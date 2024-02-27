@@ -3,3 +3,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.btn{
+    @apply p-24;
+}
+*{
+    font-family: "public sans", sans-serif;
+}
