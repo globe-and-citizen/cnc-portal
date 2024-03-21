@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
-import { ref } from 'vue'
+import { handleError, ref } from 'vue'
 const toggleSide = ref(true)
 function handleChange() {
   console.log('handleChange in App.vue')
@@ -11,22 +11,23 @@ function handleChange() {
 
 <template>
   <div>
+    <RouterView name="login" />
+
     <div class="container">
       <NavBar @toggleSideButton="handleChange" />
       <div class="content-wrapper">
-        <div class="drawer lg:drawer-open fixed">
+        <div class="drawer lg:drawer-open">
           <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
 
-          <div class="drawer-content flex flex-col">
+          <div
+            class="drawer-content flex flex-col"
+            :style="{ marginLeft: toggleSide ? '325px' : '0' }"
+          >
             <!-- Page content here -->
             <RouterView />
-
-            <!-- <label for="my-drawer-2" class="btn btn-primary drawer-button lg:hidden"
-              >Open drawer</label
-            > -->
           </div>
           <div
-            class="flex flex-col items-center menu p-4 w-80 min-h-full bg-white text-base-content"
+            class="flex flex-col items-center menu p-4 w-80 min-h-full bg-white text-base-content fixed"
             v-show="toggleSide"
             @toggleSideButton="handleChange"
           >
@@ -191,7 +192,7 @@ function handleChange() {
 }
 
 .content-wrapper {
-  /* flex: 1; */
+  flex: 1;
   padding-top: 80px;
 }
 </style>
