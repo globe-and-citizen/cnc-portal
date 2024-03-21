@@ -32,7 +32,7 @@ describe("Tips", function () {
     });
 
     it("should transfer the tip amount to the recipient", async function () {
-      const tipAmount = 10;
+      const tipAmount = ethers.parseEther("10");
       const member1StartingBalance = await ethers.provider.getBalance(member1.address);
 
       await tips.pushTip(member1.address, { value: tipAmount });
