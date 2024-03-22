@@ -37,11 +37,11 @@
           <h1 class="font-bold text-2xl">Create New Company</h1>
           <hr class="" />
           <div class="flex flex-col gap-5">
-            <label class="input input-bordered flex items-center gap-2 input-sm mt-4">
+            <label class="input input-bordered flex items-center gap-2 input-md mt-4">
               <span class="w-28">Company Name</span>
               <input type="text" class="grow" placeholder="Daisy" v-model="companyName" />
             </label>
-            <label class="input input-bordered flex items-center gap-2 input-sm">
+            <label class="input input-bordered flex items-center gap-2 input-md">
               <span class="w-28">Description</span>
               <input
                 type="text"
@@ -63,7 +63,7 @@
                 <input
                   type="text"
                   class="grow"
-                  v-model="input.wallet"
+                  v-model="input.walletAddress"
                   :placeholder="'Wallet Address ' + (index + 1)"
                 />
                 <span class="badge badge-primary">Mandatory</span>
@@ -118,22 +118,29 @@
 
 <script setup>
 import { ref, toRaw } from 'vue'
-
+import axios from 'axios'
 const showModal = ref(false)
 const companyName = ref('')
 const companyDesc = ref('')
-const inputs = ref([{ name: '', wallet: '' }])
+const inputs = ref([{ name: '', walletAddress: '' }])
 const addInput = () => {
-  inputs.value.push({ name: '', wallet: '' })
+  inputs.value.push({ name: '', walletAddress: '' })
 }
-const handleSubmit = () => {
+const handleSubmit = async () => {
   let companyMembers = { members: toRaw(inputs.value) }
   let companyObject = {
-    companyName: companyName.value,
-    companyDescription: companyDesc,
-    companyMembers: companyMembers.members
+    name: companyName.value,
+    description: companyDesc.value,
+    employees: {
+      createMany: {
+        data: companyMembers.members
+      }
+    },
+    address: 'user_address_321'
   }
   console.log(companyObject)
+  await axios.post('http://localhost:3000/companies', companyObject)
+  window.location.reload(false)
 }
 const removeInput = () => {
   if (inputs.value.length > 1) {

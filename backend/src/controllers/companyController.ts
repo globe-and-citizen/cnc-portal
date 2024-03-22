@@ -67,13 +67,15 @@ const getAllCompanies = async (req: Request, res: Response) => {
 // update company
 const updateCompany = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, employees, description } = req.body;
+  const { name, description } = req.body;
   const company = await prisma.company.update({
     where: { id: Number(id) },
     data: {
       name,
-      employees,
       description,
+    },
+    include: {
+      employees: true,
     },
   });
   res.status(200).json(company);
@@ -90,10 +92,73 @@ const deleteCompany = async (req: Request, res: Response) => {
   res.status(200).json(company);
 };
 
+//insert new employees
+const addEmployees = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const employeesData = req.body;
+
+  try {
+    const employeesToCreate = employeesData.map(
+      (employee: { name: string; walletAddress: string }) => ({
+        name: employee.name,
+        walletAddress: employee.walletAddress,
+        companyId: Number(id), // company ID
+      })
+    );
+
+    const createdEmployees = await prisma.employee.createMany({
+      data: employeesToCreate,
+    });
+
+    res.status(201).json(createdEmployees);
+  } catch (error) {
+    console.error("Error adding employees:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+//update Employee
+const updateEmployee = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, walletAddress } = req.body;
+  try {
+    console.log("well well well");
+    const employee = await prisma.employee.update({
+      where: { id: Number(id) },
+      data: {
+        name: name,
+        walletAddress: walletAddress,
+      },
+    });
+    res.status(200).json(employee);
+  } catch (error) {
+    console.log("Error updating", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+//delete employees
+const deleteEmployee = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const employee = await prisma.employee.delete({
+      where: { id: Number(id) },
+    });
+    console.log(employee);
+    res.status(200).json(employee);
+  } catch (error) {
+    console.error("Error deleting employee:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 export {
   addCompany,
   updateCompany,
   deleteCompany,
   getCompany,
   getAllCompanies,
+  updateEmployee,
+  deleteEmployee,
+  addEmployees,
 };

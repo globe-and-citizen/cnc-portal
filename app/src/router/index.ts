@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import CompanyView from '../views/CompanyView.vue'
-
+import SingleCompanyView from '../views/SingleCompanyView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -24,6 +24,12 @@ const router = createRouter({
       name: 'companies',
       component: CompanyView
     },
+    {
+      path: '/companies/:id',
+      name: 'singlecompany',
+      component: SingleCompanyView
+    },
+
     {
       path: '/about',
       name: 'about',

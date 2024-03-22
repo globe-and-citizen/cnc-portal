@@ -7,6 +7,9 @@ import {
   deleteCompany,
   getCompany,
   getAllCompanies,
+  deleteEmployee,
+  updateEmployee,
+  addEmployees,
 } from "../controllers/companyController";
 
 const router = express.Router();
@@ -20,8 +23,11 @@ router.get("/nonce", async function (req, res) {
 // Team Controller
 router.post("/companies", addCompany);
 router.get("/companies", getAllCompanies);
-router.get("/companies/:id", getCompany);
+router.post("/companies/:id", getCompany);
 router.put("/companies/:id", updateCompany);
 router.delete("/companies/:id", deleteCompany);
+router.delete("/employee/:id", deleteEmployee);
+router.put("/employee/:id", updateEmployee);
+router.post("/employee/:id", addEmployees);
 
 export default router;
