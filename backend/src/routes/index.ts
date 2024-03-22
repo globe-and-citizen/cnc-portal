@@ -2,32 +2,26 @@ import express from "express";
 import { generateNonce } from "siwe";
 
 import {
-  addCompany,
-  updateCompany,
-  deleteCompany,
-  getCompany,
-  getAllCompanies,
-  deleteEmployee,
-  updateEmployee,
-  addEmployees,
-} from "../controllers/companyController";
+  addTeam,
+  updateTeam,
+  deleteTeam,
+  getTeam,
+  getAllTeams,
+  updateMember,
+  deleteMembers,
+  addMembers,
+} from "../controllers/teamController";
 
 const router = express.Router();
 
-// export default router;
-router.get("/nonce", async function (req, res) {
-  res.setHeader("Content-Type", "text/plain");
-  res.send(generateNonce());
-});
-
 // Team Controller
-router.post("/companies", addCompany);
-router.get("/companies", getAllCompanies);
-router.post("/companies/:id", getCompany);
-router.put("/companies/:id", updateCompany);
-router.delete("/companies/:id", deleteCompany);
-router.delete("/employee/:id", deleteEmployee);
-router.put("/employee/:id", updateEmployee);
-router.post("/employee/:id", addEmployees);
+router.post("/teams", addTeam);
+router.get("/teams", getAllTeams);
+router.post("/teams/:id", getTeam);
+router.put("/teams/:id", updateTeam);
+router.delete("/teams/:id", deleteTeam);
+router.delete("/member/:id", deleteMembers);
+router.put("/member/:id", updateMember);
+router.post("/member/:id", addMembers);
 
 export default router;

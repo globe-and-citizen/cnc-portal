@@ -1,10 +1,7 @@
 <template>
   <div class="card w-80 bg-white ml-5 mt-5 flex justify-center items-center">
-    <!-- <figure>
-        <img :src="CompanyImage" alt="Company" />
-      </figure> -->
     <div class="card-body flex justify-center items-center">
-      <h1 class="card-title">Add Company</h1>
+      <h1 class="card-title">Add Team</h1>
 
       <div class="w-6 h-6 cursor-pointer" @click="showModal = true">
         <svg
@@ -34,12 +31,12 @@
             ✕
           </button>
 
-          <h1 class="font-bold text-2xl">Create New Company</h1>
+          <h1 class="font-bold text-2xl">Create New Team</h1>
           <hr class="" />
           <div class="flex flex-col gap-5">
             <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-              <span class="w-28">Company Name</span>
-              <input type="text" class="grow" placeholder="Daisy" v-model="companyName" />
+              <span class="w-28">Team Name</span>
+              <input type="text" class="grow" placeholder="Daisy" v-model="teamName" />
             </label>
             <label class="input input-bordered flex items-center gap-2 input-md">
               <span class="w-28">Description</span>
@@ -47,7 +44,7 @@
                 type="text"
                 class="grow"
                 placeholder="Enter a short description"
-                v-model="companyDesc"
+                v-model="teamDesc"
               />
             </label>
 
@@ -120,26 +117,26 @@
 import { ref, toRaw } from 'vue'
 import axios from 'axios'
 const showModal = ref(false)
-const companyName = ref('')
-const companyDesc = ref('')
+const teamName = ref('')
+const teamDesc = ref('')
 const inputs = ref([{ name: '', walletAddress: '' }])
 const addInput = () => {
   inputs.value.push({ name: '', walletAddress: '' })
 }
 const handleSubmit = async () => {
-  let companyMembers = { members: toRaw(inputs.value) }
-  let companyObject = {
-    name: companyName.value,
-    description: companyDesc.value,
-    employees: {
+  let teamMembers = { members: toRaw(inputs.value) }
+  let teamObject = {
+    name: teamName.value,
+    description: teamDesc.value,
+    members: {
       createMany: {
-        data: companyMembers.members
+        data: teamMembers.members
       }
     },
     address: 'user_address_321'
   }
-  console.log(companyObject)
-  await axios.post('http://localhost:3000/companies', companyObject)
+  console.log(teamObject)
+  await axios.post('http://localhost:3000/teams', teamObject)
   window.location.reload(false)
 }
 const removeInput = () => {

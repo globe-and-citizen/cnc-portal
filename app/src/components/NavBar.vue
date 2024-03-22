@@ -29,13 +29,13 @@
       <div class="dropdown bg-gray-400 w-96 rounded-full">
         <div class="grow flex">
           <div tabindex="0" role="button" class="btn w-full text-gray-500 flex items-center">
-            Select Company
+            Select Team
             <i class="fas fa-chevron-down ml-auto"></i>
           </div>
         </div>
         <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-96">
-          <li><a>Company 1</a></li>
-          <li><a>Company 2</a></li>
+          <li><a>Team 1</a></li>
+          <li><a>Team 2</a></li>
         </ul>
       </div>
     </div>

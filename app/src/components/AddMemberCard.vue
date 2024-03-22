@@ -1,10 +1,7 @@
 <template>
   <div class="card w-full bg-white ml-5 mt-10">
-    <!-- <figure>
-        <img :src="CompanyImage" alt="Company" />
-      </figure> -->
     <div class="card-body flex justify-center items-center">
-      <h1 class="card-title">Add Employee</h1>
+      <h1 class="card-title">Add Member</h1>
 
       <div class="w-6 h-6 cursor-pointer" @click="showModal = true">
         <svg
@@ -35,7 +32,7 @@
       >
         ✕
       </button>
-      <h1 class="font-bold text-2xl">Add New Employee</h1>
+      <h1 class="font-bold text-2xl">Add New Member</h1>
       <hr class="" />
       <div v-for="(input, index) in inputs" :key="index" class="input-group mt-3">
         <label class="input input-bordered flex items-center gap-2 input-md">
@@ -88,7 +85,7 @@
           </svg>
         </div>
       </div>
-      <div class="flex justify-center" @click="addEmployees">
+      <div class="flex justify-center" @click="addMembers">
         <button class="btn btn-primary justify-center">Add</button>
       </div>
     </div>
@@ -108,11 +105,11 @@ const removeInput = () => {
     inputs.value.pop()
   }
 }
-const addEmployees = async () => {
-  let newEmployees = toRaw(inputs.value)
+const addMembers = async () => {
+  let newMembers = toRaw(inputs.value)
   let id = props.id
   console.log(id)
-  await axios.post(`http://localhost:3000/employee/${id}`, newEmployees)
+  await axios.post(`http://localhost:3000/member/${id}`, newMembers)
   window.location.reload(false)
 }
 </script>

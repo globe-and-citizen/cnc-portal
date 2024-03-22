@@ -1,46 +1,46 @@
 <template>
   <div class="pt-10">
-    <h2 class="pl-5">Company</h2>
+    <h2 class="pl-5">Team</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <CompanyCard
-        v-for="company in companies"
-        :key="company.id"
-        :CompanyName="company.name"
-        :CompanyDescription="company.description"
+      <TeamCard
+        v-for="team in teams"
+        :key="team.id"
+        :TeamName="team.name"
+        :TeamDescription="team.description"
         class="cursor-pointer"
-        @click="navigateToCompany(company.id)"
+        @click="navigateToTeam(team.id)"
       />
 
-      <AddCompanyCard />
+      <AddTeamCard />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import AddCompanyCard from '@/components/AddCompanyCard.vue'
-import CompanyCard from '@/components/CompanyCard.vue'
+import AddTeamCard from '@/components/AddTeamCard.vue'
+import TeamCard from '../components/TeamCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import axios from 'axios'
-const companies = ref([])
+const teams = ref([])
 const router = useRouter()
 
 //
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:3000/companies', {
+    const response = await axios.get('http://localhost:3000/teams', {
       address: 'user_address_321'
     })
-    companies.value = response.data
-    console.log(companies.value)
+    teams.value = response.data
+    console.log(teams.value)
   } catch (error) {
     console.error('Error fetching data:', error)
   }
 })
-function navigateToCompany(id) {
+function navigateToTeam(id: string) {
   console.log(id)
-  router.push('/companies/' + id)
+  router.push('/teams/' + id)
 }
 </script>
 

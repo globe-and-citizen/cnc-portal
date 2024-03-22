@@ -16,35 +16,21 @@ datasource db {
 model User {
   address      String        @id @unique
   name         String?
-  transactions Transaction[]
-  companies        Company[]
+  teams        Team[]
 }
-model Company {
+model Team {
   id           Int           @id @default(autoincrement())
-  employees    Employee[]
+  members    Member[]
   owner        User          @relation(fields: [ownerId], references: [address])
   ownerId      String
   description  String?
   name         String        @unique
-  transactions Transaction[]
 }
-model Employee{
+model Member{
   id            Int           @id @default(autoincrement())
   name          String         
   walletAddress String
-  company       Company? @relation(fields: [companyId], references: [id])  // Add the opposite relation field here
-  companyId     Int?    // Nullable because an employee may not belong to a company initially
+  team       Team? @relation(fields: [teamId], references: [id])  // Add the opposite relation field here
+  teamId     Int?    // Nullable because an member may not belong to a team initially
 
-}
-model Transaction {
-  id            Int      @id @default(autoincrement())
-  author        User     @relation(fields: [authorId], references: [address])
-  authorId      String
-  company          Company     @relation(fields: [companyId], references: [id])
-  companyId        Int
-  hash          String
-  senderAddress String
-  members       String[]
-  type          String
-  value         String
 }

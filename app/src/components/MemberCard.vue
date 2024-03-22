@@ -1,7 +1,7 @@
 <template>
   <div class="card w-full bg-white ml-5 mt-10 cursor-pointer" @click="showModal = true">
     <div class="card-body">
-      <h1 class="card-title">{{ employeeName }}</h1>
+      <h1 class="card-title">{{ memberName }}</h1>
       <p class="text-sm">{{ walletAddress }}</p>
       <div class="card-actions justify-between"></div>
     </div>
@@ -19,7 +19,7 @@
       >
         ✕
       </button>
-      <h1 class="font-bold text-2xl">Update Employee Details</h1>
+      <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
         <input type="text" class="grow" v-model="nameInput" />
@@ -27,8 +27,8 @@
         <input type="text" class="grow" v-model="walletInput" />
       </label>
       <div class="flex mt-2 justify-between">
-        <button class="btn btn-error size-sm" @click="deleteEmployee">Delete</button>
-        <button class="btn btn-primary" @click="updateEmployee">Update</button>
+        <button class="btn btn-error size-sm" @click="deleteMember">Delete</button>
+        <button class="btn btn-primary" @click="updateMember">Update</button>
       </div>
     </div>
     <div></div>
@@ -42,30 +42,30 @@ const showModal = ref(false)
 const nameInput = ref('')
 const walletInput = ref('')
 
-const props = defineProps(['employeeName', 'walletAddress', 'employeeId'])
-nameInput.value = props.employeeName
+const props = defineProps(['memberName', 'walletAddress', 'memberId'])
+nameInput.value = props.memberName
 walletInput.value = props.walletAddress
 console.log(nameInput.value)
 
-const deleteEmployee = async () => {
+const deleteMember = async () => {
   try {
-    const id = props.employeeId
-    await axios.delete(`http://localhost:3000/employee/${id}`)
+    const id = props.memberId
+    await axios.delete(`http://localhost:3000/member/${id}`)
     window.location.reload(false)
   } catch (error) {
-    console.log('Error deleting employee', error)
+    console.log('Error deleting member', error)
   }
 }
-const updateEmployee = async () => {
+const updateMember = async () => {
   try {
-    const id = props.employeeId
-    await axios.put(`http://localhost:3000/employee/${id}`, {
+    const id = props.memberId
+    await axios.put(`http://localhost:3000/member/${id}`, {
       name: nameInput.value,
       walletAddress: walletInput.value
     })
     window.location.reload(false)
   } catch (error) {
-    console.log('Error updating employee', error)
+    console.log('Error updating Member', error)
   }
 }
 </script>

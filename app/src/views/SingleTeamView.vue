@@ -1,22 +1,22 @@
 <template>
   <div class="pt-10">
     <div class="flex justify-between">
-      <h2 class="pl-5">{{ company.name }}</h2>
+      <h2 class="pl-5">{{ team.name }}</h2>
       <div class="flex justify-between gap-2 items-center">
-        <button class="btn btn-primary" @click="updateCompanyModalOpen">Update</button>
+        <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
 
-        <button class="btn btn-primary" @click="deleteCompany">Delete Company</button>
+        <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
       </div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <EmployeeCard
-        v-for="employee in company.employees"
-        :employeeName="employee.name"
-        :walletAddress="employee.walletAddress"
-        :employeeId="employee.id"
-        :key="employee.id"
+      <MemberCard
+        v-for="member in team.members"
+        :memberName="member.name"
+        :walletAddress="member.walletAddress"
+        :memberId="member.id"
+        :key="member.id"
       />
-      <AddEmployeeCard :id="company.id" />
+      <AddMemberCard :id="team.id" />
     </div>
   </div>
 
@@ -33,12 +33,12 @@
         ✕
       </button>
 
-      <h1 class="font-bold text-2xl">Update Company Details</h1>
+      <h1 class="font-bold text-2xl">Update Team Details</h1>
       <hr class="" />
       <div class="flex flex-col gap-5">
         <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-          <span class="w-28">Company Name</span>
-          <input type="text" class="grow" placeholder="Enter company name" v-model="cname" />
+          <span class="w-28">Team Name</span>
+          <input type="text" class="grow" placeholder="Enter Team name" v-model="cname" />
         </label>
         <label class="input input-bordered flex items-center gap-2 input-md">
           <span class="w-28">Description</span>
@@ -48,7 +48,7 @@
 
       <div class="modal-action justify-center">
         <!-- if there is a button in form, it will close the modal -->
-        <button class="btn btn-primary" @click="updateCompany">Submit</button>
+        <button class="btn btn-primary" @click="updateTeam">Submit</button>
 
         <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
       </div>
@@ -56,16 +56,16 @@
   </dialog>
 </template>
 <script setup>
-import EmployeeCard from '@/components/EmployeeCard.vue'
+import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AddEmployeeCard from '@/components/AddEmployeeCard.vue'
+import AddMemberCard from '@/components/AddMemberCard.vue'
 
 import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
 
-const company = ref([])
+const team = ref([])
 const cname = ref('')
 const cdesc = ref('')
 
@@ -77,53 +77,49 @@ onMounted(async () => {
 
   console.log('hi', id)
   try {
-    const response = await axios.post(`http://localhost:3000/companies/${id}`, {
+    const response = await axios.post(`http://localhost:3000/teams/${id}`, {
       address: 'user_address_321'
     })
-    company.value = response.data
-    cname.value = company.value.name
-    cdesc.value = company.value.description
+    team.value = response.data
+    cname.value = team.value.name
+    cdesc.value = team.value.description
   } catch (error) {
     console.error('Error fetching data:', error)
   }
 })
-const updateCompanyModalOpen = async () => {
+const updateTeamModalOpen = async () => {
   showModal.value = true
-  inputs.value = company.value.employees
+  inputs.value = team.value.members
 }
-const updateCompany = async () => {
+const updateTeam = async () => {
   const id = route.params.id
   try {
-    // Prepare the company object with updated data
-    let companyObject = {
+    let teamObject = {
       name: cname.value,
       description: cdesc.value,
       address: 'user_address_321'
     }
-    console.log('Updated company object:', companyObject)
+    console.log('Updated team object:', teamObject)
 
-    // Make the PUT request to update the company
-    let response = await axios.put(`http://localhost:3000/companies/${id}`, companyObject)
+    let response = await axios.put(`http://localhost:3000/teams/${id}`, teamObject)
 
-    // Handle the response as needed
     console.log('Response:', response.data)
 
-    // Reload the page or perform other actions after successful update
     window.location.reload(false)
   } catch (error) {
     console.error('Error updating data:', error)
   }
 }
 
-const deleteCompany = async () => {
+const deleteTeam = async () => {
   try {
     const id = route.params.id
 
-    const response = await axios.delete(`http://localhost:3000/companies/${id}`, {
+    const response = await axios.delete(`http://localhost:3000/teams/${id}`, {
       address: 'user_address_321'
     })
     console.log(response.data)
-    router.push('/companies')
+    router.push('/teams')
   } catch (error) {
     console.error('Error fetching data:', error)
   }
