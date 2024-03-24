@@ -5,13 +5,13 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Tips", function () {
   let tips: Tips
-  let companyOwner: SignerWithAddress, member1: SignerWithAddress, member2: SignerWithAddress;
+  let sender: SignerWithAddress, member1: SignerWithAddress, member2: SignerWithAddress;
   let recipientAddress: Array<string>;
   const TIP_AMOUNT = ethers.parseEther("20");
 
   beforeEach(async function () {
     // Get signers for testing accounts
-    [companyOwner, member1, member2] = await ethers.getSigners();
+    [sender, member1, member2] = await ethers.getSigners();
 
     recipientAddress = [member1.address, member2.address];
     // Deploy the Tips contract
@@ -23,13 +23,13 @@ describe("Tips", function () {
     it("should emit a PushTip event when a tip is pushed", async function () {
       const amountPerAddress = ethers.parseEther("10");
 
-      await expect(tips.connect(companyOwner).pushTip(recipientAddress, { value: TIP_AMOUNT }))
+      await expect(tips.connect(sender).pushTip(recipientAddress, { value: TIP_AMOUNT }))
         .to.emit(tips, "PushTip")
-        .withArgs(companyOwner.address, recipientAddress, TIP_AMOUNT, amountPerAddress);
+        .withArgs(sender.address, recipientAddress, TIP_AMOUNT, amountPerAddress);
     });
 
     it("should revert if the tip amount is zero", async function () {
-      await expect(tips.connect(companyOwner).pushTip(recipientAddress)).to.be.revertedWith(
+      await expect(tips.connect(sender).pushTip(recipientAddress)).to.be.revertedWith(
         "Must send a positive amount."
       );
     });
@@ -54,13 +54,13 @@ describe("Tips", function () {
     it("should emit a SendTip event when a tip is sent", async function () {
       const amountPerAddress = ethers.parseEther("10");
 
-      await expect(tips.connect(companyOwner).sendTip(recipientAddress, { value: TIP_AMOUNT }))
+      await expect(tips.connect(sender).sendTip(recipientAddress, { value: TIP_AMOUNT }))
         .to.emit(tips, "SendTip")
-        .withArgs(companyOwner.address, recipientAddress, TIP_AMOUNT, amountPerAddress);
+        .withArgs(sender.address, recipientAddress, TIP_AMOUNT, amountPerAddress);
     });
 
     it("should revert if the tip amount is zero", async function () {
-      await expect(tips.connect(companyOwner).sendTip(recipientAddress)).to.be.revertedWith(
+      await expect(tips.connect(sender).sendTip(recipientAddress)).to.be.revertedWith(
         "Must send a positive amount."
       );
     });
@@ -84,7 +84,7 @@ describe("Tips", function () {
     });
 
     it("should withdraw earned tips and reset the balance", async function () {
-      await tips.connect(companyOwner).sendTip(recipientAddress, { value: TIP_AMOUNT });
+      await tips.connect(sender).sendTip(recipientAddress, { value: TIP_AMOUNT });
 
       const member1StartingBalance = await ethers.provider.getBalance(member1.address);
 
@@ -98,7 +98,7 @@ describe("Tips", function () {
 
     it("should emit a TipWithdrawal event on successful withdrawal", async function () {
       const amountPerAddress = ethers.parseEther("10");
-      await tips.connect(companyOwner).sendTip(recipientAddress, { value: TIP_AMOUNT });
+      await tips.connect(sender).sendTip(recipientAddress, { value: TIP_AMOUNT });
 
       await expect(tips.connect(member1).withdraw())
         .to.emit(tips, "TipWithdrawal")
