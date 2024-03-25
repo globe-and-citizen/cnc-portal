@@ -1,14 +1,9 @@
 <template>
-  <div className="card bg-neutral shadow-xl flex flex-row justify-between">
-    <div className="card-body">
-      <h2 className="card-title text-primary">{{ member.id }}</h2>
-      <p class="text-primary">{{ member.name }}</p>
-      <p class="text-primary">{{ member.address }}</p>
+  <div className="card bg-white shadow-xl flex flex-row justify-between h-[83px] w-full">
+    <div className="card-body flex flex-col justify-center">
+      <p class="text-[#212B36]">{{ member.name }}</p>
+      <p class="text-[#212B36]">{{ member.address }}</p>
     </div>
-    <div className="card-actions flex flex-col justify-center mr-[30px]">
-        <button className="btn btn-primary">Push Tips</button>
-        <button className="btn btn-secondary">Send Tips</button>
-      </div>
   </div>
 </template>
 
