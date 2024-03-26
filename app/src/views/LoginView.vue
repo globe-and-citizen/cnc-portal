@@ -7,9 +7,9 @@
         </div>
         <div class="w-[240px] grow flex flex-col justify-center p-10">
             <h2 class="pb-4">Sign in to CNC portal</h2>
-            <p class="pb-5">New User ? <span><a href="#" class="text-primary">Create an account</a></span></p>
+            <!--<p class="pb-5">New User ? <span><a href="#" class="text-primary">Create an account</a></span></p>-->
             <div class="flex flex-col gap-5">
-                <input type="text" placeholder="Email address" class="input input-bordered w-full" />
+                <!--<input type="text" placeholder="Email address" class="input input-bordered w-full" />
 
                 <label class="input input-bordered flex items-center gap-2">
                     <input type="password" class="grow" placeholder="Password" />
@@ -25,8 +25,8 @@
                     </span>
                 </label>
 
-                <p class="text-right underline">Forgot password ?</p>
-                <button class="btn btn-primary w-full" @click="signInWithEthereum">Sign in</button>
+                <p class="text-right underline">Forgot password ?</p>-->
+                <button class="btn btn-primary w-full" @click="signInWithEthereum">Sign In With Ethereum</button>
                 <div class="flex justify-center items-center ">
                     <svg xmlns="http://www.w3.org/2000/svg" width="157" height="22" viewBox="0 0 157 22" fill="none">
                         <path d="M0 10.5H156" stroke="#919EAB" stroke-opacity="0.24" stroke-linecap="square"
@@ -110,7 +110,7 @@
         //create a new user, otherwise use the latest value to sign
         const nonce = await fetchUserService.getUser(signer.address).nonce 
         let message: string
-        
+
         if (nonce) {
             message = createSiweMessage(
                 signer.address, 
