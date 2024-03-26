@@ -1,0 +1,111 @@
+<template>
+  <!-- <header> -->
+  <div class="navbar bg-white fixed h-24">
+    <div class="navbar-start flex">
+      <div>
+        <img src="../assets/Logo.png" alt="Logo" />
+      </div>
+      <div class="p-20">
+        <button class="btn btn-square btn-ghost drawer-overlay" @click="$emit('toggleSideButton')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 28 28"
+            class="inline-block w-7 h-7 stroke-current"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            ></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- <button @click="$emit('toggleSide')">Toggle Sidebar</button> -->
+    </div>
+    <div class="navbar-center">
+      <div class="dropdown bg-gray-400 w-96 rounded-full">
+        <div class="grow flex">
+          <div tabindex="0" role="button" class="btn w-full text-gray-500 flex items-center">
+            Select Team
+            <i class="fas fa-chevron-down ml-auto"></i>
+          </div>
+        </div>
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-96">
+          <li><a>Team 1</a></li>
+          <li><a>Team 2</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="navbar-end">
+      <div class="dropdown bg-gray-400 w-48 rounded-full">
+        <div
+          tabindex="0"
+          role="button"
+          class="btn w-full text-gray-500 flex items-center justify-between"
+        >
+          <div class="flex items-center space-x-1">
+            <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
+            <span class="text-black font-bold font-mono">$9000</span>
+            <span class="text-black font-bold font-mono">ETH</span>
+          </div>
+          <span class="text-gray-700 border-l border-gray-700 px-2">Units</span>
+        </div>
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48">
+          <li><a>Unit 1</a></li>
+          <li><a>Unit 2</a></li>
+        </ul>
+      </div>
+
+      <button class="btn btn-ghost btn-circle">
+        <div class="indicator">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            />
+          </svg>
+          <span class="badge badge-xs badge-primary indicator-item"></span>
+        </div>
+      </button>
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+          <div class="w-10 rounded-full">
+            <img
+              alt="Tailwind CSS Navbar component"
+              src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+            />
+          </div>
+        </div>
+        <ul
+          tabindex="0"
+          class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52"
+        >
+          <li>
+            <a class="justify-between">
+              Profile
+              <span class="badge">New</span>
+            </a>
+          </li>
+          <li><a>Settings</a></li>
+          <li><a>Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <!-- </header> -->
+</template>
+<script setup>
+import { defineEmits } from 'vue'
+const emit = defineEmits(['toggleSideButton'])
+</script>
