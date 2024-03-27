@@ -25,52 +25,51 @@ const sendTip = () => {
   totalTipAmount.value = 0
 }
 
-
 watchEffect(() => console.log(totalTipAmount.value))
 </script>
 
 <template>
-  <div class="w-full px-[40px]">
-    <h2 class="text-black text-center my-[40px]">My teams</h2>
-    <div class="flex flex-col w-full gap-[8px]">
+  <div class="w-full px-10">
+    <h2 class="text-black text-center my-10">My teams</h2>
+    <div class="flex flex-col w-full gap-2">
       <div v-for="member in members" :key="member.id">
         <MemberDetail :member="member" />
       </div>
     </div>
-    <div class="card bg-white shadow-xl flex flex-row justify-around my-[8px]">
+    <div class="card bg-white shadow-xl flex flex-row justify-around my-2">
       <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mt-[32px]">Tip Amount per Member</label>
-        <div class="w-[640px] flex flex-col justify-center m-[24px] self-center">
+        <label for="tip-amount" class="text-center mt-8">Tip Amount per Member</label>
+        <div class="w-[640px] flex flex-col justify-center m-6 self-center">
           <input
             type="text"
             placeholder="Input tip amount per member"
-            class="py-[8px] px-[16px] outline outline-1 outline-[#E4E9F0] rounded-md border-[#E4E9F0] text-center bg-white"
+            class="py-2 px-4 outline outline-1 outline-neutral-content rounded-md border-neutral-content text-center bg-white"
             v-model="tipAmountPerAddress"
             @change="countTotalTip()"
           />
         </div>
       </div>
       <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mb-[32px]">Member Total</label>
+        <label for="tip-amount" class="text-center mb-8">Member Total</label>
         <div class="flex flex-row">
-          <div class="text-[#212B36] text-center self-center mx-[8px]">X</div>
-          <div class="text-[#212B36] text-center self-center mx-[8px]">
+          <div class="text-primary-content text-center self-center mx-2">X</div>
+          <div class="text-primary-content text-center self-center mx-2">
             {{ members.length }} Members
           </div>
         </div>
       </div>
       <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mb-[32px]">Total Amount</label>
+        <label for="tip-amount" class="text-center mb-8">Total Amount</label>
         <div class="flex flex-row">
-          <div class="text-[#212B36] text-center self-center mx-[8px]">=</div>
-          <div class="text-[#212B36] text-center self-center mx-[8px]">
+          <div class="text-primary-content text-center self-center mx-2">=</div>
+          <div class="text-primary-content text-center self-center mx-2">
             {{ totalTipAmount }} ETH
           </div>
         </div>
       </div>
       <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mb-[24px]">Actions</label>
-        <div className="card-actions flex flex-row justify-between mx-[32px] self-center">
+        <label for="tip-amount" class="text-center mb-6">Actions</label>
+        <div className="card-actions flex flex-row justify-between mx-8 self-center">
           <button className="btn btn-primary text-white" @click="pushTip">Push Tips</button>
           <button className="btn btn-secondary text-white" @click="sendTip">Send Tips</button>
         </div>
