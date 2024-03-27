@@ -38,8 +38,8 @@ watchEffect(() => console.log(totalTipAmount.value))
     </div>
     <div class="card bg-white shadow-xl flex flex-row justify-around my-2">
       <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mt-8">Tip Amount per Member</label>
-        <div class="w-[640px] flex flex-col justify-center m-6 self-center">
+        <label for="tip-amount" class="text-center mt-2">Total Amount</label>
+        <div class="w-[640px] flex flex-col justify-between m-6 self-center">
           <input
             type="text"
             placeholder="Input tip amount per member"
@@ -49,24 +49,7 @@ watchEffect(() => console.log(totalTipAmount.value))
           />
         </div>
       </div>
-      <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mb-8">Member Total</label>
-        <div class="flex flex-row">
-          <div class="text-primary-content text-center self-center mx-2">X</div>
-          <div class="text-primary-content text-center self-center mx-2">
-            {{ members.length }} Members
-          </div>
-        </div>
-      </div>
-      <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mb-8">Total Amount</label>
-        <div class="flex flex-row">
-          <div class="text-primary-content text-center self-center mx-2">=</div>
-          <div class="text-primary-content text-center self-center mx-2">
-            {{ totalTipAmount }} ETH
-          </div>
-        </div>
-      </div>
+      <label class="text-center self-center mt-7">ETH</label>
       <div class="flex flex-col justify-center">
         <label for="tip-amount" class="text-center mb-6">Actions</label>
         <div className="card-actions flex flex-row justify-between mx-8 self-center">
