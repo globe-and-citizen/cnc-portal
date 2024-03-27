@@ -1,0 +1,62 @@
+<script setup lang="ts">
+import MemberDetail from '@/components/MemberDetail.vue'
+import { useMembersStore } from '@/stores/member'
+import { ref, watchEffect } from 'vue'
+
+const { members } = useMembersStore()
+const tipAmountPerAddress = ref(0)
+const totalTipAmount = ref(0)
+
+const countTotalTip = () => {
+  totalTipAmount.value = members.length * tipAmountPerAddress.value
+}
+
+const pushTip = () => {
+  // TO DO
+
+  tipAmountPerAddress.value = 0
+  totalTipAmount.value = 0
+}
+
+const sendTip = () => {
+  // TO DO
+
+  tipAmountPerAddress.value = 0
+  totalTipAmount.value = 0
+}
+
+watchEffect(() => console.log(totalTipAmount.value))
+</script>
+
+<template>
+  <div class="w-full px-10">
+    <h2 class="text-black text-center my-10">My teams</h2>
+    <div class="flex flex-col w-full gap-2">
+      <div v-for="member in members" :key="member.id">
+        <MemberDetail :member="member" />
+      </div>
+    </div>
+    <div class="card bg-white shadow-xl flex flex-row justify-around my-2">
+      <div class="flex flex-col justify-center">
+        <label for="tip-amount" class="text-center mt-2">Total Amount</label>
+        <div class="w-[640px] flex flex-col justify-between m-6 self-center">
+          <input
+            type="text"
+            placeholder="Input tip amount per member"
+            class="py-2 px-4 outline outline-1 outline-neutral-content rounded-md border-neutral-content text-center bg-white"
+            v-model="tipAmountPerAddress"
+            @change="countTotalTip()"
+          />
+        </div>
+      </div>
+      <label class="text-center self-center mt-7">ETH</label>
+      <div class="flex flex-col justify-center">
+        <label for="tip-amount" class="text-center mb-6">Actions</label>
+        <div className="card-actions flex flex-row justify-between mx-8 self-center">
+          <button className="btn btn-primary text-white" @click="pushTip">Push Tips</button>
+          <button className="btn btn-secondary text-white" @click="sendTip">Send Tips</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
