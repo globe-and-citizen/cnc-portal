@@ -1,6 +1,6 @@
 <template>
   <!-- <header> -->
-  <div class="navbar bg-white fixed h-24">
+  <div class="navbar bg-white fixed h-24 z-50 shadow-sm">
     <div class="navbar-start flex">
       <div>
         <img src="../assets/Logo.png" alt="Logo" />
