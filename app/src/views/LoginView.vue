@@ -7,9 +7,9 @@
         </div>
         <div class="w-[240px] grow flex flex-col justify-center p-10">
             <h2 class="pb-4">Sign in to CNC portal</h2>
-            <p class="pb-5">New User ? <span><a href="#" class="text-primary">Create an account</a></span></p>
+            <!--<p class="pb-5">New User ? <span><a href="#" class="text-primary">Create an account</a></span></p>-->
             <div class="flex flex-col gap-5">
-                <input type="text" placeholder="Email address" class="input input-bordered w-full" />
+                <!--<input type="text" placeholder="Email address" class="input input-bordered w-full" />
 
                 <label class="input input-bordered flex items-center gap-2">
                     <input type="password" class="grow" placeholder="Password" />
@@ -25,8 +25,8 @@
                     </span>
                 </label>
 
-                <p class="text-right underline">Forgot password ?</p>
-                <button class="btn btn-primary w-full">Sign in</button>
+                <p class="text-right underline">Forgot password ?</p>-->
+                <button class="btn btn-primary w-full" @click="signInWithEthereum">Sign In With Ethereum</button>
                 <div class="flex justify-center items-center ">
                     <svg xmlns="http://www.w3.org/2000/svg" width="157" height="22" viewBox="0 0 157 22" fill="none">
                         <path d="M0 10.5H156" stroke="#919EAB" stroke-opacity="0.24" stroke-linecap="square"
@@ -74,12 +74,68 @@
 </template>
 
 <script setup lang="ts">
+    import { BrowserProvider } from 'ethers';
+    import { SiweMessage } from 'siwe';
+    import { FetchUserService } from '@/services/userService'
+    import { SIWEAuthService } from '@/services/authService'
 
+    const domain = window.location.host;
+    const origin = window.location.origin;
+    const provider = new BrowserProvider(window.ethereum);
+    const siweAuthService = new SIWEAuthService()
+    const fetchUserService = new FetchUserService()
+
+    function createSiweMessage (address, statement, nonce) {
+        const message = new SiweMessage({
+            domain,
+            address,
+            statement,
+            nonce,
+            uri: origin,
+            version: '1',
+            chainId: '1'
+        });
+        return message.prepareMessage();
+    }
+
+    /*function connectWallet () {
+        provider.send('eth_requestAccounts', [])
+        .catch(() => console.log('user rejected request'));
+    }*/
+
+    async function signInWithEthereum () {
+        const signer = await provider.getSigner();
+        //Get latest nonce from database to check if user is already registered
+        //If nonce === undefined it means the user is not yet registered, 
+        //create a new user, otherwise use the latest value to sign
+        const nonce = await fetchUserService.getUser(signer.address).nonce 
+        let message: string
+
+        if (nonce) {
+            message = createSiweMessage(
+                signer.address, 
+                'Sign in with Ethereum to the app.',
+                nonce
+            );
+        } else {
+            //Register or create new user here
+            const user = await fetchUserService.createUser(signer.address)
+            message = createSiweMessage(
+                signer.address, 
+                'Sign in with Ethereum to the app.',
+                /*'JdqIpQPlVJ0Jyv6yu'*/
+                user.nonce
+            );
+        }
+        console.log(await signer.signMessage(message));
+        //Authenticate or login user here
+        await siweAuthService.authenticateUser({signature: message})
+    }
 </script>
 
 <style scoped >
-.auth {
-    background-image: url('/src/assets/overlay_2.png');
-    background-size: cover;
-}
+    .auth {
+        background-image: url('/src/assets/overlay_2.png');
+        background-size: cover;
+    }
 </style>
