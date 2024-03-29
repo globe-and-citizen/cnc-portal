@@ -28,7 +28,7 @@ jobs:
               working-directory: ./app
 
             - name: 🧹Format code
-              run: npm run format
+              run: npm run format-check
               working-directory: ./app
 
             - name: type check
