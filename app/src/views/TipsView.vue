@@ -1,19 +1,36 @@
 <script setup lang="ts">
 import MemberDetail from '@/components/MemberDetail.vue'
-import { useMembersStore } from '@/stores/member'
+import { useMembersStore, type Member } from '@/stores/member'
+import { useTipsStore } from '@/stores/tips'
+import LoadingButton from '@/components/LoadingButton.vue'
 import { ref } from 'vue'
 
 const { members } = useMembersStore()
+const { pushTip, sendTip, pushTipLoading, sendTipLoading } = useTipsStore()
 const totalTipAmount = ref(0)
+const memberAddresses = members.map((member: Member) => member.address)
 
-const handlePushTip = () => {
-  // TO DO
+const handlePushTip = async () => {
+  if (totalTipAmount.value === 0) return
+
+  try {
+    await pushTip(memberAddresses, totalTipAmount.value)
+    alert('Tips pushed!')
+  } catch (error) {
+    alert(error)
+  }
 
   totalTipAmount.value = 0
 }
 
-const handleSendTip = () => {
-  // TO DO
+const handleSendTip = async () => {
+  if (totalTipAmount.value === 0) return
+  try {
+    await sendTip(memberAddresses, totalTipAmount.value)
+    alert('Tips sent!')
+  } catch (error) {
+    alert(error)
+  }
 
   totalTipAmount.value = 0
 }
@@ -43,8 +60,14 @@ const handleSendTip = () => {
       <div class="flex flex-col justify-center">
         <label for="tip-amount" class="text-center mb-2">Actions</label>
         <div className="card-actions flex flex-row justify-between mx-8 self-center">
-          <button className="btn btn-primary w-full text-white" @click="handlePushTip()">Push Tips</button>
-          <button className="btn btn-secondary w-full text-white" @click="handleSendTip()">Send Tips</button>
+          <LoadingButton v-if="pushTipLoading" color="primary" />
+          <button v-else className="btn btn-primary w-full text-white" @click="handlePushTip()">
+            Push Tips
+          </button>
+          <LoadingButton v-if="sendTipLoading" color="secondary" />
+          <button v-else className="btn btn-secondary w-full text-white" @click="handleSendTip()">
+            Send Tips
+          </button>
         </div>
       </div>
     </div>
