@@ -1,0 +1,302 @@
+openapi: "3.0.2"
+info:
+  title: CNC Portal
+  version: "1.0"
+paths:
+  /teams:
+    get:
+      summary: Fetch all Teams
+      description: Returns all teams belonging to user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+
+      tags:
+        - Teams
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Unique identifier of the team
+                  name:
+                    type: string
+                    description: Name of the team
+                  description:
+                    type: string
+                    description: Description of the team
+                  ownerId:
+                    type: string
+                    description: Owner's ID of the team
+                example:
+                  - id: 1
+                    name: "Team A"
+                    description: "This is Team A"
+                    ownerId: "user123"
+                  - id: 2
+                    name: "Team B"
+                    description: "This is Team B"
+                    ownerId: "user123"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message describing the internal server error
+
+    post:
+      summary: Create Team
+      description: Create a team in the CNC portal
+      tags:
+        - Teams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the team
+                members:
+                  type: object
+                  properties:
+                    createMany:
+                      type: object
+                      properties:
+                        data:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: Name of the member
+                              walletAddress:
+                                type: string
+                                description: Wallet address of the member
+                description:
+                  type: string
+                  description: Description of the team
+                address:
+                  type: string
+                  description: Address of the owner
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        walletAddress:
+                          type: string
+                  description:
+                    type: string
+  /teams/{id}:
+    get:
+      summary: Get Team by ID
+      description: Fetch team based on ID
+      tags:
+        - Teams
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        walletAddress:
+                          type: string
+                  description:
+                    type: string
+    put:
+      summary: Update Team by ID
+      description: Update Team details like name and description by ID
+      tags:
+        - Teams
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        walletAddress:
+                          type: string
+                  description:
+                    type: string
+    delete:
+      summary: Delete Team by ID
+      description: Delete Team based on ID
+      tags:
+        - Teams
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+  /members/{id}:
+    put:
+      summary: Update member by ID
+      description: Update member by ID
+      tags:
+        - Members
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                walletAddress:
+                  type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  walletAddress:
+                    type: string
+    delete:
+      summary: Delete member by ID
+      description: Delete member by ID
+      tags:
+        - Members
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create members
+      description: Create/add members in a team
+      tags:
+        - Members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                walletAddress:
+                  type: string
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  walletAddress:
+                    type: string
