@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import MemberDetail from '@/components/MemberDetail.vue'
 import { useMembersStore } from '@/stores/member'
-import { ref, watchEffect } from 'vue'
+import { ref } from 'vue'
 
 const { members } = useMembersStore()
 const totalTipAmount = ref(0)
@@ -17,8 +17,6 @@ const handleSendTip = () => {
 
   totalTipAmount.value = 0
 }
-
-watchEffect(() => console.log(totalTipAmount.value))
 </script>
 
 <template>
