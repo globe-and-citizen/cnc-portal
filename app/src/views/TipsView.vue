@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoadingButton from '@/components/LoadingButton.vue';
 import MemberDetail from '@/components/MemberDetail.vue'
 import { useMembersStore } from '@/stores/member'
 import { ref, watchEffect } from 'vue'
@@ -10,6 +11,7 @@ const totalTipAmount = ref(0)
 const countTotalTip = () => {
   totalTipAmount.value = members.length * tipAmountPerAddress.value
 }
+const test = false
 
 const pushTip = () => {
   // TO DO
@@ -36,9 +38,9 @@ watchEffect(() => console.log(totalTipAmount.value))
         <MemberDetail :member="member" />
       </div>
     </div>
-    <div class="card bg-white shadow-xl flex flex-row justify-around my-2">
+    <div class="card bg-white shadow-xl flex flex-row justify-around my-2 p-6">
       <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mt-2">Total Amount</label>
+        <label for="tip-amount" class="text-center">Total Amount</label>
         <div class="w-[640px] flex flex-col justify-between m-6 self-center">
           <input
             type="text"
@@ -51,10 +53,10 @@ watchEffect(() => console.log(totalTipAmount.value))
       </div>
       <label class="text-center self-center mt-7">ETH</label>
       <div class="flex flex-col justify-center">
-        <label for="tip-amount" class="text-center mb-6">Actions</label>
+        <label for="tip-amount" class="text-center mb-2">Actions</label>
         <div className="card-actions flex flex-row justify-between mx-8 self-center">
-          <button className="btn btn-primary text-white" @click="pushTip">Push Tips</button>
-          <button className="btn btn-secondary text-white" @click="sendTip">Send Tips</button>
+          <button className="btn btn-primary w-full text-white" @click="pushTip">Push Tips</button>
+          <button className="btn btn-secondary w-full text-white" @click="sendTip">Send Tips</button>
         </div>
       </div>
     </div>
