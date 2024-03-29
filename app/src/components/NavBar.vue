@@ -105,7 +105,7 @@
   </div>
   <!-- </header> -->
 </template>
-<script setup>
+<script setup lang="ts">
 import { defineEmits } from 'vue'
 defineEmits(['toggleSideButton'])
 </script>
