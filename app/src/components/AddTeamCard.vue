@@ -137,7 +137,7 @@ const handleSubmit = async () => {
   }
   console.log(teamObject)
   await axios.post('http://localhost:3000/teams', teamObject)
-  window.location.reload(false)
+  window.location.reload()
 }
 const removeInput = () => {
   if (inputs.value.length > 1) {
