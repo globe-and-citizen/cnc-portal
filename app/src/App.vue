@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
-import { handleError, ref } from 'vue'
+import { ref } from 'vue'
 const toggleSide = ref(true)
 function handleChange() {
   console.log('handleChange in App.vue')

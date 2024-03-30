@@ -55,7 +55,7 @@
     </div>
   </dialog>
 </template>
-<script setup>
+<script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
