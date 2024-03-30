@@ -91,7 +91,7 @@
     </div>
   </dialog>
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref, toRaw, defineProps } from 'vue'
 import axios from 'axios'
 const showModal = ref(false)
