@@ -21,7 +21,7 @@ function handleChange() {
 
           <div
             class="drawer-content flex flex-col"
-            :style="{ marginLeft: toggleSide ? '330px' : '0' }"
+            :style="{ marginLeft: toggleSide ? '325px' : '0' }"
           >
             <!-- Page content here -->
             <RouterView />
