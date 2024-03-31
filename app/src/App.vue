@@ -16,7 +16,6 @@ function handleChange() {
       <NavBar @toggleSideButton="handleChange" />
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">
-          <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
           <div
             class="drawer-content flex flex-col"
             :style="{ marginLeft: toggleSide ? '300px' : '0' }"
