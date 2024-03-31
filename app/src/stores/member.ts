@@ -1,3 +1,4 @@
+import type { Member } from "@/types"
 import { defineStore } from "pinia"
 
 export const useMembersStore = defineStore('member', {
@@ -21,9 +22,3 @@ export const useMembersStore = defineStore('member', {
     ] as Member[],
   })
 })
-
-export interface Member {
-  id: number
-  name: string
-  address: string
-}
