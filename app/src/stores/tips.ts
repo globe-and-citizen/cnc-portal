@@ -19,26 +19,26 @@ export const useTipsStore = defineStore('tips', {
     async pushTip(addresses: ethers.AddressLike[], totalAmount: number) {
       this.pushTipLoading = true
 
-      const tx = await this.contract.pushTip(addresses, {
-        value: ethers.parseEther(totalAmount.toString())
-      })
-
-      console.log(tx);
-      console.log(await provider.getBalance('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'));
-      
-      
+      try {
+        await this.contract.pushTip(addresses, {
+          value: ethers.parseEther(totalAmount.toString())
+        })
+        
+      } catch (error) {
+        throw error
+      }
       this.pushTipLoading = false
     },
     async sendTip(addresses: ethers.AddressLike[], totalAmount: number) {
       this.sendTipLoading = true
       
-      const tx = await this.contract.sendTip(addresses, {
-        value: ethers.parseEther(totalAmount.toString())
-      })
-
-      console.log(tx);
-      console.log(await provider.getBalance('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'));
-      console.log(await provider.getBalance(TIPS_ADDRESS));
+      try {
+        await this.contract.sendTip(addresses, {
+          value: ethers.parseEther(totalAmount.toString())
+        })
+      } catch (error) {
+        throw error
+      }
 
       this.sendTipLoading = false
     }
