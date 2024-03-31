@@ -2,7 +2,7 @@
   <div
     class="flex flex-col items-center menu pt-28 w-80 min-h-full bg-white text-base-content fixed"
   >
-    <div class="flex flex-row items-center justify-center card w-64 h-24 bg-base-100 shadow-xl">
+    <div class="flex flex-row items-center justify-center card w-64 h-24 bg-base-100">
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar flex items-center">
         <div class="rounded-full">
           <img
