@@ -1,10 +1,9 @@
 import { ethers } from "hardhat";
-import { Tips } from "../typechain-types";
 import { expect } from "chai"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Tips", function () {
-  let tips: Tips
+  let tips: any
   let sender: SignerWithAddress, member1: SignerWithAddress, member2: SignerWithAddress;
   let recipientAddress: Array<string>;
   const TIP_AMOUNT = ethers.parseEther("20");
@@ -70,7 +69,7 @@ describe("Tips", function () {
       await tips.sendTip(recipientAddress, { value: TIP_AMOUNT });
       await tips.sendTip(recipientAddress, { value: TIP_AMOUNT });
 
-      const addressToTips = await tips.getTips(member1.address);
+      const addressToTips = await tips.getBalance(member1.address);
       const expectedTotalTip = amountPerAddress + amountPerAddress;
       expect(addressToTips).to.equal(expectedTotalTip);
     });
@@ -93,7 +92,7 @@ describe("Tips", function () {
       const member1EndingBalance = await ethers.provider.getBalance(member1.address);
 
       expect(member1EndingBalance).to.gt(member1StartingBalance);
-      expect(await tips.getTips(member1.address)).to.equal(0); // Balance should be reset
+      expect(await tips.getBalance(member1.address)).to.equal(0); // Balance should be reset
     });
 
     it("should emit a TipWithdrawal event on successful withdrawal", async function () {
