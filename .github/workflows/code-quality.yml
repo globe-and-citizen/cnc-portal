@@ -34,3 +34,19 @@ jobs:
             - name: type check
               run: npm run type-check
               working-directory: ./app
+
+            - name: ⚙️ NPM install on Contract
+              run: npm install
+              working-directory: ./contract
+
+            - name: ⚒️ Run Compile on Contract
+              run: npm run compile
+              working-directory: ./contract
+
+            - name: ⚒️ Create Typechain on Contract
+              run: npm run typechain
+              working-directory: ./contract
+
+            - name: 🧪 Run Test on Contract
+              run: npm run test
+              working-directory: ./contract

@@ -1,6 +1,7 @@
 {
   "name": "hardhat-project",
   "scripts": {
+    "typechain": "npx hardhat typechain",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test"
   },
