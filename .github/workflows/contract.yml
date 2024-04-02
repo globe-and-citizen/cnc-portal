@@ -37,10 +37,6 @@ jobs:
               run: npm run format-check
               working-directory: ./contract
 
-            - name: ⚒️ Create Typechain
-              run: npm run typechain
-              working-directory: ./contract
-
             - name: 🧪 Run Test
               run: npm run test
               working-directory: ./contract
