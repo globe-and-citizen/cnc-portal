@@ -1,9 +1,10 @@
 import { ethers } from "hardhat";
+import { Tips } from "../typechain-types";
 import { expect } from "chai"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Tips", function () {
-  let tips: any
+  let tips: Tips;
   let sender: SignerWithAddress, member1: SignerWithAddress, member2: SignerWithAddress;
   let recipientAddress: Array<string>;
   const TIP_AMOUNT = ethers.parseEther("20");
