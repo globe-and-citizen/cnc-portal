@@ -1,6 +1,6 @@
 // Define a generic type for user data
 interface User {
-    id?: number;
+    id?: string;
     name?: string;
     surname?: string;
     nonce?: string;
@@ -9,14 +9,14 @@ interface User {
   
   // Define an interface for UserService
   interface UserService {
-    getUser(userId: number): Promise<User>;
+    getUser(userId: string): Promise<User>;
     createUser(user: User): Promise<User>;
     updateUser(userId: number, updatedUser: Partial<User>): Promise<User>;
   }
   
   // Implement UserService using Fetch API (or any other HTTP client)
   export class FetchUserService implements UserService {
-    async getUser(userId: number): Promise<User> {
+    async getUser(userId: string): Promise<User> {
       //const response = await fetch(`https://api.example.com/users/${userId}`);
       const userData = /*await response.json()*/{};
       return userData;
