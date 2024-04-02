@@ -39,6 +39,6 @@ jobs:
             
             - name: 🚀 Tips Deployment
               run: |
-                npm run node
+                npm run node &
                 npm run deploy:tips
               working-directory: ./contract
