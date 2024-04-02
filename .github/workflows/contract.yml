@@ -29,6 +29,14 @@ jobs:
               run: npm run compile
               working-directory: ./contract
 
+            - name: </> Run Format Check
+              run: npm run format-check
+              working-directory: ./contract
+
+            - name: </> Run Linter
+              run: npm run format-check
+              working-directory: ./contract
+
             - name: ⚒️ Create Typechain
               run: npm run typechain
               working-directory: ./contract
