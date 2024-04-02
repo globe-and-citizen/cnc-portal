@@ -36,9 +36,3 @@ jobs:
             - name: 🧪 Run Test
               run: npm run test
               working-directory: ./contract
-            
-            - name: 🚀 Tips Deployment
-              run: |
-                npm run node &
-                npm run deploy:tips
-              working-directory: ./contract

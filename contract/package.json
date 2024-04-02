@@ -4,7 +4,6 @@
     "typechain": "npx hardhat typechain",
     "compile": "npx hardhat compile",
     "node": "npx hardhat node",
-    "deploy:tips": "npx hardhat ignition deploy --network localhost ./ignition/modules/Tips.ts",
     "test": "npx hardhat test"
   },
   "devDependencies": {
