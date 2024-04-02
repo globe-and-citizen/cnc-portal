@@ -10,23 +10,23 @@ export default {
     themes: [
       {
         light: {
-          "primary": "#00BF7A",
-          "secondary": "#3366FF",
-          "accent": "#00B8D9",
-          "neutral": "#0f3d2e",
-          "base-100": "#f3fcf9",
-          
+          primary: '#00BF7A',
+          secondary: '#3366FF',
+          accent: '#00B8D9',
+          neutral: '#0f3d2e',
+          'base-100': '#f3fcf9',
+
           info: '#00B8D9',
           success: '#36B37E',
           warning: '#FFAB00',
-          error: '#FF5630' 
+          error: '#FF5630'
         },
         dark: {
-          "primary": "#42ffba",
-          "secondary": "#2227bf",
-          "accent": "#242291",
-          "neutral": "#0f3d2e",
-          "base-100": "#030c09",
+          primary: '#42ffba',
+          secondary: '#2227bf',
+          accent: '#242291',
+          neutral: '#0f3d2e',
+          'base-100': '#030c09'
         },
         mytheme: {
           primary: '#0097d6',

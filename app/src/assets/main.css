@@ -5,30 +5,30 @@
 @tailwind utilities;
 
 .btn {
-    /* @apply p-24; */
+  /* @apply p-24; */
 }
 
 * {
-    font-family: "public sans", sans-serif;
-    color: var(--Text-Light-Primary, #212B36);
+  font-family: 'public sans', sans-serif;
+  color: var(--Text-Light-Primary, #212b36);
 }
 
 h1 {
-    font-size: 64px;
-    font-style: normal;
-    font-weight: 800;
-    line-height: 80px;
+  font-size: 64px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 80px;
 }
 
 h2 {
-    /* font-size: 48px;
+  /* font-size: 48px;
     font-style: normal;
     font-weight: 800;
     line-height: 64px; */
 
-    font-size: 24px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: 36px;
-    /* 150% */
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 36px;
+  /* 150% */
 }

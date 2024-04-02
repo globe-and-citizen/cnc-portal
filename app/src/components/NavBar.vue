@@ -1,11 +1,11 @@
 <template>
   <!-- <header> -->
-  <div class="navbar bg-white fixed h-24">
-    <div class="navbar-start flex">
+  <div class="navbar bg-white fixed z-50 shadow-sm p-5">
+    <div class="navbar-start">
       <div>
         <img src="../assets/Logo.png" alt="Logo" />
       </div>
-      <div class="p-20">
+      <div class="">
         <button class="btn btn-square btn-ghost drawer-overlay" @click="$emit('toggleSideButton')">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -105,7 +105,7 @@
   </div>
   <!-- </header> -->
 </template>
-<script setup>
+<script setup lang="ts">
 import { defineEmits } from 'vue'
-const emit = defineEmits(['toggleSideButton'])
+defineEmits(['toggleSideButton'])
 </script>
