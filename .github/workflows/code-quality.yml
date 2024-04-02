@@ -5,6 +5,8 @@ on:
         branches:
         - master
         - develop
+        paths:
+        - 'app/**'
     workflow_dispatch:
 jobs:
     code_quality_check:
