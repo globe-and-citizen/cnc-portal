@@ -1,21 +1,22 @@
 # Use Node.js 14 as the base image
-FROM node:18
+FROM node:alpine
+
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /srv/app
 
 # Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+COPY . .
+
 
 # Install dependencies
-RUN npx prisma migrate
 RUN npm install
 
 # Copy the rest of the application code to the working directory
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 8080
+EXPOSE 5173
 
 # Command to run the application in development mode
 CMD ["npm", "run", "dev"]
