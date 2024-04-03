@@ -113,7 +113,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, toRaw } from 'vue'
 import axios from 'axios'
 const showModal = ref(false)
@@ -137,7 +137,7 @@ const handleSubmit = async () => {
   }
   console.log(teamObject)
   await axios.post('http://localhost:3000/teams', teamObject)
-  window.location.reload(false)
+  window.location.reload()
 }
 const removeInput = () => {
   if (inputs.value.length > 1) {

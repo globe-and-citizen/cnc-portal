@@ -17,19 +17,23 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       components: {
-        default: LoginView,
         login: LoginView
       }
     },
     {
       path: '/teams',
-      name: 'teams',
-      component: TeamView
-    },
-    {
-      path: '/teams/:id',
-      name: 'singleteam',
-      component: SingleTeamView
+      children: [
+        {
+          path: ':id',
+          name: 'singleteam',
+          component: SingleTeamView
+        },
+        {
+          path: '',
+          name: 'teams',
+          component: TeamView
+        }
+      ]
     },
     {
       path: '/tips',
