@@ -43,8 +43,12 @@ const handleSendTip = () => {
       <div class="flex flex-col justify-center">
         <label for="tip-amount" class="text-center mb-2">Actions</label>
         <div className="card-actions flex flex-row justify-between mx-8 self-center">
-          <button className="btn btn-primary w-full text-white" @click="handlePushTip()">Push Tips</button>
-          <button className="btn btn-secondary w-full text-white" @click="handleSendTip()">Send Tips</button>
+          <button className="btn btn-primary w-full text-white" @click="handlePushTip()">
+            Push Tips
+          </button>
+          <button className="btn btn-secondary w-full text-white" @click="handleSendTip()">
+            Send Tips
+          </button>
         </div>
       </div>
     </div>

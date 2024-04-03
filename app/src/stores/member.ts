@@ -1,4 +1,4 @@
-import { defineStore } from "pinia"
+import { defineStore } from 'pinia'
 
 export const useMembersStore = defineStore('member', {
   state: () => ({
@@ -17,8 +17,8 @@ export const useMembersStore = defineStore('member', {
         id: 3,
         name: 'John Doe',
         address: '0x1234567890123456789012345678901234567890'
-      },
-    ] as Member[],
+      }
+    ] as Member[]
   })
 })
 
