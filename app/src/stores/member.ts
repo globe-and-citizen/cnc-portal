@@ -1,5 +1,5 @@
-import type { Member } from "@/types"
-import { defineStore } from "pinia"
+import type { Member } from '@/types'
+import { defineStore } from 'pinia'
 
 export const useMembersStore = defineStore('member', {
   state: () => ({
@@ -18,7 +18,7 @@ export const useMembersStore = defineStore('member', {
         id: 3,
         name: 'Jane Doe',
         address: '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
-      },
-    ] as Member[],
+      }
+    ] as Member[]
   })
 })

@@ -20,7 +20,7 @@ const handlePushTip = async () => {
 
   try {
     await pushTip(memberAddresses, totalTipAmount.value)
-  
+
     toastMessage.value = 'Tips pushed!'
     toastType.value = ToastType.Success
   } catch (error) {

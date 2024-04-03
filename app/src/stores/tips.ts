@@ -12,8 +12,7 @@ export const useTipsStore = defineStore('tips', {
     contract: contract as ethers.Contract,
     signer: signer as ethers.Signer,
     sendTipLoading: false as boolean,
-    pushTipLoading: false as boolean,
-
+    pushTipLoading: false as boolean
   }),
   actions: {
     async pushTip(addresses: ethers.AddressLike[], totalAmount: number) {
@@ -23,7 +22,6 @@ export const useTipsStore = defineStore('tips', {
         await this.contract.pushTip(addresses, {
           value: ethers.parseEther(totalAmount.toString())
         })
-        
       } catch (error) {
         throw error
       }
@@ -31,7 +29,7 @@ export const useTipsStore = defineStore('tips', {
     },
     async sendTip(addresses: ethers.AddressLike[], totalAmount: number) {
       this.sendTipLoading = true
-      
+
       try {
         await this.contract.sendTip(addresses, {
           value: ethers.parseEther(totalAmount.toString())
@@ -45,7 +43,7 @@ export const useTipsStore = defineStore('tips', {
   },
   getters: {
     provider() {
-      return provider;
+      return provider
     }
   }
 })
