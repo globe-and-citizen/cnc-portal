@@ -23,14 +23,27 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import axios from 'axios'
-const teams = ref([])
 const router = useRouter()
+interface Team {
+  id: string
+  name: string
+  description: string
+  members: Member[]
+  value: any
+}
+interface Member {
+  id: string
+  name: string
+  walletAddress: string
+  teamId: number
+}
+const teams = ref<Team[]>([])
 
 //
 onMounted(async () => {
   try {
     const response = await axios.get('http://localhost:3000/teams', {
-      address: 'user_address_321'
+      data: { address: 'user_address_321' }
     })
     teams.value = response.data
     console.log(teams.value)

@@ -4,7 +4,6 @@
   </button>
 </template>
 
-
 <script setup lang="ts">
 defineProps<{
   color: string
