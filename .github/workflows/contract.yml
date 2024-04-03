@@ -34,7 +34,7 @@ jobs:
               working-directory: ./contract
 
             - name: </> Run Linter
-              run: npm run format-check
+              run: npm run lint
               working-directory: ./contract
 
             - name: 🧪 Run Test
