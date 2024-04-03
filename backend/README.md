@@ -35,7 +35,14 @@ Here's the breakdown:
 
 After running this command, you should be able to connect to your PostgreSQL database at postgresql://root:root@localhost:5432/cnc-db.
 
-## Running prisma migrations for database structure :
+## Environment variables
+
+The .env file should contain the variable in the format:
+
+`DATABASE_URL=postgres://postgres:cnc@postgres@127.0.0.1:5432/postgres`
+
+## Running prisma migrations :
 
 - Migration command
+
   `npx prisma migrate dev --name init`
