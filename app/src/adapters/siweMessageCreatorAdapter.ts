@@ -1,7 +1,7 @@
 import { SiweMessage } from 'siwe';
 
 // Define interface for message creator
-interface ISiweMessageCreator {
+export interface ISiweMessageCreator {
   create(): Promise<string>;
 }
 

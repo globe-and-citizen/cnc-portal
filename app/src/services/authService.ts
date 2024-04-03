@@ -27,6 +27,7 @@ abstract class AuthService<T> implements IAuthService<T> {
 
 // Implement SIWE authentication
 export class SIWEAuthService extends AuthService<{ signature: string }> {
+  //private authAPI: AuthAPI;
   async authenticateUser(credentials: AuthCredentials<{ signature: string }>): Promise<string> {
     // Implementation of ECDSA authentication
     const { signature } = credentials;

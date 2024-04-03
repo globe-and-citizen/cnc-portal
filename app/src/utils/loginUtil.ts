@@ -1,11 +1,13 @@
-import { FetchUserService } from '@/services/userService'
+import { FetchUserService } from '@/apis/userApi'
+import { SiweAuthAPI } from '@/apis/authApi'
 import { SIWEAuthService } from '@/services/authService'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 
 const siweAuthService = new SIWEAuthService()
 const fetchUserService = new FetchUserService()
-const ethersJsAdapter = new EthersJsAdapter
+const ethersJsAdapter = new EthersJsAdapter()
+const siweAuthApi = new SiweAuthAPI()
 
 async function createSiweMessage (address: string, statement: string, nonce: string) {
     return await (new SLSiweMessageCreator({
@@ -18,8 +20,7 @@ async function createSiweMessage (address: string, statement: string, nonce: str
 }
 
 export async function signInWithEthereum () {
-    ethersJsAdapter.initialize()
-    await ethersJsAdapter.connectWallet()
+
     const address = await ethersJsAdapter.getAddress()
 
     //Get latest nonce from database to check if user is already registered
@@ -44,7 +45,6 @@ export async function signInWithEthereum () {
             user.nonce
         );
     }
-
     console.log(await ethersJsAdapter.requestSign(message));
     //Authenticate or login user here
     await siweAuthService.authenticateUser({signature: message})

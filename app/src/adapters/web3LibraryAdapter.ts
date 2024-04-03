@@ -1,7 +1,7 @@
 import { BrowserProvider/*, Signer */} from 'ethers';
 
 // Define interface for web3 library
-interface Web3Library {
+export interface IWeb3Library {
   initialize(): void;
   connectWallet(): Promise<void>;
   requestSign(message: string): Promise<string>;
@@ -9,7 +9,7 @@ interface Web3Library {
 }
 
 // Adapter for ethers.js
-export class EthersJsAdapter implements Web3Library {
+export class EthersJsAdapter implements IWeb3Library {
     private provider: any;
   //private provider: ethers.providers.Web3Provider | null = null;
   //private signer: ethers.Signer | null = null;
@@ -23,7 +23,8 @@ export class EthersJsAdapter implements Web3Library {
 
   async connectWallet(): Promise<void> {
     if (!this.provider) {
-      throw new Error('Ethers.js adapter is not initialized');
+      //throw new Error('Ethers.js adapter is not initialized');
+      this.initialize()
     }
 
     // Prompt user to connect their wallet
@@ -35,7 +36,8 @@ export class EthersJsAdapter implements Web3Library {
 
   async requestSign(message: string): Promise<string> {
     if (!this.signer) {
-      throw new Error('Wallet is not connected');
+      //throw new Error('Wallet is not connected')/;
+      await this.connectWallet()
     }
 
     // Sign the message with signer's private key
@@ -46,7 +48,8 @@ export class EthersJsAdapter implements Web3Library {
 
   async getAddress(): Promise<string> {
     if (!this.signer) {
-      throw new Error('Wallet is not connected');
+      //throw new Error('Wallet is not connected');
+      await this.connectWallet()
     }
 
     //console.log('signer: ', (await this.signer).address)
