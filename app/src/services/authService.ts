@@ -1,5 +1,9 @@
+import type { ISiweMessageCreator } from "@/adapters/siweMessageCreatorAdapter";
+import type { IWeb3Library } from "@/adapters/web3LibraryAdapter";
+import type { IAuthAPI } from "@/apis/authApi";
+
 // Define a generic type for credentials
-type AuthCredentials<T> = T;
+type AuthCredentials<T> = T | undefined | {};
 
 // Define an interface for AuthService
 interface IAuthService<T> {
@@ -8,7 +12,7 @@ interface IAuthService<T> {
   logout(): void;
 }
 
-// Abstract class providing default implementations for isAuthenticated and logout
+//Abstract class providing default implementations for isAuthenticated and logout
 abstract class AuthService<T> implements IAuthService<T> {
   abstract authenticateUser(credentials: AuthCredentials<T>): Promise<string>;
 
@@ -27,12 +31,29 @@ abstract class AuthService<T> implements IAuthService<T> {
 
 // Implement SIWE authentication
 export class SIWEAuthService extends AuthService<{ signature: string }> {
-  //private authAPI: AuthAPI;
-  async authenticateUser(credentials: AuthCredentials<{ signature: string }>): Promise<string> {
-    // Implementation of ECDSA authentication
-    const { signature } = credentials;
-    // Authentication logic using ECDSA signature
-    return 'example_token'; // For demonstration purposes only
+  private messageCreator: ISiweMessageCreator;
+  private web3Library: IWeb3Library;
+  private authAPI: IAuthAPI;
+
+  constructor(
+    messageCreator: ISiweMessageCreator,
+    web3Library: IWeb3Library,
+    authAPI: IAuthAPI,
+  ) {
+    super()
+    this.messageCreator = messageCreator;
+    this.web3Library = web3Library;
+    this.authAPI = authAPI;
+  }
+
+  async authenticateUser(): Promise<string> {
+    // Authentication logic of SIWE authentication
+    const message = await this.messageCreator.create()
+    const signature = await this.web3Library.requestSign(message)
+    const token = await this.authAPI.verifyPayloadAndGetToken(signature, 'siwe')
+    localStorage.setItem('authToken', token)
+    
+    return token; // For demonstration purposes only
   }
 }
 
@@ -56,5 +77,5 @@ export class ECDSAAuthService extends AuthService<{ signature: string }> {
   }
 }
 
-// Implement OAuth authentication
-// Similar to EmailPasswordAuthService and ECDSAAuthService
+// Implement other authentication
+// Similar to EmailPasswordAuthService and ECDSAAuthService...

@@ -1,22 +1,21 @@
-import { FetchUserService } from '@/apis/userApi'
+import { FetchUserAPI } from '@/apis/userApi'
 import { SiweAuthAPI } from '@/apis/authApi'
-import { SIWEAuthService } from '@/services/authService'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
+import { SIWEAuthService } from '@/services/authService'
 
-const siweAuthService = new SIWEAuthService()
-const fetchUserService = new FetchUserService()
+const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
 
-async function createSiweMessage (address: string, statement: string, nonce: string) {
-    return await (new SLSiweMessageCreator({
+function createSiweMessageCreator (address: string, statement: string, nonce: string | undefined) {
+    return new SLSiweMessageCreator({
         address,
         statement,
         nonce,
         version: '1',
         chainId: '1'
-    })).create()
+    })
 }
 
 export async function signInWithEthereum () {
@@ -26,26 +25,39 @@ export async function signInWithEthereum () {
     //Get latest nonce from database to check if user is already registered
     //If nonce === undefined it means the user is not yet registered, 
     //create a new user, otherwise use the latest value to sign
-    const nonce = await fetchUserService.getUser(/*signer.*/address).nonce 
-    let message: string
+    const nonce = (await fetchUserApi.getUser(address)).nonce 
+    let statement = 'Sign in with Ethereum to the app.'
+    let siweMessageCreator
 
     if (nonce) {
-        message = await createSiweMessage(
-            address, 
-            'Sign in with Ethereum to the app.',
+        siweMessageCreator = createSiweMessageCreator(
+            address,
+            statement,
             nonce
-        );
+        )
     } else {
         //Register or create new user here
-        const user = await fetchUserService.createUser(/*signer.*/{id: address})
-        message = await createSiweMessage(
-            address, 
-            'Sign in with Ethereum to the app.',
-            /*'JdqIpQPlVJ0Jyv6yu'*/
+        const user = await fetchUserApi.createUser({id: address})
+        siweMessageCreator = createSiweMessageCreator(
+            address,
+            statement,
             user.nonce
-        );
+        )
     }
-    console.log(await ethersJsAdapter.requestSign(message));
+
+    const siweAuthService = new SIWEAuthService(
+        siweMessageCreator,
+        ethersJsAdapter,
+        siweAuthApi
+    )
+
     //Authenticate or login user here
-    await siweAuthService.authenticateUser({signature: message})
+    await siweAuthService.authenticateUser()
+
+    console.log('autheToken: ', localStorage.getItem('authToken'))
+    console.log('isAuthenticated: ', siweAuthService.isAuthenticated())
+
+    siweAuthService.logout()
+
+    console.log('isAuthenticated: ', siweAuthService.isAuthenticated())
 }

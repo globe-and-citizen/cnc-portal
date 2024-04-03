@@ -5,17 +5,17 @@ interface User {
     surname?: string;
     nonce?: string;
     // Other user properties...
-  }
+}
   
   // Define an interface for UserService
-  interface UserService {
+  interface UserAPI {
     getUser(userId: string): Promise<User>;
     createUser(user: User): Promise<User>;
     updateUser(userId: number, updatedUser: Partial<User>): Promise<User>;
   }
   
   // Implement UserService using Fetch API (or any other HTTP client)
-  export class FetchUserService implements UserService {
+  export class FetchUserAPI implements UserAPI {
     async getUser(userId: string): Promise<User> {
       //const response = await fetch(`https://api.example.com/users/${userId}`);
       const userData = /*await response.json()*/{};
