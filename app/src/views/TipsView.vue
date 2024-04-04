@@ -5,7 +5,7 @@ import { useTipsStore } from '@/stores/tips'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { ToastType, type Member } from '@/types'
 import { ref } from 'vue'
-import Toast from '@/components/Toast.vue'
+import NotificationToast from '@/components/NotificationToast.vue'
 
 const { members } = useMembersStore()
 const { pushTip, sendTip, pushTipLoading, sendTipLoading } = useTipsStore()
@@ -94,5 +94,5 @@ const handleSendTip = async () => {
       </div>
     </div>
   </div>
-  <Toast v-if="showToast" :type="toastType" :message="toastMessage" />
+  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>

@@ -14,31 +14,24 @@ export const useTipsStore = defineStore('tips', {
   }),
   actions: {
     async connectWallet() {
-      if (!this.isWalletConnected) {
-        try {
-          const provider = new ethers.BrowserProvider((window as any).ethereum)
-          this.provider = provider
-          await provider.send('eth_requestAccounts', [])
-          this.signer = await provider.getSigner()
-          this.contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
-          this.isWalletConnected = true
-        } catch (error) {
-          throw error
-        }
-      }
+      if (this.isWalletConnected) return
+
+      const provider = new ethers.BrowserProvider((window as any).ethereum)
+      this.provider = provider
+      await provider.send('eth_requestAccounts', [])
+      this.signer = await provider.getSigner()
+      this.contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
+      this.isWalletConnected = true
     },
     async pushTip(addresses: ethers.AddressLike[], totalAmount: number) {
       if (!this.isWalletConnected) await this.connectWallet()
 
       this.pushTipLoading = true
 
-      try {
-        await this.contract!.pushTip(addresses, {
-          value: ethers.parseEther(totalAmount.toString())
-        })
-      } catch (error) {
-        throw error
-      }
+      await this.contract!.pushTip(addresses, {
+        value: ethers.parseEther(totalAmount.toString())
+      })
+
       this.pushTipLoading = false
     },
     async sendTip(addresses: ethers.AddressLike[], totalAmount: number) {
@@ -46,13 +39,9 @@ export const useTipsStore = defineStore('tips', {
 
       this.sendTipLoading = true
 
-      try {
-        await this.contract!.sendTip(addresses, {
-          value: ethers.parseEther(totalAmount.toString())
-        })
-      } catch (error) {
-        throw error
-      }
+      await this.contract!.sendTip(addresses, {
+        value: ethers.parseEther(totalAmount.toString())
+      })
 
       this.sendTipLoading = false
     }
