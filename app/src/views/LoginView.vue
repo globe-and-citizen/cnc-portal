@@ -38,7 +38,9 @@
         </label>
 
         <p class="text-right underline">Forgot password ?</p>-->
-        <button class="btn btn-primary w-full" @click="signInWithEthereum">Sign In With Ethereum</button>
+        <button class="btn btn-primary w-full" @click="signInWithEthereum">
+          Sign In With Ethereum
+        </button>
         <div class="flex justify-center items-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -131,12 +133,12 @@
 </template>
 
 <script setup lang="ts">
-   import {signInWithEthereum} from '@/utils/loginUtil'
+import { signInWithEthereum } from '@/utils/loginUtil'
 </script>
 
-<style scoped >
-    .auth {
-        background-image: url('/src/assets/overlay_2.png');
-        background-size: cover;
-    }
+<style scoped>
+.auth {
+  background-image: url('/src/assets/overlay_2.png');
+  background-size: cover;
+}
 </style>

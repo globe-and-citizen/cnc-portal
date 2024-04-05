@@ -1,23 +1,23 @@
-import { BrowserProvider/*, Signer */} from 'ethers';
+import { BrowserProvider /*, Signer */ } from 'ethers'
 
 // Define interface for web3 library
 export interface IWeb3Library {
-  initialize(): void;
-  connectWallet(): Promise<void>;
-  requestSign(message: string): Promise<string>;
+  initialize(): void
+  connectWallet(): Promise<void>
+  requestSign(message: string): Promise<string>
   getAddress(): Promise<string>
 }
 
 // Adapter for ethers.js
 export class EthersJsAdapter implements IWeb3Library {
-    private provider: any;
+  private provider: any
   //private provider: ethers.providers.Web3Provider | null = null;
   //private signer: ethers.Signer | null = null;
-  private signer: any;
+  private signer: any
 
   initialize(): void {
     // Initialize provider
-    this.provider = new BrowserProvider(window.ethereum);
+    this.provider = new BrowserProvider(window.ethereum)
     //this.signer = this.provider.getSigner();
   }
 
@@ -28,10 +28,10 @@ export class EthersJsAdapter implements IWeb3Library {
     }
 
     // Prompt user to connect their wallet
-    await this.provider.send('eth_requestAccounts', []);
+    await this.provider.send('eth_requestAccounts', [])
 
     // Get signer with connected wallet
-    this.signer = this.provider.getSigner();
+    this.signer = this.provider.getSigner()
   }
 
   async requestSign(message: string): Promise<string> {
@@ -41,9 +41,9 @@ export class EthersJsAdapter implements IWeb3Library {
     }
 
     // Sign the message with signer's private key
-    const signature = (await this.signer).signMessage(message);
-    
-    return signature;
+    const signature = (await this.signer).signMessage(message)
+
+    return signature
   }
 
   async getAddress(): Promise<string> {
@@ -54,8 +54,8 @@ export class EthersJsAdapter implements IWeb3Library {
 
     //console.log('signer: ', (await this.signer).address)
     // Retrieve the address associated with the signer
-    const address = (await this.signer).address;
-    
-    return address;
+    const address = (await this.signer).address
+
+    return address
   }
 }
