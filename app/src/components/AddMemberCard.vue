@@ -91,11 +91,11 @@
     </div>
   </dialog>
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref, toRaw, defineProps } from 'vue'
 import axios from 'axios'
 const showModal = ref(false)
-const props = defineProps(['id'])
+const props = defineProps<{ id: string }>() // Define the type of props explicitly
 const inputs = ref([{ name: '', walletAddress: '' }])
 const addInput = () => {
   inputs.value.push({ name: '', walletAddress: '' })
@@ -110,6 +110,6 @@ const addMembers = async () => {
   let id = props.id
   console.log(id)
   await axios.post(`http://localhost:3000/member/${id}`, newMembers)
-  window.location.reload(false)
+  window.location.reload()
 }
 </script>

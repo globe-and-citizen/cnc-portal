@@ -55,7 +55,7 @@
     </div>
   </dialog>
 </template>
-<script setup>
+<script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -65,12 +65,29 @@ import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
 
-const team = ref([])
 const cname = ref('')
 const cdesc = ref('')
 
 const showModal = ref(false)
 const inputs = ref([{ name: '', walletAddress: '' }])
+interface Team {
+  id: string
+  name: string
+  description: string
+  members: Member[]
+}
+interface Member {
+  id: string
+  name: string
+  walletAddress: string
+  teamId: number
+}
+const team = ref<Team>({
+  id: '',
+  name: '',
+  description: '',
+  members: []
+})
 
 onMounted(async () => {
   const id = route.params.id
@@ -105,7 +122,7 @@ const updateTeam = async () => {
 
     console.log('Response:', response.data)
 
-    window.location.reload(false)
+    window.location.reload()
   } catch (error) {
     console.error('Error updating data:', error)
   }
@@ -116,7 +133,9 @@ const deleteTeam = async () => {
     const id = route.params.id
 
     const response = await axios.delete(`http://localhost:3000/teams/${id}`, {
-      address: 'user_address_321'
+      data: {
+        address: 'user_address_321'
+      }
     })
     console.log(response.data)
     router.push('/teams')
