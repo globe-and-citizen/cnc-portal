@@ -17,7 +17,8 @@ export class EthersJsAdapter implements IWeb3Library {
 
   initialize(): void {
     // Initialize provider
-    this.provider = new BrowserProvider(window.ethereum)
+    if (window.ethereum)
+      this.provider = new BrowserProvider(window.ethereum)
     //this.signer = this.provider.getSigner();
   }
 

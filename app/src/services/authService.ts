@@ -53,27 +53,5 @@ export class SIWEAuthService extends AuthService<{ signature: string }> {
   }
 }
 
-// Implement Email/Password authentication
-export class EmailPasswordAuthService extends AuthService<{ email: string; password: string }> {
-  async authenticateUser(
-    credentials: AuthCredentials<{ email: string; password: string }>
-  ): Promise<string> {
-    // Implementation of email/password authentication
-    const { email, password } = credentials
-    // Authentication logic using email and password
-    return 'example_token' // For demonstration purposes only
-  }
-}
-
-// Implement ECDSA authentication
-export class ECDSAAuthService extends AuthService<{ signature: string }> {
-  async authenticateUser(credentials: AuthCredentials<{ signature: string }>): Promise<string> {
-    // Implementation of ECDSA authentication
-    const { signature } = credentials
-    // Authentication logic using ECDSA signature
-    return 'example_token' // For demonstration purposes only
-  }
-}
-
 // Implement other authentication
 // Similar to EmailPasswordAuthService and ECDSAAuthService...
