@@ -1,6 +1,14 @@
 <template>
   <div class="toast toast-end">
-    <div class="alert" :class="`alert-${type}`">
+    <div
+      class="alert"
+      :class="{
+        'alert-success': type === ToastType.Success,
+        'alert-info': type === ToastType.Info,
+        'alert-warning': type === ToastType.Warning,
+        'alert-error': type === ToastType.Error
+      }"
+    >
       <svg
         v-if="type === ToastType.Success"
         xmlns="http://www.w3.org/2000/svg"
