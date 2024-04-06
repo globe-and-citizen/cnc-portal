@@ -3,59 +3,18 @@ import MemberDetail from '@/components/MemberDetail.vue'
 import { useMembersStore } from '@/stores/member'
 import { useTipsStore } from '@/stores/tips'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { ToastType, type Member } from '@/types'
-import { ref } from 'vue'
 import NotificationToast from '@/components/NotificationToast.vue'
+import { useToastStore } from '@/stores/toast'
+import { storeToRefs } from 'pinia'
 
 const { members } = useMembersStore()
-const { pushTip, sendTip, pushTipLoading, sendTipLoading } = useTipsStore()
-const totalTipAmount = ref(0)
-const memberAddresses = members.map((member: Member) => member.address)
-const showToast = ref(false)
-const toastMessage = ref('')
-const toastType = ref(ToastType.Success)
 
-const handlePushTip = async () => {
-  if (totalTipAmount.value === 0) return
+const tipStore = useTipsStore()
+const { pushTip, sendTip } = useTipsStore()
+const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
 
-  try {
-    await pushTip(memberAddresses, totalTipAmount.value)
-
-    toastMessage.value = 'Tips pushed!'
-    toastType.value = ToastType.Success
-  } catch (error) {
-    toastMessage.value = 'Failed to push tips'
-    toastType.value = ToastType.Error
-  }
-
-  showToast.value = true
-
-  setTimeout(() => {
-    showToast.value = false
-  }, 3000)
-
-  totalTipAmount.value = 0
-}
-
-const handleSendTip = async () => {
-  if (totalTipAmount.value === 0) return
-  try {
-    await sendTip(memberAddresses, totalTipAmount.value)
-    toastMessage.value = 'Tips sent!'
-    toastType.value = ToastType.Success
-  } catch (error) {
-    toastMessage.value = 'Failed to send tips'
-    toastType.value = ToastType.Error
-  }
-
-  showToast.value = true
-
-  setTimeout(() => {
-    showToast.value = false
-  }, 3000)
-
-  totalTipAmount.value = 0
-}
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 </script>
 
 <template>
@@ -83,11 +42,11 @@ const handleSendTip = async () => {
         <label for="tip-amount" class="text-center mb-2">Actions</label>
         <div className="card-actions flex flex-row justify-between mx-8 self-center">
           <LoadingButton v-if="pushTipLoading" color="primary" />
-          <button v-else className="btn btn-primary w-full text-white" @click="handlePushTip()">
+          <button v-else className="btn btn-primary w-full text-white" @click="pushTip()">
             Push Tips
           </button>
           <LoadingButton v-if="sendTipLoading" color="secondary" />
-          <button v-else className="btn btn-secondary w-full text-white" @click="handleSendTip()">
+          <button v-else className="btn btn-secondary w-full text-white" @click="sendTip()">
             Send Tips
           </button>
         </div>
