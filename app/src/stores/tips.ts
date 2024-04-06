@@ -55,6 +55,7 @@ export const useTipsStore = defineStore('tips', {
       const { show } = useToastStore()
       if (this.totalTipAmount === 0) {
         show(ToastType.Info, 'Please enter amount to tip')
+        return
       }
 
       if (!this.isWalletConnected) await this.connectWallet()
