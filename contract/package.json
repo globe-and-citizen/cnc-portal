@@ -1,12 +1,22 @@
 {
   "name": "hardhat-project",
   "scripts": {
+    "typechain": "npx hardhat typechain",
     "compile": "npx hardhat compile",
-    "test": "npx hardhat test"
+    "node": "npx hardhat node",
+    "test": "npx hardhat test",
+    "coverage": "npx hardhat coverage",
+    "lint": "npx eslint . --ext .ts",
+    "format-check": "npx prettier --check ."
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@typechain/hardhat": "^9.1.0",
-    "hardhat": "^2.22.1"
+    "@typescript-eslint/eslint-plugin": "^7.5.0",
+    "@typescript-eslint/parser": "^7.5.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "hardhat": "^2.22.1",
+    "prettier": "3.2.5"
   }
 }

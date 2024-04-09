@@ -5,9 +5,11 @@ import { Request, Response } from "express";
 const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Teams']
+  */
   const { name, members, description } = req.body;
   try {
-    console.log(members);
     const team = await prisma.team.create({
       data: {
         name,
@@ -28,6 +30,9 @@ const addTeam = async (req: Request, res: Response) => {
 };
 // Get Team
 const getTeam = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Teams']
+  */
   const { id } = req.params;
   try {
     const team = await prisma.team.findUnique({
@@ -55,6 +60,9 @@ const getTeam = async (req: Request, res: Response) => {
 
 // Get teams owned by user
 const getAllTeams = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Teams']
+  */
   try {
     const teams = await prisma.team.findMany({
       where: {
@@ -70,6 +78,9 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 // update team
 const updateTeam = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Teams']
+  */
   const { id } = req.params;
   const { name, description } = req.body;
   const team = await prisma.team.update({
@@ -87,8 +98,11 @@ const updateTeam = async (req: Request, res: Response) => {
 
 // Delete Team
 const deleteTeam = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Teams']
+  */
   const { id } = req.params;
-  const team = await prisma.team.delete({
+  const team = await prisma.team.deleteMany({
     where: {
       id: Number(id),
     },
