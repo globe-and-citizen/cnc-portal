@@ -7,15 +7,13 @@ paths:
     get:
       summary: Fetch all Teams
       description: Returns all teams belonging to user
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: integer
-
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: The ID of the owner
       tags:
         - Teams
       responses:
@@ -83,6 +81,9 @@ paths:
                           type: array
                           items:
                             type: object
+                            required:
+                              - name
+                              - walletAddress
                             properties:
                               name:
                                 type: string
@@ -96,6 +97,11 @@ paths:
                 address:
                   type: string
                   description: Address of the owner
+              required:
+                - name
+                - members
+                - description
+                - address
       responses:
         "201":
           description: Created
@@ -179,7 +185,9 @@ paths:
                   type: string
                 description:
                   type: string
-        required: true
+              required:
+                - name
+                - description
       responses:
         "200":
           description: OK
@@ -241,6 +249,9 @@ paths:
                   type: string
                 walletAddress:
                   type: string
+              required:
+                - name
+                - walletAddress
         required: true
       responses:
         "200":
@@ -285,6 +296,9 @@ paths:
                   type: string
                 walletAddress:
                   type: string
+              required:
+                - name
+                - walletAddress
         required: true
       responses:
         "201":
