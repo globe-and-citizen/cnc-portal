@@ -1,18 +1,18 @@
-const swaggerJsdoc = require("swagger-jsdoc");
-
-const options = {
-  failOnErrors: true, // Whether or not to throw when parsing errors. Defaults to false.
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Hello World",
-      version: "1.0.0",
-    },
-  },
-  apis: ["./src/index.ts"],
-};
+const { exec } = require("child_process");
 
 export const generateDocs = () => {
-  const openapiSpecification = swaggerJsdoc(options);
-  console.log(openapiSpecification);
+  exec(
+    "redoc-cli bundle -o src/utils/backend_specs.html src/utils/backend_specs.yaml",
+    (error: { message: any }, stdout: any, stderr: any) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+      console.log(`stdout: ${stdout}`);
+    }
+  );
 };
