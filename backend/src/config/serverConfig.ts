@@ -6,11 +6,9 @@ import express, {Express} from "express";
 //#region routing modules
 import teamRoutes from "../routes/teamRoutes";
 import memberRoutes from "../routes/memberRoutes";
+import userRoutes from "../routes/userRoutes";
+import authRoutes from "../routes/authRoutes";
 //#endregion routing modules
-
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 class Server {
     private app: Express
@@ -20,12 +18,13 @@ class Server {
     constructor() {
         this.app = express()
         this.paths = {
-            teams: "/api/teams/", //recommed defining top level path in config to keep DRY
-            member: "/api/member", //recommed defining top level path in config to keep DRY
+            teams: "/api/teams/", //recommed defining top level path in config to keep route DRY
+            member: "/api/member/", //recommed defining top level path in config to keep route DRY
+            user: "/api/user/",
             auth: "/api/auth/"
         }
         this.port = parseInt(process.env.PORT as string) || 3000;
-
+        
         this.init()
     }
 
@@ -42,6 +41,8 @@ class Server {
     private routes() {
         this.app.use(teamRoutes); //recommend this.app.use(this.paths.teams, teamRoutes)
         this.app.use(memberRoutes); //recommend this.app.use(this.paths.member, memberRoutes)
+        this.app.use(this.paths.user, userRoutes)
+        this.app.use(this.paths.auth, authRoutes)
     }
 
     public listen() {
