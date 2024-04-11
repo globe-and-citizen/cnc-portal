@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { errorResponse } from "../utils/utils";
 
-const authenticateToken = async (
+const authorizeUser = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -44,4 +44,4 @@ const authenticateToken = async (
   }
 };
 
-export { authenticateToken };
+export { authorizeUser };

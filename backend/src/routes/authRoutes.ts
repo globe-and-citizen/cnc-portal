@@ -1,7 +1,7 @@
 import express from "express";
-import { verifySiwe } from "../controllers/authController";
+import { authenticateSiwe } from "../controllers/authController";
 const authRoutes = express.Router();
 
-authRoutes.post("/siwe", verifySiwe);
+authRoutes.post("/siwe", authenticateSiwe);
 
 export default authRoutes;
