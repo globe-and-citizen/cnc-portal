@@ -15,7 +15,7 @@ const addMembers = async (req: Request, res: Response) => {
         name: member.name,
         walletAddress: member.walletAddress,
         teamId: Number(id), // team ID
-      })
+      }),
     );
 
     const createdMembers = await prisma.member.createMany({
