@@ -24,12 +24,15 @@
     "@types/node": "^20.11.30",
     "prisma": "^5.11.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.1",
+    "jsonwebtoken": "^9.0.2",
+    "siwe": "^2.1.4",
     "openapi2html": "^1.1.22",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",

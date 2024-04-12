@@ -16,6 +16,7 @@ datasource db {
 model User {
   address      String        @id @unique
   name         String?
+  nonce        String
   teams        Team[]
 }
 model Team {
