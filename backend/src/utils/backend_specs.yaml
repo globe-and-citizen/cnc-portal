@@ -1,4 +1,6 @@
 openapi: "3.0.2"
+servers:
+  - url: http://localhost:3000
 info:
   title: CNC Portal
   version: "1.0"
@@ -8,12 +10,7 @@ paths:
       summary: Fetch all Teams
       description: Returns all teams belonging to user
       parameters:
-        - in: query
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: The ID of the owner
+        - $ref: "#/components/parameters/OwnerID"
       tags:
         - Teams
       responses:
@@ -22,39 +19,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: Unique identifier of the team
-                  name:
-                    type: string
-                    description: Name of the team
-                  description:
-                    type: string
-                    description: Description of the team
-                  ownerId:
-                    type: string
-                    description: Owner's ID of the team
-                example:
-                  - id: 1
-                    name: "Team A"
-                    description: "This is Team A"
-                    ownerId: "user123"
-                  - id: 2
-                    name: "Team B"
-                    description: "This is Team B"
-                    ownerId: "user123"
+                $ref: "#/components/schemas/TeamList"
         "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message describing the internal server error
+                $ref: "#/components/schemas/ErrorMessage"
 
     post:
       summary: Create Team
@@ -66,67 +37,15 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Name of the team
-                members:
-                  type: object
-                  properties:
-                    createMany:
-                      type: object
-                      properties:
-                        data:
-                          type: array
-                          items:
-                            type: object
-                            required:
-                              - name
-                              - walletAddress
-                            properties:
-                              name:
-                                type: string
-                                description: Name of the member
-                              walletAddress:
-                                type: string
-                                description: Wallet address of the member
-                description:
-                  type: string
-                  description: Description of the team
-                address:
-                  type: string
-                  description: Address of the owner
-              required:
-                - name
-                - members
-                - description
-                - address
+              $ref: "#/components/schemas/TeamCreateRequest"
       responses:
         "201":
           description: Created
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                  name:
-                    type: string
-                  members:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        name:
-                          type: string
-                        walletAddress:
-                          type: string
-                  description:
-                    type: string
+                $ref: "#/components/schemas/Team"
+
   /teams/{id}:
     get:
       summary: Get Team by ID
@@ -134,99 +53,44 @@ paths:
       tags:
         - Teams
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
+        - $ref: "#/components/parameters/TeamID"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                  name:
-                    type: string
-                  members:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        name:
-                          type: string
-                        walletAddress:
-                          type: string
-                  description:
-                    type: string
+                $ref: "#/components/schemas/Team"
     put:
       summary: Update Team by ID
       description: Update Team details like name and description by ID
       tags:
         - Teams
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
+        - $ref: "#/components/parameters/TeamID"
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-              required:
-                - name
-                - description
+              $ref: "#/components/schemas/TeamUpdateRequest"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                  name:
-                    type: string
-                  members:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        name:
-                          type: string
-                        walletAddress:
-                          type: string
-                  description:
-                    type: string
+                $ref: "#/components/schemas/Team"
     delete:
       summary: Delete Team by ID
       description: Delete Team based on ID
       tags:
         - Teams
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
+        - $ref: "#/components/parameters/TeamID"
       responses:
         "200":
           description: OK
+
   /members/{id}:
     put:
       summary: Update member by ID
@@ -234,24 +98,12 @@ paths:
       tags:
         - Members
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
+        - $ref: "#/components/parameters/MemberID"
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                walletAddress:
-                  type: string
-              required:
-                - name
-                - walletAddress
+              $ref: "#/components/schemas/MemberUpdateRequest"
         required: true
       responses:
         "200":
@@ -259,25 +111,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                  name:
-                    type: string
-                  walletAddress:
-                    type: string
+                $ref: "#/components/schemas/Member"
     delete:
       summary: Delete member by ID
       description: Delete member by ID
       tags:
         - Members
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
+        - $ref: "#/components/parameters/MemberID"
       responses:
         "200":
           description: OK
@@ -290,15 +131,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                walletAddress:
-                  type: string
-              required:
-                - name
-                - walletAddress
+              $ref: "#/components/schemas/MemberCreateRequest"
         required: true
       responses:
         "201":
@@ -306,11 +139,133 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                  name:
-                    type: string
-                  walletAddress:
-                    type: string
+                $ref: "#/components/schemas/Member"
+
+components:
+  schemas:
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the team
+        name:
+          type: string
+          description: Name of the team
+        description:
+          type: string
+          description: Description of the team
+        ownerId:
+          type: string
+          description: Owner's ID of the team
+
+    TeamList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Team"
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the member
+        name:
+          type: string
+          description: Name of the member
+        walletAddress:
+          type: string
+          description: Wallet address of the member
+
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          description: internal server error
+
+    TeamCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the team
+        members:
+          type: object
+          properties:
+            createMany:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - walletAddress
+                    properties:
+                      name:
+                        type: string
+                        description: Name of the member
+                      walletAddress:
+                        type: string
+                        description: Wallet address of the member
+        description:
+          type: string
+          description: Description of the team
+        address:
+          type: string
+          description: Address of the owner
+
+    TeamUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the team
+        description:
+          type: string
+          description: Description of the team
+
+    MemberCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the member
+        walletAddress:
+          type: string
+          description: Wallet address of the member
+
+    MemberUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the member
+        walletAddress:
+          type: string
+          description: Wallet address of the member
+
+  parameters:
+    OwnerID:
+      in: query
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: The ID of the owner
+    TeamID:
+      in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: The ID of the team
+    MemberID:
+      in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: The ID of the member
