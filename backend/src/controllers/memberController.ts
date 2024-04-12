@@ -6,6 +6,9 @@ const prisma = new PrismaClient();
 
 //insert new members
 const addMembers = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Members']
+  */
   const { id } = req.params;
   const membersData = req.body;
 
@@ -31,6 +34,9 @@ const addMembers = async (req: Request, res: Response) => {
 
 //update member
 const updateMember = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Members']
+  */
   const { id } = req.params;
   const { name, walletAddress } = req.body;
   try {
@@ -50,10 +56,13 @@ const updateMember = async (req: Request, res: Response) => {
 
 //delete members
 const deleteMembers = async (req: Request, res: Response) => {
+  /* 
+  #swagger.tags = ['Members']
+  */
   const { id } = req.params;
 
   try {
-    const member = await prisma.member.delete({
+    const member = await prisma.member.deleteMany({
       where: { id: Number(id) },
     });
     res.status(200).json(member);
