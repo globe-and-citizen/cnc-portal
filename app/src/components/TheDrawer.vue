@@ -2,20 +2,19 @@
   <div
     class="flex flex-col items-center menu pt-28 w-80 min-h-full bg-white text-base-content fixed"
   >
-    <div class="flex flex-row items-center justify-center card w-64 h-24 bg-base-100">
+    <div class="w-full flex flex-row justify-start gap-4 card bg-base-100 px-5 py-4">
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar flex items-center">
         <div class="rounded-full">
           <img
             src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
             alt="Shoes"
+            class="w-[44px]"
           />
         </div>
       </div>
-      <div class="flex flex-col pl-12">
-        <!-- Added ml-4 for spacing -->
+      <div class="flex flex-col">
         <div class="font-semibold text-lg">Dasarath G</div>
-        <div class="pt-2.5"></div>
-        <div class="badge badge-primary">Admin</div>
+        <div class="">Admin</div>
       </div>
     </div>
     <div class="pt-10">
@@ -138,7 +137,8 @@
     </div>
   </div>
 </template>
-<style>
+<style scoped>
+
 .menu-item {
   height: 5rem; /* Adjust the height as needed */
 }
