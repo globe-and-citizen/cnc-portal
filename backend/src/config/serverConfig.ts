@@ -26,6 +26,7 @@ class Server {
       member: "/api/member/",
       user: "/api/user/",
       auth: "/api/auth/",
+      apidocs: "/api-docs",
     };
     this.port = parseInt(process.env.PORT as string) || 3000;
 
@@ -33,6 +34,7 @@ class Server {
   }
 
   private init() {
+    generateDocs();
     this.middleware();
     this.routes();
   }
@@ -47,14 +49,12 @@ class Server {
     this.app.use(this.paths.member, memberRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
+    this.app.get(this.paths.apidocs, (req, res) => {
+      res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
+    });
   }
 
   public listen() {
-    this.app.get("/api-docs", (req, res) => {
-      res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
-    });
-    generateDocs();
-
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
     });
