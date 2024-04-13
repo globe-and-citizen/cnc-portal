@@ -10,6 +10,10 @@ import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 //#endregion routing modules
 
+//import document generation util
+import { generateDocs } from "../utils/swagger";
+const path = require("path");
+
 class Server {
   private app: Express;
   private paths: { [key: string]: string };
@@ -46,6 +50,11 @@ class Server {
   }
 
   public listen() {
+    this.app.get("/api-docs", (req, res) => {
+      res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
+    });
+    generateDocs();
+
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
     });
