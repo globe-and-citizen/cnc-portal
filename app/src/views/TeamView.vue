@@ -50,5 +50,4 @@ function navigateToTeam(id: string) {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

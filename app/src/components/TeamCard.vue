@@ -9,8 +9,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Team } from '@/types/types';
-interface Props{
+import type { Team } from '@/types/types'
+interface Props {
   team: Team
 }
 const props = defineProps<Props>()

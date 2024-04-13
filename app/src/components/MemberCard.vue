@@ -1,5 +1,4 @@
 <template>
-
   <tr @click="showModal = true" class="cursor-pointer">
     <th>{{ memberId }}</th>
     <th>{{ memberName }}</th>

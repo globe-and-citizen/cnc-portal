@@ -1,7 +1,7 @@
 <template>
   <div class="pt-10 flex flex-col gap-5">
     <div class="flex justify-between gap-5">
-      <div >
+      <div>
         <h2 class="pl-5">{{ team.name }}</h2>
         <p>{{ team.description }}</p>
       </div>
@@ -36,7 +36,6 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard :id="team.id" />
     </div>
-    
   </div>
 
   <dialog
