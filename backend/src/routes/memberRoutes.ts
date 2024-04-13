@@ -6,8 +6,8 @@ import {
 import express from "express";
 const memberRoutes = express.Router();
 
-memberRoutes.delete("/member/:id", deleteMembers);
-memberRoutes.put("/member/:id", updateMember);
-memberRoutes.post("/member/:id", addMembers);
+memberRoutes.delete("/:id", deleteMembers);
+memberRoutes.put("/:id", updateMember);
+memberRoutes.post("/:id", addMembers);
 
 export default memberRoutes;

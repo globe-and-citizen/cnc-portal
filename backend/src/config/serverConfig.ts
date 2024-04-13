@@ -18,8 +18,8 @@ class Server {
   constructor() {
     this.app = express();
     this.paths = {
-      teams: "/api/teams/", //recommed defining top level path in config to keep route DRY
-      member: "/api/member/", //recommed defining top level path in config to keep route DRY
+      teams: "/api/teams/",
+      member: "/api/member/",
       user: "/api/user/",
       auth: "/api/auth/",
     };
@@ -39,8 +39,8 @@ class Server {
   }
 
   private routes() {
-    this.app.use(teamRoutes); //recommend this.app.use(this.paths.teams, teamRoutes)
-    this.app.use(memberRoutes); //recommend this.app.use(this.paths.member, memberRoutes)
+    this.app.use(this.paths.teams, teamRoutes);
+    this.app.use(this.paths.member, memberRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
   }
