@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import MemberDetail from '@/components/MemberDetail.vue'
 import { useMembersStore } from '@/stores/member'
-import { ref } from 'vue'
+import { useTipsStore } from '@/stores/tips'
+import LoadingButton from '@/components/LoadingButton.vue'
+import NotificationToast from '@/components/NotificationToast.vue'
+import { useToastStore } from '@/stores/toast'
+import { storeToRefs } from 'pinia'
 
 const { members } = useMembersStore()
-const totalTipAmount = ref(0)
 
-const handlePushTip = () => {
-  // TO DO
+const tipStore = useTipsStore()
+const { pushTip, sendTip } = useTipsStore()
+const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
 
-  totalTipAmount.value = 0
-}
-
-const handleSendTip = () => {
-  // TO DO
-
-  totalTipAmount.value = 0
-}
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 </script>
 
 <template>
@@ -43,14 +41,17 @@ const handleSendTip = () => {
       <div class="flex flex-col justify-center">
         <label for="tip-amount" class="text-center mb-2">Actions</label>
         <div className="card-actions flex flex-row justify-between mx-8 self-center">
-          <button className="btn btn-primary w-full text-white" @click="handlePushTip()">
+          <LoadingButton v-if="pushTipLoading" color="primary" />
+          <button v-else className="btn btn-primary w-full text-white" @click="pushTip()">
             Push Tips
           </button>
-          <button className="btn btn-secondary w-full text-white" @click="handleSendTip()">
+          <LoadingButton v-if="sendTipLoading" color="secondary" />
+          <button v-else className="btn btn-secondary w-full text-white" @click="sendTip()">
             Send Tips
           </button>
         </div>
       </div>
     </div>
   </div>
+  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>
