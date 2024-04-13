@@ -2,7 +2,7 @@
   <div class="card bg-white">
     <div class="card-body">
       <h1 class="card-title">{{ props.team.name }}</h1>
-      <p class="text-sm">{{ props.team.description }}</p>
+      <p class="text-sm line-clamp-3">{{ props.team.description }}</p>
       <div class="card-actions justify-between"></div>
     </div>
   </div>
