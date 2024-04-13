@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Team } from '@/types/team';
+import type { Team } from '@/types/types';
 interface Props{
   team: Team
 }

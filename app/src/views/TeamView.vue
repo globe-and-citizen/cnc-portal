@@ -23,7 +23,7 @@ import { useRouter } from 'vue-router'
 
 import axios from 'axios'
 const router = useRouter()
-import type { Team } from '@/types/team'
+import type { Team } from '@/types/types'
 interface Member {
   id: string
   name: string

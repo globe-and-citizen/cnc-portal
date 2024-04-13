@@ -80,6 +80,8 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 
+import type { Team } from '@/types/types'
+
 import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
@@ -89,18 +91,6 @@ const cdesc = ref('')
 
 const showModal = ref(false)
 const inputs = ref([{ name: '', walletAddress: '' }])
-interface Team {
-  id: string
-  name: string
-  description: string
-  members: Member[]
-}
-interface Member {
-  id: string
-  name: string
-  walletAddress: string
-  teamId: number
-}
 const team = ref<Team>({
   id: '',
   name: '',
