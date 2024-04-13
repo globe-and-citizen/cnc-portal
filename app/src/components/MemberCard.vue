@@ -50,7 +50,7 @@ console.log(nameInput.value)
 const deleteMember = async () => {
   try {
     const id = props.memberId
-    await axios.delete(`http://localhost:3000/member/${id}`)
+    await axios.delete(`http://localhost:3000/api/member/${id}`)
     window.location.reload()
   } catch (error) {
     console.log('Error deleting member', error)
@@ -59,7 +59,7 @@ const deleteMember = async () => {
 const updateMember = async () => {
   try {
     const id = props.memberId
-    await axios.put(`http://localhost:3000/member/${id}`, {
+    await axios.put(`http://localhost:3000/api/member/${id}`, {
       name: nameInput.value,
       walletAddress: walletInput.value
     })

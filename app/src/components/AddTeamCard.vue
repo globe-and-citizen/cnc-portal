@@ -136,7 +136,7 @@ const handleSubmit = async () => {
     address: 'user_address_321'
   }
   console.log(teamObject)
-  await axios.post('http://localhost:3000/teams', teamObject)
+  await axios.post('http://localhost:3000/api/teams', teamObject)
   window.location.reload()
 }
 const removeInput = () => {

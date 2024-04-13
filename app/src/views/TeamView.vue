@@ -42,7 +42,7 @@ const teams = ref<Team[]>([])
 //
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:3000/teams', {
+    const response = await axios.get('http://localhost:3000/api/teams', {
       data: { address: 'user_address_321' }
     })
     teams.value = response.data

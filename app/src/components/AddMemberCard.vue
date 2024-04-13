@@ -109,7 +109,7 @@ const addMembers = async () => {
   let newMembers = toRaw(inputs.value)
   let id = props.id
   console.log(id)
-  await axios.post(`http://localhost:3000/member/${id}`, newMembers)
+  await axios.post(`http://localhost:3000/api/member/${id}`, newMembers)
   window.location.reload()
 }
 </script>

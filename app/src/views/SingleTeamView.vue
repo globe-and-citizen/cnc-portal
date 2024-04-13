@@ -94,7 +94,7 @@ onMounted(async () => {
 
   console.log('hi', id)
   try {
-    const response = await axios.post(`http://localhost:3000/teams/${id}`, {
+    const response = await axios.post(`http://localhost:3000/api/teams/${id}`, {
       address: 'user_address_321'
     })
     team.value = response.data
@@ -118,7 +118,7 @@ const updateTeam = async () => {
     }
     console.log('Updated team object:', teamObject)
 
-    let response = await axios.put(`http://localhost:3000/teams/${id}`, teamObject)
+    let response = await axios.put(`http://localhost:3000/api/teams/${id}`, teamObject)
 
     console.log('Response:', response.data)
 
@@ -132,7 +132,7 @@ const deleteTeam = async () => {
   try {
     const id = route.params.id
 
-    const response = await axios.delete(`http://localhost:3000/teams/${id}`, {
+    const response = await axios.delete(`http://localhost:3000/api/teams/${id}`, {
       data: {
         address: 'user_address_321'
       }
