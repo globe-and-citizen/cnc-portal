@@ -1,12 +1,12 @@
-# Use Node.js 14 as the base image
-FROM node:alpine
+# Use Node.js 18 as the base image
+FROM node:18-alpine  
 
 
 # Set the working directory inside the container
 WORKDIR /srv/app
 
 # Copy package.json and package-lock.json to the working directory
-COPY . .
+COPY ./package.json ./  
 
 
 # Install dependencies

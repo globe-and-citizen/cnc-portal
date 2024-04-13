@@ -32,31 +32,11 @@ After running this command, you should be able to connect to your PostgreSQL dat
 
 `npx prisma migrate dev --name init`
 
-### Installing database locally:
-
-The following commands on the MacOS, will install and start postgresql service:
-
-```
-brew install postgresql
-brew services start postgresql
-```
-
-Use ` psql postgres` to open the psql interactive shell opens up where you can create and define user roles by using the following command:
-
-`CREATE USER root WITH PASSWORD 'root' SUPERUSER;`
-
-This creates an user root with the password root and sets superuser privileges for the root user.
-Use the command `\du` in the psql shell to verify if user has been created with appropriate permissions.
-
-#### Running prisma migrations
-
-`npx prisma migrate dev --name init`
-
 #### Environment variables
 
 The .env file should contain the variable in the format:
 
-`DATABASE_URL=postgres://postgres:cnc@postgres@127.0.0.1:5432/postgres`
+`DATABASE_URL="ppostgres://<username>:<password>@<host>:<port>/<database_name>"`
 
 ## Folder structure
 
