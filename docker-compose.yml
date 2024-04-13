@@ -21,8 +21,6 @@ services:
       - "5173:5173" # Adjust port as needed
     volumes:
       - ./app:/app
-    command: npm run dev # Command to run for the frontend
-
   backend:
     build:
       context: ./backend
