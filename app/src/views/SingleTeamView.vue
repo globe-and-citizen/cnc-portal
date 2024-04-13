@@ -1,21 +1,39 @@
 <template>
-  <div class="pt-10">
-    <div class="flex justify-between">
-      <h2 class="pl-5">{{ team.name }}</h2>
+  <div class="pt-10 flex flex-col gap-5">
+    <div class="flex justify-between gap-5">
+      <div>
+        <h2 class="pl-5">{{ team.name }}</h2>
+        <p>{{ team.description }}</p>
+      </div>
       <div class="flex justify-between gap-2 items-center">
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
 
         <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
       </div>
     </div>
+    <div class="card w-full bg-white overflow-x-auto p-4">
+      <table class="table">
+        <!-- head -->
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <MemberCard
+            v-for="member in team.members"
+            :memberName="member.name"
+            :walletAddress="member.walletAddress"
+            :memberId="member.id"
+            :key="member.id"
+          />
+        </tbody>
+      </table>
+    </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <MemberCard
-        v-for="member in team.members"
-        :memberName="member.name"
-        :walletAddress="member.walletAddress"
-        :memberId="member.id"
-        :key="member.id"
-      />
       <AddMemberCard :id="team.id" />
     </div>
   </div>
@@ -61,6 +79,8 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 
+import type { Member, Team } from '@/types/types'
+
 import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
@@ -69,19 +89,7 @@ const cname = ref('')
 const cdesc = ref('')
 
 const showModal = ref(false)
-const inputs = ref([{ name: '', walletAddress: '' }])
-interface Team {
-  id: string
-  name: string
-  description: string
-  members: Member[]
-}
-interface Member {
-  id: string
-  name: string
-  walletAddress: string
-  teamId: number
-}
+const inputs = ref<Member[]>([])
 const team = ref<Team>({
   id: '',
   name: '',
