@@ -10,6 +10,7 @@
   },
   "scripts": {
     "start": "nodemon src/index.ts",
+    "build": "tsc && node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prisma:migrate": "npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate"
@@ -34,6 +35,7 @@
     "jsonwebtoken": "^9.0.2",
     "siwe": "^2.1.4",
     "openapi2html": "^1.1.22",
+    "redoc-cli": "^0.13.21",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
