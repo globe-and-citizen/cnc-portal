@@ -2,7 +2,7 @@ export interface Team {
   id: string
   name: string
   description: string
-  members?: Member[]
+  members: Member[]
 }
 
 export interface Member {
