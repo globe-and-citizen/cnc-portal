@@ -23,7 +23,7 @@
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
         <input type="text" class="grow" v-model="nameInput" />
         |
-        <input type="text" class="grow" v-model="walletInput" />
+        <input type="text" class="truncate" v-model="walletInput" />
       </label>
       <div class="flex mt-2 justify-between">
         <button class="btn btn-error size-sm" @click="deleteMember">Delete</button>
