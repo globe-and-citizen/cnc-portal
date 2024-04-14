@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips';
-import { storeToRefs } from 'pinia';
-import LoadingButton from './LoadingButton.vue';
+import { useTipsStore } from '@/stores/tips'
+import { storeToRefs } from 'pinia'
+import LoadingButton from './LoadingButton.vue'
 
 const tipStore = useTipsStore()
 const { pushTip, sendTip } = useTipsStore()
 const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
+
+defineProps<{ addresses: string[] }>()
 </script>
 
 <template>
@@ -26,11 +28,11 @@ const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
       <label for="tip-amount" class="text-center mb-2">Actions</label>
       <div className="card-actions flex flex-row justify-between mx-8 self-center">
         <LoadingButton v-if="pushTipLoading" color="primary" />
-        <button v-else className="btn btn-primary w-full text-white" @click="pushTip()">
+        <button v-else className="btn btn-primary w-full text-white" @click="pushTip(addresses)">
           Push Tips
         </button>
         <LoadingButton v-if="sendTipLoading" color="secondary" />
-        <button v-else className="btn btn-secondary w-full text-white" @click="sendTip()">
+        <button v-else className="btn btn-secondary w-full text-white" @click="sendTip(addresses)">
           Send Tips
         </button>
       </div>
