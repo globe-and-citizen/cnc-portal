@@ -1,11 +1,10 @@
 <template>
-  <div class="card w-full bg-white ml-5 mt-10 cursor-pointer" @click="showModal = true">
-    <div class="card-body">
-      <h1 class="card-title">{{ memberName }}</h1>
-      <p class="text-sm">{{ walletAddress }}</p>
-      <div class="card-actions justify-between"></div>
-    </div>
-  </div>
+  <tr @click="showModal = true" class="cursor-pointer">
+    <th>{{ memberId }}</th>
+    <th>{{ memberName }}</th>
+    <th>{{ walletAddress }}</th>
+    <th>Action</th>
+  </tr>
 
   <dialog
     id="my_modal_20"
