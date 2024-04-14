@@ -4,7 +4,6 @@ import { TIPS_ADDRESS } from '@/constant'
 import ABI from '../abi/tips.json'
 import { ToastType } from '@/types'
 import { useToastStore } from './toast'
-import { useMembersStore } from './member'
 
 export const useTipsStore = defineStore('tips', {
   state: () => ({
@@ -23,10 +22,8 @@ export const useTipsStore = defineStore('tips', {
       this.contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
       this.isWalletConnected = true
     },
-    async pushTip() {
+    async pushTip(addresses: string[]) {
       const { show } = useToastStore()
-      const { members } = useMembersStore()
-      const addresses = members.map((member) => member.address)
 
       if (this.totalTipAmount === 0) {
         show(ToastType.Info, 'Please enter amount to tip')
@@ -49,9 +46,7 @@ export const useTipsStore = defineStore('tips', {
         this.totalTipAmount = 0
       }
     },
-    async sendTip() {
-      const { members } = useMembersStore()
-      const addresses = members.map((member) => member.address)
+    async sendTip(addresses: string[]) {
       const { show } = useToastStore()
       if (this.totalTipAmount === 0) {
         show(ToastType.Info, 'Please enter amount to tip')

@@ -36,6 +36,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard :id="team.id" />
     </div>
+    <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
   </div>
 
   <dialog
@@ -72,16 +73,21 @@
       </div>
     </div>
   </dialog>
+  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
+import TipsAction from '@/components/TipsAction.vue'
 
 import type { Member, Team } from '@/types/types'
 
 import axios from 'axios'
+import { useToastStore } from '@/stores/toast'
+import { storeToRefs } from 'pinia'
+import NotificationToast from '@/components/NotificationToast.vue'
 const route = useRoute()
 const router = useRouter()
 
@@ -96,6 +102,9 @@ const team = ref<Team>({
   description: '',
   members: []
 })
+
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 onMounted(async () => {
   const id = route.params.id
