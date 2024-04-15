@@ -2,7 +2,7 @@
 import { useTipsStore } from '@/stores/tips'
 import { storeToRefs } from 'pinia'
 import LoadingButton from './LoadingButton.vue'
-import type { AddressLike } from 'ethers';
+import type { AddressLike } from 'ethers'
 
 const tipStore = useTipsStore()
 const { pushTip, sendTip } = useTipsStore()

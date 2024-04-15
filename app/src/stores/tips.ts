@@ -4,7 +4,7 @@ import { TIPS_ADDRESS } from '@/constant'
 import ABI from '../abi/tips.json'
 import { ToastType } from '@/types'
 import { useToastStore } from './toast'
-import type { AddressLike } from 'ethers';
+import type { AddressLike } from 'ethers'
 
 export const useTipsStore = defineStore('tips', {
   state: () => ({
