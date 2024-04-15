@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Member } from '@/stores/member'
+import type { Member } from '@/types'
 
 defineProps<{ member: Member }>()
 </script>

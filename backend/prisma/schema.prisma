@@ -5,8 +5,10 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
 }
+
 
 datasource db {
   provider = "postgresql"
@@ -16,6 +18,7 @@ datasource db {
 model User {
   address      String        @id @unique
   name         String?
+  nonce        String
   teams        Team[]
 }
 model Team {

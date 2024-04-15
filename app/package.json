@@ -18,7 +18,9 @@
   },
   "dependencies": {
     "axios": "^1.6.8",
+    "ethers": "^6.11.1",
     "pinia": "^2.1.7",
+    "siwe": "^2.1.4",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5"
   },
@@ -42,6 +44,7 @@
     "npm-run-all2": "^6.1.1",
     "postcss": "^8.4.35",
     "prettier": "^3.0.3",
+    "sass": "^1.75.0",
     "start-server-and-test": "^2.0.3",
     "tailwindcss": "^3.4.1",
     "typescript": "~5.3.0",

@@ -6,12 +6,12 @@
       <img src="../assets/login-illustration.png" alt="Login illustration" />
     </div>
     <div class="w-[240px] grow flex flex-col justify-center p-10">
-      <h2 class="pb-4">Sign in to CNC portal</h2>
-      <p class="pb-5">
+      <h2 class="pb-4 flex justify-center">Sign in to CNC portal</h2>
+      <!--<p class="pb-5">
         New User ? <span><a href="#" class="text-primary">Create an account</a></span>
-      </p>
+      </p>-->
       <div class="flex flex-col gap-5">
-        <input type="text" placeholder="Email address" class="input input-bordered w-full" />
+        <!--<input type="text" placeholder="Email address" class="input input-bordered w-full" />
 
         <label class="input input-bordered flex items-center gap-2">
           <input type="password" class="grow" placeholder="Password" />
@@ -37,8 +37,10 @@
           </span>
         </label>
 
-        <p class="text-right underline">Forgot password ?</p>
-        <button class="btn btn-primary w-full">Sign in</button>
+        <p class="text-right underline">Forgot password ?</p>-->
+        <button class="btn btn-primary w-full" @click="signInWithEthereum">
+          Sign In With Ethereum
+        </button>
         <div class="flex justify-center items-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -130,7 +132,9 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { signInWithEthereum } from '@/utils/loginUtil'
+</script>
 
 <style scoped>
 .auth {

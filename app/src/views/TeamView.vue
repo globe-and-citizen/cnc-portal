@@ -5,8 +5,7 @@
       <TeamCard
         v-for="team in teams"
         :key="team.id"
-        :TeamName="team.name"
-        :TeamDescription="team.description"
+        :team="team"
         class="cursor-pointer"
         @click="navigateToTeam(team.id)"
       />
@@ -24,13 +23,7 @@ import { useRouter } from 'vue-router'
 
 import axios from 'axios'
 const router = useRouter()
-interface Team {
-  id: string
-  name: string
-  description: string
-  members: Member[]
-  value: any
-}
+import type { Team } from '@/types/types'
 interface Member {
   id: string
   name: string
@@ -39,7 +32,7 @@ interface Member {
 }
 const teams = ref<Team[]>([])
 
-//
+// TODO Move this to API service
 onMounted(async () => {
   try {
     const response = await axios.get('http://localhost:3000/teams', {
@@ -57,14 +50,4 @@ function navigateToTeam(id: string) {
 }
 </script>
 
-<style scoped>
-.container {
-  position: relative;
-  display: flex;
-}
-
-.content-wrapper {
-  flex: 1;
-  padding-top: 80px;
-}
-</style>
+<style scoped></style>
