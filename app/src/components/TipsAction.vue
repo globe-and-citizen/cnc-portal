@@ -2,12 +2,13 @@
 import { useTipsStore } from '@/stores/tips'
 import { storeToRefs } from 'pinia'
 import LoadingButton from './LoadingButton.vue'
+import type { AddressLike } from 'ethers';
 
 const tipStore = useTipsStore()
 const { pushTip, sendTip } = useTipsStore()
 const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
 
-defineProps<{ addresses: string[] }>()
+defineProps<{ addresses: AddressLike[] }>()
 </script>
 
 <template>
