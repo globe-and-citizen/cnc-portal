@@ -11,7 +11,9 @@
     "test:e2e:watch": "vitest -c vitest.e2e.config.ts",
     "test:create-prisma-environment": "npm link ./prisma/vitest-environment-prisma",
     "test:install-prisma-environment": "npm link vitest-environment-prisma",
-    "pretest:e2e": "npm-run-all test:create-prisma-environment test:install-prisma-environment"
+    "pretest:e2e": "run-s test:create-prisma-environment test:install-prisma-environment",
+    "test:unit": "vitest -c ./vitest.config.unit.ts",
+    "test:unit:ui": "vitest -c ./vitest.config.unit.ts --ui"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +28,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.4.3",
     "vite-tsconfig-paths": "^4.3.2",
-    "vitest": "^1.5.0"
+    "vitest": "^1.5.0",
+    "vitest-mock-extended": "^1.3.1"
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",
