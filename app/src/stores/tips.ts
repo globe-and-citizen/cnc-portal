@@ -2,9 +2,14 @@ import { ethers } from 'ethers'
 import { defineStore } from 'pinia'
 import { TIPS_ADDRESS } from '@/constant'
 import ABI from '../abi/tips.json'
-import { ToastType } from '@/types'
+import { ToastType, TipsEventType } from '@/types'
 import { useToastStore } from './toast'
 import { useMembersStore } from './member'
+import type { EventLog } from 'ethers'
+import type { Log } from 'ethers'
+
+let contract: ethers.Contract
+let provider: ethers.BrowserProvider
 
 export const useTipsStore = defineStore('tips', {
   state: () => ({
@@ -18,9 +23,9 @@ export const useTipsStore = defineStore('tips', {
     async connectWallet() {
       if (this.isWalletConnected) return
 
-      const provider = new ethers.BrowserProvider((window as any).ethereum)
+      provider = new ethers.BrowserProvider((window as any).ethereum)
       await provider.send('eth_requestAccounts', [])
-      this.contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
+      contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
       this.isWalletConnected = true
     },
     async pushTip() {
@@ -38,7 +43,7 @@ export const useTipsStore = defineStore('tips', {
       this.pushTipLoading = true
 
       try {
-        await this.contract!.pushTip(addresses, {
+        await contract!.pushTip(addresses, {
           value: ethers.parseEther(this.totalTipAmount.toString())
         })
         show(ToastType.Success, 'Tip pushed successfully')
@@ -63,7 +68,7 @@ export const useTipsStore = defineStore('tips', {
       this.sendTipLoading = true
 
       try {
-        await this.contract!.sendTip(addresses, {
+        await contract!.sendTip(addresses, {
           value: ethers.parseEther(this.totalTipAmount.toString())
         })
         show(ToastType.Success, 'Tip sent successfully')
@@ -72,6 +77,38 @@ export const useTipsStore = defineStore('tips', {
       } finally {
         this.sendTipLoading = false
         this.totalTipAmount = 0
+      }
+    },
+    async getEvents(event: TipsEventType) {
+      if (!this.isWalletConnected) await this.connectWallet()
+
+      try {
+        const filter = {
+          address: TIPS_ADDRESS,
+          topics: [
+            ethers.id("SendTip(address,address[],uint256,uint256)"),
+            ethers.id("PushTip(address,address[],uint256,uint256)"),
+          ]
+        }
+        let events = await provider.getLogs(filter)
+        console.log(await contract.queryFilter(event));
+
+        console.log(events);
+        
+        const result = events.map(async (eventData: EventLog | Log) => {
+          const timestamp = (await eventData.getBlock()).date
+
+          return {
+            timestamp: timestamp,
+            data: contract.interface.decodeEventLog(event, eventData.data, eventData.topics)
+          }
+        })
+        return Promise.all(result)
+      } catch (error) {
+        console.log(error)
+
+        const { show } = useToastStore()
+        show(ToastType.Error, 'Failed to fetch events')
       }
     }
   }
