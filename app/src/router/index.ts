@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TipsView from '@/views/TipsView.vue'
+import TransactionsView from '@/views/TransactionsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,11 @@ const router = createRouter({
           component: TeamView
         }
       ]
+    },
+    {
+      path: '/transactions',
+      name: 'transactions',
+      component: TransactionsView
     },
     {
       path: '/tips',
