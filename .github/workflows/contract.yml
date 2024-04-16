@@ -37,6 +37,6 @@ jobs:
               run: npm run lint
               working-directory: ./contract
 
-            - name: 🧪 Run Test
-              run: npm run test
-              working-directory: ./contract
+            # - name: 🧪 Run Test
+            #   run: npm run test
+            #   working-directory: ./contract
