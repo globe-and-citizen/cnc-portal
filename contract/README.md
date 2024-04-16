@@ -43,3 +43,7 @@ npm run deploy
 ```
 
 Look at other scripts on the package.json file.
+
+## Deployed contracts
+
+- Tip.sol: [0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B](https://sepolia.etherscan.io/address/0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B)
