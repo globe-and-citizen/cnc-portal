@@ -115,7 +115,6 @@
 
 <script setup lang="ts">
 import { ref, toRaw } from 'vue'
-import axios from 'axios'
 const showModal = ref(false)
 const teamName = ref('')
 const teamDesc = ref('')
@@ -136,7 +135,22 @@ const handleSubmit = async () => {
     address: 'user_address_321'
   }
   console.log(teamObject)
-  await axios.post('http://localhost:3000/teams', teamObject)
+  const requestOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(teamObject)
+  }
+
+  try {
+    const response = await fetch('http://localhost:3000/teams', requestOptions)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('Error:', error)
+  }
   window.location.reload()
 }
 const removeInput = () => {
