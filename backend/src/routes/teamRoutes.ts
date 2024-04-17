@@ -6,13 +6,12 @@ import {
   getTeam,
   getAllTeams,
 } from "../controllers/teamController";
-import { authorizeUser } from "../middleware/authMiddleware";
 const teamRoutes = express.Router();
 
-teamRoutes.post("/", authorizeUser, addTeam);
-teamRoutes.get("/", authorizeUser, getAllTeams);
-teamRoutes.post("/:id", authorizeUser, getTeam);
-teamRoutes.put("/:id", authorizeUser, updateTeam);
-teamRoutes.delete("/:id", authorizeUser, deleteTeam);
+teamRoutes.post("/", addTeam);
+teamRoutes.get("/", getAllTeams);
+teamRoutes.post("/:id", getTeam);
+teamRoutes.put("/:id", updateTeam);
+teamRoutes.delete("/:id", deleteTeam);
 
 export default teamRoutes;
