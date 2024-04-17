@@ -23,12 +23,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 import type { Team } from '@/types/types'
-interface Member {
-  id: string
-  name: string
-  walletAddress: string
-  teamId: number
-}
+
 const teams = ref<Team[]>([])
 
 // TODO Move this to API service
