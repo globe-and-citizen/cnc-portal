@@ -4,7 +4,7 @@ import { TIPS_ADDRESS } from '@/constant'
 import ABI from '../abi/tips.json'
 import { ToastType, TipsEventType } from '@/types'
 import { useToastStore } from './toast'
-import { useMembersStore } from './member'
+import type { AddressLike } from 'ethers'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 
@@ -28,10 +28,8 @@ export const useTipsStore = defineStore('tips', {
       contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
       this.isWalletConnected = true
     },
-    async pushTip() {
+    async pushTip(addresses: AddressLike[]) {
       const { show } = useToastStore()
-      const { members } = useMembersStore()
-      const addresses = members.map((member) => member.address)
 
       if (this.totalTipAmount === 0) {
         show(ToastType.Info, 'Please enter amount to tip')
@@ -54,9 +52,7 @@ export const useTipsStore = defineStore('tips', {
         this.totalTipAmount = 0
       }
     },
-    async sendTip() {
-      const { members } = useMembersStore()
-      const addresses = members.map((member) => member.address)
+    async sendTip(addresses: AddressLike[]) {
       const { show } = useToastStore()
       if (this.totalTipAmount === 0) {
         show(ToastType.Info, 'Please enter amount to tip')
@@ -86,15 +82,15 @@ export const useTipsStore = defineStore('tips', {
         const filter = {
           address: TIPS_ADDRESS,
           topics: [
-            ethers.id("SendTip(address,address[],uint256,uint256)"),
-            ethers.id("PushTip(address,address[],uint256,uint256)"),
+            ethers.id('SendTip(address,address[],uint256,uint256)'),
+            ethers.id('PushTip(address,address[],uint256,uint256)')
           ]
         }
         let events = await provider.getLogs(filter)
-        console.log(await contract.queryFilter(event));
+        console.log(await contract.queryFilter(event))
 
-        console.log(events);
-        
+        console.log(events)
+
         const result = events.map(async (eventData: EventLog | Log) => {
           const timestamp = (await eventData.getBlock()).date
 

@@ -93,7 +93,10 @@
 </template>
 <script setup lang="ts">
 import { ref, toRaw, defineProps } from 'vue'
-import axios from 'axios'
+import { FetchMemberAPI } from '@/apis/memberApi'
+
+const memberApi = new FetchMemberAPI()
+
 const showModal = ref(false)
 const props = defineProps<{ id: string }>() // Define the type of props explicitly
 const inputs = ref([{ name: '', walletAddress: '' }])
@@ -108,8 +111,15 @@ const removeInput = () => {
 const addMembers = async () => {
   let newMembers = toRaw(inputs.value)
   let id = props.id
-  console.log(id)
-  await axios.post(`http://localhost:3000/member/${id}`, newMembers)
-  window.location.reload()
+
+  await memberApi
+    .createMembers(newMembers, id)
+    .then((response) => {
+      console.log('Created Members', response)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error creating members:', error)
+    })
 }
 </script>

@@ -3,7 +3,6 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
-import TipsView from '@/views/TipsView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 
 const router = createRouter({
@@ -40,11 +39,6 @@ const router = createRouter({
       path: '/transactions',
       name: 'transactions',
       component: TransactionsView
-    },
-    {
-      path: '/tips',
-      name: 'tips',
-      component: TipsView
     },
     {
       path: '/about',

@@ -115,7 +115,10 @@
 
 <script setup lang="ts">
 import { ref, toRaw } from 'vue'
-import axios from 'axios'
+import { FetchTeamAPI } from '@/apis/teamApi'
+
+const teamAPI = new FetchTeamAPI()
+
 const showModal = ref(false)
 const teamName = ref('')
 const teamDesc = ref('')
@@ -125,18 +128,18 @@ const addInput = () => {
 }
 const handleSubmit = async () => {
   let teamMembers = { members: toRaw(inputs.value) }
-  let teamObject = {
-    name: teamName.value,
-    description: teamDesc.value,
-    members: {
-      createMany: {
-        data: teamMembers.members
-      }
-    },
-    address: 'user_address_321'
-  }
-  console.log(teamObject)
-  await axios.post('http://localhost:3000/teams', teamObject)
+
+  teamAPI
+    .createTeam(teamName.value, teamDesc.value, teamMembers.members)
+    .then((createdTeam) => {
+      // Team creation successful
+      console.log('Created team:', createdTeam)
+      // Navigate to another route or perform other actions as needed
+    })
+    .catch((error) => {
+      // Handle errors
+      console.error('Error creating team:', error)
+    })
   window.location.reload()
 }
 const removeInput = () => {
