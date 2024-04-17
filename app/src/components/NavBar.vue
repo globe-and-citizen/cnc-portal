@@ -98,7 +98,7 @@
             </a>
           </li>
           <li><a>Settings</a></li>
-          <li><a>Logout</a></li>
+          <li><a @click="logout()">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -106,6 +106,11 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
+import { AuthService } from '@/services/authService'
 import { defineEmits } from 'vue'
 defineEmits(['toggleSideButton'])
+const logout = () => {
+  AuthService.logout()
+  window.location.reload()
+}
 </script>
