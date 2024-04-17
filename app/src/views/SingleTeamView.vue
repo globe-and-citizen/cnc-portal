@@ -83,13 +83,15 @@ import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 
 import type { Member, Team } from '@/types/types'
+import { FetchTeamAPI } from '@/apis/teamApi'
 
-import axios from 'axios'
 import { useToastStore } from '@/stores/toast'
 import { storeToRefs } from 'pinia'
 import NotificationToast from '@/components/NotificationToast.vue'
 const route = useRoute()
 const router = useRouter()
+
+const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
@@ -109,17 +111,20 @@ const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastS
 onMounted(async () => {
   const id = route.params.id
 
-  console.log('hi', id)
-  try {
-    const response = await axios.post(`http://localhost:3000/teams/${id}`, {
-      address: 'user_address_321'
+  teamApi
+    .getTeam(String(id))
+    .then((teamData) => {
+      if (teamData) {
+        team.value = teamData
+        cname.value = team.value.name
+        cdesc.value = team.value.description
+      } else {
+        console.log('Team not found for id:', id)
+      }
     })
-    team.value = response.data
-    cname.value = team.value.name
-    cdesc.value = team.value.description
-  } catch (error) {
-    console.error('Error fetching data:', error)
-  }
+    .catch((error) => {
+      console.error('Error fetching team:', error)
+    })
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
@@ -127,37 +132,32 @@ const updateTeamModalOpen = async () => {
 }
 const updateTeam = async () => {
   const id = route.params.id
-  try {
-    let teamObject = {
-      name: cname.value,
-      description: cdesc.value,
-      address: 'user_address_321'
-    }
-    console.log('Updated team object:', teamObject)
-
-    let response = await axios.put(`http://localhost:3000/teams/${id}`, teamObject)
-
-    console.log('Response:', response.data)
-
-    window.location.reload()
-  } catch (error) {
-    console.error('Error updating data:', error)
+  let teamObject = {
+    name: cname.value,
+    description: cdesc.value,
+    address: 'user_address_321'
   }
+  teamApi
+    .updateTeam(String(id), teamObject)
+    .then((updatedTeam) => {
+      console.log('Updated team:', updatedTeam)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error updating team:', error)
+    })
 }
 
 const deleteTeam = async () => {
-  try {
-    const id = route.params.id
-
-    const response = await axios.delete(`http://localhost:3000/teams/${id}`, {
-      data: {
-        address: 'user_address_321'
-      }
+  const id = route.params.id
+  teamApi
+    .deleteTeam(String(id))
+    .then(() => {
+      console.log('Team deleted successfully')
+      router.push('/teams')
     })
-    console.log(response.data)
-    router.push('/teams')
-  } catch (error) {
-    console.error('Error fetching data:', error)
-  }
+    .catch((error) => {
+      console.error('Error deleting team:', error)
+    })
 }
 </script>

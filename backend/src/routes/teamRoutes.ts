@@ -8,10 +8,10 @@ import {
 } from "../controllers/teamController";
 const teamRoutes = express.Router();
 
-teamRoutes.post("/teams", addTeam);
-teamRoutes.get("/teams", getAllTeams);
-teamRoutes.post("/teams/:id", getTeam);
-teamRoutes.put("/teams/:id", updateTeam);
-teamRoutes.delete("/teams/:id", deleteTeam);
+teamRoutes.post("/", addTeam);
+teamRoutes.get("/", getAllTeams);
+teamRoutes.post("/:id", getTeam);
+teamRoutes.put("/:id", updateTeam);
+teamRoutes.delete("/:id", deleteTeam);
 
 export default teamRoutes;
