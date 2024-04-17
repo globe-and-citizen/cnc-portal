@@ -80,9 +80,12 @@ import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 
 import type { Member, Team } from '@/types/types'
+import { FetchTeamAPI } from '@/apis/teamApi'
 
 const route = useRoute()
 const router = useRouter()
+
+const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
@@ -99,31 +102,20 @@ const team = ref<Team>({
 onMounted(async () => {
   const id = route.params.id
 
-  console.log('hi', id)
-  const url = `http://localhost:3000/teams/${id}`
-  const requestOptions = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      address: 'user_address_321'
+  teamApi
+    .getTeam(String(id))
+    .then((teamData) => {
+      if (teamData) {
+        team.value = teamData
+        cname.value = team.value.name
+        cdesc.value = team.value.description
+      } else {
+        console.log('Team not found for id:', id)
+      }
     })
-  }
-
-  try {
-    const response = await fetch(url, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-    const responseData = await response.json() // Parsing JSON response
-
-    team.value = responseData
-    cname.value = team.value.name
-    cdesc.value = team.value.description
-  } catch (error) {
-    console.error('Error:', error)
-  }
+    .catch((error) => {
+      console.error('Error fetching team:', error)
+    })
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
@@ -136,41 +128,27 @@ const updateTeam = async () => {
     description: cdesc.value,
     address: 'user_address_321'
   }
-  console.log('Updated team object:', teamObject)
-
-  const requestOptions = {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(teamObject)
-  }
-
-  try {
-    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-    window.location.reload()
-  } catch (error) {
-    console.error('Error:', error)
-  }
+  teamApi
+    .updateTeam(String(id), teamObject)
+    .then((updatedTeam) => {
+      console.log('Updated team:', updatedTeam)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error updating team:', error)
+    })
 }
 
 const deleteTeam = async () => {
   const id = route.params.id
-  const requestOptions = {
-    method: 'DELETE'
-  }
-
-  try {
-    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-    router.push('/teams')
-  } catch (error) {
-    console.error('Error:', error)
-  }
+  teamApi
+    .deleteTeam(String(id))
+    .then(() => {
+      console.log('Team deleted successfully')
+      router.push('/teams')
+    })
+    .catch((error) => {
+      console.error('Error deleting team:', error)
+    })
 }
 </script>

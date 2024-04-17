@@ -10,6 +10,10 @@ import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 //#endregion routing modules
 
+//import document generation util
+import { generateDocs } from "../utils/swagger";
+const path = require("path");
+
 class Server {
   private app: Express;
   private paths: { [key: string]: string };
@@ -18,10 +22,11 @@ class Server {
   constructor() {
     this.app = express();
     this.paths = {
-      teams: "/api/teams/", //recommed defining top level path in config to keep route DRY
-      member: "/api/member/", //recommed defining top level path in config to keep route DRY
+      teams: "/api/teams/",
+      member: "/api/member/",
       user: "/api/user/",
       auth: "/api/auth/",
+      apidocs: "/api-docs",
     };
     this.port = parseInt(process.env.PORT as string) || 3000;
 
@@ -29,6 +34,7 @@ class Server {
   }
 
   private init() {
+    generateDocs();
     this.middleware();
     this.routes();
   }
@@ -39,10 +45,13 @@ class Server {
   }
 
   private routes() {
-    this.app.use(teamRoutes); //recommend this.app.use(this.paths.teams, teamRoutes)
-    this.app.use(memberRoutes); //recommend this.app.use(this.paths.member, memberRoutes)
+    this.app.use(this.paths.teams, teamRoutes);
+    this.app.use(this.paths.member, memberRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
+    this.app.get(this.paths.apidocs, (req, res) => {
+      res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
+    });
   }
 
   public listen() {

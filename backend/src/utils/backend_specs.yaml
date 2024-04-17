@@ -5,7 +5,7 @@ info:
   title: CNC Portal
   version: "1.0"
 paths:
-  /teams:
+  /api/teams:
     get:
       summary: Fetch all Teams
       description: Returns all teams belonging to user
@@ -46,7 +46,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Team"
 
-  /teams/{id}:
+  /api/teams/{id}:
     get:
       summary: Get Team by ID
       description: Fetch team based on ID
@@ -91,7 +91,7 @@ paths:
         "200":
           description: OK
 
-  /members/{id}:
+  /api/members/{id}:
     put:
       summary: Update member by ID
       description: Update member by ID
