@@ -1,4 +1,5 @@
 import type { Team, Member } from '@/types/types'
+import { useOwnerAddressStore } from '@/stores/address'
 
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
@@ -29,6 +30,8 @@ export class FetchTeamAPI implements TeamAPI {
     }
   }
   async getTeam(id: string): Promise<Team | null> {
+    const ownerAddressStore = useOwnerAddressStore()
+
     const url = `http://localhost:3000/api/teams/${id}`
     const requestOptions = {
       method: 'POST',
@@ -36,7 +39,7 @@ export class FetchTeamAPI implements TeamAPI {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        address: 'user_address_321'
+        address: ownerAddressStore.getOwnerAddress()
       })
     }
 
@@ -54,13 +57,19 @@ export class FetchTeamAPI implements TeamAPI {
     }
   }
   async updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team> {
+    const ownerAddressStore = useOwnerAddressStore()
+
     const url = `http://localhost:3000/api/teams/${id}`
+    const requestData = {
+      ...updatedTeamData, // Spread the updated team data
+      address: ownerAddressStore.getOwnerAddress() // Add the owner address
+    }
     const requestOptions = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(updatedTeamData)
+      body: JSON.stringify(requestData)
     }
 
     try {
@@ -101,6 +110,8 @@ export class FetchTeamAPI implements TeamAPI {
     teamDesc: string,
     teamMembers: Partial<Member>[]
   ): Promise<Team> {
+    const ownerAddressStore = useOwnerAddressStore()
+
     const teamObject = {
       name: teamName,
       description: teamDesc,
@@ -109,7 +120,7 @@ export class FetchTeamAPI implements TeamAPI {
           data: teamMembers
         }
       },
-      address: 'user_address_321'
+      address: ownerAddressStore.getOwnerAddress()
     }
 
     const url = 'http://localhost:3000/api/teams'
