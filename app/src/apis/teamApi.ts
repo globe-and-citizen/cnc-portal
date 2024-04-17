@@ -65,6 +65,7 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team> {
     const ownerAddressStore = useOwnerAddressStore()
+    const token = AuthService.getToken()
 
     const url = `http://localhost:3000/api/teams/${id}`
     const requestData = {
@@ -74,9 +75,9 @@ export class FetchTeamAPI implements TeamAPI {
     const requestOptions = {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
-      Authorization: `Bearer ${AuthService.getToken()}`,
       body: JSON.stringify(requestData)
     }
 
@@ -96,9 +97,13 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `http://localhost:3000/api/teams/${id}`
+    const token = AuthService.getToken()
+
     const requestOptions = {
       method: 'DELETE',
-      Authorization: `Bearer ${AuthService.getToken()}`
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     }
 
     try {

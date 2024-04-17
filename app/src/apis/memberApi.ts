@@ -7,12 +7,14 @@ interface MemberAPI {
 }
 export class FetchMemberAPI implements MemberAPI {
   async createMembers(newMembers: Partial<Member>[], id: string): Promise<void> {
+    const token = AuthService.getToken()
+
     const requestOptions = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
-      Authorization: `Bearer ${AuthService.getToken()}`,
       body: JSON.stringify(newMembers)
     }
     try {
@@ -25,12 +27,14 @@ export class FetchMemberAPI implements MemberAPI {
     }
   }
   async updateMember(member: Partial<Member>, id: string): Promise<void> {
+    const token = AuthService.getToken()
+
     const requestOptions = {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
-      Authorization: `Bearer ${AuthService.getToken()}`,
       body: JSON.stringify({
         name: member.name,
         walletAddress: member.walletAddress
@@ -46,9 +50,12 @@ export class FetchMemberAPI implements MemberAPI {
     }
   }
   async deleteMember(id: string): Promise<void> {
+    const token = AuthService.getToken()
     const requestOptions = {
       method: 'DELETE',
-      Authorization: `Bearer ${AuthService.getToken()}`
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     }
 
     try {
