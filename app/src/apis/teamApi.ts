@@ -1,6 +1,8 @@
 import type { Team, Member } from '@/types/types'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
+import { BACKEND_URL } from '@/constant/index'
+
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
   getTeam(id: string): Promise<Team | null>
@@ -22,7 +24,7 @@ export class FetchTeamAPI implements TeamAPI {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/teams', requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/teams`, requestOptions)
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
@@ -38,7 +40,7 @@ export class FetchTeamAPI implements TeamAPI {
   async getTeam(id: string): Promise<Team | null> {
     const ownerAddressStore = useOwnerAddressStore()
     const token = AuthService.getToken()
-    const url = `http://localhost:3000/api/teams/${id}`
+    const url = `${BACKEND_URL}/api/teams/${id}`
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -67,7 +69,7 @@ export class FetchTeamAPI implements TeamAPI {
     const ownerAddressStore = useOwnerAddressStore()
     const token = AuthService.getToken()
 
-    const url = `http://localhost:3000/api/teams/${id}`
+    const url = `${BACKEND_URL}/api/teams/${id}`
     const requestData = {
       ...updatedTeamData, // Spread the updated team data
       address: ownerAddressStore.getOwnerAddress() // Add the owner address
@@ -96,7 +98,7 @@ export class FetchTeamAPI implements TeamAPI {
     }
   }
   async deleteTeam(id: string): Promise<void> {
-    const url = `http://localhost:3000/api/teams/${id}`
+    const url = `${BACKEND_URL}/api/teams/${id}`
     const token = AuthService.getToken()
 
     const requestOptions = {
@@ -138,7 +140,7 @@ export class FetchTeamAPI implements TeamAPI {
       address: ownerAddressStore.getOwnerAddress()
     }
 
-    const url = 'http://localhost:3000/api/teams'
+    const url = `${BACKEND_URL}/api/teams`
     const requestOptions = {
       method: 'POST',
       headers: {

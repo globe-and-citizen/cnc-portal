@@ -1,5 +1,7 @@
 import type { Member } from '@/types/types'
 import { AuthService } from '@/services/authService'
+import { BACKEND_URL } from '@/constant/index'
+
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
   updateMember(member: Member, id: string): Promise<void>
@@ -18,7 +20,7 @@ export class FetchMemberAPI implements MemberAPI {
       body: JSON.stringify(newMembers)
     }
     try {
-      const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
@@ -41,7 +43,7 @@ export class FetchMemberAPI implements MemberAPI {
       })
     }
     try {
-      const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
@@ -59,7 +61,7 @@ export class FetchMemberAPI implements MemberAPI {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
