@@ -25,9 +25,9 @@ jobs:
               run: npm install
               working-directory: ./contract
 
-            # - name: ⚒️ Run Compile
-            #   run: npm run compile
-            #   working-directory: ./contract
+            - name: ⚒️ Run Compile
+              run: npm run compile
+              working-directory: ./contract
 
             - name: </> Run Format Check
               run: npm run format-check
@@ -37,6 +37,6 @@ jobs:
               run: npm run lint
               working-directory: ./contract
 
-            # - name: 🧪 Run Test
-            #   run: npm run test
-            #   working-directory: ./contract
+            - name: 🧪 Run Test
+              run: npm run test
+              working-directory: ./contract
