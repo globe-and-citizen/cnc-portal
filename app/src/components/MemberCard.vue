@@ -35,7 +35,6 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import axios from 'axios'
 const showModal = ref(false)
 
 const nameInput = ref('')
@@ -47,24 +46,42 @@ walletInput.value = props.walletAddress
 console.log(nameInput.value)
 
 const deleteMember = async () => {
-  try {
-    const id = props.memberId
-    await axios.delete(`http://localhost:3000/api/member/${id}`)
-    window.location.reload()
-  } catch (error) {
-    console.log('Error deleting member', error)
+  const id = props.memberId
+  const requestOptions = {
+    method: 'DELETE'
   }
+
+  try {
+    const response = await fetch(`http://localhost:3000/member/${id}`, requestOptions)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('Error:', error)
+  }
+  window.location.reload()
 }
 const updateMember = async () => {
-  try {
-    const id = props.memberId
-    await axios.put(`http://localhost:3000/api/member/${id}`, {
+  const id = props.memberId
+  const requestOptions = {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
       name: nameInput.value,
       walletAddress: walletInput.value
     })
-    window.location.reload()
-  } catch (error) {
-    console.log('Error updating Member', error)
   }
+
+  try {
+    const response = await fetch(`http://localhost:3000/member/${id}`, requestOptions)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
+  } catch (error) {
+    console.error('Error:', error)
+  }
+  window.location.reload()
 }
 </script>

@@ -21,7 +21,6 @@ import TeamCard from '../components/TeamCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import axios from 'axios'
 const router = useRouter()
 import type { Team } from '@/types/types'
 interface Member {
@@ -34,14 +33,19 @@ const teams = ref<Team[]>([])
 
 // TODO Move this to API service
 onMounted(async () => {
+  const requestOptions = {
+    method: 'GET'
+  }
+
   try {
-    const response = await axios.get('http://localhost:3000/api/teams', {
-      data: { address: 'user_address_321' }
-    })
-    teams.value = response.data
+    const response = await fetch('http://localhost:3000/teams', requestOptions)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
+    teams.value = await response.json()
     console.log(teams.value)
   } catch (error) {
-    console.error('Error fetching data:', error)
+    console.error('Error:', error)
   }
 })
 function navigateToTeam(id: string) {
