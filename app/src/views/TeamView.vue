@@ -38,7 +38,7 @@ onMounted(async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/teams', requestOptions)
+    const response = await fetch('http://localhost:3000/api/teams', requestOptions)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }

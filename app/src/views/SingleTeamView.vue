@@ -100,7 +100,7 @@ onMounted(async () => {
   const id = route.params.id
 
   console.log('hi', id)
-  const url = `http://localhost:3000/teams/${id}`
+  const url = `http://localhost:3000/api/teams/${id}`
   const requestOptions = {
     method: 'POST',
     headers: {
@@ -147,7 +147,7 @@ const updateTeam = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
+    const response = await fetch(`http://localhost:3000/api/teams/${id}`, requestOptions)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
@@ -164,7 +164,7 @@ const deleteTeam = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
+    const response = await fetch(`http://localhost:3000/api/teams/${id}`, requestOptions)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }

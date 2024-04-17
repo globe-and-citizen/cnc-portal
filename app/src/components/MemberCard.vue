@@ -52,7 +52,7 @@ const deleteMember = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/member/${id}`, requestOptions)
+    const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
@@ -75,7 +75,7 @@ const updateMember = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/member/${id}`, requestOptions)
+    const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
