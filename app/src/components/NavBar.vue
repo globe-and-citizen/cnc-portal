@@ -105,7 +105,7 @@
 </template>
 <script setup lang="ts">
 import { useTipsStore } from '@/stores/tips'
-import { storeToRefs } from 'pinia';
+import { storeToRefs } from 'pinia'
 import { defineEmits, onMounted } from 'vue'
 
 defineEmits(['toggleSideButton'])
@@ -114,7 +114,6 @@ const { balance } = storeToRefs(tipsStore)
 
 onMounted(async () => {
   let test = await tipsStore.getBalance()
-  console.log(test);
-  
+  console.log(test)
 })
 </script>
