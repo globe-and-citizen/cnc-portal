@@ -1,6 +1,6 @@
 import type { Team, Member } from '@/types/types'
 import { useOwnerAddressStore } from '@/stores/address'
-
+import { AuthService } from '@/services/authService'
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
   getTeam(id: string): Promise<Team | null>
@@ -11,8 +11,14 @@ interface TeamAPI {
 
 export class FetchTeamAPI implements TeamAPI {
   async getAllTeams(): Promise<Team[]> {
+    const token = AuthService.getToken()
+
+    console.log(token)
     const requestOptions = {
-      method: 'GET'
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     }
 
     try {
@@ -31,12 +37,13 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async getTeam(id: string): Promise<Team | null> {
     const ownerAddressStore = useOwnerAddressStore()
-
+    const token = AuthService.getToken()
     const url = `http://localhost:3000/api/teams/${id}`
     const requestOptions = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}` // Include Authorization header here
       },
       body: JSON.stringify({
         address: ownerAddressStore.getOwnerAddress()
@@ -69,6 +76,7 @@ export class FetchTeamAPI implements TeamAPI {
       headers: {
         'Content-Type': 'application/json'
       },
+      Authorization: `Bearer ${AuthService.getToken()}`,
       body: JSON.stringify(requestData)
     }
 
@@ -89,7 +97,8 @@ export class FetchTeamAPI implements TeamAPI {
   async deleteTeam(id: string): Promise<void> {
     const url = `http://localhost:3000/api/teams/${id}`
     const requestOptions = {
-      method: 'DELETE'
+      method: 'DELETE',
+      Authorization: `Bearer ${AuthService.getToken()}`
     }
 
     try {
@@ -111,7 +120,8 @@ export class FetchTeamAPI implements TeamAPI {
     teamMembers: Partial<Member>[]
   ): Promise<Team> {
     const ownerAddressStore = useOwnerAddressStore()
-
+    const token = AuthService.getToken()
+    console.log('Tolem', token, 'Store', ownerAddressStore.getOwnerAddress())
     const teamObject = {
       name: teamName,
       description: teamDesc,
@@ -127,7 +137,8 @@ export class FetchTeamAPI implements TeamAPI {
     const requestOptions = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}` // Include Authorization header here
       },
       body: JSON.stringify(teamObject)
     }

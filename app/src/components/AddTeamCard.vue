@@ -140,7 +140,7 @@ const handleSubmit = async () => {
       // Handle errors
       console.error('Error creating team:', error)
     })
-  window.location.reload()
+  // window.location.reload()
 }
 const removeInput = () => {
   if (inputs.value.length > 1) {

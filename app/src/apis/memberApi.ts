@@ -1,5 +1,5 @@
 import type { Member } from '@/types/types'
-
+import { AuthService } from '@/services/authService'
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
   updateMember(member: Member, id: string): Promise<void>
@@ -12,6 +12,7 @@ export class FetchMemberAPI implements MemberAPI {
       headers: {
         'Content-Type': 'application/json'
       },
+      Authorization: `Bearer ${AuthService.getToken()}`,
       body: JSON.stringify(newMembers)
     }
     try {
@@ -29,6 +30,7 @@ export class FetchMemberAPI implements MemberAPI {
       headers: {
         'Content-Type': 'application/json'
       },
+      Authorization: `Bearer ${AuthService.getToken()}`,
       body: JSON.stringify({
         name: member.name,
         walletAddress: member.walletAddress
@@ -45,7 +47,8 @@ export class FetchMemberAPI implements MemberAPI {
   }
   async deleteMember(id: string): Promise<void> {
     const requestOptions = {
-      method: 'DELETE'
+      method: 'DELETE',
+      Authorization: `Bearer ${AuthService.getToken()}`
     }
 
     try {
