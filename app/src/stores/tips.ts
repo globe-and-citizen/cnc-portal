@@ -6,6 +6,7 @@ import { ToastType } from '@/types'
 import { useToastStore } from './toast'
 import type { AddressLike } from 'ethers'
 
+let provider: ethers.BrowserProvider
 export const useTipsStore = defineStore('tips', {
   state: () => ({
     contract: null as ethers.Contract | null,
@@ -25,12 +26,10 @@ export const useTipsStore = defineStore('tips', {
         return
       }
 
-      const provider = new ethers.BrowserProvider((window as any).ethereum)
+      provider = new ethers.BrowserProvider((window as any).ethereum)
       await provider.send('eth_requestAccounts', [])
       this.contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
       this.isWalletConnected = true
-
-      return (await provider.getSigner()).address
     },
     async pushTip(addresses: AddressLike[]) {
       const { show } = useToastStore()
@@ -45,9 +44,11 @@ export const useTipsStore = defineStore('tips', {
       this.pushTipLoading = true
 
       try {
-        await this.contract!.pushTip(addresses, {
+        const tx = await this.contract!.pushTip(addresses, {
           value: ethers.parseEther(this.totalTipAmount.toString())
         })
+        await tx.wait()
+
         show(ToastType.Success, 'Tip pushed successfully')
       } catch (error) {
         show(ToastType.Error, 'Failed to push tip')
@@ -68,9 +69,12 @@ export const useTipsStore = defineStore('tips', {
       this.sendTipLoading = true
 
       try {
-        await this.contract!.sendTip(addresses, {
+        const tx = await this.contract!.sendTip(addresses, {
           value: ethers.parseEther(this.totalTipAmount.toString())
         })
+        await tx.wait()
+        await this.getBalance()
+
         show(ToastType.Success, 'Tip sent successfully')
       } catch (error) {
         show(ToastType.Error, 'Failed to send tip')
@@ -80,10 +84,8 @@ export const useTipsStore = defineStore('tips', {
       }
     },
     async getBalance() {
-      let address: AddressLike | undefined
-      if (!this.isWalletConnected) {
-        address = await this.connectWallet()
-      }
+      if (!this.isWalletConnected) await this.connectWallet()
+      let address = (await provider.getSigner()).address
 
       this.balance = ethers.formatEther(await this.contract!.getBalance(address))
     },
@@ -98,12 +100,13 @@ export const useTipsStore = defineStore('tips', {
       }
 
       try {
-        await this.contract!.withdraw()
+        const tx = await this.contract!.withdraw()
+        await tx.wait()
+
+        await this.getBalance()
         show(ToastType.Success, 'Tips withdrawn successfully')
       } catch (error) {
         show(ToastType.Error, 'Failed to withdraw tips')
-      } finally {
-        await this.getBalance()
       }
     }
   }
