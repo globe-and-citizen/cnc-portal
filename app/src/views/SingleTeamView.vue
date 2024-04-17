@@ -81,7 +81,6 @@ import AddMemberCard from '@/components/AddMemberCard.vue'
 
 import type { Member, Team } from '@/types/types'
 
-import axios from 'axios'
 const route = useRoute()
 const router = useRouter()
 
@@ -101,15 +100,29 @@ onMounted(async () => {
   const id = route.params.id
 
   console.log('hi', id)
-  try {
-    const response = await axios.post(`http://localhost:3000/teams/${id}`, {
+  const url = `http://localhost:3000/teams/${id}`
+  const requestOptions = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
       address: 'user_address_321'
     })
-    team.value = response.data
+  }
+
+  try {
+    const response = await fetch(url, requestOptions)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
+    const responseData = await response.json() // Parsing JSON response
+
+    team.value = responseData
     cname.value = team.value.name
     cdesc.value = team.value.description
   } catch (error) {
-    console.error('Error fetching data:', error)
+    console.error('Error:', error)
   }
 })
 const updateTeamModalOpen = async () => {
@@ -118,37 +131,46 @@ const updateTeamModalOpen = async () => {
 }
 const updateTeam = async () => {
   const id = route.params.id
+  let teamObject = {
+    name: cname.value,
+    description: cdesc.value,
+    address: 'user_address_321'
+  }
+  console.log('Updated team object:', teamObject)
+
+  const requestOptions = {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(teamObject)
+  }
+
   try {
-    let teamObject = {
-      name: cname.value,
-      description: cdesc.value,
-      address: 'user_address_321'
+    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
     }
-    console.log('Updated team object:', teamObject)
-
-    let response = await axios.put(`http://localhost:3000/teams/${id}`, teamObject)
-
-    console.log('Response:', response.data)
-
     window.location.reload()
   } catch (error) {
-    console.error('Error updating data:', error)
+    console.error('Error:', error)
   }
 }
 
 const deleteTeam = async () => {
-  try {
-    const id = route.params.id
+  const id = route.params.id
+  const requestOptions = {
+    method: 'DELETE'
+  }
 
-    const response = await axios.delete(`http://localhost:3000/teams/${id}`, {
-      data: {
-        address: 'user_address_321'
-      }
-    })
-    console.log(response.data)
+  try {
+    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
     router.push('/teams')
   } catch (error) {
-    console.error('Error fetching data:', error)
+    console.error('Error:', error)
   }
 }
 </script>
