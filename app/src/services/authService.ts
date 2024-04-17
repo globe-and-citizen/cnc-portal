@@ -16,18 +16,17 @@ class AuthService {
   static async isAuthenticated(): Promise<boolean> {
     const token = this.getToken()
 
-    if (token !== null)
-        return await AuthAPI.veryToken(token)
+    if (token !== null) return await AuthAPI.veryToken(token)
 
     return false
   }
 
   static logout(): void {
-      localStorage.removeItem("authToken")
+    localStorage.removeItem('authToken')
   }
 
   static getToken(): string | null {
-      return localStorage.getItem("authToken")
+    return localStorage.getItem('authToken')
   }
 }
 
@@ -48,7 +47,7 @@ export class SIWEAuthService<T> extends AuthService implements IAuthService<T> {
     // Authentication logic of SIWE authentication
     const message = await this.messageCreator.create()
     const signature = await this.web3Library.requestSign(message)
-    const token = await this.authAPI.verifyPayloadAndGetToken({signature, message}, 'siwe')
+    const token = await this.authAPI.verifyPayloadAndGetToken({ signature, message }, 'siwe')
     localStorage.setItem('authToken', token)
 
     return token // For demonstration purposes only

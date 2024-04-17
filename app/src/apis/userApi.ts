@@ -1,4 +1,4 @@
-import { BACKEND_URL } from "@/utils/util";
+import { BACKEND_URL } from '@/utils/util'
 
 // Define a generic type for user data
 interface User {
@@ -19,20 +19,22 @@ interface UserAPI {
 // Implement UserService using Fetch API (or any other HTTP client)
 export class FetchUserAPI implements UserAPI {
   async getUser(userId: string): Promise<User> {
-    //const response = await fetch(`https://api.example.com/users/${userId}`);
-    const userData = /*await response.json()*/ {}
+    const response = await fetch(`${BACKEND_URL}/api/user/${userId}`, {
+      method: 'GET'
+    })
+    const userData = await response.json()
     return userData
   }
 
   async createUser(user: User): Promise<User> {
     const response = await fetch(`${BACKEND_URL}/api/user/${user.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(user),
-      });
-    const createdUser = await response.json(); /*{ nonce: `JdqIpQPlVJ0Jyv6yu` }*/
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(user)
+    })
+    const createdUser = await response.json() /*{ nonce: `JdqIpQPlVJ0Jyv6yu` }*/
     return createdUser
   }
 
@@ -53,7 +55,7 @@ export class FetchUserAPI implements UserAPI {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
-      },
+      }
     })
 
     const resObj = await response.json()

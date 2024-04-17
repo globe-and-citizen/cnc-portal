@@ -23,7 +23,7 @@ export async function signInWithEthereum() {
     const address = await ethersJsAdapter.getAddress()
     const nonce = await fetchUserApi.getNonce(address)
     const statement = 'Sign in with Ethereum to the app.'
-    let siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
+    const siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
     await siweAuthService.authenticateUser()

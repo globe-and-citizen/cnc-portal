@@ -1,4 +1,4 @@
-import { BACKEND_URL } from "@/utils/util";
+import { BACKEND_URL } from '@/utils/util'
 
 export interface IAuthAPI {
   verifyPayloadAndGetToken(payload: any, methodDetails: any): Promise<string>
@@ -7,9 +7,9 @@ export interface IAuthAPI {
 export class AuthAPI {
   static async veryToken(token: string): Promise<boolean> {
     const response = await fetch(`${BACKEND_URL}/api/auth/token`, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     })
 
@@ -34,14 +34,14 @@ export class SiweAuthAPI extends AuthAPI implements IAuthAPI {
   async verifyPayloadAndGetToken(payload: any, methodDetails: any): Promise<string> {
     // Make a call to an API endpoint
     const response = await fetch(`${BACKEND_URL}/api/auth/${methodDetails}`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
-    });
+    })
     const resObj = await response.json()
-    
+
     if (resObj.success) {
       const { accessToken: token } = resObj // Assuming the response contains a token field
       return token
