@@ -3,6 +3,7 @@ import { SiweAuthAPI } from '@/apis/authApi'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
+import router from '@/router'
 
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = new EthersJsAdapter()
@@ -27,7 +28,7 @@ export async function signInWithEthereum() {
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
     await siweAuthService.authenticateUser()
-
+    router.push('/teams')
     /*console.log('authToken: ', SIWEAuthService.getToken())
     console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())
 
