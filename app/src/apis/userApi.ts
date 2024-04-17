@@ -1,4 +1,4 @@
-import { BACKEND_URL } from '@/utils/util'
+import { BACKEND_URL } from '@/constant/index'
 
 // Define a generic type for user data
 interface User {

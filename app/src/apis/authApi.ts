@@ -1,4 +1,4 @@
-import { BACKEND_URL } from '@/utils/util'
+import { BACKEND_URL } from '@/constant/index'
 
 export interface IAuthAPI {
   verifyPayloadAndGetToken(payload: any, methodDetails: any): Promise<string>
