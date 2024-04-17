@@ -93,6 +93,10 @@
 </template>
 <script setup lang="ts">
 import { ref, toRaw, defineProps } from 'vue'
+import { FetchMemberAPI } from '@/apis/memberApi'
+
+const memberApi = new FetchMemberAPI()
+
 const showModal = ref(false)
 const props = defineProps<{ id: string }>() // Define the type of props explicitly
 const inputs = ref([{ name: '', walletAddress: '' }])
@@ -107,23 +111,15 @@ const removeInput = () => {
 const addMembers = async () => {
   let newMembers = toRaw(inputs.value)
   let id = props.id
-  console.log(id)
-  const requestOptions = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(newMembers)
-  }
 
-  try {
-    const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-  } catch (error) {
-    console.error('Error:', error)
-  }
-  window.location.reload()
+  await memberApi
+    .createMembers(newMembers, id)
+    .then((response) => {
+      console.log('Created Members', response)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error creating members:', error)
+    })
 }
 </script>
