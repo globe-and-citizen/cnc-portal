@@ -1,8 +1,30 @@
+import { BACKEND_URL } from "@/utils/util";
+
 export interface IAuthAPI {
   verifyPayloadAndGetToken(payload: any, methodDetails: any): Promise<string>
 }
 
-export class SiweAuthAPI implements IAuthAPI {
+export class AuthAPI {
+  static async veryToken(token: string): Promise<boolean> {
+    const response = await fetch(`${BACKEND_URL}/api/auth/token`, {
+      method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    const resObj = await response.json()
+
+    if (resObj.success) {
+      return true
+    } else {
+      //return false
+      throw new Error(resObj.message)
+    }
+  }
+}
+
+export class SiweAuthAPI extends AuthAPI implements IAuthAPI {
   /*private httpClient: HttpClient;
   
     constructor(httpClient: HttpClient) {
@@ -10,13 +32,21 @@ export class SiweAuthAPI implements IAuthAPI {
     }*/
 
   async verifyPayloadAndGetToken(payload: any, methodDetails: any): Promise<string> {
-    console.log(
-      '[app][src][apis][authApi.ts][SiweAuthAPI][verifyPayloadAndGetToken] payload: ',
-      payload
-    )
     // Make a call to an API endpoint
-    //const response = await this.httpClient.post('https://dummy-api.example.com/auth', { payload, methodDetails });
-    const token = 'dummy token' // Assuming the response contains a token field
-    return token
+    const response = await fetch(`${BACKEND_URL}/api/auth/${methodDetails}`, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    const resObj = await response.json()
+    
+    if (resObj.success) {
+      const { accessToken: token } = resObj // Assuming the response contains a token field
+      return token
+    } else {
+      throw new Error(resObj.message)
+    }
   }
 }
