@@ -46,16 +46,14 @@
           role="button"
           class="btn w-full text-gray-500 flex items-center justify-between"
         >
-          <div class="flex items-center space-x-1">
+          <div class="flex flex-row justify-between items-center gap-3 truncate">
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
-            <span class="text-black font-bold font-mono">$9000</span>
+            <span class="text-black font-bold font-mono">{{ balance }}</span>
             <span class="text-black font-bold font-mono">ETH</span>
           </div>
-          <span class="text-gray-700 border-l border-gray-700 px-2">Units</span>
         </div>
         <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48">
-          <li><a>Unit 1</a></li>
-          <li><a>Unit 2</a></li>
+          <li><a @click="tipsStore.withdrawTips()">Withdraw</a></li>
         </ul>
       </div>
 
@@ -106,6 +104,17 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { defineEmits } from 'vue'
+import { useTipsStore } from '@/stores/tips'
+import { storeToRefs } from 'pinia';
+import { defineEmits, onMounted } from 'vue'
+
 defineEmits(['toggleSideButton'])
+const tipsStore = useTipsStore()
+const { balance } = storeToRefs(tipsStore)
+
+onMounted(async () => {
+  let test = await tipsStore.getBalance()
+  console.log(test);
+  
+})
 </script>
