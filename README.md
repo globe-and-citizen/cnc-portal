@@ -47,7 +47,7 @@ See the **Environment Variables** section for the relevant `DATABASE_URL` envron
 
 ### Backend
 
-In the `backend` folder, create a `.env` file with the following variables:
+In the `./backend` folder, create a `.env` file with the following variables:
 
 - **DATABASE_URL**: A valid PostgreSQL database URL. Example: 
 `DATABASE_URL=postgres://username:password@localhost:5432/database_name`
@@ -55,18 +55,18 @@ In the `backend` folder, create a `.env` file with the following variables:
 - **SECRET_KEY**: An HS256 compatible key for securing the application. Example: 
 `SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`
 
-- **FRONTEND_URL**: The URL for the frontend application. Example: 
+- **FRONTEND_URL**: The URL for the frontend application. Example:
 `FRONTEND_URL=http://localhost:5173`
 
 
 ### Frontend
 
-In the `app` folder, create a `.env` file with the following variable:
+In the `./app` folder, create a `.env` file with the following variable:
 
 - **VITE_APP_BACKEND_URL**: The URL for the backend API. Example: 
 `VITE_APP_BACKEND_URL=http://localhost:8000`
 
-## Running the aaplication
+## Running the application
 
 ### 1- Run docker containers
 
