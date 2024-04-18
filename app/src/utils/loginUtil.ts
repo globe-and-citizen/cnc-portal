@@ -31,6 +31,7 @@ export async function signInWithEthereum() {
     await siweAuthService.authenticateUser()
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
+
     /*console.log('authToken: ', SIWEAuthService.getToken())
     console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())
 
