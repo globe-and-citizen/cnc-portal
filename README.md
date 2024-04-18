@@ -32,11 +32,7 @@ After running this command, you should be able to connect to your PostgreSQL dat
 
 `npx prisma migrate dev --name init`
 
-#### Environment variables
-
-The .env file should contain the variable in the format:
-
-`DATABASE_URL="ppostgres://<username>:<password>@<host>:<port>/<database_name>"`
+See the **Environment Variables** section for the relevant `DATABASE_URL` envronment variable.
 
 ## Folder structure
 
@@ -46,6 +42,31 @@ The .env file should contain the variable in the format:
 ├── backend
 └── contract
 ```
+
+## Environment Variables
+
+### Backend
+
+In the `./backend` folder, create a `.env` file with the following variables:
+
+- **DATABASE_URL**: A valid PostgreSQL database URL. Example: 
+`DATABASE_URL=postgres://username:password@localhost:5432/database_name`
+
+- **SECRET_KEY**: An HS256 compatible key for securing the application. Example: 
+`SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`
+
+- **FRONTEND_URL**: The URL for the frontend application. Example:
+`FRONTEND_URL=http://localhost:5173`
+
+
+### Frontend
+
+In the `./app` folder, create a `.env` file with the following variable:
+
+- **VITE_APP_BACKEND_URL**: The URL for the backend API. Example: 
+`VITE_APP_BACKEND_URL=http://localhost:8000`
+
+## Running the application
 
 ### 1- Run docker containers
 

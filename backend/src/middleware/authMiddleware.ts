@@ -30,7 +30,12 @@ const authorizeUser = async (
 
     const secretKey = process.env.SECRET_KEY as string;
 
-    const payload = jwt.verify(token, secretKey);
+    let payload
+    try {
+      payload = jwt.verify(token, secretKey);
+    } catch(error) {
+      return errorResponse(401, error, res)
+    }
 
     if (!payload) {
       return errorResponse(401, "Unauthorized: Missing jwt payload", res);

@@ -19,32 +19,22 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 }
 
 export async function signInWithEthereum() {
-  const address = await ethersJsAdapter.getAddress()
+  try {
+    const address = await ethersJsAdapter.getAddress()
+    const nonce = await fetchUserApi.getNonce(address)
+    const statement = 'Sign in with Ethereum to the app.'
+    const siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
+    const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
-  //Get latest nonce from database to check if user is already registered
-  //If nonce === undefined it means the user is not yet registered,
-  //create a new user, otherwise use the latest value to sign
-  const nonce = (await fetchUserApi.getUser(address)).nonce
-  const statement = 'Sign in with Ethereum to the app.'
-  let siweMessageCreator
+    await siweAuthService.authenticateUser()
 
-  if (nonce) {
-    siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
-  } else {
-    //Register or create new user here
-    const user = await fetchUserApi.createUser({ id: address })
-    siweMessageCreator = createSiweMessageCreator(address, statement, user.nonce)
+    /*console.log('authToken: ', SIWEAuthService.getToken())
+    console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())
+
+    SIWEAuthService.logout()
+
+    console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())*/
+  } catch (error) {
+    console.log('[app][src][utils][loginUtil.ts][signInWithEthereum] Error', error)
   }
-
-  const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
-
-  //Authenticate or login user here
-  await siweAuthService.authenticateUser()
-
-  console.log('authToken: ', localStorage.getItem('authToken'))
-  console.log('isAuthenticated: ', siweAuthService.isAuthenticated())
-
-  siweAuthService.logout()
-
-  console.log('isAuthenticated: ', siweAuthService.isAuthenticated())
 }
