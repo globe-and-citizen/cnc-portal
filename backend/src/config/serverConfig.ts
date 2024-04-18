@@ -12,6 +12,7 @@ import authRoutes from "../routes/authRoutes";
 
 //import document generation util
 import { generateDocs } from "../utils/swagger";
+import { authorizeUser } from "../middleware/authMiddleware";
 const path = require("path");
 
 class Server {
@@ -41,12 +42,13 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    this.app.use(cors({origin: (process.env.FRONTEND_URL as string)}));
+    this.app.use(cors({ origin: process.env.FRONTEND_URL as string }));
+
   }
 
   private routes() {
-    this.app.use(this.paths.teams, teamRoutes);
-    this.app.use(this.paths.member, memberRoutes);
+    this.app.use(this.paths.teams, authorizeUser, teamRoutes);
+    this.app.use(this.paths.member, authorizeUser, memberRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
     this.app.get(this.paths.apidocs, (req, res) => {

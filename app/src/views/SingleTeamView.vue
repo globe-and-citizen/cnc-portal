@@ -134,8 +134,7 @@ const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
     name: cname.value,
-    description: cdesc.value,
-    address: 'user_address_321'
+    description: cdesc.value
   }
   teamApi
     .updateTeam(String(id), teamObject)
