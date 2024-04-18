@@ -14,11 +14,11 @@ interface TeamAPI {
 export class FetchTeamAPI implements TeamAPI {
   async getAllTeams(): Promise<Team[]> {
     const token = AuthService.getToken()
-
-    console.log(token)
+    const ownerAddressStore = useOwnerAddressStore()
     const requestOptions = {
       method: 'GET',
       headers: {
+        ownerAddress: ownerAddressStore.ownerAddress,
         Authorization: `Bearer ${token}`
       }
     }
@@ -42,14 +42,12 @@ export class FetchTeamAPI implements TeamAPI {
     const token = AuthService.getToken()
     const url = `${BACKEND_URL}/api/teams/${id}`
     const requestOptions = {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` // Include Authorization header here
-      },
-      body: JSON.stringify({
-        address: ownerAddressStore.ownerAddress
-      })
+        Authorization: `Bearer ${token}`,
+        ownerAddress: ownerAddressStore.ownerAddress
+      }
     }
 
     try {
