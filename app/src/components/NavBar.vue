@@ -106,15 +106,7 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { AuthService } from '@/services/authService'
 import { defineEmits } from 'vue'
-import { useOwnerAddressStore } from '@/stores/address'
-const ownerAddressStore = useOwnerAddressStore()
-
+import { logout } from '@/utils/navBarUtil'
 defineEmits(['toggleSideButton'])
-const logout = () => {
-  AuthService.logout()
-  ownerAddressStore.clearOwnerAddress()
-  window.location.reload()
-}
 </script>
