@@ -17,6 +17,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     if (!signature)
       return errorResponse(401, "Auth error: Missing signature", res);
 
+    console.log("[src][controllers][authController.ts][authenticateSiwe] signature: ", signature)
     let {address, nonce} = extractAddressAndNonce(message)
 
     //Get nonce from user data from database
@@ -29,7 +30,11 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     //Very the data
     const SIWEObject = new SiweMessage(message);
 
-    await SIWEObject.verify({ signature, nonce });
+    try {
+      await SIWEObject.verify({ signature, nonce });
+    } catch(error) {
+      return errorResponse(401, (error as any).error.type, res)
+    }
 
     //Update nonce for user and persist in database
     nonce = generateNonce();

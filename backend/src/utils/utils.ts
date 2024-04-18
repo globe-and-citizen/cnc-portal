@@ -14,7 +14,7 @@ export const errorResponse = (code: number, error: any, res: Response) => {
   } else {
     return res.status(code).json({
       success: false,
-      message: "Unknown server error has occured",
+      message: "Internal server error has occured",
     });
   }
 };
