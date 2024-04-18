@@ -10,9 +10,6 @@ export const useOwnerAddressStore = defineStore({
       this.ownerAddress = address
       localStorage.setItem('ownerAddress', address) // Save owner address to localStorage
     },
-    getOwnerAddress() {
-      return this.ownerAddress
-    },
     clearOwnerAddress() {
       this.ownerAddress = ''
       localStorage.removeItem('ownerAddress') // Remove owner address from localStorage

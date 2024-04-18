@@ -48,7 +48,7 @@ export class FetchTeamAPI implements TeamAPI {
         Authorization: `Bearer ${token}` // Include Authorization header here
       },
       body: JSON.stringify({
-        address: ownerAddressStore.getOwnerAddress()
+        address: ownerAddressStore.ownerAddress
       })
     }
 
@@ -72,7 +72,7 @@ export class FetchTeamAPI implements TeamAPI {
     const url = `${BACKEND_URL}/api/teams/${id}`
     const requestData = {
       ...updatedTeamData, // Spread the updated team data
-      address: ownerAddressStore.getOwnerAddress() // Add the owner address
+      address: ownerAddressStore.ownerAddress
     }
     const requestOptions = {
       method: 'PUT',
@@ -128,7 +128,6 @@ export class FetchTeamAPI implements TeamAPI {
   ): Promise<Team> {
     const ownerAddressStore = useOwnerAddressStore()
     const token = AuthService.getToken()
-    console.log('Tolem', token, 'Store', ownerAddressStore.getOwnerAddress())
     const teamObject = {
       name: teamName,
       description: teamDesc,
@@ -137,7 +136,7 @@ export class FetchTeamAPI implements TeamAPI {
           data: teamMembers
         }
       },
-      address: ownerAddressStore.getOwnerAddress()
+      address: ownerAddressStore.ownerAddress
     }
 
     const url = `${BACKEND_URL}/api/teams`
