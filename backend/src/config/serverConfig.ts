@@ -10,9 +10,9 @@ import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 //#endregion routing modules
 
-//import document generation util
-import { generateDocs } from "../utils/swagger";
+
 import { authorizeUser } from "../middleware/authMiddleware";
+
 const path = require("path");
 
 class Server {
@@ -35,7 +35,6 @@ class Server {
   }
 
   private init() {
-    generateDocs();
     this.middleware();
     this.routes();
   }
@@ -43,7 +42,6 @@ class Server {
   private middleware() {
     this.app.use(express.json());
     this.app.use(cors({ origin: process.env.FRONTEND_URL as string }));
-
   }
 
   private routes() {
