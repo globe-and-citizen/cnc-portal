@@ -23,28 +23,13 @@
         </button>
       </div>
 
-      <!-- <button @click="$emit('toggleSide')">Toggle Sidebar</button> -->
-    </div>
-    <div class="navbar-center">
-      <div class="dropdown bg-gray-400 w-96 rounded-full">
-        <div class="grow flex">
-          <div tabindex="0" role="button" class="btn w-full text-gray-500 flex items-center">
-            Select Team
-            <i class="fas fa-chevron-down ml-auto"></i>
-          </div>
-        </div>
-        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-96">
-          <li><a>Team 1</a></li>
-          <li><a>Team 2</a></li>
-        </ul>
-      </div>
     </div>
     <div class="navbar-end">
-      <div class="dropdown bg-gray-400 w-48 rounded-full">
+      <div  class="dropdown  w-48 rounded-full">
         <div
           tabindex="0"
           role="button"
-          class="btn w-full text-gray-500 flex items-center justify-between"
+          class="btn w-full text-gray-500 flex items-center justify-between mb-2"
         >
           <div class="flex flex-row justify-between items-center gap-3 truncate">
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
@@ -53,7 +38,7 @@
           </div>
         </div>
         <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48">
-          <li><a @click="tipsStore.withdrawTips()">Withdraw</a></li>
+          <li><a @click="tipsStore.withdrawTips()">Withdraw Tips</a></li>
         </ul>
       </div>
 
