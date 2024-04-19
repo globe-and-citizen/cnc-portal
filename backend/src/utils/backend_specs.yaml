@@ -11,8 +11,14 @@ paths:
       description: Returns all teams belonging to user
       parameters:
         - $ref: "#/components/parameters/OwnerID"
+        - in: header
+          name: ownerAddress
+          schema:
+            type: string
+          required: true
       tags:
         - Teams
+
       responses:
         "200":
           description: OK
@@ -54,6 +60,11 @@ paths:
         - Teams
       parameters:
         - $ref: "#/components/parameters/TeamID"
+        - in: header
+          name: ownerAddress
+          schema:
+            type: string
+          required: true
       responses:
         "200":
           description: OK

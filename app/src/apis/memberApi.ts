@@ -1,4 +1,6 @@
 import type { Member } from '@/types/types'
+import { AuthService } from '@/services/authService'
+import { BACKEND_URL } from '@/constant/index'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
@@ -7,15 +9,18 @@ interface MemberAPI {
 }
 export class FetchMemberAPI implements MemberAPI {
   async createMembers(newMembers: Partial<Member>[], id: string): Promise<void> {
+    const token = AuthService.getToken()
+
     const requestOptions = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(newMembers)
     }
     try {
-      const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
@@ -24,10 +29,13 @@ export class FetchMemberAPI implements MemberAPI {
     }
   }
   async updateMember(member: Partial<Member>, id: string): Promise<void> {
+    const token = AuthService.getToken()
+
     const requestOptions = {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
         name: member.name,
@@ -35,7 +43,7 @@ export class FetchMemberAPI implements MemberAPI {
       })
     }
     try {
-      const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
@@ -44,12 +52,16 @@ export class FetchMemberAPI implements MemberAPI {
     }
   }
   async deleteMember(id: string): Promise<void> {
+    const token = AuthService.getToken()
     const requestOptions = {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/member/${id}`, requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }

@@ -10,7 +10,7 @@ const teamRoutes = express.Router();
 
 teamRoutes.post("/", addTeam);
 teamRoutes.get("/", getAllTeams);
-teamRoutes.post("/:id", getTeam);
+teamRoutes.get("/:id", getTeam);
 teamRoutes.put("/:id", updateTeam);
 teamRoutes.delete("/:id", deleteTeam);
 

@@ -48,7 +48,7 @@ const getTeam = async (req: Request, res: Response) => {
     if (!team) {
       return res.status(404).json({ error: "Team not found" });
     }
-    if (team.ownerId !== req.body.address) {
+    if (team.ownerId !== req.headers.owneraddress) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     res.status(200).json(team);
@@ -63,10 +63,11 @@ const getAllTeams = async (req: Request, res: Response) => {
   /* 
   #swagger.tags = ['Teams']
   */
+  const ownerId = String(req.headers.owneraddress);
   try {
     const teams = await prisma.team.findMany({
       where: {
-        ownerId: req.body.address,
+        ownerId: ownerId,
       },
     });
     res.status(200).json(teams);
