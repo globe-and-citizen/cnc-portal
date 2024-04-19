@@ -1,5 +1,5 @@
 <template>
-  <div class="card w-80 bg-white ml-5 mt-5 flex justify-center items-center">
+  <div class="card w-80 bg-white flex justify-center items-center">
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Team</h1>
 
