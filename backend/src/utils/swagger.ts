@@ -16,3 +16,4 @@ const generateDocs = () => {
     }
   );
 };
+generateDocs();
