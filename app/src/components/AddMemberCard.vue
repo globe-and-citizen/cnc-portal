@@ -38,7 +38,7 @@
         <label class="input input-bordered flex items-center gap-2 input-md">
           <input
             type="text"
-            class="grow"
+            class="w-24"
             v-model="input.name"
             :placeholder="'Member Name ' + (index + 1)"
           />
