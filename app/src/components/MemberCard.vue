@@ -21,7 +21,7 @@
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-        <input type="text" class="grow" v-model="nameInput" />
+        <input type="text" class="w-24" v-model="nameInput" />
         |
         <input type="text" class="grow" v-model="walletInput" />
       </label>
