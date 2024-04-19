@@ -12,7 +12,7 @@ interface IAuthService<T> {
 }
 
 //Class providing default implementations for auth service
-class AuthService {
+export class AuthService {
   static async isAuthenticated(): Promise<boolean> {
     const token = this.getToken()
 

@@ -1,4 +1,7 @@
 import type { Team, Member } from '@/types/types'
+import { useOwnerAddressStore } from '@/stores/address'
+import { AuthService } from '@/services/authService'
+import { BACKEND_URL } from '@/constant/index'
 
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
@@ -10,12 +13,18 @@ interface TeamAPI {
 
 export class FetchTeamAPI implements TeamAPI {
   async getAllTeams(): Promise<Team[]> {
+    const token = AuthService.getToken()
+    const ownerAddressStore = useOwnerAddressStore()
     const requestOptions = {
-      method: 'GET'
+      method: 'GET',
+      headers: {
+        ownerAddress: ownerAddressStore.ownerAddress,
+        Authorization: `Bearer ${token}`
+      }
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/teams', requestOptions)
+      const response = await fetch(`${BACKEND_URL}/api/teams`, requestOptions)
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
@@ -29,15 +38,16 @@ export class FetchTeamAPI implements TeamAPI {
     }
   }
   async getTeam(id: string): Promise<Team | null> {
-    const url = `http://localhost:3000/api/teams/${id}`
+    const ownerAddressStore = useOwnerAddressStore()
+    const token = AuthService.getToken()
+    const url = `${BACKEND_URL}/api/teams/${id}`
     const requestOptions = {
-      method: 'POST',
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        address: 'user_address_321'
-      })
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ownerAddress: ownerAddressStore.ownerAddress
+      }
     }
 
     try {
@@ -54,13 +64,21 @@ export class FetchTeamAPI implements TeamAPI {
     }
   }
   async updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team> {
-    const url = `http://localhost:3000/api/teams/${id}`
+    const ownerAddressStore = useOwnerAddressStore()
+    const token = AuthService.getToken()
+
+    const url = `${BACKEND_URL}/api/teams/${id}`
+    const requestData = {
+      ...updatedTeamData, // Spread the updated team data
+      address: ownerAddressStore.ownerAddress
+    }
     const requestOptions = {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify(updatedTeamData)
+      body: JSON.stringify(requestData)
     }
 
     try {
@@ -78,9 +96,14 @@ export class FetchTeamAPI implements TeamAPI {
     }
   }
   async deleteTeam(id: string): Promise<void> {
-    const url = `http://localhost:3000/api/teams/${id}`
+    const url = `${BACKEND_URL}/api/teams/${id}`
+    const token = AuthService.getToken()
+
     const requestOptions = {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     }
 
     try {
@@ -101,6 +124,8 @@ export class FetchTeamAPI implements TeamAPI {
     teamDesc: string,
     teamMembers: Partial<Member>[]
   ): Promise<Team> {
+    const ownerAddressStore = useOwnerAddressStore()
+    const token = AuthService.getToken()
     const teamObject = {
       name: teamName,
       description: teamDesc,
@@ -109,14 +134,15 @@ export class FetchTeamAPI implements TeamAPI {
           data: teamMembers
         }
       },
-      address: 'user_address_321'
+      address: ownerAddressStore.ownerAddress
     }
 
-    const url = 'http://localhost:3000/api/teams'
+    const url = `${BACKEND_URL}/api/teams`
     const requestOptions = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}` // Include Authorization header here
       },
       body: JSON.stringify(teamObject)
     }

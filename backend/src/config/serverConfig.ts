@@ -10,6 +10,9 @@ import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 //#endregion routing modules
 
+
+import { authorizeUser } from "../middleware/authMiddleware";
+
 const path = require("path");
 
 class Server {
@@ -42,8 +45,8 @@ class Server {
   }
 
   private routes() {
-    this.app.use(this.paths.teams, teamRoutes);
-    this.app.use(this.paths.member, memberRoutes);
+    this.app.use(this.paths.teams, authorizeUser, teamRoutes);
+    this.app.use(this.paths.member, authorizeUser, memberRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
     this.app.get(this.paths.apidocs, (req, res) => {
