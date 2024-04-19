@@ -22,22 +22,22 @@
           </svg>
         </button>
       </div>
-
     </div>
-    <div class="navbar-end">
-      <div  class="dropdown  w-48 rounded-full">
-        <div
-          tabindex="0"
-          role="button"
-          class="btn w-full text-gray-500 flex items-center justify-between mb-2"
-        >
-          <div class="flex flex-row justify-between items-center gap-3 truncate">
+    <div class="navbar-end gap-2">
+      <div class="dropdown w-48 rounded-full">
+        <div tabindex="0" role="button" class="">
+          <div class="btn w-full flex flex-row justify-between text-gray-500">
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
-            <span class="text-black font-bold font-mono">{{ balance }}</span>
-            <span class="text-black font-bold font-mono">ETH</span>
+            <div>
+              <span class="text-black font-bold font-mono">{{ balance }}</span>
+              <span class="ml-2 text-black font-bold font-mono">ETH</span>
+            </div>
           </div>
         </div>
-        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48">
+        <ul
+          tabindex="0"
+          class="mt-3 dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48"
+        >
           <li><a @click="tipsStore.withdrawTips()">Withdraw Tips</a></li>
         </ul>
       </div>
@@ -62,8 +62,8 @@
         </div>
       </button>
       <div class="dropdown dropdown-end">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-          <div class="w-10 rounded-full">
+        <div tabindex="0" role="button" class="avatar">
+          <div class="w-10 rounded-full flex justify-center">
             <img
               alt="Tailwind CSS Navbar component"
               src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
@@ -103,3 +103,5 @@ onMounted(async () => {
   console.log(test)
 })
 </script>
+
+<style scoped></style>
