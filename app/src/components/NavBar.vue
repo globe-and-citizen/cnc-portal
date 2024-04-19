@@ -96,7 +96,7 @@
             </a>
           </li>
           <li><a>Settings</a></li>
-          <li><a>Logout</a></li>
+          <li><a @click="logout()">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -107,6 +107,7 @@
 import { useTipsStore } from '@/stores/tips'
 import { storeToRefs } from 'pinia'
 import { defineEmits, onMounted } from 'vue'
+import { logout } from '@/utils/navBarUtil'
 
 defineEmits(['toggleSideButton'])
 const tipsStore = useTipsStore()

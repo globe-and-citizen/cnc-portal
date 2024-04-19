@@ -4,6 +4,8 @@ import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 
+import { AuthService } from '@/services/authService'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -44,5 +46,9 @@ const router = createRouter({
     }
   ]
 })
-
+router.beforeEach(async (to, from) => {
+  if (!(await AuthService.isAuthenticated()) && to.name !== 'login') {
+    return { name: 'login' }
+  }
+})
 export default router
