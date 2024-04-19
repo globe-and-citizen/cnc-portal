@@ -12,10 +12,10 @@ defineProps<{ addresses: AddressLike[] }>()
 </script>
 
 <template>
-  <div class="card bg-white shadow-xl flex flex-row justify-around my-2 p-6">
-    <div class="flex flex-col justify-center">
+  <div class="card bg-white shadow-xl flex flex-row justify-around my-2 p-6 gap-6">
+    <div class="grow flex flex-col justify-center">
       <label for="tip-amount" class="text-center">Total Amount</label>
-      <div class="w-[640px] flex flex-col justify-between m-6 self-center">
+      <div class="w-full flex flex-col justify-between m-6 self-center">
         <input
           type="text"
           placeholder="Input tip amount per member"
