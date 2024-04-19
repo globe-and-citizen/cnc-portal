@@ -6,7 +6,7 @@ This project is a contract registery for CNC.
 
 Inside we have the following contracts:
 
-### Tip.sol
+### Tips.sol
 
 A contract that allows users to tip to a list of addresses.
 There is two ways to tip, one is by sending a tip to a list of address directly(called **Push Tips**) and the other is by sending a tip to a list of addresses balance in the smart contract (called **Send Tips**).

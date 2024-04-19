@@ -10,6 +10,7 @@
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "lint": "npx eslint . --ext .ts",
+    "format": "prettier --write .",
     "format-check": "npx prettier --check ."
   },
   "devDependencies": {

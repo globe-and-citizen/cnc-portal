@@ -18,16 +18,8 @@
       },
       "outputSelection": {
         "*": {
-          "*": [
-            "abi",
-            "evm.bytecode",
-            "evm.deployedBytecode",
-            "evm.methodIdentifiers",
-            "metadata"
-          ],
-          "": [
-            "ast"
-          ]
+          "*": ["abi", "evm.bytecode", "evm.deployedBytecode", "evm.methodIdentifiers", "metadata"],
+          "": ["ast"]
         }
       }
     }
@@ -38,9 +30,7 @@
         "ast": {
           "absolutePath": "contracts/Tips.sol",
           "exportedSymbols": {
-            "Tips": [
-              208
-            ]
+            "Tips": [208]
           },
           "id": 209,
           "license": "MIT",
@@ -48,12 +38,7 @@
           "nodes": [
             {
               "id": 1,
-              "literals": [
-                "solidity",
-                "^",
-                "0.8",
-                ".24"
-              ],
+              "literals": ["solidity", "^", "0.8", ".24"],
               "nodeType": "PragmaDirective",
               "src": "33:24:0"
             },
@@ -65,9 +50,7 @@
               "contractKind": "contract",
               "fullyImplemented": true,
               "id": 208,
-              "linearizedBaseContracts": [
-                208
-              ],
+              "linearizedBaseContracts": [208],
               "name": "Tips",
               "nameLocation": "70:4:0",
               "nodeType": "ContractDefinition",
@@ -480,9 +463,7 @@
                     "src": "581:414:0",
                     "statements": [
                       {
-                        "assignments": [
-                          42
-                        ],
+                        "assignments": [42],
                         "declarations": [
                           {
                             "constant": false,
@@ -595,9 +576,7 @@
                           "src": "731:168:0",
                           "statements": [
                             {
-                              "assignments": [
-                                61
-                              ],
+                              "assignments": [61],
                               "declarations": [
                                 {
                                   "constant": false,
@@ -812,10 +791,7 @@
                                   "id": 72,
                                   "name": "require",
                                   "nodeType": "Identifier",
-                                  "overloadedDeclarations": [
-                                    -18,
-                                    -18
-                                  ],
+                                  "overloadedDeclarations": [-18, -18],
                                   "referencedDeclaration": -18,
                                   "src": "840:7:0",
                                   "typeDescriptions": {
@@ -904,9 +880,7 @@
                         },
                         "id": 78,
                         "initializationExpression": {
-                          "assignments": [
-                            50
-                          ],
+                          "assignments": [50],
                           "declarations": [
                             {
                               "constant": false,
@@ -1137,9 +1111,7 @@
                       "modifierName": {
                         "id": 38,
                         "name": "positiveAmountRequired",
-                        "nameLocations": [
-                          "541:22:0"
-                        ],
+                        "nameLocations": ["541:22:0"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 207,
                         "src": "541:22:0"
@@ -1214,9 +1186,7 @@
                     "src": "1100:326:0",
                     "statements": [
                       {
-                        "assignments": [
-                          98
-                        ],
+                        "assignments": [98],
                         "declarations": [
                           {
                             "constant": false,
@@ -1482,9 +1452,7 @@
                         },
                         "id": 125,
                         "initializationExpression": {
-                          "assignments": [
-                            106
-                          ],
+                          "assignments": [106],
                           "declarations": [
                             {
                               "constant": false,
@@ -1715,9 +1683,7 @@
                       "modifierName": {
                         "id": 94,
                         "name": "positiveAmountRequired",
-                        "nameLocations": [
-                          "1060:22:0"
-                        ],
+                        "nameLocations": ["1060:22:0"],
                         "nodeType": "IdentifierPath",
                         "referencedDeclaration": 207,
                         "src": "1060:22:0"
@@ -1792,9 +1758,7 @@
                     "src": "1471:329:0",
                     "statements": [
                       {
-                        "assignments": [
-                          140
-                        ],
+                        "assignments": [140],
                         "declarations": [
                           {
                             "constant": false,
@@ -1960,10 +1924,7 @@
                             "id": 146,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "1532:7:0",
                             "typeDescriptions": {
@@ -1992,9 +1953,7 @@
                         "src": "1532:46:0"
                       },
                       {
-                        "assignments": [
-                          154
-                        ],
+                        "assignments": [154],
                         "declarations": [
                           {
                             "constant": false,
@@ -2199,10 +2158,7 @@
                             "id": 164,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "1655:7:0",
                             "typeDescriptions": {
@@ -2665,10 +2621,7 @@
                             "id": 197,
                             "name": "require",
                             "nodeType": "Identifier",
-                            "overloadedDeclarations": [
-                              -18,
-                              -18
-                            ],
+                            "overloadedDeclarations": [-18, -18],
                             "referencedDeclaration": -18,
                             "src": "1974:7:0",
                             "typeDescriptions": {
@@ -2721,11 +2674,7 @@
               "scope": 209,
               "src": "61:1990:0",
               "usedErrors": [],
-              "usedEvents": [
-                16,
-                27,
-                33
-              ]
+              "usedEvents": [16, 27, 33]
             }
           ],
           "src": "33:2020:0"
