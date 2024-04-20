@@ -16,10 +16,10 @@
             <th class="text-center bg-primary">Date</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="(pushTipEvents?.length ?? 0) > 0">
           <tr
-            v-if="(pushTipEvents?.length ?? 0) > 0"
             v-for="(pushTipEvent, index) in pushTipEvents"
+            v-bind:key="pushTipEvent.txHash"
             class="text-center cursor-pointer hover:bg-primary"
             @click="showTxDetail(pushTipEvent.txHash)"
           >
@@ -30,7 +30,9 @@
             <td>{{ ethers.formatEther(pushTipEvent.data[3]) }} ETH</td>
             <td>{{ pushTipEvent.date }}</td>
           </tr>
-          <tr v-else>
+        </tbody>
+        <tbody v-else>
+          <tr>
             <td class="text-center" colspan="5">No PushTip Transactions</td>
           </tr>
         </tbody>
@@ -55,10 +57,10 @@
             <th class="text-center bg-primary">Date</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="(sendTipEvents?.length ?? 0) > 0">
           <tr
-            v-if="(sendTipEvents?.length ?? 0) > 0"
             v-for="(sendTipEvent, index) in sendTipEvents"
+            v-bind:key="sendTipEvent.txHash"
             class="text-center cursor-pointer hover:bg-primary"
             @click="showTxDetail(sendTipEvent.txHash)"
           >
@@ -69,7 +71,9 @@
             <td>{{ ethers.formatEther(sendTipEvent.data[3]) }} ETH</td>
             <td>{{ sendTipEvent.date }}</td>
           </tr>
-          <tr v-else>
+        </tbody>
+        <tbody v-else>
+          <tr>
             <td class="text-center" colspan="5">No SendTip Transactions</td>
           </tr>
         </tbody>
@@ -92,10 +96,10 @@
             <th class="text-center bg-primary">Date</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="(tipWithdrawalEvents?.length ?? 0) > 0">
           <tr
-            v-if="(tipWithdrawalEvents?.length ?? 0) > 0"
             v-for="(tipWithdrawalEvent, index) in tipWithdrawalEvents"
+            v-bind:key="tipWithdrawalEvent.txHash"
             class="text-center cursor-pointer hover:bg-primary"
             @click="showTxDetail(tipWithdrawalEvent.txHash)"
           >
@@ -104,7 +108,9 @@
             <td>{{ ethers.formatEther(tipWithdrawalEvent.data[1]) }} ETH</td>
             <td>{{ tipWithdrawalEvent.date }}</td>
           </tr>
-          <tr v-else>
+        </tbody>
+        <tbody v-else>
+          <tr>
             <td class="text-center" colspan="5">No TipWithdrawal Transactions</td>
           </tr>
         </tbody>
