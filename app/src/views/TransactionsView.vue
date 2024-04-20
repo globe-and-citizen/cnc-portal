@@ -8,25 +8,27 @@
         <!-- head -->
         <thead>
           <tr>
-            <th></th>
-            <th>From</th>
-            <th>Team Addresses</th>
-            <th>Total Tip</th>
-            <th>Tip Per Address</th>
-            <th>Age</th>
+            <th class="bg-primary"></th>
+            <th class="text-center bg-primary">From</th>
+            <th class="text-center bg-primary">Team Addresses</th>
+            <th class="text-center bg-primary">Total Tip</th>
+            <th class="text-center bg-primary">Tip Per Address</th>
+            <th class="text-center bg-primary">Date</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-if="(pushTipEvents?.length ?? 0) > 0"
             v-for="(pushTipEvent, index) in pushTipEvents"
-            class="text-center"
+            class="text-center cursor-pointer hover:bg-primary"
+            @click="showTxDetail(pushTipEvent.txHash)"
           >
-            <th>{{ index + 1 }}</th>
-            <td>{{ pushTipEvent.data[0] }}</td>
-            <td>{{ pushTipEvent.data[1] }}</td>
-            <td>{{ ethers.formatEther(pushTipEvent.data[2]) }}</td>
-            <td>{{ ethers.formatEther(pushTipEvent.data[3]) }}</td>
+            <td>{{ index + 1 }}</td>
+            <td class="truncate max-w-48">{{ pushTipEvent.data[0] }}</td>
+            <td class="truncate max-w-48">{{ pushTipEvent.data[1].join(', ') }}</td>
+            <td>{{ ethers.formatEther(pushTipEvent.data[2]) }} ETH</td>
+            <td>{{ ethers.formatEther(pushTipEvent.data[3]) }} ETH</td>
+            <td>{{ pushTipEvent.date }}</td>
           </tr>
           <tr v-else>
             <td class="text-center" colspan="5">No PushTip Transactions</td>
@@ -41,29 +43,31 @@
 
     <h2>SendTip Transactions</h2>
     <div class="overflow-x-auto bg-white">
-      <table class="table table-sm">
+      <table class="table">
         <!-- head -->
         <thead>
           <tr>
-            <th></th>
-            <th>From</th>
-            <th>Team Addresses</th>
-            <th>Total Tip</th>
-            <th>Tip Per Address</th>
-            <th>Age</th>
+            <th class="bg-primary"></th>
+            <th class="text-center bg-primary">From</th>
+            <th class="text-center bg-primary">Team Addresses</th>
+            <th class="text-center bg-primary">Total Tip</th>
+            <th class="text-center bg-primary">Tip Per Address</th>
+            <th class="text-center bg-primary">Date</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-if="(sendTipEvents?.length ?? 0) > 0"
             v-for="(sendTipEvent, index) in sendTipEvents"
-            class="text-center"
+            class="text-center cursor-pointer hover:bg-primary"
+            @click="showTxDetail(sendTipEvent.txHash)"
           >
-            <th>{{ index + 1 }}</th>
-            <td>{{ sendTipEvent.data[0] }}</td>
-            <td>{{ sendTipEvent.data[1] }}</td>
-            <td>{{ ethers.formatEther(sendTipEvent.data[2]) }}</td>
-            <td>{{ ethers.formatEther(sendTipEvent.data[3]) }}</td>
+            <td>{{ index + 1 }}</td>
+            <td class="truncate max-w-48">{{ sendTipEvent.data[0] }}</td>
+            <td class="truncate max-w-48">{{ sendTipEvent.data[1].join(', ') }}</td>
+            <td>{{ ethers.formatEther(sendTipEvent.data[2]) }} ETH</td>
+            <td>{{ ethers.formatEther(sendTipEvent.data[3]) }} ETH</td>
+            <td>{{ sendTipEvent.date }}</td>
           </tr>
           <tr v-else>
             <td class="text-center" colspan="5">No SendTip Transactions</td>
@@ -82,21 +86,23 @@
         <!-- head -->
         <thead>
           <tr>
-            <th></th>
-            <th>To</th>
-            <th>Amount</th>
-            <th>Age</th>
+            <th class="text-center bg-primary"></th>
+            <th class="text-center bg-primary">To</th>
+            <th class="text-center bg-primary">Amount</th>
+            <th class="text-center bg-primary">Date</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-if="(tipWithdrawalEvents?.length ?? 0) > 0"
             v-for="(tipWithdrawalEvent, index) in tipWithdrawalEvents"
-            class="text-center"
+            class="text-center cursor-pointer hover:bg-primary"
+            @click="showTxDetail(tipWithdrawalEvent.txHash)"
           >
-            <th>{{ index + 1 }}</th>
-            <td>{{ tipWithdrawalEvent.data[0] }}</td>
-            <td>{{ ethers.formatEther(tipWithdrawalEvent.data[1]) }}</td>
+            <td>{{ index + 1 }}</td>
+            <td class="truncate max-w-48">{{ tipWithdrawalEvent.data[0] }}</td>
+            <td>{{ ethers.formatEther(tipWithdrawalEvent.data[1]) }} ETH</td>
+            <td>{{ tipWithdrawalEvent.date }}</td>
           </tr>
           <tr v-else>
             <td class="text-center" colspan="5">No TipWithdrawal Transactions</td>
@@ -114,6 +120,7 @@ import { useTipsStore } from '@/stores/tips'
 import { TipsEventType } from '@/types'
 import { ethers, type Result } from 'ethers'
 import { onMounted, ref } from 'vue'
+import { ETHERSCAN_URL } from '@/constant'
 
 const { getEvents } = useTipsStore()
 
@@ -127,8 +134,13 @@ onMounted(async () => {
   tipWithdrawalEvents.value = await getEvents(TipsEventType.TipWithdrawal)
 })
 
+const showTxDetail = (txHash: string) => {
+  window.open(`${ETHERSCAN_URL}/tx/${txHash}`, '_blank')
+}
+
 interface EventResult {
-  timestamp: Date | null
+  txHash: string
+  date: string
   data: Result
 }
 </script>
