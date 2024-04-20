@@ -65,7 +65,7 @@ In the `./app` folder, create a `.env` file with the following variable:
 
 - **VITE_APP_BACKEND_URL**: The URL for the backend API. Example: 
 `VITE_APP_BACKEND_URL=http://localhost:8000`
-- **VITE_APP_ETHERSCAN_URL**: The URL for ethescan in order to see transaction detail. Example:
+- **VITE_APP_ETHERSCAN_URL**: The URL to see transaction detail. Example:
 `VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
 
 ## Running the application
