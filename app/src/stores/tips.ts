@@ -116,7 +116,9 @@ export const useTipsStore = defineStore('tips', {
         const events = await contract.queryFilter(event)
 
         const result = events.map(async (eventData: EventLog | Log) => {
-          const date = moment((await eventData.getBlock()).date).format('dddd, MMMM Do YYYY, HH:mm:ss')
+          const date = moment((await eventData.getBlock()).date).format(
+            'dddd, MMMM Do YYYY, HH:mm:ss'
+          )
 
           return {
             txHash: eventData.transactionHash,
