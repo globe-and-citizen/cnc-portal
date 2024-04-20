@@ -7,7 +7,7 @@ import { useToastStore } from './toast'
 import type { AddressLike } from 'ethers'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
-import moment from 'moment'
+import dayjs from 'dayjs'
 
 let contract: ethers.Contract
 let provider: ethers.BrowserProvider
@@ -116,8 +116,8 @@ export const useTipsStore = defineStore('tips', {
         const events = await contract.queryFilter(event)
 
         const result = events.map(async (eventData: EventLog | Log) => {
-          const date = moment((await eventData.getBlock()).date).format(
-            'dddd, MMMM Do YYYY, HH:mm:ss'
+          const date = dayjs((await eventData.getBlock()).date).format(
+            'dddd, MMMM D YYYY, HH:mm:ss'
           )
 
           return {
