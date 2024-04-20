@@ -7,6 +7,7 @@ import { useToastStore } from './toast'
 import type { AddressLike } from 'ethers'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
+import moment from 'moment'
 
 let contract: ethers.Contract
 let provider: ethers.BrowserProvider
@@ -48,7 +49,7 @@ export const useTipsStore = defineStore('tips', {
       this.pushTipLoading = true
 
       try {
-        const tx = await this.contract!.pushTip(addresses, {
+        const tx = await contract.pushTip(addresses, {
           value: ethers.parseEther(this.totalTipAmount.toString())
         })
         await tx.wait()
@@ -73,7 +74,7 @@ export const useTipsStore = defineStore('tips', {
       this.sendTipLoading = true
 
       try {
-        const tx = await this.contract!.sendTip(addresses, {
+        const tx = await contract.sendTip(addresses, {
           value: ethers.parseEther(this.totalTipAmount.toString())
         })
         await tx.wait()
@@ -91,20 +92,15 @@ export const useTipsStore = defineStore('tips', {
       if (!this.isWalletConnected) await this.connectWallet()
       let address = (await provider.getSigner()).address
 
-      this.balance = ethers.formatEther(await this.contract!.getBalance(address))
+      this.balance = ethers.formatEther(await contract!.getBalance(address))
     },
     async withdrawTips() {
       if (!this.isWalletConnected) await this.connectWallet()
 
       const { show } = useToastStore()
 
-      if (this.balance == '0') {
-        show(ToastType.Info, 'No tips to withdraw')
-        return
-      }
-
       try {
-        const tx = await this.contract!.withdraw()
+        const tx = await contract.withdraw()
         await tx.wait()
 
         await this.getBalance()
@@ -117,13 +113,14 @@ export const useTipsStore = defineStore('tips', {
       if (!this.isWalletConnected) await this.connectWallet()
 
       try {
-        const events = await this.contract!.queryFilter(event)
+        const events = await contract.queryFilter(event)
 
         const result = events.map(async (eventData: EventLog | Log) => {
-          const timestamp = (await eventData.getBlock()).date
+          const date = moment((await eventData.getBlock()).date).format('dddd, MMMM Do YYYY, HH:mm:ss')
 
           return {
-            timestamp: timestamp,
+            txHash: eventData.transactionHash,
+            date: date,
             data: contract.interface.decodeEventLog(event, eventData.data, eventData.topics)
           }
         })
