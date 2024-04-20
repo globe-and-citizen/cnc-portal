@@ -73,7 +73,6 @@
       </div>
     </div>
   </dialog>
-  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
@@ -87,7 +86,6 @@ import { FetchTeamAPI } from '@/apis/teamApi'
 
 import { useToastStore } from '@/stores/toast'
 import { storeToRefs } from 'pinia'
-import NotificationToast from '@/components/NotificationToast.vue'
 const route = useRoute()
 const router = useRouter()
 
@@ -104,9 +102,6 @@ const team = ref<Team>({
   description: '',
   members: []
 })
-
-const toastStore = useToastStore()
-const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 onMounted(async () => {
   const id = route.params.id
