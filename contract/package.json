@@ -3,10 +3,14 @@
   "scripts": {
     "typechain": "npx hardhat typechain",
     "compile": "npx hardhat compile",
+    "deploy": "hardhat ignition deploy ./ignition/modules/Tips.ts",
+    "deploy:sepolia": "hardhat ignition deploy ./ignition/modules/Tips.ts --network sepolia",
+    "deploy:mainnet": "hardhat ignition deploy ./ignition/modules/Tips.ts --network localhost",
     "node": "npx hardhat node",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "lint": "npx eslint . --ext .ts",
+    "format": "prettier --write .",
     "format-check": "npx prettier --check ."
   },
   "devDependencies": {
@@ -18,5 +22,8 @@
     "eslint-config-prettier": "^9.1.0",
     "hardhat": "^2.22.1",
     "prettier": "3.2.5"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
   }
 }

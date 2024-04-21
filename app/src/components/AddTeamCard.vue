@@ -1,5 +1,5 @@
 <template>
-  <div class="card w-80 bg-white ml-5 mt-5 flex justify-center items-center">
+  <div class="card w-80 bg-white flex justify-center items-center">
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Team</h1>
 
@@ -35,11 +35,11 @@
           <hr class="" />
           <div class="flex flex-col gap-5">
             <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-              <span class="w-28">Team Name</span>
+              <span class="w-24">Team Name</span>
               <input type="text" class="grow" placeholder="Daisy" v-model="teamName" />
             </label>
             <label class="input input-bordered flex items-center gap-2 input-md">
-              <span class="w-28">Description</span>
+              <span class="w-24">Description</span>
               <input
                 type="text"
                 class="grow"
@@ -52,7 +52,7 @@
               <label class="input input-bordered flex items-center gap-2 input-md">
                 <input
                   type="text"
-                  class="grow"
+                  class="w-24"
                   v-model="input.name"
                   :placeholder="'Member Name ' + (index + 1)"
                 />
@@ -63,7 +63,6 @@
                   v-model="input.walletAddress"
                   :placeholder="'Wallet Address ' + (index + 1)"
                 />
-                <span class="badge badge-primary">Mandatory</span>
               </label>
             </div>
           </div>
@@ -115,7 +114,10 @@
 
 <script setup lang="ts">
 import { ref, toRaw } from 'vue'
-import axios from 'axios'
+import { FetchTeamAPI } from '@/apis/teamApi'
+
+const teamAPI = new FetchTeamAPI()
+
 const showModal = ref(false)
 const teamName = ref('')
 const teamDesc = ref('')
@@ -125,18 +127,18 @@ const addInput = () => {
 }
 const handleSubmit = async () => {
   let teamMembers = { members: toRaw(inputs.value) }
-  let teamObject = {
-    name: teamName.value,
-    description: teamDesc.value,
-    members: {
-      createMany: {
-        data: teamMembers.members
-      }
-    },
-    address: 'user_address_321'
-  }
-  console.log(teamObject)
-  await axios.post('http://localhost:3000/teams', teamObject)
+
+  teamAPI
+    .createTeam(teamName.value, teamDesc.value, teamMembers.members)
+    .then((createdTeam) => {
+      // Team creation successful
+      console.log('Created team:', createdTeam)
+      // Navigate to another route or perform other actions as needed
+    })
+    .catch((error) => {
+      // Handle errors
+      console.error('Error creating team:', error)
+    })
   window.location.reload()
 }
 const removeInput = () => {

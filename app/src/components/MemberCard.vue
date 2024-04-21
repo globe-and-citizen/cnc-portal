@@ -21,7 +21,7 @@
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-        <input type="text" class="grow" v-model="nameInput" />
+        <input type="text" class="w-24" v-model="nameInput" />
         |
         <input type="text" class="grow" v-model="walletInput" />
       </label>
@@ -34,12 +34,14 @@
   </dialog>
 </template>
 <script setup lang="ts">
+import { FetchMemberAPI } from '@/apis/memberApi'
 import { ref } from 'vue'
-import axios from 'axios'
 const showModal = ref(false)
 
 const nameInput = ref('')
 const walletInput = ref('')
+
+const memberApi = new FetchMemberAPI()
 
 const props = defineProps(['memberName', 'walletAddress', 'memberId'])
 nameInput.value = props.memberName
@@ -47,24 +49,32 @@ walletInput.value = props.walletAddress
 console.log(nameInput.value)
 
 const deleteMember = async () => {
-  try {
-    const id = props.memberId
-    await axios.delete(`http://localhost:3000/member/${id}`)
-    window.location.reload()
-  } catch (error) {
-    console.log('Error deleting member', error)
-  }
+  const id = props.memberId
+  memberApi
+    .deleteMember(id)
+    .then(() => {
+      console.log('Deleted member succesfully')
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Delete member failed', error)
+    })
 }
 const updateMember = async () => {
-  try {
-    const id = props.memberId
-    await axios.put(`http://localhost:3000/member/${id}`, {
-      name: nameInput.value,
-      walletAddress: walletInput.value
-    })
-    window.location.reload()
-  } catch (error) {
-    console.log('Error updating Member', error)
+  const id = props.memberId
+
+  const member = {
+    name: nameInput.value,
+    walletAddress: walletInput.value
   }
+  memberApi
+    .updateMember(member, id)
+    .then(() => {
+      console.log('Updated member successfully')
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Error updating member', error)
+    })
 }
 </script>
