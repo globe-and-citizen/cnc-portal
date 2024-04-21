@@ -25,7 +25,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development
+      target: production
     ports:
       - "3000:3000" # Adjust port as needed
     volumes:
