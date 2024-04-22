@@ -36,6 +36,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard :id="team.id" />
     </div>
+    <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
   </div>
 
   <dialog
@@ -72,17 +73,25 @@
       </div>
     </div>
   </dialog>
+  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
+import TipsAction from '@/components/TipsAction.vue'
 
 import type { Member, Team } from '@/types/types'
+import { FetchTeamAPI } from '@/apis/teamApi'
 
+import { useToastStore } from '@/stores/toast'
+import { storeToRefs } from 'pinia'
+import NotificationToast from '@/components/NotificationToast.vue'
 const route = useRoute()
 const router = useRouter()
+
+const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
@@ -96,34 +105,26 @@ const team = ref<Team>({
   members: []
 })
 
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
+
 onMounted(async () => {
   const id = route.params.id
 
-  console.log('hi', id)
-  const url = `http://localhost:3000/teams/${id}`
-  const requestOptions = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      address: 'user_address_321'
+  teamApi
+    .getTeam(String(id))
+    .then((teamData) => {
+      if (teamData) {
+        team.value = teamData
+        cname.value = team.value.name
+        cdesc.value = team.value.description
+      } else {
+        console.log('Team not found for id:', id)
+      }
     })
-  }
-
-  try {
-    const response = await fetch(url, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-    const responseData = await response.json() // Parsing JSON response
-
-    team.value = responseData
-    cname.value = team.value.name
-    cdesc.value = team.value.description
-  } catch (error) {
-    console.error('Error:', error)
-  }
+    .catch((error) => {
+      console.error('Error fetching team:', error)
+    })
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
@@ -133,44 +134,29 @@ const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
     name: cname.value,
-    description: cdesc.value,
-    address: 'user_address_321'
+    description: cdesc.value
   }
-  console.log('Updated team object:', teamObject)
-
-  const requestOptions = {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(teamObject)
-  }
-
-  try {
-    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-    window.location.reload()
-  } catch (error) {
-    console.error('Error:', error)
-  }
+  teamApi
+    .updateTeam(String(id), teamObject)
+    .then((updatedTeam) => {
+      console.log('Updated team:', updatedTeam)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error updating team:', error)
+    })
 }
 
 const deleteTeam = async () => {
   const id = route.params.id
-  const requestOptions = {
-    method: 'DELETE'
-  }
-
-  try {
-    const response = await fetch(`http://localhost:3000/teams/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-    router.push('/teams')
-  } catch (error) {
-    console.error('Error:', error)
-  }
+  teamApi
+    .deleteTeam(String(id))
+    .then(() => {
+      console.log('Team deleted successfully')
+      router.push('/teams')
+    })
+    .catch((error) => {
+      console.error('Error deleting team:', error)
+    })
 }
 </script>

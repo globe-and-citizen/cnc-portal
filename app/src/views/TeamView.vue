@@ -20,33 +20,23 @@ import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '../components/TeamCard.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-
+import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
 import type { Team } from '@/types/types'
-interface Member {
-  id: string
-  name: string
-  walletAddress: string
-  teamId: number
-}
+
+const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
 
-// TODO Move this to API service
 onMounted(async () => {
-  const requestOptions = {
-    method: 'GET'
-  }
-
-  try {
-    const response = await fetch('http://localhost:3000/teams', requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-    teams.value = await response.json()
-    console.log(teams.value)
-  } catch (error) {
-    console.error('Error:', error)
-  }
+  teamApi
+    .getAllTeams()
+    .then((teamsList) => {
+      console.log('Fetched teams:', teamsList)
+      teams.value = teamsList
+    })
+    .catch((error) => {
+      console.error('Error fetching teams:', error)
+    })
 })
 function navigateToTeam(id: string) {
   console.log(id)

@@ -1,5 +1,5 @@
 <template>
-  <div class="card w-full bg-white ml-5 mt-10">
+  <div class="card w-full bg-white">
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Member</h1>
 
@@ -38,7 +38,7 @@
         <label class="input input-bordered flex items-center gap-2 input-md">
           <input
             type="text"
-            class="grow"
+            class="w-24"
             v-model="input.name"
             :placeholder="'Member Name ' + (index + 1)"
           />
@@ -93,6 +93,10 @@
 </template>
 <script setup lang="ts">
 import { ref, toRaw, defineProps } from 'vue'
+import { FetchMemberAPI } from '@/apis/memberApi'
+
+const memberApi = new FetchMemberAPI()
+
 const showModal = ref(false)
 const props = defineProps<{ id: string }>() // Define the type of props explicitly
 const inputs = ref([{ name: '', walletAddress: '' }])
@@ -107,23 +111,15 @@ const removeInput = () => {
 const addMembers = async () => {
   let newMembers = toRaw(inputs.value)
   let id = props.id
-  console.log(id)
-  const requestOptions = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(newMembers)
-  }
 
-  try {
-    const response = await fetch(`http://localhost:3000/member/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-  } catch (error) {
-    console.error('Error:', error)
-  }
-  window.location.reload()
+  await memberApi
+    .createMembers(newMembers, id)
+    .then((response) => {
+      console.log('Created Members', response)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error creating members:', error)
+    })
 }
 </script>

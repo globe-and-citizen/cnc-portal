@@ -21,7 +21,7 @@
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-        <input type="text" class="grow" v-model="nameInput" />
+        <input type="text" class="w-24" v-model="nameInput" />
         |
         <input type="text" class="grow" v-model="walletInput" />
       </label>
@@ -34,11 +34,14 @@
   </dialog>
 </template>
 <script setup lang="ts">
+import { FetchMemberAPI } from '@/apis/memberApi'
 import { ref } from 'vue'
 const showModal = ref(false)
 
 const nameInput = ref('')
 const walletInput = ref('')
+
+const memberApi = new FetchMemberAPI()
 
 const props = defineProps(['memberName', 'walletAddress', 'memberId'])
 nameInput.value = props.memberName
@@ -47,41 +50,31 @@ console.log(nameInput.value)
 
 const deleteMember = async () => {
   const id = props.memberId
-  const requestOptions = {
-    method: 'DELETE'
-  }
-
-  try {
-    const response = await fetch(`http://localhost:3000/member/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-  } catch (error) {
-    console.error('Error:', error)
-  }
-  window.location.reload()
+  memberApi
+    .deleteMember(id)
+    .then(() => {
+      console.log('Deleted member succesfully')
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Delete member failed', error)
+    })
 }
 const updateMember = async () => {
   const id = props.memberId
-  const requestOptions = {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      name: nameInput.value,
-      walletAddress: walletInput.value
-    })
-  }
 
-  try {
-    const response = await fetch(`http://localhost:3000/member/${id}`, requestOptions)
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
-  } catch (error) {
-    console.error('Error:', error)
+  const member = {
+    name: nameInput.value,
+    walletAddress: walletInput.value
   }
-  window.location.reload()
+  memberApi
+    .updateMember(member, id)
+    .then(() => {
+      console.log('Updated member successfully')
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Error updating member', error)
+    })
 }
 </script>
