@@ -4,11 +4,11 @@
 
     <h2>PushTip Transactions</h2>
     <div class="overflow-x-auto bg-white">
-      <table class="table table-sm">
+      <table class="table table-zebra">
         <!-- head -->
         <thead>
           <tr>
-            <th class="bg-primary"></th>
+            <th class="bg-primary">N°</th>
             <th class="text-center bg-primary">From</th>
             <th class="text-center bg-primary">Team Addresses</th>
             <th class="text-center bg-primary">Total Tip</th>
@@ -20,12 +20,12 @@
           <tr
             v-for="(pushTipEvent, index) in pushTipEvents"
             v-bind:key="pushTipEvent.txHash"
-            class="text-center cursor-pointer hover:bg-primary"
+            class="text-center cursor-pointer hover"
             @click="showTxDetail(pushTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
             <td class="truncate max-w-48">{{ pushTipEvent.data[0] }}</td>
-            <td class="truncate max-w-48">{{ pushTipEvent.data[1].join(', ') }}</td>
+            <td>{{ pushTipEvent.data[1].join(', ') }}</td>
             <td>{{ ethers.formatEther(pushTipEvent.data[2]) }} ETH</td>
             <td>{{ ethers.formatEther(pushTipEvent.data[3]) }} ETH</td>
             <td>{{ pushTipEvent.date }}</td>
@@ -49,7 +49,7 @@
         <!-- head -->
         <thead>
           <tr>
-            <th class="bg-primary"></th>
+            <th class="bg-primary">N°</th>
             <th class="text-center bg-primary">From</th>
             <th class="text-center bg-primary">Team Addresses</th>
             <th class="text-center bg-primary">Total Tip</th>
@@ -61,12 +61,12 @@
           <tr
             v-for="(sendTipEvent, index) in sendTipEvents"
             v-bind:key="sendTipEvent.txHash"
-            class="text-center cursor-pointer hover:bg-primary"
+            class="text-center cursor-pointer hover"
             @click="showTxDetail(sendTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
             <td class="truncate max-w-48">{{ sendTipEvent.data[0] }}</td>
-            <td class="truncate max-w-48">{{ sendTipEvent.data[1].join(', ') }}</td>
+            <td>{{ sendTipEvent.data[1].join(', ') }}</td>
             <td>{{ ethers.formatEther(sendTipEvent.data[2]) }} ETH</td>
             <td>{{ ethers.formatEther(sendTipEvent.data[3]) }} ETH</td>
             <td>{{ sendTipEvent.date }}</td>
@@ -86,11 +86,11 @@
 
     <h2>TipWithdrawal Transactions</h2>
     <div class="overflow-x-auto bg-white">
-      <table class="table table-sm">
+      <table class="table table-zebra">
         <!-- head -->
         <thead>
           <tr>
-            <th class="text-center bg-primary"></th>
+            <th class="text-center bg-primary">N°</th>
             <th class="text-center bg-primary">To</th>
             <th class="text-center bg-primary">Amount</th>
             <th class="text-center bg-primary">Date</th>
@@ -100,7 +100,7 @@
           <tr
             v-for="(tipWithdrawalEvent, index) in tipWithdrawalEvents"
             v-bind:key="tipWithdrawalEvent.txHash"
-            class="text-center cursor-pointer hover:bg-primary"
+            class="text-center cursor-pointer hover"
             @click="showTxDetail(tipWithdrawalEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
