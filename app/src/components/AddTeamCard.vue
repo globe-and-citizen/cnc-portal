@@ -133,13 +133,14 @@ const handleSubmit = async () => {
     .then((createdTeam) => {
       // Team creation successful
       console.log('Created team:', createdTeam)
+      window.location.reload()
+
       // Navigate to another route or perform other actions as needed
     })
     .catch((error) => {
       // Handle errors
       console.error('Error creating team:', error)
     })
-  window.location.reload()
 }
 const removeInput = () => {
   if (inputs.value.length > 1) {
