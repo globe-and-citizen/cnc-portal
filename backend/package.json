@@ -10,12 +10,13 @@
   },
   "scripts": {
     "start": "nodemon src/index.ts",
-    "build": "tsc",
+    "build": "tsc && npm run generate:docs && npm run copy:docs",
     "prod": "node  dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
-    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && rm src/utils/swagger.js"
+    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js"
   },
   "keywords": [],
   "author": "",
