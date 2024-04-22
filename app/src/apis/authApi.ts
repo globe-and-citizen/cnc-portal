@@ -1,5 +1,5 @@
 import { BACKEND_URL } from '@/constant/index'
-
+import { logout } from '@/utils/navBarUtil'
 export interface IAuthAPI {
   verifyPayloadAndGetToken(payload: any, methodDetails: any): Promise<string>
 }
@@ -19,6 +19,7 @@ export class AuthAPI {
       return true
     } else {
       //return false
+      logout()
       throw new Error(resObj.message)
     }
   }
