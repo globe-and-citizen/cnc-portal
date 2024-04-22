@@ -5,7 +5,7 @@ export interface IAuthAPI {
 }
 
 export class AuthAPI {
-  static async veryToken(token: string): Promise<boolean> {
+  static async verifyToken(token: string): Promise<boolean> {
     const response = await fetch(`${BACKEND_URL}/api/auth/token`, {
       method: 'GET',
       headers: {
