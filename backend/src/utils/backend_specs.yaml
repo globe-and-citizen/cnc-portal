@@ -1,12 +1,17 @@
 openapi: "3.0.2"
 servers:
   - url: http://localhost:3000
+
+security:
+  - BearerAuth: []
+
 info:
   title: CNC Portal
   version: "1.0"
 paths:
   /api/auth/siwe:
     post:
+      security: []
       tags:
         - Authentication
       summary: Authenticates user using SIWE
@@ -53,8 +58,6 @@ paths:
         - Authentication
       summary: Verifies the JWT token is valid
       description: Checks whether the JWT token supplied is valid
-      security:
-        - BearerAuth: []
       responses:
         "200":
           description: Authentication token retrieved successfully
@@ -81,6 +84,7 @@ paths:
 
   /api/user/nonce/{address}:
     get:
+      security: []
       summary: Get user nonce
       description: Returns the nonce to use with the SIWE message to prevent replay attacks
       tags:
