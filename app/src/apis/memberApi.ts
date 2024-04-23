@@ -1,6 +1,7 @@
 import type { Member } from '@/types/types'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
+import { isWalletAddressValid } from '@/utils/walletValidatorUtil'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
@@ -10,7 +11,12 @@ interface MemberAPI {
 export class FetchMemberAPI implements MemberAPI {
   async createMembers(newMembers: Partial<Member>[], id: string): Promise<void> {
     const token = AuthService.getToken()
-
+    console.log(newMembers)
+    newMembers.map((member: any) => {
+      if (!isWalletAddressValid(member.walletAddress)) {
+        throw new Error(`Invalid wallet address`)
+      }
+    })
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -30,7 +36,6 @@ export class FetchMemberAPI implements MemberAPI {
   }
   async updateMember(member: Partial<Member>, id: string): Promise<void> {
     const token = AuthService.getToken()
-
     const requestOptions = {
       method: 'PUT',
       headers: {
@@ -43,12 +48,17 @@ export class FetchMemberAPI implements MemberAPI {
       })
     }
     try {
+      if (!isWalletAddressValid(String(member.walletAddress))) {
+        throw new Error(`Invalid wallet address`)
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
     } catch (error) {
       console.error('Error:', error)
+      return
     }
   }
   async deleteMember(id: string): Promise<void> {

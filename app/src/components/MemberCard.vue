@@ -69,8 +69,8 @@ const updateMember = async () => {
   }
   memberApi
     .updateMember(member, id)
-    .then(() => {
-      console.log('Updated member successfully')
+    .then((response) => {
+      console.log('Updated member successfully', response)
       window.location.reload()
     })
     .catch((error) => {
