@@ -2,6 +2,8 @@ import type { Member } from '@/types/types'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isWalletAddressValid } from '@/utils/walletValidatorUtil'
+import { useToastStore } from '@/stores/toast'
+import { ToastType } from '@/types'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
@@ -47,6 +49,8 @@ export class FetchMemberAPI implements MemberAPI {
         walletAddress: member.walletAddress
       })
     }
+    const { show } = useToastStore()
+
     try {
       if (!isWalletAddressValid(String(member.walletAddress))) {
         throw new Error(`Invalid wallet address`)
@@ -56,9 +60,11 @@ export class FetchMemberAPI implements MemberAPI {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
-    } catch (error) {
+      show(ToastType.Success, 'Updated Member Details')
+    } catch (error: any) {
+      show(ToastType.Warning, error.message)
       console.error('Error:', error)
-      return
+      throw error
     }
   }
   async deleteMember(id: string): Promise<void> {

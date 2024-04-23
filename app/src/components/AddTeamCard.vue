@@ -106,6 +106,7 @@
 
             <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
           </div>
+          <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
         </div>
       </dialog>
     </div>
@@ -115,8 +116,13 @@
 <script setup lang="ts">
 import { ref, toRaw } from 'vue'
 import { FetchTeamAPI } from '@/apis/teamApi'
-
+import { useToastStore } from '@/stores/toast'
+import { storeToRefs } from 'pinia'
+import NotificationToast from '@/components/NotificationToast.vue'
 const teamAPI = new FetchTeamAPI()
+
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 const showModal = ref(false)
 const teamName = ref('')
