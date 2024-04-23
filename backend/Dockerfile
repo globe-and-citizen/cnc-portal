@@ -17,8 +17,8 @@ COPY . .
 # Generate Prisma Client
 RUN npm run prisma:generate
 
-# Expose the port the app runs on
-EXPOSE 3000
+# Expose the port defined in the environment variable
+ENV PORT $PORT
 
 # Command to run the application using nodemon
 CMD ["npm", "run", "start"]
@@ -28,4 +28,6 @@ FROM development as production
 RUN npm run build
 
 CMD ["npm", "run", "prod"]
-EXPOSE 3000
+
+# Expose the port defined in the environment variable
+ENV PORT $PORT
