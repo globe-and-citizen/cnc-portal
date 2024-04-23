@@ -2,6 +2,7 @@ import type { Team, Member } from '@/types/types'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
+import { isWalletAddressValid } from '@/utils/walletValidatorUtil'
 
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
@@ -148,16 +149,20 @@ export class FetchTeamAPI implements TeamAPI {
     }
 
     try {
+      teamMembers.map((member) => {
+        if (!isWalletAddressValid(String(member.walletAddress))) {
+          throw new Error(`Invalid wallet address`)
+        }
+      })
       const response = await fetch(url, requestOptions)
-
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
 
       const createdTeam: Team = await response.json()
       return createdTeam
-    } catch (error) {
-      console.error('Error:', error)
+    } catch (error: any) {
+      console.error('Error:', error.message)
       throw error
     }
   }
