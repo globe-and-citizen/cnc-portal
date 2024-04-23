@@ -16,7 +16,7 @@ export class AuthService {
   static async isAuthenticated(): Promise<boolean> {
     const token = this.getToken()
 
-    if (token !== null) return await AuthAPI.veryToken(token)
+    if (token !== null) return await AuthAPI.verifyToken(token)
 
     return false
   }
