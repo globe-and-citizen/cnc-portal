@@ -1,10 +1,117 @@
 openapi: "3.0.2"
 servers:
   - url: http://localhost:3000
+
+security:
+  - BearerAuth: []
+
 info:
   title: CNC Portal
   version: "1.0"
 paths:
+  /api/auth/siwe:
+    post:
+      security: []
+      tags:
+        - Authentication
+      summary: Authenticates user using SIWE
+      description: |
+        Verifies that the user has the corresponding private key for the Ethereum wallet address they claim to own.
+        Additionally, it generates a new nonce and associates it with the user address for the next sign-in session.
+        If the user doesn't exist, it creates a new user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The message to be signed.
+                signature:
+                  type: string
+                  description: The signature of the signed message
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        "401":
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/token:
+    get:
+      tags:
+        - Authentication
+      summary: Verifies the JWT token is valid
+      description: Checks whether the JWT token supplied is valid
+      responses:
+        "200":
+          description: Authentication token retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the authentication token is valid.
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/user/nonce/{address}:
+    get:
+      security: []
+      summary: Get user nonce
+      description: Returns the nonce to use with the SIWE message to prevent replay attacks
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/WalletAddress"
+      responses:
+        "200":
+          description: Request successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the operation was successful
+                  nonce:
+                    type: string
+                    description: Random string for the user to sign with the SIWE message that prevents replay attacks
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/teams:
     get:
       summary: Fetch all Teams
@@ -26,12 +133,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TeamList"
-        "500":
-          description: Internal server error
+        "401":
+          description: Authentication failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorMessage"
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       summary: Create Team
@@ -51,6 +164,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/teams/{id}:
     get:
@@ -72,6 +197,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Update Team by ID
       description: Update Team details like name and description by ID
@@ -91,6 +228,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       summary: Delete Team by ID
       description: Delete Team based on ID
@@ -101,6 +250,18 @@ paths:
       responses:
         "200":
           description: OK
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/members/{id}:
     put:
@@ -123,6 +284,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Member"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       summary: Delete member by ID
       description: Delete member by ID
@@ -133,6 +306,18 @@ paths:
       responses:
         "200":
           description: OK
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     post:
       summary: Create members
       description: Create/add members in a team
@@ -151,9 +336,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Member"
-
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
+    AuthToken:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates whether the authentication was successful
+        accessToken:
+          type: string
+          description: A JWT token for accessing protected routes
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates whether the operation was successful.
+        message:
+          type: string
+          description: Details about the error.
+
     Team:
       type: object
       properties:
@@ -187,13 +403,6 @@ components:
         walletAddress:
           type: string
           description: Wallet address of the member
-
-    ErrorMessage:
-      type: object
-      properties:
-        message:
-          type: string
-          description: internal server error
 
     TeamCreateRequest:
       type: object
@@ -259,6 +468,13 @@ components:
           description: Wallet address of the member
 
   parameters:
+    WalletAddress:
+      in: path
+      name: address
+      schema:
+        type: string
+      required: true
+      description: Ethereum address of the user
     OwnerID:
       in: query
       name: id
@@ -280,3 +496,9 @@ components:
         type: integer
       required: true
       description: The ID of the member
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
