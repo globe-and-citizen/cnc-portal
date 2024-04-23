@@ -13,6 +13,7 @@
       <AddTeamCard />
     </div>
   </div>
+  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>
 
 <script setup lang="ts">
@@ -23,9 +24,14 @@ import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
 import type { Team } from '@/types/types'
+import { useToastStore } from '@/stores/toast'
+import { storeToRefs } from 'pinia'
+import NotificationToast from '@/components/NotificationToast.vue'
 
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 onMounted(async () => {
   teamApi
