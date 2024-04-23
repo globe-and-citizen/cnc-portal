@@ -17,7 +17,6 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     if (!signature)
       return errorResponse(401, "Auth error: Missing signature", res);
 
-    console.log("[src][controllers][authController.ts][authenticateSiwe] signature: ", signature)
     let {address, nonce} = extractAddressAndNonce(message)
 
     //Get nonce from user data from database
