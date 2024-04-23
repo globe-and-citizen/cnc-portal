@@ -7,7 +7,7 @@ info:
 paths:
   /api/auth/siwe:
     post:
-      tags: 
+      tags:
         - Authentication
       summary: Authenticates user using SIWE
       description: |
@@ -30,17 +30,17 @@ paths:
       responses:
         "200":
           description: Authentication successful
-          content: 
+          content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthToken"
-        "401": 
+        "401":
           description: Authentication failure
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "500": 
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -56,7 +56,7 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        '200':
+        "200":
           description: Authentication token retrieved successfully
           content:
             application/json:
@@ -66,29 +66,29 @@ paths:
                   success:
                     type: boolean
                     description: Indicates whether the authentication token is valid.
-        '401':
+        "401":
           description: Authentication failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/user/nonce/{address}:
     get:
       summary: Get user nonce
-      description: Returns the nonce to use with the SIWE message to prevent replay attacks 
+      description: Returns the nonce to use with the SIWE message to prevent replay attacks
       tags:
         - Users
       parameters:
         - $ref: "#/components/parameters/WalletAddress"
       responses:
-        '200':
+        "200":
           description: Request successful
           content:
             application/json:
@@ -101,12 +101,12 @@ paths:
                   nonce:
                     type: string
                     description: Random string for the user to sign with the SIWE message that prevents replay attacks
-        '500':
+        "500":
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/teams:
     get:
@@ -129,12 +129,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TeamList"
-        "500":
-          description: Internal server error
+        "401":
+          description: Authentication failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorMessage"
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
     post:
       summary: Create Team
@@ -154,6 +160,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/teams/{id}:
     get:
@@ -175,6 +193,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Update Team by ID
       description: Update Team details like name and description by ID
@@ -194,6 +224,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       summary: Delete Team by ID
       description: Delete Team based on ID
@@ -204,6 +246,18 @@ paths:
       responses:
         "200":
           description: OK
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/members/{id}:
     put:
@@ -226,6 +280,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Member"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       summary: Delete member by ID
       description: Delete member by ID
@@ -236,6 +302,18 @@ paths:
       responses:
         "200":
           description: OK
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     post:
       summary: Create members
       description: Create/add members in a team
@@ -254,13 +332,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Member"
-
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     AuthToken:
       type: object
       properties:
-        success: 
+        success:
           type: boolean
           description: Indicates whether the authentication was successful
         accessToken:
@@ -310,13 +399,6 @@ components:
         walletAddress:
           type: string
           description: Wallet address of the member
-
-    ErrorMessage:
-      type: object
-      properties:
-        message:
-          type: string
-          description: internal server error
 
     TeamCreateRequest:
       type: object
