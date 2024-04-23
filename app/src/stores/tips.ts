@@ -76,7 +76,7 @@ export const useTipsStore = defineStore('tips', {
     },
     async getBalance() {
       if (!this.isWalletConnected) await this.connectWallet()
-      let address = (await provider.getSigner()).address
+      const address = (await provider.getSigner()).address
 
       this.balance = ethers.formatEther(await this.contract!.getBalance(address))
     },
