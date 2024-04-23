@@ -34,11 +34,6 @@ export const useTipsStore = defineStore('tips', {
     async pushTip(addresses: AddressLike[]) {
       const { show } = useToastStore()
 
-      if (this.totalTipAmount === 0) {
-        show(ToastType.Info, 'Please enter amount to tip')
-        return
-      }
-
       if (!this.isWalletConnected) await this.connectWallet()
 
       this.pushTipLoading = true
@@ -50,8 +45,8 @@ export const useTipsStore = defineStore('tips', {
         await tx.wait()
 
         show(ToastType.Success, 'Tip pushed successfully')
-      } catch (error) {
-        show(ToastType.Error, 'Failed to push tip')
+      } catch (error: any) {
+        show(ToastType.Error, error.reason ? error.reason : 'Failed to push tip')
       } finally {
         this.pushTipLoading = false
         this.totalTipAmount = 0
@@ -59,10 +54,6 @@ export const useTipsStore = defineStore('tips', {
     },
     async sendTip(addresses: AddressLike[]) {
       const { show } = useToastStore()
-      if (this.totalTipAmount === 0) {
-        show(ToastType.Info, 'Please enter amount to tip')
-        return
-      }
 
       if (!this.isWalletConnected) await this.connectWallet()
 
@@ -76,8 +67,8 @@ export const useTipsStore = defineStore('tips', {
         await this.getBalance()
 
         show(ToastType.Success, 'Tip sent successfully')
-      } catch (error) {
-        show(ToastType.Error, 'Failed to send tip')
+      } catch (error: any) {
+        show(ToastType.Error, error.reason ? error.reason : 'Failed to send tip')
       } finally {
         this.sendTipLoading = false
         this.totalTipAmount = 0
@@ -105,8 +96,8 @@ export const useTipsStore = defineStore('tips', {
 
         await this.getBalance()
         show(ToastType.Success, 'Tips withdrawn successfully')
-      } catch (error) {
-        show(ToastType.Error, 'Failed to withdraw tips')
+      } catch (error: any) {
+        show(ToastType.Error, error.reason ? error.reason : 'Failed to withdraw tips')
       }
     }
   }
