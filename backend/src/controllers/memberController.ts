@@ -1,7 +1,8 @@
 // CRUD Members using Prisma Client
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import { isWalletAddressValid } from "../utils/validators/walletValidatorUtil";
+import { isAddress } from "ethers";
+
 const prisma = new PrismaClient();
 
 //insert new members
@@ -15,7 +16,7 @@ const addMembers = async (req: Request, res: Response) => {
   try {
     const membersToCreate = membersData.map(
       (member: { name: string; walletAddress: string }) => {
-        if (!isWalletAddressValid(member.walletAddress)) {
+        if (!isAddress(member.walletAddress)) {
           throw new Error(`Invalid wallet address for member: ${member.name}`);
         }
 
@@ -46,7 +47,7 @@ const updateMember = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, walletAddress } = req.body;
   try {
-    if (!isWalletAddressValid(walletAddress)) {
+    if (!isAddress(walletAddress)) {
       throw new Error(`Invalid wallet address for member: ${name}`);
     }
     const member = await prisma.member.update({

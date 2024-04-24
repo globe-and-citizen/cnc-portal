@@ -1,8 +1,7 @@
 // CRUD team using Prisma Client
 import { Member, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import { isWalletAddressValid } from "../utils/validators/walletValidatorUtil";
-
+import { isAddress } from "ethers";
 const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
@@ -13,7 +12,7 @@ const addTeam = async (req: Request, res: Response) => {
   console.log("Members:", members.createMany.data);
   try {
     members.createMany.data.map((member: Member) => {
-      if (!isWalletAddressValid(member.walletAddress)) {
+      if (!isAddress(member.walletAddress)) {
         throw new Error(`Invalid wallet address for member: ${member.name}`);
       }
     });

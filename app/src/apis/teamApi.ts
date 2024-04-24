@@ -2,9 +2,10 @@ import type { Team, Member } from '@/types/types'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
-import { isWalletAddressValid } from '@/utils/walletValidatorUtil'
 import { useToastStore } from '@/stores/toast'
 import { ToastType } from '@/types'
+import { isAddress } from 'ethers' // ethers v6
+
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
   getTeam(id: string): Promise<Team | null>
@@ -154,7 +155,7 @@ export class FetchTeamAPI implements TeamAPI {
 
     try {
       teamMembers.map((member) => {
-        if (!isWalletAddressValid(String(member.walletAddress))) {
+        if (!isAddress(String(member.walletAddress))) {
           throw new Error(`Invalid wallet address`)
         }
       })
