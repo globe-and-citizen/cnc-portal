@@ -114,10 +114,8 @@
 
 <script setup lang="ts">
 import { ref, toRaw } from 'vue'
-import { FetchTeamAPI } from '@/apis/teamApi'
 
-const teamAPI = new FetchTeamAPI()
-
+const emits = defineEmits(['addTeam'])
 const showModal = ref(false)
 const teamName = ref('')
 const teamDesc = ref('')
@@ -127,20 +125,7 @@ const addInput = () => {
 }
 const handleSubmit = async () => {
   let teamMembers = { members: toRaw(inputs.value) }
-
-  teamAPI
-    .createTeam(teamName.value, teamDesc.value, teamMembers.members)
-    .then((createdTeam) => {
-      // Team creation successful
-      console.log('Created team:', createdTeam)
-      window.location.reload()
-
-      // Navigate to another route or perform other actions as needed
-    })
-    .catch((error) => {
-      // Handle errors
-      console.error('Error creating team:', error)
-    })
+  emits('addTeam', teamName.value, teamDesc.value, teamMembers.members)
 }
 const removeInput = () => {
   if (inputs.value.length > 1) {

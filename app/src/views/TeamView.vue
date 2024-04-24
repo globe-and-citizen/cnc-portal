@@ -10,7 +10,7 @@
         @click="navigateToTeam(team.id)"
       />
 
-      <AddTeamCard />
+      <AddTeamCard @addTeam="handleAddTeam" />
     </div>
   </div>
 </template>
@@ -22,11 +22,21 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
-import type { Team } from '@/types/types'
+import type { Member, Team } from '@/types/types'
 
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
-
+const handleAddTeam = (teamName: string, teamDesc: string, teamMembers: Partial<Member>[]) => {
+  teamApi
+    .createTeam(teamName, teamDesc, teamMembers)
+    .then((createdTeam) => {
+      console.log('Created team:', createdTeam)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error creating team:', error)
+    })
+}
 onMounted(async () => {
   teamApi
     .getAllTeams()
