@@ -34,7 +34,7 @@
       </table>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <AddMemberCard :id="team.id" />
+      <AddMemberCard :id="team.id" @addMembers="handleAddMembers" />
     </div>
     <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
   </div>
@@ -83,9 +83,9 @@ import TipsAction from '@/components/TipsAction.vue'
 
 import type { Member, Team } from '@/types/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
+import { FetchMemberAPI } from '@/apis/memberApi'
 
-import { useToastStore } from '@/stores/toast'
-import { storeToRefs } from 'pinia'
+const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
 
@@ -103,6 +103,15 @@ const team = ref<Team>({
   members: []
 })
 
+const handleAddMembers = async (newMembers: Member[], id: string) => {
+  try {
+    console.log(newMembers)
+    await memberApi.createMembers(newMembers, id)
+    window.location.reload()
+  } catch (error) {
+    console.error('Error adding members:', error)
+  }
+}
 onMounted(async () => {
   const id = route.params.id
 

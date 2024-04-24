@@ -32,6 +32,7 @@ export class FetchMemberAPI implements MemberAPI {
         }
       })
       const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+      console.log(response)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }

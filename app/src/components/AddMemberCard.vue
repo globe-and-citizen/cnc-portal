@@ -92,34 +92,26 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import { ref, toRaw, defineProps } from 'vue'
-import { FetchMemberAPI } from '@/apis/memberApi'
+import { ref, toRaw } from 'vue'
 
-const memberApi = new FetchMemberAPI()
+const emits = defineEmits(['addMembers'])
 
 const showModal = ref(false)
-const props = defineProps<{ id: string }>() // Define the type of props explicitly
+const props = defineProps<{ id: string }>()
 const inputs = ref([{ name: '', walletAddress: '' }])
-const addInput = () => {
-  inputs.value.push({ name: '', walletAddress: '' })
-}
+
+const addInput = () => inputs.value.push({ name: '', walletAddress: '' })
 const removeInput = () => {
-  if (inputs.value.length > 1) {
-    inputs.value.pop()
-  }
+  if (inputs.value.length > 1) inputs.value.pop()
 }
 const addMembers = async () => {
   let newMembers = toRaw(inputs.value)
   let id = props.id
 
-  await memberApi
-    .createMembers(newMembers, id)
-    .then((response) => {
-      console.log('Created Members', response)
-      window.location.reload()
-    })
-    .catch((error) => {
-      console.error('Error creating members:', error)
-    })
+  try {
+    emits('addMembers', newMembers, id)
+  } catch (error) {
+    console.error('Error creating members:', error)
+  }
 }
 </script>
