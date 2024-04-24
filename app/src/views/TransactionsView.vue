@@ -8,19 +8,19 @@
         <!-- head -->
         <thead>
           <tr>
-            <th class="bg-primary">N°</th>
-            <th class="text-center bg-primary">From</th>
-            <th class="text-center bg-primary">Team Addresses</th>
-            <th class="text-center bg-primary">Total Tip</th>
-            <th class="text-center bg-primary">Tip Per Address</th>
-            <th class="text-center bg-primary">Date</th>
+            <th class="text-center font-bold text-lg">N°</th>
+            <th class="text-center font-bold text-lg">From</th>
+            <th class="text-center font-bold text-lg">Team Addresses</th>
+            <th class="text-center font-bold text-lg">Total Tip</th>
+            <th class="text-center font-bold text-lg">Tip Per Address</th>
+            <th class="text-center font-bold text-lg">Date</th>
           </tr>
         </thead>
         <tbody v-if="(pushTipEvents?.length ?? 0) > 0">
           <tr
             v-for="(pushTipEvent, index) in pushTipEvents"
             v-bind:key="pushTipEvent.txHash"
-            class="cursor-pointer hover"
+            class="text-center cursor-pointer hover"
             @click="showTxDetail(pushTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
@@ -37,7 +37,7 @@
         </tbody>
         <tbody v-else>
           <tr>
-            <td class="text-center" colspan="5">No PushTip Transactions</td>
+            <td class="text-center font-bold text-lg" colspan="6">No PushTip Transactions</td>
           </tr>
         </tbody>
       </table>
@@ -49,23 +49,23 @@
 
     <h2>SendTip Transactions</h2>
     <div class="overflow-x-auto bg-white">
-      <table class="table">
+      <table class="table table-zebra">
         <!-- head -->
         <thead>
           <tr>
-            <th class="bg-primary">N°</th>
-            <th class="text-center bg-primary">From</th>
-            <th class="text-center bg-primary">Team Addresses</th>
-            <th class="text-center bg-primary">Total Tip</th>
-            <th class="text-center bg-primary">Tip Per Address</th>
-            <th class="text-center bg-primary">Date</th>
+            <th class="text-center font-bold text-lg">N°</th>
+            <th class="text-center font-bold text-lg">From</th>
+            <th class="text-center font-bold text-lg">Team Addresses</th>
+            <th class="text-center font-bold text-lg">Total Tip</th>
+            <th class="text-center font-bold text-lg">Tip Per Address</th>
+            <th class="text-center font-bold text-lg">Date</th>
           </tr>
         </thead>
         <tbody v-if="(sendTipEvents?.length ?? 0) > 0">
           <tr
             v-for="(sendTipEvent, index) in sendTipEvents"
             v-bind:key="sendTipEvent.txHash"
-            class="cursor-pointer hover"
+            class="text-center cursor-pointer hover"
             @click="showTxDetail(sendTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
@@ -82,7 +82,7 @@
         </tbody>
         <tbody v-else>
           <tr>
-            <td class="text-center" colspan="5">No SendTip Transactions</td>
+            <td class="text-center font-bold text-lg" colspan="6">No SendTip Transactions</td>
           </tr>
         </tbody>
       </table>
@@ -98,13 +98,13 @@
         <!-- head -->
         <thead>
           <tr>
-            <th class="text-center bg-primary">N°</th>
-            <th class="text-center bg-primary">To</th>
-            <th class="text-center bg-primary">Amount</th>
-            <th class="text-center bg-primary">Date</th>
+            <th class="text-center font-bold text-lg">N°</th>
+            <th class="text-center font-bold text-lg">To</th>
+            <th class="text-center font-bold text-lg">Amount</th>
+            <th class="text-center font-bold text-lg">Date</th>
           </tr>
         </thead>
-        <tbody v-if="(tipWithdrawalEvents?.length ?? 0) > 0">
+        <tbody v-if="!((tipWithdrawalEvents?.length ?? 0) > 0)">
           <tr
             v-for="(tipWithdrawalEvent, index) in tipWithdrawalEvents"
             v-bind:key="tipWithdrawalEvent.txHash"
@@ -119,7 +119,7 @@
         </tbody>
         <tbody v-else>
           <tr>
-            <td class="text-center" colspan="5">No TipWithdrawal Transactions</td>
+            <td class="text-center font-bold text-lg" colspan="4">No TipWithdrawal Transactions</td>
           </tr>
         </tbody>
       </table>
