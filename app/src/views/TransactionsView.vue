@@ -104,7 +104,7 @@
             <th class="text-center font-bold text-lg">Date</th>
           </tr>
         </thead>
-        <tbody v-if="!((tipWithdrawalEvents?.length ?? 0) > 0)">
+        <tbody v-if="(tipWithdrawalEvents?.length ?? 0) > 0">
           <tr
             v-for="(tipWithdrawalEvent, index) in tipWithdrawalEvents"
             v-bind:key="tipWithdrawalEvent.txHash"
