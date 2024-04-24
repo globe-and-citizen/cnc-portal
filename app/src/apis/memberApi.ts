@@ -13,7 +13,6 @@ interface MemberAPI {
 export class FetchMemberAPI implements MemberAPI {
   async createMembers(newMembers: Partial<Member>[], id: string): Promise<void> {
     const token = AuthService.getToken()
-    console.log(newMembers)
 
     const requestOptions = {
       method: 'POST',
@@ -32,7 +31,6 @@ export class FetchMemberAPI implements MemberAPI {
         }
       })
       const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
-      console.log(response)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
