@@ -23,10 +23,31 @@ import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
 import type { Member, Team } from '@/types/types'
+import { isAddress } from 'ethers' // ethers v6
+import { useToastStore } from '@/stores/toast'
+import { ToastType } from '@/types'
 
+const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
+
 const handleAddTeam = (teamName: string, teamDesc: string, teamMembers: Partial<Member>[]) => {
+  let isValid = true
+  let errorIndexes: number[] = []
+
+  teamMembers.map((member, index) => {
+    if (!isAddress(member.walletAddress)) {
+      isValid = false
+      errorIndexes.push(index)
+    }
+  })
+
+  if (!isValid) {
+    show(ToastType.Warning, 'Invalid wallet address')
+
+    console.error('Invalid wallet address for one or more team members')
+    return
+  }
   teamApi
     .createTeam(teamName, teamDesc, teamMembers)
     .then((createdTeam) => {

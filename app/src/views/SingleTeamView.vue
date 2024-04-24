@@ -85,6 +85,12 @@ import type { Member, Team } from '@/types/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { FetchMemberAPI } from '@/apis/memberApi'
 
+import { isAddress } from 'ethers' // ethers v6
+import { useToastStore } from '@/stores/toast'
+import { ToastType } from '@/types'
+
+const { show } = useToastStore()
+
 const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
@@ -105,7 +111,22 @@ const team = ref<Team>({
 
 const handleAddMembers = async (newMembers: Member[], id: string) => {
   try {
+    let isValid = true
+    let errorIndexes: number[] = []
     console.log(newMembers)
+    newMembers.map((member, index) => {
+      if (!isAddress(member.walletAddress)) {
+        isValid = false
+        errorIndexes.push(index)
+      }
+    })
+
+    if (!isValid) {
+      show(ToastType.Warning, 'Invalid wallet address')
+
+      console.error('Invalid wallet address for one or more team members')
+      return
+    }
     await memberApi.createMembers(newMembers, id)
     window.location.reload()
   } catch (error) {
