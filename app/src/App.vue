@@ -2,11 +2,18 @@
 import { RouterView } from 'vue-router'
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
+import NotificationToast from '@/components/NotificationToast.vue'
 import { ref } from 'vue'
+import { useToastStore } from './stores/toast'
+import { storeToRefs } from 'pinia'
+
 const toggleSide = ref(true)
 function handleChange() {
   toggleSide.value = !toggleSide.value
 }
+
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 </script>
 
 <template>
@@ -30,6 +37,7 @@ function handleChange() {
         </div>
       </div>
     </div>
+    <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
   </div>
 </template>
 
