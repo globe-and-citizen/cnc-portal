@@ -20,12 +20,16 @@
           <tr
             v-for="(pushTipEvent, index) in pushTipEvents"
             v-bind:key="pushTipEvent.txHash"
-            class="text-center cursor-pointer hover"
+            class="cursor-pointer hover"
             @click="showTxDetail(pushTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
             <td class="truncate max-w-48">{{ pushTipEvent.data[0] }}</td>
-            <td>{{ pushTipEvent.data[1].join(', ') }}</td>
+            <td>
+              <ul v-for="(address, index) in pushTipEvent.data[1]" :key="index">
+                <li>{{ address }}</li>
+              </ul>
+            </td>
             <td>{{ ethers.formatEther(pushTipEvent.data[2]) }} ETH</td>
             <td>{{ ethers.formatEther(pushTipEvent.data[3]) }} ETH</td>
             <td>{{ pushTipEvent.date }}</td>
@@ -61,12 +65,16 @@
           <tr
             v-for="(sendTipEvent, index) in sendTipEvents"
             v-bind:key="sendTipEvent.txHash"
-            class="text-center cursor-pointer hover"
+            class="cursor-pointer hover"
             @click="showTxDetail(sendTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
             <td class="truncate max-w-48">{{ sendTipEvent.data[0] }}</td>
-            <td>{{ sendTipEvent.data[1].join(', ') }}</td>
+            <td>
+              <ul v-for="(address, index) in sendTipEvent.data[1]" :key="index">
+                <li>{{ address }}</li>
+              </ul>
+            </td>
             <td>{{ ethers.formatEther(sendTipEvent.data[2]) }} ETH</td>
             <td>{{ ethers.formatEther(sendTipEvent.data[3]) }} ETH</td>
             <td>{{ sendTipEvent.date }}</td>
