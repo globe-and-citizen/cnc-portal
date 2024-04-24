@@ -34,7 +34,7 @@
       </button>
       <h1 class="font-bold text-2xl">Add New Member</h1>
       <hr class="" />
-      <div v-for="(input, index) in inputs" :key="index" class="input-group mt-3">
+      <div v-for="(input, index) in formData" :key="index" class="input-group mt-3">
         <label class="input input-bordered flex items-center gap-2 input-md">
           <input
             type="text"
@@ -53,7 +53,7 @@
         </label>
       </div>
       <div class="flex justify-end pt-3">
-        <div class="w-6 h-6 cursor-pointer" @click="addInput">
+        <div class="w-6 h-6 cursor-pointer" @click="emits('addInput')">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="lightgreen"
@@ -68,7 +68,7 @@
             />
           </svg>
         </div>
-        <div class="w-6 h-6 cursor-pointer" @click="removeInput">
+        <div class="w-6 h-6 cursor-pointer" @click="emits('removeInput')">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="red"
@@ -85,33 +85,29 @@
           </svg>
         </div>
       </div>
-      <div class="flex justify-center" @click="addMembers">
+      <div class="flex justify-center" @click="emits('addMembers')">
         <button class="btn btn-primary justify-center">Add</button>
       </div>
     </div>
   </dialog>
 </template>
 <script setup lang="ts">
-import { ref, toRaw } from 'vue'
-
-const emits = defineEmits(['addMembers'])
+import { ref, defineProps, defineEmits, watch } from 'vue'
 
 const showModal = ref(false)
-const props = defineProps<{ id: string }>()
-const inputs = ref([{ name: '', walletAddress: '' }])
+const props = defineProps<{
+  formData: Array<{ name: string; walletAddress: string; isValid: boolean }>
+}>()
 
-const addInput = () => inputs.value.push({ name: '', walletAddress: '' })
-const removeInput = () => {
-  if (inputs.value.length > 1) inputs.value.pop()
-}
-const addMembers = async () => {
-  let newMembers = toRaw(inputs.value)
-  let id = props.id
+const emits = defineEmits(['updateForm', 'addInput', 'removeInput', 'addMembers'])
 
-  try {
-    emits('addMembers', newMembers, id)
-  } catch (error) {
-    console.error('Error creating members:', error)
-  }
-}
+const formData = ref(props.formData)
+
+watch(
+  formData,
+  (newValue) => {
+    emits('updateForm', newValue)
+  },
+  { deep: true }
+)
 </script>

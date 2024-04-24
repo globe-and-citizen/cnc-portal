@@ -34,7 +34,13 @@
       </table>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <AddMemberCard :id="team.id" @addMembers="handleAddMembers" />
+      <AddMemberCard
+        v-model:formData="teamMembers"
+        @addInput="addInput"
+        @removeInput="removeInput"
+        @addMembers="handleAddMembers"
+        @updateForm="handleUpdateForm"
+      />
     </div>
     <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
   </div>
@@ -108,13 +114,39 @@ const team = ref<Team>({
   description: '',
   members: []
 })
+const teamMembers = ref([
+  {
+    name: '',
+    walletAddress: '',
+    isValid: false
+  }
+]) // Assuming teamMembers is an array
 
-const handleAddMembers = async (newMembers: Member[], id: string) => {
+const addInput = () => {
+  teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
+}
+
+const removeInput = () => {
+  if (teamMembers.value.length > 1) {
+    teamMembers.value.pop()
+  }
+}
+const handleUpdateForm = async () => {
+  teamMembers.value.map((member, index) => {
+    let errorIndexes: number[] = []
+    if (!isAddress(member.walletAddress)) {
+      member.isValid = false
+      errorIndexes.push(index)
+    }
+  })
+}
+const handleAddMembers = async () => {
   try {
     let isValid = true
     let errorIndexes: number[] = []
-    console.log(newMembers)
-    newMembers.map((member, index) => {
+    console.log(teamMembers.value)
+
+    teamMembers.value.map((member, index) => {
       if (!isAddress(member.walletAddress)) {
         isValid = false
         errorIndexes.push(index)
@@ -127,7 +159,8 @@ const handleAddMembers = async (newMembers: Member[], id: string) => {
       console.error('Invalid wallet address for one or more team members')
       return
     }
-    await memberApi.createMembers(newMembers, id)
+    await memberApi.createMembers(teamMembers.value, String(route.params.id))
+
     window.location.reload()
   } catch (error) {
     console.error('Error adding members:', error)
