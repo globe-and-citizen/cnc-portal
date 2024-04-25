@@ -3,24 +3,24 @@
     <!-- PUSH TIP TRANSACTIONS -->
 
     <h2>PushTip Transactions</h2>
-    <div class="overflow-x-auto bg-white">
+    <div class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
-          <tr>
-            <th class="text-center font-bold text-lg">N°</th>
-            <th class="text-center font-bold text-lg">From</th>
-            <th class="text-center font-bold text-lg">Team Addresses</th>
-            <th class="text-center font-bold text-lg">Total Tip</th>
-            <th class="text-center font-bold text-lg">Tip Per Address</th>
-            <th class="text-center font-bold text-lg">Date</th>
+          <tr class="font-bold text-lg">
+            <th>N°</th>
+            <th>From</th>
+            <th>Team Addresses</th>
+            <th>Total Tip</th>
+            <th class="truncate max-w-12">Tip Per Address</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody v-if="(pushTipEvents?.length ?? 0) > 0">
           <tr
             v-for="(pushTipEvent, index) in pushTipEvents"
             v-bind:key="pushTipEvent.txHash"
-            class="text-center cursor-pointer hover"
+            class="cursor-pointer hover"
             @click="showTxDetail(pushTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
@@ -48,24 +48,24 @@
     <!-- SEND TIP TRANSACTIONS -->
 
     <h2>SendTip Transactions</h2>
-    <div class="overflow-x-auto bg-white">
+    <div class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
-          <tr>
-            <th class="text-center font-bold text-lg">N°</th>
-            <th class="text-center font-bold text-lg">From</th>
-            <th class="text-center font-bold text-lg">Team Addresses</th>
-            <th class="text-center font-bold text-lg">Total Tip</th>
-            <th class="text-center font-bold text-lg">Tip Per Address</th>
-            <th class="text-center font-bold text-lg">Date</th>
+          <tr class="font-bold text-lg">
+            <th>From</th>
+            <th>N°</th>
+            <th>Team Addresses</th>
+            <th>Total Tip</th>
+            <th class="truncate max-w-12">Tip Per Address</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody v-if="(sendTipEvents?.length ?? 0) > 0">
           <tr
             v-for="(sendTipEvent, index) in sendTipEvents"
             v-bind:key="sendTipEvent.txHash"
-            class="text-center cursor-pointer hover"
+            class="cursor-pointer hover"
             @click="showTxDetail(sendTipEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
@@ -93,22 +93,22 @@
     <!-- TIP WITHDRAWAL TRANSACTIONS -->
 
     <h2>TipWithdrawal Transactions</h2>
-    <div class="overflow-x-auto bg-white">
+    <div class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
-          <tr>
-            <th class="text-center font-bold text-lg">N°</th>
-            <th class="text-center font-bold text-lg">To</th>
-            <th class="text-center font-bold text-lg">Amount</th>
-            <th class="text-center font-bold text-lg">Date</th>
+          <tr class="font-bold text-lg">
+            <th>N°</th>
+            <th>To</th>
+            <th>Amount</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody v-if="(tipWithdrawalEvents?.length ?? 0) > 0">
           <tr
             v-for="(tipWithdrawalEvent, index) in tipWithdrawalEvents"
             v-bind:key="tipWithdrawalEvent.txHash"
-            class="text-center cursor-pointer hover"
+            class="cursor-pointer hover"
             @click="showTxDetail(tipWithdrawalEvent.txHash)"
           >
             <td>{{ index + 1 }}</td>
@@ -119,7 +119,7 @@
         </tbody>
         <tbody v-else>
           <tr>
-            <td class="text-center font-bold text-lg" colspan="4">No TipWithdrawal Transactions</td>
+            <td class="font-bold text-lg" colspan="4">No TipWithdrawal Transactions</td>
           </tr>
         </tbody>
       </table>
