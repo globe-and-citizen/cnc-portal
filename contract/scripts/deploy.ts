@@ -5,8 +5,7 @@ async function main() {
   const tips = await upgrades.deployProxy(Tips)
   const contract = await tips.waitForDeployment()
 
-  console.log('Tips deployed to:', await contract.getAddress());
-  
+  console.log('Tips deployed to:', await contract.getAddress())
 }
 
 main()
