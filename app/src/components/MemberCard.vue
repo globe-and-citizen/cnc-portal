@@ -1,5 +1,5 @@
 <template>
-  <tr @click="emits('toggleUpdateMemberForm')" class="cursor-pointer">
+  <tr @click="emits('toggleUpdateMemberForm', member)" class="cursor-pointer">
     <th>{{ memberId }}</th>
     <th>{{ memberName }}</th>
     <th>{{ walletAddress }}</th>
@@ -12,76 +12,49 @@
     :class="{ 'modal-open': showUpdateMemberForm }"
   >
     <div class="modal-box">
-      <button
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="emits('toggleUpdateMemberForm')"
-      >
-        <span @click="emits('toggleUpdateMemberForm')">x</span>
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+        <span @click="emits('toggleUpdateMemberForm', {})">x</span>
       </button>
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-        <input type="text" class="w-24" v-model="nameInput" />
+        <input type="text" class="w-24" v-model="updateMemberInput.name" />
         |
-        <input type="text" class="grow" v-model="walletInput" />
+        <input type="text" class="grow" v-model="updateMemberInput.walletAddress" />
       </label>
       <div class="flex mt-2 justify-between">
-        <button class="btn btn-error size-sm" @click="deleteMember">Delete</button>
-        <button class="btn btn-primary" @click="updateMember">Update</button>
+        <button class="btn btn-error size-sm" @click="emits('deleteMember', updateMemberInput.id)">
+          Delete
+        </button>
+        <button class="btn btn-primary" @click="emits('updateMember', updateMemberInput.id)">
+          Update
+        </button>
       </div>
     </div>
     <div></div>
   </dialog>
 </template>
 <script setup lang="ts">
-import { FetchMemberAPI } from '@/apis/memberApi'
+import type { MemberInput } from '@/types/types'
 import { ref, watch } from 'vue'
 
-const nameInput = ref('')
-const walletInput = ref('')
-
-const memberApi = new FetchMemberAPI()
-
-const emits = defineEmits(['toggleUpdateMemberForm'])
-const props = defineProps(['memberName', 'walletAddress', 'memberId', 'showUpdateMemberForm'])
-nameInput.value = props.memberName
-walletInput.value = props.walletAddress
-console.log(nameInput.value)
-
+const emits = defineEmits(['toggleUpdateMemberForm', 'updateMember', 'deleteMember'])
+const props = defineProps<{
+  showUpdateMemberForm: boolean
+  member: Partial<MemberInput>
+  updateMemberInput: Partial<MemberInput>
+  memberId: Number
+}>()
+const memberName = ref(props.member.name)
+const walletAddress = props.member.walletAddress
+const updateMemberInput = ref(props.updateMemberInput)
 const showUpdateMemberForm = ref<boolean>(props.showUpdateMemberForm)
-const deleteMember = async () => {
-  const id = props.memberId
-  memberApi
-    .deleteMember(id)
-    .then(() => {
-      console.log('Deleted member succesfully')
-      window.location.reload()
-    })
-    .catch((error) => {
-      console.log('Delete member failed', error)
-    })
-}
-const updateMember = async () => {
-  const id = props.memberId
 
-  const member = {
-    name: nameInput.value,
-    walletAddress: walletInput.value
-  }
-  memberApi
-    .updateMember(member, id)
-    .then((response) => {
-      console.log('Updated member successfully', response)
-      window.location.reload()
-    })
-    .catch((error) => {
-      console.log('Error updating member', error)
-    })
-}
 watch(
-  () => props.showUpdateMemberForm,
-  (newValue) => {
-    showUpdateMemberForm.value = newValue
+  [() => props.showUpdateMemberForm, () => props.updateMemberInput],
+  ([showForm, updateInput]) => {
+    showUpdateMemberForm.value = showForm
+    updateMemberInput.value = updateInput
   }
 )
 </script>

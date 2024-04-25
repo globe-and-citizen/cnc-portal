@@ -25,15 +25,18 @@
         <tbody>
           <MemberCard
             v-for="member in team.members"
-            :memberName="member.name"
-            :walletAddress="member.walletAddress"
-            :memberId="member.id"
+            v-model:updateMemberInput="updateMemberInput"
+            :member="member"
+            :memberId="Number(member.id)"
             :key="member.id"
             v-model:showUpdateMemberForm="showUpdateMemberForm"
+            @updateMember="(id) => updateMember(id)"
+            @deleteMember="(id) => deleteMember(id)"
             @toggleUpdateMemberForm="
-              () => {
+              (member) => {
+                console.log(member)
                 showUpdateMemberForm = !showUpdateMemberForm
-                console.log(showUpdateMemberForm)
+                updateMemberInput = member
               }
             "
           />
@@ -135,7 +138,11 @@ const teamMembers = ref([
     isValid: false
   }
 ])
-
+const updateMemberInput = ref({
+  name: '',
+  walletAddress: '',
+  id: ''
+})
 const addInput = () => {
   teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
 }
@@ -201,6 +208,33 @@ onMounted(async () => {
 const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
+}
+const deleteMember = async (id: string) => {
+  memberApi
+    .deleteMember(id)
+    .then(() => {
+      console.log('Deleted member succesfully')
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Delete member failed', error)
+    })
+}
+const updateMember = async (id: string) => {
+  console.log(id)
+  const member = {
+    name: updateMemberInput.value.name,
+    walletAddress: updateMemberInput.value.walletAddress
+  }
+  memberApi
+    .updateMember(member, id)
+    .then((response) => {
+      console.log('Updated member successfully', response)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Error updating member', error)
+    })
 }
 const updateTeam = async () => {
   const id = route.params.id
