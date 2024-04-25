@@ -1,5 +1,5 @@
 <template>
-  <tr @click="showUpdateMemberForm = true" class="cursor-pointer">
+  <tr @click="emits('toggleUpdateMemberForm')" class="cursor-pointer">
     <th>{{ memberId }}</th>
     <th>{{ memberName }}</th>
     <th>{{ walletAddress }}</th>
@@ -14,9 +14,9 @@
     <div class="modal-box">
       <button
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="showUpdateMemberForm = !showUpdateMemberForm"
+        @click="emits('toggleUpdateMemberForm')"
       >
-        ✕
+        <span @click="emits('toggleUpdateMemberForm')">x</span>
       </button>
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
@@ -35,19 +35,20 @@
 </template>
 <script setup lang="ts">
 import { FetchMemberAPI } from '@/apis/memberApi'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const nameInput = ref('')
 const walletInput = ref('')
 
 const memberApi = new FetchMemberAPI()
 
+const emits = defineEmits(['toggleUpdateMemberForm'])
 const props = defineProps(['memberName', 'walletAddress', 'memberId', 'showUpdateMemberForm'])
 nameInput.value = props.memberName
 walletInput.value = props.walletAddress
 console.log(nameInput.value)
 
-const showUpdateMemberForm = ref(props.showUpdateMemberForm)
+const showUpdateMemberForm = ref<boolean>(props.showUpdateMemberForm)
 const deleteMember = async () => {
   const id = props.memberId
   memberApi
@@ -77,4 +78,10 @@ const updateMember = async () => {
       console.log('Error updating member', error)
     })
 }
+watch(
+  () => props.showUpdateMemberForm,
+  (newValue) => {
+    showUpdateMemberForm.value = newValue
+  }
+)
 </script>

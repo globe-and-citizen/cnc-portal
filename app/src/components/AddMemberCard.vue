@@ -3,7 +3,7 @@
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Member</h1>
 
-      <div class="w-6 h-6 cursor-pointer" @click="emits('toggleUpdateForm')">
+      <div class="w-6 h-6 cursor-pointer" @click="emits('toggleAddMemberForm')">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="lightgreen"
@@ -23,12 +23,12 @@
   <dialog
     id="my_modal_10"
     class="modal modal-bottom sm:modal-middle"
-    :class="{ 'modal-open': showUpdateForm }"
+    :class="{ 'modal-open': showAddMemberForm }"
   >
     <div class="modal-box">
       <button
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="emits('toggleUpdateForm')"
+        @click="emits('toggleAddMemberForm')"
       >
         ✕
       </button>
@@ -100,7 +100,7 @@ import { ref, defineProps, defineEmits, watch } from 'vue'
 
 const props = defineProps<{
   formData: Array<{ name: string; walletAddress: string; isValid: boolean }>
-  showUpdateForm: boolean
+  showAddMemberForm: boolean
 }>()
 
 const emits = defineEmits([
@@ -108,17 +108,17 @@ const emits = defineEmits([
   'addInput',
   'removeInput',
   'addMembers',
-  'toggleUpdateForm'
+  'toggleAddMemberForm'
 ])
 
 const formData = ref(props.formData)
 
-const showUpdateForm = ref(props.showUpdateForm)
+const showAddMemberForm = ref<boolean>(props.showAddMemberForm)
 watch(
-  [formData, showUpdateForm],
-  ([newFormData, newShowUpdateForm]) => {
+  [() => props.showAddMemberForm, formData],
+  ([newShowAddMemberForm, newFormData]) => {
     emits('updateForm', newFormData)
-    showUpdateForm.value = newShowUpdateForm
+    showAddMemberForm.value = newShowAddMemberForm
   },
   { deep: true }
 )

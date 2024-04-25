@@ -30,6 +30,12 @@
             :memberId="member.id"
             :key="member.id"
             v-model:showUpdateMemberForm="showUpdateMemberForm"
+            @toggleUpdateMemberForm="
+              () => {
+                showUpdateMemberForm = !showUpdateMemberForm
+                console.log(showUpdateMemberForm)
+              }
+            "
           />
         </tbody>
       </table>
@@ -37,12 +43,12 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard
         v-model:formData="teamMembers"
-        v-model:showUpdateForm="showUpdateForm"
+        v-model:showAddMemberForm="showAddMemberForm"
         @addInput="addInput"
         @removeInput="removeInput"
         @addMembers="handleAddMembers"
         @updateForm="handleUpdateForm"
-        @toggleUpdateForm="showUpdateForm = !showUpdateForm"
+        @toggleAddMemberForm="showAddMemberForm = !showAddMemberForm"
       />
     </div>
     <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
@@ -112,6 +118,7 @@ const cdesc = ref('')
 const showModal = ref(false)
 
 const showUpdateMemberForm = ref(false)
+const showAddMemberForm = ref(false)
 
 const inputs = ref<Member[]>([])
 const team = ref<Team>({
@@ -128,7 +135,6 @@ const teamMembers = ref([
     isValid: false
   }
 ])
-const showUpdateForm = ref(false)
 
 const addInput = () => {
   teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
