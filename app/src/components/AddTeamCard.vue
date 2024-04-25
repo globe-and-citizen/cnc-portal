@@ -55,6 +55,7 @@
                   class="w-24"
                   v-model="input.name"
                   :placeholder="'Member Name ' + (index + 1)"
+                  :class="{ 'input-error': !input.isValid }"
                 />
                 |
                 <input
