@@ -7,7 +7,8 @@ export interface IWeb3Library {
   initialize(): void
   connectWallet(): Promise<void>
   requestSign(message: string): Promise<string>
-  getAddress(): Promise<Ref<string | null>>
+  //getAddressRef(): Promise<Ref<string | null>>
+  getAddress(): Promise<string>
 }
 
 // Adapter for ethers.js
@@ -16,23 +17,18 @@ export class EthersJsAdapter implements IWeb3Library {
   //private provider: ethers.providers.Web3Provider | null = null;
   //private signer: ethers.Signer | null = null;
   private signer: any
-  private _address: Ref<string | null>
+  /*private _address: Ref<string | null>
 
   constructor() {
     this._address = ref(null)
-  }
+  }*/
 
   initialize(): void {
     // Initialize provider
     if ('ethereum' in window) {
       this.provider = new BrowserProvider(window.ethereum as any);
-      (window.ethereum as any).on('accountsChanged', (accounts: string[]) =>{
-        if (accounts.length > 0) {
-          this._address.value = accounts[0]
-          //console.log("[app][src][adapters][web3LibraryAdapter.ts][EthersjsAdapter][initialize] this._address: ", this._address)
-        } else {
-          this._address.value = null
-        }
+      (window.ethereum as any).on('accountsChanged', async (accounts: string[]) =>{
+        this.signer = await this.provider.getSigner()
       })
     }
     //this.signer = this.provider.getSigner();
@@ -69,10 +65,6 @@ export class EthersJsAdapter implements IWeb3Library {
       await this.connectWallet()
     }
 
-    //console.log('signer: ', (await this.signer).address)
-    // Retrieve the address associated with the signer
-    this._address.value = this._address.value? this._address.value: (await this.signer).address
-
-    return this._address
+    return (await this.signer).address
   }
 }

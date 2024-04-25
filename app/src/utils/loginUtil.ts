@@ -5,7 +5,7 @@ import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { useOwnerAddressStore } from '@/stores/address'
-
+ 
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -23,8 +23,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 export async function signInWithEthereum() {
   try {
     const address = await ethersJsAdapter.getAddress()
-    console.log(`[app][src][utils][loginUtil.ts][signInWithEthereum] address: `, address)
-    /*const nonce = await fetchUserApi.getNonce(address)
+    const nonce = await fetchUserApi.getNonce(address)
     const statement = 'Sign in with Ethereum to the app.'
     const siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
