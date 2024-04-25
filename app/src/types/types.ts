@@ -11,3 +11,15 @@ export interface Member {
   walletAddress: string
   teamId: number
 }
+
+export interface MemberInput {
+  name: string
+  walletAddress: string
+  isValid: boolean
+}
+
+export interface TeamInput {
+  name: string
+  description: string
+  members: MemberInput[]
+}

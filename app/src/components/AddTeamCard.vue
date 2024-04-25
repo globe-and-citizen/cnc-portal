@@ -36,7 +36,7 @@
           <div class="flex flex-col gap-5">
             <label class="input input-bordered flex items-center gap-2 input-md mt-4">
               <span class="w-24">Team Name</span>
-              <input type="text" class="grow" placeholder="Daisy" v-model="teamName" />
+              <input type="text" class="grow" placeholder="Daisy" v-model="team.name" />
             </label>
             <label class="input input-bordered flex items-center gap-2 input-md">
               <span class="w-24">Description</span>
@@ -44,11 +44,11 @@
                 type="text"
                 class="grow"
                 placeholder="Enter a short description"
-                v-model="teamDesc"
+                v-model="team.description"
               />
             </label>
 
-            <div v-for="(input, index) in inputs" :key="index" class="input-group">
+            <div v-for="(input, index) in team.members" :key="index" class="input-group">
               <label class="input input-bordered flex items-center gap-2 input-md">
                 <input
                   type="text"
@@ -67,7 +67,7 @@
             </div>
           </div>
           <div class="flex justify-end pt-3">
-            <div class="w-6 h-6 cursor-pointer" @click="addInput">
+            <div class="w-6 h-6 cursor-pointer" @click="emits('addInput')">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="lightgreen"
@@ -82,7 +82,7 @@
                 />
               </svg>
             </div>
-            <div class="w-6 h-6 cursor-pointer" @click="removeInput">
+            <div class="w-6 h-6 cursor-pointer" @click="emits('removeInput')">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="red"
@@ -102,7 +102,7 @@
 
           <div class="modal-action justify-center">
             <!-- if there is a button in form, it will close the modal -->
-            <button class="btn btn-primary" @click="handleSubmit">Submit</button>
+            <button class="btn btn-primary" @click="emits('addTeam')">Submit</button>
 
             <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
           </div>
@@ -113,25 +113,15 @@
 </template>
 
 <script setup lang="ts">
+import type { TeamInput } from '@/types/types'
 import { ref, toRaw } from 'vue'
 
-const emits = defineEmits(['addTeam', 'showAddTeamForm'])
-const props = defineProps<{ showUpdateForm: boolean }>()
+const emits = defineEmits(['addTeam', 'showAddTeamForm', 'addInput', 'removeInput'])
+const props = defineProps<{
+  showUpdateForm: boolean
+  team: TeamInput
+}>()
+const team = ref(props.team)
 
 const showAddTeamForm = ref(props.showUpdateForm)
-const teamName = ref('')
-const teamDesc = ref('')
-const inputs = ref([{ name: '', walletAddress: '' }])
-const addInput = () => {
-  inputs.value.push({ name: '', walletAddress: '' })
-}
-const handleSubmit = async () => {
-  let teamMembers = { members: toRaw(inputs.value) }
-  emits('addTeam', teamName.value, teamDesc.value, teamMembers.members)
-}
-const removeInput = () => {
-  if (inputs.value.length > 1) {
-    inputs.value.pop()
-  }
-}
 </script>
