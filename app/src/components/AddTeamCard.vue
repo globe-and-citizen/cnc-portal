@@ -49,13 +49,15 @@
             </label>
 
             <div v-for="(input, index) in team.members" :key="index" class="input-group">
-              <label class="input input-bordered flex items-center gap-2 input-md">
+              <label
+                class="input input-bordered flex items-center gap-2 input-md"
+                :class="{ 'input-error': !input.isValid }"
+              >
                 <input
                   type="text"
                   class="w-24"
                   v-model="input.name"
                   :placeholder="'Member Name ' + (index + 1)"
-                  :class="{ 'input-error': !input.isValid }"
                 />
                 |
                 <input
@@ -117,7 +119,13 @@
 import type { TeamInput } from '@/types/types'
 import { ref, watch } from 'vue'
 
-const emits = defineEmits(['addTeam', 'addInput', 'removeInput', 'toggleAddTeamForm'])
+const emits = defineEmits([
+  'addTeam',
+  'addInput',
+  'removeInput',
+  'toggleAddTeamForm',
+  'updateAddTeamForm'
+])
 const props = defineProps<{
   showAddTeamForm: boolean
   team: TeamInput
@@ -126,9 +134,11 @@ const team = ref(props.team)
 const showAddTeamForm = ref<boolean>(props.showAddTeamForm)
 
 watch(
-  () => props.showAddTeamForm,
-  (newValue) => {
-    showAddTeamForm.value = newValue
-  }
+  [() => props.showAddTeamForm, team],
+  ([newShowAddTeamForm, newFormDataTeam]) => {
+    emits('updateAddTeamForm', newFormDataTeam)
+    showAddTeamForm.value = newShowAddTeamForm
+  },
+  { deep: true }
 )
 </script>

@@ -1,8 +1,8 @@
 <template>
   <tr @click="emits('toggleUpdateMemberForm', member)" class="cursor-pointer">
     <th>{{ memberId }}</th>
-    <th>{{ memberName }}</th>
-    <th>{{ walletAddress }}</th>
+    <th>{{ member.name }}</th>
+    <th>{{ member.walletAddress }}</th>
     <th>Action</th>
   </tr>
 
@@ -17,7 +17,10 @@
       </button>
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
-      <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <label
+        :class="{ 'input-error': !member.isValid }"
+        class="input input-bordered flex items-center gap-2 input-md mt-2"
+      >
         <input type="text" class="w-24" v-model="updateMemberInput.name" />
         |
         <input type="text" class="grow" v-model="updateMemberInput.walletAddress" />
@@ -38,23 +41,26 @@
 import type { MemberInput } from '@/types/types'
 import { ref, watch } from 'vue'
 
-const emits = defineEmits(['toggleUpdateMemberForm', 'updateMember', 'deleteMember'])
+const emits = defineEmits([
+  'toggleUpdateMemberForm',
+  'updateMember',
+  'deleteMember',
+  'updateMemberForm'
+])
 const props = defineProps<{
   showUpdateMemberForm: boolean
   member: Partial<MemberInput>
   updateMemberInput: Partial<MemberInput>
   memberId: Number
 }>()
-const memberName = ref(props.member.name)
-const walletAddress = props.member.walletAddress
+const member = ref(props.member)
 const updateMemberInput = ref(props.updateMemberInput)
 const showUpdateMemberForm = ref<boolean>(props.showUpdateMemberForm)
 
-watch(
-  [() => props.showUpdateMemberForm, () => props.updateMemberInput],
-  ([showForm, updateInput]) => {
-    showUpdateMemberForm.value = showForm
-    updateMemberInput.value = updateInput
-  }
-)
+watch([() => props.showUpdateMemberForm, member, props.member], ([showForm, updateInput]) => {
+  showUpdateMemberForm.value = showForm
+  updateMemberInput.value = updateInput
+  emits('updateMemberForm')
+  console.log(updateMemberInput.value.isValid)
+})
 </script>

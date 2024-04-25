@@ -35,7 +35,6 @@
       <h1 class="font-bold text-2xl">Add New Member</h1>
       <hr class="" />
       <div v-for="(input, index) in formData" :key="index" class="input-group mt-3">
-        <div v-if="input.isValid == false"></div>
         <label
           class="input input-bordered flex items-center gap-2 input-md"
           :class="{ 'input-error': !input.isValid }"

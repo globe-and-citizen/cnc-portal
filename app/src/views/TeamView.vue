@@ -14,6 +14,7 @@
         @addTeam="handleAddTeam"
         v-model:showAddTeamForm="showAddTeamForm"
         v-model:team="team"
+        @updateAddTeamForm="handleUpdateAddTeamForm"
         @addInput="addInput"
         @removeInput="removeInput"
         @toggleAddTeamForm="showAddTeamForm = !showAddTeamForm"
@@ -51,6 +52,17 @@ const team = ref<TeamInput>({
   ]
 })
 
+const handleUpdateAddTeamForm = (teamInput: TeamInput) => {
+  team.value = teamInput
+  let members = team.value.members
+  console.log('Members:', members)
+  members.map((member) => {
+    if (isAddress(member.walletAddress)) {
+      console.log('Valid wallet address:', member.walletAddress)
+      member.isValid = true
+    }
+  })
+}
 const handleAddTeam = () => {
   team.value.members.map((member) => {
     if (!isAddress(member.walletAddress)) {

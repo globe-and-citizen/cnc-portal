@@ -32,9 +32,9 @@
             v-model:showUpdateMemberForm="showUpdateMemberForm"
             @updateMember="(id) => updateMember(id)"
             @deleteMember="(id) => deleteMember(id)"
+            @updateMemberForm="handleUpdateMemberForm"
             @toggleUpdateMemberForm="
               (member) => {
-                console.log(member)
                 showUpdateMemberForm = !showUpdateMemberForm
                 updateMemberInput = member
               }
@@ -99,7 +99,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 
-import type { Member, Team } from '@/types/types'
+import type { Member, MemberInput, Team } from '@/types/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { FetchMemberAPI } from '@/apis/memberApi'
 
@@ -138,10 +138,11 @@ const teamMembers = ref([
     isValid: false
   }
 ])
-const updateMemberInput = ref({
+const updateMemberInput = ref<MemberInput>({
   name: '',
   walletAddress: '',
-  id: ''
+  id: '',
+  isValid: false
 })
 const addInput = () => {
   teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
@@ -150,6 +151,13 @@ const addInput = () => {
 const removeInput = () => {
   if (teamMembers.value.length > 1) {
     teamMembers.value.pop()
+  }
+}
+const handleUpdateMemberForm = () => {
+  if (isAddress(updateMemberInput.value.walletAddress)) {
+    updateMemberInput.value.isValid = true
+  } else {
+    updateMemberInput.value.isValid = false
   }
 }
 const handleUpdateForm = async () => {
@@ -164,13 +172,11 @@ const handleUpdateForm = async () => {
 const handleAddMembers = async () => {
   try {
     let isValid = true
-    let errorIndexes: number[] = []
     console.log(teamMembers.value)
 
-    teamMembers.value.map((member, index) => {
+    teamMembers.value.map((member) => {
       if (!isAddress(member.walletAddress)) {
         isValid = false
-        errorIndexes.push(index)
       }
     })
 
