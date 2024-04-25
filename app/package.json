@@ -18,6 +18,7 @@
     "format-check": "prettier . --check"
   },
   "dependencies": {
+    "dayjs": "^1.11.10",
     "ethers": "^6.11.1",
     "pinia": "^2.1.7",
     "siwe": "^2.1.4",

@@ -65,6 +65,10 @@ In the `./app` folder, create a `.env` file with the following variable:
 
 - **VITE_APP_BACKEND_URL**: The URL for the backend API. Example: 
 `VITE_APP_BACKEND_URL=http://localhost:8000`
+- **VITE_APP_ETHERSCAN_URL**: The URL to see transaction detail. Example:
+`VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
+- **VITE_APP_TIPS_ADDRESS**: The URL to Tips smart contract. Example:
+`VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B`
 
 ## Running the application
 
