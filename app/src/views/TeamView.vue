@@ -10,7 +10,7 @@
         @click="navigateToTeam(team.id)"
       />
 
-      <AddTeamCard @addTeam="handleAddTeam" />
+      <AddTeamCard @addTeam="handleAddTeam" v-model:showUpdateForm="showAddTeamForm" />
     </div>
   </div>
 </template>
@@ -30,6 +30,8 @@ import { ToastType } from '@/types'
 const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
+
+const showAddTeamForm = ref(false)
 
 const handleAddTeam = (teamName: string, teamDesc: string, teamMembers: Partial<Member>[]) => {
   let isValid = true

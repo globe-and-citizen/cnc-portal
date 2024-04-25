@@ -3,7 +3,7 @@
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Team</h1>
 
-      <div class="w-6 h-6 cursor-pointer" @click="showModal = true">
+      <div class="w-6 h-6 cursor-pointer" @click="showAddTeamForm = true">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="lightgreen"
@@ -21,12 +21,12 @@
       <dialog
         id="my_modal_5"
         class="modal modal-bottom sm:modal-middle"
-        :class="{ 'modal-open': showModal }"
+        :class="{ 'modal-open': showAddTeamForm }"
       >
         <div class="modal-box">
           <button
             class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            @click="showModal = !showModal"
+            @click="showAddTeamForm = !showAddTeamForm"
           >
             ✕
           </button>
@@ -115,8 +115,10 @@
 <script setup lang="ts">
 import { ref, toRaw } from 'vue'
 
-const emits = defineEmits(['addTeam'])
-const showModal = ref(false)
+const emits = defineEmits(['addTeam', 'showAddTeamForm'])
+const props = defineProps<{ showUpdateForm: boolean }>()
+
+const showAddTeamForm = ref(props.showUpdateForm)
 const teamName = ref('')
 const teamDesc = ref('')
 const inputs = ref([{ name: '', walletAddress: '' }])
