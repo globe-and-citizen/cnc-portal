@@ -3,7 +3,7 @@
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Member</h1>
 
-      <div class="w-6 h-6 cursor-pointer" @click="showModal = true">
+      <div class="w-6 h-6 cursor-pointer" @click="showUpdateForm = true">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="lightgreen"
@@ -23,19 +23,23 @@
   <dialog
     id="my_modal_10"
     class="modal modal-bottom sm:modal-middle"
-    :class="{ 'modal-open': showModal }"
+    :class="{ 'modal-open': showUpdateForm }"
   >
     <div class="modal-box">
       <button
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="showModal = !showModal"
+        @click="showUpdateForm = !showUpdateForm"
       >
         ✕
       </button>
       <h1 class="font-bold text-2xl">Add New Member</h1>
       <hr class="" />
       <div v-for="(input, index) in formData" :key="index" class="input-group mt-3">
-        <label class="input input-bordered flex items-center gap-2 input-md">
+        <div v-if="input.isValid == false"></div>
+        <label
+          class="input input-bordered flex items-center gap-2 input-md"
+          :class="{ 'input-error': !input.isValid }"
+        >
           <input
             type="text"
             class="w-24"
@@ -94,19 +98,21 @@
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, watch } from 'vue'
 
-const showModal = ref(false)
 const props = defineProps<{
   formData: Array<{ name: string; walletAddress: string; isValid: boolean }>
+  showUpdateForm: boolean
 }>()
 
-const emits = defineEmits(['updateForm', 'addInput', 'removeInput', 'addMembers'])
+const emits = defineEmits(['updateForm', 'addInput', 'removeInput', 'addMembers', 'showUpdateForm'])
 
 const formData = ref(props.formData)
 
+const showUpdateForm = ref(props.showUpdateForm)
 watch(
-  formData,
-  (newValue) => {
-    emits('updateForm', newValue)
+  [formData, showUpdateForm],
+  ([newFormData, newShowUpdateForm]) => {
+    emits('updateForm', newFormData)
+    emits('showUpdateForm', newShowUpdateForm)
   },
   { deep: true }
 )

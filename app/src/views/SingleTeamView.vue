@@ -36,6 +36,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard
         v-model:formData="teamMembers"
+        v-model:showUpdateForm="showUpdateForm"
         @addInput="addInput"
         @removeInput="removeInput"
         @addMembers="handleAddMembers"
@@ -121,6 +122,7 @@ const teamMembers = ref([
     isValid: false
   }
 ]) // Assuming teamMembers is an array
+const showUpdateForm = ref(false)
 
 const addInput = () => {
   teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
@@ -132,11 +134,11 @@ const removeInput = () => {
   }
 }
 const handleUpdateForm = async () => {
-  teamMembers.value.map((member, index) => {
-    let errorIndexes: number[] = []
+  teamMembers.value.map((member) => {
     if (!isAddress(member.walletAddress)) {
       member.isValid = false
-      errorIndexes.push(index)
+    } else {
+      member.isValid = true
     }
   })
 }
