@@ -14,14 +14,15 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
 
-  # frontend:
-  #   build:
-  #     context: ./app
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5173:5173" # Adjust port as needed
-  #   volumes:
-  #     - ./app:/app
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "80:80" # Adjust port as needed
+    volumes:
+      - ./app:/app
   backend:
     build:
       context: ./backend
@@ -35,8 +36,11 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgres://postgres:newpassword@db:5432/crypto-db
+      DATABASE_URL: postgres://postgres:newpassword@db:5432/cnc-db
       PORT: 3000
+      FRONTEND_URL: http://localhost
+      NODE_ENV: development
+      SECRET_KEY: "secret-key"
 
 volumes:
   db:
