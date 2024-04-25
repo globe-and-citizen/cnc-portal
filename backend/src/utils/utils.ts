@@ -1,17 +1,23 @@
 import { Response } from "express";
 
 export const errorResponse = (code: number, error: any, res: Response) => {
-  if (typeof error === "string")
+  if (code !== 500 && typeof error === "string")
     return res.status(code).json({
       success: false,
       message: error,
     });
-  else if (error instanceof Error) {
+  else if (code !== 500 && error instanceof Error) {
     return res.status(code).json({
       success: false,
       message: error.message,
     });
   } else {
+    if (process.env.NODE_ENV === "development")
+      if (error instanceof Error)
+        console.log(error.stack)
+      else
+        console.log(error)
+      
     return res.status(code).json({
       success: false,
       message: "Internal server error has occured",

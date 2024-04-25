@@ -10,8 +10,8 @@ import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 //#endregion routing modules
 
-
 import { authorizeUser } from "../middleware/authMiddleware";
+import { errorMessages } from "../utils/serverConfigUtil";
 
 const path = require("path");
 
@@ -35,8 +35,20 @@ class Server {
   }
 
   private init() {
+    this.checks()
     this.middleware();
     this.routes();
+  }
+
+  private checks() {
+    if (process.env.NODE_ENV === undefined)
+      throw new Error(errorMessages.nodeEnv)
+    if (process.env.FRONTEND_URL === undefined)
+      throw new Error(errorMessages.frontendUrl)
+    if (process.env.SECRET_KEY === undefined)
+      throw new Error(errorMessages.secretKey)
+    if (process.env.DATABASE_URL === undefined)
+      throw new Error(errorMessages.databaseUrl)
   }
 
   private middleware() {
