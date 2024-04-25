@@ -22,7 +22,7 @@ jobs:
                 cache: 'npm'
 
             - name: ⚙️ NPM install
-              run: npm install
+              run: npm ci
               working-directory: ./app
 
             - name: ⚙️ Run lint
