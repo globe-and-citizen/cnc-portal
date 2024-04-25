@@ -15,7 +15,7 @@ Note: If you plan on using `docker-compose up` at the root directory, you can sk
 
 To create and run a PostgreSQL Docker container with the correct port and database URL as specified in your .env file, you can use the following command:
 
-`docker run --name cnc-db -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=cnc-db -p 5432:5432 -d postgres`
+`docker run --name cnc-db -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=cnc-db -p 5432:5432 -d postgres:16-alpine`
 
 Here's the breakdown:
 
