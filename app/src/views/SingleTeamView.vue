@@ -29,6 +29,7 @@
             :walletAddress="member.walletAddress"
             :memberId="member.id"
             :key="member.id"
+            v-model:showUpdateMemberForm="showUpdateMemberForm"
           />
         </tbody>
       </table>
@@ -41,6 +42,7 @@
         @removeInput="removeInput"
         @addMembers="handleAddMembers"
         @updateForm="handleUpdateForm"
+        @toggleUpdateForm="showUpdateForm = !showUpdateForm"
       />
     </div>
     <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
@@ -108,6 +110,9 @@ const cname = ref('')
 const cdesc = ref('')
 
 const showModal = ref(false)
+
+const showUpdateMemberForm = ref(false)
+
 const inputs = ref<Member[]>([])
 const team = ref<Team>({
   id: '',
@@ -115,13 +120,14 @@ const team = ref<Team>({
   description: '',
   members: []
 })
+
 const teamMembers = ref([
   {
     name: '',
     walletAddress: '',
     isValid: false
   }
-]) // Assuming teamMembers is an array
+])
 const showUpdateForm = ref(false)
 
 const addInput = () => {

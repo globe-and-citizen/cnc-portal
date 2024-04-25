@@ -3,7 +3,7 @@
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Member</h1>
 
-      <div class="w-6 h-6 cursor-pointer" @click="showUpdateForm = true">
+      <div class="w-6 h-6 cursor-pointer" @click="emits('toggleUpdateForm')">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="lightgreen"
@@ -28,7 +28,7 @@
     <div class="modal-box">
       <button
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="showUpdateForm = !showUpdateForm"
+        @click="emits('toggleUpdateForm')"
       >
         ✕
       </button>
@@ -103,7 +103,13 @@ const props = defineProps<{
   showUpdateForm: boolean
 }>()
 
-const emits = defineEmits(['updateForm', 'addInput', 'removeInput', 'addMembers', 'showUpdateForm'])
+const emits = defineEmits([
+  'updateForm',
+  'addInput',
+  'removeInput',
+  'addMembers',
+  'toggleUpdateForm'
+])
 
 const formData = ref(props.formData)
 
@@ -112,7 +118,7 @@ watch(
   [formData, showUpdateForm],
   ([newFormData, newShowUpdateForm]) => {
     emits('updateForm', newFormData)
-    emits('showUpdateForm', newShowUpdateForm)
+    showUpdateForm.value = newShowUpdateForm
   },
   { deep: true }
 )

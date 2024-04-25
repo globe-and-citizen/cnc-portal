@@ -1,5 +1,5 @@
 <template>
-  <tr @click="showModal = true" class="cursor-pointer">
+  <tr @click="showUpdateMemberForm = true" class="cursor-pointer">
     <th>{{ memberId }}</th>
     <th>{{ memberName }}</th>
     <th>{{ walletAddress }}</th>
@@ -9,12 +9,12 @@
   <dialog
     id="my_modal_20"
     class="modal modal-bottom sm:modal-middle"
-    :class="{ 'modal-open': showModal }"
+    :class="{ 'modal-open': showUpdateMemberForm }"
   >
     <div class="modal-box">
       <button
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="showModal = !showModal"
+        @click="showUpdateMemberForm = !showUpdateMemberForm"
       >
         ✕
       </button>
@@ -36,18 +36,18 @@
 <script setup lang="ts">
 import { FetchMemberAPI } from '@/apis/memberApi'
 import { ref } from 'vue'
-const showModal = ref(false)
 
 const nameInput = ref('')
 const walletInput = ref('')
 
 const memberApi = new FetchMemberAPI()
 
-const props = defineProps(['memberName', 'walletAddress', 'memberId'])
+const props = defineProps(['memberName', 'walletAddress', 'memberId', 'showUpdateMemberForm'])
 nameInput.value = props.memberName
 walletInput.value = props.walletAddress
 console.log(nameInput.value)
 
+const showUpdateMemberForm = ref(props.showUpdateMemberForm)
 const deleteMember = async () => {
   const id = props.memberId
   memberApi

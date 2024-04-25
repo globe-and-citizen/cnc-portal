@@ -12,10 +12,11 @@
 
       <AddTeamCard
         @addTeam="handleAddTeam"
-        v-model:showUpdateForm="showAddTeamForm"
+        v-model:showAddTeamForm="showAddTeamForm"
         v-model:team="team"
         @addInput="addInput"
         @removeInput="removeInput"
+        @toggleAddTeamForm="showAddTeamForm = !showAddTeamForm"
       />
     </div>
   </div>

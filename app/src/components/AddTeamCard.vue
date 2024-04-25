@@ -3,7 +3,7 @@
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Team</h1>
 
-      <div class="w-6 h-6 cursor-pointer" @click="showAddTeamForm = true">
+      <div class="w-6 h-6 cursor-pointer" @click="emits('toggleAddTeamForm')">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="lightgreen"
@@ -26,7 +26,7 @@
         <div class="modal-box">
           <button
             class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            @click="showAddTeamForm = !showAddTeamForm"
+            @click="emits('toggleAddTeamForm')"
           >
             ✕
           </button>
@@ -115,14 +115,20 @@
 
 <script setup lang="ts">
 import type { TeamInput } from '@/types/types'
-import { ref, toRaw } from 'vue'
+import { ref, watch } from 'vue'
 
-const emits = defineEmits(['addTeam', 'showAddTeamForm', 'addInput', 'removeInput'])
+const emits = defineEmits(['addTeam', 'addInput', 'removeInput', 'toggleAddTeamForm'])
 const props = defineProps<{
-  showUpdateForm: boolean
+  showAddTeamForm: boolean
   team: TeamInput
 }>()
 const team = ref(props.team)
+const showAddTeamForm = ref<boolean>(props.showAddTeamForm)
 
-const showAddTeamForm = ref(props.showUpdateForm)
+watch(
+  () => props.showAddTeamForm,
+  (newValue) => {
+    showAddTeamForm.value = newValue
+  }
+)
 </script>
