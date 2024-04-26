@@ -27,9 +27,8 @@
             v-for="member in team.members"
             v-model:updateMemberInput="updateMemberInput"
             :member="member"
-            :memberId="Number(member.id)"
             :key="member.id"
-            v-model:showUpdateMemberForm="showUpdateMemberForm"
+            :showUpdateMemberForm="showUpdateMemberForm"
             @updateMember="(id) => updateMember(id)"
             @deleteMember="(id) => deleteMember(id)"
             @updateMemberForm="handleUpdateMemberForm"
@@ -154,6 +153,7 @@ const removeInput = () => {
   }
 }
 const handleUpdateMemberForm = () => {
+  console.log(updateMemberInput.value.walletAddress)
   if (isAddress(updateMemberInput.value.walletAddress)) {
     updateMemberInput.value.isValid = true
   } else {
@@ -172,7 +172,6 @@ const handleUpdateForm = async () => {
 const handleAddMembers = async () => {
   try {
     let isValid = true
-    console.log(teamMembers.value)
 
     teamMembers.value.map((member) => {
       if (!isAddress(member.walletAddress)) {

@@ -1,6 +1,6 @@
 <template>
   <tr @click="emits('toggleUpdateMemberForm', member)" class="cursor-pointer">
-    <th>{{ memberId }}</th>
+    <th>{{ member.id }}</th>
     <th>{{ member.name }}</th>
     <th>{{ member.walletAddress }}</th>
     <th>Action</th>
@@ -8,6 +8,7 @@
 
   <dialog
     id="my_modal_20"
+    v-if="showUpdateMemberForm"
     class="modal modal-bottom sm:modal-middle"
     :class="{ 'modal-open': showUpdateMemberForm }"
   >
@@ -18,7 +19,7 @@
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
       <label
-        :class="{ 'input-error': !member.isValid }"
+        :class="{ 'input-error': !updateMemberInput.isValid }"
         class="input input-bordered flex items-center gap-2 input-md mt-2"
       >
         <input type="text" class="w-24" v-model="updateMemberInput.name" />
@@ -51,16 +52,19 @@ const props = defineProps<{
   showUpdateMemberForm: boolean
   member: Partial<MemberInput>
   updateMemberInput: Partial<MemberInput>
-  memberId: Number
 }>()
 const member = ref(props.member)
 const updateMemberInput = ref(props.updateMemberInput)
 const showUpdateMemberForm = ref<boolean>(props.showUpdateMemberForm)
 
-watch([() => props.showUpdateMemberForm, member, props.member], ([showForm, updateInput]) => {
-  showUpdateMemberForm.value = showForm
-  updateMemberInput.value = updateInput
-  emits('updateMemberForm')
-  console.log(updateMemberInput.value.isValid)
-})
+watch(
+  [() => props.showUpdateMemberForm, props.updateMemberInput, updateMemberInput],
+  ([showForm]) => {
+    showUpdateMemberForm.value = showForm
+    updateMemberInput.value = props.updateMemberInput
+    emits('updateMemberForm')
+    console.log('updateMemberInput', updateMemberInput.value)
+  },
+  { deep: true }
+)
 </script>
