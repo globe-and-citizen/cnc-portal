@@ -29,22 +29,6 @@ WORKDIR /app
 # Copy the rest of the application code
 COPY --from=development /app .
 
-# Receive the arguments from the docker-compose.yml file
-ARG VITE_APP_TIPS_ADDRESS
-ARG VITE_APP_BACKEND_URL
-ARG VITE_APP_ETHERSCAN_URL
-
-# log the environment variables
-RUN echo "Current VITE_APP_TIPS_ADDRESS: $VITE_APP_TIPS_ADDRESS" && \
-    echo "Current VITE_APP_BACKEND_URL: $VITE_APP_BACKEND_URL"  && \
-    echo "VITE_APP_ETHERSCAN_URL: $VITE_APP_ETHERSCAN_URL"
-
-
-# Define the environment variables and generate the .env file
-RUN echo "VITE_APP_TIPS_ADDRESS=$VITE_APP_TIPS_ADDRESS" > .env && \
-    echo "VITE_APP_BACKEND_URL=$VITE_APP_BACKEND_URL"  >> .env && \
-    echo "VITE_APP_ETHERSCAN_URL: $VITE_APP_ETHERSCAN_URL" >> .env
-
 RUN npm run build
 
 # Use nginx base image for serving Vue app
