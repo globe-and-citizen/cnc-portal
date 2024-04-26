@@ -8,6 +8,7 @@ steps:
     env:
       - 'VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL'
       - 'VITE_APP_TIPS_ADDRESS=$_VITE_APP_TIPS_ADDRESS'
+      - 'VITE_APP_ETHERSCAN_URL=$_VITE_APP_ETHERSCAN_URL'
 
   # Push the image to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -27,3 +28,4 @@ steps:
 substitutions:
     _VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
     _VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
+    _VITE_APP_ETHERSCAN_URL: "https://sepolia.etherscan.io/"
