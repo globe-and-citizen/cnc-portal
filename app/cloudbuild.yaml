@@ -2,9 +2,12 @@ steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     script: |
-      docker build --build-arg VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B VITE_APP_BACKEND_URL=https://cnc-portal-neg4ztdcia-wl.a.run.app -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA ./app
+      docker build -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA ./app
     automapSubstitutions: true
     id: 'Build The Image'
+    env:
+      - 'VITE_APP_BACKEND_URL=$VITE_APP_BACKEND_URL'
+      - 'VITE_APP_TIPS_ADDRESS=$VITE_APP_TIPS_ADDRESS'
 
   # Push the image to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -19,3 +22,8 @@ steps:
     id: 'Deploy to Cloud Run'
     waitFor:
       - 'Push The Image'
+
+
+substitutions:
+    VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
+    VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
