@@ -31,7 +31,7 @@
             :showUpdateMemberModal="showUpdateMemberModal"
             @updateMember="(id) => updateMember(id)"
             @deleteMember="(id) => deleteMember(id)"
-            @toggleUpdateMemberForm="toggleUpdateMemberForm"
+            @toggleUpdateMemberModal="toggleUpdateMemberModal"
           />
         </tbody>
       </table>
@@ -146,7 +146,7 @@ const removeInput = () => {
     teamMembers.value.pop()
   }
 }
-const toggleUpdateMemberForm = (member: MemberInput) => {
+const toggleUpdateMemberModal = (member: MemberInput) => {
   showUpdateMemberModal.value = !showUpdateMemberModal.value
   updateMemberInput.value = member
 }
