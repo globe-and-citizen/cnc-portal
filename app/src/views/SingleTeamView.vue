@@ -28,15 +28,10 @@
             v-model:updateMemberInput="updateMemberInput"
             :member="member"
             :key="member.id"
-            :showUpdateMemberForm="showUpdateMemberForm"
+            :showUpdateMemberModal="showUpdateMemberModal"
             @updateMember="(id) => updateMember(id)"
             @deleteMember="(id) => deleteMember(id)"
-            @toggleUpdateMemberForm="
-              (member) => {
-                showUpdateMemberForm = !showUpdateMemberForm
-                updateMemberInput = member
-              }
-            "
+            @toggleUpdateMemberForm="toggleUpdateMemberForm"
           />
         </tbody>
       </table>
@@ -118,7 +113,7 @@ const cdesc = ref('')
 
 const showModal = ref(false)
 
-const showUpdateMemberForm = ref(false)
+const showUpdateMemberModal = ref(false)
 const showAddMemberForm = ref(false)
 
 const inputs = ref<Member[]>([])
@@ -151,14 +146,10 @@ const removeInput = () => {
     teamMembers.value.pop()
   }
 }
-// const handleUpdateMemberForm = () => {
-//   console.log(updateMemberInput.value.walletAddress)
-//   if (isAddress(updateMemberInput.value.walletAddress)) {
-//     updateMemberInput.value.isValid = true
-//   } else {
-//     updateMemberInput.value.isValid = false
-//   }
-// }
+const toggleUpdateMemberForm = (member: MemberInput) => {
+  showUpdateMemberModal.value = !showUpdateMemberModal.value
+  updateMemberInput.value = member
+}
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
     if (!isAddress(member.walletAddress)) {

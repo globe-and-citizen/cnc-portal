@@ -8,9 +8,9 @@
 
   <dialog
     id="my_modal_20"
-    v-if="showUpdateMemberForm"
+    v-if="showUpdateMemberModal"
     class="modal modal-bottom sm:modal-middle"
-    :class="{ 'modal-open': showUpdateMemberForm }"
+    :class="{ 'modal-open': showUpdateMemberModal }"
   >
     <div class="modal-box">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
@@ -44,18 +44,18 @@ import { ref, watch } from 'vue'
 
 const emits = defineEmits(['toggleUpdateMemberForm', 'updateMember', 'deleteMember'])
 const props = defineProps<{
-  showUpdateMemberForm: boolean
+  showUpdateMemberModal: boolean
   member: Partial<MemberInput>
   updateMemberInput: Partial<MemberInput>
 }>()
 const member = ref(props.member)
 const updateMemberInput = ref(props.updateMemberInput)
-const showUpdateMemberForm = ref<boolean>(props.showUpdateMemberForm)
+const showUpdateMemberModal = ref<boolean>(props.showUpdateMemberModal)
 
 watch(
-  [() => props.showUpdateMemberForm, props.updateMemberInput, updateMemberInput],
+  [() => props.showUpdateMemberModal, props.updateMemberInput, updateMemberInput],
   ([showForm]) => {
-    showUpdateMemberForm.value = showForm
+    showUpdateMemberModal.value = showForm
     updateMemberInput.value = props.updateMemberInput
   },
   { deep: true }
