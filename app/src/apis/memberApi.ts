@@ -25,7 +25,7 @@ export class FetchMemberAPI implements MemberAPI {
     const { show } = useToastStore()
 
     try {
-      newMembers.map((member: any) => {
+      newMembers.map((member: Partial<Member>) => {
         if (!isAddress(member.walletAddress)) {
           throw new Error(`Invalid wallet address`)
         }
