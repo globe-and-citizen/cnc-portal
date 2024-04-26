@@ -42,12 +42,7 @@
 import type { MemberInput } from '@/types/types'
 import { ref, watch } from 'vue'
 
-const emits = defineEmits([
-  'toggleUpdateMemberForm',
-  'updateMember',
-  'deleteMember',
-  'updateMemberForm'
-])
+const emits = defineEmits(['toggleUpdateMemberForm', 'updateMember', 'deleteMember'])
 const props = defineProps<{
   showUpdateMemberForm: boolean
   member: Partial<MemberInput>
@@ -62,8 +57,6 @@ watch(
   ([showForm]) => {
     showUpdateMemberForm.value = showForm
     updateMemberInput.value = props.updateMemberInput
-    emits('updateMemberForm')
-    console.log('updateMemberInput', updateMemberInput.value)
   },
   { deep: true }
 )

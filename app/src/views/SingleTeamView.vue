@@ -31,7 +31,6 @@
             :showUpdateMemberForm="showUpdateMemberForm"
             @updateMember="(id) => updateMember(id)"
             @deleteMember="(id) => deleteMember(id)"
-            @updateMemberForm="handleUpdateMemberForm"
             @toggleUpdateMemberForm="
               (member) => {
                 showUpdateMemberForm = !showUpdateMemberForm
@@ -93,7 +92,7 @@
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
@@ -152,14 +151,14 @@ const removeInput = () => {
     teamMembers.value.pop()
   }
 }
-const handleUpdateMemberForm = () => {
-  console.log(updateMemberInput.value.walletAddress)
-  if (isAddress(updateMemberInput.value.walletAddress)) {
-    updateMemberInput.value.isValid = true
-  } else {
-    updateMemberInput.value.isValid = false
-  }
-}
+// const handleUpdateMemberForm = () => {
+//   console.log(updateMemberInput.value.walletAddress)
+//   if (isAddress(updateMemberInput.value.walletAddress)) {
+//     updateMemberInput.value.isValid = true
+//   } else {
+//     updateMemberInput.value.isValid = false
+//   }
+// }
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
     if (!isAddress(member.walletAddress)) {
@@ -270,4 +269,11 @@ const deleteTeam = async () => {
       console.error('Error deleting team:', error)
     })
 }
+watch(
+  updateMemberInput,
+  (newVal) => {
+    updateMemberInput.value.isValid = isAddress(newVal.walletAddress)
+  },
+  { deep: true }
+)
 </script>
