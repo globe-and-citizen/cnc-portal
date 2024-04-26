@@ -15,7 +15,7 @@
 </template>
 <script setup lang="ts">
 import type { MemberInput } from '@/types/types'
-import UpdateMemberModal from '@/components/UpdateMemberModal.vue'
+import UpdateMemberModal from '@/components/modals/UpdateMemberModal.vue'
 import { ref, watch } from 'vue'
 
 const emits = defineEmits(['toggleUpdateMemberModal', 'updateMember', 'deleteMember'])

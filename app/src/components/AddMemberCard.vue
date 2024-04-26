@@ -32,7 +32,7 @@
 </template>
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, watch } from 'vue'
-import AddMemberModal from '@/components/AddMemberModal.vue'
+import AddMemberModal from '@/components/modals/AddMemberModal.vue'
 
 const props = defineProps<{
   formData: Array<{ name: string; walletAddress: string; isValid: boolean }>
