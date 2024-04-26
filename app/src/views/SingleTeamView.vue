@@ -47,7 +47,14 @@
         @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
       />
     </div>
-    <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
+    <TipsAction
+      :addresses="team.members.map((member) => member.walletAddress)"
+      :pushTipLoading="pushTipLoading"
+      :sendTipLoading="sendTipLoading"
+      :totalTipAmount="totalTipAmount"
+      @pushTip="(addresses) => pushTip(addresses)"
+      @sendTip="(addresses) => sendTip(addresses)"
+    />
   </div>
 
   <dialog
@@ -86,6 +93,8 @@
   </dialog>
 </template>
 <script setup lang="ts">
+import { useTipsStore } from '@/stores/tips'
+import { storeToRefs } from 'pinia'
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -101,6 +110,10 @@ import { useToastStore } from '@/stores/toast'
 import { ToastType } from '@/types'
 
 const { show } = useToastStore()
+
+const tipStore = useTipsStore()
+const { pushTip, sendTip } = useTipsStore()
+const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
 
 const memberApi = new FetchMemberAPI()
 const route = useRoute()

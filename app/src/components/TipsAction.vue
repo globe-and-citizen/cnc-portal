@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
-import { storeToRefs } from 'pinia'
-import LoadingButton from './LoadingButton.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
+import { ref } from 'vue'
 import type { AddressLike } from 'ethers'
 
-const tipStore = useTipsStore()
-const { pushTip, sendTip } = useTipsStore()
-const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
+const props = defineProps<{
+  addresses: AddressLike[]
+  pushTipLoading: boolean
+  sendTipLoading: boolean
+  totalTipAmount: number
+}>()
+const emits = defineEmits(['pushTip', 'sendTip'])
 
-defineProps<{ addresses: AddressLike[] }>()
+const totalTipAmount = ref(props.totalTipAmount)
+const pushTipLoading = ref(props.pushTipLoading)
+const sendTipLoading = ref(props.sendTipLoading)
 </script>
 
 <template>
@@ -29,11 +34,19 @@ defineProps<{ addresses: AddressLike[] }>()
       <label for="tip-amount" class="text-center mb-2">Actions</label>
       <div className="card-actions flex flex-row justify-between mx-8 self-center">
         <LoadingButton v-if="pushTipLoading" color="primary" />
-        <button v-else className="btn btn-primary w-full text-white" @click="pushTip(addresses)">
+        <button
+          v-else
+          className="btn btn-primary w-full text-white"
+          @click="emits('pushTip', addresses)"
+        >
           Push Tips
         </button>
         <LoadingButton v-if="sendTipLoading" color="secondary" />
-        <button v-else className="btn btn-secondary w-full text-white" @click="sendTip(addresses)">
+        <button
+          v-else
+          className="btn btn-secondary w-full text-white"
+          @click="emits('sendTip', addresses)"
+        >
           Send Tips
         </button>
       </div>
