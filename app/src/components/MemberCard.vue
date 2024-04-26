@@ -13,8 +13,11 @@
     :class="{ 'modal-open': showUpdateMemberModal }"
   >
     <div class="modal-box">
-      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-        <span @click="emits('toggleUpdateMemberForm', {})">x</span>
+      <button
+        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        @click="emits('toggleUpdateMemberForm', {})"
+      >
+        <span>x</span>
       </button>
       <h1 class="font-bold text-2xl">Update Member Details</h1>
       <hr class="" />
