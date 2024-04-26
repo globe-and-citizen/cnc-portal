@@ -44,7 +44,7 @@
         @removeInput="removeInput"
         @addMembers="handleAddMembers"
         @updateForm="handleUpdateForm"
-        @toggleAddMemberForm="showAddMemberForm = !showAddMemberForm"
+        @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
       />
     </div>
     <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
