@@ -216,7 +216,6 @@ const deleteMember = async (id: string) => {
     })
 }
 const updateMember = async (id: string) => {
-  console.log(id)
   const member = {
     name: updateMemberInput.value.name,
     walletAddress: updateMemberInput.value.walletAddress

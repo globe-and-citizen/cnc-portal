@@ -12,12 +12,12 @@
 
       <AddTeamCard
         @addTeam="handleAddTeam"
-        v-model:showAddTeamForm="showAddTeamForm"
+        v-model:showAddTeamModal="showAddTeamModal"
         v-model:team="team"
-        @updateAddTeamForm="handleUpdateAddTeamForm"
+        @updateAddTeamModal="handleupdateAddTeamModal"
         @addInput="addInput"
         @removeInput="removeInput"
-        @toggleAddTeamForm="showAddTeamForm = !showAddTeamForm"
+        @toggleAddTeamModal="showAddTeamModal = !showAddTeamModal"
       />
     </div>
   </div>
@@ -39,7 +39,7 @@ const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
 
-const showAddTeamForm = ref(false)
+const showAddTeamModal = ref(false)
 const team = ref<TeamInput>({
   name: '',
   description: '',
@@ -52,14 +52,14 @@ const team = ref<TeamInput>({
   ]
 })
 
-const handleUpdateAddTeamForm = (teamInput: TeamInput) => {
+const handleupdateAddTeamModal = (teamInput: TeamInput) => {
   team.value = teamInput
   let members = team.value.members
-  console.log('Members:', members)
   members.map((member) => {
     if (isAddress(member.walletAddress)) {
-      console.log('Valid wallet address:', member.walletAddress)
       member.isValid = true
+    } else {
+      member.isValid = false
     }
   })
 }
