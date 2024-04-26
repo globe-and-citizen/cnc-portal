@@ -1,4 +1,4 @@
-import type { Team, Member } from '@/types/types'
+import type { Team, Member } from '@/types/index'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'

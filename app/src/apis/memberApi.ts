@@ -1,4 +1,4 @@
-import type { Member } from '@/types/types'
+import type { Member } from '@/types/index'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6

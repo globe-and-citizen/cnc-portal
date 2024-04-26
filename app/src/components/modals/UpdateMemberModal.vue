@@ -35,7 +35,7 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import type { MemberInput } from '@/types/types'
+import type { MemberInput } from '@/types/index'
 import { ref, watch } from 'vue'
 const emits = defineEmits(['toggleUpdateMemberModal', 'updateMember', 'deleteMember'])
 const props = defineProps<{
