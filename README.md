@@ -15,7 +15,7 @@ Note: If you plan on using `docker-compose up` at the root directory, you can sk
 
 To create and run a PostgreSQL Docker container with the correct port and database URL as specified in your .env file, you can use the following command:
 
-`docker run --name cnc-db -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=cnc-db -p 5432:5432 -d postgres`
+`docker run --name cnc-db -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=cnc-db -p 5432:5432 -d postgres:16-alpine`
 
 Here's the breakdown:
 
@@ -65,6 +65,10 @@ In the `./app` folder, create a `.env` file with the following variable:
 
 - **VITE_APP_BACKEND_URL**: The URL for the backend API. Example: 
 `VITE_APP_BACKEND_URL=http://localhost:8000`
+- **VITE_APP_ETHERSCAN_URL**: The URL to see transaction detail. Example:
+`VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
+- **VITE_APP_TIPS_ADDRESS**: The URL to Tips smart contract. Example:
+`VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B`
 
 ## Running the application
 
