@@ -51,6 +51,7 @@
       :addresses="team.members.map((member) => member.walletAddress)"
       :pushTipLoading="pushTipLoading"
       :sendTipLoading="sendTipLoading"
+      :tipAmount="tipAmount"
       @pushTip="(addresses, amount) => pushTip(addresses, amount)"
       @sendTip="(addresses, amount) => sendTip(addresses, amount)"
     />
@@ -112,6 +113,7 @@ const { show } = useToastStore()
 const tipStore = useTipsStore()
 const { pushTip, sendTip } = useTipsStore()
 const { sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
+const tipAmount = ref(0)
 
 const memberApi = new FetchMemberAPI()
 const route = useRoute()

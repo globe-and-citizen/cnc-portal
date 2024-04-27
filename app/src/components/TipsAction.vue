@@ -1,20 +1,3 @@
-<script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
-import { ref } from 'vue'
-import type { AddressLike } from 'ethers'
-
-const props = defineProps<{
-  addresses: AddressLike[]
-  pushTipLoading: boolean
-  sendTipLoading: boolean
-}>()
-const emits = defineEmits(['pushTip', 'sendTip'])
-
-const tipAmount = ref(0)
-const pushTipLoading = ref(props.pushTipLoading)
-const sendTipLoading = ref(props.sendTipLoading)
-</script>
-
 <template>
   <div class="card bg-white shadow-xl flex flex-row justify-around my-2 p-6 gap-6">
     <div class="grow flex flex-col justify-center">
@@ -52,3 +35,24 @@ const sendTipLoading = ref(props.sendTipLoading)
     </div>
   </div>
 </template>
+<script setup lang="ts">
+import LoadingButton from '@/components/LoadingButton.vue'
+import { ref, watch } from 'vue'
+import type { AddressLike } from 'ethers'
+
+const props = defineProps<{
+  addresses: AddressLike[]
+  pushTipLoading: boolean
+  sendTipLoading: boolean
+  tipAmount: number
+}>()
+const emits = defineEmits(['pushTip', 'sendTip'])
+
+const tipAmount = ref(props.tipAmount)
+const pushTipLoading = ref<boolean>(props.pushTipLoading)
+const sendTipLoading = ref<boolean>(props.sendTipLoading)
+
+watch([() => props.pushTipLoading, pushTipLoading], ([pushTipLoadingNew]) => {
+  pushTipLoading.value = pushTipLoadingNew
+})
+</script>
