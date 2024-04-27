@@ -3,7 +3,7 @@
     <div class="flex justify-between gap-5">
       <div>
         <h2 class="pl-5">{{ team.name }}</h2>
-        <p>{{ team.description }}</p>
+        <p class="pl-5">{{ team.description }}</p>
       </div>
       <div class="flex justify-between gap-2 items-center">
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
