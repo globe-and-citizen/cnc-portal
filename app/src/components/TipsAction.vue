@@ -7,11 +7,10 @@ const props = defineProps<{
   addresses: AddressLike[]
   pushTipLoading: boolean
   sendTipLoading: boolean
-  totalTipAmount: number
 }>()
 const emits = defineEmits(['pushTip', 'sendTip'])
 
-const totalTipAmount = ref(props.totalTipAmount)
+const tipAmount = ref(0)
 const pushTipLoading = ref(props.pushTipLoading)
 const sendTipLoading = ref(props.sendTipLoading)
 </script>
@@ -25,7 +24,7 @@ const sendTipLoading = ref(props.sendTipLoading)
           type="text"
           placeholder="Input tip amount per member"
           class="py-2 px-4 outline outline-1 outline-neutral-content rounded-md border-neutral-content text-center bg-white"
-          v-model="totalTipAmount"
+          v-model="tipAmount"
         />
       </div>
     </div>
@@ -37,7 +36,7 @@ const sendTipLoading = ref(props.sendTipLoading)
         <button
           v-else
           className="btn btn-primary w-full text-white"
-          @click="emits('pushTip', addresses)"
+          @click="emits('pushTip', addresses, tipAmount)"
         >
           Push Tips
         </button>
@@ -45,7 +44,7 @@ const sendTipLoading = ref(props.sendTipLoading)
         <button
           v-else
           className="btn btn-secondary w-full text-white"
-          @click="emits('sendTip', addresses)"
+          @click="emits('sendTip', addresses, tipAmount)"
         >
           Send Tips
         </button>
