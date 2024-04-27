@@ -4,19 +4,7 @@
       <h1 class="card-title">Add Member</h1>
 
       <div class="w-6 h-6 cursor-pointer" @click="emits('toggleAddMemberModal')">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="lightgreen"
-          viewBox="0 0 24 24"
-          strokeWidth="{10.5}"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-          />
-        </svg>
+        <IconPlus />
       </div>
     </div>
   </div>
@@ -33,6 +21,7 @@
 <script setup lang="ts">
 import { ref, defineProps, watch } from 'vue'
 import AddMemberModal from '@/components/modals/AddMemberModal.vue'
+import IconPlus from '@/components/icons/IconPlus.vue'
 
 const props = defineProps<{
   formData: Array<{ name: string; walletAddress: string; isValid: boolean }>

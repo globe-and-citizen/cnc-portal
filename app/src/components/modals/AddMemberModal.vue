@@ -36,35 +36,10 @@
       </div>
       <div class="flex justify-end pt-3">
         <div class="w-6 h-6 cursor-pointer" @click="emits('addInput')">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="lightgreen"
-            viewBox="0 0 24 24"
-            strokeWidth="{10.5}"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            />
-          </svg>
+          <IconPlus />
         </div>
         <div class="w-6 h-6 cursor-pointer" @click="emits('removeInput')">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="red"
-            viewBox="0 0 24 24"
-            strokeWidth="{1.5}"
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            />
-          </svg>
+          <IconMinus />
         </div>
       </div>
       <div class="flex justify-center" @click="emits('addMembers')">
@@ -76,6 +51,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { defineProps, defineEmits } from 'vue'
+import IconPlus from '@/components/icons/IconPlus.vue';
+import IconMinus from '@/components/icons/IconMinus.vue';
 const emits = defineEmits([
   'updateForm',
   'addInput',
