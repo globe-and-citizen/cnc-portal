@@ -70,7 +70,7 @@
 </template>
 <script setup lang="ts">
 import type { TeamInput } from '@/types'
-import { ref, defineProps, defineEmits, watch } from 'vue'
+import { ref, watch } from 'vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue';
 
