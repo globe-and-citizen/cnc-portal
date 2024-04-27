@@ -1,4 +1,4 @@
-import type { MemberInput } from "./member-input"
+import type { MemberInput } from './member-input'
 
 export interface TeamInput {
   name: string

@@ -50,8 +50,8 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import IconPlus from '@/components/icons/IconPlus.vue';
-import IconMinus from '@/components/icons/IconMinus.vue';
+import IconPlus from '@/components/icons/IconPlus.vue'
+import IconMinus from '@/components/icons/IconMinus.vue'
 const emits = defineEmits([
   'updateForm',
   'addInput',

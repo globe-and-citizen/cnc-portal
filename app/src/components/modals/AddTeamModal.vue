@@ -72,7 +72,7 @@
 import type { TeamInput } from '@/types'
 import { ref, watch } from 'vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
-import IconMinus from '@/components/icons/IconMinus.vue';
+import IconMinus from '@/components/icons/IconMinus.vue'
 
 const emits = defineEmits([
   'addTeam',

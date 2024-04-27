@@ -7,7 +7,7 @@
       </div>
       <div class="">
         <button class="btn btn-square btn-ghost drawer-overlay" @click="$emit('toggleSideButton')">
-         <IconHamburgerMenu/>
+          <IconHamburgerMenu />
         </button>
       </div>
     </div>
