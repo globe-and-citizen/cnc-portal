@@ -27,7 +27,7 @@
       </li>
       <li>
         <RouterLink to="/teams">
-          <IconInfo />
+          <IconUsers />
           Teams
         </RouterLink>
       </li>
@@ -51,6 +51,6 @@ li {
 
 <script setup lang="ts">
 import IconHome from '@/components/icons/IconHome.vue'
-import IconInfo from '@/components/icons/IconInfo.vue'
+import IconUsers from '@/components/icons/IconUsers.vue'
 import IconNote from '@/components/icons/IconNote.vue'
 </script>
