@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TeamInput } from '@/types/index'
+import type { TeamInput } from '@/types'
 import { ref, watch } from 'vue'
 import AddTeamModal from '@/components/modals/AddTeamModal.vue'
 

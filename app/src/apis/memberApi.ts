@@ -1,9 +1,8 @@
-import type { Member } from '@/types/index'
+import { ToastType, type Member } from '@/types'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
-import { ToastType } from '@/types'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>

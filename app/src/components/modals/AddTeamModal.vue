@@ -94,7 +94,7 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import type { TeamInput } from '@/types/index'
+import type { TeamInput } from '@/types'
 import { ref, defineProps, defineEmits, watch } from 'vue'
 
 const emits = defineEmits([

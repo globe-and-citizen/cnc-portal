@@ -14,7 +14,7 @@
   />
 </template>
 <script setup lang="ts">
-import type { MemberInput } from '@/types/index'
+import type { MemberInput } from '@/types'
 import UpdateMemberModal from '@/components/modals/UpdateMemberModal.vue'
 import { ref, watch } from 'vue'
 
