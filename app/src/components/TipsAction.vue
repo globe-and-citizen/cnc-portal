@@ -51,8 +51,11 @@ const emits = defineEmits(['pushTip', 'sendTip'])
 const tipAmount = ref(props.tipAmount)
 const pushTipLoading = ref<boolean>(props.pushTipLoading)
 const sendTipLoading = ref<boolean>(props.sendTipLoading)
-
-watch([() => props.pushTipLoading, pushTipLoading], ([pushTipLoadingNew]) => {
-  pushTipLoading.value = pushTipLoadingNew
-})
+watch(
+  [() => props.pushTipLoading, () => props.sendTipLoading],
+  ([pushTipLoadingNew, sendTipLoadingNew]) => {
+    pushTipLoading.value = pushTipLoadingNew
+    sendTipLoading.value = sendTipLoadingNew
+  }
+)
 </script>
