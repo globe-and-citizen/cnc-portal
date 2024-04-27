@@ -31,7 +31,7 @@
   />
 </template>
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, watch } from 'vue'
+import { ref, defineProps, watch } from 'vue'
 import AddMemberModal from '@/components/modals/AddMemberModal.vue'
 
 const props = defineProps<{

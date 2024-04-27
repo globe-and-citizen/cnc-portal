@@ -91,7 +91,7 @@
 <script setup lang="ts">
 import { useTipsStore } from '@/stores/tips'
 import { storeToRefs } from 'pinia'
-import { defineEmits, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { logout } from '@/utils/navBarUtil'
 
 defineEmits(['toggleSideButton'])
