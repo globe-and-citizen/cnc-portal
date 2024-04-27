@@ -17,7 +17,7 @@
           <div class="btn w-full flex flex-row justify-between text-gray-500">
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
             <div>
-              <span class="text-black font-bold font-mono">{{ balance }}</span>
+              <span class="text-black font-bold font-mono">{{ balance.slice(0, 6) }}</span>
               <span class="ml-2 text-black font-bold font-mono">ETH</span>
             </div>
           </div>
