@@ -81,6 +81,11 @@ contract Tips {
         return balance[_address];
     }
 
+    function updatePushLimit(uint8 value) external {
+        require(value <= MAW_PUSH_LIMIT, "Push limit is too high, must be less or equal to 100");
+        pushLimit = value;
+    }
+    
     modifier positiveAmountRequired() {
         require(msg.value > 0, "Must send a positive amount.");
         _;
