@@ -54,16 +54,18 @@ contract Tips {
         emit SendTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
 
+    // TODO: Protection for reentrancy attack
     function withdraw() external payable {
-        uint256 tipEarned = balance[msg.sender];
-        require(tipEarned > 0, "No tips to withdraw.");
+        uint256 senderBalance = balance[msg.sender];
+        require(senderBalance > 0, "No tips to withdraw.");
 
-        bool tipSuccess = payable(msg.sender).send(tipEarned);
-        require(tipSuccess, "Failed to withdraw tips.");
+        (bool sent,) = msg.sender.call{value: senderBalance}("");
+        require(sent, "Failed to withdraw tips.");
 
         balance[msg.sender] = 0;
+        require(balances[msg.sender] == 0, "Failed to zero out balance");
 
-        emit TipWithdrawal(msg.sender, tipEarned);
+        emit TipWithdrawal(msg.sender, senderBalance);
     }
 
     function getBalance(address _address) external view returns (uint256) {
