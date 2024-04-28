@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 contract Tips {
     mapping(address => uint256) private balance;
     uint8 public pushLimit=10;
+    uint8 public MAW_PUSH_LIMIT = 100;
     uint256 remainder;
 
     event PushTip(
@@ -29,6 +30,9 @@ contract Tips {
         );
         uint totalAmount = msg.value + remainder;
         uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
+        
+        // Update the remainder
+        remainder= totalAmount % _teamMembersAddresses.length;
 
         // Should fail if the contract balance is insufficient
         for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
@@ -44,8 +48,13 @@ contract Tips {
         emit PushTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
 
-    function sendTip(address[] memory _teamMembersAddresses) positiveAmountRequired external payable {
-        uint256 amountPerAddress = msg.value / _teamMembersAddresses.length;
+    function sendTip(address [] calldata _teamMembersAddresses) positiveAmountRequired external payable {
+        require(_teamMembersAddresses.length > 0, "Must have at least one team member");
+        uint totalAmount = msg.value + remainder;
+        uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
+        
+        // Update the remainder
+        remainder= totalAmount % _teamMembersAddresses.length;
 
         for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
             balance[_teamMembersAddresses[i]] += amountPerAddress;
