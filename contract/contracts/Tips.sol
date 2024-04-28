@@ -3,6 +3,8 @@ pragma solidity ^0.8.24;
 
 contract Tips {
     mapping(address => uint256) private balance;
+    uint8 public pushLimit=10;
+    uint256 remainder;
 
     event PushTip(
         address from,
@@ -18,12 +20,25 @@ contract Tips {
     );
     event TipWithdrawal(address to, uint256 amount);
 
-    function pushTip(address[] memory _teamMembersAddresses) positiveAmountRequired external payable {
-        uint256 amountPerAddress = msg.value / _teamMembersAddresses.length;
+    function pushTip(address[] calldata _teamMembersAddresses) positiveAmountRequired external payable {
+        
+        require(_teamMembersAddresses.length > 0, "Must have at least one team member");
+        require(
+            pushLimit >= _teamMembersAddresses.length,
+            "You have too much team members"
+        );
+        uint totalAmount = msg.value + remainder;
+        uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
 
+        // Should fail if the contract balance is insufficient
         for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
-            bool transferSuccess = payable(_teamMembersAddresses[i]).send(amountPerAddress);
-            require(transferSuccess, "Failed to send tip.");
+            require(
+                address(this).balance >= amountPerAddress,
+                "Insufficient contract balance"
+            );
+            
+            (bool sent, ) = _teamMembersAddresses[i].call{value: amountPerAddress}("");
+            require(sent, "Failed to send ETH");
         }
 
         emit PushTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
