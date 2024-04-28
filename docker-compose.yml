@@ -14,14 +14,23 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
 
-  # frontend:
-  #   build:
-  #     context: ./app
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5173:5173" # Adjust port as needed
-  #   volumes:
-  #     - ./app:/app
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: build
+      args:
+        VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
+        VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
+        VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
+    environment:
+      VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
+      VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
+      VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
+    ports:
+      - "80:80" # Adjust port as needed
+    volumes:
+      - ./app:/app
   backend:
     build:
       context: ./backend
@@ -35,8 +44,11 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgres://postgres:newpassword@db:5432/crypto-db
+      DATABASE_URL: postgres://postgres:newpassword@db:5432/cnc-db
       PORT: 3000
+      FRONTEND_URL: http://localhost
+      NODE_ENV: development
+      SECRET_KEY: "secret-key"
 
 volumes:
   db:

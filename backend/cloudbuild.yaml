@@ -2,7 +2,7 @@ steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     script: |
-      docker build -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA ./backend
+      docker build --build-arg NODE_ENV=prod -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA ./backend
     automapSubstitutions: true
     id: 'Build The Image'
 
