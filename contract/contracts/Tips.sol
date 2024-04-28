@@ -72,7 +72,7 @@ contract Tips {
         require(sent, "Failed to withdraw tips.");
 
         balance[msg.sender] = 0;
-        require(balances[msg.sender] == 0, "Failed to zero out balance");
+        require(balance[msg.sender] == 0, "Failed to zero out balance");
 
         emit TipWithdrawal(msg.sender, senderBalance);
     }
