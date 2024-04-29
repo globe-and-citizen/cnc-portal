@@ -28,7 +28,7 @@ const updateUserInput = ref({
   isValid: true
 })
 watch(
-  () => updateUserInput.value,
+  () => updateUserInput.value.walletAddress,
   (newVal) => {
     updateUserInput.value.isValid = isAddress(newVal)
   }
