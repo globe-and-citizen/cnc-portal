@@ -3,6 +3,7 @@ import { Member, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
+import { error } from "console";
 
 const prisma = new PrismaClient();
 // Create a new team
@@ -13,15 +14,11 @@ const addTeam = async (req: Request, res: Response) => {
   const { name, members, description } = req.body;
   console.log("Members:", members.createMany.data);
   try {
-    members.createMany.data.map((member: Member) => {
+    for (const member of members.createMany.data) {
       if (!isAddress(member.walletAddress)) {
-        return errorResponse(
-          500,
-          new Error(`Invalid wallet address for member: ${member.name}`),
-          res
-        );
+        throw new Error(`Invalid wallet address for member: ${member.name}`);
       }
-    });
+    }
 
     const team = await prisma.team.create({
       data: {
@@ -57,10 +54,10 @@ const getTeam = async (req: Request, res: Response) => {
 
     // Handle  404
     if (!team) {
-      return res.status(404).json({ error: "Team not found" });
+      return errorResponse(404, "Team not found", res);
     }
     if (team.ownerId !== req.headers.owneraddress) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return errorResponse(401, "Unauthorized", res);
     }
     res.status(200).json({ team, success: true });
   } catch (error) {

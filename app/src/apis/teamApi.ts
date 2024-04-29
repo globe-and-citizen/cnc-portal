@@ -2,8 +2,6 @@ import type { Team, Member } from '@/types'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
-import { useToastStore } from '@/stores/toast'
-import { ToastType } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useErrorHandler } from '@/composables/errorHandler'
 
@@ -30,7 +28,7 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(`${BACKEND_URL}/api/teams`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(response)
+      useErrorHandler().handleError(resObj)
     }
 
     return resObj.teams
@@ -51,7 +49,7 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(url, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(response)
+      useErrorHandler().handleError(resObj)
     }
 
     return resObj.team
@@ -76,10 +74,12 @@ export class FetchTeamAPI implements TeamAPI {
 
     const response = await fetch(url, requestOptions)
     const resObj = await response.json()
-    if (!resObj.success) {
-      useErrorHandler().handleError(response)
+    console.log(resObj)
+    if (!resObj.success || !resObj) {
+      useErrorHandler().handleError(resObj)
+      return {} as Team
     }
-    return resObj.updatedTeam
+    return resObj.team
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
@@ -94,11 +94,11 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(url, requestOptions)
 
     const resObj = await response.json()
-    if (!resObj.success) {
-      useErrorHandler().handleError(response)
+    console.log(resObj)
+    if (!resObj.success || !resObj) {
+      return useErrorHandler().handleError(resObj)
     }
-
-    return
+    return resObj.team
   }
   async createTeam(
     teamName: string,
@@ -127,20 +127,21 @@ export class FetchTeamAPI implements TeamAPI {
       },
       body: JSON.stringify(teamObject)
     }
-    const { show } = useToastStore()
 
-    teamMembers.map((member) => {
+    for (const member of teamMembers) {
       if (!isAddress(String(member.walletAddress))) {
         useErrorHandler().handleError(new Error(`Invalid wallet address`))
+        return {} as Team
       }
-    })
+    }
+
     const response = await fetch(url, requestOptions)
 
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(response)
+      useErrorHandler().handleError(resObj)
+      return {} as Team
     }
-    show(ToastType.Success, 'Successfully added team')
-    return resObj.createdTeam
+    return resObj.team
   }
 }

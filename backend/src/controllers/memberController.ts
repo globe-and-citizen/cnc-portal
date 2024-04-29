@@ -29,11 +29,15 @@ const addMembers = async (req: Request, res: Response) => {
       }
     );
 
-    const createdMembers = await prisma.member.createMany({
+    await prisma.member.createMany({
       data: membersToCreate,
     });
-
-    res.status(201).json({ createdMembers, success: true });
+    const members = await prisma.member.findMany({
+      where: {
+        teamId: Number(id),
+      },
+    });
+    return res.status(201).json({ members, success: true });
   } catch (error: any) {
     return errorResponse(500, error, res);
   }
@@ -57,7 +61,7 @@ const updateMember = async (req: Request, res: Response) => {
         walletAddress: walletAddress,
       },
     });
-    res.status(200).json(member);
+    res.status(200).json({ member, success: true });
   } catch (error: any) {
     return errorResponse(500, error, res);
   }
@@ -74,7 +78,7 @@ const deleteMembers = async (req: Request, res: Response) => {
     const member = await prisma.member.deleteMany({
       where: { id: Number(id) },
     });
-    res.status(200).json(member);
+    res.status(200).json({ member, success: true });
   } catch (error) {
     return errorResponse(500, error, res);
   }

@@ -7,11 +7,11 @@ import { useErrorHandler } from '@/composables/errorHandler'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
-  updateMember(member: Member, id: string): Promise<void>
-  createMembers(newMembers: Member[], id: string): Promise<void>
+  updateMember(member: Member, id: string): Promise<Member>
+  createMembers(newMembers: Member[], id: string): Promise<Member[]>
 }
 export class FetchMemberAPI implements MemberAPI {
-  async createMembers(newMembers: Partial<Member>[], id: string): Promise<void> {
+  async createMembers(newMembers: Partial<Member>[], id: string): Promise<Member[]> {
     const token = AuthService.getToken()
 
     const requestOptions = {
@@ -24,19 +24,22 @@ export class FetchMemberAPI implements MemberAPI {
     }
     const { show } = useToastStore()
 
-    newMembers.map((member: Partial<Member>) => {
+    for (const member of newMembers) {
       if (!isAddress(member.walletAddress)) {
         useErrorHandler().handleError(new Error(`Invalid wallet address`))
+        return [] as Member[]
       }
-    })
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(response)
+      useErrorHandler().handleError(resObj)
+      return [] as Member[]
     }
-    show(ToastType.Success, 'Updated Member Details')
+    return resObj.members
   }
-  async updateMember(member: Partial<Member>, id: string): Promise<void> {
+  async updateMember(member: Partial<Member>, id: string): Promise<Member> {
     const token = AuthService.getToken()
     const requestOptions = {
       method: 'PUT',
@@ -49,18 +52,18 @@ export class FetchMemberAPI implements MemberAPI {
         walletAddress: member.walletAddress
       })
     }
-    const { show } = useToastStore()
 
     if (!isAddress(String(member.walletAddress))) {
       useErrorHandler().handleError(new Error(`Invalid wallet address`))
+      return {} as Member
     }
 
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(response)
+      useErrorHandler().handleError(resObj)
     }
-    show(ToastType.Success, 'Updated Member Details')
+    return resObj.member
   }
   async deleteMember(id: string): Promise<void> {
     const token = AuthService.getToken()
@@ -74,7 +77,9 @@ export class FetchMemberAPI implements MemberAPI {
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(response)
+      useErrorHandler().handleError(resObj)
     }
+    console.log(resObj)
+    return resObj.member
   }
 }

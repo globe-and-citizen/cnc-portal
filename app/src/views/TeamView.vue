@@ -62,7 +62,7 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
     }
   })
 }
-const handleAddTeam = () => {
+const handleAddTeam = async () => {
   team.value.members.map((member) => {
     if (!isAddress(member.walletAddress)) {
       member.isValid = false
@@ -79,14 +79,12 @@ const handleAddTeam = () => {
       walletAddress: member.walletAddress
     }
   })
-  teamApi
-    .createTeam(team.value.name, team.value.description, members)
-    .then((createdTeam) => {
-      console.log('Created team:', createdTeam)
-    })
-    .catch((error) => {
-      console.error('Error creating team:', error)
-    })
+  const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
+  if (createdTeam && Object.keys(createdTeam).length !== 0) {
+    show(ToastType.Success, 'Team created successfully')
+    showAddTeamModal.value = !showAddTeamModal.value
+    teams.value.push(createdTeam)
+  }
 }
 const addInput = () => {
   team.value.members.push({ name: '', walletAddress: '', isValid: false })
@@ -109,7 +107,6 @@ onMounted(async () => {
     })
 })
 function navigateToTeam(id: string) {
-  console.log(id)
   router.push('/teams/' + id)
 }
 </script>
