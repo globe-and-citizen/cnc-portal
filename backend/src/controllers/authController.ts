@@ -20,7 +20,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     let { address, nonce } = extractAddressAndNonce(message);
 
     //Get nonce from user data from database
-    let user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { address },
     });
 
@@ -44,7 +44,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         data: { nonce },
       });
     else
-      user = await prisma.user.create({
+      await prisma.user.create({
         data: {
           address,
           nonce,
@@ -59,7 +59,6 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       accessToken,
-      user,
     });
   } catch (error) {
     await prisma.$disconnect();
