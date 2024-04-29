@@ -29,6 +29,8 @@ export async function signInWithEthereum() {
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
     await siweAuthService.authenticateUser()
+    const userData = await fetchUserApi.getUser(address)
+    console.log('address: ', userData)
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
 
