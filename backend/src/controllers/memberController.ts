@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
+import { errorResponse } from "../utils/utils";
 
 const prisma = new PrismaClient();
 
@@ -28,14 +29,17 @@ const addMembers = async (req: Request, res: Response) => {
       }
     );
 
-    const createdMembers = await prisma.member.createMany({
+    await prisma.member.createMany({
       data: membersToCreate,
     });
-
-    res.status(201).json(createdMembers);
+    const members = await prisma.member.findMany({
+      where: {
+        teamId: Number(id),
+      },
+    });
+    return res.status(201).json({ members, success: true });
   } catch (error: any) {
-    console.error("Error adding members:", error);
-    res.status(500).json({ error: `${error.message}` });
+    return errorResponse(500, error, res);
   }
 };
 
@@ -57,10 +61,9 @@ const updateMember = async (req: Request, res: Response) => {
         walletAddress: walletAddress,
       },
     });
-    res.status(200).json(member);
+    res.status(200).json({ member, success: true });
   } catch (error: any) {
-    console.log("Error updating", error);
-    res.status(500).json({ error: `${error.message}` });
+    return errorResponse(500, error, res);
   }
 };
 
@@ -75,10 +78,9 @@ const deleteMembers = async (req: Request, res: Response) => {
     const member = await prisma.member.deleteMany({
       where: { id: Number(id) },
     });
-    res.status(200).json(member);
+    res.status(200).json({ member, success: true });
   } catch (error) {
-    console.error("Error deleting member:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return errorResponse(500, error, res);
   }
 };
 export { updateMember, deleteMembers, addMembers };

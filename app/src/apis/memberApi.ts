@@ -3,14 +3,15 @@ import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
+import { useErrorHandler } from '@/composables/errorHandler'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
-  updateMember(member: Member, id: string): Promise<void>
-  createMembers(newMembers: Member[], id: string): Promise<void>
+  updateMember(member: Member, id: string): Promise<Member>
+  createMembers(newMembers: Member[], id: string): Promise<Member[]>
 }
 export class FetchMemberAPI implements MemberAPI {
-  async createMembers(newMembers: Partial<Member>[], id: string): Promise<void> {
+  async createMembers(newMembers: Partial<Member>[], id: string): Promise<Member[]> {
     const token = AuthService.getToken()
 
     const requestOptions = {
@@ -23,24 +24,22 @@ export class FetchMemberAPI implements MemberAPI {
     }
     const { show } = useToastStore()
 
-    try {
-      newMembers.map((member: Partial<Member>) => {
-        if (!isAddress(member.walletAddress)) {
-          throw new Error(`Invalid wallet address`)
-        }
-      })
-      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+    for (const member of newMembers) {
+      if (!isAddress(member.walletAddress)) {
+        useErrorHandler().handleError(new Error(`Invalid wallet address`))
+        return [] as Member[]
       }
-      show(ToastType.Success, 'Updated Member Details')
-    } catch (error: any) {
-      show(ToastType.Warning, error.message)
-      console.error('Error:', error)
-      throw error
     }
+
+    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(resObj)
+      return [] as Member[]
+    }
+    return resObj.members
   }
-  async updateMember(member: Partial<Member>, id: string): Promise<void> {
+  async updateMember(member: Partial<Member>, id: string): Promise<Member> {
     const token = AuthService.getToken()
     const requestOptions = {
       method: 'PUT',
@@ -53,23 +52,18 @@ export class FetchMemberAPI implements MemberAPI {
         walletAddress: member.walletAddress
       })
     }
-    const { show } = useToastStore()
 
-    try {
-      if (!isAddress(String(member.walletAddress))) {
-        throw new Error(`Invalid wallet address`)
-      }
-
-      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-      show(ToastType.Success, 'Updated Member Details')
-    } catch (error: any) {
-      show(ToastType.Warning, error.message)
-      console.error('Error:', error)
-      throw error
+    if (!isAddress(String(member.walletAddress))) {
+      useErrorHandler().handleError(new Error(`Invalid wallet address`))
+      return {} as Member
     }
+
+    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(resObj)
+    }
+    return resObj.member
   }
   async deleteMember(id: string): Promise<void> {
     const token = AuthService.getToken()
@@ -80,13 +74,12 @@ export class FetchMemberAPI implements MemberAPI {
       }
     }
 
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-    } catch (error) {
-      console.error('Error:', error)
+    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(resObj)
     }
+    console.log(resObj)
+    return resObj.member
   }
 }

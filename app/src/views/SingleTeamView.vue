@@ -173,26 +173,24 @@ const handleUpdateForm = async () => {
   })
 }
 const handleAddMembers = async () => {
-  try {
-    let isValid = true
+  let isValid = true
 
-    teamMembers.value.map((member) => {
-      if (!isAddress(member.walletAddress)) {
-        isValid = false
-      }
-    })
+  teamMembers.value.map((member) => {
+    if (!isAddress(member.walletAddress)) isValid = false
+  })
 
-    if (!isValid) {
-      show(ToastType.Warning, 'Invalid wallet address')
-
-      console.error('Invalid wallet address for one or more team members')
-      return
-    }
-    await memberApi.createMembers(teamMembers.value, String(route.params.id))
-
-    window.location.reload()
-  } catch (error) {
-    console.error('Error adding members:', error)
+  if (!isValid) {
+    show(ToastType.Warning, 'Invalid wallet address')
+    return
+  }
+  const members: Member[] = await memberApi.createMembers(
+    teamMembers.value,
+    String(route.params.id)
+  )
+  if (members && members.length > 0) {
+    show(ToastType.Success, 'Members added successfully')
+    team.value.members = members
+    showAddMemberForm.value = false
   }
 }
 onMounted(async () => {
@@ -218,30 +216,29 @@ const updateTeamModalOpen = async () => {
   inputs.value = team.value.members
 }
 const deleteMember = async (id: string) => {
-  memberApi
-    .deleteMember(id)
-    .then(() => {
-      console.log('Deleted member succesfully')
-      window.location.reload()
-    })
-    .catch((error) => {
-      console.log('Delete member failed', error)
-    })
+  const memberRes: any = await memberApi.deleteMember(id)
+  console.log('Deleted member:', memberRes)
+  if (memberRes && memberRes.count == 1) {
+    show(ToastType.Success, 'Member deleted successfully')
+    team.value.members.splice(
+      team.value.members.findIndex((member) => member.id === id),
+      1
+    )
+
+    showUpdateMemberModal.value = false
+  }
 }
 const updateMember = async (id: string) => {
   const member = {
     name: updateMemberInput.value.name,
     walletAddress: updateMemberInput.value.walletAddress
   }
-  memberApi
-    .updateMember(member, id)
-    .then((response) => {
-      console.log('Updated member successfully', response)
-      window.location.reload()
-    })
-    .catch((error) => {
-      console.log('Error updating member', error)
-    })
+  const updatedMember = await memberApi.updateMember(member, id)
+  console.log('Updated member:', updatedMember)
+  if (updatedMember) {
+    show(ToastType.Success, 'Member updated successfully')
+    showUpdateMemberModal.value = false
+  }
 }
 const updateTeam = async () => {
   const id = route.params.id
@@ -249,28 +246,20 @@ const updateTeam = async () => {
     name: cname.value,
     description: cdesc.value
   }
-  teamApi
-    .updateTeam(String(id), teamObject)
-    .then((updatedTeam) => {
-      console.log('Updated team:', updatedTeam)
-      window.location.reload()
-    })
-    .catch((error) => {
-      console.error('Error updating team:', error)
-    })
+  const team = await teamApi.updateTeam(String(id), teamObject)
+  if (team) {
+    show(ToastType.Success, 'Team updated successfully')
+    showModal.value = false
+  }
 }
 
 const deleteTeam = async () => {
   const id = route.params.id
-  teamApi
-    .deleteTeam(String(id))
-    .then(() => {
-      console.log('Team deleted successfully')
-      router.push('/teams')
-    })
-    .catch((error) => {
-      console.error('Error deleting team:', error)
-    })
+  const response: any = await teamApi.deleteTeam(String(id))
+  if (response && response.count == 1) {
+    show(ToastType.Success, 'Team deleted successfully')
+    router.push('/teams')
+  }
 }
 watch(
   updateMemberInput,

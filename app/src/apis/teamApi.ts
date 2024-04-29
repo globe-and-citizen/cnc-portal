@@ -2,9 +2,8 @@ import type { Team, Member } from '@/types'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
-import { useToastStore } from '@/stores/toast'
-import { ToastType } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
+import { useErrorHandler } from '@/composables/errorHandler'
 
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
@@ -26,19 +25,13 @@ export class FetchTeamAPI implements TeamAPI {
       }
     }
 
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/teams`, requestOptions)
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-
-      const teamsData = await response.json()
-      return teamsData
-    } catch (error) {
-      console.error('Error:', error)
-      throw error
+    const response = await fetch(`${BACKEND_URL}/api/teams`, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(resObj)
     }
+
+    return resObj.teams
   }
   async getTeam(id: string): Promise<Team | null> {
     const ownerAddressStore = useOwnerAddressStore()
@@ -53,18 +46,13 @@ export class FetchTeamAPI implements TeamAPI {
       }
     }
 
-    try {
-      const response = await fetch(url, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-
-      const teamData = await response.json()
-      return teamData
-    } catch (error) {
-      console.error('Error:', error)
-      throw error
+    const response = await fetch(url, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(resObj)
     }
+
+    return resObj.team
   }
   async updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team> {
     const ownerAddressStore = useOwnerAddressStore()
@@ -84,21 +72,14 @@ export class FetchTeamAPI implements TeamAPI {
       body: JSON.stringify(requestData)
     }
 
-    try {
-      const response = await fetch(url, requestOptions)
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-
-      const updatedTeam: Team = await response.json()
-      return updatedTeam
-    } catch (error: any) {
-      const { show } = useToastStore()
-      show(ToastType.Warning, error.message)
-      console.error('Error:', error)
-      throw error
+    const response = await fetch(url, requestOptions)
+    const resObj = await response.json()
+    console.log(resObj)
+    if (!resObj.success || !resObj) {
+      useErrorHandler().handleError(resObj)
+      return {} as Team
     }
+    return resObj.team
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
@@ -110,19 +91,14 @@ export class FetchTeamAPI implements TeamAPI {
         Authorization: `Bearer ${token}`
       }
     }
+    const response = await fetch(url, requestOptions)
 
-    try {
-      const response = await fetch(url, requestOptions)
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-
-      return
-    } catch (error) {
-      console.error('Error:', error)
-      throw error
+    const resObj = await response.json()
+    console.log(resObj)
+    if (!resObj.success || !resObj) {
+      return useErrorHandler().handleError(resObj)
     }
+    return resObj.team
   }
   async createTeam(
     teamName: string,
@@ -151,25 +127,21 @@ export class FetchTeamAPI implements TeamAPI {
       },
       body: JSON.stringify(teamObject)
     }
-    const { show } = useToastStore()
 
-    try {
-      teamMembers.map((member) => {
-        if (!isAddress(String(member.walletAddress))) {
-          throw new Error(`Invalid wallet address`)
-        }
-      })
-      const response = await fetch(url, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+    for (const member of teamMembers) {
+      if (!isAddress(String(member.walletAddress))) {
+        useErrorHandler().handleError(new Error(`Invalid wallet address`))
+        return {} as Team
       }
-      show(ToastType.Success, 'Successfully added team')
-      const createdTeam: Team = await response.json()
-      return createdTeam
-    } catch (error: any) {
-      show(ToastType.Warning, error.message)
-      console.error('Error:', error.message)
-      throw error
     }
+
+    const response = await fetch(url, requestOptions)
+
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(resObj)
+      return {} as Team
+    }
+    return resObj.team
   }
 }
