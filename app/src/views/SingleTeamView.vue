@@ -189,8 +189,6 @@ const handleAddMembers = async () => {
       return
     }
     await memberApi.createMembers(teamMembers.value, String(route.params.id))
-
-    window.location.reload()
   } catch (error) {
     console.error('Error adding members:', error)
   }
@@ -222,7 +220,6 @@ const deleteMember = async (id: string) => {
     .deleteMember(id)
     .then(() => {
       console.log('Deleted member succesfully')
-      window.location.reload()
     })
     .catch((error) => {
       console.log('Delete member failed', error)
@@ -237,7 +234,6 @@ const updateMember = async (id: string) => {
     .updateMember(member, id)
     .then((response) => {
       console.log('Updated member successfully', response)
-      window.location.reload()
     })
     .catch((error) => {
       console.log('Error updating member', error)
@@ -253,7 +249,6 @@ const updateTeam = async () => {
     .updateTeam(String(id), teamObject)
     .then((updatedTeam) => {
       console.log('Updated team:', updatedTeam)
-      window.location.reload()
     })
     .catch((error) => {
       console.error('Error updating team:', error)

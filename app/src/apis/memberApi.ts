@@ -3,6 +3,7 @@ import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
+import { useErrorHandler } from '@/composables/errorHandler'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
@@ -23,22 +24,17 @@ export class FetchMemberAPI implements MemberAPI {
     }
     const { show } = useToastStore()
 
-    try {
-      newMembers.map((member: Partial<Member>) => {
-        if (!isAddress(member.walletAddress)) {
-          throw new Error(`Invalid wallet address`)
-        }
-      })
-      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+    newMembers.map((member: Partial<Member>) => {
+      if (!isAddress(member.walletAddress)) {
+        useErrorHandler().handleError(new Error(`Invalid wallet address`))
       }
-      show(ToastType.Success, 'Updated Member Details')
-    } catch (error: any) {
-      show(ToastType.Warning, error.message)
-      console.error('Error:', error)
-      throw error
+    })
+    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(response)
     }
+    show(ToastType.Success, 'Updated Member Details')
   }
   async updateMember(member: Partial<Member>, id: string): Promise<void> {
     const token = AuthService.getToken()
@@ -55,21 +51,16 @@ export class FetchMemberAPI implements MemberAPI {
     }
     const { show } = useToastStore()
 
-    try {
-      if (!isAddress(String(member.walletAddress))) {
-        throw new Error(`Invalid wallet address`)
-      }
-
-      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-      show(ToastType.Success, 'Updated Member Details')
-    } catch (error: any) {
-      show(ToastType.Warning, error.message)
-      console.error('Error:', error)
-      throw error
+    if (!isAddress(String(member.walletAddress))) {
+      useErrorHandler().handleError(new Error(`Invalid wallet address`))
     }
+
+    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(response)
+    }
+    show(ToastType.Success, 'Updated Member Details')
   }
   async deleteMember(id: string): Promise<void> {
     const token = AuthService.getToken()
@@ -80,13 +71,10 @@ export class FetchMemberAPI implements MemberAPI {
       }
     }
 
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
-      }
-    } catch (error) {
-      console.error('Error:', error)
+    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const resObj = await response.json()
+    if (!resObj.success) {
+      useErrorHandler().handleError(response)
     }
   }
 }

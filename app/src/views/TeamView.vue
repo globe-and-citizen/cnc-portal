@@ -83,7 +83,6 @@ const handleAddTeam = () => {
     .createTeam(team.value.name, team.value.description, members)
     .then((createdTeam) => {
       console.log('Created team:', createdTeam)
-      window.location.reload()
     })
     .catch((error) => {
       console.error('Error creating team:', error)

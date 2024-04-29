@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
+import { errorResponse } from "../utils/utils";
 
 const prisma = new PrismaClient();
 
@@ -32,10 +33,9 @@ const addMembers = async (req: Request, res: Response) => {
       data: membersToCreate,
     });
 
-    res.status(201).json(createdMembers);
+    res.status(201).json({ createdMembers, success: true });
   } catch (error: any) {
-    console.error("Error adding members:", error);
-    res.status(500).json({ error: `${error.message}` });
+    return errorResponse(500, error, res);
   }
 };
 
@@ -59,8 +59,7 @@ const updateMember = async (req: Request, res: Response) => {
     });
     res.status(200).json(member);
   } catch (error: any) {
-    console.log("Error updating", error);
-    res.status(500).json({ error: `${error.message}` });
+    return errorResponse(500, error, res);
   }
 };
 
@@ -77,8 +76,7 @@ const deleteMembers = async (req: Request, res: Response) => {
     });
     res.status(200).json(member);
   } catch (error) {
-    console.error("Error deleting member:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return errorResponse(500, error, res);
   }
 };
 export { updateMember, deleteMembers, addMembers };

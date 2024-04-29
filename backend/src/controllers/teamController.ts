@@ -2,6 +2,8 @@
 import { Member, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
+import { errorResponse } from "../utils/utils";
+
 const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
@@ -13,7 +15,11 @@ const addTeam = async (req: Request, res: Response) => {
   try {
     members.createMany.data.map((member: Member) => {
       if (!isAddress(member.walletAddress)) {
-        throw new Error(`Invalid wallet address for member: ${member.name}`);
+        return errorResponse(
+          500,
+          new Error(`Invalid wallet address for member: ${member.name}`),
+          res
+        );
       }
     });
 
@@ -28,11 +34,9 @@ const addTeam = async (req: Request, res: Response) => {
         members: true,
       },
     });
-    console.log(team);
-    res.status(201).json(team);
-  } catch (e: any) {
-    console.log("Error: ", e);
-    res.status(500).json({ error: `${e.message}` });
+    res.status(201).json({ success: true, team });
+  } catch (error: any) {
+    return errorResponse(500, error, res);
   }
 };
 // Get Team
@@ -58,10 +62,9 @@ const getTeam = async (req: Request, res: Response) => {
     if (team.ownerId !== req.headers.owneraddress) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    res.status(200).json(team);
-  } catch (e) {
-    console.log("Error: ", e);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(200).json({ team, success: true });
+  } catch (error) {
+    return errorResponse(500, error, res);
   }
 };
 
@@ -77,10 +80,9 @@ const getAllTeams = async (req: Request, res: Response) => {
         ownerId: ownerId,
       },
     });
-    res.status(200).json(teams);
-  } catch (e) {
-    console.log("Error: ", e);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(200).json({ teams, success: true });
+  } catch (error) {
+    return errorResponse(500, error, res);
   }
 };
 
@@ -91,17 +93,21 @@ const updateTeam = async (req: Request, res: Response) => {
   */
   const { id } = req.params;
   const { name, description } = req.body;
-  const team = await prisma.team.update({
-    where: { id: Number(id) },
-    data: {
-      name,
-      description,
-    },
-    include: {
-      members: true,
-    },
-  });
-  res.status(200).json(team);
+  try {
+    const team = await prisma.team.update({
+      where: { id: Number(id) },
+      data: {
+        name,
+        description,
+      },
+      include: {
+        members: true,
+      },
+    });
+    res.status(200).json({ team, success: true });
+  } catch (error: any) {
+    return errorResponse(500, error, res);
+  }
 };
 
 // Delete Team
@@ -110,12 +116,16 @@ const deleteTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const team = await prisma.team.deleteMany({
-    where: {
-      id: Number(id),
-    },
-  });
-  res.status(200).json(team);
+  try {
+    const team = await prisma.team.deleteMany({
+      where: {
+        id: Number(id),
+      },
+    });
+    res.status(200).json({ team, success: true });
+  } catch (error) {
+    return errorResponse(500, error, res);
+  }
 };
 
 export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams };
