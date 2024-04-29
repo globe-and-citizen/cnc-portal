@@ -20,7 +20,7 @@ export const getNonce = async (req: Request, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: {
-        address: address
+        address: address,
       },
     });
 
@@ -38,6 +38,30 @@ export const getNonce = async (req: Request, res: Response) => {
       success: true,
       nonce,
     });
+  } catch (error) {
+    await prisma.$disconnect();
+    return errorResponse(500, error, res);
+  }
+};
+
+export const getUser = async (req: Request, res: Response) => {
+  const { address } = req.params;
+
+  try {
+    if (!address)
+      return errorResponse(401, "Get user error: Missing user address", res);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        address: address,
+      },
+    });
+
+    await prisma.$disconnect();
+
+    if (!user) return errorResponse(404, "User not found", res);
+
+    return res.status(200).json(user);
   } catch (error) {
     await prisma.$disconnect();
     return errorResponse(500, error, res);
