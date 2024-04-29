@@ -32,7 +32,11 @@ export async function signInWithEthereum() {
 
     await siweAuthService.authenticateUser()
     const userData: Partial<User> = await fetchUserApi.getUser(address)
-    useUserDataStore().setUserData(userData)
+    useUserDataStore().setUserData(
+      userData.name || '',
+      userData.address || '',
+      userData.nonce || ''
+    )
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
 

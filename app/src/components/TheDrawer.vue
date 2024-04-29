@@ -13,11 +13,12 @@
         </div>
       </div>
       <div class="flex flex-col">
-        <p class="font-semibold text-lg">{{ user.name ? user.name : 'User' }}</p>
-        <p class="font-semibold text-lg"></p>
-
-        <p class="text-slate-500">
-          {{ user.address.substring(0, 20) }}{{ user.address.length > 30 ? '...' : '' }}
+        <p class="font-semibold text-lg">{{ name ? name : 'User' }}</p>
+        <div class="flex flex-col"></div>
+        <p class="text-slate-500" v-if="address">
+          {{
+            address ? address.substring(0, 10) + '...' + address.substring(address.length - 10) : ''
+          }}
         </p>
       </div>
     </div>
@@ -57,13 +58,10 @@ li {
 import IconHome from '@/components/icons/IconHome.vue'
 import IconUsers from '@/components/icons/IconUsers.vue'
 import IconNote from '@/components/icons/IconNote.vue'
-import type { User } from '@/types/user'
-import { ref } from 'vue'
 
 // Explicitly define the props with correct types
-const props = defineProps<{
-  user: User
+defineProps<{
+  name: string
+  address: string
 }>()
-
-const user = ref(props.user)
 </script>

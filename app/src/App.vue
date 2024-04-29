@@ -16,7 +16,8 @@ function handleChange() {
 const toastStore = useToastStore()
 const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
-const { userData } = useUserDataStore()
+const userStore = useUserDataStore()
+const { name, address } = storeToRefs(userStore)
 </script>
 
 <template>
@@ -35,7 +36,7 @@ const { userData } = useUserDataStore()
             </div>
           </div>
           <div v-if="toggleSide" @toggleSideButton="handleChange">
-            <Drawer :user="JSON.parse(userData)" />
+            <Drawer :name="name" :address="address" />
           </div>
         </div>
       </div>
