@@ -50,7 +50,7 @@
           class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52"
         >
           <li>
-            <a class="justify-between">
+            <a class="justify-between" @click="emits('toggleEditUserModal')">
               Profile
               <span class="badge">New</span>
             </a>
@@ -71,7 +71,7 @@ import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 
-defineEmits(['toggleSideButton'])
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const tipsStore = useTipsStore()
 const { balance } = storeToRefs(tipsStore)
 

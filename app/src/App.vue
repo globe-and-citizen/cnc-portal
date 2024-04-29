@@ -7,6 +7,7 @@ import { ref } from 'vue'
 import { useToastStore } from './stores/toast'
 import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
+import EditUserModal from '@/components/modals/EditUserModal.vue'
 
 const toggleSide = ref(true)
 function handleChange() {
@@ -18,13 +19,18 @@ const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastS
 
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
+
+const showUserModal = ref(false)
 </script>
 
 <template>
   <div>
     <RouterView name="login" />
     <div v-if="$route.path != '/login'">
-      <NavBar @toggleSideButton="handleChange" />
+      <NavBar
+        @toggleSideButton="handleChange"
+        @toggleEditUserModal="showUserModal = !showUserModal"
+      />
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">
           <div
@@ -36,7 +42,17 @@ const { name, address } = storeToRefs(userStore)
             </div>
           </div>
           <div v-if="toggleSide" @toggleSideButton="handleChange">
-            <Drawer :name="name" :address="address" />
+            <Drawer
+              :name="name"
+              :address="address"
+              @toggleEditUserModal="() => (showUserModal = !showUserModal)"
+            />
+            <EditUserModal
+              :showEditUserModal="showUserModal"
+              :user="{ name, walletAddress: address }"
+              @updateUser="showUserModal = false"
+              @toggleEditUserModal="showUserModal = !showUserModal"
+            />
           </div>
         </div>
       </div>
