@@ -20,15 +20,16 @@
           <input type="text" class="grow" placeholder="John Doe" v-model="updateUserInput.name" />
         </label>
         <label
-          class="input input-bordered flex items-center gap-2 input-md"
+          class="input input-bordered flex items-center gap-2 input-md input-disabled mt-4"
           :class="{ 'input-error': !updateUserInput.isValid }"
         >
           <span class="w-24">Wallet Address</span>
           <input
             type="text"
-            class="grow"
+            class="grow input-disabled"
             placeholder="Enter wallet address"
-            v-model="updateUserInput.walletAddress"
+            :value="updateUserInput.address"
+            readonly
           />
         </label>
       </div>
@@ -45,7 +46,7 @@ import { ref, defineProps, defineEmits, watch } from 'vue'
 const emits = defineEmits(['updateUser', 'toggleEditUserModal'])
 const props = defineProps<{
   showEditUserModal: boolean
-  updateUserInput: { name: string; walletAddress: string; isValid: boolean }
+  updateUserInput: { name: string; address: string; isValid: boolean }
 }>()
 const updateUserInput = ref(props.updateUserInput)
 

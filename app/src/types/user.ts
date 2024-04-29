@@ -1,5 +1,8 @@
 export interface User {
-  nonce: string
-  address: string
-  name: string
+  id?: string
+  name?: string
+  surname?: string
+  nonce?: string
+  address?: string
+  // Other user properties...
 }
