@@ -6,6 +6,7 @@ import NotificationToast from '@/components/NotificationToast.vue'
 import { ref } from 'vue'
 import { useToastStore } from './stores/toast'
 import { storeToRefs } from 'pinia'
+import { useUserDataStore } from '@/stores/user'
 
 const toggleSide = ref(true)
 function handleChange() {
@@ -14,6 +15,8 @@ function handleChange() {
 
 const toastStore = useToastStore()
 const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
+
+const { userData } = useUserDataStore()
 </script>
 
 <template>
@@ -32,7 +35,7 @@ const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastS
             </div>
           </div>
           <div v-if="toggleSide" @toggleSideButton="handleChange">
-            <Drawer />
+            <Drawer :user="JSON.parse(userData)" />
           </div>
         </div>
       </div>
