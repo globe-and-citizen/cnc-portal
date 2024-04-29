@@ -20,7 +20,7 @@ export const getNonce = async (req: Request, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: {
-        address: address
+        address: address,
       },
     });
 
