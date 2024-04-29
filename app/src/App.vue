@@ -3,12 +3,12 @@ import { RouterView } from 'vue-router'
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useToastStore } from './stores/toast'
 import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
-
+import { isAddress } from 'ethers'
 const toggleSide = ref(true)
 function handleChange() {
   toggleSide.value = !toggleSide.value
@@ -21,6 +21,18 @@ const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
 
 const showUserModal = ref(false)
+
+const updateUserInput = ref({
+  name: name,
+  walletAddress: address,
+  isValid: true
+})
+watch(
+  () => updateUserInput.value,
+  (newVal) => {
+    updateUserInput.value.isValid = isAddress(newVal)
+  }
+)
 </script>
 
 <template>
@@ -45,12 +57,12 @@ const showUserModal = ref(false)
             <Drawer
               :name="name"
               :address="address"
-              @toggleEditUserModal="() => (showUserModal = !showUserModal)"
+              @toggleEditUserModal="showUserModal = !showUserModal"
             />
             <EditUserModal
               :showEditUserModal="showUserModal"
-              :user="{ name, walletAddress: address }"
-              @updateUser="showUserModal = false"
+              v-model:updateUserInput="updateUserInput"
+              @updateUser="console.log('Update user', updateUserInput)"
               @toggleEditUserModal="showUserModal = !showUserModal"
             />
           </div>

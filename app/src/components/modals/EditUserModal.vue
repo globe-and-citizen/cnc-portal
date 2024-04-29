@@ -17,16 +17,18 @@
       <div class="flex flex-col gap-5">
         <label class="input input-bordered flex items-center gap-2 input-md mt-4">
           <span class="w-24">Name</span>
-          <input type="text" class="grow" placeholder="John Doe" :value="user.name" />
+          <input type="text" class="grow" placeholder="John Doe" v-model="updateUserInput.name" />
         </label>
-        <label class="input input-bordered flex items-center gap-2 input-md file-input-disabled">
+        <label
+          class="input input-bordered flex items-center gap-2 input-md"
+          :class="{ 'input-error': !updateUserInput.isValid }"
+        >
           <span class="w-24">Wallet Address</span>
           <input
             type="text"
-            class="grow input-disabled"
+            class="grow"
             placeholder="Enter wallet address"
-            :value="user.walletAddress"
-            readonly
+            v-model="updateUserInput.walletAddress"
           />
         </label>
       </div>
@@ -43,19 +45,19 @@ import { ref, defineProps, defineEmits, watch } from 'vue'
 const emits = defineEmits(['updateUser', 'toggleEditUserModal'])
 const props = defineProps<{
   showEditUserModal: boolean
-  user: {
-    name: string
-    walletAddress: string
-  }
+  updateUserInput: { name: string; walletAddress: string; isValid: boolean }
 }>()
-const user = ref(props.user)
+const updateUserInput = ref(props.updateUserInput)
+
 const showEditUserModal = ref<boolean>(props.showEditUserModal)
+watch(
+  [() => props.showEditUserModal, () => props.updateUserInput, updateUserInput],
+  ([showForm, updateUserInputNew]) => {
+    showEditUserModal.value = showForm
+    updateUserInput.value = updateUserInputNew
+  },
+  { deep: true }
+)
 
 // Watch for changes in the props
-watch(
-  () => props.showEditUserModal,
-  (value) => {
-    showEditUserModal.value = value
-  }
-)
 </script>
