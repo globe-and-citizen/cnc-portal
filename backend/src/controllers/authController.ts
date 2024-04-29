@@ -17,22 +17,22 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     if (!signature)
       return errorResponse(401, "Auth error: Missing signature", res);
 
-    let {address, nonce} = extractAddressAndNonce(message)
+    let { address, nonce } = extractAddressAndNonce(message);
 
     //Get nonce from user data from database
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { address },
     });
 
-    nonce = user? user.nonce: nonce
+    nonce = user ? user.nonce : nonce;
 
     //Very the data
     const SIWEObject = new SiweMessage(message);
 
     try {
       await SIWEObject.verify({ signature, nonce });
-    } catch(error) {
-      return errorResponse(401, (error as any).error.type, res)
+    } catch (error) {
+      return errorResponse(401, (error as any).error.type, res);
     }
 
     //Update nonce for user and persist in database
@@ -44,7 +44,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         data: { nonce },
       });
     else
-      await prisma.user.create({
+      user = await prisma.user.create({
         data: {
           address,
           nonce,
@@ -56,10 +56,10 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
     const accessToken = jwt.sign({ address }, secretKey, { expiresIn: "24h" });
-
     return res.status(200).json({
       success: true,
       accessToken,
+      user,
     });
   } catch (error) {
     await prisma.$disconnect();
@@ -69,13 +69,13 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 };
 
 export const authenticateToken = (req: Request, res: Response) => {
-  try { 
-     if (!(req as any).address) {
-       return errorResponse(401, "Unauthorized: Missing jwt payload", res);
-     }
+  try {
+    if (!(req as any).address) {
+      return errorResponse(401, "Unauthorized: Missing jwt payload", res);
+    }
 
-     return res.status(200).json({success: true})
+    return res.status(200).json({ success: true });
   } catch (error) {
     return errorResponse(500, error, res);
   }
-}
+};
