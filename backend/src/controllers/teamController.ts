@@ -1,7 +1,7 @@
 // CRUD team using Prisma Client
-import { PrismaClient } from "@prisma/client";
+import { Member, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-
+import { isAddress } from "ethers";
 const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
@@ -9,7 +9,14 @@ const addTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { name, members, description } = req.body;
+  console.log("Members:", members.createMany.data);
   try {
+    members.createMany.data.map((member: Member) => {
+      if (!isAddress(member.walletAddress)) {
+        throw new Error(`Invalid wallet address for member: ${member.name}`);
+      }
+    });
+
     const team = await prisma.team.create({
       data: {
         name,
@@ -23,9 +30,9 @@ const addTeam = async (req: Request, res: Response) => {
     });
     console.log(team);
     res.status(201).json(team);
-  } catch (e) {
+  } catch (e: any) {
     console.log("Error: ", e);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ error: `${e.message}` });
   }
 };
 // Get Team

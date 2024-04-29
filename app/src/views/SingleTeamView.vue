@@ -3,7 +3,7 @@
     <div class="flex justify-between gap-5">
       <div>
         <h2 class="pl-5">{{ team.name }}</h2>
-        <p>{{ team.description }}</p>
+        <p class="pl-5">{{ team.description }}</p>
       </div>
       <div class="flex justify-between gap-2 items-center">
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
@@ -25,18 +25,36 @@
         <tbody>
           <MemberCard
             v-for="member in team.members"
-            :memberName="member.name"
-            :walletAddress="member.walletAddress"
-            :memberId="member.id"
+            v-model:updateMemberInput="updateMemberInput"
+            :member="member"
             :key="member.id"
+            :showUpdateMemberModal="showUpdateMemberModal"
+            @updateMember="(id) => updateMember(id)"
+            @deleteMember="(id) => deleteMember(id)"
+            @toggleUpdateMemberModal="toggleUpdateMemberModal"
           />
         </tbody>
       </table>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <AddMemberCard :id="team.id" />
+      <AddMemberCard
+        v-model:formData="teamMembers"
+        v-model:showAddMemberForm="showAddMemberForm"
+        @addInput="addInput"
+        @removeInput="removeInput"
+        @addMembers="handleAddMembers"
+        @updateForm="handleUpdateForm"
+        @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
+      />
     </div>
-    <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
+    <TipsAction
+      :addresses="team.members.map((member) => member.walletAddress)"
+      :pushTipLoading="pushTipLoading"
+      :sendTipLoading="sendTipLoading"
+      :tipAmount="tipAmount"
+      @pushTip="(addresses, amount) => pushTip(addresses, amount)"
+      @sendTip="(addresses, amount) => sendTip(addresses, amount)"
+    />
   </div>
 
   <dialog
@@ -75,17 +93,29 @@
   </dialog>
 </template>
 <script setup lang="ts">
+import { useTipsStore } from '@/stores/tips'
+import { storeToRefs } from 'pinia'
 import MemberCard from '@/components/MemberCard.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 
-import type { Member, Team } from '@/types/types'
+import { ToastType, type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
+import { FetchMemberAPI } from '@/apis/memberApi'
 
+import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
-import { storeToRefs } from 'pinia'
+
+const { show } = useToastStore()
+
+const tipStore = useTipsStore()
+const { pushTip, sendTip } = useTipsStore()
+const { sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
+const tipAmount = ref(0)
+
+const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
 
@@ -95,6 +125,10 @@ const cname = ref('')
 const cdesc = ref('')
 
 const showModal = ref(false)
+
+const showUpdateMemberModal = ref(false)
+const showAddMemberForm = ref(false)
+
 const inputs = ref<Member[]>([])
 const team = ref<Team>({
   id: '',
@@ -103,6 +137,64 @@ const team = ref<Team>({
   members: []
 })
 
+const teamMembers = ref([
+  {
+    name: '',
+    walletAddress: '',
+    isValid: false
+  }
+])
+const updateMemberInput = ref<MemberInput>({
+  name: '',
+  walletAddress: '',
+  id: '',
+  isValid: false
+})
+const addInput = () => {
+  teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
+}
+
+const removeInput = () => {
+  if (teamMembers.value.length > 1) {
+    teamMembers.value.pop()
+  }
+}
+const toggleUpdateMemberModal = (member: MemberInput) => {
+  showUpdateMemberModal.value = !showUpdateMemberModal.value
+  updateMemberInput.value = member
+}
+const handleUpdateForm = async () => {
+  teamMembers.value.map((member) => {
+    if (!isAddress(member.walletAddress)) {
+      member.isValid = false
+    } else {
+      member.isValid = true
+    }
+  })
+}
+const handleAddMembers = async () => {
+  try {
+    let isValid = true
+
+    teamMembers.value.map((member) => {
+      if (!isAddress(member.walletAddress)) {
+        isValid = false
+      }
+    })
+
+    if (!isValid) {
+      show(ToastType.Warning, 'Invalid wallet address')
+
+      console.error('Invalid wallet address for one or more team members')
+      return
+    }
+    await memberApi.createMembers(teamMembers.value, String(route.params.id))
+
+    window.location.reload()
+  } catch (error) {
+    console.error('Error adding members:', error)
+  }
+}
 onMounted(async () => {
   const id = route.params.id
 
@@ -124,6 +216,32 @@ onMounted(async () => {
 const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
+}
+const deleteMember = async (id: string) => {
+  memberApi
+    .deleteMember(id)
+    .then(() => {
+      console.log('Deleted member succesfully')
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Delete member failed', error)
+    })
+}
+const updateMember = async (id: string) => {
+  const member = {
+    name: updateMemberInput.value.name,
+    walletAddress: updateMemberInput.value.walletAddress
+  }
+  memberApi
+    .updateMember(member, id)
+    .then((response) => {
+      console.log('Updated member successfully', response)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.log('Error updating member', error)
+    })
 }
 const updateTeam = async () => {
   const id = route.params.id
@@ -154,4 +272,11 @@ const deleteTeam = async () => {
       console.error('Error deleting team:', error)
     })
 }
+watch(
+  updateMemberInput,
+  (newVal) => {
+    updateMemberInput.value.isValid = isAddress(newVal.walletAddress)
+  },
+  { deep: true }
+)
 </script>

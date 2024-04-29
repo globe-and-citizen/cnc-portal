@@ -1,7 +1,10 @@
-import type { Team, Member } from '@/types/types'
+import type { Team, Member } from '@/types'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
+import { useToastStore } from '@/stores/toast'
+import { ToastType } from '@/types'
+import { isAddress } from 'ethers' // ethers v6
 
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
@@ -90,7 +93,9 @@ export class FetchTeamAPI implements TeamAPI {
 
       const updatedTeam: Team = await response.json()
       return updatedTeam
-    } catch (error) {
+    } catch (error: any) {
+      const { show } = useToastStore()
+      show(ToastType.Warning, error.message)
       console.error('Error:', error)
       throw error
     }
@@ -146,18 +151,24 @@ export class FetchTeamAPI implements TeamAPI {
       },
       body: JSON.stringify(teamObject)
     }
+    const { show } = useToastStore()
 
     try {
+      teamMembers.map((member) => {
+        if (!isAddress(String(member.walletAddress))) {
+          throw new Error(`Invalid wallet address`)
+        }
+      })
       const response = await fetch(url, requestOptions)
-
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
-
+      show(ToastType.Success, 'Successfully added team')
       const createdTeam: Team = await response.json()
       return createdTeam
-    } catch (error) {
-      console.error('Error:', error)
+    } catch (error: any) {
+      show(ToastType.Warning, error.message)
+      console.error('Error:', error.message)
       throw error
     }
   }

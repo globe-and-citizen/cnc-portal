@@ -18,7 +18,6 @@ export const useTipsStore = defineStore('tips', {
     sendTipLoading: false as boolean,
     pushTipLoading: false as boolean,
     isWalletConnected: false as boolean,
-    totalTipAmount: 0 as number,
     balance: '0' as string
   }),
   actions: {
@@ -36,7 +35,7 @@ export const useTipsStore = defineStore('tips', {
       contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
       this.isWalletConnected = true
     },
-    async pushTip(addresses: AddressLike[]) {
+    async pushTip(addresses: AddressLike[], amount: number) {
       const { show } = useToastStore()
 
       if (!this.isWalletConnected) await this.connectWallet()
@@ -45,7 +44,7 @@ export const useTipsStore = defineStore('tips', {
 
       try {
         const tx = await contract.pushTip(addresses, {
-          value: ethers.parseEther(this.totalTipAmount.toString())
+          value: ethers.parseEther(amount.toString())
         })
         await tx.wait()
 
@@ -54,10 +53,9 @@ export const useTipsStore = defineStore('tips', {
         show(ToastType.Error, error.reason ? error.reason : 'Failed to push tip')
       } finally {
         this.pushTipLoading = false
-        this.totalTipAmount = 0
       }
     },
-    async sendTip(addresses: AddressLike[]) {
+    async sendTip(addresses: AddressLike[], amount: number) {
       const { show } = useToastStore()
 
       if (!this.isWalletConnected) await this.connectWallet()
@@ -66,7 +64,7 @@ export const useTipsStore = defineStore('tips', {
 
       try {
         const tx = await contract.sendTip(addresses, {
-          value: ethers.parseEther(this.totalTipAmount.toString())
+          value: ethers.parseEther(amount.toString())
         })
         await tx.wait()
         await this.getBalance()
@@ -76,7 +74,6 @@ export const useTipsStore = defineStore('tips', {
         show(ToastType.Error, error.reason ? error.reason : 'Failed to send tip')
       } finally {
         this.sendTipLoading = false
-        this.totalTipAmount = 0
       }
     },
     async getBalance() {

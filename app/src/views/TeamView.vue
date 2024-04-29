@@ -10,7 +10,15 @@
         @click="navigateToTeam(team.id)"
       />
 
-      <AddTeamCard />
+      <AddTeamCard
+        @addTeam="handleAddTeam"
+        v-model:showAddTeamModal="showAddTeamModal"
+        v-model:team="team"
+        @updateAddTeamModal="handleupdateAddTeamModal"
+        @addInput="addInput"
+        @removeInput="removeInput"
+        @toggleAddTeamModal="showAddTeamModal = !showAddTeamModal"
+      />
     </div>
   </div>
 </template>
@@ -22,11 +30,74 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
-import type { Team } from '@/types/types'
+import { ToastType, type Team, type TeamInput } from '@/types'
+import { isAddress } from 'ethers' // ethers v6
+import { useToastStore } from '@/stores/toast'
 
+const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
 
+const showAddTeamModal = ref(false)
+const team = ref<TeamInput>({
+  name: '',
+  description: '',
+  members: [
+    {
+      name: '',
+      walletAddress: '',
+      isValid: false
+    }
+  ]
+})
+
+const handleupdateAddTeamModal = (teamInput: TeamInput) => {
+  team.value = teamInput
+  let members = team.value.members
+  members.map((member) => {
+    if (isAddress(member.walletAddress)) {
+      member.isValid = true
+    } else {
+      member.isValid = false
+    }
+  })
+}
+const handleAddTeam = () => {
+  team.value.members.map((member) => {
+    if (!isAddress(member.walletAddress)) {
+      member.isValid = false
+    }
+    if (!member.isValid) {
+      show(ToastType.Warning, 'Invalid wallet address')
+      console.error('Invalid wallet address for one or more team members')
+      return
+    }
+  })
+  const members = team.value.members.map((member) => {
+    return {
+      name: member.name,
+      walletAddress: member.walletAddress
+    }
+  })
+  teamApi
+    .createTeam(team.value.name, team.value.description, members)
+    .then((createdTeam) => {
+      console.log('Created team:', createdTeam)
+      window.location.reload()
+    })
+    .catch((error) => {
+      console.error('Error creating team:', error)
+    })
+}
+const addInput = () => {
+  team.value.members.push({ name: '', walletAddress: '', isValid: false })
+}
+
+const removeInput = () => {
+  if (team.value.members.length > 1) {
+    team.value.members.pop()
+  }
+}
 onMounted(async () => {
   teamApi
     .getAllTeams()

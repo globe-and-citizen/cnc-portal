@@ -1,6 +1,8 @@
-import type { Member } from '@/types/types'
+import { ToastType, type Member } from '@/types'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
+import { isAddress } from 'ethers' // ethers v6
+import { useToastStore } from '@/stores/toast'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
@@ -19,18 +21,27 @@ export class FetchMemberAPI implements MemberAPI {
       },
       body: JSON.stringify(newMembers)
     }
+    const { show } = useToastStore()
+
     try {
+      newMembers.map((member: Partial<Member>) => {
+        if (!isAddress(member.walletAddress)) {
+          throw new Error(`Invalid wallet address`)
+        }
+      })
       const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
-    } catch (error) {
+      show(ToastType.Success, 'Updated Member Details')
+    } catch (error: any) {
+      show(ToastType.Warning, error.message)
       console.error('Error:', error)
+      throw error
     }
   }
   async updateMember(member: Partial<Member>, id: string): Promise<void> {
     const token = AuthService.getToken()
-
     const requestOptions = {
       method: 'PUT',
       headers: {
@@ -42,13 +53,22 @@ export class FetchMemberAPI implements MemberAPI {
         walletAddress: member.walletAddress
       })
     }
+    const { show } = useToastStore()
+
     try {
+      if (!isAddress(String(member.walletAddress))) {
+        throw new Error(`Invalid wallet address`)
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
-    } catch (error) {
+      show(ToastType.Success, 'Updated Member Details')
+    } catch (error: any) {
+      show(ToastType.Warning, error.message)
       console.error('Error:', error)
+      throw error
     }
   }
   async deleteMember(id: string): Promise<void> {
