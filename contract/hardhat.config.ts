@@ -9,12 +9,12 @@ dotenv.config()
 let networks: NetworksUserConfig = {
   hardhat: {}
 }
-if (process.env.ALCHEMY_API_KEY === undefined || process.env.PRIVATE_KEY === undefined) {
-  console.error('\x1b[33m Please set your ALCHEMY_API_KEY and PRIVATE_KEY in a .env file\x1b[0m')
+if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefined) {
+  console.error('\x1b[33m Please set your SEPOLIA_URL and PRIVATE_KEY in a .env file\x1b[0m')
 } else {
   networks = {
     sepolia: {
-      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      url: process.env.SEPOLIA_URL!,
       accounts: [process.env.PRIVATE_KEY]
     }
   }
