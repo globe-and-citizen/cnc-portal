@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-contract Tips {
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(address => uint256) private balance;
     uint8 public pushLimit=10;
     uint8 public MAW_PUSH_LIMIT = 100;
@@ -20,6 +23,11 @@ contract Tips {
         uint256 amountPerAddress
     );
     event TipWithdrawal(address to, uint256 amount);
+
+    function initialize() public initializer {
+        __Ownable_init();
+        pushLimit = 10;
+    }
 
     function pushTip(address[] calldata _teamMembersAddresses) positiveAmountRequired external payable {
         
@@ -64,7 +72,7 @@ contract Tips {
     }
 
     // TODO: Protection for reentrancy attack
-    function withdraw() external payable {
+    function withdraw() external nonReentrant{
         uint256 senderBalance = balance[msg.sender];
         require(senderBalance > 0, "No tips to withdraw.");
 
@@ -81,7 +89,7 @@ contract Tips {
         return balance[_address];
     }
 
-    function updatePushLimit(uint8 value) external {
+    function updatePushLimit(uint8 value) external onlyOwner{
         require(value <= MAW_PUSH_LIMIT, "Push limit is too high, must be less or equal to 100");
         pushLimit = value;
     }
