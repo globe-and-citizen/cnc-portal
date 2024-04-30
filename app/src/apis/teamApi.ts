@@ -3,7 +3,6 @@ import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
-import { useErrorHandler } from '@/composables/errorHandler'
 
 interface TeamAPI {
   getAllTeams(): Promise<Team[]>
@@ -28,7 +27,7 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(`${BACKEND_URL}/api/teams`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(resObj)
+      throw new Error(resObj.message)
     }
 
     return resObj.teams
@@ -49,7 +48,7 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(url, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(resObj)
+      throw new Error(resObj.message)
     }
 
     return resObj.team
@@ -76,8 +75,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     console.log(resObj)
     if (!resObj.success || !resObj) {
-      useErrorHandler().handleError(resObj)
-      return {} as Team
+      throw new Error(resObj.message)
     }
     return resObj.team
   }
@@ -96,7 +94,10 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     console.log(resObj)
     if (!resObj.success || !resObj) {
-      return useErrorHandler().handleError(resObj)
+      throw new Error(resObj.message)
+    }
+    if (resObj.team.count == 0) {
+      throw new Error('Team not deleted')
     }
     return resObj.team
   }
@@ -130,8 +131,7 @@ export class FetchTeamAPI implements TeamAPI {
 
     for (const member of teamMembers) {
       if (!isAddress(String(member.walletAddress))) {
-        useErrorHandler().handleError(new Error(`Invalid wallet address`))
-        return {} as Team
+        throw new Error(`Invalid wallet address`)
       }
     }
 
@@ -139,8 +139,7 @@ export class FetchTeamAPI implements TeamAPI {
 
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(resObj)
-      return {} as Team
+      throw new Error(resObj.message)
     }
     return resObj.team
   }
