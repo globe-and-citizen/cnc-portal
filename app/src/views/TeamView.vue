@@ -33,6 +33,7 @@ const router = useRouter()
 import { ToastType, type Team, type TeamInput } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
+import { useErrorHandler } from '@/composables/errorHandler'
 
 const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
@@ -63,27 +64,21 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
   })
 }
 const handleAddTeam = async () => {
-  team.value.members.map((member) => {
-    if (!isAddress(member.walletAddress)) {
-      member.isValid = false
-    }
-    if (!member.isValid) {
-      show(ToastType.Warning, 'Invalid wallet address')
-      console.error('Invalid wallet address for one or more team members')
-      return
-    }
-  })
   const members = team.value.members.map((member) => {
     return {
       name: member.name,
       walletAddress: member.walletAddress
     }
   })
-  const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
-  if (createdTeam && Object.keys(createdTeam).length !== 0) {
-    show(ToastType.Success, 'Team created successfully')
-    showAddTeamModal.value = !showAddTeamModal.value
-    teams.value.push(createdTeam)
+  try {
+    const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
+    if (createdTeam && Object.keys(createdTeam).length !== 0) {
+      show(ToastType.Success, 'Team created successfully')
+      showAddTeamModal.value = !showAddTeamModal.value
+      teams.value.push(createdTeam)
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
   }
 }
 const addInput = () => {
@@ -96,15 +91,12 @@ const removeInput = () => {
   }
 }
 onMounted(async () => {
-  teamApi
-    .getAllTeams()
-    .then((teamsList) => {
-      console.log('Fetched teams:', teamsList)
-      teams.value = teamsList
-    })
-    .catch((error) => {
-      console.error('Error fetching teams:', error)
-    })
+  try {
+    const teamsList = await teamApi.getAllTeams()
+    teams.value = teamsList
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
 })
 function navigateToTeam(id: string) {
   router.push('/teams/' + id)

@@ -2,7 +2,6 @@ import { type Member } from '@/types'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
-import { useErrorHandler } from '@/composables/errorHandler'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
@@ -24,16 +23,14 @@ export class FetchMemberAPI implements MemberAPI {
 
     for (const member of newMembers) {
       if (!isAddress(member.walletAddress)) {
-        useErrorHandler().handleError(new Error(`Invalid wallet address`))
-        return [] as Member[]
+        throw new Error(`Invalid wallet address`)
       }
     }
 
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(resObj)
-      return [] as Member[]
+      throw new Error(resObj.message)
     }
     return resObj.members
   }
@@ -52,15 +49,13 @@ export class FetchMemberAPI implements MemberAPI {
     }
 
     if (!isAddress(String(member.walletAddress))) {
-      useErrorHandler().handleError(new Error(`Invalid wallet address`))
-      return {} as Member
+      throw new Error(`Invalid wallet address`)
     }
 
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(resObj)
-      return {} as Member
+      throw new Error(resObj.message)
     }
     return resObj.member
   }
@@ -76,9 +71,8 @@ export class FetchMemberAPI implements MemberAPI {
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (!resObj.success) {
-      useErrorHandler().handleError(resObj)
+      throw new Error(resObj)
     }
-    console.log(resObj)
     return resObj.member
   }
 }

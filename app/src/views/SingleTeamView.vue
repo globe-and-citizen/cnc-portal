@@ -108,6 +108,8 @@ import { FetchMemberAPI } from '@/apis/memberApi'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 
+import { useErrorHandler } from '@/composables/errorHandler'
+
 const { show } = useToastStore()
 
 const tipStore = useTipsStore()
@@ -174,58 +176,52 @@ const handleUpdateForm = async () => {
   })
 }
 const handleAddMembers = async () => {
-  let isValid = true
-
-  teamMembers.value.map((member) => {
-    if (!isAddress(member.walletAddress)) isValid = false
-  })
-
-  if (!isValid) {
-    show(ToastType.Warning, 'Invalid wallet address')
-    return
-  }
-  const members: Member[] = await memberApi.createMembers(
-    teamMembers.value,
-    String(route.params.id)
-  )
-  if (members && members.length > 0) {
-    show(ToastType.Success, 'Members added successfully')
-    team.value.members = members
-    showAddMemberForm.value = false
+  try {
+    const members: Member[] = await memberApi.createMembers(
+      teamMembers.value,
+      String(route.params.id)
+    )
+    if (members && members.length > 0) {
+      show(ToastType.Success, 'Members added successfully')
+      team.value.members = members
+      showAddMemberForm.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
   }
 }
 onMounted(async () => {
   const id = route.params.id
-
-  teamApi
-    .getTeam(String(id))
-    .then((teamData) => {
-      if (teamData) {
-        team.value = teamData
-        cname.value = team.value.name
-        cdesc.value = team.value.description
-      } else {
-        console.log('Team not found for id:', id)
-      }
-    })
-    .catch((error) => {
-      console.error('Error fetching team:', error)
-    })
+  try {
+    const teamData = await teamApi.getTeam(String(id))
+    if (teamData) {
+      team.value = teamData
+      cname.value = team.value.name
+      cdesc.value = team.value.description
+    } else {
+      console.log('Team not found for id:', id)
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
 }
 const deleteMember = async (id: string) => {
-  const memberRes: any = await memberApi.deleteMember(id)
-  if (memberRes && memberRes.count == 1) {
-    show(ToastType.Success, 'Member deleted successfully')
-    team.value.members.splice(
-      team.value.members.findIndex((member) => member.id === id),
-      1
-    )
-
-    showUpdateMemberModal.value = false
+  try {
+    const memberRes: any = await memberApi.deleteMember(id)
+    if (memberRes && memberRes.count == 1) {
+      show(ToastType.Success, 'Member deleted successfully')
+      team.value.members.splice(
+        team.value.members.findIndex((member) => member.id === id),
+        1
+      )
+      showUpdateMemberModal.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
   }
 }
 const updateMember = async (id: string) => {
@@ -233,17 +229,21 @@ const updateMember = async (id: string) => {
     name: updateMemberInput.value.name,
     walletAddress: updateMemberInput.value.walletAddress
   }
-  const updatedMember = await memberApi.updateMember(member, id)
-  if (updatedMember && Object.keys(updatedMember).length !== 0) {
-    show(ToastType.Success, 'Member updated successfully')
-    team.value.members.map((member) => {
-      if (member.id === id) {
-        member.name = updatedMember.name
-        member.walletAddress = updatedMember.walletAddress
-      }
-    })
+  try {
+    const updatedMember = await memberApi.updateMember(member, id)
+    if (updatedMember && Object.keys(updatedMember).length !== 0) {
+      show(ToastType.Success, 'Member updated successfully')
+      team.value.members.map((member) => {
+        if (member.id === id) {
+          member.name = updatedMember.name
+          member.walletAddress = updatedMember.walletAddress
+        }
+      })
 
-    showUpdateMemberModal.value = false
+      showUpdateMemberModal.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
   }
 }
 const updateTeam = async () => {
@@ -252,21 +252,29 @@ const updateTeam = async () => {
     name: cname.value,
     description: cdesc.value
   }
-  const teamRes = await teamApi.updateTeam(String(id), teamObject)
-  if (teamRes) {
-    show(ToastType.Success, 'Team updated successfully')
-    team.value.name = teamRes.name
-    team.value.description = teamRes.description
-    showModal.value = false
+  try {
+    const teamRes = await teamApi.updateTeam(String(id), teamObject)
+    if (teamRes) {
+      show(ToastType.Success, 'Team updated successfully')
+      team.value.name = teamRes.name
+      team.value.description = teamRes.description
+      showModal.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
   }
 }
 
 const deleteTeam = async () => {
   const id = route.params.id
-  const response: any = await teamApi.deleteTeam(String(id))
-  if (response && response.count == 1) {
-    show(ToastType.Success, 'Team deleted successfully')
-    router.push('/teams')
+  try {
+    const response: any = await teamApi.deleteTeam(String(id))
+    if (response) {
+      show(ToastType.Success, 'Team deleted successfully')
+      router.push('/teams')
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
   }
 }
 watch(
