@@ -43,3 +43,60 @@ export const getNonce = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
+
+export const getUser = async (req: Request, res: Response) => {
+  const { address } = req.params;
+
+  try {
+    if (!address)
+      return errorResponse(401, "Get user error: Missing user address", res);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        address: address,
+      },
+    });
+
+    await prisma.$disconnect();
+
+    if (!user) return errorResponse(404, "User not found", res);
+
+    return res.status(200).json(user);
+  } catch (error) {
+    await prisma.$disconnect();
+    return errorResponse(500, error, res);
+  }
+};
+export const updateUser = async (req: Request, res: Response) => {
+  const { address } = req.params;
+  const { name } = req.body;
+
+  try {
+    if (!address)
+      return errorResponse(401, "Update user error: Missing user address", res);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        address: address,
+      },
+    });
+
+    await prisma.$disconnect();
+
+    if (!user) return errorResponse(404, "User not found", res);
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        address: address,
+      },
+      data: {
+        name,
+      },
+    });
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    await prisma.$disconnect();
+    return errorResponse(500, error, res);
+  }
+};

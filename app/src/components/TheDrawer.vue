@@ -2,7 +2,10 @@
   <div
     class="flex flex-col items-center menu pt-28 w-80 min-h-full bg-white text-base-content fixed px-6 gap-3"
   >
-    <div class="w-full flex flex-row justify-start gap-4 card bg-base-100 px-5 py-4">
+    <div
+      class="w-full flex flex-row justify-start gap-4 card bg-base-100 px-5 py-4 cursor-pointer"
+      @click="emits('toggleEditUserModal')"
+    >
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar flex items-center">
         <div class="rounded-full">
           <img
@@ -13,8 +16,13 @@
         </div>
       </div>
       <div class="flex flex-col">
-        <p class="font-semibold text-lg">Dasarath G</p>
-        <p class="text-slate-500">Admin</p>
+        <p class="font-semibold text-lg">{{ name ? name : 'User' }}</p>
+        <div class="flex flex-col"></div>
+        <p class="text-slate-500" v-if="address">
+          {{
+            address ? address.substring(0, 10) + '...' + address.substring(address.length - 10) : ''
+          }}
+        </p>
       </div>
     </div>
     <ul class="menu bg-white w-full rounded-box gap-3">
@@ -53,4 +61,11 @@ li {
 import IconHome from '@/components/icons/IconHome.vue'
 import IconUsers from '@/components/icons/IconUsers.vue'
 import IconNote from '@/components/icons/IconNote.vue'
+
+// Explicitly define the props with correct types
+const emits = defineEmits(['toggleEditUserModal'])
+defineProps<{
+  name: string
+  address: string
+}>()
 </script>

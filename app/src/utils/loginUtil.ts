@@ -5,6 +5,8 @@ import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { useOwnerAddressStore } from '@/stores/address'
+import { useUserDataStore } from '@/stores/user'
+import type { User } from '@/types'
 
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = new EthersJsAdapter()
@@ -29,6 +31,12 @@ export async function signInWithEthereum() {
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
     await siweAuthService.authenticateUser()
+    const userData: Partial<User> = await fetchUserApi.getUser(address)
+    useUserDataStore().setUserData(
+      userData.name || '',
+      userData.address || '',
+      userData.nonce || ''
+    )
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
 
