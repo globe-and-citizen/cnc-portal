@@ -218,7 +218,6 @@ const updateTeamModalOpen = async () => {
 }
 const deleteMember = async (id: string) => {
   const memberRes: any = await memberApi.deleteMember(id)
-  console.log('Deleted member:', memberRes)
   if (memberRes && memberRes.count == 1) {
     show(ToastType.Success, 'Member deleted successfully')
     team.value.members.splice(
