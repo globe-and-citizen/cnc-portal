@@ -25,7 +25,7 @@
         <tbody>
           <MemberCard
             v-for="member in team.members"
-            v-model:updateMemberInput="updateMemberInput"
+            :updateMemberInput="updateMemberInput"
             :member="member"
             :key="member.id"
             :showUpdateMemberModal="showUpdateMemberModal"
@@ -161,7 +161,8 @@ const removeInput = () => {
 }
 const toggleUpdateMemberModal = (member: MemberInput) => {
   showUpdateMemberModal.value = !showUpdateMemberModal.value
-  updateMemberInput.value = member
+  const updatedMember = { ...member }
+  updateMemberInput.value = updatedMember
 }
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
@@ -217,7 +218,6 @@ const updateTeamModalOpen = async () => {
 }
 const deleteMember = async (id: string) => {
   const memberRes: any = await memberApi.deleteMember(id)
-  console.log('Deleted member:', memberRes)
   if (memberRes && memberRes.count == 1) {
     show(ToastType.Success, 'Member deleted successfully')
     team.value.members.splice(
@@ -234,9 +234,15 @@ const updateMember = async (id: string) => {
     walletAddress: updateMemberInput.value.walletAddress
   }
   const updatedMember = await memberApi.updateMember(member, id)
-  console.log('Updated member:', updatedMember)
-  if (updatedMember) {
+  if (updatedMember && Object.keys(updatedMember).length !== 0) {
     show(ToastType.Success, 'Member updated successfully')
+    team.value.members.map((member) => {
+      if (member.id === id) {
+        member.name = updatedMember.name
+        member.walletAddress = updatedMember.walletAddress
+      }
+    })
+
     showUpdateMemberModal.value = false
   }
 }
@@ -246,9 +252,11 @@ const updateTeam = async () => {
     name: cname.value,
     description: cdesc.value
   }
-  const team = await teamApi.updateTeam(String(id), teamObject)
-  if (team) {
+  const teamRes = await teamApi.updateTeam(String(id), teamObject)
+  if (teamRes) {
     show(ToastType.Success, 'Team updated successfully')
+    team.value.name = teamRes.name
+    team.value.description = teamRes.description
     showModal.value = false
   }
 }
