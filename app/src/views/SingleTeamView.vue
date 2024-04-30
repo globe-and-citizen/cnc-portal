@@ -253,9 +253,11 @@ const updateTeam = async () => {
     name: cname.value,
     description: cdesc.value
   }
-  const team = await teamApi.updateTeam(String(id), teamObject)
-  if (team) {
+  const teamRes = await teamApi.updateTeam(String(id), teamObject)
+  if (teamRes) {
     show(ToastType.Success, 'Team updated successfully')
+    team.value.name = teamRes.name
+    team.value.description = teamRes.description
     showModal.value = false
   }
 }
