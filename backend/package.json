@@ -9,7 +9,7 @@
     ]
   },
   "scripts": {
-    "start": "nodemon src/index.ts",
+    "start": "npx nodemon src/index.ts",
     "test": "vitest run -c vitest.unit.config.ts",
     "test:watch": "vitest -c vitest.unit.config.ts",
     "test:e2e": "vitest run -c vitest.e2e.config.ts",
@@ -19,9 +19,12 @@
     "pretest:e2e": "run-s test:create-prisma-environment test:install-prisma-environment",
     "test:unit": "vitest -c ./vitest.config.unit.ts",
     "test:unit:ui": "vitest -c ./vitest.config.unit.ts --ui",
-    "build": "tsc && node src/index.js",
-    "prisma:migrate": "npx prisma migrate deploy",
-    "prisma:generate": "npx prisma generate"
+    "build": "tsc && npm run generate:docs && npm run copy:docs",
+    "prod": "node  dist/index.js",
+    "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:generate": "prisma generate",
+    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +35,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.11.30",
     "npm-run-all": "^4.1.5",
+    "nodemon": "^3.1.0",
     "prisma": "^5.11.0",
     "ts-node": "^10.9.2",
     "vite-tsconfig-paths": "^4.3.2",
@@ -45,9 +49,9 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.1",
     "jsonwebtoken": "^9.0.2",
-    "siwe": "^2.1.4",
     "openapi2html": "^1.1.22",
     "redoc-cli": "^0.13.21",
+    "siwe": "^2.1.4",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",

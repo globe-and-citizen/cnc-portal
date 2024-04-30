@@ -3,7 +3,9 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
-import TipsView from '@/views/TipsView.vue'
+import TransactionsView from '@/views/TransactionsView.vue'
+
+import { AuthService } from '@/services/authService'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,9 +38,9 @@ const router = createRouter({
       ]
     },
     {
-      path: '/tips',
-      name: 'tips',
-      component: TipsView
+      path: '/transactions',
+      name: 'transactions',
+      component: TransactionsView
     },
     {
       path: '/about',
@@ -50,5 +52,9 @@ const router = createRouter({
     }
   ]
 })
-
+router.beforeEach(async (to, _) => {
+  if (!(await AuthService.isAuthenticated()) && to.name !== 'login') {
+    return { name: 'login' }
+  }
+})
 export default router

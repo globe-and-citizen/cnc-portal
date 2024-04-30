@@ -1,5 +1,6 @@
 export interface Member {
-  id: number
+  id: string
   name: string
-  address: string
+  walletAddress: string
+  teamId: number
 }

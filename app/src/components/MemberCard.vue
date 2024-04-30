@@ -1,70 +1,39 @@
 <template>
-  <tr @click="showModal = true" class="cursor-pointer">
-    <th>{{ memberId }}</th>
-    <th>{{ memberName }}</th>
-    <th>{{ walletAddress }}</th>
+  <tr @click="emits('toggleUpdateMemberModal', member)" class="cursor-pointer hover">
+    <th>{{ member.id }}</th>
+    <th>{{ member.name }}</th>
+    <th>{{ member.walletAddress }}</th>
     <th>Action</th>
   </tr>
-
-  <dialog
-    id="my_modal_20"
-    class="modal modal-bottom sm:modal-middle"
-    :class="{ 'modal-open': showModal }"
-  >
-    <div class="modal-box">
-      <button
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="showModal = !showModal"
-      >
-        ✕
-      </button>
-      <h1 class="font-bold text-2xl">Update Member Details</h1>
-      <hr class="" />
-      <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-        <input type="text" class="grow" v-model="nameInput" />
-        |
-        <input type="text" class="grow" v-model="walletInput" />
-      </label>
-      <div class="flex mt-2 justify-between">
-        <button class="btn btn-error size-sm" @click="deleteMember">Delete</button>
-        <button class="btn btn-primary" @click="updateMember">Update</button>
-      </div>
-    </div>
-    <div></div>
-  </dialog>
+  <UpdateMemberModal
+    :showUpdateMemberModal="showUpdateMemberModal"
+    :updateMemberInput="updateMemberInput"
+    @toggleUpdateMemberModal="emits('toggleUpdateMemberModal', {})"
+    @updateMember="(id) => emits('updateMember', id)"
+    @deleteMember="(id) => emits('deleteMember', id)"
+  />
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-import axios from 'axios'
-const showModal = ref(false)
+import type { MemberInput } from '@/types'
+import UpdateMemberModal from '@/components/modals/UpdateMemberModal.vue'
+import { ref, watch } from 'vue'
 
-const nameInput = ref('')
-const walletInput = ref('')
+const emits = defineEmits(['toggleUpdateMemberModal', 'updateMember', 'deleteMember'])
+const props = defineProps<{
+  showUpdateMemberModal: boolean
+  member: Partial<MemberInput>
+  updateMemberInput: Partial<MemberInput>
+}>()
+const member = ref(props.member)
+const updateMemberInput = ref(props.updateMemberInput)
+const showUpdateMemberModal = ref<boolean>(props.showUpdateMemberModal)
 
-const props = defineProps(['memberName', 'walletAddress', 'memberId'])
-nameInput.value = props.memberName
-walletInput.value = props.walletAddress
-console.log(nameInput.value)
-
-const deleteMember = async () => {
-  try {
-    const id = props.memberId
-    await axios.delete(`http://localhost:3000/member/${id}`)
-    window.location.reload()
-  } catch (error) {
-    console.log('Error deleting member', error)
-  }
-}
-const updateMember = async () => {
-  try {
-    const id = props.memberId
-    await axios.put(`http://localhost:3000/member/${id}`, {
-      name: nameInput.value,
-      walletAddress: walletInput.value
-    })
-    window.location.reload()
-  } catch (error) {
-    console.log('Error updating Member', error)
-  }
-}
+watch(
+  [() => props.showUpdateMemberModal, props.updateMemberInput, updateMemberInput],
+  ([showForm]) => {
+    showUpdateMemberModal.value = showForm
+    updateMemberInput.value = props.updateMemberInput
+  },
+  { deep: true }
+)
 </script>
