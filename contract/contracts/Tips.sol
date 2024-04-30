@@ -3,8 +3,9 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
     mapping(address => uint256) private balance;
     uint8 public pushLimit=10;
     uint8 public MAW_PUSH_LIMIT = 100;
@@ -29,7 +30,7 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         pushLimit = 10;
     }
 
-    function pushTip(address[] calldata _teamMembersAddresses) positiveAmountRequired external payable {
+    function pushTip(address[] calldata _teamMembersAddresses) positiveAmountRequired whenNotPaused external payable {
         
         require(_teamMembersAddresses.length > 0, "Must have at least one team member");
         require(
@@ -44,6 +45,8 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         // Should fail if the contract balance is insufficient
         for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
+            // Check for zero addresses
+            require(_teamMembersAddresses[i] != address(0), "Invalid address");
             require(
                 address(this).balance >= amountPerAddress,
                 "Insufficient contract balance"
@@ -56,7 +59,7 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         emit PushTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
 
-    function sendTip(address [] calldata _teamMembersAddresses) positiveAmountRequired external payable {
+    function sendTip(address [] calldata _teamMembersAddresses) positiveAmountRequired whenNotPaused external payable {
         require(_teamMembersAddresses.length > 0, "Must have at least one team member");
         uint totalAmount = msg.value + remainder;
         uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
@@ -65,6 +68,8 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         remainder= totalAmount % _teamMembersAddresses.length;
 
         for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
+            // Check for zero addresses
+            require(_teamMembersAddresses[i] != address(0), "Invalid address");
             balance[_teamMembersAddresses[i]] += amountPerAddress;
         }
 
@@ -72,7 +77,7 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     // TODO: Protection for reentrancy attack
-    function withdraw() external nonReentrant{
+    function withdraw() external nonReentrant whenNotPaused{
         uint256 senderBalance = balance[msg.sender];
         require(senderBalance > 0, "No tips to withdraw.");
 
@@ -90,6 +95,7 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function updatePushLimit(uint8 value) external onlyOwner{
+        require(value != pushLimit, "New limit is the same as the old one");
         require(value <= MAW_PUSH_LIMIT, "Push limit is too high, must be less or equal to 100");
         pushLimit = value;
     }
@@ -97,5 +103,17 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     modifier positiveAmountRequired() {
         require(msg.value > 0, "Must send a positive amount.");
         _;
+    }
+    
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+    
+    function getContractBalance() external view onlyOwner returns (uint256) {
+        return address(this).balance;
     }
 }
