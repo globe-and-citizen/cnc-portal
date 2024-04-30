@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
     mapping(address => uint256) private balance;
@@ -26,7 +26,7 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
     event TipWithdrawal(address to, uint256 amount);
 
     function initialize() public initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         pushLimit = 10;
     }
 
