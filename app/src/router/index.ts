@@ -52,7 +52,7 @@ const router = createRouter({
     }
   ]
 })
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to, _) => {
   if (!(await AuthService.isAuthenticated()) && to.name !== 'login') {
     return { name: 'login' }
   }
