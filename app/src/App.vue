@@ -50,7 +50,13 @@ watch(
     <div v-if="$route.path != '/login'">
       <NavBar
         @toggleSideButton="handleChange"
-        @toggleEditUserModal="showUserModal = !showUserModal"
+        @toggleEditUserModal="
+          () => {
+            updateUserInput.name = name
+            updateUserInput.address = address
+            showUserModal = !showUserModal
+          }
+        "
       />
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">
@@ -66,7 +72,13 @@ watch(
             <Drawer
               :name="name"
               :address="address"
-              @toggleEditUserModal="showUserModal = !showUserModal"
+              @toggleEditUserModal="
+                () => {
+                  updateUserInput.name = name
+                  updateUserInput.address = address
+                  showUserModal = !showUserModal
+                }
+              "
             />
             <EditUserModal
               :showEditUserModal="showUserModal"
