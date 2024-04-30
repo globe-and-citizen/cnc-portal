@@ -29,9 +29,10 @@ const updateMemberInput = ref(props.updateMemberInput)
 const showUpdateMemberModal = ref<boolean>(props.showUpdateMemberModal)
 
 watch(
-  [() => props.showUpdateMemberModal, props.updateMemberInput, updateMemberInput],
+  [() => props.showUpdateMemberModal, props.updateMemberInput, updateMemberInput, member],
   ([showForm]) => {
     showUpdateMemberModal.value = showForm
+    member.value = props.member
     updateMemberInput.value = props.updateMemberInput
   },
   { deep: true }

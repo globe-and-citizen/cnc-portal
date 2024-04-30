@@ -1,8 +1,7 @@
-import { ToastType, type Member } from '@/types'
+import { type Member } from '@/types'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
-import { useToastStore } from '@/stores/toast'
 import { useErrorHandler } from '@/composables/errorHandler'
 
 interface MemberAPI {
@@ -22,7 +21,6 @@ export class FetchMemberAPI implements MemberAPI {
       },
       body: JSON.stringify(newMembers)
     }
-    const { show } = useToastStore()
 
     for (const member of newMembers) {
       if (!isAddress(member.walletAddress)) {
@@ -62,6 +60,7 @@ export class FetchMemberAPI implements MemberAPI {
     const resObj = await response.json()
     if (!resObj.success) {
       useErrorHandler().handleError(resObj)
+      return {} as Member
     }
     return resObj.member
   }

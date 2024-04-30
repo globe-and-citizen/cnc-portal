@@ -25,7 +25,7 @@
         <tbody>
           <MemberCard
             v-for="member in team.members"
-            v-model:updateMemberInput="updateMemberInput"
+            :updateMemberInput="updateMemberInput"
             :member="member"
             :key="member.id"
             :showUpdateMemberModal="showUpdateMemberModal"
@@ -161,7 +161,8 @@ const removeInput = () => {
 }
 const toggleUpdateMemberModal = (member: MemberInput) => {
   showUpdateMemberModal.value = !showUpdateMemberModal.value
-  updateMemberInput.value = member
+  const updatedMember = { ...member }
+  updateMemberInput.value = updatedMember
 }
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
@@ -234,9 +235,15 @@ const updateMember = async (id: string) => {
     walletAddress: updateMemberInput.value.walletAddress
   }
   const updatedMember = await memberApi.updateMember(member, id)
-  console.log('Updated member:', updatedMember)
-  if (updatedMember) {
+  if (updatedMember && Object.keys(updatedMember).length !== 0) {
     show(ToastType.Success, 'Member updated successfully')
+    team.value.members.map((member) => {
+      if (member.id === id) {
+        member.name = updatedMember.name
+        member.walletAddress = updatedMember.walletAddress
+      }
+    })
+
     showUpdateMemberModal.value = false
   }
 }
