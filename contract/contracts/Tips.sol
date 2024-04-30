@@ -7,8 +7,8 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
     mapping(address => uint256) private balance;
-    uint8 public pushLimit=10;
-    uint8 public MAW_PUSH_LIMIT = 100;
+    uint8 public pushLimit;
+    uint8 public constant  MAX_PUSH_LIMIT = 100;
     uint256 remainder;
 
     event PushTip(
@@ -96,7 +96,7 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
 
     function updatePushLimit(uint8 value) external onlyOwner{
         require(value != pushLimit, "New limit is the same as the old one");
-        require(value <= MAW_PUSH_LIMIT, "Push limit is too high, must be less or equal to 100");
+        require(value <= MAX_PUSH_LIMIT, "Push limit is too high, must be less or equal to 100");
         pushLimit = value;
     }
     
