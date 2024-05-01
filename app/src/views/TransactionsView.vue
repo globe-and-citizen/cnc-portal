@@ -49,7 +49,7 @@
     <!-- SEND TIP TRANSACTIONS -->
 
     <h2>SendTip Transactions</h2>
-    <SkeletonLoading v-if="sendTipLoading" class="w-full h-96 p-5"/>
+    <SkeletonLoading v-if="sendTipLoading" class="w-full h-96 p-5" />
     <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
@@ -95,7 +95,7 @@
     <!-- TIP WITHDRAWAL TRANSACTIONS -->
 
     <h2>TipWithdrawal Transactions</h2>
-    <SkeletonLoading v-if="withdrawalTipLoading" class="w-full h-96 p-5"/>
+    <SkeletonLoading v-if="withdrawalTipLoading" class="w-full h-96 p-5" />
     <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
