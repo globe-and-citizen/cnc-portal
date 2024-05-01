@@ -5,6 +5,10 @@ import '@openzeppelin/hardhat-upgrades'
 import dotenv from 'dotenv'
 import { NetworksUserConfig } from 'hardhat/types'
 
+import { vars } from "hardhat/config";
+
+const ETHERSCAN_API_KEY = vars.get("ETHERSCAN_API_KEY");
+
 dotenv.config()
 let networks: NetworksUserConfig = {
   hardhat: {}
@@ -23,7 +27,10 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
 const config: HardhatUserConfig = {
   solidity: '0.8.24',
   defaultNetwork: 'hardhat',
-  networks: networks
+  networks: networks,
+  etherscan: {
+    apiKey: ETHERSCAN_API_KEY
+  }
 }
 
 export default config
