@@ -49,4 +49,4 @@ const tipsModule = buildModule('TipsModule', (m) => {
   return { tips, proxy, proxyAdmin }
 })
 
-module.exports = tipsModule
+export default tipsModule;
