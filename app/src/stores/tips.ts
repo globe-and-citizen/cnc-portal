@@ -105,22 +105,24 @@ export const useTipsStore = defineStore('tips', {
         loading.value = true
         const events = await contract.queryFilter(event)
 
-        const result = await Promise.all(events.map(async (eventData: EventLog | Log) => {
-          const date = dayjs((await eventData.getBlock()).date).format('DD/MM/YYYY HH:mm')
+        const result = await Promise.all(
+          events.map(async (eventData: EventLog | Log) => {
+            const date = dayjs((await eventData.getBlock()).date).format('DD/MM/YYYY HH:mm')
 
-          return {
-            txHash: eventData.transactionHash,
-            date: date,
-            data: contract.interface.decodeEventLog(event, eventData.data, eventData.topics)
-          }
-        }))
+            return {
+              txHash: eventData.transactionHash,
+              date: date,
+              data: contract.interface.decodeEventLog(event, eventData.data, eventData.topics)
+            }
+          })
+        )
 
         return result
       } catch (error) {
         const { show } = useToastStore()
         show(ToastType.Error, 'Failed to fetch events')
       } finally {
-        loading.value= false
+        loading.value = false
       }
     }
   }
