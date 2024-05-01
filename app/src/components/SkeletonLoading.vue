@@ -1,3 +1,3 @@
 <template>
-  <div class="skeleton w-full h-96"></div>
+  <div class="skeleton"></div>
 </template>
