@@ -76,8 +76,7 @@ const tipsStore = useTipsStore()
 const { balance } = storeToRefs(tipsStore)
 
 onMounted(async () => {
-  let test = await tipsStore.getBalance()
-  console.log(test)
+  await tipsStore.getBalance()
 })
 </script>
 
