@@ -8,6 +8,7 @@ import type { AddressLike } from 'ethers'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import dayjs from 'dayjs'
+import type { Ref } from 'vue'
 
 let contract: ethers.Contract
 let provider: ethers.BrowserProvider
@@ -97,13 +98,14 @@ export const useTipsStore = defineStore('tips', {
         show(ToastType.Error, error.reason ? error.reason : 'Failed to withdraw tips')
       }
     },
-    async getEvents(event: TipsEventType) {
+    async getEvents(event: TipsEventType, loading: Ref<boolean>) {
       if (!this.isWalletConnected) await this.connectWallet()
 
       try {
+        loading.value = true
         const events = await contract.queryFilter(event)
 
-        const result = events.map(async (eventData: EventLog | Log) => {
+        const result = await Promise.all(events.map(async (eventData: EventLog | Log) => {
           const date = dayjs((await eventData.getBlock()).date).format('DD/MM/YYYY HH:mm')
 
           return {
@@ -111,11 +113,14 @@ export const useTipsStore = defineStore('tips', {
             date: date,
             data: contract.interface.decodeEventLog(event, eventData.data, eventData.topics)
           }
-        })
-        return Promise.all(result)
+        }))
+
+        return result
       } catch (error) {
         const { show } = useToastStore()
         show(ToastType.Error, 'Failed to fetch events')
+      } finally {
+        loading.value= false
       }
     }
   }
