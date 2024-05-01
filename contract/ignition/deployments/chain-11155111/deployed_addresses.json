@@ -1,6 +1,6 @@
 {
-  "ProxyModule#Tips": "0xA79d4a6F6231cB066342BED4E8f36ae35959fE7e",
-  "ProxyModule#TransparentUpgradeableProxy": "0x11546550D17b4B1f8288dcD983CD71a2Dc4c9C0D",
-  "ProxyModule#ProxyAdmin": "0x2D033C5A2f39f623b6062eC62a9f06C2944701Aa",
-  "TipsModule#Tips": "0x11546550D17b4B1f8288dcD983CD71a2Dc4c9C0D"
+  "ProxyModule#Tips": "0x216ED555e29ABAAe2545a65b51E23f325043a2A2",
+  "ProxyModule#TransparentUpgradeableProxy": "0x79EF3aE86725D7D0Ae4eF3A31758A7c7fe40e5B4",
+  "ProxyModule#ProxyAdmin": "0xA75Ba04003ec21a48F4CbD45A00E8E996154b57F",
+  "TipsModule#Tips": "0x79EF3aE86725D7D0Ae4eF3A31758A7c7fe40e5B4"
 }

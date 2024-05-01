@@ -42,6 +42,7 @@ const tipsModule = buildModule('TipsModule', (m) => {
   // to treat the contract at the proxy address as an instance of the Tips contract.
   // This allows us to interact with the underlying Tips contract via the proxy from within tests and scripts.
   const tips = m.contractAt('Tips', proxy)
+  m.call(tips, "initialize", []);
 
   // Return the contract instance, along with the original proxy and proxyAdmin contracts
   // so that they can be used by other modules, or in tests and scripts.
