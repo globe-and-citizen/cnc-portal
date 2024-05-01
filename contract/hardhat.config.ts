@@ -5,9 +5,9 @@ import '@openzeppelin/hardhat-upgrades'
 import dotenv from 'dotenv'
 import { NetworksUserConfig } from 'hardhat/types'
 
-import { vars } from "hardhat/config";
+import { vars } from 'hardhat/config'
 
-const ETHERSCAN_API_KEY = vars.get("ETHERSCAN_API_KEY");
+const ETHERSCAN_API_KEY = vars.get('ETHERSCAN_API_KEY')
 
 dotenv.config()
 let networks: NetworksUserConfig = {
@@ -18,8 +18,12 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
 } else {
   networks = {
     sepolia: {
-      url: process.env.SEPOLIA_URL!,
+      url: process.env.SEPOLIA_URL,
       accounts: [process.env.PRIVATE_KEY]
+    },
+    mainnet: {
+      url: process.env.MAINNET_URL,
+      accounts: [process.env.MAINNET_KEY!]
     }
   }
 }
