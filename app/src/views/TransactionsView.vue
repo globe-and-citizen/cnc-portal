@@ -3,7 +3,7 @@
     <!-- PUSH TIP TRANSACTIONS -->
 
     <h2>PushTip Transactions</h2>
-    <Skeleton v-if="pushTipLoading" class="p-5" />
+    <SkeletonLoading v-if="pushTipLoading" class="p-5" />
     <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
@@ -49,7 +49,7 @@
     <!-- SEND TIP TRANSACTIONS -->
 
     <h2>SendTip Transactions</h2>
-    <Skeleton v-if="sendTipLoading" />
+    <SkeletonLoading v-if="sendTipLoading" />
     <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
@@ -95,7 +95,7 @@
     <!-- TIP WITHDRAWAL TRANSACTIONS -->
 
     <h2>TipWithdrawal Transactions</h2>
-    <Skeleton v-if="withdrawalTipLoading" />
+    <SkeletonLoading v-if="withdrawalTipLoading" />
     <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
@@ -138,7 +138,7 @@ import { TipsEventType } from '@/types'
 import { ethers, type Result } from 'ethers'
 import { onMounted, ref } from 'vue'
 import { ETHERSCAN_URL } from '@/constant'
-import Skeleton from '@/components/Skeleton.vue'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
 
 const { getEvents } = useTipsStore()
 
@@ -153,12 +153,12 @@ onMounted(async () => {
   const [pushTipData, sendTipData, withdrawalTipData] = await Promise.all([
     getEvents(TipsEventType.PushTip, pushTipLoading),
     getEvents(TipsEventType.SendTip, sendTipLoading),
-    getEvents(TipsEventType.TipWithdrawal, withdrawalTipLoading),
-  ]);
+    getEvents(TipsEventType.TipWithdrawal, withdrawalTipLoading)
+  ])
 
-  pushTipEvents.value = pushTipData;
-  sendTipEvents.value = sendTipData;
-  tipWithdrawalEvents.value = withdrawalTipData;
+  pushTipEvents.value = pushTipData
+  sendTipEvents.value = sendTipData
+  tipWithdrawalEvents.value = withdrawalTipData
 })
 
 const showTxDetail = (txHash: string) => {
