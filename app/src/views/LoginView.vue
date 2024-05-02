@@ -38,8 +38,9 @@
         </label>
 
         <p class="text-right underline">Forgot password ?</p>-->
-        <button class="btn btn-primary w-full" @click="signInWithEthereum">
-          Sign In With Ethereum
+        <button class="btn btn-primary w-full" @click="siwe" :disabled="isProcessing">
+          <span v-if="isProcessing">Processing...</span>
+          <span v-else>Sign In With Ethereum</span>
         </button>
         <div class="flex justify-center items-center">
           <svg
@@ -130,10 +131,13 @@
       </div>
     </div>
   </div>
+  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>
 
 <script setup lang="ts">
-import { signInWithEthereum } from '@/utils/loginUtil'
+import NotificationToast from "@/components/NotificationToast.vue";
+import { useSiwe } from '@/utils/loginUtil'
+const { isProcessing, showToast, toastType, toastMessage, siwe } = useSiwe()
 </script>
 
 <style scoped>
