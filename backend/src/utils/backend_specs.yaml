@@ -112,6 +112,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/user/{address}:
+    get:
+      summary: Get user by address
+      description: Fetch user based on Ethereum address
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/WalletAddress"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/teams:
     get:
       summary: Fetch all Teams
@@ -369,7 +396,21 @@ components:
         message:
           type: string
           description: Details about the error.
-
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the user
+        name:
+          type: string
+          description: Name of the user
+        walletAddress:
+          type: string
+          description: Wallet address of the user
+        nonce:
+          type: string
+          description: Random string for the user to sign with the SIWE message that prevents replay attacks
     Team:
       type: object
       properties:
