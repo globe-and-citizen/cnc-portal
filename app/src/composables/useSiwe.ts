@@ -11,7 +11,7 @@ import { ToastType } from "@/types";
 import { storeToRefs } from "pinia";
  
 const fetchUserApi = new FetchUserAPI()
-const ethersJsAdapter = new EthersJsAdapter()
+const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
 
 const isProcessing = ref(false)

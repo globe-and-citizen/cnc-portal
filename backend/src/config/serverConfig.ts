@@ -16,6 +16,7 @@ import { errorMessages } from "../utils/serverConfigUtil";
 const path = require("path");
 
 class Server {
+  private static instance: Server | undefined;
   private app: Express;
   private paths: { [key: string]: string };
   private port: number;
@@ -71,8 +72,16 @@ class Server {
       console.log(`helloworld: listening on port ${this.port}`);
     });
   }
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new this()
+    }
+
+    return this.instance
+  }
 }
 
-const server = new Server();
+const server = Server.getInstance()
 
 export default server;

@@ -13,6 +13,7 @@ export interface IWeb3Library {
 
 // Adapter for ethers.js
 export class EthersJsAdapter implements IWeb3Library {
+  private static instance: IWeb3Library | undefined
   private provider: any
   //private provider: ethers.providers.Web3Provider | null = null;
   //private signer: ethers.Signer | null = null;
@@ -66,5 +67,13 @@ export class EthersJsAdapter implements IWeb3Library {
     }
 
     return (await this.signer).address
+  }
+
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new EthersJsAdapter()
+    }
+
+    return this.instance
   }
 }
