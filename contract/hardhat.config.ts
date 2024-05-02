@@ -5,13 +5,7 @@ import '@openzeppelin/hardhat-upgrades'
 import dotenv from 'dotenv'
 import { NetworksUserConfig } from 'hardhat/types'
 
-import { vars } from 'hardhat/config'
-
-//const ETHERSCAN_API_KEY = vars.get('ETHERSCAN_API_KEY')
-
 dotenv.config()
-console.log("process.env.SEPOLIA_URL", process.env.SEPOLIA_URL);
-
 let networks: NetworksUserConfig = {
   hardhat: {}
 }
