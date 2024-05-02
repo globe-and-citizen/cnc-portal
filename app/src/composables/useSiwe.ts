@@ -15,7 +15,6 @@ const ethersJsAdapter = new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
 
 const isProcessing = ref(false)
-const error = ref({isError: false, message: null})
 
 function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
   return new SLSiweMessageCreator({
