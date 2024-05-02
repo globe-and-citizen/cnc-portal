@@ -136,7 +136,7 @@
 
 <script setup lang="ts">
 import NotificationToast from "@/components/NotificationToast.vue";
-import { useSiwe } from '@/utils/loginUtil'
+import { useSiwe } from '@/composables/useSiwe'
 const { isProcessing, showToast, toastType, toastMessage, siwe } = useSiwe()
 </script>
 
