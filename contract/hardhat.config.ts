@@ -7,9 +7,11 @@ import { NetworksUserConfig } from 'hardhat/types'
 
 import { vars } from 'hardhat/config'
 
-const ETHERSCAN_API_KEY = vars.get('ETHERSCAN_API_KEY')
+//const ETHERSCAN_API_KEY = vars.get('ETHERSCAN_API_KEY')
 
 dotenv.config()
+console.log("process.env.SEPOLIA_URL", process.env.SEPOLIA_URL);
+
 let networks: NetworksUserConfig = {
   hardhat: {}
 }
@@ -19,21 +21,47 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
   networks = {
     sepolia: {
       url: process.env.SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [process.env.PRIVATE_KEY],
     },
     mainnet: {
       url: process.env.MAINNET_URL,
-      accounts: [process.env.MAINNET_KEY!]
+      accounts: [process.env.MAINNET_KEY!],
+      gasPrice: 1000000000
+    },
+    polygon: {
+      url: process.env.POLYGON_URL,
+      accounts: [process.env.MAINNET_KEY!],
+      gasPrice: 400000000000
     }
   }
 }
 
 const config: HardhatUserConfig = {
-  solidity: '0.8.24',
+  solidity: {
+    version: '0.8.24',
+    settings: {
+      optimizer: {
+        // Toggles whether the optimizer is on or off.
+        // It's good to keep it off for development
+        // and turn on for when getting ready to launch.
+        enabled: true,
+        // The number of runs specifies roughly how often
+        // the deployed code will be executed across the
+        // life-time of the contract.
+        runs: 200
+      }
+    }
+  },
   defaultNetwork: 'hardhat',
   networks: networks,
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY
+    apiKey: process.env.POLYGONSCAN_API_KEY
+  },
+  gasReporter: {
+    enabled: true,
+    currency: 'USD',
+    coinmarketcap: process.env.COINMARKETCAP_KEY,
+    token: "MATIC",
   }
 }
 
