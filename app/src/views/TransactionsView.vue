@@ -3,7 +3,8 @@
     <!-- PUSH TIP TRANSACTIONS -->
 
     <h2>PushTip Transactions</h2>
-    <div class="overflow-x-auto bg-white p-5">
+    <SkeletonLoading v-if="pushTipLoading" class="w-full h-96 p-5" />
+    <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
@@ -48,7 +49,8 @@
     <!-- SEND TIP TRANSACTIONS -->
 
     <h2>SendTip Transactions</h2>
-    <div class="overflow-x-auto bg-white p-5">
+    <SkeletonLoading v-if="sendTipLoading" class="w-full h-96 p-5" />
+    <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
@@ -93,7 +95,8 @@
     <!-- TIP WITHDRAWAL TRANSACTIONS -->
 
     <h2>TipWithdrawal Transactions</h2>
-    <div class="overflow-x-auto bg-white p-5">
+    <SkeletonLoading v-if="withdrawalTipLoading" class="w-full h-96 p-5" />
+    <div v-else class="overflow-x-auto bg-white p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
@@ -119,7 +122,7 @@
         </tbody>
         <tbody v-else>
           <tr>
-            <td class="font-bold text-lg" colspan="4">No TipWithdrawal Transactions</td>
+            <td class="text-center font-bold text-lg" colspan="4">No TipWithdrawal Transactions</td>
           </tr>
         </tbody>
       </table>
@@ -135,17 +138,27 @@ import { TipsEventType } from '@/types'
 import { ethers, type Result } from 'ethers'
 import { onMounted, ref } from 'vue'
 import { ETHERSCAN_URL } from '@/constant'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
 
 const { getEvents } = useTipsStore()
 
+const pushTipLoading = ref(false)
+const sendTipLoading = ref(false)
+const withdrawalTipLoading = ref(false)
 const pushTipEvents = ref([] as EventResult[] | undefined)
 const sendTipEvents = ref([] as EventResult[] | undefined)
 const tipWithdrawalEvents = ref([] as EventResult[] | undefined)
 
 onMounted(async () => {
-  pushTipEvents.value = await getEvents(TipsEventType.PushTip)
-  sendTipEvents.value = await getEvents(TipsEventType.SendTip)
-  tipWithdrawalEvents.value = await getEvents(TipsEventType.TipWithdrawal)
+  const [pushTipData, sendTipData, withdrawalTipData] = await Promise.all([
+    getEvents(TipsEventType.PushTip, pushTipLoading),
+    getEvents(TipsEventType.SendTip, sendTipLoading),
+    getEvents(TipsEventType.TipWithdrawal, withdrawalTipLoading)
+  ])
+
+  pushTipEvents.value = pushTipData
+  sendTipEvents.value = sendTipData
+  tipWithdrawalEvents.value = withdrawalTipData
 })
 
 const showTxDetail = (txHash: string) => {
