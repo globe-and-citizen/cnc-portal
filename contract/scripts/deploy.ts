@@ -9,6 +9,13 @@ async function main() {
     await contract.getAddress()
   )
 
+  //log initialisation message
+  console.log('Initializing contract...')
+  contract.initialize()
+
+  //log initialisation end message
+  console.log('Contract initialized')
+
   console.log('Tips deployed to:', await contract.getAddress())
 
   console.log('Implementation contract address: ' + implementationAddress)
