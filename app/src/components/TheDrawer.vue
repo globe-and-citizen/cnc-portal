@@ -9,8 +9,8 @@
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar flex items-center">
         <div class="rounded-full">
           <img
-            src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
-            alt="Shoes"
+            alt="Tailwind CSS Navbar component"
+            src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
             class="w-[44px]"
           />
         </div>
