@@ -30,7 +30,7 @@
       <li>
         <RouterLink to="/">
           <IconHome />
-          Dashboard</RouterLink
+          Dashboard1</RouterLink
         >
       </li>
       <li>
