@@ -78,6 +78,9 @@ const deleteMembers = async (req: Request, res: Response) => {
     const member = await prisma.member.deleteMany({
       where: { id: Number(id) },
     });
+    if (member.count === 0) {
+      throw new Error("Member not found");
+    }
     res.status(200).json({ member, success: true });
   } catch (error) {
     return errorResponse(500, error, res);

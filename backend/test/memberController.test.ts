@@ -25,10 +25,6 @@ describe("Member Controller", () => {
           name: "Dasarath",
           walletAddress: "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
         },
-        {
-          name: "Sita",
-          walletAddress: "0xaFeF48F7718c51fC6d1B314B3991D2e1d8421E",
-        },
       ];
       const req = {
         params: {
@@ -49,7 +45,37 @@ describe("Member Controller", () => {
       } as unknown as Response;
 
       await addMembers(req, res);
-      console.log(res.data);
+      expect(res.data.success).toBe(true);
+    });
+    it("should not add a new member (validation)", async () => {
+      const membersData = [
+        {
+          name: "Dasarath",
+          walletAddress: "0xaFeF48F8c51fb7C1B314B3991D2e1d8421E", // provide wrong format address
+        },
+        {
+          name: "Sita",
+          walletAddress: "0xaFeF48F7718c51fC6d1B314B3991D2e1d8421E",
+        },
+      ];
+      const req = {
+        params: {
+          id: "4",
+        },
+        body: {
+          membersData,
+        },
+      } as unknown as Request;
+
+      const res: any = {
+        status: () => res,
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+      await addMembers(req, res);
       expect(res.data.success).toBe(false);
     });
   });
@@ -57,7 +83,7 @@ describe("Member Controller", () => {
     it("should update a member", async () => {
       const req = {
         params: {
-          id: "1", // Replace with the desired id
+          id: "11", // Replace with the desired id
         },
         body: {
           name: "Ramaxxx",
@@ -75,8 +101,38 @@ describe("Member Controller", () => {
       } as unknown as Response;
 
       await updateMember(req, res);
-      console.log(res.data);
       expect(res.data.success).toBe(true);
+    });
+    it("should not update member (validation)", async () => {
+      const membersData = [
+        {
+          name: "Dasarath",
+          walletAddress: "0xaFeF48F8c51fb7C1B314B3991D2e1d8421E", // provide wrong format address
+        },
+        {
+          name: "Sita",
+          walletAddress: "0xaFeF48F7718c51fC6d1B314B3991D2e1d8421E",
+        },
+      ];
+      const req = {
+        params: {
+          id: "4",
+        },
+        body: {
+          membersData,
+        },
+      } as unknown as Request;
+
+      const res: any = {
+        status: () => res,
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+      await addMembers(req, res);
+      expect(res.data.success).toBe(false);
     });
   });
   describe("deleteMembers", () => {
@@ -97,8 +153,38 @@ describe("Member Controller", () => {
       } as unknown as Response;
 
       await deleteMembers(req, res);
-      console.log(res.data);
       expect(res.data.success).toBe(true);
     });
+  });
+  it("should not delete member (validation)", async () => {
+    const membersData = [
+      {
+        name: "Dasarath",
+        walletAddress: "0xaFeF48F8c51fb7C1B314B3991D2e1d8421E", // provide wrong format address
+      },
+      {
+        name: "Sita",
+        walletAddress: "0xaFeF48F7718c51fC6d1B314B3991D2e1d8421E",
+      },
+    ];
+    const req = {
+      params: {
+        id: "4",
+      },
+      body: {
+        membersData,
+      },
+    } as unknown as Request;
+
+    const res: any = {
+      status: () => res,
+      json: (data: any) => {
+        res.data = data;
+        return res;
+      },
+      data: undefined,
+    } as unknown as Response;
+    await addMembers(req, res);
+    expect(res.data.success).toBe(false);
   });
 });
