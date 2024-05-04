@@ -12,7 +12,7 @@ const addMembers = async (req: Request, res: Response) => {
   #swagger.tags = ['Members']
   */
   const { id } = req.params;
-  const membersData = req.body;
+  const { membersData } = req.body;
 
   try {
     const membersToCreate = membersData.map(

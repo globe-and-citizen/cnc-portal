@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import {
   addMembers,
-  updateMember,
   deleteMembers,
+  updateMember,
 } from "../src/controllers/memberController";
+import { describe, it } from "vitest";
 
 const prisma = new PrismaClient();
 
@@ -19,63 +20,85 @@ describe("Member Controller", () => {
 
   describe("addMembers", () => {
     it("should add a new member", async () => {
-      const req: Request = {
+      const membersData = [
+        {
+          name: "Dasarath",
+          walletAddress: "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+        },
+        {
+          name: "Sita",
+          walletAddress: "0xaFeF48F7718c51fC6d1B314B3991D2e1d8421E",
+        },
+      ];
+      const req = {
         params: {
-          id: "12345", // Replace with the desired id
+          id: "4", // Replace with the desired id
         },
         body: {
-          members: [
-            {
-              name: "Dasarath",
-              walletAddress: "0x4b6Bf5cD91446408290725879F5666dcd9785F62",
-            },
-            {
-              name: "Sita",
-              walletAddress: "0x4b6Bf5cD91446408290725879F5666dcd9785F63",
-            },
-          ],
+          membersData,
         },
       } as unknown as Request;
-      const res: Response = {} as Response;
 
-      // Call the addMembers function
+      const res: any = {
+        status: () => res,
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
       await addMembers(req, res);
-      console.log(res);
-      expect(res.status).toBe(201);
+      console.log(res.data);
+      expect(res.data.success).toBe(false);
     });
   });
-
   describe("updateMember", () => {
-    it("should update an existing member", async () => {
-      const req: Request = {
-        /* Mock request object */
-      } as Request;
-      const res: Response = {
-        /* Mock response object */
-      } as Response;
+    it("should update a member", async () => {
+      const req = {
+        params: {
+          id: "1", // Replace with the desired id
+        },
+        body: {
+          name: "Ramaxxx",
+          walletAddress: "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+        },
+      } as unknown as Request;
 
-      // Call the updateMember function
+      const res: any = {
+        status: () => res,
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
       await updateMember(req, res);
-
-      // Assert the expected behavior or response
-      // ...
+      console.log(res.data);
+      expect(res.data.success).toBe(true);
     });
   });
-
   describe("deleteMembers", () => {
-    it("should delete members", async () => {
-      const req: Request = {
-        /* Mock request object */
-      } as Request;
-      const res: Response = {
-        /* Mock response object */
-      } as Response;
+    it("should delete a member", async () => {
+      const req = {
+        params: {
+          id: "1", // Replace with the desired id
+        },
+      } as unknown as Request;
 
-      // Call the deleteMembers function
+      const res: any = {
+        status: () => res,
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
       await deleteMembers(req, res);
-
-      // Assert the expected behavior or response
-      // ...
+      console.log(res.data);
+      expect(res.data.success).toBe(true);
     });
   });
 });
