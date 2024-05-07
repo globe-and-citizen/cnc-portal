@@ -93,8 +93,6 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
-import { storeToRefs } from 'pinia'
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -109,12 +107,11 @@ import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 
 import { useErrorHandler } from '@/composables/errorHandler'
+import { useTips } from '@/composables/tips'
 
 const { show } = useToastStore()
 
-const tipStore = useTipsStore()
-const { pushTip, sendTip } = useTipsStore()
-const { sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
+const { sendTip, pushTip, sendTipLoading, pushTipLoading } = useTips()
 const tipAmount = ref(0)
 
 const memberApi = new FetchMemberAPI()
