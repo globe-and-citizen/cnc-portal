@@ -134,8 +134,8 @@
 
 <script setup lang="ts">
 import { useTipsStore } from '@/stores/tips'
-import { TipsEventType } from '@/types'
-import { ethers, type Result } from 'ethers'
+import { TipsEventType, type EventResult } from '@/types'
+import { ethers } from 'ethers'
 import { onMounted, ref } from 'vue'
 import { ETHERSCAN_URL } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
@@ -163,11 +163,5 @@ onMounted(async () => {
 
 const showTxDetail = (txHash: string) => {
   window.open(`${ETHERSCAN_URL}/tx/${txHash}`, '_blank')
-}
-
-interface EventResult {
-  txHash: string
-  date: string
-  data: Result
 }
 </script>
