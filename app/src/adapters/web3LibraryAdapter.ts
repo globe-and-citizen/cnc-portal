@@ -1,4 +1,4 @@
-import { BrowserProvider /*, Signer */ } from 'ethers'
+import { BrowserProvider, /*, Signer */ ethers} from 'ethers'
 import { ref } from "vue";
 import type { Ref } from "vue";
 
@@ -9,6 +9,8 @@ export interface IWeb3Library {
   requestSign(message: string): Promise<string>
   //getAddressRef(): Promise<Ref<string | null>>
   getAddress(): Promise<string>
+  getContract(address: string, abi: any): Promise<any>
+  parseEther(value: string): bigint
 }
 
 // Adapter for ethers.js
@@ -67,6 +69,19 @@ export class EthersJsAdapter implements IWeb3Library {
     }
 
     return (await this.signer).address
+  }
+
+  async getContract(address: string, abi: any) {
+    if (!this.signer) {
+      //throw new Error('Wallet is not connected');
+      await this.connectWallet()
+    }
+    
+    return new ethers.Contract(address, abi, this.signer)
+  }
+
+  parseEther(value: string) {
+    return ethers.parseEther(value)
   }
 
   static getInstance() {
