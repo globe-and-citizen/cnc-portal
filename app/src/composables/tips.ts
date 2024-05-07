@@ -1,68 +1,83 @@
-import { TIPS_ADDRESS } from '@/constant'
-import { ethers } from 'ethers'
-import ABI from '../abi/tips.json'
-import { onMounted, ref } from 'vue'
-import { useToast } from './toast'
-import { ToastType } from '@/types'
-import type { AddressLike } from 'ethers'
+import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { TipsService } from '@/services/tipsService'
+import type { EventResult, TipsEventType } from '@/types'
+import dayjs from 'dayjs'
+import type { EventLog } from 'ethers'
+import { ref, type Ref } from 'vue'
 
 export function useTips() {
-  const { showToast } = useToast()
-  const provider = new ethers.BrowserProvider((window as any).ethereum)
-
-  const contract = new ethers.Contract(TIPS_ADDRESS, ABI, provider)
+  const tipsService = new TipsService(EthersJsAdapter.getInstance())
+  const balance = ref('0')
   const pushTipLoading = ref(false)
   const sendTipLoading = ref(false)
+  const balanceLoading = ref(false)
 
-  async function pushTip(addresses: AddressLike[], amount: number) {
+  async function getBalance() {
+    balanceLoading.value = true
+
+    balance.value = await tipsService.getBalance()
+
+    balanceLoading.value = false
+  }
+
+  async function withdraw() {
+    await tipsService.withdrawTips()
+    await getBalance()
+  }
+
+  async function pushTip(addresses: string[], amount: number): Promise<void> {
     pushTipLoading.value = true
 
-    try {
-      const tx = await contract.pushTip(addresses, {
-        value: ethers.parseEther(amount.toString())
-      })
-      await tx.wait()
+    await tipsService.pushTip(addresses, amount)
+    await getBalance()
 
-      showToast(ToastType.Success, 'Tip pushed successfully')
-    } catch (error: any) {
-      showToast(ToastType.Error, error.reason ? error.reason : 'Failed to push tip')
-    } finally {
-      pushTipLoading.value = false
-    }
+    pushTipLoading.value = false
   }
 
-  async function sendTip(addresses: AddressLike[], amount: number) {
+  async function sendTip(addresses: string[], amount: number): Promise<void> {
     sendTipLoading.value = true
 
-    try {
-      const tx = await contract.sendTip(addresses, {
-        value: ethers.parseEther(amount.toString())
+    await tipsService.sendTip(addresses, amount)
+    await getBalance()
+
+    sendTipLoading.value = false
+  }
+
+  async function getEvents(type: TipsEventType, loading: Ref<boolean>): Promise<EventResult[]> {
+    loading.value = true
+
+    const events = await tipsService.getEvents(type)
+
+    const result = await Promise.all(
+      events.map(async (eventData: EventLog) => {
+        const date = dayjs((await eventData.getBlock()).date).format('DD/MM/YYYY HH:mm')
+
+        return {
+          txHash: eventData.transactionHash,
+          date: date,
+          data: tipsService.contract.interface.decodeEventLog(
+            type,
+            eventData.data,
+            eventData.topics
+          )
+        }
       })
-      await tx.wait()
+    )
 
-      showToast(ToastType.Success, 'Tip sent successfully')
-    } catch (error: any) {
-      showToast(ToastType.Error, error.reason ? error.reason : 'Failed to send tip')
-    } finally {
-      sendTipLoading.value = false
-    }
+    loading.value = false
+
+    return result
   }
-
-  async function getBalance(address: AddressLike) {
-    return await contract.getBalance(address)
-  }
-
-  onMounted(async () => {
-    if (!(window as any).ethereum) showToast(ToastType.Info, 'Please install Metamask')
-
-    await provider.send('eth_requestAccounts', [])
-  })
 
   return {
+    balance,
     pushTipLoading,
-    pushTip,
     sendTipLoading,
+    balanceLoading,
+    getBalance,
+    withdraw,
+    pushTip,
     sendTip,
-    getBalance
+    getEvents
   }
 }
