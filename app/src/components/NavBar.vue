@@ -26,7 +26,7 @@
           tabindex="0"
           class="mt-3 dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48"
         >
-          <li><a @click="tipsStore.withdrawTips()">Withdraw Tips</a></li>
+          <li><a @click="withdraw()">Withdraw Tips</a></li>
         </ul>
       </div>
 
@@ -64,19 +64,17 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
-import { storeToRefs } from 'pinia'
 import { onMounted } from 'vue'
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
+import { useTips } from '@/composables/tips'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
-const tipsStore = useTipsStore()
-const { balance } = storeToRefs(tipsStore)
+const { getBalance, withdraw,  balance } = useTips()
 
 onMounted(async () => {
-  await tipsStore.getBalance()
+  await getBalance()
 })
 </script>
 
