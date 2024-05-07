@@ -10,9 +10,14 @@
   },
   "scripts": {
     "start": "npx nodemon src/index.ts",
+    "test": "vitest run -c vitest.unit.config.ts",
+    "test:watch": "vitest -c vitest.unit.config.ts",
+    "test:e2e": "vitest run -c vitest.e2e.config.ts",
+    "test:e2e:watch": "vitest -c vitest.e2e.config.ts",
+    "test:unit": "vitest -c ./vitest.config.unit.ts",
+    "test:unit:ui": "vitest -c ./vitest.config.unit.ts --ui",
     "build": "tsc && npm run generate:docs && npm run copy:docs",
     "prod": "node  dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
@@ -29,7 +34,9 @@
     "nodemon": "^3.1.0",
     "prisma": "^5.11.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vite-tsconfig-paths": "^4.3.2",
+    "vitest": "^1.5.0"
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",

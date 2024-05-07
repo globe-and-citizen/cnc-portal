@@ -12,7 +12,7 @@ const addMembers = async (req: Request, res: Response) => {
   #swagger.tags = ['Members']
   */
   const { id } = req.params;
-  const membersData = req.body;
+  const { membersData } = req.body;
 
   try {
     const membersToCreate = membersData.map(
@@ -78,6 +78,9 @@ const deleteMembers = async (req: Request, res: Response) => {
     const member = await prisma.member.deleteMany({
       where: { id: Number(id) },
     });
+    if (member.count === 0) {
+      throw new Error("Member not found");
+    }
     res.status(200).json({ member, success: true });
   } catch (error) {
     return errorResponse(500, error, res);
