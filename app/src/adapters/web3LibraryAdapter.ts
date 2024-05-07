@@ -5,19 +5,31 @@ export interface IWeb3Library {
   initialize(): void
   connectWallet(): Promise<void>
   requestSign(message: string): Promise<string>
+  //getAddressRef(): Promise<Ref<string | null>>
   getAddress(): Promise<string>
 }
 
 // Adapter for ethers.js
 export class EthersJsAdapter implements IWeb3Library {
+  private static instance: IWeb3Library | undefined
   private provider: any
   //private provider: ethers.providers.Web3Provider | null = null;
   //private signer: ethers.Signer | null = null;
   private signer: any
+  /*private _address: Ref<string | null>
+
+  constructor() {
+    this._address = ref(null)
+  }*/
 
   initialize(): void {
     // Initialize provider
-    if ('ethereum' in window) this.provider = new BrowserProvider(window.ethereum as any)
+    if ('ethereum' in window) {
+      this.provider = new BrowserProvider(window.ethereum as any)
+      ;(window.ethereum as any).on('accountsChanged', async (/*accounts: string[]*/) => {
+        this.signer = await this.provider.getSigner()
+      })
+    }
     //this.signer = this.provider.getSigner();
   }
 
@@ -46,16 +58,20 @@ export class EthersJsAdapter implements IWeb3Library {
     return signature
   }
 
-  async getAddress(): Promise<string> {
+  async getAddress() {
     if (!this.signer) {
       //throw new Error('Wallet is not connected');
       await this.connectWallet()
     }
 
-    //console.log('signer: ', (await this.signer).address)
-    // Retrieve the address associated with the signer
-    const address = (await this.signer).address
+    return (await this.signer).address
+  }
 
-    return address
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new EthersJsAdapter()
+    }
+
+    return this.instance
   }
 }
