@@ -5,7 +5,7 @@ import {
   deleteMembers,
   updateMember,
 } from "../src/controllers/memberController";
-import { describe, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const prisma = new PrismaClient();
 
