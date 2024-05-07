@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
+import TransactionsView from '@/views/TransactionsView.vue'
 
 import { AuthService } from '@/services/authService'
 
@@ -37,6 +38,11 @@ const router = createRouter({
       ]
     },
     {
+      path: '/transactions',
+      name: 'transactions',
+      component: TransactionsView
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting
@@ -46,7 +52,7 @@ const router = createRouter({
     }
   ]
 })
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to) => {
   if (!(await AuthService.isAuthenticated()) && to.name !== 'login') {
     return { name: 'login' }
   }

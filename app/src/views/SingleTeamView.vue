@@ -3,7 +3,7 @@
     <div class="flex justify-between gap-5">
       <div>
         <h2 class="pl-5">{{ team.name }}</h2>
-        <p>{{ team.description }}</p>
+        <p class="pl-5">{{ team.description }}</p>
       </div>
       <div class="flex justify-between gap-2 items-center">
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
@@ -25,18 +25,36 @@
         <tbody>
           <MemberCard
             v-for="member in team.members"
-            :memberName="member.name"
-            :walletAddress="member.walletAddress"
-            :memberId="member.id"
+            :updateMemberInput="updateMemberInput"
+            :member="member"
             :key="member.id"
+            :showUpdateMemberModal="showUpdateMemberModal"
+            @updateMember="(id) => updateMember(id)"
+            @deleteMember="(id) => deleteMember(id)"
+            @toggleUpdateMemberModal="toggleUpdateMemberModal"
           />
         </tbody>
       </table>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <AddMemberCard :id="team.id" />
+      <AddMemberCard
+        v-model:formData="teamMembers"
+        v-model:showAddMemberForm="showAddMemberForm"
+        @addInput="addInput"
+        @removeInput="removeInput"
+        @addMembers="handleAddMembers"
+        @updateForm="handleUpdateForm"
+        @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
+      />
     </div>
-    <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
+    <TipsAction
+      :addresses="team.members.map((member) => member.walletAddress)"
+      :pushTipLoading="pushTipLoading"
+      :sendTipLoading="sendTipLoading"
+      :tipAmount="tipAmount"
+      @pushTip="(addresses, amount) => pushTip(addresses, amount)"
+      @sendTip="(addresses, amount) => sendTip(addresses, amount)"
+    />
   </div>
 
   <dialog
@@ -73,21 +91,33 @@
       </div>
     </div>
   </dialog>
-  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 </template>
 <script setup lang="ts">
+import { useTipsStore } from '@/stores/tips'
+import { storeToRefs } from 'pinia'
 import MemberCard from '@/components/MemberCard.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 
-import type { Member, Team } from '@/types/types'
+import { ToastType, type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
+import { FetchMemberAPI } from '@/apis/memberApi'
 
+import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
-import { storeToRefs } from 'pinia'
-import NotificationToast from '@/components/NotificationToast.vue'
+
+import { useErrorHandler } from '@/composables/errorHandler'
+
+const { show } = useToastStore()
+
+const tipStore = useTipsStore()
+const { pushTip, sendTip } = useTipsStore()
+const { sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
+const tipAmount = ref(0)
+
+const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
 
@@ -97,6 +127,10 @@ const cname = ref('')
 const cdesc = ref('')
 
 const showModal = ref(false)
+
+const showUpdateMemberModal = ref(false)
+const showAddMemberForm = ref(false)
+
 const inputs = ref<Member[]>([])
 const team = ref<Team>({
   id: '',
@@ -105,30 +139,112 @@ const team = ref<Team>({
   members: []
 })
 
-const toastStore = useToastStore()
-const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
+const teamMembers = ref([
+  {
+    name: '',
+    walletAddress: '',
+    isValid: false
+  }
+])
+const updateMemberInput = ref<MemberInput>({
+  name: '',
+  walletAddress: '',
+  id: '',
+  isValid: false
+})
+const addInput = () => {
+  teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
+}
 
+const removeInput = () => {
+  if (teamMembers.value.length > 1) {
+    teamMembers.value.pop()
+  }
+}
+const toggleUpdateMemberModal = (member: MemberInput) => {
+  showUpdateMemberModal.value = !showUpdateMemberModal.value
+  const updatedMember = { ...member }
+  updateMemberInput.value = updatedMember
+}
+const handleUpdateForm = async () => {
+  teamMembers.value.map((member) => {
+    if (!isAddress(member.walletAddress)) {
+      member.isValid = false
+    } else {
+      member.isValid = true
+    }
+  })
+}
+const handleAddMembers = async () => {
+  try {
+    const members: Member[] = await memberApi.createMembers(
+      teamMembers.value,
+      String(route.params.id)
+    )
+    if (members && members.length > 0) {
+      show(ToastType.Success, 'Members added successfully')
+      team.value.members = members
+      showAddMemberForm.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
+}
 onMounted(async () => {
   const id = route.params.id
-
-  teamApi
-    .getTeam(String(id))
-    .then((teamData) => {
-      if (teamData) {
-        team.value = teamData
-        cname.value = team.value.name
-        cdesc.value = team.value.description
-      } else {
-        console.log('Team not found for id:', id)
-      }
-    })
-    .catch((error) => {
-      console.error('Error fetching team:', error)
-    })
+  try {
+    const teamData = await teamApi.getTeam(String(id))
+    if (teamData) {
+      team.value = teamData
+      cname.value = team.value.name
+      cdesc.value = team.value.description
+    } else {
+      console.log('Team not found for id:', id)
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
+}
+const deleteMember = async (id: string) => {
+  try {
+    const memberRes: any = await memberApi.deleteMember(id)
+    if (memberRes && memberRes.count == 1) {
+      show(ToastType.Success, 'Member deleted successfully')
+      team.value.members.splice(
+        team.value.members.findIndex((member) => member.id === id),
+        1
+      )
+      showUpdateMemberModal.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
+}
+const updateMember = async (id: string) => {
+  const member = {
+    name: updateMemberInput.value.name,
+    walletAddress: updateMemberInput.value.walletAddress
+  }
+  try {
+    const updatedMember = await memberApi.updateMember(member, id)
+    if (updatedMember && Object.keys(updatedMember).length !== 0) {
+      show(ToastType.Success, 'Member updated successfully')
+      team.value.members.map((member) => {
+        if (member.id === id) {
+          member.name = updatedMember.name
+          member.walletAddress = updatedMember.walletAddress
+        }
+      })
+
+      showUpdateMemberModal.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
 }
 const updateTeam = async () => {
   const id = route.params.id
@@ -136,27 +252,36 @@ const updateTeam = async () => {
     name: cname.value,
     description: cdesc.value
   }
-  teamApi
-    .updateTeam(String(id), teamObject)
-    .then((updatedTeam) => {
-      console.log('Updated team:', updatedTeam)
-      window.location.reload()
-    })
-    .catch((error) => {
-      console.error('Error updating team:', error)
-    })
+  try {
+    const teamRes = await teamApi.updateTeam(String(id), teamObject)
+    if (teamRes) {
+      show(ToastType.Success, 'Team updated successfully')
+      team.value.name = teamRes.name
+      team.value.description = teamRes.description
+      showModal.value = false
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
 }
 
 const deleteTeam = async () => {
   const id = route.params.id
-  teamApi
-    .deleteTeam(String(id))
-    .then(() => {
-      console.log('Team deleted successfully')
+  try {
+    const response: any = await teamApi.deleteTeam(String(id))
+    if (response) {
+      show(ToastType.Success, 'Team deleted successfully')
       router.push('/teams')
-    })
-    .catch((error) => {
-      console.error('Error deleting team:', error)
-    })
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
 }
+watch(
+  updateMemberInput,
+  (newVal) => {
+    updateMemberInput.value.isValid = isAddress(newVal.walletAddress)
+  },
+  { deep: true }
+)
 </script>

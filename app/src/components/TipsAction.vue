@@ -1,16 +1,3 @@
-<script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
-import { storeToRefs } from 'pinia'
-import LoadingButton from './LoadingButton.vue'
-import type { AddressLike } from 'ethers'
-
-const tipStore = useTipsStore()
-const { pushTip, sendTip } = useTipsStore()
-const { totalTipAmount, sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
-
-defineProps<{ addresses: AddressLike[] }>()
-</script>
-
 <template>
   <div class="card bg-white shadow-xl flex flex-row justify-around my-2 p-6 gap-6">
     <div class="grow flex flex-col justify-center">
@@ -20,7 +7,7 @@ defineProps<{ addresses: AddressLike[] }>()
           type="text"
           placeholder="Input tip amount per member"
           class="py-2 px-4 outline outline-1 outline-neutral-content rounded-md border-neutral-content text-center bg-white"
-          v-model="totalTipAmount"
+          v-model="tipAmount"
         />
       </div>
     </div>
@@ -29,14 +16,46 @@ defineProps<{ addresses: AddressLike[] }>()
       <label for="tip-amount" class="text-center mb-2">Actions</label>
       <div className="card-actions flex flex-row justify-between mx-8 self-center">
         <LoadingButton v-if="pushTipLoading" color="primary" />
-        <button v-else className="btn btn-primary w-full text-white" @click="pushTip(addresses)">
+        <button
+          v-else
+          className="btn btn-primary w-full text-white"
+          @click="emits('pushTip', addresses, tipAmount)"
+        >
           Push Tips
         </button>
         <LoadingButton v-if="sendTipLoading" color="secondary" />
-        <button v-else className="btn btn-secondary w-full text-white" @click="sendTip(addresses)">
+        <button
+          v-else
+          className="btn btn-secondary w-full text-white"
+          @click="emits('sendTip', addresses, tipAmount)"
+        >
           Send Tips
         </button>
       </div>
     </div>
   </div>
 </template>
+<script setup lang="ts">
+import LoadingButton from '@/components/LoadingButton.vue'
+import { ref, watch } from 'vue'
+import type { AddressLike } from 'ethers'
+
+const props = defineProps<{
+  addresses: AddressLike[]
+  pushTipLoading: boolean
+  sendTipLoading: boolean
+  tipAmount: number
+}>()
+const emits = defineEmits(['pushTip', 'sendTip'])
+
+const tipAmount = ref(props.tipAmount)
+const pushTipLoading = ref<boolean>(props.pushTipLoading)
+const sendTipLoading = ref<boolean>(props.sendTipLoading)
+watch(
+  [() => props.pushTipLoading, () => props.sendTipLoading],
+  ([pushTipLoadingNew, sendTipLoadingNew]) => {
+    pushTipLoading.value = pushTipLoadingNew
+    sendTipLoading.value = sendTipLoadingNew
+  }
+)
+</script>

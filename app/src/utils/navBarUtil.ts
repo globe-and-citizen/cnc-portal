@@ -1,10 +1,10 @@
 import { AuthService } from '@/services/authService'
 import { useOwnerAddressStore } from '@/stores/address'
+import { useUserDataStore } from '@/stores/user'
 
 export const logout = () => {
   AuthService.logout()
-  const ownerAddressStore = useOwnerAddressStore()
-
-  ownerAddressStore.clearOwnerAddress()
+  useOwnerAddressStore().clearOwnerAddress()
+  useUserDataStore().clearUserData()
   window.location.reload()
 }

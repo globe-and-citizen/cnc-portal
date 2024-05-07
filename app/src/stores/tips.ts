@@ -2,18 +2,23 @@ import { ethers } from 'ethers'
 import { defineStore } from 'pinia'
 import { TIPS_ADDRESS } from '@/constant'
 import ABI from '../abi/tips.json'
-import { ToastType } from '@/types'
+import { ToastType, TipsEventType } from '@/types'
 import { useToastStore } from './toast'
 import type { AddressLike } from 'ethers'
+import type { EventLog } from 'ethers'
+import type { Log } from 'ethers'
+import dayjs from 'dayjs'
+import type { Ref } from 'vue'
 
+let contract: ethers.Contract
 let provider: ethers.BrowserProvider
+
 export const useTipsStore = defineStore('tips', {
   state: () => ({
     contract: null as ethers.Contract | null,
     sendTipLoading: false as boolean,
     pushTipLoading: false as boolean,
     isWalletConnected: false as boolean,
-    totalTipAmount: 0 as number,
     balance: '0' as string
   }),
   actions: {
@@ -28,85 +33,96 @@ export const useTipsStore = defineStore('tips', {
 
       provider = new ethers.BrowserProvider((window as any).ethereum)
       await provider.send('eth_requestAccounts', [])
-      this.contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
+      contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
       this.isWalletConnected = true
     },
-    async pushTip(addresses: AddressLike[]) {
+    async pushTip(addresses: AddressLike[], amount: number) {
       const { show } = useToastStore()
-
-      if (this.totalTipAmount === 0) {
-        show(ToastType.Info, 'Please enter amount to tip')
-        return
-      }
 
       if (!this.isWalletConnected) await this.connectWallet()
 
       this.pushTipLoading = true
 
       try {
-        const tx = await this.contract!.pushTip(addresses, {
-          value: ethers.parseEther(this.totalTipAmount.toString())
+        const tx = await contract.pushTip(addresses, {
+          value: ethers.parseEther(amount.toString())
         })
         await tx.wait()
 
         show(ToastType.Success, 'Tip pushed successfully')
-      } catch (error) {
-        show(ToastType.Error, 'Failed to push tip')
+      } catch (error: any) {
+        show(ToastType.Error, error.reason ? error.reason : 'Failed to push tip')
       } finally {
         this.pushTipLoading = false
-        this.totalTipAmount = 0
       }
     },
-    async sendTip(addresses: AddressLike[]) {
+    async sendTip(addresses: AddressLike[], amount: number) {
       const { show } = useToastStore()
-      if (this.totalTipAmount === 0) {
-        show(ToastType.Info, 'Please enter amount to tip')
-        return
-      }
 
       if (!this.isWalletConnected) await this.connectWallet()
 
       this.sendTipLoading = true
 
       try {
-        const tx = await this.contract!.sendTip(addresses, {
-          value: ethers.parseEther(this.totalTipAmount.toString())
+        const tx = await contract.sendTip(addresses, {
+          value: ethers.parseEther(amount.toString())
         })
         await tx.wait()
         await this.getBalance()
 
         show(ToastType.Success, 'Tip sent successfully')
-      } catch (error) {
-        show(ToastType.Error, 'Failed to send tip')
+      } catch (error: any) {
+        show(ToastType.Error, error.reason ? error.reason : 'Failed to send tip')
       } finally {
         this.sendTipLoading = false
-        this.totalTipAmount = 0
       }
     },
     async getBalance() {
       if (!this.isWalletConnected) await this.connectWallet()
       const address = (await provider.getSigner()).address
 
-      this.balance = ethers.formatEther(await this.contract!.getBalance(address))
+      this.balance = ethers.formatEther(await contract!.getBalance(address))
     },
     async withdrawTips() {
       if (!this.isWalletConnected) await this.connectWallet()
 
       const { show } = useToastStore()
 
-      if (this.balance == '0') {
-        show(ToastType.Info, 'No tips to withdraw')
-        return
-      }
-
       try {
-        const tx = await this.contract!.withdraw()
+        const tx = await contract.withdraw()
         await tx.wait()
 
         await this.getBalance()
         show(ToastType.Success, 'Tips withdrawn successfully')
+      } catch (error: any) {
+        show(ToastType.Error, error.reason ? error.reason : 'Failed to withdraw tips')
+      }
+    },
+    async getEvents(event: TipsEventType, loading: Ref<boolean>) {
+      if (!this.isWalletConnected) await this.connectWallet()
+
+      try {
+        loading.value = true
+        const events = await contract.queryFilter(event)
+
+        const result = await Promise.all(
+          events.map(async (eventData: EventLog | Log) => {
+            const date = dayjs((await eventData.getBlock()).date).format('DD/MM/YYYY HH:mm')
+
+            return {
+              txHash: eventData.transactionHash,
+              date: date,
+              data: contract.interface.decodeEventLog(event, eventData.data, eventData.topics)
+            }
+          })
+        )
+
+        return result
       } catch (error) {
-        show(ToastType.Error, 'Failed to withdraw tips')
+        const { show } = useToastStore()
+        show(ToastType.Error, 'Failed to fetch events')
+      } finally {
+        loading.value = false
       }
     }
   }

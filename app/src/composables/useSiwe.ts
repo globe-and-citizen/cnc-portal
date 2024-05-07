@@ -10,6 +10,9 @@ import { useToastStore } from "@/stores/toast";
 import { ToastType } from "@/types";
 import { storeToRefs } from "pinia";
  
+import { useUserDataStore } from '@/stores/user'
+import type { User } from '@/types'
+
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -38,6 +41,12 @@ async function siwe() {
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
     await siweAuthService.authenticateUser()
+    const userData: Partial<User> = await fetchUserApi.getUser(address)
+    useUserDataStore().setUserData(
+      userData.name || '',
+      userData.address || '',
+      userData.nonce || ''
+    )
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
     
