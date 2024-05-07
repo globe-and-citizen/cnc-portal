@@ -9,21 +9,54 @@ dotenv.config()
 let networks: NetworksUserConfig = {
   hardhat: {}
 }
-if (process.env.ALCHEMY_API_KEY === undefined || process.env.PRIVATE_KEY === undefined) {
-  console.error('\x1b[33m Please set your ALCHEMY_API_KEY and PRIVATE_KEY in a .env file\x1b[0m')
+if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefined) {
+  console.error('\x1b[33m Please set your SEPOLIA_URL and PRIVATE_KEY in a .env file\x1b[0m')
 } else {
   networks = {
     sepolia: {
-      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: [process.env.PRIVATE_KEY]
+      url: process.env.SEPOLIA_URL,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+    mainnet: {
+      url: process.env.MAINNET_URL,
+      accounts: [process.env.MAINNET_KEY!],
+      gasPrice: 1000000000
+    },
+    polygon: {
+      url: process.env.POLYGON_URL,
+      accounts: [process.env.MAINNET_KEY!],
+      gasPrice: 400000000000
     }
   }
 }
 
 const config: HardhatUserConfig = {
-  solidity: '0.8.24',
+  solidity: {
+    version: '0.8.24',
+    settings: {
+      optimizer: {
+        // Toggles whether the optimizer is on or off.
+        // It's good to keep it off for development
+        // and turn on for when getting ready to launch.
+        enabled: true,
+        // The number of runs specifies roughly how often
+        // the deployed code will be executed across the
+        // life-time of the contract.
+        runs: 200
+      }
+    }
+  },
   defaultNetwork: 'hardhat',
-  networks: networks
+  networks: networks,
+  etherscan: {
+    apiKey: process.env.POLYGONSCAN_API_KEY
+  },
+  gasReporter: {
+    enabled: true,
+    currency: 'USD',
+    coinmarketcap: process.env.COINMARKETCAP_KEY,
+    token: "MATIC",
+  }
 }
 
 export default config
