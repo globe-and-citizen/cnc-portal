@@ -15,7 +15,7 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
   networks = {
     sepolia: {
       url: process.env.SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: [process.env.PRIVATE_KEY]
     },
     mainnet: {
       url: process.env.MAINNET_URL,
@@ -55,7 +55,7 @@ const config: HardhatUserConfig = {
     enabled: true,
     currency: 'USD',
     coinmarketcap: process.env.COINMARKETCAP_KEY,
-    token: "MATIC",
+    token: 'MATIC'
   }
 }
 
