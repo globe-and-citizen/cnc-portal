@@ -5,13 +5,14 @@ import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { useOwnerAddressStore } from '@/stores/address'
+import { ref } from 'vue'
+import { useToastStore } from '@/stores/toast'
+import { ToastType } from '@/types'
+import { storeToRefs } from 'pinia'
+
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
-import { ref } from "vue";
-import { useToastStore } from "@/stores/toast";
-import { ToastType } from "@/types";
-import { storeToRefs } from "pinia";
- 
+
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -48,7 +49,6 @@ async function siwe() {
     )
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
-    
 
     /*console.log('authToken: ', SIWEAuthService.getToken())
     console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())
@@ -66,6 +66,6 @@ async function siwe() {
 export function useSiwe() {
   const toastStore = useToastStore()
   const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
-  
+
   return { isProcessing, showToast, toastType, toastMessage, siwe }
 }

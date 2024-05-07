@@ -1,6 +1,4 @@
-import { BrowserProvider, /*, Signer */ ethers} from 'ethers'
-import { ref } from "vue";
-import type { Ref } from "vue";
+import { BrowserProvider, /*, Signer */ ethers } from 'ethers'
 
 // Define interface for web3 library
 export interface IWeb3Library {
@@ -29,8 +27,8 @@ export class EthersJsAdapter implements IWeb3Library {
   initialize(): void {
     // Initialize provider
     if ('ethereum' in window) {
-      this.provider = new BrowserProvider(window.ethereum as any);
-      (window.ethereum as any).on('accountsChanged', async (accounts: string[]) =>{
+      this.provider = new BrowserProvider(window.ethereum as any)
+      ;(window.ethereum as any).on('accountsChanged', async (/*accounts: string[]*/) => {
         this.signer = await this.provider.getSigner()
       })
     }
@@ -76,7 +74,7 @@ export class EthersJsAdapter implements IWeb3Library {
       //throw new Error('Wallet is not connected');
       await this.connectWallet()
     }
-    
+
     return new ethers.Contract(address, abi, this.signer)
   }
 
