@@ -56,9 +56,9 @@ async function siwe() {
     SIWEAuthService.logout()
 
     console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())*/
-  } catch (error) {
+  } catch (error: any) {
     isProcessing.value = false
-    show(ToastType.Error, error as string)
+    show(ToastType.Error, error.message as string)
     console.log('[app][src][utils][loginUtil.ts][signInWithEthereum] Error', error)
   }
 }
