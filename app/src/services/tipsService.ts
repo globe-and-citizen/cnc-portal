@@ -40,7 +40,7 @@ export class TipsService extends SmartContract implements ISmartContract {
 
   async pushTip(addresses: AddressLike[], amount: number): Promise<void> {
     if (!this.contract) {
-      this.getContract()
+      this.contract = await super.getContract()
     }
 
     const tx = this.contract.pushTip(addresses, {
@@ -51,7 +51,7 @@ export class TipsService extends SmartContract implements ISmartContract {
 
   async sendTip(addresses: AddressLike[], amount: number): Promise<void> {
     if (!this.contract) {
-      this.getContract()
+      this.contract = await super.getContract()
     }
 
     const tx = this.contract.sendTip(addresses, {
@@ -62,15 +62,15 @@ export class TipsService extends SmartContract implements ISmartContract {
 
   async getBalance(): Promise<string> {
     if (!this.contract) {
-      this.getContract()
+      this.contract = await super.getContract()
     }
 
-    return this.contract.getBalance()
+    return (await this.contract.getBalance(await this.web3Library.getAddress())).toString()
   }
 
   async withdrawTips(): Promise<void> {
     if (!this.contract) {
-      this.getContract()
+      this.contract = await super.getContract()
     }
 
     const tx = this.contract.withdraw()
@@ -79,7 +79,7 @@ export class TipsService extends SmartContract implements ISmartContract {
 
   async getEvents(type: TipsEventType): Promise<EventLog[]> {
     if (!this.contract) {
-      this.getContract()
+      this.contract = await super.getContract()
     }
 
     return this.contract.queryFilter(type)
