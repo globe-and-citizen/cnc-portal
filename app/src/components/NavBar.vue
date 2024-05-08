@@ -16,7 +16,8 @@
         <div tabindex="0" role="button" class="">
           <div class="btn w-full flex flex-row justify-between text-gray-500">
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
-            <div>
+            <div v-if="balanceLoading">XXX ETH</div>
+            <div v-else>
               <span class="text-black font-bold font-mono">{{ balance.slice(0, 6) }}</span>
               <span class="ml-2 text-black font-bold font-mono">ETH</span>
             </div>
@@ -26,7 +27,7 @@
           tabindex="0"
           class="mt-3 dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48"
         >
-          <li><a @click="withdraw()">Withdraw Tips</a></li>
+          <li><a @click="$emit('withdraw')">Withdraw Tips</a></li>
         </ul>
       </div>
 
@@ -64,18 +65,13 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import { useTips } from '@/composables/tips'
 
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
-const { getBalance, withdraw,  balance } = useTips()
-
-onMounted(async () => {
-  await getBalance()
-})
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
+const { balance, loading: balanceLoading } = useTips()
 </script>
 
 <style scoped></style>

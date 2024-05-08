@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
-import { ref, watch, toRaw } from 'vue'
+import { ref, watch, toRaw, onMounted } from 'vue'
 import { useToastStore } from './stores/toast'
 import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
+import { useTips } from '@/composables/tips'
 
 const userApi = new FetchUserAPI()
+const route = useRoute()
 
 const toggleSide = ref(true)
 function handleChange() {
@@ -31,6 +33,7 @@ const updateUserInput = ref({
   address: address.value,
   isValid: true
 })
+const { getBalance, withdraw } = useTips()
 const handleUserUpdate = async () => {
   const user = await userApi.updateUser(toRaw(updateUserInput.value))
   userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
@@ -42,6 +45,11 @@ watch(
     updateUserInput.value.isValid = isAddress(newVal)
   }
 )
+onMounted(async () => {
+  if (route.path != '/login') {
+    await getBalance()
+  }
+})
 </script>
 
 <template>
@@ -57,6 +65,7 @@ watch(
             showUserModal = !showUserModal
           }
         "
+        @withdraw="() => withdraw()"
       />
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">

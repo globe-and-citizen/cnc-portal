@@ -19,7 +19,7 @@
         <button
           v-else
           className="btn btn-primary w-full text-white"
-          @click="emits('pushTip', addresses, tipAmount)"
+          @click="pushTip(addresses, tipAmount)"
         >
           Push Tips
         </button>
@@ -27,7 +27,7 @@
         <button
           v-else
           className="btn btn-secondary w-full text-white"
-          @click="emits('sendTip', addresses, tipAmount)"
+          @click="sendTip(addresses, tipAmount)"
         >
           Send Tips
         </button>
@@ -37,25 +37,15 @@
 </template>
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
-import { ref, watch } from 'vue'
-import type { AddressLike } from 'ethers'
+import { useTips } from '@/composables/tips'
+import { ref } from 'vue';
 
 const props = defineProps<{
-  addresses: AddressLike[]
-  pushTipLoading: boolean
-  sendTipLoading: boolean
+  addresses: string[]
   tipAmount: number
 }>()
 const emits = defineEmits(['pushTip', 'sendTip'])
-
 const tipAmount = ref(props.tipAmount)
-const pushTipLoading = ref<boolean>(props.pushTipLoading)
-const sendTipLoading = ref<boolean>(props.sendTipLoading)
-watch(
-  [() => props.pushTipLoading, () => props.sendTipLoading],
-  ([pushTipLoadingNew, sendTipLoadingNew]) => {
-    pushTipLoading.value = pushTipLoadingNew
-    sendTipLoading.value = sendTipLoadingNew
-  }
-)
+const { pushTip, loading: pushTipLoading } = useTips()
+const { sendTip, loading: sendTipLoading } = useTips()
 </script>
