@@ -66,7 +66,6 @@
 <script setup lang="ts">
 import { useTipsStore } from '@/stores/tips'
 import { storeToRefs } from 'pinia'
-import { onMounted } from 'vue'
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
@@ -74,10 +73,6 @@ import IconBell from '@/components/icons/IconBell.vue'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const tipsStore = useTipsStore()
 const { balance } = storeToRefs(tipsStore)
-
-onMounted(async () => {
-  await tipsStore.getBalance()
-})
 </script>
 
 <style scoped></style>

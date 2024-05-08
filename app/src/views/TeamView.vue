@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '../components/TeamCard.vue'
+import { useTipsStore } from '@/stores/tips'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
@@ -34,6 +35,8 @@ import { ToastType, type Team, type TeamInput } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 import { useErrorHandler } from '@/composables/errorHandler'
+
+const tipsStore = useTipsStore()
 
 const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
@@ -92,6 +95,7 @@ const removeInput = () => {
 }
 onMounted(async () => {
   try {
+    await tipsStore.getBalance()
     const teamsList = await teamApi.getAllTeams()
     teams.value = teamsList
   } catch (error) {
