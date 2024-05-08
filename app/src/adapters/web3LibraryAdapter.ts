@@ -75,7 +75,7 @@ export class EthersJsAdapter implements IWeb3Library {
       await this.connectWallet()
     }
 
-    return new ethers.Contract(address, abi, this.signer)
+    return new ethers.Contract(address, abi, await this.signer)
   }
 
   parseEther(value: string) {
