@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useTips } from '@/composables/tips'
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const props = defineProps<{
   addresses: string[]

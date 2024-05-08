@@ -93,6 +93,6 @@ export function useTips() {
     withdraw,
     pushTip,
     sendTip,
-    getEvents,
+    getEvents
   }
 }
