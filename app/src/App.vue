@@ -2,15 +2,13 @@
 import { RouterView, useRoute } from 'vue-router'
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
-import NotificationToast from '@/components/NotificationToast.vue'
 import { ref, watch, toRaw, onMounted } from 'vue'
-import { useToastStore } from './stores/toast'
 import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
-import { useTips } from '@/composables/tips'
+import { useTipsBalance, useWithdrawTips } from './composables/tips'
 
 const userApi = new FetchUserAPI()
 const route = useRoute()
@@ -19,9 +17,6 @@ const toggleSide = ref(true)
 function handleChange() {
   toggleSide.value = !toggleSide.value
 }
-
-const toastStore = useToastStore()
-const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
@@ -33,7 +28,8 @@ const updateUserInput = ref({
   address: address.value,
   isValid: true
 })
-const { getBalance, withdraw } = useTips()
+const { withdraw } = useWithdrawTips()
+const { getBalance } = useTipsBalance()
 const handleUserUpdate = async () => {
   const user = await userApi.updateUser(toRaw(updateUserInput.value))
   userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
@@ -99,7 +95,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
   </div>
 </template>
 
