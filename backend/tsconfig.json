@@ -25,5 +25,12 @@
     /* Type Checking */
     "strict": true /* Enable all strict type-checking options. */,
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
-  }
+  },
+  "exclude": [
+    "test",
+    "vitest.config.unit.ts",
+    "vitest.config.ts",
+    "vitest.e2e.config.ts",
+    "vitest.unit.config.ts"
+  ],
 }
