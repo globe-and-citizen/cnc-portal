@@ -5,9 +5,9 @@ import dayjs from 'dayjs'
 import type { EventLog } from 'ethers'
 import { ref } from 'vue'
 
-export function useTips() {
-  const tipsService = new TipsService(EthersJsAdapter.getInstance())
-  const events = ref<EventResult[]>([])
+const tipsService = new TipsService(EthersJsAdapter.getInstance())
+
+export function useTipsBalance() {
   const balance = ref<string>('0')
   const loading = ref(false)
   const error = ref<any>(null)
@@ -23,23 +23,17 @@ export function useTips() {
     }
   }
 
-  async function withdraw() {
-    try {
-      loading.value = true
-      await tipsService.withdrawTips()
-      await getBalance()
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
+  return { balance, getBalance, loading, error }
+}
+
+export function usePushTip() {
+  const loading = ref(false)
+  const error = ref<any>(null)
 
   async function pushTip(addresses: string[], amount: number): Promise<void> {
     try {
       loading.value = true
       await tipsService.pushTip(addresses, amount)
-      await getBalance()
     } catch (err) {
       error.value = err
     } finally {
@@ -47,17 +41,49 @@ export function useTips() {
     }
   }
 
+  return { pushTip, loading, error }
+}
+
+export function useSendTip() {
+  const loading = ref(false)
+  const error = ref<any>(null)
+
   async function sendTip(addresses: string[], amount: number): Promise<void> {
     try {
       loading.value = true
       await tipsService.sendTip(addresses, amount)
-      await getBalance()
     } catch (err) {
       error.value = err
     } finally {
       loading.value = false
     }
   }
+
+  return { sendTip, loading, error }
+}
+
+export function useWithdrawTips() {
+  const loading = ref(false)
+  const error = ref<any>(null)
+
+  async function withdraw() {
+    try {
+      loading.value = true
+      await tipsService.withdrawTips()
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { withdraw, loading, error }
+}
+
+export function useTipEvents() {
+  const events = ref<EventResult[]>([])
+  const loading = ref(false)
+  const error = ref<any>(null)
 
   async function getEvents(type: TipsEventType): Promise<void> {
     try {
@@ -83,16 +109,5 @@ export function useTips() {
     } finally {
       loading.value = false
     }
-  }
-
-  return {
-    balance,
-    loading,
-    error,
-    getBalance,
-    withdraw,
-    pushTip,
-    sendTip,
-    getEvents
   }
 }
