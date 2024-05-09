@@ -47,10 +47,7 @@
         @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
       />
     </div>
-    <TipsAction
-      :addresses="team.members.map((member) => member.walletAddress)"
-      :tipAmount="tipAmount"
-    />
+    <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
   </div>
 
   <dialog
@@ -100,14 +97,11 @@ import { FetchTeamAPI } from '@/apis/teamApi'
 import { FetchMemberAPI } from '@/apis/memberApi'
 
 import { isAddress } from 'ethers' // ethers v6
-import { useToastStore } from '@/stores/toast'
 
 import { useErrorHandler } from '@/composables/errorHandler'
+import { useToast } from 'vue-toastification'
 
-const { show } = useToastStore()
-
-const tipAmount = ref(0)
-
+const $toast = useToast()
 const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
@@ -173,7 +167,7 @@ const handleAddMembers = async () => {
       String(route.params.id)
     )
     if (members && members.length > 0) {
-      show(ToastType.Success, 'Members added successfully')
+      $toast.success('Members added successfully')
       team.value.members = members
       showAddMemberForm.value = false
     }
@@ -204,7 +198,7 @@ const deleteMember = async (id: string) => {
   try {
     const memberRes: any = await memberApi.deleteMember(id)
     if (memberRes && memberRes.count == 1) {
-      show(ToastType.Success, 'Member deleted successfully')
+      $toast.success('Member deleted successfully')
       team.value.members.splice(
         team.value.members.findIndex((member) => member.id === id),
         1
@@ -223,7 +217,7 @@ const updateMember = async (id: string) => {
   try {
     const updatedMember = await memberApi.updateMember(member, id)
     if (updatedMember && Object.keys(updatedMember).length !== 0) {
-      show(ToastType.Success, 'Member updated successfully')
+      $toast.success('Member updated successfully')
       team.value.members.map((member) => {
         if (member.id === id) {
           member.name = updatedMember.name
@@ -246,7 +240,7 @@ const updateTeam = async () => {
   try {
     const teamRes = await teamApi.updateTeam(String(id), teamObject)
     if (teamRes) {
-      show(ToastType.Success, 'Team updated successfully')
+      $toast.success('Team updated successfully')
       team.value.name = teamRes.name
       team.value.description = teamRes.description
       showModal.value = false
@@ -261,7 +255,7 @@ const deleteTeam = async () => {
   try {
     const response: any = await teamApi.deleteTeam(String(id))
     if (response) {
-      show(ToastType.Success, 'Team deleted successfully')
+      $toast.success('Team deleted successfully')
       router.push('/teams')
     }
   } catch (error) {

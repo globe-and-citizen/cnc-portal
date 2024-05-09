@@ -32,10 +32,10 @@ import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
 import { ToastType, type Team, type TeamInput } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
-import { useToastStore } from '@/stores/toast'
+import { useToast } from 'vue-toastification'
 import { useErrorHandler } from '@/composables/errorHandler'
 
-const { show } = useToastStore()
+const $toast = useToast()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
 
@@ -73,7 +73,7 @@ const handleAddTeam = async () => {
   try {
     const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
     if (createdTeam && Object.keys(createdTeam).length !== 0) {
-      show(ToastType.Success, 'Team created successfully')
+      $toast.success('Team created successfully')
       showAddTeamModal.value = !showAddTeamModal.value
       teams.value.push(createdTeam)
     }

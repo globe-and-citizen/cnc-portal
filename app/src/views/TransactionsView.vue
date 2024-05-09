@@ -133,32 +133,56 @@
 </template>
 
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
-import { TipsEventType, type EventResult } from '@/types'
+import { useTipEvents } from '@/composables/tips'
+import { TipsEventType } from '@/types'
 import { ethers } from 'ethers'
-import { onMounted, ref } from 'vue'
+import { onMounted, watchEffect } from 'vue'
 import { ETHERSCAN_URL } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
+import { useToast } from 'vue-toastification'
 
-const { getEvents } = useTipsStore()
+const $toast = useToast()
 
-const pushTipLoading = ref(false)
-const sendTipLoading = ref(false)
-const withdrawalTipLoading = ref(false)
-const pushTipEvents = ref([] as EventResult[] | undefined)
-const sendTipEvents = ref([] as EventResult[] | undefined)
-const tipWithdrawalEvents = ref([] as EventResult[] | undefined)
+const {
+  events: pushTipEvents,
+  getEvents: getPushTipEvents,
+  loading: pushTipLoading,
+  error: pushTipError
+} = useTipEvents()
+const {
+  events: sendTipEvents,
+  getEvents: getSendTipEvents,
+  loading: sendTipLoading,
+  error: sendTipError
+} = useTipEvents()
+const {
+  events: tipWithdrawalEvents,
+  getEvents: getTipsWithdrawal,
+  loading: withdrawalTipLoading,
+  error: withdrawalTipError
+} = useTipEvents()
 
 onMounted(async () => {
-  const [pushTipData, sendTipData, withdrawalTipData] = await Promise.all([
-    getEvents(TipsEventType.PushTip, pushTipLoading),
-    getEvents(TipsEventType.SendTip, sendTipLoading),
-    getEvents(TipsEventType.TipWithdrawal, withdrawalTipLoading)
+  await Promise.all([
+    getPushTipEvents(TipsEventType.PushTip),
+    getSendTipEvents(TipsEventType.SendTip),
+    getTipsWithdrawal(TipsEventType.TipWithdrawal)
   ])
+})
 
-  pushTipEvents.value = pushTipData
-  sendTipEvents.value = sendTipData
-  tipWithdrawalEvents.value = withdrawalTipData
+watchEffect(() => {
+  if (pushTipError.value) {
+    $toast.error('Failed to get push tip events')
+    pushTipError.value = null
+  }
+  if (sendTipError.value) {
+    $toast.error('Failed to get send tip events')
+    sendTipError.value = null
+  }
+  if (withdrawalTipError.value) {
+    $toast.error('Failed to get withdrawal tip events')
+    withdrawalTipError.value = null
+  }
 })
 
 const showTxDetail = (txHash: string) => {

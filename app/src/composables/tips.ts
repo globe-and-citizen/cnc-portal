@@ -114,4 +114,6 @@ export function useTipEvents() {
       loading.value = false
     }
   }
+
+  return { events, getEvents, loading, error }
 }

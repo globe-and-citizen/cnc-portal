@@ -1,13 +1,12 @@
-import { useToastStore } from '@/stores/toast'
-import { ToastType } from '@/types'
+import { useToast } from "vue-toastification"
 
 export function useErrorHandler() {
-  const { show } = useToastStore()
 
   function handleError(error: any) {
     console.log('Error:', error.message)
     error.value = error.message
-    show(ToastType.Error, error.message)
+    const $toast = useToast()
+    $toast.error(error.message)
   }
 
   return { handleError }
