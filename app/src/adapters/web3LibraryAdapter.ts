@@ -38,6 +38,14 @@ export class EthersJsAdapter implements IWeb3Library {
       //throw new Error('Ethers.js adapter is not initialized');
       this.initialize()
     }
+    if (this.provider) {
+      const network = await this.provider.getNetwork()
+      if (network.name.toString() != import.meta.env.VITE_CURRENT_NETWORK_NAME) {
+        throw new Error(
+          `Please make sure you're connected to the ${import.meta.env.VITE_CURRENT_NETWORK_NAME} network. You're currently connected to the ${network.name} network.`
+        )
+      }
+    }
 
     // Prompt user to connect their wallet
     await this.provider.send('eth_requestAccounts', [])
