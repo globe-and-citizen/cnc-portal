@@ -45,8 +45,18 @@ defineProps<{
   addresses: string[]
 }>()
 const tipAmount = ref(0)
-const { pushTip, loading: pushTipLoading, isSuccess: pushTipSuccess, error: pushTipError } = usePushTip()
-const { sendTip, loading: sendTipLoading, isSuccess: sendTipSuccess, error: sendTipError } = useSendTip()
+const {
+  pushTip,
+  loading: pushTipLoading,
+  isSuccess: pushTipSuccess,
+  error: pushTipError
+} = usePushTip()
+const {
+  sendTip,
+  loading: sendTipLoading,
+  isSuccess: sendTipSuccess,
+  error: sendTipError
+} = useSendTip()
 
 const $toast = useToast()
 watchEffect(() => {
@@ -58,11 +68,11 @@ watchEffect(() => {
     $toast.error(sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip')
     sendTipError.value = null
   }
-  if(pushTipSuccess.value) {
+  if (pushTipSuccess.value) {
     $toast.success('Tips pushed successfully')
     pushTipSuccess.value = false
   }
-  if(sendTipSuccess.value) {
+  if (sendTipSuccess.value) {
     $toast.success('Tips pushed successfully')
     sendTipSuccess.value = false
   }

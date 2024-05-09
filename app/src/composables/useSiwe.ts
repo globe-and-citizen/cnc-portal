@@ -61,5 +61,5 @@ async function siwe() {
 }
 
 export function useSiwe() {
-  return { isProcessing,siwe }
+  return { isProcessing, siwe }
 }

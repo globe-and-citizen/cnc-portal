@@ -30,7 +30,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
-import { ToastType, type Team, type TeamInput } from '@/types'
+import { type Team, type TeamInput } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useToast } from 'vue-toastification'
 import { useErrorHandler } from '@/composables/errorHandler'

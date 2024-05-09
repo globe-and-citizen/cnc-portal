@@ -39,74 +39,54 @@ export class TipsService extends SmartContract implements ISmartContract {
   }
 
   async pushTip(addresses: AddressLike[], amount: number): Promise<any> {
-    try {
-      if (!this.contract) {
-        this.contract = await super.getContract()
-      }
-
-      const tx = await this.contract.pushTip(addresses, {
-        value: this.web3Library.parseEther(amount.toString())
-      })
-      
-      await tx.wait()
-
-      return tx
-    } catch (error) {
-      throw error
+    if (!this.contract) {
+      this.contract = await super.getContract()
     }
+
+    const tx = await this.contract.pushTip(addresses, {
+      value: this.web3Library.parseEther(amount.toString())
+    })
+
+    await tx.wait()
+
+    return tx
   }
 
   async sendTip(addresses: AddressLike[], amount: number): Promise<void> {
-    try {
-      if (!this.contract) {
-        this.contract = await super.getContract()
-      }
-
-      const tx = await this.contract.sendTip(addresses, {
-        value: this.web3Library.parseEther(amount.toString())
-      })
-      await tx.wait()
-
-      return tx
-    } catch (error) {
-      throw error
+    if (!this.contract) {
+      this.contract = await super.getContract()
     }
+
+    const tx = await this.contract.sendTip(addresses, {
+      value: this.web3Library.parseEther(amount.toString())
+    })
+    await tx.wait()
+
+    return tx
   }
 
   async getBalance(): Promise<string> {
-    try {
-      if (!this.contract) {
-        this.contract = await super.getContract()
-      }
-
-      return (await this.contract.getBalance(await this.web3Library.getAddress())).toString()
-    } catch (error) {
-      throw error
+    if (!this.contract) {
+      this.contract = await super.getContract()
     }
+
+    return (await this.contract.getBalance(await this.web3Library.getAddress())).toString()
   }
 
   async withdrawTips(): Promise<void> {
-    try {
-      if (!this.contract) {
-        this.contract = await super.getContract()
-      }
-
-      const tx = await this.contract.withdraw()
-      await tx.wait()
-    } catch (error) {
-      throw error
+    if (!this.contract) {
+      this.contract = await super.getContract()
     }
+
+    const tx = await this.contract.withdraw()
+    await tx.wait()
   }
 
   async getEvents(type: TipsEventType): Promise<EventLog[]> {
-    try {
-      if (!this.contract) {
-        this.contract = await super.getContract()
-      }
-
-      return this.contract.queryFilter(type)
-    } catch (error) {
-      throw error
+    if (!this.contract) {
+      this.contract = await super.getContract()
     }
+
+    return this.contract.queryFilter(type)
   }
 }

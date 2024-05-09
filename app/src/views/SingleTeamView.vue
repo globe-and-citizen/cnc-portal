@@ -92,7 +92,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 
-import { ToastType, type Member, type MemberInput, type Team } from '@/types'
+import { type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { FetchMemberAPI } from '@/apis/memberApi'
 
