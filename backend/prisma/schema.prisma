@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  address      String        @id @unique
+  name         String?
+  nonce        String
+  teams        Team[]
+}
+model Team {
+  id           Int           @id @default(autoincrement())
+  members    Member[]
+  owner        User          @relation(fields: [ownerId], references: [address])
+  ownerId      String
+  description  String?
+  name         String        @unique
+}
+model Member{
+  id            Int           @id @default(autoincrement())
+  name          String         
+  walletAddress String
+  team       Team? @relation(fields: [teamId], references: [id])  // Add the opposite relation field here
+  teamId     Int?    // Nullable because an member may not belong to a team initially
+
+}

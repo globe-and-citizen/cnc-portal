@@ -1,0 +1,6 @@
+{
+  "ProxyModule#Tips": "0x216ED555e29ABAAe2545a65b51E23f325043a2A2",
+  "ProxyModule#TransparentUpgradeableProxy": "0x79EF3aE86725D7D0Ae4eF3A31758A7c7fe40e5B4",
+  "ProxyModule#ProxyAdmin": "0xA75Ba04003ec21a48F4CbD45A00E8E996154b57F",
+  "TipsModule#Tips": "0x79EF3aE86725D7D0Ae4eF3A31758A7c7fe40e5B4"
+}

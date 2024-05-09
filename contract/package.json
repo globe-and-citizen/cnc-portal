@@ -1,0 +1,33 @@
+{
+  "name": "hardhat-project",
+  "scripts": {
+    "typechain": "npx hardhat typechain",
+    "compile": "npx hardhat compile",
+    "deploy": "hardhat ignition deploy ./ignition/modules/Tips.ts",
+    "deploy:sepolia": "hardhat ignition deploy ./ignition/modules/ProxyModule.ts --network sepolia --reset",
+    "deploy:mainnet": "hardhat ignition deploy ./ignition/modules/ProxyModule.ts --network mainnet --reset",
+    "deploy:polygon": "hardhat ignition deploy ./ignition/modules/ProxyModule.ts --network polygon --reset",
+    "node": "npx hardhat node",
+    "test": "npx hardhat test",
+    "coverage": "npx hardhat coverage",
+    "lint": "npx eslint . --ext .ts",
+    "format": "prettier --write .",
+    "format-check": "npx prettier --check ."
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.0.5",
+    "@typechain/hardhat": "^9.1.0",
+    "@typescript-eslint/eslint-plugin": "^7.5.0",
+    "@typescript-eslint/parser": "^7.5.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "hardhat": "^2.22.1",
+    "prettier": "3.2.5"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "@openzeppelin/contracts-upgradeable": "^5.0.2",
+    "dotenv": "^16.4.5"
+  }
+}

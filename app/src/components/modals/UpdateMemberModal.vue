@@ -1,0 +1,53 @@
+<template>
+  <dialog
+    id="my_modal_20"
+    v-if="showUpdateMemberModal"
+    class="modal modal-bottom sm:modal-middle"
+    :class="{ 'modal-open': showUpdateMemberModal }"
+  >
+    <div class="modal-box">
+      <button
+        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        @click="emits('toggleUpdateMemberModal', {})"
+      >
+        <span>x</span>
+      </button>
+      <h1 class="font-bold text-2xl">Update Member Details</h1>
+      <hr class="" />
+      <label
+        :class="{ 'input-error': !updateMemberInput.isValid }"
+        class="input input-bordered flex items-center gap-2 input-md mt-2"
+      >
+        <input type="text" class="w-24" v-model="updateMemberInput.name" />
+        |
+        <input type="text" class="grow" v-model="updateMemberInput.walletAddress" />
+      </label>
+      <div class="flex mt-2 justify-between">
+        <button class="btn btn-error size-sm" @click="emits('deleteMember', updateMemberInput.id)">
+          Delete
+        </button>
+        <button class="btn btn-primary" @click="emits('updateMember', updateMemberInput.id)">
+          Update
+        </button>
+      </div>
+    </div>
+    <div></div>
+  </dialog>
+</template>
+<script setup lang="ts">
+import type { MemberInput } from '@/types'
+import { ref, watch } from 'vue'
+const emits = defineEmits(['toggleUpdateMemberModal', 'updateMember', 'deleteMember'])
+const props = defineProps<{
+  showUpdateMemberModal: boolean
+  updateMemberInput: Partial<MemberInput>
+}>()
+const updateMemberInput = ref(props.updateMemberInput)
+watch(
+  [() => props.showUpdateMemberModal, props.updateMemberInput, updateMemberInput],
+  () => {
+    updateMemberInput.value = props.updateMemberInput
+  },
+  { deep: true }
+)
+</script>
