@@ -68,10 +68,10 @@
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
-import { useTips } from '@/composables/tips'
+import { useTipsBalance } from '@/composables/tips';
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
-const { balance, loading: balanceLoading } = useTips()
+const { balance, loading: balanceLoading } = useTipsBalance()
 </script>
 
 <style scoped></style>

@@ -49,11 +49,7 @@
     </div>
     <TipsAction
       :addresses="team.members.map((member) => member.walletAddress)"
-      :pushTipLoading="pushTipLoading"
-      :sendTipLoading="sendTipLoading"
       :tipAmount="tipAmount"
-      @pushTip="(addresses, amount) => pushTip(addresses, amount)"
-      @sendTip="(addresses, amount) => sendTip(addresses, amount)"
     />
   </div>
 
@@ -107,11 +103,9 @@ import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-import { useTips } from '@/composables/tips'
 
 const { show } = useToastStore()
 
-const { sendTip, pushTip, sendTipLoading, pushTipLoading } = useTips()
 const tipAmount = ref(0)
 
 const memberApi = new FetchMemberAPI()

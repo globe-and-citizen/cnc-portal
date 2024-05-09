@@ -15,7 +15,7 @@
     <div class="flex flex-col justify-center">
       <label for="tip-amount" class="text-center mb-2">Actions</label>
       <div className="card-actions flex flex-row justify-between mx-8 self-center">
-        <LoadingButton v-if="pushTipLoading" color="primary" />
+        <LoadingButton v-if="pushTipLoading" color="primary w-full min-w-24" />
         <button
           v-else
           className="btn btn-primary w-full text-white"
@@ -23,7 +23,7 @@
         >
           Push Tips
         </button>
-        <LoadingButton v-if="sendTipLoading" color="secondary" />
+        <LoadingButton v-if="sendTipLoading" color="secondary w-full min-w-24" />
         <button
           v-else
           className="btn btn-secondary w-full text-white"
@@ -37,8 +37,9 @@
 </template>
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
-import { useTips } from '@/composables/tips'
-import { ref } from 'vue'
+import { usePushTip, useSendTip } from '@/composables/tips'
+import { ref, watchEffect, watch } from 'vue'
+import { useToast } from 'vue-toastification'
 
 const props = defineProps<{
   addresses: string[]
@@ -46,6 +47,21 @@ const props = defineProps<{
 }>()
 const emits = defineEmits(['pushTip', 'sendTip'])
 const tipAmount = ref(props.tipAmount)
-const { pushTip, loading: pushTipLoading } = useTips()
-const { sendTip, loading: sendTipLoading } = useTips()
+const { pushTip, loading: pushTipLoading, error: pushTipError } = usePushTip()
+const { sendTip, loading: sendTipLoading, error: sendTipError } = useSendTip()
+
+const $toast = useToast()
+watchEffect(() => {
+  if (pushTipError.value) {
+    $toast.error(
+      pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip',
+    )
+    pushTipError.value = null
+  }
+  if (sendTipError.value) {
+    $toast.error(
+      sendTipError.value.reason ? pushTipError.value.reason : 'Failed to send tip',
+    )
+  }
+})
 </script>
