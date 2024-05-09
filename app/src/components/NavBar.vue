@@ -27,7 +27,8 @@
           tabindex="0"
           class="mt-3 dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48"
         >
-          <li><a @click="$emit('withdraw')">Withdraw Tips</a></li>
+          <li v-if="withdrawLoading"><a href="#">Processing...</a></li>
+          <li v-else><a @click="withdraw()">Withdraw Tips</a></li>
         </ul>
       </div>
 
@@ -68,10 +69,27 @@
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
-import { useTipsBalance } from '@/composables/tips';
+import { useTipsBalance, useWithdrawTips } from '@/composables/tips'
+import { watchEffect } from 'vue'
+import { useToast } from 'vue-toastification'
 
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
-const { balance, loading: balanceLoading } = useTipsBalance()
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
+const $toast = useToast()
+const { balance, loading: balanceLoading, error: balanceError } = useTipsBalance()
+const { withdraw, loading: withdrawLoading, error: withdrawError } = useWithdrawTips()
+
+watchEffect(() => {
+  if (balanceError.value) {
+    $toast.error(balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance')
+    balanceError.value = null
+  }
+  if (withdrawError.value) {
+    $toast.error(
+      withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips'
+    )
+    withdrawError.value = null
+  }
+})
 </script>
 
 <style scoped></style>
