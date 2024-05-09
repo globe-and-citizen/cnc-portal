@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 import { usePushTip, useSendTip } from '@/composables/tips'
-import { ref, watchEffect } from 'vue'
+import { ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 
 defineProps<{
@@ -59,22 +59,16 @@ const {
 } = useSendTip()
 
 const $toast = useToast()
-watchEffect(() => {
-  if (pushTipError.value) {
-    $toast.error(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
-    pushTipError.value = null
-  }
-  if (sendTipError.value) {
-    $toast.error(sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip')
-    sendTipError.value = null
-  }
-  if (pushTipSuccess.value) {
-    $toast.success('Tips pushed successfully')
-    pushTipSuccess.value = false
-  }
-  if (sendTipSuccess.value) {
-    $toast.success('Tips pushed successfully')
-    sendTipSuccess.value = false
-  }
+watch(pushTipError, () => {
+  $toast.error(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
+})
+watch(sendTipError, () => {
+  $toast.error(sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip')
+})
+watch(pushTipSuccess, () => {
+  $toast.success('Tips pushed successfully')
+})
+watch(sendTipSuccess, () => {
+  $toast.success('Tips sent successfully')
 })
 </script>
