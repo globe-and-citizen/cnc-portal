@@ -32,6 +32,17 @@ export const useTipsStore = defineStore('tips', {
       }
 
       provider = new ethers.BrowserProvider((window as any).ethereum)
+      if (provider) {
+        const network = await provider.getNetwork()
+        if (network.name.toString() != import.meta.env.VITE_CURRENT_NETWORK_NAME) {
+          show(
+            ToastType.Warning,
+            `Please make sure you're connected to the ${import.meta.env.VITE_CURRENT_NETWORK_NAME} network. You're currently connected to the ${network.name} network.`
+          )
+
+          return
+        }
+      }
       await provider.send('eth_requestAccounts', [])
       contract = new ethers.Contract(TIPS_ADDRESS, ABI, await provider.getSigner())
       this.isWalletConnected = true
