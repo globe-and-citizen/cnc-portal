@@ -29,11 +29,13 @@ export function useTipsBalance() {
 export function usePushTip() {
   const loading = ref(false)
   const error = ref<any>(null)
+  const isSuccess = ref(false)
 
   async function pushTip(addresses: string[], amount: number): Promise<void> {
     try {
       loading.value = true
       await tipsService.pushTip(addresses, amount)
+      isSuccess.value = true
     } catch (err) {
       error.value = err
     } finally {
@@ -41,17 +43,19 @@ export function usePushTip() {
     }
   }
 
-  return { pushTip, loading, error }
+  return { pushTip, loading, error, isSuccess }
 }
 
 export function useSendTip() {
   const loading = ref(false)
   const error = ref<any>(null)
+  const isSuccess = ref(false)
 
   async function sendTip(addresses: string[], amount: number): Promise<void> {
     try {
       loading.value = true
       await tipsService.sendTip(addresses, amount)
+      isSuccess.value = true
     } catch (err) {
       error.value = err
     } finally {
@@ -59,7 +63,7 @@ export function useSendTip() {
     }
   }
 
-  return { sendTip, loading, error }
+  return { sendTip, loading, error, isSuccess }
 }
 
 export function useWithdrawTips() {
