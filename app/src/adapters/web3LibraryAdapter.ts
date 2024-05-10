@@ -1,5 +1,5 @@
 import { BrowserProvider /*, Signer */ } from 'ethers'
-import { MetaMaskUtil } from "@/utils/web3Util";
+import { MetaMaskUtil } from '@/utils/web3Util'
 
 // Define interface for web3 library
 export interface IWeb3Library {
@@ -11,7 +11,7 @@ export interface IWeb3Library {
   getProvider(): any
 }
 
-const metaMaskUtil = new MetaMaskUtil() 
+const metaMaskUtil = new MetaMaskUtil()
 
 // Adapter for ethers.js
 export class EthersJsAdapter implements IWeb3Library {
@@ -29,11 +29,11 @@ export class EthersJsAdapter implements IWeb3Library {
   async initialize() {
     // Initialize provider
     const metaProvider = metaMaskUtil.getProvider()
-    this.provider = new BrowserProvider(metaProvider);
+    this.provider = new BrowserProvider(metaProvider)
     metaProvider.on('accountsChanged', async (/*accounts: string[]*/) => {
       this.signer = await this.provider.getSigner()
     })
-    
+
     //this.signer = this.provider.getSigner();
   }
 
