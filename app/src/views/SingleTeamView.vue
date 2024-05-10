@@ -86,7 +86,6 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
