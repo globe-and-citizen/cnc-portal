@@ -39,7 +39,8 @@
 import LoadingButton from '@/components/LoadingButton.vue'
 import { usePushTip, useSendTip } from '@/composables/tips'
 import { ref, watch } from 'vue'
-import { useToast } from 'vue-toastification'
+import { useToastStore } from '@/stores/toast'
+import { ToastType } from '@/types'
 
 defineProps<{
   addresses: string[]
@@ -58,17 +59,23 @@ const {
   error: sendTipError
 } = useSendTip()
 
-const $toast = useToast()
+const { show } = useToastStore()
 watch(pushTipError, () => {
-  $toast.error(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
+  show(
+    ToastType.Error,
+    pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
+  )
 })
 watch(sendTipError, () => {
-  $toast.error(sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip')
+  show(
+    ToastType.Error,
+    sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
+  )
 })
 watch(pushTipSuccess, () => {
-  $toast.success('Tips pushed successfully')
+  show(ToastType.Success, 'Tips pushed successfully')
 })
 watch(sendTipSuccess, () => {
-  $toast.success('Tips sent successfully')
+  show(ToastType.Success, 'Tips sent successfully')
 })
 </script>
