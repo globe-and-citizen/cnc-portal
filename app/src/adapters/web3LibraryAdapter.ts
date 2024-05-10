@@ -1,8 +1,9 @@
 import { BrowserProvider /*, Signer */ } from 'ethers'
+import { switchWalletNetwork } from "@/utils/web3Util";
 
 // Define interface for web3 library
 export interface IWeb3Library {
-  initialize(): void
+  initialize(): Promise<void>
   connectWallet(): Promise<void>
   requestSign(message: string): Promise<string>
   //getAddressRef(): Promise<Ref<string | null>>
@@ -22,13 +23,15 @@ export class EthersJsAdapter implements IWeb3Library {
     this._address = ref(null)
   }*/
 
-  initialize(): void {
+  async initialize() {
     // Initialize provider
     if ('ethereum' in window) {
-      this.provider = new BrowserProvider(window.ethereum as any)
-      ;(window.ethereum as any).on('accountsChanged', async (/*accounts: string[]*/) => {
+      this.provider = new BrowserProvider(window.ethereum as any);
+      (window.ethereum as any).on('accountsChanged', async (/*accounts: string[]*/) => {
         this.signer = await this.provider.getSigner()
       })
+    } else {
+      throw new Error("Error: MetaMask Extention Not Installed")
     }
     //this.signer = this.provider.getSigner();
   }
@@ -39,7 +42,8 @@ export class EthersJsAdapter implements IWeb3Library {
       this.initialize()
     }
 
-    // Prompt user to connect their wallet
+    await switchWalletNetwork()
+
     await this.provider.send('eth_requestAccounts', [])
 
     // Get signer with connected wallet
