@@ -6,7 +6,9 @@ import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { useOwnerAddressStore } from '@/stores/address'
 import { ref } from 'vue'
-import { useToast } from 'vue-toastification'
+import { useToastStore } from '@/stores/toast'
+import { ToastType } from '@/types'
+import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 
@@ -27,7 +29,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 }
 
 async function siwe() {
-  const $toast = useToast()
+  const { show } = useToastStore()
 
   try {
     isProcessing.value = true
@@ -55,11 +57,14 @@ async function siwe() {
     console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())*/
   } catch (error) {
     isProcessing.value = false
-    $toast.error(error as string)
+    show(ToastType.Error, error as string)
     console.log('[app][src][utils][loginUtil.ts][signInWithEthereum] Error', error)
   }
 }
 
 export function useSiwe() {
-  return { isProcessing, siwe }
+  const toastStore = useToastStore()
+  const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
+
+  return { isProcessing, showToast, toastType, toastMessage, siwe }
 }

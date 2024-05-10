@@ -71,18 +71,25 @@ import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import { useTipsBalance, useWithdrawTips } from '@/composables/tips'
 import { watch } from 'vue'
-import { useToast } from 'vue-toastification'
+import { ToastType } from '@/types'
+import { useToastStore } from '@/stores/toast'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
-const $toast = useToast()
+const { show } = useToastStore()
 const { balance, loading: balanceLoading, error: balanceError } = useTipsBalance()
 const { withdraw, loading: withdrawLoading, error: withdrawError } = useWithdrawTips()
 
 watch(balanceError, () => {
-  $toast.error(balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance')
+  show(
+    ToastType.Error,
+    balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance'
+  )
 })
 watch(withdrawError, () => {
-  $toast.error(withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips')
+  show(
+    ToastType.Error,
+    withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips'
+  )
 })
 </script>
 

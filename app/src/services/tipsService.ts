@@ -33,7 +33,7 @@ export class SmartContract implements ISmartContract {
   }
 }
 
-export class TipsService extends SmartContract implements ISmartContract {
+export class TipsService extends SmartContract {
   constructor(web3Library: IWeb3Library) {
     super(web3Library, TIPS_ADDRESS, ABI)
   }

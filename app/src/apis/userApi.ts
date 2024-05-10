@@ -1,8 +1,8 @@
 import { BACKEND_URL } from '@/constant/index'
 
 // Define a generic type for user data
-import { type User } from '@/types'
-import { useToast } from 'vue-toastification'
+import { type User, ToastType } from '@/types/index'
+import { useToastStore } from '@/stores/toast'
 
 // Define an interface for UserService
 interface UserAPI {
@@ -45,8 +45,8 @@ export class FetchUserAPI implements UserAPI {
         body: JSON.stringify(updatedUser)
       })
       const updatedUserData = await response.json()
-      const $toast = useToast()
-      $toast.success('User updated successfully')
+      const { show } = useToastStore()
+      show(ToastType.Success, 'User updated successfully')
       return updatedUserData
     } catch (error) {
       console.error('Error:', error)

@@ -86,22 +86,23 @@
   </dialog>
 </template>
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 
-import { type Member, type MemberInput, type Team } from '@/types'
+import { ToastType, type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { FetchMemberAPI } from '@/apis/memberApi'
 
 import { isAddress } from 'ethers' // ethers v6
+import { useToastStore } from '@/stores/toast'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-import { useToast } from 'vue-toastification'
 
-const $toast = useToast()
+const { show } = useToastStore()
 const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
@@ -167,7 +168,7 @@ const handleAddMembers = async () => {
       String(route.params.id)
     )
     if (members && members.length > 0) {
-      $toast.success('Members added successfully')
+      show(ToastType.Success, 'Members added successfully')
       team.value.members = members
       showAddMemberForm.value = false
     }
@@ -198,7 +199,7 @@ const deleteMember = async (id: string) => {
   try {
     const memberRes: any = await memberApi.deleteMember(id)
     if (memberRes && memberRes.count == 1) {
-      $toast.success('Member deleted successfully')
+      show(ToastType.Success, 'Member deleted successfully')
       team.value.members.splice(
         team.value.members.findIndex((member) => member.id === id),
         1
@@ -217,7 +218,7 @@ const updateMember = async (id: string) => {
   try {
     const updatedMember = await memberApi.updateMember(member, id)
     if (updatedMember && Object.keys(updatedMember).length !== 0) {
-      $toast.success('Member updated successfully')
+      show(ToastType.Success, 'Member updated successfully')
       team.value.members.map((member) => {
         if (member.id === id) {
           member.name = updatedMember.name
@@ -240,7 +241,7 @@ const updateTeam = async () => {
   try {
     const teamRes = await teamApi.updateTeam(String(id), teamObject)
     if (teamRes) {
-      $toast.success('Team updated successfully')
+      show(ToastType.Success, 'Team updated successfully')
       team.value.name = teamRes.name
       team.value.description = teamRes.description
       showModal.value = false
@@ -255,7 +256,7 @@ const deleteTeam = async () => {
   try {
     const response: any = await teamApi.deleteTeam(String(id))
     if (response) {
-      $toast.success('Team deleted successfully')
+      show(ToastType.Success, 'Team deleted successfully')
       router.push('/teams')
     }
   } catch (error) {

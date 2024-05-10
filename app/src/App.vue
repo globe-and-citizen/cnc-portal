@@ -2,6 +2,8 @@
 import { RouterView, useRoute } from 'vue-router'
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
+import NotificationToast from '@/components/NotificationToast.vue'
+import { useToastStore } from '@/stores/toast'
 import { ref, watch, toRaw, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
@@ -17,6 +19,9 @@ const toggleSide = ref(true)
 function handleChange() {
   toggleSide.value = !toggleSide.value
 }
+
+const toastStore = useToastStore()
+const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
@@ -95,6 +100,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
   </div>
 </template>
 

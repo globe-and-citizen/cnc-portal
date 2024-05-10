@@ -134,14 +134,14 @@
 
 <script setup lang="ts">
 import { useTipEvents } from '@/composables/tips'
-import { TipsEventType } from '@/types'
+import { TipsEventType, ToastType } from '@/types'
 import { ethers } from 'ethers'
 import { onMounted, watch } from 'vue'
 import { ETHERSCAN_URL } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { useToast } from 'vue-toastification'
+import { useToastStore } from '@/stores/toast'
 
-const $toast = useToast()
+const { show } = useToastStore()
 
 const {
   events: pushTipEvents,
@@ -171,13 +171,13 @@ onMounted(async () => {
 })
 
 watch(pushTipError, () => {
-  $toast.error('Failed to get push tip events')
+  show(ToastType.Error, 'Failed to get push tip events')
 })
 watch(sendTipError, () => {
-  $toast.error('Failed to get send tip events')
+  show(ToastType.Error, 'Failed to get send tip events')
 })
 watch(withdrawalTipError, () => {
-  $toast.error('Failed to get withdrawal tip events')
+  show(ToastType.Error, 'Failed to get withdrawal tip events')
 })
 
 const showTxDetail = (txHash: string) => {
