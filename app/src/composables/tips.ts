@@ -2,6 +2,7 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { TipsService } from '@/services/tipsService'
 import type { EventResult, TipsEventType } from '@/types'
 import dayjs from 'dayjs'
+import type { Log } from 'ethers'
 import type { EventLog } from 'ethers'
 import { ref } from 'vue'
 
@@ -27,14 +28,15 @@ export function useTipsBalance() {
 }
 
 export function usePushTip() {
+  const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function pushTip(addresses: string[], amount: number): Promise<void> {
+  async function pushTip(addresses: string[], amount: number): Promise<any> {
     try {
       loading.value = true
-      await tipsService.pushTip(addresses, amount)
+      transaction.value = await tipsService.pushTip(addresses, amount)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -43,10 +45,11 @@ export function usePushTip() {
     }
   }
 
-  return { pushTip, loading, error, isSuccess }
+  return { pushTip, loading, error, isSuccess, transaction }
 }
 
 export function useSendTip() {
+  const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -54,7 +57,7 @@ export function useSendTip() {
   async function sendTip(addresses: string[], amount: number): Promise<void> {
     try {
       loading.value = true
-      await tipsService.sendTip(addresses, amount)
+      transaction.value = await tipsService.sendTip(addresses, amount)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -63,17 +66,18 @@ export function useSendTip() {
     }
   }
 
-  return { sendTip, loading, error, isSuccess }
+  return { sendTip, loading, error, isSuccess, transaction }
 }
 
 export function useWithdrawTips() {
+  const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
 
   async function withdraw() {
     try {
       loading.value = true
-      await tipsService.withdrawTips()
+      transaction.value = await tipsService.withdrawTips()
     } catch (err) {
       error.value = err
     } finally {
@@ -81,7 +85,7 @@ export function useWithdrawTips() {
     }
   }
 
-  return { withdraw, loading, error }
+  return { withdraw, loading, error, transaction }
 }
 
 export function useTipEvents() {
@@ -94,13 +98,13 @@ export function useTipEvents() {
       loading.value = true
       const response = await tipsService.getEvents(type)
       events.value = await Promise.all(
-        response.map(async (eventData: EventLog) => {
+        response.map(async (eventData: EventLog | Log) => {
           const date = dayjs((await eventData.getBlock()).date).format('DD/MM/YYYY HH:mm')
 
           return {
             txHash: eventData.transactionHash,
             date: date,
-            data: tipsService.contract.interface.decodeEventLog(
+            data: (await tipsService.getContract()).interface.decodeEventLog(
               type,
               eventData.data,
               eventData.topics

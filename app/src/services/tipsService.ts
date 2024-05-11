@@ -4,16 +4,18 @@ import type { AddressLike } from 'ethers'
 import ABI from '../abi/tips.json'
 import type { TipsEventType } from '@/types'
 import type { EventLog } from 'ethers'
+import type { Contract } from 'ethers'
+import type { Log } from 'ethers'
 
 interface ISmartContract {
-  contract: any
+  contract: Contract | undefined
   contractAddress: string
   contractAbi: any
-  getContract(address: string, abi: any): Promise<any>
+  getContract(address: string, abi: any): Promise<Contract>
 }
 
 export class SmartContract implements ISmartContract {
-  contract: any
+  contract: Contract | undefined
   contractAddress: string
   contractAbi: any
   web3Library: IWeb3Library
@@ -24,7 +26,7 @@ export class SmartContract implements ISmartContract {
     this.contractAbi = contractAbi
   }
 
-  async getContract(): Promise<any> {
+  async getContract(): Promise<Contract> {
     if (!this.contract) {
       this.contract = await this.web3Library.getContract(this.contractAddress, this.contractAbi)
     }
@@ -82,7 +84,7 @@ export class TipsService extends SmartContract {
     await tx.wait()
   }
 
-  async getEvents(type: TipsEventType): Promise<EventLog[]> {
+  async getEvents(type: TipsEventType): Promise<EventLog[] | Log[]> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }

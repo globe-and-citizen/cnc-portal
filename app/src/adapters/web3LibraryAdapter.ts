@@ -1,3 +1,4 @@
+import type { Contract } from 'ethers'
 import { BrowserProvider, /*, Signer */ ethers } from 'ethers'
 
 // Define interface for web3 library
@@ -7,7 +8,7 @@ export interface IWeb3Library {
   requestSign(message: string): Promise<string>
   //getAddressRef(): Promise<Ref<string | null>>
   getAddress(): Promise<string>
-  getContract(address: string, abi: any): Promise<any>
+  getContract(address: string, abi: any): Promise<Contract>
   parseEther(value: string): bigint
 }
 
@@ -69,7 +70,7 @@ export class EthersJsAdapter implements IWeb3Library {
     return (await this.signer).address
   }
 
-  async getContract(address: string, abi: any) {
+  async getContract(address: string, abi: any): Promise<Contract> {
     if (!this.signer) {
       //throw new Error('Wallet is not connected');
       await this.connectWallet()
@@ -78,7 +79,7 @@ export class EthersJsAdapter implements IWeb3Library {
     return new ethers.Contract(address, abi, await this.signer)
   }
 
-  parseEther(value: string) {
+  parseEther(value: string): bigint {
     return ethers.parseEther(value)
   }
 

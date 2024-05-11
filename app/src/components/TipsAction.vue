@@ -61,21 +61,29 @@ const {
 
 const { show } = useToastStore()
 watch(pushTipError, () => {
-  show(
-    ToastType.Error,
-    pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
-  )
+  if (pushTipError.value) {
+    show(
+      ToastType.Error,
+      pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
+    )
+  }
 })
 watch(sendTipError, () => {
-  show(
-    ToastType.Error,
-    sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
-  )
+  if (sendTipError.value) {
+    show(
+      ToastType.Error,
+      sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
+    )
+  }
 })
 watch(pushTipSuccess, () => {
-  show(ToastType.Success, 'Tips pushed successfully')
+  if (pushTipSuccess.value) {
+    show(ToastType.Success, 'Tips pushed successfully')
+  }
 })
 watch(sendTipSuccess, () => {
-  show(ToastType.Success, 'Tips sent successfully')
+  if (sendTipSuccess.value) {
+    show(ToastType.Success, 'Tips sent successfully')
+  }
 })
 </script>
