@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    # restart: always
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: newpassword
+      POSTGRES_DB: cnc-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: build
+      args:
+        VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
+        VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
+        VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
+    environment:
+      VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
+      VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
+      VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
+    ports:
+      - "5173:5173" # Adjust port as needed
+    volumes:
+      - ./app:/app
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "3000:3000" # Adjust port as needed
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://postgres:newpassword@db:5432/cnc-db
+      PORT: 3000
+      FRONTEND_URL: http://localhost
+      NODE_ENV: development
+      SECRET_KEY: "secret-key"
+
+volumes:
+  db:
