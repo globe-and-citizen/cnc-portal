@@ -17,7 +17,7 @@ describe('Tips', function () {
     // Deploy the Tips contract
     const TipsFactory = await ethers.getContractFactory('Tips')
     tips = await TipsFactory.deploy()
-    await tips.initialize();
+    await tips.initialize()
   })
 
   describe('pushTip', function () {
