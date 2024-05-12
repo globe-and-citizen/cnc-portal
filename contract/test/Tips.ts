@@ -17,6 +17,7 @@ describe('Tips', function () {
     // Deploy the Tips contract
     const TipsFactory = await ethers.getContractFactory('Tips')
     tips = await TipsFactory.deploy()
+    await tips.initialize();
   })
 
   describe('pushTip', function () {
@@ -76,29 +77,30 @@ describe('Tips', function () {
 
   describe('withdraw', function () {
     it('should revert if no tips have been earned', async function () {
-      await expect(tips.connect(member1).withdraw()).to.be.revertedWith('No tips to withdraw.')
+      await expect(tips.connect(member1).withdraw(TIP_AMOUNT)).to.be.revertedWith(
+        'No tips to withdraw.'
+      )
     })
 
     it('should withdraw earned tips and reset the balance', async function () {
+      const amountPerAddress = ethers.parseEther('10')
+      const amountToWithdraw = ethers.parseEther('5')
       await tips.connect(sender).sendTip(recipientAddress, { value: TIP_AMOUNT })
 
-      const member1StartingBalance = await ethers.provider.getBalance(member1.address)
-
-      await tips.connect(member1).withdraw()
-
-      const member1EndingBalance = await ethers.provider.getBalance(member1.address)
-
-      expect(member1EndingBalance).to.gt(member1StartingBalance)
-      expect(await tips.getBalance(member1.address)).to.equal(0) // Balance should be reset
+      await expect(() => tips.connect(member1).withdraw(amountToWithdraw)).to.changeEtherBalance(
+        member1,
+        amountToWithdraw
+      )
+      expect(await tips.getBalance(member1.address)).to.equal(amountPerAddress - amountToWithdraw)
     })
 
     it('should emit a TipWithdrawal event on successful withdrawal', async function () {
-      const amountPerAddress = ethers.parseEther('10')
+      const amountToWithdraw = ethers.parseEther('5')
       await tips.connect(sender).sendTip(recipientAddress, { value: TIP_AMOUNT })
 
-      await expect(tips.connect(member1).withdraw())
+      await expect(tips.connect(member1).withdraw(amountToWithdraw))
         .to.emit(tips, 'TipWithdrawal')
-        .withArgs(member1.address, amountPerAddress)
+        .withArgs(member1.address, amountToWithdraw)
     })
   })
 })
