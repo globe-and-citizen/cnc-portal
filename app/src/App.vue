@@ -13,7 +13,7 @@ import { FetchUserAPI } from './apis/userApi'
 import { useDark, useToggle } from '@vueuse/core'
 
 const isDark = useDark(
-  window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) as any
 )
 const toggleDark = useToggle(isDark)
 
