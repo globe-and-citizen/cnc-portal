@@ -10,6 +10,12 @@ import { useUserDataStore } from '@/stores/user'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
+import { useDark, useToggle } from '@vueuse/core'
+
+const isDark = useDark(
+  window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+)
+const toggleDark = useToggle(isDark)
 
 const userApi = new FetchUserAPI()
 
@@ -49,6 +55,7 @@ watch(
     <RouterView name="login" />
     <div v-if="$route.path != '/login'">
       <NavBar
+        @toggleTheme="() => toggleDark()"
         @toggleSideButton="handleChange"
         @toggleEditUserModal="
           () => {
@@ -57,6 +64,7 @@ watch(
             showUserModal = !showUserModal
           }
         "
+        :isDark="isDark"
       />
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">
