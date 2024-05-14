@@ -1,7 +1,10 @@
-import { NETWORK_CONFIG } from '@/constant'
+import { NETWORK_NAME } from '@/constant'
+import networks from "@/networks/networks.json";
+import type { Network } from "@/types"
 
 export class MetaMaskUtil {
   private provider: any
+  private network: Network
 
   constructor() {
     if ('ethereum' in window) {
@@ -9,13 +12,15 @@ export class MetaMaskUtil {
     } else {
       throw new Error('MetaMask Not Installed')
     }
+    
+    this.network = networks[NETWORK_NAME] 
   }
 
   async switchNetwork() {
     try {
       await this.provider.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: NETWORK_CONFIG.chainId }]
+        params: [{ chainId: this.network.chainId }]
       })
     } catch (error: any) {
       if (error.code === 4902) {
@@ -23,15 +28,15 @@ export class MetaMaskUtil {
           method: 'wallet_addEthereumChain',
           params: [
             {
-              chainId: NETWORK_CONFIG.chainId,
-              chainName: NETWORK_CONFIG.networkName,
-              rpcUrls: [NETWORK_CONFIG.networkUrl],
+              chainId: this.network.chainId,
+              chainName: this.network.networkName,
+              rpcUrls: [this.network.rpcUrl],
               nativeCurrency: {
-                symbol: NETWORK_CONFIG.currencySymbol,
+                symbol: this.network.currencySymbol,
                 decimals: 18
               },
-              blockExplorerUrls: NETWORK_CONFIG.blockExplorerUrl
-                ? [NETWORK_CONFIG.blockExplorerUrl]
+              blockExplorerUrls: this.network.blockExplorerUrl
+                ? [this.network.blockExplorerUrl]
                 : null
             }
           ]
@@ -44,5 +49,9 @@ export class MetaMaskUtil {
 
   getProvider() {
     return this.provider
+  }
+
+  getNetwork() {
+    return this.network
   }
 }
