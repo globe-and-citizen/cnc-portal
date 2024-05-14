@@ -15,7 +15,7 @@ export default {
           accent: '#00B8D9',
           neutral: '#0f3d2e',
           'base-100': '#f3fcf9',
-
+          'base-200': '#FFFFFF',
           info: '#00B8D9',
           success: '#36B37E',
           warning: '#FFAB00',
@@ -23,11 +23,20 @@ export default {
         },
         dark: {
           primary: '#42ffba',
-          secondary: '#2227bf',
-          accent: '#242291',
-          neutral: '#0f3d2e',
-          'base-100': '#030c09'
+          secondary: '#2c3e50',
+          accent: '#8e44ad',
+          neutral: '#34495e',
+          'base-100': '#1a1a1a',
+          'base-200': '#121212'
         },
+        // dark: {
+        //   primary: '#42ffba',
+        //   secondary: '#2227bf',
+        //   accent: '#242291',
+        //   neutral: '#0f3d2e',
+        //   'base-100': '#1a1a1a',
+        //   'base-200': '#030c09'
+        // },
         mytheme: {
           primary: '#0097d6',
           secondary: '#0058ff',

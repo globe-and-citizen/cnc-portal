@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col items-center menu pt-28 w-80 min-h-full bg-white text-base-content fixed px-6 gap-3"
+    class="flex flex-col bg-base-200 items-center menu pt-28 w-80 min-h-full text-base-content fixed px-6 gap-3"
   >
     <div
       class="w-full flex flex-row justify-start gap-4 card bg-base-100 px-5 py-4 cursor-pointer"
@@ -25,7 +25,7 @@
         </p>
       </div>
     </div>
-    <ul class="menu bg-white w-full rounded-box gap-3">
+    <ul class="menu bg-base-200 w-full rounded-box gap-3">
       <li class="menu-title">Title</li>
       <li>
         <RouterLink to="/">

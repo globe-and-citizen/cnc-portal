@@ -51,7 +51,7 @@ watch(
 </script>
 
 <template>
-  <div>
+  <div class="text text-secondary">
     <RouterView name="login" />
     <div v-if="$route.path != '/login'">
       <NavBar
