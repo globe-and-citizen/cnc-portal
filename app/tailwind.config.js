@@ -23,20 +23,12 @@ export default {
         },
         dark: {
           primary: '#42ffba',
-          secondary: '#2c3e50',
-          accent: '#8e44ad',
-          neutral: '#34495e',
+          secondary: '#2227bf',
+          accent: '#242291',
+          neutral: '#0f3d2e',
           'base-100': '#1a1a1a',
-          'base-200': '#121212'
+          'base-200': '#030c09'
         },
-        // dark: {
-        //   primary: '#42ffba',
-        //   secondary: '#2227bf',
-        //   accent: '#242291',
-        //   neutral: '#0f3d2e',
-        //   'base-100': '#1a1a1a',
-        //   'base-200': '#030c09'
-        // },
         mytheme: {
           primary: '#0097d6',
           secondary: '#0058ff',
