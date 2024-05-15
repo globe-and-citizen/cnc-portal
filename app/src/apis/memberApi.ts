@@ -18,7 +18,7 @@ export class FetchMemberAPI implements MemberAPI {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify(newMembers)
+      body: JSON.stringify({ membersData: newMembers })
     }
 
     for (const member of newMembers) {
