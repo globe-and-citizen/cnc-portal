@@ -5,6 +5,7 @@ export type Networks =
     | "ethereum" 
     | "amoy" 
     | "holesky"
+    | undefined
 
 export type Network = {
     chainId: string; 

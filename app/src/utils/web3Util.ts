@@ -1,5 +1,4 @@
-import { NETWORK_NAME } from '@/constant'
-import networks from "@/networks/networks.json";
+import { NETWORK } from '@/constant'
 import type { Network } from "@/types"
 
 export class MetaMaskUtil {
@@ -13,7 +12,7 @@ export class MetaMaskUtil {
       throw new Error('MetaMask Not Installed')
     }
     
-    this.network = networks[NETWORK_NAME] 
+    this.network = NETWORK 
   }
 
   async switchNetwork() {

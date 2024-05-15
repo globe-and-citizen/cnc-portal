@@ -69,6 +69,18 @@ In the `./app` folder, create a `.env` file with the following variable:
 `VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
 - **VITE_APP_TIPS_ADDRESS**: The URL to Tips smart contract. Example:
 `VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B`
+- _VITE_APP_NETWORK_ALIAS_: The string identifier of an EVM compatible network that the app uses. Example: `VITE_APP_NETWORK_ALIAS=polygon`. This variable is optional but if you don't set your own network parameters it has to be provided. Use this if you want to use one of the preset networks which the application provides. Available options are:
+    1. `etherem` - The Ethereum Main Network
+    2. `polygon` - The Polygon Main Network
+    3. `sepolia` - The Sepolia Test Network
+    4. `holesky` - The Holesky Test Network
+    6. `amoy` - The Polygon Amoy Test Network
+    6. `hardhat` - The Hardhat Local Network
+- __VITE_APP_NETWORK_NAME__: The full name of the EVM compatible network the app uses. Example: `VITE_APP_NETWORK_NAME=Optimism Mainnet`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- __VITE_APP_RPC_URL__: The URL used to access the EVM compatible network the app uses. Example: `VITE_APP_RPC_URL=https://optimism-mainnet.infura.io`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- __VITE_APP_CHAIN_ID__: The Network ID used to sign transcations on the EVM compatible network that the app uses in hexadecimal. Example: `VITE_APP_CHAIN_ID=0xa`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- __VITE_APP_CURRENCY_SYMBOL__: The ticker symbol displayed for the network's currency. Example: `VITE_APP_CURRENCY_SYMBOL=ETH`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- __VITE_APP_BLOCK_EXPLORER_URL__: The URL for viewing transactions on the network the app uses. Example: `VITE_APP_BLOCK_EXPLORER_URL=https://optimistic.etherscan.io/`. This variable is optional.
 
 ## Running the application
 
