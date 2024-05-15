@@ -47,7 +47,13 @@
         @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
       />
     </div>
-    <TipsAction :addresses="team.members.map((member) => member.walletAddress)" />
+    <TipsAction
+      :pushTipLoading="pushTipLoading"
+      :sendTipLoading="sendTipLoading"
+      @pushTip="(amount) => pushTip(membersAddress, amount)"
+      @sendTip="(amount) => sendTip(membersAddress, amount)"
+    />
+    <!-- <TipsAction :addresses="team.members.map((member) => member.walletAddress)" /> -->
   </div>
 
   <dialog
@@ -87,7 +93,7 @@
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
@@ -98,13 +104,43 @@ import { FetchMemberAPI } from '@/apis/memberApi'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
+import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-
 const { show } = useToastStore()
 const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
+const {
+  execute: pushTip,
+  isLoading: pushTipLoading,
+  isSuccess: pushTipSuccess,
+  error: pushTipError
+} = usePushTip()
+const {
+  execute: sendTip,
+  isLoading: sendTipLoading,
+  isSuccess: sendTipSuccess,
+  error: sendTipError
+} = useSendTip()
+watch(pushTipError, () => {
+  show(
+    ToastType.Error,
+    pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
+  )
+})
+watch(sendTipError, () => {
+  show(
+    ToastType.Error,
+    sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
+  )
+})
+watch(pushTipSuccess, () => {
+  show(ToastType.Success, 'Tips pushed successfully')
+})
+watch(sendTipSuccess, () => {
+  show(ToastType.Success, 'Tips sent successfully')
+})
 
 const teamApi = new FetchTeamAPI()
 
@@ -269,4 +305,7 @@ watch(
   },
   { deep: true }
 )
+const membersAddress = computed(() => {
+  return team.value.members.map((member) => member.walletAddress)
+})
 </script>

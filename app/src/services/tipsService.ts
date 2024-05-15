@@ -84,6 +84,7 @@ export class TipsService extends SmartContract {
     await tx.wait()
   }
 
+  // TODO use a builder pattern for this
   async getEvents(type: TipsEventType): Promise<EventLog[] | Log[]> {
     if (!this.contract) {
       this.contract = await super.getContract()
