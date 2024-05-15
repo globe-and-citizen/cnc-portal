@@ -23,7 +23,6 @@ export class AuthAPI {
         throw new Error(resObj.message)
       }
     } catch (e: any) {
-      logout()
       throw new Error(e)
     }
   }

@@ -53,7 +53,7 @@ const router = createRouter({
   ]
 })
 router.beforeEach(async (to) => {
-  if (!(await AuthService.isAuthenticated()) && to.name !== 'login') {
+  if (localStorage.getItem('authToken') == null && to.name !== 'login') {
     return { name: 'login' }
   }
 })

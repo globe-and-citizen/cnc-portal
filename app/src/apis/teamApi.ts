@@ -1,6 +1,7 @@
 import type { Team, Member } from '@/types'
 import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
+import { AuthAPI } from '@/apis/authApi'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
 
@@ -14,7 +15,7 @@ interface TeamAPI {
 
 export class FetchTeamAPI implements TeamAPI {
   async getAllTeams(): Promise<Team[]> {
-    const token = AuthService.getToken()
+    const token: any = AuthService.getToken()
     const ownerAddressStore = useOwnerAddressStore()
     const requestOptions = {
       method: 'GET',
@@ -26,6 +27,10 @@ export class FetchTeamAPI implements TeamAPI {
 
     const response = await fetch(`${BACKEND_URL}/api/teams`, requestOptions)
     const resObj = await response.json()
+    if (response.status === 401) {
+      await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
     if (!resObj.success) {
       throw new Error(resObj.message)
     }
@@ -34,7 +39,7 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async getTeam(id: string): Promise<Team | null> {
     const ownerAddressStore = useOwnerAddressStore()
-    const token = AuthService.getToken()
+    const token: any = AuthService.getToken()
     const url = `${BACKEND_URL}/api/teams/${id}`
     const requestOptions = {
       method: 'GET',
@@ -47,6 +52,10 @@ export class FetchTeamAPI implements TeamAPI {
 
     const response = await fetch(url, requestOptions)
     const resObj = await response.json()
+    if (response.status === 401) {
+      await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
     if (!resObj.success) {
       throw new Error(resObj.message)
     }
@@ -55,7 +64,7 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team> {
     const ownerAddressStore = useOwnerAddressStore()
-    const token = AuthService.getToken()
+    const token: any = AuthService.getToken()
 
     const url = `${BACKEND_URL}/api/teams/${id}`
     const requestData = {
@@ -73,7 +82,10 @@ export class FetchTeamAPI implements TeamAPI {
 
     const response = await fetch(url, requestOptions)
     const resObj = await response.json()
-    console.log(resObj)
+    if (response.status === 401) {
+      await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
     }
@@ -81,7 +93,7 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
-    const token = AuthService.getToken()
+    const token: any = AuthService.getToken()
 
     const requestOptions = {
       method: 'DELETE',
@@ -92,7 +104,10 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(url, requestOptions)
 
     const resObj = await response.json()
-    console.log(resObj)
+    if (response.status === 401) {
+      await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
     }
@@ -107,7 +122,7 @@ export class FetchTeamAPI implements TeamAPI {
     teamMembers: Partial<Member>[]
   ): Promise<Team> {
     const ownerAddressStore = useOwnerAddressStore()
-    const token = AuthService.getToken()
+    const token: any = AuthService.getToken()
     const teamObject = {
       name: teamName,
       description: teamDesc,
@@ -138,6 +153,10 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(url, requestOptions)
 
     const resObj = await response.json()
+    if (response.status === 401) {
+      await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
     if (!resObj.success) {
       throw new Error(resObj.message)
     }
