@@ -8,8 +8,22 @@ import { ref } from 'vue'
 
 const tipsService = new TipsService(EthersJsAdapter.getInstance())
 
-export function useTipsBalance() {
-  const balance = ref<string>('0')
+interface IContractReadFunction<T> {
+  isLoading: ref<boolean>
+  error: ref<any>
+  data: ref<T>
+  execute: () => Promise<void>
+}
+
+interface IContractTransactionFunction {
+  isLoading: ref<boolean>
+  error: ref<any>
+  transaction: ref<any>
+  execute: () => Promise<void>
+}
+
+export function useTipsBalance(): IContractReadFunction<string> {
+  const balance = ref<string>(null)
   const loading = ref(false)
   const error = ref<any>(null)
 
@@ -24,10 +38,14 @@ export function useTipsBalance() {
     }
   }
 
-  return { balance, getBalance, loading, error }
+  async function execute() {
+    await getBalance()
+  }
+
+  return { isLoading, error, data: balance, execute }
 }
 
-export function usePushTip() {
+export function usePushTip(): IContractTransactionFunction {
   const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
