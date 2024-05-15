@@ -171,13 +171,19 @@ onMounted(async () => {
 })
 
 watch(pushTipError, () => {
-  show(ToastType.Error, 'Failed to get push tip events')
+  if (pushTipError.value) {
+    show(ToastType.Error, 'Failed to get push tip events')
+  }
 })
 watch(sendTipError, () => {
-  show(ToastType.Error, 'Failed to get send tip events')
+  if (sendTipError.value) {
+    show(ToastType.Error, 'Failed to get send tip events')
+  }
 })
 watch(withdrawalTipError, () => {
-  show(ToastType.Error, 'Failed to get withdrawal tip events')
+  if (withdrawalTipError.value) {
+    show(ToastType.Error, 'Failed to get withdrawal tip events')
+  }
 })
 
 const showTxDetail = (txHash: string) => {

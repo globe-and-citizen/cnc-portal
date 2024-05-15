@@ -84,16 +84,20 @@ onMounted(() => {
   execute()
 })
 watch(balanceError, () => {
-  show(
-    ToastType.Error,
-    balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance'
-  )
+  if (balanceError.value) {
+    show(
+      ToastType.Error,
+      balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance'
+    )
+  }
 })
 watch(withdrawError, () => {
-  show(
-    ToastType.Error,
-    withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips'
-  )
+  if (withdrawError.value) {
+    show(
+      ToastType.Error,
+      withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips'
+    )
+  }
 })
 </script>
 
