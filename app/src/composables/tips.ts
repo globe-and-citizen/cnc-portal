@@ -4,26 +4,28 @@ import type { EventResult, TipsEventType } from '@/types'
 import dayjs from 'dayjs'
 import type { Log } from 'ethers'
 import type { EventLog } from 'ethers'
+import type { Ref } from 'vue'
 import { ref } from 'vue'
 
 const tipsService = new TipsService(EthersJsAdapter.getInstance())
 
 interface IContractReadFunction<T> {
-  isLoading: ref<boolean>
-  error: ref<any>
-  data: ref<T>
+  isLoading: Ref<boolean>
+  error: Ref<any>
+  data: Ref<T>
   execute: () => Promise<void>
 }
 
 interface IContractTransactionFunction {
-  isLoading: ref<boolean>
-  error: ref<any>
-  transaction: ref<any>
-  execute: () => Promise<void>
+  isLoading: Ref<boolean>
+  isSuccess: Ref<boolean>
+  error: Ref<any>
+  transaction: Ref<any>
+  execute: (...args: any[]) => Promise<void>
 }
 
-export function useTipsBalance(): IContractReadFunction<string> {
-  const balance = ref<string>(null)
+export function useTipsBalance(): IContractReadFunction<string | null> {
+  const balance = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<any>(null)
 
@@ -42,28 +44,28 @@ export function useTipsBalance(): IContractReadFunction<string> {
     await getBalance()
   }
 
-  return { isLoading, error, data: balance, execute }
+  return { isLoading: loading, error, data: balance, execute }
 }
 
 export function usePushTip(): IContractTransactionFunction {
   const transaction = ref<any>(null)
-  const loading = ref(false)
+  const isLoading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function pushTip(addresses: string[], amount: number): Promise<any> {
+  async function pushTip(addresses: string[], amount: number) {
     try {
-      loading.value = true
+      isLoading.value = true
       transaction.value = await tipsService.pushTip(addresses, amount)
       isSuccess.value = true
     } catch (err) {
       error.value = err
     } finally {
-      loading.value = false
+      isLoading.value = false
     }
   }
 
-  return { pushTip, loading, error, isSuccess, transaction }
+  return { execute: pushTip, isLoading, error, isSuccess, transaction }
 }
 
 export function useSendTip() {

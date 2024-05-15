@@ -47,8 +47,8 @@ defineProps<{
 }>()
 const tipAmount = ref(0)
 const {
-  pushTip,
-  loading: pushTipLoading,
+  execute: pushTip,
+  isLoading: pushTipLoading,
   isSuccess: pushTipSuccess,
   error: pushTipError
 } = usePushTip()
