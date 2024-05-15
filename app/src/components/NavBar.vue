@@ -16,8 +16,11 @@
         <div tabindex="0" role="button" class="">
           <div class="btn w-full flex flex-row justify-between text-gray-500">
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
-            <div>
-              <span class="text-black font-bold font-mono">{{ balance.slice(0, 6) }}</span>
+            <div v-if="balanceLoading">XXX ETH</div>
+            <div v-else>
+              <span class="text-black font-bold font-mono">
+                {{ balance ? balance.slice(0, 6) : '0' }}</span
+              >
               <span class="ml-2 text-black font-bold font-mono">ETH</span>
             </div>
           </div>
@@ -26,7 +29,8 @@
           tabindex="0"
           class="mt-3 dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48"
         >
-          <li><a @click="tipsStore.withdrawTips()">Withdraw Tips</a></li>
+          <li v-if="withdrawLoading"><a href="#">Processing...</a></li>
+          <li v-else><a @click="withdraw()">Withdraw Tips</a></li>
         </ul>
       </div>
 
@@ -64,19 +68,36 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
-import { storeToRefs } from 'pinia'
-import { onMounted } from 'vue'
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
+import { useTipsBalance, useWithdrawTips } from '@/composables/tips'
+import { onMounted, watch } from 'vue'
+import { ToastType } from '@/types'
+import { useToastStore } from '@/stores/toast'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
-const tipsStore = useTipsStore()
-const { balance } = storeToRefs(tipsStore)
-
-onMounted(async () => {
-  await tipsStore.getBalance()
+const { show } = useToastStore()
+const { execute, data: balance, isLoading: balanceLoading, error: balanceError } = useTipsBalance()
+const { execute: withdraw, isLoading: withdrawLoading, error: withdrawError } = useWithdrawTips()
+onMounted(() => {
+  execute()
+})
+watch(balanceError, () => {
+  if (balanceError.value) {
+    show(
+      ToastType.Error,
+      balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance'
+    )
+  }
+})
+watch(withdrawError, () => {
+  if (withdrawError.value) {
+    show(
+      ToastType.Error,
+      withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips'
+    )
+  }
 })
 </script>
 

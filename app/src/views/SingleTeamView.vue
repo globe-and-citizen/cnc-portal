@@ -48,13 +48,12 @@
       />
     </div>
     <TipsAction
-      :addresses="team.members.map((member) => member.walletAddress)"
       :pushTipLoading="pushTipLoading"
       :sendTipLoading="sendTipLoading"
-      :tipAmount="tipAmount"
-      @pushTip="(addresses, amount) => pushTip(addresses, amount)"
-      @sendTip="(addresses, amount) => sendTip(addresses, amount)"
+      @pushTip="(amount) => pushTip(membersAddress, amount)"
+      @sendTip="(amount) => sendTip(membersAddress, amount)"
     />
+    <!-- <TipsAction :addresses="team.members.map((member) => member.walletAddress)" /> -->
   </div>
 
   <dialog
@@ -93,10 +92,8 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
-import { storeToRefs } from 'pinia'
 import MemberCard from '@/components/MemberCard.vue'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
@@ -107,19 +104,51 @@ import { FetchMemberAPI } from '@/apis/memberApi'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
+import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-
 const { show } = useToastStore()
-
-const tipStore = useTipsStore()
-const { pushTip, sendTip } = useTipsStore()
-const { sendTipLoading, pushTipLoading } = storeToRefs(tipStore)
-const tipAmount = ref(0)
-
 const memberApi = new FetchMemberAPI()
 const route = useRoute()
 const router = useRouter()
+const {
+  execute: pushTip,
+  isLoading: pushTipLoading,
+  isSuccess: pushTipSuccess,
+  error: pushTipError
+} = usePushTip()
+const {
+  execute: sendTip,
+  isLoading: sendTipLoading,
+  isSuccess: sendTipSuccess,
+  error: sendTipError
+} = useSendTip()
+watch(pushTipError, () => {
+  if (pushTipError.value) {
+    show(
+      ToastType.Error,
+      pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
+    )
+  }
+})
+watch(sendTipError, () => {
+  if (sendTipError.value) {
+    show(
+      ToastType.Error,
+      sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
+    )
+  }
+})
+watch(pushTipSuccess, () => {
+  if (pushTipSuccess.value) {
+    show(ToastType.Success, 'Tips pushed successfully')
+  }
+})
+watch(sendTipSuccess, () => {
+  if (sendTipSuccess.value) {
+    show(ToastType.Success, 'Tips sent successfully')
+  }
+})
 
 const teamApi = new FetchTeamAPI()
 
@@ -284,4 +313,7 @@ watch(
   },
   { deep: true }
 )
+const membersAddress = computed(() => {
+  return team.value.members.map((member) => member.walletAddress)
+})
 </script>

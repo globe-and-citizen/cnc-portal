@@ -25,6 +25,5 @@ import IconCheck from '@/components/icons/IconCheck.vue'
 import IconInfo from '@/components/icons/IconInfo.vue'
 import IconWarning from '@/components/icons/IconWarning.vue'
 import IconError from '@/components/icons/IconError.vue'
-
 defineProps<{ type: ToastType; message: string }>()
 </script>

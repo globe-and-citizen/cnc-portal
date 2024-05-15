@@ -9,7 +9,6 @@ import { ref } from 'vue'
 import { useToastStore } from '@/stores/toast'
 import { ToastType } from '@/types'
 import { storeToRefs } from 'pinia'
-
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 
