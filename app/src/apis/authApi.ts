@@ -6,21 +6,25 @@ export interface IAuthAPI {
 
 export class AuthAPI {
   static async verifyToken(token: string): Promise<boolean> {
-    const response = await fetch(`${BACKEND_URL}/api/auth/token`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/auth/token`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      const resObj = await response.json()
+
+      if (resObj.success) {
+        return true
+      } else {
+        logout()
+        throw new Error(resObj.message)
       }
-    })
-
-    const resObj = await response.json()
-
-    if (resObj.success) {
-      return true
-    } else {
-      //return false
+    } catch (e: any) {
       logout()
-      throw new Error(resObj.message)
+      throw new Error(e)
     }
   }
 }
