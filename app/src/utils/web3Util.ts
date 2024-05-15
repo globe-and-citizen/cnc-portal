@@ -1,5 +1,5 @@
 import { NETWORK } from '@/constant'
-import type { Network } from "@/types"
+import type { Network } from '@/types'
 
 export class MetaMaskUtil {
   private provider: any
@@ -11,8 +11,8 @@ export class MetaMaskUtil {
     } else {
       throw new Error('MetaMask Not Installed')
     }
-    
-    this.network = NETWORK 
+
+    this.network = NETWORK
   }
 
   async switchNetwork() {
