@@ -19,7 +19,7 @@
         <button
           v-else
           className="btn btn-primary w-full text-white"
-          @click="pushTip(addresses, tipAmount)"
+          @click="emits('pushTip', tipAmount)"
         >
           Push Tips
         </button>
@@ -27,7 +27,7 @@
         <button
           v-else
           className="btn btn-secondary w-full text-white"
-          @click="sendTip(addresses, tipAmount)"
+          @click="emits('sendTip', tipAmount)"
         >
           Send Tips
         </button>
@@ -36,46 +36,13 @@
   </div>
 </template>
 <script setup lang="ts">
+import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { usePushTip, useSendTip } from '@/composables/tips'
-import { ref, watch } from 'vue'
-import { useToastStore } from '@/stores/toast'
-import { ToastType } from '@/types'
 
-defineProps<{
-  addresses: string[]
-}>()
+const emits = defineEmits(['pushTip', 'sendTip'])
 const tipAmount = ref(0)
-const {
-  execute: pushTip,
-  isLoading: pushTipLoading,
-  isSuccess: pushTipSuccess,
-  error: pushTipError
-} = usePushTip()
-const {
-  execute: sendTip,
-  isLoading: sendTipLoading,
-  isSuccess: sendTipSuccess,
-  error: sendTipError
-} = useSendTip()
-
-const { show } = useToastStore()
-watch(pushTipError, () => {
-  show(
-    ToastType.Error,
-    pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
-  )
-})
-watch(sendTipError, () => {
-  show(
-    ToastType.Error,
-    sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
-  )
-})
-watch(pushTipSuccess, () => {
-  show(ToastType.Success, 'Tips pushed successfully')
-})
-watch(sendTipSuccess, () => {
-  show(ToastType.Success, 'Tips sent successfully')
-})
+defineProps<{
+  pushTipLoading: boolean
+  sendTipLoading: boolean
+}>()
 </script>
