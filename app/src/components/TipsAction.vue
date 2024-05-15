@@ -53,8 +53,8 @@ const {
   error: pushTipError
 } = usePushTip()
 const {
-  sendTip,
-  loading: sendTipLoading,
+  execute: sendTip,
+  isLoading: sendTipLoading,
   isSuccess: sendTipSuccess,
   error: sendTipError
 } = useSendTip()

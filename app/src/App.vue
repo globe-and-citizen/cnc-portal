@@ -33,7 +33,7 @@ const updateUserInput = ref({
   address: address.value,
   isValid: true
 })
-const { withdraw } = useWithdrawTips()
+const { execute: withdraw } = useWithdrawTips()
 const { execute: getBalance } = useTipsBalance()
 const handleUserUpdate = async () => {
   const user = await userApi.updateUser(toRaw(updateUserInput.value))

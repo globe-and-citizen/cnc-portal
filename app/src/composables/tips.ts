@@ -68,7 +68,7 @@ export function usePushTip(): IContractTransactionFunction {
   return { execute: pushTip, isLoading, error, isSuccess, transaction }
 }
 
-export function useSendTip() {
+export function useSendTip(): IContractTransactionFunction {
   const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
@@ -86,18 +86,20 @@ export function useSendTip() {
     }
   }
 
-  return { sendTip, loading, error, isSuccess, transaction }
+  return { execute: sendTip, isLoading: loading, error, isSuccess, transaction }
 }
 
-export function useWithdrawTips() {
+export function useWithdrawTips(): IContractTransactionFunction {
   const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
+  const isSuccess = ref(false)
 
   async function withdraw() {
     try {
       loading.value = true
       transaction.value = await tipsService.withdrawTips()
+      isSuccess.value = true
     } catch (err) {
       error.value = err
     } finally {
@@ -105,7 +107,7 @@ export function useWithdrawTips() {
     }
   }
 
-  return { withdraw, loading, error, transaction }
+  return { execute: withdraw, isLoading: loading, isSuccess, error, transaction }
 }
 
 export function useTipEvents() {

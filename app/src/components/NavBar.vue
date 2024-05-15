@@ -18,9 +18,9 @@
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
             <div v-if="balanceLoading">XXX ETH</div>
             <div v-else>
-              <span class="text-black font-bold font-mono"> {{
-                balance ? balance.slice(0, 6) : '0'
-              }}</span>
+              <span class="text-black font-bold font-mono">
+                {{ balance ? balance.slice(0, 6) : '0' }}</span
+              >
               <span class="ml-2 text-black font-bold font-mono">ETH</span>
             </div>
           </div>
@@ -79,7 +79,7 @@ import { useToastStore } from '@/stores/toast'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { show } = useToastStore()
 const { execute, data: balance, isLoading: balanceLoading, error: balanceError } = useTipsBalance()
-const { withdraw, loading: withdrawLoading, error: withdrawError } = useWithdrawTips()
+const { execute: withdraw, isLoading: withdrawLoading, error: withdrawError } = useWithdrawTips()
 onMounted(() => {
   execute()
 })
