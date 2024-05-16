@@ -10,6 +10,8 @@ import { useUserDataStore } from '@/stores/user'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
+import { useTipsBalance, useWithdrawTips } from './composables/tips'
+import { ToastType } from './types'
 
 const userApi = new FetchUserAPI()
 
@@ -20,6 +22,19 @@ function handleChange() {
 
 const toastStore = useToastStore()
 const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
+
+const {
+  isSuccess: withdrawSuccess,
+  isLoading: withdrawLoading,
+  error: withdrawError,
+  execute: withdraw
+} = useWithdrawTips()
+const {
+  data: balance,
+  isLoading: balanceLoading,
+  error: balanceError,
+  execute: getBalance
+} = useTipsBalance()
 
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
@@ -42,6 +57,27 @@ watch(
     updateUserInput.value.isValid = isAddress(newVal)
   }
 )
+watch(withdrawError, () => {
+  if (withdrawError.value) {
+    toastStore.show(
+      ToastType.Error,
+      withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips'
+    )
+  }
+})
+watch(withdrawSuccess, () => {
+  if (withdrawSuccess.value) {
+    toastStore.show(ToastType.Success, 'Tips withdrawn successfully')
+  }
+})
+watch(balanceError, () => {
+  if (balanceError.value) {
+    toastStore.show(
+      ToastType.Error,
+      balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance'
+    )
+  }
+})
 </script>
 
 <template>
@@ -57,6 +93,11 @@ watch(
             showUserModal = !showUserModal
           }
         "
+        @withdraw="withdraw()"
+        :withdrawLoading="withdrawLoading"
+        @getBalance="getBalance()"
+        :balance="balance ? balance : '0'"
+        :balanceLoading="balanceLoading"
       />
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">
