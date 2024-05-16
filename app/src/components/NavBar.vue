@@ -75,12 +75,17 @@ import { useTipsBalance, useWithdrawTips } from '@/composables/tips'
 import { onMounted, watch } from 'vue'
 import { ToastType } from '@/types'
 import { useToastStore } from '@/stores/toast'
+import { useRoute } from 'vue-router'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { show } = useToastStore()
 const { execute, data: balance, isLoading: balanceLoading, error: balanceError } = useTipsBalance()
 const { execute: withdraw, isLoading: withdrawLoading, error: withdrawError } = useWithdrawTips()
+const route = useRoute()
 onMounted(() => {
+  if (route.path == '/' || route.path == '/login') {
+    return
+  }
   execute()
 })
 watch(balanceError, () => {
