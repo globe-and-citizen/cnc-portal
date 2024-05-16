@@ -10,6 +10,7 @@ export interface IWeb3Library {
   getAddress(): Promise<string>
   getContract(address: string, abi: any): Promise<Contract>
   parseEther(value: string): bigint
+  formatEther(value: bigint): string
 }
 
 // Adapter for ethers.js
@@ -81,6 +82,10 @@ export class EthersJsAdapter implements IWeb3Library {
 
   parseEther(value: string): bigint {
     return ethers.parseEther(value)
+  }
+
+  formatEther(value: bigint): string {
+    return ethers.formatEther(value)
   }
 
   static getInstance() {
