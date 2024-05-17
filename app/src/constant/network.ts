@@ -3,17 +3,17 @@ import networks from '@/networks/networks.json'
 
 const checkNetwork = (network: Network) => {
   for (const key in network) {
-    if (key !== "blockExplorerUrl" && !network[key]) {
+    if (key !== 'blockExplorerUrl' && !network[key]) {
       return false
     }
   }
 
   return true
-} 
+}
 
 export const getNetwork = (): Network => {
   const NETWORK_ALIAS: Networks = import.meta.env.VITE_APP_NETWORK_ALIAS
-  let network: Network 
+  let network: Network
 
   if (NETWORK_ALIAS) {
     network = networks[NETWORK_ALIAS]
@@ -29,8 +29,6 @@ export const getNetwork = (): Network => {
     }
   }
 
-  if (checkNetwork(network))
-    return network
-  else
-    return networks['sepolia']
+  if (checkNetwork(network)) return network
+  else return networks['sepolia']
 }
