@@ -68,13 +68,13 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { logout } from '@/utils/navBarUtil'
-import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
-import IconBell from '@/components/icons/IconBell.vue'
-import { useTipsBalance, useWithdrawTips } from '@/composables/tips'
 import { onMounted, watch } from 'vue'
 import { ToastType } from '@/types'
 import { useToastStore } from '@/stores/toast'
+import { logout } from '@/utils/navBarUtil'
+import { useTipsBalance, useWithdrawTips } from '@/composables/tips'
+import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
+import IconBell from '@/components/icons/IconBell.vue'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { show } = useToastStore()
