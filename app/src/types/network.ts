@@ -8,9 +8,10 @@ export type Networks =
   | undefined
 
 export type Network = {
-  chainId: string
-  networkName: string
-  rpcUrl: string
-  blockExplorerUrl?: string
-  currencySymbol: string
+  [key: string]: string | undefined;
+  chainId: string;
+  networkName: string;
+  rpcUrl: string;
+  blockExplorerUrl?: string;
+  currencySymbol: string;
 }
