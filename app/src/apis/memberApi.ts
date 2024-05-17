@@ -30,8 +30,11 @@ export class FetchMemberAPI implements MemberAPI {
 
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
-    if (!resObj.success) {
+    if (response.status === 401) {
       await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
+    if (!resObj.success) {
       throw new Error(resObj.message)
     }
     return resObj.members
@@ -56,8 +59,11 @@ export class FetchMemberAPI implements MemberAPI {
 
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
-    if (!resObj.success) {
+    if (response.status === 401) {
       await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
+    if (!resObj.success) {
       throw new Error(resObj.message)
     }
     return resObj.member
@@ -73,8 +79,11 @@ export class FetchMemberAPI implements MemberAPI {
 
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
-    if (!resObj.success) {
+    if (response.status === 401) {
       await AuthAPI.verifyToken(token)
+      throw new Error('Unauthorized')
+    }
+    if (!resObj.success) {
       throw new Error(resObj)
     }
     return resObj.member
