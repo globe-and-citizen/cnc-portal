@@ -1,22 +1,30 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { ref, watch, toRaw } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useToastStore } from '@/stores/toast'
+import { useUserDataStore } from '@/stores/user'
+import { AuthService } from '@/services/authService'
+
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
-import { ref, watch, toRaw } from 'vue'
-import { useToastStore } from './stores/toast'
-import { storeToRefs } from 'pinia'
-import { useUserDataStore } from '@/stores/user'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
+
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
 import { useDark, useToggle } from '@vueuse/core'
+
+const isAuth = ref<boolean | null>(null)
 
 const isDark = useDark(
   (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) as any
 )
 const toggleDark = useToggle(isDark)
 
+AuthService.isAuthenticated().then((res) => {
+  isAuth.value = res
+})
 const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
@@ -53,7 +61,7 @@ watch(
 <template>
   <div>
     <RouterView name="login" />
-    <div v-if="$route.path != '/login'">
+    <div v-if="isAuth">
       <NavBar
         @toggleTheme="() => toggleDark()"
         @toggleSideButton="handleChange"

@@ -15,19 +15,19 @@
     <div class="flex flex-col justify-center">
       <label for="tip-amount" class="text-center mb-2">Actions</label>
       <div className="card-actions flex flex-row justify-between mx-8 self-center">
-        <LoadingButton v-if="pushTipLoading" color="primary" />
+        <LoadingButton v-if="pushTipLoading" color="primary w-full min-w-24" />
         <button
           v-else
           className="btn btn-primary w-full text-white"
-          @click="emits('pushTip', addresses, tipAmount)"
+          @click="emits('pushTip', tipAmount)"
         >
           Push Tips
         </button>
-        <LoadingButton v-if="sendTipLoading" color="secondary" />
+        <LoadingButton v-if="sendTipLoading" color="secondary w-full min-w-24" />
         <button
           v-else
           className="btn btn-secondary w-full text-white"
-          @click="emits('sendTip', addresses, tipAmount)"
+          @click="emits('sendTip', tipAmount)"
         >
           Send Tips
         </button>
@@ -36,26 +36,13 @@
   </div>
 </template>
 <script setup lang="ts">
+import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { ref, watch } from 'vue'
-import type { AddressLike } from 'ethers'
 
-const props = defineProps<{
-  addresses: AddressLike[]
+const emits = defineEmits(['pushTip', 'sendTip'])
+const tipAmount = ref(0)
+defineProps<{
   pushTipLoading: boolean
   sendTipLoading: boolean
-  tipAmount: number
 }>()
-const emits = defineEmits(['pushTip', 'sendTip'])
-
-const tipAmount = ref(props.tipAmount)
-const pushTipLoading = ref<boolean>(props.pushTipLoading)
-const sendTipLoading = ref<boolean>(props.sendTipLoading)
-watch(
-  [() => props.pushTipLoading, () => props.sendTipLoading],
-  ([pushTipLoadingNew, sendTipLoadingNew]) => {
-    pushTipLoading.value = pushTipLoadingNew
-    sendTipLoading.value = sendTipLoadingNew
-  }
-)
 </script>
