@@ -42,7 +42,9 @@ export class EthersJsAdapter implements IWeb3Library {
       //throw new Error('Ethers.js adapter is not initialized');
       this.initialize()
     }
-
+    if (!(window as any).ethereum) {
+      throw new Error('Please install Metamask')
+    }
     // Prompt user to connect their wallet
     await this.provider.send('eth_requestAccounts', [])
 

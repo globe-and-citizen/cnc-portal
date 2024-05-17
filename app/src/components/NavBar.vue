@@ -66,10 +66,10 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
-import { onMounted } from 'vue'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw', 'getBalance'])
 defineProps<{
