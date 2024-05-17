@@ -2,6 +2,8 @@ import type { Networks, Network } from '@/types'
 import networks from '@/networks/networks.json'
 
 const checkNetwork = (network: Network) => {
+  if (!network) return false
+
   for (const key in network) {
     if (key !== 'blockExplorerUrl' && !network[key]) {
       return false
