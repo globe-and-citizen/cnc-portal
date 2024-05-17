@@ -6,7 +6,7 @@
         <img src="../assets/Logo.png" alt="Logo" />
       </div>
       <div class="">
-        <button class="btn btn-square btn-ghost drawer-overlay" @click="$emit('toggleSideButton')">
+        <button class="btn btn-square btn-ghost drawer-overlay" @click="emits('toggleSideButton')">
           <IconHamburgerMenu />
         </button>
       </div>
@@ -28,7 +28,7 @@
           class="mt-3 dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-48"
         >
           <li v-if="withdrawLoading"><a href="#">Processing...</a></li>
-          <li v-else><a @click="$emit('withdraw')">Withdraw Tips</a></li>
+          <li v-else><a @click="emits('withdraw')">Withdraw Tips</a></li>
         </ul>
       </div>
 
@@ -52,7 +52,7 @@
           class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52"
         >
           <li>
-            <a class="justify-between" @click="$emit('toggleEditUserModal')">
+            <a class="justify-between" @click="emits('toggleEditUserModal')">
               Profile
               <span class="badge">New</span>
             </a>
