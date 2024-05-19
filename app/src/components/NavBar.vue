@@ -66,20 +66,16 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw', 'getBalance'])
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
   balance: string
 }>()
-onMounted(() => {
-  emits('getBalance')
-})
 </script>
 
 <style scoped></style>
