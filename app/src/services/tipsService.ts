@@ -67,12 +67,12 @@ export class TipsService extends SmartContract {
     return tx
   }
 
-  async getBalance(): Promise<string> {
+  async getBalance(): Promise<bigint> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
 
-    return (await this.contract.getBalance(await this.web3Library.getAddress())).toString()
+    return await this.contract.getBalance(await this.web3Library.getAddress())
   }
 
   async withdrawTips(): Promise<void> {
