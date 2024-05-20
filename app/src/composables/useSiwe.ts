@@ -9,7 +9,6 @@ import { ref } from 'vue'
 import { useToastStore } from '@/stores/toast'
 import { ToastType } from '@/types'
 import { storeToRefs } from 'pinia'
-
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 
@@ -56,9 +55,9 @@ async function siwe() {
     SIWEAuthService.logout()
 
     console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())*/
-  } catch (error) {
+  } catch (error: any) {
     isProcessing.value = false
-    show(ToastType.Error, error as string)
+    show(ToastType.Error, error.message as string)
     console.log('[app][src][utils][loginUtil.ts][signInWithEthereum] Error', error)
   }
 }
