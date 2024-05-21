@@ -49,11 +49,13 @@ async function siwe() {
     )
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
-
   } catch (error: any) {
     isProcessing.value = false
     show(ToastType.Error, parseError(error))
-    console.log('[app][src][utils][loginUtil.ts][signInWithEthereum] error instanceof Error: ', error instanceof Error)
+    console.log(
+      '[app][src][utils][loginUtil.ts][signInWithEthereum] error instanceof Error: ',
+      error instanceof Error
+    )
   }
 }
 
