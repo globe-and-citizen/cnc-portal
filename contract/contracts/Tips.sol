@@ -76,18 +76,16 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
         emit SendTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
 
-    // TODO: Protection for reentrancy attack
-    function withdraw() external nonReentrant whenNotPaused{
+    function withdraw(uint256 amount) external nonReentrant whenNotPaused{
         uint256 senderBalance = balance[msg.sender];
         require(senderBalance > 0, "No tips to withdraw.");
+        require(senderBalance >= amount, "Not enough tips to withdraw.");
 
-        (bool sent,) = msg.sender.call{value: senderBalance}("");
+        balance[msg.sender] = senderBalance - amount;
+        (bool sent,) = msg.sender.call{value: amount}("");
         require(sent, "Failed to withdraw tips.");
 
-        balance[msg.sender] = 0;
-        require(balance[msg.sender] == 0, "Failed to zero out balance");
-
-        emit TipWithdrawal(msg.sender, senderBalance);
+        emit TipWithdrawal(msg.sender, amount);
     }
 
     function getBalance(address _address) external view returns (uint256) {

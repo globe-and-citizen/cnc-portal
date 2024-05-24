@@ -2,7 +2,7 @@ import { ethers, ignition } from 'hardhat'
 import { expect } from 'chai'
 
 import TipsModule from '../ignition/modules/ProxyModule'
-describe.only('Tips Proxy', function () {
+describe('Tips Proxy', function () {
   describe('Proxy interaction', async function () {
     it('Should be interactable via proxy', async function () {
       const [owner, otherAccount] = await ethers.getSigners()
