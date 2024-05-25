@@ -61,7 +61,7 @@ export const getUser = async (req: Request, res: Response) => {
 
     if (!user) return errorResponse(404, "User not found", res);
 
-    return res.status(200).json(user);
+    return res.status(200).json({ success: true, user });
   } catch (error) {
     await prisma.$disconnect();
     return errorResponse(500, error, res);
@@ -94,7 +94,7 @@ export const updateUser = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(200).json(updatedUser);
+    return res.status(200).json({ success: true, user: updatedUser });
   } catch (error) {
     await prisma.$disconnect();
     return errorResponse(500, error, res);

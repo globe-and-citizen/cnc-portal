@@ -54,9 +54,13 @@ const updateUserInput = ref({
   isValid: true
 })
 const handleUserUpdate = async () => {
-  const user = await userApi.updateUser(toRaw(updateUserInput.value))
-  userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
-  showUserModal.value = false
+  try {
+    const user = await userApi.updateUser(toRaw(updateUserInput.value))
+    userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
+    showUserModal.value = false
+  } catch (error: any) {
+    toastStore.show(ToastType.Error, error.message)
+  }
 }
 watch(
   () => updateUserInput.value.address,

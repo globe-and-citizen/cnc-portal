@@ -27,8 +27,8 @@ export class FetchUserAPI extends BaseAPI implements UserAPI {
     const { show } = useToastStore()
 
     const resObj = await this.request(`/api/user/${updatedUser.address}`, 'PUT', updatedUser)
-
-    show(ToastType.Success, 'User updated successfully')
+    console.log(resObj)
+    // show(ToastType.Success, 'User updated successfully')
     return resObj.user
   }
 
