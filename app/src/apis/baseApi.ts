@@ -22,8 +22,7 @@ export class BaseAPI {
 
     const response = await fetch(`${BACKEND_URL}${endpoint}`, requestOptions)
     const resObj = await response.json()
-
-    if (!response.ok) {
+    if (resObj.success === false || !response.ok) {
       throw new Error(resObj.message || 'An error occurred')
     }
 
