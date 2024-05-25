@@ -1,5 +1,4 @@
-import { type User, ToastType } from '@/types/index'
-import { useToastStore } from '@/stores/toast'
+import { type User } from '@/types/index'
 import { BaseAPI } from '@/apis/baseApi'
 
 // Define an interface for UserService
@@ -24,11 +23,7 @@ export class FetchUserAPI extends BaseAPI implements UserAPI {
   }
 
   async updateUser(updatedUser: Partial<User>): Promise<User> {
-    const { show } = useToastStore()
-
     const resObj = await this.request(`/api/user/${updatedUser.address}`, 'PUT', updatedUser)
-    console.log(resObj)
-    // show(ToastType.Success, 'User updated successfully')
     return resObj.user
   }
 
