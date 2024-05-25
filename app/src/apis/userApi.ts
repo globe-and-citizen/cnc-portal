@@ -1,8 +1,6 @@
-import { BACKEND_URL } from '@/constant/index'
-
-// Define a generic type for user data
 import { type User, ToastType } from '@/types/index'
 import { useToastStore } from '@/stores/toast'
+import { BaseAPI } from '@/apis/baseApi'
 
 // Define an interface for UserService
 interface UserAPI {
@@ -12,63 +10,31 @@ interface UserAPI {
 }
 
 // Implement UserService using Fetch API (or any other HTTP client)
-export class FetchUserAPI implements UserAPI {
+export class FetchUserAPI extends BaseAPI implements UserAPI {
   async getUser(address: string): Promise<User> {
-    const response = await fetch(`${BACKEND_URL}/api/user/${address}`, {
-      method: 'GET'
-    })
-    const userData = await response.json()
-    return userData
+    const resObj = await this.request(`/api/user/${address}`, 'GET')
+
+    return resObj.user
   }
 
   async createUser(user: User): Promise<User> {
-    const response = await fetch(`${BACKEND_URL}/api/user/${user.id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(user)
-    })
-    const createdUser = await response.json() /*{ nonce: `JdqIpQPlVJ0Jyv6yu` }*/
-    return createdUser
+    const resObj = await this.request(`/api/user/${user.id}`, 'POST', user)
+
+    return resObj.user
   }
 
   async updateUser(updatedUser: Partial<User>): Promise<User> {
-    console.log('updatedUser', updatedUser)
-    const address = updatedUser.address
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/user/${address}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updatedUser)
-      })
-      const updatedUserData = await response.json()
-      const { show } = useToastStore()
-      show(ToastType.Success, 'User updated successfully')
-      return updatedUserData
-    } catch (error) {
-      console.error('Error:', error)
-      throw error
-    }
+    const { show } = useToastStore()
+
+    const resObj = await this.request(`/api/user/${updatedUser.address}`, 'PUT', updatedUser)
+
+    show(ToastType.Success, 'User updated successfully')
+    return resObj.user
   }
 
   async getNonce(userId: string): Promise<string> {
-    const response = await fetch(`${BACKEND_URL}/api/user/nonce/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    const resObj = await this.request(`/api/user/nonce/${userId}`, 'GET')
 
-    const resObj = await response.json()
-
-    if (resObj.success) {
-      const { nonce } = resObj
-      return nonce
-    } else {
-      throw new Error(resObj.message)
-    }
+    return resObj.nonce
   }
 }
