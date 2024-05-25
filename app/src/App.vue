@@ -58,6 +58,7 @@ const handleUserUpdate = async () => {
     const user = await userApi.updateUser(toRaw(updateUserInput.value))
     userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
     showUserModal.value = false
+    toastStore.show(ToastType.Success, 'User updated successfully')
   } catch (error: any) {
     toastStore.show(ToastType.Error, error.message)
   }

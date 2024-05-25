@@ -4,8 +4,8 @@ import { BaseAPI } from '@/apis/baseApi'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
-  updateMember(member: Partial<Member>, id: string): Promise<Member>
-  createMembers(newMembers: Partial<Member>[], id: string): Promise<Member[]>
+  updateMember(member: Member, id: string): Promise<Member>
+  createMembers(newMembers: Member[], id: string): Promise<Member[]>
 }
 
 export class FetchMemberAPI extends BaseAPI implements MemberAPI {
