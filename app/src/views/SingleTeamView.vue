@@ -3,10 +3,16 @@
     <div class="flex justify-between gap-5">
       <div>
         <h2 class="pl-5">{{ team.name }}</h2>
-        <p class="pl-5">{{ team.description }}</p>
+        <p class="pl-5 pb-3 text-xl">{{ team.description }}</p>
+        <p class="pl-5" v-if="team.bankAddress">
+          Bank Account Smart Contract Address: {{ team.bankAddress }}
+        </p>
+        <p class="pl-5" v-if="team.bankAddress">Team Balance: {{ teamBalance }}</p>
       </div>
       <div class="flex justify-between gap-2 items-center">
-        <button class="btn btn-primary" @click="bankModal = true">Create Bank Account Smart Contract</button>
+        <button class="btn btn-primary" @click="bankModal = true" v-if="!team.bankAddress">
+          Create Bank Account Smart Contract
+        </button>
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
 
         <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
@@ -94,7 +100,7 @@
   <CreateBankModal
     v-if="bankModal"
     @close-modal="() => (bankModal = !bankModal)"
-    @create-bank="() => deployBankContract()"
+    @create-bank="async () => createBankContract()"
   />
 </template>
 <script setup lang="ts">
@@ -108,6 +114,8 @@ import CreateBankModal from '@/components/CreateBankModal.vue'
 import { ToastType, type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { FetchMemberAPI } from '@/apis/memberApi'
+import { BankService } from '@/services/bankService'
+import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
@@ -116,6 +124,8 @@ import { usePushTip, useSendTip } from '@/composables/tips'
 import { useErrorHandler } from '@/composables/errorHandler'
 const { show } = useToastStore()
 const memberApi = new FetchMemberAPI()
+const bankService = new BankService()
+const web3Library = EthersJsAdapter.getInstance()
 const route = useRoute()
 const router = useRouter()
 const {
@@ -161,6 +171,7 @@ const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
+const teamBalance = ref('0.0')
 
 const showModal = ref(false)
 const bankModal = ref(false)
@@ -239,6 +250,9 @@ onMounted(async () => {
     } else {
       console.log('Team not found for id:', id)
     }
+    if (team.value.bankAddress) {
+      teamBalance.value = await web3Library.getBalance(team.value.bankAddress)
+    }
   } catch (error) {
     return useErrorHandler().handleError(error)
   }
@@ -316,8 +330,18 @@ const deleteTeam = async () => {
   }
 }
 
-const deployBankContract = async () => {
-  // TODO
+const createBankContract = async () => {
+  const id = route.params.id
+  try {
+    const bankAddress = await bankService.createBankContract(String(id))
+    team.value.bankAddress = bankAddress
+    bankModal.value = !bankModal.value
+    if (bankAddress) {
+      show(ToastType.Success, `Bank contract created successfully at ${bankAddress}`)
+    }
+  } catch (error) {
+    show(ToastType.Error, error as string)
+  }
 }
 watch(
   updateMemberInput,
