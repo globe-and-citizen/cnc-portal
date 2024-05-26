@@ -9,6 +9,7 @@ export interface IWeb3Library {
   requestSign(message: string): Promise<string>
   //getAddressRef(): Promise<Ref<string | null>>
   getAddress(): Promise<string>
+  getBalance(address: string): Promise<string>
   getProvider(): any
   getContract(address: string, abi: any): Promise<Contract>
   parseEther(value: string): bigint
@@ -73,6 +74,10 @@ export class EthersJsAdapter implements IWeb3Library {
     }
 
     return (await this.signer).address
+  }
+
+  async getBalance(address: string): Promise<string> {
+    return this.formatEther(await this.provider.getBalance(address))
   }
 
   async getContract(address: string, abi: any): Promise<Contract> {
