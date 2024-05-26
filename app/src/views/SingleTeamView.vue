@@ -6,6 +6,7 @@
         <p class="pl-5">{{ team.description }}</p>
       </div>
       <div class="flex justify-between gap-2 items-center">
+        <button class="btn btn-primary" @click="bankModal = true">Create Bank Account Smart Contract</button>
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
 
         <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
@@ -90,6 +91,11 @@
       </div>
     </div>
   </dialog>
+  <CreateBankModal
+    v-if="bankModal"
+    @close-modal="() => (bankModal = !bankModal)"
+    @create-bank="() => deployBankContract()"
+  />
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
@@ -97,6 +103,7 @@ import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
+import CreateBankModal from '@/components/CreateBankModal.vue'
 
 import { ToastType, type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
@@ -156,6 +163,7 @@ const cname = ref('')
 const cdesc = ref('')
 
 const showModal = ref(false)
+const bankModal = ref(false)
 
 const showUpdateMemberModal = ref(false)
 const showAddMemberForm = ref(false)
@@ -165,6 +173,7 @@ const team = ref<Team>({
   id: '',
   name: '',
   description: '',
+  bankAddress: null,
   members: []
 })
 
@@ -305,6 +314,10 @@ const deleteTeam = async () => {
   } catch (error) {
     return useErrorHandler().handleError(error)
   }
+}
+
+const deployBankContract = async () => {
+  // TODO
 }
 watch(
   updateMemberInput,
