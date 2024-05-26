@@ -4,7 +4,7 @@ import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
 
-interface TeamAPI {
+export interface TeamAPI {
   getAllTeams(): Promise<Team[]>
   getTeam(id: string): Promise<Team | null>
   updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team>
