@@ -1,7 +1,7 @@
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Tips } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { Tips } from '../typechain-types/contracts'
 
 describe('Tips', function () {
   let tips: Tips
@@ -15,8 +15,8 @@ describe('Tips', function () {
 
     recipientAddress = [member1.address, member2.address]
     // Deploy the Tips contract
-    const TipsFactory = await ethers.getContractFactory('Tips')
-    tips = await TipsFactory.deploy()
+    const tipsFactory = await ethers.getContractFactory('Tips')
+    tips = (await upgrades.deployProxy(tipsFactory)) as unknown as Tips
   })
 
   describe('pushTip', function () {
@@ -82,13 +82,11 @@ describe('Tips', function () {
     it('should withdraw earned tips and reset the balance', async function () {
       await tips.connect(sender).sendTip(recipientAddress, { value: TIP_AMOUNT })
 
-      const member1StartingBalance = await ethers.provider.getBalance(member1.address)
+      await expect(() => tips.connect(member1).withdraw()).to.changeEtherBalance(
+        member1,
+        ethers.parseEther('10')
+      )
 
-      await tips.connect(member1).withdraw()
-
-      const member1EndingBalance = await ethers.provider.getBalance(member1.address)
-
-      expect(member1EndingBalance).to.gt(member1StartingBalance)
       expect(await tips.getBalance(member1.address)).to.equal(0) // Balance should be reset
     })
 
