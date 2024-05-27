@@ -28,7 +28,6 @@ model Team {
   ownerId      String
   description  String?
   name         String        @unique
-  bankAddress  String?       // A team can have no bank contract
 }
 model Member{
   id            Int           @id @default(autoincrement())
