@@ -6,7 +6,7 @@
         <img src="../assets/Logo.png" alt="Logo" />
       </div>
       <div class="">
-        <button class="btn btn-square btn-ghost drawer-overlay" @click="$emit('toggleSideButton')">
+        <button class="btn btn-square btn-ghost drawer-overlay" @click="emits('toggleSideButton')">
           <IconHamburgerMenu />
         </button>
       </div>
@@ -18,9 +18,7 @@
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
             <div v-if="balanceLoading">XXX ETH</div>
             <div v-else>
-              <span class="text-black font-bold font-mono">
-                {{ balance ? balance.slice(0, 6) : '0' }}</span
-              >
+              <span class="text-black font-bold font-mono"> {{ balance.slice(0, 6) }}</span>
               <span class="ml-2 text-black font-bold font-mono">ETH</span>
             </div>
           </div>
@@ -30,7 +28,7 @@
           class="mt-3 dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-48"
         >
           <li v-if="withdrawLoading"><a href="#">Processing...</a></li>
-          <li v-else><a @click="withdraw()">Withdraw Tips</a></li>
+          <li v-else><a @click="emits('withdraw')">Withdraw Tips</a></li>
         </ul>
       </div>
 
@@ -79,40 +77,15 @@ import { onMounted, watch, computed } from 'vue'
 import { ToastType } from '@/types'
 import { useToastStore } from '@/stores/toast'
 import { logout } from '@/utils/navBarUtil'
-import { useTipsBalance, useWithdrawTips } from '@/composables/tips'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 
-const { show } = useToastStore()
-const { execute, data: balance, isLoading: balanceLoading, error: balanceError } = useTipsBalance()
-const { execute: withdraw, isLoading: withdrawLoading, error: withdrawError } = useWithdrawTips()
-
-const props = defineProps(['isDark'])
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'toggleTheme'])
-
-const theme = computed(() => {
-  // Check if the prefers-color-scheme is dark
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-})
-onMounted(() => {
-  execute()
-})
-watch(balanceError, () => {
-  if (balanceError.value) {
-    show(
-      ToastType.Error,
-      balanceError.value.reason ? balanceError.value.reason : 'Failed to get balance'
-    )
-  }
-})
-watch(withdrawError, () => {
-  if (withdrawError.value) {
-    show(
-      ToastType.Error,
-      withdrawError.value.reason ? withdrawError.value.reason : 'Failed to withdraw tips'
-    )
-  }
-})
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
+defineProps<{
+  withdrawLoading: boolean
+  balanceLoading: boolean
+  balance: string
+}>()
 </script>
 
 <style scoped></style>

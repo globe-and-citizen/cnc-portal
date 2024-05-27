@@ -32,7 +32,7 @@ export function useTipsBalance(): IContractReadFunction<string | null> {
   async function getBalance() {
     try {
       loading.value = true
-      balance.value = await tipsService.getBalance()
+      balance.value = tipsService.web3Library.formatEther(await tipsService.getBalance()).toString()
     } catch (err) {
       error.value = err
     } finally {
