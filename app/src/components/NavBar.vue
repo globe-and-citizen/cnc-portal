@@ -73,19 +73,24 @@
   <!-- </header> -->
 </template>
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue'
-import { ToastType } from '@/types'
-import { useToastStore } from '@/stores/toast'
+import { computed } from 'vue'
+
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw', 'toggleTheme'])
+
 defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
   balance: string
+  isDark: boolean
 }>()
+const theme = computed(() => {
+  // Check if the prefers-color-scheme is dark
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+})
 </script>
 
 <style scoped></style>
