@@ -1,3 +1,4 @@
+import { useFetch } from '@vueuse/core'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 
@@ -14,15 +15,22 @@ export class BaseAPI {
       Authorization: `Bearer ${token}`,
       ...additionalHeaders
     }
+
+    const url = `${BACKEND_URL}${endpoint}`
     const requestOptions: RequestInit = {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined
     }
 
-    const response = await fetch(`${BACKEND_URL}${endpoint}`, requestOptions)
-    const resObj = await response.json()
-    if (resObj.success === false || !response.ok) {
+    const { data, error } = await useFetch(url, requestOptions).json()
+
+    if (error.value) {
+      throw new Error(error.value.message || 'An error occurred')
+    }
+
+    const resObj = data.value
+    if (resObj.success === false) {
       throw new Error(resObj.message || 'An error occurred')
     }
 
