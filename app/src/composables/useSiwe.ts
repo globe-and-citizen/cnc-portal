@@ -11,6 +11,7 @@ import { ToastType } from '@/types'
 import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
+import { parseError } from '@/utils'
 
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
@@ -48,17 +49,13 @@ async function siwe() {
     )
     useOwnerAddressStore().setOwnerAddress(address)
     router.push('/teams')
-
-    /*console.log('authToken: ', SIWEAuthService.getToken())
-    console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())
-
-    SIWEAuthService.logout()
-
-    console.log('isAuthenticated: ', await SIWEAuthService.isAuthenticated())*/
   } catch (error: any) {
     isProcessing.value = false
-    show(ToastType.Error, error.message as string)
-    console.log('[app][src][utils][loginUtil.ts][signInWithEthereum] Error', error)
+    show(ToastType.Error, parseError(error))
+    console.log(
+      '[app][src][utils][loginUtil.ts][signInWithEthereum] error instanceof Error: ',
+      error instanceof Error
+    )
   }
 }
 
