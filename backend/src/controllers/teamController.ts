@@ -89,14 +89,13 @@ const updateTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const { name, description, bankAddress } = req.body;
+  const { name, description } = req.body;
   try {
     const team = await prisma.team.update({
       where: { id: Number(id) },
       data: {
         name,
         description,
-        bankAddress,
       },
       include: {
         members: true,
