@@ -50,7 +50,7 @@ async function siwe() {
       userData.nonce || ''
     )
     useOwnerAddressStore().setOwnerAddress(address)
-    addToast('Login successful', ToastType.Success)
+    //addToast('Login successful', ToastType.Success)
     router.push('/teams')
   } catch (error: any) {
     isProcessing.value = false
