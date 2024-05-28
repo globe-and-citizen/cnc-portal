@@ -13,7 +13,7 @@
     "test": "vitest run -c vitest.unit.config.ts",
     "test:watch": "vitest -c vitest.unit.config.ts",
     "test:e2e": "vitest run -c vitest.e2e.config.ts",
-    "test:unit:coverage": "vitest run --coverage",
+    "test:unit:coverage": "npx vitest run --coverage",
     "test:e2e:watch": "vitest -c vitest.e2e.config.ts",
     "test:unit": "vitest -c ./vitest.config.unit.ts",
     "test:unit:ui": "vitest -c ./vitest.config.unit.ts --ui",
