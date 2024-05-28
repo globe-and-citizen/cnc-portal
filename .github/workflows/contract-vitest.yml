@@ -1,0 +1,36 @@
+name: Contract Vitest Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - "contract/**"
+  workflow_dispatch:
+
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up NodeJS 20.10.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: "npm"
+          cache-dependency-path: ./contract/package-lock.json
+
+      - name: 💻 Run Vitest
+        run: |
+          npm install
+          npm run coverage
+        working-directory: ./contract
+
+      - name: ✅ Upload coverage to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: contract-unit-tests
