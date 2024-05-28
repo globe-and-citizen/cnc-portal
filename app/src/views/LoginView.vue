@@ -92,9 +92,9 @@ import IconFacebook from '@/components/icons/IconFacebook.vue'
 import IconTwitter from '@/components/icons/IconTwitter.vue'
 //import NotificationToast from '@/components/NotificationToast.vue'
 //import { useSiwe } from '@/composables/useSiwe'
-import { useSiwe/*, useToast */} from "@/composables";
+import { useSiwe /*, useToast */ } from '@/composables'
 
-const { isProcessing, /*showToast, toastType, toastMessage, */siwe } = useSiwe()
+const { isProcessing, /*showToast, toastType, toastMessage, */ siwe } = useSiwe()
 </script>
 
 <style scoped>

@@ -15,7 +15,7 @@ import EditUserModal from '@/components/modals/EditUserModal.vue'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
 import { useToast } from '@/composables'
-import TestToast from "@/components/TestToast.vue";
+import TestToast from '@/components/TestToast.vue'
 
 const { toasts } = useToast()
 
@@ -153,7 +153,12 @@ watch(
     </div>
     <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
     <div class="container--notification">
-      <TestToast v-for="(toast, index) in toasts" :key="index" :message="toast.message" :type="toast.type" />
+      <TestToast
+        v-for="(toast, index) in toasts"
+        :key="index"
+        :message="toast.message"
+        :type="toast.type"
+      />
     </div>
   </div>
 </template>

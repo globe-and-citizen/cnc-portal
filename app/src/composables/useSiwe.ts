@@ -12,7 +12,7 @@ import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
-import { useToast } from "@/composables";
+import { useToast } from '@/composables'
 
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
@@ -32,7 +32,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 }
 
 async function siwe() {
-  const { show } = useToastStore()
+  //const { show } = useToastStore()
 
   try {
     isProcessing.value = true
