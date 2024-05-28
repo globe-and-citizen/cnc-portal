@@ -20,8 +20,8 @@
     "build": "tsc && npm run generate:docs && npm run copy:docs",
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
-    "prisma:migrate": "prisma migrate deploy",
-    "prisma:generate": "prisma generate",
+    "prisma:migrate": "npx prisma migrate deploy",
+    "prisma:generate": "npx prisma generate",
     "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js"
   },
   "keywords": [],
