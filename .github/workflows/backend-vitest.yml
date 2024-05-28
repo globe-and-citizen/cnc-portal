@@ -12,6 +12,18 @@ on:
 jobs:
   vitest:
     runs-on: ubuntu-latest
+    container: node:20.10.0-alpine
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: cnc-db
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
       - name: 🛫 Checkout
         uses: actions/checkout@v4
@@ -23,10 +35,17 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./backend/package-lock.json
 
-      - name: 💻 Run Vitest
+      - name: ⚙️ NPM install
+        run: npm ci
+        working-directory: ./app
+
+      - name: 🏗 Set up PostgreSQL
         run: |
-          npm install
-          npm run test:unit:coverage
+          npm run prisma:migrate
+        working-directory: ./backend
+
+      - name: 💻 Run Vitest
+        run: npm run test:unit:coverage
         working-directory: ./backend
 
       - name: ✅ Upload coverage to Codecov
