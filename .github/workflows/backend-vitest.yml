@@ -43,10 +43,14 @@ jobs:
         run: |
           npm run prisma:migrate
         working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.CODECOV_TOKEN }}
 
       - name: 💻 Run Vitest
         run: npm run test:unit:coverage
         working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.CODECOV_TOKEN }}
 
       - name: ✅ Upload coverage to Codecov
         uses: codecov/codecov-action@v4.0.1
