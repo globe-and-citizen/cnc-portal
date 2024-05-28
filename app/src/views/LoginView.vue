@@ -83,16 +83,18 @@
       </div>
     </div>
   </div>
-  <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
+  <!--<NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />-->
 </template>
 
 <script setup lang="ts">
 import IconGoogle from '@/components/icons/IconGoogle.vue'
 import IconFacebook from '@/components/icons/IconFacebook.vue'
 import IconTwitter from '@/components/icons/IconTwitter.vue'
-import NotificationToast from '@/components/NotificationToast.vue'
-import { useSiwe } from '@/composables/useSiwe'
-const { isProcessing, showToast, toastType, toastMessage, siwe } = useSiwe()
+//import NotificationToast from '@/components/NotificationToast.vue'
+//import { useSiwe } from '@/composables/useSiwe'
+import { useSiwe/*, useToast */} from "@/composables";
+
+const { isProcessing, /*showToast, toastType, toastMessage, */siwe } = useSiwe()
 </script>
 
 <style scoped>

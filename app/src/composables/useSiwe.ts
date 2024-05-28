@@ -12,12 +12,14 @@ import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
+import { useToast } from "@/composables";
 
 const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
 
 const isProcessing = ref(false)
+const { addToast } = useToast()
 
 function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
   return new SLSiweMessageCreator({
@@ -48,10 +50,12 @@ async function siwe() {
       userData.nonce || ''
     )
     useOwnerAddressStore().setOwnerAddress(address)
+    addToast('Login successful', ToastType.Success)
     router.push('/teams')
   } catch (error: any) {
     isProcessing.value = false
-    show(ToastType.Error, parseError(error))
+    //show(ToastType.Error, parseError(error))
+    addToast(parseError(error), ToastType.Error)
     console.log(
       '[app][src][utils][loginUtil.ts][signInWithEthereum] error instanceof Error: ',
       error instanceof Error
