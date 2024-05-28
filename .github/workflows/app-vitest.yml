@@ -1,4 +1,4 @@
-name: Vitest Unit Tests
+name: Frontend Vitest Unit Tests
 
 on:
   pull_request:
