@@ -1,0 +1,59 @@
+name: Backend Vitest Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - "backend/**"
+  workflow_dispatch:
+
+jobs:
+  api-unit-test:
+    runs-on: ubuntu-latest
+    container: node:20.10.0-alpine
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: cnc-db
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up NodeJS 20.10.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: "npm"
+          cache-dependency-path: ./backend/package-lock.json
+
+      - name: ⚙️ NPM install
+        run: npm ci
+        working-directory: ./backend
+
+      - name: 🏗 Set up PostgreSQL
+        run: |
+          npm run prisma:migrate
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: 💻 Run Vitest
+        run: npm run test:unit:coverage
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: ✅ Upload coverage to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: api-unit-tests
