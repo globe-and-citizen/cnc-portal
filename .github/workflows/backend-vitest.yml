@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  vitest:
+  api-unit-test:
     runs-on: ubuntu-latest
     container: node:20.10.0-alpine
     services:

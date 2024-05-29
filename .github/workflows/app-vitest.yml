@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  vitest:
+  app-unit-test:
     runs-on: ubuntu-latest
     steps:
       - name: 🛫 Checkout
