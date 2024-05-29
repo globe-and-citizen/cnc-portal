@@ -2,7 +2,6 @@ import { type Member } from '@/types'
 import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
 import { isAddress } from 'ethers' // ethers v6
-import { AuthAPI } from './authApi'
 
 interface MemberAPI {
   deleteMember(id: string): Promise<void>
@@ -11,7 +10,10 @@ interface MemberAPI {
 }
 export class FetchMemberAPI implements MemberAPI {
   async createMembers(newMembers: Partial<Member>[], id: string): Promise<Member[]> {
-    const token: any = AuthService.getToken()
+    const token: string | null = AuthService.getToken()
+    if (!token) {
+      throw new Error('Token is null')
+    }
 
     const requestOptions = {
       method: 'POST',
@@ -31,7 +33,6 @@ export class FetchMemberAPI implements MemberAPI {
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (response.status === 401) {
-      await AuthAPI.verifyToken(token)
       throw new Error('Unauthorized')
     }
     if (!resObj.success) {
@@ -40,7 +41,11 @@ export class FetchMemberAPI implements MemberAPI {
     return resObj.members
   }
   async updateMember(member: Partial<Member>, id: string): Promise<Member> {
-    const token: any = AuthService.getToken()
+    const token: string | null = AuthService.getToken()
+
+    if (!token) {
+      throw new Error('Token is null')
+    }
     const requestOptions = {
       method: 'PUT',
       headers: {
@@ -60,7 +65,6 @@ export class FetchMemberAPI implements MemberAPI {
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (response.status === 401) {
-      await AuthAPI.verifyToken(token)
       throw new Error('Unauthorized')
     }
     if (!resObj.success) {
@@ -69,7 +73,11 @@ export class FetchMemberAPI implements MemberAPI {
     return resObj.member
   }
   async deleteMember(id: string): Promise<void> {
-    const token: any = AuthService.getToken()
+    const token: string | null = AuthService.getToken()
+
+    if (!token) {
+      throw new Error('Token is null')
+    }
     const requestOptions = {
       method: 'DELETE',
       headers: {
@@ -80,7 +88,6 @@ export class FetchMemberAPI implements MemberAPI {
     const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
     const resObj = await response.json()
     if (response.status === 401) {
-      await AuthAPI.verifyToken(token)
       throw new Error('Unauthorized')
     }
     if (!resObj.success) {
