@@ -45,6 +45,10 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          
+      - name: List all file in the folder
+        run: ls -la
+        working-directory: ./backend
 
       - name: 💻 Run Vitest
         run: npm run test:unit:coverage
