@@ -14,10 +14,6 @@ import NotificationToast from '@/components/NotificationToast.vue'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
-import { useToast } from '@/composables'
-import TestToast from '@/components/TestToast.vue'
-
-const { toasts } = useToast()
 
 const isAuth = ref<boolean | null>(null)
 
@@ -152,14 +148,6 @@ watch(
       </div>
     </div>
     <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
-    <div class="container--notification">
-      <TestToast
-        v-for="(toast, index) in toasts"
-        :key="index"
-        :message="toast.message"
-        :type="toast.type"
-      />
-    </div>
   </div>
 </template>
 
