@@ -1,22 +1,35 @@
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Tips } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { Tips } from '../typechain-types/contracts'
 
 describe('Tips', function () {
   let tips: Tips
-  let sender: SignerWithAddress, member1: SignerWithAddress, member2: SignerWithAddress
+  let owner: SignerWithAddress,
+    sender: SignerWithAddress,
+    member1: SignerWithAddress,
+    member2: SignerWithAddress
+
   let recipientAddress: Array<string>
   const TIP_AMOUNT = ethers.parseEther('20')
 
   beforeEach(async function () {
     // Get signers for testing accounts
-    ;[sender, member1, member2] = await ethers.getSigners()
+    const [signer1, signer2, signer3, signer4] = await ethers.getSigners()
+    owner = signer1
+    sender = signer2
+    member1 = signer3
+    member2 = signer4
 
     recipientAddress = [member1.address, member2.address]
     // Deploy the Tips contract
-    const TipsFactory = await ethers.getContractFactory('Tips')
-    tips = await TipsFactory.deploy()
+    const tipsFactory = await ethers.getContractFactory('Tips')
+    tips = (await upgrades.deployProxy(tipsFactory)) as unknown as Tips
+  })
+
+  it('should deploy and set the owner', async function () {
+    expect(tips.deploymentTransaction()).is.exist
+    expect(await tips.connect(sender).owner()).to.equal(owner.address)
   })
 
   describe('pushTip', function () {
@@ -82,13 +95,11 @@ describe('Tips', function () {
     it('should withdraw earned tips and reset the balance', async function () {
       await tips.connect(sender).sendTip(recipientAddress, { value: TIP_AMOUNT })
 
-      const member1StartingBalance = await ethers.provider.getBalance(member1.address)
+      await expect(() => tips.connect(member1).withdraw()).to.changeEtherBalance(
+        member1,
+        ethers.parseEther('10')
+      )
 
-      await tips.connect(member1).withdraw()
-
-      const member1EndingBalance = await ethers.provider.getBalance(member1.address)
-
-      expect(member1EndingBalance).to.gt(member1StartingBalance)
       expect(await tips.getBalance(member1.address)).to.equal(0) // Balance should be reset
     })
 
