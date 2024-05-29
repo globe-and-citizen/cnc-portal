@@ -15,7 +15,11 @@ describe('Tips', function () {
 
   beforeEach(async function () {
     // Get signers for testing accounts
-    ;[owner, sender, member1, member2] = await ethers.getSigners()
+    const [signer1, signer2, signer3, signer4] = await ethers.getSigners()
+    owner = signer1
+    sender = signer2
+    member1 = signer3
+    member2 = signer4
 
     recipientAddress = [member1.address, member2.address]
     // Deploy the Tips contract
