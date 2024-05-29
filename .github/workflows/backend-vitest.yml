@@ -45,9 +45,9 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          
-      - name: List all file in the folder
-        run: ls -la
+
+      - name: List all file in the folder and display the current directory path
+        run: ls -la && pwd
         working-directory: ./backend
 
       - name: 💻 Run Vitest
