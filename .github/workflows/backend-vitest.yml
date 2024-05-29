@@ -37,7 +37,7 @@ jobs:
 
       - name: ⚙️ NPM install
         run: npm ci
-        working-directory: ./app
+        working-directory: ./backend
 
       - name: 🏗 Set up PostgreSQL
         run: |
@@ -45,11 +45,7 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: List all file in the folder and display the current directory path
-        run: ls -la && pwd
-        working-directory: ./backend
-
+          
       - name: 💻 Run Vitest
         run: npm install && npm run test:unit:coverage
         working-directory: ./backend
