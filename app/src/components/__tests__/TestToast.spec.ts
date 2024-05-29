@@ -12,7 +12,7 @@ vi.mock('../icons/IconError.vue', () => ({ default: { template: '<span>Error Ico
 describe('Toast Component', () => {
   it('renders success toast correctly', () => {
     const wrapper = mount(Toast, {
-      props: { type: ToastType.Success, message: 'Success message' }
+      props: { type: ToastType.Success, message: 'Success message', timeout: 5000 }
     })
 
     expect(wrapper.text()).toContain('Success message')
@@ -22,7 +22,7 @@ describe('Toast Component', () => {
 
   it('renders info toast correctly', () => {
     const wrapper = mount(Toast, {
-      props: { type: ToastType.Info, message: 'Info message' }
+      props: { type: ToastType.Info, message: 'Info message', timeout: 5000 }
     })
 
     expect(wrapper.text()).toContain('Info message')
@@ -32,7 +32,7 @@ describe('Toast Component', () => {
 
   it('renders warning toast correctly', () => {
     const wrapper = mount(Toast, {
-      props: { type: ToastType.Warning, message: 'Warning message' }
+      props: { type: ToastType.Warning, message: 'Warning message', timeout: 5000 }
     })
 
     expect(wrapper.text()).toContain('Warning message')
@@ -42,7 +42,7 @@ describe('Toast Component', () => {
 
   it('renders error toast correctly', () => {
     const wrapper = mount(Toast, {
-      props: { type: ToastType.Error, message: 'Error message' }
+      props: { type: ToastType.Error, message: 'Error message', timeout: 5000 }
     })
 
     expect(wrapper.text()).toContain('Error message')
@@ -53,7 +53,7 @@ describe('Toast Component', () => {
   it('disappears after 5 seconds', async () => {
     vi.useFakeTimers()
     const wrapper = mount(Toast, {
-      props: { type: ToastType.Info, message: 'Disappearing message' }
+      props: { type: ToastType.Info, message: 'Disappearing message', timeout: 5000 }
     })
 
     expect(wrapper.text()).toContain('Disappearing message')
