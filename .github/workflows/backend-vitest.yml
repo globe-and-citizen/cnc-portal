@@ -51,7 +51,7 @@ jobs:
         working-directory: ./backend
 
       - name: 💻 Run Vitest
-        run: npm run test:unit:coverage
+        run: npm install && npm run test:unit:coverage
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
