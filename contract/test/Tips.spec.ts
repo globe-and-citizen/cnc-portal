@@ -5,18 +5,31 @@ import { Tips } from '../typechain-types/contracts'
 
 describe('Tips', function () {
   let tips: Tips
-  let sender: SignerWithAddress, member1: SignerWithAddress, member2: SignerWithAddress
+  let owner: SignerWithAddress,
+    sender: SignerWithAddress,
+    member1: SignerWithAddress,
+    member2: SignerWithAddress
+
   let recipientAddress: Array<string>
   const TIP_AMOUNT = ethers.parseEther('20')
 
   beforeEach(async function () {
     // Get signers for testing accounts
-    ;[sender, member1, member2] = await ethers.getSigners()
+    const [signer1, signer2, signer3, signer4] = await ethers.getSigners()
+    owner = signer1
+    sender = signer2
+    member1 = signer3
+    member2 = signer4
 
     recipientAddress = [member1.address, member2.address]
     // Deploy the Tips contract
     const tipsFactory = await ethers.getContractFactory('Tips')
     tips = (await upgrades.deployProxy(tipsFactory)) as unknown as Tips
+  })
+
+  it('should deploy and set the owner', async function () {
+    expect(tips.deploymentTransaction()).is.exist
+    expect(await tips.connect(sender).owner()).to.equal(owner.address)
   })
 
   describe('pushTip', function () {
