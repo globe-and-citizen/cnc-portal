@@ -105,7 +105,8 @@ watch(
 </script>
 
 <template>
-  <div>
+  
+  <div class="min-h-screen m-0  bg-base-200">
     <RouterView name="login" />
     <div v-if="isAuth">
       <!-- 
@@ -131,7 +132,7 @@ watch(
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">
           <div
-            class="drawer-content flex flex-col"
+            class="drawer-content flex flex-col "
             :style="{ marginLeft: toggleSide ? '300px' : '0' }"
           >
             <div class="m-20">
