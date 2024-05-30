@@ -19,19 +19,35 @@ import { ToastType } from '@/types'
 const { addToast } = useToastStore()
 
 const showInfoToast = () => {
-  addToast('This is an info toast!', ToastType.Info, 50000)
+  addToast({
+    message: 'This is an info toast!',
+    type: ToastType.Info,
+    timeout: 50000
+  })
 }
 
 const showSuccessToast = () => {
-  addToast('This is a success toast!', ToastType.Success, 25000)
+  addToast({
+    message: 'This is a success toast!',
+    type: ToastType.Success,
+    timeout: 25000
+  })
 }
 
 const showWarningToast = () => {
-  addToast('This is a warning toast!', ToastType.Warning, 15000)
+  addToast({
+    message: 'This is a warning toast!',
+    type: ToastType.Warning,
+    timeout: 15000
+  })
 }
 
 const showErrorToast = () => {
-  addToast('This is an error toast!', ToastType.Error, 5000)
+  addToast({
+    message: 'This is an error toast!',
+    type: ToastType.Error,
+    timeout: 5000
+  })
 }
 </script>
 

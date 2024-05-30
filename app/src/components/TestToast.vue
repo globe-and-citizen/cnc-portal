@@ -12,19 +12,13 @@
 
 <script setup lang="ts">
 import { defineProps, ref, onMounted, computed, onUnmounted } from 'vue'
-import { ToastType } from '@/types'
+import { ToastType, type Toast } from '@/types'
 import IconCheck from '@/components/icons/IconCheck.vue'
 import IconInfo from '@/components/icons/IconInfo.vue'
 import IconWarning from '@/components/icons/IconWarning.vue'
 import IconError from '@/components/icons/IconError.vue'
 
-interface ToastProps {
-  type: ToastType
-  message: string
-  timeout: number
-}
-
-const props = defineProps<ToastProps>()
+const props = defineProps<Toast>()
 
 const visible = ref(true)
 const timeLeft = ref(props.timeout / 1000)
