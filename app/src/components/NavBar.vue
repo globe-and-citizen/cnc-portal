@@ -31,14 +31,6 @@
           <li v-else><a @click="emits('withdraw')">Withdraw Tips</a></li>
         </ul>
       </div>
-      <!-- logic for theme switch -->
-      <!-- <input
-        type="checkbox"
-        :value="theme ? 'light' : 'dark'"
-        :checked="!isDark"
-        @change="emits('toggleTheme')"
-        className="toggle theme-controller"
-      /> -->
       <button class="btn btn-ghost btn-circle">
         <div class="indicator">
           <IconBell />
@@ -76,8 +68,7 @@
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
-
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw', 'toggleTheme'])
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 
 defineProps<{
   withdrawLoading: boolean
@@ -85,11 +76,6 @@ defineProps<{
   balance: string
 }>()
 
-// logic for theme switch
-// const theme = computed(() => {
-//   // Check if the prefers-color-scheme is dark
-//   return window.matchMedia('(prefers-color-scheme: dark)').matches
-// })
 </script>
 
 <style scoped></style>
