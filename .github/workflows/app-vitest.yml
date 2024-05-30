@@ -1,4 +1,4 @@
-name: Vitest Unit Tests
+name: Frontend Vitest Unit Tests
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  vitest:
+  app-unit-test:
     runs-on: ubuntu-latest
     steps:
       - name: 🛫 Checkout
@@ -33,4 +33,4 @@ jobs:
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unittests
+          flags: app-unit-tests
