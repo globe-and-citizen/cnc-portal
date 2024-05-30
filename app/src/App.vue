@@ -19,12 +19,6 @@ import { ToastType } from './types'
 
 const isAuth = ref<boolean | null>(null)
 
-// const isDark = useDark(
-//   (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) as any
-// )
-// const toggleDark = useToggle(isDark)
-// const toggleDark = useToggle(false)
-
 AuthService.isAuthenticated().then((res) => {
   isAuth.value = res
 })
