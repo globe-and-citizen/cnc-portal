@@ -5,13 +5,13 @@
       <IconInfo v-if="type === ToastType.Info" />
       <IconWarning v-if="type === ToastType.Warning" />
       <IconError v-if="type === ToastType.Error" />
-      <span>{{ message }}</span>
+      <span>{{ message }} - {{ timeLeft }}s</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, onMounted, computed } from 'vue'
+import { defineProps, ref, onMounted, computed, onUnmounted } from 'vue'
 import { ToastType } from '@/types'
 import IconCheck from '@/components/icons/IconCheck.vue'
 import IconInfo from '@/components/icons/IconInfo.vue'
@@ -21,6 +21,8 @@ import IconError from '@/components/icons/IconError.vue'
 const props = defineProps<{ type: ToastType; message: string; timeout: number }>()
 
 const visible = ref(true)
+const timeLeft = ref(props.timeout / 1000)
+let interval: number
 
 const typeClass = computed(() => {
   return {
@@ -31,9 +33,21 @@ const typeClass = computed(() => {
   }
 })
 
+const updateTimeLeft = () => {
+  timeLeft.value -= 1
+  if (timeLeft.value <= 0) {
+    clearInterval(interval)
+  }
+}
+
 onMounted(() => {
+  setInterval(updateTimeLeft, 1000)
   setTimeout(() => {
     visible.value = false
   }, props.timeout)
+})
+
+onUnmounted(() => {
+  clearInterval(interval)
 })
 </script>
