@@ -1,7 +1,7 @@
 <template>
   <div :class="['toast', positionClass]">
     <Toast
-      v-for="(toast, index) in toasts"
+      v-for="toast in toasts"
       :key="toast.id"
       :message="toast.message"
       :type="toast.type"
