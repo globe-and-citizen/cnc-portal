@@ -75,7 +75,6 @@ defineProps<{
   balanceLoading: boolean
   balance: string
 }>()
-
 </script>
 
 <style scoped></style>
