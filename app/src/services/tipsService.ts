@@ -1,11 +1,12 @@
-import { type IWeb3Library } from '@/adapters/web3LibraryAdapter'
+import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import { TIPS_ADDRESS } from '@/constant'
-import type { AddressLike } from 'ethers'
-import ABI from '../abi/tips.json'
+import { ethers, type AddressLike } from 'ethers'
+import ABI from '../artifacts/abi/tips.json'
 import type { TipsEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Contract } from 'ethers'
 import type { Log } from 'ethers'
+import { BankService, type IBankService } from './bankService'
 
 interface ISmartContract {
   contract: Contract | undefined
@@ -36,13 +37,19 @@ export class SmartContract implements ISmartContract {
 }
 
 export class TipsService extends SmartContract {
-  constructor(web3Library: IWeb3Library) {
+  bankService: IBankService
+  constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     super(web3Library, TIPS_ADDRESS, ABI)
+    this.bankService = new BankService(web3Library)
   }
 
-  async pushTip(addresses: AddressLike[], amount: number): Promise<any> {
+  async pushTip(addresses: string[], amount: number, bankAddress?: string): Promise<any> {
     if (!this.contract) {
       this.contract = await super.getContract()
+    }
+
+    if (bankAddress) {
+      return await this.bankPushTip(bankAddress, addresses, amount)
     }
 
     const tx = await this.contract.pushTip(addresses, {
@@ -54,9 +61,13 @@ export class TipsService extends SmartContract {
     return tx
   }
 
-  async sendTip(addresses: AddressLike[], amount: number): Promise<void> {
+  async sendTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
     if (!this.contract) {
       this.contract = await super.getContract()
+    }
+
+    if (bankAddress) {
+      return await this.bankSendTip(bankAddress, addresses, amount)
     }
 
     const tx = await this.contract.sendTip(addresses, {
@@ -91,5 +102,23 @@ export class TipsService extends SmartContract {
     }
 
     return this.contract.queryFilter(type)
+  }
+
+  async bankPushTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
+    try {
+      const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
+      await tx.wait()
+
+      return tx
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
+  }
+  async bankSendTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
+    const tx = await this.bankService.sendTip(bankAddress, addresses, amount)
+    await tx.wait()
+
+    return tx
   }
 }
