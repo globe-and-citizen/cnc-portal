@@ -141,9 +141,8 @@ describe('Bank', () => {
 
     it('should not be able to push tips if the funds insufficient', async () => {
       const amount = ethers.parseEther('2')
-      await expect(
-        bank.connect(owner).pushTip([member1.address, member2.address], amount)
-      ).to.be.reverted
+      await expect(bank.connect(owner).pushTip([member1.address, member2.address], amount)).to.be
+        .reverted
     })
   })
 
@@ -179,8 +178,8 @@ describe('Bank', () => {
 
     it('should not be able to push tips if the funds insufficient', async () => {
       const amount = ethers.parseEther('2')
-      await expect(
-        bank.connect(owner).sendTip([member1.address, member2.address], amount)
-      ).to.be.reverted})
+      await expect(bank.connect(owner).sendTip([member1.address, member2.address], amount)).to.be
+        .reverted
+    })
   })
 })
