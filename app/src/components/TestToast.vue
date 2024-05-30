@@ -19,8 +19,8 @@ import IconWarning from '@/components/icons/IconWarning.vue'
 import IconError from '@/components/icons/IconError.vue'
 
 interface ToastProps {
-  type: ToastType; 
-  message: string; 
+  type: ToastType
+  message: string
   timeout: number
 }
 

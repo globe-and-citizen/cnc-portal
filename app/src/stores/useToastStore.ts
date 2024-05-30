@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { ToastType } from '@/types'
 
 interface Toast {
-  id: number;
+  id: number
   message: string
   type: ToastType
   timeout: number
@@ -26,7 +26,7 @@ export const useToastStore = defineStore('_toast', () => {
   }
 
   const removeToast = (id: number) => {
-    toasts.value = toasts.value.filter(toast => toast.id !== id)
+    toasts.value = toasts.value.filter((toast) => toast.id !== id)
   }
 
   return {
