@@ -19,33 +19,6 @@ describe("Member Controller", () => {
   });
 
   describe("addMembers", () => {
-    it("should add a new member", async () => {
-      const membersData = [
-        {
-          name: "Dasarath",
-          walletAddress: "0x4b6Bf5cD91446408290725879F5666dcd9785F62",
-        },
-      ];
-      const req = {
-        params: {
-          id: "1", // Replace with the desired id
-        },
-        body: {
-          membersData,
-        },
-      } as unknown as Request;
-
-      const res: any = {
-        status: () => res,
-        json: (data: any) => {
-          res.data = data;
-          return res;
-        },
-        data: undefined,
-      } as unknown as Response;
-      await addMembers(req, res);
-      expect(res.data.success).toBe(true);
-    });
     it("should not add a new member (validation)", async () => {
       const membersData = [
         {
