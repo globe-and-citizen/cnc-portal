@@ -9,7 +9,10 @@ export class BaseAPI {
     body?: any,
     additionalHeaders?: Record<string, string>
   ): Promise<any> {
-    const token = AuthService.getToken()
+    const token: string | null = AuthService.getToken()
+    if (!token) {
+      throw new Error('Token is null')
+    }
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
