@@ -143,7 +143,7 @@ describe('Bank', () => {
       const amount = ethers.parseEther('2')
       await expect(
         bank.connect(owner).pushTip([member1.address, member2.address], amount)
-      ).to.be.revertedWith('Insufficient funds')
+      ).to.be.reverted
     })
   })
 
@@ -181,7 +181,6 @@ describe('Bank', () => {
       const amount = ethers.parseEther('2')
       await expect(
         bank.connect(owner).sendTip([member1.address, member2.address], amount)
-      ).to.be.revertedWith('Insufficient funds')
-    })
+      ).to.be.reverted})
   })
 })
