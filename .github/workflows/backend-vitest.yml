@@ -46,7 +46,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Seed PostgreSQL
-        run: npx prisma migrate reset
+        run: npx prisma migrate reset --force
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
