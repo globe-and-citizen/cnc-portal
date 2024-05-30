@@ -1,6 +1,6 @@
 <template>
   <!-- <header> -->
-  <div class="navbar bg-base-200 fixed z-50 shadow-sm p-5">
+  <div class="navbar bg-base-100 fixed z-50 shadow-sm p-5">
     <div class="navbar-start">
       <div>
         <img src="../assets/Logo.png" alt="Logo" />
