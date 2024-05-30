@@ -18,7 +18,13 @@ import IconInfo from '@/components/icons/IconInfo.vue'
 import IconWarning from '@/components/icons/IconWarning.vue'
 import IconError from '@/components/icons/IconError.vue'
 
-const props = defineProps<{ type: ToastType; message: string; timeout: number }>()
+interface ToastProps {
+  type: ToastType; 
+  message: string; 
+  timeout: number
+}
+
+const props = defineProps<ToastProps>()
 
 const visible = ref(true)
 const timeLeft = ref(props.timeout / 1000)
