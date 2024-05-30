@@ -137,7 +137,7 @@ import { useTipEvents } from '@/composables/tips'
 import { TipsEventType, ToastType } from '@/types'
 import { ethers } from 'ethers'
 import { onMounted, watch } from 'vue'
-import { ETHERSCAN_URL } from '@/constant'
+import { NETWORK } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { useToastStore } from '@/stores/toast'
 
@@ -187,6 +187,6 @@ watch(withdrawalTipError, () => {
 })
 
 const showTxDetail = (txHash: string) => {
-  window.open(`${ETHERSCAN_URL}/tx/${txHash}`, '_blank')
+  window.open(`${NETWORK.blockExplorerUrl}/tx/${txHash}`, '_blank')
 }
 </script>
