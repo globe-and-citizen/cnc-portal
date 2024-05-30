@@ -13,16 +13,17 @@ import EditUserModal from '@/components/modals/EditUserModal.vue'
 
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
-import { useDark, useToggle } from '@vueuse/core'
+// import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
 
 const isAuth = ref<boolean | null>(null)
 
-const isDark = useDark(
-  (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) as any
-)
-const toggleDark = useToggle(isDark)
+// const isDark = useDark(
+//   (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) as any
+// )
+// const toggleDark = useToggle(isDark)
+// const toggleDark = useToggle(false)
 
 AuthService.isAuthenticated().then((res) => {
   isAuth.value = res
@@ -107,8 +108,12 @@ watch(
   <div>
     <RouterView name="login" />
     <div v-if="isAuth">
+      <!-- 
+        for toggleTheme
+        @toggleTheme="() => toggleDark()" 
+        :isDark="isDark"
+      -->
       <NavBar
-        @toggleTheme="() => toggleDark()"
         @toggleSideButton="handleChange"
         @toggleEditUserModal="
           () => {
@@ -122,7 +127,6 @@ watch(
         @getBalance="getBalance()"
         :balance="balance ? balance : '0'"
         :balanceLoading="balanceLoading"
-        :isDark="isDark"
       />
       <div class="content-wrapper">
         <div class="drawer lg:drawer-open">
