@@ -1,5 +1,5 @@
 <template>
-  <div class="card w-full bg-white">
+  <div class="card w-full bg-base-100">
     <div class="card-body flex justify-center items-center">
       <h1 class="card-title">Add Member</h1>
 

@@ -1,12 +1,12 @@
 <template>
-  <div class="card bg-white shadow-xl flex flex-row justify-around my-2 p-6 gap-6">
+  <div class="card bg-base-200 shadow-xl flex flex-row justify-around my-2 p-6 gap-6">
     <div class="grow flex flex-col justify-center">
       <label for="tip-amount" class="text-center">Total Amount</label>
       <div class="w-full flex flex-col justify-between m-6 self-center">
         <input
           type="text"
           placeholder="Input tip amount per member"
-          class="py-2 px-4 outline outline-1 outline-neutral-content rounded-md border-neutral-content text-center bg-white"
+          class="py-2 px-4 outline outline-1 outline-neutral-content rounded-md border-neutral-content text-center bg-base-200"
           v-model="tipAmount"
         />
       </div>
