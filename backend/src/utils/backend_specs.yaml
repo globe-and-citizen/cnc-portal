@@ -523,6 +523,9 @@ components:
         description:
           type: string
           description: Description of the team
+        bankAddress:
+          type: string
+          description: Bank smartt contract address of the team
 
     MemberCreateRequest:
       type: object
