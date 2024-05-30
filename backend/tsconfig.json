@@ -1,5 +1,4 @@
 {
-  "include": ["src/**/*", "prisma/seed.ts"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
     "types": ["vitest/globals"],
@@ -16,7 +15,7 @@
 
     /* Modules */
     "module": "commonjs",
-    // "rootDir": "./src",
+    "rootDir": "./src",
     "outDir": "./dist",
     /* Emit */
     "sourceMap": true,
@@ -32,8 +31,6 @@
     "vitest.config.unit.ts",
     "vitest.config.ts",
     "vitest.e2e.config.ts",
-    "vitest.unit.config.ts",
-    "node_modules",
-    "dist"
-  ]
+    "vitest.unit.config.ts"
+  ],
 }
