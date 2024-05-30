@@ -2,7 +2,7 @@
   <div :class="['toast', positionClass]">
     <Toast
       v-for="(toast, index) in toasts"
-      :key="index"
+      :key="toast.id"
       :message="toast.message"
       :type="toast.type"
       :timeout="toast.timeout"
