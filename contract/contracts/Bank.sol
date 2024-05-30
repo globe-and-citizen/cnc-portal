@@ -2,13 +2,15 @@
 pragma solidity ^0.8.24;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
 interface ITips {
   function pushTip(address[] calldata _teamMembersAddresses) external payable;
   function sendTip(address[] calldata _teamMembersAddresses) external payable;
 }
 
-contract Bank is OwnableUpgradeable {
+contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   address public tipsAddress;
 
   event Deposited(address indexed depositor, uint256 amount);
@@ -30,10 +32,7 @@ contract Bank is OwnableUpgradeable {
     emit Deposited(msg.sender, msg.value);
   }
 
-  function transfer(
-    address _to,
-    uint256 _amount
-  ) external payable onlyOwner shouldHaveEnoughFunds(_amount) {
+  function transfer(address _to, uint256 _amount) external payable onlyOwner nonReentrant {
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
 
@@ -52,26 +51,15 @@ contract Bank is OwnableUpgradeable {
     emit TipsAddressChanged(msg.sender, oldAddress, _tipsAddress);
   }
 
-  function pushTip(
-    address[] calldata _addresses,
-    uint256 _amount
-  ) external payable onlyOwner shouldHaveEnoughFunds(_amount) {
+  function pushTip(address[] calldata _addresses, uint256 _amount) external payable onlyOwner {
     ITips(tipsAddress).pushTip{value: _amount}(_addresses);
 
     emit PushTip(msg.sender, _addresses, _amount);
   }
 
-  function sendTip(
-    address[] calldata _addresses,
-    uint256 _amount
-  ) external payable onlyOwner shouldHaveEnoughFunds(_amount) {
+  function sendTip(address[] calldata _addresses, uint256 _amount) external payable onlyOwner {
     ITips(tipsAddress).sendTip{value: _amount}(_addresses);
 
     emit SendTip(msg.sender, _addresses, _amount);
-  }
-
-  modifier shouldHaveEnoughFunds(uint256 _amount) {
-    require(address(this).balance >= _amount, 'Insufficient funds');
-    _;
   }
 }
