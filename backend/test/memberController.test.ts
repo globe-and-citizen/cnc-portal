@@ -23,12 +23,12 @@ describe("Member Controller", () => {
       const membersData = [
         {
           name: "Dasarath",
-          walletAddress: "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+          walletAddress: "0x4b6Bf5cD91446408290725879F5666dcd9785F62",
         },
       ];
       const req = {
         params: {
-          id: "4", // Replace with the desired id
+          id: "2", // Replace with the desired id
         },
         body: {
           membersData,
@@ -43,7 +43,6 @@ describe("Member Controller", () => {
         },
         data: undefined,
       } as unknown as Response;
-
       await addMembers(req, res);
       expect(res.data.success).toBe(true);
     });
@@ -60,7 +59,7 @@ describe("Member Controller", () => {
       ];
       const req = {
         params: {
-          id: "4",
+          id: "1",
         },
         body: {
           membersData,
@@ -83,7 +82,7 @@ describe("Member Controller", () => {
     it("should update a member", async () => {
       const req = {
         params: {
-          id: "11", // Replace with the desired id
+          id: "2", // Replace with the desired id
         },
         body: {
           name: "Ramaxxx",
@@ -116,7 +115,7 @@ describe("Member Controller", () => {
       ];
       const req = {
         params: {
-          id: "4",
+          id: "1",
         },
         body: {
           membersData,
@@ -169,7 +168,7 @@ describe("Member Controller", () => {
     ];
     const req = {
       params: {
-        id: "4",
+        id: "1",
       },
       body: {
         membersData,
