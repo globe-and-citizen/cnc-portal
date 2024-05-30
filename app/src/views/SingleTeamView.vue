@@ -5,13 +5,25 @@
         <h2 class="pl-5">{{ team.name }}</h2>
         <p class="pl-5 pb-3 text-xl">{{ team.description }}</p>
         <p class="pl-5" v-if="team.bankAddress">
-          Bank Account Smart Contract Address: {{ team.bankAddress }}
+          Bank Contract Address: {{ team.bankAddress }}
         </p>
-        <p class="pl-5" v-if="team.bankAddress">Team Balance: {{ teamBalance }}</p>
+        <p class="pl-5" v-if="team.bankAddress && !balanceLoading">
+          Team Balance: {{ teamBalance }} {{ NETWORK.currencySymbol }}
+        </p>
+        <p class="pl-5 flex flex-row gap-2" v-if="balanceLoading">
+          <span>Team Balance: </span>
+          <SkeletonLoading class="w-40 h-4 self-center" />
+        </p>
       </div>
-      <div class="flex justify-between gap-2 items-center">
+      <div class="flex flex-wrap justify-between gap-1 items-center">
         <button class="btn btn-primary" @click="bankModal = true" v-if="!team.bankAddress">
           Create Bank Account Smart Contract
+        </button>
+        <button class="btn btn-primary" @click="depositModal = true" v-if="team.bankAddress">
+          Deposit
+        </button>
+        <button class="btn btn-primary" @click="transferModal = true" v-if="team.bankAddress">
+          Transfer
         </button>
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
 
@@ -57,8 +69,8 @@
     <TipsAction
       :pushTipLoading="pushTipLoading"
       :sendTipLoading="sendTipLoading"
-      @pushTip="(amount) => pushTip(membersAddress, amount)"
-      @sendTip="(amount) => sendTip(membersAddress, amount)"
+      @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
+      @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
     />
     <!-- <TipsAction :addresses="team.members.map((member) => member.walletAddress)" /> -->
   </div>
@@ -99,8 +111,21 @@
   </dialog>
   <CreateBankModal
     v-if="bankModal"
-    @close-modal="() => (bankModal = !bankModal)"
-    @create-bank="async () => createBankContract()"
+    @close-modal="() => (bankModal = false)"
+    @create-bank="async () => deployBankContract()"
+    :loading="createBankLoading"
+  />
+  <DepositBankModal
+    v-if="depositModal"
+    @close-modal="() => (depositModal = false)"
+    @deposit="async (amount: string) => depositToBank(amount)"
+    :loading="depositLoading"
+  />
+  <TransferFromBankModal
+    v-if="transferModal"
+    @close-modal="() => (transferModal = false)"
+    @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
+    :loading="transferLoading"
   />
 </template>
 <script setup lang="ts">
@@ -109,23 +134,30 @@ import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
-import CreateBankModal from '@/components/CreateBankModal.vue'
+import CreateBankModal from '@/components/modals/CreateBankModal.vue'
+import DepositBankModal from '@/components/modals/DepositBankModal.vue'
+import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
 import { ToastType, type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { FetchMemberAPI } from '@/apis/memberApi'
-import { BankService } from '@/services/bankService'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
+import {
+  useBankBalance,
+  useBankDeposit,
+  useDeployBankContract,
+  useBankTransfer
+} from '@/composables/bank'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
+import { NETWORK } from '@/constant'
+
 const { show } = useToastStore()
 const memberApi = new FetchMemberAPI()
-const bankService = new BankService()
-const web3Library = EthersJsAdapter.getInstance()
 const route = useRoute()
 const router = useRouter()
 const {
@@ -140,8 +172,34 @@ const {
   isSuccess: sendTipSuccess,
   error: sendTipError
 } = useSendTip()
-watch(pushTipError, () => {
+const {
+  execute: getBalance,
+  isLoading: balanceLoading,
+  data: teamBalance,
+  error: balanceError
+} = useBankBalance()
+const {
+  contractAddress,
+  execute: createBankContract,
+  isLoading: createBankLoading,
+  isSuccess: createBankSuccess,
+  error: createBankError
+} = useDeployBankContract()
+const {
+  execute: deposit,
+  isLoading: depositLoading,
+  isSuccess: depositSuccess,
+  error: depositError
+} = useBankDeposit()
+const {
+  execute: transfer,
+  isLoading: transferLoading,
+  isSuccess: transferSuccess,
+  error: transferError
+} = useBankTransfer()
+watch(pushTipError, async () => {
   if (pushTipError.value) {
+    await getBalance()
     show(
       ToastType.Error,
       pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
@@ -161,9 +219,49 @@ watch(pushTipSuccess, () => {
     show(ToastType.Success, 'Tips pushed successfully')
   }
 })
-watch(sendTipSuccess, () => {
+watch(sendTipSuccess, async () => {
   if (sendTipSuccess.value) {
+    await getBalance()
     show(ToastType.Success, 'Tips sent successfully')
+  }
+})
+watch(balanceError, () => {
+  if (balanceError.value) {
+    console.log(balanceError.value)
+    show(ToastType.Error, 'Failed to fetch team balance')
+  }
+})
+watch(createBankError, () => {
+  if (createBankError.value) {
+    show(ToastType.Error, 'Failed to create bank contract')
+  }
+})
+watch(createBankSuccess, () => {
+  if (createBankSuccess.value) {
+    show(ToastType.Success, 'Bank contract created successfully')
+  }
+})
+watch(depositSuccess, () => {
+  if (depositSuccess.value) {
+    show(ToastType.Success, 'Deposited successfully')
+  }
+})
+watch(depositError, () => {
+  if (depositError.value) {
+    show(ToastType.Error, 'Deposit failed')
+  }
+})
+watch(transferSuccess, () => {
+  if (transferSuccess.value) {
+    show(ToastType.Success, 'Transfer successfully')
+  }
+})
+watch(transferError, () => {
+  if (transferError.value) {
+    show(
+      ToastType.Error,
+      transferError.value.reason ? transferError.value.reason : 'Transfer failed'
+    )
   }
 })
 
@@ -171,10 +269,11 @@ const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
-const teamBalance = ref('0.0')
 
 const showModal = ref(false)
 const bankModal = ref(false)
+const depositModal = ref(false)
+const transferModal = ref(false)
 
 const showUpdateMemberModal = ref(false)
 const showAddMemberForm = ref(false)
@@ -251,7 +350,7 @@ onMounted(async () => {
       console.log('Team not found for id:', id)
     }
     if (team.value.bankAddress) {
-      teamBalance.value = await web3Library.getBalance(team.value.bankAddress)
+      await getBalance(team.value.bankAddress)
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
@@ -329,18 +428,27 @@ const deleteTeam = async () => {
     return useErrorHandler().handleError(error)
   }
 }
-
-const createBankContract = async () => {
+const deployBankContract = async () => {
   const id = route.params.id
-  try {
-    const bankAddress = await bankService.createBankContract(String(id))
-    team.value.bankAddress = bankAddress
-    bankModal.value = !bankModal.value
-    if (bankAddress) {
-      show(ToastType.Success, `Bank contract created successfully at ${bankAddress}`)
-    }
-  } catch (error) {
-    show(ToastType.Error, error as string)
+  await createBankContract(String(id))
+  team.value.bankAddress = contractAddress.value
+  if (team.value.bankAddress) {
+    bankModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
+const depositToBank = async (amount: string) => {
+  await deposit(team.value.bankAddress, amount)
+  if (depositSuccess.value) {
+    depositModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
+const transferFromBank = async (to: string, amount: string) => {
+  await transfer(team.value.bankAddress, to, amount)
+  if (transferSuccess.value) {
+    transferModal.value = false
+    await getBalance(team.value.bankAddress)
   }
 }
 watch(

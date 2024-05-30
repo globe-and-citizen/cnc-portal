@@ -15,7 +15,10 @@
       </h3>
 
       <div class="modal-action justify-center">
-        <button class="btn btn-primary" @click="$emit('createBank')">Deploy Bank Contract</button>
+        <LoadingButton color="primary" class="w-44" v-if="loading" />
+        <button class="btn btn-primary" @click="$emit('createBank')" v-if="!loading">
+          Deploy Bank Contract
+        </button>
         <button class="btn btn-error" @click="$emit('closeModal')">Cancel</button>
       </div>
     </div>
@@ -23,5 +26,10 @@
 </template>
 
 <script setup lang="ts">
+import LoadingButton from '@/components/LoadingButton.vue'
+
 defineEmits(['closeModal', 'createBank'])
+defineProps<{
+  loading: boolean
+}>()
 </script>
