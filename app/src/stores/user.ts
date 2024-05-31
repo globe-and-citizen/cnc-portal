@@ -1,5 +1,6 @@
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
+import { AuthService } from '@/services/authService'
 
 export const useUserDataStore = defineStore({
   id: 'userData',
@@ -24,7 +25,8 @@ export const useUserDataStore = defineStore({
       this.nonce = ''
       localStorage.clear() // Clear all localStorage
     },
-    setAuthStatus(isAuth: boolean) {
+    async setAuthStatus() {
+      const isAuth = await AuthService.isAuthenticated()
       this.isAuth = isAuth
       useStorage('isAuth', isAuth) // Save isAuth to localStorage
     }

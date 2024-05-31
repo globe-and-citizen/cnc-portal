@@ -4,7 +4,6 @@ import { ref, watch, toRaw } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/toast'
 import { useUserDataStore } from '@/stores/user'
-import { AuthService } from '@/services/authService'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -17,11 +16,6 @@ import { FetchUserAPI } from './apis/userApi'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
 
-const isAuth = ref<boolean | null>(null)
-
-AuthService.isAuthenticated().then((res) => {
-  isAuth.value = res
-})
 const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
@@ -46,7 +40,7 @@ const {
 } = useTipsBalance()
 
 const userStore = useUserDataStore()
-const { name, address } = storeToRefs(userStore)
+const { name, address, isAuth } = storeToRefs(userStore)
 
 const showUserModal = ref(false)
 
@@ -67,8 +61,8 @@ watch(
   }
 )
 watch(
-  [withdrawError, withdrawSuccess, balanceError, isAuth],
-  async ([withdrawErr, withdrawSuc, balanceErr, isAuthed]) => {
+  [withdrawError, withdrawSuccess, balanceError],
+  async ([withdrawErr, withdrawSuc, balanceErr]) => {
     // Handle withdraw error
     if (withdrawErr) {
       toastStore.show(
@@ -91,9 +85,6 @@ watch(
     }
 
     // Handle authentication change (optional)
-    if (isAuthed) {
-      await getBalance()
-    }
   }
 )
 </script>
