@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import NavBar from '../NavBar.vue'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
-import { getNetwork } from '@/constant/network'
+import { NETWORK } from '@/constant/index'
 
 describe('NavBar', () => {
   const props = {
@@ -45,6 +45,6 @@ describe('NavBar', () => {
   })
   it('shows loading state for balance', () => {
     const wrapper = mount(NavBar, { props: { ...props, balanceLoading: true } })
-    expect(wrapper.find('.btn div').text()).toBe('XXX ' + getNetwork().currencySymbol)
+    expect(wrapper.find('.btn div').text()).toBe('XXX ' + NETWORK.currencySymbol)
   })
 })
