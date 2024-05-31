@@ -4,7 +4,6 @@ import NavBar from '../NavBar.vue'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import { getNetwork } from '@/constant/network'
-import { get } from 'http'
 
 describe('NavBar', () => {
   const props = {
