@@ -17,7 +17,7 @@ describe('Bank', () => {
     })) as unknown as Tips
 
     const BankImpl = await ethers.getContractFactory('Bank')
-    bank = (await upgrades.deployProxy(BankImpl, [await bank.getAddress()], {
+    bank = (await upgrades.deployProxy(BankImpl, [await tips.getAddress()], {
       initializer: 'initialize'
     })) as unknown as Bank
 
