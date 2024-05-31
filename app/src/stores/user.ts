@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 
 export const useUserDataStore = defineStore('user', () => {
-  const userName = useStorage('name', 'hermann')
+  const userName = useStorage('name', '')
   const userAddress = useStorage('ownerAddress', '')
   const userNonce = useStorage('nonce', '')
 
