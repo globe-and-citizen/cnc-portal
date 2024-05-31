@@ -16,10 +16,12 @@
         <div tabindex="0" role="button" class="">
           <div class="btn w-full flex flex-row justify-between bg-base-primary">
             <img src="../assets/Ethereum.png" height="20" width="20" alt="Ethereum Icon" />
-            <div v-if="balanceLoading">XXX ETH</div>
+            <div class="text-xs" v-if="balanceLoading">XXX {{ NETWORK.currencySymbol }}</div>
             <div v-else>
-              <span class="text-black font-bold font-mono"> {{ balance.slice(0, 6) }}</span>
-              <span class="ml-2 text-black font-bold font-mono">ETH</span>
+              <span class="text-black font-bold font-mono"> {{ balance.slice(0, 5) }}</span>
+              <span class="ml-2 text-black font-bold font-mono text-xs">{{
+                NETWORK.currencySymbol
+              }}</span>
             </div>
           </div>
         </div>
@@ -68,8 +70,8 @@
 import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
+import { NETWORK } from '@/constant/index'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
-
 defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
