@@ -6,7 +6,8 @@ export const useUserDataStore = defineStore({
   state: () => ({
     name: useStorage('name', ''),
     address: useStorage('ownerAddress', ''),
-    nonce: useStorage('nonce', '')
+    nonce: useStorage('nonce', ''),
+    isAuth: useStorage('isAuth', false)
   }),
   actions: {
     setUserData(name: string, address: string, nonce: string) {
@@ -22,6 +23,10 @@ export const useUserDataStore = defineStore({
       this.address = ''
       this.nonce = ''
       localStorage.clear() // Clear all localStorage
+    },
+    setAuthStatus(isAuth: boolean) {
+      this.isAuth = isAuth
+      useStorage('isAuth', isAuth) // Save isAuth to localStorage
     }
   }
 })
