@@ -18,7 +18,18 @@ const addTeam = async (req: Request, res: Response) => {
         throw new Error(`Invalid wallet address for member: ${member.name}`);
       }
     }
-
+    const user = await prisma.user.findUnique({
+      where: {
+        address: req.body.address,
+      },
+    });
+    if (!user) {
+      return errorResponse(404, "User not found", res);
+    }
+    members.createMany.data.push({
+      name: user.name ? user.name : "User",
+      walletAddress: user.address,
+    });
     const team = await prisma.team.create({
       data: {
         name,
@@ -32,6 +43,7 @@ const addTeam = async (req: Request, res: Response) => {
     });
     res.status(201).json({ success: true, team });
   } catch (error: any) {
+    console.log("Error:", error);
     return errorResponse(500, error, res);
   }
 };
