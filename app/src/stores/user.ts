@@ -23,6 +23,7 @@ export const useUserDataStore = defineStore({
       this.name = ''
       this.address = ''
       this.nonce = ''
+      this.isAuth = false
       localStorage.clear() // Clear all localStorage
     },
     async setAuthStatus() {
