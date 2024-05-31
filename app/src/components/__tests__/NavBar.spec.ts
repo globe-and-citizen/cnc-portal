@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest'
 import NavBar from '../NavBar.vue'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
+import { getNetwork } from '@/constant/network'
+import { get } from 'http'
 
 describe('NavBar', () => {
   const props = {
@@ -25,7 +27,7 @@ describe('NavBar', () => {
   })
 
   it('renders balance correctly', () => {
-    expect(wrapper.find('.btn span').text()).toContain('1.2345')
+    expect(wrapper.find('.btn span').text()).toContain('1.234')
   })
 
   it('emits toggleSideButton when hamburger button is clicked', async () => {
@@ -41,5 +43,9 @@ describe('NavBar', () => {
   it('renders withdraw loading state', () => {
     const wrapper = mount(NavBar, { props: { ...props, withdrawLoading: true } })
     expect(wrapper.find('.dropdown-content li a').text()).toBe('Processing...')
+  })
+  it('shows loading state for balance', () => {
+    const wrapper = mount(NavBar, { props: { ...props, balanceLoading: true } })
+    expect(wrapper.find('.btn div').text()).toBe('XXX ' + getNetwork().currencySymbol)
   })
 })
