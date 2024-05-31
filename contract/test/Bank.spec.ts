@@ -7,16 +7,17 @@ describe('Bank', () => {
   let bank: Bank
   let tips: Tips
   let owner: SignerWithAddress, other: SignerWithAddress
+
   beforeEach(async () => {
     ;[owner, other] = await ethers.getSigners()
 
-    const Tips = await ethers.getContractFactory('Tips')
-    tips = (await upgrades.deployProxy(Tips, [], {
+    const TipsImpl = await ethers.getContractFactory('Tips')
+    tips = (await upgrades.deployProxy(TipsImpl, [], {
       initializer: 'initialize'
     })) as unknown as Tips
 
-    const Bank = await ethers.getContractFactory('Bank')
-    bank = (await upgrades.deployProxy(Bank, [await tips.getAddress()], {
+    const BankImpl = await ethers.getContractFactory('Bank')
+    bank = (await upgrades.deployProxy(BankImpl, [await bank.getAddress()], {
       initializer: 'initialize'
     })) as unknown as Bank
 
