@@ -1,5 +1,5 @@
 <template>
-  <div class="card bg-base-200 shadow-xl flex flex-row justify-around my-2 p-6 gap-6">
+  <div class="card bg-base-100 shadow-xl flex flex-row justify-around my-2 p-6 gap-6">
     <div class="grow flex flex-col justify-center">
       <label for="tip-amount" class="text-center">Total Amount</label>
       <div class="w-full flex flex-col justify-between m-6 self-center">
