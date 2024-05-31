@@ -3,7 +3,6 @@ import { Member, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
-import { error } from "console";
 
 const prisma = new PrismaClient();
 // Create a new team
