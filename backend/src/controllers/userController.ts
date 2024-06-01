@@ -46,7 +46,6 @@ export const getNonce = async (req: Request, res: Response) => {
 
 export const getUser = async (req: Request, res: Response) => {
   const { address } = req.params;
-
   try {
     if (!address)
       return errorResponse(401, "Get user error: Missing user address", res);
@@ -95,6 +94,43 @@ export const updateUser = async (req: Request, res: Response) => {
     });
 
     return res.status(200).json(updatedUser);
+  } catch (error) {
+    await prisma.$disconnect();
+    return errorResponse(500, error, res);
+  }
+};
+
+export const searchUser = async (req: Request, res: Response) => {
+  const { name, address } = req.query;
+
+  try {
+    if (!name && !address)
+      return errorResponse(
+        401,
+        "Search user error: Missing query parameters",
+        res
+      );
+
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: name as string,
+            },
+          },
+          {
+            address: {
+              contains: address as string,
+            },
+          },
+        ],
+      },
+    });
+
+    await prisma.$disconnect();
+
+    return res.status(200).json(users);
   } catch (error) {
     await prisma.$disconnect();
     return errorResponse(500, error, res);
