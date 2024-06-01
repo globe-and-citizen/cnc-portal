@@ -23,10 +23,10 @@
         </thead>
         <tbody>
           <MemberCard
-            v-for="(member, index) in team.members"
+            v-for="member in team.members"
             :teamId="Number(team.id)"
             :member="member"
-            :key="index"
+            :key="member.address"
             @deleteMember="(id, address) => deleteMember(id, address)"
           />
         </tbody>
