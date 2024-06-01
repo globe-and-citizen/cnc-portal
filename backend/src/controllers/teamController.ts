@@ -14,7 +14,7 @@ const addTeam = async (req: Request, res: Response) => {
   try {
     // Validate all members' wallet addresses
     for (const member of members) {
-      if (!isAddress(member.walletAddress)) {
+      if (!isAddress(member.address)) {
         throw new Error(`Invalid wallet address for member: ${member.name}`);
       }
     }
@@ -35,7 +35,7 @@ const addTeam = async (req: Request, res: Response) => {
     if (!members.some((member: User) => member.address === ownerAddress)) {
       members.push({
         name: owner.name || "User",
-        walletAddress: owner.address,
+        address: owner.address,
       });
     }
 
