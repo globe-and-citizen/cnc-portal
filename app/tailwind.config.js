@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+
 import daisyui from 'daisyui'
+
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
@@ -14,8 +16,8 @@ export default {
           secondary: '#3366FF',
           accent: '#00B8D9',
           neutral: '#0f3d2e',
-          'base-100': '#f3fcf9',
-
+          'base-100': '#FFFFFF',
+          'base-200': '#f3fcf9',
           info: '#00B8D9',
           success: '#36B37E',
           warning: '#FFAB00',
@@ -26,7 +28,8 @@ export default {
           secondary: '#2227bf',
           accent: '#242291',
           neutral: '#0f3d2e',
-          'base-100': '#030c09'
+          'base-100': '#1a1a1a',
+          'base-200': '#030c09'
         },
         mytheme: {
           primary: '#0097d6',

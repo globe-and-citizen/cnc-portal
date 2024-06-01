@@ -2,16 +2,18 @@
 import { RouterView } from 'vue-router'
 import { ref, watch, toRaw } from 'vue'
 import { storeToRefs } from 'pinia'
-import { isAddress } from 'ethers'
 import { useToastStore } from '@/stores/toast'
 import { useUserDataStore } from '@/stores/user'
-import { FetchUserAPI } from '@/apis/userApi'
 import { AuthService } from '@/services/authService'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
+
+import { isAddress } from 'ethers'
+import { FetchUserAPI } from './apis/userApi'
+// import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
 
@@ -97,9 +99,14 @@ watch(
 </script>
 
 <template>
-  <div>
+  <div class="min-h-screen m-0 bg-base-200">
     <RouterView name="login" />
     <div v-if="isAuth">
+      <!-- 
+        for toggleTheme
+        @toggleTheme="() => toggleDark()" 
+        :isDark="isDark"
+      -->
       <NavBar
         @toggleSideButton="handleChange"
         @toggleEditUserModal="
