@@ -11,6 +11,7 @@
   <AddTeamModal
     :team="team"
     :showAddTeamModal="showAddTeamModal"
+    @searchUsers="(input) => emits('searchUsers', input)"
     @updateAddTeamModal="(newFormDataTeam) => emits('updateAddTeamModal', newFormDataTeam)"
     @addInput="emits('addInput')"
     @removeInput="emits('removeInput')"
@@ -30,7 +31,8 @@ const emits = defineEmits([
   'addInput',
   'removeInput',
   'toggleAddTeamModal',
-  'updateAddTeamModal'
+  'updateAddTeamModal',
+  'searchUsers'
 ])
 const props = defineProps<{
   showAddTeamModal: boolean

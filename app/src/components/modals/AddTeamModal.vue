@@ -38,6 +38,7 @@
               type="text"
               class="w-24"
               v-model="input.name"
+              @keyup.enter="emits('searchUsers', input)"
               :placeholder="'Member Name ' + (index + 1)"
             />
             |
@@ -45,6 +46,7 @@
               type="text"
               class="grow"
               v-model="input.address"
+              @keyup.enter="emits('searchUsers', input)"
               :placeholder="'Wallet Address ' + (index + 1)"
             />
           </label>
@@ -79,7 +81,8 @@ const emits = defineEmits([
   'addInput',
   'removeInput',
   'toggleAddTeamModal',
-  'updateAddTeamModal'
+  'updateAddTeamModal',
+  'searchUsers'
 ])
 const props = defineProps<{
   showAddTeamModal: boolean

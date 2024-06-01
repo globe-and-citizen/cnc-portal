@@ -9,6 +9,7 @@ interface UserAPI {
   getUser(address: string): Promise<User>
   createUser(user: User): Promise<User>
   updateUser(updatedUser: Partial<User>): Promise<User>
+  searchUser(name: string, address: string): Promise<User[]>
 }
 
 // Implement UserService using Fetch API (or any other HTTP client)
@@ -70,5 +71,18 @@ export class FetchUserAPI implements UserAPI {
     } else {
       throw new Error(resObj.message)
     }
+  }
+  async searchUser(name: string, address: string): Promise<User[]> {
+    console.log('hi')
+    const params = new URLSearchParams()
+
+    if (name) params.append('name', name)
+    if (address) params.append('address', address)
+
+    const response = await fetch(`${BACKEND_URL}/api/user/search/user?${params.toString()}`, {
+      method: 'GET'
+    })
+    const userData = await response.json()
+    return userData
   }
 }

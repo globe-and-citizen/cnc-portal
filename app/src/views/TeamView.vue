@@ -12,6 +12,7 @@
 
       <AddTeamCard
         @addTeam="handleAddTeam"
+        @searchUsers="(input) => searchUsers(input)"
         v-model:showAddTeamModal="showAddTeamModal"
         v-model:team="team"
         @updateAddTeamModal="handleupdateAddTeamModal"
@@ -34,6 +35,9 @@ import { ToastType, type Team, type TeamInput } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 import { useErrorHandler } from '@/composables/errorHandler'
+import { FetchUserAPI } from '@/apis/userApi'
+
+const userApi = new FetchUserAPI()
 
 const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
@@ -84,7 +88,14 @@ const handleAddTeam = async () => {
 const addInput = () => {
   team.value.members.push({ name: '', address: '', isValid: false })
 }
-
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    const users = await userApi.searchUser(input.name, input.address)
+    console.log(users)
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
+}
 const removeInput = () => {
   if (team.value.members.length > 1) {
     team.value.members.pop()
