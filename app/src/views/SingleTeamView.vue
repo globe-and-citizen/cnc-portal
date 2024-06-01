@@ -27,7 +27,7 @@
             :member="member"
             :key="index"
             :showUpdateMemberModal="showUpdateMemberModal"
-            @deleteMember="(id) => deleteMember(id)"
+            @deleteMember="(address) => deleteMember(address)"
             @toggleUpdateMemberModal="toggleUpdateMemberModal"
           />
         </tbody>
@@ -230,7 +230,7 @@ const updateTeamModalOpen = async () => {
 }
 const deleteMember = async (id: string) => {
   try {
-    const memberRes: any = await memberApi.deleteMember(id)
+    const memberRes: any = await teamApi.deleteMember(id)
     if (memberRes && memberRes.count == 1) {
       show(ToastType.Success, 'Member deleted successfully')
       team.value.members.splice(
