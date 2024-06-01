@@ -1,6 +1,5 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import { TIPS_ADDRESS } from '@/constant'
-import { ethers, type AddressLike } from 'ethers'
 import ABI from '../artifacts/abi/tips.json'
 import type { TipsEventType } from '@/types'
 import type { EventLog } from 'ethers'
