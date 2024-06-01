@@ -170,7 +170,7 @@ const updateTeam = async (req: Request, res: Response) => {
         members: true,
       },
     });
-    res.status(200).json({ teamU, success: true });
+    res.status(200).json({ team: teamU, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }
@@ -201,10 +201,59 @@ const deleteTeam = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(200).json({ teamD, success: true });
+    res.status(200).json({ team: teamD, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }
 };
 
-export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams };
+const deleteMember = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const memberAddress = req.headers.memberaddress;
+
+  try {
+    // Find the team
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) },
+      include: { members: true },
+    });
+
+    // Check if the team exists
+    if (!team) {
+      throw new Error("Team not found");
+    }
+
+    // Find the index of the member in the team
+    const memberIndex = team.members.findIndex(
+      (member) => member.address === memberAddress
+    );
+
+    // If member not found in the team, throw an error
+    if (memberIndex === -1) {
+      throw new Error("Member not found in the team");
+    }
+
+    // Update the team to disconnect the specified member
+    const name = team.name;
+    const description = team.description;
+
+    const updatedTeam = await prisma.team.update({
+      where: { id: Number(id) },
+      data: {
+        name,
+        description,
+        members: {
+          disconnect: { address: String(memberAddress) },
+        },
+      },
+    });
+    console.log("Updated Team:", updatedTeam);
+    res.status(200).json({ success: true, team: updatedTeam });
+  } catch (error: any) {
+    // Handle errors
+    console.log("Error:", error);
+    return errorResponse(500, error.message || "Internal Server Error", res);
+  }
+};
+
+export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams, deleteMember };
