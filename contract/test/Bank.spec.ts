@@ -2,6 +2,7 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { Bank, Tips } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { ContractTransactionResponse } from 'ethers'
 
 describe('Bank', () => {
   let bank: Bank
@@ -123,7 +124,7 @@ describe('Bank', () => {
       })
 
       context('When I send crypto to my Employee', () => {
-        let tx: any
+        let tx: ContractTransactionResponse;
         let amount: bigint
 
         before(async () => {
