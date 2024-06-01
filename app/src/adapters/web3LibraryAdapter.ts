@@ -15,7 +15,6 @@ export interface IWeb3Library {
   getContract(address: string, abi: any): Promise<Contract>
   parseEther(value: string): bigint
   formatEther(value: bigint): string
-  contractFactory(abi: any, bytecode: any): any
   sendTransaction(to: string, amount: string): Promise<any>
 }
 
@@ -90,13 +89,6 @@ export class EthersJsAdapter implements IWeb3Library {
     }
 
     return new ethers.Contract(address, abi, await this.signer)
-  }
-
-  async contractFactory(abi: any, bytecode: any): Promise<ContractFactory> {
-    if (!this.signer) {
-      await this.connectWallet()
-    }
-    return new ethers.ContractFactory(abi, bytecode, this.signer)
   }
 
   async sendTransaction(to: string, amount: string): Promise<any> {
