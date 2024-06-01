@@ -68,7 +68,7 @@ const getTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = req.headers.callerAddress;
+  const callerAddress = req.headers.calleraddress;
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -146,8 +146,20 @@ const updateTeam = async (req: Request, res: Response) => {
   */
   const { id } = req.params;
   const { name, description, bankAddress } = req.body;
+  const callerAddress = req.headers.calleraddress;
   try {
-    const team = await prisma.team.update({
+    const team = await prisma.team.findUnique({
+      where: {
+        id: Number(id),
+      },
+    });
+    if (!team) {
+      return errorResponse(404, "Team not found", res);
+    }
+    if (team.ownerAddress !== callerAddress) {
+      return errorResponse(401, "Unauthorized", res);
+    }
+    const teamU = await prisma.team.update({
       where: { id: Number(id) },
       data: {
         name,
@@ -158,7 +170,7 @@ const updateTeam = async (req: Request, res: Response) => {
         members: true,
       },
     });
-    res.status(200).json({ team, success: true });
+    res.status(200).json({ teamU, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }
@@ -170,13 +182,26 @@ const deleteTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
+  const callerAddress = req.headers.calleraddress;
   try {
-    const team = await prisma.team.delete({
+    const team = await prisma.team.findUnique({
       where: {
         id: Number(id),
       },
     });
-    res.status(200).json({ team, success: true });
+    if (!team) {
+      return errorResponse(404, "Team not found", res);
+    }
+    if (team.ownerAddress !== callerAddress) {
+      return errorResponse(401, "Unauthorized", res);
+    }
+    const teamD = await prisma.team.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    res.status(200).json({ teamD, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }
