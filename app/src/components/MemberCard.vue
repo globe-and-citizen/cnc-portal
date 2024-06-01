@@ -17,7 +17,7 @@ const emits = defineEmits(['toggleUpdateMemberModal', 'deleteMember'])
 const props = defineProps<{
   showUpdateMemberModal: boolean
   member: Partial<MemberInput>
-  teamId: string
+  teamId: Number
 }>()
 const member = ref(props.member)
 </script>
