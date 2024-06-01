@@ -124,7 +124,7 @@ describe('Bank', () => {
       })
 
       context('When I send crypto to my Employee', () => {
-        let tx: ContractTransactionResponse;
+        let tx: ContractTransactionResponse
         let amount: bigint
 
         before(async () => {
