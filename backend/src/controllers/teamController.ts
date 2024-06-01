@@ -68,6 +68,7 @@ const getTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
+  const callerAddress = req.headers.callerAddress;
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -82,7 +83,8 @@ const getTeam = async (req: Request, res: Response) => {
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
-    if (team.ownerAddress !== req.headers.owneraddress) {
+    const teamMembers = team.members.map((member) => member.address);
+    if (teamMembers.includes(String(callerAddress)) === false) {
       return errorResponse(401, "Unauthorized", res);
     }
     res.status(200).json({ team, success: true });
