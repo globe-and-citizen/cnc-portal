@@ -24,7 +24,7 @@ export class FetchTeamAPI implements TeamAPI {
     const requestOptions = {
       method: 'GET',
       headers: {
-        ownerAddress: ownerAddressStore.ownerAddress,
+        calleraddress: ownerAddressStore.ownerAddress,
         Authorization: `Bearer ${token}`
       }
     }
@@ -54,7 +54,7 @@ export class FetchTeamAPI implements TeamAPI {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
-        ownerAddress: ownerAddressStore.ownerAddress
+        calleraddress: ownerAddressStore.ownerAddress
       }
     }
 
@@ -80,14 +80,14 @@ export class FetchTeamAPI implements TeamAPI {
 
     const url = `${BACKEND_URL}/api/teams/${id}`
     const requestData = {
-      ...updatedTeamData, // Spread the updated team data
-      address: ownerAddressStore.ownerAddress
+      ...updatedTeamData // Spread the updated team data
     }
     const requestOptions = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
+        calleraddress: ownerAddressStore.ownerAddress
       },
       body: JSON.stringify(requestData)
     }
@@ -105,18 +105,22 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
+    const ownerAddressStore = useOwnerAddressStore()
+
     const token: string | null = AuthService.getToken()
 
     if (!token) {
       throw new Error('Token is null')
     }
-
     const requestOptions = {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        calleraddress: ownerAddressStore.ownerAddress
       }
     }
+    console.log('ownerAddressStore.ownerAddress', requestOptions)
     const response = await fetch(url, requestOptions)
 
     const resObj = await response.json()
@@ -127,9 +131,7 @@ export class FetchTeamAPI implements TeamAPI {
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
     }
-    if (resObj.team.count == 0) {
-      throw new Error('Team not deleted')
-    }
+
     return resObj.team
   }
   async createTeam(
@@ -146,12 +148,8 @@ export class FetchTeamAPI implements TeamAPI {
     const teamObject = {
       name: teamName,
       description: teamDesc,
-      members: {
-        createMany: {
-          data: teamMembers
-        }
-      },
-      address: ownerAddressStore.ownerAddress
+      members: teamMembers,
+      ownerAddress: ownerAddressStore.ownerAddress
     }
 
     const url = `${BACKEND_URL}/api/teams`
@@ -165,7 +163,7 @@ export class FetchTeamAPI implements TeamAPI {
     }
 
     for (const member of teamMembers) {
-      if (!isAddress(String(member.walletAddress))) {
+      if (!isAddress(String(member.address))) {
         throw new Error(`Invalid wallet address`)
       }
     }

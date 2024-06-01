@@ -24,7 +24,7 @@ import AddMemberModal from '@/components/modals/AddMemberModal.vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 
 const props = defineProps<{
-  formData: Array<{ name: string; walletAddress: string; isValid: boolean }>
+  formData: Array<{ name: string; address: string; isValid: boolean }>
   showAddMemberForm: boolean
 }>()
 

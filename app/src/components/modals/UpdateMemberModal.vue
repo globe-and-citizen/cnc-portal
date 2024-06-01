@@ -20,7 +20,7 @@
       >
         <input type="text" class="w-24" v-model="updateMemberInput.name" />
         |
-        <input type="text" class="grow" v-model="updateMemberInput.walletAddress" />
+        <input type="text" class="grow" v-model="updateMemberInput.address" />
       </label>
       <div class="flex mt-2 justify-between">
         <button class="btn btn-error size-sm" @click="emits('deleteMember', updateMemberInput.id)">

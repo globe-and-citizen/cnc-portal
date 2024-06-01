@@ -46,7 +46,7 @@ const team = ref<TeamInput>({
   members: [
     {
       name: '',
-      walletAddress: '',
+      address: '',
       isValid: false
     }
   ]
@@ -56,7 +56,7 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
   team.value = teamInput
   let members = team.value.members
   members.map((member) => {
-    if (isAddress(member.walletAddress)) {
+    if (isAddress(member.address)) {
       member.isValid = true
     } else {
       member.isValid = false
@@ -67,7 +67,7 @@ const handleAddTeam = async () => {
   const members = team.value.members.map((member) => {
     return {
       name: member.name,
-      walletAddress: member.walletAddress
+      address: member.address
     }
   })
   try {
@@ -82,7 +82,7 @@ const handleAddTeam = async () => {
   }
 }
 const addInput = () => {
-  team.value.members.push({ name: '', walletAddress: '', isValid: false })
+  team.value.members.push({ name: '', address: '', isValid: false })
 }
 
 const removeInput = () => {

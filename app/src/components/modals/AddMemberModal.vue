@@ -28,7 +28,7 @@
           <input
             type="text"
             class="grow"
-            v-model="input.walletAddress"
+            v-model="input.address"
             :placeholder="'Wallet Address ' + (index + 1)"
           />
           <span class="badge badge-primary">Mandatory</span>
@@ -60,7 +60,7 @@ const emits = defineEmits([
   'toggleAddMemberModal'
 ])
 const props = defineProps<{
-  formData: Array<{ name: string; walletAddress: string; isValid: boolean }>
+  formData: Array<{ name: string; address: string; isValid: boolean }>
   showAddMemberForm: boolean
 }>()
 const formData = ref(props.formData)

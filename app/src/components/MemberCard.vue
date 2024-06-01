@@ -2,7 +2,7 @@
   <tr @click="emits('toggleUpdateMemberModal', member)" class="cursor-pointer hover">
     <th>{{ member.id }}</th>
     <th>{{ member.name }}</th>
-    <th>{{ member.walletAddress }}</th>
+    <th>{{ member.address }}</th>
     <th>Action</th>
   </tr>
   <UpdateMemberModal

@@ -12,7 +12,7 @@ describe('FetchMemberAPI', () => {
       vi.spyOn(AuthService, 'getToken').mockReturnValue(null)
       await expect(
         fetchMemberAPI.createMembers(
-          [{ name: 'John', walletAddress: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }],
+          [{ name: 'John', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }],
           '123'
         )
       ).rejects.toThrow('Token is null')
@@ -21,7 +21,7 @@ describe('FetchMemberAPI', () => {
     it('throws an error if wallet address is invalid', async () => {
       vi.spyOn(AuthService, 'getToken').mockReturnValue('token')
       await expect(
-        fetchMemberAPI.createMembers([{ name: 'John', walletAddress: '0x89238' }], '123')
+        fetchMemberAPI.createMembers([{ name: 'John', address: '0x89238' }], '123')
       ).rejects.toThrow('Invalid wallet address')
     })
   })

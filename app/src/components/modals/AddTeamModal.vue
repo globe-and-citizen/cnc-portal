@@ -44,7 +44,7 @@
             <input
               type="text"
               class="grow"
-              v-model="input.walletAddress"
+              v-model="input.address"
               :placeholder="'Wallet Address ' + (index + 1)"
             />
           </label>

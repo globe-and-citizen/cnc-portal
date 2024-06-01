@@ -53,7 +53,7 @@
       @pushTip="(amount) => pushTip(membersAddress, amount)"
       @sendTip="(amount) => sendTip(membersAddress, amount)"
     />
-    <!-- <TipsAction :addresses="team.members.map((member) => member.walletAddress)" /> -->
+    <!-- <TipsAction :addresses="team.members.map((member) => member.address)" /> -->
   </div>
 
   <dialog
@@ -171,18 +171,18 @@ const team = ref<Team>({
 const teamMembers = ref([
   {
     name: '',
-    walletAddress: '',
+    address: '',
     isValid: false
   }
 ])
 const updateMemberInput = ref<MemberInput>({
   name: '',
-  walletAddress: '',
+  address: '',
   id: '',
   isValid: false
 })
 const addInput = () => {
-  teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
+  teamMembers.value.push({ name: '', address: '', isValid: false })
 }
 
 const removeInput = () => {
@@ -197,7 +197,7 @@ const toggleUpdateMemberModal = (member: MemberInput) => {
 }
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
-    if (!isAddress(member.walletAddress)) {
+    if (!isAddress(member.address)) {
       member.isValid = false
     } else {
       member.isValid = true
@@ -256,7 +256,7 @@ const deleteMember = async (id: string) => {
 const updateMember = async (id: string) => {
   const member = {
     name: updateMemberInput.value.name,
-    walletAddress: updateMemberInput.value.walletAddress
+    address: updateMemberInput.value.address
   }
   try {
     const updatedMember = await memberApi.updateMember(member, id)
@@ -265,7 +265,7 @@ const updateMember = async (id: string) => {
       team.value.members.map((member) => {
         if (member.id === id) {
           member.name = updatedMember.name
-          member.walletAddress = updatedMember.walletAddress
+          member.address = updatedMember.address
         }
       })
 
@@ -309,11 +309,11 @@ const deleteTeam = async () => {
 watch(
   updateMemberInput,
   (newVal) => {
-    updateMemberInput.value.isValid = isAddress(newVal.walletAddress)
+    updateMemberInput.value.isValid = isAddress(newVal.address)
   },
   { deep: true }
 )
 const membersAddress = computed(() => {
-  return team.value.members.map((member) => member.walletAddress)
+  return team.value.members.map((member) => member.address)
 })
 </script>

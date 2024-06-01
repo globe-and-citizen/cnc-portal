@@ -25,7 +25,7 @@ export class FetchMemberAPI implements MemberAPI {
     }
 
     for (const member of newMembers) {
-      if (!isAddress(member.walletAddress)) {
+      if (!isAddress(member.address)) {
         throw new Error(`Invalid wallet address`)
       }
     }
@@ -54,11 +54,11 @@ export class FetchMemberAPI implements MemberAPI {
       },
       body: JSON.stringify({
         name: member.name,
-        walletAddress: member.walletAddress
+        address: member.address
       })
     }
 
-    if (!isAddress(String(member.walletAddress))) {
+    if (!isAddress(String(member.address))) {
       throw new Error(`Invalid wallet address`)
     }
 
