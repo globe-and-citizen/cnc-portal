@@ -227,7 +227,7 @@ const deleteMember = async (req: Request, res: Response) => {
       return errorResponse(401, "Unauthorized", res);
     }
     if (team.ownerAddress === memberAddress) {
-      return errorResponse(500, "Owner cannot be removed", res);
+      return errorResponse(401, "Owner cannot be removed", res);
     }
 
     // Find the index of the member in the team
