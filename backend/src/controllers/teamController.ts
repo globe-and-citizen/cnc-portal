@@ -96,17 +96,41 @@ const getAllTeams = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const ownerId = String(req.headers.owneraddress);
+  const ownerAddress = String(req.headers.owneraddress);
   try {
-    const teams = await prisma.team.findMany({
+    // Get teams owned by the user
+    const ownedTeams = await prisma.team.findMany({
       where: {
-        ownerAddress: ownerId,
+        ownerAddress: ownerAddress,
       },
       include: {
         members: true,
       },
     });
-    res.status(200).json({ teams, success: true });
+
+    // Get teams where the user is a member
+    const memberTeams = await prisma.team.findMany({
+      where: {
+        members: {
+          some: {
+            address: ownerAddress,
+          },
+        },
+      },
+      include: {
+        members: true,
+      },
+    });
+
+    // Combine owned and member teams
+    const allTeams = [...ownedTeams, ...memberTeams];
+
+    // Filter out duplicate teams
+    const uniqueTeams = allTeams.filter(
+      (team, index, self) => index === self.findIndex((t) => t.id === team.id)
+    );
+
+    res.status(200).json({ teams: uniqueTeams, success: true });
   } catch (error: any) {
     console.log("Error:", error);
     return errorResponse(500, error.message, res);
