@@ -98,7 +98,6 @@ import TipsAction from '@/components/TipsAction.vue'
 
 import { ToastType, type Member, type MemberInput, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
-import { FetchMemberAPI } from '@/apis/memberApi'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
@@ -106,7 +105,7 @@ import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
 const { show } = useToastStore()
-const memberApi = new FetchMemberAPI()
+
 const route = useRoute()
 const router = useRouter()
 const {

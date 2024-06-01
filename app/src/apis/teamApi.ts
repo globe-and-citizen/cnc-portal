@@ -12,6 +12,7 @@ interface TeamAPI {
   deleteTeam(id: string): Promise<void>
   createTeam(teamName: string, teamDesc: string, teamMembers: Partial<Member>[]): Promise<Team>
   deleteMember(id: string, address: string): Promise<void>
+  createMembers(newMembers: Member[], id: string): Promise<Member[]>
 }
 
 export class FetchTeamAPI implements TeamAPI {
@@ -207,5 +208,36 @@ export class FetchTeamAPI implements TeamAPI {
     }
     console.log(resObj)
     return resObj.team
+  }
+  async createMembers(newMembers: Partial<Member>[], id: string): Promise<Member[]> {
+    const token: string | null = AuthService.getToken()
+    if (!token) {
+      throw new Error('Token is null')
+    }
+
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ membersData: newMembers })
+    }
+
+    for (const member of newMembers) {
+      if (!isAddress(member.address)) {
+        throw new Error(`Invalid wallet address`)
+      }
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const resObj = await response.json()
+    if (response.status === 401) {
+      throw new Error('Unauthorized')
+    }
+    if (!resObj.success) {
+      throw new Error(resObj.message)
+    }
+    return resObj.members
   }
 }
