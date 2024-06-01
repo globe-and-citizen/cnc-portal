@@ -27,9 +27,7 @@
             :teamId="Number(team.id)"
             :member="member"
             :key="index"
-            :showUpdateMemberModal="showUpdateMemberModal"
             @deleteMember="(id, address) => deleteMember(id, address)"
-            @toggleUpdateMemberModal="toggleUpdateMemberModal"
           />
         </tbody>
       </table>
@@ -161,7 +159,6 @@ const cdesc = ref('')
 
 const showModal = ref(false)
 
-const showUpdateMemberModal = ref(false)
 const showAddMemberForm = ref(false)
 
 const inputs = ref<Member[]>([])
@@ -189,9 +186,7 @@ const removeInput = () => {
     teamMembers.value.pop()
   }
 }
-const toggleUpdateMemberModal = () => {
-  showUpdateMemberModal.value = !showUpdateMemberModal.value
-}
+
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
     if (!isAddress(member.address)) {
@@ -244,7 +239,6 @@ const deleteMember = async (id: string, address: string) => {
         team.value.members.findIndex((member) => member.address === address),
         1
       )
-      showUpdateMemberModal.value = false
     }
   } catch (error) {
     return useErrorHandler().handleError(error)

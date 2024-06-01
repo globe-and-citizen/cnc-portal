@@ -15,7 +15,6 @@ import { ref } from 'vue'
 
 const emits = defineEmits(['toggleUpdateMemberModal', 'deleteMember'])
 const props = defineProps<{
-  showUpdateMemberModal: boolean
   member: Partial<MemberInput>
   teamId: Number
 }>()
