@@ -11,6 +11,7 @@
   <AddTeamModal
     :team="team"
     :showAddTeamModal="showAddTeamModal"
+    :users="users"
     @searchUsers="(input) => emits('searchUsers', input)"
     @updateAddTeamModal="(newFormDataTeam) => emits('updateAddTeamModal', newFormDataTeam)"
     @addInput="emits('addInput')"
@@ -21,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TeamInput } from '@/types'
+import type { TeamInput, User } from '@/types'
 import { ref, watch } from 'vue'
 import AddTeamModal from '@/components/modals/AddTeamModal.vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
@@ -37,6 +38,7 @@ const emits = defineEmits([
 const props = defineProps<{
   showAddTeamModal: boolean
   team: TeamInput
+  users: User[]
 }>()
 const team = ref(props.team)
 const showAddTeamModal = ref<boolean>(props.showAddTeamModal)

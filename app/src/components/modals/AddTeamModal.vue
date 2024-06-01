@@ -71,7 +71,7 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import type { TeamInput } from '@/types'
+import type { TeamInput, User } from '@/types'
 import { ref, watch } from 'vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue'
@@ -87,6 +87,7 @@ const emits = defineEmits([
 const props = defineProps<{
   showAddTeamModal: boolean
   team: TeamInput
+  users: User[]
 }>()
 const team = ref(props.team)
 const showAddTeamModal = ref<boolean>(props.showAddTeamModal)

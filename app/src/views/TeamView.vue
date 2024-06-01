@@ -13,6 +13,7 @@
       <AddTeamCard
         @addTeam="handleAddTeam"
         @searchUsers="(input) => searchUsers(input)"
+        :users="foundUsers"
         v-model:showAddTeamModal="showAddTeamModal"
         v-model:team="team"
         @updateAddTeamModal="handleupdateAddTeamModal"
@@ -31,7 +32,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
-import { ToastType, type Team, type TeamInput } from '@/types'
+import { ToastType, type Team, type TeamInput, type User } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 import { useErrorHandler } from '@/composables/errorHandler'
@@ -43,6 +44,7 @@ const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
 
+const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
 const team = ref<TeamInput>({
   name: '',
@@ -91,6 +93,7 @@ const addInput = () => {
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
     const users = await userApi.searchUser(input.name, input.address)
+    foundUsers.value = users
     console.log(users)
   } catch (error) {
     return useErrorHandler().handleError(error)

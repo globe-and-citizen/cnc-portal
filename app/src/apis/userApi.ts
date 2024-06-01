@@ -82,7 +82,7 @@ export class FetchUserAPI implements UserAPI {
     const response = await fetch(`${BACKEND_URL}/api/user/search/user?${params.toString()}`, {
       method: 'GET'
     })
-    const userData = await response.json()
-    return userData
+    const resObj = await response.json()
+    return resObj.users
   }
 }
