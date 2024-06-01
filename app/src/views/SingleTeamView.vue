@@ -24,10 +24,11 @@
         <tbody>
           <MemberCard
             v-for="(member, index) in team.members"
+            :teamId="team.id"
             :member="member"
             :key="index"
             :showUpdateMemberModal="showUpdateMemberModal"
-            @deleteMember="(address) => deleteMember(address)"
+            @deleteMember="(id, address) => deleteMember(id, address)"
             @toggleUpdateMemberModal="toggleUpdateMemberModal"
           />
         </tbody>
@@ -228,10 +229,11 @@ const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
 }
-const deleteMember = async (id: string) => {
+const deleteMember = async (id: string, address: string) => {
   try {
-    const memberRes: any = await teamApi.deleteMember(id)
-    if (memberRes && memberRes.count == 1) {
+    const memberRes: any = await teamApi.deleteMember(id, address)
+    console.log('memberRes', memberRes)
+    if (memberRes) {
       show(ToastType.Success, 'Member deleted successfully')
       team.value.members.splice(
         team.value.members.findIndex((member) => member.id === id),

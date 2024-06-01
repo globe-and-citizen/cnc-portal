@@ -11,7 +11,7 @@ interface TeamAPI {
   updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team>
   deleteTeam(id: string): Promise<void>
   createTeam(teamName: string, teamDesc: string, teamMembers: Partial<Member>[]): Promise<Team>
-  deleteMember(address: string): Promise<void>
+  deleteMember(id: string, address: string): Promise<void>
 }
 
 export class FetchTeamAPI implements TeamAPI {
@@ -102,7 +102,7 @@ export class FetchTeamAPI implements TeamAPI {
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
     }
-    return resObj.teamU
+    return resObj.team
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
@@ -132,7 +132,7 @@ export class FetchTeamAPI implements TeamAPI {
       throw new Error(resObj.message)
     }
 
-    return resObj.teamD
+    return resObj.team
   }
   async createTeam(
     teamName: string,
@@ -180,7 +180,7 @@ export class FetchTeamAPI implements TeamAPI {
     }
     return resObj.team
   }
-  async deleteMember(address: string): Promise<void> {
+  async deleteMember(id: string, address: string): Promise<void> {
     const ownerAddressStore = useOwnerAddressStore()
     const token: string | null = AuthService.getToken()
 
@@ -192,11 +192,12 @@ export class FetchTeamAPI implements TeamAPI {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        calleraddress: ownerAddressStore.ownerAddress
+        calleraddress: ownerAddressStore.ownerAddress,
+        memberaddress: address
       }
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/member/${address}`, requestOptions)
+    const response = await fetch(`${BACKEND_URL}/api/teams/${id}/member`, requestOptions)
     const resObj = await response.json()
     if (response.status === 401) {
       throw new Error('Unauthorized')
@@ -204,6 +205,7 @@ export class FetchTeamAPI implements TeamAPI {
     if (!resObj.success) {
       throw new Error(resObj)
     }
-    return resObj.member
+    console.log(resObj)
+    return resObj.team
   }
 }
