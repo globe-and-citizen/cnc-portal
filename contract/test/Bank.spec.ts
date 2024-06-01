@@ -155,8 +155,10 @@ describe('Bank', () => {
       })
 
       context('When I call send tips with my team address', () => {
-        it('Then my team members\' balance increases.', async () => {
-          await bank.connect(owner).sendTip([member1.address, member2.address], ethers.parseEther('6'))
+        it("Then my team members' balance increases.", async () => {
+          await bank
+            .connect(owner)
+            .sendTip([member1.address, member2.address], ethers.parseEther('6'))
 
           expect(await tips.getBalance(member1.address)).to.eq(ethers.parseEther('3'))
           expect(await tips.getBalance(member2.address)).to.eq(ethers.parseEther('3'))
@@ -164,8 +166,10 @@ describe('Bank', () => {
       })
 
       context('When I call push tips with my team address', () => {
-        it('Then my team members\' balance increases.', async () => {
-          const tx = await bank.connect(owner).pushTip([member1.address, member2.address], ethers.parseEther('6'))
+        it("Then my team members' balance increases.", async () => {
+          const tx = await bank
+            .connect(owner)
+            .pushTip([member1.address, member2.address], ethers.parseEther('6'))
           expect(tx).to.changeEtherBalance(member1, ethers.parseEther('3'))
           expect(tx).to.changeEtherBalance(member2, ethers.parseEther('3'))
         })
