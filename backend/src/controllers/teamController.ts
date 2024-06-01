@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
@@ -32,7 +32,7 @@ const addTeam = async (req: Request, res: Response) => {
     }
 
     // Ensure the owner's wallet address is in the members list
-    if (!members.some((member: any) => member.walletAddress === ownerAddress)) {
+    if (!members.some((member: User) => member.address === ownerAddress)) {
       members.push({
         name: owner.name || "User",
         walletAddress: owner.address,
@@ -46,8 +46,8 @@ const addTeam = async (req: Request, res: Response) => {
         description,
         ownerAddress,
         members: {
-          connect: members.map((member: any) => ({
-            address: member.walletAddress,
+          connect: members.map((member: User) => ({
+            address: member.address,
           })),
         },
       },
@@ -98,12 +98,12 @@ const getAllTeams = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const ownerAddress = String(req.headers.owneraddress);
+  const callerAddress = String(req.headers.calleraddress);
   try {
     // Get teams owned by the user
     const ownedTeams = await prisma.team.findMany({
       where: {
-        ownerAddress: ownerAddress,
+        ownerAddress: callerAddress,
       },
       include: {
         members: true,
@@ -115,7 +115,7 @@ const getAllTeams = async (req: Request, res: Response) => {
       where: {
         members: {
           some: {
-            address: ownerAddress,
+            address: callerAddress,
           },
         },
       },
