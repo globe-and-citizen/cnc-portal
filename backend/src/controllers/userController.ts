@@ -117,6 +117,7 @@ export const searchUser = async (req: Request, res: Response) => {
           {
             name: {
               contains: name as string,
+              mode: "insensitive",
             },
           },
           {
