@@ -24,11 +24,9 @@
         <tbody>
           <MemberCard
             v-for="(member, index) in team.members"
-            :updateMemberInput="updateMemberInput"
             :member="member"
             :key="index"
             :showUpdateMemberModal="showUpdateMemberModal"
-            @updateMember="(id) => updateMember(id)"
             @deleteMember="(id) => deleteMember(id)"
             @toggleUpdateMemberModal="toggleUpdateMemberModal"
           />
@@ -174,12 +172,7 @@ const teamMembers = ref([
     isValid: false
   }
 ])
-const updateMemberInput = ref<MemberInput>({
-  name: '',
-  address: '',
-  id: '',
-  isValid: false
-})
+
 const addInput = () => {
   teamMembers.value.push({ name: '', address: '', isValid: false })
 }
@@ -189,10 +182,8 @@ const removeInput = () => {
     teamMembers.value.pop()
   }
 }
-const toggleUpdateMemberModal = (member: MemberInput) => {
+const toggleUpdateMemberModal = () => {
   showUpdateMemberModal.value = !showUpdateMemberModal.value
-  const updatedMember = { ...member }
-  updateMemberInput.value = updatedMember
 }
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
@@ -252,28 +243,7 @@ const deleteMember = async (id: string) => {
     return useErrorHandler().handleError(error)
   }
 }
-const updateMember = async (id: string) => {
-  const member = {
-    name: updateMemberInput.value.name,
-    address: updateMemberInput.value.address
-  }
-  try {
-    const updatedMember = await memberApi.updateMember(member, id)
-    if (updatedMember && Object.keys(updatedMember).length !== 0) {
-      show(ToastType.Success, 'Member updated successfully')
-      team.value.members.map((member) => {
-        if (member.id === id) {
-          member.name = updatedMember.name
-          member.address = updatedMember.address
-        }
-      })
 
-      showUpdateMemberModal.value = false
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-}
 const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
@@ -305,13 +275,7 @@ const deleteTeam = async () => {
     return useErrorHandler().handleError(error)
   }
 }
-watch(
-  updateMemberInput,
-  (newVal) => {
-    updateMemberInput.value.isValid = isAddress(newVal.address)
-  },
-  { deep: true }
-)
+
 const membersAddress = computed(() => {
   return team.value.members.map((member) => member.address)
 })
