@@ -130,7 +130,7 @@ export const searchUser = async (req: Request, res: Response) => {
 
     await prisma.$disconnect();
 
-    return res.status(200).json(users);
+    return res.status(200).json({ success: true, users });
   } catch (error) {
     await prisma.$disconnect();
     return errorResponse(500, error, res);
