@@ -35,7 +35,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj.message)
@@ -64,7 +64,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj.message)
@@ -98,7 +98,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
@@ -127,7 +127,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
@@ -174,7 +174,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj.message)
@@ -201,7 +201,7 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(`${BACKEND_URL}/api/teams/${id}/member`, requestOptions)
     const resObj = await response.json()
     if (response.status === 401) {
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj)
@@ -233,7 +233,7 @@ export class FetchTeamAPI implements TeamAPI {
     const response = await fetch(`${BACKEND_URL}/api/teams/${id}/member`, requestOptions)
     const resObj = await response.json()
     if (response.status === 401) {
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj.message)
