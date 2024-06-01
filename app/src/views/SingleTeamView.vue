@@ -24,7 +24,7 @@
         <tbody>
           <MemberCard
             v-for="(member, index) in team.members"
-            :teamId="team.id"
+            :teamId="Number(team.id)"
             :member="member"
             :key="index"
             :showUpdateMemberModal="showUpdateMemberModal"
@@ -36,8 +36,10 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard
+        :users="foundUsers"
         v-model:formData="teamMembers"
         v-model:showAddMemberForm="showAddMemberForm"
+        @searchUsers="(input) => searchUsers(input)"
         @addInput="addInput"
         @removeInput="removeInput"
         @addMembers="handleAddMembers"
@@ -96,7 +98,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 
-import { ToastType, type Member, type MemberInput, type Team } from '@/types'
+import { ToastType, type Member, type User, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 
 import { isAddress } from 'ethers' // ethers v6
@@ -104,7 +106,12 @@ import { useToastStore } from '@/stores/toast'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
+import { FetchUserAPI } from '@/apis/userApi'
+const userApi = new FetchUserAPI()
+
 const { show } = useToastStore()
+
+const foundUsers = ref<User[]>([])
 
 const route = useRoute()
 const router = useRouter()
@@ -276,7 +283,16 @@ const deleteTeam = async () => {
     return useErrorHandler().handleError(error)
   }
 }
-
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    const users = await userApi.searchUser(input.name, input.address)
+    foundUsers.value = users
+    console.log(users)
+  } catch (error) {
+    foundUsers.value = []
+    return useErrorHandler().handleError(error)
+  }
+}
 const membersAddress = computed(() => {
   return team.value.members.map((member) => member.address)
 })
