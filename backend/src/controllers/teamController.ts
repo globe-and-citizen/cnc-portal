@@ -210,6 +210,7 @@ const deleteTeam = async (req: Request, res: Response) => {
 const deleteMember = async (req: Request, res: Response) => {
   const { id } = req.params;
   const memberAddress = req.headers.memberaddress;
+  const callerAddress = req.headers.calleraddress;
 
   try {
     // Find the team
@@ -221,6 +222,12 @@ const deleteMember = async (req: Request, res: Response) => {
     // Check if the team exists
     if (!team) {
       throw new Error("Team not found");
+    }
+    if (team.ownerAddress !== callerAddress) {
+      return errorResponse(401, "Unauthorized", res);
+    }
+    if (team.ownerAddress === memberAddress) {
+      return errorResponse(401, "Owner cannot be removed", res);
     }
 
     // Find the index of the member in the team
