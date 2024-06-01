@@ -255,5 +255,54 @@ const deleteMember = async (req: Request, res: Response) => {
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
 };
+const addMembers = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const membersData = req.body.data;
 
-export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams, deleteMember };
+  try {
+    // Fetch the team and its current members
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) },
+      include: { members: true },
+    });
+
+    if (!team) {
+      throw new Error("Team not found");
+    }
+
+    await prisma.team.update({
+      where: { id: Number(id) },
+      data: {
+        members: {
+          connect: membersData.map((member: User) => ({
+            address: member.address,
+          })),
+        },
+      },
+    });
+
+    // Fetch all members of the team after addition
+    const updatedTeam = await prisma.team.findUnique({
+      where: { id: Number(id) },
+      include: { members: true },
+    });
+
+    // Return the updated members list
+    return res
+      .status(201)
+      .json({ members: updatedTeam?.members, success: true });
+  } catch (error: any) {
+    console.log("Error:", error);
+    return errorResponse(500, error.message || "Internal Server Error", res);
+  }
+};
+
+export {
+  addTeam,
+  updateTeam,
+  deleteTeam,
+  getTeam,
+  getAllTeams,
+  deleteMember,
+  addMembers,
+};
