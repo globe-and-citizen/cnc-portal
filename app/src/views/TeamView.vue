@@ -96,6 +96,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
     foundUsers.value = users
     console.log(users)
   } catch (error) {
+    foundUsers.value = []
     return useErrorHandler().handleError(error)
   }
 }

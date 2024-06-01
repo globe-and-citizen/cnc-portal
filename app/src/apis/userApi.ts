@@ -73,7 +73,6 @@ export class FetchUserAPI implements UserAPI {
     }
   }
   async searchUser(name: string, address: string): Promise<User[]> {
-    console.log('hi')
     const params = new URLSearchParams()
 
     if (name) params.append('name', name)
@@ -83,6 +82,12 @@ export class FetchUserAPI implements UserAPI {
       method: 'GET'
     })
     const resObj = await response.json()
+    if (response.status === 401) {
+      throw new Error(resObj.message)
+    }
+    if (!resObj.success) {
+      throw new Error(resObj.message)
+    }
     return resObj.users
   }
 }
