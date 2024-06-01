@@ -101,7 +101,7 @@ export class FetchTeamAPI implements TeamAPI {
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
     }
-    return resObj.team
+    return resObj.teamU
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
@@ -132,7 +132,7 @@ export class FetchTeamAPI implements TeamAPI {
       throw new Error(resObj.message)
     }
 
-    return resObj.team
+    return resObj.teamD
   }
   async createTeam(
     teamName: string,
