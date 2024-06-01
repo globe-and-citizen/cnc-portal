@@ -16,7 +16,6 @@
         <!-- head -->
         <thead>
           <tr>
-            <th></th>
             <th>Name</th>
             <th>Address</th>
             <th>Action</th>
@@ -24,10 +23,10 @@
         </thead>
         <tbody>
           <MemberCard
-            v-for="member in team.members"
+            v-for="(member, index) in team.members"
             :updateMemberInput="updateMemberInput"
             :member="member"
-            :key="member.id"
+            :key="index"
             :showUpdateMemberModal="showUpdateMemberModal"
             @updateMember="(id) => updateMember(id)"
             @deleteMember="(id) => deleteMember(id)"
