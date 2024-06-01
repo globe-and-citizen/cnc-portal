@@ -120,7 +120,6 @@ export class FetchTeamAPI implements TeamAPI {
         calleraddress: ownerAddressStore.ownerAddress
       }
     }
-    console.log('ownerAddressStore.ownerAddress', requestOptions)
     const response = await fetch(url, requestOptions)
 
     const resObj = await response.json()
