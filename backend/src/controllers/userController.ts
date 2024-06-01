@@ -105,11 +105,7 @@ export const searchUser = async (req: Request, res: Response) => {
 
   try {
     if (!name && !address)
-      return errorResponse(
-        401,
-        "Search user error: Missing query parameters",
-        res
-      );
+      return errorResponse(401, "Search error: Missing name and address", res);
 
     const users = await prisma.user.findMany({
       where: {
