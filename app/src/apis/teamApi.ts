@@ -221,7 +221,7 @@ export class FetchTeamAPI implements TeamAPI {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({ membersData: newMembers })
+      body: JSON.stringify({ data: newMembers })
     }
 
     for (const member of newMembers) {
@@ -230,7 +230,7 @@ export class FetchTeamAPI implements TeamAPI {
       }
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/member/${id}`, requestOptions)
+    const response = await fetch(`${BACKEND_URL}/api/teams/${id}/member`, requestOptions)
     const resObj = await response.json()
     if (response.status === 401) {
       throw new Error('Unauthorized')

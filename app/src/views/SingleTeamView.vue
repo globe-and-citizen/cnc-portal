@@ -196,7 +196,7 @@ const handleUpdateForm = async () => {
 }
 const handleAddMembers = async () => {
   try {
-    const members: Member[] = await memberApi.createMembers(
+    const members: Member[] = await teamApi.createMembers(
       teamMembers.value,
       String(route.params.id)
     )
