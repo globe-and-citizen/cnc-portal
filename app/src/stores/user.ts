@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
-import { defineStore } from 'pinia'
 import { AuthService } from '@/services/authService'
 
 export const useUserDataStore = defineStore('user', () => {
   const userName = useStorage('name', '')
   const userAddress = useStorage('ownerAddress', '')
   const userNonce = useStorage('nonce', '')
+  const isAuth = useStorage('isAuth', false)
 
   function setUserData(name: string, address: string, nonce: string) {
     userName.value = name
@@ -19,6 +19,18 @@ export const useUserDataStore = defineStore('user', () => {
     userAddress.value = ''
     userNonce.value = ''
   }
+  async function setAuthStatus() {
+    const authStatus = await AuthService.isAuthenticated()
+    isAuth.value = authStatus
+  }
 
-  return { name: userName, address: userAddress, nonce: userNonce, setUserData, clearUserData }
+  return {
+    name: userName,
+    address: userAddress,
+    nonce: userNonce,
+    isAuth,
+    setUserData,
+    clearUserData,
+    setAuthStatus
+  }
 })

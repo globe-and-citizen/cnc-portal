@@ -60,7 +60,6 @@ watch(
     updateUserInput.value.isValid = isAddress(newVal)
   }
 )
-
 // Handle authentication change (optional)
 watch(isAuth, async () => {
   if (isAuth.value == true) {
