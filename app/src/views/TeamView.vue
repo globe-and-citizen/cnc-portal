@@ -43,7 +43,12 @@ const teamApi = new FetchTeamAPI()
  * isFetching - Can be used to show loading spinner
  * execute - Can be used to fetch data again later: ex: when a new team is added
  */
-const { isFetching: teamIsFetching, error: teamError, data: teams, execute} = useCustomFetch<Array<Team>>('teams')
+const {
+  isFetching: teamIsFetching,
+  error: teamError,
+  data: teams,
+  execute
+} = useCustomFetch<Array<Team>>('teams')
 watch(teamError, () => {
   if (teamError.value) {
     return useErrorHandler().handleError(teamError)
