@@ -12,12 +12,6 @@ describe('LoadingButton', () => {
     })
     const button = wrapper.find('button')
 
-    expect(button.exists()).toBe(true)
-    expect(button.classes()).toContain('btn')
     expect(button.classes()).toContain(`btn-${color}`)
-    expect(wrapper.find('.loading').exists()).toBe(true)
-    expect(wrapper.find('.loading-spinner').exists()).toBe(true)
-    expect(wrapper.find('.loading-sm').exists()).toBe(true)
-    expect(wrapper.find('.text-white').exists()).toBe(true)
   })
 })

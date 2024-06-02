@@ -48,7 +48,7 @@ async function siwe() {
       userData.nonce || ''
     )
     useOwnerAddressStore().setOwnerAddress(address)
-    useUserDataStore().setAuthStatus()
+    useUserDataStore().setAuthStatus(true)
 
     router.push('/teams')
   } catch (error: any) {

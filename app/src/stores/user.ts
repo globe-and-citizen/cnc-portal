@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
-import { AuthService } from '@/services/authService'
 
 export const useUserDataStore = defineStore('user', () => {
   const userName = useStorage('name', '')
@@ -18,10 +17,11 @@ export const useUserDataStore = defineStore('user', () => {
     userName.value = ''
     userAddress.value = ''
     userNonce.value = ''
+    isAuth.value = false // Reset authentication status as well if clearing user data
   }
-  async function setAuthStatus() {
-    const authStatus = await AuthService.isAuthenticated()
-    isAuth.value = authStatus
+
+  function setAuthStatus(status: boolean) {
+    isAuth.value = status
   }
 
   return {

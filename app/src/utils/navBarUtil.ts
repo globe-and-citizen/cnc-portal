@@ -6,6 +6,6 @@ export const logout = () => {
   AuthService.logout()
   useOwnerAddressStore().clearOwnerAddress()
   useUserDataStore().clearUserData()
-  useUserDataStore().setAuthStatus()
+  useUserDataStore().setAuthStatus(false)
   window.location.reload()
 }
