@@ -4,7 +4,7 @@ import { NETWORK } from '@/constant/index'
 import NavBar from '../NavBar.vue'
 import { mount } from '@vue/test-utils'
 
-describe.only('NavBar', () => {
+describe('NavBar', () => {
   const props = {
     withdrawLoading: false,
     balanceLoading: false,
