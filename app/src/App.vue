@@ -66,36 +66,30 @@ watch(
     updateUserInput.value.isValid = isAddress(newVal)
   }
 )
-watch(
-  [withdrawError, withdrawSuccess, balanceError, isAuth],
-  async ([withdrawErr, withdrawSuc, balanceErr, isAuthed]) => {
-    // Handle withdraw error
-    if (withdrawErr) {
-      toastStore.show(
-        ToastType.Error,
-        withdrawErr.value.reason ? withdrawErr.value.reason : 'Failed to withdraw tips'
-      )
-    }
 
-    // Handle withdraw success
-    if (withdrawSuc) {
-      toastStore.show(ToastType.Success, 'Tips withdrawn successfully')
-    }
-
-    // Handle balance error
-    if (balanceErr) {
-      toastStore.show(
-        ToastType.Error,
-        balanceErr.value.reason ? balanceErr.value.reason : 'Failed to get balance'
-      )
-    }
-
-    // Handle authentication change (optional)
-    if (isAuthed) {
-      await getBalance()
-    }
+// Handle authentication change (optional)
+watch(isAuth, async () => {
+  if (isAuth.value == true) {
+    getBalance()
   }
-)
+})
+// Handle Balance error
+watch(balanceError, () => {
+  if (balanceError.value) {
+    toastStore.show(ToastType.Error, balanceError.value?.reason || 'Failed to Get balance')
+  }
+})
+// Handle withdraw error
+watch(withdrawError, () => {
+  toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
+})
+
+// Handle withdraw success
+watch(withdrawSuccess, () => {
+  if (withdrawSuccess.value) {
+    toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
+  }
+})
 </script>
 
 <template>

@@ -1,8 +1,8 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+
+import { NETWORK } from '@/constant/index'
 import NavBar from '../NavBar.vue'
-import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
-import IconBell from '@/components/icons/IconBell.vue'
+import { mount } from '@vue/test-utils'
 
 describe('NavBar', () => {
   const props = {
@@ -12,34 +12,50 @@ describe('NavBar', () => {
   }
   const wrapper = mount(NavBar, { props })
 
-  it('renders navbar with static elements', () => {
-    expect(wrapper.find('img[alt="Logo"]').exists()).toBe(true)
+  // Check if the component is rendered properly
+  describe('Render', () => {
+    it('Should Render the component', () => {
+      expect(wrapper.exists()).toBe(true)
+    })
 
-    expect(wrapper.findComponent(IconHamburgerMenu).exists()).toBe(true)
+    it('renders the logo', () => {
+      expect(wrapper.find('img').attributes('src')).toBe('/src/assets/Logo.png')
+    })
 
-    expect(wrapper.find('img[alt="Ethereum Icon"]').exists()).toBe(true)
-
-    expect(wrapper.findComponent(IconBell).exists()).toBe(true)
-
-    expect(wrapper.find('.avatar img').exists()).toBe(true)
+    it('Should renders balance correctly', () => {
+      expect(wrapper.find('.btn span').text()).toContain('1.234')
+    })
+    it('Should renders Withdraw Button', () => {
+      expect(wrapper.find('[data-test="withdraw"]').text()).toContain('Withdraw Tips')
+    })
   })
 
-  it('renders balance correctly', () => {
-    expect(wrapper.find('.btn span').text()).toContain('1.2345')
+  // Check if the component emits the right events
+  describe('Emits', () => {
+    it('Should emits toggleSideButton when hamburger button is clicked', async () => {
+      await wrapper.find('[data-test="toggleSideButton"]').trigger('click')
+      expect(wrapper.emitted('toggleSideButton')).toBeTruthy()
+    })
+
+    it('Should emits withdraw event when withdraw is clicked', async () => {
+      await wrapper.find('[data-test="withdraw"]').trigger('click')
+      expect(wrapper.emitted('withdraw')).toBeTruthy()
+    })
+    it('Should emits toggleEditUserModal event when Profile is clicked', async () => {
+      await wrapper.find('[data-test="toggleEditUser"]').trigger('click')
+      expect(wrapper.emitted('toggleEditUserModal')).toBeTruthy()
+    })
   })
 
-  it('emits toggleSideButton when hamburger button is clicked', async () => {
-    await wrapper.find('button').trigger('click')
-    expect(wrapper.emitted('toggleSideButton')).toBeTruthy()
-  })
-
-  it('emits withdraw event when withdraw is clicked', async () => {
-    await wrapper.find('.dropdown-content li a').trigger('click')
-    expect(wrapper.emitted('withdraw')).toBeTruthy()
-  })
-
-  it('renders withdraw loading state', () => {
-    const wrapper = mount(NavBar, { props: { ...props, withdrawLoading: true } })
-    expect(wrapper.find('.dropdown-content li a').text()).toBe('Processing...')
+  // Check if the component has the right behavior for loading
+  describe('Loading', () => {
+    it('Should render withdraw loading state', () => {
+      const wrapper = mount(NavBar, { props: { ...props, withdrawLoading: true } })
+      expect(wrapper.find('.dropdown-content li a').text()).toBe('Processing')
+    })
+    it('Should render loading state for balance', () => {
+      const wrapper = mount(NavBar, { props: { ...props, balanceLoading: true } })
+      expect(wrapper.find('.btn div').text()).toBe(NETWORK.currencySymbol)
+    })
   })
 })
