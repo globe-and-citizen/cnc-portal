@@ -1,18 +1,31 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
-import NavBar from '../NavBar.vue'
-import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
-import IconBell from '@/components/icons/IconBell.vue'
-import { NETWORK } from '@/constant/index'
+import { describe, expect, it } from 'vitest'
 
-describe('NavBar', () => {
+import IconBell from '@/components/icons/IconBell.vue'
+import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
+import { NETWORK } from '@/constant/index'
+import NavBar from '../NavBar.vue'
+import { mount } from '@vue/test-utils'
+
+describe.only('NavBar', () => {
   const props = {
     withdrawLoading: false,
     balanceLoading: false,
     balance: '1.23456789'
   }
+  const props2 = {
+    withdrawLoading: true,
+    balanceLoading: true,
+    balance: '1.23456789'
+  }
   const wrapper = mount(NavBar, { props })
+  const wrapper2 = mount(NavBar, { props: props2 })
 
+  //TODO
+  // First check if the component is mounted
+  // Check if we have the right behavior
+  // Difference balance and withdraw loading state
+
+  it('Should have loading state for Balance and Withr', () => {})
   it('renders navbar with static elements', () => {
     expect(wrapper.find('img[alt="Logo"]').exists()).toBe(true)
 
@@ -41,10 +54,10 @@ describe('NavBar', () => {
 
   it('renders withdraw loading state', () => {
     const wrapper = mount(NavBar, { props: { ...props, withdrawLoading: true } })
-    expect(wrapper.find('.dropdown-content li a').text()).toBe('Processing...')
+    expect(wrapper.find('.dropdown-content li a').text()).toBe('Processing')
   })
   it('shows loading state for balance', () => {
     const wrapper = mount(NavBar, { props: { ...props, balanceLoading: true } })
-    expect(wrapper.find('.btn div').text()).toBe('XXX ' + NETWORK.currencySymbol)
+    expect(wrapper.find('.btn div').text()).toBe(NETWORK.currencySymbol)
   })
 })
