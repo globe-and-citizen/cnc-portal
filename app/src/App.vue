@@ -74,14 +74,11 @@ watch(isAuth, async () => {
   }
 })
 // Handle Balance error
-watch(
-  balanceError,
-  () => {
-    if (balanceError.value) {
-      toastStore.show(ToastType.Error, balanceError.value?.reason || 'Failed to Get balance')
-    }
+watch(balanceError, () => {
+  if (balanceError.value) {
+    toastStore.show(ToastType.Error, balanceError.value?.reason || 'Failed to Get balance')
   }
-)
+})
 // Handle withdraw error
 watch(withdrawError, () => {
   toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
