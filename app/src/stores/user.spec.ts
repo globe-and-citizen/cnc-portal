@@ -1,13 +1,11 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createWebHistory } from 'vue-router'
 import { describe, expect, it } from 'vitest'
 
-import { beforeEach } from 'node:test'
 import { nextTick } from 'vue'
 import { useStorage } from '@vueuse/core'
 import { useUserDataStore } from '@/stores/user'
 
-describe.only('User Data Store', () => {
+describe('User Data Store', () => {
   it('Should set user data correctly', () => {
     setActivePinia(createPinia())
     const userStore = useUserDataStore()
@@ -37,7 +35,6 @@ describe.only('User Data Store', () => {
   })
 
   it.skip('Should set user data correctly when the data is update directly in the localStorage', async () => {
-
     const userStore = useUserDataStore()
     const name = 'John Doe'
     const address = '0x123456789'
@@ -64,11 +61,10 @@ describe.only('User Data Store', () => {
 
     useStorage('name', 'Jane DoeV2')
     // TODO: find a way to make the test pass
-    console.log("This Test is not passing: TODO: find a way to make the test pass");
-    
+    console.log('This Test is not passing: TODO: find a way to make the test pass')
+
     expect(userStore.name).toBe(newName)
     expect(userStore.address).toBe(newAddress)
     expect(userStore.nonce).toBe(newNonce)
-    
   })
 })
