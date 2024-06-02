@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '../components/TeamCard.vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
@@ -34,10 +34,22 @@ import { ToastType, type Team, type TeamInput } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 import { useErrorHandler } from '@/composables/errorHandler'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
-const teams = ref<Team[]>([])
+/**
+ * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
+ * isFetching - Can be used to show loading spinner
+ * execute - Can be used to fetch data again later: ex: when a new team is added
+ */
+const { isFetching: teamIsFetching, error: teamError, data: teams, execute} = useCustomFetch<Array<Team>>('teams')
+watch(teamError, () => {
+  if (teamError.value) {
+    return useErrorHandler().handleError(teamError)
+  }
+})
+// const teams = ref<Team[]>([])
 
 const showAddTeamModal = ref(false)
 const team = ref<TeamInput>({
@@ -90,14 +102,14 @@ const removeInput = () => {
     team.value.members.pop()
   }
 }
-onMounted(async () => {
-  try {
-    const teamsList = await teamApi.getAllTeams()
-    teams.value = teamsList
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-})
+// onMounted(async () => {
+//   try {
+//     // const teamsList = await teamApi.getAllTeams()
+//     teams.value = teamsList
+//   } catch (error) {
+//     return useErrorHandler().handleError(error)
+//   }
+// })
 function navigateToTeam(id: string) {
   router.push('/teams/' + id)
 }
