@@ -2,7 +2,6 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { Bank, Tips } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { ContractTransactionResponse } from 'ethers'
 
 describe('Bank', () => {
   let bankProxy: Bank
@@ -21,165 +20,78 @@ describe('Bank', () => {
     })) as unknown as Bank
   }
 
-  // As a company owner
-  // I want to deploy/create a team's bank contract
-  // so that I can operate transaction with it
-  describe('Deploy a bank contract', () => {
-    context("Given an owner and a team's bank contract", () => {
-      let owner: SignerWithAddress
+  describe('As A User (Owner of a wallet/address)', () => {
+    let owner: SignerWithAddress
+    let contractor: SignerWithAddress
+    let member1: SignerWithAddress
+    let member2: SignerWithAddress
 
+    context('I want to deploy my Bank Smart Contract', () => {
       before(async () => {
-        owner = (await ethers.getSigners())[0]
-      })
-
-      context('When I deploy a bank contract', async () => {
-        before(async () => {
-          await deployContract(owner)
-          expect(await bankProxy.getAddress()).to.be.string
-          expect(await tipsProxy.getAddress()).to.be.string
-          expect(await bankProxy.tipsAddress()).to.eq(await tipsProxy.getAddress())
-        })
-
-        it('Then I can operate transaction with it', async () => {
-          const amount = ethers.parseEther('1')
-          const bankAddress = await bankProxy.getAddress()
-          await owner.sendTransaction({ to: bankAddress, value: amount })
-          expect(await ethers.provider.getBalance(bankAddress)).to.eq(amount)
-        })
-
-        it('Then I owned the contract', async () => {
-          expect(await bankProxy.owner()).to.eq(await owner.getAddress())
-        })
-      })
-    })
-  })
-
-  // As a company owner of a digital service provider.
-  // I want to direct money from my online operations to my team’s crypto “bank” account on the CNC portal.
-  // When I deposit into my team's bank contract
-  // Then I can see funds in the team's bank contract
-
-  describe('Deposit', () => {
-    context("Given an owner and a team's bank contract", () => {
-      let owner: SignerWithAddress
-
-      before(async () => {
-        owner = (await ethers.getSigners())[0]
-        await deployContract(owner)
-      })
-      context('When I deposit into my team’s bank contract', () => {
-        it('Then I can see funds in the team’s bank contract', async () => {
-          const amount = ethers.parseEther('1')
-          const bankAddress = await bankProxy.getAddress()
-          await expect(owner.sendTransaction({ to: bankAddress, value: amount }))
-            .to.emit(bankProxy, 'Deposited')
-            .withArgs(owner.address, amount)
-          expect(await ethers.provider.getBalance(bankAddress)).to.eq(amount)
-        })
-      })
-    })
-  })
-
-  // As a company owner of a digital service
-  // I want to pay a provider through the team’s bank contract (CNC Portal).
-  // When I have a service I want to buy
-  // Then I can operate transfer operation to a provider company account as payment for the service I'm buying. Using my team's bank contract funds
-  describe('Pay Digital Service', () => {
-    context("Given an owner and a team's bank contract", () => {
-      let owner: SignerWithAddress, digitalService: SignerWithAddress
-      before(async () => {
-        ;[owner, digitalService] = await ethers.getSigners()
+        ;[owner, contractor, member1, member2] = await ethers.getSigners()
         await deployContract(owner)
       })
 
-      context('When I have a service I want to buy', () => {
-        before(async () => {
-          const amount = ethers.parseEther('5')
-          await owner.sendTransaction({ to: await bankProxy.getAddress(), value: amount })
-        })
-
-        it("Then I can operate transfer operation to a provider company account as payment for the service I'm buying. Using my team's bank contract funds", async () => {
-          const tx = await bankProxy.transfer(digitalService.address, ethers.parseEther('5'))
-
-          expect(tx).to.emit(bankProxy, 'Transfer')
-          expect(tx).to.changeEtherBalance(digitalService, ethers.parseEther('5'))
-          expect(tx).to.changeEtherBalance(bankProxy, -ethers.parseEther('5'))
-        })
-      })
-    })
-  })
-
-  // As a company owner of a digital service
-  // I want to pay my employe
-  // When I Send Token to my Employee
-  // Then he will receive it in his wallet
-  describe('Pay Employee', () => {
-    context("Given an owner, employee and a team's bank contract", () => {
-      let owner: SignerWithAddress, employee: SignerWithAddress
-
-      before(async () => {
-        ;[owner, employee] = await ethers.getSigners()
-        await deployContract(owner)
-        await owner.sendTransaction({
-          to: await bankProxy.getAddress(),
-          value: ethers.parseEther('10')
-        })
+      it('Then I become the owner of the contract', async () => {
+        expect(await bankProxy.owner()).to.eq(await owner.getAddress())
       })
 
-      context('When I send crypto to my Employee', () => {
-        let tx: ContractTransactionResponse
-        let amount: bigint
-
-        before(async () => {
-          amount = ethers.parseEther('5')
-          tx = await bankProxy.transfer(employee.address, amount)
-        })
-
-        it('Then he will receive it in his wallet', async () => {
-          expect(tx).to.changeEtherBalance(employee, amount)
-          expect(tx).to.changeEtherBalance(bankProxy, -amount)
-        })
-      })
-    })
-  })
-
-  // As a company owner of a digital service
-  // I want to be able to call an external Contract to operate transaction
-  // I want to send tips or push tips to my team using the TIPS Smart Contract
-  // When I Call send tips or push tips with my team address
-  // Then my team members's balance increases.
-  describe('Call External Contract', () => {
-    context("Given an owner and a team's bank contract", () => {
-      let owner: SignerWithAddress, member1: SignerWithAddress, member2: SignerWithAddress
-
-      before(async () => {
-        ;[owner, member1, member2] = await ethers.getSigners()
-        await deployContract(owner)
-        await owner.sendTransaction({
-          to: await bankProxy.getAddress(),
-          value: ethers.parseEther('12')
-        })
+      it('Then the address i provide during the bank contract deployment becomes the address of tips contract', async () => {
+        expect(await bankProxy.tipsAddress()).to.eq(await tipsProxy.getAddress())
       })
 
-      context('When I call send tips with my team address', () => {
-        it("Then my team members' balance increases.", async () => {
-          await bankProxy
-            .connect(owner)
-            .sendTip([member1.address, member2.address], ethers.parseEther('6'))
+      it('Then I can deposit into the bank contract', async () => {
+        const amount = ethers.parseEther('10')
+        const tx = await owner.sendTransaction({ to: await bankProxy.getAddress(), value: amount })
 
-          expect(await tipsProxy.getBalance(member1.address)).to.eq(ethers.parseEther('3'))
-          expect(await tipsProxy.getBalance(member2.address)).to.eq(ethers.parseEther('3'))
-        })
+        expect(tx).to.changeEtherBalance(bankProxy, amount)
+        expect(tx).to.emit(bankProxy, 'Deposit').withArgs(owner.address, amount)
       })
 
-      context('When I call push tips with my team address', () => {
-        it("Then my team members' balance increases.", async () => {
-          const tx = await bankProxy
-            .connect(owner)
-            .pushTip([member1.address, member2.address], ethers.parseEther('6'))
-          expect(tx).to.changeEtherBalance(member1, ethers.parseEther('3'))
-          expect(tx).to.changeEtherBalance(member2, ethers.parseEther('3'))
-        })
+      it('Then I can transfer fund from my bank contract to an address (contractor)', async () => {
+        const amount = ethers.parseEther('1')
+        const tx = await bankProxy.transfer(contractor.address, amount)
+
+        expect(tx).to.changeEtherBalance(bankProxy, -amount)
+        expect(tx).to.changeEtherBalance(owner, amount)
+        expect(tx)
+          .to.emit(bankProxy, 'Transfer')
+          .withArgs(owner.address, contractor.address, amount)
+      })
+
+      it('Then I can send tips to all contractors including team members', async () => {
+        const amount = ethers.parseEther('3')
+        const amountPerAddress = ethers.parseEther('1')
+        const tx = await bankProxy.sendTip(
+          [contractor.address, member1.address, member2.address],
+          amount
+        )
+
+        expect(tx).to.changeEtherBalance(bankProxy, -amount)
+        expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
+        expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
+        expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
+      })
+
+      it('Then I can push tips to all contractors including team members', async () => {
+        const amount = ethers.parseEther('3')
+        const amountPerAddress = ethers.parseEther('1')
+        const tx = await bankProxy.pushTip(
+          [contractor.address, member1.address, member2.address],
+          amount
+        )
+
+        expect(tx).to.changeEtherBalance(bankProxy, -amount)
+        expect(tx).to.changeEtherBalance(contractor, amountPerAddress)
+        expect(tx).to.changeEtherBalance(member1, amountPerAddress)
+        expect(tx).to.changeEtherBalance(member2, amountPerAddress)
+      })
+
+      it('Then I can edit tips contract address', async () => {
+        const newTipsAddress = (await ethers.getSigners())[4]
+        const tx = await bankProxy.changeTipsAddress(newTipsAddress.address)
+
+        expect(tx).to.emit(bankProxy, 'SetTipsAddress').withArgs(newTipsAddress.address)
       })
     })
   })
