@@ -48,13 +48,13 @@ describe('Toast Store', () => {
     `)
   })
 
-  it.skip('Should remove toast correctly', () => {
-    const toastStore = useToastStore()
-    const toast = { message: 'Hello World', timeout: 1000 }
+  // it.skip('Should remove toast correctly', () => {
+  //   const toastStore = useToastStore()
+  //   const toast = { message: 'Hello World', timeout: 1000 }
 
-    toastStore.addToast(toast)
-    toastStore.removeToast(0)
+  //   toastStore.addToast(toast)
+  //   toastStore.removeToast(0)
 
-    expect(toastStore.toasts.value.length).toBe(0)
-  })
+  //   expect(toastStore.toasts.value.length).toBe(0)
+  // })
 })
