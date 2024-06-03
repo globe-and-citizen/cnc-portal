@@ -13,6 +13,9 @@
         This will transfer {{ amount }} {{ NETWORK.currencySymbol }} from the team bank contract to
         this address {{ to }}.
       </h3>
+      <h3 class="pt-4">
+        Current team bank contract's balance {{ bankBalance }} {{ NETWORK.currencySymbol }}
+      </h3>
 
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
         <p>To</p>
@@ -48,6 +51,7 @@ const amount = ref<string>('0')
 const to = ref<string | null>(null)
 defineEmits(['transfer', 'closeModal'])
 defineProps<{
-  loading: boolean
+  loading: boolean,
+  bankBalance: string | null
 }>()
 </script>
