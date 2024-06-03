@@ -8,7 +8,6 @@ import { AuthService } from '@/services/authService'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
-import NotificationToast from '@/components/NotificationToast.vue'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 
@@ -30,9 +29,6 @@ const toggleSide = ref(true)
 function handleChange() {
   toggleSide.value = !toggleSide.value
 }
-
-const toastStore = useToastStore()
-const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 const {
   isSuccess: withdrawSuccess,
@@ -87,13 +83,23 @@ watch(balanceError, () => {
 })
 // Handle withdraw error
 watch(withdrawError, () => {
-  toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
+  //toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
+  addToast({
+    message: withdrawError.value.reason || 'Failed to withdraw tips',
+    type: ToastType.Error,
+    timeout: 5000
+  })
 })
 
 // Handle withdraw success
 watch(withdrawSuccess, () => {
   if (withdrawSuccess.value) {
-    toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
+    //toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
+    addToast({
+      message: withdrawError.value.reason || 'Tips withdrawn successfully',
+      type: ToastType.Success,
+      timeout: 5000
+    })
   }
 })
 </script>
@@ -154,9 +160,8 @@ watch(withdrawSuccess, () => {
         </div>
       </div>
     </div>
-    <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
 
-    <ToastContainer position="bottom-center" />
+    <ToastContainer position="bottom-right" />
   </div>
 </template>
 
