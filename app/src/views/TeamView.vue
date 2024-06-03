@@ -24,18 +24,18 @@
 </template>
 
 <script setup lang="ts">
-import AddTeamCard from '@/components/AddTeamCard.vue'
-import TeamCard from '../components/TeamCard.vue'
-import { onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { FetchTeamAPI } from '@/apis/teamApi'
-const router = useRouter()
-import { ToastType, type Team, type TeamInput } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import AddTeamCard from '@/components/AddTeamCard.vue'
+import TeamCard from '@/components/TeamCard.vue'
+import { FetchTeamAPI } from '@/apis/teamApi'
+import { ToastType, type Team, type TeamInput } from '@/types'
 import { useToastStore } from '@/stores/toast'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
+const router = useRouter()
 const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
 /**
@@ -47,7 +47,7 @@ const {
   isFetching: teamIsFetching,
   error: teamError,
   data: teams,
-  execute : executeFetchTeams
+  execute: executeFetchTeams
 } = useCustomFetch<Array<Team>>('teams')
 watch(teamError, () => {
   if (teamError.value) {
