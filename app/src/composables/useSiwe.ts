@@ -48,6 +48,8 @@ async function siwe() {
       userData.nonce || ''
     )
     useOwnerAddressStore().setOwnerAddress(address)
+    useUserDataStore().setAuthStatus(true)
+
     router.push('/teams')
   } catch (error: any) {
     isProcessing.value = false

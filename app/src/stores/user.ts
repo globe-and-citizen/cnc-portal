@@ -5,6 +5,7 @@ export const useUserDataStore = defineStore('user', () => {
   const userName = useStorage('name', '')
   const userAddress = useStorage('ownerAddress', '')
   const userNonce = useStorage('nonce', '')
+  const isAuth = useStorage('isAuth', false)
 
   function setUserData(name: string, address: string, nonce: string) {
     userName.value = name
@@ -16,7 +17,20 @@ export const useUserDataStore = defineStore('user', () => {
     userName.value = ''
     userAddress.value = ''
     userNonce.value = ''
+    isAuth.value = false // Reset authentication status as well if clearing user data
   }
 
-  return { name: userName, address: userAddress, nonce: userNonce, setUserData, clearUserData }
+  function setAuthStatus(status: boolean) {
+    isAuth.value = status
+  }
+
+  return {
+    name: userName,
+    address: userAddress,
+    nonce: userNonce,
+    isAuth,
+    setUserData,
+    clearUserData,
+    setAuthStatus
+  }
 })
