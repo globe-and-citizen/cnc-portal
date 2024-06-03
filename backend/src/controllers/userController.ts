@@ -99,6 +99,30 @@ export const updateUser = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
+export const getAllUsers = async (req: Request, res: Response) => {
+  const { page, limit } = req.query;
+  const pageNumber = parseInt(page as string) || 1;
+  const pageSize = parseInt(limit as string) || 10;
+  const offset = (pageNumber - 1) * pageSize;
+
+  try {
+    const users = await prisma.user.findMany({
+      skip: offset,
+      take: pageSize,
+    });
+    const totalUsers = await prisma.user.count();
+    await prisma.$disconnect();
+    return res.status(200).json({
+      users,
+      totalUsers,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalUsers / pageSize),
+    });
+  } catch (error) {
+    await prisma.$disconnect();
+    return errorResponse(500, error, res);
+  }
+};
 
 export const searchUser = async (req: Request, res: Response) => {
   const { name, address } = req.query;
