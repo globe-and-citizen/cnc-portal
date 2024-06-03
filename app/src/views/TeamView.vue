@@ -47,7 +47,7 @@ const {
   isFetching: teamIsFetching,
   error: teamError,
   data: teams,
-  execute
+  execute : executeFetchTeams
 } = useCustomFetch<Array<Team>>('teams')
 watch(teamError, () => {
   if (teamError.value) {
@@ -92,7 +92,7 @@ const handleAddTeam = async () => {
     if (createdTeam && Object.keys(createdTeam).length !== 0) {
       show(ToastType.Success, 'Team created successfully')
       showAddTeamModal.value = !showAddTeamModal.value
-      teams.value.push(createdTeam)
+      executeFetchTeams()
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
@@ -107,14 +107,6 @@ const removeInput = () => {
     team.value.members.pop()
   }
 }
-// onMounted(async () => {
-//   try {
-//     // const teamsList = await teamApi.getAllTeams()
-//     teams.value = teamsList
-//   } catch (error) {
-//     return useErrorHandler().handleError(error)
-//   }
-// })
 function navigateToTeam(id: string) {
   router.push('/teams/' + id)
 }
