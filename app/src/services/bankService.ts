@@ -14,11 +14,10 @@ export interface IBankService {
 
 export class BankService implements IBankService {
   web3Library: IWeb3Library
-  teamApi: TeamAPI
+  teamApi: TeamAPI = new FetchTeamAPI()
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
-    this.teamApi = new FetchTeamAPI()
   }
 
   async createBankContract(teamId: string): Promise<string> {
