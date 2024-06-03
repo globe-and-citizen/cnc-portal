@@ -101,14 +101,6 @@ const getAllTeams = async (req: Request, res: Response) => {
   const callerAddress = String(req.headers.calleraddress);
   try {
     // Get teams owned by the user
-    const ownedTeams = await prisma.team.findMany({
-      where: {
-        ownerAddress: callerAddress,
-      },
-      include: {
-        members: true,
-      },
-    });
 
     // Get teams where the user is a member
     const memberTeams = await prisma.team.findMany({
@@ -125,14 +117,8 @@ const getAllTeams = async (req: Request, res: Response) => {
     });
 
     // Combine owned and member teams
-    const allTeams = [...ownedTeams, ...memberTeams];
 
-    // Filter out duplicate teams
-    const uniqueTeams = allTeams.filter(
-      (team, index, self) => index === self.findIndex((t) => t.id === team.id)
-    );
-
-    res.status(200).json({ teams: uniqueTeams, success: true });
+    res.status(200).json({ teams: memberTeams, success: true });
   } catch (error: any) {
     console.log("Error:", error);
     return errorResponse(500, error.message, res);
