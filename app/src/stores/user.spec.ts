@@ -67,4 +67,10 @@ describe('User Data Store', () => {
     expect(userStore.address).toBe(newAddress)
     expect(userStore.nonce).toBe(newNonce)
   })
+  it('Should set authentication status correctly', () => {
+    const userStore = useUserDataStore()
+    const status = true
+    userStore.setAuthStatus(status)
+    expect(userStore.isAuth).toBe(status)
+  })
 })

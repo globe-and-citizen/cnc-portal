@@ -4,7 +4,6 @@ import { ref, watch, toRaw } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/toast'
 import { useUserDataStore } from '@/stores/user'
-import { AuthService } from '@/services/authService'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -17,11 +16,6 @@ import { FetchUserAPI } from './apis/userApi'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
 
-const isAuth = ref<boolean | null>(null)
-
-AuthService.isAuthenticated().then((res) => {
-  isAuth.value = res
-})
 const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
@@ -66,13 +60,15 @@ watch(
     updateUserInput.value.isValid = isAddress(newVal)
   }
 )
-
 // Handle authentication change (optional)
-watch(isAuth, async () => {
-  if (isAuth.value == true) {
-    getBalance()
+watch(
+  () => userStore.isAuth,
+  (isAuth) => {
+    if (isAuth === true) {
+      getBalance()
+    }
   }
-})
+)
 // Handle Balance error
 watch(balanceError, () => {
   if (balanceError.value) {
@@ -95,7 +91,7 @@ watch(withdrawSuccess, () => {
 <template>
   <div class="min-h-screen m-0 bg-base-200">
     <RouterView name="login" />
-    <div v-if="isAuth">
+    <div v-if="userStore.isAuth">
       <!-- 
         for toggleTheme
         @toggleTheme="() => toggleDark()" 
