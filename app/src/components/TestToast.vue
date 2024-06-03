@@ -42,9 +42,6 @@ const updateTimeLeft = () => {
 
 onMounted(() => {
   setInterval(updateTimeLeft, 1000)
-  setTimeout(() => {
-    visible.value = false
-  }, props.timeout)
 })
 
 onUnmounted(() => {
