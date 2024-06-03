@@ -40,7 +40,7 @@ const {
 } = useTipsBalance()
 
 const userStore = useUserDataStore()
-const { name, address, isAuth } = storeToRefs(userStore)
+const { name, address } = storeToRefs(userStore)
 
 const showUserModal = ref(false)
 
@@ -61,11 +61,14 @@ watch(
   }
 )
 // Handle authentication change (optional)
-watch(isAuth, async () => {
-  if (isAuth.value == true) {
-    getBalance()
+watch(
+  () => userStore.isAuth,
+  (isAuth) => {
+    if (isAuth === true) {
+      getBalance()
+    }
   }
-})
+)
 // Handle Balance error
 watch(balanceError, () => {
   if (balanceError.value) {
@@ -88,7 +91,7 @@ watch(withdrawSuccess, () => {
 <template>
   <div class="min-h-screen m-0 bg-base-200">
     <RouterView name="login" />
-    <div v-if="isAuth">
+    <div v-if="userStore.isAuth">
       <!-- 
         for toggleTheme
         @toggleTheme="() => toggleDark()" 
