@@ -10,6 +10,7 @@ const addTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { name, members, description } = req.body;
+  const callerAddress = req.headers.calleraddress;
   console.log("Members:", members);
   try {
     // Validate all members' wallet addresses
@@ -20,10 +21,9 @@ const addTeam = async (req: Request, res: Response) => {
     }
 
     // Find the owner (user) by their address
-    const ownerAddress = req.body.ownerAddress;
     const owner = await prisma.user.findUnique({
       where: {
-        address: ownerAddress,
+        address: String(callerAddress),
       },
     });
 
@@ -32,7 +32,7 @@ const addTeam = async (req: Request, res: Response) => {
     }
 
     // Ensure the owner's wallet address is in the members list
-    if (!members.some((member: User) => member.address === ownerAddress)) {
+    if (!members.some((member: User) => member.address === callerAddress)) {
       members.push({
         name: owner.name || "User",
         address: owner.address,
@@ -44,7 +44,7 @@ const addTeam = async (req: Request, res: Response) => {
       data: {
         name,
         description,
-        ownerAddress,
+        ownerAddress: String(callerAddress),
         members: {
           connect: members.map((member: User) => ({
             address: member.address,
@@ -85,7 +85,7 @@ const getTeam = async (req: Request, res: Response) => {
     }
     const teamMembers = team.members.map((member) => member.address);
     if (teamMembers.includes(String(callerAddress)) === false) {
-      return errorResponse(401, "Unauthorized", res);
+      return errorResponse(403, "Unauthorized", res);
     }
     res.status(200).json({ team, success: true });
   } catch (error: any) {
@@ -101,14 +101,6 @@ const getAllTeams = async (req: Request, res: Response) => {
   const callerAddress = String(req.headers.calleraddress);
   try {
     // Get teams owned by the user
-    const ownedTeams = await prisma.team.findMany({
-      where: {
-        ownerAddress: callerAddress,
-      },
-      include: {
-        members: true,
-      },
-    });
 
     // Get teams where the user is a member
     const memberTeams = await prisma.team.findMany({
@@ -125,14 +117,8 @@ const getAllTeams = async (req: Request, res: Response) => {
     });
 
     // Combine owned and member teams
-    const allTeams = [...ownedTeams, ...memberTeams];
 
-    // Filter out duplicate teams
-    const uniqueTeams = allTeams.filter(
-      (team, index, self) => index === self.findIndex((t) => t.id === team.id)
-    );
-
-    res.status(200).json({ teams: uniqueTeams, success: true });
+    res.status(200).json({ teams: memberTeams, success: true });
   } catch (error: any) {
     console.log("Error:", error);
     return errorResponse(500, error.message, res);
@@ -157,7 +143,7 @@ const updateTeam = async (req: Request, res: Response) => {
       return errorResponse(404, "Team not found", res);
     }
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(401, "Unauthorized", res);
+      return errorResponse(403, "Unauthorized", res);
     }
     const teamU = await prisma.team.update({
       where: { id: Number(id) },
@@ -193,7 +179,7 @@ const deleteTeam = async (req: Request, res: Response) => {
       return errorResponse(404, "Team not found", res);
     }
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(401, "Unauthorized", res);
+      return errorResponse(403, "Unauthorized", res);
     }
     const teamD = await prisma.team.delete({
       where: {
@@ -224,7 +210,7 @@ const deleteMember = async (req: Request, res: Response) => {
       throw new Error("Team not found");
     }
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(401, "Unauthorized", res);
+      return errorResponse(403, "Unauthorized", res);
     }
     if (team.ownerAddress === memberAddress) {
       return errorResponse(401, "Owner cannot be removed", res);
