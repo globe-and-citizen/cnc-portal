@@ -149,8 +149,7 @@ export class FetchTeamAPI implements TeamAPI {
     const teamObject = {
       name: teamName,
       description: teamDesc,
-      members: teamMembers,
-      ownerAddress: ownerAddressStore.ownerAddress
+      members: teamMembers
     }
 
     const url = `${BACKEND_URL}/api/teams`
@@ -158,7 +157,8 @@ export class FetchTeamAPI implements TeamAPI {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` // Include Authorization header here
+        Authorization: `Bearer ${token}`, // Include Authorization header here
+        calleraddress: ownerAddressStore.ownerAddress
       },
       body: JSON.stringify(teamObject)
     }
