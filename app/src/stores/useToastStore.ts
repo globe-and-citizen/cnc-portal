@@ -11,14 +11,11 @@ export const useToastStore = defineStore('_toast', () => {
     const currentId = id
     toasts.value.push({ ...toast, id: currentId })
     setTimeout(() => {
-      console.log(' will remove Toast ', currentId)
       removeToast(currentId)
     }, toast.timeout)
   }
 
   const removeToast = (id: number) => {
-    console.log('Removing toast with id ', id)
-
     const toastsTemp = toasts.value.filter((toast) => toast.id !== id)
     toasts.value = []
     toasts.value = toastsTemp

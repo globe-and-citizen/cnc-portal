@@ -2,7 +2,7 @@
 import { RouterView } from 'vue-router'
 import { ref, watch, toRaw } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import { AuthService } from '@/services/authService'
 
@@ -10,12 +10,14 @@ import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
 import NotificationToast from '@/components/NotificationToast.vue'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
+import ToastContainer from '@/components/ToastContainer.vue'
 
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
+const { addToast } = useToastStore()
 
 const isAuth = ref<boolean | null>(null)
 
@@ -76,7 +78,11 @@ watch(isAuth, async () => {
 // Handle Balance error
 watch(balanceError, () => {
   if (balanceError.value) {
-    toastStore.show(ToastType.Error, balanceError.value?.reason || 'Failed to Get balance')
+    addToast({
+      message: balanceError.value?.reason || 'Failed to Get balance',
+      type: ToastType.Error,
+      timeout: 5000
+    })
   }
 })
 // Handle withdraw error
@@ -149,6 +155,8 @@ watch(withdrawSuccess, () => {
       </div>
     </div>
     <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
+
+    <ToastContainer position="bottom-center" />
   </div>
 </template>
 
