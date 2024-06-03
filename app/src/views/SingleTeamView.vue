@@ -11,7 +11,7 @@
         <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
       </div>
     </div>
-    <div class="card w-full bg-white overflow-x-auto p-4">
+    <div class="card w-full bg-base-100 overflow-x-auto p-4">
       <table class="table">
         <!-- head -->
         <thead>

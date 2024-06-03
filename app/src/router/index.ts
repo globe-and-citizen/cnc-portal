@@ -6,8 +6,6 @@ import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import ToastDemoView from '@/views/ToastDemoView.vue'
 
-import { AuthService } from '@/services/authService'
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -59,7 +57,7 @@ const router = createRouter({
   ]
 })
 router.beforeEach(async (to) => {
-  if (!(await AuthService.isAuthenticated()) && to.name !== 'login') {
+  if (localStorage.getItem('authToken') == null && to.name !== 'login') {
     return { name: 'login' }
   }
 })
