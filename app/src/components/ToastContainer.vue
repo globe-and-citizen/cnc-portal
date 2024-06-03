@@ -1,7 +1,7 @@
 <template>
   <div :class="['toast', positionClass]">
     <Toast
-      v-for="toast in toasts"
+      v-for="toast in toastStore.toasts"
       :key="toast.id"
       :message="toast.message"
       :type="toast.type"
@@ -16,7 +16,6 @@ import { useToastStore } from '@/stores/useToastStore'
 import Toast from '@/components/TestToast.vue'
 
 const toastStore = useToastStore()
-const { toasts } = toastStore
 const props = defineProps<{ position: string }>()
 const positionClass = computed(() => {
   return {
