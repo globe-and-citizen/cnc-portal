@@ -7,14 +7,24 @@ export const useToastStore = defineStore('_toast', () => {
   let id = 0
 
   const addToast = (toast: Toast) => {
-    toasts.value.push({ ...toast, id: id++ })
+    id++
+    const currentId = id
+    toasts.value.push({ ...toast, id: currentId })
     setTimeout(() => {
-      removeToast(id)
+      console.log(' will remove Toast ', currentId)
+      removeToast(currentId)
     }, toast.timeout)
   }
 
   const removeToast = (id: number) => {
-    toasts.value = toasts.value.filter((toast) => toast.id !== id)
+    console.log('Removing toast with id ', id)
+
+    const toastsTemp = toasts.value.filter((toast) => toast.id !== id)
+    toasts.value = []
+    toasts.value = toastsTemp
+    if (toasts.value.length === 0) {
+      id = 0
+    }
   }
 
   return {
