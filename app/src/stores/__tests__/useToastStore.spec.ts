@@ -6,7 +6,7 @@ import { ToastType } from '@/types/toast-type'
 import { nextTick } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 
-describe.only('Toast Store', () => {
+describe('Toast Store', () => {
   beforeEach(() => {
     // tell vitest we use mocked time
     vi.useFakeTimers()
@@ -17,7 +17,7 @@ describe.only('Toast Store', () => {
     vi.useRealTimers()
   })
 
-  it.only('Should add toast correctly', () => {
+  it('Should add toast correctly', () => {
     setActivePinia(createPinia())
     const toastStore = useToastStore()
 
