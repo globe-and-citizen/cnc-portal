@@ -4,11 +4,10 @@ import { type Toast } from '@/types'
 
 export const useToastStore = defineStore('_toast', () => {
   const toasts = ref<Toast[]>([])
-  let id = 0
+  let toastId = 0
 
   const addToast = (toast: Toast) => {
-    id++
-    const currentId = id
+    const currentId = ++toastId
     toasts.value.push({ ...toast, id: currentId })
     setTimeout(() => {
       removeToast(currentId)
@@ -19,8 +18,8 @@ export const useToastStore = defineStore('_toast', () => {
     const toastsTemp = toasts.value.filter((toast) => toast.id !== id)
     toasts.value = []
     toasts.value = toastsTemp
-    if (toasts.value.length === 0) {
-      id = 0
+    if (toasts.value.length < 1) {
+      toastId = 0
     }
   }
 
