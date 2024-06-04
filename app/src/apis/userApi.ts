@@ -78,7 +78,7 @@ export class FetchUserAPI implements UserAPI {
     if (name) params.append('name', name)
     if (address) params.append('address', address)
 
-    const response = await fetch(`${BACKEND_URL}/api/user/search/user?${params.toString()}`, {
+    const response = await fetch(`${BACKEND_URL}/api/user/search?${params.toString()}`, {
       method: 'GET'
     })
     const resObj = await response.json()
