@@ -38,17 +38,53 @@
               type="text"
               class="w-24"
               v-model="input.name"
+              @keyup.stop="
+                () => {
+                  emits('searchUsers', input)
+                  dropdown = true
+                }
+              "
               :placeholder="'Member Name ' + (index + 1)"
             />
             |
             <input
               type="text"
               class="grow"
-              v-model="input.walletAddress"
+              v-model="input.address"
+              @keyup.stop="
+                () => {
+                  emits('searchUsers', input)
+                  dropdown = true
+                }
+              "
               :placeholder="'Wallet Address ' + (index + 1)"
             />
           </label>
         </div>
+      </div>
+      <div
+        class="dropdown"
+        :class="{ 'dropdown-open': !!users && users.length > 0 }"
+        v-if="dropdown"
+      >
+        <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
+          <li v-for="user in users" :key="user.address">
+            <a
+              @click="
+                () => {
+                  const l = team.members.length - 1
+                  if (l >= 0) {
+                    team.members[l].name = user.name ?? ''
+                    team.members[l].address = user.address ?? ''
+                    dropdown = false
+                  }
+                }
+              "
+            >
+              {{ user.name }} | {{ user.address }}
+            </a>
+          </li>
+        </ul>
       </div>
       <div class="flex justify-end pt-3">
         <div class="w-6 h-6 cursor-pointer" @click="emits('addInput')">
@@ -69,7 +105,7 @@
   </dialog>
 </template>
 <script setup lang="ts">
-import type { TeamInput } from '@/types'
+import type { TeamInput, User } from '@/types'
 import { ref, watch } from 'vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue'
@@ -79,12 +115,15 @@ const emits = defineEmits([
   'addInput',
   'removeInput',
   'toggleAddTeamModal',
-  'updateAddTeamModal'
+  'updateAddTeamModal',
+  'searchUsers'
 ])
 const props = defineProps<{
   showAddTeamModal: boolean
   team: TeamInput
+  users: User[]
 }>()
+const dropdown = ref<boolean>(true)
 const team = ref(props.team)
 const showAddTeamModal = ref<boolean>(props.showAddTeamModal)
 

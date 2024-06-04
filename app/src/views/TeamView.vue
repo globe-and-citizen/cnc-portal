@@ -12,6 +12,8 @@
 
       <AddTeamCard
         @addTeam="handleAddTeam"
+        @searchUsers="(input) => searchUsers(input)"
+        :users="foundUsers"
         v-model:showAddTeamModal="showAddTeamModal"
         v-model:team="team"
         @updateAddTeamModal="handleupdateAddTeamModal"
@@ -30,15 +32,19 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
-import { ToastType, type Team, type TeamInput } from '@/types'
+import { ToastType, type Team, type TeamInput, type User } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
 import { useErrorHandler } from '@/composables/errorHandler'
+import { FetchUserAPI } from '@/apis/userApi'
+
+const userApi = new FetchUserAPI()
 
 const { show } = useToastStore()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
 
+const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
 const team = ref<TeamInput>({
   name: '',
@@ -46,7 +52,7 @@ const team = ref<TeamInput>({
   members: [
     {
       name: '',
-      walletAddress: '',
+      address: '',
       isValid: false
     }
   ]
@@ -56,7 +62,7 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
   team.value = teamInput
   let members = team.value.members
   members.map((member) => {
-    if (isAddress(member.walletAddress)) {
+    if (isAddress(member.address)) {
       member.isValid = true
     } else {
       member.isValid = false
@@ -67,7 +73,7 @@ const handleAddTeam = async () => {
   const members = team.value.members.map((member) => {
     return {
       name: member.name,
-      walletAddress: member.walletAddress
+      address: member.address
     }
   })
   try {
@@ -82,9 +88,18 @@ const handleAddTeam = async () => {
   }
 }
 const addInput = () => {
-  team.value.members.push({ name: '', walletAddress: '', isValid: false })
+  team.value.members.push({ name: '', address: '', isValid: false })
 }
-
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    const users = await userApi.searchUser(input.name, input.address)
+    foundUsers.value = users
+    console.log(users)
+  } catch (error) {
+    foundUsers.value = []
+    return useErrorHandler().handleError(error)
+  }
+}
 const removeInput = () => {
   if (team.value.members.length > 1) {
     team.value.members.pop()

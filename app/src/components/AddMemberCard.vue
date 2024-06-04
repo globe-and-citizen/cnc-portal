@@ -9,8 +9,10 @@
     </div>
   </div>
   <AddMemberModal
+    :users="users"
     :formData="formData"
     :showAddMemberForm="showAddMemberForm"
+    @searchUsers="(input) => emits('searchUsers', input)"
     @updateForm="formData = $event"
     @addInput="emits('addInput')"
     @removeInput="emits('removeInput')"
@@ -20,12 +22,14 @@
 </template>
 <script setup lang="ts">
 import { ref, defineProps, watch } from 'vue'
+import type { User } from '@/types'
 import AddMemberModal from '@/components/modals/AddMemberModal.vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 
 const props = defineProps<{
-  formData: Array<{ name: string; walletAddress: string; isValid: boolean }>
+  formData: Array<{ name: string; address: string; isValid: boolean }>
   showAddMemberForm: boolean
+  users: User[]
 }>()
 
 const emits = defineEmits([
@@ -33,7 +37,8 @@ const emits = defineEmits([
   'addInput',
   'removeInput',
   'addMembers',
-  'toggleAddMemberModal'
+  'toggleAddMemberModal',
+  'searchUsers'
 ])
 
 const formData = ref(props.formData)
