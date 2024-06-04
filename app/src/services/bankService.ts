@@ -63,12 +63,8 @@ export class BankService implements IBankService {
   }
 
   private async getBankContract(bankAddress: string): Promise<Contract> {
-    try {
-      const bankContract = await this.web3Library.getContract(bankAddress, BANK_ABI)
+    const bankContract = await this.web3Library.getContract(bankAddress, BANK_ABI)
 
-      return bankContract
-    } catch (error) {
-      throw error
-    }
+    return bankContract
   }
 }

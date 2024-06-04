@@ -2,7 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 import { NETWORK } from '@/constant'
-import { wrap } from 'module'
 
 describe('TransferFromBankModal.vue', () => {
   it('renders correctly', () => {

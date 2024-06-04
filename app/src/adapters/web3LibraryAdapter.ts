@@ -1,4 +1,4 @@
-import type { Contract, ContractFactory } from 'ethers'
+import type { Contract } from 'ethers'
 import { BrowserProvider, /*, Signer */ ethers } from 'ethers'
 import { MetaMaskUtil } from '@/utils/web3Util'
 import type { Signer } from 'ethers'
