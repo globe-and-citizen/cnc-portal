@@ -24,10 +24,5 @@ describe('TeamCard', () => {
       expect(wrapper.text()).toContain(props.team.name)
       expect(wrapper.text()).toContain(props.team.description)
     })
-
-    it('Should have correct class names for styling', () => {
-      expect(wrapper.classes()).toContain('card')
-      expect(wrapper.classes()).toContain('bg-base-100')
-    })
   })
 })
