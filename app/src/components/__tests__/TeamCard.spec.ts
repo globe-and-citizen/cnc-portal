@@ -1,21 +1,33 @@
+import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
 import TeamCard from '@/components/TeamCard.vue'
-import type { Team } from '@/types'
 
-describe('TeamCard.vue', () => {
-  const team: Team = {
-    id: '1',
-    name: 'Test Team',
-    description: 'This is a test team description.',
-    members: []
+describe('TeamCard', () => {
+  // Mock props
+  const props = {
+    team: {
+      name: 'Team A',
+      description: 'This is a description of Team A.',
+      id: '1',
+      members: []
+    }
   }
-  it('renders team name and description', () => {
-    const wrapper = mount(TeamCard, {
-      props: { team }
+
+  const wrapper = mount(TeamCard, { props })
+
+  describe('Render', () => {
+    it('Should render the component', () => {
+      expect(wrapper.exists()).toBeTruthy()
     })
 
-    expect(wrapper.find('.card-title').text()).toBe(team.name)
-    expect(wrapper.find('p').text()).toBe(team.description)
+    it('Should display team name and description', () => {
+      expect(wrapper.text()).toContain(props.team.name)
+      expect(wrapper.text()).toContain(props.team.description)
+    })
+
+    it('Should have correct class names for styling', () => {
+      expect(wrapper.classes()).toContain('card')
+      expect(wrapper.classes()).toContain('bg-base-100')
+    })
   })
 })
