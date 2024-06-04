@@ -22,7 +22,7 @@ export class BankService implements IBankService {
 
   async createBankContract(teamId: string): Promise<string> {
     // TODO: change to actual deploy contract
-    const bankAddress = '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9'
+    const bankAddress = '0x5466767aA6412f298dD61FbE4E3e40483030b39B'
 
     const response = await this.teamApi.updateTeam(teamId, {
       bankAddress
