@@ -5,7 +5,7 @@ import CreateBankModal from '@/components/modals/CreateBankModal.vue'
 describe('CreateBankModal.vue', () => {
   it('renders correctly', () => {
     const wrapper = mount(CreateBankModal, {
-      props: { loading: false },
+      props: { loading: false }
     })
 
     expect(wrapper.find('h1').text()).toBe('Create Team Bank Contract')
@@ -15,25 +15,25 @@ describe('CreateBankModal.vue', () => {
 
   it('emits closeModal when close button is clicked', async () => {
     const wrapper = mount(CreateBankModal, {
-      props: { loading: false },
+      props: { loading: false }
     })
-    
+
     await wrapper.find('.btn-circle').trigger('click')
     expect(wrapper.emitted()).toHaveProperty('closeModal')
   })
 
   it('emits createBank when Deploy Bank Contract button is clicked', async () => {
     const wrapper = mount(CreateBankModal, {
-      props: { loading: false },
+      props: { loading: false }
     })
-    
+
     await wrapper.find('.btn-primary').trigger('click')
     expect(wrapper.emitted()).toHaveProperty('createBank')
   })
 
   it('shows loading button when loading is true', () => {
     const wrapper = mount(CreateBankModal, {
-      props: { loading: true },
+      props: { loading: true }
     })
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
@@ -42,7 +42,7 @@ describe('CreateBankModal.vue', () => {
 
   it('shows deploy button when loading is false', () => {
     const wrapper = mount(CreateBankModal, {
-      props: { loading: false },
+      props: { loading: false }
     })
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(false)
@@ -51,9 +51,9 @@ describe('CreateBankModal.vue', () => {
 
   it('emits closeModal when cancel button is clicked', async () => {
     const wrapper = mount(CreateBankModal, {
-      props: { loading: false },
+      props: { loading: false }
     })
-    
+
     await wrapper.find('.btn-error').trigger('click')
     expect(wrapper.emitted()).toHaveProperty('closeModal')
   })

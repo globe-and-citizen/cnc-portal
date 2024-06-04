@@ -4,9 +4,7 @@
       <div>
         <h2 class="pl-5">{{ team.name }}</h2>
         <p class="pl-5 pb-3 text-xl">{{ team.description }}</p>
-        <p class="pl-5" v-if="team.bankAddress">
-          Bank Contract Address: {{ team.bankAddress }}
-        </p>
+        <p class="pl-5" v-if="team.bankAddress">Bank Contract Address: {{ team.bankAddress }}</p>
         <p class="pl-5" v-if="team.bankAddress && !balanceLoading">
           Team Balance: {{ teamBalance }} {{ NETWORK.currencySymbol }}
         </p>

@@ -98,7 +98,7 @@ export class EthersJsAdapter implements IWeb3Library {
 
     const tx = ((await this.signer) as Signer).sendTransaction({
       to,
-      value: this.parseEther(amount),
+      value: this.parseEther(amount)
     })
 
     return tx

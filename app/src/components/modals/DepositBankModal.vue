@@ -13,7 +13,7 @@
         This will deposit {{ amount }} {{ NETWORK.currencySymbol }} to the team bank contract.
       </h3>
 
-      <input type="text" class="input input-bordered w-full mt-8" v-model="amount">
+      <input type="text" class="input input-bordered w-full mt-8" v-model="amount" />
 
       <div class="modal-action justify-center">
         <LoadingButton color="primary" class="w-24" v-if="loading" />
@@ -28,8 +28,8 @@
 
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
-import { NETWORK } from '@/constant';
-import { ref } from 'vue';
+import { NETWORK } from '@/constant'
+import { ref } from 'vue'
 
 const amount = ref<string>('0')
 defineEmits(['deposit', 'closeModal'])

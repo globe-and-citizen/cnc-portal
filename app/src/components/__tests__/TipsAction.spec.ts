@@ -8,8 +8,8 @@ describe('TipsAction.vue', () => {
     const wrapper = mount(TipsAction, {
       props: {
         pushTipLoading: false,
-        sendTipLoading: false,
-      },
+        sendTipLoading: false
+      }
     })
 
     expect(wrapper.find('label[for="tip-amount"]').text()).toBe('Total Amount')
@@ -22,10 +22,10 @@ describe('TipsAction.vue', () => {
     const wrapper = mount(TipsAction, {
       props: {
         pushTipLoading: false,
-        sendTipLoading: false,
-      },
+        sendTipLoading: false
+      }
     })
-    
+
     const input = wrapper.find('input')
     await input.setValue('100')
     await wrapper.find('button.btn-primary').trigger('click')
@@ -38,10 +38,10 @@ describe('TipsAction.vue', () => {
     const wrapper = mount(TipsAction, {
       props: {
         pushTipLoading: false,
-        sendTipLoading: false,
-      },
+        sendTipLoading: false
+      }
     })
-    
+
     const input = wrapper.find('input')
     await input.setValue('100')
     await wrapper.find('button.btn-secondary').trigger('click')
@@ -54,8 +54,8 @@ describe('TipsAction.vue', () => {
     const wrapper = mount(TipsAction, {
       props: {
         pushTipLoading: true,
-        sendTipLoading: false,
-      },
+        sendTipLoading: false
+      }
     })
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
@@ -66,8 +66,8 @@ describe('TipsAction.vue', () => {
     const wrapper = mount(TipsAction, {
       props: {
         pushTipLoading: false,
-        sendTipLoading: false,
-      },
+        sendTipLoading: false
+      }
     })
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(false)
@@ -78,8 +78,8 @@ describe('TipsAction.vue', () => {
     const wrapper = mount(TipsAction, {
       props: {
         pushTipLoading: false,
-        sendTipLoading: true,
-      },
+        sendTipLoading: true
+      }
     })
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).isVisible()).toBe(true)
@@ -90,8 +90,8 @@ describe('TipsAction.vue', () => {
     const wrapper = mount(TipsAction, {
       props: {
         pushTipLoading: false,
-        sendTipLoading: false,
-      },
+        sendTipLoading: false
+      }
     })
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(false)

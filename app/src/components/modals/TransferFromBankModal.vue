@@ -51,7 +51,7 @@ const amount = ref<string>('0')
 const to = ref<string | null>(null)
 defineEmits(['transfer', 'closeModal'])
 defineProps<{
-  loading: boolean,
+  loading: boolean
   bankBalance: string | null
 }>()
 </script>
