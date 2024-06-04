@@ -4,7 +4,6 @@ import { ref, watch, toRaw } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/toast'
 import { useUserDataStore } from '@/stores/user'
-import { AuthService } from '@/services/authService'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -17,11 +16,6 @@ import { FetchUserAPI } from './apis/userApi'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
 
-const isAuth = ref<boolean | null>(null)
-
-AuthService.isAuthenticated().then((res) => {
-  isAuth.value = res
-})
 const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
@@ -66,42 +60,38 @@ watch(
     updateUserInput.value.isValid = isAddress(newVal)
   }
 )
+// Handle authentication change (optional)
 watch(
-  [withdrawError, withdrawSuccess, balanceError, isAuth],
-  async ([withdrawErr, withdrawSuc, balanceErr, isAuthed]) => {
-    // Handle withdraw error
-    if (withdrawErr) {
-      toastStore.show(
-        ToastType.Error,
-        withdrawErr.value.reason ? withdrawErr.value.reason : 'Failed to withdraw tips'
-      )
-    }
-
-    // Handle withdraw success
-    if (withdrawSuc) {
-      toastStore.show(ToastType.Success, 'Tips withdrawn successfully')
-    }
-
-    // Handle balance error
-    if (balanceErr) {
-      toastStore.show(
-        ToastType.Error,
-        balanceErr.value.reason ? balanceErr.value.reason : 'Failed to get balance'
-      )
-    }
-
-    // Handle authentication change (optional)
-    if (isAuthed) {
-      await getBalance()
+  () => userStore.isAuth,
+  (isAuth) => {
+    if (isAuth === true) {
+      getBalance()
     }
   }
 )
+// Handle Balance error
+watch(balanceError, () => {
+  if (balanceError.value) {
+    toastStore.show(ToastType.Error, balanceError.value?.reason || 'Failed to Get balance')
+  }
+})
+// Handle withdraw error
+watch(withdrawError, () => {
+  toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
+})
+
+// Handle withdraw success
+watch(withdrawSuccess, () => {
+  if (withdrawSuccess.value) {
+    toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
+  }
+})
 </script>
 
 <template>
   <div class="min-h-screen m-0 bg-base-200">
     <RouterView name="login" />
-    <div v-if="isAuth">
+    <div v-if="userStore.isAuth">
       <!-- 
         for toggleTheme
         @toggleTheme="() => toggleDark()" 
