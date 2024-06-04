@@ -46,7 +46,7 @@ const bankModule = buildModule('BankModule', (m) => {
   // to treat the contract at the proxy address as an instance of the Bank contract.
   // This allows us to interact with the underlying Bank contract via the proxy from within tests and scripts.
   const bank = m.contractAt('Bank', proxy)
-  m.call(bank, 'initialize', ['0x11546550D17b4B1f8288dcD983CD71a2Dc4c9C0D'])
+  m.call(bank, 'initialize', ['0x79EF3aE86725D7D0Ae4eF3A31758A7c7fe40e5B4'])
 
   // Return the contract instance, along with the original proxy and proxyAdmin contracts
   // so that they can be used by other modules, or in tests and scripts.
