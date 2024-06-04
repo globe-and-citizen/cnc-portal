@@ -124,6 +124,7 @@
     @close-modal="() => (transferModal = false)"
     @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
     :loading="transferLoading"
+    :bank-balance="teamBalance"
   />
 </template>
 <script setup lang="ts">
