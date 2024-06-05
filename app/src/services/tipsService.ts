@@ -39,7 +39,7 @@ export class TipsService extends SmartContract {
   bankService: IBankService
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     super(web3Library, TIPS_ADDRESS, ABI)
-    this.bankService = new BankService(web3Library)
+    this.bankService = new BankService()
   }
 
   async pushTip(addresses: string[], amount: number, bankAddress?: string): Promise<any> {
