@@ -32,7 +32,10 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     emit Deposited(msg.sender, msg.value);
   }
 
-  function transfer(address _to, uint256 _amount) external payable onlyOwner nonReentrant {
+  function transfer(
+    address _to,
+    uint256 _amount
+  ) external payable onlyOwner nonReentrant whenNotPaused {
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
 
@@ -42,7 +45,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     emit Transfer(msg.sender, _to, _amount);
   }
 
-  function changeTipsAddress(address _tipsAddress) external onlyOwner {
+  function changeTipsAddress(address _tipsAddress) external onlyOwner whenNotPaused {
     require(_tipsAddress != address(0), 'Address cannot be zero');
 
     address oldAddress = tipsAddress;
@@ -51,15 +54,29 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     emit TipsAddressChanged(msg.sender, oldAddress, _tipsAddress);
   }
 
-  function pushTip(address[] calldata _addresses, uint256 _amount) external payable onlyOwner {
+  function pushTip(
+    address[] calldata _addresses,
+    uint256 _amount
+  ) external payable onlyOwner whenNotPaused {
     ITips(tipsAddress).pushTip{value: _amount}(_addresses);
 
     emit PushTip(msg.sender, _addresses, _amount);
   }
 
-  function sendTip(address[] calldata _addresses, uint256 _amount) external payable onlyOwner {
+  function sendTip(
+    address[] calldata _addresses,
+    uint256 _amount
+  ) external payable onlyOwner whenNotPaused {
     ITips(tipsAddress).sendTip{value: _amount}(_addresses);
 
     emit SendTip(msg.sender, _addresses, _amount);
+  }
+
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  function unpause() external onlyOwner {
+    _unpause();
   }
 }

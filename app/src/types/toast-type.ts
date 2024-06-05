@@ -4,3 +4,10 @@ export enum ToastType {
   Warning = 'warning',
   Error = 'error'
 }
+
+export interface Toast {
+  id?: number
+  message: string
+  timeout: number
+  type: ToastType
+}

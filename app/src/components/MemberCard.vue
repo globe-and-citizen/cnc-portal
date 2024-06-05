@@ -1,39 +1,22 @@
 <template>
-  <tr @click="emits('toggleUpdateMemberModal', member)" class="cursor-pointer hover">
-    <th>{{ member.id }}</th>
+  <tr class="cursor-pointer hover">
     <th>{{ member.name }}</th>
-    <th>{{ member.walletAddress }}</th>
-    <th>Action</th>
+    <th>{{ member.address }}</th>
+    <th>
+      <button class="btn btn-error btn-xs" @click="emits('deleteMember', teamId, member.address)">
+        Delete
+      </button>
+    </th>
   </tr>
-  <UpdateMemberModal
-    :showUpdateMemberModal="showUpdateMemberModal"
-    :updateMemberInput="updateMemberInput"
-    @toggleUpdateMemberModal="emits('toggleUpdateMemberModal', {})"
-    @updateMember="(id) => emits('updateMember', id)"
-    @deleteMember="(id) => emits('deleteMember', id)"
-  />
 </template>
 <script setup lang="ts">
 import type { MemberInput } from '@/types'
-import UpdateMemberModal from '@/components/modals/UpdateMemberModal.vue'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
-const emits = defineEmits(['toggleUpdateMemberModal', 'updateMember', 'deleteMember'])
+const emits = defineEmits(['deleteMember'])
 const props = defineProps<{
-  showUpdateMemberModal: boolean
   member: Partial<MemberInput>
-  updateMemberInput: Partial<MemberInput>
+  teamId: Number
 }>()
 const member = ref(props.member)
-const updateMemberInput = ref(props.updateMemberInput)
-const showUpdateMemberModal = ref<boolean>(props.showUpdateMemberModal)
-
-watch(
-  [() => props.showUpdateMemberModal, props.updateMemberInput, updateMemberInput],
-  ([showForm]) => {
-    showUpdateMemberModal.value = showForm
-    updateMemberInput.value = props.updateMemberInput
-  },
-  { deep: true }
-)
 </script>

@@ -33,7 +33,6 @@
         <!-- head -->
         <thead>
           <tr>
-            <th></th>
             <th>Name</th>
             <th>Address</th>
             <th>Action</th>
@@ -42,21 +41,20 @@
         <tbody>
           <MemberCard
             v-for="member in team.members"
-            :updateMemberInput="updateMemberInput"
+            :teamId="Number(team.id)"
             :member="member"
-            :key="member.id"
-            :showUpdateMemberModal="showUpdateMemberModal"
-            @updateMember="(id) => updateMember(id)"
-            @deleteMember="(id) => deleteMember(id)"
-            @toggleUpdateMemberModal="toggleUpdateMemberModal"
+            :key="member.address"
+            @deleteMember="(id, address) => deleteMember(id, address)"
           />
         </tbody>
       </table>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard
+        :users="foundUsers"
         v-model:formData="teamMembers"
         v-model:showAddMemberForm="showAddMemberForm"
+        @searchUsers="(input) => searchUsers(input)"
         @addInput="addInput"
         @removeInput="removeInput"
         @addMembers="handleAddMembers"
@@ -70,7 +68,7 @@
       @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
       @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
     />
-    <!-- <TipsAction :addresses="team.members.map((member) => member.walletAddress)" /> -->
+    <!-- <TipsAction :addresses="team.members.map((member) => member.address)" /> -->
   </div>
 
   <dialog
@@ -137,9 +135,8 @@ import CreateBankModal from '@/components/modals/CreateBankModal.vue'
 import DepositBankModal from '@/components/modals/DepositBankModal.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
-import { ToastType, type Member, type MemberInput, type Team } from '@/types'
+import { ToastType, type Member, type User, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
-import { FetchMemberAPI } from '@/apis/memberApi'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/toast'
@@ -154,9 +151,13 @@ import {
 } from '@/composables/bank'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { NETWORK } from '@/constant'
+import { FetchUserAPI } from '@/apis/userApi'
+const userApi = new FetchUserAPI()
 
 const { show } = useToastStore()
-const memberApi = new FetchMemberAPI()
+
+const foundUsers = ref<User[]>([])
+
 const route = useRoute()
 const router = useRouter()
 const {
@@ -274,7 +275,6 @@ const bankModal = ref(false)
 const depositModal = ref(false)
 const transferModal = ref(false)
 
-const showUpdateMemberModal = ref(false)
 const showAddMemberForm = ref(false)
 
 const inputs = ref<Member[]>([])
@@ -289,18 +289,13 @@ const team = ref<Team>({
 const teamMembers = ref([
   {
     name: '',
-    walletAddress: '',
+    address: '',
     isValid: false
   }
 ])
-const updateMemberInput = ref<MemberInput>({
-  name: '',
-  walletAddress: '',
-  id: '',
-  isValid: false
-})
+
 const addInput = () => {
-  teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
+  teamMembers.value.push({ name: '', address: '', isValid: false })
 }
 
 const removeInput = () => {
@@ -308,14 +303,10 @@ const removeInput = () => {
     teamMembers.value.pop()
   }
 }
-const toggleUpdateMemberModal = (member: MemberInput) => {
-  showUpdateMemberModal.value = !showUpdateMemberModal.value
-  const updatedMember = { ...member }
-  updateMemberInput.value = updatedMember
-}
+
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
-    if (!isAddress(member.walletAddress)) {
+    if (!isAddress(member.address)) {
       member.isValid = false
     } else {
       member.isValid = true
@@ -324,7 +315,7 @@ const handleUpdateForm = async () => {
 }
 const handleAddMembers = async () => {
   try {
-    const members: Member[] = await memberApi.createMembers(
+    const members: Member[] = await teamApi.createMembers(
       teamMembers.value,
       String(route.params.id)
     )
@@ -359,43 +350,21 @@ const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
 }
-const deleteMember = async (id: string) => {
+const deleteMember = async (id: string, address: string) => {
   try {
-    const memberRes: any = await memberApi.deleteMember(id)
-    if (memberRes && memberRes.count == 1) {
+    const memberRes: any = await teamApi.deleteMember(id, address)
+    if (memberRes) {
       show(ToastType.Success, 'Member deleted successfully')
       team.value.members.splice(
-        team.value.members.findIndex((member) => member.id === id),
+        team.value.members.findIndex((member) => member.address === address),
         1
       )
-      showUpdateMemberModal.value = false
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
   }
 }
-const updateMember = async (id: string) => {
-  const member = {
-    name: updateMemberInput.value.name,
-    walletAddress: updateMemberInput.value.walletAddress
-  }
-  try {
-    const updatedMember = await memberApi.updateMember(member, id)
-    if (updatedMember && Object.keys(updatedMember).length !== 0) {
-      show(ToastType.Success, 'Member updated successfully')
-      team.value.members.map((member) => {
-        if (member.id === id) {
-          member.name = updatedMember.name
-          member.walletAddress = updatedMember.walletAddress
-        }
-      })
 
-      showUpdateMemberModal.value = false
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-}
 const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
@@ -450,14 +419,17 @@ const transferFromBank = async (to: string, amount: string) => {
     await getBalance(team.value.bankAddress)
   }
 }
-watch(
-  updateMemberInput,
-  (newVal) => {
-    updateMemberInput.value.isValid = isAddress(newVal.walletAddress)
-  },
-  { deep: true }
-)
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    const users = await userApi.searchUser(input.name, input.address)
+    foundUsers.value = users
+    console.log(users)
+  } catch (error) {
+    foundUsers.value = []
+    return useErrorHandler().handleError(error)
+  }
+}
 const membersAddress = computed(() => {
-  return team.value.members.map((member) => member.walletAddress)
+  return team.value.members.map((member) => member.address)
 })
 </script>

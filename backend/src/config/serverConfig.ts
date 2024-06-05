@@ -5,7 +5,6 @@ import express, { Express } from "express";
 
 //#region routing modules
 import teamRoutes from "../routes/teamRoutes";
-import memberRoutes from "../routes/memberRoutes";
 import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 //#endregion routing modules
@@ -36,20 +35,20 @@ class Server {
   }
 
   private init() {
-    this.checks()
+    this.checks();
     this.middleware();
     this.routes();
   }
 
   private checks() {
     if (process.env.NODE_ENV === undefined)
-      throw new Error(errorMessages.nodeEnv)
+      throw new Error(errorMessages.nodeEnv);
     if (process.env.FRONTEND_URL === undefined)
-      throw new Error(errorMessages.frontendUrl)
+      throw new Error(errorMessages.frontendUrl);
     if (process.env.SECRET_KEY === undefined)
-      throw new Error(errorMessages.secretKey)
+      throw new Error(errorMessages.secretKey);
     if (process.env.DATABASE_URL === undefined)
-      throw new Error(errorMessages.databaseUrl)
+      throw new Error(errorMessages.databaseUrl);
   }
 
   private middleware() {
@@ -59,7 +58,6 @@ class Server {
 
   private routes() {
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
-    this.app.use(this.paths.member, authorizeUser, memberRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
     this.app.get(this.paths.apidocs, (req, res) => {
@@ -75,13 +73,13 @@ class Server {
 
   public static getInstance() {
     if (!this.instance) {
-      this.instance = new this()
+      this.instance = new this();
     }
 
-    return this.instance
+    return this.instance;
   }
 }
 
-const server = Server.getInstance()
+const server = Server.getInstance();
 
 export default server;

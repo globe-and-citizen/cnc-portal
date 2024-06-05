@@ -93,6 +93,21 @@ describe('Bank', () => {
 
         expect(tx).to.emit(bankProxy, 'SetTipsAddress').withArgs(newTipsAddress.address)
       })
+
+      it('Then I can pause the contract', async () => {
+        await bankProxy.pause()
+
+        expect(await bankProxy.paused()).to.be.true
+        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
+      })
+
+      it('Then I can unpause the contract', async () => {
+        await bankProxy.unpause()
+
+        expect(await bankProxy.paused()).to.be.false
+        expect(await bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be
+          .reverted
+      })
     })
   })
 })

@@ -11,6 +11,8 @@ export interface TeamAPI {
   updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team>
   deleteTeam(id: string): Promise<void>
   createTeam(teamName: string, teamDesc: string, teamMembers: Partial<Member>[]): Promise<Team>
+  deleteMember(id: string, address: string): Promise<void>
+  createMembers(newMembers: Member[], id: string): Promise<Member[]>
 }
 
 export class FetchTeamAPI implements TeamAPI {
@@ -24,7 +26,7 @@ export class FetchTeamAPI implements TeamAPI {
     const requestOptions = {
       method: 'GET',
       headers: {
-        ownerAddress: ownerAddressStore.ownerAddress,
+        calleraddress: ownerAddressStore.ownerAddress,
         Authorization: `Bearer ${token}`
       }
     }
@@ -33,7 +35,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj.message)
@@ -54,7 +56,7 @@ export class FetchTeamAPI implements TeamAPI {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
-        ownerAddress: ownerAddressStore.ownerAddress
+        calleraddress: ownerAddressStore.ownerAddress
       }
     }
 
@@ -62,7 +64,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj.message)
@@ -80,14 +82,14 @@ export class FetchTeamAPI implements TeamAPI {
 
     const url = `${BACKEND_URL}/api/teams/${id}`
     const requestData = {
-      ...updatedTeamData, // Spread the updated team data
-      address: ownerAddressStore.ownerAddress
+      ...updatedTeamData // Spread the updated team data
     }
     const requestOptions = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
+        calleraddress: ownerAddressStore.ownerAddress
       },
       body: JSON.stringify(requestData)
     }
@@ -96,7 +98,7 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
@@ -105,16 +107,19 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
+    const ownerAddressStore = useOwnerAddressStore()
+
     const token: string | null = AuthService.getToken()
 
     if (!token) {
       throw new Error('Token is null')
     }
-
     const requestOptions = {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        calleraddress: ownerAddressStore.ownerAddress
       }
     }
     const response = await fetch(url, requestOptions)
@@ -122,14 +127,12 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success || !resObj) {
       throw new Error(resObj.message)
     }
-    if (resObj.team.count == 0) {
-      throw new Error('Team not deleted')
-    }
+
     return resObj.team
   }
   async createTeam(
@@ -146,12 +149,7 @@ export class FetchTeamAPI implements TeamAPI {
     const teamObject = {
       name: teamName,
       description: teamDesc,
-      members: {
-        createMany: {
-          data: teamMembers
-        }
-      },
-      address: ownerAddressStore.ownerAddress
+      members: teamMembers
     }
 
     const url = `${BACKEND_URL}/api/teams`
@@ -159,13 +157,14 @@ export class FetchTeamAPI implements TeamAPI {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` // Include Authorization header here
+        Authorization: `Bearer ${token}`, // Include Authorization header here
+        calleraddress: ownerAddressStore.ownerAddress
       },
       body: JSON.stringify(teamObject)
     }
 
     for (const member of teamMembers) {
-      if (!isAddress(String(member.walletAddress))) {
+      if (!isAddress(String(member.address))) {
         throw new Error(`Invalid wallet address`)
       }
     }
@@ -175,11 +174,70 @@ export class FetchTeamAPI implements TeamAPI {
     const resObj = await response.json()
     if (response.status === 401) {
       await AuthAPI.verifyToken(token)
-      throw new Error('Unauthorized')
+      throw new Error(resObj.message)
     }
     if (!resObj.success) {
       throw new Error(resObj.message)
     }
     return resObj.team
+  }
+  async deleteMember(id: string, address: string): Promise<void> {
+    const ownerAddressStore = useOwnerAddressStore()
+    const token: string | null = AuthService.getToken()
+
+    if (!token) {
+      throw new Error('Token is null')
+    }
+    const requestOptions = {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        calleraddress: ownerAddressStore.ownerAddress,
+        memberaddress: address
+      }
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/teams/${id}/member`, requestOptions)
+    const resObj = await response.json()
+    if (response.status === 401) {
+      throw new Error(resObj.message)
+    }
+    if (!resObj.success) {
+      throw new Error(resObj)
+    }
+    console.log(resObj)
+    return resObj.team
+  }
+  async createMembers(newMembers: Partial<Member>[], id: string): Promise<Member[]> {
+    const token: string | null = AuthService.getToken()
+    if (!token) {
+      throw new Error('Token is null')
+    }
+
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ data: newMembers })
+    }
+
+    for (const member of newMembers) {
+      if (!isAddress(member.address)) {
+        throw new Error(`Invalid wallet address`)
+      }
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/teams/${id}/member`, requestOptions)
+    const resObj = await response.json()
+    if (response.status === 401) {
+      throw new Error(resObj.message)
+    }
+    if (!resObj.success) {
+      throw new Error(resObj.message)
+    }
+    return resObj.members
   }
 }
