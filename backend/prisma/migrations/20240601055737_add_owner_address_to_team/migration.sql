@@ -13,8 +13,7 @@ ALTER TABLE "Member" DROP CONSTRAINT "Member_teamId_fkey";
 ALTER TABLE "Team" DROP CONSTRAINT "Team_ownerId_fkey";
 
 -- AlterTable
-ALTER TABLE "Team" DROP COLUMN "ownerId",
-ADD COLUMN     "ownerAddress" TEXT NOT NULL;
+ALTER TABLE "Team" RENAME  COLUMN "ownerId" to "ownerAddress";
 
 -- DropTable
 DROP TABLE "Member";
