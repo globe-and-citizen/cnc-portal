@@ -1,7 +1,8 @@
 import { PrismaClient, User } from "@prisma/client";
 import { Request, Response } from "express";
-import { isAddress } from "ethers";
+
 import { errorResponse } from "../utils/utils";
+import { isAddress } from "ethers";
 
 const prisma = new PrismaClient();
 // Create a new team
@@ -76,6 +77,7 @@ const getTeam = async (req: Request, res: Response) => {
       },
       include: {
         members: true,
+        oldMembers: true
       },
     });
 
