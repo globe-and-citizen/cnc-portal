@@ -181,11 +181,7 @@ paths:
       description: Returns all teams belonging to user
       parameters:
         - $ref: "#/components/parameters/OwnerID"
-        - in: header
-          name: ownerAddress
-          schema:
-            type: string
-          required: true
+        - $ref: "#/components/parameters/CallerAddress"
       tags:
         - Teams
 
@@ -212,6 +208,8 @@ paths:
     post:
       summary: Create Team
       description: Create a team in the CNC portal
+      parameters:
+        - $ref: "#/components/parameters/CallerAddress"
       tags:
         - Teams
       requestBody:
@@ -248,11 +246,8 @@ paths:
         - Teams
       parameters:
         - $ref: "#/components/parameters/TeamID"
-        - in: header
-          name: ownerAddress
-          schema:
-            type: string
-          required: true
+        - $ref: "#/components/parameters/CallerAddress"
+
       responses:
         "200":
           description: OK
@@ -279,6 +274,8 @@ paths:
         - Teams
       parameters:
         - $ref: "#/components/parameters/TeamID"
+        - $ref: "#/components/parameters/CallerAddress"
+
       requestBody:
         content:
           application/json:
@@ -310,6 +307,7 @@ paths:
         - Teams
       parameters:
         - $ref: "#/components/parameters/TeamID"
+        - $ref: "#/components/parameters/CallerAddress"
       responses:
         "200":
           description: OK
@@ -325,7 +323,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-
+  /api/teams/{id}/member:
+    delete:
+      summary: Remove member from Team
+      description: Remove member from Team
+      tags:
+        - Teams
+      parameters:
+        - $ref: "#/components/parameters/TeamID"
+        - $ref: "#/components/parameters/CallerAddress"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                  description: Ethereum address of the member to be removed
+        required: true
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      summary: Add members to Team
+      description: Add members to Team
+      tags:
+        - Teams
+      parameters:
+        - $ref: "#/components/parameters/TeamID"
+        - $ref: "#/components/parameters/CallerAddress"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                  description: Ethereum address of the member to be added
+        required: true
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     AuthToken:
@@ -362,6 +426,23 @@ components:
         nonce:
           type: string
           description: Random string for the user to sign with the SIWE message that prevents replay attacks
+        teams:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Unique identifier of the team
+              name:
+                type: string
+                description: Name of the team
+              description:
+                type: string
+                description: Description of the team
+              ownerId:
+                type: string
+                description: Owner's ID of the team
     Team:
       type: object
       properties:
@@ -390,25 +471,19 @@ components:
           type: string
           description: Name of the team
         members:
-          type: object
-          properties:
-            createMany:
-              type: object
-              properties:
-                data:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - name
-                      - walletAddress
-                    properties:
-                      name:
-                        type: string
-                        description: Name of the member
-                      walletAddress:
-                        type: string
-                        description: Wallet address of the member
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - walletAddress
+            properties:
+              name:
+                type: string
+                description: Name of the member
+              walletAddress:
+                type: string
+                description: Wallet address of the member
         description:
           type: string
           description: Description of the team
@@ -430,6 +505,13 @@ components:
           description: Bank smartt contract address of the team
 
   parameters:
+    CallerAddress:
+      in: header
+      name: calleraddress
+      schema:
+        type: string
+      required: true
+      description: Ethereum address of the caller
     WalletAddress:
       in: path
       name: address
