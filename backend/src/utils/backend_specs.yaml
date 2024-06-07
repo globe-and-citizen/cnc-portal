@@ -175,6 +175,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/user/search:
+    get:
+      summary: Search for users
+      description: Search for users based on name
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/UserName"
+        - $ref: "#/components/parameters/MemberAddress"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/user/getAllUsers:
+    get:
+      summary: Fetch all Users
+      description: Returns all users
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/pageNumber"
+        - $ref: "#/components/parameters/pageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/teams:
     get:
       summary: Fetch all Teams
@@ -505,6 +561,30 @@ components:
           description: Bank smartt contract address of the team
 
   parameters:
+    pageNumber:
+      name: page
+      in: query
+      schema:
+        type: integer
+      description: Page number
+    pageLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+      description: Number of items per page
+    UserName:
+      name: name
+      in: query
+      schema:
+        type: string
+      description: Name of the user
+    MemberAddress:
+      name: address
+      in: query
+      schema:
+        type: string
+      description: Ethereum address of the Member
     CallerAddress:
       in: header
       name: calleraddress
