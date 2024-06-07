@@ -79,6 +79,9 @@ export class EthersJsAdapter implements IWeb3Library {
   }
 
   async getBalance(address: string): Promise<string> {
+    if (!this.signer) {
+      await this.connectWallet()
+    }
     return this.formatEther(await this.provider.getBalance(address))
   }
 
