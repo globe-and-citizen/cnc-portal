@@ -14,7 +14,11 @@
         </p>
       </div>
       <div class="flex flex-wrap justify-between gap-1 items-center">
-        <button class="btn btn-primary btn-disabled" @click="bankModal = true" v-if="!team.bankAddress">
+        <button
+          class="btn btn-primary btn-disabled"
+          @click="bankModal = true"
+          v-if="!team.bankAddress"
+        >
           Create Bank Account Smart Contract
         </button>
         <button class="btn btn-primary" @click="depositModal = true" v-if="team.bankAddress">
@@ -97,7 +101,12 @@
         </label>
         <label class="input input-bordered flex items-center gap-2 input-md">
           <span class="w-30">Bank Smart Contract Address</span>
-          <input type="text" class="grow" placeholder="Enter bank smart contract address" v-model="bankSmartContractAddress" />
+          <input
+            type="text"
+            class="grow"
+            placeholder="Enter bank smart contract address"
+            v-model="bankSmartContractAddress"
+          />
         </label>
       </div>
 

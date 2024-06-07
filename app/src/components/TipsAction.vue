@@ -11,7 +11,7 @@
         />
       </div>
     </div>
-    <label class="text-center self-center mt-7">{{NETWORK.currencySymbol}}</label>
+    <label class="text-center self-center mt-7">{{ NETWORK.currencySymbol }}</label>
     <div class="flex flex-col justify-center">
       <label for="tip-amount" class="text-center mb-2">Actions</label>
       <div className="card-actions flex flex-row justify-between mx-8 self-center">
@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { NETWORK } from '@/constant';
+import { NETWORK } from '@/constant'
 
 const emits = defineEmits(['pushTip', 'sendTip'])
 const tipAmount = ref(0)
