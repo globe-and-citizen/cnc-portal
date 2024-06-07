@@ -14,7 +14,7 @@
         </p>
       </div>
       <div class="flex flex-wrap justify-between gap-1 items-center">
-        <button class="btn btn-primary" @click="bankModal = true" v-if="!team.bankAddress">
+        <button class="btn btn-primary btn-disabled" @click="bankModal = true" v-if="!team.bankAddress">
           Create Bank Account Smart Contract
         </button>
         <button class="btn btn-primary" @click="depositModal = true" v-if="team.bankAddress">
@@ -94,6 +94,10 @@
         <label class="input input-bordered flex items-center gap-2 input-md">
           <span class="w-28">Description</span>
           <input type="text" class="grow" placeholder="Enter short description" v-model="cdesc" />
+        </label>
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-30">Bank Smart Contract Address</span>
+          <input type="text" class="grow" placeholder="Enter bank smart contract address" v-model="bankSmartContractAddress" />
         </label>
       </div>
 
@@ -269,6 +273,7 @@ const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
+const bankSmartContractAddress = ref<string | null>('')
 
 const showModal = ref(false)
 const bankModal = ref(false)
@@ -336,6 +341,7 @@ onMounted(async () => {
       team.value = teamData
       cname.value = team.value.name
       cdesc.value = team.value.description
+      bankSmartContractAddress.value = team.value.bankAddress
     } else {
       console.log('Team not found for id:', id)
     }
@@ -369,7 +375,8 @@ const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
     name: cname.value,
-    description: cdesc.value
+    description: cdesc.value,
+    bankAddress: bankSmartContractAddress.value
   }
   try {
     const teamRes = await teamApi.updateTeam(String(id), teamObject)
@@ -377,6 +384,7 @@ const updateTeam = async () => {
       show(ToastType.Success, 'Team updated successfully')
       team.value.name = teamRes.name
       team.value.description = teamRes.description
+      team.value.bankAddress = teamRes.bankAddress
       showModal.value = false
     }
   } catch (error) {
