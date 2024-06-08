@@ -34,13 +34,13 @@ import { FetchTeamAPI } from '@/apis/teamApi'
 const router = useRouter()
 import { ToastType, type Team, type TeamInput, type User } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { FetchUserAPI } from '@/apis/userApi'
 
 const userApi = new FetchUserAPI()
 
-const { show } = useToastStore()
+const { addToast } = useToastStore()
 const teamApi = new FetchTeamAPI()
 const teams = ref<Team[]>([])
 
@@ -79,7 +79,7 @@ const handleAddTeam = async () => {
   try {
     const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
     if (createdTeam && Object.keys(createdTeam).length !== 0) {
-      show(ToastType.Success, 'Team created successfully')
+      addToast({ type: ToastType.Success, message: 'Team created successfully', timeout: 5000 })
       showAddTeamModal.value = !showAddTeamModal.value
       teams.value.push(createdTeam)
     }
