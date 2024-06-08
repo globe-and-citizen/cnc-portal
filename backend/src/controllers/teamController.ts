@@ -52,7 +52,12 @@ const addTeam = async (req: Request, res: Response) => {
         },
       },
       include: {
-        members: true,
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -75,7 +80,12 @@ const getTeam = async (req: Request, res: Response) => {
         id: Number(id),
       },
       include: {
-        members: true,
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -112,7 +122,12 @@ const getAllTeams = async (req: Request, res: Response) => {
         },
       },
       include: {
-        members: true,
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -153,7 +168,12 @@ const updateTeam = async (req: Request, res: Response) => {
         bankAddress,
       },
       include: {
-        members: true,
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
       },
     });
     res.status(200).json({ team: teamU, success: true });
