@@ -74,7 +74,7 @@ export class FetchUserAPI implements UserAPI {
   }
   async searchUser(name: string, address: string): Promise<User[]> {
     const params = new URLSearchParams()
-
+    if (!name && !address) return []
     if (name) params.append('name', name)
     if (address) params.append('address', address)
 
