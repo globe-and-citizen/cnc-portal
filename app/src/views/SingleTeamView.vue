@@ -100,14 +100,14 @@ import { ToastType, type Member, type User, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 
 import { isAddress } from 'ethers' // ethers v6
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
 import { FetchUserAPI } from '@/apis/userApi'
 const userApi = new FetchUserAPI()
 
-const { show } = useToastStore()
+const { addToast } = useToastStore()
 
 const foundUsers = ref<User[]>([])
 
@@ -127,28 +127,30 @@ const {
 } = useSendTip()
 watch(pushTipError, () => {
   if (pushTipError.value) {
-    show(
-      ToastType.Error,
-      pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
-    )
+    addToast({
+      message: pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip',
+      type: ToastType.Error,
+      timeout: 5000
+    })
   }
 })
 watch(sendTipError, () => {
   if (sendTipError.value) {
-    show(
-      ToastType.Error,
-      sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
-    )
+    addToast({
+      message: sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip',
+      type: ToastType.Error,
+      timeout: 5000
+    })
   }
 })
 watch(pushTipSuccess, () => {
   if (pushTipSuccess.value) {
-    show(ToastType.Success, 'Tips pushed successfully')
+    addToast({ type: ToastType.Success, message: 'Tips pushed successfully', timeout: 5000 })
   }
 })
 watch(sendTipSuccess, () => {
   if (sendTipSuccess.value) {
-    show(ToastType.Success, 'Tips sent successfully')
+    addToast({ type: ToastType.Success, message: 'Tips sent successfully', timeout: 5000 })
   }
 })
 
@@ -203,7 +205,7 @@ const handleAddMembers = async () => {
       String(route.params.id)
     )
     if (members && members.length > 0) {
-      show(ToastType.Success, 'Members added successfully')
+      addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
       team.value.members = members
       showAddMemberForm.value = false
     }
@@ -234,7 +236,8 @@ const deleteMember = async (id: string, address: string) => {
   try {
     const memberRes: any = await teamApi.deleteMember(id, address)
     if (memberRes) {
-      show(ToastType.Success, 'Member deleted successfully')
+      addToast({ type: ToastType.Success, message: 'Members deleted successfully', timeout: 5000 })
+
       team.value.members.splice(
         team.value.members.findIndex((member) => member.address === address),
         1
@@ -254,7 +257,7 @@ const updateTeam = async () => {
   try {
     const teamRes = await teamApi.updateTeam(String(id), teamObject)
     if (teamRes) {
-      show(ToastType.Success, 'Team updated successfully')
+      addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
       team.value.name = teamRes.name
       team.value.description = teamRes.description
       showModal.value = false
@@ -269,7 +272,7 @@ const deleteTeam = async () => {
   try {
     const response: any = await teamApi.deleteTeam(String(id))
     if (response) {
-      show(ToastType.Success, 'Team deleted successfully')
+      addToast({ type: ToastType.Success, message: 'Team deleted successfully', timeout: 5000 })
       router.push('/teams')
     }
   } catch (error) {

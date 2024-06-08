@@ -139,9 +139,9 @@ import { ethers } from 'ethers'
 import { onMounted, watch } from 'vue'
 import { ETHERSCAN_URL } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 
-const { show } = useToastStore()
+const { addToast } = useToastStore()
 
 const {
   events: pushTipEvents,
@@ -172,17 +172,21 @@ onMounted(async () => {
 
 watch(pushTipError, () => {
   if (pushTipError.value) {
-    show(ToastType.Error, 'Failed to get push tip events')
+    addToast({ type: ToastType.Error, message: 'Failed to get push tip events', timeout: 5000 })
   }
 })
 watch(sendTipError, () => {
   if (sendTipError.value) {
-    show(ToastType.Error, 'Failed to get send tip events')
+    addToast({ type: ToastType.Error, message: 'Failed to get send tip events', timeout: 5000 })
   }
 })
 watch(withdrawalTipError, () => {
   if (withdrawalTipError.value) {
-    show(ToastType.Error, 'Failed to get withdrawal tip events')
+    addToast({
+      type: ToastType.Error,
+      message: 'Failed to get withdrawal tip events',
+      timeout: 5000
+    })
   }
 })
 

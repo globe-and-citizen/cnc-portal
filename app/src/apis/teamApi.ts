@@ -191,7 +191,7 @@ export class FetchTeamAPI implements TeamAPI {
       throw new Error(resObj.message)
     }
     if (!resObj.success) {
-      throw new Error(resObj)
+      throw new Error(resObj.message)
     }
     console.log(resObj)
     return resObj.team
