@@ -259,6 +259,14 @@ const deleteMember = async (req: Request, res: Response) => {
           disconnect: { address: String(memberAddress) },
         },
       },
+      include: {
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+      },
     });
     console.log("Updated Team:", updatedTeam);
     res.status(200).json({ success: true, team: updatedTeam });
