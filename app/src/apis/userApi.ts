@@ -2,7 +2,7 @@ import { BACKEND_URL } from '@/constant/index'
 
 // Define a generic type for user data
 import { type User, ToastType } from '@/types/index'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 
 // Define an interface for UserService
 interface UserAPI {
@@ -46,8 +46,8 @@ export class FetchUserAPI implements UserAPI {
         body: JSON.stringify(updatedUser)
       })
       const updatedUserData = await response.json()
-      const { show } = useToastStore()
-      show(ToastType.Success, 'User updated successfully')
+      const { addToast } = useToastStore()
+      addToast({ type: ToastType.Success, message: 'User updated successfully', timeout: 5000 })
       return updatedUserData
     } catch (error) {
       console.error('Error:', error)
