@@ -1,5 +1,4 @@
 import type { Team, Member } from '@/types'
-import { useOwnerAddressStore } from '@/stores/address'
 import { AuthService } from '@/services/authService'
 import { AuthAPI } from '@/apis/authApi'
 import { BACKEND_URL } from '@/constant/index'
@@ -22,11 +21,9 @@ export class FetchTeamAPI implements TeamAPI {
     if (!token) {
       throw new Error('Token is null')
     }
-    const ownerAddressStore = useOwnerAddressStore()
     const requestOptions = {
       method: 'GET',
       headers: {
-        calleraddress: ownerAddressStore.ownerAddress,
         Authorization: `Bearer ${token}`
       }
     }
@@ -44,7 +41,6 @@ export class FetchTeamAPI implements TeamAPI {
     return resObj.teams
   }
   async getTeam(id: string): Promise<Team | null> {
-    const ownerAddressStore = useOwnerAddressStore()
     const token: string | null = AuthService.getToken()
 
     if (!token) {
@@ -55,8 +51,7 @@ export class FetchTeamAPI implements TeamAPI {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        calleraddress: ownerAddressStore.ownerAddress
+        Authorization: `Bearer ${token}`
       }
     }
 
@@ -73,7 +68,6 @@ export class FetchTeamAPI implements TeamAPI {
     return resObj.team
   }
   async updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team> {
-    const ownerAddressStore = useOwnerAddressStore()
     const token: string | null = AuthService.getToken()
 
     if (!token) {
@@ -88,8 +82,7 @@ export class FetchTeamAPI implements TeamAPI {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        calleraddress: ownerAddressStore.ownerAddress
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(requestData)
     }
@@ -107,7 +100,6 @@ export class FetchTeamAPI implements TeamAPI {
   }
   async deleteTeam(id: string): Promise<void> {
     const url = `${BACKEND_URL}/api/teams/${id}`
-    const ownerAddressStore = useOwnerAddressStore()
 
     const token: string | null = AuthService.getToken()
 
@@ -118,8 +110,7 @@ export class FetchTeamAPI implements TeamAPI {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        calleraddress: ownerAddressStore.ownerAddress
+        Authorization: `Bearer ${token}`
       }
     }
     const response = await fetch(url, requestOptions)
@@ -140,7 +131,6 @@ export class FetchTeamAPI implements TeamAPI {
     teamDesc: string,
     teamMembers: Partial<Member>[]
   ): Promise<Team> {
-    const ownerAddressStore = useOwnerAddressStore()
     const token: string | null = AuthService.getToken()
 
     if (!token) {
@@ -157,8 +147,7 @@ export class FetchTeamAPI implements TeamAPI {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`, // Include Authorization header here
-        calleraddress: ownerAddressStore.ownerAddress
+        Authorization: `Bearer ${token}` // Include Authorization header here
       },
       body: JSON.stringify(teamObject)
     }
@@ -182,7 +171,6 @@ export class FetchTeamAPI implements TeamAPI {
     return resObj.team
   }
   async deleteMember(id: string, address: string): Promise<void> {
-    const ownerAddressStore = useOwnerAddressStore()
     const token: string | null = AuthService.getToken()
 
     if (!token) {
@@ -193,7 +181,6 @@ export class FetchTeamAPI implements TeamAPI {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        calleraddress: ownerAddressStore.ownerAddress,
         memberaddress: address
       }
     }

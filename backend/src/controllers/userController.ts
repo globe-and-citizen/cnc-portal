@@ -69,11 +69,14 @@ export const getUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name } = req.body;
+  const callerAddress = req.body.address;
 
   try {
     if (!address)
       return errorResponse(401, "Update user error: Missing user address", res);
-
+    if (callerAddress !== address) {
+      return errorResponse(403, "Unauthorized", res);
+    }
     const user = await prisma.user.findUnique({
       where: {
         address: address,
