@@ -6,4 +6,5 @@ export interface Team {
   description: string
   bankAddress: string | null
   members: Member[]
+  ownerAddress: string
 }

@@ -17,11 +17,33 @@
         Current team bank contract's balance {{ bankBalance }} {{ NETWORK.currencySymbol }}
       </h3>
 
-      <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-        <p>To</p>
-        |
-        <input type="text" class="grow" v-model="to" />
-      </label>
+      <div class="flex flex-col items-center">
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+          <p>To</p>
+          |
+          <input type="text" class="grow" v-model="to" />
+        </label>
+        <div v-if="dropdown" class="dropdown w-full max-h-20" :class="{ 'dropdown-open': contractors.length > 0 }">
+          <ul
+            v-for="contractor in contractors"
+            :key="contractor.address"
+            tabindex="0"
+            class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-full"
+          >
+            <li>
+              <a
+                @click="
+                  () => {
+                    to = contractor.address!
+                    dropdown = false
+                  }
+                "
+                >{{ contractor.name }} | {{ contractor.address }}</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
 
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
         <p>Amount</p>
@@ -45,13 +67,21 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 import { NETWORK } from '@/constant'
-import { ref } from 'vue'
+import type { User } from '@/types'
+import { ref, watch } from 'vue'
 
 const amount = ref<string>('0')
 const to = ref<string | null>(null)
-defineEmits(['transfer', 'closeModal'])
+const dropdown = ref<boolean>(true)
+const emit = defineEmits(['transfer', 'closeModal', 'getAllContractors'])
 defineProps<{
   loading: boolean
   bankBalance: string | null
+  contractors: User[]
 }>()
+watch(to, () => {
+  if (to.value?.length ?? 0 > 0) {
+    emit('getAllContractors', to.value)
+  }
+})
 </script>
