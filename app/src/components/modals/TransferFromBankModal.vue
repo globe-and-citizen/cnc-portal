@@ -23,7 +23,11 @@
           |
           <input type="text" class="grow" v-model="to" />
         </label>
-        <div v-if="dropdown" class="dropdown w-full max-h-20" :class="{ 'dropdown-open': contractors.length > 0 }">
+        <div
+          v-if="dropdown"
+          class="dropdown w-full max-h-20"
+          :class="{ 'dropdown-open': contractors.length > 0 }"
+        >
           <ul
             v-for="contractor in contractors"
             :key="contractor.address"

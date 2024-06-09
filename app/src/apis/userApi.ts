@@ -10,7 +10,6 @@ interface UserAPI {
   createUser(user: User): Promise<User>
   updateUser(updatedUser: Partial<User>): Promise<User>
   searchUser(name: string, address: string): Promise<User[]>
-  getAllContractors(address: string, query?: string): Promise<User[]>
 }
 
 // Implement UserService using Fetch API (or any other HTTP client)
@@ -92,7 +91,12 @@ export class FetchUserAPI implements UserAPI {
     return resObj.users
   }
 
-  async getAllUsers(page: string, limit: string, ownerAddress?: string, query?: string): Promise<User[]> {
+  async getAllUsers(
+    page: string,
+    limit: string,
+    ownerAddress?: string,
+    query?: string
+  ): Promise<User[]> {
     const params = new URLSearchParams()
 
     if (ownerAddress) params.append('ownerAddress', ownerAddress)
@@ -107,7 +111,7 @@ export class FetchUserAPI implements UserAPI {
     if (response.status === 401) {
       throw new Error(resObj.message)
     }
-    
+
     return resObj.users
   }
 }

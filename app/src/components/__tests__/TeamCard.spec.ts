@@ -10,7 +10,8 @@ describe('TeamCard', () => {
       description: 'This is a description of Team A.',
       bankAddress: null,
       id: '1',
-      members: []
+      members: [],
+      ownerAddress: '0x123'
     }
   }
 
