@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { generateNonce, SiweMessage } from "siwe";
 import { errorResponse } from "../utils/utils";
@@ -103,15 +103,40 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 export const getAllUsers = async (req: Request, res: Response) => {
-  const { page, limit } = req.query;
+  const { page, limit, ownerAddress, query } = req.query;
   const pageNumber = parseInt(page as string) || 1;
   const pageSize = parseInt(limit as string) || 10;
   const offset = (pageNumber - 1) * pageSize;
+
+  const whereQuery: Prisma.UserWhereInput = {};
+  if (query as string) {
+    whereQuery.OR = [
+      {
+        name: {
+          contains: query as string,
+          mode: "insensitive",
+        },
+      },
+      {
+        address: {
+          contains: query as string,
+        },
+      },
+    ];
+  }
+  if (ownerAddress as string) {
+    whereQuery.ownedTeams = {
+      every: {
+        ownerAddress: ownerAddress as string,
+      },
+    };
+  }
 
   try {
     const users = await prisma.user.findMany({
       skip: offset,
       take: pageSize,
+      where: whereQuery,
     });
     const totalUsers = await prisma.user.count();
     await prisma.$disconnect();
@@ -158,5 +183,46 @@ export const searchUser = async (req: Request, res: Response) => {
   } catch (error) {
     await prisma.$disconnect();
     return errorResponse(500, error, res);
+  }
+};
+
+export const getAllContractors = async (req: Request, res: Response) => {
+  const { ownerAddress } = req.params;
+  const { query } = req.query;
+
+  if (!ownerAddress)
+    return errorResponse(
+      400,
+      "Get all contractors error: Missing address",
+      res
+    );
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        ownedTeams: {
+          every: {
+            ownerAddress: ownerAddress,
+          },
+        },
+        OR: [
+          {
+            name: {
+              contains: query as string,
+              mode: "insensitive",
+            },
+          },
+          {
+            address: {
+              contains: query as string,
+            },
+          },
+        ],
+      },
+    });
+    return res.status(200).json({ success: true, users });
+  } catch (error) {
+    return errorResponse(500, error, res);
+  } finally {
+    await prisma.$disconnect();
   }
 };
