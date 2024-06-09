@@ -6,9 +6,8 @@ import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { useOwnerAddressStore } from '@/stores/address'
 import { ref } from 'vue'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 import { ToastType } from '@/types'
-import { storeToRefs } from 'pinia'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
@@ -30,7 +29,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 }
 
 async function siwe() {
-  const { show } = useToastStore()
+  const { addToast } = useToastStore()
 
   try {
     isProcessing.value = true
@@ -53,7 +52,7 @@ async function siwe() {
     router.push('/teams')
   } catch (error: any) {
     isProcessing.value = false
-    show(ToastType.Error, parseError(error))
+    addToast({ type: ToastType.Error, message: parseError(error), timeout: 5000 })
     console.log(
       '[app][src][utils][loginUtil.ts][signInWithEthereum] error instanceof Error: ',
       error instanceof Error
@@ -62,8 +61,5 @@ async function siwe() {
 }
 
 export function useSiwe() {
-  const toastStore = useToastStore()
-  const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
-
-  return { isProcessing, showToast, toastType, toastMessage, siwe }
+  return { isProcessing, siwe }
 }
