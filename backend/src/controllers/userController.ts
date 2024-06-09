@@ -103,7 +103,8 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 export const getAllUsers = async (req: Request, res: Response) => {
-  const { page, limit, ownerAddress, query } = req.query;
+  const { page, limit, query } = req.query;
+  const { ownerAddress } = req.body
   const pageNumber = parseInt(page as string) || 1;
   const pageSize = parseInt(limit as string) || 10;
   const offset = (pageNumber - 1) * pageSize;
