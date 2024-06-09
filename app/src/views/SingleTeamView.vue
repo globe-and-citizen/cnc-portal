@@ -25,6 +25,7 @@
           <MemberCard
             v-for="member in team.members"
             :teamId="Number(team.id)"
+            :isOwner="team.ownerAddress == member.address"
             :member="member"
             :key="member.address"
             @deleteMember="(id, address) => deleteMember(id, address)"
@@ -168,7 +169,8 @@ const team = ref<Team>({
   id: '',
   name: '',
   description: '',
-  members: []
+  members: [],
+  ownerAddress: ''
 })
 
 const teamMembers = ref([

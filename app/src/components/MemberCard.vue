@@ -3,7 +3,11 @@
     <th>{{ member.name }}</th>
     <th>{{ member.address }}</th>
     <th>
-      <button class="btn btn-error btn-xs" @click="emits('deleteMember', teamId, member.address)">
+      <button
+        v-if="!isOwner"
+        class="btn btn-error btn-xs"
+        @click="emits('deleteMember', teamId, member.address)"
+      >
         Delete
       </button>
     </th>
@@ -17,6 +21,7 @@ const emits = defineEmits(['deleteMember'])
 const props = defineProps<{
   member: Partial<MemberInput>
   teamId: Number
+  isOwner: Boolean
 }>()
 const member = ref(props.member)
 </script>
