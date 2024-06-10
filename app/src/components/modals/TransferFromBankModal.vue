@@ -26,11 +26,11 @@
         <div
           v-if="dropdown"
           class="dropdown w-full max-h-20"
-          :class="{ 'dropdown-open': contractors.length > 0 }"
+          :class="{ 'dropdown-open': filteredMembers.length > 0 }"
         >
           <ul
-            v-for="contractor in contractors"
-            :key="contractor.address"
+            v-for="contractor in filteredMembers"
+            :key="contractor.id"
             tabindex="0"
             class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-full"
           >
@@ -77,15 +77,15 @@ import { ref, watch } from 'vue'
 const amount = ref<string>('0')
 const to = ref<string | null>(null)
 const dropdown = ref<boolean>(true)
-const emit = defineEmits(['transfer', 'closeModal', 'getAllContractors'])
+const emit = defineEmits(['transfer', 'closeModal', 'searchMembers'])
 defineProps<{
   loading: boolean
   bankBalance: string | null
-  contractors: User[]
+  filteredMembers: User[]
 }>()
 watch(to, () => {
   if (to.value?.length ?? 0 > 0) {
-    emit('getAllContractors', to.value)
+    emit('searchMembers', to.value)
   }
 })
 </script>

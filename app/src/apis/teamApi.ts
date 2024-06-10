@@ -6,7 +6,7 @@ import { isAddress } from 'ethers' // ethers v6
 
 export interface TeamAPI {
   getAllTeams(): Promise<Team[]>
-  getTeam(id: string): Promise<Team | null>
+  getTeam(id: string, query?: string): Promise<Team | null>
   updateTeam(id: string, updatedTeamData: Partial<Team>): Promise<Team>
   deleteTeam(id: string): Promise<void>
   createTeam(teamName: string, teamDesc: string, teamMembers: Partial<Member>[]): Promise<Team>
@@ -40,13 +40,18 @@ export class FetchTeamAPI implements TeamAPI {
 
     return resObj.teams
   }
-  async getTeam(id: string): Promise<Team | null> {
+  async getTeam(id: string, query?: string): Promise<Team | null> {
     const token: string | null = AuthService.getToken()
 
     if (!token) {
       throw new Error('Token is null')
     }
-    const url = `${BACKEND_URL}/api/teams/${id}`
+
+    const queryParams = new URLSearchParams()
+    if (query) {
+      queryParams.append('query', query)
+    }
+    const url = `${BACKEND_URL}/api/teams/${id}?${queryParams.toString()}`
     const requestOptions = {
       method: 'GET',
       headers: {

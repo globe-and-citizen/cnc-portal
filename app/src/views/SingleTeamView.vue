@@ -134,8 +134,8 @@
     v-if="transferModal"
     @close-modal="() => (transferModal = false)"
     @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
-    @getAllContractors="async (query: string) => await getAllContractors(query)"
-    :contractors="contractors"
+    @searchMembers="async (query: string) => await searchMembers(query)"
+    :filteredMembers="filteredMembers"
     :loading="transferLoading"
     :bank-balance="teamBalance"
   />
@@ -172,7 +172,7 @@ const userApi = new FetchUserAPI()
 const { addToast } = useToastStore()
 
 const foundUsers = ref<User[]>([])
-const contractors = ref<User[]>([])
+const filteredMembers = ref<User[]>([])
 
 const route = useRoute()
 const router = useRouter()
@@ -455,12 +455,12 @@ const searchUsers = async (input: { name: string; address: string }) => {
     return useErrorHandler().handleError(error)
   }
 }
-const getAllContractors = async (query: string) => {
+const searchMembers = async (query: string) => {
   try {
-    const result = await userApi.getAllUsers('1', '10', team.value.ownerAddress, query)
-    contractors.value = result
+    const result = await teamApi.getTeam('1', query)
+    filteredMembers.value = result?.members || []
   } catch (error) {
-    contractors.value = []
+    filteredMembers.value = []
     return useErrorHandler().handleError(error)
   }
 }
