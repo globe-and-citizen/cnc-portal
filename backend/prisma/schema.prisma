@@ -41,4 +41,5 @@ model Notification {
   userAddress   String
   user          User     @relation(fields: [userAddress], references: [address])
   createdAt     DateTime @default(now())
+  author        String?
 }
