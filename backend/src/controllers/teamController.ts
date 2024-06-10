@@ -74,10 +74,8 @@ const getTeam = async (req: Request, res: Response) => {
   */
   const { id } = req.params;
   const callerAddress = req.body.address;
-
-  const filterQuery = buildFilterMember(req.query);
   try {
-    const team = await prisma.team.findUnique({
+    let team = await prisma.team.findUnique({
       where: {
         id: Number(id),
       },
@@ -87,19 +85,38 @@ const getTeam = async (req: Request, res: Response) => {
             address: true,
             name: true,
           },
-          where: filterQuery,
         },
       },
     });
+
+    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
+      return errorResponse(403, "Unauthorized", res);
+    }
 
     // Handle 404
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
-    const teamMembers = team.members.map((member) => member.address);
-    if (teamMembers.includes(String(callerAddress)) === false) {
-      return errorResponse(403, "Unauthorized", res);
+
+    if (!req.query) {
+      res.status(200).json({ team, success: true });
     }
+
+    const filterQuery = buildFilterMember(req.query);
+    team = await prisma.team.findUnique({
+      where: {
+        id: Number(id),
+      },
+      include: {
+        members: {
+          where: filterQuery,
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+      },
+    })
     res.status(200).json({ team, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
@@ -319,6 +336,13 @@ const addMembers = async (req: Request, res: Response) => {
     console.log("Error:", error);
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
+};
+
+const isUserPartOfTheTeam = async (
+  members: { address: string; name?: string | null }[],
+  callerAddress: string
+) => {
+  return members.some((member) => member.address === callerAddress);
 };
 
 const buildFilterMember = (queryParams: Request["query"]) => {
