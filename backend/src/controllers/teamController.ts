@@ -1,4 +1,4 @@
-import { PrismaClient, User } from "@prisma/client";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
@@ -74,6 +74,8 @@ const getTeam = async (req: Request, res: Response) => {
   */
   const { id } = req.params;
   const callerAddress = req.body.address;
+
+  const filterQuery = buildFilterMember(req.query);
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -85,6 +87,7 @@ const getTeam = async (req: Request, res: Response) => {
             address: true,
             name: true,
           },
+          where: filterQuery,
         },
       },
     });
@@ -316,6 +319,30 @@ const addMembers = async (req: Request, res: Response) => {
     console.log("Error:", error);
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
+};
+
+const buildFilterMember = (queryParams: Request["query"]) => {
+  const filterQuery: Prisma.UserWhereInput = {};
+  if (queryParams.query) {
+    filterQuery.OR = [
+      {
+        name: {
+          contains: String(queryParams.query),
+          mode: "insensitive",
+        },
+      },
+      {
+        address: {
+          contains: String(queryParams.query),
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
+
+  // can add others filter
+
+  return filterQuery;
 };
 
 export {
