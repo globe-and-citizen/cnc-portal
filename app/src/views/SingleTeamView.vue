@@ -1,44 +1,53 @@
 <template>
   <div class="pt-10 flex flex-col gap-5">
     <div class="flex justify-between gap-5">
-      <div>
-        <div class="flex">
-          <h2 class="pl-5">{{ team.name }}</h2>
-          <div
-            class="badge badge-sm badge-primary"
-            v-if="team.ownerAddress == useUserDataStore().address"
-          >
-            Owner
+      <div
+        class="collapse collapse-arrow border"
+        :class="`${team.ownerAddress == useUserDataStore().address ? 'bg-green-100' : 'bg-blue-100'}`"
+      >
+        <input type="checkbox" />
+        <div class="collapse-title text-xl font-medium">
+          <div class="flex">
+            <h2 class="pl-5">{{ team.name }}</h2>
+            <div
+              class="badge badge-sm badge-primary"
+              v-if="team.ownerAddress == useUserDataStore().address"
+            >
+              Owner
+            </div>
+            <div class="badge badge-sm badge-secondary" v-else>Employee</div>
           </div>
-          <div class="badge badge-sm badge-secondary" v-else>Employee</div>
         </div>
-        <p class="pl-5">{{ team.description }}</p>
+        <div class="collapse-content">
+          <p class="pl-5">{{ team.description }}</p>
+
+          <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
+            <button
+              class="btn btn-secondary btn-sm"
+              v-if="team.ownerAddress == useUserDataStore().address"
+              @click="updateTeamModalOpen"
+            >
+              Update
+            </button>
+            <button
+              class="btn btn-error btn-sm"
+              v-if="team.ownerAddress == useUserDataStore().address"
+              @click="showDeleteConfirmModal = !showDeleteConfirmModal"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="flex justify-between gap-2 items-center">
-        <button
-          class="btn btn-primary"
-          v-if="team.ownerAddress == useUserDataStore().address"
-          @click="updateTeamModalOpen"
-        >
-          Update
-        </button>
-        <button
-          class="btn btn-primary"
-          v-if="team.ownerAddress == useUserDataStore().address"
-          @click="showDeleteConfirmModal = !showDeleteConfirmModal"
-        >
-          Delete Team
-        </button>
-        <DeleteConfirmModal
-          :showDeleteConfirmModal="showDeleteConfirmModal"
-          @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
-          @deleteItem="deleteTeam()"
-        >
-          Are you sure you want to delete the team
-          <span class="font-bold">{{ team.name }}</span
-          >?
-        </DeleteConfirmModal>
-      </div>
+      <DeleteConfirmModal
+        :showDeleteConfirmModal="showDeleteConfirmModal"
+        @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
+        @deleteItem="deleteTeam()"
+      >
+        Are you sure you want to delete the team
+        <span class="font-bold">{{ team.name }}</span
+        >?
+      </DeleteConfirmModal>
     </div>
     <div class="card w-full bg-base-100 overflow-x-auto p-4">
       <table class="table">

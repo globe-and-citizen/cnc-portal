@@ -1,5 +1,8 @@
 <template>
-  <div class="card h-36 w-80 bg-base-100">
+  <div
+    class="card h-36 w-80 border"
+    :class="`${team.ownerAddress == useUserDataStore().address ? 'bg-green-100' : 'bg-blue-100'}`"
+  >
     <div class="card-body">
       <div class="flex flex-row justify-between items-start">
         <h1 class="card-title text-md overflow-hidden">
