@@ -1,8 +1,9 @@
 <template>
-  <tr class="cursor-pointer hover">
-    <th>{{ member.name }}</th>
-    <th>{{ member.address }}</th>
-    <th>
+  <div class="collapse collapse-arrow bg-base-100">
+    <input type="radio" name="my-accordion-2" />
+    <div class="collapse-title text-sm font-medium">
+      <span>{{ member.name }}</span>
+      <span>{{ member.address }}</span>
       <button
         v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
         class="btn btn-error btn-xs"
@@ -10,8 +11,10 @@
       >
         Delete
       </button>
-    </th>
-  </tr>
+    </div>
+    <div class="collapse-content">HI</div>
+  </div>
+
   <DeleteConfirmModal
     :showDeleteConfirmModal="showDeleteConfirmModal"
     @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"

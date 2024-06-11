@@ -41,26 +41,14 @@
       </div>
     </div>
     <div class="card w-full bg-base-100 overflow-x-auto p-4">
-      <table class="table">
-        <!-- head -->
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Address</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <MemberCard
-            v-for="member in team.members"
-            :ownerAddress="team.ownerAddress"
-            :teamId="Number(team.id)"
-            :member="member"
-            :key="member.address"
-            @deleteMember="(id, address) => deleteMember(id, address)"
-          />
-        </tbody>
-      </table>
+      <MemberCard
+        v-for="member in team.members"
+        :ownerAddress="team.ownerAddress"
+        :teamId="Number(team.id)"
+        :member="member"
+        :key="member.address"
+        @deleteMember="(id, address) => deleteMember(id, address)"
+      />
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard
