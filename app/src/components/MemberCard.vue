@@ -1,6 +1,12 @@
 <template>
-  <div class="collapse collapse-arrow bg-base-100">
-    <input type="checkbox" />
+  <div
+    class="collapse bg-base-100"
+    :class="`${member.address != ownerAddress && ownerAddress == useUserDataStore().address ? 'collapse-arrow' : ''}`"
+  >
+    <input
+      type="checkbox"
+      v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
+    />
     <div class="collapse-title text-sm font-bold flex px-4">
       <span class="w-1/2">{{ member.name }}</span>
       <span class="w-2/3">{{ member.address }}</span>
