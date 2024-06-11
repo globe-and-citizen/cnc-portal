@@ -4,7 +4,7 @@
     <th>{{ member.address }}</th>
     <th>
       <button
-        v-if="!isOwner"
+        v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
         class="btn btn-error btn-xs"
         @click="showDeleteConfirmModal = !showDeleteConfirmModal"
       >
@@ -20,6 +20,7 @@
   />
 </template>
 <script setup lang="ts">
+import { useUserDataStore } from '@/stores/user'
 import type { MemberInput } from '@/types'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
 import { ref } from 'vue'
@@ -29,7 +30,7 @@ const showDeleteConfirmModal = ref(false)
 const props = defineProps<{
   member: Partial<MemberInput>
   teamId: Number
-  isOwner: Boolean
+  ownerAddress: String
 }>()
 const member = ref(props.member)
 </script>
