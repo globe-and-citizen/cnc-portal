@@ -1,33 +1,29 @@
 <template>
-  <dialog id="my_modal_2" class="modal" :class="{ 'modal-open': props.showDeleteConfirmModal }">
+  <dialog id="my_modal_2" class="modal" :class="{ 'modal-open': showDeleteConfirmModal }">
     <div class="modal-box">
       <form method="dialog">
         <button
           class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="emits('toggleDeleteConfirmModal')"
+          @click="emit('toggleDeleteConfirmModal')"
         >
           ✕
         </button>
       </form>
       <h3 class="font-bold text-lg">Confirmation</h3>
       <p class="py-4">
-        Are you sure you want to delete
-        <span class="font-bold">{{ props.member.name }}</span>
-        with address <span class="font-bold">{{ props.member.address }}</span>
-        from the team?
+        <slot></slot>
       </p>
       <div class="modal-action justify-center">
-        <button class="btn btn-error" @click="emits('deleteMember')">Delete</button>
-        <button class="btn btn-primary" @click="emits('toggleDeleteConfirmModal')">Cancel</button>
+        <button class="btn btn-error" @click="emit('deleteItem')">Delete</button>
+        <button class="btn btn-primary" @click="emit('toggleDeleteConfirmModal')">Cancel</button>
       </div>
     </div>
   </dialog>
 </template>
+
 <script setup lang="ts">
-import type { MemberInput } from '@/types'
-const emits = defineEmits(['toggleDeleteConfirmModal', 'deleteMember'])
+const emit = defineEmits(['toggleDeleteConfirmModal', 'deleteItem'])
 const props = defineProps<{
   showDeleteConfirmModal: boolean
-  member: Partial<MemberInput>
 }>()
 </script>

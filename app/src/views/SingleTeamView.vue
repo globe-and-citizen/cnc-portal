@@ -25,10 +25,19 @@
         <button
           class="btn btn-primary"
           v-if="team.ownerAddress == useUserDataStore().address"
-          @click="deleteTeam"
+          @click="showDeleteConfirmModal = !showDeleteConfirmModal"
         >
           Delete Team
         </button>
+        <DeleteConfirmModal
+          :showDeleteConfirmModal="showDeleteConfirmModal"
+          @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
+          @deleteItem="deleteTeam()"
+        >
+          Are you sure you want to delete the team
+          <span class="font-bold">{{ team.name }}</span
+          >?
+        </DeleteConfirmModal>
       </div>
     </div>
     <div class="card w-full bg-base-100 overflow-x-auto p-4">
@@ -128,7 +137,10 @@ import { usePushTip, useSendTip } from '@/composables/tips'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { FetchUserAPI } from '@/apis/userApi'
 import { useUserDataStore } from '@/stores/user'
+import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
 const userApi = new FetchUserAPI()
+
+const showDeleteConfirmModal = ref(false)
 
 const { addToast } = useToastStore()
 
