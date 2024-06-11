@@ -2,7 +2,16 @@
   <div class="pt-10 flex flex-col gap-5">
     <div class="flex justify-between gap-5">
       <div>
-        <h2 class="pl-5">{{ team.name }}</h2>
+        <div class="flex">
+          <h2 class="pl-5">{{ team.name }}</h2>
+          <div
+            class="badge badge-sm badge-primary"
+            v-if="team.ownerAddress == useUserDataStore().address"
+          >
+            Owner
+          </div>
+          <div class="badge badge-sm badge-secondary" v-else>Employee</div>
+        </div>
         <p class="pl-5">{{ team.description }}</p>
       </div>
       <div class="flex justify-between gap-2 items-center">
