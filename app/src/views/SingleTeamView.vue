@@ -6,9 +6,20 @@
         <p class="pl-5">{{ team.description }}</p>
       </div>
       <div class="flex justify-between gap-2 items-center">
-        <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
-
-        <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
+        <button
+          class="btn btn-primary"
+          v-if="team.ownerAddress == useUserDataStore().address"
+          @click="updateTeamModalOpen"
+        >
+          Update
+        </button>
+        <button
+          class="btn btn-primary"
+          v-if="team.ownerAddress == useUserDataStore().address"
+          @click="deleteTeam"
+        >
+          Delete Team
+        </button>
       </div>
     </div>
     <div class="card w-full bg-base-100 overflow-x-auto p-4">
@@ -24,6 +35,7 @@
         <tbody>
           <MemberCard
             v-for="member in team.members"
+            :ownerAddress="team.ownerAddress"
             :teamId="Number(team.id)"
             :member="member"
             :key="member.address"
@@ -35,6 +47,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <AddMemberCard
         :users="foundUsers"
+        v-if="team.ownerAddress == useUserDataStore().address"
         v-model:formData="teamMembers"
         v-model:showAddMemberForm="showAddMemberForm"
         @searchUsers="(input) => searchUsers(input)"
@@ -105,6 +118,7 @@ import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
 import { FetchUserAPI } from '@/apis/userApi'
+import { useUserDataStore } from '@/stores/user'
 const userApi = new FetchUserAPI()
 
 const { addToast } = useToastStore()
@@ -168,7 +182,8 @@ const team = ref<Team>({
   id: '',
   name: '',
   description: '',
-  members: []
+  members: [],
+  ownerAddress: ''
 })
 
 const teamMembers = ref([

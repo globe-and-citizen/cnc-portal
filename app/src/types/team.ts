@@ -5,4 +5,5 @@ export interface Team {
   name: string
   description: string
   members: Member[]
+  ownerAddress: string
 }
