@@ -15,9 +15,13 @@
   <DeleteConfirmModal
     :showDeleteConfirmModal="showDeleteConfirmModal"
     @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
-    @deleteMember="emits('deleteMember', teamId, member.address)"
-    :member="member"
-  />
+    @deleteItem="emits('deleteMember', teamId, member.address)"
+  >
+    Are you sure you want to delete
+    <span class="font-bold">{{ member.name }}</span>
+    with address <span class="font-bold">{{ member.address }}</span>
+    from the team?
+  </DeleteConfirmModal>
 </template>
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
