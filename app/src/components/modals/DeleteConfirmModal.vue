@@ -10,6 +10,7 @@
         </button>
       </form>
       <h3 class="font-bold text-lg">Confirmation</h3>
+      <hr class="" />
       <p class="py-4">
         <slot></slot>
       </p>
