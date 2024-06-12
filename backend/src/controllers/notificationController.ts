@@ -22,7 +22,7 @@ const getNotification = async (req: Request, res: Response) => {
     //check if user is authorized to get notification
     if (
       notification.length < 1 || 
-      (req as any).address === notification[0].userAddress
+      req.address === notification[0].userAddress
     ) {
 
       //send notification
