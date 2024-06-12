@@ -26,23 +26,41 @@
 </template>
 
 <script setup lang="ts">
-import AddTeamCard from '@/components/AddTeamCard.vue'
-import TeamCard from '../components/TeamCard.vue'
-import { onMounted, ref } from 'vue'
+import {  ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { FetchTeamAPI } from '@/apis/teamApi'
-const router = useRouter()
-import { ToastType, type Team, type TeamInput, type User } from '@/types'
 import { isAddress } from 'ethers' // ethers v6
+
+import AddTeamCard from '@/components/AddTeamCard.vue'
+import TeamCard from '@/components/TeamCard.vue'
+import { ToastType, type Team, type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { useErrorHandler } from '@/composables/errorHandler'
 import { FetchUserAPI } from '@/apis/userApi'
+import { FetchTeamAPI } from '@/apis/teamApi'
+import { useErrorHandler } from '@/composables/errorHandler'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+const router = useRouter()
 
 const userApi = new FetchUserAPI()
 
 const { addToast } = useToastStore()
 const teamApi = new FetchTeamAPI()
-const teams = ref<Team[]>([])
+/**
+ * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
+ * isFetching - Can be used to show loading spinner
+ * execute - Can be used to fetch data again later: ex: when a new team is added
+ */
+const {
+  isFetching: teamIsFetching,
+  error: teamError,
+  data: teams,
+  execute: executeFetchTeams
+} = useCustomFetch<Array<Team>>('teams')
+watch(teamError, () => {
+  if (teamError.value) {
+    return useErrorHandler().handleError(teamError)
+  }
+})
+// const teams = ref<Team[]>([])
 
 const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
@@ -81,7 +99,7 @@ const handleAddTeam = async () => {
     if (createdTeam && Object.keys(createdTeam).length !== 0) {
       addToast({ type: ToastType.Success, message: 'Team created successfully', timeout: 5000 })
       showAddTeamModal.value = !showAddTeamModal.value
-      teams.value.push(createdTeam)
+      executeFetchTeams()
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
@@ -105,14 +123,6 @@ const removeInput = () => {
     team.value.members.pop()
   }
 }
-onMounted(async () => {
-  try {
-    const teamsList = await teamApi.getAllTeams()
-    teams.value = teamsList
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-})
 function navigateToTeam(id: string) {
   router.push('/teams/' + id)
 }
