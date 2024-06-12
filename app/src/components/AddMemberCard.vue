@@ -1,12 +1,12 @@
 <template>
-  <div class="card w-full bg-base-100">
-    <div class="card-body flex justify-center items-center">
-      <h1 class="card-title">Add Member</h1>
-
-      <div class="w-6 h-6 cursor-pointer" @click="emits('toggleAddMemberModal')">
-        <IconPlus />
-      </div>
-    </div>
+  <div class="card w-44 h-4 bg-base-100 flex flex-row justify-center items-center">
+    <span
+      class="w-4 h-4 cursor-pointer flex justify-center items-center"
+      @click="emits('toggleAddMemberModal')"
+    >
+      <IconPlus />
+    </span>
+    <span class="flex justify-center items-center">Add Member</span>
   </div>
   <AddMemberModal
     :users="users"
