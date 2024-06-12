@@ -7,6 +7,7 @@ import express, { Express } from "express";
 import teamRoutes from "../routes/teamRoutes";
 import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
+import notificationRoutes from "../routes/notificationRoute";
 //#endregion routing modules
 
 import { authorizeUser } from "../middleware/authMiddleware";
@@ -27,11 +28,16 @@ class Server {
       member: "/api/member/",
       user: "/api/user/",
       auth: "/api/auth/",
+      notification: "/api/notification/",
       apidocs: "/api-docs",
     };
     this.port = parseInt(process.env.PORT as string) || 3000;
 
     this.init();
+  }
+
+  public getApp() {
+    return this.app;
   }
 
   private init() {
@@ -60,6 +66,7 @@ class Server {
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
+    this.app.use(this.paths.notification, notificationRoutes);
     this.app.get(this.paths.apidocs, (req, res) => {
       res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
     });
