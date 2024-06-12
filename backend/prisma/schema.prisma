@@ -15,11 +15,12 @@ datasource db {
 }
 
 model User {
-  address    String  @id @unique
-  name       String?
-  nonce      String
-  teams      Team[]  @relation("MemberTeams")
-  ownedTeams Team[]  @relation("OwnedTeams")
+  address       String  @id @unique
+  name          String?
+  nonce         String
+  teams         Team[]  @relation("MemberTeams")
+  ownedTeams    Team[]  @relation("OwnedTeams")
+  notifications Notification[]
 }
 
 model Team {
@@ -30,4 +31,15 @@ model Team {
   description  String?
   name         String  @unique
   bankAddress  String? // A team can have no bank contract
+}
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  subject       String?
+  message       String
+  isRead        Boolean  @default(false)
+  userAddress   String
+  user          User     @relation(fields: [userAddress], references: [address])
+  createdAt     DateTime @default(now())
+  author        String?
 }
