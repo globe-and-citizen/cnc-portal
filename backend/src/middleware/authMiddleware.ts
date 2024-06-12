@@ -41,7 +41,7 @@ const authorizeUser = async (
       return errorResponse(401, "Unauthorized: Missing jwt payload", res);
     }
 
-    req.body.address = (payload as any).address;
+    (req as any).address = (payload as any).address;
 
     next();
   } catch (error) {

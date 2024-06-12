@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 const getNotification = async (req: Request, res: Response) => {
   //check if userAddress property is set
   const { userAddress } = req.query;
+  const callerAddress = (req as any).address;
 
   if (!userAddress) return errorResponse(401, "ID empty or not set", res);
 
@@ -22,7 +23,7 @@ const getNotification = async (req: Request, res: Response) => {
     //check if user is authorized to get notification
     if (
       notification.length < 1 ||
-      req.body.address === notification[0].userAddress
+      callerAddress === notification[0].userAddress
     ) {
       //send notification
       res.status(201).json({
