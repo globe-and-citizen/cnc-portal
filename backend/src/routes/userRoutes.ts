@@ -10,7 +10,7 @@ const userRoutes = express.Router();
 
 userRoutes.get("/nonce/:address", getNonce);
 userRoutes.get("/search", searchUser);
-userRoutes.get("/getAllUsers", getAllUsers);
+userRoutes.get("/", getAllUsers);
 userRoutes.get("/:address", getUser);
 userRoutes.put("/:address", updateUser);
 export default userRoutes;
