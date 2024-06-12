@@ -56,6 +56,7 @@ jobs:
         run: npm run test:unit:coverage
         working-directory: ./backend
         env:
+          FRONTEND_URL: http://localhost:5173
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: ✅ Upload coverage to Codecov
