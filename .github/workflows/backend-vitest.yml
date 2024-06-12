@@ -45,18 +45,19 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          
+
       - name: Seed PostgreSQL
         run: npx prisma db seed
         working-directory: ./backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          
+
       - name: 💻 Run Vitest
         run: npm run test:unit:coverage
         working-directory: ./backend
         env:
-          FRONTEND_URL: http://localhost:5173
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: ✅ Upload coverage to Codecov
