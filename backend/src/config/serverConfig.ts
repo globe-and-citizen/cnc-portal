@@ -34,6 +34,10 @@ class Server {
     this.init();
   }
 
+  public getApp() {
+    return this.app;
+  }
+
   private init() {
     this.checks();
     this.middleware();
