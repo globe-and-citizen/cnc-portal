@@ -3,9 +3,30 @@
     <div class="flex justify-between gap-5">
       <div>
         <h2 class="pl-5">{{ team.name }}</h2>
-        <p class="pl-5">{{ team.description }}</p>
+        <p class="pl-5 pb-3 text-xl">{{ team.description }}</p>
+        <p class="pl-5" v-if="team.bankAddress">Bank Contract Address: {{ team.bankAddress }}</p>
+        <p class="pl-5" v-if="team.bankAddress && !balanceLoading">
+          Team Balance: {{ teamBalance }} {{ NETWORK.currencySymbol }}
+        </p>
+        <p class="pl-5 flex flex-row gap-2" v-if="balanceLoading">
+          <span>Team Balance: </span>
+          <SkeletonLoading class="w-40 h-4 self-center" />
+        </p>
       </div>
-      <div class="flex justify-between gap-2 items-center">
+      <div class="flex flex-wrap justify-between gap-1 items-center">
+        <button
+          class="btn btn-primary btn-disabled"
+          @click="bankModal = true"
+          v-if="!team.bankAddress"
+        >
+          Create Bank Account Smart Contract
+        </button>
+        <button class="btn btn-primary" @click="depositModal = true" v-if="team.bankAddress">
+          Deposit
+        </button>
+        <button class="btn btn-primary" @click="transferModal = true" v-if="team.bankAddress">
+          Transfer
+        </button>
         <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
 
         <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
@@ -48,8 +69,8 @@
     <TipsAction
       :pushTipLoading="pushTipLoading"
       :sendTipLoading="sendTipLoading"
-      @pushTip="(amount) => pushTip(membersAddress, amount)"
-      @sendTip="(amount) => sendTip(membersAddress, amount)"
+      @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
+      @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
     />
     <!-- <TipsAction :addresses="team.members.map((member) => member.address)" /> -->
   </div>
@@ -78,6 +99,15 @@
           <span class="w-28">Description</span>
           <input type="text" class="grow" placeholder="Enter short description" v-model="cdesc" />
         </label>
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-30">Bank Smart Contract Address</span>
+          <input
+            type="text"
+            class="grow"
+            placeholder="Enter bank smart contract address"
+            v-model="bankSmartContractAddress"
+          />
+        </label>
       </div>
 
       <div class="modal-action justify-center">
@@ -88,6 +118,27 @@
       </div>
     </div>
   </dialog>
+  <CreateBankModal
+    v-if="bankModal"
+    @close-modal="() => (bankModal = false)"
+    @create-bank="async () => deployBankContract()"
+    :loading="createBankLoading"
+  />
+  <DepositBankModal
+    v-if="depositModal"
+    @close-modal="() => (depositModal = false)"
+    @deposit="async (amount: string) => depositToBank(amount)"
+    :loading="depositLoading"
+  />
+  <TransferFromBankModal
+    v-if="transferModal"
+    @close-modal="() => (transferModal = false)"
+    @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
+    @searchMembers="async (query: string) => await searchMembers(query)"
+    :filteredMembers="filteredMembers"
+    :loading="transferLoading"
+    :bank-balance="teamBalance"
+  />
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
@@ -95,6 +146,9 @@ import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
+import CreateBankModal from '@/components/modals/CreateBankModal.vue'
+import DepositBankModal from '@/components/modals/DepositBankModal.vue'
+import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
 import { ToastType, type Member, type User, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
@@ -104,12 +158,21 @@ import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
+import {
+  useBankBalance,
+  useBankDeposit,
+  useDeployBankContract,
+  useBankTransfer
+} from '@/composables/bank'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
+import { NETWORK } from '@/constant'
 import { FetchUserAPI } from '@/apis/userApi'
 const userApi = new FetchUserAPI()
 
 const { addToast } = useToastStore()
 
 const foundUsers = ref<User[]>([])
+const filteredMembers = ref<User[]>([])
 
 const route = useRoute()
 const router = useRouter()
@@ -125,7 +188,32 @@ const {
   isSuccess: sendTipSuccess,
   error: sendTipError
 } = useSendTip()
-watch(pushTipError, () => {
+const {
+  execute: getBalance,
+  isLoading: balanceLoading,
+  data: teamBalance,
+  error: balanceError
+} = useBankBalance()
+const {
+  contractAddress,
+  execute: createBankContract,
+  isLoading: createBankLoading,
+  isSuccess: createBankSuccess,
+  error: createBankError
+} = useDeployBankContract()
+const {
+  execute: deposit,
+  isLoading: depositLoading,
+  isSuccess: depositSuccess,
+  error: depositError
+} = useBankDeposit()
+const {
+  execute: transfer,
+  isLoading: transferLoading,
+  isSuccess: transferSuccess,
+  error: transferError
+} = useBankTransfer()
+watch(pushTipError, async () => {
   if (pushTipError.value) {
     addToast({
       message: pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip',
@@ -148,9 +236,52 @@ watch(pushTipSuccess, () => {
     addToast({ type: ToastType.Success, message: 'Tips pushed successfully', timeout: 5000 })
   }
 })
-watch(sendTipSuccess, () => {
+watch(sendTipSuccess, async () => {
   if (sendTipSuccess.value) {
     addToast({ type: ToastType.Success, message: 'Tips sent successfully', timeout: 5000 })
+  }
+})
+watch(balanceError, () => {
+  if (balanceError.value) {
+    addToast({ type: ToastType.Error, message: 'Failed to fetch team balance', timeout: 5000 })
+  }
+})
+watch(createBankError, () => {
+  if (createBankError.value) {
+    addToast({
+      type: ToastType.Error,
+      message: 'Failed to create bank contract',
+      timeout: 5000
+    })
+  }
+})
+watch(createBankSuccess, () => {
+  if (createBankSuccess.value) {
+    addToast({
+      type: ToastType.Success,
+      message: 'Bank contract created successfully',
+      timeout: 5000
+    })
+  }
+})
+watch(depositSuccess, () => {
+  if (depositSuccess.value) {
+    addToast({ type: ToastType.Success, message: 'Deposited successfully', timeout: 5000 })
+  }
+})
+watch(depositError, () => {
+  if (depositError.value) {
+    addToast({ type: ToastType.Error, message: 'Failed to deposit', timeout: 5000 })
+  }
+})
+watch(transferSuccess, () => {
+  if (transferSuccess.value) {
+    addToast({ type: ToastType.Success, message: 'Transferred successfully', timeout: 5000 })
+  }
+})
+watch(transferError, () => {
+  if (transferError.value) {
+    addToast({ type: ToastType.Error, message: 'Failed to transfer', timeout: 5000 })
   }
 })
 
@@ -158,8 +289,12 @@ const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
+const bankSmartContractAddress = ref<string | null>('')
 
 const showModal = ref(false)
+const bankModal = ref(false)
+const depositModal = ref(false)
+const transferModal = ref(false)
 
 const showAddMemberForm = ref(false)
 
@@ -168,7 +303,9 @@ const team = ref<Team>({
   id: '',
   name: '',
   description: '',
-  members: []
+  bankAddress: null,
+  members: [],
+  ownerAddress: ''
 })
 
 const teamMembers = ref([
@@ -221,8 +358,12 @@ onMounted(async () => {
       team.value = teamData
       cname.value = team.value.name
       cdesc.value = team.value.description
+      bankSmartContractAddress.value = team.value.bankAddress
     } else {
       console.log('Team not found for id:', id)
+    }
+    if (team.value.bankAddress) {
+      await getBalance(team.value.bankAddress)
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
@@ -252,7 +393,8 @@ const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
     name: cname.value,
-    description: cdesc.value
+    description: cdesc.value,
+    bankAddress: bankSmartContractAddress.value
   }
   try {
     const teamRes = await teamApi.updateTeam(String(id), teamObject)
@@ -260,6 +402,7 @@ const updateTeam = async () => {
       addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
       team.value.name = teamRes.name
       team.value.description = teamRes.description
+      team.value.bankAddress = teamRes.bankAddress
       showModal.value = false
     }
   } catch (error) {
@@ -279,6 +422,29 @@ const deleteTeam = async () => {
     return useErrorHandler().handleError(error)
   }
 }
+const deployBankContract = async () => {
+  const id = route.params.id
+  await createBankContract(String(id))
+  team.value.bankAddress = contractAddress.value
+  if (team.value.bankAddress) {
+    bankModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
+const depositToBank = async (amount: string) => {
+  await deposit(team.value.bankAddress, amount)
+  if (depositSuccess.value) {
+    depositModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
+const transferFromBank = async (to: string, amount: string) => {
+  await transfer(team.value.bankAddress, to, amount)
+  if (transferSuccess.value) {
+    transferModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
     const users = await userApi.searchUser(input.name, input.address)
@@ -286,6 +452,15 @@ const searchUsers = async (input: { name: string; address: string }) => {
     console.log(users)
   } catch (error) {
     foundUsers.value = []
+    return useErrorHandler().handleError(error)
+  }
+}
+const searchMembers = async (query: string) => {
+  try {
+    const result = await teamApi.getTeam('1', query)
+    filteredMembers.value = result?.members || []
+  } catch (error) {
+    filteredMembers.value = []
     return useErrorHandler().handleError(error)
   }
 }

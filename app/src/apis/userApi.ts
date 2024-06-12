@@ -90,4 +90,28 @@ export class FetchUserAPI implements UserAPI {
     }
     return resObj.users
   }
+
+  async getAllUsers(
+    page: string,
+    limit: string,
+    ownerAddress?: string,
+    query?: string
+  ): Promise<User[]> {
+    const params = new URLSearchParams()
+
+    if (ownerAddress) params.append('ownerAddress', ownerAddress)
+    if (query) params.append('query', query)
+    params.append('page', page)
+    params.append('limit', limit)
+
+    const response = await fetch(`${BACKEND_URL}/api/user/getAllUsers?${params.toString()}`, {
+      method: 'GET'
+    })
+    const resObj = await response.json()
+    if (response.status === 401) {
+      throw new Error(resObj.message)
+    }
+
+    return resObj.users
+  }
 }
