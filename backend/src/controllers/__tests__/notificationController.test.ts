@@ -34,7 +34,7 @@ describe("getNotification", () => {
   beforeEach(() => {
     req = {
       query: {},
-      body: {},
+      body: "",
     };
     res = {
       status: vi.fn().mockReturnThis(),
@@ -62,7 +62,7 @@ describe("getNotification", () => {
 
   it("should return notifications if user is authorized", async () => {
     req.query = { userAddress: "0x123" };
-    req.body.address = "0x123";
+    req.address = "0x123";
 
     const findManyMock = prisma.notification.findMany as MockedFunction<
       typeof prisma.notification.findMany
@@ -84,7 +84,7 @@ describe("getNotification", () => {
 
   it("should return unauthorized error if user is not authorized", async () => {
     req.query = { userAddress: "0x123" };
-    req.body.address = "0x456";
+    req.address = "0x456";
 
     const findManyMock = prisma.notification.findMany as MockedFunction<
       typeof prisma.notification.findMany

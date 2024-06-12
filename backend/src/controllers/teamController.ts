@@ -10,7 +10,7 @@ const addTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { name, members, description } = req.body;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   console.log("Members:", members);
   try {
     // Validate all members' wallet addresses
@@ -73,7 +73,7 @@ const getTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   try {
     let team = await prisma.team.findUnique({
       where: {
@@ -116,7 +116,7 @@ const getTeam = async (req: Request, res: Response) => {
           },
         },
       },
-    })
+    });
     res.status(200).json({ team, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
@@ -128,7 +128,7 @@ const getAllTeams = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const callerAddress = String(req.body.address);
+  const callerAddress = String((req as any).address);
   try {
     // Get teams owned by the user
 
@@ -167,7 +167,7 @@ const updateTeam = async (req: Request, res: Response) => {
   */
   const { id } = req.params;
   const { name, description, bankAddress } = req.body;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -208,7 +208,7 @@ const deleteTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -236,7 +236,7 @@ const deleteTeam = async (req: Request, res: Response) => {
 const deleteMember = async (req: Request, res: Response) => {
   const { id } = req.params;
   const memberAddress = req.headers.memberaddress;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
 
   try {
     // Find the team
