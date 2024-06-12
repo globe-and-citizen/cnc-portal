@@ -1,45 +1,92 @@
 <template>
   <div class="pt-10 flex flex-col gap-5">
     <div class="flex justify-between gap-5">
-      <div>
-        <h2 class="pl-5">{{ team.name }}</h2>
-        <p class="pl-5">{{ team.description }}</p>
-      </div>
-      <div class="flex justify-between gap-2 items-center">
-        <button class="btn btn-primary" @click="updateTeamModalOpen">Update</button>
+      <div
+        class="collapse collapse-arrow border"
+        :class="`${team.ownerAddress == useUserDataStore().address ? 'bg-green-100' : 'bg-blue-100'}`"
+      >
+        <input type="checkbox" />
+        <div class="collapse-title text-xl font-medium">
+          <div class="flex items-center justify-center">
+            <h2 class="pl-5">{{ team.name }}</h2>
+            <div
+              class="badge badge-sm badge-primary flex items-center justify-center ml-2"
+              v-if="team.ownerAddress == useUserDataStore().address"
+            >
+              Owner
+            </div>
+            <div class="badge badge-sm badge-secondary ml-2" v-else>Employee</div>
+          </div>
+        </div>
+        <div class="collapse-content">
+          <p class="pl-5">{{ team.description }}</p>
+          <p class="pl-5" v-if="team.bankAddress">Bank Contract Address: {{ team.bankAddress }}</p>
+          <p class="pl-5" v-if="team.bankAddress && !balanceLoading">
+            Team Balance: {{ teamBalance }} {{ NETWORK.currencySymbol }}
+          </p>
+          <p class="pl-5 flex flex-row gap-2" v-if="balanceLoading">
+            <span>Team Balance: </span>
+            <SkeletonLoading class="w-40 h-4 self-center" />
+          </p>
 
-        <button class="btn btn-primary" @click="deleteTeam">Delete Team</button>
+          <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
+            <button
+              class="btn btn-secondary btn-sm"
+              v-if="team.ownerAddress == useUserDataStore().address"
+              @click="updateTeamModalOpen"
+            >
+              Update
+            </button>
+            <button
+              class="btn btn-error btn-sm"
+              v-if="team.ownerAddress == useUserDataStore().address"
+              @click="showDeleteConfirmModal = !showDeleteConfirmModal"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <DeleteConfirmModal
+        :showDeleteConfirmModal="showDeleteConfirmModal"
+        @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
+        @deleteItem="deleteTeam()"
+      >
+        Are you sure you want to delete the team
+        <span class="font-bold">{{ team.name }}</span
+        >?
+      </DeleteConfirmModal>
+    </div>
+    <div class="flex justify-between">
+      <button
+        class="btn btn-primary btn-disabled"
+        @click="bankModal = true"
+        v-if="!team.bankAddress"
+      >
+        Create Bank Account Smart Contract
+      </button>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" @click="depositModal = true" v-if="team.bankAddress">
+          Deposit
+        </button>
+        <button class="btn btn-primary" @click="transferModal = true" v-if="team.bankAddress">
+          Transfer
+        </button>
       </div>
     </div>
-    <div class="card w-full bg-base-100 overflow-x-auto p-4">
-      <table class="table">
-        <!-- head -->
-        <thead>
-          <tr>
-            <th></th>
-            <th>Name</th>
-            <th>Address</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <MemberCard
-            v-for="member in team.members"
-            :updateMemberInput="updateMemberInput"
-            :member="member"
-            :key="member.id"
-            :showUpdateMemberModal="showUpdateMemberModal"
-            @updateMember="(id) => updateMember(id)"
-            @deleteMember="(id) => deleteMember(id)"
-            @toggleUpdateMemberModal="toggleUpdateMemberModal"
-          />
-        </tbody>
-      </table>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
+    <div
+      class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
+    >
+      <span class="w-1/2">Name</span>
+      <span class="w-1/2">Address</span>
       <AddMemberCard
+        class="w-1/2"
+        :users="foundUsers"
+        v-if="team.ownerAddress == useUserDataStore().address"
         v-model:formData="teamMembers"
         v-model:showAddMemberForm="showAddMemberForm"
+        @searchUsers="(input) => searchUsers(input)"
         @addInput="addInput"
         @removeInput="removeInput"
         @addMembers="handleAddMembers"
@@ -47,13 +94,22 @@
         @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
       />
     </div>
+    <MemberCard
+      v-for="member in team.members"
+      :ownerAddress="team.ownerAddress"
+      :teamId="Number(team.id)"
+      :member="member"
+      :key="member.address"
+      @deleteMember="(id, address) => deleteMember(id, address)"
+    />
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
     <TipsAction
       :pushTipLoading="pushTipLoading"
       :sendTipLoading="sendTipLoading"
-      @pushTip="(amount) => pushTip(membersAddress, amount)"
-      @sendTip="(amount) => sendTip(membersAddress, amount)"
+      @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
+      @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
     />
-    <!-- <TipsAction :addresses="team.members.map((member) => member.walletAddress)" /> -->
+    <!-- <TipsAction :addresses="team.members.map((member) => member.address)" /> -->
   </div>
 
   <dialog
@@ -80,6 +136,15 @@
           <span class="w-28">Description</span>
           <input type="text" class="grow" placeholder="Enter short description" v-model="cdesc" />
         </label>
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-30">Bank Smart Contract Address</span>
+          <input
+            type="text"
+            class="grow"
+            placeholder="Enter bank smart contract address"
+            v-model="bankSmartContractAddress"
+          />
+        </label>
       </div>
 
       <div class="modal-action justify-center">
@@ -90,6 +155,27 @@
       </div>
     </div>
   </dialog>
+  <CreateBankModal
+    v-if="bankModal"
+    @close-modal="() => (bankModal = false)"
+    @create-bank="async () => deployBankContract()"
+    :loading="createBankLoading"
+  />
+  <DepositBankModal
+    v-if="depositModal"
+    @close-modal="() => (depositModal = false)"
+    @deposit="async (amount: string) => depositToBank(amount)"
+    :loading="depositLoading"
+  />
+  <TransferFromBankModal
+    v-if="transferModal"
+    @close-modal="() => (transferModal = false)"
+    @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
+    @searchMembers="async (query: string) => await searchMembers(query)"
+    :filteredMembers="filteredMembers"
+    :loading="transferLoading"
+    :bank-balance="teamBalance"
+  />
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
@@ -97,18 +183,38 @@ import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
+import CreateBankModal from '@/components/modals/CreateBankModal.vue'
+import DepositBankModal from '@/components/modals/DepositBankModal.vue'
+import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
-import { ToastType, type Member, type MemberInput, type Team } from '@/types'
+import { ToastType, type Member, type User, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
-import { FetchMemberAPI } from '@/apis/memberApi'
 
 import { isAddress } from 'ethers' // ethers v6
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-const { show } = useToastStore()
-const memberApi = new FetchMemberAPI()
+import {
+  useBankBalance,
+  useBankDeposit,
+  useDeployBankContract,
+  useBankTransfer
+} from '@/composables/bank'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
+import { NETWORK } from '@/constant'
+import { FetchUserAPI } from '@/apis/userApi'
+import { useUserDataStore } from '@/stores/user'
+import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
+const userApi = new FetchUserAPI()
+
+const showDeleteConfirmModal = ref(false)
+
+const { addToast } = useToastStore()
+
+const foundUsers = ref<User[]>([])
+const filteredMembers = ref<User[]>([])
+
 const route = useRoute()
 const router = useRouter()
 const {
@@ -123,30 +229,100 @@ const {
   isSuccess: sendTipSuccess,
   error: sendTipError
 } = useSendTip()
-watch(pushTipError, () => {
+const {
+  execute: getBalance,
+  isLoading: balanceLoading,
+  data: teamBalance,
+  error: balanceError
+} = useBankBalance()
+const {
+  contractAddress,
+  execute: createBankContract,
+  isLoading: createBankLoading,
+  isSuccess: createBankSuccess,
+  error: createBankError
+} = useDeployBankContract()
+const {
+  execute: deposit,
+  isLoading: depositLoading,
+  isSuccess: depositSuccess,
+  error: depositError
+} = useBankDeposit()
+const {
+  execute: transfer,
+  isLoading: transferLoading,
+  isSuccess: transferSuccess,
+  error: transferError
+} = useBankTransfer()
+watch(pushTipError, async () => {
   if (pushTipError.value) {
-    show(
-      ToastType.Error,
-      pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip'
-    )
+    addToast({
+      message: pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip',
+      type: ToastType.Error,
+      timeout: 5000
+    })
   }
 })
 watch(sendTipError, () => {
   if (sendTipError.value) {
-    show(
-      ToastType.Error,
-      sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip'
-    )
+    addToast({
+      message: sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip',
+      type: ToastType.Error,
+      timeout: 5000
+    })
   }
 })
 watch(pushTipSuccess, () => {
   if (pushTipSuccess.value) {
-    show(ToastType.Success, 'Tips pushed successfully')
+    addToast({ type: ToastType.Success, message: 'Tips pushed successfully', timeout: 5000 })
   }
 })
-watch(sendTipSuccess, () => {
+watch(sendTipSuccess, async () => {
   if (sendTipSuccess.value) {
-    show(ToastType.Success, 'Tips sent successfully')
+    addToast({ type: ToastType.Success, message: 'Tips sent successfully', timeout: 5000 })
+  }
+})
+watch(balanceError, () => {
+  if (balanceError.value) {
+    addToast({ type: ToastType.Error, message: 'Failed to fetch team balance', timeout: 5000 })
+  }
+})
+watch(createBankError, () => {
+  if (createBankError.value) {
+    addToast({
+      type: ToastType.Error,
+      message: 'Failed to create bank contract',
+      timeout: 5000
+    })
+  }
+})
+watch(createBankSuccess, () => {
+  if (createBankSuccess.value) {
+    addToast({
+      type: ToastType.Success,
+      message: 'Bank contract created successfully',
+      timeout: 5000
+    })
+  }
+})
+watch(depositSuccess, () => {
+  if (depositSuccess.value) {
+    addToast({ type: ToastType.Success, message: 'Deposited successfully', timeout: 5000 })
+  }
+})
+watch(depositError, () => {
+  if (depositError.value) {
+    addToast({ type: ToastType.Error, message: 'Failed to deposit', timeout: 5000 })
+  }
+})
+watch(transferSuccess, () => {
+  if (transferSuccess.value) {
+    addToast({ type: ToastType.Success, message: 'Transferred successfully', timeout: 5000 })
+  }
+})
+watch(transferError, () => {
+  if (transferError.value) {
+    addToast({ type: ToastType.Error, message: 'Failed to transfer', timeout: 5000 })
   }
 })
 
@@ -154,10 +330,13 @@ const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
+const bankSmartContractAddress = ref<string | null>('')
 
 const showModal = ref(false)
+const bankModal = ref(false)
+const depositModal = ref(false)
+const transferModal = ref(false)
 
-const showUpdateMemberModal = ref(false)
 const showAddMemberForm = ref(false)
 
 const inputs = ref<Member[]>([])
@@ -165,24 +344,21 @@ const team = ref<Team>({
   id: '',
   name: '',
   description: '',
-  members: []
+  bankAddress: null,
+  members: [],
+  ownerAddress: ''
 })
 
 const teamMembers = ref([
   {
     name: '',
-    walletAddress: '',
+    address: '',
     isValid: false
   }
 ])
-const updateMemberInput = ref<MemberInput>({
-  name: '',
-  walletAddress: '',
-  id: '',
-  isValid: false
-})
+
 const addInput = () => {
-  teamMembers.value.push({ name: '', walletAddress: '', isValid: false })
+  teamMembers.value.push({ name: '', address: '', isValid: false })
 }
 
 const removeInput = () => {
@@ -190,14 +366,10 @@ const removeInput = () => {
     teamMembers.value.pop()
   }
 }
-const toggleUpdateMemberModal = (member: MemberInput) => {
-  showUpdateMemberModal.value = !showUpdateMemberModal.value
-  const updatedMember = { ...member }
-  updateMemberInput.value = updatedMember
-}
+
 const handleUpdateForm = async () => {
   teamMembers.value.map((member) => {
-    if (!isAddress(member.walletAddress)) {
+    if (!isAddress(member.address)) {
       member.isValid = false
     } else {
       member.isValid = true
@@ -206,12 +378,12 @@ const handleUpdateForm = async () => {
 }
 const handleAddMembers = async () => {
   try {
-    const members: Member[] = await memberApi.createMembers(
+    const members: Member[] = await teamApi.createMembers(
       teamMembers.value,
       String(route.params.id)
     )
     if (members && members.length > 0) {
-      show(ToastType.Success, 'Members added successfully')
+      addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
       team.value.members = members
       showAddMemberForm.value = false
     }
@@ -227,8 +399,12 @@ onMounted(async () => {
       team.value = teamData
       cname.value = team.value.name
       cdesc.value = team.value.description
+      bankSmartContractAddress.value = team.value.bankAddress
     } else {
       console.log('Team not found for id:', id)
+    }
+    if (team.value.bankAddress) {
+      await getBalance(team.value.bankAddress)
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
@@ -238,55 +414,36 @@ const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
 }
-const deleteMember = async (id: string) => {
+const deleteMember = async (id: string, address: string) => {
   try {
-    const memberRes: any = await memberApi.deleteMember(id)
-    if (memberRes && memberRes.count == 1) {
-      show(ToastType.Success, 'Member deleted successfully')
+    const memberRes: any = await teamApi.deleteMember(id, address)
+    if (memberRes) {
+      addToast({ type: ToastType.Success, message: 'Members deleted successfully', timeout: 5000 })
+
       team.value.members.splice(
-        team.value.members.findIndex((member) => member.id === id),
+        team.value.members.findIndex((member) => member.address === address),
         1
       )
-      showUpdateMemberModal.value = false
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
   }
 }
-const updateMember = async (id: string) => {
-  const member = {
-    name: updateMemberInput.value.name,
-    walletAddress: updateMemberInput.value.walletAddress
-  }
-  try {
-    const updatedMember = await memberApi.updateMember(member, id)
-    if (updatedMember && Object.keys(updatedMember).length !== 0) {
-      show(ToastType.Success, 'Member updated successfully')
-      team.value.members.map((member) => {
-        if (member.id === id) {
-          member.name = updatedMember.name
-          member.walletAddress = updatedMember.walletAddress
-        }
-      })
 
-      showUpdateMemberModal.value = false
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-}
 const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
     name: cname.value,
-    description: cdesc.value
+    description: cdesc.value,
+    bankAddress: bankSmartContractAddress.value
   }
   try {
     const teamRes = await teamApi.updateTeam(String(id), teamObject)
     if (teamRes) {
-      show(ToastType.Success, 'Team updated successfully')
+      addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
       team.value.name = teamRes.name
       team.value.description = teamRes.description
+      team.value.bankAddress = teamRes.bankAddress
       showModal.value = false
     }
   } catch (error) {
@@ -299,21 +456,56 @@ const deleteTeam = async () => {
   try {
     const response: any = await teamApi.deleteTeam(String(id))
     if (response) {
-      show(ToastType.Success, 'Team deleted successfully')
+      addToast({ type: ToastType.Success, message: 'Team deleted successfully', timeout: 5000 })
       router.push('/teams')
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
   }
 }
-watch(
-  updateMemberInput,
-  (newVal) => {
-    updateMemberInput.value.isValid = isAddress(newVal.walletAddress)
-  },
-  { deep: true }
-)
+const deployBankContract = async () => {
+  const id = route.params.id
+  await createBankContract(String(id))
+  team.value.bankAddress = contractAddress.value
+  if (team.value.bankAddress) {
+    bankModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
+const depositToBank = async (amount: string) => {
+  await deposit(team.value.bankAddress, amount)
+  if (depositSuccess.value) {
+    depositModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
+const transferFromBank = async (to: string, amount: string) => {
+  await transfer(team.value.bankAddress, to, amount)
+  if (transferSuccess.value) {
+    transferModal.value = false
+    await getBalance(team.value.bankAddress)
+  }
+}
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    const users = await userApi.searchUser(input.name, input.address)
+    foundUsers.value = users
+    console.log(users)
+  } catch (error) {
+    foundUsers.value = []
+    return useErrorHandler().handleError(error)
+  }
+}
+const searchMembers = async (query: string) => {
+  try {
+    const result = await teamApi.getTeam('1', query)
+    filteredMembers.value = result?.members || []
+  } catch (error) {
+    filteredMembers.value = []
+    return useErrorHandler().handleError(error)
+  }
+}
 const membersAddress = computed(() => {
-  return team.value.members.map((member) => member.walletAddress)
+  return team.value.members.map((member) => member.address)
 })
 </script>

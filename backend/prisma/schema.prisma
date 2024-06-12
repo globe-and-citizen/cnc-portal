@@ -9,32 +9,37 @@ generator client {
   binaryTargets = ["native"]
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  address      String        @id @unique
-  name         String?
-  nonce        String
-  teams        Team[]
+  address       String  @id @unique
+  name          String?
+  nonce         String
+  teams         Team[]  @relation("MemberTeams")
+  ownedTeams    Team[]  @relation("OwnedTeams")
+  notifications Notification[]
 }
-model Team {
-  id           Int           @id @default(autoincrement())
-  members    Member[]
-  owner        User          @relation(fields: [ownerId], references: [address])
-  ownerId      String
-  description  String?
-  name         String        @unique
-  bankAddress  String?       // A team can have no bank contract
-}
-model Member{
-  id            Int           @id @default(autoincrement())
-  name          String         
-  walletAddress String
-  team       Team? @relation(fields: [teamId], references: [id])  // Add the opposite relation field here
-  teamId     Int?    // Nullable because an member may not belong to a team initially
 
+model Team {
+  id           Int     @id @default(autoincrement())
+  members      User[]  @relation("MemberTeams")
+  owner        User    @relation("OwnedTeams", fields: [ownerAddress], references: [address])
+  ownerAddress String
+  description  String?
+  name         String  @unique
+  bankAddress  String? // A team can have no bank contract
+}
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  subject       String?
+  message       String
+  isRead        Boolean  @default(false)
+  userAddress   String
+  user          User     @relation(fields: [userAddress], references: [address])
+  createdAt     DateTime @default(now())
+  author        String?
 }

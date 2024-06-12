@@ -7,6 +7,19 @@ Often, several open-source developers coalesce around a particular project and t
 
 The Crypto Native Corporation Portal (CNC Portal) has the potential to be an extremely large and extremely complex project.
 
+## Table of Contents
+
+1. [Database setup](#setting-up-postgres-database)
+   1. [Install using docker](#installing-the-database-using-docker)
+   2. [Running prisma migrations](#running-prisma-migrations)
+2. [Project structure](#folder-structure)
+3. [Environment variables](#environment-variables)
+   1. [Frontend](#frontend)
+   2. [Backend](#backend)
+4. [Running the application](#running-the-application)
+   1. [Run docker containers](#1--run-docker-containers)
+   2. [Run locally](#2--run-locally)
+
 ## Setting up postgres database
 
 Note: If you plan on using `docker-compose up` at the root directory, you can skip this part as that sets the database up automatically
@@ -49,38 +62,37 @@ See the **Environment Variables** section for the relevant `DATABASE_URL` envron
 
 In the `./backend` folder, create a `.env` file with the following variables:
 
-- **DATABASE_URL**: A valid PostgreSQL database URL. Example: 
-`DATABASE_URL=postgres://username:password@localhost:5432/database_name`
+- **DATABASE_URL**: A valid PostgreSQL database URL. Example:
+  `DATABASE_URL=postgres://username:password@localhost:5432/database_name`
 
-- **SECRET_KEY**: An HS256 compatible key for securing the application. Example: 
-`SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`
+- **SECRET_KEY**: An HS256 compatible key for securing the application. Example:
+  `SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`
 
 - **FRONTEND_URL**: The URL for the frontend application. Example:
-`FRONTEND_URL=http://localhost:5173`
-
+  `FRONTEND_URL=http://localhost:5173`
 
 ### Frontend
 
 In the `./app` folder, create a `.env` file with the following variable:
 
-- **VITE_APP_BACKEND_URL**: The URL for the backend API. Example: 
-`VITE_APP_BACKEND_URL=http://localhost:8000`
+- **VITE_APP_BACKEND_URL**: The URL for the backend API. Example:
+  `VITE_APP_BACKEND_URL=http://localhost:8000`
 - **VITE_APP_ETHERSCAN_URL**: The URL to see transaction detail. Example:
-`VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
+  `VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
 - **VITE_APP_TIPS_ADDRESS**: The URL to Tips smart contract. Example:
-`VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B`
+  `VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B`
 - _VITE_APP_NETWORK_ALIAS_: The string identifier of an EVM compatible network that the app uses. Example: `VITE_APP_NETWORK_ALIAS=polygon`. This variable is optional but if you don't set your own network parameters it has to be provided. Use this if you want to use one of the preset networks which the application provides. Available options are:
-    1. `etherem` - The Ethereum Main Network
-    2. `polygon` - The Polygon Main Network
-    3. `sepolia` - The Sepolia Test Network
-    4. `holesky` - The Holesky Test Network
-    6. `amoy` - The Polygon Amoy Test Network
-    6. `hardhat` - The Hardhat Local Network
-- __VITE_APP_NETWORK_NAME__: The full name of the EVM compatible network the app uses. Example: `VITE_APP_NETWORK_NAME=Optimism Mainnet`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
-- __VITE_APP_RPC_URL__: The URL used to access the EVM compatible network the app uses. Example: `VITE_APP_RPC_URL=https://optimism-mainnet.infura.io`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
-- __VITE_APP_CHAIN_ID__: The Network ID used to sign transcations on the EVM compatible network that the app uses in hexadecimal. Example: `VITE_APP_CHAIN_ID=0xa`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
-- __VITE_APP_CURRENCY_SYMBOL__: The ticker symbol displayed for the network's currency. Example: `VITE_APP_CURRENCY_SYMBOL=ETH`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
-- __VITE_APP_BLOCK_EXPLORER_URL__: The URL for viewing transactions on the network the app uses. Example: `VITE_APP_BLOCK_EXPLORER_URL=https://optimistic.etherscan.io/`. This variable is optional.
+  1. `etherem` - The Ethereum Main Network
+  2. `polygon` - The Polygon Main Network
+  3. `sepolia` - The Sepolia Test Network
+  4. `holesky` - The Holesky Test Network
+  5. `amoy` - The Polygon Amoy Test Network
+  6. `hardhat` - The Hardhat Local Network
+- **VITE_APP_NETWORK_NAME**: The full name of the EVM compatible network the app uses. Example: `VITE_APP_NETWORK_NAME=Optimism Mainnet`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- **VITE_APP_RPC_URL**: The URL used to access the EVM compatible network the app uses. Example: `VITE_APP_RPC_URL=https://optimism-mainnet.infura.io`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- **VITE_APP_CHAIN_ID**: The Network ID used to sign transcations on the EVM compatible network that the app uses in hexadecimal. Example: `VITE_APP_CHAIN_ID=0xa`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- **VITE_APP_CURRENCY_SYMBOL**: The ticker symbol displayed for the network's currency. Example: `VITE_APP_CURRENCY_SYMBOL=ETH`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- **VITE_APP_BLOCK_EXPLORER_URL**: The URL for viewing transactions on the network the app uses. Example: `VITE_APP_BLOCK_EXPLORER_URL=https://optimistic.etherscan.io/`. This variable is optional.
 
 ## Running the application
 

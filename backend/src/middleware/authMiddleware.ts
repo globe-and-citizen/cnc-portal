@@ -5,7 +5,7 @@ import { errorResponse } from "../utils/utils";
 const authorizeUser = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   try {
     // Extract the authorization header (optional)
@@ -16,7 +16,7 @@ const authorizeUser = async (
       return errorResponse(
         401,
         "Unauthorized: Missing authorization header",
-        res,
+        res
       );
 
     // Split the header to separate scheme and token (if present)
@@ -30,11 +30,11 @@ const authorizeUser = async (
 
     const secretKey = process.env.SECRET_KEY as string;
 
-    let payload
+    let payload;
     try {
       payload = jwt.verify(token, secretKey);
-    } catch(error) {
-      return errorResponse(401, error, res)
+    } catch (error) {
+      return errorResponse(401, error, res);
     }
 
     if (!payload) {

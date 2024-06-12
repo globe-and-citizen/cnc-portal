@@ -1,6 +1,6 @@
 export interface MemberInput {
   name: string
-  walletAddress: string
+  address: string
   id?: string
   isValid: boolean
 }

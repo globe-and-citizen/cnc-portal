@@ -2,35 +2,27 @@
 import { RouterView } from 'vue-router'
 import { ref, watch, toRaw } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useToastStore } from '@/stores/toast'
+import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
-import { AuthService } from '@/services/authService'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
-import NotificationToast from '@/components/NotificationToast.vue'
 import EditUserModal from '@/components/modals/EditUserModal.vue'
+import ToastContainer from '@/components/ToastContainer.vue'
 
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
+const { addToast } = useToastStore()
 
-const isAuth = ref<boolean | null>(null)
-
-AuthService.isAuthenticated().then((res) => {
-  isAuth.value = res
-})
 const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
 function handleChange() {
   toggleSide.value = !toggleSide.value
 }
-
-const toastStore = useToastStore()
-const { showToast, type: toastType, message: toastMessage } = storeToRefs(toastStore)
 
 const {
   isSuccess: withdrawSuccess,
@@ -66,28 +58,44 @@ watch(
     updateUserInput.value.isValid = isAddress(newVal)
   }
 )
-
 // Handle authentication change (optional)
-watch(isAuth, async () => {
-  if (isAuth.value == true) {
-    getBalance()
+watch(
+  () => userStore.isAuth,
+  (isAuth) => {
+    if (isAuth === true) {
+      getBalance()
+    }
   }
-})
+)
 // Handle Balance error
 watch(balanceError, () => {
   if (balanceError.value) {
-    toastStore.show(ToastType.Error, balanceError.value?.reason || 'Failed to Get balance')
+    addToast({
+      message: balanceError.value?.reason || 'Failed to Get balance',
+      type: ToastType.Error,
+      timeout: 5000
+    })
   }
 })
 // Handle withdraw error
 watch(withdrawError, () => {
-  toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
+  //toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
+  addToast({
+    message: withdrawError.value.reason || 'Failed to withdraw tips',
+    type: ToastType.Error,
+    timeout: 5000
+  })
 })
 
 // Handle withdraw success
 watch(withdrawSuccess, () => {
   if (withdrawSuccess.value) {
-    toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
+    //toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
+    addToast({
+      message: withdrawError.value.reason || 'Tips withdrawn successfully',
+      type: ToastType.Success,
+      timeout: 5000
+    })
   }
 })
 </script>
@@ -95,7 +103,7 @@ watch(withdrawSuccess, () => {
 <template>
   <div class="min-h-screen m-0 bg-base-200">
     <RouterView name="login" />
-    <div v-if="isAuth">
+    <div v-if="userStore.isAuth">
       <!-- 
         for toggleTheme
         @toggleTheme="() => toggleDark()" 
@@ -148,7 +156,8 @@ watch(withdrawSuccess, () => {
         </div>
       </div>
     </div>
-    <NotificationToast v-if="showToast" :type="toastType" :message="toastMessage" />
+
+    <ToastContainer position="bottom-right" />
   </div>
 </template>
 
