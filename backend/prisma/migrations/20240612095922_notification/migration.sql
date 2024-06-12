@@ -6,6 +6,7 @@ CREATE TABLE "Notification" (
     "isRead" BOOLEAN NOT NULL DEFAULT false,
     "userAddress" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "author" TEXT,
 
     CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
