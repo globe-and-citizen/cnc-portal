@@ -8,6 +8,7 @@ describe('TeamCard', () => {
     team: {
       name: 'Team A',
       description: 'This is a description of Team A.',
+      bankAddress: null,
       id: '1',
       members: [],
       ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
