@@ -22,7 +22,7 @@
             type="text"
             class="w-24"
             v-model="input.name"
-            @keyup.enter="
+            @keyup.stop="
               () => {
                 emits('searchUsers', input)
                 dropdown = true
@@ -35,7 +35,7 @@
             type="text"
             class="grow"
             v-model="input.address"
-            @keyup.enter="
+            @keyup.stop="
               () => {
                 emits('searchUsers', input)
                 dropdown = true

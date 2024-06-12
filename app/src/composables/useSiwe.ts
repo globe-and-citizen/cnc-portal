@@ -4,7 +4,6 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
-import { useOwnerAddressStore } from '@/stores/address'
 import { ref } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { ToastType } from '@/types'
@@ -46,7 +45,6 @@ async function siwe() {
       userData.address || '',
       userData.nonce || ''
     )
-    useOwnerAddressStore().setOwnerAddress(address)
     useUserDataStore().setAuthStatus(true)
 
     router.push('/teams')
