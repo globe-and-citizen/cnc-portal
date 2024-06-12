@@ -34,7 +34,7 @@ describe("getNotification", () => {
   beforeEach(() => {
     req = {
       query: {},
-      address: "",
+      body: {},
     };
     res = {
       status: vi.fn().mockReturnThis(),
