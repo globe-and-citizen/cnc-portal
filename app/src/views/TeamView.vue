@@ -1,26 +1,30 @@
 <template>
-  <div class="pt-10">
-    <h2 class="pl-5">Team</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <TeamCard
-        v-for="team in teams?.teams"
-        :key="team.id"
-        :team="team"
-        class="cursor-pointer"
-        @click="navigateToTeam(team.id)"
-      />
+  <div class="min-h-screen flex justify-center">
+    <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
 
-      <AddTeamCard
-        @addTeam="handleAddTeam"
-        @searchUsers="(input) => searchUsers(input)"
-        :users="foundUsers"
-        v-model:showAddTeamModal="showAddTeamModal"
-        v-model:team="team"
-        @updateAddTeamModal="handleupdateAddTeamModal"
-        @addInput="addInput"
-        @removeInput="removeInput"
-        @toggleAddTeamModal="showAddTeamModal = !showAddTeamModal"
-      />
+    <div class="pt-10" v-else>
+      <h2 class="pl-5">Team</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
+        <TeamCard
+          v-for="team in teams?.teams"
+          :key="team.id"
+          :team="team"
+          class="cursor-pointer"
+          @click="navigateToTeam(team.id)"
+        />
+
+        <AddTeamCard
+          @addTeam="handleAddTeam"
+          @searchUsers="(input) => searchUsers(input)"
+          :users="foundUsers"
+          v-model:showAddTeamModal="showAddTeamModal"
+          v-model:team="team"
+          @updateAddTeamModal="handleupdateAddTeamModal"
+          @addInput="addInput"
+          @removeInput="removeInput"
+          @toggleAddTeamModal="showAddTeamModal = !showAddTeamModal"
+        />
+      </div>
     </div>
   </div>
 </template>
