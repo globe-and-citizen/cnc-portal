@@ -79,7 +79,7 @@ export function useUpdateTeam() {
   const error = ref<any>()
   const isSuccess = ref(false)
 
-  const execute = async (id: string, team: Partial<Team>) => {
+  const execute = async (id: string, team: Partial<Team>): Promise<Team> => {
     const requestData = {
       ...team
     }
@@ -89,11 +89,14 @@ export function useUpdateTeam() {
         .put(JSON.stringify(requestData))
         .json()
       data.value = updatedTeam
+      console.log('Updated Team:', updatedTeam.value.team)
       error.value = err.value
       isSuccess.value = true
+      return updatedTeam.value.team
     } catch (err: any) {
       data.value = null
       error.value = err.value
+      throw new Error(err.value)
     } finally {
       teamIsUpdating.value = false
     }

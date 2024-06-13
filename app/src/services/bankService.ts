@@ -2,6 +2,7 @@ import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapte
 import { FetchTeamAPI, type TeamAPI } from '@/apis/teamApi'
 import BANK_ABI from '../artifacts/abi/bank.json'
 import type { Contract } from 'ethers'
+import { useUpdateTeam } from '@/composables/crud/team'
 
 export interface IBankService {
   web3Library: IWeb3Library
@@ -23,10 +24,8 @@ export class BankService implements IBankService {
   async createBankContract(teamId: string): Promise<string> {
     // TODO: change to actual deploy contract
     const bankAddress = '0x5466767aA6412f298dD61FbE4E3e40483030b39B'
-
-    const response = await this.teamApi.updateTeam(teamId, {
-      bankAddress
-    })
+    const { execute } = useUpdateTeam()
+    const response = await execute(teamId, { bankAddress })
 
     return response.bankAddress!
   }
