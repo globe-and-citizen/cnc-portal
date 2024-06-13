@@ -46,8 +46,8 @@ export class FetchUserAPI implements UserAPI {
         body: JSON.stringify(updatedUser)
       })
       const updatedUserData = await response.json()
-      const { addToast } = useToastStore()
-      addToast({ type: ToastType.Success, message: 'User updated successfully', timeout: 5000 })
+      const { addSuccessToast } = useToastStore()
+      addSuccessToast('User updated successfully')
       return updatedUserData
     } catch (error) {
       console.error('Error:', error)

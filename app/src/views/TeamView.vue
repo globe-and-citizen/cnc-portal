@@ -43,7 +43,7 @@ const router = useRouter()
 
 const userApi = new FetchUserAPI()
 
-const { addToast } = useToastStore()
+const { addSuccessToast } = useToastStore()
 
 const teamApi = new FetchTeamAPI()
 
@@ -101,7 +101,7 @@ const handleAddTeam = async () => {
   try {
     const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
     if (createdTeam && Object.keys(createdTeam).length !== 0) {
-      addToast({ type: ToastType.Success, message: 'Team created successfully', timeout: 5000 })
+      addSuccessToast('Team created successfully')
       showAddTeamModal.value = !showAddTeamModal.value
       executeFetchTeams()
     }
