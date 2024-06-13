@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex justify-center">
-    <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
+    <span v-if="teamsAreFetching" class="loading loading-spinner loading-lg"></span>
 
     <div class="pt-10" v-else>
       <h2 class="pl-5">Team</h2>
@@ -41,8 +41,8 @@ import { useToastStore } from '@/stores/useToastStore'
 import { FetchUserAPI } from '@/apis/userApi'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { useErrorHandler } from '@/composables/errorHandler'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { TeamsResponse } from '@/types/index'
+
+import { useGetTeams } from '@/composables/crud/team'
 const router = useRouter()
 
 const userApi = new FetchUserAPI()
@@ -59,11 +59,11 @@ const teamApi = new FetchTeamAPI()
  */
 
 const {
-  isFetching: teamIsFetching,
+  teamsAreFetching,
   error: teamError,
   data: teams,
   execute: executeFetchTeams
-} = useCustomFetch<TeamsResponse>('teams').json()
+} = useGetTeams()
 watch(teamError, () => {
   if (teamError.value) {
     return useErrorHandler().handleError(new Error(teamError.value))

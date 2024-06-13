@@ -195,6 +195,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
+import { useDeleteMember } from '@/composables/crud/teamMember'
 import {
   useBankBalance,
   useBankDeposit,
@@ -416,14 +417,16 @@ const updateTeamModalOpen = async () => {
 }
 const deleteMember = async (id: string, address: string) => {
   try {
-    const memberRes: any = await teamApi.deleteMember(id, address)
-    if (memberRes) {
+    const { data, error, memberIsDeleting } = useDeleteMember(id, address)
+    if (data) {
       addToast({ type: ToastType.Success, message: 'Members deleted successfully', timeout: 5000 })
-
       team.value.members.splice(
         team.value.members.findIndex((member) => member.address === address),
         1
       )
+    }
+    if (error.value != null || error.value != undefined) {
+      useErrorHandler().handleError(new Error(error.value))
     }
   } catch (error) {
     return useErrorHandler().handleError(error)
