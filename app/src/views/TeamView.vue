@@ -42,7 +42,7 @@ import { FetchUserAPI } from '@/apis/userApi'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { useErrorHandler } from '@/composables/errorHandler'
 
-import { useGetTeams } from '@/composables/crud/team'
+import { useGetTeams, useCreateTeam } from '@/composables/crud/team'
 const router = useRouter()
 
 const userApi = new FetchUserAPI()
@@ -95,6 +95,27 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
     }
   })
 }
+const {
+  isSuccess: createTeamSuccess,
+  error: createTeamError,
+  execute: executeCreateTeam
+} = useCreateTeam()
+watch(createTeamError, () => {
+  if (createTeamError.value) {
+    return useErrorHandler().handleError(new Error(createTeamError.value))
+  }
+})
+watch(createTeamSuccess, () => {
+  if (createTeamSuccess.value) {
+    addToast({
+      type: ToastType.Success,
+      message: 'Team created successfully',
+      timeout: 5000
+    })
+    showAddTeamModal.value = false
+    executeFetchTeams()
+  }
+})
 const handleAddTeam = async () => {
   const members = team.value.members.map((member) => {
     return {
@@ -102,16 +123,7 @@ const handleAddTeam = async () => {
       address: member.address
     }
   })
-  try {
-    const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
-    if (createdTeam && Object.keys(createdTeam).length !== 0) {
-      addToast({ type: ToastType.Success, message: 'Team created successfully', timeout: 5000 })
-      showAddTeamModal.value = !showAddTeamModal.value
-      executeFetchTeams()
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
+  await executeCreateTeam(team.value.name, team.value.description, members)
 }
 const addInput = () => {
   team.value.members.push({ name: '', address: '', isValid: false })

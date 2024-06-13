@@ -1,182 +1,187 @@
 <template>
-  <div class="pt-10 flex flex-col gap-5">
-    <div class="flex justify-between gap-5">
-      <div
-        class="collapse collapse-arrow border"
-        :class="`${team.ownerAddress == useUserDataStore().address ? 'bg-green-100' : 'bg-blue-100'}`"
-      >
-        <input type="checkbox" />
-        <div class="collapse-title text-xl font-medium">
-          <div class="flex items-center justify-center">
-            <h2 class="pl-5">{{ team.name }}</h2>
-            <div
-              class="badge badge-sm badge-primary flex items-center justify-center ml-2"
-              v-if="team.ownerAddress == useUserDataStore().address"
-            >
-              Owner
+  <div class="flex min-h-screen justify-center">
+    <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
+    <div v-else class="pt-10 flex flex-col gap-5 w-10/12">
+      <div class="flex justify-between gap-5">
+        <div
+          class="collapse collapse-arrow border"
+          :class="`${team.ownerAddress == useUserDataStore().address ? 'bg-green-100' : 'bg-blue-100'}`"
+        >
+          <input type="checkbox" />
+          <div class="collapse-title text-xl font-medium">
+            <div class="flex items-center justify-center">
+              <h2 class="pl-5">{{ team.name }}</h2>
+              <div
+                class="badge badge-sm badge-primary flex items-center justify-center ml-2"
+                v-if="team.ownerAddress == useUserDataStore().address"
+              >
+                Owner
+              </div>
+              <div class="badge badge-sm badge-secondary ml-2" v-else>Employee</div>
             </div>
-            <div class="badge badge-sm badge-secondary ml-2" v-else>Employee</div>
+          </div>
+          <div class="collapse-content">
+            <p class="pl-5">{{ team.description }}</p>
+            <p class="pl-5" v-if="team.bankAddress">
+              Bank Contract Address: {{ team.bankAddress }}
+            </p>
+            <p class="pl-5" v-if="team.bankAddress && !balanceLoading">
+              Team Balance: {{ teamBalance }} {{ NETWORK.currencySymbol }}
+            </p>
+            <p class="pl-5 flex flex-row gap-2" v-if="balanceLoading">
+              <span>Team Balance: </span>
+              <SkeletonLoading class="w-40 h-4 self-center" />
+            </p>
+
+            <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
+              <button
+                class="btn btn-secondary btn-sm"
+                v-if="team.ownerAddress == useUserDataStore().address"
+                @click="updateTeamModalOpen"
+              >
+                Update
+              </button>
+              <button
+                class="btn btn-error btn-sm"
+                v-if="team.ownerAddress == useUserDataStore().address"
+                @click="showDeleteConfirmModal = !showDeleteConfirmModal"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
-        <div class="collapse-content">
-          <p class="pl-5">{{ team.description }}</p>
-          <p class="pl-5" v-if="team.bankAddress">Bank Contract Address: {{ team.bankAddress }}</p>
-          <p class="pl-5" v-if="team.bankAddress && !balanceLoading">
-            Team Balance: {{ teamBalance }} {{ NETWORK.currencySymbol }}
-          </p>
-          <p class="pl-5 flex flex-row gap-2" v-if="balanceLoading">
-            <span>Team Balance: </span>
-            <SkeletonLoading class="w-40 h-4 self-center" />
-          </p>
 
-          <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
-            <button
-              class="btn btn-secondary btn-sm"
-              v-if="team.ownerAddress == useUserDataStore().address"
-              @click="updateTeamModalOpen"
-            >
-              Update
-            </button>
-            <button
-              class="btn btn-error btn-sm"
-              v-if="team.ownerAddress == useUserDataStore().address"
-              @click="showDeleteConfirmModal = !showDeleteConfirmModal"
-            >
-              Delete
-            </button>
-          </div>
+        <DeleteConfirmModal
+          :showDeleteConfirmModal="showDeleteConfirmModal"
+          :isLoading="teamIsDeleting"
+          @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
+          @deleteItem="deleteTeam()"
+        >
+          Are you sure you want to delete the team
+          <span class="font-bold">{{ team.name }}</span
+          >?
+        </DeleteConfirmModal>
+      </div>
+      <div class="flex justify-between">
+        <button
+          class="btn btn-primary btn-disabled"
+          @click="bankModal = true"
+          v-if="!team.bankAddress"
+        >
+          Create Bank Account Smart Contract
+        </button>
+        <div class="flex gap-2">
+          <button class="btn btn-primary" @click="depositModal = true" v-if="team.bankAddress">
+            Deposit
+          </button>
+          <button class="btn btn-primary" @click="transferModal = true" v-if="team.bankAddress">
+            Transfer
+          </button>
         </div>
       </div>
-
-      <DeleteConfirmModal
-        :showDeleteConfirmModal="showDeleteConfirmModal"
-        :isLoading="teamIsDeleting"
-        @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
-        @deleteItem="deleteTeam()"
+      <div
+        class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
       >
-        Are you sure you want to delete the team
-        <span class="font-bold">{{ team.name }}</span
-        >?
-      </DeleteConfirmModal>
-    </div>
-    <div class="flex justify-between">
-      <button
-        class="btn btn-primary btn-disabled"
-        @click="bankModal = true"
-        v-if="!team.bankAddress"
-      >
-        Create Bank Account Smart Contract
-      </button>
-      <div class="flex gap-2">
-        <button class="btn btn-primary" @click="depositModal = true" v-if="team.bankAddress">
-          Deposit
-        </button>
-        <button class="btn btn-primary" @click="transferModal = true" v-if="team.bankAddress">
-          Transfer
-        </button>
+        <span class="w-1/2">Name</span>
+        <span class="w-1/2">Address</span>
+        <AddMemberCard
+          class="w-1/2"
+          :users="foundUsers"
+          v-if="team.ownerAddress == useUserDataStore().address"
+          v-model:formData="teamMembers"
+          v-model:showAddMemberForm="showAddMemberForm"
+          @searchUsers="(input) => searchUsers(input)"
+          @addInput="addInput"
+          @removeInput="removeInput"
+          @addMembers="handleAddMembers"
+          @updateForm="handleUpdateForm"
+          @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
+        />
       </div>
-    </div>
-    <div
-      class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
-    >
-      <span class="w-1/2">Name</span>
-      <span class="w-1/2">Address</span>
-      <AddMemberCard
-        class="w-1/2"
-        :users="foundUsers"
-        v-if="team.ownerAddress == useUserDataStore().address"
-        v-model:formData="teamMembers"
-        v-model:showAddMemberForm="showAddMemberForm"
-        @searchUsers="(input) => searchUsers(input)"
-        @addInput="addInput"
-        @removeInput="removeInput"
-        @addMembers="handleAddMembers"
-        @updateForm="handleUpdateForm"
-        @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
+      <MemberCard
+        v-for="member in team.members"
+        :ownerAddress="team.ownerAddress"
+        :teamId="Number(team.id)"
+        :member="member"
+        :key="member.address"
+        @deleteMember="(id, address) => deleteMember(id, address)"
       />
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
+      <TipsAction
+        :pushTipLoading="pushTipLoading"
+        :sendTipLoading="sendTipLoading"
+        @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
+        @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
+      />
+      <!-- <TipsAction :addresses="team.members.map((member) => member.address)" /> -->
     </div>
-    <MemberCard
-      v-for="member in team.members"
-      :ownerAddress="team.ownerAddress"
-      :teamId="Number(team.id)"
-      :member="member"
-      :key="member.address"
-      @deleteMember="(id, address) => deleteMember(id, address)"
+
+    <dialog
+      id="my_modal_4"
+      class="modal modal-bottom sm:modal-middle"
+      :class="{ 'modal-open': showModal }"
+    >
+      <div class="modal-box">
+        <button
+          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          @click="showModal = !showModal"
+        >
+          ✕
+        </button>
+        <h1 class="font-bold text-2xl">Update Team Details</h1>
+        <hr class="" />
+        <div class="flex flex-col gap-5">
+          <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+            <span class="w-28">Team Name</span>
+            <input type="text" class="grow" placeholder="Enter Team name" v-model="cname" />
+          </label>
+          <label class="input input-bordered flex items-center gap-2 input-md">
+            <span class="w-28">Description</span>
+            <input type="text" class="grow" placeholder="Enter short description" v-model="cdesc" />
+          </label>
+          <label class="input input-bordered flex items-center gap-2 input-md">
+            <span class="w-30">Bank Smart Contract Address</span>
+            <input
+              type="text"
+              class="grow"
+              placeholder="Enter bank smart contract address"
+              v-model="bankSmartContractAddress"
+            />
+          </label>
+        </div>
+
+        <div class="modal-action justify-center">
+          <!-- if there is a button in form, it will close the modal -->
+          <LoadingButton color="primary min-w-24" v-if="teamIsUpdating" />
+          <button v-else class="btn btn-primary" @click="updateTeam">Submit</button>
+
+          <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
+        </div>
+      </div>
+    </dialog>
+    <CreateBankModal
+      v-if="bankModal"
+      @close-modal="() => (bankModal = false)"
+      @create-bank="async () => deployBankContract()"
+      :loading="createBankLoading"
     />
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
-    <TipsAction
-      :pushTipLoading="pushTipLoading"
-      :sendTipLoading="sendTipLoading"
-      @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
-      @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
+    <DepositBankModal
+      v-if="depositModal"
+      @close-modal="() => (depositModal = false)"
+      @deposit="async (amount: string) => depositToBank(amount)"
+      :loading="depositLoading"
     />
-    <!-- <TipsAction :addresses="team.members.map((member) => member.address)" /> -->
+    <TransferFromBankModal
+      v-if="transferModal"
+      @close-modal="() => (transferModal = false)"
+      @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
+      @searchMembers="async (query: string) => await searchMembers(query)"
+      :filteredMembers="filteredMembers"
+      :loading="transferLoading"
+      :bank-balance="teamBalance"
+    />
   </div>
-
-  <dialog
-    id="my_modal_4"
-    class="modal modal-bottom sm:modal-middle"
-    :class="{ 'modal-open': showModal }"
-  >
-    <div class="modal-box">
-      <button
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        @click="showModal = !showModal"
-      >
-        ✕
-      </button>
-      <h1 class="font-bold text-2xl">Update Team Details</h1>
-      <hr class="" />
-      <div class="flex flex-col gap-5">
-        <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-          <span class="w-28">Team Name</span>
-          <input type="text" class="grow" placeholder="Enter Team name" v-model="cname" />
-        </label>
-        <label class="input input-bordered flex items-center gap-2 input-md">
-          <span class="w-28">Description</span>
-          <input type="text" class="grow" placeholder="Enter short description" v-model="cdesc" />
-        </label>
-        <label class="input input-bordered flex items-center gap-2 input-md">
-          <span class="w-30">Bank Smart Contract Address</span>
-          <input
-            type="text"
-            class="grow"
-            placeholder="Enter bank smart contract address"
-            v-model="bankSmartContractAddress"
-          />
-        </label>
-      </div>
-
-      <div class="modal-action justify-center">
-        <!-- if there is a button in form, it will close the modal -->
-        <LoadingButton color="primary min-w-24" v-if="teamIsUpdating" />
-        <button v-else class="btn btn-primary" @click="updateTeam">Submit</button>
-
-        <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
-      </div>
-    </div>
-  </dialog>
-  <CreateBankModal
-    v-if="bankModal"
-    @close-modal="() => (bankModal = false)"
-    @create-bank="async () => deployBankContract()"
-    :loading="createBankLoading"
-  />
-  <DepositBankModal
-    v-if="depositModal"
-    @close-modal="() => (depositModal = false)"
-    @deposit="async (amount: string) => depositToBank(amount)"
-    :loading="depositLoading"
-  />
-  <TransferFromBankModal
-    v-if="transferModal"
-    @close-modal="() => (transferModal = false)"
-    @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
-    @searchMembers="async (query: string) => await searchMembers(query)"
-    :filteredMembers="filteredMembers"
-    :loading="transferLoading"
-    :bank-balance="teamBalance"
-  />
 </template>
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
@@ -208,7 +213,7 @@ import { NETWORK } from '@/constant'
 import { FetchUserAPI } from '@/apis/userApi'
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
-import { useUpdateTeam, useDeleteTeam } from '@/composables/crud/team'
+import { useUpdateTeam, useDeleteTeam, useGetTeam } from '@/composables/crud/team'
 import LoadingButton from '@/components/LoadingButton.vue'
 const userApi = new FetchUserAPI()
 
@@ -221,6 +226,7 @@ const filteredMembers = ref<User[]>([])
 
 const route = useRoute()
 const router = useRouter()
+const isLoading = ref(false)
 const {
   execute: pushTip,
   isLoading: pushTipLoading,
@@ -344,7 +350,7 @@ const transferModal = ref(false)
 const showAddMemberForm = ref(false)
 
 const inputs = ref<Member[]>([])
-const team = ref<Team>({
+let team = ref<Team>({
   id: '',
   name: '',
   description: '',
@@ -395,12 +401,36 @@ const handleAddMembers = async () => {
     return useErrorHandler().handleError(error)
   }
 }
+const {
+  data: teamData,
+  error: getTeamError,
+  isSuccess: getTeamSuccess,
+  teamIsFetching,
+  execute: getTeamAPI
+} = useGetTeam()
+watch(teamIsFetching, () => {
+  if (teamIsFetching.value) {
+    isLoading.value = true
+  } else {
+    isLoading.value = false
+  }
+})
+watch(getTeamError, () => {
+  if (getTeamError.value) {
+    useErrorHandler().handleError(new Error(getTeamError.value))
+  }
+})
+watch(getTeamSuccess, () => {
+  if (getTeamSuccess.value) {
+    team.value = teamData.value.team
+  }
+})
 onMounted(async () => {
   const id = route.params.id
   try {
-    const teamData = await teamApi.getTeam(String(id))
-    if (teamData) {
-      team.value = teamData
+    const teamData = await getTeamAPI(String(id))
+    if (teamData.value) {
+      team.value = teamData.value.team
       cname.value = team.value.name
       cdesc.value = team.value.description
       bankSmartContractAddress.value = team.value.bankAddress
@@ -428,13 +458,17 @@ const {
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     useErrorHandler().handleError(new Error(deleteMemberError.value))
+    showDeleteConfirmModal.value = false
   }
 })
-watch(deleteMemberSuccess, () => {
+watch(deleteMemberSuccess, async () => {
   if (deleteMemberSuccess.value) {
     addToast({ type: ToastType.Success, message: 'Member deleted successfully', timeout: 5000 })
     deleteMemberSuccess.value = false
-    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
+    const teamData = await getTeamAPI(String(route.params.id))
+    if (teamData.value) {
+      team.value = teamData.value.team
+    }
   }
 })
 
@@ -465,12 +499,11 @@ watch(updateTeamSuccess, () => {
 })
 const updateTeam = async () => {
   const id = route.params.id
-  let teamObject = {
+  await updateTeamAPI(String(id), {
     name: cname.value,
     description: cdesc.value,
     bankAddress: bankSmartContractAddress.value
-  }
-  await updateTeamAPI(String(id), teamObject)
+  })
 }
 const {
   execute: deleteTeamAPI,
