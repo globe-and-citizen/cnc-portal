@@ -8,3 +8,7 @@ export interface Team {
   members: Member[]
   ownerAddress: string
 }
+export interface TeamsResponse {
+  teams: Team[]
+  success: boolean
+}
