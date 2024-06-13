@@ -3,7 +3,7 @@
     <h2 class="pl-5">Team</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <TeamCard
-        v-for="team in teams.teams"
+        v-for="team in teams?.teams"
         :key="team.id"
         :team="team"
         class="cursor-pointer"
@@ -26,13 +26,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { isAddress } from 'ethers' // ethers v6
 
 import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '@/components/TeamCard.vue'
-import { ToastType, type Team, type TeamInput, type User } from '@/types'
+import { ToastType, type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { FetchUserAPI } from '@/apis/userApi'
 import { FetchTeamAPI } from '@/apis/teamApi'
@@ -44,6 +44,7 @@ const router = useRouter()
 const userApi = new FetchUserAPI()
 
 const { addToast } = useToastStore()
+
 const teamApi = new FetchTeamAPI()
 
 // const teams = ref<Team[]>([])
