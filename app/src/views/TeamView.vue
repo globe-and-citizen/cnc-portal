@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import {  ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { isAddress } from 'ethers' // ethers v6
 
@@ -52,16 +52,18 @@ const teamApi = new FetchTeamAPI()
 const {
   isFetching: teamIsFetching,
   error: teamError,
-  data: teams,
+  data,
   execute: executeFetchTeams
-} = useCustomFetch<Array<Team>>('teams')
+} = useCustomFetch<any>('teams')
+watch(data, () => {
+  teams.value = JSON.parse(data.value as unknown as string).teams
+})
 watch(teamError, () => {
-  if (teamError.value) {
-    return useErrorHandler().handleError(teamError)
+  if (teamError.value !== null || teamError.value != undefined) {
+    return useErrorHandler().handleError(new Error(teamError.value))
   }
 })
-// const teams = ref<Team[]>([])
-
+const teams = ref<Team[]>([])
 const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
 const team = ref<TeamInput>({
