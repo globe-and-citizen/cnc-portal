@@ -6,7 +6,7 @@
         :class="`${team.ownerAddress == useUserDataStore().address ? 'bg-green-100' : 'bg-blue-100'}`"
       >
         <input type="checkbox" />
-        <div class="collapse-title text-xl font-medium">
+        <div class="collapse-title text-xl font-medium self-center">
           <div class="flex items-center justify-center">
             <h2 class="pl-5">{{ team.name }}</h2>
             <div
@@ -58,7 +58,7 @@
         >?
       </DeleteConfirmModal>
     </div>
-    <div class="flex justify-between">
+    <div class="flex justify-end">
       <button
         class="btn btn-primary btn-disabled"
         @click="bankModal = true"
