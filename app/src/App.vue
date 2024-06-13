@@ -74,7 +74,7 @@ watch(balanceError, () => {
 })
 // Handle withdraw error
 watch(withdrawError, () => {
-    addErrorToast(withdrawError.value.reason || 'Failed to withdraw tips')
+  addErrorToast(withdrawError.value.reason || 'Failed to withdraw tips')
 })
 
 // Handle withdraw success

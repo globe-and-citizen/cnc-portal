@@ -187,7 +187,7 @@ import CreateBankModal from '@/components/modals/CreateBankModal.vue'
 import DepositBankModal from '@/components/modals/DepositBankModal.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
-import {  type Member, type User, type Team } from '@/types'
+import { type Member, type User, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 
 import { isAddress } from 'ethers' // ethers v6
