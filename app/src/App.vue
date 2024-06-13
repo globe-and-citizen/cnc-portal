@@ -14,8 +14,7 @@ import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
-import { ToastType } from './types'
-const { addToast } = useToastStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
 
 const userApi = new FetchUserAPI()
 
@@ -70,32 +69,18 @@ watch(
 // Handle Balance error
 watch(balanceError, () => {
   if (balanceError.value) {
-    addToast({
-      message: balanceError.value?.reason || 'Failed to Get balance',
-      type: ToastType.Error,
-      timeout: 5000
-    })
+    addErrorToast(balanceError.value?.reason || 'Failed to Get balance')
   }
 })
 // Handle withdraw error
 watch(withdrawError, () => {
-  //toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
-  addToast({
-    message: withdrawError.value.reason || 'Failed to withdraw tips',
-    type: ToastType.Error,
-    timeout: 5000
-  })
+    addErrorToast(withdrawError.value.reason || 'Failed to withdraw tips')
 })
 
 // Handle withdraw success
 watch(withdrawSuccess, () => {
   if (withdrawSuccess.value) {
-    //toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
-    addToast({
-      message: withdrawError.value.reason || 'Tips withdrawn successfully',
-      type: ToastType.Success,
-      timeout: 5000
-    })
+    addSuccessToast('Tips withdrawn successfully')
   }
 })
 </script>
