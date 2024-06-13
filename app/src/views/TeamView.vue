@@ -52,22 +52,18 @@ const teams = ref<Team[]>([])
  * isFetching - Can be used to show loading spinner
  * execute - Can be used to fetch data again later: ex: when a new team is added
  */
+
 const {
   isFetching: teamIsFetching,
   error: teamError,
-  data: teamData,
+  data,
   execute: executeFetchTeams
-} = useCustomFetch<any>('teams')
-watch(teamData, () => {
-  try {
-    const parsedData = JSON.parse(teamData.value) as TeamsResponse
-    teams.value = parsedData.teams
-  } catch (error) {
-    teams.value = []
-  }
+} = useCustomFetch<TeamsResponse>('teams')
+watch(data, () => {
+  teams.value = JSON.parse(data.value as unknown as string).teams
 })
 watch(teamError, () => {
-  if (teamError.value !== null || teamError.value != undefined) {
+  if (teamError.value) {
     return useErrorHandler().handleError(new Error(teamError.value))
   }
 })
