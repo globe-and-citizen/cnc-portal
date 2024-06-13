@@ -415,19 +415,6 @@ const handleAddMembers = async () => {
     }
   })
   await executeAddMembers(String(route.params.id), members)
-  // try {
-  //   const members: Member[] = await teamApi.createMembers(
-  //     teamMembers.value,
-  //     String(route.params.id)
-  //   )
-  //   if (members && members.length > 0) {
-  //     addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
-  //     team.value.members = members
-  //     showAddMemberForm.value = false
-  //   }
-  // } catch (error) {
-  //   return useErrorHandler().handleError(error)
-  // }
 }
 const {
   data: teamData,
@@ -449,11 +436,9 @@ watch(getTeamError, () => {
   }
 })
 watch(getTeamSuccess, () => {
-  console.log('getTeamSuccess', getTeamSuccess.value)
   if (getTeamSuccess.value) {
     team.value = teamData.value.team
     getTeamSuccess.value = false
-    console.log('team', team)
   }
 })
 onMounted(async () => {
@@ -466,7 +451,7 @@ onMounted(async () => {
       cdesc.value = team.value.description
       bankSmartContractAddress.value = team.value.bankAddress
     } else {
-      console.log('Team not found for id:', id)
+      useErrorHandler().handleError(new Error('Failed to fetch team'))
     }
     if (team.value.bankAddress) {
       await getBalance(team.value.bankAddress)
