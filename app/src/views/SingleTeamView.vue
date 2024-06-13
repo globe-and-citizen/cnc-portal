@@ -50,6 +50,7 @@
 
       <DeleteConfirmModal
         :showDeleteConfirmModal="showDeleteConfirmModal"
+        :isLoading="teamIsDeleting"
         @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
         @deleteItem="deleteTeam()"
       >
@@ -207,7 +208,7 @@ import { NETWORK } from '@/constant'
 import { FetchUserAPI } from '@/apis/userApi'
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
-import { useUpdateTeam } from '@/composables/crud/team'
+import { useUpdateTeam, useDeleteTeam } from '@/composables/crud/team'
 import LoadingButton from '@/components/LoadingButton.vue'
 const userApi = new FetchUserAPI()
 
@@ -417,34 +418,49 @@ const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
 }
-const deleteMember = async (id: string, address: string) => {
-  try {
-    const { data, error, memberIsDeleting } = useDeleteMember(id, address)
-    if (data) {
-      addToast({ type: ToastType.Success, message: 'Members deleted successfully', timeout: 5000 })
-      team.value.members.splice(
-        team.value.members.findIndex((member) => member.address === address),
-        1
-      )
-    }
-    if (error.value != null || error.value != undefined) {
-      useErrorHandler().handleError(new Error(error.value))
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
+
+const {
+  error: deleteMemberError,
+  isSuccess: deleteMemberSuccess,
+  memberIsDeleting,
+  execute: deleteMemberAPI
+} = useDeleteMember()
+watch(deleteMemberError, () => {
+  if (deleteMemberError.value) {
+    useErrorHandler().handleError(new Error(deleteMemberError.value))
   }
+})
+watch(deleteMemberSuccess, () => {
+  if (deleteMemberSuccess.value) {
+    addToast({ type: ToastType.Success, message: 'Member deleted successfully', timeout: 5000 })
+    deleteMemberSuccess.value = false
+    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
+  }
+})
+
+const deleteMember = async (id: string, address: string) => {
+  await deleteMemberAPI(id, address)
 }
 
-const { execute: updateTeamAPI, teamIsUpdating, error: updateTeamError } = useUpdateTeam()
+const {
+  execute: updateTeamAPI,
+  teamIsUpdating,
+  error: updateTeamError,
+  isSuccess: updateTeamSuccess
+} = useUpdateTeam()
 watch(updateTeamError, () => {
   if (updateTeamError.value) {
     useErrorHandler().handleError(new Error(updateTeamError.value))
-  } else {
+  }
+})
+watch(updateTeamSuccess, () => {
+  if (updateTeamSuccess.value) {
     addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
     team.value.name = cname.value
     team.value.description = cdesc.value
     team.value.bankAddress = bankSmartContractAddress.value
     showModal.value = false
+    updateTeamSuccess.value = false
   }
 })
 const updateTeam = async () => {
@@ -455,37 +471,29 @@ const updateTeam = async () => {
     bankAddress: bankSmartContractAddress.value
   }
   await updateTeamAPI(String(id), teamObject)
-  // const id = route.params.id
-  // let teamObject = {
-  //   name: cname.value,
-  //   description: cdesc.value,
-  //   bankAddress: bankSmartContractAddress.value
-  // }
-  // try {
-  //   const teamRes = await teamApi.updateTeam(String(id), teamObject)
-  //   if (teamRes) {
-  //     addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
-  //     team.value.name = teamRes.name
-  //     team.value.description = teamRes.description
-  //     team.value.bankAddress = teamRes.bankAddress
-  //     showModal.value = false
-  //   }
-  // } catch (error) {
-  //   return useErrorHandler().handleError(error)
-  // }
 }
+const {
+  execute: deleteTeamAPI,
+  teamIsDeleting,
+  error: deleteTeamError,
+  isSuccess: deleteTeamSuccess
+} = useDeleteTeam()
 
-const deleteTeam = async () => {
-  const id = route.params.id
-  try {
-    const response: any = await teamApi.deleteTeam(String(id))
-    if (response) {
-      addToast({ type: ToastType.Success, message: 'Team deleted successfully', timeout: 5000 })
-      router.push('/teams')
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
+watch(deleteTeamError, () => {
+  if (deleteTeamError.value) {
+    useErrorHandler().handleError(new Error(deleteTeamError.value))
   }
+})
+watch(deleteTeamSuccess, () => {
+  if (deleteTeamSuccess.value) {
+    addToast({ type: ToastType.Success, message: 'Team deleted successfully', timeout: 5000 })
+    deleteTeamSuccess.value = false
+    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
+    router.push('/teams')
+  }
+})
+const deleteTeam = async () => {
+  await deleteTeamAPI(String(route.params.id))
 }
 const deployBankContract = async () => {
   const id = route.params.id

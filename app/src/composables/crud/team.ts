@@ -36,6 +36,7 @@ export function useUpdateTeam() {
   const teamIsUpdating = ref(false)
   const data = ref<any>()
   const error = ref<any>()
+  const isSuccess = ref(false)
 
   const execute = async (id: string, team: Partial<Team>) => {
     const requestData = {
@@ -48,6 +49,7 @@ export function useUpdateTeam() {
         .json()
       data.value = updatedTeam
       error.value = err.value
+      isSuccess.value = true
     } catch (err: any) {
       data.value = null
       error.value = err.value
@@ -58,21 +60,29 @@ export function useUpdateTeam() {
 
   return {
     teamIsUpdating,
+    isSuccess,
     data,
     error,
     execute
   }
 }
-export function useDeleteTeam(id: string) {
-  const {
-    isFetching: teamIsDeleting,
-    data,
-    error,
-    execute
-  } = useCustomFetch<TeamsResponse>(`teams/${id}`).delete().json()
+export function useDeleteTeam() {
+  const isFetching = ref(false)
+  const data = ref<any>()
+  const error = ref<any>()
+  const isSuccess = ref(false)
 
+  const execute = async (id: string) => {
+    const { data: deletedTeam, error } = useCustomFetch<TeamsResponse>(`teams/${id}`)
+      .delete()
+      .json()
+
+    data.value = deletedTeam.value
+    isSuccess.value = true
+  }
   return {
-    teamIsDeleting,
+    teamIsDeleting: isFetching,
+    isSuccess,
     data,
     error,
     execute
