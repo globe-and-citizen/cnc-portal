@@ -79,7 +79,13 @@
         </div>
       </div>
       <div class="flex justify-center" @click="emits('addMembers')">
-        <button class="btn btn-primary justify-center">Add</button>
+        <LoadingButton
+          color=" primary w-24"
+          v-if="isLoading"
+          class="btn btn-primary justify-center"
+        />
+
+        <button class="btn btn-primary justify-center" v-else>Add</button>
       </div>
     </div>
   </dialog>
@@ -89,6 +95,7 @@ import { ref, watch } from 'vue'
 import type { User } from '@/types'
 import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue'
+import LoadingButton from '../LoadingButton.vue'
 const emits = defineEmits([
   'updateForm',
   'addInput',
@@ -101,6 +108,7 @@ const props = defineProps<{
   formData: Array<{ name: string; address: string; isValid: boolean }>
   showAddMemberForm: boolean
   users: User[]
+  isLoading: boolean
 }>()
 const dropdown = ref<boolean>(true)
 

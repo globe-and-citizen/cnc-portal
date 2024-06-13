@@ -1,6 +1,6 @@
 import { useCustomFetch } from '../useCustomFetch'
 import type { TeamResponse, Team, TeamsResponse, Member } from '@/types'
-import { watch, ref } from 'vue'
+import { ref } from 'vue'
 
 export function useCreateTeam() {
   const teamIsCreating = ref(false)
@@ -52,7 +52,7 @@ export function useGetTeams() {
     execute
   }
 }
-export function useGetTeam(id?: string) {
+export function useGetTeam() {
   const fetchingTeam = ref(false)
   const data = ref<any>()
   const error = ref<any>()
@@ -114,12 +114,13 @@ export function useDeleteTeam() {
   const isSuccess = ref(false)
 
   const execute = async (id: string) => {
-    const { data: deletedTeam, error } = useCustomFetch<TeamsResponse>(`teams/${id}`)
+    const { data: deletedTeam, error: err } = useCustomFetch<TeamsResponse>(`teams/${id}`)
       .delete()
       .json()
 
     data.value = deletedTeam.value
     isSuccess.value = true
+    error.value = err.value
   }
   return {
     teamIsDeleting: isFetching,

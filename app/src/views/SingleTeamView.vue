@@ -86,6 +86,7 @@
         <span class="w-1/2">Name</span>
         <span class="w-1/2">Address</span>
         <AddMemberCard
+          :isLoading="addMembersLoading"
           class="w-1/2"
           :users="foundUsers"
           v-if="team.ownerAddress == useUserDataStore().address"
@@ -201,7 +202,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-import { useDeleteMember } from '@/composables/crud/teamMember'
+import { useDeleteMember, useAddMember } from '@/composables/crud/teamMember'
 import {
   useBankBalance,
   useBankDeposit,
@@ -386,20 +387,50 @@ const handleUpdateForm = async () => {
     }
   })
 }
-const handleAddMembers = async () => {
-  try {
-    const members: Member[] = await teamApi.createMembers(
-      teamMembers.value,
-      String(route.params.id)
-    )
-    if (members && members.length > 0) {
-      addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
-      team.value.members = members
-      showAddMemberForm.value = false
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
+const {
+  execute: executeAddMembers,
+  isSuccess: addMembersSuccess,
+  error: addMembersError,
+  data: teamMembersData,
+  addingMembers: addMembersLoading
+} = useAddMember()
+watch(addMembersError, () => {
+  if (addMembersError.value) {
+    useErrorHandler().handleError(new Error(addMembersError.value))
   }
+})
+watch(addMembersSuccess, async () => {
+  if (addMembersSuccess.value) {
+    addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
+    const teamData = await getTeamAPI(String(route.params.id))
+    if (teamData.value) {
+      team.value = teamData.value.team
+    }
+    showAddMemberForm.value = false
+    addMembersSuccess.value = false
+  }
+})
+const handleAddMembers = async () => {
+  const members = teamMembers.value.map((member) => {
+    return {
+      name: member.name,
+      address: member.address
+    }
+  })
+  await executeAddMembers(String(route.params.id), members)
+  // try {
+  //   const members: Member[] = await teamApi.createMembers(
+  //     teamMembers.value,
+  //     String(route.params.id)
+  //   )
+  //   if (members && members.length > 0) {
+  //     addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
+  //     team.value.members = members
+  //     showAddMemberForm.value = false
+  //   }
+  // } catch (error) {
+  //   return useErrorHandler().handleError(error)
+  // }
 }
 const {
   data: teamData,
@@ -421,8 +452,11 @@ watch(getTeamError, () => {
   }
 })
 watch(getTeamSuccess, () => {
+  console.log('getTeamSuccess', getTeamSuccess.value)
   if (getTeamSuccess.value) {
     team.value = teamData.value.team
+    getTeamSuccess.value = false
+    console.log('team', team)
   }
 })
 onMounted(async () => {

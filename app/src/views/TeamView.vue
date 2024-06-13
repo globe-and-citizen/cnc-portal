@@ -39,7 +39,6 @@ import TeamCard from '@/components/TeamCard.vue'
 import { ToastType, type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { FetchUserAPI } from '@/apis/userApi'
-import { FetchTeamAPI } from '@/apis/teamApi'
 import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useGetTeams, useCreateTeam } from '@/composables/crud/team'
@@ -48,8 +47,6 @@ const router = useRouter()
 const userApi = new FetchUserAPI()
 
 const { addToast } = useToastStore()
-
-const teamApi = new FetchTeamAPI()
 
 // const teams = ref<Team[]>([])
 /**
