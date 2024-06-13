@@ -32,7 +32,7 @@ import { isAddress } from 'ethers' // ethers v6
 
 import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '@/components/TeamCard.vue'
-import { ToastType, type TeamInput, type User } from '@/types'
+import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { FetchUserAPI } from '@/apis/userApi'
 import { FetchTeamAPI } from '@/apis/teamApi'

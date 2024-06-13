@@ -134,7 +134,7 @@
 
 <script setup lang="ts">
 import { useTipEvents } from '@/composables/tips'
-import { TipsEventType, ToastType } from '@/types'
+import { TipsEventType } from '@/types'
 import { ethers } from 'ethers'
 import { onMounted, watch } from 'vue'
 import { NETWORK } from '@/constant'

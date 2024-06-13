@@ -14,7 +14,6 @@
 <script setup lang="ts">
 import { useToastStore } from '@/stores/useToastStore'
 import ToastContainer from '@/components/ToastContainer.vue'
-import { ToastType } from '@/types'
 
 const { addErrorToast, addSuccessToast, addWarningToast, addInfoToast } = useToastStore()
 

@@ -1,7 +1,7 @@
 import { BACKEND_URL } from '@/constant/index'
 
 // Define a generic type for user data
-import { type User, ToastType } from '@/types/index'
+import { type User } from '@/types/index'
 import { useToastStore } from '@/stores/useToastStore'
 
 // Define an interface for UserService

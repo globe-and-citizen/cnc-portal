@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { nextTick } from 'vue'
-import { ToastType } from '@/types'
 
 type ToastStore = ReturnType<typeof useToastStore>
 
