@@ -141,14 +141,14 @@ const getAllTeams = async (req: Request, res: Response) => {
           },
         },
       },
-      include: {
-        members: {
-          select: {
-            address: true,
-            name: true,
-          },
-        },
-      },
+      // include: {
+      //   members: {
+      //     select: {
+      //       address: true,
+      //       name: true,
+      //     },
+      //   },
+      // },
     });
 
     // Combine owned and member teams

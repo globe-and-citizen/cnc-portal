@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import {  ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { isAddress } from 'ethers' // ethers v6
 
@@ -38,12 +38,15 @@ import { FetchUserAPI } from '@/apis/userApi'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import type { TeamsResponse } from '@/types/index'
 const router = useRouter()
 
 const userApi = new FetchUserAPI()
 
 const { addToast } = useToastStore()
 const teamApi = new FetchTeamAPI()
+
+const teams = ref<Team[]>([])
 /**
  * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
  * isFetching - Can be used to show loading spinner
@@ -52,15 +55,22 @@ const teamApi = new FetchTeamAPI()
 const {
   isFetching: teamIsFetching,
   error: teamError,
-  data: teams,
+  data: teamData,
   execute: executeFetchTeams
-} = useCustomFetch<Array<Team>>('teams')
-watch(teamError, () => {
-  if (teamError.value) {
-    return useErrorHandler().handleError(teamError)
+} = useCustomFetch<any>('teams')
+watch(teamData, () => {
+  try {
+    const parsedData = JSON.parse(teamData.value) as TeamsResponse
+    teams.value = parsedData.teams
+  } catch (error) {
+    teams.value = []
   }
 })
-// const teams = ref<Team[]>([])
+watch(teamError, () => {
+  if (teamError.value !== null || teamError.value != undefined) {
+    return useErrorHandler().handleError(new Error(teamError.value))
+  }
+})
 
 const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
