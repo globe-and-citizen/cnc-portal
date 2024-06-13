@@ -1,12 +1,10 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
-import { FetchTeamAPI, type TeamAPI } from '@/apis/teamApi'
 import BANK_ABI from '../artifacts/abi/bank.json'
 import type { Contract } from 'ethers'
 import { useUpdateTeam } from '@/composables/crud/team'
 
 export interface IBankService {
   web3Library: IWeb3Library
-  teamApi: TeamAPI
   createBankContract(id: string): Promise<string>
   deposit(bankAddress: string, amount: string): Promise<any>
   pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
@@ -15,7 +13,6 @@ export interface IBankService {
 
 export class BankService implements IBankService {
   web3Library: IWeb3Library
-  teamApi: TeamAPI = new FetchTeamAPI()
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library

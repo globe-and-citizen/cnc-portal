@@ -195,7 +195,6 @@ import DepositBankModal from '@/components/modals/DepositBankModal.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
 import { ToastType, type Member, type User, type Team } from '@/types'
-import { FetchTeamAPI } from '@/apis/teamApi'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/useToastStore'
@@ -336,8 +335,6 @@ watch(transferError, () => {
     addToast({ type: ToastType.Error, message: 'Failed to transfer', timeout: 5000 })
   }
 })
-
-const teamApi = new FetchTeamAPI()
 
 const cname = ref('')
 const cdesc = ref('')
@@ -597,7 +594,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
 }
 const searchMembers = async (query: string) => {
   try {
-    const result = await teamApi.getTeam('1', query)
+    const result = await getTeamAPI(String(route.params.id), query)
     filteredMembers.value = result?.members || []
   } catch (error) {
     filteredMembers.value = []

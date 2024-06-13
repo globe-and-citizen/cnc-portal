@@ -58,8 +58,14 @@ export function useGetTeam() {
   const error = ref<any>()
   const isSuccess = ref(false)
 
-  const execute = async (id: string): Promise<any> => {
-    const { data: team, error: err } = await useCustomFetch<TeamResponse>(`teams/${id}`).json()
+  const execute = async (id: string, query?: string): Promise<any> => {
+    const queryParams = new URLSearchParams()
+    if (query) {
+      queryParams.append('query', query)
+    }
+    const { data: team, error: err } = await useCustomFetch<TeamResponse>(
+      `teams/${id}?${queryParams.toString()}`
+    ).json()
     data.value = team
     error.value = err.value
     isSuccess.value = true
