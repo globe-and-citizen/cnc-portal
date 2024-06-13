@@ -124,7 +124,6 @@
       >
         ✕
       </button>
-
       <h1 class="font-bold text-2xl">Update Team Details</h1>
       <hr class="" />
       <div class="flex flex-col gap-5">
@@ -149,7 +148,8 @@
 
       <div class="modal-action justify-center">
         <!-- if there is a button in form, it will close the modal -->
-        <button class="btn btn-primary" @click="updateTeam">Submit</button>
+        <LoadingButton color="primary min-w-24" v-if="teamIsUpdating" />
+        <button v-else class="btn btn-primary" @click="updateTeam">Submit</button>
 
         <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
       </div>
@@ -207,6 +207,8 @@ import { NETWORK } from '@/constant'
 import { FetchUserAPI } from '@/apis/userApi'
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
+import { useUpdateTeam } from '@/composables/crud/team'
+import LoadingButton from '@/components/LoadingButton.vue'
 const userApi = new FetchUserAPI()
 
 const showDeleteConfirmModal = ref(false)
@@ -433,6 +435,18 @@ const deleteMember = async (id: string, address: string) => {
   }
 }
 
+const { execute: updateTeamAPI, teamIsUpdating, error: updateTeamError } = useUpdateTeam()
+watch(updateTeamError, () => {
+  if (updateTeamError.value) {
+    useErrorHandler().handleError(new Error(updateTeamError.value))
+  } else {
+    addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
+    team.value.name = cname.value
+    team.value.description = cdesc.value
+    team.value.bankAddress = bankSmartContractAddress.value
+    showModal.value = false
+  }
+})
 const updateTeam = async () => {
   const id = route.params.id
   let teamObject = {
@@ -440,18 +454,25 @@ const updateTeam = async () => {
     description: cdesc.value,
     bankAddress: bankSmartContractAddress.value
   }
-  try {
-    const teamRes = await teamApi.updateTeam(String(id), teamObject)
-    if (teamRes) {
-      addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
-      team.value.name = teamRes.name
-      team.value.description = teamRes.description
-      team.value.bankAddress = teamRes.bankAddress
-      showModal.value = false
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
+  await updateTeamAPI(String(id), teamObject)
+  // const id = route.params.id
+  // let teamObject = {
+  //   name: cname.value,
+  //   description: cdesc.value,
+  //   bankAddress: bankSmartContractAddress.value
+  // }
+  // try {
+  //   const teamRes = await teamApi.updateTeam(String(id), teamObject)
+  //   if (teamRes) {
+  //     addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
+  //     team.value.name = teamRes.name
+  //     team.value.description = teamRes.description
+  //     team.value.bankAddress = teamRes.bankAddress
+  //     showModal.value = false
+  //   }
+  // } catch (error) {
+  //   return useErrorHandler().handleError(error)
+  // }
 }
 
 const deleteTeam = async () => {
