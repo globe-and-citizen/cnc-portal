@@ -3,7 +3,7 @@
     <h2 class="pl-5">Team</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
       <TeamCard
-        v-for="team in teams"
+        v-for="team in teams.teams"
         :key="team.id"
         :team="team"
         class="cursor-pointer"
@@ -46,7 +46,7 @@ const userApi = new FetchUserAPI()
 const { addToast } = useToastStore()
 const teamApi = new FetchTeamAPI()
 
-const teams = ref<Team[]>([])
+// const teams = ref<Team[]>([])
 /**
  * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
  * isFetching - Can be used to show loading spinner
@@ -56,12 +56,9 @@ const teams = ref<Team[]>([])
 const {
   isFetching: teamIsFetching,
   error: teamError,
-  data,
+  data: teams,
   execute: executeFetchTeams
-} = useCustomFetch<TeamsResponse>('teams')
-watch(data, () => {
-  teams.value = JSON.parse(data.value as unknown as string).teams
-})
+} = useCustomFetch<TeamsResponse>('teams').json()
 watch(teamError, () => {
   if (teamError.value) {
     return useErrorHandler().handleError(new Error(teamError.value))
