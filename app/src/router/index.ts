@@ -5,6 +5,7 @@ import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import ToastDemoView from '@/views/ToastDemoView.vue'
+import { useStorage } from '@vueuse/core'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -48,8 +49,10 @@ const router = createRouter({
     }
   ]
 })
+const isAuth = useStorage('isAuth', false)
 router.beforeEach(async (to) => {
-  if (localStorage.getItem('authToken') == null && to.name !== 'login') {
+  // Redirect to login page if not authenticated
+  if (!isAuth.value && to.name !== 'login') {
     return { name: 'login' }
   }
 })
