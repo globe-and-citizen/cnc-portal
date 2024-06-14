@@ -14,7 +14,8 @@
         />
 
         <AddTeamCard
-          @addTeam="handleAddTeam"
+          :isLoading="createTeamFetching"
+          @addTeam="executeCreateTeam"
           @searchUsers="(input) => searchUsers(input)"
           :users="foundUsers"
           v-model:showAddTeamModal="showAddTeamModal"
@@ -40,8 +41,7 @@ import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { useErrorHandler } from '@/composables/errorHandler'
 
-import { useGetTeams, useCreateTeam } from '@/composables/apis/team'
-import { useSearchUser } from '@/composables/apis/user'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 const router = useRouter()
 
 const { addSuccessToast } = useToastStore()
@@ -54,11 +54,11 @@ const { addSuccessToast } = useToastStore()
  */
 
 const {
-  teamsAreFetching,
+  isFetching: teamsAreFetching,
   error: teamError,
   data: teams,
   execute: executeFetchTeams
-} = useGetTeams()
+} = useCustomFetch('teams').json()
 watch(teamError, () => {
   if (teamError.value) {
     return useErrorHandler().handleError(new Error(teamError.value))
@@ -90,43 +90,79 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
     }
   })
 }
+const teamPayload = ref(JSON.stringify(team.value))
+
 const {
-  isSuccess: createTeamSuccess,
+  isFetching: createTeamFetching,
   error: createTeamError,
-  execute: executeCreateTeam
-} = useCreateTeam()
+  execute: executeCreateTeam,
+  response: createTeamResponse
+} = useCustomFetch('teams', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    teamPayload.value = JSON.stringify({
+      name: team.value.name,
+      description: team.value.description,
+      members: team.value.members.map((member) => {
+        return {
+          name: member.name,
+          address: member.address
+        }
+      })
+    })
+    options.body = teamPayload.value
+    return { options, url, cancel }
+  }
+})
+  .post()
+  .json()
+
 watch(createTeamError, () => {
   if (createTeamError.value) {
     return useErrorHandler().handleError(new Error(createTeamError.value))
   }
 })
-watch(createTeamSuccess, () => {
-  if (createTeamSuccess.value) {
+watch(createTeamResponse, () => {
+  if (createTeamResponse.value?.ok) {
     addSuccessToast('Team created successfully')
     showAddTeamModal.value = false
     executeFetchTeams()
   }
 })
-const handleAddTeam = async () => {
-  const members = team.value.members.map((member) => {
-    return {
-      name: member.name,
-      address: member.address
-    }
-  })
-  await executeCreateTeam(team.value.name, team.value.description, members)
-}
+
 const addInput = () => {
   team.value.members.push({ name: '', address: '', isValid: false })
 }
+const searchUserName = ref('')
+const searchUserAddress = ref('')
+const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+watch(searchUserResponse, () => {
+  if (searchUserResponse.value?.ok && users.value?.users) {
+    foundUsers.value = users.value.users
+  }
+})
 const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    const users = await useSearchUser().execute(input.name, input.address)
-    foundUsers.value = users
-    console.log(users)
-  } catch (error) {
-    foundUsers.value = []
-    return useErrorHandler().handleError(error)
+  searchUserName.value = input.name
+  searchUserAddress.value = input.address
+  if (searchUserName.value || searchUserAddress.value) {
+    await executeSearchUser()
   }
 }
 const removeInput = () => {

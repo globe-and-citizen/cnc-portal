@@ -4,6 +4,7 @@ import { createFetch } from '@vueuse/core'
 
 export const useCustomFetch = createFetch({
   baseUrl: `${BACKEND_URL}/api/`,
+  combination: 'overwrite',
   fetchOptions: {
     mode: 'cors',
     headers: {
