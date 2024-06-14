@@ -43,6 +43,7 @@ import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { logout } from '@/utils/navBarUtil'
+import type { TeamsResponse } from '@/types'
 const router = useRouter()
 
 const { addSuccessToast } = useToastStore()
