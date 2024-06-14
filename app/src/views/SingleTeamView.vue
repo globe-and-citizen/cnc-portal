@@ -195,7 +195,6 @@ import DepositBankModal from '@/components/modals/DepositBankModal.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
 import { type Member, type User, type Team } from '@/types'
-import { FetchTeamAPI } from '@/apis/teamApi'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/useToastStore'
@@ -382,7 +381,7 @@ watch(addMembersError, () => {
 })
 watch(addMembersSuccess, async () => {
   if (addMembersSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
+    addSuccessToast('Members added successfully')
     const teamData = await getTeamAPI(String(route.params.id))
     if (teamData.value) {
       team.value = teamData.value.team
@@ -463,7 +462,7 @@ watch(deleteMemberError, () => {
 })
 watch(deleteMemberSuccess, async () => {
   if (deleteMemberSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Member deleted successfully', timeout: 5000 })
+    addSuccessToast('Member deleted successfully')
     deleteMemberSuccess.value = false
     const teamData = await getTeamAPI(String(route.params.id))
     if (teamData.value) {
@@ -489,7 +488,7 @@ watch(updateTeamError, () => {
 })
 watch(updateTeamSuccess, () => {
   if (updateTeamSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
+    addSuccessToast('Team updated successfully')
     team.value.name = cname.value
     team.value.description = cdesc.value
     team.value.bankAddress = bankSmartContractAddress.value
@@ -519,7 +518,7 @@ watch(deleteTeamError, () => {
 })
 watch(deleteTeamSuccess, () => {
   if (deleteTeamSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Team deleted successfully', timeout: 5000 })
+    addSuccessToast('Team deleted successfully')
     deleteTeamSuccess.value = false
     showDeleteConfirmModal.value = !showDeleteConfirmModal.value
     router.push('/teams')

@@ -46,8 +46,6 @@ const router = useRouter()
 
 const { addSuccessToast } = useToastStore()
 
-const teamApi = new FetchTeamAPI()
-
 // const teams = ref<Team[]>([])
 /**
  * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
@@ -104,11 +102,7 @@ watch(createTeamError, () => {
 })
 watch(createTeamSuccess, () => {
   if (createTeamSuccess.value) {
-    addToast({
-      type: ToastType.Success,
-      message: 'Team created successfully',
-      timeout: 5000
-    })
+    addSuccessToast('Team created successfully')
     showAddTeamModal.value = false
     executeFetchTeams()
   }
