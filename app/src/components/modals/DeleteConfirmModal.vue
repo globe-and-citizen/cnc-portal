@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 const emit = defineEmits(['toggleDeleteConfirmModal', 'deleteItem'])
-const props = defineProps<{
+defineProps<{
   showDeleteConfirmModal: boolean
 }>()
 </script>

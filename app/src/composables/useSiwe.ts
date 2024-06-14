@@ -5,7 +5,6 @@ import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { ref } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { ToastType } from '@/types'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
@@ -27,7 +26,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 }
 
 async function siwe() {
-  const { addToast } = useToastStore()
+  const { addErrorToast } = useToastStore()
 
   try {
     isProcessing.value = true
@@ -49,8 +48,7 @@ async function siwe() {
     router.push('/teams')
   } catch (error: any) {
     isProcessing.value = false
-    console.log(error)
-    addToast({ type: ToastType.Error, message: parseError(error), timeout: 5000 })
+    addErrorToast(parseError(error))
     console.log(
       '[app][src][utils][loginUtil.ts][signInWithEthereum] error instanceof Error: ',
       error instanceof Error

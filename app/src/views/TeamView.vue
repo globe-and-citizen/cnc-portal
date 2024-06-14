@@ -36,7 +36,7 @@ import { isAddress } from 'ethers' // ethers v6
 
 import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '@/components/TeamCard.vue'
-import { ToastType, type TeamInput, type User } from '@/types'
+import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { useErrorHandler } from '@/composables/errorHandler'
 
@@ -44,7 +44,9 @@ import { useGetTeams, useCreateTeam } from '@/composables/apis/team'
 import { useSearchUser } from '@/composables/apis/user'
 const router = useRouter()
 
-const { addToast } = useToastStore()
+const { addSuccessToast } = useToastStore()
+
+const teamApi = new FetchTeamAPI()
 
 // const teams = ref<Team[]>([])
 /**

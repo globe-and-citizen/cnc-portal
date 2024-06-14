@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { type Toast } from '@/types'
+import { ToastType, type Toast } from '@/types'
+
+const DEFAULT_TIMEOUT = 5000
 
 export const useToastStore = defineStore('_toast', () => {
   const toasts = ref<Toast[]>([])
@@ -14,6 +16,18 @@ export const useToastStore = defineStore('_toast', () => {
     }, toast.timeout)
   }
 
+  const addSuccessToast = (message: string) => {
+    addToast({ message, timeout: DEFAULT_TIMEOUT, type: ToastType.Success })
+  }
+  const addInfoToast = (message: string) => {
+    addToast({ message, timeout: DEFAULT_TIMEOUT, type: ToastType.Info })
+  }
+  const addWarningToast = (message: string) => {
+    addToast({ message, timeout: DEFAULT_TIMEOUT, type: ToastType.Warning })
+  }
+  const addErrorToast = (message: string) => {
+    addToast({ message, timeout: DEFAULT_TIMEOUT, type: ToastType.Error })
+  }
   const removeToast = (id: number) => {
     const toastsTemp = toasts.value.filter((toast) => toast.id !== id)
     toasts.value = []
@@ -25,6 +39,9 @@ export const useToastStore = defineStore('_toast', () => {
 
   return {
     toasts,
-    addToast
+    addSuccessToast,
+    addInfoToast,
+    addWarningToast,
+    addErrorToast
   }
 })
