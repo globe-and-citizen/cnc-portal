@@ -39,6 +39,7 @@ import { FetchTeamAPI } from '@/apis/teamApi'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { TeamsResponse } from '@/types/index'
+import { logout } from '@/utils/navBarUtil'
 const router = useRouter()
 
 const userApi = new FetchUserAPI()
@@ -60,8 +61,12 @@ const {
   data: teams,
   execute: executeFetchTeams
 } = useCustomFetch<TeamsResponse>('teams').json()
+
 watch(teamError, () => {
   if (teamError.value) {
+    if (teamError.value === 'Unauthorized') {
+      logout()
+    }
     return useErrorHandler().handleError(new Error(teamError.value))
   }
 })
