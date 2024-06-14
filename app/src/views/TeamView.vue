@@ -40,8 +40,8 @@ import { ToastType, type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { useErrorHandler } from '@/composables/errorHandler'
 
-import { useGetTeams, useCreateTeam } from '@/composables/crud/team'
-import { useSearchUser } from '@/composables/crud/user'
+import { useGetTeams, useCreateTeam } from '@/composables/apis/team'
+import { useSearchUser } from '@/composables/apis/user'
 const router = useRouter()
 
 const { addToast } = useToastStore()
@@ -144,3 +144,4 @@ function navigateToTeam(id: string) {
 </script>
 
 <style scoped></style>
+@/composables/apis/team

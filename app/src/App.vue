@@ -14,7 +14,7 @@ import { isAddress } from 'ethers'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
-import { useUpdateUser } from '@/composables/crud/user'
+import { useUpdateUser } from '@/composables/apis/user'
 import { useErrorHandler } from './composables/errorHandler'
 const { addToast } = useToastStore()
 

@@ -9,7 +9,7 @@ import { ToastType } from '@/types'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
-import { useGetNonce, useGetUser } from './crud/user'
+import { useGetNonce, useGetUser } from './apis/user'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()

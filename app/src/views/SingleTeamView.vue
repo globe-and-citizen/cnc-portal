@@ -201,7 +201,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-import { useDeleteMember, useAddMember } from '@/composables/crud/teamMember'
+import { useDeleteMember, useAddMember } from '@/composables/apis/teamMember'
 import {
   useBankBalance,
   useBankDeposit,
@@ -212,9 +212,9 @@ import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { NETWORK } from '@/constant'
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
-import { useUpdateTeam, useDeleteTeam, useGetTeam } from '@/composables/crud/team'
+import { useUpdateTeam, useDeleteTeam, useGetTeam } from '@/composables/apis/team'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { useSearchUser } from '@/composables/crud/user'
+import { useSearchUser } from '@/composables/apis/user'
 
 const showDeleteConfirmModal = ref(false)
 
@@ -590,3 +590,4 @@ const membersAddress = computed(() => {
   return team.value.members.map((member) => member.address)
 })
 </script>
+@/composables/apis/teamMember@/composables/apis/team
