@@ -42,6 +42,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { logout } from '@/utils/navBarUtil'
 const router = useRouter()
 
 const { addSuccessToast } = useToastStore()
@@ -58,9 +59,13 @@ const {
   error: teamError,
   data: teams,
   execute: executeFetchTeams
-} = useCustomFetch('teams').json()
+} = useCustomFetch<TeamsResponse>('teams').json()
+
 watch(teamError, () => {
   if (teamError.value) {
+    if (teamError.value === 'Unauthorized') {
+      logout()
+    }
     return useErrorHandler().handleError(new Error(teamError.value))
   }
 })
