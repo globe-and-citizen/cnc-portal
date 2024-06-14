@@ -34,7 +34,8 @@
         </label>
       </div>
       <div class="modal-action justify-center">
-        <button class="btn btn-primary" @click="emits('updateUser')">Save</button>
+        <LoadingButton v-if="isLoading" color="primary min-w-24" />
+        <button v-else class="btn btn-primary" @click="emits('updateUser')">Save</button>
       </div>
     </div>
   </dialog>
@@ -42,11 +43,13 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, watch } from 'vue'
+import LoadingButton from '../LoadingButton.vue'
 
 const emits = defineEmits(['updateUser', 'toggleEditUserModal'])
 const props = defineProps<{
   showEditUserModal: boolean
   updateUserInput: { name: string; address: string; isValid: boolean }
+  isLoading: boolean
 }>()
 const updateUserInput = ref(props.updateUserInput)
 

@@ -38,13 +38,11 @@ import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '@/components/TeamCard.vue'
 import { ToastType, type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { FetchUserAPI } from '@/apis/userApi'
 import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useGetTeams, useCreateTeam } from '@/composables/crud/team'
+import { useSearchUser } from '@/composables/crud/user'
 const router = useRouter()
-
-const userApi = new FetchUserAPI()
 
 const { addToast } = useToastStore()
 
@@ -127,7 +125,7 @@ const addInput = () => {
 }
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
-    const users = await userApi.searchUser(input.name, input.address)
+    const users = await useSearchUser().execute(input.name, input.address)
     foundUsers.value = users
     console.log(users)
   } catch (error) {

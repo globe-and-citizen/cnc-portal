@@ -11,13 +11,12 @@ import EditUserModal from '@/components/modals/EditUserModal.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 
 import { isAddress } from 'ethers'
-import { FetchUserAPI } from './apis/userApi'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { ToastType } from './types'
+import { useUpdateUser } from '@/composables/crud/user'
+import { useErrorHandler } from './composables/errorHandler'
 const { addToast } = useToastStore()
-
-const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
 function handleChange() {
@@ -47,10 +46,31 @@ const updateUserInput = ref({
   address: address.value,
   isValid: true
 })
+const {
+  userIsUpdating,
+  isSuccess: userUpdateSuccess,
+  error: userUpdateError,
+  execute: updateUserAPI
+} = useUpdateUser()
+watch(userUpdateError, () => {
+  if (userUpdateError.value) {
+    useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
+  }
+})
+watch(userUpdateSuccess, () => {
+  if (userUpdateSuccess.value) {
+    addToast({
+      message: 'User updated',
+      type: ToastType.Success,
+      timeout: 5000
+    })
+    showUserModal.value = false
+    userUpdateSuccess.value = false
+  }
+})
 const handleUserUpdate = async () => {
-  const user = await userApi.updateUser(toRaw(updateUserInput.value))
+  const user = await updateUserAPI(toRaw(updateUserInput.value))
   userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
-  showUserModal.value = false
 }
 watch(
   () => updateUserInput.value.address,
@@ -147,6 +167,7 @@ watch(withdrawSuccess, () => {
               "
             />
             <EditUserModal
+              :isLoading="userIsUpdating"
               :showEditUserModal="showUserModal"
               v-model:updateUserInput="updateUserInput"
               @updateUser="handleUserUpdate"

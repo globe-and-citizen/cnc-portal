@@ -210,12 +210,11 @@ import {
 } from '@/composables/bank'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { NETWORK } from '@/constant'
-import { FetchUserAPI } from '@/apis/userApi'
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
 import { useUpdateTeam, useDeleteTeam, useGetTeam } from '@/composables/crud/team'
 import LoadingButton from '@/components/LoadingButton.vue'
-const userApi = new FetchUserAPI()
+import { useSearchUser } from '@/composables/crud/user'
 
 const showDeleteConfirmModal = ref(false)
 
@@ -569,7 +568,8 @@ const transferFromBank = async (to: string, amount: string) => {
 }
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
-    const users = await userApi.searchUser(input.name, input.address)
+    const users = await useSearchUser().execute(input.name, input.address)
+    // const users = await userApi.searchUser(input.name, input.address)
     foundUsers.value = users
     console.log(users)
   } catch (error) {
