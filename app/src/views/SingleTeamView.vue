@@ -105,6 +105,7 @@
         :ownerAddress="team.ownerAddress"
         :teamId="Number(team.id)"
         :member="member"
+        :isMemberDeleting="memberIsDeleting"
         :key="member.address"
         @deleteMember="(id, address) => deleteMember(id, address)"
       />
