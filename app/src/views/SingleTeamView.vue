@@ -63,7 +63,7 @@
           >?
         </DeleteConfirmModal>
       </div>
-      <div class="flex justify-between">
+      <div class="flex justify-end">
         <button
           class="btn btn-primary btn-disabled"
           @click="bankModal = true"
