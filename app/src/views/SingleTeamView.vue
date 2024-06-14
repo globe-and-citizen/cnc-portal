@@ -64,7 +64,11 @@
         </DeleteConfirmModal>
       </div>
       <div class="flex justify-end">
-        <button class="btn btn-primary btn" @click="bankModal = true" v-if="!team.bankAddress">
+        <button
+          class="btn btn-primary btn-disabled"
+          @click="bankModal = true"
+          v-if="!team.bankAddress"
+        >
           Create Bank Account Smart Contract
         </button>
         <div class="flex gap-2">
@@ -185,7 +189,7 @@
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref, watch, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 import CreateBankModal from '@/components/modals/CreateBankModal.vue'
@@ -410,6 +414,10 @@ const {
     if (query.value) {
       queryParams.append('query', query.value)
       url += '?' + queryParams.toString()
+    }
+    options.headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${AuthService.getToken()}`
     }
     return { options, url, cancel }
   }
