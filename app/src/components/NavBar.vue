@@ -16,6 +16,8 @@
       </div>
     </div>
     <div class="navbar-end gap-2">
+      
+      <!--Withdraw Start-->
       <div class="dropdown w-48 rounded-full">
         <div tabindex="0" role="button" class="">
           <div class="btn w-full flex flex-row justify-between bg-base-primary">
@@ -42,12 +44,27 @@
           <li v-else><a @click="emits('withdraw')" data-test="withdraw">Withdraw Tips</a></li>
         </ul>
       </div>
-      <button class="btn btn-ghost btn-circle">
-        <div class="indicator">
-          <IconBell />
-          <span class="badge badge-xs badge-primary indicator-item"></span>
-        </div>
-      </button>
+      <!--Withdraw End-->
+
+      <!--Notification Start-->
+      <div class="dropdown dropdown-end">
+        <button class="btn btn-ghost btn-circle m-1">
+          <div class="indicator">
+            <IconBell />
+            <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
+          </div>
+        </button>
+        <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]">
+            <li v-for="notification in notifications" :key="notification.id">
+              <a>
+                <div class="notification__body">{{ notification.message }}</div>
+                <!--<div class="notification__footer">{{ notification.author }} {{ notification.createdAt }}</div>-->
+              </a>
+            </li>
+        </ul>
+      </div>
+      <!--Notification End-->
+
       <div class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="avatar">
           <div class="w-10 rounded-full flex justify-center">
@@ -84,12 +101,14 @@ import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import { NETWORK } from '@/constant/index'
+import { useNotification } from "@/composables/useNotification";
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
   balance: string
 }>()
+const { notifications, isUnread } = useNotification() 
 </script>
 
 <style scoped></style>
