@@ -81,6 +81,10 @@ export const updateUser = async (req: Request, res: Response) => {
       where: {
         address: address,
       },
+      select: {
+        address: true,
+        name: true,
+      },
     });
 
     await prisma.$disconnect();
@@ -93,6 +97,10 @@ export const updateUser = async (req: Request, res: Response) => {
       },
       data: {
         name,
+      },
+      select: {
+        address: true,
+        name: true,
       },
     });
 

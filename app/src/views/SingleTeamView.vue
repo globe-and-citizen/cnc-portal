@@ -64,11 +64,7 @@
         </DeleteConfirmModal>
       </div>
       <div class="flex justify-end">
-        <button
-          class="btn btn-primary btn-disabled"
-          @click="bankModal = true"
-          v-if="!team.bankAddress"
-        >
+        <button class="btn btn-primary btn" @click="bankModal = true" v-if="!team.bankAddress">
           Create Bank Account Smart Contract
         </button>
         <div class="flex gap-2">
@@ -226,7 +222,6 @@ const filteredMembers = ref<User[]>([])
 
 const route = useRoute()
 const router = useRouter()
-const isLoading = ref(false)
 const {
   execute: pushTip,
   isLoading: pushTipLoading,

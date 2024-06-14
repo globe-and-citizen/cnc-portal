@@ -13,9 +13,8 @@ import ToastContainer from '@/components/ToastContainer.vue'
 import { isAddress } from 'ethers'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
-import { ToastType } from './types'
-import { useUpdateUser } from '@/composables/apis/user'
 import { useErrorHandler } from './composables/errorHandler'
+import { useCustomFetch } from './composables/useCustomFetch'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const toggleSide = ref(true)
@@ -46,27 +45,30 @@ const updateUserInput = ref({
   address: address.value,
   isValid: true
 })
+const updateUserInputString = ref(JSON.stringify(updateUserInput.value))
 const {
-  userIsUpdating,
-  isSuccess: userUpdateSuccess,
+  isFetching: userIsUpdating,
+  response: userUpdateResponse,
   error: userUpdateError,
   execute: updateUserAPI
-} = useUpdateUser()
+} = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInputString).json()
 watch(userUpdateError, () => {
   if (userUpdateError.value) {
     useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
   }
 })
-watch(userUpdateSuccess, () => {
-  if (userUpdateSuccess.value) {
+watch(userUpdateResponse, async () => {
+  if (userUpdateResponse.value?.ok) {
     addSuccessToast('User updated')
+    const user = await userUpdateResponse.value?.json()
+    userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
     showUserModal.value = false
-    userUpdateSuccess.value = false
   }
 })
+
 const handleUserUpdate = async () => {
-  const user = await updateUserAPI(toRaw(updateUserInput.value))
-  userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
+  updateUserInputString.value = JSON.stringify(toRaw(updateUserInput.value))
+  await updateUserAPI()
 }
 watch(
   () => updateUserInput.value.address,

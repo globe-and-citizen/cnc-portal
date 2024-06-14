@@ -8,7 +8,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
-import { useGetNonce, useGetUser } from './apis/user'
+import { useCustomFetch } from './useCustomFetch'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -31,13 +31,15 @@ async function siwe() {
   try {
     isProcessing.value = true
     const address = await ethersJsAdapter.getAddress()
-    const nonce = await useGetNonce().execute(address)
+    const response = await useCustomFetch<string>(`user/nonce/${address}`).get().json()
+    const nonce = response.data.value.nonce
     const statement = 'Sign in with Ethereum to the app.'
     const siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
     await siweAuthService.authenticateUser()
-    const userData: Partial<User> = await useGetUser().execute(address)
+    const result = await useCustomFetch<string>(`user/${address}`).get().json()
+    const userData: Partial<User> = result.data.value
     useUserDataStore().setUserData(
       userData.name || '',
       userData.address || '',
