@@ -56,7 +56,7 @@
           :showDeleteConfirmModal="showDeleteConfirmModal"
           :isLoading="teamIsDeleting"
           @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
-          @deleteItem="deleteTeam()"
+          @deleteItem="async () => deleteTeamAPI()"
         >
           Are you sure you want to delete the team
           <span class="font-bold">{{ team.name }}</span
@@ -155,7 +155,9 @@
         <div class="modal-action justify-center">
           <!-- if there is a button in form, it will close the modal -->
           <LoadingButton color="primary min-w-24" v-if="teamIsUpdating" />
-          <button v-else class="btn btn-primary" @click="updateTeam">Submit</button>
+          <button v-else class="btn btn-primary" @click="async () => await updateTeamAPI()">
+            Submit
+          </button>
 
           <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
         </div>
@@ -201,7 +203,6 @@ import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip, useSendTip } from '@/composables/tips'
 
 import { useErrorHandler } from '@/composables/errorHandler'
-import { useDeleteMember, useAddMember } from '@/composables/apis/teamMember'
 import {
   useBankBalance,
   useBankDeposit,
@@ -212,9 +213,9 @@ import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { NETWORK } from '@/constant'
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
-import { useUpdateTeam, useDeleteTeam, useGetTeam } from '@/composables/apis/team'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { useSearchUser } from '@/composables/apis/user'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { AuthService } from '@/services/authService'
 
 const showDeleteConfirmModal = ref(false)
 
@@ -367,81 +368,77 @@ const handleUpdateForm = async () => {
     }
   })
 }
+const addMembersPayload = ref('')
+
 const {
   execute: executeAddMembers,
-  isSuccess: addMembersSuccess,
+  response: addMemberResponse,
   error: addMembersError,
-  data: teamMembersData,
-  addingMembers: addMembersLoading
-} = useAddMember()
+  isFetching: addMembersLoading
+} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
+  immediate: false
+})
+  .post(addMembersPayload)
+  .json()
 watch(addMembersError, () => {
   if (addMembersError.value) {
     useErrorHandler().handleError(new Error(addMembersError.value))
   }
 })
-watch(addMembersSuccess, async () => {
-  if (addMembersSuccess.value) {
+watch(addMemberResponse, async () => {
+  if (addMemberResponse.value?.ok) {
     addSuccessToast('Members added successfully')
-    const teamData = await getTeamAPI(String(route.params.id))
-    if (teamData.value) {
-      team.value = teamData.value.team
-    }
+    await getTeamAPI()
     showAddMemberForm.value = false
-    addMembersSuccess.value = false
   }
 })
 const handleAddMembers = async () => {
-  const members = teamMembers.value.map((member) => {
-    return {
-      name: member.name,
-      address: member.address
-    }
+  addMembersPayload.value = JSON.stringify({
+    data: teamMembers.value.map((member) => {
+      return {
+        name: member.name,
+        address: member.address
+      }
+    })
   })
-  await executeAddMembers(String(route.params.id), members)
+  await executeAddMembers()
 }
 const {
-  data: teamData,
   error: getTeamError,
-  isSuccess: getTeamSuccess,
-  teamIsFetching,
+  isFetching: teamIsFetching,
+  response: teamResponse,
   execute: getTeamAPI
-} = useGetTeam()
-watch(teamIsFetching, () => {
-  if (teamIsFetching.value) {
-    isLoading.value = true
-  } else {
-    isLoading.value = false
+} = useCustomFetch(`teams/${String(route.params.id)}`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const queryParams = new URLSearchParams()
+    if (query.value) {
+      queryParams.append('query', query.value)
+      url += '?' + queryParams.toString()
+    }
+    return { options, url, cancel }
   }
 })
+  .get()
+  .json()
+
 watch(getTeamError, () => {
   if (getTeamError.value) {
     useErrorHandler().handleError(new Error(getTeamError.value))
   }
 })
-watch(getTeamSuccess, () => {
-  if (getTeamSuccess.value) {
-    team.value = teamData.value.team
-    getTeamSuccess.value = false
+watch(teamResponse, async () => {
+  if (teamResponse.value?.ok) {
+    const teamData = await teamResponse.value.json()
+    team.value = teamData.team
+    cname.value = team.value.name
+    cdesc.value = team.value.description
+    bankSmartContractAddress.value = team.value.bankAddress
   }
 })
+
 onMounted(async () => {
-  const id = route.params.id
-  try {
-    const teamData = await getTeamAPI(String(id))
-    if (teamData.value) {
-      team.value = teamData.value.team
-      cname.value = team.value.name
-      cdesc.value = team.value.description
-      bankSmartContractAddress.value = team.value.bankAddress
-    } else {
-      useErrorHandler().handleError(new Error('Failed to fetch team'))
-    }
-    if (team.value.bankAddress) {
-      await getBalance(team.value.bankAddress)
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
+  await getTeamAPI()
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
@@ -450,83 +447,98 @@ const updateTeamModalOpen = async () => {
 
 const {
   error: deleteMemberError,
-  isSuccess: deleteMemberSuccess,
-  memberIsDeleting,
+  response: deleteMemberResponse,
+  isFetching: memberIsDeleting,
   execute: deleteMemberAPI
-} = useDeleteMember()
+} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: deleteMemberAddress.value,
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${AuthService.getToken()}`
+    }
+    return { options, url, cancel }
+  }
+})
+  .delete()
+  .json()
+watch(deleteMemberResponse, () => {
+  if (deleteMemberResponse.value?.ok) {
+    addSuccessToast('Member deleted successfully')
+    getTeamAPI()
+  }
+})
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     useErrorHandler().handleError(new Error(deleteMemberError.value))
     showDeleteConfirmModal.value = false
   }
 })
-watch(deleteMemberSuccess, async () => {
-  if (deleteMemberSuccess.value) {
-    addSuccessToast('Member deleted successfully')
-    deleteMemberSuccess.value = false
-    const teamData = await getTeamAPI(String(route.params.id))
-    if (teamData.value) {
-      team.value = teamData.value.team
-    }
-  }
-})
-
+const deleteMemberId = ref('')
+const deleteMemberAddress = ref('')
 const deleteMember = async (id: string, address: string) => {
-  await deleteMemberAPI(id, address)
+  deleteMemberId.value = id
+  deleteMemberAddress.value = address
+  await deleteMemberAPI()
 }
 
 const {
   execute: updateTeamAPI,
-  teamIsUpdating,
+  isFetching: teamIsUpdating,
   error: updateTeamError,
-  isSuccess: updateTeamSuccess
-} = useUpdateTeam()
+  response: updateTeamResponse
+} = useCustomFetch(`teams/${String(route.params.id)}`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const body = {
+      name: cname.value,
+      description: cdesc.value,
+      bankAddress: bankSmartContractAddress.value
+    }
+    options.body = JSON.stringify(body)
+    return { options, url, cancel }
+  }
+})
+  .json()
+  .put()
 watch(updateTeamError, () => {
   if (updateTeamError.value) {
     useErrorHandler().handleError(new Error(updateTeamError.value))
   }
 })
-watch(updateTeamSuccess, () => {
-  if (updateTeamSuccess.value) {
+watch(updateTeamResponse, () => {
+  if (updateTeamResponse.value?.ok) {
     addSuccessToast('Team updated successfully')
-    team.value.name = cname.value
-    team.value.description = cdesc.value
-    team.value.bankAddress = bankSmartContractAddress.value
+    getTeamAPI()
     showModal.value = false
-    updateTeamSuccess.value = false
   }
 })
-const updateTeam = async () => {
-  const id = route.params.id
-  await updateTeamAPI(String(id), {
-    name: cname.value,
-    description: cdesc.value,
-    bankAddress: bankSmartContractAddress.value
-  })
-}
+
 const {
   execute: deleteTeamAPI,
-  teamIsDeleting,
+  isFetching: teamIsDeleting,
   error: deleteTeamError,
-  isSuccess: deleteTeamSuccess
-} = useDeleteTeam()
+  response: deleteTeamResponse
+} = useCustomFetch(`teams/${String(route.params.id)}`, {
+  immediate: false
+})
+  .delete()
+  .json()
 
 watch(deleteTeamError, () => {
   if (deleteTeamError.value) {
     useErrorHandler().handleError(new Error(deleteTeamError.value))
   }
 })
-watch(deleteTeamSuccess, () => {
-  if (deleteTeamSuccess.value) {
+watch(deleteTeamResponse, () => {
+  if (deleteTeamResponse.value?.ok) {
     addSuccessToast('Team deleted successfully')
-    deleteTeamSuccess.value = false
     showDeleteConfirmModal.value = !showDeleteConfirmModal.value
     router.push('/teams')
   }
 })
-const deleteTeam = async () => {
-  await deleteTeamAPI(String(route.params.id))
-}
+
 const deployBankContract = async () => {
   const id = route.params.id
   await createBankContract(String(id))
@@ -550,20 +562,47 @@ const transferFromBank = async (to: string, amount: string) => {
     await getBalance(team.value.bankAddress)
   }
 }
+const searchUserName = ref('')
+const searchUserAddress = ref('')
+const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+watch(searchUserResponse, () => {
+  if (searchUserResponse.value?.ok && users.value?.users) {
+    foundUsers.value = users.value.users
+  }
+})
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
-    const users = await useSearchUser().execute(input.name, input.address)
-    // const users = await userApi.searchUser(input.name, input.address)
-    foundUsers.value = users
-    console.log(users)
+    searchUserName.value = input.name
+    searchUserAddress.value = input.address
+    if (searchUserName.value || searchUserAddress.value) {
+      await executeSearchUser()
+    }
   } catch (error) {
-    foundUsers.value = []
     return useErrorHandler().handleError(error)
   }
 }
-const searchMembers = async (query: string) => {
+const query = ref('')
+const searchMembers = async (queryIn: string) => {
   try {
-    const result = await getTeamAPI(String(route.params.id), query)
+    query.value = queryIn
+    const result = await getTeamAPI()
     filteredMembers.value = result?.members || []
   } catch (error) {
     filteredMembers.value = []
