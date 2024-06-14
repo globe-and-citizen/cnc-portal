@@ -29,7 +29,7 @@
           className="btn btn-secondary w-full text-white hidden"
           @click="emits('sendTip', tipAmount)"
         >
-         send To CNC Account 
+          send To CNC Account
         </button>
       </div>
     </div>
