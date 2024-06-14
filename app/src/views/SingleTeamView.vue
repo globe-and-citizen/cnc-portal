@@ -187,7 +187,7 @@ import CreateBankModal from '@/components/modals/CreateBankModal.vue'
 import DepositBankModal from '@/components/modals/DepositBankModal.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
-import { ToastType, type Member, type User, type Team } from '@/types'
+import { type Member, type User, type Team } from '@/types'
 import { FetchTeamAPI } from '@/apis/teamApi'
 
 import { isAddress } from 'ethers' // ethers v6
@@ -210,7 +210,7 @@ const userApi = new FetchUserAPI()
 
 const showDeleteConfirmModal = ref(false)
 
-const { addToast } = useToastStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 const foundUsers = ref<User[]>([])
 const filteredMembers = ref<User[]>([])
@@ -256,73 +256,57 @@ const {
 } = useBankTransfer()
 watch(pushTipError, async () => {
   if (pushTipError.value) {
-    addToast({
-      message: pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip',
-      type: ToastType.Error,
-      timeout: 5000
-    })
+    addErrorToast(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
   }
 })
 watch(sendTipError, () => {
   if (sendTipError.value) {
-    addToast({
-      message: sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip',
-      type: ToastType.Error,
-      timeout: 5000
-    })
+    addErrorToast(sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip')
   }
 })
 watch(pushTipSuccess, () => {
   if (pushTipSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Tips pushed successfully', timeout: 5000 })
+    addSuccessToast('Tips pushed successfully')
   }
 })
 watch(sendTipSuccess, async () => {
   if (sendTipSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Tips sent successfully', timeout: 5000 })
+    addSuccessToast('Tips sent successfully')
   }
 })
 watch(balanceError, () => {
   if (balanceError.value) {
-    addToast({ type: ToastType.Error, message: 'Failed to fetch team balance', timeout: 5000 })
+    addErrorToast('Failed to fetch team balance')
   }
 })
 watch(createBankError, () => {
   if (createBankError.value) {
-    addToast({
-      type: ToastType.Error,
-      message: 'Failed to create bank contract',
-      timeout: 5000
-    })
+    addErrorToast('Failed to create bank contract')
   }
 })
 watch(createBankSuccess, () => {
   if (createBankSuccess.value) {
-    addToast({
-      type: ToastType.Success,
-      message: 'Bank contract created successfully',
-      timeout: 5000
-    })
+    addSuccessToast('Bank contract created successfully')
   }
 })
 watch(depositSuccess, () => {
   if (depositSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Deposited successfully', timeout: 5000 })
+    addSuccessToast('Deposited successfully')
   }
 })
 watch(depositError, () => {
   if (depositError.value) {
-    addToast({ type: ToastType.Error, message: 'Failed to deposit', timeout: 5000 })
+    addErrorToast('Failed to deposit')
   }
 })
 watch(transferSuccess, () => {
   if (transferSuccess.value) {
-    addToast({ type: ToastType.Success, message: 'Transferred successfully', timeout: 5000 })
+    addSuccessToast('Transferred successfully')
   }
 })
 watch(transferError, () => {
   if (transferError.value) {
-    addToast({ type: ToastType.Error, message: 'Failed to transfer', timeout: 5000 })
+    addErrorToast('Failed to transfer')
   }
 })
 
@@ -383,7 +367,7 @@ const handleAddMembers = async () => {
       String(route.params.id)
     )
     if (members && members.length > 0) {
-      addToast({ type: ToastType.Success, message: 'Members added successfully', timeout: 5000 })
+      addSuccessToast('Members added successfully')
       team.value.members = members
       showAddMemberForm.value = false
     }
@@ -418,7 +402,7 @@ const deleteMember = async (id: string, address: string) => {
   try {
     const memberRes: any = await teamApi.deleteMember(id, address)
     if (memberRes) {
-      addToast({ type: ToastType.Success, message: 'Members deleted successfully', timeout: 5000 })
+      addSuccessToast('Members deleted successfully')
 
       team.value.members.splice(
         team.value.members.findIndex((member) => member.address === address),
@@ -440,7 +424,7 @@ const updateTeam = async () => {
   try {
     const teamRes = await teamApi.updateTeam(String(id), teamObject)
     if (teamRes) {
-      addToast({ type: ToastType.Success, message: 'Team updated successfully', timeout: 5000 })
+      addSuccessToast('Team updated successfully')
       team.value.name = teamRes.name
       team.value.description = teamRes.description
       team.value.bankAddress = teamRes.bankAddress
@@ -456,7 +440,7 @@ const deleteTeam = async () => {
   try {
     const response: any = await teamApi.deleteTeam(String(id))
     if (response) {
-      addToast({ type: ToastType.Success, message: 'Team deleted successfully', timeout: 5000 })
+      addSuccessToast('Team deleted successfully')
       router.push('/teams')
     }
   } catch (error) {

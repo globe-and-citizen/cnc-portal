@@ -39,7 +39,6 @@ import { useUserDataStore } from '@/stores/user'
 import type { MemberInput } from '@/types'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
 import { ref } from 'vue'
-import AddMemberCard from './AddMemberCard.vue'
 
 const emits = defineEmits(['deleteMember'])
 const showDeleteConfirmModal = ref(false)
