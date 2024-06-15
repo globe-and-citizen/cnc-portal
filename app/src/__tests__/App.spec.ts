@@ -23,6 +23,14 @@ vi.mock('@/stores/useToastStore', () => {
 
 describe('App.vue', () => {
   describe('Toast', () => {
+    // addSuccessToast,
+    // addInfoToast,
+    // addWarningToast,
+    // addErrorToast
+    let addSuccessToast: ReturnType<typeof vi.fn>
+    let addInfoToast: ReturnType<typeof vi.fn>
+    let addWarningToast: ReturnType<typeof vi.fn>
+    let addErrorToast: ReturnType<typeof vi.fn>
     let addToast: ReturnType<typeof vi.fn>
     let balanceError: any
     let withdrawError: any
@@ -33,8 +41,18 @@ describe('App.vue', () => {
 
       // Mock the useToastStore
       addToast = vi.fn()
+      addSuccessToast = vi.fn()
+      addInfoToast = vi.fn()
+      addWarningToast = vi.fn()
+      addErrorToast = vi.fn()
       const useToastStoreMock = useToastStore as unknown as ReturnType<typeof vi.fn>
-      useToastStoreMock.mockReturnValue({ addToast })
+      useToastStoreMock.mockReturnValue({
+        addToast,
+        addSuccessToast,
+        addInfoToast,
+        addWarningToast,
+        addErrorToast
+      })
 
       // Define reactive variables
       balanceError = ref(null)
@@ -66,11 +84,7 @@ describe('App.vue', () => {
       balanceError.value = { reason: 'New balance error' }
       await new Promise((resolve) => setTimeout(resolve, 0)) // wait for the next tick
 
-      expect(addToast).toHaveBeenCalledWith({
-        message: 'New balance error',
-        type: 'error',
-        timeout: 5000
-      })
+      expect(addErrorToast).toHaveBeenCalledWith('New balance error')
     })
 
     it('should add toast on withdrawError', async () => {
@@ -79,11 +93,7 @@ describe('App.vue', () => {
       withdrawError.value = { reason: 'New withdraw error' }
       await new Promise((resolve) => setTimeout(resolve, 0)) // wait for the next tick
 
-      expect(addToast).toHaveBeenCalledWith({
-        message: 'New withdraw error',
-        type: 'error',
-        timeout: 5000
-      })
+      expect(addErrorToast).toHaveBeenCalledWith('New withdraw error')
     })
 
     it('should add toast on withdrawSuccess', async () => {
@@ -93,11 +103,7 @@ describe('App.vue', () => {
       withdrawError.value = { reason: 'Withdraw success message' }
       await new Promise((resolve) => setTimeout(resolve, 0)) // wait for the next tick
 
-      expect(addToast).toHaveBeenCalledWith({
-        message: 'Withdraw success message',
-        type: 'success',
-        timeout: 5000
-      })
+      expect(addSuccessToast).toHaveBeenCalledWith('Tips withdrawn successfully')
     })
   })
 })

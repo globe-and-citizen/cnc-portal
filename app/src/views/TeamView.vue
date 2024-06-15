@@ -32,18 +32,19 @@ import { isAddress } from 'ethers' // ethers v6
 
 import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '@/components/TeamCard.vue'
-import { ToastType, type TeamInput, type User } from '@/types'
+import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { FetchUserAPI } from '@/apis/userApi'
 import { FetchTeamAPI } from '@/apis/teamApi'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { TeamsResponse } from '@/types/index'
+import { logout } from '@/utils/navBarUtil'
 const router = useRouter()
 
 const userApi = new FetchUserAPI()
 
-const { addToast } = useToastStore()
+const { addSuccessToast } = useToastStore()
 
 const teamApi = new FetchTeamAPI()
 
@@ -60,8 +61,12 @@ const {
   data: teams,
   execute: executeFetchTeams
 } = useCustomFetch<TeamsResponse>('teams').json()
+
 watch(teamError, () => {
   if (teamError.value) {
+    if (teamError.value === 'Unauthorized') {
+      logout()
+    }
     return useErrorHandler().handleError(new Error(teamError.value))
   }
 })
@@ -101,7 +106,7 @@ const handleAddTeam = async () => {
   try {
     const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
     if (createdTeam && Object.keys(createdTeam).length !== 0) {
-      addToast({ type: ToastType.Success, message: 'Team created successfully', timeout: 5000 })
+      addSuccessToast('Team created successfully')
       showAddTeamModal.value = !showAddTeamModal.value
       executeFetchTeams()
     }
