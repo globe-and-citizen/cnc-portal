@@ -46,20 +46,14 @@ const showUserModal = ref(false)
 
 const updateUserInput = ref({
   name: name.value,
-  address: address.value,
-  isValid: true
+  address: address.value
 })
 const handleUserUpdate = async () => {
   const user = await userApi.updateUser(toRaw(updateUserInput.value))
   userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
   showUserModal.value = false
 }
-watch(
-  () => updateUserInput.value.address,
-  (newVal) => {
-    updateUserInput.value.isValid = isAddress(newVal)
-  }
-)
+
 // Handle authentication change (optional)
 watch(
   () => userStore.isAuth,
@@ -124,27 +118,23 @@ watch(withdrawSuccess, () => {
           </div>
           <div v-if="toggleSide" @toggleSideButton="handleChange">
             <Drawer
-              :name="name"
-              :address="address"
-              @toggleEditUserModal="
+              :user="{ name, address }"
+              @openEditUserModal="
                 () => {
                   toggleModal = true
-                  updateUserInput.name = name
-                  updateUserInput.address = address
-                  // showUserModal = !showUserModal
+                  updateUserInput = { name, address }
                 }
               "
             />
-
-            <ModalComponent v-model="toggleModal">
-              <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
-              <EditUserForm v-model="updateUserInput" @submitEditUser="handleUserUpdate"/>
-            </ModalComponent>
           </div>
         </div>
       </div>
     </div>
 
+    <ModalComponent v-model="toggleModal">
+      <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
+      <EditUserForm v-model="updateUserInput" @submitEditUser="handleUserUpdate" />
+    </ModalComponent>
     <ToastContainer position="bottom-right" />
   </div>
 </template>
