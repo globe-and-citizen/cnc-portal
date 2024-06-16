@@ -4,7 +4,7 @@
   >
     <div
       class="w-full flex flex-row justify-start gap-4 card bg-base-200 px-5 py-4 cursor-pointer"
-      @click="emits('toggleEditUserModal')"
+      @click="emits('openEditUserModal')"
     >
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar flex items-center">
         <div class="rounded-full">
@@ -16,12 +16,10 @@
         </div>
       </div>
       <div class="flex flex-col">
-        <p class="font-semibold text-lg">{{ name ? name : 'User' }}</p>
+        <p class="font-semibold text-lg">{{ user.name ? user.name : 'User' }}</p>
         <div class="flex flex-col"></div>
-        <p class="text-slate-500" v-if="address">
-          {{
-            address ? address.substring(0, 10) + '...' + address.substring(address.length - 10) : ''
-          }}
+        <p class="text-slate-500">
+          {{ formatedUserAddress }}
         </p>
       </div>
     </div>
@@ -61,11 +59,23 @@ li {
 import IconHome from '@/components/icons/IconHome.vue'
 import IconUsers from '@/components/icons/IconUsers.vue'
 import IconNote from '@/components/icons/IconNote.vue'
+import { computed } from 'vue'
 
-// Explicitly define the props with correct types
-const emits = defineEmits(['toggleEditUserModal'])
-defineProps<{
+interface User {
   name: string
   address: string
+}
+// Explicitly define the props with correct types
+const emits = defineEmits(['openEditUserModal'])
+const props = defineProps<{
+  user: User
 }>()
+
+const formatedUserAddress = computed(() => {
+  return props.user.address
+    ? props.user.address.substring(0, 10) +
+        '...' +
+        props.user.address.substring(props.user.address.length - 10)
+    : ''
+})
 </script>
