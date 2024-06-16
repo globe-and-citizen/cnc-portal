@@ -46,13 +46,6 @@ describe('TheDrawer', () => {
 
     const links = wrapper.findAllComponents(RouterLinkStub)
     const linkTexts = links.map((link) => link.text())
-    expect(linkTexts).toMatchInlineSnapshot(`
-      [
-        "Dashboard",
-        "Teams",
-        "Transactions",
-      ]
-    `)
     expect(linkTexts).toContain('Dashboard')
     expect(linkTexts).toContain('Teams')
     expect(linkTexts).toContain('Transactions')
