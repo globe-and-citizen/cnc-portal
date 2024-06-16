@@ -7,8 +7,9 @@ import { useUserDataStore } from '@/stores/user'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
-import EditUserModal from '@/components/modals/EditUserModal.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import EditUserForm from '@/components/modals/EditUserForm.vue'
 
 import { isAddress } from 'ethers'
 import { FetchUserAPI } from './apis/userApi'
@@ -19,6 +20,8 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
+const toggleModal = ref(false)
+
 function handleChange() {
   toggleSide.value = !toggleSide.value
 }
@@ -100,7 +103,7 @@ watch(withdrawSuccess, () => {
           () => {
             updateUserInput.name = name
             updateUserInput.address = address
-            showUserModal = !showUserModal
+            toggleModal = true
           }
         "
         @withdraw="withdraw()"
@@ -125,18 +128,18 @@ watch(withdrawSuccess, () => {
               :address="address"
               @toggleEditUserModal="
                 () => {
+                  toggleModal = true
                   updateUserInput.name = name
                   updateUserInput.address = address
-                  showUserModal = !showUserModal
+                  // showUserModal = !showUserModal
                 }
               "
             />
-            <EditUserModal
-              :showEditUserModal="showUserModal"
-              v-model:updateUserInput="updateUserInput"
-              @updateUser="handleUserUpdate"
-              @toggleEditUserModal="showUserModal = !showUserModal"
-            />
+
+            <ModalComponent v-model="toggleModal">
+              <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
+              <EditUserForm v-model="updateUserInput" @submitEditUser="handleUserUpdate"/>
+            </ModalComponent>
           </div>
         </div>
       </div>
