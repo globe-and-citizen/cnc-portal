@@ -16,17 +16,23 @@
     </label>
   </div>
   <div class="modal-action justify-center">
-    <button class="btn btn-primary" @click="emits('submitEditUser')">Save</button>
+    <LoadingButton v-if="isLoading" color="primary min-w-24" />
+    <button v-else class="btn btn-primary" @click="emits('submitEditUser')">Save</button>
   </div>
 </template>
 
 <script setup lang="ts">
+import LoadingButton from '../LoadingButton.vue'
 const user = defineModel({
   default: {
     name: '',
     address: ''
   }
 })
+
+defineProps<{
+  isLoading: boolean
+}>()
 const emits = defineEmits(['submitEditUser'])
 </script>
 

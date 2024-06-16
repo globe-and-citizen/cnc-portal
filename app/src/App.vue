@@ -18,7 +18,7 @@ import { useCustomFetch } from './composables/useCustomFetch'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const toggleSide = ref(true)
-const toggleModal = ref(false)
+const showModal = ref(false)
 
 function handleChange() {
   toggleSide.value = !toggleSide.value
@@ -40,39 +40,54 @@ const {
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
 
-const showUserModal = ref(false)
 
 const updateUserInput = ref({
   name: name.value,
   address: address.value
 })
-const updateUserInputString = ref(JSON.stringify(updateUserInput.value))
 const {
   isFetching: userIsUpdating,
   response: userUpdateResponse,
   error: userUpdateError,
-  execute: updateUserAPI
-} = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInputString).json()
+  execute: executeUpdateUser
+} = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInput).json()
+
 watch(userUpdateError, () => {
   if (userUpdateError.value) {
     useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
   }
 })
+
 watch(userUpdateResponse, async () => {
   if (userUpdateResponse.value?.ok) {
     addSuccessToast('User updated')
     const user = await userUpdateResponse.value?.json()
     userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
-    showUserModal.value = false
   }
 })
 
 const handleUserUpdate = async () => {
-  updateUserInputString.value = JSON.stringify(toRaw(updateUserInput.value))
-  await updateUserAPI()
+  await executeUpdateUser()
 }
 
+/**
+ * Watch and set showModal to false when 
+ *   userIsUpdating is false
+ *   userUpdateError is null
+ *   userUpdateResponse is ok
+ */
+
+watch([() => userIsUpdating.value, () => userUpdateError.value, () => userUpdateResponse.value], () => {
+  /**
+   * Toggle it the update is successful and with no errors
+   */
+  if (!userIsUpdating.value && !userUpdateError.value && userUpdateResponse.value?.ok) {
+    showModal.value = false
+  }
+})
+
 // Handle authentication change (optional)
+// Chek if user is authenticated and get balance
 watch(
   () => userStore.isAuth,
   (isAuth) => {
@@ -104,18 +119,12 @@ watch(withdrawSuccess, () => {
   <div class="min-h-screen m-0 bg-base-200">
     <RouterView name="login" />
     <div v-if="userStore.isAuth">
-      <!-- 
-        for toggleTheme
-        @toggleTheme="() => toggleDark()" 
-        :isDark="isDark"
-      -->
       <NavBar
         @toggleSideButton="handleChange"
         @toggleEditUserModal="
           () => {
-            updateUserInput.name = name
-            updateUserInput.address = address
-            toggleModal = true
+            updateUserInput = { name, address }
+            showModal = true
           }
         "
         @withdraw="withdraw()"
@@ -139,7 +148,7 @@ watch(withdrawSuccess, () => {
               :user="{ name, address }"
               @openEditUserModal="
                 () => {
-                  toggleModal = true
+                  showModal = true
                   updateUserInput = { name, address }
                 }
               "
@@ -149,10 +158,13 @@ watch(withdrawSuccess, () => {
       </div>
     </div>
 
-    <ModalComponent v-model="toggleModal">
+    <ModalComponent v-model="showModal">
       <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
-      <EditUserForm v-model="updateUserInput" @submitEditUser="handleUserUpdate" 
-      :isLoading="userIsUpdating"/>
+      <EditUserForm
+        v-model="updateUserInput"
+        @submitEditUser="handleUserUpdate"
+        :isLoading="userIsUpdating"
+      />
     </ModalComponent>
     <ToastContainer position="bottom-right" />
   </div>
