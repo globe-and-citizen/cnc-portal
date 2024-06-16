@@ -97,7 +97,8 @@
 
       <div class="modal-action justify-center">
         <!-- if there is a button in form, it will close the modal -->
-        <button class="btn btn-primary" @click="emits('addTeam')">Submit</button>
+        <LoadingButton v-if="isLoading" color="primary min-w-24" />
+        <button class="btn btn-primary" @click="emits('addTeam')" v-else>Submit</button>
 
         <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
       </div>
@@ -109,6 +110,7 @@ import type { TeamInput, User } from '@/types'
 import { ref, watch } from 'vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue'
+import LoadingButton from '../LoadingButton.vue'
 
 const emits = defineEmits([
   'addTeam',
@@ -122,6 +124,7 @@ const props = defineProps<{
   showAddTeamModal: boolean
   team: TeamInput
   users: User[]
+  isLoading: boolean
 }>()
 const dropdown = ref<boolean>(true)
 const team = ref(props.team)

@@ -9,6 +9,7 @@
     <span class="flex justify-center items-center">Add Member</span>
   </div>
   <AddMemberModal
+    :isLoading="isLoading"
     :users="users"
     :formData="formData"
     :showAddMemberForm="showAddMemberForm"
@@ -30,6 +31,7 @@ const props = defineProps<{
   formData: Array<{ name: string; address: string; isValid: boolean }>
   showAddMemberForm: boolean
   users: User[]
+  isLoading: boolean
 }>()
 
 const emits = defineEmits([

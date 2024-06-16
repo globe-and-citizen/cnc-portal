@@ -1,4 +1,3 @@
-import { FetchUserAPI } from '@/apis/userApi'
 import { SiweAuthAPI } from '@/apis/authApi'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
@@ -9,8 +8,8 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
+import { useCustomFetch } from './useCustomFetch'
 
-const fetchUserApi = new FetchUserAPI()
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
 
@@ -32,13 +31,15 @@ async function siwe() {
   try {
     isProcessing.value = true
     const address = await ethersJsAdapter.getAddress()
-    const nonce = await fetchUserApi.getNonce(address)
+    const response = await useCustomFetch<string>(`user/nonce/${address}`).get().json()
+    const nonce = response.data.value.nonce
     const statement = 'Sign in with Ethereum to the app.'
     const siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
     const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
     await siweAuthService.authenticateUser()
-    const userData: Partial<User> = await fetchUserApi.getUser(address)
+    const result = await useCustomFetch<string>(`user/${address}`).get().json()
+    const userData: Partial<User> = result.data.value
     useUserDataStore().setUserData(
       userData.name || '',
       userData.address || '',

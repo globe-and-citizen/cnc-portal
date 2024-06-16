@@ -1,26 +1,31 @@
 <template>
-  <div class="pt-10">
-    <h2 class="pl-5">Team</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
-      <TeamCard
-        v-for="team in teams?.teams"
-        :key="team.id"
-        :team="team"
-        class="cursor-pointer"
-        @click="navigateToTeam(team.id)"
-      />
+  <div class="min-h-screen flex justify-center">
+    <span v-if="teamsAreFetching" class="loading loading-spinner loading-lg"></span>
 
-      <AddTeamCard
-        @addTeam="handleAddTeam"
-        @searchUsers="(input) => searchUsers(input)"
-        :users="foundUsers"
-        v-model:showAddTeamModal="showAddTeamModal"
-        v-model:team="team"
-        @updateAddTeamModal="handleupdateAddTeamModal"
-        @addInput="addInput"
-        @removeInput="removeInput"
-        @toggleAddTeamModal="showAddTeamModal = !showAddTeamModal"
-      />
+    <div class="pt-10" v-else>
+      <h2 class="pl-5">Team</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
+        <TeamCard
+          v-for="team in teams?.teams"
+          :key="team.id"
+          :team="team"
+          class="cursor-pointer"
+          @click="navigateToTeam(team.id)"
+        />
+
+        <AddTeamCard
+          :isLoading="createTeamFetching"
+          @addTeam="executeCreateTeam"
+          @searchUsers="(input) => searchUsers(input)"
+          :users="foundUsers"
+          v-model:showAddTeamModal="showAddTeamModal"
+          v-model:team="team"
+          @updateAddTeamModal="handleupdateAddTeamModal"
+          @addInput="addInput"
+          @removeInput="removeInput"
+          @toggleAddTeamModal="showAddTeamModal = !showAddTeamModal"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -34,19 +39,14 @@ import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '@/components/TeamCard.vue'
 import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { FetchUserAPI } from '@/apis/userApi'
-import { FetchTeamAPI } from '@/apis/teamApi'
 import { useErrorHandler } from '@/composables/errorHandler'
+
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { TeamsResponse } from '@/types/index'
 import { logout } from '@/utils/navBarUtil'
+import type { TeamsResponse } from '@/types'
 const router = useRouter()
 
-const userApi = new FetchUserAPI()
-
 const { addSuccessToast } = useToastStore()
-
-const teamApi = new FetchTeamAPI()
 
 // const teams = ref<Team[]>([])
 /**
@@ -56,7 +56,7 @@ const teamApi = new FetchTeamAPI()
  */
 
 const {
-  isFetching: teamIsFetching,
+  isFetching: teamsAreFetching,
   error: teamError,
   data: teams,
   execute: executeFetchTeams
@@ -96,35 +96,79 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
     }
   })
 }
-const handleAddTeam = async () => {
-  const members = team.value.members.map((member) => {
-    return {
-      name: member.name,
-      address: member.address
-    }
-  })
-  try {
-    const createdTeam = await teamApi.createTeam(team.value.name, team.value.description, members)
-    if (createdTeam && Object.keys(createdTeam).length !== 0) {
-      addSuccessToast('Team created successfully')
-      showAddTeamModal.value = !showAddTeamModal.value
-      executeFetchTeams()
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
+const teamPayload = ref(JSON.stringify(team.value))
+
+const {
+  isFetching: createTeamFetching,
+  error: createTeamError,
+  execute: executeCreateTeam,
+  response: createTeamResponse
+} = useCustomFetch('teams', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    teamPayload.value = JSON.stringify({
+      name: team.value.name,
+      description: team.value.description,
+      members: team.value.members.map((member) => {
+        return {
+          name: member.name,
+          address: member.address
+        }
+      })
+    })
+    options.body = teamPayload.value
+    return { options, url, cancel }
   }
-}
+})
+  .post()
+  .json()
+
+watch(createTeamError, () => {
+  if (createTeamError.value) {
+    return useErrorHandler().handleError(new Error(createTeamError.value))
+  }
+})
+watch(createTeamResponse, () => {
+  if (createTeamResponse.value?.ok) {
+    addSuccessToast('Team created successfully')
+    showAddTeamModal.value = false
+    executeFetchTeams()
+  }
+})
+
 const addInput = () => {
   team.value.members.push({ name: '', address: '', isValid: false })
 }
+const searchUserName = ref('')
+const searchUserAddress = ref('')
+const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+watch(searchUserResponse, () => {
+  if (searchUserResponse.value?.ok && users.value?.users) {
+    foundUsers.value = users.value.users
+  }
+})
 const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    const users = await userApi.searchUser(input.name, input.address)
-    foundUsers.value = users
-    console.log(users)
-  } catch (error) {
-    foundUsers.value = []
-    return useErrorHandler().handleError(error)
+  searchUserName.value = input.name
+  searchUserAddress.value = input.address
+  if (searchUserName.value || searchUserAddress.value) {
+    await executeSearchUser()
   }
 }
 const removeInput = () => {
@@ -138,3 +182,4 @@ function navigateToTeam(id: string) {
 </script>
 
 <style scoped></style>
+@/composables/apis/team

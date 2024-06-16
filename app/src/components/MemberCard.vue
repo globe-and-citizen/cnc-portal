@@ -26,6 +26,7 @@
   <DeleteConfirmModal
     :showDeleteConfirmModal="showDeleteConfirmModal"
     @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
+    :isLoading="isMemberDeleting"
     @deleteItem="emits('deleteMember', teamId, member.address)"
   >
     Are you sure you want to delete
@@ -46,6 +47,7 @@ const props = defineProps<{
   member: Partial<MemberInput>
   teamId: Number
   ownerAddress: String
+  isMemberDeleting: boolean
 }>()
 const member = ref(props.member)
 </script>
