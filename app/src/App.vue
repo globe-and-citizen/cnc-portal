@@ -40,7 +40,6 @@ const {
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
 
-
 const updateUserInput = ref({
   name: name.value,
   address: address.value
@@ -71,20 +70,23 @@ const handleUserUpdate = async () => {
 }
 
 /**
- * Watch and set showModal to false when 
+ * Watch and set showModal to false when
  *   userIsUpdating is false
  *   userUpdateError is null
  *   userUpdateResponse is ok
  */
 
-watch([() => userIsUpdating.value, () => userUpdateError.value, () => userUpdateResponse.value], () => {
-  /**
-   * Toggle it the update is successful and with no errors
-   */
-  if (!userIsUpdating.value && !userUpdateError.value && userUpdateResponse.value?.ok) {
-    showModal.value = false
+watch(
+  [() => userIsUpdating.value, () => userUpdateError.value, () => userUpdateResponse.value],
+  () => {
+    /**
+     * Toggle it the update is successful and with no errors
+     */
+    if (!userIsUpdating.value && !userUpdateError.value && userUpdateResponse.value?.ok) {
+      showModal.value = false
+    }
   }
-})
+)
 
 // Handle authentication change (optional)
 // Chek if user is authenticated and get balance
