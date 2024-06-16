@@ -5,6 +5,7 @@
     :class="{ 'modal-open': toggleOpen }"
   >
     <div class="modal-box">
+      <button class="btn btn-sm absolute right-4 top-4" @click="toggleOpen = false">✕</button>
       <slot></slot>
     </div>
 
