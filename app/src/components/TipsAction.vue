@@ -21,15 +21,15 @@
           className="btn btn-primary w-full text-white"
           @click="emits('pushTip', tipAmount)"
         >
-          Push Tips
+          Send To Wallets
         </button>
         <LoadingButton v-if="sendTipLoading" color="secondary w-full min-w-24" />
         <button
           v-else
-          className="btn btn-secondary w-full text-white"
+          className="btn btn-secondary w-full text-white hidden"
           @click="emits('sendTip', tipAmount)"
         >
-          Send Tips
+          Send To CNC Account
         </button>
       </div>
     </div>

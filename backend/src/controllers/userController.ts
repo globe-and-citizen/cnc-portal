@@ -69,7 +69,7 @@ export const getUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name } = req.body;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
 
   try {
     if (!address)
@@ -80,6 +80,10 @@ export const updateUser = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({
       where: {
         address: address,
+      },
+      select: {
+        address: true,
+        name: true,
       },
     });
 
@@ -93,6 +97,10 @@ export const updateUser = async (req: Request, res: Response) => {
       },
       data: {
         name,
+      },
+      select: {
+        address: true,
+        name: true,
       },
     });
 

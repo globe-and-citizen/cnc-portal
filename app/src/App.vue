@@ -11,13 +11,11 @@ import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/modals/EditUserForm.vue'
 
-import { isAddress } from 'ethers'
-import { FetchUserAPI } from './apis/userApi'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
+import { useErrorHandler } from './composables/errorHandler'
+import { useCustomFetch } from './composables/useCustomFetch'
 const { addErrorToast, addSuccessToast } = useToastStore()
-
-const userApi = new FetchUserAPI()
 
 const toggleSide = ref(true)
 const toggleModal = ref(false)
@@ -48,10 +46,30 @@ const updateUserInput = ref({
   name: name.value,
   address: address.value
 })
+const updateUserInputString = ref(JSON.stringify(updateUserInput.value))
+const {
+  isFetching: userIsUpdating,
+  response: userUpdateResponse,
+  error: userUpdateError,
+  execute: updateUserAPI
+} = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInputString).json()
+watch(userUpdateError, () => {
+  if (userUpdateError.value) {
+    useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
+  }
+})
+watch(userUpdateResponse, async () => {
+  if (userUpdateResponse.value?.ok) {
+    addSuccessToast('User updated')
+    const user = await userUpdateResponse.value?.json()
+    userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
+    showUserModal.value = false
+  }
+})
+
 const handleUserUpdate = async () => {
-  const user = await userApi.updateUser(toRaw(updateUserInput.value))
-  userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
-  showUserModal.value = false
+  updateUserInputString.value = JSON.stringify(toRaw(updateUserInput.value))
+  await updateUserAPI()
 }
 
 // Handle authentication change (optional)
@@ -133,7 +151,8 @@ watch(withdrawSuccess, () => {
 
     <ModalComponent v-model="toggleModal">
       <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
-      <EditUserForm v-model="updateUserInput" @submitEditUser="handleUserUpdate" />
+      <EditUserForm v-model="updateUserInput" @submitEditUser="handleUserUpdate" 
+      :isLoading="userIsUpdating"/>
     </ModalComponent>
     <ToastContainer position="bottom-right" />
   </div>

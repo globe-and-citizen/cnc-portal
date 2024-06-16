@@ -1,11 +1,10 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
-import { FetchTeamAPI, type TeamAPI } from '@/apis/teamApi'
 import BANK_ABI from '../artifacts/abi/bank.json'
 import type { Contract } from 'ethers'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 export interface IBankService {
   web3Library: IWeb3Library
-  teamApi: TeamAPI
   createBankContract(id: string): Promise<string>
   deposit(bankAddress: string, amount: string): Promise<any>
   pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
@@ -14,7 +13,6 @@ export interface IBankService {
 
 export class BankService implements IBankService {
   web3Library: IWeb3Library
-  teamApi: TeamAPI = new FetchTeamAPI()
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
@@ -23,12 +21,8 @@ export class BankService implements IBankService {
   async createBankContract(teamId: string): Promise<string> {
     // TODO: change to actual deploy contract
     const bankAddress = '0x5466767aA6412f298dD61FbE4E3e40483030b39B'
-
-    const response = await this.teamApi.updateTeam(teamId, {
-      bankAddress
-    })
-
-    return response.bankAddress!
+    const response = await useCustomFetch<string>(`teams/${teamId}`).put({ bankAddress }).json()
+    return response.data.value.bankAddress
   }
 
   async deposit(bankAddress: string, amount: string): Promise<any> {

@@ -237,7 +237,6 @@ const deleteMember = async (req: Request, res: Response) => {
   const { id } = req.params;
   const memberAddress = req.headers.memberaddress;
   const callerAddress = (req as any).address;
-
   try {
     // Find the team
     const team = await prisma.team.findUnique({
@@ -299,7 +298,6 @@ const deleteMember = async (req: Request, res: Response) => {
 const addMembers = async (req: Request, res: Response) => {
   const { id } = req.params;
   const membersData = req.body.data;
-
   try {
     // Fetch the team and its current members
     const team = await prisma.team.findUnique({

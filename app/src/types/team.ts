@@ -12,3 +12,7 @@ export interface TeamsResponse {
   teams: Team[]
   success: boolean
 }
+export interface TeamResponse {
+  team: Team
+  success: boolean
+}
