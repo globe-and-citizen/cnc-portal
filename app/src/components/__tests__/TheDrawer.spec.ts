@@ -12,24 +12,16 @@ describe('TheDrawer', () => {
 
   it('should render user information correctly', () => {
     const wrapper = mount(TheDrawer, {
-      props: { name, address },
-      global: {
-        stubs: { RouterLink: RouterLinkStub, IconHome, IconUsers, IconNote }
-      }
+      props: { user: { name, address } }
     })
 
     expect(wrapper.find('p.font-semibold.text-lg').text()).toBe(name)
-    expect(wrapper.find('p.text-slate-500').text()).toBe(
-      address.substring(0, 10) + '...' + address.substring(address.length - 10)
-    )
+    expect(wrapper.find('p.text-slate-500').text()).toBe("0xc0ffee25...10F9d54979")
   })
 
   it('should render default user name when no name is provided', () => {
     const wrapper = mount(TheDrawer, {
-      props: { name: '', address },
-      global: {
-        stubs: { RouterLink: RouterLinkStub, IconHome, IconUsers, IconNote }
-      }
+      props: { user:{ name: '', address }}
     })
 
     expect(wrapper.find('p.font-semibold.text-lg').text()).toBe('User')
@@ -37,19 +29,16 @@ describe('TheDrawer', () => {
 
   it('should emit toggleEditUserModal when the user card is clicked', async () => {
     const wrapper = mount(TheDrawer, {
-      props: { name, address },
-      global: {
-        stubs: { RouterLink: RouterLinkStub, IconHome, IconUsers, IconNote }
-      }
+      props: { user: { name, address } }
     })
 
     await wrapper.find('.card').trigger('click')
-    expect(wrapper.emitted().toggleEditUserModal).toBeTruthy()
+    expect(wrapper.emitted().openEditUserModal).toBeTruthy()
   })
 
   it('should render navigation links correctly', () => {
     const wrapper = mount(TheDrawer, {
-      props: { name, address },
+      props: { user: { name, address } },
       global: {
         stubs: { RouterLink: RouterLinkStub, IconHome, IconUsers, IconNote }
       }
@@ -57,6 +46,13 @@ describe('TheDrawer', () => {
 
     const links = wrapper.findAllComponents(RouterLinkStub)
     const linkTexts = links.map((link) => link.text())
+    expect(linkTexts).toMatchInlineSnapshot(`
+      [
+        "Dashboard",
+        "Teams",
+        "Transactions",
+      ]
+    `)
     expect(linkTexts).toContain('Dashboard')
     expect(linkTexts).toContain('Teams')
     expect(linkTexts).toContain('Transactions')
