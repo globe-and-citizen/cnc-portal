@@ -9,6 +9,7 @@
     </div>
   </div>
   <AddTeamModal
+    :isLoading="isLoading"
     :team="team"
     :showAddTeamModal="showAddTeamModal"
     :users="users"
@@ -39,6 +40,7 @@ const props = defineProps<{
   showAddTeamModal: boolean
   team: TeamInput
   users: User[]
+  isLoading: boolean
 }>()
 const team = ref(props.team)
 const showAddTeamModal = ref<boolean>(props.showAddTeamModal)

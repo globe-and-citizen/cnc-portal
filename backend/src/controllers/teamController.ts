@@ -1,4 +1,4 @@
-import { PrismaClient, User } from "@prisma/client";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
@@ -10,7 +10,7 @@ const addTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { name, members, description } = req.body;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   console.log("Members:", members);
   try {
     // Validate all members' wallet addresses
@@ -73,9 +73,9 @@ const getTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   try {
-    const team = await prisma.team.findUnique({
+    let team = await prisma.team.findUnique({
       where: {
         id: Number(id),
       },
@@ -89,14 +89,34 @@ const getTeam = async (req: Request, res: Response) => {
       },
     });
 
+    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
+      return errorResponse(403, "Unauthorized", res);
+    }
+
     // Handle 404
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
-    const teamMembers = team.members.map((member) => member.address);
-    if (teamMembers.includes(String(callerAddress)) === false) {
-      return errorResponse(403, "Unauthorized", res);
+
+    if (!req.query) {
+      res.status(200).json({ team, success: true });
     }
+
+    const filterQuery = buildFilterMember(req.query);
+    team = await prisma.team.findUnique({
+      where: {
+        id: Number(id),
+      },
+      include: {
+        members: {
+          where: filterQuery,
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+      },
+    });
     res.status(200).json({ team, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
@@ -108,7 +128,7 @@ const getAllTeams = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const callerAddress = String(req.body.address);
+  const callerAddress = String((req as any).address);
   try {
     // Get teams owned by the user
 
@@ -121,14 +141,14 @@ const getAllTeams = async (req: Request, res: Response) => {
           },
         },
       },
-      include: {
-        members: {
-          select: {
-            address: true,
-            name: true,
-          },
-        },
-      },
+      // include: {
+      //   members: {
+      //     select: {
+      //       address: true,
+      //       name: true,
+      //     },
+      //   },
+      // },
     });
 
     // Combine owned and member teams
@@ -147,7 +167,7 @@ const updateTeam = async (req: Request, res: Response) => {
   */
   const { id } = req.params;
   const { name, description, bankAddress } = req.body;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -188,7 +208,7 @@ const deleteTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = req.body.address;
+  const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -216,8 +236,7 @@ const deleteTeam = async (req: Request, res: Response) => {
 const deleteMember = async (req: Request, res: Response) => {
   const { id } = req.params;
   const memberAddress = req.headers.memberaddress;
-  const callerAddress = req.body.address;
-
+  const callerAddress = (req as any).address;
   try {
     // Find the team
     const team = await prisma.team.findUnique({
@@ -279,7 +298,6 @@ const deleteMember = async (req: Request, res: Response) => {
 const addMembers = async (req: Request, res: Response) => {
   const { id } = req.params;
   const membersData = req.body.data;
-
   try {
     // Fetch the team and its current members
     const team = await prisma.team.findUnique({
@@ -316,6 +334,37 @@ const addMembers = async (req: Request, res: Response) => {
     console.log("Error:", error);
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
+};
+
+const isUserPartOfTheTeam = async (
+  members: { address: string; name?: string | null }[],
+  callerAddress: string
+) => {
+  return members.some((member) => member.address === callerAddress);
+};
+
+const buildFilterMember = (queryParams: Request["query"]) => {
+  const filterQuery: Prisma.UserWhereInput = {};
+  if (queryParams.query) {
+    filterQuery.OR = [
+      {
+        name: {
+          contains: String(queryParams.query),
+          mode: "insensitive",
+        },
+      },
+      {
+        address: {
+          contains: String(queryParams.query),
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
+
+  // can add others filter
+
+  return filterQuery;
 };
 
 export {

@@ -15,7 +15,8 @@
         <slot></slot>
       </p>
       <div class="modal-action justify-center">
-        <button class="btn btn-error" @click="emit('deleteItem')">Delete</button>
+        <LoadingButton v-if="isLoading" color="error min-w-24 " />
+        <button v-else class="btn btn-error" @click="emit('deleteItem')">Delete</button>
         <button class="btn btn-primary" @click="emit('toggleDeleteConfirmModal')">Cancel</button>
       </div>
     </div>
@@ -23,8 +24,11 @@
 </template>
 
 <script setup lang="ts">
+import LoadingButton from '../LoadingButton.vue'
+
 const emit = defineEmits(['toggleDeleteConfirmModal', 'deleteItem'])
-const props = defineProps<{
+defineProps<{
   showDeleteConfirmModal: boolean
+  isLoading: boolean
 }>()
 </script>

@@ -1,28 +1,12 @@
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { TipsService } from '@/services/tipsService'
 import type { EventResult, TipsEventType } from '@/types'
+import type { IContractReadFunction, IContractTransactionFunction } from '@/types/interfaces'
 import dayjs from 'dayjs'
 import type { Log } from 'ethers'
 import type { EventLog } from 'ethers'
-import type { Ref } from 'vue'
 import { ref } from 'vue'
 
-const tipsService = new TipsService(EthersJsAdapter.getInstance())
-
-interface IContractReadFunction<T> {
-  isLoading: Ref<boolean>
-  error: Ref<any>
-  data: Ref<T>
-  execute: () => Promise<void>
-}
-
-interface IContractTransactionFunction {
-  isLoading: Ref<boolean>
-  isSuccess: Ref<boolean>
-  error: Ref<any>
-  transaction: Ref<any>
-  execute: (...args: any[]) => Promise<void>
-}
+const tipsService = new TipsService()
 
 export function useTipsBalance(): IContractReadFunction<string | null> {
   const balance = ref<string | null>(null)
@@ -53,10 +37,10 @@ export function usePushTip(): IContractTransactionFunction {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function pushTip(addresses: string[], amount: number) {
+  async function pushTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
     try {
       isLoading.value = true
-      transaction.value = await tipsService.pushTip(addresses, amount)
+      transaction.value = await tipsService.pushTip(addresses, amount, bankAddress)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -74,10 +58,10 @@ export function useSendTip(): IContractTransactionFunction {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function sendTip(addresses: string[], amount: number): Promise<void> {
+  async function sendTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
     try {
       loading.value = true
-      transaction.value = await tipsService.sendTip(addresses, amount)
+      transaction.value = await tipsService.sendTip(addresses, amount, bankAddress)
       isSuccess.value = true
     } catch (err) {
       error.value = err

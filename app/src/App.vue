@@ -7,19 +7,19 @@ import { useUserDataStore } from '@/stores/user'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
-import EditUserModal from '@/components/modals/EditUserModal.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import EditUserForm from '@/components/modals/EditUserForm.vue'
 
-import { isAddress } from 'ethers'
-import { FetchUserAPI } from './apis/userApi'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
-import { ToastType } from './types'
-const { addToast } = useToastStore()
-
-const userApi = new FetchUserAPI()
+import { useErrorHandler } from './composables/errorHandler'
+import { useCustomFetch } from './composables/useCustomFetch'
+const { addErrorToast, addSuccessToast } = useToastStore()
 
 const toggleSide = ref(true)
+const showModal = ref(false)
+
 function handleChange() {
   toggleSide.value = !toggleSide.value
 }
@@ -40,25 +40,56 @@ const {
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
 
-const showUserModal = ref(false)
-
 const updateUserInput = ref({
   name: name.value,
-  address: address.value,
-  isValid: true
+  address: address.value
 })
+const {
+  isFetching: userIsUpdating,
+  response: userUpdateResponse,
+  error: userUpdateError,
+  execute: executeUpdateUser
+} = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInput).json()
+
+watch(userUpdateError, () => {
+  if (userUpdateError.value) {
+    useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
+  }
+})
+
+watch(userUpdateResponse, async () => {
+  if (userUpdateResponse.value?.ok) {
+    addSuccessToast('User updated')
+    const user = await userUpdateResponse.value?.json()
+    userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
+  }
+})
+
 const handleUserUpdate = async () => {
-  const user = await userApi.updateUser(toRaw(updateUserInput.value))
-  userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
-  showUserModal.value = false
+  await executeUpdateUser()
 }
+
+/**
+ * Watch and set showModal to false when
+ *   userIsUpdating is false
+ *   userUpdateError is null
+ *   userUpdateResponse is ok
+ */
+
 watch(
-  () => updateUserInput.value.address,
-  (newVal) => {
-    updateUserInput.value.isValid = isAddress(newVal)
+  [() => userIsUpdating.value, () => userUpdateError.value, () => userUpdateResponse.value],
+  () => {
+    /**
+     * Toggle it the update is successful and with no errors
+     */
+    if (!userIsUpdating.value && !userUpdateError.value && userUpdateResponse.value?.ok) {
+      showModal.value = false
+    }
   }
 )
+
 // Handle authentication change (optional)
+// Chek if user is authenticated and get balance
 watch(
   () => userStore.isAuth,
   (isAuth) => {
@@ -70,32 +101,18 @@ watch(
 // Handle Balance error
 watch(balanceError, () => {
   if (balanceError.value) {
-    addToast({
-      message: balanceError.value?.reason || 'Failed to Get balance',
-      type: ToastType.Error,
-      timeout: 5000
-    })
+    addErrorToast(balanceError.value?.reason || 'Failed to Get balance')
   }
 })
 // Handle withdraw error
 watch(withdrawError, () => {
-  //toastStore.show(ToastType.Error, withdrawError.value.reason || 'Failed to withdraw tips')
-  addToast({
-    message: withdrawError.value.reason || 'Failed to withdraw tips',
-    type: ToastType.Error,
-    timeout: 5000
-  })
+  addErrorToast(withdrawError.value.reason || 'Failed to withdraw tips')
 })
 
 // Handle withdraw success
 watch(withdrawSuccess, () => {
   if (withdrawSuccess.value) {
-    //toastStore.show(ToastType.Success, withdrawError.value.reason || 'Tips withdrawn successfully')
-    addToast({
-      message: withdrawError.value.reason || 'Tips withdrawn successfully',
-      type: ToastType.Success,
-      timeout: 5000
-    })
+    addSuccessToast('Tips withdrawn successfully')
   }
 })
 </script>
@@ -104,18 +121,12 @@ watch(withdrawSuccess, () => {
   <div class="min-h-screen m-0 bg-base-200">
     <RouterView name="login" />
     <div v-if="userStore.isAuth">
-      <!-- 
-        for toggleTheme
-        @toggleTheme="() => toggleDark()" 
-        :isDark="isDark"
-      -->
       <NavBar
         @toggleSideButton="handleChange"
         @toggleEditUserModal="
           () => {
-            updateUserInput.name = name
-            updateUserInput.address = address
-            showUserModal = !showUserModal
+            updateUserInput = { name, address }
+            showModal = true
           }
         "
         @withdraw="withdraw()"
@@ -136,27 +147,27 @@ watch(withdrawSuccess, () => {
           </div>
           <div v-if="toggleSide" @toggleSideButton="handleChange">
             <Drawer
-              :name="name"
-              :address="address"
-              @toggleEditUserModal="
+              :user="{ name, address }"
+              @openEditUserModal="
                 () => {
-                  updateUserInput.name = name
-                  updateUserInput.address = address
-                  showUserModal = !showUserModal
+                  showModal = true
+                  updateUserInput = { name, address }
                 }
               "
-            />
-            <EditUserModal
-              :showEditUserModal="showUserModal"
-              v-model:updateUserInput="updateUserInput"
-              @updateUser="handleUserUpdate"
-              @toggleEditUserModal="showUserModal = !showUserModal"
             />
           </div>
         </div>
       </div>
     </div>
 
+    <ModalComponent v-model="showModal">
+      <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
+      <EditUserForm
+        v-model="updateUserInput"
+        @submitEditUser="handleUserUpdate"
+        :isLoading="userIsUpdating"
+      />
+    </ModalComponent>
     <ToastContainer position="bottom-right" />
   </div>
 </template>

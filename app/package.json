@@ -8,6 +8,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
+    "test:watch": "vitest -u",
     "test:unit:coverage": "npx vitest run --coverage",
     "coverage": "npx serve coverage/",
     "prod": "node  dist/index.js",

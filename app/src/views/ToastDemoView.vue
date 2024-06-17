@@ -14,40 +14,23 @@
 <script setup lang="ts">
 import { useToastStore } from '@/stores/useToastStore'
 import ToastContainer from '@/components/ToastContainer.vue'
-import { ToastType } from '@/types'
 
-const { addToast } = useToastStore()
+const { addErrorToast, addSuccessToast, addWarningToast, addInfoToast } = useToastStore()
 
 const showInfoToast = () => {
-  addToast({
-    message: 'This is an info toast!',
-    type: ToastType.Info,
-    timeout: 50000
-  })
+  addInfoToast('This is an info toast!')
 }
 
 const showSuccessToast = () => {
-  addToast({
-    message: 'This is a success toast!',
-    type: ToastType.Success,
-    timeout: 25000
-  })
+  addSuccessToast('This is a success toast!')
 }
 
 const showWarningToast = () => {
-  addToast({
-    message: 'This is a warning toast!',
-    type: ToastType.Warning,
-    timeout: 15000
-  })
+  addWarningToast('This is a warning toast!')
 }
 
 const showErrorToast = () => {
-  addToast({
-    message: 'This is an error toast!',
-    type: ToastType.Error,
-    timeout: 5000
-  })
+  addErrorToast('This is an error toast!')
 }
 </script>
 

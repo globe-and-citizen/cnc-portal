@@ -4,6 +4,7 @@ import type { IAuthAPI } from '@/apis/authApi'
 import { AuthAPI } from '@/apis/authApi'
 import { useStorage } from '@vueuse/core'
 
+// TODO: We can have a globale token reactive object for the localStorage and avoid instanciating it everytime we want to use it.
 // Define a generic type for credentials
 type AuthCredentials<T> = T | undefined | {}
 
@@ -27,6 +28,8 @@ export class AuthService {
     token.value = null
   }
 
+  // TODO: refactor: we return a value instead of the reactive object.
+  // When it's used it should be a reactive object. So we don't have to create the token object everi time we want to use it.
   static getToken(): string | null {
     const token = useStorage('authToken', null)
 
