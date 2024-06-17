@@ -4,16 +4,16 @@ import { Request, Response } from "express";
 
 const getNotification = async (req: Request, res: Response) => {
   //check if userAddress property is set
-  const { userAddress } = req.query;
+  //const { userAddress } = req.query;
   const callerAddress = (req as any).address;
 
-  if (!userAddress) return errorResponse(401, "ID empty or not set", res);
+  //if (!userAddress) return errorResponse(401, "ID empty or not set", res);
 
   try {
     //retrieve notification
     let notification = await prisma.notification.findMany({
       where: {
-        userAddress: userAddress as string,
+        userAddress: callerAddress as string,
       },
     });
 
