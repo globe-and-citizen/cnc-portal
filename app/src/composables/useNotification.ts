@@ -1,30 +1,32 @@
-import { NotificationAPI } from '@/apis/notificationApi'
-import { parseError } from '@/utils'
-import { ref } from 'vue'
-import { useToastStore } from '@/stores/useToastStore'
-import { ToastType } from '@/types'
+import { watch, ref } from 'vue'
+import { type NotificationResponse } from '@/types'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const isUnread = ref(false)
-const notifications = ref()
 
 export const useNotification = () => {
-  const { addToast } = useToastStore()
+  const {
+    isFetching: isNotificationsFetching,
+    error: notificationError,
+    data: notifications,
+    execute: executeFetchNotifications
+  } = useCustomFetch<NotificationResponse>('notification').json()
 
-  async function fetchData() {
-    try {
-      notifications.value = await NotificationAPI.getNotifications()
-      const idx = notifications.value.findIndex(
-        (notification: any) => notification.isRead === false
-      )
-      /*console.log(`notifications: `, notifications.value)
-            console.log(`idx: `, idx)*/
+  watch(notifications, () => {
+    if (notifications.value) {
+      const { data } = notifications.value
+
+      const idx = data.findIndex((notification: any) => notification.isRead === false)
+
       isUnread.value = idx > -1
-    } catch (error) {
-      addToast({ message: parseError(error), type: ToastType.Error, timeout: 3000 })
     }
+  })
+
+  return {
+    isNotificationsFetching,
+    notificationError,
+    notifications,
+    executeFetchNotifications,
+    isUnread
   }
-
-  fetchData()
-
-  return { notifications, isUnread }
 }

@@ -54,7 +54,7 @@
           </div>
         </button>
         <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]">
-          <li v-for="notification in notifications" :key="notification.id">
+          <li v-for="notification in notifications?.data" :key="notification.id">
             <a>
               <div class="notification__body">{{ notification.message }}</div>
               <!--<div class="notification__footer">{{ notification.author }} {{ notification.createdAt }}</div>-->
@@ -102,12 +102,20 @@ import IconBell from '@/components/icons/IconBell.vue'
 import { NETWORK } from '@/constant/index'
 import { useNotification } from '@/composables/useNotification'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
+
 defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
   balance: string
 }>()
-const { notifications, isUnread } = useNotification()
+
+const {
+  isUnread,
+  notifications
+  /*isNotificationsFetching,
+  notificationError,
+  executeFetchNotifications */
+} = useNotification()
 </script>
 
 <style scoped></style>
