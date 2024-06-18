@@ -11,10 +11,13 @@ const getNotification = async (req: Request, res: Response) => {
 
   try {
     //retrieve notification
-    let notification = await prisma.notification.findMany({
+    let notifications = await prisma.notification.findMany({
       where: {
         userAddress: callerAddress as string,
       },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
     //clean up
@@ -22,13 +25,13 @@ const getNotification = async (req: Request, res: Response) => {
 
     //check if user is authorized to get notification
     if (
-      notification.length < 1 ||
-      callerAddress === notification[0].userAddress
+      notifications.length < 1 ||
+      callerAddress === notifications[0].userAddress
     ) {
       //send notification
       res.status(201).json({
         success: true,
-        data: notification,
+        data: notifications,
       });
     } else {
       //send error
