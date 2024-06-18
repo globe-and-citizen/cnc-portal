@@ -43,7 +43,7 @@ const getNotification = async (req: Request, res: Response) => {
 };
 
 const updateNotification = async (req: Request, res: Response) => {
-  let { id } = req.query;
+  let { id } = req.params;
 
   const _id = parseInt(id as string)
 

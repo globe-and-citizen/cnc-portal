@@ -62,7 +62,7 @@
           <li v-for="notification in notifications?.data" :key="notification.id">
             <a @click="updateNotification(notification.id)">
               <div class="notification__body">
-                <span :class="{ unread: !notification.isRead }">
+                <span :class="{ 'font-bold': !notification.isRead }">
                   {{ notification.message }}
                 </span>
               </div>
@@ -110,7 +110,7 @@ import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import { NETWORK } from '@/constant/index'
-import { ref, type Ref, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { type NotificationResponse } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
@@ -121,8 +121,7 @@ defineProps<{
   balance: string
 }>()
 
-const isUnread = ref(false)
-const id: Ref<number | string | null> = ref(null)
+const updateEndPoint = ref('')
 
 const {
   //isFetching: isNotificationsFetching,
@@ -136,35 +135,25 @@ const {
   //error: isUpdateNotificationError,
   execute: executeUpdateNotifications
   //data: _notifications
-} = useCustomFetch<NotificationResponse>('notification', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    //options.body = JSON.stringify({ id: id.value })
-    url += `?id=${id.value}`
-    return { options, url, cancel }
-  }
+} = useCustomFetch<NotificationResponse>(updateEndPoint, {
+  immediate: false
 })
   .put()
   .json()
 
-const updateNotification = async (_id: number | string | null) => {
-  id.value = _id
+const isUnread = computed(() => {
+  const idx = notifications.value?.data.findIndex(
+    (notification: any) => notification.isRead === false
+  )
+  return idx > -1
+})
+
+const updateNotification = async (id: number | string | null) => {
+  updateEndPoint.value = `notification/${id}`
 
   await executeUpdateNotifications()
   await executeFetchNotifications()
 }
-
-watch(notifications, () => {
-  if (notifications.value) {
-    const { data } = notifications.value
-    const idx = data.findIndex((notification: any) => notification.isRead === false)
-    isUnread.value = idx > -1
-  }
-})
 </script>
 
-<style scoped>
-.unread {
-  font-weight: bold;
-}
-</style>
+<style scoped></style>
