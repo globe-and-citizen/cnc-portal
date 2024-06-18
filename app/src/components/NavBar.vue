@@ -47,16 +47,22 @@
 
       <!--Notification Start-->
       <div class="dropdown dropdown-end">
-        <button class="btn btn-ghost btn-circle m-1">
-          <div class="indicator">
-            <IconBell />
-            <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
+        <div tabindex="0" role="button" class="">
+          <div class="btn btn-ghost btn-circle m-1">
+            <div class="indicator">
+              <IconBell />
+              <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
+            </div>
           </div>
-        </button>
-        <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]">
+        </div>
+        <ul tabindex="0" class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]">
           <li v-for="notification in notifications?.data" :key="notification.id">
-            <a>
-              <div class="notification__body">{{ notification.message }}</div>
+            <a @click="updateNotification(notification.id)">
+              <div class="notification__body">
+                <span :class="{ unread: !notification.isRead}">
+                  {{ notification.message }}
+                </span>
+              </div>
               <!--<div class="notification__footer">{{ notification.author }} {{ notification.createdAt }}</div>-->
             </a>
           </li>
@@ -114,8 +120,14 @@ const {
   notifications
   /*isNotificationsFetching,
   notificationError,
-  executeFetchNotifications */
+  executeFetchNotifications */,
+  updateNotification
 } = useNotification()
+
 </script>
 
-<style scoped></style>
+<style scoped>
+.unread {
+  font-weight: bold;
+}
+</style>
