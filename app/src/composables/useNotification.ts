@@ -7,7 +7,7 @@ const isUnread = ref(false)
 export const useNotification = () => {
   const id: Ref<number | string | null> = ref(null)
 
-  let {
+  const {
     isFetching: isNotificationsFetching,
     error: notificationError,
     data: notifications,
@@ -15,14 +15,16 @@ export const useNotification = () => {
   } = useCustomFetch<NotificationResponse>('notification').json()
 
   const {
-    isFetching: isUpdateNotificationsFetching,
-    error: isUpdateNotificationError,
-    execute: executeUpdateNotifications,
-    data: _notifications
+    //isFetching: isUpdateNotificationsFetching,
+    //error: isUpdateNotificationError,
+    execute: executeUpdateNotifications
+    //data: _notifications
   } = useCustomFetch<NotificationResponse>('notification', {
     immediate: false,
-    beforeFetch: async ({options, url, cancel}) => {
-      options.body = JSON.stringify({id: id.value})
+    beforeFetch: async ({ options, url, cancel }) => {
+      options.body = JSON.stringify({ id: id.value })
+
+      return { options, url, cancel }
     }
   })
     .put()

@@ -55,11 +55,14 @@
             </div>
           </div>
         </div>
-        <ul tabindex="0" class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]">
+        <ul
+          tabindex="0"
+          class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
+        >
           <li v-for="notification in notifications?.data" :key="notification.id">
             <a @click="updateNotification(notification.id)">
               <div class="notification__body">
-                <span :class="{ unread: !notification.isRead}">
+                <span :class="{ unread: !notification.isRead }">
                   {{ notification.message }}
                 </span>
               </div>
@@ -117,13 +120,11 @@ defineProps<{
 
 const {
   isUnread,
-  notifications
+  notifications,
   /*isNotificationsFetching,
   notificationError,
-  executeFetchNotifications */,
-  updateNotification
+  executeFetchNotifications */ updateNotification
 } = useNotification()
-
 </script>
 
 <style scoped>
