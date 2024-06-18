@@ -110,9 +110,9 @@ import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import { NETWORK } from '@/constant/index'
-import { ref, type Ref, watch } from "vue";
-import { type NotificationResponse } from "@/types";
-import { useCustomFetch } from "@/composables/useCustomFetch";
+import { ref, type Ref, watch } from 'vue'
+import { type NotificationResponse } from '@/types'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 
 defineProps<{
@@ -125,8 +125,8 @@ const isUnread = ref(false)
 const id: Ref<number | string | null> = ref(null)
 
 const {
-  isFetching: isNotificationsFetching,
-  error: notificationError,
+  //isFetching: isNotificationsFetching,
+  //error: notificationError,
   data: notifications,
   execute: executeFetchNotifications
 } = useCustomFetch<NotificationResponse>('notification').json()
@@ -139,8 +139,8 @@ const {
 } = useCustomFetch<NotificationResponse>('notification', {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
-    options.body = JSON.stringify({ id: id.value })
-    url+=`?id=${id.value}`
+    //options.body = JSON.stringify({ id: id.value })
+    url += `?id=${id.value}`
     return { options, url, cancel }
   }
 })

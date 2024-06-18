@@ -43,7 +43,7 @@ const getNotification = async (req: Request, res: Response) => {
 };
 
 const updateNotification = async (req: Request, res: Response) => {
-  let { id } = req.body;
+  let { id } = req.query;
 
   const _id = parseInt(id as string)
 
@@ -56,7 +56,7 @@ const updateNotification = async (req: Request, res: Response) => {
   try {
     let notification = await prisma.notification.findUnique({
       where: {
-        id: id as unknown as number
+        id: _id /*as unknown as number*/
       }
     })
 
@@ -64,7 +64,7 @@ const updateNotification = async (req: Request, res: Response) => {
       callerAddress === notification?.userAddress
     ) {
       notification = await prisma.notification.update({
-        where: {id: id as unknown as number},
+        where: {id: _id},
         data: { isRead: notification?.isRead? false: true }
       })
 
