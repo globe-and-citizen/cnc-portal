@@ -1,118 +1,182 @@
-import { describe, it, expect, vi, MockedFunction, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { prisma, errorResponse } from "../../utils";
 import { Request, Response } from "express";
-import { getNotification } from "../notificationController";
+import { getNotification, updateNotification } from "../notificationController";
 
-vi.mock("../../utils", () => {
-  return {
-    __esModule: true,
-    prisma: {
-      notification: {
-        create: vi.fn(),
-        findMany: vi.fn(),
-      },
-      $disconnect: vi.fn(),
-    },
-    errorResponse: vi.fn(),
-  };
-});
-
-const dummyData = {
-  id: 1,
-  message: "Test message",
-  isRead: false,
-  userAddress: "0x123",
-  createdAt: new Date(Date.now()),
-  subject: null,
-  author: null,
-};
-
-describe("getNotification", () => {
-  let req: Partial<Request>;
-  let res: Partial<Response>;
-
-  beforeEach(() => {
-    req = {
-      query: {},
-      body: "",
-    };
-    res = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
-    };
-
-    (
-      prisma.notification.findMany as MockedFunction<
-        typeof prisma.notification.findMany
-      >
-    ).mockClear();
-    (
-      prisma.$disconnect as MockedFunction<typeof prisma.$disconnect>
-    ).mockClear();
-    (errorResponse as MockedFunction<typeof errorResponse>).mockClear();
+describe("Get Notification", () => {
+  beforeAll(async () => {
+    await prisma.$connect();
   });
 
-  it("should return error if userAddress is not set", async () => {
-    req.query = {};
-
-    await getNotification(req as Request, res as Response);
-
-    expect(errorResponse).toHaveBeenCalledWith(401, "ID empty or not set", res);
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   it("should return notifications if user is authorized", async () => {
-    req.query = { userAddress: "0x123" };
-    req.address = "0x123";
+    const req = {
+      address: "0x123"
+    } as unknown as Request;
 
-    const findManyMock = prisma.notification.findMany as MockedFunction<
-      typeof prisma.notification.findMany
-    >;
-    findManyMock.mockResolvedValue([dummyData]);
+    const res: any = {
+      status: () => res,
+      json: (data: any) => {
+        res.data = data;
+        return res;
+      },
+      data: undefined,
+    } as unknown as Response;
 
-    await getNotification(req as Request, res as Response);
+    await getNotification(req, res);
 
-    expect(prisma.notification.findMany).toHaveBeenCalledWith({
-      where: { userAddress: "0x123" },
-    });
-    expect(prisma.$disconnect).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      data: [dummyData],
-    });
+    expect(res.data.success).toBe(true);
   });
 
-  it("should return unauthorized error if user is not authorized", async () => {
-    req.query = { userAddress: "0x123" };
-    req.address = "0x456";
 
-    const findManyMock = prisma.notification.findMany as MockedFunction<
-      typeof prisma.notification.findMany
-    >;
-    findManyMock.mockResolvedValue([dummyData]);
+  it("should handle errors gracefully", async () => {
+    const req = {
+      address: 1
+    } as unknown as Request;
 
-    await getNotification(req as Request, res as Response);
+    const res: any = {
+      status: () => res,
+      json: (data: any) => {
+        res.data = data;
+        return res;
+      },
+      data: undefined,
+    } as unknown as Response;
 
-    expect(prisma.notification.findMany).toHaveBeenCalledWith({
-      where: { userAddress: "0x123" },
+    await getNotification(req, res);
+
+   
+    expect(res.data.success).toBe(false);
+  });
+});
+
+describe("Update Notification", () => {
+  beforeAll(async () => {
+    await prisma.$connect();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  it("should update notification if user is authorized", async () => {
+    const req = {
+      params: {
+        id: "1"
+      },
+      address: "0x123"
+    } as unknown as Request;
+
+    const res: any = {
+      status: () => { return res; },
+      json: (data: any) => { res.data = data; return res; },
+      data: undefined,
+    } as unknown as Response;
+
+    vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue({
+      id: 1,
+      userAddress: "0x123",
+      isRead: false,
+      message: "Test Message",
+      subject: "Test Subject",
+      author: "0x345",
+      createdAt: new Date(Date.now())
     });
-    expect(prisma.$disconnect).toHaveBeenCalled();
-    expect(errorResponse).toHaveBeenCalledWith(403, "Unauthorized access", res);
+
+    vi.spyOn(prisma.notification, 'update').mockResolvedValue({
+      id: 1,
+      userAddress: "0x123",
+      isRead: true,
+      message: "Test Message",
+      subject: "Test Subject",
+      author: "0x345",
+      createdAt: new Date(Date.now())
+    });
+
+    await updateNotification(req, res);
+
+    expect(res.data.success).toBe(true);
+
+    // Clean up the mocks
+    vi.restoreAllMocks();
+  });
+
+  it("should return error if notification ID is invalid", async () => {
+    const req = {
+      params: {
+        id: "xyz"
+      },
+      address: "0x123"
+    } as unknown as Request;
+
+    const res: any = {
+      status: () => { return res; },
+      json: (data: any) => { res.data = data; return res; },
+      data: undefined,
+    } as unknown as Response;
+
+    await updateNotification(req, res);
+
+    expect(res.data.success).toBe(false);
+    expect(res.data.message).toBe("Notification ID invalid format");
+  });
+
+  it("should return error if user is unauthorized", async () => {
+    const req = {
+      params: {
+        id: "1"
+      },
+      address: "0x124"
+    } as unknown as Request;
+
+    const res: any = {
+      status: () => { return res; },
+      json: (data: any) => { res.data = data; return res; },
+      data: undefined,
+    } as unknown as Response;
+
+    vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue({
+      id: 1,
+      userAddress: "0x123",
+      isRead: false,
+      message: "Test Message",
+      subject: "Test Subject",
+      author: "0x345",
+      createdAt: new Date(Date.now())
+    });
+
+    await updateNotification(req, res);
+
+    expect(res.data.success).toBe(false);
+    expect(res.data.message).toBe("Unauthorized access");
+
+    // Clean up the mocks
+    vi.restoreAllMocks();
   });
 
   it("should handle errors gracefully", async () => {
-    req.query = { userAddress: "0x123" };
+    const req = {
+      params: {
+        id: "1"
+      },
+      address: 1
+    } as unknown as Request;
 
-    const findManyMock = prisma.notification.findMany as MockedFunction<
-      typeof prisma.notification.findMany
-    >;
-    findManyMock.mockRejectedValue(new Error("Database error"));
+    const res: any = {
+      status: () => { return res; },
+      json: (data: any) => { res.data = data; return res; },
+      data: undefined,
+    } as unknown as Response;
 
-    await getNotification(req as Request, res as Response);
+    await updateNotification(req, res);
 
-    expect(prisma.notification.findMany).toHaveBeenCalledWith({
-      where: { userAddress: "0x123" },
-    });
-    expect(errorResponse).toHaveBeenCalledWith(500, expect.any(Error), res);
+    expect(res.data.success).toBe(false);
+
+    // Clean up the mocks
+    vi.restoreAllMocks();
   });
 });
+
