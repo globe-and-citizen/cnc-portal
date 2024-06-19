@@ -19,7 +19,7 @@
             :isLoading="createTeamFetching"
             v-model="team"
             :users="foundUsers"
-            @searchUsers="(input: any) => searchUsers(input)"
+            @searchUsers="(input) => searchUsers(input)"
             @addTeam="executeCreateTeam"
           />
         </ModalComponent>

@@ -40,7 +40,7 @@
             :isLoading="addMembersLoading"
             :users="foundUsers"
             :formData="teamMembers"
-            @searchUsers="(input: any) => searchUsers(input)"
+            @searchUsers="(input) => searchUsers(input)"
             @addMembers="handleAddMembers"
           />
         </ModalComponent>
