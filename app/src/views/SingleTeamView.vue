@@ -9,8 +9,9 @@
           :balanceLoading="balanceLoading"
           :teamBalance="Number(teamBalance)"
           @updateTeamModalOpen="updateTeamModalOpen"
-          @deleteTeam="async () => deleteTeamAPI()"
+          @deleteTeam="showDeleteConfirmModal = !showDeleteConfirmModal"
         />
+
         <DeleteConfirmModal
           :showDeleteConfirmModal="showDeleteConfirmModal"
           :isLoading="teamIsDeleting"
@@ -73,12 +74,14 @@
         @updateTeam="() => updateTeamAPI()"
       />
     </ModalComponent>
-    <CreateBankModal
-      v-if="bankModal"
-      @close-modal="() => (bankModal = false)"
-      @create-bank="async () => deployBankContract()"
-      :loading="createBankLoading"
-    />
+    <ModalComponent v-model="bankModal">
+      <CreateBankForm
+        @close-modal="() => (bankModal = false)"
+        @create-bank="async () => deployBankContract()"
+        :loading="createBankLoading"
+      />
+    </ModalComponent>
+
     <ModalComponent v-model="depositModal">
       <DepositBankForm
         v-if="depositModal"
@@ -104,7 +107,7 @@ import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
-import CreateBankModal from '@/components/modals/CreateBankModal.vue'
+import CreateBankForm from '@/components/modals/CreateBankForm.vue'
 import DepositBankForm from '@/components/modals/DepositBankForm.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 import UpdateTeamForm from '@/components/modals/UpdateTeamForm.vue'
@@ -238,6 +241,7 @@ const depositModal = ref(false)
 const transferModal = ref(false)
 
 const showAddMemberForm = ref(false)
+const showDeleteTeamConfirmModal = ref(false)
 
 const inputs = ref<Member[]>([])
 
