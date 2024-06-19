@@ -9,19 +9,15 @@
           :balanceLoading="balanceLoading"
           :teamBalance="Number(teamBalance)"
           @updateTeamModalOpen="updateTeamModalOpen"
-          @deleteTeam="showDeleteConfirmModal = !showDeleteConfirmModal"
+          @deleteTeam="showDeleteTeamConfirmModal = true"
         />
-
-        <DeleteConfirmModal
-          :showDeleteConfirmModal="showDeleteConfirmModal"
-          :isLoading="teamIsDeleting"
-          @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
-          @deleteItem="async () => deleteTeamAPI()"
-        >
-          Are you sure you want to delete the team
-          <span class="font-bold">{{ team.name }}</span
-          >?
-        </DeleteConfirmModal>
+        <ModalComponent v-model="showDeleteTeamConfirmModal">
+          <DeleteConfirmModal :isLoading="teamIsDeleting" @deleteItem="async () => deleteTeamAPI()">
+            Are you sure you want to delete the team
+            <span class="font-bold">{{ team.name }}</span
+            >?
+          </DeleteConfirmModal>
+        </ModalComponent>
       </div>
       <TeamActions
         :team="team"
@@ -57,8 +53,23 @@
         :member="member"
         :isMemberDeleting="memberIsDeleting"
         :key="member.address"
-        @deleteMember="(id, address) => deleteMember(id, address)"
+        @deleteMember="
+          (member) => {
+            memberToBeDeleted.name = member.name
+            memberToBeDeleted.id = member.id
+            memberToBeDeleted.address = member.address
+            showDeleteMemberConfirmModal = true
+          }
+        "
       />
+      <ModalComponent v-model="showDeleteMemberConfirmModal">
+        <DeleteConfirmModal :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+          Are you sure you want to delete
+          <span class="font-bold">{{ memberToBeDeleted.name }}</span>
+          with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
+          from the team?
+        </DeleteConfirmModal>
+      </ModalComponent>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
       <TipsAction
         :pushTipLoading="pushTipLoading"
@@ -107,7 +118,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAddress } from 'ethers'
 
 // Store imports
 import { useToastStore } from '@/stores/useToastStore'
@@ -146,7 +156,8 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { type Member, type Team, type User } from '@/types'
 
 // Modal control states
-const showDeleteConfirmModal = ref(false)
+const showDeleteMemberConfirmModal = ref(false)
+const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const bankModal = ref(false)
 const depositModal = ref(false)
@@ -156,8 +167,7 @@ const showAddMemberForm = ref(false)
 // CRUD input refs
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
-const deleteMemberId = ref('')
-const deleteMemberAddress = ref('')
+const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const inputs = ref<Member[]>([])
@@ -371,7 +381,7 @@ watch(deleteTeamError, () => {
 watch([() => teamIsDeleting.value, () => deleteTeamError.value], async () => {
   if (!teamIsDeleting.value && !deleteTeamError.value) {
     addSuccessToast('Team deleted successfully')
-    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
+    showDeleteTeamConfirmModal.value = !showDeleteTeamConfirmModal.value
     router.push('/teams')
   }
 })
@@ -389,7 +399,7 @@ const {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
-      memberaddress: deleteMemberAddress.value,
+      memberaddress: memberToBeDeleted.value.address,
       'Content-Type': 'application/json',
       Authorization: `Bearer ${AuthService.getToken()}`
     }
@@ -409,14 +419,9 @@ watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () =>
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     useErrorHandler().handleError(new Error(deleteMemberError.value))
-    showDeleteConfirmModal.value = false
+    showDeleteMemberConfirmModal.value = false
   }
 })
-const deleteMember = async (id: string, address: string) => {
-  deleteMemberId.value = id
-  deleteMemberAddress.value = address
-  await deleteMemberAPI()
-}
 
 const deployBankContract = async () => {
   const id = route.params.id
