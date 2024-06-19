@@ -61,7 +61,7 @@ const addTeam = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json({ success: true, team });
+    res.status(201).json(team);
   } catch (error: any) {
     console.log("Error:", error);
     return errorResponse(500, error.message, res);
@@ -117,7 +117,7 @@ const getTeam = async (req: Request, res: Response) => {
         },
       },
     });
-    res.status(200).json({ team, success: true });
+    res.status(200).json(team);
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }
@@ -153,7 +153,7 @@ const getAllTeams = async (req: Request, res: Response) => {
 
     // Combine owned and member teams
 
-    res.status(200).json({ teams: memberTeams, success: true });
+    res.status(200).json(memberTeams);
   } catch (error: any) {
     console.log("Error:", error);
     return errorResponse(500, error.message, res);

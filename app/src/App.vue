@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { ref, watch, toRaw } from 'vue'
+import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
@@ -45,8 +45,8 @@ const updateUserInput = ref({
   address: address.value
 })
 const {
+  data: updatedUser,
   isFetching: userIsUpdating,
-  response: userUpdateResponse,
   error: userUpdateError,
   execute: executeUpdateUser
 } = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInput).json()
@@ -56,12 +56,14 @@ watch(userUpdateError, () => {
     useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
   }
 })
-
-watch(userUpdateResponse, async () => {
-  if (userUpdateResponse.value?.ok) {
+watch(updatedUser, () => {
+  if (updatedUser.value) {
     addSuccessToast('User updated')
-    const user = await userUpdateResponse.value?.json()
-    userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
+    userStore.setUserData(
+      updatedUser.value.name || '',
+      updatedUser.value.address || '',
+      updatedUser.value.nonce || ''
+    )
   }
 })
 
@@ -76,17 +78,14 @@ const handleUserUpdate = async () => {
  *   userUpdateResponse is ok
  */
 
-watch(
-  [() => userIsUpdating.value, () => userUpdateError.value, () => userUpdateResponse.value],
-  () => {
-    /**
-     * Toggle it the update is successful and with no errors
-     */
-    if (!userIsUpdating.value && !userUpdateError.value && userUpdateResponse.value?.ok) {
-      showModal.value = false
-    }
+watch([() => userIsUpdating.value, () => userUpdateError.value], () => {
+  /**
+   * Toggle it the update is successful and with no errors
+   */
+  if (!userIsUpdating.value && !userUpdateError.value) {
+    showModal.value = false
   }
-)
+})
 
 // Handle authentication change (optional)
 // Chek if user is authenticated and get balance
