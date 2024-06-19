@@ -45,9 +45,8 @@ const updateUserInput = ref({
   address: address.value
 })
 const {
-  data: user,
+  data: updatedUser,
   isFetching: userIsUpdating,
-  response: userUpdateResponse,
   error: userUpdateError,
   execute: executeUpdateUser
 } = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInput).json()
@@ -57,10 +56,14 @@ watch(userUpdateError, () => {
     useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
   }
 })
-watch(user, () => {
-  if (user.value && userUpdateResponse.value?.ok) {
+watch(updatedUser, () => {
+  if (updatedUser.value) {
     addSuccessToast('User updated')
-    userStore.setUserData(user.value.name || '', user.value.address || '', user.value.nonce || '')
+    userStore.setUserData(
+      updatedUser.value.name || '',
+      updatedUser.value.address || '',
+      updatedUser.value.nonce || ''
+    )
   }
 })
 
@@ -75,17 +78,14 @@ const handleUserUpdate = async () => {
  *   userUpdateResponse is ok
  */
 
-watch(
-  [() => userIsUpdating.value, () => userUpdateError.value, () => userUpdateResponse.value],
-  () => {
-    /**
-     * Toggle it the update is successful and with no errors
-     */
-    if (!userIsUpdating.value && !userUpdateError.value && userUpdateResponse.value?.ok) {
-      showModal.value = false
-    }
+watch([() => userIsUpdating.value, () => userUpdateError.value], () => {
+  /**
+   * Toggle it the update is successful and with no errors
+   */
+  if (!userIsUpdating.value && !userUpdateError.value) {
+    showModal.value = false
   }
-)
+})
 
 // Handle authentication change (optional)
 // Chek if user is authenticated and get balance
