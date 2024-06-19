@@ -1,11 +1,11 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import DepositBankModal from '@/components/modals/DepositBankModal.vue'
+import DepositBankForm from '@/components/modals/DepositBankForm.vue'
 import { NETWORK } from '@/constant'
 
 describe('DepositBankModal.vue', () => {
   it('renders correctly', () => {
-    const wrapper = mount(DepositBankModal, {
+    const wrapper = mount(DepositBankForm, {
       props: { loading: false }
     })
 
@@ -17,7 +17,7 @@ describe('DepositBankModal.vue', () => {
   })
 
   it('emits closeModal when close button is clicked', async () => {
-    const wrapper = mount(DepositBankModal, {
+    const wrapper = mount(DepositBankForm, {
       props: { loading: false }
     })
 
@@ -26,7 +26,7 @@ describe('DepositBankModal.vue', () => {
   })
 
   it('emits deposit with the correct amount when Deposit button is clicked', async () => {
-    const wrapper = mount(DepositBankModal, {
+    const wrapper = mount(DepositBankForm, {
       props: { loading: false }
     })
 
@@ -38,7 +38,7 @@ describe('DepositBankModal.vue', () => {
   })
 
   it('shows loading button when loading is true', () => {
-    const wrapper = mount(DepositBankModal, {
+    const wrapper = mount(DepositBankForm, {
       props: { loading: true }
     })
 
@@ -47,7 +47,7 @@ describe('DepositBankModal.vue', () => {
   })
 
   it('shows deposit button when loading is false', () => {
-    const wrapper = mount(DepositBankModal, {
+    const wrapper = mount(DepositBankForm, {
       props: { loading: false }
     })
 
@@ -56,7 +56,7 @@ describe('DepositBankModal.vue', () => {
   })
 
   it('emits closeModal when cancel button is clicked', async () => {
-    const wrapper = mount(DepositBankModal, {
+    const wrapper = mount(DepositBankForm, {
       props: { loading: false }
     })
 

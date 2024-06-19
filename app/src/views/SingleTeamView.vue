@@ -241,7 +241,6 @@ const depositModal = ref(false)
 const transferModal = ref(false)
 
 const showAddMemberForm = ref(false)
-const showDeleteTeamConfirmModal = ref(false)
 
 const inputs = ref<Member[]>([])
 
