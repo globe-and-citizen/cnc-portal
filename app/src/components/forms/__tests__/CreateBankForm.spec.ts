@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import CreateBankForm from '@/components/modals/CreateBankForm.vue'
+import CreateBankForm from '@/components/forms/CreateBankForm.vue'
 
 describe('CreateBankModal.vue', () => {
   describe('render', () => {

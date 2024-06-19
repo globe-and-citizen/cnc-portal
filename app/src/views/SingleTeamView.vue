@@ -127,16 +127,16 @@ import {
 import { AuthService } from '@/services/authService'
 
 // Modals/Forms
-import CreateBankForm from '@/components/modals/CreateBankForm.vue'
-import DepositBankForm from '@/components/modals/DepositBankForm.vue'
-import TransferFromBankForm from '@/components/modals/TransferFromBankForm.vue'
+import CreateBankForm from '@/components/forms/CreateBankForm.vue'
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import UpdateTeamForm from '@/components/forms/UpdateTeamForm.vue'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
 
 //Components
 import MemberCard from '@/components/MemberCard.vue'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
-import UpdateTeamForm from '@/components/modals/UpdateTeamForm.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
 import TeamActions from '@/components/TeamActions.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
