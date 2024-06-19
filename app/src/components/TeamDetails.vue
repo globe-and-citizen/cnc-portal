@@ -50,7 +50,7 @@
 import { useUserDataStore } from '@/stores/user'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { NETWORK } from '@/constant'
-import { Team } from '@/types/Team'
+import type { Team } from '@/types'
 
 const emits = defineEmits(['updateTeamModalOpen', 'deleteTeam'])
 defineProps<{
