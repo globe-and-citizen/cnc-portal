@@ -50,4 +50,37 @@ describe('AddMemberModal.vue', () => {
       expect(wrapper.emitted('addMembers')).toBeTruthy()
     })
   })
+  describe('Actions', () => {
+    it('adds a new member input field when clicking the add icon', async () => {
+      const wrapper = mount(AddMemberForm, {
+        props: {
+          formData: [{ name: '', address: '', isValid: false }],
+          users: [],
+          isLoading: false
+        }
+      })
+
+      const addButton = wrapper.findComponent(IconPlus)
+      await addButton.trigger('click')
+
+      expect(wrapper.findAll('.input-group').length).toBe(2)
+    })
+
+    it('removes the last member input field when clicking the remove icon', async () => {
+      const wrapper = mount(AddMemberForm, {
+        props: {
+          formData: [
+            { name: '', address: '', isValid: false },
+            { name: '', address: '', isValid: false }
+          ],
+          users: [],
+          isLoading: false
+        }
+      })
+      const removeButton = wrapper.findComponent(IconMinus)
+      await removeButton.trigger('click')
+
+      expect(wrapper.findAll('.input-group').length).toBe(1)
+    })
+  })
 })

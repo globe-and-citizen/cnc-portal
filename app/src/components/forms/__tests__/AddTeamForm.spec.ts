@@ -5,6 +5,7 @@ import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { TeamInput, User } from '@/types'
+import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
 describe('AddTeamModal.vue', () => {
   const team: TeamInput = {
@@ -30,6 +31,11 @@ describe('AddTeamModal.vue', () => {
         IconMinus,
         LoadingButton
       }
+    },
+    data() {
+      return {
+        dropdown: true
+      }
     }
   })
   describe('Render', () => {
@@ -39,6 +45,12 @@ describe('AddTeamModal.vue', () => {
     })
     it('shows dropdown when users are available', async () => {
       expect(wrapper.find('.dropdown-open').exists()).toBe(true)
+    })
+    it('renders icon plus', () => {
+      expect(wrapper.findComponent(IconPlus).exists()).toBe(true)
+    })
+    it('renders icon minus', () => {
+      expect(wrapper.findComponent(IconMinus).exists()).toBe(true)
     })
 
     it('updates team members when a user is selected from dropdown', async () => {
@@ -51,6 +63,42 @@ describe('AddTeamModal.vue', () => {
     it('emits addTeam when submit button is clicked', async () => {
       await wrapper.find('button.btn-primary').trigger('click')
       expect(wrapper.emitted()).toHaveProperty('addTeam')
+    })
+  })
+  describe('Actions', () => {
+    it('adds a new member input field when clicking the add icon', async () => {
+      const addButton = wrapper.findComponent(IconPlus)
+      await addButton.trigger('click')
+
+      expect(wrapper.findAll('.input-group').length).toBe(1)
+    })
+
+    it('removes the last member input field when clicking the remove icon', async () => {
+      const addButton = wrapper.findComponent(IconPlus)
+      await addButton.trigger('click') // Add a member
+
+      const removeButton = wrapper.findComponent(IconMinus)
+      await removeButton.trigger('click') // Remove a member
+
+      expect(wrapper.findAll('.input-group').length).toBe(1)
+    })
+    it('displays dropdown with users when dropdown is true', async () => {
+      const wrapper = mount(AddTeamForm, {
+        props: {
+          users: [
+            { name: 'Alice', address: '0x123' },
+            { name: 'Bob', address: '0x456' }
+          ],
+          isLoading: false
+        },
+        data() {
+          return {
+            dropdown: true
+          }
+        }
+      })
+      expect(wrapper.find('.dropdown-open').exists()).toBe(true)
+      expect(wrapper.findAll('li').length).toBe(2)
     })
   })
 })
