@@ -1,7 +1,8 @@
 <template>
   <div class="flex min-h-screen justify-center">
     <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
-    <div v-else class="pt-10 flex flex-col gap-5 w-10/12">
+
+    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-10/12">
       <div class="flex justify-between gap-5">
         <div
           class="collapse collapse-arrow border"
@@ -136,11 +137,21 @@
         <div class="flex flex-col gap-5">
           <label class="input input-bordered flex items-center gap-2 input-md mt-4">
             <span class="w-28">Team Name</span>
-            <input type="text" class="grow" placeholder="Enter Team name" v-model="cname" />
+            <input
+              type="text"
+              class="grow"
+              placeholder="Enter Team name"
+              v-model="updateTeamInput.name"
+            />
           </label>
           <label class="input input-bordered flex items-center gap-2 input-md">
             <span class="w-28">Description</span>
-            <input type="text" class="grow" placeholder="Enter short description" v-model="cdesc" />
+            <input
+              type="text"
+              class="grow"
+              placeholder="Enter short description"
+              v-model="updateTeamInput.description"
+            />
           </label>
           <label class="input input-bordered flex items-center gap-2 input-md">
             <span class="w-30">Bank Smart Contract Address</span>
@@ -148,7 +159,7 @@
               type="text"
               class="grow"
               placeholder="Enter bank smart contract address"
-              v-model="bankSmartContractAddress"
+              v-model="updateTeamInput.bankAddress"
             />
           </label>
         </div>
@@ -190,14 +201,14 @@
 <script setup lang="ts">
 import MemberCard from '@/components/MemberCard.vue'
 import { onMounted, ref, watch, computed } from 'vue'
-import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 import CreateBankModal from '@/components/modals/CreateBankModal.vue'
 import DepositBankModal from '@/components/modals/DepositBankModal.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 
-import { type Member, type User, type Team } from '@/types'
+import { type Member, type Team, type User } from '@/types'
 
 import { isAddress } from 'ethers' // ethers v6
 import { useToastStore } from '@/stores/useToastStore'
@@ -319,11 +330,6 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
-
-const cname = ref('')
-const cdesc = ref('')
-const bankSmartContractAddress = ref<string | null>('')
-
 const showModal = ref(false)
 const bankModal = ref(false)
 const depositModal = ref(false)
@@ -332,14 +338,6 @@ const transferModal = ref(false)
 const showAddMemberForm = ref(false)
 
 const inputs = ref<Member[]>([])
-let team = ref<Team>({
-  id: '',
-  name: '',
-  description: '',
-  bankAddress: null,
-  members: [],
-  ownerAddress: ''
-})
 
 const teamMembers = ref([
   {
@@ -368,7 +366,6 @@ const handleUpdateForm = async () => {
     }
   })
 }
-const addMembersPayload = ref('')
 
 const {
   execute: executeAddMembers,
@@ -378,50 +375,35 @@ const {
 } = useCustomFetch(`teams/${String(route.params.id)}/member`, {
   immediate: false
 })
-  .post(addMembersPayload)
+  .post({ data: teamMembers.value })
   .json()
 watch(addMembersError, () => {
   if (addMembersError.value) {
     useErrorHandler().handleError(new Error(addMembersError.value))
   }
 })
-watch(addMemberResponse, async () => {
-  if (addMemberResponse.value?.ok) {
-    addSuccessToast('Members added successfully')
-    await getTeamAPI()
-    showAddMemberForm.value = false
+watch(
+  [() => addMembersLoading.value, () => addMembersError.value, () => addMemberResponse.value],
+  async () => {
+    if (!addMembersLoading.value && !addMembersError.value && addMemberResponse.value?.ok) {
+      addSuccessToast('Members added successfully')
+      await getTeamAPI()
+      showAddMemberForm.value = false
+    }
   }
-})
+)
+
 const handleAddMembers = async () => {
-  addMembersPayload.value = JSON.stringify({
-    data: teamMembers.value.map((member) => {
-      return {
-        name: member.name,
-        address: member.address
-      }
-    })
-  })
   await executeAddMembers()
 }
 const {
   error: getTeamError,
+  data: team,
   isFetching: teamIsFetching,
   response: teamResponse,
   execute: getTeamAPI
 } = useCustomFetch(`teams/${String(route.params.id)}`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const queryParams = new URLSearchParams()
-    if (query.value) {
-      queryParams.append('query', query.value)
-      url += '?' + queryParams.toString()
-    }
-    options.headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${AuthService.getToken()}`
-    }
-    return { options, url, cancel }
-  }
+  immediate: false
 })
   .get()
   .json()
@@ -431,15 +413,16 @@ watch(getTeamError, () => {
     useErrorHandler().handleError(new Error(getTeamError.value))
   }
 })
-watch(teamResponse, async () => {
-  if (teamResponse.value?.ok) {
-    const teamData = await teamResponse.value.json()
-    team.value = teamData.team
-    cname.value = team.value.name
-    cdesc.value = team.value.description
-    bankSmartContractAddress.value = team.value.bankAddress
+watch(
+  [() => teamIsFetching.value, () => getTeamError.value, () => teamResponse.value],
+  async () => {
+    if (!teamIsFetching.value && !getTeamError.value && teamResponse.value?.ok) {
+      updateTeamInput.value.name = team.value.name
+      updateTeamInput.value.description = team.value.description
+      updateTeamInput.value.bankAddress = team.value.bankAddress
+    }
   }
-})
+)
 
 onMounted(async () => {
   await getTeamAPI()
@@ -467,12 +450,16 @@ const {
 })
   .delete()
   .json()
-watch(deleteMemberResponse, () => {
-  if (deleteMemberResponse.value?.ok) {
-    addSuccessToast('Member deleted successfully')
-    getTeamAPI()
+watch(
+  [() => memberIsDeleting.value, () => deleteMemberError.value, () => deleteMemberResponse.value],
+  async () => {
+    if (!memberIsDeleting.value && !deleteMemberError.value && deleteMemberResponse.value?.ok) {
+      addSuccessToast('Member deleted successfully')
+      getTeamAPI()
+    }
   }
-})
+)
+
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     useErrorHandler().handleError(new Error(deleteMemberError.value))
@@ -486,39 +473,36 @@ const deleteMember = async (id: string, address: string) => {
   deleteMemberAddress.value = address
   await deleteMemberAPI()
 }
-
+const updateTeamInput = ref<Partial<Team>>({
+  name: '',
+  description: '',
+  bankAddress: ''
+})
 const {
   execute: updateTeamAPI,
   isFetching: teamIsUpdating,
   error: updateTeamError,
   response: updateTeamResponse
 } = useCustomFetch(`teams/${String(route.params.id)}`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const body = {
-      name: cname.value,
-      description: cdesc.value,
-      bankAddress: bankSmartContractAddress.value
-    }
-    options.body = JSON.stringify(body)
-    return { options, url, cancel }
-  }
+  immediate: false
 })
   .json()
-  .put()
+  .put(updateTeamInput)
 watch(updateTeamError, () => {
   if (updateTeamError.value) {
     useErrorHandler().handleError(new Error(updateTeamError.value))
   }
 })
-watch(updateTeamResponse, () => {
-  if (updateTeamResponse.value?.ok) {
-    addSuccessToast('Team updated successfully')
-    getTeamAPI()
-    showModal.value = false
+watch(
+  [() => teamIsUpdating.value, () => updateTeamError.value, () => updateTeamResponse.value],
+  async () => {
+    if (!teamIsUpdating.value && !updateTeamError.value && updateTeamResponse.value?.ok) {
+      addSuccessToast('Member deleted successfully')
+      showModal.value = false
+      getTeamAPI()
+    }
   }
-})
-
+)
 const {
   execute: deleteTeamAPI,
   isFetching: teamIsDeleting,
@@ -535,14 +519,16 @@ watch(deleteTeamError, () => {
     useErrorHandler().handleError(new Error(deleteTeamError.value))
   }
 })
-watch(deleteTeamResponse, () => {
-  if (deleteTeamResponse.value?.ok) {
-    addSuccessToast('Team deleted successfully')
-    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
-    router.push('/teams')
+watch(
+  [() => teamIsDeleting.value, () => deleteTeamError.value, () => deleteTeamResponse.value],
+  async () => {
+    if (!teamIsDeleting.value && !deleteTeamError.value && deleteTeamResponse.value?.ok) {
+      addSuccessToast('Team deleted successfully')
+      showDeleteConfirmModal.value = !showDeleteConfirmModal.value
+      router.push('/teams')
+    }
   }
-})
-
+)
 const deployBankContract = async () => {
   const id = route.params.id
   await createBankContract(String(id))
@@ -614,7 +600,7 @@ const searchMembers = async (queryIn: string) => {
   }
 }
 const membersAddress = computed(() => {
-  return team.value.members.map((member) => member.address)
+  return team.value.members.map((member: { address: string }) => member.address)
 })
 </script>
 @/composables/apis/teamMember@/composables/apis/team

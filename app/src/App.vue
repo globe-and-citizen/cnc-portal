@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { ref, watch, toRaw } from 'vue'
+import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
@@ -45,6 +45,7 @@ const updateUserInput = ref({
   address: address.value
 })
 const {
+  data: updatedUserData,
   isFetching: userIsUpdating,
   response: userUpdateResponse,
   error: userUpdateError,
@@ -56,12 +57,14 @@ watch(userUpdateError, () => {
     useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
   }
 })
-
-watch(userUpdateResponse, async () => {
-  if (userUpdateResponse.value?.ok) {
+watch(updatedUserData, () => {
+  if (updatedUserData.value && userUpdateResponse.value?.ok) {
     addSuccessToast('User updated')
-    const user = await userUpdateResponse.value?.json()
-    userStore.setUserData(user.name || '', user.address || '', user.nonce || '')
+    userStore.setUserData(
+      updatedUserData.value.name || '',
+      updatedUserData.value.address || '',
+      updatedUserData.value.nonce || ''
+    )
   }
 })
 

@@ -2,11 +2,11 @@
   <div class="min-h-screen flex justify-center">
     <span v-if="teamsAreFetching" class="loading loading-spinner loading-lg"></span>
 
-    <div class="pt-10" v-else>
+    <div class="pt-10" v-if="!teamsAreFetching && teams">
       <h2 class="pl-5">Team</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
         <TeamCard
-          v-for="team in teams?.teams"
+          v-for="team in teams"
           :key="team.id"
           :team="team"
           class="cursor-pointer"
@@ -96,7 +96,6 @@ const handleupdateAddTeamModal = (teamInput: TeamInput) => {
     }
   })
 }
-const teamPayload = ref(JSON.stringify(team.value))
 
 const {
   isFetching: createTeamFetching,
@@ -104,23 +103,9 @@ const {
   execute: executeCreateTeam,
   response: createTeamResponse
 } = useCustomFetch('teams', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    teamPayload.value = JSON.stringify({
-      name: team.value.name,
-      description: team.value.description,
-      members: team.value.members.map((member) => {
-        return {
-          name: member.name,
-          address: member.address
-        }
-      })
-    })
-    options.body = teamPayload.value
-    return { options, url, cancel }
-  }
+  immediate: false
 })
-  .post()
+  .post(team)
   .json()
 
 watch(createTeamError, () => {
@@ -128,14 +113,16 @@ watch(createTeamError, () => {
     return useErrorHandler().handleError(new Error(createTeamError.value))
   }
 })
-watch(createTeamResponse, () => {
-  if (createTeamResponse.value?.ok) {
-    addSuccessToast('Team created successfully')
-    showAddTeamModal.value = false
-    executeFetchTeams()
+watch(
+  [() => createTeamFetching.value, () => createTeamError.value, () => createTeamResponse.value],
+  () => {
+    if (!createTeamFetching.value && !createTeamError.value && createTeamResponse.value?.ok) {
+      addSuccessToast('Team created successfully')
+      showAddTeamModal.value = false
+      executeFetchTeams()
+    }
   }
-})
-
+)
 const addInput = () => {
   team.value.members.push({ name: '', address: '', isValid: false })
 }
