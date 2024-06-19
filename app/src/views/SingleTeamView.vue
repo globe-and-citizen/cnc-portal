@@ -12,11 +12,11 @@
           @deleteTeam="showDeleteTeamConfirmModal = true"
         />
         <ModalComponent v-model="showDeleteTeamConfirmModal">
-          <DeleteConfirmModal :isLoading="teamIsDeleting" @deleteItem="async () => deleteTeamAPI()">
+          <DeleteConfirmForm :isLoading="teamIsDeleting" @deleteItem="async () => deleteTeamAPI()">
             Are you sure you want to delete the team
             <span class="font-bold">{{ team.name }}</span
             >?
-          </DeleteConfirmModal>
+          </DeleteConfirmForm>
         </ModalComponent>
       </div>
       <TeamActions
@@ -63,12 +63,12 @@
         "
       />
       <ModalComponent v-model="showDeleteMemberConfirmModal">
-        <DeleteConfirmModal :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+        <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
           Are you sure you want to delete
           <span class="font-bold">{{ memberToBeDeleted.name }}</span>
           with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
           from the team?
-        </DeleteConfirmModal>
+        </DeleteConfirmForm>
       </ModalComponent>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
       <TipsAction
@@ -143,7 +143,7 @@ import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import UpdateTeamForm from '@/components/forms/UpdateTeamForm.vue'
 import AddMemberForm from '@/components/forms/AddMemberForm.vue'
-import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
+import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 
 //Components
 import MemberCard from '@/components/MemberCard.vue'
