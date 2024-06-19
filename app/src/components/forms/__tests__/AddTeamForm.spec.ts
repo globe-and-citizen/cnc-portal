@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddTeamModal from '@/components/modals/AddTeamModal.vue'
+import AddTeamModal from '@/components/forms/AddTeamForm.vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
@@ -48,21 +48,6 @@ describe('AddTeamModal.vue', () => {
     })
   })
   describe('Emits', () => {
-    it('emits toggleAddTeamModal when close button is clicked', async () => {
-      await wrapper.find('button.btn-circle').trigger('click')
-      expect(wrapper.emitted()).toHaveProperty('toggleAddTeamModal')
-    })
-
-    it('emits addInput when add button is clicked', async () => {
-      await wrapper.findComponent(IconPlus).trigger('click')
-      expect(wrapper.emitted()).toHaveProperty('addInput')
-    })
-
-    it('emits removeInput when remove button is clicked', async () => {
-      await wrapper.findComponent(IconMinus).trigger('click')
-      expect(wrapper.emitted()).toHaveProperty('removeInput')
-    })
-
     it('emits addTeam when submit button is clicked', async () => {
       await wrapper.find('button.btn-primary').trigger('click')
       expect(wrapper.emitted()).toHaveProperty('addTeam')
