@@ -410,6 +410,7 @@ const {
 watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () => {
   if (!memberIsDeleting.value && !deleteMemberError.value) {
     addSuccessToast('Member deleted successfully')
+    showDeleteMemberConfirmModal.value = false
     getTeamAPI()
   }
 })

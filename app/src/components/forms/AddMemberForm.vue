@@ -84,10 +84,9 @@
       <IconMinus />
     </div>
   </div>
-  <div class="flex justify-center" @click="emits('addMembers')">
+  <div class="flex justify-center">
     <LoadingButton color=" primary w-24" v-if="isLoading" class="btn btn-primary justify-center" />
-
-    <button class="btn btn-primary justify-center" v-else>Add</button>
+    <button class="btn btn-primary justify-center" v-else @click="emits('addMembers')">Add</button>
   </div>
 </template>
 <script setup lang="ts">
