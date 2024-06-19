@@ -25,7 +25,7 @@
       </div>
       <TeamActions
         :team="team"
-        @createContract="bankModal = true"
+        @createBank="bankModal = true"
         @deposit="depositModal = true"
         @transfer="transferModal = true"
       />
