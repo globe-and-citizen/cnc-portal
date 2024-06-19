@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-end">
-    <button class="btn btn-primary btn" @click="emits('createContract')" v-if="!team.bankAddress">
+    <button class="btn btn-primary" @click="emits('createContract')" v-if="!team.bankAddress">
       Create Bank Account Smart Contract
     </button>
     <div class="flex gap-2">
