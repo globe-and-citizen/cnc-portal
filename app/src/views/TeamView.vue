@@ -13,18 +13,16 @@
           @click="navigateToTeam(team.id)"
         />
 
-        <AddTeamCard
-          :isLoading="createTeamFetching"
-          @addTeam="executeCreateTeam"
-          @searchUsers="(input) => searchUsers(input)"
-          :users="foundUsers"
-          v-model:showAddTeamModal="showAddTeamModal"
-          v-model:team="team"
-          @updateAddTeamModal="handleupdateAddTeamModal"
-          @addInput="addInput"
-          @removeInput="removeInput"
-          @toggleAddTeamModal="showAddTeamModal = !showAddTeamModal"
-        />
+        <AddTeamCard @openAddTeamModal="showAddTeamModal = !showAddTeamModal" />
+        <ModalComponent v-model="showAddTeamModal">
+          <AddTeamForm
+            :isLoading="createTeamFetching"
+            v-model="team"
+            :users="foundUsers"
+            @searchUsers="(input) => searchUsers(input)"
+            @addTeam="executeCreateTeam"
+          />
+        </ModalComponent>
       </div>
     </div>
   </div>
@@ -33,7 +31,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { isAddress } from 'ethers' // ethers v6
 
 import AddTeamCard from '@/components/AddTeamCard.vue'
 import TeamCard from '@/components/TeamCard.vue'
@@ -44,6 +41,8 @@ import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { logout } from '@/utils/navBarUtil'
 import type { TeamsResponse } from '@/types'
+import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
 const router = useRouter()
 
 const { addSuccessToast } = useToastStore()
@@ -85,18 +84,6 @@ const team = ref<TeamInput>({
   ]
 })
 
-const handleupdateAddTeamModal = (teamInput: TeamInput) => {
-  team.value = teamInput
-  let members = team.value.members
-  members.map((member) => {
-    if (isAddress(member.address)) {
-      member.isValid = true
-    } else {
-      member.isValid = false
-    }
-  })
-}
-
 const {
   isFetching: createTeamFetching,
   error: createTeamError,
@@ -123,9 +110,7 @@ watch(
     }
   }
 )
-const addInput = () => {
-  team.value.members.push({ name: '', address: '', isValid: false })
-}
+
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const {
@@ -158,11 +143,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
     await executeSearchUser()
   }
 }
-const removeInput = () => {
-  if (team.value.members.length > 1) {
-    team.value.members.pop()
-  }
-}
+
 function navigateToTeam(id: string) {
   router.push('/teams/' + id)
 }

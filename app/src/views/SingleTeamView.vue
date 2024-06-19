@@ -9,19 +9,15 @@
           :balanceLoading="balanceLoading"
           :teamBalance="Number(teamBalance)"
           @updateTeamModalOpen="updateTeamModalOpen"
-          @deleteTeam="showDeleteConfirmModal = !showDeleteConfirmModal"
+          @deleteTeam="showDeleteTeamConfirmModal = true"
         />
-
-        <DeleteConfirmModal
-          :showDeleteConfirmModal="showDeleteConfirmModal"
-          :isLoading="teamIsDeleting"
-          @toggleDeleteConfirmModal="showDeleteConfirmModal = !showDeleteConfirmModal"
-          @deleteItem="async () => deleteTeamAPI()"
-        >
-          Are you sure you want to delete the team
-          <span class="font-bold">{{ team.name }}</span
-          >?
-        </DeleteConfirmModal>
+        <ModalComponent v-model="showDeleteTeamConfirmModal">
+          <DeleteConfirmForm :isLoading="teamIsDeleting" @deleteItem="async () => deleteTeamAPI()">
+            Are you sure you want to delete the team
+            <span class="font-bold">{{ team.name }}</span
+            >?
+          </DeleteConfirmForm>
+        </ModalComponent>
       </div>
       <TeamActions
         :team="team"
@@ -35,19 +31,19 @@
         <span class="w-1/2">Name</span>
         <span class="w-1/2">Address</span>
         <AddMemberCard
-          :isLoading="addMembersLoading"
           class="w-1/2"
-          :users="foundUsers"
           v-if="team.ownerAddress == useUserDataStore().address"
-          v-model:formData="teamMembers"
-          v-model:showAddMemberForm="showAddMemberForm"
-          @searchUsers="(input) => searchUsers(input)"
-          @addInput="addInput"
-          @removeInput="removeInput"
-          @addMembers="handleAddMembers"
-          @updateForm="handleUpdateForm"
           @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
         />
+        <ModalComponent v-model="showAddMemberForm">
+          <AddMemberForm
+            :isLoading="addMembersLoading"
+            :users="foundUsers"
+            :formData="teamMembers"
+            @searchUsers="(input) => searchUsers(input)"
+            @addMembers="handleAddMembers"
+          />
+        </ModalComponent>
       </div>
       <MemberCard
         v-for="member in team.members"
@@ -56,8 +52,23 @@
         :member="member"
         :isMemberDeleting="memberIsDeleting"
         :key="member.address"
-        @deleteMember="(id, address) => deleteMember(id, address)"
+        @deleteMember="
+          (member) => {
+            memberToBeDeleted.name = member.name
+            memberToBeDeleted.id = member.id
+            memberToBeDeleted.address = member.address
+            showDeleteMemberConfirmModal = true
+          }
+        "
       />
+      <ModalComponent v-model="showDeleteMemberConfirmModal">
+        <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+          Are you sure you want to delete
+          <span class="font-bold">{{ memberToBeDeleted.name }}</span>
+          with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
+          from the team?
+        </DeleteConfirmForm>
+      </ModalComponent>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
       <TipsAction
         :pushTipLoading="pushTipLoading"
@@ -76,7 +87,6 @@
     </ModalComponent>
     <ModalComponent v-model="bankModal">
       <CreateBankForm
-        @close-modal="() => (bankModal = false)"
         @create-bank="async () => deployBankContract()"
         :loading="createBankLoading"
       />
@@ -106,7 +116,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isAddress } from 'ethers'
 
 // Store imports
 import { useToastStore } from '@/stores/useToastStore'
@@ -131,7 +140,8 @@ import CreateBankForm from '@/components/forms/CreateBankForm.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import UpdateTeamForm from '@/components/forms/UpdateTeamForm.vue'
-import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
+import AddMemberForm from '@/components/forms/AddMemberForm.vue'
+import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 
 //Components
 import MemberCard from '@/components/MemberCard.vue'
@@ -144,7 +154,8 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { type Member, type Team, type User } from '@/types'
 
 // Modal control states
-const showDeleteConfirmModal = ref(false)
+const showDeleteMemberConfirmModal = ref(false)
+const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const bankModal = ref(false)
 const depositModal = ref(false)
@@ -154,8 +165,7 @@ const showAddMemberForm = ref(false)
 // CRUD input refs
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
-const deleteMemberId = ref('')
-const deleteMemberAddress = ref('')
+const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const inputs = ref<Member[]>([])
@@ -267,26 +277,6 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
-
-const addInput = () => {
-  teamMembers.value.push({ name: '', address: '', isValid: false })
-}
-
-const removeInput = () => {
-  if (teamMembers.value.length > 1) {
-    teamMembers.value.pop()
-  }
-}
-
-const handleUpdateForm = async () => {
-  teamMembers.value.map((member) => {
-    if (!isAddress(member.address)) {
-      member.isValid = false
-    } else {
-      member.isValid = true
-    }
-  })
-}
 // useFetch instance for getting team details
 const {
   error: getTeamError,
@@ -335,6 +325,8 @@ watch(addMembersError, () => {
 watch([() => addMembersLoading.value, () => addMembersError.value], async () => {
   if (!addMembersLoading.value && !addMembersError.value) {
     addSuccessToast('Members added successfully')
+    teamMembers.value = [{ name: '', address: '', isValid: false }]
+    foundUsers.value = []
     await getTeamAPI()
     showAddMemberForm.value = false
   }
@@ -387,7 +379,7 @@ watch(deleteTeamError, () => {
 watch([() => teamIsDeleting.value, () => deleteTeamError.value], async () => {
   if (!teamIsDeleting.value && !deleteTeamError.value) {
     addSuccessToast('Team deleted successfully')
-    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
+    showDeleteTeamConfirmModal.value = !showDeleteTeamConfirmModal.value
     router.push('/teams')
   }
 })
@@ -405,7 +397,7 @@ const {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
-      memberaddress: deleteMemberAddress.value,
+      memberaddress: memberToBeDeleted.value.address,
       'Content-Type': 'application/json',
       Authorization: `Bearer ${AuthService.getToken()}`
     }
@@ -418,6 +410,7 @@ const {
 watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () => {
   if (!memberIsDeleting.value && !deleteMemberError.value) {
     addSuccessToast('Member deleted successfully')
+    showDeleteMemberConfirmModal.value = false
     getTeamAPI()
   }
 })
@@ -425,14 +418,9 @@ watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () =>
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     useErrorHandler().handleError(new Error(deleteMemberError.value))
-    showDeleteConfirmModal.value = false
+    showDeleteMemberConfirmModal.value = false
   }
 })
-const deleteMember = async (id: string, address: string) => {
-  deleteMemberId.value = id
-  deleteMemberAddress.value = address
-  await deleteMemberAPI()
-}
 
 const deployBankContract = async () => {
   const id = route.params.id

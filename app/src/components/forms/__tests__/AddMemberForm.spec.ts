@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddMemberModal from '@/components/modals/AddMemberModal.vue'
+import AddMemberForm from '@/components/forms/AddMemberForm.vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 import IconMinus from '@/components/icons/IconMinus.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
@@ -14,7 +14,7 @@ describe('AddMemberModal.vue', () => {
     { name: 'Farrell', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }
   ]
 
-  const wrapper = mount(AddMemberModal, {
+  const wrapper = mount(AddMemberForm, {
     props: {
       formData,
       users,
@@ -45,25 +45,42 @@ describe('AddMemberModal.vue', () => {
     })
   })
   describe('Emits', () => {
-    it('emits toggleAddMemberModal when close button is clicked', async () => {
-      await wrapper.find('button.btn-circle').trigger('click')
-      expect(wrapper.emitted('toggleAddMemberModal')).toBeTruthy()
-    })
-
-    it('emits addInput when add button is clicked', async () => {
-      await wrapper.findComponent(IconPlus).trigger('click')
-      expect(wrapper.emitted('addInput')).toBeTruthy()
-    })
-
-    it('emits removeInput when remove button is clicked', async () => {
-      await wrapper.findComponent(IconMinus).trigger('click')
-      console.log(wrapper.emitted())
-      expect(wrapper.emitted('removeInput')).toBeTruthy()
-    })
-
     it('emits addMembers when add button is clicked', async () => {
       await wrapper.find('button.btn-primary').trigger('click')
       expect(wrapper.emitted('addMembers')).toBeTruthy()
+    })
+  })
+  describe('Actions', () => {
+    it('adds a new member input field when clicking the add icon', async () => {
+      const wrapper = mount(AddMemberForm, {
+        props: {
+          formData: [{ name: '', address: '', isValid: false }],
+          users: [],
+          isLoading: false
+        }
+      })
+
+      const addButton = wrapper.findComponent(IconPlus)
+      await addButton.trigger('click')
+
+      expect(wrapper.findAll('.input-group').length).toBe(2)
+    })
+
+    it('removes the last member input field when clicking the remove icon', async () => {
+      const wrapper = mount(AddMemberForm, {
+        props: {
+          formData: [
+            { name: '', address: '', isValid: false },
+            { name: '', address: '', isValid: false }
+          ],
+          users: [],
+          isLoading: false
+        }
+      })
+      const removeButton = wrapper.findComponent(IconMinus)
+      await removeButton.trigger('click')
+
+      expect(wrapper.findAll('.input-group').length).toBe(1)
     })
   })
 })
