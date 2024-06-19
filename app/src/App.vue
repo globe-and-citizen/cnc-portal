@@ -45,7 +45,7 @@ const updateUserInput = ref({
   address: address.value
 })
 const {
-  data: updatedUserData,
+  data: user,
   isFetching: userIsUpdating,
   response: userUpdateResponse,
   error: userUpdateError,
@@ -57,14 +57,10 @@ watch(userUpdateError, () => {
     useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
   }
 })
-watch(updatedUserData, () => {
-  if (updatedUserData.value && userUpdateResponse.value?.ok) {
+watch(user, () => {
+  if (user.value && userUpdateResponse.value?.ok) {
     addSuccessToast('User updated')
-    userStore.setUserData(
-      updatedUserData.value.name || '',
-      updatedUserData.value.address || '',
-      updatedUserData.value.nonce || ''
-    )
+    userStore.setUserData(user.value.name || '', user.value.address || '', user.value.nonce || '')
   }
 })
 

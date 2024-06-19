@@ -554,4 +554,3 @@ const membersAddress = computed(() => {
   return team.value.members.map((member: { address: string }) => member.address)
 })
 </script>
-@/composables/apis/teamMember@/composables/apis/team
