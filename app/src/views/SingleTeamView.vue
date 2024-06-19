@@ -35,19 +35,20 @@
         <span class="w-1/2">Name</span>
         <span class="w-1/2">Address</span>
         <AddMemberCard
-          :isLoading="addMembersLoading"
           class="w-1/2"
-          :users="foundUsers"
           v-if="team.ownerAddress == useUserDataStore().address"
-          v-model:formData="teamMembers"
-          v-model:showAddMemberForm="showAddMemberForm"
-          @searchUsers="(input) => searchUsers(input)"
-          @addInput="addInput"
-          @removeInput="removeInput"
-          @addMembers="handleAddMembers"
-          @updateForm="handleUpdateForm"
           @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
         />
+        <ModalComponent v-model="showAddMemberForm">
+          <AddMemberForm
+            :isLoading="addMembersLoading"
+            :users="foundUsers"
+            :formData="teamMembers"
+            :showAddMemberForm="showAddMemberForm"
+            @searchUsers="(input: any) => searchUsers(input)"
+            @addMembers="handleAddMembers"
+          />
+        </ModalComponent>
       </div>
       <MemberCard
         v-for="member in team.members"
@@ -131,6 +132,7 @@ import CreateBankForm from '@/components/forms/CreateBankForm.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import UpdateTeamForm from '@/components/forms/UpdateTeamForm.vue'
+import AddMemberForm from '@/components/forms/AddMemberForm.vue'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
 
 //Components
@@ -267,26 +269,6 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
-
-const addInput = () => {
-  teamMembers.value.push({ name: '', address: '', isValid: false })
-}
-
-const removeInput = () => {
-  if (teamMembers.value.length > 1) {
-    teamMembers.value.pop()
-  }
-}
-
-const handleUpdateForm = async () => {
-  teamMembers.value.map((member) => {
-    if (!isAddress(member.address)) {
-      member.isValid = false
-    } else {
-      member.isValid = true
-    }
-  })
-}
 // useFetch instance for getting team details
 const {
   error: getTeamError,

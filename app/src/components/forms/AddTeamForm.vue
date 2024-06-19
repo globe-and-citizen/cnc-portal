@@ -25,9 +25,6 @@
           type="text"
           class="w-24"
           v-model="input.name"
-          @input="
-            () => (isAddress(input.address) ? (input.isValid = true) : (input.isValid = false))
-          "
           @keyup.stop="
             () => {
               emits('searchUsers', input)
