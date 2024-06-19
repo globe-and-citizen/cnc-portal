@@ -4,24 +4,17 @@ import { createFetch } from '@vueuse/core'
 
 export const useCustomFetch = createFetch({
   baseUrl: `${BACKEND_URL}/api/`,
-  combination: 'overwrite',
-  fetchOptions: {
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${AuthService.getToken()}`
-    }
-  },
+  combination: 'chain',
   options: {
     async beforeFetch({ options }) {
+      const token = AuthService.getToken()
       options = {
-        ...options,
+        mode: 'cors',
         headers: {
-          ...options.headers,
-          Authorization: `Bearer ${AuthService.getToken()}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         }
       }
-
       return { options }
     }
   }
