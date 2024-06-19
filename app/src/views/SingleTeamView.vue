@@ -94,53 +94,81 @@
       v-if="transferModal"
       @close-modal="() => (transferModal = false)"
       @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
-      @searchMembers="async (query: string) => await searchMembers(query)"
-      :filteredMembers="filteredMembers"
+      @searchMembers="(input) => searchUsers({ address: input, name: '' })"
+      :filteredMembers="foundUsers"
       :loading="transferLoading"
       :bank-balance="teamBalance"
     />
   </div>
 </template>
 <script setup lang="ts">
-import MemberCard from '@/components/MemberCard.vue'
-import { onMounted, ref, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AddMemberCard from '@/components/AddMemberCard.vue'
-import TipsAction from '@/components/TipsAction.vue'
-import CreateBankForm from '@/components/modals/CreateBankForm.vue'
-import DepositBankForm from '@/components/modals/DepositBankForm.vue'
-import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
-import UpdateTeamForm from '@/components/modals/UpdateTeamForm.vue'
-import { type Member, type Team, type User } from '@/types'
+import { isAddress } from 'ethers'
 
-import { isAddress } from 'ethers' // ethers v6
+// Store imports
 import { useToastStore } from '@/stores/useToastStore'
-import { usePushTip, useSendTip } from '@/composables/tips'
+import { useUserDataStore } from '@/stores/user'
 
+// Composables
 import { useErrorHandler } from '@/composables/errorHandler'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { usePushTip, useSendTip } from '@/composables/tips'
 import {
   useBankBalance,
   useBankDeposit,
   useDeployBankContract,
   useBankTransfer
 } from '@/composables/bank'
+
+// Service
+import { AuthService } from '@/services/authService'
+
+// Modals/Forms
+import CreateBankForm from '@/components/modals/CreateBankForm.vue'
+import DepositBankForm from '@/components/modals/DepositBankForm.vue'
+import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
+import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
+
+//Components
+import MemberCard from '@/components/MemberCard.vue'
+import AddMemberCard from '@/components/AddMemberCard.vue'
+import TipsAction from '@/components/TipsAction.vue'
+import UpdateTeamForm from '@/components/modals/UpdateTeamForm.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
 import TeamActions from '@/components/TeamActions.vue'
-import { useUserDataStore } from '@/stores/user'
-import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { AuthService } from '@/services/authService'
 import ModalComponent from '@/components/ModalComponent.vue'
 
+import { type Member, type Team, type User } from '@/types'
+
+// Modal control states
 const showDeleteConfirmModal = ref(false)
+const showModal = ref(false)
+const bankModal = ref(false)
+const depositModal = ref(false)
+const transferModal = ref(false)
+const showAddMemberForm = ref(false)
 
-const { addSuccessToast, addErrorToast } = useToastStore()
-
+// CRUD input refs
 const foundUsers = ref<User[]>([])
-const filteredMembers = ref<User[]>([])
+const teamMembers = ref([{ name: '', address: '', isValid: false }])
+const deleteMemberId = ref('')
+const deleteMemberAddress = ref('')
+const searchUserName = ref('')
+const searchUserAddress = ref('')
+const inputs = ref<Member[]>([])
+const updateTeamInput = ref<Partial<Team>>({
+  name: '',
+  description: '',
+  bankAddress: ''
+})
 
 const route = useRoute()
 const router = useRouter()
+
+const { addSuccessToast, addErrorToast } = useToastStore()
+
+// Banking composables
 const {
   execute: pushTip,
   isLoading: pushTipLoading,
@@ -178,6 +206,8 @@ const {
   isSuccess: transferSuccess,
   error: transferError
 } = useBankTransfer()
+
+// Watchers for Banking functions
 watch(pushTipError, async () => {
   if (pushTipError.value) {
     addErrorToast(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
@@ -235,22 +265,6 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
-const showModal = ref(false)
-const bankModal = ref(false)
-const depositModal = ref(false)
-const transferModal = ref(false)
-
-const showAddMemberForm = ref(false)
-
-const inputs = ref<Member[]>([])
-
-const teamMembers = ref([
-  {
-    name: '',
-    address: '',
-    isValid: false
-  }
-])
 
 const addInput = () => {
   teamMembers.value.push({ name: '', address: '', isValid: false })
@@ -271,7 +285,36 @@ const handleUpdateForm = async () => {
     }
   })
 }
+// useFetch instance for getting team details
+const {
+  error: getTeamError,
+  data: team,
+  isFetching: teamIsFetching,
+  execute: getTeamAPI
+} = useCustomFetch(`teams/${String(route.params.id)}`, {
+  immediate: false
+})
+  .get()
+  .json()
 
+// Watchers for getting team details
+watch(getTeamError, () => {
+  if (getTeamError.value) {
+    useErrorHandler().handleError(new Error(getTeamError.value))
+  }
+})
+watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], async () => {
+  if (!teamIsFetching.value && !getTeamError.value && team.value) {
+    updateTeamInput.value.name = team.value.name
+    updateTeamInput.value.description = team.value.description
+    updateTeamInput.value.bankAddress = team.value.bankAddress
+  }
+})
+onMounted(async () => {
+  await getTeamAPI() //Call the execute function to get team details on mount
+})
+
+// useFetch instance for adding members to team
 const {
   execute: executeAddMembers,
   error: addMembersError,
@@ -281,6 +324,7 @@ const {
 })
   .post({ data: teamMembers.value })
   .json()
+// Watchers for adding members to team
 watch(addMembersError, () => {
   if (addMembersError.value) {
     useErrorHandler().handleError(new Error(addMembersError.value))
@@ -297,38 +341,60 @@ watch([() => addMembersLoading.value, () => addMembersError.value], async () => 
 const handleAddMembers = async () => {
   await executeAddMembers()
 }
+
+// useFetch instance for updating team details
 const {
-  error: getTeamError,
-  data: team,
-  isFetching: teamIsFetching,
-  execute: getTeamAPI
+  execute: updateTeamAPI,
+  isFetching: teamIsUpdating,
+  error: updateTeamError
 } = useCustomFetch(`teams/${String(route.params.id)}`, {
   immediate: false
 })
-  .get()
   .json()
-
-watch(getTeamError, () => {
-  if (getTeamError.value) {
-    useErrorHandler().handleError(new Error(getTeamError.value))
+  .put(updateTeamInput)
+// Watchers for updating team details
+watch(updateTeamError, () => {
+  if (updateTeamError.value) {
+    useErrorHandler().handleError(new Error(updateTeamError.value))
   }
 })
-watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], async () => {
-  if (!teamIsFetching.value && !getTeamError.value && team.value) {
-    updateTeamInput.value.name = team.value.name
-    updateTeamInput.value.description = team.value.description
-    updateTeamInput.value.bankAddress = team.value.bankAddress
+watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
+  if (!teamIsUpdating.value && !updateTeamError.value) {
+    addSuccessToast('Team updated successfully')
+    showModal.value = false
+    getTeamAPI()
   }
 })
 
-onMounted(async () => {
-  await getTeamAPI()
+// useFetch instance for deleting team
+const {
+  execute: deleteTeamAPI,
+  isFetching: teamIsDeleting,
+  error: deleteTeamError
+} = useCustomFetch(`teams/${String(route.params.id)}`, {
+  immediate: false
+})
+  .delete()
+  .json()
+// Watchers for deleting team
+watch(deleteTeamError, () => {
+  if (deleteTeamError.value) {
+    useErrorHandler().handleError(new Error(deleteTeamError.value))
+  }
+})
+watch([() => teamIsDeleting.value, () => deleteTeamError.value], async () => {
+  if (!teamIsDeleting.value && !deleteTeamError.value) {
+    addSuccessToast('Team deleted successfully')
+    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
+    router.push('/teams')
+  }
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
   inputs.value = team.value.members
 }
 
+// useFetch instance for deleting member
 const {
   error: deleteMemberError,
   isFetching: memberIsDeleting,
@@ -346,6 +412,7 @@ const {
 })
   .delete()
   .json()
+// Watchers for deleting member
 watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () => {
   if (!memberIsDeleting.value && !deleteMemberError.value) {
     addSuccessToast('Member deleted successfully')
@@ -359,61 +426,12 @@ watch(deleteMemberError, () => {
     showDeleteConfirmModal.value = false
   }
 })
-const deleteMemberId = ref('')
-const deleteMemberAddress = ref('')
 const deleteMember = async (id: string, address: string) => {
   deleteMemberId.value = id
   deleteMemberAddress.value = address
   await deleteMemberAPI()
 }
-const updateTeamInput = ref<Partial<Team>>({
-  name: '',
-  description: '',
-  bankAddress: ''
-})
-const {
-  execute: updateTeamAPI,
-  isFetching: teamIsUpdating,
-  error: updateTeamError
-} = useCustomFetch(`teams/${String(route.params.id)}`, {
-  immediate: false
-})
-  .json()
-  .put(updateTeamInput)
-watch(updateTeamError, () => {
-  if (updateTeamError.value) {
-    useErrorHandler().handleError(new Error(updateTeamError.value))
-  }
-})
-watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
-  if (!teamIsUpdating.value && !updateTeamError.value) {
-    addSuccessToast('Team updated successfully')
-    showModal.value = false
-    getTeamAPI()
-  }
-})
-const {
-  execute: deleteTeamAPI,
-  isFetching: teamIsDeleting,
-  error: deleteTeamError
-} = useCustomFetch(`teams/${String(route.params.id)}`, {
-  immediate: false
-})
-  .delete()
-  .json()
 
-watch(deleteTeamError, () => {
-  if (deleteTeamError.value) {
-    useErrorHandler().handleError(new Error(deleteTeamError.value))
-  }
-})
-watch([() => teamIsDeleting.value, () => deleteTeamError.value], async () => {
-  if (!teamIsDeleting.value && !deleteTeamError.value) {
-    addSuccessToast('Team deleted successfully')
-    showDeleteConfirmModal.value = !showDeleteConfirmModal.value
-    router.push('/teams')
-  }
-})
 const deployBankContract = async () => {
   const id = route.params.id
   await createBankContract(String(id))
@@ -437,8 +455,7 @@ const transferFromBank = async (to: string, amount: string) => {
     await getBalance(team.value.bankAddress)
   }
 }
-const searchUserName = ref('')
-const searchUserAddress = ref('')
+
 const {
   execute: executeSearchUser,
   response: searchUserResponse,
@@ -470,17 +487,6 @@ const searchUsers = async (input: { name: string; address: string }) => {
       await executeSearchUser()
     }
   } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-}
-const query = ref('')
-const searchMembers = async (queryIn: string) => {
-  try {
-    query.value = queryIn
-    const result = await getTeamAPI()
-    filteredMembers.value = result?.members || []
-  } catch (error) {
-    filteredMembers.value = []
     return useErrorHandler().handleError(error)
   }
 }
