@@ -40,7 +40,6 @@
             :isLoading="addMembersLoading"
             :users="foundUsers"
             :formData="teamMembers"
-            :showAddMemberForm="showAddMemberForm"
             @searchUsers="(input: any) => searchUsers(input)"
             @addMembers="handleAddMembers"
           />
@@ -88,7 +87,6 @@
     </ModalComponent>
     <ModalComponent v-model="bankModal">
       <CreateBankForm
-        @close-modal="() => (bankModal = false)"
         @create-bank="async () => deployBankContract()"
         :loading="createBankLoading"
       />
