@@ -79,12 +79,14 @@
       @create-bank="async () => deployBankContract()"
       :loading="createBankLoading"
     />
-    <DepositBankModal
-      v-if="depositModal"
-      @close-modal="() => (depositModal = false)"
-      @deposit="async (amount: string) => depositToBank(amount)"
-      :loading="depositLoading"
-    />
+    <ModalComponent v-model="depositModal">
+      <DepositBankForm
+        v-if="depositModal"
+        @close-modal="() => (depositModal = false)"
+        @deposit="async (amount: string) => depositToBank(amount)"
+        :loading="depositLoading"
+      />
+    </ModalComponent>
     <TransferFromBankModal
       v-if="transferModal"
       @close-modal="() => (transferModal = false)"
@@ -103,7 +105,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AddMemberCard from '@/components/AddMemberCard.vue'
 import TipsAction from '@/components/TipsAction.vue'
 import CreateBankModal from '@/components/modals/CreateBankModal.vue'
-import DepositBankModal from '@/components/modals/DepositBankModal.vue'
+import DepositBankForm from '@/components/modals/DepositBankForm.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
 import UpdateTeamForm from '@/components/modals/UpdateTeamForm.vue'
 import { type Member, type Team, type User } from '@/types'
