@@ -6,8 +6,7 @@ describe('MemberCard', () => {
   const member = { name: 'Dasarath', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }
   const teamId = 1
   const ownerAddress = '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
-  const isMemberDeleting = false
-  const props = { member, teamId, ownerAddress, isMemberDeleting }
+  const props = { member, teamId, ownerAddress }
   const wrapper = mount(MemberCard, {
     props
   })

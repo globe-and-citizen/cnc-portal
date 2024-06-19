@@ -34,7 +34,6 @@ const props = defineProps<{
   member: Partial<MemberInput>
   teamId: Number
   ownerAddress: String
-  isMemberDeleting: boolean
 }>()
 const member = ref(props.member)
 </script>
