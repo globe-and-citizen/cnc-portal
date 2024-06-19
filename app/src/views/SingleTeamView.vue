@@ -117,64 +117,15 @@
         @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
         @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
       />
-      <!-- <TipsAction :addresses="team.members.map((member) => member.address)" /> -->
     </div>
 
-    <dialog
-      id="my_modal_4"
-      class="modal modal-bottom sm:modal-middle"
-      :class="{ 'modal-open': showModal }"
-    >
-      <div class="modal-box">
-        <button
-          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="showModal = !showModal"
-        >
-          ✕
-        </button>
-        <h1 class="font-bold text-2xl">Update Team Details</h1>
-        <hr class="" />
-        <div class="flex flex-col gap-5">
-          <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-            <span class="w-28">Team Name</span>
-            <input
-              type="text"
-              class="grow"
-              placeholder="Enter Team name"
-              v-model="updateTeamInput.name"
-            />
-          </label>
-          <label class="input input-bordered flex items-center gap-2 input-md">
-            <span class="w-28">Description</span>
-            <input
-              type="text"
-              class="grow"
-              placeholder="Enter short description"
-              v-model="updateTeamInput.description"
-            />
-          </label>
-          <label class="input input-bordered flex items-center gap-2 input-md">
-            <span class="w-30">Bank Smart Contract Address</span>
-            <input
-              type="text"
-              class="grow"
-              placeholder="Enter bank smart contract address"
-              v-model="updateTeamInput.bankAddress"
-            />
-          </label>
-        </div>
-
-        <div class="modal-action justify-center">
-          <!-- if there is a button in form, it will close the modal -->
-          <LoadingButton color="primary min-w-24" v-if="teamIsUpdating" />
-          <button v-else class="btn btn-primary" @click="async () => await updateTeamAPI()">
-            Submit
-          </button>
-
-          <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
-        </div>
-      </div>
-    </dialog>
+    <ModalComponent v-model="showModal">
+      <UpdateTeamForm
+        :teamIsUpdating="teamIsUpdating"
+        v-model="updateTeamInput"
+        @updateTeam="() => updateTeamAPI()"
+      />
+    </ModalComponent>
     <CreateBankModal
       v-if="bankModal"
       @close-modal="() => (bankModal = false)"
@@ -207,7 +158,7 @@ import TipsAction from '@/components/TipsAction.vue'
 import CreateBankModal from '@/components/modals/CreateBankModal.vue'
 import DepositBankModal from '@/components/modals/DepositBankModal.vue'
 import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
-
+import UpdateTeamForm from '@/components/modals/UpdateTeamForm.vue'
 import { type Member, type Team, type User } from '@/types'
 
 import { isAddress } from 'ethers' // ethers v6
@@ -225,9 +176,9 @@ import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { NETWORK } from '@/constant'
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { AuthService } from '@/services/authService'
+import ModalComponent from '@/components/ModalComponent.vue'
 
 const showDeleteConfirmModal = ref(false)
 
@@ -497,7 +448,7 @@ watch(
   [() => teamIsUpdating.value, () => updateTeamError.value, () => updateTeamResponse.value],
   async () => {
     if (!teamIsUpdating.value && !updateTeamError.value && updateTeamResponse.value?.ok) {
-      addSuccessToast('Member deleted successfully')
+      addSuccessToast('Team updated successfully')
       showModal.value = false
       getTeamAPI()
     }
