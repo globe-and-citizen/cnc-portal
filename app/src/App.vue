@@ -9,7 +9,7 @@ import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import EditUserForm from '@/components/modals/EditUserForm.vue'
+import EditUserForm from '@/components/forms/EditUserForm.vue'
 
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
