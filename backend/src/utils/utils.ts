@@ -1,6 +1,10 @@
 import { Response } from "express";
 
 export const errorResponse = (code: number, error: any, res: Response) => {
+  if (process.env.NODE_ENV === "development")
+    if (error instanceof Error) console.log(error.stack);
+    else console.log(error);
+  
   if (code !== 500 && typeof error === "string")
     return res.status(code).json({
       success: false,
@@ -12,9 +16,9 @@ export const errorResponse = (code: number, error: any, res: Response) => {
       message: error.message,
     });
   } else {
-    if (process.env.NODE_ENV === "development")
+    /*if (process.env.NODE_ENV === "development")
       if (error instanceof Error) console.log(error.stack);
-      else console.log(error);
+      else console.log(error);*/
 
     return res.status(code).json({
       success: false,
