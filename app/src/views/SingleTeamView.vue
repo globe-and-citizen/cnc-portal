@@ -317,6 +317,8 @@ watch(addMembersError, () => {
 watch([() => addMembersLoading.value, () => addMembersError.value], async () => {
   if (!addMembersLoading.value && !addMembersError.value) {
     addSuccessToast('Members added successfully')
+    teamMembers.value = [{ name: '', address: '', isValid: false }]
+    foundUsers.value = []
     await getTeamAPI()
     showAddMemberForm.value = false
   }
