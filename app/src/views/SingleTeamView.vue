@@ -90,15 +90,17 @@
         :loading="depositLoading"
       />
     </ModalComponent>
-    <TransferFromBankModal
-      v-if="transferModal"
-      @close-modal="() => (transferModal = false)"
-      @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
-      @searchMembers="(input) => searchUsers({ address: input, name: '' })"
-      :filteredMembers="foundUsers"
-      :loading="transferLoading"
-      :bank-balance="teamBalance"
-    />
+    <ModalComponent v-model="transferModal">
+      <TransferFromBankForm
+        v-if="transferModal"
+        @close-modal="() => (transferModal = false)"
+        @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
+        @searchMembers="(input) => searchUsers({ address: input, name: '' })"
+        :filteredMembers="foundUsers"
+        :loading="transferLoading"
+        :bank-balance="teamBalance"
+      />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -127,7 +129,7 @@ import { AuthService } from '@/services/authService'
 // Modals/Forms
 import CreateBankForm from '@/components/modals/CreateBankForm.vue'
 import DepositBankForm from '@/components/modals/DepositBankForm.vue'
-import TransferFromBankModal from '@/components/modals/TransferFromBankModal.vue'
+import TransferFromBankForm from '@/components/modals/TransferFromBankForm.vue'
 import DeleteConfirmModal from '@/components/modals/DeleteConfirmModal.vue'
 
 //Components
