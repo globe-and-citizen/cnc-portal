@@ -66,7 +66,11 @@ export class BankService implements IBankService {
 
   private async deployBankContract(): Promise<string> {
     const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
-    const proxyDeployment = await proxyFactory.deploy(BANK_IMPL_ADDRESS, await this.web3Library.getAddress(), '0x')
+    const proxyDeployment = await proxyFactory.deploy(
+      BANK_IMPL_ADDRESS,
+      await this.web3Library.getAddress(),
+      '0x'
+    )
     const proxy = await proxyDeployment.waitForDeployment()
     await proxyDeployment.waitForDeployment()
 
