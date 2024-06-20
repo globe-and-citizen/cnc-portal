@@ -8,6 +8,7 @@
     <div class="pt-10" v-if="!teamsAreFetching && teams">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20" v-if="teams.length != 0">
         <TeamCard
+          data-test="teamcard"
           v-for="team in teams"
           :key="team.id"
           :team="team"
