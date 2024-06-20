@@ -33,4 +33,5 @@
     "vitest.e2e.config.ts",
     "vitest.unit.config.ts"
   ],
+  "include": ["prisma/seeds.ts", "src/*"]
 }
