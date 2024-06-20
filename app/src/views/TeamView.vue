@@ -17,7 +17,7 @@
         <div class="flex justify-center">
           <AddTeamCard
             @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
-            class="w-80 text-lg"
+            class="w-80 text-xl"
           />
         </div>
       </div>
