@@ -1,0 +1,50 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    script: |
+      docker build -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA ./app
+    automapSubstitutions: true
+    id: 'Build The Image'
+    env:
+      - 'VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL'
+      - 'VITE_APP_TIPS_ADDRESS=$_VITE_APP_TIPS_ADDRESS'
+      - 'VITE_APP_ETHERSCAN_URL=$_VITE_APP_ETHERSCAN_URL'
+
+  # Push the image to Google Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA'
+      ]
+    id: 'Push The Image'
+    waitFor:
+      - 'Build The Image'
+
+      # Run the container in Cloud run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      [
+        'run',
+        'deploy',
+        '${REPO_NAME}-app-prod',
+        '--image',
+        '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA',
+        '--region',
+        '${LOCATION}',
+        '--platform',
+        'managed',
+        '--allow-unauthenticated',
+        '--port',
+        '80',
+        '--tag',
+        'tag-${SHORT_SHA}'
+      ]
+    id: 'Deploy to Cloud Run'
+    waitFor:
+      - 'Push The Image'
+
+substitutions:
+  _VITE_APP_BACKEND_URL: 'https://cnc-portal-neg4ztdcia-wl.a.run.app'
+  _VITE_APP_TIPS_ADDRESS: '0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B'
+  _VITE_APP_ETHERSCAN_URL: 'https://sepolia.etherscan.io/'
