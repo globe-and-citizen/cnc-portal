@@ -49,8 +49,8 @@ async function siwe() {
 
     router.push('/teams')
   } catch (error: any) {
-    log.error(parseError(error), 'Some random error message', new Error('Example error'))
     isProcessing.value = false
+    log.error(parseError(error))
     addErrorToast(parseError(error))
   }
 }
