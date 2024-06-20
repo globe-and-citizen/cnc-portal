@@ -2,6 +2,7 @@ import { Prisma, PrismaClient, User } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
+import { addNotification } from "../utils";
 
 const prisma = new PrismaClient();
 // Create a new team
@@ -61,6 +62,14 @@ const addTeam = async (req: Request, res: Response) => {
       },
     });
 
+    addNotification(
+      members.map((member: User) => member.address),
+      {
+        message: `You have been added to a new team: ${name} by ${owner.name}`,
+        subject: "Team Invitation",
+        author: owner.name?.toString() || "",
+      }
+    );
     res.status(201).json(team);
   } catch (error: any) {
     console.log("Error:", error);
