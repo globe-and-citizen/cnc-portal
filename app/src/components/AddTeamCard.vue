@@ -1,9 +1,9 @@
 <template>
   <div class="card bg-green-100 flex justify-center items-center border">
     <div class="card-body flex justify-center items-center">
-      <h1 class="card-title">Add Team</h1>
+      <span class="font-bold">Add Team</span>
 
-      <div class="w-6 h-6 cursor-pointer" @click="emits('openAddTeamModal')">
+      <div class="w-5 h-5 cursor-pointer" @click="emits('openAddTeamModal')">
         <IconPlus />
       </div>
     </div>

@@ -15,7 +15,10 @@
           @click="navigateToTeam(team.id)"
         />
         <div class="flex justify-center">
-          <AddTeamCard @openAddTeamModal="showAddTeamModal = !showAddTeamModal" class="w-80" />
+          <AddTeamCard
+            @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
+            class="w-80 text-lg"
+          />
         </div>
       </div>
       <div class="flex flex-col items-center" v-if="teams.length == 0">
@@ -27,7 +30,10 @@
         >
 
         <div class="flex justify-center">
-          <AddTeamCard @openAddTeamModal="showAddTeamModal = !showAddTeamModal" class="w-80 h-20" />
+          <AddTeamCard
+            @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
+            class="w-72 h-16 text-sm"
+          />
         </div>
       </div>
     </div>
