@@ -7,7 +7,7 @@ import { ref } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
-import { parseError } from '@/utils'
+import { parseError, log } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
@@ -50,11 +50,8 @@ async function siwe() {
     router.push('/teams')
   } catch (error: any) {
     isProcessing.value = false
+    log.error(parseError(error))
     addErrorToast(parseError(error))
-    console.log(
-      '[app][src][utils][loginUtil.ts][signInWithEthereum] error instanceof Error: ',
-      error instanceof Error
-    )
   }
 }
 
