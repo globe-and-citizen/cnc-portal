@@ -48,6 +48,7 @@ async function siwe() {
     useUserDataStore().setAuthStatus(true)
 
     router.push('/teams')
+    isProcessing.value = false
   } catch (error: any) {
     isProcessing.value = false
     log.error(parseError(error))
