@@ -1,56 +1,16 @@
 <template>
-  <div class="card w-80 bg-base-100 flex justify-center items-center">
+  <div class="card bg-green-100 flex justify-center items-center border">
     <div class="card-body flex justify-center items-center">
-      <h1 class="card-title">Add Team</h1>
+      <span class="font-bold">Add Team</span>
 
-      <div class="w-6 h-6 cursor-pointer" @click="emits('toggleAddTeamModal')">
+      <div class="w-5 h-5 cursor-pointer" @click="emits('openAddTeamModal')">
         <IconPlus />
       </div>
     </div>
   </div>
-  <AddTeamModal
-    :isLoading="isLoading"
-    :team="team"
-    :showAddTeamModal="showAddTeamModal"
-    :users="users"
-    @searchUsers="(input) => emits('searchUsers', input)"
-    @updateAddTeamModal="(newFormDataTeam) => emits('updateAddTeamModal', newFormDataTeam)"
-    @addInput="emits('addInput')"
-    @removeInput="emits('removeInput')"
-    @addTeam="emits('addTeam')"
-    @toggleAddTeamModal="emits('toggleAddTeamModal')"
-  />
 </template>
 
 <script setup lang="ts">
-import type { TeamInput, User } from '@/types'
-import { ref, watch } from 'vue'
-import AddTeamModal from '@/components/modals/AddTeamModal.vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
-
-const emits = defineEmits([
-  'addTeam',
-  'addInput',
-  'removeInput',
-  'toggleAddTeamModal',
-  'updateAddTeamModal',
-  'searchUsers'
-])
-const props = defineProps<{
-  showAddTeamModal: boolean
-  team: TeamInput
-  users: User[]
-  isLoading: boolean
-}>()
-const team = ref(props.team)
-const showAddTeamModal = ref<boolean>(props.showAddTeamModal)
-
-watch(
-  [() => props.showAddTeamModal, team, showAddTeamModal],
-  ([newshowAddTeamModal, newFormDataTeam]) => {
-    emits('updateAddTeamModal', newFormDataTeam)
-    showAddTeamModal.value = newshowAddTeamModal
-  },
-  { deep: true }
-)
+const emits = defineEmits(['openAddTeamModal'])
 </script>

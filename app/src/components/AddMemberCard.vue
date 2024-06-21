@@ -8,50 +8,9 @@
     </span>
     <span class="flex justify-center items-center">Add Member</span>
   </div>
-  <AddMemberModal
-    :isLoading="isLoading"
-    :users="users"
-    :formData="formData"
-    :showAddMemberForm="showAddMemberForm"
-    @searchUsers="(input) => emits('searchUsers', input)"
-    @updateForm="formData = $event"
-    @addInput="emits('addInput')"
-    @removeInput="emits('removeInput')"
-    @addMembers="emits('addMembers')"
-    @toggleAddMemberModal="emits('toggleAddMemberModal')"
-  />
 </template>
 <script setup lang="ts">
-import { ref, defineProps, watch } from 'vue'
-import type { User } from '@/types'
-import AddMemberModal from '@/components/modals/AddMemberModal.vue'
 import IconPlus from '@/components/icons/IconPlus.vue'
 
-const props = defineProps<{
-  formData: Array<{ name: string; address: string; isValid: boolean }>
-  showAddMemberForm: boolean
-  users: User[]
-  isLoading: boolean
-}>()
-
-const emits = defineEmits([
-  'updateForm',
-  'addInput',
-  'removeInput',
-  'addMembers',
-  'toggleAddMemberModal',
-  'searchUsers'
-])
-
-const formData = ref(props.formData)
-
-const showAddMemberForm = ref<boolean>(props.showAddMemberForm)
-watch(
-  [() => props.showAddMemberForm, formData],
-  ([newShowAddMemberForm, newFormData]) => {
-    emits('updateForm', newFormData)
-    showAddMemberForm.value = newShowAddMemberForm
-  },
-  { deep: true }
-)
+const emits = defineEmits(['toggleAddMemberModal'])
 </script>

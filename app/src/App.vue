@@ -9,7 +9,7 @@ import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import EditUserForm from '@/components/modals/EditUserForm.vue'
+import EditUserForm from '@/components/forms/EditUserForm.vue'
 
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
@@ -44,12 +44,13 @@ const updateUserInput = ref({
   name: name.value,
   address: address.value
 })
+const userUpdateEndpoint = ref('')
 const {
   data: updatedUser,
   isFetching: userIsUpdating,
   error: userUpdateError,
   execute: executeUpdateUser
-} = useCustomFetch(`user/${address.value}`, { immediate: false }).put(updateUserInput).json()
+} = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(updateUserInput).json()
 
 watch(userUpdateError, () => {
   if (userUpdateError.value) {
@@ -68,6 +69,7 @@ watch(updatedUser, () => {
 })
 
 const handleUserUpdate = async () => {
+  userUpdateEndpoint.value = `user/${address.value}`
   await executeUpdateUser()
 }
 
