@@ -59,7 +59,7 @@
           tabindex="0"
           class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
         >
-          <li v-for="notification in notifications?.data" :key="notification.id">
+          <li v-for="notification in paginatedNotifications" :key="notification.id">
             <a @click="updateNotification(notification.id)">
               <div class="notification__body">
                 <span :class="{ 'font-bold': !notification.isRead }">
@@ -69,10 +69,27 @@
               <!--<div class="notification__footer">{{ notification.author }} {{ notification.createdAt }}</div>-->
             </a>
           </li>
+          <!-- Pagination Controls -->
+          <div class="flex justify-between items-center p-2">
+            <button
+              class="btn btn-sm"
+              :class="{ 'cursor-not-allowed': currentPage == 1 }"
+              @click="currentPage > 1 ? currentPage-- : currentPage"
+            >
+              Previous
+            </button>
+            <span>{{ currentPage }} / {{ totalPages }}</span>
+            <button
+              class="btn btn-sm"
+              :class="{ 'cursor-not-allowed': currentPage === totalPages }"
+              @click="currentPage < totalPages ? currentPage++ : currentPage"
+            >
+              Next
+            </button>
+          </div>
         </ul>
       </div>
       <!--Notification End-->
-
       <div class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="avatar">
           <div class="w-10 rounded-full flex justify-center">
@@ -110,7 +127,7 @@ import { logout } from '@/utils/navBarUtil'
 import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import { NETWORK } from '@/constant/index'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { type NotificationResponse } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
@@ -120,6 +137,9 @@ defineProps<{
   balanceLoading: boolean
   balance: string
 }>()
+const currentPage = ref(1)
+const itemsPerPage = ref(4)
+const totalPages = ref(0)
 
 const updateEndPoint = ref('')
 
@@ -141,6 +161,10 @@ const {
   .put()
   .json()
 
+watch(notifications, () => {
+  totalPages.value = Math.ceil(notifications.value.data.length / itemsPerPage.value)
+})
+
 const isUnread = computed(() => {
   const idx = notifications.value?.data.findIndex(
     (notification: any) => notification.isRead === false
@@ -154,6 +178,13 @@ const updateNotification = async (id: number | string | null) => {
   await executeUpdateNotifications()
   await executeFetchNotifications()
 }
+
+const paginatedNotifications = computed(() => {
+  if (!notifications.value?.data) return []
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return notifications.value.data.slice(start, end)
+})
 </script>
 
 <style scoped></style>
