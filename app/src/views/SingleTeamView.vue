@@ -20,47 +20,53 @@
         </ModalComponent>
       </div>
       <TeamActions
+        v-if="isOwner"
         :team="team"
         @createBank="bankModal = true"
         @deposit="depositModal = true"
         @transfer="transferModal = true"
       />
-      <div
-        class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
-      >
-        <span class="w-1/2">Name</span>
-        <span class="w-1/2">Address</span>
-        <AddMemberCard
-          class="w-1/2"
-          v-if="team.ownerAddress == useUserDataStore().address"
-          @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
-        />
-        <ModalComponent v-model="showAddMemberForm">
-          <AddMemberForm
-            :isLoading="addMembersLoading"
-            :users="foundUsers"
-            :formData="teamMembers"
-            @searchUsers="(input) => searchUsers(input)"
-            @addMembers="handleAddMembers"
+      <TabNavigation :tabs="tabs" :active-tab="activeTab" @setTab="(tab) => (activeTab = tab)" />
+      <div id="members" v-if="activeTab == SingleTeamTabs.Members">
+        <div
+          class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
+        >
+          <span class="w-1/2">Name</span>
+          <span class="w-1/2">Address</span>
+          <AddMemberCard
+            class="w-1/2"
+            v-if="team.ownerAddress == useUserDataStore().address"
+            @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
           />
-        </ModalComponent>
+          <ModalComponent v-model="showAddMemberForm">
+            <AddMemberForm
+              :isLoading="addMembersLoading"
+              :users="foundUsers"
+              :formData="teamMembers"
+              @searchUsers="(input) => searchUsers(input)"
+              @addMembers="handleAddMembers"
+            />
+          </ModalComponent>
+        </div>
+        <MemberCard
+          v-for="member in team.members"
+          :ownerAddress="team.ownerAddress"
+          :teamId="Number(team.id)"
+          :member="member"
+          :isMemberDeleting="memberIsDeleting"
+          :key="member.address"
+          @deleteMember="
+            (member) => {
+              memberToBeDeleted.name = member.name
+              memberToBeDeleted.id = member.id
+              memberToBeDeleted.address = member.address
+              showDeleteMemberConfirmModal = true
+            }
+          "
+        />
       </div>
-      <MemberCard
-        v-for="member in team.members"
-        :ownerAddress="team.ownerAddress"
-        :teamId="Number(team.id)"
-        :member="member"
-        :isMemberDeleting="memberIsDeleting"
-        :key="member.address"
-        @deleteMember="
-          (member) => {
-            memberToBeDeleted.name = member.name
-            memberToBeDeleted.id = member.id
-            memberToBeDeleted.address = member.address
-            showDeleteMemberConfirmModal = true
-          }
-        "
-      />
+
+      <!-- TODO : for tabs transactions and bank management -->
       <ModalComponent v-model="showDeleteMemberConfirmModal">
         <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
           Are you sure you want to delete
@@ -150,8 +156,9 @@ import TipsAction from '@/components/TipsAction.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
 import TeamActions from '@/components/TeamActions.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
+import TabNavigation from '@/components/TabNavigation.vue'
 
-import { type Member, type Team, type User } from '@/types'
+import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 
 // Modal control states
 const showDeleteMemberConfirmModal = ref(false)
@@ -161,6 +168,9 @@ const bankModal = ref(false)
 const depositModal = ref(false)
 const transferModal = ref(false)
 const showAddMemberForm = ref(false)
+const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
+const activeTab = ref<SingleTeamTabs>(SingleTeamTabs.Members)
+const isOwner = ref(false)
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
@@ -304,6 +314,13 @@ watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], 
 })
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
+
+  if (team.value.ownerAddress == useUserDataStore().address) {
+    isOwner.value = true
+  }
+  if (team.value.bankAddress) {
+    tabs.value.push(SingleTeamTabs.Transactions, SingleTeamTabs.Bank)
+  }
 })
 
 // useFetch instance for adding members to team
