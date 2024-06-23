@@ -4,6 +4,7 @@ FROM node:18-alpine as development
 ARG VITE_APP_NETWORK_ALIAS
 ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
 
+RUN echo "VITE_APP_NETWORK_ALIAS value is: ${VITE_APP_NETWORK_ALIAS}"
 # Set the working directory inside the container
 WORKDIR /app
 
@@ -30,6 +31,9 @@ WORKDIR /app
 
 # Copy the rest of the application code
 COPY --from=development /app .
+
+ARG VITE_APP_NETWORK_ALIAS
+ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
 
 RUN npm run build
 
