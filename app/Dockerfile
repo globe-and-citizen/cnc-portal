@@ -1,6 +1,8 @@
 # Use Node.js 18 as the base image
 FROM node:18-alpine as development  
 
+ARG VITE_APP_NETWORK_ALIAS
+ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
 
 # Set the working directory inside the container
 WORKDIR /app
