@@ -26,45 +26,54 @@
         @deposit="depositModal = true"
         @transfer="transferModal = true"
       />
-      <TabNavigation :tabs="tabs" :active-tab="activeTab" @setTab="(tab) => (activeTab = tab)" />
-      <div id="members" v-if="activeTab == SingleTeamTabs.Members">
-        <div
-          class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
-        >
-          <span class="w-1/2">Name</span>
-          <span class="w-1/2">Address</span>
-          <AddMemberCard
-            class="w-1/2"
-            v-if="team.ownerAddress == useUserDataStore().address"
-            @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
-          />
-          <ModalComponent v-model="showAddMemberForm">
-            <AddMemberForm
-              :isLoading="addMembersLoading"
-              :users="foundUsers"
-              :formData="teamMembers"
-              @searchUsers="(input) => searchUsers(input)"
-              @addMembers="handleAddMembers"
+      <TabNavigation :initial-active-tab="0" :tabs="tabs">
+        <template #tab-0>
+          <div id="members">
+            <div
+              class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
+            >
+              <span class="w-1/2">Name</span>
+              <span class="w-1/2">Address</span>
+              <AddMemberCard
+                class="w-1/2"
+                v-if="team.ownerAddress == useUserDataStore().address"
+                @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
+              />
+              <ModalComponent v-model="showAddMemberForm">
+                <AddMemberForm
+                  :isLoading="addMembersLoading"
+                  :users="foundUsers"
+                  :formData="teamMembers"
+                  @searchUsers="(input) => searchUsers(input)"
+                  @addMembers="handleAddMembers"
+                />
+              </ModalComponent>
+            </div>
+            <MemberCard
+              v-for="member in team.members"
+              :ownerAddress="team.ownerAddress"
+              :teamId="Number(team.id)"
+              :member="member"
+              :isMemberDeleting="memberIsDeleting"
+              :key="member.address"
+              @deleteMember="
+                (member) => {
+                  memberToBeDeleted.name = member.name
+                  memberToBeDeleted.id = member.id
+                  memberToBeDeleted.address = member.address
+                  showDeleteMemberConfirmModal = true
+                }
+              "
             />
-          </ModalComponent>
-        </div>
-        <MemberCard
-          v-for="member in team.members"
-          :ownerAddress="team.ownerAddress"
-          :teamId="Number(team.id)"
-          :member="member"
-          :isMemberDeleting="memberIsDeleting"
-          :key="member.address"
-          @deleteMember="
-            (member) => {
-              memberToBeDeleted.name = member.name
-              memberToBeDeleted.id = member.id
-              memberToBeDeleted.address = member.address
-              showDeleteMemberConfirmModal = true
-            }
-          "
-        />
-      </div>
+          </div>
+        </template>
+        <template #tab-1>
+          <div>transactions</div>
+        </template>
+        <template #tab-2>
+          <div>bank management</div>
+        </template>
+      </TabNavigation>
 
       <!-- TODO : for tabs transactions and bank management -->
       <ModalComponent v-model="showDeleteMemberConfirmModal">
