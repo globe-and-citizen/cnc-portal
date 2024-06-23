@@ -81,6 +81,8 @@ In the `./app` folder, create a `.env` file with the following variable:
   `VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
 - **VITE_APP_TIPS_ADDRESS**: The URL to Tips smart contract. Example:
   `VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B`
+- **VITE_APP_VITE_BANK_IMPL_ADDRESS**=: The bank implementation address
+  `VITE_BANK_IMPL_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9`
 - _VITE_APP_NETWORK_ALIAS_: The string identifier of an EVM compatible network that the app uses. Example: `VITE_APP_NETWORK_ALIAS=polygon`. This variable is optional but if you don't set your own network parameters it has to be provided. Use this if you want to use one of the preset networks which the application provides. Available options are:
   1. `etherem` - The Ethereum Main Network
   2. `polygon` - The Polygon Main Network

@@ -1,7 +1,10 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import BANK_ABI from '../artifacts/abi/bank.json'
+import PROXY_ABI from '../artifacts/abi/proxy.json'
 import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { BANK_IMPL_ADDRESS } from '@/constant'
+import { PROXY_BYTECODE } from '@/artifacts/bytecode/proxy'
 
 export interface IBankService {
   web3Library: IWeb3Library
@@ -19,8 +22,7 @@ export class BankService implements IBankService {
   }
 
   async createBankContract(teamId: string): Promise<string> {
-    // TODO: change to actual deploy contract
-    const bankAddress = '0x5466767aA6412f298dD61FbE4E3e40483030b39B'
+    const bankAddress = await this.deployBankContract()
     const response = await useCustomFetch<string>(`teams/${teamId}`).put({ bankAddress }).json()
     return response.data.value.bankAddress
   }
@@ -60,5 +62,18 @@ export class BankService implements IBankService {
     const bankContract = await this.web3Library.getContract(bankAddress, BANK_ABI)
 
     return bankContract
+  }
+
+  private async deployBankContract(): Promise<string> {
+    const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
+    const proxyDeployment = await proxyFactory.deploy(
+      BANK_IMPL_ADDRESS,
+      await this.web3Library.getAddress(),
+      '0x'
+    )
+    const proxy = await proxyDeployment.waitForDeployment()
+    await proxyDeployment.waitForDeployment()
+
+    return await proxy.getAddress()
   }
 }

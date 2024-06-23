@@ -2,6 +2,7 @@ import type { Contract } from 'ethers'
 import { BrowserProvider, /*, Signer */ ethers } from 'ethers'
 import { MetaMaskUtil } from '@/utils/web3Util'
 import type { Signer } from 'ethers'
+import type { ContractFactory } from 'ethers'
 
 // Define interface for web3 library
 export interface IWeb3Library {
@@ -13,6 +14,7 @@ export interface IWeb3Library {
   getBalance(address: string): Promise<string>
   getProvider(): any
   getContract(address: string, abi: any): Promise<Contract>
+  getFactoryContract(abi: any, bytecode: string): Promise<ContractFactory>
   parseEther(value: string): bigint
   formatEther(value: bigint): string
   sendTransaction(to: string, amount: string): Promise<any>
@@ -92,6 +94,14 @@ export class EthersJsAdapter implements IWeb3Library {
     }
 
     return new ethers.Contract(address, abi, await this.signer)
+  }
+
+  async getFactoryContract(abi: any, bytecode: string): Promise<ContractFactory> {
+    if (!this.signer) {
+      await this.connectWallet()
+    }
+
+    return new ethers.ContractFactory(abi, bytecode, await this.signer)
   }
 
   async sendTransaction(to: string, amount: string): Promise<any> {
