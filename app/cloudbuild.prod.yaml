@@ -3,6 +3,8 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     script: |
       docker build \
+        --build-arg VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL \
+        --build-arg VITE_APP_TIPS_ADDRESS=$_VITE_APP_TIPS_ADDRESS \
         --build-arg VITE_APP_NETWORK_ALIAS=$_VITE_APP_NETWORK_ALIAS \
         -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA ./app
     automapSubstitutions: true
