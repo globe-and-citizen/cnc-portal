@@ -178,7 +178,6 @@ const depositModal = ref(false)
 const transferModal = ref(false)
 const showAddMemberForm = ref(false)
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
-const activeTab = ref<SingleTeamTabs>(SingleTeamTabs.Members)
 const isOwner = ref(false)
 
 // CRUD input refs
