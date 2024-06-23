@@ -46,5 +46,5 @@ steps:
 
 substitutions:
   _VITE_APP_BACKEND_URL: 'https://cnc-portal-api-prod-neg4ztdcia-wl.a.run.app'
-  _VITE_APP_TIPS_ADDRESS: '0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B'
+  _VITE_APP_TIPS_ADDRESS: '0xDC0466d0406bf3770d08B1C681241465De5BF455'
   _VITE_APP_NETWORK_ALIAS: 'polygon'
