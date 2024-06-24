@@ -2,8 +2,8 @@
   <div class="flex min-h-screen justify-center">
     <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
 
-    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-10/12">
-      <div class="flex justify-between gap-5">
+    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-10/12 items-center">
+      <div class="flex justify-between gap-5 w-full">
         <TeamDetails
           :team="team"
           :balanceLoading="balanceLoading"
@@ -19,14 +19,21 @@
           </DeleteConfirmForm>
         </ModalComponent>
       </div>
-      <TeamActions
+      <TeamAccount
+        :teamBalance="Number(teamBalance)"
         :team="team"
         @createBank="bankModal = true"
         @deposit="depositModal = true"
         @transfer="transferModal = true"
+        :pushTipLoading="pushTipLoading"
+        :sendTipLoading="sendTipLoading"
+        :balanceLoading="balanceLoading"
+        @pushTip="(amount: Number) => pushTip(membersAddress, amount, team.bankAddress)"
+        @sendTip="(amount: Number) => sendTip(membersAddress, amount, team.bankAddress)"
       />
+
       <div
-        class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
+        class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4 w-full"
       >
         <span class="w-1/2">Name</span>
         <span class="w-1/2">Address</span>
@@ -69,13 +76,6 @@
           from the team?
         </DeleteConfirmForm>
       </ModalComponent>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
-      <TipsAction
-        :pushTipLoading="pushTipLoading"
-        :sendTipLoading="sendTipLoading"
-        @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
-        @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
-      />
     </div>
 
     <ModalComponent v-model="showModal">
@@ -150,6 +150,7 @@ import TipsAction from '@/components/TipsAction.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
 import TeamActions from '@/components/TeamActions.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
+import TeamAccount from '@/components/TeamAccount.vue'
 
 import { type Member, type Team, type User } from '@/types'
 
@@ -304,6 +305,7 @@ watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], 
 })
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
+  if (team.value.bankAddress) await getBalance(team.value.bankAddress)
 })
 
 // useFetch instance for adding members to team
