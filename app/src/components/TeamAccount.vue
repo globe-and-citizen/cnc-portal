@@ -70,5 +70,5 @@ defineProps<{
   sendTipLoading: boolean
   balanceLoading: boolean
 }>()
-const emits = defineEmits(['createBank', 'pushTip', 'sendTip', 'deposit', 'transfer'])
+const emits = defineEmits(['pushTip', 'sendTip', 'deposit', 'transfer'])
 </script>

@@ -77,14 +77,6 @@ describe('TeamAccount', () => {
         expect(wrapper.emitted('deposit')).toBeTruthy()
       }
     })
-    it('should emit createBank event when deposit button is clicked and bank address is not set', async () => {
-      const wrapper = createComponent({ team: { bankAddress: null } })
-      const depositButton = wrapper.findAll('button.btn-secondary').at(0)
-      if (depositButton) {
-        await depositButton.trigger('click')
-        expect(wrapper.emitted('createBank')).toBeTruthy()
-      }
-    })
 
     it('should emit the pushTip event with the correct amount when send button is clicked', async () => {
       const wrapper = createComponent()
