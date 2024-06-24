@@ -32,7 +32,7 @@
       </div>
     </div>
     <div class="stat w-48 flex flex-col justify-center items-center">
-      <div class="stat-title">Send to Wallets</div>
+      <div class="stat-title">Send to Members</div>
       <div class="stat-value text-sm mt-2">
         <input
           type="text"
