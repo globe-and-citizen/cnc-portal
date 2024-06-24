@@ -2,7 +2,11 @@ steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     script: |
-      docker build -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA ./app
+      docker build \
+        --build-arg VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL \
+        --build-arg VITE_APP_TIPS_ADDRESS=$_VITE_APP_TIPS_ADDRESS \
+        --build-arg VITE_APP_NETWORK_ALIAS=$_VITE_APP_NETWORK_ALIAS \
+        -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA ./app
     automapSubstitutions: true
     id: 'Build The Image'
     env:
@@ -27,7 +31,7 @@ steps:
       [
         'run',
         'deploy',
-        '${REPO_NAME}-app',
+        '${REPO_NAME}-app-prod',
         '--image',
         '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA',
         '--region',
@@ -46,5 +50,5 @@ steps:
 
 substitutions:
   _VITE_APP_BACKEND_URL: 'https://cnc-portal-api-prod-neg4ztdcia-wl.a.run.app'
-  _VITE_APP_TIPS_ADDRESS: '0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B'
-  _VITE_APP_NETWORK_ALIAS: 'sepolia'
+  _VITE_APP_TIPS_ADDRESS: '0xDC0466d0406bf3770d08B1C681241465De5BF455'
+  _VITE_APP_NETWORK_ALIAS: 'polygon'
