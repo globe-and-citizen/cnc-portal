@@ -23,21 +23,21 @@
         </a>
       </li>
       <!-- Pagination Controls -->
-      <div class="flex justify-between items-center p-2">
+      <div class="join flex justify-between items-center p-2">
         <button
-          class="btn btn-sm"
-          :class="{ 'cursor-not-allowed': currentPage == 1 }"
+          class="join-item btn-primary btn btn-xs"
+          :class="currentPage === 1 ? 'btn-disabled' : ''"
           @click="currentPage > 1 ? currentPage-- : currentPage"
         >
-          Previous
+          «
         </button>
-        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
         <button
-          class="btn btn-sm"
-          :class="{ 'cursor-not-allowed': currentPage === totalPages }"
+          class="join-item btn btn-primary btn-xs"
+          :class="currentPage == totalPages ? 'btn-disabled' : ''"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
         >
-          Next
+          »
         </button>
       </div>
     </ul>
