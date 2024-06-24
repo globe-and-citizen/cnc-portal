@@ -135,6 +135,11 @@ watch(
   () => {
     if (!createTeamFetching.value && !createTeamError.value && createTeamResponse.value?.ok) {
       addSuccessToast('Team created successfully')
+      team.value = {
+        name: '',
+        description: '',
+        members: []
+      }
       showAddTeamModal.value = false
       executeFetchTeams()
     }
