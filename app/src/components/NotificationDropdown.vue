@@ -86,8 +86,8 @@ const isUnread = computed(() => {
 
 const isInvitation = (notification: Notification) => {
   if (notification.resource) {
-    const resourceArr = notification.resource.split("/")
-    if (resourceArr[0] === "teams") return true
+    const resourceArr = notification.resource.split('/')
+    if (resourceArr[0] === 'teams') return true
   }
 
   return false
