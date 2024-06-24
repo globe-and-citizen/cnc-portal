@@ -319,6 +319,7 @@ watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], 
 })
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
+  await getBalance(team.value.bankAddress)
 
   if (team.value.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
