@@ -13,7 +13,7 @@
       class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
-        <a @click="updateNotification(notification.id)">
+        <a @click="updateNotification(notification)">
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">
               {{ notification.message }}
@@ -45,9 +45,10 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { type NotificationResponse } from '@/types'
+import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import IconBell from '@/components/icons/IconBell.vue'
+import router from '@/router'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
@@ -75,6 +76,7 @@ const {
 watch(notifications, () => {
   totalPages.value = Math.ceil(notifications.value.data.length / itemsPerPage.value)
 })
+
 const isUnread = computed(() => {
   const idx = notifications.value?.data.findIndex(
     (notification: any) => notification.isRead === false
@@ -82,11 +84,24 @@ const isUnread = computed(() => {
   return idx > -1
 })
 
-const updateNotification = async (id: number | string | null) => {
-  updateEndPoint.value = `notification/${id}`
+const isInvitation = (notification: Notification) => {
+  if (notification.resource) {
+    const resourceArr = notification.resource.split("/")
+    if (resourceArr[0] === "teams") return true
+  }
+
+  return false
+}
+
+const updateNotification = async (notification: Notification) => {
+  updateEndPoint.value = `notification/${notification.id}`
 
   await executeUpdateNotifications()
   await executeFetchNotifications()
+
+  if (isInvitation(notification) && notification.resource) {
+    router.push(`/${notification.resource}`)
+  }
 }
 
 const paginatedNotifications = computed(() => {
