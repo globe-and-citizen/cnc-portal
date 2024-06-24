@@ -205,7 +205,7 @@ const updateTeam = async (req: Request, res: Response) => {
         },
       },
     });
-    res.status(200).json({ team: teamU, success: true });
+    res.status(200).json(teamU);
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }

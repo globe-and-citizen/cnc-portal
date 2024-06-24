@@ -28,14 +28,6 @@
         >
           Transfer
         </button>
-        <button
-          class="btn btn-primary btn-xs"
-          @click="emits('createBank')"
-          v-if="!team.bankAddress && team.ownerAddress == useUserDataStore().address"
-          data-test="createBank"
-        >
-          Create Bank Account
-        </button>
       </div>
     </div>
     <div class="stat flex flex-col justify-center items-center">

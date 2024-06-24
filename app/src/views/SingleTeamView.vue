@@ -1,8 +1,11 @@
 <template>
   <div class="flex min-h-screen justify-center">
-    <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
+    <span v-if="teamIsFetching || balanceLoading" class="loading loading-spinner loading-lg"></span>
 
-    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-10/12 items-center">
+    <div
+      v-if="!(teamIsFetching || balanceLoading) && team"
+      class="pt-10 flex flex-col gap-5 w-10/12 items-center"
+    >
       <div class="flex justify-between gap-5 w-full">
         <TeamDetails
           :team="team"
@@ -19,7 +22,14 @@
           </DeleteConfirmForm>
         </ModalComponent>
       </div>
-
+      <button
+        class="btn btn-primary btn-xs"
+        @click="bankModal = true"
+        v-if="!team.bankAddress && team.ownerAddress == useUserDataStore().address"
+        data-test="createBank"
+      >
+        Create Bank Account
+      </button>
       <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members">
@@ -319,13 +329,13 @@ watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], 
 })
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
-  await getBalance(team.value.bankAddress)
 
   if (team.value.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
   }
   if (team.value.bankAddress) {
     tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    await getBalance(team.value.bankAddress)
   }
 })
 
@@ -451,6 +461,8 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    await getTeamAPI()
     await getBalance(team.value.bankAddress)
   }
 }
