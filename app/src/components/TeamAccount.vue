@@ -1,7 +1,14 @@
 <template>
-  <div class="stats bg-green-100 flex justify-center items-center text-primary-content w-96 border">
-    <div class="stat w-48 flex flex-col justify-center items-center">
+  <div class="stats bg-green-100 flex text-primary-content border-outline">
+    <div class="stat flex flex-col justify-center items-center">
       <div class="stat-title">Team balance</div>
+      <span v-if="team.bankAddress">
+        <span
+          class="badge badge-sm"
+          :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
+          >{{ team.bankAddress }}</span
+        >
+      </span>
       <span
         class="loading loading-dots loading-xs"
         data-test="balance-loading"
@@ -31,7 +38,7 @@
         </button>
       </div>
     </div>
-    <div class="stat w-48 flex flex-col justify-center items-center">
+    <div class="stat flex flex-col justify-center items-center">
       <div class="stat-title">Send to Members</div>
       <div class="stat-value text-sm mt-2">
         <input

@@ -19,19 +19,8 @@
           </DeleteConfirmForm>
         </ModalComponent>
       </div>
-      <TeamAccount
-        :teamBalance="Number(teamBalance)"
-        :team="team"
-        @createBank="bankModal = true"
-        @deposit="depositModal = true"
-        @transfer="transferModal = true"
-        :pushTipLoading="pushTipLoading"
-        :sendTipLoading="sendTipLoading"
-        :balanceLoading="balanceLoading"
-        @pushTip="(amount: Number) => pushTip(membersAddress, amount, team.bankAddress)"
-        @sendTip="(amount: Number) => sendTip(membersAddress, amount, team.bankAddress)"
-      />
-      <TabNavigation :initial-active-tab="0" :tabs="tabs">
+
+      <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members">
             <div
@@ -73,10 +62,21 @@
           </div>
         </template>
         <template #tab-1>
-          <div>transactions</div>
+          <TeamAccount
+            :teamBalance="Number(teamBalance)"
+            :team="team"
+            @createBank="bankModal = true"
+            @deposit="depositModal = true"
+            @transfer="transferModal = true"
+            :pushTipLoading="pushTipLoading"
+            :sendTipLoading="sendTipLoading"
+            :balanceLoading="balanceLoading"
+            @pushTip="(amount: Number) => pushTip(membersAddress, amount, team.bankAddress)"
+            @sendTip="(amount: Number) => sendTip(membersAddress, amount, team.bankAddress)"
+          />
         </template>
         <template #tab-2>
-          <div>bank management</div>
+          <div>transactions</div>
         </template>
       </TabNavigation>
 
@@ -159,9 +159,7 @@ import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 //Components
 import MemberCard from '@/components/MemberCard.vue'
 import AddMemberCard from '@/components/AddMemberCard.vue'
-import TipsAction from '@/components/TipsAction.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
-import TeamActions from '@/components/TeamActions.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import TeamAccount from '@/components/TeamAccount.vue'
@@ -326,7 +324,7 @@ onMounted(async () => {
     isOwner.value = true
   }
   if (team.value.bankAddress) {
-    tabs.value.push(SingleTeamTabs.Transactions, SingleTeamTabs.Bank)
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
   }
 })
 

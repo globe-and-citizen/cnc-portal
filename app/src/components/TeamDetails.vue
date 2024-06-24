@@ -18,7 +18,6 @@
     </div>
     <div class="collapse-content">
       <p class="pl-5">{{ team.description }}</p>
-      <p class="pl-5" v-if="team.bankAddress">Bank Contract Address: {{ team.bankAddress }}</p>
 
       <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
         <button
@@ -41,8 +40,6 @@
 </template>
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
-import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { NETWORK } from '@/constant'
 import type { Team } from '@/types'
 
 const emits = defineEmits(['updateTeamModalOpen', 'deleteTeam'])
