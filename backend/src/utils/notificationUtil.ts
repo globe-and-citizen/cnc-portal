@@ -6,7 +6,8 @@ export const addNotification = async (
     notification: {
         message: string, 
         subject?: string,
-        author?: string
+        author?: string,
+        resource?: string
 }) => {
 
       let notifications = await Promise.all(userIds.map(async (userId: string) => {
@@ -19,7 +20,8 @@ export const addNotification = async (
               message: notification.message,
               userAddress: userId,
               subject: notification.subject? notification.subject: null,
-              author: notification.author? notification.author: null
+              author: notification.author? notification.author: null,
+              resource: notification.resource? notification.resource: null
           }
         })
       }))

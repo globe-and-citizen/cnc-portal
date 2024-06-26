@@ -68,6 +68,7 @@ const addTeam = async (req: Request, res: Response) => {
         message: `You have been added to a new team: ${name} by ${owner.name}`,
         subject: "Team Invitation",
         author: owner.address?.toString() || "",
+        resource: `teams/${team.id}`
       }
     );
     res.status(201).json(team);
