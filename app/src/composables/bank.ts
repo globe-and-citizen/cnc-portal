@@ -92,12 +92,12 @@ export function useBankTransfer(): IContractTransactionFunction {
   return { execute: transfer, isLoading: loading, isSuccess, error, transaction }
 }
 
-export function useBankEvents(bankAddress: string) {
+export function useBankEvents() {
   const events = ref<EventResult[]>([])
   const loading = ref(false)
   const error = ref<any>(null)
 
-  async function getEvents(type: BankEventType): Promise<void> {
+  async function getEvents(bankAddress: string, type: BankEventType): Promise<void> {
     try {
       loading.value = true
       const response = await bankService.getEvents(bankAddress, type)
