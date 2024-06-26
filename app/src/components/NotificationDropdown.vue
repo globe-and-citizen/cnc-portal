@@ -13,7 +13,10 @@
       class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
-        <a @click="updateNotification(notification)">
+        <a
+          @click="updateNotification(notification)"
+          :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
+        >
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">
               {{ notification.message }}
@@ -48,7 +51,6 @@ import { ref, computed, watch } from 'vue'
 import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import IconBell from '@/components/icons/IconBell.vue'
-import router from '@/router'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
@@ -98,10 +100,6 @@ const updateNotification = async (notification: Notification) => {
 
   await executeUpdateNotifications()
   await executeFetchNotifications()
-
-  if (isInvitation(notification) && notification.resource) {
-    router.push(`/${notification.resource}`)
-  }
 }
 
 const paginatedNotifications = computed(() => {
