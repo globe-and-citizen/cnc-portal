@@ -5,17 +5,22 @@ import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { BANK_IMPL_ADDRESS } from '@/constant'
 import { PROXY_BYTECODE } from '@/artifacts/bytecode/proxy'
-
+import type { BankEventType } from '@/types'
+import type { EventLog } from 'ethers'
+import type { Log } from 'ethers'
+import { SmartContract } from './contractService'
 export interface IBankService {
   web3Library: IWeb3Library
   createBankContract(id: string): Promise<string>
   deposit(bankAddress: string, amount: string): Promise<any>
   pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
   sendTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
+  getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]>
 }
 
 export class BankService implements IBankService {
   web3Library: IWeb3Library
+  private contractService?: SmartContract
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
@@ -35,7 +40,7 @@ export class BankService implements IBankService {
   }
 
   async transfer(bankAddress: string, to: string, amount: string): Promise<any> {
-    const bank = await this.getBankContract(bankAddress)
+    const bank = await this.getContract(bankAddress)
     const tx = await bank.transfer(to, this.web3Library.parseEther(amount))
     await tx.wait()
 
@@ -43,7 +48,7 @@ export class BankService implements IBankService {
   }
 
   async pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
-    const bank = await this.getBankContract(bankAddress)
+    const bank = await this.getContract(bankAddress)
     const tx = await bank.pushTip(addresses, this.web3Library.parseEther(amount.toString()))
     await tx.wait()
 
@@ -51,17 +56,31 @@ export class BankService implements IBankService {
   }
 
   async sendTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
-    const bank = await this.getBankContract(bankAddress)
+    const bank = await this.getContract(bankAddress)
     const tx = await bank.sendTip(addresses, this.web3Library.parseEther(amount.toString()))
     await tx.wait()
 
     return tx
   }
 
-  private async getBankContract(bankAddress: string): Promise<Contract> {
-    const bankContract = await this.web3Library.getContract(bankAddress, BANK_ABI)
+  async getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]> {
+    if (!this.contractService) {
+      this.contractService = this.getContractService("0x5466767aA6412f298dD61FbE4E3e40483030b39B")
+    }
 
-    return bankContract
+    return await this.contractService.getEvents(type)
+  }
+
+  async getContract(bankAddress: string): Promise<Contract> {
+    if (!this.contractService) {
+      this.contractService = this.getContractService(bankAddress)
+    }
+
+    return await this.contractService.getContract()
+  }
+
+  private getContractService(bankAddress: string): SmartContract {
+    return new SmartContract(bankAddress, BANK_ABI)
   }
 
   private async deployBankContract(): Promise<string> {
