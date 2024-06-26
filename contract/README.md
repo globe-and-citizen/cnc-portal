@@ -64,3 +64,8 @@ If you have a contract deploy on a network and you need to verify it you can use
 ```bash
 npx hardhat verify --network polygon [contractAddress]
 ```
+
+## Ressources
+
+- [Hardht Verifying contract](https://hardhat.org/hardhat-runner/docs/guides/verifying)
+- [Hardhat Verify plugin](https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify)
