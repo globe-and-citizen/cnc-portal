@@ -1,15 +1,19 @@
 <template>
-  <div role="tablist" class="tabs tabs-lifted !after:hidden">
+  <div role="tablist" class="tabs tabs-lifted">
     <template v-for="(tab, index) in tabs" :key="index">
-      <input
-        type="radio"
+      <a
         role="tab"
         class="tab"
+        :class="{ 'tab-active': index === activeTab }"
         :aria-label="tab"
-        :checked="index === activeTab"
-        @change="activeTab = index"
-      />
-      <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 overflow-hidden">
+        @click="activeTab = index"
+      >
+        {{ tab }}</a
+      >
+      <div
+        role="tabpanel"
+        class="tab-content bg-base-100 border-base-300 rounded-box p-6 overflow-hidden"
+      >
         <slot :name="`tab-${index}`"> </slot>
       </div>
     </template>
@@ -17,11 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-
-const props = defineProps<{
+defineProps<{
   tabs: Array<string>
-  initialActiveTab?: number
 }>()
-const activeTab = ref(props.initialActiveTab ?? 0)
+const activeTab = defineModel({ default: 0 })
 </script>
