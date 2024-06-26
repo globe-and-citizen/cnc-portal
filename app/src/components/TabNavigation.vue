@@ -1,5 +1,5 @@
 <template>
-  <div role="tablist" class="tabs tabs-lifted">
+  <div role="tablist" class="tabs tabs-lifted !after:hidden">
     <template v-for="(tab, index) in tabs" :key="index">
       <input
         type="radio"
@@ -9,7 +9,7 @@
         :checked="index === activeTab"
         @change="activeTab = index"
       />
-      <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+      <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 overflow-hidden">
         <slot :name="`tab-${index}`"> </slot>
       </div>
     </template>
