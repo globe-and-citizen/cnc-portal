@@ -1,9 +1,12 @@
 <template>
   <div class="flex min-h-screen justify-center">
-    <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
+    <span v-if="teamIsFetching || balanceLoading" class="loading loading-spinner loading-lg"></span>
 
-    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-10/12">
-      <div class="flex justify-between gap-5">
+    <div
+      v-if="!(teamIsFetching || balanceLoading) && team"
+      class="pt-10 flex flex-col gap-5 w-10/12 items-center"
+    >
+      <div class="flex justify-between gap-5 w-full">
         <TeamDetails
           :team="team"
           :balanceLoading="balanceLoading"
@@ -19,18 +22,19 @@
           </DeleteConfirmForm>
         </ModalComponent>
       </div>
-      <TeamActions
-        v-if="isOwner"
-        :team="team"
-        @createBank="bankModal = true"
-        @deposit="depositModal = true"
-        @transfer="transferModal = true"
-      />
-      <TabNavigation :initial-active-tab="0" :tabs="tabs">
+      <button
+        class="btn btn-primary btn-xs"
+        @click="bankModal = true"
+        v-if="!team.bankAddress && team.ownerAddress == useUserDataStore().address"
+        data-test="createBank"
+      >
+        Create Bank Account
+      </button>
+      <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members">
             <div
-              class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
+              class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4 w-full"
             >
               <span class="w-1/2">Name</span>
               <span class="w-1/2">Address</span>
@@ -68,10 +72,21 @@
           </div>
         </template>
         <template #tab-1>
-          <BankTransactions :bank-address="team.bankAddress" />
+          <TeamAccount
+            :teamBalance="Number(teamBalance)"
+            :team="team"
+            @createBank="bankModal = true"
+            @deposit="depositModal = true"
+            @transfer="transferModal = true"
+            :pushTipLoading="pushTipLoading"
+            :sendTipLoading="sendTipLoading"
+            :balanceLoading="balanceLoading"
+            @pushTip="(amount: Number) => pushTip(membersAddress, amount, team.bankAddress)"
+            @sendTip="(amount: Number) => sendTip(membersAddress, amount, team.bankAddress)"
+          />
         </template>
         <template #tab-2>
-          <div>bank management</div>
+          <BankTransactions :bank-address="team.bankAddress" />
         </template>
       </TabNavigation>
       <ModalComponent v-model="showDeleteMemberConfirmModal">
@@ -82,13 +97,6 @@
           from the team?
         </DeleteConfirmForm>
       </ModalComponent>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
-      <TipsAction
-        :pushTipLoading="pushTipLoading"
-        :sendTipLoading="sendTipLoading"
-        @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
-        @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
-      />
     </div>
 
     <ModalComponent v-model="showModal">
@@ -160,12 +168,11 @@ import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 //Components
 import MemberCard from '@/components/MemberCard.vue'
 import AddMemberCard from '@/components/AddMemberCard.vue'
-import TipsAction from '@/components/TipsAction.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
-import TeamActions from '@/components/TeamActions.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
+import TeamAccount from '@/components/TeamAccount.vue'
 
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 
@@ -327,7 +334,8 @@ onMounted(async () => {
     isOwner.value = true
   }
   if (team.value.bankAddress) {
-    tabs.value.push(SingleTeamTabs.Transactions, SingleTeamTabs.Bank)
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    await getBalance(team.value.bankAddress)
   }
 })
 
@@ -453,6 +461,8 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    await getTeamAPI()
     await getBalance(team.value.bankAddress)
   }
 }
