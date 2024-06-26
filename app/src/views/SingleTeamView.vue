@@ -68,14 +68,12 @@
           </div>
         </template>
         <template #tab-1>
-          <div>transactions</div>
+          <BankTransactions :bank-address="team.bankAddress" />
         </template>
         <template #tab-2>
           <div>bank management</div>
         </template>
       </TabNavigation>
-
-      <!-- TODO : for tabs transactions and bank management -->
       <ModalComponent v-model="showDeleteMemberConfirmModal">
         <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
           Are you sure you want to delete
@@ -129,7 +127,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, onUpdated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 // Store imports
@@ -144,7 +142,8 @@ import {
   useBankBalance,
   useBankDeposit,
   useDeployBankContract,
-  useBankTransfer
+  useBankTransfer,
+  useBankEvents
 } from '@/composables/bank'
 
 // Service
@@ -166,6 +165,7 @@ import TeamDetails from '@/components/TeamDetails.vue'
 import TeamActions from '@/components/TeamActions.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
+import BankTransactions from '@/components/BankTransactions.vue'
 
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 
