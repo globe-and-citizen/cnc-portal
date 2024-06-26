@@ -89,19 +89,19 @@
         <template #tab-2>
           <BankTransactions
             v-if="activeTab == 2"
-            :deposit-events="(depositEvents as EventResult[])"
+            :deposit-events="depositEvents as EventResult[]"
             :depositEventLoading="depositEventLoading"
             @get-deposit-events="getDepositEvents(team.bankAddress, BankEventType.Deposit)"
-            :transfer-events="(transferEvents as EventResult[])"
+            :transfer-events="transferEvents as EventResult[]"
             :transferEventLoading="transferEventLoading"
             @get-transfer-events="getTransferEvents(team.bankAddress, BankEventType.Transfer)"
-            :tips-address-changed-events="(tipsAddressChangedEvents as EventResult[])"
-            :tips-address-changed-event-loading="transferEventLoading"
+            :tips-address-changed-events="tipsAddressChangedEvents as EventResult[]"
+            :tips-address-changed-event-loading="tipsAddressChangedEventLoading"
             @get-tips-address-changed-events="
               getTipsAddressChangedEvents(team.bankAddress, BankEventType.TipsAddressChanged)
             "
-                    :send-to-wallet-events="(sendToWalletEvents as EventResult[])"
-            :send-to-wallet-event-loading="transferEventLoading"
+            :send-to-wallet-events="sendToWalletEvents as EventResult[]"
+            :send-to-wallet-event-loading="sendToWalletEventLoading"
             @get-send-to-wallet-events="
               getSendToWalletEvents(team.bankAddress, BankEventType.PushTip)
             "
@@ -154,7 +154,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, onUpdated } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 // Store imports

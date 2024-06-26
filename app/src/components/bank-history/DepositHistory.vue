@@ -42,7 +42,7 @@
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import type { EventResult } from '@/types'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { NETWORK } from '@/constant';
+import { NETWORK } from '@/constant'
 
 const web3Library = EthersJsAdapter.getInstance()
 defineProps<{

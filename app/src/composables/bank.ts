@@ -1,7 +1,6 @@
 import { BankService } from '@/services/bankService'
 import type { BankEventType, EventResult } from '@/types'
 import type { IContractReadFunction, IContractTransactionFunction } from '@/types/interfaces'
-import { log } from '@/utils'
 import dayjs from 'dayjs'
 import type { Log } from 'ethers'
 import type { EventLog } from 'ethers'

@@ -7,7 +7,6 @@ import type { Log } from 'ethers'
 import { BankService, type IBankService } from './bankService'
 import { SmartContract } from './contractService'
 
-
 export class TipsService extends SmartContract {
   bankService: IBankService
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {

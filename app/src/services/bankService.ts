@@ -65,7 +65,7 @@ export class BankService implements IBankService {
 
   async getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]> {
     if (!this.contractService) {
-      this.contractService = this.getContractService("0x5466767aA6412f298dD61FbE4E3e40483030b39B")
+      this.contractService = this.getContractService(bankAddress)
     }
 
     return await this.contractService.getEvents(type)
