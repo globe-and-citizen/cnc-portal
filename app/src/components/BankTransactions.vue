@@ -1,62 +1,50 @@
 <template>
-  <div id="bank-transactions">
-    <SkeletonLoading v-if="depositEventLoading" class="w-full h-52" />
-    <h2>Deposit History</h2>
-    <div v-if="!depositEventLoading">
-      <table class="table table-zebra">
-        <TableHead class="font-bold text-lg" :columns="depositColumns" />
-        <TableBody :tableData="depositEvents" />
-        <!-- <thead>
-          <tr>
-            <th></th>
-            <th>Name</th>
-            <th>Job</th>
-            <th>Favorite Color</th>
-          </tr>
-        </thead> -->
-      </table>
-    </div>/
+  <div id="bank-transactions" class="flex flex-col gap-24">
+    <DepositHistory :depositEvents="depositEvents" :depositEventLoading="depositEventLoading" />
+    <TransferHistory
+      :transferEvents="transferEvents"
+      :transferEventLoading="transferEventLoading"
+    />
+    <TipsAddressChangedHistory
+      :tipsAddressChangedEvents="tipsAddressChangedEvents"
+      :tipsAddressChangedEventLoading="tipsAddressChangedEventLoading"
+    />
+    <SendToWalletHistory
+      :sendToWalletEvents="sendToWalletEvents"
+      :sendToWalletEventLoading="sendToWalletEventLoading"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { onMounted } from 'vue'
+import DepositHistory from '@/components/bank-history/DepositHistory.vue'
+import TransferHistory from '@/components/bank-history/TransferHistory.vue'
+import TipsAddressChangedHistory from '@/components/bank-history/TipsAddressChangedHistory.vue'
+import SendToWalletHistory from '@/components/bank-history/SendToWalletHistory.vue'
+import type { EventResult } from '@/types'
 
-// Components
-import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import TableHead from '@/components/TableHead.vue'
-import { useBankEvents } from '@/composables/bank'
-import { useToastStore } from '@/stores/useToastStore'
-import { BankEventType } from '@/types'
-import TableBody from '@/components/TableBody.vue'
-import { log } from '@/utils'
-
-const props = defineProps<{
-  bankAddress: string
+defineProps<{
+  depositEvents: EventResult[]
+  depositEventLoading: boolean
+  transferEvents: EventResult[]
+  transferEventLoading: boolean
+  tipsAddressChangedEvents: EventResult[]
+  tipsAddressChangedEventLoading: boolean
+  sendToWalletEvents: EventResult[]
+  sendToWalletEventLoading: boolean
 }>()
-const emits = defineEmits(['fetchTransactions'])
-const depositColumns = ['Tx Hash', 'Depositor', 'Amount']
+const emits = defineEmits([
+  'getDepositEvents',
+  'getTransferEvents',
+  'getTipsAddressChangedEvents',
+  'getSendToWalletEvents'
+])
 
-const {
-  getEvents: getDepositEvents,
-  error: depositEventError,
-  events: depositEvents,
-  loading: depositEventLoading
-} = useBankEvents(props.bankAddress)
-const { addErrorToast } = useToastStore()
-
-watch(depositEventError, () => {
-  if (depositEventError.value) {
-    addErrorToast(
-      depositEventError.value.reason
-        ? depositEventError.value.reason
-        : 'Failed to get deposit events'
-    )
-  }
-})
-
-onMounted(async () => {
-  log.info('test')
-  await getDepositEvents(BankEventType.Deposit)
+onMounted(() => {
+  emits('getDepositEvents')
+  emits('getTransferEvents')
+  emits('getTipsAddressChangedEvents')
+  emits('getSendToWalletEvents')
 })
 </script>

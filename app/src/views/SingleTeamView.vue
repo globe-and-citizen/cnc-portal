@@ -30,9 +30,9 @@
       >
         Create Bank Account
       </button>
-      <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
+      <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
-          <div id="members">
+          <div id="members" v-if="activeTab == 0">
             <div
               class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4 w-full"
             >
@@ -73,6 +73,7 @@
         </template>
         <template #tab-1>
           <TeamAccount
+            v-if="activeTab == 1"
             :teamBalance="Number(teamBalance)"
             :team="team"
             @createBank="bankModal = true"
@@ -86,7 +87,25 @@
           />
         </template>
         <template #tab-2>
-          <BankTransactions :bank-address="team.bankAddress" />
+          <BankTransactions
+            v-if="activeTab == 2"
+            :deposit-events="(depositEvents as EventResult[])"
+            :depositEventLoading="depositEventLoading"
+            @get-deposit-events="getDepositEvents(team.bankAddress, BankEventType.Deposit)"
+            :transfer-events="(transferEvents as EventResult[])"
+            :transferEventLoading="transferEventLoading"
+            @get-transfer-events="getTransferEvents(team.bankAddress, BankEventType.Transfer)"
+            :tips-address-changed-events="(tipsAddressChangedEvents as EventResult[])"
+            :tips-address-changed-event-loading="transferEventLoading"
+            @get-tips-address-changed-events="
+              getTipsAddressChangedEvents(team.bankAddress, BankEventType.TipsAddressChanged)
+            "
+                    :send-to-wallet-events="(sendToWalletEvents as EventResult[])"
+            :send-to-wallet-event-loading="transferEventLoading"
+            @get-send-to-wallet-events="
+              getSendToWalletEvents(team.bankAddress, BankEventType.PushTip)
+            "
+          />
         </template>
       </TabNavigation>
       <ModalComponent v-model="showDeleteMemberConfirmModal">
@@ -174,7 +193,14 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
 import TeamAccount from '@/components/TeamAccount.vue'
 
-import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
+import {
+  type Member,
+  type Team,
+  type User,
+  SingleTeamTabs,
+  BankEventType,
+  type EventResult
+} from '@/types'
 
 // Modal control states
 const showDeleteMemberConfirmModal = ref(false)
@@ -199,6 +225,7 @@ const updateTeamInput = ref<Partial<Team>>({
   description: '',
   bankAddress: ''
 })
+const activeTab = ref(0)
 
 const route = useRoute()
 const router = useRouter()
@@ -243,6 +270,30 @@ const {
   isSuccess: transferSuccess,
   error: transferError
 } = useBankTransfer()
+const {
+  getEvents: getDepositEvents,
+  error: depositEventError,
+  events: depositEvents,
+  loading: depositEventLoading
+} = useBankEvents()
+const {
+  getEvents: getTransferEvents,
+  error: transferEventError,
+  events: transferEvents,
+  loading: transferEventLoading
+} = useBankEvents()
+const {
+  getEvents: getTipsAddressChangedEvents,
+  error: tipsAddressChangedEventError,
+  events: tipsAddressChangedEvents,
+  loading: tipsAddressChangedEventLoading
+} = useBankEvents()
+const {
+  getEvents: getSendToWalletEvents,
+  error: sendToWalletEventError,
+  events: sendToWalletEvents,
+  loading: sendToWalletEventLoading
+} = useBankEvents()
 
 // Watchers for Banking functions
 watch(pushTipError, async () => {
@@ -302,6 +353,43 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
+watch(depositEventError, () => {
+  if (depositEventError.value) {
+    addErrorToast(
+      depositEventError.value.reason
+        ? depositEventError.value.reason
+        : 'Failed to get deposit events'
+    )
+  }
+})
+watch(transferEventError, () => {
+  if (transferEventError.value) {
+    addErrorToast(
+      transferEventError.value.reason
+        ? transferEventError.value.reason
+        : 'Failed to get transfer events'
+    )
+  }
+})
+watch(tipsAddressChangedEventError, () => {
+  if (tipsAddressChangedEventError.value) {
+    addErrorToast(
+      tipsAddressChangedEventError.value.reason
+        ? tipsAddressChangedEventError.value.reason
+        : 'Failed to get tips address changed events'
+    )
+  }
+})
+watch(sendToWalletEventError, () => {
+  if (sendToWalletEventError.value) {
+    addErrorToast(
+      sendToWalletEventError.value.reason
+        ? sendToWalletEventError.value.reason
+        : 'Failed to get tips address changed events'
+    )
+  }
+})
+
 // useFetch instance for getting team details
 const {
   error: getTeamError,
