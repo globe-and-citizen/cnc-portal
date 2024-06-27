@@ -1,8 +1,8 @@
 <template>
   <div id="send-to-wallet">
     <h2>Send to Wallet History</h2>
-    <SkeletonLoading v-if="sendToWalletEventLoading" class="w-full h-96 mt-5" />
-    <div v-if="!sendToWalletEventLoading" class="overflow-x-auto bg-base-100 mt-5">
+    <SkeletonLoading v-if="loading" class="w-full h-96 mt-5" />
+    <div v-if="!loading" class="overflow-x-auto bg-base-100 mt-5">
       <table class="table table-zebra text-center">
         <!-- head -->
         <thead>
@@ -14,25 +14,25 @@
             <th>Date</th>
           </tr>
         </thead>
-        <tbody v-if="(sendToWalletEvents?.length ?? 0) > 0">
+        <tbody v-if="(events?.length ?? 0) > 0">
           <tr
-            v-for="(sendToWalletEvent, index) in sendToWalletEvents"
-            v-bind:key="sendToWalletEvent.txHash"
+            v-for="(event, index) in events"
+            v-bind:key="event.txHash"
             class="cursor-pointer hover"
-            @click="showTxDetail(sendToWalletEvent.txHash)"
+            @click="showTxDetail(event.txHash)"
           >
             <td>{{ index + 1 }}</td>
-            <td class="truncate max-w-48">{{ sendToWalletEvent.data[0] }}</td>
+            <td class="truncate max-w-48">{{ event.data[0] }}</td>
             <td>
-              <ul v-for="(address, index) in sendToWalletEvent.data[1]" :key="index">
+              <ul v-for="(address, index) in event.data[1]" :key="index">
                 <li>{{ address }}</li>
               </ul>
             </td>
             <td>
-              {{ web3Library.formatEther(sendToWalletEvent.data[2]) }}
+              {{ web3Library.formatEther(event.data[2]) }}
               {{ NETWORK.currencySymbol }}
             </td>
-            <td>{{ sendToWalletEvent.date }}</td>
+            <td>{{ event.date }}</td>
           </tr>
         </tbody>
         <tbody v-else>
@@ -47,17 +47,31 @@
 
 <script setup lang="ts">
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import type { EventResult } from '@/types'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { NETWORK } from '@/constant'
+import { useToastStore } from '@/stores/useToastStore'
+import { useBankEvents } from '@/composables/bank'
+import { onMounted, watch } from 'vue'
+import { BankEventType } from '@/types'
 
 const web3Library = EthersJsAdapter.getInstance()
-defineProps<{
-  sendToWalletEvents: EventResult[]
-  sendToWalletEventLoading: boolean
+const { addErrorToast } = useToastStore()
+const props = defineProps<{
+  bankAddress: string
 }>()
+const { getEvents, error, events, loading } = useBankEvents(props.bankAddress)
+
+onMounted(async () => {
+  await getEvents(BankEventType.PushTip)
+})
 
 const showTxDetail = (txHash: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/tx/${txHash}`, '_blank')
 }
+
+watch(error, () => {
+  if (error.value) {
+    addErrorToast(error.value.reason ? error.value.reason : 'Failed to get transfer events')
+  }
+})
 </script>

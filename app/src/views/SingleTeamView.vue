@@ -89,22 +89,7 @@
         <template #tab-2>
           <BankTransactions
             v-if="activeTab == 2"
-            :deposit-events="depositEvents as EventResult[]"
-            :depositEventLoading="depositEventLoading"
-            @get-deposit-events="getDepositEvents(team.bankAddress, BankEventType.Deposit)"
-            :transfer-events="transferEvents as EventResult[]"
-            :transferEventLoading="transferEventLoading"
-            @get-transfer-events="getTransferEvents(team.bankAddress, BankEventType.Transfer)"
-            :tips-address-changed-events="tipsAddressChangedEvents as EventResult[]"
-            :tips-address-changed-event-loading="tipsAddressChangedEventLoading"
-            @get-tips-address-changed-events="
-              getTipsAddressChangedEvents(team.bankAddress, BankEventType.TipsAddressChanged)
-            "
-            :send-to-wallet-events="sendToWalletEvents as EventResult[]"
-            :send-to-wallet-event-loading="sendToWalletEventLoading"
-            @get-send-to-wallet-events="
-              getSendToWalletEvents(team.bankAddress, BankEventType.PushTip)
-            "
+            :bank-address="team.bankAddress"
           />
         </template>
       </TabNavigation>
@@ -201,6 +186,7 @@ import {
   BankEventType,
   type EventResult
 } from '@/types'
+import { log } from '@/utils'
 
 // Modal control states
 const showDeleteMemberConfirmModal = ref(false)
@@ -270,30 +256,6 @@ const {
   isSuccess: transferSuccess,
   error: transferError
 } = useBankTransfer()
-const {
-  getEvents: getDepositEvents,
-  error: depositEventError,
-  events: depositEvents,
-  loading: depositEventLoading
-} = useBankEvents()
-const {
-  getEvents: getTransferEvents,
-  error: transferEventError,
-  events: transferEvents,
-  loading: transferEventLoading
-} = useBankEvents()
-const {
-  getEvents: getTipsAddressChangedEvents,
-  error: tipsAddressChangedEventError,
-  events: tipsAddressChangedEvents,
-  loading: tipsAddressChangedEventLoading
-} = useBankEvents()
-const {
-  getEvents: getSendToWalletEvents,
-  error: sendToWalletEventError,
-  events: sendToWalletEvents,
-  loading: sendToWalletEventLoading
-} = useBankEvents()
 
 // Watchers for Banking functions
 watch(pushTipError, async () => {
@@ -353,42 +315,6 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
-watch(depositEventError, () => {
-  if (depositEventError.value) {
-    addErrorToast(
-      depositEventError.value.reason
-        ? depositEventError.value.reason
-        : 'Failed to get deposit events'
-    )
-  }
-})
-watch(transferEventError, () => {
-  if (transferEventError.value) {
-    addErrorToast(
-      transferEventError.value.reason
-        ? transferEventError.value.reason
-        : 'Failed to get transfer events'
-    )
-  }
-})
-watch(tipsAddressChangedEventError, () => {
-  if (tipsAddressChangedEventError.value) {
-    addErrorToast(
-      tipsAddressChangedEventError.value.reason
-        ? tipsAddressChangedEventError.value.reason
-        : 'Failed to get tips address changed events'
-    )
-  }
-})
-watch(sendToWalletEventError, () => {
-  if (sendToWalletEventError.value) {
-    addErrorToast(
-      sendToWalletEventError.value.reason
-        ? sendToWalletEventError.value.reason
-        : 'Failed to get tips address changed events'
-    )
-  }
-})
 
 // useFetch instance for getting team details
 const {
@@ -416,8 +342,10 @@ watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], 
   }
 })
 onMounted(async () => {
+  log.info('onMounted - SingleTeamView')
   await getTeamAPI() //Call the execute function to get team details on mount
 
+  console.log(team.value.bankAddress)
   if (team.value.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
   }

@@ -1,8 +1,8 @@
 <template>
   <div id="transfer">
     <h2>Tips Address Changed History</h2>
-    <SkeletonLoading v-if="tipsAddressChangedEventLoading" class="w-full h-96 mt-5" />
-    <div v-if="!tipsAddressChangedEventLoading" class="overflow-x-auto bg-base-100 mt-5">
+    <SkeletonLoading v-if="loading" class="w-full h-96 mt-5" />
+    <div v-if="!loading" class="overflow-x-auto bg-base-100 mt-5">
       <table class="table table-zebra text-center">
         <!-- head -->
         <thead>
@@ -14,18 +14,18 @@
             <th>Date</th>
           </tr>
         </thead>
-        <tbody v-if="(tipsAddressChangedEvents?.length ?? 0) > 0">
+        <tbody v-if="(events?.length ?? 0) > 0">
           <tr
-            v-for="(tipsAddressChangedEvent, index) in tipsAddressChangedEvents"
-            v-bind:key="tipsAddressChangedEvent.txHash"
+            v-for="(event, index) in events"
+            v-bind:key="event.txHash"
             class="cursor-pointer hover"
-            @click="showTxDetail(tipsAddressChangedEvent.txHash)"
+            @click="showTxDetail(event.txHash)"
           >
             <td>{{ index + 1 }}</td>
-            <td class="truncate max-w-48">{{ tipsAddressChangedEvent.data[0] }}</td>
-            <td class="truncate max-w-48">{{ tipsAddressChangedEvent.data[1] }}</td>
-            <td class="truncate max-w-48">{{ tipsAddressChangedEvent.data[2] }}</td>
-            <td>{{ tipsAddressChangedEvent.date }}</td>
+            <td class="truncate max-w-48">{{ event.data[0] }}</td>
+            <td class="truncate max-w-48">{{ event.data[1] }}</td>
+            <td class="truncate max-w-48">{{ event.data[2] }}</td>
+            <td>{{ event.date }}</td>
           </tr>
         </tbody>
         <tbody v-else>
@@ -40,15 +40,29 @@
 
 <script setup lang="ts">
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import type { EventResult } from '@/types'
+import { useBankEvents } from '@/composables/bank'
 import { NETWORK } from '@/constant'
+import { useToastStore } from '@/stores/useToastStore'
+import { BankEventType } from '@/types'
+import { onMounted, watch } from 'vue'
 
-defineProps<{
-  tipsAddressChangedEvents: EventResult[]
-  tipsAddressChangedEventLoading: boolean
+const { addErrorToast } = useToastStore()
+const props = defineProps<{
+  bankAddress: string
 }>()
+const { getEvents, error, events, loading } = useBankEvents(props.bankAddress)
+
+onMounted(async () => {
+  await getEvents(BankEventType.TipsAddressChanged)
+})
 
 const showTxDetail = (txHash: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/tx/${txHash}`, '_blank')
 }
+
+watch(error, () => {
+  if (error.value) {
+    addErrorToast(error.value.reason ? error.value.reason : 'Failed to get transfer events')
+  }
+})
 </script>
