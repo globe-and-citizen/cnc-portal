@@ -1,19 +1,15 @@
 <template>
   <div role="tablist" class="tabs tabs-lifted">
     <template v-for="(tab, index) in tabs" :key="index">
-      <a
+      <input
+        type="radio"
         role="tab"
         class="tab"
-        :class="{ 'tab-active': index === activeTab }"
         :aria-label="tab"
-        @click="activeTab = index"
-      >
-        {{ tab }}</a
-      >
-      <div
-        role="tabpanel"
-        class="tab-content bg-base-100 border-base-300 rounded-box p-6 overflow-hidden"
-      >
+        :checked="activeTab === index"
+        @change="activeTab = index"
+      />
+      <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
         <slot :name="`tab-${index}`"> </slot>
       </div>
     </template>
