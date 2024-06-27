@@ -21,12 +21,12 @@ export const parseError = (error: any) => {
 
   if (error instanceof Error) {
     if ('info' in error && isMetaMaskErrorInfo(error.info)) {
-      message = parseErrorInfo(error.info as MetaMaskErrorInfo)
+      message = `Metamask Error: ${parseErrorInfo(error.info as MetaMaskErrorInfo)}`
     } else {
       message = error.message
     }
   } else {
-    message = 'Looks like something went wrong. Try again.'
+    message = 'App Error: Looks like something went wrong.'
   }
 
   return message
@@ -70,4 +70,42 @@ const parseErrorInfo = (info: MetaMaskErrorInfo) => {
   const A: string[] = info.error.message.split(':')
 
   return A[1].trim()
+}
+
+export function getFetchErrorMessage(status: number) {
+  if (!status) return 'An unknown error occurred'
+
+  if (status >= 100 && status < 200) {
+    return 'Informational response received.'
+  } else if (status >= 200 && status < 300) {
+    return 'Success.'
+  } else if (status >= 300 && status < 400) {
+    return 'Redirection message received.'
+  } else if (status >= 400 && status < 500) {
+    switch (status) {
+      case 400:
+        return 'Bad Request.'
+      case 401:
+        return 'Unauthorized.'
+      case 403:
+        return 'Forbidden.'
+      case 404:
+        return 'Not Found.'
+      default:
+        return 'Client error occurred.'
+    }
+  } else if (status >= 500 && status < 600) {
+    switch (status) {
+      case 500:
+        return 'Internal Server Error.'
+      case 502:
+        return 'Bad Gateway.'
+      case 503:
+        return 'Service Unavailable.'
+      default:
+        return 'Server error occurred.'
+    }
+  } else {
+    return 'Unexpected error occurred.'
+  }
 }

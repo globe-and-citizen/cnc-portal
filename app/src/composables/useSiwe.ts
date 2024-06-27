@@ -8,7 +8,7 @@ import { ref, type Ref } from 'vue'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
 import { parseError } from '@/utils'
-import { useCustomFetch } from './useCustomFetch'
+import { useCustomFetch, errorMessage } from './useCustomFetch'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -38,7 +38,7 @@ export function useSiwe() {
         //execute: executeFetchNonce
       } = await useCustomFetch<string>(`user/nonce/${address}`).get().json()
 
-      if (fetchError.value) throw new Error(fetchError.value)
+      if (fetchError.value) throw new Error(errorMessage.value)
 
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(address, statement, nonce.value.nonce)
@@ -53,7 +53,7 @@ export function useSiwe() {
         //execute: executeFetchUser
       } = await useCustomFetch<string>(`user/${address}`).get().json()
 
-      if (fetchUserError.value) throw new Error(fetchUserError.value)
+      if (fetchUserError.value) throw new Error(errorMessage.value)
 
       const userData: Partial<User> = user.value
       useUserDataStore().setUserData(
