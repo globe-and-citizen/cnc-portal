@@ -1,9 +1,12 @@
 <template>
   <div class="flex min-h-screen justify-center">
-    <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
+    <span v-if="teamIsFetching || balanceLoading" class="loading loading-spinner loading-lg"></span>
 
-    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-10/12">
-      <div class="flex justify-between gap-5">
+    <div
+      v-if="!(teamIsFetching || balanceLoading) && team"
+      class="pt-10 flex flex-col gap-5 w-full items-center"
+    >
+      <div class="flex justify-between gap-5 w-full">
         <TeamDetails
           :team="team"
           :balanceLoading="balanceLoading"
@@ -19,48 +22,75 @@
           </DeleteConfirmForm>
         </ModalComponent>
       </div>
-      <TeamActions
-        :team="team"
-        @createBank="bankModal = true"
-        @deposit="depositModal = true"
-        @transfer="transferModal = true"
-      />
-      <div
-        class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4"
+      <button
+        class="btn btn-primary btn-xs"
+        @click="bankModal = true"
+        v-if="!team.bankAddress && team.ownerAddress == useUserDataStore().address"
+        data-test="createBank"
       >
-        <span class="w-1/2">Name</span>
-        <span class="w-1/2">Address</span>
-        <AddMemberCard
-          class="w-1/2"
-          v-if="team.ownerAddress == useUserDataStore().address"
-          @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
-        />
-        <ModalComponent v-model="showAddMemberForm">
-          <AddMemberForm
-            :isLoading="addMembersLoading"
-            :users="foundUsers"
-            :formData="teamMembers"
-            @searchUsers="(input) => searchUsers(input)"
-            @addMembers="handleAddMembers"
+        Create Bank Account
+      </button>
+      <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
+        <template #tab-0>
+          <div id="members">
+            <div
+              class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4 w-full"
+            >
+              <span class="w-1/2">Name</span>
+              <span class="w-1/2">Address</span>
+              <AddMemberCard
+                class="w-1/2"
+                v-if="team.ownerAddress == useUserDataStore().address"
+                @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
+              />
+              <ModalComponent v-model="showAddMemberForm">
+                <AddMemberForm
+                  :isLoading="addMembersLoading"
+                  :users="foundUsers"
+                  :formData="teamMembers"
+                  @searchUsers="(input) => searchUsers(input)"
+                  @addMembers="handleAddMembers"
+                />
+              </ModalComponent>
+            </div>
+            <MemberCard
+              v-for="member in team.members"
+              :ownerAddress="team.ownerAddress"
+              :teamId="Number(team.id)"
+              :member="member"
+              :isMemberDeleting="memberIsDeleting"
+              :key="member.address"
+              @deleteMember="
+                (member) => {
+                  memberToBeDeleted.name = member.name
+                  memberToBeDeleted.id = member.id
+                  memberToBeDeleted.address = member.address
+                  showDeleteMemberConfirmModal = true
+                }
+              "
+            />
+          </div>
+        </template>
+        <template #tab-1>
+          <TeamAccount
+            :teamBalance="Number(teamBalance)"
+            :team="team"
+            @createBank="bankModal = true"
+            @deposit="depositModal = true"
+            @transfer="transferModal = true"
+            :pushTipLoading="pushTipLoading"
+            :sendTipLoading="sendTipLoading"
+            :balanceLoading="balanceLoading"
+            @pushTip="(amount: Number) => pushTip(membersAddress, amount, team.bankAddress)"
+            @sendTip="(amount: Number) => sendTip(membersAddress, amount, team.bankAddress)"
           />
-        </ModalComponent>
-      </div>
-      <MemberCard
-        v-for="member in team.members"
-        :ownerAddress="team.ownerAddress"
-        :teamId="Number(team.id)"
-        :member="member"
-        :isMemberDeleting="memberIsDeleting"
-        :key="member.address"
-        @deleteMember="
-          (member) => {
-            memberToBeDeleted.name = member.name
-            memberToBeDeleted.id = member.id
-            memberToBeDeleted.address = member.address
-            showDeleteMemberConfirmModal = true
-          }
-        "
-      />
+        </template>
+        <template #tab-2>
+          <div>transactions</div>
+        </template>
+      </TabNavigation>
+
+      <!-- TODO : for tabs transactions and bank management -->
       <ModalComponent v-model="showDeleteMemberConfirmModal">
         <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
           Are you sure you want to delete
@@ -69,13 +99,6 @@
           from the team?
         </DeleteConfirmForm>
       </ModalComponent>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"></div>
-      <TipsAction
-        :pushTipLoading="pushTipLoading"
-        :sendTipLoading="sendTipLoading"
-        @pushTip="(amount) => pushTip(membersAddress, amount, team.bankAddress)"
-        @sendTip="(amount) => sendTip(membersAddress, amount, team.bankAddress)"
-      />
     </div>
 
     <ModalComponent v-model="showModal">
@@ -146,12 +169,12 @@ import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 //Components
 import MemberCard from '@/components/MemberCard.vue'
 import AddMemberCard from '@/components/AddMemberCard.vue'
-import TipsAction from '@/components/TipsAction.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
-import TeamActions from '@/components/TeamActions.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
+import TabNavigation from '@/components/TabNavigation.vue'
+import TeamAccount from '@/components/TeamAccount.vue'
 
-import { type Member, type Team, type User } from '@/types'
+import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 
 // Modal control states
 const showDeleteMemberConfirmModal = ref(false)
@@ -161,6 +184,8 @@ const bankModal = ref(false)
 const depositModal = ref(false)
 const transferModal = ref(false)
 const showAddMemberForm = ref(false)
+const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
+const isOwner = ref(false)
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
@@ -304,6 +329,14 @@ watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], 
 })
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
+
+  if (team.value.ownerAddress == useUserDataStore().address) {
+    isOwner.value = true
+  }
+  if (team.value.bankAddress) {
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    await getBalance(team.value.bankAddress)
+  }
 })
 
 // useFetch instance for adding members to team
@@ -428,6 +461,8 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    await getTeamAPI()
     await getBalance(team.value.bankAddress)
   }
 }

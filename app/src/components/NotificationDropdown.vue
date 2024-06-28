@@ -13,7 +13,10 @@
       class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
-        <a @click="updateNotification(notification.id)">
+        <a
+          @click="updateNotification(notification)"
+          :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
+        >
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">
               {{ notification.message }}
@@ -23,21 +26,21 @@
         </a>
       </li>
       <!-- Pagination Controls -->
-      <div class="flex justify-between items-center p-2">
+      <div class="join flex justify-between items-center p-2">
         <button
-          class="btn btn-sm"
-          :class="{ 'cursor-not-allowed': currentPage == 1 }"
+          class="join-item btn-primary btn btn-xs"
+          :class="currentPage === 1 ? 'btn-disabled' : ''"
           @click="currentPage > 1 ? currentPage-- : currentPage"
         >
-          Previous
+          «
         </button>
-        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
         <button
-          class="btn btn-sm"
-          :class="{ 'cursor-not-allowed': currentPage === totalPages }"
+          class="join-item btn btn-primary btn-xs"
+          :class="currentPage == totalPages ? 'btn-disabled' : ''"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
         >
-          Next
+          »
         </button>
       </div>
     </ul>
@@ -45,7 +48,7 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { type NotificationResponse } from '@/types'
+import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import IconBell from '@/components/icons/IconBell.vue'
 
@@ -82,8 +85,17 @@ const isUnread = computed(() => {
   return idx > -1
 })
 
-const updateNotification = async (id: number | string | null) => {
-  updateEndPoint.value = `notification/${id}`
+const isInvitation = (notification: Notification) => {
+  if (notification.resource) {
+    const resourceArr = notification.resource.split('/')
+    if (resourceArr[0] === 'teams') return true
+  }
+
+  return false
+}
+
+const updateNotification = async (notification: Notification) => {
+  updateEndPoint.value = `notification/${notification.id}`
 
   await executeUpdateNotifications()
   await executeFetchNotifications()

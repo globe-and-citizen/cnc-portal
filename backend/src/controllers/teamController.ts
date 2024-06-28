@@ -68,6 +68,7 @@ const addTeam = async (req: Request, res: Response) => {
         message: `You have been added to a new team: ${name} by ${owner.name}`,
         subject: "Team Invitation",
         author: owner.address?.toString() || "",
+        resource: `teams/${team.id}`
       }
     );
     res.status(201).json(team);
@@ -205,7 +206,7 @@ const updateTeam = async (req: Request, res: Response) => {
         },
       },
     });
-    res.status(200).json({ team: teamU, success: true });
+    res.status(200).json(teamU);
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }
