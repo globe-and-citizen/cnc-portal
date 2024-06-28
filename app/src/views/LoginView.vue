@@ -60,19 +60,8 @@ import IconGoogle from '@/components/icons/IconGoogle.vue'
 import IconFacebook from '@/components/icons/IconFacebook.vue'
 import IconTwitter from '@/components/icons/IconTwitter.vue'
 import { useSiwe } from '@/composables/useSiwe'
-import { watch } from 'vue'
-import { log } from '@/utils'
-import { useToastStore } from '@/stores/useToastStore'
 
-const { addErrorToast } = useToastStore()
-const { isProcessing, siwe, error } = useSiwe()
-
-watch(error, (newValue) => {
-  if (newValue) {
-    log.error(newValue)
-    addErrorToast(newValue)
-  }
-})
+const { isProcessing, siwe } = useSiwe()
 </script>
 
 <style scoped>

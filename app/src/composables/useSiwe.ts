@@ -7,8 +7,9 @@ import { ref, type Ref } from 'vue'
 //import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
-import { parseError } from '@/utils'
-import { useCustomFetch, errorMessage } from './useCustomFetch'
+import { getFetchErrorMessage, log, parseError } from '@/utils'
+import { useCustomFetch } from './useCustomFetch'
+import { useToastStore } from '@/stores/useToastStore'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -24,8 +25,8 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 }
 
 export function useSiwe() {
+  const { addErrorToast } = useToastStore()
   const isProcessing = ref(false)
-  const error: Ref<string | null> = ref(null)
 
   async function siwe() {
     try {
@@ -38,7 +39,12 @@ export function useSiwe() {
         //execute: executeFetchNonce
       } = await useCustomFetch<string>(`user/nonce/${address}`).get().json()
 
-      if (fetchError.value) throw new Error(errorMessage.value)
+      if (fetchError.value) {
+        log.info(getFetchErrorMessage(fetchError.value))
+        addErrorToast(fetchError.value)
+        log.info('SIWE rejected')
+        return
+      }
 
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(address, statement, nonce.value.nonce)
@@ -53,7 +59,12 @@ export function useSiwe() {
         //execute: executeFetchUser
       } = await useCustomFetch<string>(`user/${address}`).get().json()
 
-      if (fetchUserError.value) throw new Error(errorMessage.value)
+      if (fetchUserError.value) {
+        log.info(getFetchErrorMessage(fetchUserError.value))
+        addErrorToast(getFetchErrorMessage(fetchUserError.value))
+        log.info('SIWE rejected')
+        return
+      }
 
       const userData: Partial<User> = user.value
       useUserDataStore().setUserData(
@@ -65,11 +76,13 @@ export function useSiwe() {
 
       router.push('/teams')
     } catch (_error: any) {
-      error.value = parseError(_error)
+      log.info(parseError(_error))
+      addErrorToast(parseError(_error))
+      log.info('SIWE rejected')
     } finally {
       isProcessing.value = false
     }
   }
 
-  return { isProcessing, error, siwe }
+  return { isProcessing, siwe }
 }
