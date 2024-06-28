@@ -11,8 +11,15 @@
             {{ new Date().toLocaleDateString() }}</span
           ></span
         >
-
-        <p class="text-sm">{{ proposal.description }}</p>
+        <p class="text-sm">
+          {{
+            proposal.description
+              ? proposal.description.length > 120
+                ? proposal.description.substring(0, 120) + '...'
+                : proposal.description
+              : ''
+          }}
+        </p>
       </div>
       <div
         class="flex flex-row items-center justify-center gap-5 w-1/2"
@@ -52,8 +59,7 @@
 </template>
 <script setup lang="ts">
 import type { Proposal } from '@/types/index'
-import { onMounted, ref } from 'vue'
-const props = defineProps<{
+defineProps<{
   proposal: Partial<Proposal>
 }>()
 </script>

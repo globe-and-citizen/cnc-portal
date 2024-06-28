@@ -6,7 +6,8 @@ describe('ProposalCard.vue', () => {
   const proposalDirective = {
     title: 'Directive',
     draftedBy: 'Ravioli',
-    description: 'This is a test directive.',
+    description:
+      'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
     isElection: false,
     votes: {
       yes: 10,
@@ -19,7 +20,9 @@ describe('ProposalCard.vue', () => {
   const proposalElection = {
     title: 'Election',
     draftedBy: 'Beerbelliez',
-    description: 'This is a test election.',
+    description:
+      'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
+
     isElection: true,
     votesForUsers: [
       { name: 'Ravioli', address: '0x1', votes: 0 },
@@ -33,7 +36,11 @@ describe('ProposalCard.vue', () => {
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalDirective.title)
       expect(wrapper.find('.badge-primary').text()).toContain(proposalDirective.draftedBy)
-      expect(wrapper.find('.text-sm').text()).toContain(proposalDirective.description)
+      const expectedDescription =
+        proposalDirective.description.length > 120
+          ? proposalDirective.description.substring(0, 120) + '...'
+          : proposalDirective.description
+      expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
       expect(wrapper.findAll('progress').length).toBe(3) // 3 progress bars for Yes, No, Abstain
       expect(wrapper.classes()).toContain('bg-blue-100') // blue background for directive
     })
@@ -44,7 +51,11 @@ describe('ProposalCard.vue', () => {
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalElection.title)
       expect(wrapper.find('.badge-primary').text()).toContain(proposalElection.draftedBy)
-      expect(wrapper.find('.text-sm').text()).toContain(proposalElection.description)
+      const expectedDescription =
+        proposalDirective.description.length > 120
+          ? proposalDirective.description.substring(0, 120) + '...'
+          : proposalDirective.description
+      expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
       expect(wrapper.findAll('progress').length).toBe(proposalElection.votesForUsers.length) // 1 progress bar per user
       proposalElection.votesForUsers.forEach((user) => {
         expect(wrapper.text()).toContain(user.name)
