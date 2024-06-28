@@ -1,6 +1,5 @@
 <template>
   <div id="deposit">
-    <h2>Deposit History</h2>
     <SkeletonLoading v-if="loading" class="w-full h-96 mt-5" />
     <div v-if="!loading" class="overflow-x-auto bg-base-100 mt-5">
       <table class="table table-zebra text-center">
