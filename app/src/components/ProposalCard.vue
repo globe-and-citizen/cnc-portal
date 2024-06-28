@@ -1,5 +1,5 @@
 <template>
-  <div class="card bg-green-100 shadow-xl">
+  <div class="card shadow-xl" :class="`${proposal.isElection ? 'bg-green-100' : 'bg-blue-100'}`">
     <div class="card-body flex flex-row justify-between">
       <div class="w-1/2">
         <h2 class="card-title">{{ proposal.title }}</h2>
