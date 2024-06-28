@@ -342,7 +342,6 @@ watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], 
   }
 })
 onMounted(async () => {
-  log.info('onMounted - SingleTeamView')
   await getTeamAPI() //Call the execute function to get team details on mount
 
   if (team.value.ownerAddress == useUserDataStore().address) {
