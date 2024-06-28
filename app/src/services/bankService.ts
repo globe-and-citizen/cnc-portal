@@ -5,7 +5,7 @@ import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { BANK_IMPL_ADDRESS } from '@/constant'
 import { PROXY_BYTECODE } from '@/artifacts/bytecode/proxy'
-import type { BankEventType } from '@/types'
+import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
@@ -20,7 +20,6 @@ export interface IBankService {
 
 export class BankService implements IBankService {
   web3Library: IWeb3Library
-  private contractService?: SmartContract
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
@@ -64,19 +63,15 @@ export class BankService implements IBankService {
   }
 
   async getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]> {
-    if (!this.contractService) {
-      this.contractService = this.getContractService(bankAddress)
-    }
+    const contractService = this.getContractService(bankAddress)
 
-    return await this.contractService.getEvents(type)
+    return await contractService.getEvents(type)
   }
 
   async getContract(bankAddress: string): Promise<Contract> {
-    if (!this.contractService) {
-      this.contractService = this.getContractService(bankAddress)
-    }
+    const contractService = this.getContractService(bankAddress)
 
-    return await this.contractService.getContract()
+    return await contractService.getContract()
   }
 
   private getContractService(bankAddress: string): SmartContract {
