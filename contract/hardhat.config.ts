@@ -17,15 +17,15 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
       url: process.env.SEPOLIA_URL,
       accounts: [process.env.PRIVATE_KEY]
     },
-    mainnet: {
-      url: process.env.MAINNET_URL,
-      accounts: [process.env.MAINNET_KEY!],
-      gasPrice: 1000000000
-    },
+    // mainnet: {
+    //   url: process.env.MAINNET_URL,
+    //   accounts: [process.env.MAINNET_KEY!],
+    //   gasPrice: 1000000000
+    // },
     polygon: {
       url: process.env.POLYGON_URL,
       accounts: [process.env.MAINNET_KEY!],
-      gasPrice: 400000000000
+      gasPrice: 'auto'
     }
   }
 }

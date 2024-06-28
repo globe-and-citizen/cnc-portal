@@ -97,7 +97,8 @@ watch(
     if (isAuth === true) {
       getBalance()
     }
-  }
+  },
+  { immediate: true }
 )
 // Handle Balance error
 watch(balanceError, () => {

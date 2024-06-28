@@ -4,7 +4,7 @@
 
     <div
       v-if="!(teamIsFetching || balanceLoading) && team"
-      class="pt-10 flex flex-col gap-5 w-10/12 items-center"
+      class="pt-10 flex flex-col gap-5 w-full items-center"
     >
       <div class="flex justify-between gap-5 w-full">
         <TeamDetails
