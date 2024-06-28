@@ -3,12 +3,12 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
-import { ref, type Ref } from 'vue'
-//import { useToastStore } from '@/stores/useToastStore'
+import { ref } from 'vue'
+import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
-import { parseError } from '@/utils'
-import { useCustomFetch, errorMessage } from './useCustomFetch'
+import { parseError, getFetchErrorMessage, log } from '@/utils'
+import { useCustomFetch, responseSatus } from './useCustomFetch'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -24,21 +24,24 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 }
 
 export function useSiwe() {
+  const { addErrorToast } = useToastStore()
   const isProcessing = ref(false)
-  const error: Ref<string | null> = ref(null)
 
   async function siwe() {
     try {
       isProcessing.value = true
       const address = await ethersJsAdapter.getAddress()
-      const {
-        //isFetching: isFetchingNonce,
-        error: fetchError,
-        data: nonce
-        //execute: executeFetchNonce
-      } = await useCustomFetch<string>(`user/nonce/${address}`).get().json()
+      const { error: fetchError, data: nonce } = await useCustomFetch<string>(
+        `user/nonce/${address}`
+      )
+        .get()
+        .json()
 
-      if (fetchError.value) throw new Error(errorMessage.value)
+      if (fetchError.value) {
+        log.error(getFetchErrorMessage(responseSatus.value))
+        addErrorToast(getFetchErrorMessage(responseSatus.value))
+        return
+      }
 
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(address, statement, nonce.value.nonce)
@@ -46,14 +49,15 @@ export function useSiwe() {
 
       await siweAuthService.authenticateUser()
 
-      const {
-        //isFetching: isFetchingUser,
-        error: fetchUserError,
-        data: user
-        //execute: executeFetchUser
-      } = await useCustomFetch<string>(`user/${address}`).get().json()
+      const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${address}`)
+        .get()
+        .json()
 
-      if (fetchUserError.value) throw new Error(errorMessage.value)
+      if (fetchUserError.value) {
+        log.error(getFetchErrorMessage(responseSatus.value))
+        addErrorToast(getFetchErrorMessage(responseSatus.value))
+        return
+      }
 
       const userData: Partial<User> = user.value
       useUserDataStore().setUserData(
@@ -65,11 +69,12 @@ export function useSiwe() {
 
       router.push('/teams')
     } catch (_error: any) {
-      error.value = parseError(_error)
+      log.error(parseError(_error))
+      addErrorToast(parseError(_error))
     } finally {
       isProcessing.value = false
     }
   }
 
-  return { isProcessing, error, siwe }
+  return { isProcessing, siwe }
 }

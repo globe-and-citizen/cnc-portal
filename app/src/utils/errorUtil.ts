@@ -90,7 +90,7 @@ export function getFetchErrorMessage(status: number) {
       case 403:
         return 'Forbidden.'
       case 404:
-        return 'Not Found.'
+        return 'Resource Not Found.'
       default:
         return 'Client error occurred.'
     }
