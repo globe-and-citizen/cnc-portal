@@ -1,13 +1,11 @@
-import { useToastStore } from '@/stores/toast'
-import { ToastType } from '@/types'
-
+import { useToastStore } from '@/stores/useToastStore'
 export function useErrorHandler() {
-  const { show } = useToastStore()
+  const { addErrorToast } = useToastStore()
 
   function handleError(error: any) {
     console.log('Error:', error.message)
     error.value = error.message
-    show(ToastType.Error, error.message)
+    addErrorToast(error.message)
   }
 
   return { handleError }

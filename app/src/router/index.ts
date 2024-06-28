@@ -4,8 +4,8 @@ import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
-
-import { AuthService } from '@/services/authService'
+import ToastDemoView from '@/views/ToastDemoView.vue'
+import { useStorage } from '@vueuse/core'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,17 +43,16 @@ const router = createRouter({
       component: TransactionsView
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
+      path: '/toast-demo',
+      name: 'toast-demo',
+      component: ToastDemoView
     }
   ]
 })
+const isAuth = useStorage('isAuth', false)
 router.beforeEach(async (to) => {
-  if (!(await AuthService.isAuthenticated()) && to.name !== 'login') {
+  // Redirect to login page if not authenticated
+  if (!isAuth.value && to.name !== 'login') {
     return { name: 'login' }
   }
 })

@@ -2,7 +2,9 @@ import type { ISiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import type { IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import type { IAuthAPI } from '@/apis/authApi'
 import { AuthAPI } from '@/apis/authApi'
+import { useStorage } from '@vueuse/core'
 
+// TODO: We can have a globale token reactive object for the localStorage and avoid instanciating it everytime we want to use it.
 // Define a generic type for credentials
 type AuthCredentials<T> = T | undefined | {}
 
@@ -22,11 +24,16 @@ export class AuthService {
   }
 
   static logout(): void {
-    localStorage.removeItem('authToken')
+    const token = useStorage('authToken', null)
+    token.value = null
   }
 
+  // TODO: refactor: we return a value instead of the reactive object.
+  // When it's used it should be a reactive object. So we don't have to create the token object everi time we want to use it.
   static getToken(): string | null {
-    return localStorage.getItem('authToken')
+    const token = useStorage('authToken', null)
+
+    return token.value
   }
 }
 
@@ -48,7 +55,7 @@ export class SIWEAuthService<T> extends AuthService implements IAuthService<T> {
     const message = await this.messageCreator.create()
     const signature = await this.web3Library.requestSign(message)
     const token = await this.authAPI.verifyPayloadAndGetToken({ signature, message }, 'siwe')
-    localStorage.setItem('authToken', token)
+    useStorage('authToken', token)
 
     return token // For demonstration purposes only
   }

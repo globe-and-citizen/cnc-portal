@@ -4,7 +4,7 @@
 
     <h2>PushTip Transactions</h2>
     <SkeletonLoading v-if="pushTipLoading" class="w-full h-96 p-5" />
-    <div v-else class="overflow-x-auto bg-white p-5">
+    <div v-else class="overflow-x-auto bg-base-100 p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
@@ -50,7 +50,7 @@
 
     <h2>SendTip Transactions</h2>
     <SkeletonLoading v-if="sendTipLoading" class="w-full h-96 p-5" />
-    <div v-else class="overflow-x-auto bg-white p-5">
+    <div v-else class="overflow-x-auto bg-base-100 p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
@@ -96,7 +96,7 @@
 
     <h2>TipWithdrawal Transactions</h2>
     <SkeletonLoading v-if="withdrawalTipLoading" class="w-full h-96 p-5" />
-    <div v-else class="overflow-x-auto bg-white p-5">
+    <div v-else class="overflow-x-auto bg-base-100 p-5">
       <table class="table table-zebra">
         <!-- head -->
         <thead>
@@ -133,41 +133,60 @@
 </template>
 
 <script setup lang="ts">
-import { useTipsStore } from '@/stores/tips'
+import { useTipEvents } from '@/composables/tips'
 import { TipsEventType } from '@/types'
-import { ethers, type Result } from 'ethers'
-import { onMounted, ref } from 'vue'
-import { ETHERSCAN_URL } from '@/constant'
+import { ethers } from 'ethers'
+import { onMounted, watch } from 'vue'
+import { NETWORK } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
+import { useToastStore } from '@/stores/useToastStore'
 
-const { getEvents } = useTipsStore()
+const { addErrorToast } = useToastStore()
 
-const pushTipLoading = ref(false)
-const sendTipLoading = ref(false)
-const withdrawalTipLoading = ref(false)
-const pushTipEvents = ref([] as EventResult[] | undefined)
-const sendTipEvents = ref([] as EventResult[] | undefined)
-const tipWithdrawalEvents = ref([] as EventResult[] | undefined)
+const {
+  events: pushTipEvents,
+  getEvents: getPushTipEvents,
+  loading: pushTipLoading,
+  error: pushTipError
+} = useTipEvents()
+const {
+  events: sendTipEvents,
+  getEvents: getSendTipEvents,
+  loading: sendTipLoading,
+  error: sendTipError
+} = useTipEvents()
+const {
+  events: tipWithdrawalEvents,
+  getEvents: getTipsWithdrawal,
+  loading: withdrawalTipLoading,
+  error: withdrawalTipError
+} = useTipEvents()
 
 onMounted(async () => {
-  const [pushTipData, sendTipData, withdrawalTipData] = await Promise.all([
-    getEvents(TipsEventType.PushTip, pushTipLoading),
-    getEvents(TipsEventType.SendTip, sendTipLoading),
-    getEvents(TipsEventType.TipWithdrawal, withdrawalTipLoading)
+  await Promise.all([
+    getPushTipEvents(TipsEventType.PushTip),
+    getSendTipEvents(TipsEventType.SendTip),
+    getTipsWithdrawal(TipsEventType.TipWithdrawal)
   ])
+})
 
-  pushTipEvents.value = pushTipData
-  sendTipEvents.value = sendTipData
-  tipWithdrawalEvents.value = withdrawalTipData
+watch(pushTipError, () => {
+  if (pushTipError.value) {
+    addErrorToast('Failed to get push tip events')
+  }
+})
+watch(sendTipError, () => {
+  if (sendTipError.value) {
+    addErrorToast('Failed to get send tip events')
+  }
+})
+watch(withdrawalTipError, () => {
+  if (withdrawalTipError.value) {
+    addErrorToast('Failed to get withdrawal tip events')
+  }
 })
 
 const showTxDetail = (txHash: string) => {
-  window.open(`${ETHERSCAN_URL}/tx/${txHash}`, '_blank')
-}
-
-interface EventResult {
-  txHash: string
-  date: string
-  data: Result
+  window.open(`${NETWORK.blockExplorerUrl}/tx/${txHash}`, '_blank')
 }
 </script>

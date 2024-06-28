@@ -47,3 +47,25 @@ Look at other scripts on the package.json file.
 ## Deployed contracts
 
 - Tip.sol: [0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B](https://sepolia.etherscan.io/address/0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B)
+
+## Scripts
+
+- Deploy an ignition scipt on polygon and verify it:
+
+```bash
+npx hardhat ignition deploy ./ignition/modules/[yourIgnitionScript].ts --network polygon --verify
+```
+
+ps: to make the verify working you need to have the `ETHERSCAN_API_KEY` on your .env file
+
+- Verify a contract:
+If you have a contract deploy on a network and you need to verify it you can use the following command:
+
+```bash
+npx hardhat verify --network polygon [contractAddress]
+```
+
+## Ressources
+
+- [Hardht Verifying contract](https://hardhat.org/hardhat-runner/docs/guides/verifying)
+- [Hardhat Verify plugin](https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify)

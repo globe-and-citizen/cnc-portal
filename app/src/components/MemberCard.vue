@@ -1,39 +1,39 @@
 <template>
-  <tr @click="emits('toggleUpdateMemberModal', member)" class="cursor-pointer hover">
-    <th>{{ member.id }}</th>
-    <th>{{ member.name }}</th>
-    <th>{{ member.walletAddress }}</th>
-    <th>Action</th>
-  </tr>
-  <UpdateMemberModal
-    :showUpdateMemberModal="showUpdateMemberModal"
-    :updateMemberInput="updateMemberInput"
-    @toggleUpdateMemberModal="emits('toggleUpdateMemberModal', {})"
-    @updateMember="(id) => emits('updateMember', id)"
-    @deleteMember="(id) => emits('deleteMember', id)"
-  />
+  <div
+    class="collapse bg-base-100"
+    :class="`${member.address != ownerAddress && ownerAddress == useUserDataStore().address ? 'collapse-arrow' : ''}`"
+  >
+    <input
+      type="checkbox"
+      v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
+    />
+    <div class="collapse-title text-sm font-bold flex px-4">
+      <span class="w-1/2">{{ member.name }}</span>
+      <span class="w-2/3">{{ member.address }}</span>
+    </div>
+    <div class="collapse-content">
+      <div class="flex justify-center">
+        <button
+          v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
+          class="btn btn-error btn-xs"
+          @click="emits('deleteMember', member)"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
+import { useUserDataStore } from '@/stores/user'
 import type { MemberInput } from '@/types'
-import UpdateMemberModal from '@/components/modals/UpdateMemberModal.vue'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
-const emits = defineEmits(['toggleUpdateMemberModal', 'updateMember', 'deleteMember'])
+const emits = defineEmits(['deleteMember'])
 const props = defineProps<{
-  showUpdateMemberModal: boolean
   member: Partial<MemberInput>
-  updateMemberInput: Partial<MemberInput>
+  teamId: Number
+  ownerAddress: String
 }>()
 const member = ref(props.member)
-const updateMemberInput = ref(props.updateMemberInput)
-const showUpdateMemberModal = ref<boolean>(props.showUpdateMemberModal)
-
-watch(
-  [() => props.showUpdateMemberModal, props.updateMemberInput, updateMemberInput],
-  ([showForm]) => {
-    showUpdateMemberModal.value = showForm
-    updateMemberInput.value = props.updateMemberInput
-  },
-  { deep: true }
-)
 </script>

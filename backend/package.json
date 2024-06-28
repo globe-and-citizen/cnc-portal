@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "nodemonConfig": {
     "ignore": [
       "src/utils/swagger-output.json"
@@ -13,14 +16,15 @@
     "test": "vitest run -c vitest.unit.config.ts",
     "test:watch": "vitest -c vitest.unit.config.ts",
     "test:e2e": "vitest run -c vitest.e2e.config.ts",
+    "test:unit:coverage": "npx vitest run --coverage -c ./vitest.config.ts",
     "test:e2e:watch": "vitest -c vitest.e2e.config.ts",
     "test:unit": "vitest -c ./vitest.config.unit.ts",
     "test:unit:ui": "vitest -c ./vitest.config.unit.ts --ui",
     "build": "tsc && npm run generate:docs && npm run copy:docs",
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
-    "prisma:migrate": "prisma migrate deploy",
-    "prisma:generate": "prisma generate",
+    "prisma:migrate": "npx prisma migrate deploy",
+    "prisma:generate": "npx prisma generate",
     "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js"
   },
   "keywords": [],
@@ -31,8 +35,10 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.11.30",
+    "@vitest/coverage-istanbul": "^1.6.0",
     "nodemon": "^3.1.0",
     "prisma": "^5.11.0",
+    "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
     "vite-tsconfig-paths": "^4.3.2",
@@ -40,12 +46,12 @@
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",
+    "@redocly/cli": "^1.12.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.1",
     "jsonwebtoken": "^9.0.2",
     "openapi2html": "^1.1.22",
-    "redoc-cli": "^0.13.21",
     "siwe": "^2.1.4",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
