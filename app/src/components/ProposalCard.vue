@@ -1,0 +1,59 @@
+<template>
+  <div class="card bg-green-100 shadow-xl">
+    <div class="card-body flex flex-row justify-between">
+      <div class="w-1/2">
+        <h2 class="card-title">{{ proposal.title }}</h2>
+        <span class="text-xs">
+          <span class="badge badge-primary badge-xs"> {{ proposal.draftedBy }}</span>
+
+          on
+          <span class="badge badge-secondary badge-xs">
+            {{ new Date().toLocaleDateString() }}</span
+          ></span
+        >
+
+        <p class="text-sm">{{ proposal.description }}</p>
+      </div>
+      <div
+        class="flex flex-row items-center justify-center gap-5 w-1/2"
+        v-if="!proposal.isElection"
+      >
+        <div class="flex flex-col items-center justify-center gap-2 text-sm">
+          <span>Yes </span>
+          <span>No </span>
+          <span>Abstain </span>
+        </div>
+        <div class="flex flex-col items-center justify-center gap-5">
+          <progress class="progress progress-success w-56" value="10" max="100"></progress>
+          <progress class="progress progress-success w-56" value="10" max="100"></progress>
+          <progress class="progress progress-success w-56" value="40" max="100"></progress>
+        </div>
+      </div>
+      <div class="flex flex-row items-center justify-center gap-5 w-1/2" v-else>
+        <div class="flex flex-col items-center justify-center gap-2 text-sm">
+          <span v-for="user in proposal.votesForUsers" :key="user.address">{{ user.name }}</span>
+        </div>
+        <div class="flex flex-col items-center justify-center gap-5">
+          <progress
+            class="progress progress-success w-56"
+            value="20"
+            max="100"
+            v-for="user in proposal.votesForUsers"
+            :key="user.address"
+          ></progress>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-center gap-4 mb-2">
+      <button class="btn btn-primary btn-sm">Vote</button>
+      <button class="btn btn-secondary btn-sm">View</button>
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import type { Proposal } from '@/types/index'
+import { onMounted, ref } from 'vue'
+const props = defineProps<{
+  proposal: Partial<Proposal>
+}>()
+</script>

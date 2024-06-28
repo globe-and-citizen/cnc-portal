@@ -88,6 +88,9 @@
         <template #tab-2>
           <div>transactions</div>
         </template>
+        <template #tab-3>
+          <ProposalDashBoard />
+        </template>
       </TabNavigation>
 
       <!-- TODO : for tabs transactions and bank management -->
@@ -173,6 +176,7 @@ import TeamDetails from '@/components/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import TeamAccount from '@/components/TeamAccount.vue'
+import ProposalDashBoard from '@/components/ProposalDashboard.vue'
 
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 
@@ -334,7 +338,7 @@ onMounted(async () => {
     isOwner.value = true
   }
   if (team.value.bankAddress) {
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
     await getBalance(team.value.bankAddress)
   }
 })
@@ -461,7 +465,7 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
     await getTeamAPI()
     await getBalance(team.value.bankAddress)
   }
