@@ -25,7 +25,7 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
     polygon: {
       url: process.env.POLYGON_URL,
       accounts: [process.env.MAINNET_KEY!],
-      gasPrice: 'auto',
+      gasPrice: 'auto'
     }
   }
 }
