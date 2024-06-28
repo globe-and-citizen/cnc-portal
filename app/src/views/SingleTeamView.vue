@@ -345,7 +345,6 @@ onMounted(async () => {
   log.info('onMounted - SingleTeamView')
   await getTeamAPI() //Call the execute function to get team details on mount
 
-  console.log(team.value.bankAddress)
   if (team.value.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
   }

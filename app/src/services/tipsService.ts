@@ -77,7 +77,6 @@ export class TipsService extends SmartContract {
 
       return tx
     } catch (error) {
-      console.log(error)
       throw error
     }
   }

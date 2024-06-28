@@ -77,7 +77,6 @@ export function useBankTransfer(): IContractTransactionFunction {
 
   async function transfer(bankAddress: string, to: string, amount: string) {
     try {
-      console.log('bankAddress: ', bankAddress, ' to: ', to, ' amount: ', amount)
       loading.value = true
       transaction.value = await bankService.transfer(bankAddress, to, amount)
       isSuccess.value = true

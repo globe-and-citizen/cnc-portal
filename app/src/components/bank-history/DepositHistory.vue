@@ -44,7 +44,6 @@ import { NETWORK } from '@/constant'
 import { onMounted, watch } from 'vue'
 import { useBankEvents } from '@/composables/bank'
 import { useToastStore } from '@/stores/useToastStore'
-import { log } from '@/utils'
 
 const web3Library = EthersJsAdapter.getInstance()
 const { addErrorToast } = useToastStore()
@@ -54,7 +53,6 @@ const props = defineProps<{
 const { getEvents, error, events, loading } = useBankEvents(props.bankAddress)
 
 onMounted(async () => {
-  log.info('DepositHistory: ', props.bankAddress)
   await getEvents(BankEventType.Deposit)
 })
 
