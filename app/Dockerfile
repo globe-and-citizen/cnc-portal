@@ -15,6 +15,15 @@ RUN npm install
 # Copy the rest of the application code to the working directory
 COPY . .
 
+# Arguments and environment variables for the build stage
+ARG VITE_APP_BACKEND_URL
+ARG VITE_APP_TIPS_ADDRESS
+ARG VITE_APP_NETWORK_ALIAS
+
+ENV VITE_APP_BACKEND_URL=$VITE_APP_BACKEND_URL
+ENV VITE_APP_TIPS_ADDRESS=$VITE_APP_TIPS_ADDRESS
+ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
+
 # Expose the port the app runs on
 EXPOSE 5173
 
@@ -28,6 +37,17 @@ WORKDIR /app
 
 # Copy the rest of the application code
 COPY --from=development /app .
+
+# Arguments and environment variables for the build stage
+ARG VITE_APP_BACKEND_URL
+ARG VITE_APP_TIPS_ADDRESS
+ARG VITE_APP_NETWORK_ALIAS
+ARG VITE_BANK_IMPL_ADDRESS
+
+ENV VITE_APP_BACKEND_URL=$VITE_APP_BACKEND_URL
+ENV VITE_APP_TIPS_ADDRESS=$VITE_APP_TIPS_ADDRESS
+ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
+ENV VITE_BANK_IMPL_ADDRESS=$VITE_BANK_IMPL_ADDRESS
 
 RUN npm run build
 

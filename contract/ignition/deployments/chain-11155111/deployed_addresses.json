@@ -6,5 +6,6 @@
   "BankProxyModule#Bank": "0xAc139D791964669d4aCAC10bFB9Cebe704d67357",
   "BankProxyModule#TransparentUpgradeableProxy": "0x5466767aA6412f298dD61FbE4E3e40483030b39B",
   "BankProxyModule#ProxyAdmin": "0xc6D9eD8c18901002e6111aE5A2cb074034040d6A",
-  "BankModule#Bank": "0x5466767aA6412f298dD61FbE4E3e40483030b39B"
+  "BankModule#Bank": "0x5466767aA6412f298dD61FbE4E3e40483030b39B",
+  "Bank#Bank": "0xAd1569cF877b70B61dee6b5C3368c115Cc4aA49A"
 }

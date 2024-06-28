@@ -78,7 +78,6 @@ const {
 watch(notifications, () => {
   totalPages.value = Math.ceil(notifications.value.data.length / itemsPerPage.value)
 })
-
 const isUnread = computed(() => {
   const idx = notifications.value?.data.findIndex(
     (notification: any) => notification.isRead === false
