@@ -4,11 +4,11 @@ import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { ref } from 'vue'
-import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
-import { parseError, getFetchErrorMessage, log } from '@/utils'
-import { useCustomFetch, responseSatus } from './useCustomFetch'
+import { getFetchErrorMessage, log, parseError } from '@/utils'
+import { useCustomFetch } from './useCustomFetch'
+import { useToastStore } from '@/stores/useToastStore'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -38,8 +38,9 @@ export function useSiwe() {
         .json()
 
       if (fetchError.value) {
-        log.error(getFetchErrorMessage(responseSatus.value))
-        addErrorToast(getFetchErrorMessage(responseSatus.value))
+        log.info(getFetchErrorMessage(fetchError.value))
+        addErrorToast(getFetchErrorMessage(fetchError.value))
+        log.info('SIWE rejected')
         return
       }
 
@@ -54,8 +55,9 @@ export function useSiwe() {
         .json()
 
       if (fetchUserError.value) {
-        log.error(getFetchErrorMessage(responseSatus.value))
-        addErrorToast(getFetchErrorMessage(responseSatus.value))
+        log.info(getFetchErrorMessage(fetchUserError.value))
+        addErrorToast(getFetchErrorMessage(fetchUserError.value))
+        log.info('SIWE rejected')
         return
       }
 
@@ -69,8 +71,9 @@ export function useSiwe() {
 
       router.push('/teams')
     } catch (_error: any) {
-      log.error(parseError(_error))
+      log.info(parseError(_error))
       addErrorToast(parseError(_error))
+      log.info('SIWE rejected')
     } finally {
       isProcessing.value = false
     }

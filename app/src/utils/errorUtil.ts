@@ -72,40 +72,13 @@ const parseErrorInfo = (info: MetaMaskErrorInfo) => {
   return A[1].trim()
 }
 
-export function getFetchErrorMessage(status: number) {
-  if (!status) return 'An unknown error occurred'
-
-  if (status >= 100 && status < 200) {
-    return 'Informational response received.'
-  } else if (status >= 200 && status < 300) {
-    return 'Success.'
-  } else if (status >= 300 && status < 400) {
-    return 'Redirection message received.'
-  } else if (status >= 400 && status < 500) {
-    switch (status) {
-      case 400:
-        return 'Bad Request.'
-      case 401:
-        return 'Unauthorized.'
-      case 403:
-        return 'Forbidden.'
-      case 404:
-        return 'Resource Not Found.'
-      default:
-        return 'Client error occurred.'
-    }
-  } else if (status >= 500 && status < 600) {
-    switch (status) {
-      case 500:
-        return 'Internal Server Error.'
-      case 502:
-        return 'Bad Gateway.'
-      case 503:
-        return 'Service Unavailable.'
-      default:
-        return 'Server error occurred.'
-    }
-  } else {
-    return 'Unexpected error occurred.'
+export function getFetchErrorMessage(status: number | string) {
+  switch (status) {
+    case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON` || `Unauthorized`:
+      return `You can't make this request`
+    case `Internal Server Error`:
+      return 'An error occurred, try again later'
+    default:
+      return 'A network error occurred'
   }
 }
