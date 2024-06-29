@@ -52,8 +52,9 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
                 "Insufficient contract balance"
             );
             
-            (bool sent, ) = _teamMembersAddresses[i].call{value: amountPerAddress}("");
-            require(sent, "Failed to send ETH");
+            //(bool sent, ) = _teamMembersAddresses[i].call{value: amountPerAddress}("");
+            //require(sent, "Failed to send ETH");
+            payable(_teamMembersAddresses[i]).transfer(amountPerAddress);
         }
 
         emit PushTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
