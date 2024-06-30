@@ -4,16 +4,14 @@ import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { ref } from 'vue'
-import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
-import { parseError, log } from '@/utils'
+import { getFetchErrorMessage, log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
+import { useToastStore } from '@/stores/useToastStore'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
-
-const isProcessing = ref(false)
 
 function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
   return new SLSiweMessageCreator({
@@ -25,37 +23,61 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
   })
 }
 
-async function siwe() {
-  const { addErrorToast } = useToastStore()
-
-  try {
-    isProcessing.value = true
-    const address = await ethersJsAdapter.getAddress()
-    const response = await useCustomFetch<string>(`user/nonce/${address}`).get().json()
-    const nonce = response.data.value.nonce
-    const statement = 'Sign in with Ethereum to the app.'
-    const siweMessageCreator = createSiweMessageCreator(address, statement, nonce)
-    const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
-
-    await siweAuthService.authenticateUser()
-    const result = await useCustomFetch<string>(`user/${address}`).get().json()
-    const userData: Partial<User> = result.data.value
-    useUserDataStore().setUserData(
-      userData.name || '',
-      userData.address || '',
-      userData.nonce || ''
-    )
-    useUserDataStore().setAuthStatus(true)
-
-    router.push('/teams')
-    isProcessing.value = false
-  } catch (error: any) {
-    isProcessing.value = false
-    log.error(parseError(error))
-    addErrorToast(parseError(error))
-  }
-}
-
 export function useSiwe() {
+  const { addErrorToast } = useToastStore()
+  const isProcessing = ref(false)
+
+  async function siwe() {
+    try {
+      isProcessing.value = true
+      const address = await ethersJsAdapter.getAddress()
+      const { error: fetchError, data: nonce } = await useCustomFetch<string>(
+        `user/nonce/${address}`
+      )
+        .get()
+        .json()
+
+      if (fetchError.value) {
+        log.info(getFetchErrorMessage(fetchError.value))
+        addErrorToast(getFetchErrorMessage(fetchError.value))
+        log.info('SIWE rejected')
+        return
+      }
+
+      const statement = 'Sign in with Ethereum to the app.'
+      const siweMessageCreator = createSiweMessageCreator(address, statement, nonce.value.nonce)
+      const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
+
+      await siweAuthService.authenticateUser()
+
+      const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${address}`)
+        .get()
+        .json()
+
+      if (fetchUserError.value) {
+        log.info(getFetchErrorMessage(fetchUserError.value))
+        addErrorToast(getFetchErrorMessage(fetchUserError.value))
+        log.info('SIWE rejected')
+        return
+      }
+
+      const userData: Partial<User> = user.value
+      useUserDataStore().setUserData(
+        userData.name || '',
+        userData.address || '',
+        userData.nonce || ''
+      )
+      useUserDataStore().setAuthStatus(true)
+
+      router.push('/teams')
+    } catch (_error: any) {
+      log.info(parseError(_error))
+      addErrorToast(parseError(_error))
+      log.info('SIWE rejected')
+    } finally {
+      isProcessing.value = false
+    }
+  }
+
   return { isProcessing, siwe }
 }

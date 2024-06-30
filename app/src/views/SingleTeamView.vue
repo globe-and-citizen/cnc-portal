@@ -89,6 +89,9 @@
         <template #tab-2>
           <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
+        <template #tab-3>
+          <ProposalDashBoard />
+        </template>
       </TabNavigation>
       <ModalComponent v-model="showDeleteMemberConfirmModal">
         <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
@@ -173,6 +176,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
 import TeamAccount from '@/components/TeamAccount.vue'
+import ProposalDashBoard from '@/components/ProposalDashboard.vue'
 
 import {
   type Member,
@@ -341,7 +345,7 @@ onMounted(async () => {
     isOwner.value = true
   }
   if (team.value.bankAddress) {
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
     await getBalance(team.value.bankAddress)
   }
 })
@@ -468,7 +472,7 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
     await getTeamAPI()
     await getBalance(team.value.bankAddress)
   }

@@ -1,4 +1,5 @@
 import { SiweMessage } from 'siwe'
+import { log, parseError } from '@/utils'
 
 // Define interface for message creator
 export interface ISiweMessageCreator {
@@ -24,12 +25,16 @@ export class SLSiweMessageCreator implements ISiweMessageCreator {
   }
 
   async create(): Promise<string> {
-    // Create SiweMessage instance with provided data
-    const siweMessage = new SiweMessage(this.data)
+    try {
+      // Create SiweMessage instance with provided data
+      const siweMessage = new SiweMessage(this.data)
+      // Call prepareMessage method to properly format the message
+      const message = siweMessage.prepareMessage()
 
-    // Call prepareMessage method to properly format the message
-    const message = siweMessage.prepareMessage()
-
-    return message
+      return message
+    } catch (error) {
+      log.error(parseError(error))
+      throw new Error('Something went wrong. Please try agin')
+    }
   }
 }
