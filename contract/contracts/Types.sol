@@ -14,9 +14,8 @@ library Types {
         uint256 votes;
     }
     struct Member{
-        string id;
         string name;
-        string teamId;
+        uint256 teamId;
         bool isVoted;
     }   
     struct Proposal{
