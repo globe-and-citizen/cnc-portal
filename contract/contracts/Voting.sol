@@ -11,8 +11,18 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
     mapping(uint256 id => Types.Proposal proposal) public proposals;
     uint256 public proposalCount;
 
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
+   function initialize(Types.MemberInput[] memory inputs) public initializer {
+    __Ownable_init(msg.sender);
+
+    for (uint256 i = 0; i < inputs.length; i++) {
+        members[inputs[i].memberAddress] = Types.Member({
+            name: inputs[i].name,
+            teamId: inputs[i].teamId,
+            isEligible: true,
+            isVoted: false
+        });
     }
+}
+
 
 }

@@ -16,6 +16,7 @@ library Types {
     struct Member{
         string name;
         uint256 teamId;
+        bool isEligible;
         bool isVoted;
     }   
     struct Proposal{
@@ -26,4 +27,10 @@ library Types {
         DirectiveVotes votes;
         Candidate[] candidates;
         }
+    struct MemberInput {
+        address memberAddress;
+        string name;
+        uint256 teamId;
+        }
+
 }
