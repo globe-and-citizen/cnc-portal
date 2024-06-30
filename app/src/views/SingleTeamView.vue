@@ -87,10 +87,7 @@
           />
         </template>
         <template #tab-2>
-          <BankTransactions
-            v-if="activeTab == 2"
-            :bank-address="team.bankAddress"
-          />
+          <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
       </TabNavigation>
       <ModalComponent v-model="showDeleteMemberConfirmModal">
@@ -155,7 +152,6 @@ import {
   useBankDeposit,
   useDeployBankContract,
   useBankTransfer,
-  useBankEvents
 } from '@/composables/bank'
 
 // Service
@@ -183,10 +179,7 @@ import {
   type Team,
   type User,
   SingleTeamTabs,
-  BankEventType,
-  type EventResult
 } from '@/types'
-import { log } from '@/utils'
 
 // Modal control states
 const showDeleteMemberConfirmModal = ref(false)

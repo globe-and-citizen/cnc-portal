@@ -71,14 +71,10 @@ export class TipsService extends SmartContract {
   }
 
   async bankPushTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
-    try {
-      const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
-      await tx.wait()
+    const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
+    await tx.wait()
 
-      return tx
-    } catch (error) {
-      throw error
-    }
+    return tx
   }
   async bankSendTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
     const tx = await this.bankService.sendTip(bankAddress, addresses, amount)
