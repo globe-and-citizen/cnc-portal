@@ -1,64 +1,146 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import TipsAddressChanged from '@/components/bank-history/TipsAddressChangedHistory.vue'
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { VueWrapper, mount } from '@vue/test-utils'
+import TipsAddressChangedHistory from '@/components/bank-history/TipsAddressChangedHistory.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { NETWORK } from '@/constant'
 import type { EventResult } from '@/types'
 import type { Result } from 'ethers'
+import { ref } from 'vue'
+import { useBankEvents } from '@/composables/bank'
+import { createTestingPinia } from '@pinia/testing'
+import { NETWORK } from '@/constant'
 
 const tipsAddressChangedEvents: EventResult[] = [
   {
     txHash: '0x1',
-    data: ['0xOwner1', '0xOldTips1', '0xNewTips1'] as Result,
+    data: ['0xOwner', '0xOldAddress1', '0xNewAddress1'] as Result,
     date: '2024-06-25'
   },
   {
     txHash: '0x2',
-    data: ['0xOwner2', '0xOldTips2', '0xNewTips2'] as Result,
+    data: ['0xOwner', '0xOldAddress2', '0xNewAddress2'] as Result,
     date: '2024-06-26'
   }
 ]
 
-describe('TipsAddressChanged.vue', () => {
-  let wrapper: any
+vi.mock('@/stores/useToastStore', () => ({
+  useToastStore: vi.fn().mockImplementation(() => ({ addErrorToast: vi.fn() }))
+}))
+
+vi.mock('@/composables/bank', () => ({
+  useBankEvents: vi.fn().mockImplementation(() => ({
+    getEvents: vi.fn().mockReturnValue(tipsAddressChangedEvents),
+    loading: ref(false),
+    events: ref(tipsAddressChangedEvents),
+    error: ref(null)
+  }))
+}))
+
+describe('TipsAddressChangedHistory', () => {
+  let wrapper: VueWrapper
 
   beforeEach(() => {
-    wrapper = mount(TipsAddressChanged, {
+    wrapper = mount(TipsAddressChangedHistory, {
       props: {
-        tipsAddressChangedEvents: [],
-        tipsAddressChangedEventLoading: true
+        bankAddress: '0x123'
       },
       global: {
-        components: {
-          SkeletonLoading
-        }
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   })
 
-  it('renders skeleton loader when loading', () => {
-    expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
-    expect(wrapper.find('table').exists()).toBe(false)
+  describe('Render', () => {
+    it('renders correctly', () => {
+      // basic render
+      expect(wrapper.find('div.overflow-x-auto.bg-base-100.mt-5').exists()).toBe(true)
+      expect(wrapper.find('table.table-zebra.text-center').exists()).toBe(true)
+      expect(wrapper.find('thead tr').exists()).toBe(true)
+      expect(wrapper.find('tbody tr').exists()).toBe(true)
+
+      // table header
+      const header = ['No', 'Owner Address', 'Old Tips Address', 'New Tips Address', 'Date']
+      expect(wrapper.findAll('th').length).toBe(5)
+      expect(wrapper.findAll('th').forEach((th, index) => expect(th.text()).toBe(header[index])))
+
+      // table body
+      expect(wrapper.findAll('td').length).toBe(tipsAddressChangedEvents.length * header.length)
+    })
+
+    it('renders table body correctly', () => {
+      const tableData = wrapper.findAll('td')
+      const no = tableData[0].text()
+      const ownerAddress = tableData[1].text()
+      const oldTipsAddress = tableData[2].text()
+      const newTipsAddress = tableData[3].text()
+      const date = tableData[4].text()
+
+      expect(no).toEqual('1')
+      expect(ownerAddress).toEqual(tipsAddressChangedEvents[0].data[0])
+      expect(oldTipsAddress).toEqual(tipsAddressChangedEvents[0].data[1])
+      expect(newTipsAddress).toEqual(tipsAddressChangedEvents[0].data[2])
+      expect(date).toEqual(tipsAddressChangedEvents[0].date)
+    })
+
+    it('renders skeleton loading if loading', () => {
+      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
+        getEvents: vi.fn().mockReturnValue([]),
+        loading: ref(true),
+        events: ref([]),
+        error: ref(null)
+      }))
+
+      const wrapper = mount(TipsAddressChangedHistory, {
+        props: {
+          bankAddress: '0x123'
+        }
+      })
+      expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
+    })
+
+    it('renders empty table when no tips address changed events', () => {
+      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
+        getEvents: vi.fn().mockReturnValue([]),
+        loading: ref(false),
+        events: ref([]),
+        error: ref(null)
+      }))
+
+      const wrapper = mount(TipsAddressChangedHistory, {
+        props: {
+          bankAddress: '0x123'
+        }
+      })
+      const emtpyRow = wrapper.find('tr td.text-center.font-bold.text-lg')
+      expect(emtpyRow.exists()).toBe(true)
+      expect(emtpyRow.text()).toBe('No tips address transactions')
+      expect(emtpyRow.attributes('colspan')).toBe('5')
+    })
   })
 
-  it('renders table when not loading and tips address changed events exist', async () => {
-    await wrapper.setProps({ tipsAddressChangedEventLoading: false, tipsAddressChangedEvents })
-    expect(wrapper.find('table').exists()).toBe(true)
-    expect(wrapper.findAll('tbody tr').length).toBe(2)
-  })
+  describe('Actions', () => {
+    it('calls getEvents when mounted', async () => {
+      const getEvents = vi.fn()
+      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
+        getEvents,
+        loading: ref(false),
+        events: ref([]),
+        error: ref(null)
+      }))
 
-  it('renders no tips address transactions message when not loading and no tips address changed events exist', async () => {
-    await wrapper.setProps({ tipsAddressChangedEventLoading: false, tipsAddressChangedEvents: [] })
-    expect(wrapper.find('table').exists()).toBe(true)
-    expect(wrapper.findAll('tbody tr').length).toBe(1)
-    expect(wrapper.find('tbody tr td').text()).toBe('No tips address transactions')
-  })
+      mount(TipsAddressChangedHistory, {
+        props: {
+          bankAddress: '0x123'
+        }
+      })
+      expect(getEvents).toHaveBeenCalled()
+    })
 
-  it('opens transaction detail in a new window when a row is clicked', async () => {
-    global.open = vi.fn() // Mock window.open
-    await wrapper.setProps({ tipsAddressChangedEventLoading: false, tipsAddressChangedEvents })
+    it('opens transaction detail in a new window when a row is clicked', async () => {
+      global.open = vi.fn() // Mock window.open
 
-    await wrapper.findAll('tbody tr')[0].trigger('click')
-    expect(global.open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
+      const row = wrapper.findAll('tbody tr')[0]
+      await row.trigger('click')
+      expect(global.open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
+    })
   })
 })

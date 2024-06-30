@@ -36,7 +36,7 @@
         </tbody>
         <tbody v-else>
           <tr>
-            <td class="text-center font-bold text-lg" colspan="4">No send to wallet history</td>
+            <td class="text-center font-bold text-lg" colspan="5">No send to wallet history</td>
           </tr>
         </tbody>
       </table>
