@@ -18,7 +18,7 @@ describe('TabNavigation', () => {
     const wrapper = mount(TabNavigation, {
       props: {
         tabs: ['Tab 1', 'Tab 2', 'Tab 3'],
-        initialActiveTab: 1
+        modelValue: 1
       }
     })
 

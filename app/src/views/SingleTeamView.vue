@@ -30,9 +30,9 @@
       >
         Create Bank Account
       </button>
-      <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
+      <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
-          <div id="members">
+          <div id="members" v-if="activeTab == 0">
             <div
               class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4 w-full"
             >
@@ -73,6 +73,7 @@
         </template>
         <template #tab-1>
           <TeamAccount
+            v-if="activeTab == 1"
             :teamBalance="Number(teamBalance)"
             :team="team"
             @createBank="bankModal = true"
@@ -86,14 +87,12 @@
           />
         </template>
         <template #tab-2>
-          <div>transactions</div>
+          <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
           <ProposalDashBoard />
         </template>
       </TabNavigation>
-
-      <!-- TODO : for tabs transactions and bank management -->
       <ModalComponent v-model="showDeleteMemberConfirmModal">
         <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
           Are you sure you want to delete
@@ -175,6 +174,7 @@ import AddMemberCard from '@/components/AddMemberCard.vue'
 import TeamDetails from '@/components/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
+import BankTransactions from '@/components/BankTransactions.vue'
 import TeamAccount from '@/components/TeamAccount.vue'
 import ProposalDashBoard from '@/components/ProposalDashboard.vue'
 
@@ -203,6 +203,7 @@ const updateTeamInput = ref<Partial<Team>>({
   description: '',
   bankAddress: ''
 })
+const activeTab = ref(0)
 
 const route = useRoute()
 const router = useRouter()
@@ -306,6 +307,7 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
+
 // useFetch instance for getting team details
 const {
   error: getTeamError,
