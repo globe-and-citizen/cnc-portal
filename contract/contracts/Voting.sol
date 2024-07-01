@@ -44,7 +44,7 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         require(voter.isEligible, "You are not eligible to vote");
         require(!voter.isVoted, "You have already voted");
 
-        recordVote(proposal, vote);
+        recordDirectiveVote(proposal, vote);
 
         voter.isVoted = true;
         emit DirectiveVoted(msg.sender, proposalId, vote);
@@ -85,7 +85,7 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         revert("You are not registered to vote in this proposal");
     }
 
-    function recordVote(Types.Proposal storage proposal, uint256 vote) internal {
+    function recordDirectiveVote(Types.Proposal storage proposal, uint256 vote) internal {
         if (vote == 0) {
             proposal.votes.no++;
         } else if (vote == 1) {
