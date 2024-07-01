@@ -154,7 +154,7 @@ import {
   useBankBalance,
   useBankDeposit,
   useDeployBankContract,
-  useBankTransfer,
+  useBankTransfer
 } from '@/composables/bank'
 
 // Service
@@ -178,12 +178,7 @@ import BankTransactions from '@/components/BankTransactions.vue'
 import TeamAccount from '@/components/TeamAccount.vue'
 import ProposalDashBoard from '@/components/ProposalDashboard.vue'
 
-import {
-  type Member,
-  type Team,
-  type User,
-  SingleTeamTabs,
-} from '@/types'
+import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 
 // Modal control states
 const showDeleteMemberConfirmModal = ref(false)

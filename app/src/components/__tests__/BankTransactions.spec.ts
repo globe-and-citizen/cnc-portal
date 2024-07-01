@@ -23,11 +23,11 @@ describe('BankTransactions', () => {
     it('renders correctly', () => {
       const wrapper = mount(BankTransactions, {
         global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })],
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
         }
       })
       expect(wrapper.find('div#bank-transactions').exists()).toBe(true)
-      
+
       expect(wrapper.findComponent(AccordionComponent).exists()).toBe(true)
       expect(wrapper.findComponent(DepositHistory).exists()).toBe(true)
       expect(wrapper.findComponent(TransferHistory).exists()).toBe(true)
