@@ -5,20 +5,20 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe('Voting Contract', () => {
   let votingProxy: Voting
-  const memberInputs = [
-    {
-      memberAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
-      name: 'Member 1',
-      teamId: 1
-    },
-    {
-      memberAddress: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928',
-      name: 'Member 2',
-      teamId: 1
-    }
-  ]
 
   async function deployContracts(owner: SignerWithAddress) {
+    const memberInputs = [
+      {
+        memberAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
+        name: 'Member 1',
+        teamId: 1
+      },
+      {
+        memberAddress: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928',
+        name: 'Member 2',
+        teamId: 1
+      }
+    ]
     const VotingImplementation = await ethers.getContractFactory('Voting')
     votingProxy = (await upgrades.deployProxy(VotingImplementation, [memberInputs], {
       initializer: 'initialize',
