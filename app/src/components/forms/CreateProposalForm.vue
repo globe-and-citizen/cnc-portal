@@ -21,7 +21,7 @@
 
       <div class="flex justify-center">
         <button class="btn btn-primary btn-md justify-center" @click="handleSubmit">
-          Create Ballot
+          Create Proposal
         </button>
       </div>
     </div>

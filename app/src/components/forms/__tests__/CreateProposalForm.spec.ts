@@ -10,7 +10,7 @@ describe('CreateProposalForm.vue', () => {
       expect(wrapper.find('select').exists()).toBe(true)
       expect(wrapper.findAll('input').length).toBe(4) // 4 input fields by default: title, description, start time and end time
       expect(wrapper.find('textarea').exists()).toBe(true)
-      expect(wrapper.find('button').text()).toBe('Create Ballot')
+      expect(wrapper.find('button').text()).toBe('Create Proposal')
     })
 
     it('shows candidate input when proposal type is election', async () => {

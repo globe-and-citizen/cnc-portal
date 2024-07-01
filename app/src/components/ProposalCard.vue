@@ -51,7 +51,7 @@
         </div>
       </div>
     </div>
-    <div class="flex justify-center gap-4 mb-2">
+    <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
       <button class="btn btn-primary btn-sm">Vote</button>
       <button class="btn btn-secondary btn-sm">View</button>
     </div>
@@ -61,5 +61,6 @@
 import type { Proposal } from '@/types/index'
 defineProps<{
   proposal: Partial<Proposal>
+  isDone?: boolean
 }>()
 </script>
