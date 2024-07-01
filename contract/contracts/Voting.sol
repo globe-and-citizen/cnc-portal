@@ -45,9 +45,16 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         }
     }
 
-    function addProposal(Types.Proposal memory _proposal) public onlyOwner whenNotPaused {
-        proposals[proposalCount] = _proposal;
-        emit ProposalAdded(proposalCount,_proposal.title, _proposal.description);
+   function addProposal(Types.Proposal memory _proposal) public onlyOwner whenNotPaused {
+        Types.Proposal storage newProposal = proposals[proposalCount];
+        newProposal.description = _proposal.description;
+        newProposal.votes = _proposal.votes;
+
+        for (uint256 i = 0; i < _proposal.candidates.length; i++) {
+            newProposal.candidates.push(_proposal.candidates[i]);
+        }
+
+        emit ProposalAdded(proposalCount, _proposal.title,_proposal.description);
         proposalCount++;
     }
 
@@ -82,6 +89,7 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         require(members[msg.sender].isEligible, "You are not eligible to vote");
         require(!members[msg.sender].isVoted, "You have already voted");
         require(proposalId < proposalCount, "Proposal does not exist");
+        require(candidateId < proposals[proposalId].candidates.length, "Candidate does not exist");
 
         proposals[proposalId].candidates[candidateId].votes++;
         members[msg.sender].isVoted = true;
