@@ -81,23 +81,6 @@ describe('Voting Contract', () => {
       })
       describe('Voting actions', () => {
         it('should vote on a proposal successfully', async () => {
-          const ownerAddress = await owner.getAddress()
-          console.log('Owner Address:', ownerAddress)
-
-          const proposal = {
-            draftedBy: ownerAddress,
-            title: 'Proposal 1',
-            description: 'Description of Proposal 1',
-            isElection: false,
-            votes: {
-              yes: 0,
-              no: 0,
-              abstain: 0
-            },
-            candidates: []
-          }
-
-          await votingProxy.addProposal(proposal)
           const votingProxyAsMember1 = votingProxy.connect(member1)
 
           await expect(await votingProxyAsMember1.voteProposal(0, 0))
