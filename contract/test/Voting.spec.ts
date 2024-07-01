@@ -89,13 +89,13 @@ describe('Voting Contract', () => {
       it('should vote on a proposal successfully', async () => {
         const votingProxyAsMember1 = votingProxy.connect(member1)
 
-        await expect(await votingProxyAsMember1.voteProposal(0, 0))
-          .to.emit(votingProxy, 'Voted')
+        await expect(await votingProxyAsMember1.voteDirective(0, 0))
+          .to.emit(votingProxy, 'DirectiveVoted')
           .withArgs(await member1.getAddress(), 0, 0)
       })
       it('should not allow a member to vote twice on a proposal', async () => {
         const votingProxyAsMember1 = votingProxy.connect(member1)
-        await expect(votingProxyAsMember1.voteProposal(0, 0)).to.be.revertedWith(
+        await expect(votingProxyAsMember1.voteDirective(0, 0)).to.be.revertedWith(
           'You have already voted'
         )
       })

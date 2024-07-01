@@ -12,7 +12,7 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
     uint256 public proposalCount;
 
     event ProposalAdded(uint256 indexed proposalId, string title, string description);
-    event Voted(address indexed voter, uint256 indexed proposalId, uint256 vote);
+    event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
     event ElectionVoted(address indexed voter, uint256 indexed proposalId, address indexed candidateAddress);
     event ProposalConcluded(uint256 indexed proposalId, Types.Proposal proposal);
 
@@ -34,7 +34,7 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         return _proposals;
     }
 
-    function voteProposal(uint256 proposalId, uint256 vote) public whenNotPaused {
+    function voteDirective(uint256 proposalId, uint256 vote) public whenNotPaused {
         require(proposalId < proposalCount, "Proposal does not exist");
         require(proposals[proposalId].isActive, "Proposal is not active");
 
@@ -47,7 +47,7 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         recordVote(proposal, vote);
 
         voter.isVoted = true;
-        emit Voted(msg.sender, proposalId, vote);
+        emit DirectiveVoted(msg.sender, proposalId, vote);
     }
 
     function voteElection(uint256 proposalId, address candidateAddress) public whenNotPaused {
