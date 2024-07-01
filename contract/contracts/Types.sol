@@ -15,17 +15,19 @@ library Types {
     }
     struct Member{
         string name;
-        uint256 teamId;
         bool isEligible;
         bool isVoted;
+        address memberAddress;
     }   
     struct Proposal{
         string title;
         string description;
         string draftedBy;
         bool isElection;
+        bool isActive;
         DirectiveVotes votes;
         Candidate[] candidates;
+        Member[] voters;
         }
     struct MemberInput {
         address memberAddress;
