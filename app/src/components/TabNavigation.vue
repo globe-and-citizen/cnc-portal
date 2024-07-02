@@ -6,7 +6,7 @@
         role="tab"
         class="tab"
         :aria-label="tab"
-        :checked="index === activeTab"
+        :checked="activeTab === index"
         @change="activeTab = index"
       />
       <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
@@ -17,11 +17,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-
-const props = defineProps<{
+defineProps<{
   tabs: Array<string>
-  initialActiveTab?: number
 }>()
-const activeTab = ref(props.initialActiveTab ?? 0)
+const activeTab = defineModel({ default: 0 })
 </script>
