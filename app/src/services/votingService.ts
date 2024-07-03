@@ -17,7 +17,7 @@ export interface IVotingService {
   concludeProposal(votingAddress: string, proposalId: number): Promise<any>
   voteDirective(votingAddress: string, proposalId: number, directive: number): Promise<any>
   voteElection(votingAddress: string, electionId: number, candidateAddress: string): Promise<any>
-  getEvents(bankAddress: string): Promise<EventLog[] | Log[]>
+  getEvents(votingAddress: string): Promise<EventLog[] | Log[]>
 }
 
 export class VotingService implements IVotingService {
