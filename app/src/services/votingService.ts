@@ -24,10 +24,10 @@ export class VotingService implements IVotingService {
     this.web3Library = web3Library
   }
 
-  async createVotingContract(teamId: string): Promise<any> {
+  async createVotingContract(): Promise<any> {
     const votingAddress = await this.deployVotingContract()
-    const response = await useCustomFetch<string>(`teams/${teamId}`).put({ votingAddress }).json()
-    return response.data.value.votingAddress
+    // const response = await useCustomFetch<string>(`teams/${teamId}`).put({ votingAddress }).json()
+    return votingAddress
   }
   async addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any> {
     const votingContract = await this.getVotingContract(votingAddress)

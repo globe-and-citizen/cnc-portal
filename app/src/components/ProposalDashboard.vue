@@ -2,9 +2,14 @@
   <div class="flex flex-col">
     <div class="flex justify-between">
       <h2>Proposals</h2>
-      <button class="btn btn-primary btn-md" @click="showModal = !showModal">
-        Create Proposal
-      </button>
+      <div>
+        <button class="btn btn-primary btn-md" @click="showModal = !showModal">
+          Create Proposal
+        </button>
+        <button class="btn btn-secondary btn-md" @click="deployVotingContract">
+          Deploy contract
+        </button>
+      </div>
     </div>
     <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
       <template #tab-0>
@@ -39,6 +44,16 @@ import ModalComponent from './ModalComponent.vue'
 import CreateProposalForm from './forms/CreateProposalForm.vue'
 import TabNavigation from './TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
+import { useCreateVotingContract } from '@/composables/voting'
+
+const {
+  execute: deployVotingContract,
+  isLoading: loading,
+  isSuccess,
+  error,
+  contractAddress
+} = useCreateVotingContract()
+
 const showModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
