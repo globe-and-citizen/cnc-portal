@@ -6,8 +6,8 @@
         role="tab"
         :class="{ 'tab-active': activeTab === index }"
         @click="activeTab = index"
-      >{{ tab }}
-    </a>
+        >{{ tab }}
+      </a>
       <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
         <slot :name="`tab-${index}`"> </slot>
       </div>
