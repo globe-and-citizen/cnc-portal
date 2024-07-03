@@ -24,7 +24,7 @@ export class VotingService implements IVotingService {
     this.web3Library = web3Library
   }
 
-  async createVotingContract(): Promise<any> {
+  async createVotingContract(teamId: string): Promise<any> {
     const votingAddress = await this.deployVotingContract()
     // const response = await useCustomFetch<string>(`teams/${teamId}`).put({ votingAddress }).json()
     return votingAddress
@@ -68,15 +68,20 @@ export class VotingService implements IVotingService {
     return tx
   }
   private async deployVotingContract(): Promise<any> {
-    const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
-    const proxyDeployment = await proxyFactory.deploy(
-      VOTING_IMPL_ADDRESS,
-      await this.web3Library.getAddress(),
-      '0x'
-    )
-    const proxy = await proxyDeployment.waitForDeployment()
-    await proxyDeployment.waitForDeployment()
-    return await proxy.getAddress()
+    try {
+      const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
+
+      const proxyDeployment = await proxyFactory.deploy(
+        VOTING_IMPL_ADDRESS,
+        await this.web3Library.getAddress(),
+        '0x'
+      )
+      const proxy = await proxyDeployment.waitForDeployment()
+
+      return await proxy.getAddress()
+    } catch (e) {
+      console.log(e)
+    }
   }
   private async getVotingContract(votingContractAddress: string): Promise<Contract> {
     const votingContract = await this.web3Library.getContract(votingContractAddress, VOTING_ABI)

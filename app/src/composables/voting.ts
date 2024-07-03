@@ -9,11 +9,10 @@ export function useCreateVotingContract() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function deploy() {
+  async function deploy(teamId: string) {
     try {
       loading.value = true
-      console.log('createVotingContract')
-      contractAddress.value = await votingService.createVotingContract()
+      contractAddress.value = await votingService.createVotingContract(teamId)
       console.log('contractAddress', contractAddress.value)
       isSuccess.value = true
     } catch (err) {
