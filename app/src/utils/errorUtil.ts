@@ -21,12 +21,12 @@ export const parseError = (error: any) => {
 
   if (error instanceof Error) {
     if ('info' in error && isMetaMaskErrorInfo(error.info)) {
-      message = parseErrorInfo(error.info as MetaMaskErrorInfo)
+      message = `Metamask Error: ${parseErrorInfo(error.info as MetaMaskErrorInfo)}`
     } else {
       message = error.message
     }
   } else {
-    message = 'Looks like something went wrong. Try again.'
+    message = 'App Error: Looks like something went wrong.'
   }
 
   return message
@@ -70,4 +70,15 @@ const parseErrorInfo = (info: MetaMaskErrorInfo) => {
   const A: string[] = info.error.message.split(':')
 
   return A[1].trim()
+}
+
+export function getFetchErrorMessage(status: number | string) {
+  switch (status) {
+    case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON` || `Unauthorized`:
+      return `You can't make this request`
+    case `Internal Server Error`:
+      return 'An error occurred, try again later'
+    default:
+      return 'A network error occurred'
+  }
 }
