@@ -60,6 +60,7 @@ import IconGoogle from '@/components/icons/IconGoogle.vue'
 import IconFacebook from '@/components/icons/IconFacebook.vue'
 import IconTwitter from '@/components/icons/IconTwitter.vue'
 import { useSiwe } from '@/composables/useSiwe'
+
 const { isProcessing, siwe } = useSiwe()
 </script>
 
