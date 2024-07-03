@@ -35,7 +35,6 @@ export function useAddProposal() {
   async function addProposal(votingAddress: string, proposal: Partial<Proposal>) {
     try {
       loading.value = true
-      console.log('proposal', proposal)
       proposal.votes = {
         yes: 0,
         no: 0,
