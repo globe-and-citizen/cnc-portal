@@ -4,7 +4,7 @@ export interface Proposal {
   description: string
   teamId: string
   draftedBy: string
-  status: boolean
+  isActive: boolean
   isElection: boolean
   voters: {
     address: string
