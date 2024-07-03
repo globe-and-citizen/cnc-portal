@@ -27,7 +27,7 @@
     </TabNavigation>
 
     <ModalComponent v-model="showModal">
-      <CreateProposalForm />
+      <CreateProposalForm v-model="newProposalInput" @createProposal="createProposal" />
     </ModalComponent>
   </div>
 </template>
@@ -41,6 +41,16 @@ import TabNavigation from './TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 const showModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
+
+const newProposalInput = ref({
+  title: '',
+  description: '',
+  candidates: [],
+  isElection: false
+})
+const createProposal = () => {
+  console.log(newProposalInput.value)
+}
 const oldProposals = ref<Partial<Proposal>[]>([
   {
     title: 'Remote work: Yay or Nay?',
@@ -51,7 +61,24 @@ const oldProposals = ref<Partial<Proposal>[]>([
       no: 2,
       abstain: 1
     },
-    isElection: false
+    isElection: false,
+    voters: [
+      {
+        name: 'Dasarath',
+        votes: 2,
+        address: '0x1234567890'
+      },
+      {
+        name: 'Ravioli',
+        votes: 2,
+        address: '0x111234567890'
+      },
+      {
+        name: 'Herm',
+        votes: 2,
+        address: '0x123114567890'
+      }
+    ]
   }
 ])
 const activeProposals = ref<Partial<Proposal>[]>([
@@ -60,7 +87,7 @@ const activeProposals = ref<Partial<Proposal>[]>([
     description:
       'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
     draftedBy: 'Ravioli',
-    votesForUsers: [
+    candidates: [
       {
         name: 'Dasarath',
         votes: 2,

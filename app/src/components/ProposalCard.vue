@@ -38,14 +38,14 @@
       </div>
       <div class="flex flex-row items-center justify-center gap-5 w-1/2" v-else>
         <div class="flex flex-col items-center justify-center gap-2 text-sm">
-          <span v-for="user in proposal.votesForUsers" :key="user.address">{{ user.name }}</span>
+          <span v-for="user in proposal.candidates" :key="user.address">{{ user.name }}</span>
         </div>
         <div class="flex flex-col items-center justify-center gap-5">
           <progress
             class="progress progress-success w-56"
             value="20"
             max="100"
-            v-for="user in proposal.votesForUsers"
+            v-for="user in proposal.candidates"
             :key="user.address"
           ></progress>
         </div>

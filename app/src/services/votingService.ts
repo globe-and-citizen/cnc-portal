@@ -5,12 +5,12 @@ import VOTING_ABI from '@/artifacts/abi/voting.json'
 import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { VOTING_IMPL_ADDRESS } from '@/constant'
+import type { Proposal } from '@/types'
 
 export interface IVotingService {
   web3Library: IWeb3Library
   createVotingContract(teamId: string): Promise<string>
-  vote(votingAddress: string, vote: string): Promise<any>
-  addProposal(votingAddress: string, proposal: string): Promise<any>
+  addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any>
   getProposals(votingAddress: string): Promise<any>
   concludeProposal(votingAddress: string, proposalId: number): Promise<any>
   voteDirective(votingAddress: string, proposalId: number, directive: number): Promise<any>
@@ -29,16 +29,44 @@ export class VotingService implements IVotingService {
     const response = await useCustomFetch<string>(`teams/${teamId}`).put({ votingAddress }).json()
     return response.data.value.votingAddress
   }
-  async vote(votingAddress: string, vote: string): Promise<any> {}
-  async addProposal(votingAddress: string, proposal: string): Promise<any> {}
-  async getProposals(votingAddress: string): Promise<any> {}
-  async concludeProposal(votingAddress: string, proposalId: number): Promise<any> {}
-  async voteDirective(votingAddress: string, proposalId: number, directive: number): Promise<any> {}
+  async addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any> {
+    const votingContract = await this.getVotingContract(votingAddress)
+    const tx = await votingContract.addProposal(proposal)
+    await tx.wait()
+
+    return tx
+  }
+  async getProposals(votingAddress: string): Promise<any> {
+    const votingContract = await this.getVotingContract(votingAddress)
+    const proposals = await votingContract.getProposals()
+
+    return proposals
+  }
+  async concludeProposal(votingAddress: string, proposalId: number): Promise<any> {
+    const votingContract = await this.getVotingContract(votingAddress)
+    const tx = await votingContract.concludeProposal(proposalId)
+    await tx.wait()
+
+    return tx
+  }
+  async voteDirective(votingAddress: string, proposalId: number, directive: number): Promise<any> {
+    const votingContract = await this.getVotingContract(votingAddress)
+    const tx = await votingContract.voteDirective(proposalId, directive)
+    await tx.wait()
+
+    return tx
+  }
   async voteElection(
     votingAddress: string,
     electionId: number,
     candidateAddress: string
-  ): Promise<any> {}
+  ): Promise<any> {
+    const votingContract = await this.getVotingContract(votingAddress)
+    const tx = await votingContract.voteElection(electionId, candidateAddress)
+    await tx.wait()
+
+    return tx
+  }
   private async deployVotingContract(): Promise<any> {
     const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
     const proxyDeployment = await proxyFactory.deploy(

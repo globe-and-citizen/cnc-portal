@@ -1,5 +1,3 @@
-import type { User } from './user'
-
 export interface Proposal {
   id: string
   title: string
@@ -8,13 +6,18 @@ export interface Proposal {
   draftedBy: string
   status: boolean
   isElection: boolean
+  voters: {
+    address: string
+    name: string
+    votes: number
+  }[]
 
   votes?: {
     yes: number
     no: number
     abstain: number
   }
-  votesForUsers?: {
+  candidates?: {
     address: string
     name: string
     votes: number
