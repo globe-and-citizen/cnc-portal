@@ -43,6 +43,12 @@
           Transactions
         </RouterLink>
       </li>
+      <li>
+        <RouterLink to="/roles">
+          <IconNote />
+          Roles
+        </RouterLink>
+      </li>
     </ul>
   </div>
 </template>
