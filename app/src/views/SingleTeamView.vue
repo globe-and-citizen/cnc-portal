@@ -90,7 +90,7 @@
           <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
-          <ProposalDashBoard />
+          <ProposalDashBoard :team="team" @getTeam="getTeamAPI" />
         </template>
       </TabNavigation>
       <ModalComponent v-model="showDeleteMemberConfirmModal">

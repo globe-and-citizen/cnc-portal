@@ -1,13 +1,29 @@
 <template>
-  <div class="flex flex-col">
+  <div class="flex justify-center" v-if="!team.votingAddress">
+    <button
+      class="btn btn-primary btn-md"
+      @click="execute(String($route.params.id))"
+      v-if="!loading"
+    >
+      Deploy contract
+    </button>
+    <div v-else>
+      <LoadingButton color="primary min-w-28" />
+    </div>
+  </div>
+  <div class="flex flex-col" v-else>
     <div class="flex justify-between">
-      <h2>Proposals</h2>
+      <div>
+        <h2>Proposals</h2>
+        <span
+          class="badge badge-sm"
+          :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
+          >{{ team.bankAddress }}</span
+        >
+      </div>
       <div>
         <button class="btn btn-primary btn-md" @click="showModal = !showModal">
           Create Proposal
-        </button>
-        <button class="btn btn-secondary btn-md" @click="execute(String($route.params.id))">
-          Deploy contract
         </button>
       </div>
     </div>
@@ -39,17 +55,36 @@
 <script setup lang="ts">
 import ProposalCard from '@/components/ProposalCard.vue'
 import type { Proposal } from '@/types/index'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import ModalComponent from './ModalComponent.vue'
 import CreateProposalForm from './forms/CreateProposalForm.vue'
 import TabNavigation from './TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 import { useCreateVotingContract } from '@/composables/voting'
+import type { Team } from '@/types/index'
+import LoadingButton from './LoadingButton.vue'
+import { useUserDataStore } from '@/stores/user'
+import { useToastStore } from '@/stores/useToastStore'
 
+const emits = defineEmits(['getTeam'])
+const { addSuccessToast, addErrorToast } = useToastStore()
 const { execute, isLoading: loading, isSuccess, error, contractAddress } = useCreateVotingContract()
+watch(isSuccess, () => {
+  if (isSuccess.value) {
+    addSuccessToast('Voting contract deployed successfully')
+    emits('getTeam')
+  }
+})
 
+watch(error, () => {
+  if (error.value) {
+    addErrorToast(error.value.reason ? error.value.reason : 'Failed to deploy contract')
+  }
+})
 const showModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
+
+defineProps<{ team: Partial<Team> }>()
 
 const newProposalInput = ref({
   title: '',
