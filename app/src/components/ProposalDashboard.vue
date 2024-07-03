@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-center" v-if="!team.votingAddress">
+  <div class="flex justify-center" v-if="!team.votingAddress && !loadingGetProposals">
     <button
       class="btn btn-primary btn-md"
       @click="executeCreateVotingContract(String($route.params.id))"
@@ -11,7 +11,7 @@
       <LoadingButton color="primary min-w-28" />
     </div>
   </div>
-  <div class="flex flex-col" v-else>
+  <div class="flex flex-col" v-if="team.votingAddress && !loadingGetProposals">
     <div class="flex justify-between">
       <div>
         <h2>Proposals</h2>
@@ -55,16 +55,19 @@
       />
     </ModalComponent>
   </div>
+  <div class="flex justify-center items-center" v-if="loadingGetProposals">
+    <span class="loading loading-spinner loading-lg"></span>
+  </div>
 </template>
 <script setup lang="ts">
 import ProposalCard from '@/components/ProposalCard.vue'
 import type { Proposal } from '@/types/index'
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import ModalComponent from './ModalComponent.vue'
 import CreateProposalForm from './forms/CreateProposalForm.vue'
 import TabNavigation from './TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import { useCreateVotingContract, useAddProposal } from '@/composables/voting'
+import { useCreateVotingContract, useAddProposal, useGetProposals } from '@/composables/voting'
 import type { Team } from '@/types/index'
 import LoadingButton from './LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
@@ -85,10 +88,30 @@ const {
   isSuccess: isSuccessAddProposal,
   error: errorAddProposal
 } = useAddProposal()
+const {
+  execute: executeGetProposals,
+  isLoading: loadingGetProposals,
+  isSuccess: isSuccessGetProposals,
+  error: errorGetProposals,
+  data: proposals
+} = useGetProposals()
+watch(isSuccessGetProposals, () => {
+  if (isSuccessGetProposals.value) {
+    console.log(proposals.value)
+  }
+})
+watch(errorGetProposals, () => {
+  if (errorGetProposals.value) {
+    addErrorToast(
+      errorGetProposals.value.reason ? errorGetProposals.value.reason : 'Failed to get proposals'
+    )
+  }
+})
 watch(isSuccessAddProposal, () => {
   if (isSuccessAddProposal.value) {
     console.log(isSuccessAddProposal.value)
     addSuccessToast('Proposal created successfully')
+    emits('getTeam')
   }
 })
 watch(errorAddProposal, () => {
@@ -200,4 +223,11 @@ const activeProposals = ref<Partial<Proposal>[]>([
     isElection: false
   }
 ])
+
+onMounted(() => {
+  if (props.team.votingAddress) {
+    console.log(props.team.votingAddress)
+    executeGetProposals(props.team.votingAddress)
+  }
+})
 </script>

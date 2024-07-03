@@ -62,11 +62,13 @@ export function useGetProposals() {
   const proposals = ref<any[]>([])
   const loading = ref(false)
   const error = ref<any>(null)
+  const isSuccess = ref(false)
 
   async function getProposals(votingAddress: string) {
     try {
       loading.value = true
       proposals.value = await votingService.getProposals(votingAddress)
+      isSuccess.value = true
     } catch (err) {
       error.value = err
     } finally {
@@ -74,7 +76,7 @@ export function useGetProposals() {
     }
   }
 
-  return { execute: getProposals, isLoading: loading, error, data: proposals }
+  return { execute: getProposals, isLoading: loading, error, data: proposals, isSuccess }
 }
 export function useConcludeProposal() {
   const transaction = ref<any>(null)
