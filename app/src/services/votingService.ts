@@ -33,7 +33,7 @@ export class VotingService implements IVotingService {
     const votingContract = await this.getVotingContract(votingAddress)
     const tx = await votingContract.addProposal(proposal)
     await tx.wait()
-
+    console.log('tx', tx)
     return tx
   }
   async getProposals(votingAddress: string): Promise<any> {

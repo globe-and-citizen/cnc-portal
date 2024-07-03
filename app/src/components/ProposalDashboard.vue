@@ -2,7 +2,7 @@
   <div class="flex justify-center" v-if="!team.votingAddress">
     <button
       class="btn btn-primary btn-md"
-      @click="execute(String($route.params.id))"
+      @click="executeCreateVotingContract(String($route.params.id))"
       v-if="!loading"
     >
       Deploy contract
@@ -48,7 +48,11 @@
     </TabNavigation>
 
     <ModalComponent v-model="showModal">
-      <CreateProposalForm v-model="newProposalInput" @createProposal="createProposal" />
+      <CreateProposalForm
+        v-model="newProposalInput"
+        @createProposal="createProposal"
+        :isLoading="loadingAddProposal"
+      />
     </ModalComponent>
   </div>
 </template>
@@ -60,7 +64,7 @@ import ModalComponent from './ModalComponent.vue'
 import CreateProposalForm from './forms/CreateProposalForm.vue'
 import TabNavigation from './TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import { useCreateVotingContract } from '@/composables/voting'
+import { useCreateVotingContract, useAddProposal } from '@/composables/voting'
 import type { Team } from '@/types/index'
 import LoadingButton from './LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
@@ -68,7 +72,32 @@ import { useToastStore } from '@/stores/useToastStore'
 
 const emits = defineEmits(['getTeam'])
 const { addSuccessToast, addErrorToast } = useToastStore()
-const { execute, isLoading: loading, isSuccess, error, contractAddress } = useCreateVotingContract()
+const {
+  execute: executeCreateVotingContract,
+  isLoading: loading,
+  isSuccess,
+  error,
+  contractAddress
+} = useCreateVotingContract()
+const {
+  execute: executeAddProposal,
+  isLoading: loadingAddProposal,
+  isSuccess: isSuccessAddProposal,
+  error: errorAddProposal
+} = useAddProposal()
+watch(isSuccessAddProposal, () => {
+  if (isSuccessAddProposal.value) {
+    console.log(isSuccessAddProposal.value)
+    addSuccessToast('Proposal created successfully')
+  }
+})
+watch(errorAddProposal, () => {
+  if (errorAddProposal.value) {
+    addErrorToast(
+      errorAddProposal.value.reason ? errorAddProposal.value.reason : 'Failed to create proposal'
+    )
+  }
+})
 watch(isSuccess, () => {
   if (isSuccess.value) {
     addSuccessToast('Voting contract deployed successfully')
@@ -84,16 +113,28 @@ watch(error, () => {
 const showModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
-defineProps<{ team: Partial<Team> }>()
-
-const newProposalInput = ref({
+const props = defineProps<{ team: Partial<Team> }>()
+const newProposalInput = ref<Partial<Proposal>>({
   title: '',
   description: '',
-  candidates: [],
-  isElection: false
+  draftedBy: '',
+  isElection: false,
+  voters: [],
+  candidates: []
 })
+
 const createProposal = () => {
-  console.log(newProposalInput.value)
+  newProposalInput.value.draftedBy = useUserDataStore().name
+  newProposalInput.value.voters = props.team.members?.map((member) => {
+    return {
+      name: member.name,
+      memberAddress: member.address
+    }
+  })
+
+  if (props.team.votingAddress) {
+    executeAddProposal(props.team.votingAddress, newProposalInput.value)
+  }
 }
 const oldProposals = ref<Partial<Proposal>[]>([
   {
@@ -109,18 +150,15 @@ const oldProposals = ref<Partial<Proposal>[]>([
     voters: [
       {
         name: 'Dasarath',
-        votes: 2,
-        address: '0x1234567890'
+        memberAddress: '0x1234567890'
       },
       {
         name: 'Ravioli',
-        votes: 2,
-        address: '0x111234567890'
+        memberAddress: '0x111234567890'
       },
       {
         name: 'Herm',
-        votes: 2,
-        address: '0x123114567890'
+        memberAddress: '0x123114567890'
       }
     ]
   }

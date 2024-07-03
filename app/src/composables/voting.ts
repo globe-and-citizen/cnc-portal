@@ -1,4 +1,5 @@
 import { VotingService } from '@/services/votingService'
+import type { Proposal } from '@/types'
 import { ref } from 'vue'
 
 const votingService = new VotingService()
@@ -31,9 +32,21 @@ export function useAddProposal() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function addProposal(votingAddress: string, proposal: any) {
+  async function addProposal(votingAddress: string, proposal: Partial<Proposal>) {
     try {
       loading.value = true
+      console.log('proposal', proposal)
+      proposal.votes = {
+        yes: 0,
+        no: 0,
+        abstain: 0
+      }
+      proposal.isActive = true
+      proposal.voters?.map((voter) => {
+        voter.isVoted = false
+        voter.isEligible = true
+      })
+
       transaction.value = await votingService.addProposal(votingAddress, proposal)
       isSuccess.value = true
     } catch (err) {

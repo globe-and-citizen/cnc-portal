@@ -28,7 +28,13 @@
       />
 
       <div class="flex justify-center">
-        <button class="btn btn-primary btn-md justify-center" @click="emits('createProposal')">
+        <LoadingButton v-if="isLoading" color="primary min-w-28" />
+
+        <button
+          v-else
+          class="btn btn-primary btn-md justify-center"
+          @click="emits('createProposal')"
+        >
           Create Proposal
         </button>
       </div>
@@ -37,7 +43,10 @@
 </template>
 
 <script setup lang="ts">
+import LoadingButton from '../LoadingButton.vue'
+
 const emits = defineEmits(['createProposal'])
+defineProps(['isLoading'])
 const newProposalInput = defineModel({
   default: {
     title: '',
