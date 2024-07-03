@@ -6,7 +6,9 @@ import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { VOTING_IMPL_ADDRESS } from '@/constant'
 import type { Proposal } from '@/types'
-
+import { SmartContract } from './contractService'
+import type { EventLog } from 'ethers'
+import type { Log } from 'ethers'
 export interface IVotingService {
   web3Library: IWeb3Library
   createVotingContract(teamId: string): Promise<string>
@@ -15,6 +17,7 @@ export interface IVotingService {
   concludeProposal(votingAddress: string, proposalId: number): Promise<any>
   voteDirective(votingAddress: string, proposalId: number, directive: number): Promise<any>
   voteElection(votingAddress: string, electionId: number, candidateAddress: string): Promise<any>
+  getEvents(bankAddress: string): Promise<EventLog[] | Log[]>
 }
 
 export class VotingService implements IVotingService {
@@ -30,10 +33,15 @@ export class VotingService implements IVotingService {
     return response.data.value.votingAddress
   }
   async addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any> {
-    const votingContract = await this.getVotingContract(votingAddress)
-    const tx = await votingContract.addProposal(proposal)
-    await tx.wait()
-    return tx
+    try {
+      const votingContract = await this.getVotingContract(votingAddress)
+      const tx = await votingContract.addProposal(proposal)
+      console.log(await this.getEvents(votingAddress))
+      await tx.wait()
+      return tx
+    } catch (e) {
+      console.log(e)
+    }
   }
   async getProposals(votingAddress: string): Promise<any> {
     const votingContract = await this.getVotingContract(votingAddress)
@@ -94,5 +102,14 @@ export class VotingService implements IVotingService {
     const votingContract = await this.web3Library.getContract(votingContractAddress, VOTING_ABI)
 
     return votingContract
+  }
+
+  async getEvents(votingAddress: string): Promise<EventLog[] | Log[]> {
+    const contractService = this.getContractService(votingAddress)
+
+    return await contractService.getEvents('ProposalAdded')
+  }
+  private getContractService(votingAddress: string): SmartContract {
+    return new SmartContract(votingAddress, VOTING_ABI)
   }
 }
