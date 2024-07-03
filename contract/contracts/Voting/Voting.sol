@@ -26,7 +26,7 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         proposalCount++;
     }
 
-    function getProposals() public returns (Types.Proposal[] memory) {
+    function getProposals() view public returns (Types.Proposal[] memory) {
         require(proposalCount > 0, "No proposals found");
         Types.Proposal[] memory _proposals = new Types.Proposal[](proposalCount);
         for (uint256 i = 0; i < proposalCount; i++) {
