@@ -14,7 +14,7 @@ describe('ProposalCard.vue', () => {
       no: 5,
       abstain: 3
     },
-    votersForUsers: []
+    candidates: []
   }
 
   const proposalElection = {
@@ -24,7 +24,7 @@ describe('ProposalCard.vue', () => {
       'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
 
     isElection: true,
-    votesForUsers: [
+    candidates: [
       { name: 'Ravioli', address: '0x1', votes: 0 },
       { name: 'Herm', address: '0x2', votes: 1 }
     ]
@@ -56,8 +56,8 @@ describe('ProposalCard.vue', () => {
           ? proposalDirective.description.substring(0, 120) + '...'
           : proposalDirective.description
       expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
-      expect(wrapper.findAll('progress').length).toBe(proposalElection.votesForUsers.length) // 1 progress bar per user
-      proposalElection.votesForUsers.forEach((user) => {
+      expect(wrapper.findAll('progress').length).toBe(proposalElection.candidates.length) // 1 progress bar per user
+      proposalElection.candidates.forEach((user) => {
         expect(wrapper.text()).toContain(user.name)
       })
       expect(wrapper.classes()).toContain('bg-green-100') // green background for election

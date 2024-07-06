@@ -39,9 +39,8 @@ describe('Voting Contract', () => {
       it('should initialize with owner as the contract owner', async () => {
         expect(await votingProxy.owner()).to.equal(await owner.getAddress())
       })
-      it('should have zero proposals initially', async () => {
-        const proposals = await votingProxy.getProposals()
-        expect(proposals).to.have.lengthOf(0)
+      it('should revert with no proposals found', async () => {
+        await expect(votingProxy.getProposals()).to.be.revertedWith('No proposals found')
       })
     })
     describe('CRUD Members and Proposals', async () => {
