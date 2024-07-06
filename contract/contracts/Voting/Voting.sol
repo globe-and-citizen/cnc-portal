@@ -1,45 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import "./Types.sol";
 
-contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
-
-    mapping(uint256 => Types.Proposal) public proposals;
+contract Voting {
+    mapping(uint256 => Types.Proposal[]) public proposalsByTeam; // team id => proposal array
     uint256 public proposalCount;
 
     event ProposalAdded(uint256 indexed proposalId, string title, string description);
     event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
     event ElectionVoted(address indexed voter, uint256 indexed proposalId, address indexed candidateAddress);
-    event ProposalConcluded(uint256 indexed proposalId, Types.Proposal proposal);
+    event ProposalConcluded(uint256 indexed proposalId, bool isActive);
 
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
-    }
+    function addProposal(Types.Proposal calldata _proposal) public {
+        require(_proposal.teamId > 0, "Invalid teamId");
+        require(bytes(_proposal.title).length > 0, "Title cannot be empty");
 
-   function addProposal(Types.Proposal calldata _proposal) public onlyOwner whenNotPaused {
-        proposals[proposalCount] = _proposal;
-        emit ProposalAdded(proposalCount, _proposal.title,_proposal.description);
+        proposalsByTeam[_proposal.teamId].push(_proposal);
+
+        emit ProposalAdded(proposalCount, _proposal.title, _proposal.description);
         proposalCount++;
     }
 
-    function getProposals() view public returns (Types.Proposal[] memory) {
-        require(proposalCount > 0, "No proposals found");
-        Types.Proposal[] memory _proposals = new Types.Proposal[](proposalCount);
-        for (uint256 i = 0; i < proposalCount; i++) {
-            _proposals[i] = proposals[i];
-        }
-        return _proposals;
+    function getProposals(uint256 teamId) view public returns (Types.Proposal[] memory) {
+        return proposalsByTeam[teamId];
     }
 
-    function voteDirective(uint256 proposalId, uint256 vote) public whenNotPaused {
+    function voteDirective(uint256 teamId,uint256 proposalId, uint256 vote) public {
         require(proposalId < proposalCount, "Proposal does not exist");
-        require(proposals[proposalId].isActive, "Proposal is not active");
 
-        Types.Proposal storage proposal = proposals[proposalId];
+        Types.Proposal storage proposal = proposalsByTeam[teamId][proposalId];
+        require(proposal.isActive, "Proposal is not active");
+
         Types.Member storage voter = findVoter(proposal, msg.sender);
 
         require(voter.isEligible, "You are not eligible to vote");
@@ -51,32 +43,40 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         emit DirectiveVoted(msg.sender, proposalId, vote);
     }
 
-    function voteElection(uint256 proposalId, address candidateAddress) public whenNotPaused {
+    function voteElection(uint256 teamId, uint256 proposalId, address candidateAddress) public {
         require(proposalId < proposalCount, "Proposal does not exist");
-        require(proposals[proposalId].isActive, "Proposal is not active");
-        
-        Types.Proposal storage proposal = proposals[proposalId];
+
+        Types.Proposal storage proposal = proposalsByTeam[teamId][proposalId]; 
+        require(proposal.isActive, "Proposal is not active");
+
         Types.Member storage voter = findVoter(proposal, msg.sender);
 
         require(voter.isEligible, "You are not eligible to vote");
         require(!voter.isVoted, "You have already voted");
 
-        for(uint256 i=0; i<proposal.candidates.length; i++){
-            if(proposal.candidates[i].candidateAddress == candidateAddress){
+        bool candidateExists = false;
+        for (uint256 i = 0; i < proposal.candidates.length; i++) {
+            if (proposal.candidates[i].candidateAddress == candidateAddress) {
                 proposal.candidates[i].votes++;
-                voter.isVoted = true;
-                emit ElectionVoted(msg.sender, proposalId, candidateAddress);
-                return;
+                candidateExists = true;
+                break;
             }
         }
-        revert("Candidate does not exist");
+
+        require(candidateExists, "Candidate does not exist");
+        voter.isVoted = true;
+        emit ElectionVoted(msg.sender, proposalId, candidateAddress);
     }
 
-    function concludeProposal(uint256 proposalId) public onlyOwner whenNotPaused {
+    function concludeProposal(uint256 teamId,uint256 proposalId) public {
         require(proposalId < proposalCount, "Proposal does not exist");
-        proposals[proposalId].isActive = !proposals[proposalId].isActive;
-        emit ProposalConcluded(proposalId, proposals[proposalId]);
+
+        Types.Proposal storage proposal = proposalsByTeam[teamId][proposalId]; // Assuming only one proposal per ID
+        proposal.isActive = !proposal.isActive;
+
+        emit ProposalConcluded(proposalId, proposal.isActive);
     }
+
     function findVoter(Types.Proposal storage proposal, address voterAddress) internal view returns (Types.Member storage) {
         for (uint256 i = 0; i < proposal.voters.length; i++) {
             if (proposal.voters[i].memberAddress == voterAddress) {
@@ -96,13 +96,5 @@ contract Voting is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgra
         } else {
             revert("Invalid vote");
         }
-    }
-
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        _unpause();
     }
 }
