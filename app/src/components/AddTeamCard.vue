@@ -4,7 +4,7 @@
       <span class="font-bold">Add Team</span>
 
       <div class="w-5 h-5 cursor-pointer" @click="emits('openAddTeamModal')">
-        <PlusCircleIcon class="size-6 text-red-700" />
+        <PlusCircleIcon class="size-6" />
       </div>
     </div>
   </div>

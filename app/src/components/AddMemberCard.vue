@@ -4,13 +4,13 @@
       class="w-4 h-4 cursor-pointer flex justify-center items-center"
       @click="emits('toggleAddMemberModal')"
     >
-      <IconPlus />
+      <PlusCircleIcon class="size-6" />
     </span>
     <span class="flex justify-center items-center">Add Member</span>
   </div>
 </template>
 <script setup lang="ts">
-import IconPlus from '@/components/icons/IconPlus.vue'
+import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 
 const emits = defineEmits(['toggleAddMemberModal'])
 </script>
