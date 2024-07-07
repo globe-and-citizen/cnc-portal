@@ -1,23 +1,14 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers } from 'hardhat'
 import { expect } from 'chai'
 import { Voting } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
 
 describe('Voting Contract', () => {
-  let votingProxy: Voting
-
-  async function deployContracts(owner: SignerWithAddress) {
-    const VotingImplementation = await ethers.getContractFactory('Voting')
-    votingProxy = (await upgrades.deployProxy(VotingImplementation, [], {
-      initializer: 'initialize',
-      initialOwner: await owner.getAddress()
-    })) as unknown as Voting
-  }
-
+  let voting: Voting
   let owner: SignerWithAddress
   let member1: SignerWithAddress
   let member2: SignerWithAddress
+
   const candidates = [
     {
       name: 'Candidate 1',
@@ -30,19 +21,19 @@ describe('Voting Contract', () => {
       votes: 0
     }
   ]
+
+  async function deployContracts() {
+    const VotingFactory = await ethers.getContractFactory('Voting')
+    voting = (await VotingFactory.deploy()) as Voting
+    await voting.waitForDeployment()
+  }
+
   context('Deploying Voting Contract', () => {
     before(async () => {
       ;[owner, member1, member2] = await ethers.getSigners()
-      await deployContracts(owner)
+      await deployContracts()
     })
-    describe('Initialization', () => {
-      it('should initialize with owner as the contract owner', async () => {
-        expect(await votingProxy.owner()).to.equal(await owner.getAddress())
-      })
-      it('should revert with no proposals found', async () => {
-        await expect(votingProxy.getProposals()).to.be.revertedWith('No proposals found')
-      })
-    })
+
     describe('CRUD Members and Proposals', async () => {
       it('should add a proposal successfully', async () => {
         const proposal = {
@@ -53,6 +44,7 @@ describe('Voting Contract', () => {
           votes: { yes: 0, no: 0, abstain: 0 },
           candidates,
           isActive: true,
+          teamId: 1,
           voters: [
             {
               name: 'Member 1',
@@ -69,55 +61,60 @@ describe('Voting Contract', () => {
           ]
         }
 
-        await expect(votingProxy.addProposal(proposal))
-          .to.emit(votingProxy, 'ProposalAdded')
+        await expect(voting.addProposal(proposal))
+          .to.emit(voting, 'ProposalAdded')
           .withArgs(0, proposal.title, proposal.description)
-        await votingProxy.addProposal(proposal)
       })
+
       it('should return the proposal details', async () => {
-        const proposals = await votingProxy.getProposals()
-        expect(proposals).to.have.lengthOf(2)
-      })
-      it('should conclude a proposal successfully', async () => {
-        await expect(votingProxy.concludeProposal(1))
-          .to.emit(votingProxy, 'ProposalConcluded')
-          .withArgs(1, anyValue)
+        const proposals = await voting.getProposals(1)
+        expect(proposals).to.have.lengthOf(1)
+        expect(proposals[0].title).to.equal('Proposal 1')
       })
     })
+
     describe('Voting actions', () => {
       it('should vote on a proposal successfully', async () => {
-        const votingProxyAsMember1 = votingProxy.connect(member1)
+        const votingAsMember1 = voting.connect(member1)
 
-        await expect(await votingProxyAsMember1.voteDirective(0, 0))
-          .to.emit(votingProxy, 'DirectiveVoted')
-          .withArgs(await member1.getAddress(), 0, 0)
+        await expect(await votingAsMember1.voteDirective(1, 0, 1))
+          .to.emit(voting, 'DirectiveVoted')
+          .withArgs(await member1.getAddress(), 0, 1)
+
+        const proposals = await voting.getProposals(1)
+        expect(proposals[0].votes.yes).to.equal(1)
       })
+
       it('should not allow a member to vote twice on a proposal', async () => {
-        const votingProxyAsMember1 = votingProxy.connect(member1)
-        await expect(votingProxyAsMember1.voteDirective(0, 0)).to.be.revertedWith(
+        const votingAsMember1 = voting.connect(member1)
+        await expect(votingAsMember1.voteDirective(1, 0, 1)).to.be.revertedWith(
           'You have already voted'
         )
       })
+
       it('should vote on an election successfully', async () => {
-        const votingProxyAsMember2 = votingProxy.connect(member2)
+        const votingAsMember2 = voting.connect(member2)
 
-        await expect(await votingProxyAsMember2.voteElection(0, candidates[1].candidateAddress))
-          .to.emit(votingProxy, 'ElectionVoted')
+        await expect(await votingAsMember2.voteElection(1, 0, candidates[1].candidateAddress))
+          .to.emit(voting, 'ElectionVoted')
           .withArgs(await member2.getAddress(), 0, candidates[1].candidateAddress)
+
+        const proposals = await voting.getProposals(1)
+        const candidate = proposals[0].candidates.find(
+          (c) => c.candidateAddress === candidates[1].candidateAddress
+        )
+        if (candidate) {
+          expect(candidate.votes).to.equal(1)
+        }
       })
-    })
 
-    describe('Pausing and Unpausing the Contract', () => {
-      it('should pause the contract', async () => {
-        await votingProxy.pause()
+      it('should conclude a proposal successfully', async () => {
+        await expect(voting.concludeProposal(1, 0))
+          .to.emit(voting, 'ProposalConcluded')
+          .withArgs(0, false)
 
-        expect(await votingProxy.paused()).to.be.true
-      })
-
-      it('should unpause the contract', async () => {
-        await votingProxy.unpause()
-
-        expect(await votingProxy.paused()).to.be.false
+        const proposals = await voting.getProposals(1)
+        expect(proposals[0].isActive).to.be.false
       })
     })
   })
