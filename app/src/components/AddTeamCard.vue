@@ -4,13 +4,14 @@
       <span class="font-bold">Add Team</span>
 
       <div class="w-5 h-5 cursor-pointer" @click="emits('openAddTeamModal')">
-        <IconPlus />
+        <PlusCircleIcon class="size-6 text-red-700" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import IconPlus from '@/components/icons/IconPlus.vue'
+
+import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 const emits = defineEmits(['openAddTeamModal'])
 </script>
