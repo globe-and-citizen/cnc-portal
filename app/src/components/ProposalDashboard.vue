@@ -1,17 +1,6 @@
 <template>
-  <div class="flex justify-center" v-if="!team.votingAddress && !loadingGetProposals">
-    <button
-      class="btn btn-primary btn-md"
-      @click="executeCreateVotingContract(String($route.params.id))"
-      v-if="!loading"
-    >
-      Deploy contract
-    </button>
-    <div v-else>
-      <LoadingButton color="primary min-w-28" />
-    </div>
-  </div>
-  <div class="flex flex-col" v-if="team.votingAddress && !loadingGetProposals">
+  <div class="flex justify-center" v-if="!loadingGetProposals"></div>
+  <div class="flex flex-col" v-if="!loadingGetProposals">
     <div class="flex justify-between">
       <div>
         <h2>Proposals</h2>
@@ -67,7 +56,7 @@ import ModalComponent from './ModalComponent.vue'
 import CreateProposalForm from './forms/CreateProposalForm.vue'
 import TabNavigation from './TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import { useCreateVotingContract, useAddProposal, useGetProposals } from '@/composables/voting'
+import { useAddProposal, useGetProposals } from '@/composables/voting'
 import type { Team } from '@/types/index'
 import LoadingButton from './LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
@@ -75,13 +64,7 @@ import { useToastStore } from '@/stores/useToastStore'
 
 const emits = defineEmits(['getTeam'])
 const { addSuccessToast, addErrorToast } = useToastStore()
-const {
-  execute: executeCreateVotingContract,
-  isLoading: loading,
-  isSuccess,
-  error,
-  contractAddress
-} = useCreateVotingContract()
+
 const {
   execute: executeAddProposal,
   isLoading: loadingAddProposal,
@@ -121,18 +104,7 @@ watch(errorAddProposal, () => {
     )
   }
 })
-watch(isSuccess, () => {
-  if (isSuccess.value) {
-    addSuccessToast('Voting contract deployed successfully')
-    emits('getTeam')
-  }
-})
 
-watch(error, () => {
-  if (error.value) {
-    addErrorToast(error.value.reason ? error.value.reason : 'Failed to deploy contract')
-  }
-})
 const showModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
@@ -155,9 +127,7 @@ const createProposal = () => {
     }
   })
 
-  if (props.team.votingAddress) {
-    executeAddProposal(props.team.votingAddress, newProposalInput.value)
-  }
+  executeAddProposal(newProposalInput.value)
 }
 const oldProposals = ref<Partial<Proposal>[]>([
   {
@@ -225,9 +195,6 @@ const activeProposals = ref<Partial<Proposal>[]>([
 ])
 
 onMounted(() => {
-  if (props.team.votingAddress) {
-    console.log(props.team.votingAddress)
-    executeGetProposals(props.team.votingAddress)
-  }
+  executeGetProposals()
 })
 </script>

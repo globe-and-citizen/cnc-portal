@@ -4,35 +4,13 @@ import { ref } from 'vue'
 
 const votingService = new VotingService()
 
-export function useCreateVotingContract() {
-  const contractAddress = ref<string | null>(null)
-  const loading = ref(false)
-  const error = ref<any>(null)
-  const isSuccess = ref(false)
-
-  async function deploy(teamId: string) {
-    try {
-      loading.value = true
-      contractAddress.value = await votingService.createVotingContract(teamId)
-      console.log('contractAddress', contractAddress.value)
-      isSuccess.value = true
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: deploy, isLoading: loading, isSuccess, error, contractAddress }
-}
-
 export function useAddProposal() {
   const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function addProposal(votingAddress: string, proposal: Partial<Proposal>) {
+  async function addProposal(proposal: Partial<Proposal>) {
     try {
       loading.value = true
       proposal.votes = {
@@ -46,7 +24,7 @@ export function useAddProposal() {
         voter.isEligible = true
       })
 
-      transaction.value = await votingService.addProposal(votingAddress, proposal)
+      transaction.value = await votingService.addProposal(proposal)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -64,10 +42,10 @@ export function useGetProposals() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function getProposals(votingAddress: string) {
+  async function getProposals() {
     try {
       loading.value = true
-      proposals.value = await votingService.getProposals(votingAddress)
+      proposals.value = await votingService.getProposals()
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -84,10 +62,10 @@ export function useConcludeProposal() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function concludeProposal(votingAddress: string, proposalId: number) {
+  async function concludeProposal(proposalId: number) {
     try {
       loading.value = true
-      transaction.value = await votingService.concludeProposal(votingAddress, proposalId)
+      transaction.value = await votingService.concludeProposal(proposalId)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -104,10 +82,10 @@ export function useVoteDirective() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function voteDirective(votingAddress: string, proposalId: number, directive: number) {
+  async function voteDirective(proposalId: number, directive: number) {
     try {
       loading.value = true
-      transaction.value = await votingService.voteDirective(votingAddress, proposalId, directive)
+      transaction.value = await votingService.voteDirective(proposalId, directive)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -124,14 +102,10 @@ export function useVoteElection() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function voteElection(votingAddress: string, electionId: number, candidateAddress: string) {
+  async function voteElection(electionId: number, candidateAddress: string) {
     try {
       loading.value = true
-      transaction.value = await votingService.voteElection(
-        votingAddress,
-        electionId,
-        candidateAddress
-      )
+      transaction.value = await votingService.voteElection(electionId, candidateAddress)
       isSuccess.value = true
     } catch (err) {
       error.value = err
