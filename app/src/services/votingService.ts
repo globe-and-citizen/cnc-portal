@@ -1,6 +1,5 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
-import { PROXY_BYTECODE } from '@/artifacts/bytecode/proxy'
-import PROXY_ABI from '../artifacts/abi/proxy.json'
+
 import VOTING_ABI from '@/artifacts/abi/voting.json'
 import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
