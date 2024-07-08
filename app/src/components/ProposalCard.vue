@@ -6,11 +6,11 @@
         <span class="text-xs">
           <span class="badge badge-primary badge-xs"> {{ proposal.draftedBy }}</span>
 
-          on
+          <!-- on
           <span class="badge badge-secondary badge-xs">
             {{ new Date().toLocaleDateString() }}</span
-          ></span
-        >
+          > -->
+        </span>
         <p class="text-sm">
           {{
             proposal.description
@@ -31,22 +31,35 @@
           <span>Abstain </span>
         </div>
         <div class="flex flex-col items-center justify-center gap-5">
-          <progress class="progress progress-success w-56" value="10" max="100"></progress>
-          <progress class="progress progress-success w-56" value="10" max="100"></progress>
-          <progress class="progress progress-success w-56" value="40" max="100"></progress>
+          <progress
+            class="progress progress-success w-56"
+            :value="Number(proposal.votes?.yes)"
+            max="100"
+          ></progress>
+          <progress
+            class="progress progress-success w-56"
+            :value="Number(proposal.votes?.no)"
+            max="100"
+          ></progress>
+          <progress
+            class="progress progress-success w-56"
+            :value="Number(proposal.votes?.abstain)"
+            max="100"
+          ></progress>
         </div>
       </div>
       <div class="flex flex-row items-center justify-center gap-5 w-1/2" v-else>
         <div class="flex flex-col items-center justify-center gap-2 text-sm">
-          <span v-for="user in proposal.candidates" :key="user.address">{{ user.name }}</span>
+          <span v-for="user in (proposal as any).candidates.slice(0, 3)" :key="user.address">{{
+            user.name
+          }}</span>
         </div>
         <div class="flex flex-col items-center justify-center gap-5">
           <progress
             class="progress progress-success w-56"
-            value="20"
-            max="100"
-            v-for="user in proposal.candidates"
+            v-for="user in (proposal as any).candidates.slice(0, 3)"
             :key="user.address"
+            :value="Number(user?.votes)"
           ></progress>
         </div>
       </div>
