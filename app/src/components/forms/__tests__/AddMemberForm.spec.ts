@@ -42,10 +42,7 @@ describe('AddMemberModal.vue', () => {
       await wrapper.find('button.btn-primary').trigger('click')
       expect(wrapper.emitted('addMembers')).toBeTruthy()
     })
-  })
-
-  // The the behavior of the component on user actions
-  describe('Actions', () => {
+    
     it('Should trigger searchUsers on keyup.stop', async () => {
       const wrapper = mount(AddMemberForm, {
         props: {
@@ -106,6 +103,10 @@ describe('AddMemberModal.vue', () => {
         ]
       `)
     })
+  })
+
+  // The the behavior of the component on user actions
+  describe('Actions', () => {
     it('adds a new member input field when clicking the add icon', async () => {
       const wrapper = mount(AddMemberForm, {
         props: {
