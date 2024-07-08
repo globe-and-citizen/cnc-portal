@@ -67,7 +67,23 @@
     <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
       <button class="btn btn-primary btn-sm" @click="showVoteModal = true">Vote</button>
       <button class="btn btn-secondary btn-sm">View</button>
+      <button class="btn btn-error btn-sm" @click="showConcludeConfirmModal = true">Stop</button>
     </div>
+    <ModalComponent v-model="showConcludeConfirmModal">
+      <h2>Conclude</h2>
+      <hr />
+      <span class="mt-4">Are you sure you want to conclude this proposal?</span>
+      <div class="flex justify-center">
+        <LoadingButton v-if="concludingProposal" color="error mt-4 min-w-16 btn-sm" />
+        <button
+          v-else
+          class="btn btn-sm btn-error mt-4"
+          @click="concludeProposal(Number($route.params.id), Number(proposal.id))"
+        >
+          Yes
+        </button>
+      </div>
+    </ModalComponent>
     <ModalComponent v-model="showVoteModal">
       <VoteForm
         :isLoading="castingElectionVote || castingDirectiveVote"
@@ -83,19 +99,27 @@
 import type { Proposal } from '@/types/index'
 import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { useVoteElection, useVoteDirective } from '@/composables/voting'
+import { useVoteElection, useVoteDirective, useConcludeProposal } from '@/composables/voting'
 import VoteForm from '@/components/forms/VoteForm.vue'
 import ModalComponent from './ModalComponent.vue'
+import LoadingButton from './LoadingButton.vue'
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 defineProps<{
   proposal: Partial<Proposal>
   isDone?: boolean
 }>()
+const emits = defineEmits(['getTeam'])
 
 const voteInput = ref<any>()
 const showVoteModal = ref(false)
-
+const showConcludeConfirmModal = ref(false)
+const {
+  execute: concludeProposal,
+  isLoading: concludingProposal,
+  error: concludeError,
+  isSuccess: concludeSuccess
+} = useConcludeProposal()
 const {
   execute: voteElection,
   isLoading: castingElectionVote,
@@ -112,6 +136,8 @@ const {
 watch(electionSuccess, () => {
   if (electionSuccess.value) {
     addSuccessToast('Election vote casted')
+    showVoteModal.value = false
+    emits('getTeam')
   }
 })
 watch(electionError, () => {
@@ -122,11 +148,25 @@ watch(electionError, () => {
 watch(directiveSuccess, () => {
   if (directiveSuccess.value) {
     addSuccessToast('Directive vote casted')
+    showVoteModal.value = false
+    emits('getTeam')
   }
 })
 watch(directiveError, () => {
   if (directiveError.value) {
     addErrorToast('Error casting directive vote')
+  }
+})
+watch(concludeSuccess, () => {
+  if (concludeSuccess.value) {
+    addSuccessToast('Proposal concluded')
+    showConcludeConfirmModal.value = false
+    emits('getTeam')
+  }
+})
+watch(concludeError, () => {
+  if (concludeError.value) {
+    addErrorToast('Error concluding proposal')
   }
 })
 </script>

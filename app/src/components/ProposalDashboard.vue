@@ -23,6 +23,7 @@
           :proposal="proposal"
           class="mt-10"
           :key="proposal.title"
+          @getTeam="emits('getTeam')"
         />
       </template>
       <template #tab-1>
