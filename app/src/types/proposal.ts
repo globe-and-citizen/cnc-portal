@@ -19,7 +19,7 @@ export interface Proposal {
     abstain: number
   }
   candidates?: {
-    address: string
+    candidateAddress: string
     name: string
     votes: number
   }[]

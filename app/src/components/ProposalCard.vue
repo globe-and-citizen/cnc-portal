@@ -65,15 +65,25 @@
       </div>
     </div>
     <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
-      <button class="btn btn-primary btn-sm">Vote</button>
+      <button class="btn btn-primary btn-sm" @click="showVoteModal = true">Vote</button>
       <button class="btn btn-secondary btn-sm">View</button>
     </div>
+    <ModalComponent v-model="showVoteModal">
+      <VoteForm v-model="voteInput" @vote="() => {}" :proposal="proposal" />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
 import type { Proposal } from '@/types/index'
+import { ref } from 'vue'
+import VoteForm from '@/components/forms/VoteForm.vue'
+import ModalComponent from './ModalComponent.vue'
+
 defineProps<{
   proposal: Partial<Proposal>
   isDone?: boolean
 }>()
+
+const voteInput = ref<any>()
+const showVoteModal = ref(false)
 </script>
