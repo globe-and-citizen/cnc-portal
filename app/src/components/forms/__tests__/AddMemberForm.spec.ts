@@ -42,7 +42,7 @@ describe('AddMemberModal.vue', () => {
       await wrapper.find('button.btn-primary').trigger('click')
       expect(wrapper.emitted('addMembers')).toBeTruthy()
     })
-    
+
     it('Should trigger searchUsers on keyup.stop', async () => {
       const wrapper = mount(AddMemberForm, {
         props: {
