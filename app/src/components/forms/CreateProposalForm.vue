@@ -19,13 +19,82 @@
         placeholder="Description"
         v-model="newProposalInput.description"
       ></textarea>
-      <input
-        v-if="newProposalInput.isElection"
-        type="text"
-        placeholder="Candidate"
-        class="input input-bordered"
-        v-model="newProposalInput.candidates"
-      />
+      <div v-if="newProposalInput.isElection">
+        <div class="input-group">
+          <label class="input input-primary flex items-center gap-2 input-md">
+            <input
+              type="text"
+              class="w-28"
+              v-model="searchUserName"
+              @keyup.stop="
+                () => {
+                  searchUsers()
+                  dropdown = true
+                }
+              "
+              placeholder="Candidate Name"
+            />
+            |
+            <input
+              type="text"
+              class="grow"
+              v-model="searchUserAddress"
+              @keyup.stop="
+                () => {
+                  searchUsers()
+                  dropdown = true
+                }
+              "
+              placeholder="Address"
+            />
+          </label>
+        </div>
+
+        <div
+          class="dropdown"
+          v-if="dropdown"
+          :class="{ 'dropdown-open': users && users.users && users.users.length > 0 }"
+        >
+          <ul
+            v-if="users && users.users && users.users.length > 0"
+            class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96"
+          >
+            <li v-for="user in users.users" :key="user.address">
+              <a
+                @click="
+                  () => {
+                    newProposalInput.candidates.push({
+                      name: user.name,
+                      candidateAddress: user.address
+                    })
+                    searchUserName = ''
+                    searchUserAddress = ''
+                    dropdown = false
+                  }
+                "
+              >
+                {{ user.name }} | {{ user.address }}
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div
+          class="flex m-4 text-sm gap-4 justify-between"
+          v-for="(candidate, index) in newProposalInput.candidates"
+          :key="index"
+        >
+          <span>
+            {{ candidate.name }}
+          </span>
+          <span>
+            {{ candidate.candidateAddress }}
+          </span>
+          <IconMinus
+            class="w-4 cursor-pointer"
+            @click="() => newProposalInput.candidates.splice(index, 1)"
+          />
+        </div>
+      </div>
 
       <div class="flex justify-center">
         <LoadingButton v-if="isLoading" color="primary min-w-28" />
@@ -44,15 +113,53 @@
 
 <script setup lang="ts">
 import LoadingButton from '../LoadingButton.vue'
+import { ref } from 'vue'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useErrorHandler } from '@/composables/errorHandler'
+import IconMinus from '../icons/IconMinus.vue'
 
 const emits = defineEmits(['createProposal'])
-defineProps(['isLoading'])
+defineProps<{
+  isLoading: boolean
+}>()
+const dropdown = ref<boolean>(true)
+
+const searchUserName = ref('')
+const searchUserAddress = ref('')
+
 const newProposalInput = defineModel({
   default: {
     title: '',
     description: '',
-    candidates: [],
+    candidates: [
+      {
+        name: '',
+        candidateAddress: ''
+      }
+    ],
     isElection: false
   }
 })
+const { execute: executeSearchUser, data: users } = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+const searchUsers = async () => {
+  try {
+    if (searchUserName.value || searchUserAddress.value) {
+      await executeSearchUser()
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
+}
 </script>

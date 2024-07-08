@@ -23,6 +23,11 @@ export function useAddProposal() {
         voter.isVoted = false
         voter.isEligible = true
       })
+      if (proposal.isElection) {
+        proposal.candidates?.map((candidate) => {
+          candidate.votes = 0
+        })
+      }
 
       transaction.value = await votingService.addProposal(proposal)
       isSuccess.value = true
