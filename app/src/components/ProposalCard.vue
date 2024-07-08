@@ -91,7 +91,9 @@
       <VoteForm
         :isLoading="castingElectionVote || castingDirectiveVote"
         v-model="voteInput"
-        @voteElection="(value) => voteElection(value.teamId, value.proposalId, value.candidate)"
+        @voteElection="
+          (value) => voteElection(value.teamId, value.proposalId, value.candidateAddress)
+        "
         :proposal="proposal"
         @voteDirective="(value) => voteDirective(value.teamId, value.proposalId, value.option)"
       />
