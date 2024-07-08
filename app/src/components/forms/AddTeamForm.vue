@@ -84,7 +84,7 @@
         }
       "
     >
-      <IconPlus />
+      <PlusCircleIcon class="size-6" />
     </div>
     <div
       class="w-6 h-6 cursor-pointer"
@@ -96,7 +96,7 @@
         }
       "
     >
-      <IconMinus />
+      <MinusCircleIcon class="size-6" />
     </div>
   </div>
 
@@ -111,8 +111,7 @@
 <script setup lang="ts">
 import type { User } from '@/types'
 import { ref } from 'vue'
-import IconPlus from '@/components/icons/IconPlus.vue'
-import IconMinus from '@/components/icons/IconMinus.vue'
+import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '../LoadingButton.vue'
 import { isAddress } from 'ethers'
 
