@@ -69,15 +69,24 @@
       <button class="btn btn-secondary btn-sm">View</button>
     </div>
     <ModalComponent v-model="showVoteModal">
-      <VoteForm v-model="voteInput" @vote="() => {}" :proposal="proposal" />
+      <VoteForm
+        :isLoading="castingElectionVote || castingDirectiveVote"
+        v-model="voteInput"
+        @voteElection="(value) => voteElection(value.teamId, value.proposalId, value.candidate)"
+        :proposal="proposal"
+        @voteDirective="(value) => voteDirective(value.teamId, value.proposalId, value.option)"
+      />
     </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
 import type { Proposal } from '@/types/index'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useToastStore } from '@/stores/useToastStore'
+import { useVoteElection, useVoteDirective } from '@/composables/voting'
 import VoteForm from '@/components/forms/VoteForm.vue'
 import ModalComponent from './ModalComponent.vue'
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 defineProps<{
   proposal: Partial<Proposal>
@@ -86,4 +95,38 @@ defineProps<{
 
 const voteInput = ref<any>()
 const showVoteModal = ref(false)
+
+const {
+  execute: voteElection,
+  isLoading: castingElectionVote,
+  error: electionError,
+  isSuccess: electionSuccess
+} = useVoteElection()
+const {
+  execute: voteDirective,
+  isLoading: castingDirectiveVote,
+  error: directiveError,
+  isSuccess: directiveSuccess
+} = useVoteDirective()
+
+watch(electionSuccess, () => {
+  if (electionSuccess.value) {
+    addSuccessToast('Election vote casted')
+  }
+})
+watch(electionError, () => {
+  if (electionError.value) {
+    addErrorToast('Error casting election vote')
+  }
+})
+watch(directiveSuccess, () => {
+  if (directiveSuccess.value) {
+    addSuccessToast('Directive vote casted')
+  }
+})
+watch(directiveError, () => {
+  if (directiveError.value) {
+    addErrorToast('Error casting directive vote')
+  }
+})
 </script>
