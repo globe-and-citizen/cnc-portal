@@ -2,7 +2,6 @@ import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapte
 
 import VOTING_ABI from '@/artifacts/abi/voting.json'
 import type { Contract } from 'ethers'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { VOTING_ADDRESS } from '@/constant'
 import type { Proposal } from '@/types'
 import { SmartContract } from './contractService'
@@ -11,10 +10,10 @@ import type { Log } from 'ethers'
 export interface IVotingService {
   web3Library: IWeb3Library
   addProposal(proposal: Partial<Proposal>): Promise<any>
-  getProposals(): Promise<any>
-  concludeProposal(proposalId: number): Promise<any>
-  voteDirective(proposalId: number, directive: number): Promise<any>
-  voteElection(electionId: number, candidateAddress: string): Promise<any>
+  getProposals(teamId: Number): Promise<any>
+  concludeProposal(teamId: Number, proposalId: Number): Promise<any>
+  voteDirective(teamId: Number, proposalId: Number, directive: Number): Promise<any>
+  voteElection(teamId: Number, proposalId: Number, candidateAddress: string): Promise<any>
   getEvents(): Promise<EventLog[] | Log[]>
 }
 
@@ -36,10 +35,10 @@ export class VotingService implements IVotingService {
       console.log(e)
     }
   }
-  async getProposals(): Promise<any> {
+  async getProposals(teamId: Number): Promise<any> {
     const votingContract = await this.getVotingContract(VOTING_ADDRESS)
     try {
-      const proposals = await votingContract.getProposals()
+      const proposals = await votingContract.getProposals(teamId)
       if (proposals === '0x' || !proposals) {
         console.log('No proposals found or returned data is empty.')
         return []
@@ -50,23 +49,23 @@ export class VotingService implements IVotingService {
       console.log('Error fetching proposals:', e)
     }
   }
-  async concludeProposal(proposalId: number): Promise<any> {
+  async concludeProposal(teamId: Number, proposalId: Number): Promise<any> {
     const votingContract = await this.getVotingContract(VOTING_ADDRESS)
-    const tx = await votingContract.concludeProposal(proposalId)
+    const tx = await votingContract.concludeProposal(teamId, proposalId)
     await tx.wait()
 
     return tx
   }
-  async voteDirective(proposalId: number, directive: number): Promise<any> {
+  async voteDirective(teamId: Number, proposalId: Number, vote: Number): Promise<any> {
     const votingContract = await this.getVotingContract(VOTING_ADDRESS)
-    const tx = await votingContract.voteDirective(proposalId, directive)
+    const tx = await votingContract.voteDirective(teamId, proposalId, vote)
     await tx.wait()
 
     return tx
   }
-  async voteElection(electionId: number, candidateAddress: string): Promise<any> {
+  async voteElection(teamId: Number, proposalId: Number, candidateAddress: string): Promise<any> {
     const votingContract = await this.getVotingContract(VOTING_ADDRESS)
-    const tx = await votingContract.voteElection(electionId, candidateAddress)
+    const tx = await votingContract.voteElection(teamId, proposalId, candidateAddress)
     await tx.wait()
 
     return tx

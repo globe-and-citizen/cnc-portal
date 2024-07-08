@@ -37,15 +37,15 @@ export function useAddProposal() {
 }
 
 export function useGetProposals() {
-  const proposals = ref<any[]>([])
+  const proposals = ref<Proposal[]>([])
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function getProposals() {
+  async function getProposals(teamId: Number) {
     try {
       loading.value = true
-      proposals.value = await votingService.getProposals()
+      proposals.value = await votingService.getProposals(teamId)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -62,10 +62,10 @@ export function useConcludeProposal() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function concludeProposal(proposalId: number) {
+  async function concludeProposal(teamId: Number, proposalId: Number) {
     try {
       loading.value = true
-      transaction.value = await votingService.concludeProposal(proposalId)
+      transaction.value = await votingService.concludeProposal(teamId, proposalId)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -82,10 +82,10 @@ export function useVoteDirective() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function voteDirective(proposalId: number, directive: number) {
+  async function voteDirective(teamId: Number, proposalId: Number, directive: number) {
     try {
       loading.value = true
-      transaction.value = await votingService.voteDirective(proposalId, directive)
+      transaction.value = await votingService.voteDirective(teamId, proposalId, directive)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -102,10 +102,10 @@ export function useVoteElection() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function voteElection(electionId: number, candidateAddress: string) {
+  async function voteElection(teamId: Number, proposalId: Number, candidateAddress: string) {
     try {
       loading.value = true
-      transaction.value = await votingService.voteElection(electionId, candidateAddress)
+      transaction.value = await votingService.voteElection(teamId, proposalId, candidateAddress)
       isSuccess.value = true
     } catch (err) {
       error.value = err

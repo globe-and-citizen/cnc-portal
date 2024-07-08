@@ -5,6 +5,7 @@ export interface Proposal {
   draftedBy: string
   isActive: boolean
   isElection: boolean
+  teamId: Number
   voters?: {
     memberAddress: string
     name: string

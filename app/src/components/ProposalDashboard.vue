@@ -59,6 +59,7 @@ import { ProposalTabs } from '@/types/index'
 import { useAddProposal, useGetProposals } from '@/composables/voting'
 import type { Team } from '@/types/index'
 import LoadingButton from './LoadingButton.vue'
+import { useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
 
@@ -80,7 +81,9 @@ const {
 } = useGetProposals()
 watch(isSuccessGetProposals, () => {
   if (isSuccessGetProposals.value) {
-    console.log(proposals.value)
+    const proposalsList = Object.values(proposals.value)
+    activeProposals.value = proposalsList.filter((proposal) => proposal.isActive)
+    oldProposals.value = proposalsList.filter((proposal) => !proposal.isActive)
   }
 })
 watch(errorGetProposals, () => {
@@ -108,6 +111,8 @@ watch(errorAddProposal, () => {
 const showModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
+const route = useRoute()
+
 const props = defineProps<{ team: Partial<Team> }>()
 const newProposalInput = ref<Partial<Proposal>>({
   title: '',
@@ -115,7 +120,8 @@ const newProposalInput = ref<Partial<Proposal>>({
   draftedBy: '',
   isElection: false,
   voters: [],
-  candidates: []
+  candidates: [],
+  teamId: Number(route.params.id)
 })
 
 const createProposal = () => {
@@ -129,72 +135,10 @@ const createProposal = () => {
 
   executeAddProposal(newProposalInput.value)
 }
-const oldProposals = ref<Partial<Proposal>[]>([
-  {
-    title: 'Remote work: Yay or Nay?',
-    description: 'What is the best way to work? Remote or Office?',
-    draftedBy: 'Dasarath',
-    votes: {
-      yes: 10,
-      no: 2,
-      abstain: 1
-    },
-    isElection: false,
-    voters: [
-      {
-        name: 'Dasarath',
-        memberAddress: '0x1234567890'
-      },
-      {
-        name: 'Ravioli',
-        memberAddress: '0x111234567890'
-      },
-      {
-        name: 'Herm',
-        memberAddress: '0x123114567890'
-      }
-    ]
-  }
-])
-const activeProposals = ref<Partial<Proposal>[]>([
-  {
-    title: 'Board of Directors Election this June',
-    description:
-      'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
-    draftedBy: 'Ravioli',
-    candidates: [
-      {
-        name: 'Dasarath',
-        votes: 2,
-        address: '0x1234567890'
-      },
-      {
-        name: 'Ravioli',
-        votes: 2,
-        address: '0x111234567890'
-      },
-      {
-        name: 'Herm',
-        votes: 2,
-        address: '0x123114567890'
-      }
-    ],
-    isElection: true
-  },
-  {
-    title: 'Remote work: Yay or Nay?',
-    description: 'What is the best way to work? Remote or Office?',
-    draftedBy: 'Dasarath',
-    votes: {
-      yes: 10,
-      no: 2,
-      abstain: 1
-    },
-    isElection: false
-  }
-])
+const oldProposals = ref<Partial<Proposal>[]>([])
+const activeProposals = ref<Partial<Proposal>[]>([])
 
 onMounted(() => {
-  executeGetProposals()
+  executeGetProposals(Number(route.params.id))
 })
 </script>
