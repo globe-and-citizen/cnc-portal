@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddMemberForm from '@/components/forms/AddMemberForm.vue'
-// import { PlusCircleIcon } from '@heroicons/vue/24/outline'
-import LoadingButton from '@/components/LoadingButton.vue'
 
-describe.only('AddMemberModal.vue', () => {
+describe('AddMemberModal.vue', () => {
   const formData = [
     { name: 'Hermann', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E', isValid: true }
   ]
