@@ -1,10 +1,10 @@
 <template>
   <div v-if="visible">
     <div :class="['alert', typeClass]">
-      <IconCheck v-if="type === ToastType.Success" />
-      <IconInfo v-if="type === ToastType.Info" />
-      <IconWarning v-if="type === ToastType.Warning" />
-      <IconError v-if="type === ToastType.Error" />
+      <CheckCircleIcon class="size-6" v-if="type === ToastType.Success" />
+      <InformationCircleIcon class="size-6" v-if="type === ToastType.Info" />
+      <ExclamationCircleIcon class="size-6" v-if="type === ToastType.Warning" />
+      <XCircleIcon class="size-6" v-if="type === ToastType.Error" />
       <span>{{ message }} - {{ timeLeft }}s</span>
     </div>
   </div>
@@ -13,10 +13,12 @@
 <script setup lang="ts">
 import { defineProps, ref, onMounted, computed, onUnmounted } from 'vue'
 import { ToastType, type Toast } from '@/types'
-import IconCheck from '@/components/icons/IconCheck.vue'
-import IconInfo from '@/components/icons/IconInfo.vue'
-import IconWarning from '@/components/icons/IconWarning.vue'
-import IconError from '@/components/icons/IconError.vue'
+import {
+  CheckCircleIcon,
+  InformationCircleIcon,
+  XCircleIcon,
+  ExclamationCircleIcon
+} from '@heroicons/vue/24/outline'
 
 const props = defineProps<Toast>()
 
