@@ -66,8 +66,11 @@
     </div>
     <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
       <button class="btn btn-primary btn-sm" @click="showVoteModal = true">Vote</button>
-      <button class="btn btn-secondary btn-sm">View</button>
+      <button class="btn btn-secondary btn-sm" @click="showPollDetailsModal = true">View</button>
       <button class="btn btn-error btn-sm" @click="showConcludeConfirmModal = true">Stop</button>
+    </div>
+    <div class="flex justify-center gap-4 mb-2" v-else>
+      <button class="btn btn-secondary btn-sm" @click="showPollDetailsModal = true">View</button>
     </div>
     <ModalComponent v-model="showConcludeConfirmModal">
       <h2>Conclude</h2>
@@ -93,6 +96,9 @@
         @voteDirective="(value) => voteDirective(value.teamId, value.proposalId, value.option)"
       />
     </ModalComponent>
+    <ModalComponent v-model="showPollDetailsModal">
+      <PollDetails :proposal="proposal" />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -101,6 +107,7 @@ import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useVoteElection, useVoteDirective, useConcludeProposal } from '@/composables/voting'
 import VoteForm from '@/components/forms/VoteForm.vue'
+import PollDetails from '@/components/PollDetails.vue'
 import ModalComponent from './ModalComponent.vue'
 import LoadingButton from './LoadingButton.vue'
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -114,6 +121,8 @@ const emits = defineEmits(['getTeam'])
 const voteInput = ref<any>()
 const showVoteModal = ref(false)
 const showConcludeConfirmModal = ref(false)
+const showPollDetailsModal = ref(false)
+
 const {
   execute: concludeProposal,
   isLoading: concludingProposal,
