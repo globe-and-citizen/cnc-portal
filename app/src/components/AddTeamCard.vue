@@ -11,7 +11,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 const emits = defineEmits(['openAddTeamModal'])
 </script>
