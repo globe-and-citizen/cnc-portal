@@ -1,0 +1,59 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AddMemberModal.vue > Actions > Should trigger searchUsers on keyup.stop > 
+        [
+          [
+            {
+              "address": "",
+              "isValid": false,
+              "name": "Farrel",
+            },
+          ],
+        ]
+       1`] = `
+[
+  [
+    {
+      "address": "",
+      "isValid": false,
+      "name": "Farrel",
+    },
+  ],
+]
+`;
+
+exports[`AddMemberModal.vue > Actions > Should trigger searchUsers on keyup.stop > 
+        [
+          [
+            {
+              "address": "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+              "isValid": true,
+              "name": "Farrel",
+            },
+          ],
+          [
+            {
+              "address": "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+              "isValid": true,
+              "name": "Farrel",
+            },
+          ],
+        ]
+       1`] = `
+[
+  [
+    {
+      "address": "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+      "isValid": true,
+      "name": "Farrel",
+    },
+  ],
+  [
+    {
+      "address": "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+      "isValid": true,
+      "name": "Farrel",
+    },
+  ],
+]
+`;

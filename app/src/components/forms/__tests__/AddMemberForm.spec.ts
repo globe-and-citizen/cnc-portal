@@ -46,6 +46,66 @@ describe('AddMemberModal.vue', () => {
 
   // The the behavior of the component on user actions
   describe('Actions', () => {
+    it('Should trigger searchUsers on keyup.stop', async () => {
+      const wrapper = mount(AddMemberForm, {
+        props: {
+          formData: [{ name: '', address: '', isValid: false }],
+          users,
+          isLoading: false
+        }
+      })
+      const inputs = wrapper.findAll('input')
+      expect(inputs.length).toBe(2)
+
+      // Intial state of the searchUser event
+      expect(wrapper.emitted('searchUsers')).toBe(undefined)
+
+      // Set the value of the first input and trigger
+      await inputs[0].setValue('Farrel')
+
+      // No emit after setting the value until we trigger
+      expect(wrapper.emitted('searchUsers')).toBe(undefined)
+
+      expect(inputs[0].element.value).toBe('Farrel')
+      await inputs[0].trigger('keyup.stop')
+
+      // Result after trigger
+      expect(wrapper.emitted('searchUsers')).toMatchSnapshot(`
+        [
+          [
+            {
+              "address": "",
+              "isValid": false,
+              "name": "Farrel",
+            },
+          ],
+        ]
+      `)
+
+      // Type in the second input and trigger
+      await inputs[1].setValue('0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E')
+      await inputs[1].trigger('keyup.stop')
+
+      // Result After trigger
+      expect(wrapper.emitted('searchUsers')).toMatchSnapshot(`
+        [
+          [
+            {
+              "address": "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+              "isValid": true,
+              "name": "Farrel",
+            },
+          ],
+          [
+            {
+              "address": "0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E",
+              "isValid": true,
+              "name": "Farrel",
+            },
+          ],
+        ]
+      `)
+    })
     it('adds a new member input field when clicking the add icon', async () => {
       const wrapper = mount(AddMemberForm, {
         props: {
