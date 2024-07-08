@@ -40,9 +40,9 @@
         </label>
       </div>
     </div>
-    <div class="flex justify-center">
-      <button class="btn btn-primary mt-4" @click="castVote">Cast Vote</button>
+    <div class="flex justify-center mt-4">
       <LoadingButton v-if="castingElectionVote || castingDirectiveVote" color="primary min-w-24" />
+      <button v-else class="btn btn-primary" @click="castVote">Cast Vote</button>
     </div>
   </div>
 </template>
@@ -51,12 +51,15 @@
 import { useVoteElection, useVoteDirective } from '@/composables/voting'
 import type { Proposal } from '@/types/index'
 import { useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { useToastStore } from '@/stores/useToastStore'
+import { ref, watch } from 'vue'
 import LoadingButton from '../LoadingButton.vue'
 const selectedCandidate = ref<string>()
 const selectedOption = ref<string | null>(null)
 
 const route = useRoute()
+
+const { addSuccessToast, addErrorToast } = useToastStore()
 const {
   execute: voteElection,
   isLoading: castingElectionVote,
@@ -70,6 +73,28 @@ const {
   isSuccess: directiveSuccess
 } = useVoteDirective()
 
+watch(electionSuccess, () => {
+  if (electionSuccess.value) {
+    console.log('Election vote casted')
+    addSuccessToast('Election vote casted')
+  }
+})
+watch(electionError, () => {
+  if (electionError.value) {
+    addErrorToast('Error casting election vote')
+  }
+})
+watch(directiveSuccess, () => {
+  if (directiveSuccess.value) {
+    console.log('Directive vote casted')
+    addSuccessToast('Directive vote casted')
+  }
+})
+watch(directiveError, () => {
+  if (directiveError.value) {
+    addErrorToast('Error casting directive vote')
+  }
+})
 defineModel({
   default: {
     title: '',

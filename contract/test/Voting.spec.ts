@@ -37,6 +37,7 @@ describe('Voting Contract', () => {
     describe('CRUD Members and Proposals', async () => {
       it('should add a proposal successfully', async () => {
         const proposal = {
+          id: 0,
           title: 'Proposal 1',
           description: 'Description of Proposal 1',
           draftedBy: await owner.getAddress(),

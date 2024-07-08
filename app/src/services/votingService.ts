@@ -26,6 +26,7 @@ export class VotingService implements IVotingService {
 
   async addProposal(proposal: Partial<Proposal>): Promise<any> {
     try {
+      proposal.id = 0
       const votingContract = await this.getVotingContract(VOTING_ADDRESS)
       const tx = await votingContract.addProposal(proposal)
       console.log(await this.getEvents())

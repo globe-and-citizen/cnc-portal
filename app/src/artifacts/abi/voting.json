@@ -98,6 +98,11 @@
       {
         "components": [
           {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
             "internalType": "string",
             "name": "title",
             "type": "string"
@@ -240,6 +245,11 @@
       {
         "components": [
           {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
             "internalType": "string",
             "name": "title",
             "type": "string"
@@ -377,6 +387,11 @@
     ],
     "name": "proposalsByTeam",
     "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
       {
         "internalType": "string",
         "name": "title",

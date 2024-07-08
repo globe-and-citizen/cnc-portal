@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "./Types.sol";
+import "hardhat/console.sol";
 
 contract Voting {
     mapping(uint256 => Types.Proposal[]) public proposalsByTeam; // team id => proposal array
@@ -16,7 +17,25 @@ contract Voting {
         require(_proposal.teamId > 0, "Invalid teamId");
         require(bytes(_proposal.title).length > 0, "Title cannot be empty");
 
-        proposalsByTeam[_proposal.teamId].push(_proposal);
+        Types.Proposal storage newProposal = proposalsByTeam[_proposal.teamId].push();
+        
+        newProposal.id = proposalCount;
+        newProposal.title = _proposal.title;
+        newProposal.description = _proposal.description;
+        newProposal.draftedBy = _proposal.draftedBy;
+        newProposal.isElection = _proposal.isElection;
+        newProposal.isActive = _proposal.isActive;
+        newProposal.teamId = _proposal.teamId;
+
+        for (uint256 i = 0; i < _proposal.candidates.length; i++) {
+            newProposal.candidates.push(_proposal.candidates[i]);
+        }
+
+        for (uint256 i = 0; i < _proposal.voters.length; i++) {
+            newProposal.voters.push(_proposal.voters[i]);
+        }
+
+        newProposal.votes = _proposal.votes;
 
         emit ProposalAdded(proposalCount, _proposal.title, _proposal.description);
         proposalCount++;
@@ -29,7 +48,7 @@ contract Voting {
     function voteDirective(uint256 teamId,uint256 proposalId, uint256 vote) public {
         require(proposalId < proposalCount, "Proposal does not exist");
 
-        Types.Proposal storage proposal = proposalsByTeam[teamId][proposalId];
+        Types.Proposal storage proposal = getProposalById(teamId, proposalId);
         require(proposal.isActive, "Proposal is not active");
 
         Types.Member storage voter = findVoter(proposal, msg.sender);
@@ -46,7 +65,7 @@ contract Voting {
     function voteElection(uint256 teamId, uint256 proposalId, address candidateAddress) public {
         require(proposalId < proposalCount, "Proposal does not exist");
 
-        Types.Proposal storage proposal = proposalsByTeam[teamId][proposalId]; 
+        Types.Proposal storage proposal = getProposalById(teamId, proposalId);
         require(proposal.isActive, "Proposal is not active");
 
         Types.Member storage voter = findVoter(proposal, msg.sender);
@@ -71,7 +90,7 @@ contract Voting {
     function concludeProposal(uint256 teamId,uint256 proposalId) public {
         require(proposalId < proposalCount, "Proposal does not exist");
 
-        Types.Proposal storage proposal = proposalsByTeam[teamId][proposalId]; // Assuming only one proposal per ID
+        Types.Proposal storage proposal = getProposalById(teamId, proposalId);
         proposal.isActive = !proposal.isActive;
 
         emit ProposalConcluded(proposalId, proposal.isActive);
@@ -84,6 +103,15 @@ contract Voting {
             }
         }
         revert("You are not registered to vote in this proposal");
+    }
+    function getProposalById(uint256 teamId, uint256 proposalId) internal view returns (Types.Proposal storage) {
+        Types.Proposal[] storage proposals = proposalsByTeam[teamId];
+        for (uint256 i = 0; i < proposals.length; i++) {
+            if (proposals[i].id == proposalId) {
+                return proposals[i];
+            }
+        }
+        revert("Proposal does not exist");
     }
 
     function recordDirectiveVote(Types.Proposal storage proposal, uint256 vote) internal {
