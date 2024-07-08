@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AddMemberModal.vue > Actions > Should trigger searchUsers on keyup.stop > 
+exports[`AddMemberModal.vue > Emits > Should trigger searchUsers on keyup.stop > 
         [
           [
             {
@@ -22,7 +22,7 @@ exports[`AddMemberModal.vue > Actions > Should trigger searchUsers on keyup.stop
 ]
 `;
 
-exports[`AddMemberModal.vue > Actions > Should trigger searchUsers on keyup.stop > 
+exports[`AddMemberModal.vue > Emits > Should trigger searchUsers on keyup.stop > 
         [
           [
             {
