@@ -1,5 +1,5 @@
 export interface Proposal {
-  id: string
+  id: Number
   title: string
   description: string
   draftedBy: string

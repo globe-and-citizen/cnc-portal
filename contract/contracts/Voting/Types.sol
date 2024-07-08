@@ -22,6 +22,7 @@ library Types {
     }
 
     struct Proposal {
+        uint256 id;
         string title;
         string description;
         string draftedBy;
