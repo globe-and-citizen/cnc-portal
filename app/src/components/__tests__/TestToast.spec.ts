@@ -3,7 +3,6 @@ import { describe, it, expect, vi } from 'vitest'
 import Toast from '../TestToast.vue'
 import { ToastType } from '../../types'
 
-
 describe('Toast Component', () => {
   describe('Render', () => {
     it('renders success toast correctly', () => {
