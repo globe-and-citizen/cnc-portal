@@ -68,8 +68,9 @@
           formData.push({ name: '', address: '', isValid: false })
         }
       "
+      data-test="plus-icon"
     >
-      <IconPlus />
+      <PlusCircleIcon class="size-6 text-green-700" />
     </div>
     <div
       class="w-6 h-6 cursor-pointer"
@@ -80,8 +81,9 @@
           }
         }
       "
+      data-test="minus-icon"
     >
-      <IconMinus />
+      <MinusCircleIcon class="size-6 text-red-700" />
     </div>
   </div>
   <div class="flex justify-center">
@@ -92,8 +94,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { User } from '@/types'
-import IconPlus from '@/components/icons/IconPlus.vue'
-import IconMinus from '@/components/icons/IconMinus.vue'
+// import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/solid'
 import LoadingButton from '../LoadingButton.vue'
 import { isAddress } from 'ethers'
 const emits = defineEmits(['updateForm', 'addMembers', 'searchUsers'])

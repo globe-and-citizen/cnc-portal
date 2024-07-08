@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddMemberForm from '@/components/forms/AddMemberForm.vue'
-import IconPlus from '@/components/icons/IconPlus.vue'
-import IconMinus from '@/components/icons/IconMinus.vue'
+import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '@/components/LoadingButton.vue'
 
 describe('AddMemberModal.vue', () => {
@@ -23,8 +22,8 @@ describe('AddMemberModal.vue', () => {
     },
     global: {
       components: {
-        IconPlus,
-        IconMinus,
+        PlusCircleIcon,
+        MinusCircleIcon,
         LoadingButton
       }
     }
@@ -60,7 +59,7 @@ describe('AddMemberModal.vue', () => {
         }
       })
 
-      const addButton = wrapper.findComponent(IconPlus)
+      const addButton = wrapper.findComponent(PlusCircleIcon)
       await addButton.trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(2)
@@ -77,7 +76,7 @@ describe('AddMemberModal.vue', () => {
           isLoading: false
         }
       })
-      const removeButton = wrapper.findComponent(IconMinus)
+      const removeButton = wrapper.find('[data-test="minus-icon"]')
       await removeButton.trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(1)
