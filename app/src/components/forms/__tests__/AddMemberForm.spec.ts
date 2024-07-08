@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddMemberForm from '@/components/forms/AddMemberForm.vue'
-import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
+// import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '@/components/LoadingButton.vue'
 
-describe('AddMemberModal.vue', () => {
+describe.only('AddMemberModal.vue', () => {
   const formData = [
     { name: 'Hermann', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E', isValid: true }
   ]
@@ -19,15 +19,9 @@ describe('AddMemberModal.vue', () => {
       users,
       isLoading: false,
       showAddMemberForm: true
-    },
-    global: {
-      components: {
-        PlusCircleIcon,
-        MinusCircleIcon,
-        LoadingButton
-      }
     }
   })
+  // Test the rendering of the component
   describe('Render', () => {
     it('renders correctly with initial props', () => {
       expect(wrapper.find('h1').text()).toBe('Add New Member')
@@ -43,12 +37,16 @@ describe('AddMemberModal.vue', () => {
       expect((wrapper.vm as any).formData[0].address).toBe(users[0].address)
     })
   })
+
+  // Test the emitting of events
   describe('Emits', () => {
     it('emits addMembers when add button is clicked', async () => {
       await wrapper.find('button.btn-primary').trigger('click')
       expect(wrapper.emitted('addMembers')).toBeTruthy()
     })
   })
+
+  // The the behavior of the component on user actions
   describe('Actions', () => {
     it('adds a new member input field when clicking the add icon', async () => {
       const wrapper = mount(AddMemberForm, {
@@ -59,7 +57,7 @@ describe('AddMemberModal.vue', () => {
         }
       })
 
-      const addButton = wrapper.findComponent(PlusCircleIcon)
+      const addButton = wrapper.find('[data-test="plus-icon"]')
       await addButton.trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(2)
