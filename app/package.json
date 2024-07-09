@@ -21,9 +21,10 @@
     "format-check": "prettier . --check"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.1.4",
     "@vueuse/core": "^10.9.0",
     "dayjs": "^1.11.10",
-    "ethers": "^6.11.1",
+    "ethers": "^6.13.1",
     "pinia": "^2.1.7",
     "siwe": "^2.1.4",
     "vue": "^3.4.15",
