@@ -4,35 +4,13 @@ import { ref } from 'vue'
 
 const votingService = new VotingService()
 
-export function useCreateVotingContract() {
-  const contractAddress = ref<string | null>(null)
-  const loading = ref(false)
-  const error = ref<any>(null)
-  const isSuccess = ref(false)
-
-  async function deploy(teamId: string) {
-    try {
-      loading.value = true
-      contractAddress.value = await votingService.createVotingContract(teamId)
-      console.log('contractAddress', contractAddress.value)
-      isSuccess.value = true
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: deploy, isLoading: loading, isSuccess, error, contractAddress }
-}
-
 export function useAddProposal() {
   const transaction = ref<any>(null)
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function addProposal(votingAddress: string, proposal: Partial<Proposal>) {
+  async function addProposal(proposal: Partial<Proposal>) {
     try {
       loading.value = true
       proposal.votes = {
@@ -45,8 +23,13 @@ export function useAddProposal() {
         voter.isVoted = false
         voter.isEligible = true
       })
+      if (proposal.isElection) {
+        proposal.candidates?.map((candidate) => {
+          candidate.votes = 0
+        })
+      }
 
-      transaction.value = await votingService.addProposal(votingAddress, proposal)
+      transaction.value = await votingService.addProposal(proposal)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -59,15 +42,15 @@ export function useAddProposal() {
 }
 
 export function useGetProposals() {
-  const proposals = ref<any[]>([])
+  const proposals = ref<Proposal[]>([])
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function getProposals(votingAddress: string) {
+  async function getProposals(teamId: Number) {
     try {
       loading.value = true
-      proposals.value = await votingService.getProposals(votingAddress)
+      proposals.value = await votingService.getProposals(teamId)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -84,10 +67,10 @@ export function useConcludeProposal() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function concludeProposal(votingAddress: string, proposalId: number) {
+  async function concludeProposal(teamId: Number, proposalId: Number) {
     try {
       loading.value = true
-      transaction.value = await votingService.concludeProposal(votingAddress, proposalId)
+      transaction.value = await votingService.concludeProposal(teamId, proposalId)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -104,10 +87,10 @@ export function useVoteDirective() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function voteDirective(votingAddress: string, proposalId: number, directive: number) {
+  async function voteDirective(teamId: Number, proposalId: Number, directive: number) {
     try {
       loading.value = true
-      transaction.value = await votingService.voteDirective(votingAddress, proposalId, directive)
+      transaction.value = await votingService.voteDirective(teamId, proposalId, directive)
       isSuccess.value = true
     } catch (err) {
       error.value = err
@@ -124,14 +107,10 @@ export function useVoteElection() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function voteElection(votingAddress: string, electionId: number, candidateAddress: string) {
+  async function voteElection(teamId: Number, proposalId: Number, candidateAddress: string) {
     try {
       loading.value = true
-      transaction.value = await votingService.voteElection(
-        votingAddress,
-        electionId,
-        candidateAddress
-      )
+      transaction.value = await votingService.voteElection(teamId, proposalId, candidateAddress)
       isSuccess.value = true
     } catch (err) {
       error.value = err
