@@ -27,19 +27,19 @@
       <li class="menu-title">Title</li>
       <li>
         <RouterLink to="/">
-          <IconHome />
+          <HomeIcon class="size-6" />
           Dashboard</RouterLink
         >
       </li>
       <li>
         <RouterLink to="/teams">
-          <IconUsers />
+          <UsersIcon class="size-6" />
           Teams
         </RouterLink>
       </li>
       <li>
         <RouterLink to="/transactions">
-          <IconNote />
+          <ClipboardDocumentListIcon class="size-6" />
           Transactions
         </RouterLink>
       </li>
@@ -56,9 +56,7 @@ li {
 </style>
 
 <script setup lang="ts">
-import IconHome from '@/components/icons/IconHome.vue'
-import IconUsers from '@/components/icons/IconUsers.vue'
-import IconNote from '@/components/icons/IconNote.vue'
+import { HomeIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
 interface User {
