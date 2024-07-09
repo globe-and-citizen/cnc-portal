@@ -89,7 +89,7 @@
           <span>
             {{ candidate.candidateAddress }}
           </span>
-          <IconMinus
+          <MinusCircleIcon
             class="w-4 cursor-pointer"
             @click="() => newProposalInput.candidates.splice(index, 1)"
           />
@@ -116,7 +116,7 @@ import LoadingButton from '../LoadingButton.vue'
 import { ref } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useErrorHandler } from '@/composables/errorHandler'
-import IconMinus from '../icons/IconMinus.vue'
+import { MinusCircleIcon } from '@heroicons/vue/24/solid'
 
 const emits = defineEmits(['createProposal'])
 defineProps<{

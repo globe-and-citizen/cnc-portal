@@ -25,8 +25,8 @@ describe('ProposalCard.vue', () => {
 
     isElection: true,
     candidates: [
-      { name: 'Ravioli', address: '0x1', votes: 0 },
-      { name: 'Herm', address: '0x2', votes: 1 }
+      { name: 'Ravioli', candidateAddress: '0x1', votes: 0 },
+      { name: 'Herm', candidateAddress: '0x2', votes: 1 }
     ]
   }
   describe('render', () => {
