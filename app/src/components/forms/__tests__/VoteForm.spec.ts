@@ -1,4 +1,4 @@
-import { it, expect, describe, vi, beforeEach } from 'vitest'
+import { it, expect, describe, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import VoteForm from '../VoteForm.vue'
 vi.mock('vue-router', () => ({
@@ -40,65 +40,67 @@ describe('VoteForm.vue', () => {
       { name: 'Herm', candidateAddress: '0x2', votes: 1 }
     ]
   }
-
-  it('renders form correctly for election proposal', () => {
-    const wrapper = mount(VoteForm, {
-      props: { proposal: proposalElection, isLoading: false }
+  describe('Renders ', () => {
+    it('renders form correctly for election proposal', () => {
+      const wrapper = mount(VoteForm, {
+        props: { proposal: proposalElection, isLoading: false }
+      })
+      const candidates = wrapper.findAll('.form-control')
+      expect(candidates.length).toBe(proposalElection.candidates.length)
+      proposalElection.candidates.forEach((candidate, index) => {
+        expect(candidates[index].text()).toContain(candidate.name)
+        expect(candidates[index].text()).toContain(candidate.candidateAddress)
+      })
     })
-    const candidates = wrapper.findAll('.form-control')
-    expect(candidates.length).toBe(proposalElection.candidates.length)
-    proposalElection.candidates.forEach((candidate, index) => {
-      expect(candidates[index].text()).toContain(candidate.name)
-      expect(candidates[index].text()).toContain(candidate.candidateAddress)
+
+    it('renders form correctly for non-election proposal', () => {
+      const wrapper = mount(VoteForm, {
+        props: { proposal: proposalDirective, isLoading: false }
+      })
+      const options = wrapper.findAll('.form-control')
+      expect(options.length).toBe(3) // Yes, No, Abstain
+      expect(options[0].text()).toContain('Yes')
+      expect(options[1].text()).toContain('No')
+      expect(options[2].text()).toContain('Abstain')
     })
   })
+  describe('Actions', () => {
+    it('casts vote for election proposal', async () => {
+      const wrapper = mount(VoteForm, {
+        props: { proposal: proposalElection, isLoading: false }
+      })
+      const radioButtons = wrapper.findAll('input[type="radio"]')
+      await radioButtons[0].setValue() // Select first candidate
+      await wrapper.find('button').trigger('click')
 
-  it('renders form correctly for non-election proposal', () => {
-    const wrapper = mount(VoteForm, {
-      props: { proposal: proposalDirective, isLoading: false }
+      const emitted = wrapper.emitted()
+      expect(emitted.voteElection).toBeTruthy()
+      expect(emitted.voteElection[0]).toEqual([
+        {
+          teamId: 0,
+          proposalId: 1,
+          candidateAddress: proposalElection.candidates[0].candidateAddress
+        }
+      ])
     })
-    const options = wrapper.findAll('.form-control')
-    expect(options.length).toBe(3) // Yes, No, Abstain
-    expect(options[0].text()).toContain('Yes')
-    expect(options[1].text()).toContain('No')
-    expect(options[2].text()).toContain('Abstain')
-  })
 
-  it('casts vote for election proposal', async () => {
-    const wrapper = mount(VoteForm, {
-      props: { proposal: proposalElection, isLoading: false }
+    it('casts vote for non-election proposal', async () => {
+      const wrapper = mount(VoteForm, {
+        props: { proposal: proposalDirective, isLoading: false }
+      })
+      const radioButtons = wrapper.findAll('input[type="radio"]')
+      await radioButtons[0].setValue() // Select "Yes" option
+      await wrapper.find('button').trigger('click')
+
+      const emitted = wrapper.emitted()
+      expect(emitted.voteDirective).toBeTruthy()
+      expect(emitted.voteDirective[0]).toEqual([
+        {
+          teamId: 0,
+          proposalId: 0,
+          option: 1
+        }
+      ])
     })
-    const radioButtons = wrapper.findAll('input[type="radio"]')
-    await radioButtons[0].setValue() // Select first candidate
-    await wrapper.find('button').trigger('click')
-
-    const emitted = wrapper.emitted()
-    expect(emitted.voteElection).toBeTruthy()
-    expect(emitted.voteElection[0]).toEqual([
-      {
-        teamId: 0,
-        proposalId: 1,
-        candidateAddress: proposalElection.candidates[0].candidateAddress
-      }
-    ])
-  })
-
-  it('casts vote for non-election proposal', async () => {
-    const wrapper = mount(VoteForm, {
-      props: { proposal: proposalDirective, isLoading: false }
-    })
-    const radioButtons = wrapper.findAll('input[type="radio"]')
-    await radioButtons[0].setValue() // Select "Yes" option
-    await wrapper.find('button').trigger('click')
-
-    const emitted = wrapper.emitted()
-    expect(emitted.voteDirective).toBeTruthy()
-    expect(emitted.voteDirective[0]).toEqual([
-      {
-        teamId: 0,
-        proposalId: 0,
-        option: 1
-      }
-    ])
   })
 })
