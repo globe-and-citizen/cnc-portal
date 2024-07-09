@@ -1,8 +1,8 @@
 import { it, expect, describe } from 'vitest'
 import { mount } from '@vue/test-utils'
-import PollDetails from '../PollDetails.vue'
+import ProposalDetails from '../ProposalDetails.vue'
 
-describe('PollDetails.vue', () => {
+describe('ProposalDetails.vue', () => {
   const proposalDirective = {
     title: 'Directive',
     description:
@@ -28,7 +28,7 @@ describe('PollDetails.vue', () => {
   }
 
   it('renders proposal title and description correctly', () => {
-    const wrapper = mount(PollDetails, {
+    const wrapper = mount(ProposalDetails, {
       props: { proposal: proposalDirective }
     })
     expect(wrapper.find('h2').text()).toBe(proposalDirective.title)
@@ -36,7 +36,7 @@ describe('PollDetails.vue', () => {
   })
 
   it('renders vote details correctly for non-election proposal', () => {
-    const wrapper = mount(PollDetails, {
+    const wrapper = mount(ProposalDetails, {
       props: { proposal: proposalDirective }
     })
     const voteDetails = wrapper.findAll('.text-sm')
@@ -46,7 +46,7 @@ describe('PollDetails.vue', () => {
   })
 
   it('renders candidate details correctly for election proposal', () => {
-    const wrapper = mount(PollDetails, {
+    const wrapper = mount(ProposalDetails, {
       props: { proposal: proposalElection }
     })
     const candidateDetails = wrapper.findAll('.text-sm')
