@@ -1,14 +1,15 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import BANK_ABI from '../artifacts/abi/bank.json'
 import PROXY_ABI from '../artifacts/abi/proxy.json'
-import type { Contract } from 'ethers'
+import { type Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { BANK_IMPL_ADDRESS } from '@/constant'
+import { BANK_IMPL_ADDRESS, TIPS_ADDRESS } from '@/constant'
 import { PROXY_BYTECODE } from '@/artifacts/bytecode/proxy'
 import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
+
 export interface IBankService {
   web3Library: IWeb3Library
   createBankContract(id: string): Promise<string>
@@ -16,6 +17,9 @@ export interface IBankService {
   pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
   sendTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
   getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]>
+  isPaused(bankAddress: string): Promise<boolean>
+  pause(bankAddress: string): Promise<any>
+  unpause(bankAddress: string): Promise<any>
 }
 
 export class BankService implements IBankService {
@@ -68,6 +72,32 @@ export class BankService implements IBankService {
     return await contractService.getEvents(type)
   }
 
+  async isPaused(bankAddress: string): Promise<boolean> {
+    const contractService = this.getContractService(bankAddress)
+    const bank = await contractService.getContract()
+    const paused = await this.web3Library.call(bank, bankAddress, 'paused')
+
+    return paused[0]
+  }
+
+  async pause(bankAddress: string): Promise<any> {
+    const contractService = this.getContractService(bankAddress)
+    const bank = await contractService.getContract()
+    const tx = await bank.pause()
+    await tx.wait()
+
+    return tx
+  }
+
+  async unpause(bankAddress: string): Promise<any> {
+    const contractService = this.getContractService(bankAddress)
+    const bank = await contractService.getContract()
+    const tx = await bank.unpause()
+    await tx.wait()
+
+    return tx
+  }
+
   async getContract(bankAddress: string): Promise<Contract> {
     const contractService = this.getContractService(bankAddress)
 
@@ -80,13 +110,16 @@ export class BankService implements IBankService {
 
   private async deployBankContract(): Promise<string> {
     const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
+    const bankImplementation = await this.web3Library.getContract(BANK_IMPL_ADDRESS, BANK_ABI)
     const proxyDeployment = await proxyFactory.deploy(
       BANK_IMPL_ADDRESS,
       await this.web3Library.getAddress(),
-      '0x'
+      bankImplementation.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
     )
     const proxy = await proxyDeployment.waitForDeployment()
-    await proxyDeployment.waitForDeployment()
+    const proxyContract = await this.web3Library.getContract(await proxy.getAddress(), BANK_ABI)
+    const tx = await proxyContract.initialize(TIPS_ADDRESS)
+    await tx.wait()
 
     return await proxy.getAddress()
   }

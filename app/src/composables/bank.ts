@@ -123,3 +123,45 @@ export function useBankEvents(bankAddress: string) {
 
   return { events, getEvents, loading, error }
 }
+
+export function useBankPause(bankAddress: string): IContractTransactionFunction {
+  const transaction = ref<any>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function pause() {
+    try {
+      loading.value = true
+      transaction.value = await bankService.pause(bankAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: pause, isLoading: loading, isSuccess, error, transaction }
+}
+
+export function useBankUnpause(bankAddress: string): IContractTransactionFunction {
+  const transaction = ref<any>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function pause() {
+    try {
+      loading.value = true
+      transaction.value = await bankService.unpause(bankAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: pause, isLoading: loading, isSuccess, error, transaction }
+}
