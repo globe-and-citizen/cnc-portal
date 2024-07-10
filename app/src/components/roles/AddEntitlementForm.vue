@@ -38,6 +38,7 @@ watch(
   (newType, oldType) => {
     if (!entitlement.value.isInit && newType !== oldType) {
       console.log('reset!!!')
+      console.log('newType: ', newType, ', oldType: ', oldType)
       console.log('entitlement.value: ', entitlement.value)
       entitlement.value.rule = ''
     } else entitlement.value.isInit = false
