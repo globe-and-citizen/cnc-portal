@@ -21,23 +21,23 @@ describe.only('BankV2', () => {
     ])
 
     // deploy admin beacon as superadmin
-    const AdminBeaconFactory = await ethers.getContractFactory('AdminBeacon')
-    const adminBeacon = await AdminBeaconFactory.connect(superAdmin).deploy(
+    const BeaconFactory = await ethers.getContractFactory('Beacon')
+    const beacon = await BeaconFactory.connect(superAdmin).deploy(
       await bankImplementation.getAddress()
     )
-    await adminBeacon.waitForDeployment()
+    await beacon.waitForDeployment()
 
     // deploy bank beacon proxy 1
     const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
     const bankBeaconProxy1 = await BankBeaconProxy.connect(user1).deploy(
-      await adminBeacon.getAddress(),
+      await beacon.getAddress(),
       encodedInitialize
     )
     await bankBeaconProxy1.waitForDeployment()
 
     // deploy bank beacon proxy 2
     const bankBeaconProxy2 = await BankBeaconProxy.connect(user2).deploy(
-      await adminBeacon.getAddress(),
+      await beacon.getAddress(),
       encodedInitialize
     )
     await bankBeaconProxy2.waitForDeployment()
@@ -50,7 +50,7 @@ describe.only('BankV2', () => {
       tipsProxy,
       bankBeaconProxy1,
       bankBeaconProxy2,
-      adminBeacon,
+      beacon,
       bankImplementation,
       encodedInitialize
     }
@@ -58,19 +58,19 @@ describe.only('BankV2', () => {
 
   context('deployment', () => {
     it('should deploy correctly', async () => {
-      const { superAdmin, adminBeacon, bankImplementation } = await loadFixture(deployFixture)
+      const { superAdmin, beacon, bankImplementation } = await loadFixture(deployFixture)
 
-      expect(await adminBeacon.owner()).to.eq(superAdmin.address)
-      expect(await adminBeacon.implementation()).to.eq(await bankImplementation.getAddress())
+      expect(await beacon.owner()).to.eq(superAdmin.address)
+      expect(await beacon.implementation()).to.eq(await bankImplementation.getAddress())
     })
 
     it('should deploy beacon proxy correctly', async () => {
-      const { adminBeacon, user3, encodedInitialize, bankImplementation } =
+      const { beacon, user3, encodedInitialize, bankImplementation } =
         await loadFixture(deployFixture)
 
       const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
       const bankBeaconProxy1 = await BankBeaconProxy.connect(user3).deploy(
-        await adminBeacon.getAddress(),
+        await beacon.getAddress(),
         encodedInitialize
       )
       await bankBeaconProxy1.waitForDeployment()
@@ -85,34 +85,34 @@ describe.only('BankV2', () => {
     })
 
     it('should set superAdmin correctly', async () => {
-      const { superAdmin, adminBeacon } = await loadFixture(deployFixture)
-      expect(await adminBeacon.owner()).to.eq(superAdmin.address)
+      const { superAdmin, beacon } = await loadFixture(deployFixture)
+      expect(await beacon.owner()).to.eq(superAdmin.address)
     })
   })
 
   describe('upgrade', () => {
     it('should upgrade correctly', async () => {
-      const { superAdmin, adminBeacon } = await loadFixture(deployFixture)
+      const { superAdmin, beacon } = await loadFixture(deployFixture)
 
       // upgrade to new address
       const BankImplementationFactory = await ethers.getContractFactory('BankV2')
       const newImpl = await BankImplementationFactory.connect(superAdmin).deploy()
       await newImpl.waitForDeployment()
-      const tx = await adminBeacon.connect(superAdmin).upgradeTo(await newImpl.getAddress())
+      const tx = await beacon.connect(superAdmin).upgradeTo(await newImpl.getAddress())
       await tx.wait()
 
-      expect(await adminBeacon.implementation()).to.eq(await newImpl.getAddress())
+      expect(await beacon.implementation()).to.eq(await newImpl.getAddress())
     })
 
     it('shouldnot upgrade if not admin', async () => {
-      const { user1, adminBeacon } = await loadFixture(deployFixture)
+      const { user1, beacon } = await loadFixture(deployFixture)
 
       const BankImplementationFactory = await ethers.getContractFactory('BankV2')
       const newImpl = await BankImplementationFactory.connect(user1).deploy()
       await newImpl.waitForDeployment()
       await expect(
-        adminBeacon.connect(user1).upgradeTo(await newImpl.getAddress())
-      ).to.be.revertedWithCustomError(adminBeacon, 'OwnableUnauthorizedAccount')
+        beacon.connect(user1).upgradeTo(await newImpl.getAddress())
+      ).to.be.revertedWithCustomError(beacon, 'OwnableUnauthorizedAccount')
     })
   })
 
