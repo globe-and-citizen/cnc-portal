@@ -2,12 +2,12 @@ import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 
 const bankBeaconModule = buildModule('BankBeaconModule', (m) => {
   const beaconAdmin = m.getAccount(0)
-  const bankContractImplementation = m.contract('BankV2')
-  const beacon = m.contract('Beacon', [bankContractImplementation], {
-    from: beaconAdmin,
+  const bankImplementation = m.contract('BankV2')
+  const beacon = m.contract('Beacon', [bankImplementation], {
+    from: beaconAdmin
   })
 
-  return { beacon }
+  return { beacon, bankImplementation }
 })
 
 export default bankBeaconModule

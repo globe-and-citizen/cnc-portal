@@ -2,7 +2,7 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
-describe.only('BankV2', () => {
+describe('BankV2', () => {
   async function deployFixture() {
     const [superAdmin, user1, user2, user3] = await ethers.getSigners()
 
