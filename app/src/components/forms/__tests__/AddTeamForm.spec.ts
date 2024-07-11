@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddTeamModal from '@/components/forms/AddTeamForm.vue'
-import IconPlus from '@/components/icons/IconPlus.vue'
-import IconMinus from '@/components/icons/IconMinus.vue'
+import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { TeamInput, User } from '@/types'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
@@ -27,8 +26,8 @@ describe('AddTeamModal.vue', () => {
     },
     global: {
       components: {
-        IconPlus,
-        IconMinus,
+        PlusCircleIcon,
+        MinusCircleIcon,
         LoadingButton
       }
     },
@@ -47,10 +46,10 @@ describe('AddTeamModal.vue', () => {
       expect(wrapper.find('.dropdown-open').exists()).toBe(true)
     })
     it('renders icon plus', () => {
-      expect(wrapper.findComponent(IconPlus).exists()).toBe(true)
+      expect(wrapper.findComponent(PlusCircleIcon).exists()).toBe(true)
     })
     it('renders icon minus', () => {
-      expect(wrapper.findComponent(IconMinus).exists()).toBe(true)
+      expect(wrapper.findComponent(MinusCircleIcon).exists()).toBe(true)
     })
 
     it('updates team members when a user is selected from dropdown', async () => {
@@ -67,17 +66,17 @@ describe('AddTeamModal.vue', () => {
   })
   describe('Actions', () => {
     it('adds a new member input field when clicking the add icon', async () => {
-      const addButton = wrapper.findComponent(IconPlus)
+      const addButton = wrapper.findComponent(PlusCircleIcon)
       await addButton.trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(1)
     })
 
     it('removes the last member input field when clicking the remove icon', async () => {
-      const addButton = wrapper.findComponent(IconPlus)
+      const addButton = wrapper.findComponent(PlusCircleIcon)
       await addButton.trigger('click') // Add a member
 
-      const removeButton = wrapper.findComponent(IconMinus)
+      const removeButton = wrapper.findComponent(MinusCircleIcon)
       await removeButton.trigger('click') // Remove a member
 
       expect(wrapper.findAll('.input-group').length).toBe(1)

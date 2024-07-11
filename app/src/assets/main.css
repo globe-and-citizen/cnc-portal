@@ -10,7 +10,7 @@
 
 * {
   font-family: 'public sans', sans-serif;
-  color: var(--Text-Light-Primary, #212b36);
+  /* color: var(--Text-Light-Primary, #212b36); */
   box-sizing: border-box;
 }
 

@@ -10,43 +10,39 @@ describe('TabNavigation', () => {
       }
     })
 
-    const tabInputs = wrapper.findAll('input[type="radio"]')
-    expect(tabInputs.length).toBe(3)
+    const tabs = wrapper.findAll('[role="tab"]')
+    expect(tabs.length).toBe(3)
   })
 
   it('sets the initial active tab correctly', () => {
     const wrapper = mount(TabNavigation, {
       props: {
         tabs: ['Tab 1', 'Tab 2', 'Tab 3'],
-        initialActiveTab: 1
+        modelValue: 1
       }
     })
 
-    const activeTabInput = wrapper.find('input[type="radio"]:checked')
-    expect(activeTabInput.element.getAttribute('aria-label')).toBe('Tab 2')
+    const activeTab = wrapper.find('[role="tab"].tab-active')
+    expect(activeTab.text()).toBe('Tab 2')
   })
 
-  it('changes the active tab when a different tab is selected', async () => {
+  it('changes the active tab when a different tab is clicked', async () => {
     const wrapper = mount(TabNavigation, {
       props: {
         tabs: ['Tab 1', 'Tab 2', 'Tab 3']
       }
     })
 
-    const tabInputs = wrapper.findAll('input[type="radio"]')
+    const tabs = wrapper.findAll('[role="tab"]')
 
     // Initially the first tab should be active
-    expect(wrapper.find('input[type="radio"]:checked').element.getAttribute('aria-label')).toBe(
-      'Tab 1'
-    )
+    expect(wrapper.find('[role="tab"].tab-active').text()).toBe('Tab 1')
 
-    // Select the second tab
-    await (tabInputs[1] as any).setChecked('click')
+    // Click the second tab
+    await tabs[1].trigger('click')
 
     // Check if the second tab is now active
-    expect(wrapper.find('input[type="radio"]:checked').element.getAttribute('aria-label')).toBe(
-      'Tab 2'
-    )
+    expect(wrapper.find('[role="tab"].tab-active').text()).toBe('Tab 2')
   })
 
   it('renders slot content for each tab', async () => {
@@ -61,19 +57,19 @@ describe('TabNavigation', () => {
       }
     })
 
-    const tabInputs = wrapper.findAll('input[type="radio"]')
+    const tabs = wrapper.findAll('[role="tab"]')
 
     // Initially the first tab content should be visible
     expect(wrapper.find('.slot-content-0').text()).toBe('Content for Tab 1')
 
-    // Select the second tab
-    await tabInputs[1].trigger('click')
+    // Click the second tab
+    await tabs[1].trigger('click')
 
     // Check if the second tab content is now visible
     expect(wrapper.find('.slot-content-1').text()).toBe('Content for Tab 2')
 
-    // Select the third tab
-    await tabInputs[2].trigger('click')
+    // Click the third tab
+    await tabs[2].trigger('click')
 
     // Check if the third tab content is now visible
     expect(wrapper.find('.slot-content-2').text()).toBe('Content for Tab 3')
