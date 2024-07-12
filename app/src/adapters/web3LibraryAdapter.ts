@@ -18,7 +18,8 @@ export interface IWeb3Library {
   parseEther(value: string): bigint
   formatEther(value: bigint): string
   sendTransaction(to: string, amount: string): Promise<any>
-  call(contract: Contract, to: string, functionName: string, ...args: []): Promise<any>
+  send(to: string, value?: string | null, data?: string | null): Promise<any>
+  call(to: string, data?: string | null): Promise<any>
 }
 
 const metaMaskUtil = new MetaMaskUtil()
@@ -105,6 +106,18 @@ export class EthersJsAdapter implements IWeb3Library {
     return new ethers.ContractFactory(abi, bytecode, await this.signer)
   }
 
+  async send(to: string, value?: string | null, data?: string | null): Promise<any> {
+    if (!this.signer) {
+      await this.connectWallet()
+    }
+
+    return ((await this.signer) as Signer).sendTransaction({
+      to,
+      value: value ? this.parseEther(value) : null,
+      data: data
+    })
+  }
+
   async sendTransaction(to: string, amount: string): Promise<any> {
     if (!this.signer) {
       await this.connectWallet()
@@ -118,14 +131,14 @@ export class EthersJsAdapter implements IWeb3Library {
     return tx
   }
 
-  async call(contract: Contract, to: string, functionName: string, ...args: []): Promise<any> {
+  async call(to: string, data?: string): Promise<any> {
     if (!this.signer) {
       await this.connectWallet()
     }
 
-    await (this.signer as Signer).call({
+    return await ((await this.signer) as Signer).call({
       to: to,
-      data: contract.interface.encodeFunctionData(functionName, args)
+      data: data
     })
   }
 

@@ -9,6 +9,7 @@ import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
+import { BANK_BYTECODE } from '@/artifacts/bytecode/bank'
 
 export interface IBankService {
   web3Library: IWeb3Library
@@ -75,24 +76,33 @@ export class BankService implements IBankService {
   async isPaused(bankAddress: string): Promise<boolean> {
     const contractService = this.getContractService(bankAddress)
     const bank = await contractService.getContract()
-    const paused = await this.web3Library.call(bank, bankAddress, 'paused')
+    const pausedFunctionSignature = bank.interface.encodeFunctionData('paused')
+    const result = await this.web3Library.call(bankAddress, pausedFunctionSignature)
+    const paused = bank.interface.decodeFunctionResult('paused', result)[0]
 
-    return paused[0]
+    return paused
   }
 
   async pause(bankAddress: string): Promise<any> {
-    const contractService = this.getContractService(bankAddress)
+    const contractService = this.getContractService(BANK_IMPL_ADDRESS)
     const bank = await contractService.getContract()
-    const tx = await bank.pause()
-    await tx.wait()
+    try {
+      const pauseFunctionSignature = bank.interface.encodeFunctionData('pause')
+      const tx = await this.web3Library.send(bankAddress, null, pauseFunctionSignature)
+      await tx.wait()
 
-    return tx
+      return tx
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
   }
 
   async unpause(bankAddress: string): Promise<any> {
     const contractService = this.getContractService(bankAddress)
     const bank = await contractService.getContract()
-    const tx = await bank.unpause()
+    const unpauseFunctionSignature = bank.interface.encodeFunctionData('unpause')
+    const tx = await this.web3Library.send(bankAddress, null, unpauseFunctionSignature)
     await tx.wait()
 
     return tx
@@ -109,18 +119,26 @@ export class BankService implements IBankService {
   }
 
   private async deployBankContract(): Promise<string> {
-    const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
-    const bankImplementation = await this.web3Library.getContract(BANK_IMPL_ADDRESS, BANK_ABI)
-    const proxyDeployment = await proxyFactory.deploy(
-      BANK_IMPL_ADDRESS,
-      await this.web3Library.getAddress(),
-      bankImplementation.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
-    )
-    const proxy = await proxyDeployment.waitForDeployment()
-    const proxyContract = await this.web3Library.getContract(await proxy.getAddress(), BANK_ABI)
-    const tx = await proxyContract.initialize(TIPS_ADDRESS)
-    await tx.wait()
+    try {
+      const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
+      const bankFactory = await this.web3Library.getFactoryContract(BANK_ABI, BANK_BYTECODE)
+      const proxyDeployment = await proxyFactory.deploy(
+        BANK_IMPL_ADDRESS,
+        await this.web3Library.getAddress(),
+        bankFactory.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
+      )
+      console.log(
+        BANK_IMPL_ADDRESS,
+        await this.web3Library.getAddress(),
+        bankFactory.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
+      )
+      const proxy = await proxyDeployment.waitForDeployment()
+      console.log(proxy.deploymentTransaction())
 
-    return await proxy.getAddress()
+      return await proxy.getAddress()
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
   }
 }
