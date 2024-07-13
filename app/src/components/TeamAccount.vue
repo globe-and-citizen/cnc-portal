@@ -54,14 +54,12 @@
       </div>
     </div>
   </div>
-  <PauseContract :team-address="team.bankAddress!"/>
 </template>
 <script setup lang="ts">
 import type { Team } from '@/types'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import PauseContract from '@/components/bank-management/PauseContract.vue'
 import { useUserDataStore } from '@/stores/user'
 const tipAmount = ref(0)
 

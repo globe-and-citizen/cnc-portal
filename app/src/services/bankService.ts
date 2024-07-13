@@ -18,9 +18,6 @@ export interface IBankService {
   pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
   sendTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
   getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]>
-  isPaused(bankAddress: string): Promise<boolean>
-  pause(bankAddress: string): Promise<any>
-  unpause(bankAddress: string): Promise<any>
 }
 
 export class BankService implements IBankService {
@@ -71,32 +68,6 @@ export class BankService implements IBankService {
     const contractService = this.getContractService(bankAddress)
 
     return await contractService.getEvents(type)
-  }
-
-  async isPaused(bankAddress: string): Promise<boolean> {
-    const contractService = this.getContractService(bankAddress)
-    const bank = await contractService.getContract()
-    const paused = await bank.paused()
-
-    return paused
-  }
-
-  async pause(bankAddress: string): Promise<any> {
-    const contractService = this.getContractService(bankAddress)
-    const bank = await contractService.getContract()
-    const tx = await bank.unpause()
-    await tx.wait()
-
-    return tx
-  }
-
-  async unpause(bankAddress: string): Promise<any> {
-    const contractService = this.getContractService(bankAddress)
-    const bank = await contractService.getContract()
-    const tx = await bank.unpause()
-    await tx.wait()
-
-    return tx
   }
 
   async getContract(bankAddress: string): Promise<Contract> {
