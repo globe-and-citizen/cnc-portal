@@ -55,7 +55,8 @@ export class SIWEAuthService<T> extends AuthService implements IAuthService<T> {
     const message = await this.messageCreator.create()
     const signature = await this.web3Library.requestSign(message)
     const token = await this.authAPI.verifyPayloadAndGetToken({ signature, message }, 'siwe')
-    useStorage('authToken', token)
+    const _token = useStorage('authToken', token)
+    _token.value = token
 
     return token // For demonstration purposes only
   }
