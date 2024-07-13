@@ -9,7 +9,6 @@ import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
-import { BANK_BYTECODE } from '@/artifacts/bytecode/bank'
 
 export interface IBankService {
   web3Library: IWeb3Library
@@ -82,11 +81,11 @@ export class BankService implements IBankService {
 
   private async deployBankContract(): Promise<string> {
     const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
-    const bankFactory = await this.web3Library.getFactoryContract(BANK_ABI, BANK_BYTECODE)
+    const bankImplementation = await this.getContract(BANK_IMPL_ADDRESS)
     const proxyDeployment = await proxyFactory.deploy(
       BANK_IMPL_ADDRESS,
       await this.web3Library.getAddress(),
-      bankFactory.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
+      bankImplementation.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
     )
     const proxy = await proxyDeployment.waitForDeployment()
 
