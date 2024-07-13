@@ -76,33 +76,24 @@ export class BankService implements IBankService {
   async isPaused(bankAddress: string): Promise<boolean> {
     const contractService = this.getContractService(bankAddress)
     const bank = await contractService.getContract()
-    const pausedFunctionSignature = bank.interface.encodeFunctionData('paused')
-    const result = await this.web3Library.call(bankAddress, pausedFunctionSignature)
-    const paused = bank.interface.decodeFunctionResult('paused', result)[0]
+    const paused = await bank.paused()
 
     return paused
   }
 
   async pause(bankAddress: string): Promise<any> {
-    const contractService = this.getContractService(BANK_IMPL_ADDRESS)
+    const contractService = this.getContractService(bankAddress)
     const bank = await contractService.getContract()
-    try {
-      const pauseFunctionSignature = bank.interface.encodeFunctionData('pause')
-      const tx = await this.web3Library.send(bankAddress, null, pauseFunctionSignature)
-      await tx.wait()
+    const tx = await bank.unpause()
+    await tx.wait()
 
-      return tx
-    } catch (error) {
-      console.log(error)
-      throw error
-    }
+    return tx
   }
 
   async unpause(bankAddress: string): Promise<any> {
     const contractService = this.getContractService(bankAddress)
     const bank = await contractService.getContract()
-    const unpauseFunctionSignature = bank.interface.encodeFunctionData('unpause')
-    const tx = await this.web3Library.send(bankAddress, null, unpauseFunctionSignature)
+    const tx = await bank.unpause()
     await tx.wait()
 
     return tx
@@ -119,26 +110,15 @@ export class BankService implements IBankService {
   }
 
   private async deployBankContract(): Promise<string> {
-    try {
-      const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
-      const bankFactory = await this.web3Library.getFactoryContract(BANK_ABI, BANK_BYTECODE)
-      const proxyDeployment = await proxyFactory.deploy(
-        BANK_IMPL_ADDRESS,
-        await this.web3Library.getAddress(),
-        bankFactory.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
-      )
-      console.log(
-        BANK_IMPL_ADDRESS,
-        await this.web3Library.getAddress(),
-        bankFactory.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
-      )
-      const proxy = await proxyDeployment.waitForDeployment()
-      console.log(proxy.deploymentTransaction())
+    const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
+    const bankFactory = await this.web3Library.getFactoryContract(BANK_ABI, BANK_BYTECODE)
+    const proxyDeployment = await proxyFactory.deploy(
+      BANK_IMPL_ADDRESS,
+      await this.web3Library.getAddress(),
+      bankFactory.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
+    )
+    const proxy = await proxyDeployment.waitForDeployment()
 
-      return await proxy.getAddress()
-    } catch (error) {
-      console.log(error)
-      throw error
-    }
+    return await proxy.getAddress()
   }
 }
