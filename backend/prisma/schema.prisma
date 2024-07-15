@@ -51,6 +51,7 @@ model Notification {
 model RoleCategory {
   id           Int           @id @default(autoincrement())
   name         String        @unique
+  description  String?
   roles        Role[]
   entitlements Entitlement[]
 }

@@ -8,6 +8,7 @@ import teamRoutes from "../routes/teamRoutes";
 import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 import notificationRoutes from "../routes/notificationRoute";
+import roleRoutes from "../routes/roleRoutes";
 //#endregion routing modules
 
 import { authorizeUser } from "../middleware/authMiddleware";
@@ -29,6 +30,7 @@ class Server {
       user: "/api/user/",
       auth: "/api/auth/",
       notification: "/api/notification/",
+      role: "/api/role/",
       apidocs: "/api-docs",
     };
     this.port = parseInt(process.env.PORT as string) || 3000;
@@ -67,6 +69,7 @@ class Server {
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
     this.app.use(this.paths.notification, notificationRoutes);
+    this.app.use(this.paths.role, roleRoutes)
     this.app.get(this.paths.apidocs, (req, res) => {
       res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
     });
