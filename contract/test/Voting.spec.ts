@@ -11,6 +11,7 @@ describe('Voting Contract', () => {
   let member3: SignerWithAddress
   let member4: SignerWithAddress
   let member5: SignerWithAddress
+  let member6: SignerWithAddress
   let notMember: SignerWithAddress
 
   const candidates = [
@@ -34,7 +35,8 @@ describe('Voting Contract', () => {
 
   context('Deploying Voting Contract', () => {
     before(async () => {
-      ;[owner, member1, member2, notMember, member3, member4, member5] = await ethers.getSigners()
+      ;[owner, member1, member2, notMember, member3, member4, member5, member6] =
+        await ethers.getSigners()
       await deployContracts()
     })
 
@@ -78,6 +80,12 @@ describe('Voting Contract', () => {
             {
               name: 'Member 5',
               memberAddress: await member5.getAddress(),
+              isVoted: false,
+              isEligible: true
+            },
+            {
+              name: 'Member 6',
+              memberAddress: await member6.getAddress(),
               isVoted: false,
               isEligible: true
             }
@@ -128,6 +136,11 @@ describe('Voting Contract', () => {
 
         const proposals = await voting.getProposals(1)
         expect(proposals[0].votes.abstain).to.equal(1)
+      })
+      it('should revert with invalid vote', async () => {
+        const votingAsMember6 = voting.connect(member6)
+
+        await expect(votingAsMember6.voteDirective(1, 0, 4)).to.be.revertedWith('Invalid vote')
       })
       it('should not allow a random member to vote on a proposal', async () => {
         const votingAsRandomMember = voting.connect(notMember)
