@@ -3,6 +3,7 @@
     <div class="collapse collapse-arrow bg-base-200">
       <input
         type="radio"
+        :data-test="`accordion-radio-${index}`"
         :name="`accordion-${index}`"
         :checked="activeAccordion === index"
         @click="activeAccordion = index"
