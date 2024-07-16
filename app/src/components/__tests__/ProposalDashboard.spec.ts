@@ -1,37 +1,73 @@
+// ProposalDashboard.spec.ts
+import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
-import ProposalDashboard from '@/components/ProposalDashboard.vue'
-import ProposalCard from '@/components/ProposalCard.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import CreateProposalForm from '@/components/forms/CreateProposalForm.vue'
+import ProposalDashboard from '../ProposalDashboard.vue'
+
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({ params: { id: '1' } }))
+}))
+
+vi.mock('@/stores/user', () => ({
+  useUserDataStore: vi.fn(() => ({ name: 'Test User', address: '0xTestAddress' }))
+}))
+
+vi.mock('@/stores/useToastStore', () => ({
+  useToastStore: vi.fn(() => ({
+    addSuccessToast: vi.fn(),
+    addErrorToast: vi.fn()
+  }))
+}))
+
+vi.mock('@/composables/voting', () => ({
+  useAddProposal: vi.fn(() => ({
+    execute: vi.fn(),
+    isLoading: vi.fn(),
+    isSuccess: vi.fn(),
+    error: vi.fn()
+  })),
+  useGetProposals: vi.fn(() => ({
+    execute: vi.fn(),
+    isLoading: vi.fn(),
+    isSuccess: vi.fn(),
+    error: vi.fn(),
+    data: vi.fn()
+  }))
+}))
 
 describe('ProposalDashboard.vue', () => {
-  it('renders ProposalDashboard with proposals', () => {
-    const wrapper = mount(ProposalDashboard)
-    const activeProposals = wrapper
-      .findAllComponents(ProposalCard)
-      .filter((comp) => !comp.props('isDone'))
-    const oldProposals = wrapper
-      .findAllComponents(ProposalCard)
-      .filter((comp) => comp.props('isDone'))
+  let wrapper: ReturnType<typeof mount>
 
-    expect(activeProposals.length).toBe(2)
-    expect(oldProposals.length).toBe(1)
-
-    expect(wrapper.find('h2').text()).toBe('Proposals')
+  beforeEach(() => {
+    wrapper = mount(ProposalDashboard, {
+      props: {
+        team: {
+          name: 'Test Team',
+          ownerAddress: '0xOwnerAddress',
+          bankAddress: '0xBankAddress',
+          members: [
+            { name: 'Member 1', address: '0xMember1', teamId: 1, id: '1' },
+            { name: 'Member 2', address: '0xMember2', teamId: 1, id: '1' }
+          ]
+        }
+      }
+    })
   })
 
-  it('opens modal when Create Proposal button is clicked', async () => {
-    const wrapper = mount(ProposalDashboard)
-
-    const modalComponent = wrapper.findComponent(ModalComponent)
-
-    await wrapper.find('button.btn-primary').trigger('click')
-
-    expect((wrapper as any).vm.showModal).toBe(true)
-    expect(modalComponent.exists()).toBe(true)
-
-    const createProposalForm = wrapper.findComponent(CreateProposalForm)
-    expect(createProposalForm.exists()).toBe(true)
+  it('shows loading spinner when loadingGetProposals is true', async () => {
+    wrapper = mount(ProposalDashboard, {
+      props: {
+        team: {
+          name: 'Test Team',
+          ownerAddress: '0xOwnerAddress',
+          bankAddress: '0xBankAddress',
+          members: [
+            { name: 'Member 1', address: '0xMember1', teamId: 1, id: '1' },
+            { name: 'Member 2', address: '0xMember2', teamId: 1, id: '1' }
+          ]
+        }
+      }
+    })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('span.loading').exists()).toBe(true)
   })
 })

@@ -1,0 +1,93 @@
+<template>
+  <div>
+    <h2>Vote</h2>
+    <hr />
+    <div v-if="proposal.isElection">
+      <div
+        v-for="candidate in proposal.candidates"
+        :key="candidate.candidateAddress"
+        class="form-control"
+      >
+        <label class="m-2 label cursor-pointer border rounded-lg">
+          <span class="label-text">{{ candidate.name }} | {{ candidate.candidateAddress }}</span>
+          <input
+            type="radio"
+            name="candidate"
+            class="radio"
+            :value="candidate.candidateAddress"
+            v-model="selectedCandidate"
+          />
+        </label>
+      </div>
+    </div>
+    <div v-else>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Yes</span>
+          <input type="radio" name="option" class="radio" value="1" v-model="selectedOption" />
+        </label>
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">No</span>
+          <input type="radio" name="option" class="radio" value="0" v-model="selectedOption" />
+        </label>
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Abstain</span>
+          <input type="radio" name="option" class="radio" value="2" v-model="selectedOption" />
+        </label>
+      </div>
+    </div>
+    <div class="flex justify-center mt-4">
+      <LoadingButton v-if="isLoading" color="primary min-w-24" />
+      <button v-else class="btn btn-primary" @click="castVote">Cast Vote</button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { Proposal } from '@/types/index'
+import { useRoute } from 'vue-router'
+import { ref } from 'vue'
+import LoadingButton from '../LoadingButton.vue'
+const selectedCandidate = ref<string>()
+const selectedOption = ref<string | null>(null)
+
+const route = useRoute()
+const emits = defineEmits(['voteElection', 'voteDirective'])
+defineModel({
+  default: {
+    title: '',
+    description: '',
+    candidates: [
+      {
+        name: '',
+        candidateAddress: ''
+      }
+    ],
+    isElection: false
+  }
+})
+const props = defineProps<{
+  proposal: Partial<Proposal>
+  isLoading: boolean
+}>()
+
+const castVote = () => {
+  if (props.proposal.isElection) {
+    emits('voteElection', {
+      teamId: Number(route.params.id),
+      proposalId: Number(props.proposal.id),
+      candidateAddress: selectedCandidate.value ? selectedCandidate.value : ''
+    })
+  } else {
+    emits('voteDirective', {
+      teamId: Number(route.params.id),
+      proposalId: Number(props.proposal.id),
+      option: Number(selectedOption.value)
+    })
+  }
+}
+</script>

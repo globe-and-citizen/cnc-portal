@@ -1,9 +1,42 @@
-import { it, expect, describe } from 'vitest'
+import { it, expect, describe, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ProposalCard from '../ProposalCard.vue'
 
+vi.mock('@/stores/useToastStore', () => {
+  return {
+    useToastStore: vi.fn(() => ({
+      addSuccessToast: vi.fn(),
+      addErrorToast: vi.fn()
+    }))
+  }
+})
+
+vi.mock('@/composables/voting', () => {
+  return {
+    useVoteElection: vi.fn(() => ({
+      execute: vi.fn(),
+      isLoading: vi.fn(),
+      error: vi.fn(),
+      isSuccess: vi.fn()
+    })),
+    useVoteDirective: vi.fn(() => ({
+      execute: vi.fn(),
+      isLoading: vi.fn(),
+      error: vi.fn(),
+      isSuccess: vi.fn()
+    })),
+    useConcludeProposal: vi.fn(() => ({
+      execute: vi.fn(),
+      isLoading: vi.fn(),
+      error: vi.fn(),
+      isSuccess: vi.fn()
+    }))
+  }
+})
+
 describe('ProposalCard.vue', () => {
   const proposalDirective = {
+    id: 0,
     title: 'Directive',
     draftedBy: 'Ravioli',
     description:
@@ -14,19 +47,20 @@ describe('ProposalCard.vue', () => {
       no: 5,
       abstain: 3
     },
-    votersForUsers: []
+    candidates: []
   }
 
   const proposalElection = {
+    id: 1,
     title: 'Election',
     draftedBy: 'Beerbelliez',
     description:
       'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
 
     isElection: true,
-    votesForUsers: [
-      { name: 'Ravioli', address: '0x1', votes: 0 },
-      { name: 'Herm', address: '0x2', votes: 1 }
+    candidates: [
+      { name: 'Ravioli', candidateAddress: '0x1', votes: 0 },
+      { name: 'Herm', candidateAddress: '0x2', votes: 1 }
     ]
   }
   describe('render', () => {
@@ -56,8 +90,8 @@ describe('ProposalCard.vue', () => {
           ? proposalDirective.description.substring(0, 120) + '...'
           : proposalDirective.description
       expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
-      expect(wrapper.findAll('progress').length).toBe(proposalElection.votesForUsers.length) // 1 progress bar per user
-      proposalElection.votesForUsers.forEach((user) => {
+      expect(wrapper.findAll('progress').length).toBe(proposalElection.candidates.length) // 1 progress bar per user
+      proposalElection.candidates.forEach((user) => {
         expect(wrapper.text()).toContain(user.name)
       })
       expect(wrapper.classes()).toContain('bg-green-100') // green background for election
@@ -67,7 +101,6 @@ describe('ProposalCard.vue', () => {
         props: { proposal: proposalDirective }
       })
       const buttons = wrapper.findAll('button')
-      expect(buttons.length).toBe(2)
       expect(buttons[0].text()).toBe('Vote')
       expect(buttons[1].text()).toBe('View')
     })

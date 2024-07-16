@@ -1,0 +1,497 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "vote",
+        "type": "uint256"
+      }
+    ],
+    "name": "DirectiveVoted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "candidateAddress",
+        "type": "address"
+      }
+    ],
+    "name": "ElectionVoted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      }
+    ],
+    "name": "ProposalAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "name": "ProposalConcluded",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "draftedBy",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "isElection",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "teamId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "yes",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "no",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "abstain",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct Types.DirectiveVotes",
+            "name": "votes",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "candidateAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "votes",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct Types.Candidate[]",
+            "name": "candidates",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "isEligible",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "isVoted",
+                "type": "bool"
+              },
+              {
+                "internalType": "address",
+                "name": "memberAddress",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct Types.Member[]",
+            "name": "voters",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct Types.Proposal",
+        "name": "_proposal",
+        "type": "tuple"
+      }
+    ],
+    "name": "addProposal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "concludeProposal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getProposals",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "draftedBy",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "isElection",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "teamId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "yes",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "no",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "abstain",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct Types.DirectiveVotes",
+            "name": "votes",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "candidateAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "votes",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct Types.Candidate[]",
+            "name": "candidates",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "isEligible",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "isVoted",
+                "type": "bool"
+              },
+              {
+                "internalType": "address",
+                "name": "memberAddress",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct Types.Member[]",
+            "name": "voters",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct Types.Proposal[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proposalCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "proposalsByTeam",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "draftedBy",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "isElection",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "yes",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "no",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "abstain",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Types.DirectiveVotes",
+        "name": "votes",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vote",
+        "type": "uint256"
+      }
+    ],
+    "name": "voteDirective",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "candidateAddress",
+        "type": "address"
+      }
+    ],
+    "name": "voteElection",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

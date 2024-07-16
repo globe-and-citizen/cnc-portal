@@ -68,7 +68,7 @@ const addTeam = async (req: Request, res: Response) => {
         message: `You have been added to a new team: ${name} by ${owner.name}`,
         subject: "Team Invitation",
         author: owner.address?.toString() || "",
-        resource: `teams/${team.id}`
+        resource: `teams/${team.id}`,
       }
     );
     res.status(201).json(team);
@@ -176,7 +176,7 @@ const updateTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const { name, description, bankAddress } = req.body;
+  const { name, description, bankAddress, votingAddress } = req.body;
   const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
@@ -196,6 +196,7 @@ const updateTeam = async (req: Request, res: Response) => {
         name,
         description,
         bankAddress,
+        votingAddress,
       },
       include: {
         members: {
