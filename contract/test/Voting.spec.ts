@@ -8,6 +8,10 @@ describe('Voting Contract', () => {
   let owner: SignerWithAddress
   let member1: SignerWithAddress
   let member2: SignerWithAddress
+  let member3: SignerWithAddress
+  let member4: SignerWithAddress
+  let member5: SignerWithAddress
+  let notMember: SignerWithAddress
 
   const candidates = [
     {
@@ -30,7 +34,7 @@ describe('Voting Contract', () => {
 
   context('Deploying Voting Contract', () => {
     before(async () => {
-      ;[owner, member1, member2] = await ethers.getSigners()
+      ;[owner, member1, member2, notMember, member3, member4, member5] = await ethers.getSigners()
       await deployContracts()
     })
 
@@ -58,6 +62,24 @@ describe('Voting Contract', () => {
               memberAddress: await member2.getAddress(),
               isVoted: false,
               isEligible: true
+            },
+            {
+              name: 'Member 3',
+              memberAddress: await member3.getAddress(),
+              isVoted: false,
+              isEligible: true
+            },
+            {
+              name: 'Member 4',
+              memberAddress: await member4.getAddress(),
+              isVoted: false,
+              isEligible: true
+            },
+            {
+              name: 'Member 5',
+              memberAddress: await member5.getAddress(),
+              isVoted: false,
+              isEligible: true
             }
           ]
         }
@@ -75,20 +97,48 @@ describe('Voting Contract', () => {
     })
 
     describe('Voting actions', () => {
-      it('should vote on a proposal successfully', async () => {
-        const votingAsMember1 = voting.connect(member1)
+      it('should vote "yes" on a proposal successfully', async () => {
+        const votingAsMember3 = voting.connect(member3)
 
-        await expect(await votingAsMember1.voteDirective(1, 0, 1))
+        await expect(await votingAsMember3.voteDirective(1, 0, 1))
           .to.emit(voting, 'DirectiveVoted')
-          .withArgs(await member1.getAddress(), 0, 1)
+          .withArgs(await member3.getAddress(), 0, 1)
 
         const proposals = await voting.getProposals(1)
         expect(proposals[0].votes.yes).to.equal(1)
       })
 
+      it('should vote "no" on a proposal successfully', async () => {
+        const votingAsMember4 = voting.connect(member4)
+
+        await expect(await votingAsMember4.voteDirective(1, 0, 0))
+          .to.emit(voting, 'DirectiveVoted')
+          .withArgs(await member4.getAddress(), 0, 0)
+
+        const proposals = await voting.getProposals(1)
+        expect(proposals[0].votes.no).to.equal(1)
+      })
+
+      it('should vote "abstain" on a proposal successfully', async () => {
+        const votingAsMember5 = voting.connect(member5)
+
+        await expect(await votingAsMember5.voteDirective(1, 0, 2))
+          .to.emit(voting, 'DirectiveVoted')
+          .withArgs(await member5.getAddress(), 0, 2)
+
+        const proposals = await voting.getProposals(1)
+        expect(proposals[0].votes.abstain).to.equal(1)
+      })
+      it('should not allow a random member to vote on a proposal', async () => {
+        const votingAsRandomMember = voting.connect(notMember)
+        await expect(votingAsRandomMember.voteDirective(1, 0, 1)).to.be.revertedWith(
+          'You are not registered to vote in this proposal'
+        )
+      })
+
       it('should not allow a member to vote twice on a proposal', async () => {
-        const votingAsMember1 = voting.connect(member1)
-        await expect(votingAsMember1.voteDirective(1, 0, 1)).to.be.revertedWith(
+        const votingAsMember3 = voting.connect(member3)
+        await expect(votingAsMember3.voteDirective(1, 0, 1)).to.be.revertedWith(
           'You have already voted'
         )
       })
@@ -107,6 +157,9 @@ describe('Voting Contract', () => {
         if (candidate) {
           expect(candidate.votes).to.equal(1)
         }
+      })
+      it('should revert with proposal does not exist ', async () => {
+        await expect(voting.voteDirective(1, 37, 1)).to.be.revertedWith('Proposal does not exist')
       })
 
       it('should conclude a proposal successfully', async () => {
