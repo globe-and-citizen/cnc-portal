@@ -7,15 +7,24 @@
     </div>
     <div class="collapse-content">
       <div class="flex justify-center gap-2">
-        <button @click="openExplorer(member.address ?? '')" class="btn btn-primary btn-xs">
+        <button
+          @click="openExplorer(member.address ?? '')"
+          class="btn btn-primary btn-xs"
+          data-test="show-address-button"
+        >
           See in block explorer
         </button>
-        <button @click="copy(member.address ?? '')" class="btn btn-info btn-xs">
+        <button
+          @click="copy(member.address ?? '')"
+          class="btn btn-info btn-xs"
+          data-test="copy-address-button"
+        >
           {{ copied ? 'Copied!' : 'Copy address' }}
         </button>
         <button
           v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
           class="btn btn-error btn-xs"
+          data-test="delete-member-button"
           @click="emits('deleteMember', member)"
         >
           Delete

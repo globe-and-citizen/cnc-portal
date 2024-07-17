@@ -37,8 +37,8 @@ describe('MemberCard', () => {
         }
       })
 
-      expect(wrapper.find('button').exists()).toBe(true)
-      expect(wrapper.find('button').text()).toBe('Delete')
+      expect(wrapper.find('button[data-test="delete-member-button"]').exists()).toBe(true)
+      expect(wrapper.find('button[data-test="delete-member-button"]').text()).toBe('Delete')
     })
 
     it('does not show delete button if user is not the owner', async () => {
@@ -50,7 +50,7 @@ describe('MemberCard', () => {
         }
       })
 
-      expect(wrapper.find('button').exists()).toBe(false)
+      expect(wrapper.find('button[data-test="delete-member-button"]').exists()).toBe(false)
     })
   })
   describe('Emits', () => {
@@ -62,7 +62,7 @@ describe('MemberCard', () => {
           ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
         }
       })
-      await wrapper.find('button').trigger('click')
+      await wrapper.find('button[data-test="delete-member-button"]').trigger('click')
 
       expect(wrapper.emitted().deleteMember).toBeTruthy()
       expect(wrapper.emitted().deleteMember[0]).toEqual([{ name: 'John Doe', address: '0x123' }])
