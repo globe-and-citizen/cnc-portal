@@ -3,15 +3,16 @@
     <div class="stat flex flex-col justify-center items-center">
       <div class="stat-title">Team balance</div>
       <span v-if="team.bankAddress" class="flex gap-2 items-center">
-        <ToolTip content="Click to see address in block explorer">
+        <ToolTip data-test="bank-address-tooltip" content="Click to see address in block explorer">
           <span
             class="badge badge-sm cursor-pointer"
+            data-test="team-bank-address"
             @click="openExplorer(team.bankAddress)"
             :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
             >{{ team.bankAddress }}</span
           >
         </ToolTip>
-        <ToolTip :content="copied ? 'Copied!' : 'Copy address'">
+        <ToolTip data-test="copy-address-tooltip" :content="copied ? 'Copied!' : 'Click to copy address'">
           <ClipboardDocumentListIcon
             v-if="isSupported && !copied"
             class="size-5 cursor-pointer"
