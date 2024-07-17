@@ -155,7 +155,7 @@ describe('MemberCard', () => {
 
       mockClipboard.isSupported.value = true
       await wrapper.vm.$nextTick()
-      
+
       const copyButton = wrapper.find('button[data-test="copy-address-button"]')
       await copyButton.trigger('click')
 

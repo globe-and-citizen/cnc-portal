@@ -12,7 +12,10 @@
             >{{ team.bankAddress }}</span
           >
         </ToolTip>
-        <ToolTip data-test="copy-address-tooltip" :content="copied ? 'Copied!' : 'Click to copy address'">
+        <ToolTip
+          data-test="copy-address-tooltip"
+          :content="copied ? 'Copied!' : 'Click to copy address'"
+        >
           <ClipboardDocumentListIcon
             v-if="isSupported && !copied"
             class="size-5 cursor-pointer"
