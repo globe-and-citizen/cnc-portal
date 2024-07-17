@@ -15,6 +15,7 @@
           See in block explorer
         </button>
         <button
+          v-if="isSupported"
           @click="copy(member.address ?? '')"
           class="btn btn-info btn-xs"
           data-test="copy-address-button"
