@@ -36,9 +36,7 @@
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
 import type { MemberInput } from '@/types'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { useClipboard } from '@vueuse/core'
-import ToolTip from '@/components/ToolTip.vue'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'
 
