@@ -3,7 +3,7 @@
     <div class="stat flex flex-col justify-center items-center">
       <div class="stat-title">Team balance</div>
       <span v-if="team.bankAddress" class="flex gap-2 items-center">
-        <ToolTip content="See address in block explorer">
+        <ToolTip content="Click to see address in block explorer">
           <span
             class="badge badge-sm cursor-pointer"
             @click="openExplorer(team.bankAddress)"
