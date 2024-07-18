@@ -3,7 +3,7 @@
     <div tabindex="0" role="button" class="">
       <div class="btn btn-ghost btn-circle m-1">
         <div class="indicator">
-          <IconBell />
+          <BellIcon class="size-6" />
           <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
         </div>
       </div>
@@ -32,7 +32,7 @@
           :class="currentPage === 1 ? 'btn-disabled' : ''"
           @click="currentPage > 1 ? currentPage-- : currentPage"
         >
-          «
+          <ChevronLeftIcon class="size-6" />
         </button>
         <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
         <button
@@ -40,7 +40,7 @@
           :class="currentPage == totalPages ? 'btn-disabled' : ''"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
         >
-          »
+          <ChevronRightIcon class="size-6" />
         </button>
       </div>
     </ul>
@@ -50,7 +50,10 @@
 import { ref, computed, watch } from 'vue'
 import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import IconBell from '@/components/icons/IconBell.vue'
+
+import { BellIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
+import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)

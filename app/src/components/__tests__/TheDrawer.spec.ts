@@ -1,9 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import TheDrawer from '@/components/TheDrawer.vue'
-import IconHome from '@/components/icons/IconHome.vue'
-import IconUsers from '@/components/icons/IconUsers.vue'
-import IconNote from '@/components/icons/IconNote.vue'
+import { HomeIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { RouterLinkStub } from '@vue/test-utils'
 
 describe('TheDrawer', () => {
@@ -40,7 +38,7 @@ describe('TheDrawer', () => {
     const wrapper = mount(TheDrawer, {
       props: { user: { name, address } },
       global: {
-        stubs: { RouterLink: RouterLinkStub, IconHome, IconUsers, IconNote }
+        stubs: { RouterLink: RouterLinkStub, HomeIcon, UsersIcon, ClipboardDocumentListIcon }
       }
     })
 

@@ -11,7 +11,7 @@
           @click="emits('toggleSideButton')"
           data-test="toggleSideButton"
         >
-          <IconHamburgerMenu />
+          <Bars3Icon class="size-6" />
         </button>
       </div>
     </div>
@@ -79,11 +79,11 @@
 
 <script setup lang="ts">
 import { logout } from '@/utils/navBarUtil'
-import IconHamburgerMenu from '@/components/icons/IconHamburgerMenu.vue'
 import { NETWORK } from '@/constant/index'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 
+import { Bars3Icon } from '@heroicons/vue/24/solid'
 defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
