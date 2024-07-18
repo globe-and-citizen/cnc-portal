@@ -84,12 +84,12 @@ describe('VoteForm.vue', () => {
       ])
     })
 
-    it('casts vote for non-election proposal', async () => {
+    it('casts vote of type yes for a directive proposal', async () => {
       const wrapper = mount(VoteForm, {
         props: { proposal: proposalDirective, isLoading: false }
       })
-      const radioButtons = wrapper.findAll('input[type="radio"]')
-      await radioButtons[0].setValue() // Select "Yes" option
+      const yesButton = wrapper.find('[data-test="yesButton"]')
+      await yesButton.setValue()
       await wrapper.find('button').trigger('click')
 
       const emitted = wrapper.emitted()
@@ -99,6 +99,42 @@ describe('VoteForm.vue', () => {
           teamId: 0,
           proposalId: 0,
           option: 1
+        }
+      ])
+    })
+    it('casts vote of type no for a directive proposal', async () => {
+      const wrapper = mount(VoteForm, {
+        props: { proposal: proposalDirective, isLoading: false }
+      })
+      const noButton = wrapper.find('[data-test="noButton"]')
+      await noButton.setValue()
+      await wrapper.find('button').trigger('click')
+
+      const emitted = wrapper.emitted()
+      expect(emitted.voteDirective).toBeTruthy()
+      expect(emitted.voteDirective[0]).toEqual([
+        {
+          teamId: 0,
+          proposalId: 0,
+          option: 0
+        }
+      ])
+    })
+    it('casts vote of type abstain for a directive proposal', async () => {
+      const wrapper = mount(VoteForm, {
+        props: { proposal: proposalDirective, isLoading: false }
+      })
+      const abstainButton = wrapper.find('[data-test="abstainButton"]')
+      await abstainButton.setValue()
+      await wrapper.find('button').trigger('click')
+
+      const emitted = wrapper.emitted()
+      expect(emitted.voteDirective).toBeTruthy()
+      expect(emitted.voteDirective[0]).toEqual([
+        {
+          teamId: 0,
+          proposalId: 0,
+          option: 2
         }
       ])
     })

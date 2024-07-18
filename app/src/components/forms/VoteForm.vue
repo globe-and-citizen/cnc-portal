@@ -24,19 +24,40 @@
       <div class="form-control">
         <label class="label">
           <span class="label-text">Yes</span>
-          <input type="radio" name="option" class="radio" value="1" v-model="selectedOption" />
+          <input
+            type="radio"
+            name="option"
+            class="radio"
+            value="1"
+            v-model="selectedOption"
+            data-test="yesButton"
+          />
         </label>
       </div>
       <div class="form-control">
         <label class="label">
           <span class="label-text">No</span>
-          <input type="radio" name="option" class="radio" value="0" v-model="selectedOption" />
+          <input
+            type="radio"
+            name="option"
+            class="radio"
+            value="0"
+            v-model="selectedOption"
+            data-test="noButton"
+          />
         </label>
       </div>
       <div class="form-control">
         <label class="label">
           <span class="label-text">Abstain</span>
-          <input type="radio" name="option" class="radio" value="2" v-model="selectedOption" />
+          <input
+            type="radio"
+            name="option"
+            class="radio"
+            value="2"
+            v-model="selectedOption"
+            data-test="abstainButton"
+          />
         </label>
       </div>
     </div>
