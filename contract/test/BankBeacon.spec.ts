@@ -65,23 +65,20 @@ describe('BankBeacon', () => {
     })
 
     it('should deploy beacon proxy correctly', async () => {
-      const { beacon, user3, encodedInitialize, bankImplementation } =
-        await loadFixture(deployFixture)
+      const { beacon, user3, encodedInitialize } = await loadFixture(deployFixture)
 
       const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
-      const bankBeaconProxy1 = await BankBeaconProxy.connect(user3).deploy(
+      const beaconProxy = await BankBeaconProxy.connect(user3).deploy(
         await beacon.getAddress(),
         encodedInitialize
       )
-      await bankBeaconProxy1.waitForDeployment()
+      await beaconProxy.waitForDeployment()
 
-      expect(await bankBeaconProxy1.getAddress()).to.exist
-      const txResult = await user3.call({
-        to: await bankBeaconProxy1.getAddress(),
-        data: bankImplementation.interface.encodeFunctionData('owner')
-      })
-      const beaconProxyOwner = bankImplementation.interface.decodeFunctionResult('owner', txResult)
-      expect(beaconProxyOwner[0]).to.eq(user3.address)
+      const bankBeaconProxy = await ethers.getContractAt('Bank', await beaconProxy.getAddress())
+
+      expect(await bankBeaconProxy.getAddress()).to.exist
+      const owner = await bankBeaconProxy.owner()
+      expect(owner).to.eq(user3.address)
     })
 
     it('should set superAdmin correctly', async () => {
@@ -104,7 +101,7 @@ describe('BankBeacon', () => {
       expect(await beacon.implementation()).to.eq(await newImpl.getAddress())
     })
 
-    it('shouldnot upgrade if not admin', async () => {
+    it('should not upgrade if not admin', async () => {
       const { user1, beacon } = await loadFixture(deployFixture)
 
       const BankImplementationFactory = await ethers.getContractFactory('Bank')
@@ -118,48 +115,40 @@ describe('BankBeacon', () => {
 
   describe('bank functions', () => {
     it('should read correctly', async () => {
-      const { user1, bankBeaconProxy1, bankImplementation } = await loadFixture(deployFixture)
+      const { bankBeaconProxy1 } = await loadFixture(deployFixture)
 
-      const tx = await user1.call({
-        to: await bankBeaconProxy1.getAddress(),
-        data: bankImplementation.interface.encodeFunctionData('paused')
-      })
-      const paused = bankImplementation.interface.decodeFunctionResult('paused', tx)
-      expect(paused[0]).to.eq(false)
+      const bankBeacon = await ethers.getContractAt('Bank', await bankBeaconProxy1.getAddress())
+      const paused = await bankBeacon.paused()
+      expect(paused).to.to.be.false
     })
 
     it('should write correctly', async () => {
-      const { user1, bankBeaconProxy1, bankImplementation } = await loadFixture(deployFixture)
+      const { user1, bankBeaconProxy1 } = await loadFixture(deployFixture)
+      const bankBeaconProxy = await ethers.getContractAt(
+        'Bank',
+        await bankBeaconProxy1.getAddress()
+      )
+      // Pause - Write to the blockhcain
+      await bankBeaconProxy.connect(user1).pause()
 
-      await user1.sendTransaction({
-        to: await bankBeaconProxy1.getAddress(),
-        data: bankImplementation.interface.encodeFunctionData('pause')
-      })
-
-      const tx = await user1.call({
-        to: await bankBeaconProxy1.getAddress(),
-        data: bankImplementation.interface.encodeFunctionData('paused')
-      })
-      const paused = bankImplementation.interface.decodeFunctionResult('paused', tx)
-      expect(paused[0]).to.eq(true)
+      const paused = await bankBeaconProxy.paused()
+      expect(paused).to.be.true
     })
 
-    it('shouldnot be able to write if not owner', async () => {
+    it('should not be able to write if not owner', async () => {
       const { user2, bankBeaconProxy1, bankImplementation } = await loadFixture(deployFixture)
 
-      await expect(
-        user2.call({
-          to: await bankBeaconProxy1.getAddress(),
-          data: bankImplementation.interface.encodeFunctionData('pause')
-        })
-      ).to.revertedWithCustomError(bankImplementation, 'OwnableUnauthorizedAccount')
+      const bankBeaconProxy = await ethers.getContractAt(
+        'Bank',
+        await bankBeaconProxy1.getAddress()
+      )
+      await expect(bankBeaconProxy.connect(user2).pause()).to.be.revertedWithCustomError(
+        bankImplementation,
+        'OwnableUnauthorizedAccount'
+      )
 
-      const tx = await user2.call({
-        to: await bankBeaconProxy1.getAddress(),
-        data: bankImplementation.interface.encodeFunctionData('paused')
-      })
-      const paused = bankImplementation.interface.decodeFunctionResult('paused', tx)
-      expect(paused[0]).to.eq(false)
+      const paused = await bankBeaconProxy.connect(user2).paused()
+      expect(paused).to.be.false
     })
   })
 })
