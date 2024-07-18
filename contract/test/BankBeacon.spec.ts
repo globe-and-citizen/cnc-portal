@@ -2,7 +2,7 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
-describe('BankV2', () => {
+describe('BankBeacon', () => {
   async function deployFixture() {
     const [superAdmin, user1, user2, user3] = await ethers.getSigners()
 
@@ -12,7 +12,7 @@ describe('BankV2', () => {
     await tipsProxy.waitForDeployment()
 
     // deploy bank impl
-    const BankImplementationFactory = await ethers.getContractFactory('BankV2')
+    const BankImplementationFactory = await ethers.getContractFactory('Bank')
     const bankImplementation = await BankImplementationFactory.connect(superAdmin).deploy()
     await bankImplementation.waitForDeployment()
 
@@ -95,7 +95,7 @@ describe('BankV2', () => {
       const { superAdmin, beacon } = await loadFixture(deployFixture)
 
       // upgrade to new address
-      const BankImplementationFactory = await ethers.getContractFactory('BankV2')
+      const BankImplementationFactory = await ethers.getContractFactory('Bank')
       const newImpl = await BankImplementationFactory.connect(superAdmin).deploy()
       await newImpl.waitForDeployment()
       const tx = await beacon.connect(superAdmin).upgradeTo(await newImpl.getAddress())
@@ -107,7 +107,7 @@ describe('BankV2', () => {
     it('shouldnot upgrade if not admin', async () => {
       const { user1, beacon } = await loadFixture(deployFixture)
 
-      const BankImplementationFactory = await ethers.getContractFactory('BankV2')
+      const BankImplementationFactory = await ethers.getContractFactory('Bank')
       const newImpl = await BankImplementationFactory.connect(user1).deploy()
       await newImpl.waitForDeployment()
       await expect(
