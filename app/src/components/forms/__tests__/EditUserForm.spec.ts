@@ -35,7 +35,9 @@ describe('EditUserForm', () => {
     it('renders label and input for name correctly', () => {
       expect(wrapper.find('span[data-test="name-label"]').text()).toBe('Name')
       expect(wrapper.find('input[data-test="name-input"]').exists()).toBeTruthy()
-      expect(wrapper.find('input[data-test="name-input"]').text()).toBe(user.name)
+      expect(
+        (wrapper.find('input[data-test="name-input"]').element as HTMLInputElement).value
+      ).toBe(user.name)
     })
 
     it('renders label and address with tooltip correctly', () => {
@@ -95,6 +97,11 @@ describe('EditUserForm', () => {
     })
 
     it('copies address when copy icon is clicked', async () => {
+      // mock clipboard
+      mockClipboard.isSupported.value = true
+      mockClipboard.copied.value = false
+      await wrapper.vm.$nextTick()
+
       await wrapper.findComponent(ClipboardDocumentListIcon).trigger('click')
 
       expect(mockCopy).toBeCalledWith(user.address)
