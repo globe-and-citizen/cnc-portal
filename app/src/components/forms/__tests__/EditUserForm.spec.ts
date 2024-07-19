@@ -1,7 +1,7 @@
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 
@@ -35,6 +35,7 @@ describe('EditUserForm', () => {
     it('renders label and input for name correctly', () => {
       expect(wrapper.find('span[data-test="name-label"]').text()).toBe('Name')
       expect(wrapper.find('input[data-test="name-input"]').exists()).toBeTruthy()
+      expect(wrapper.find('input[data-test="name-input"]').text()).toBe(user.name)
     })
 
     it('renders label and address with tooltip correctly', () => {
@@ -56,6 +57,12 @@ describe('EditUserForm', () => {
         name: 'ToolTip'
       })
       expect(copyIconTooltip.props().content).toBe('Click to copy address')
+    })
+
+    it('renders copied icon when copied', async () => {
+      mockClipboard.copied.value = true
+      await wrapper.vm.$nextTick()
+      expect(wrapper.findComponent(ClipboardDocumentCheckIcon).exists()).toBeTruthy()
     })
 
     it('renders submit button correctly', () => {
