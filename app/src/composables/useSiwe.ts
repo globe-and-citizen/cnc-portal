@@ -9,6 +9,7 @@ import type { User } from '@/types'
 import { getFetchErrorMessage, log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
+import { MetaMaskUtil } from '@/utils/web3Util'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 const siweAuthApi = new SiweAuthAPI()
@@ -28,6 +29,12 @@ export function useSiwe() {
   const isProcessing = ref(false)
 
   async function siwe() {
+    // Check if we have metamask installation befor continue the process
+    if (!MetaMaskUtil.hasInstalledWallet()) {
+      addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
+      return
+    }
+    
     try {
       isProcessing.value = true
       const address = await ethersJsAdapter.getAddress()
