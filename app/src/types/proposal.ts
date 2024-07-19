@@ -1,5 +1,3 @@
-import type { User } from './user'
-
 export interface Proposal {
   id: string
   title: string

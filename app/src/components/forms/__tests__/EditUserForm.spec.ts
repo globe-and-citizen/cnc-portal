@@ -1,7 +1,7 @@
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 
