@@ -1,21 +1,40 @@
-import { AuthService } from '@/services/authService'
 import { BACKEND_URL } from '@/constant/index'
-import { createFetch } from '@vueuse/core'
+import { createFetch, useStorage } from '@vueuse/core'
+import { log } from '@/utils/generalUtil'
+import { useToastStore } from '@/stores/useToastStore'
+const isRedirecting = ref(false)
+
+import { ref } from 'vue'
+import { useAuth } from '@/composables/useAuth'
 
 export const useCustomFetch = createFetch({
   baseUrl: `${BACKEND_URL}/api/`,
   combination: 'chain',
   options: {
     async beforeFetch({ options }) {
-      const token = AuthService.getToken()
+      const token = useStorage('authToken', "")
+      // TODO : Validate token and log the status of the token we get from the storage.
       options = {
         mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token.value}`
         }
       }
       return { options }
+    },
+    async onFetchError(ctx) {
+      if (ctx.response?.status === 401 && !isRedirecting.value) {
+        isRedirecting.value = true
+        const { addErrorToast } = useToastStore()
+        addErrorToast('Unauthorized, Please login again')
+        log.info('Unauthorized, will logout the user and redirect to login page')
+
+        // TODO : Instead of logging out the user, we can recheck if the token is expired and refresh it.
+        const { logout } = useAuth()
+        logout()
+      }
+      return ctx
     }
   }
 })
