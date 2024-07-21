@@ -1,4 +1,5 @@
 const isDevelopment = import.meta.env.MODE === 'development'
+const isVerbose = true
 
 export const getTimestamp = (): string => {
   const now = new Date()
@@ -8,7 +9,8 @@ export const getTimestamp = (): string => {
 export const log = {
   info: (message: string, ...args: any[]): void => {
     if (isDevelopment) {
-      console.info(`[${getTimestamp()}] INFO: ${message}`, ...args)
+      console.log(`[${getTimestamp()}] INFO: ${message}`, ...args)
+      // if (isVerbose) console.trace('Trace:' )
     }
   },
   warn: (message: string, ...args: any[]): void => {
