@@ -78,12 +78,14 @@
 </template>
 
 <script setup lang="ts">
-import { logout } from '@/utils/navBarUtil'
 import { NETWORK } from '@/constant/index'
-import NotificationDropdown from '@/components/NotificationDropdown.vue'
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
-
+import { useAuth } from '@/composables/useAuth'
 import { Bars3Icon } from '@heroicons/vue/24/solid'
+import NotificationDropdown from '@/components/NotificationDropdown.vue'
+
+const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
+const { logout } = useAuth()
+
 defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
