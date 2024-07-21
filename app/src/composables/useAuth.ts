@@ -8,6 +8,8 @@ export function useAuth() {
   const isAuthenticated = ref(false)
   const user = ref<User | null>(null)
 
+  // TODO: Handle auth status and user data here
+
   /**
    * Logs out the user by clearing the user data and forcing a page reload
    */
