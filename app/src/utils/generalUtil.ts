@@ -1,5 +1,5 @@
 const isDevelopment = import.meta.env.MODE === 'development'
-const isVerbose = true
+// const isVerbose = true
 
 export const getTimestamp = (): string => {
   const now = new Date()

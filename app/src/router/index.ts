@@ -56,7 +56,7 @@ router.beforeEach(async (to) => {
     return { name: 'login' }
   }
   // Redirect to home page if logged in
-  if(to.name === 'login' && isAuth.value) {
+  if (to.name === 'login' && isAuth.value) {
     return { name: 'home' }
   }
 })

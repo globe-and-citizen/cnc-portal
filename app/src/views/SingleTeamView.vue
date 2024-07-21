@@ -437,7 +437,7 @@ const {
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
       memberaddress: memberToBeDeleted.value.address,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
       // Authorization: `Bearer ${AuthService.getToken()}`
     }
     return { options, url, cancel }

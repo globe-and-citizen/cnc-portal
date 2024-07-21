@@ -33,7 +33,7 @@ export class SLSiweMessageCreator implements ISiweMessageCreator {
 
       return message
     } catch (error) {
-      // TODO : Look at this. It's weird to catch an error the throw a new one 
+      // TODO : Look at this. It's weird to catch an error the throw a new one
       log.error(parseError(error))
       throw new Error('Something went wrong. Please try agin')
     }
