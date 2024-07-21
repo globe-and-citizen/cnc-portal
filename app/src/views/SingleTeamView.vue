@@ -158,7 +158,7 @@ import {
 } from '@/composables/bank'
 
 // Service
-import { AuthService } from '@/services/authService'
+// import { AuthService } from '@/services/authService'
 
 // Modals/Forms
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
@@ -438,7 +438,7 @@ const {
     options.headers = {
       memberaddress: memberToBeDeleted.value.address,
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${AuthService.getToken()}`
+      // Authorization: `Bearer ${AuthService.getToken()}`
     }
     return { options, url, cancel }
   }
