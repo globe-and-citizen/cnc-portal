@@ -1,7 +1,6 @@
-import { SiweAuthAPI } from '@/apis/authApi'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
-import { SIWEAuthService } from '@/services/authService'
+// import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { ref } from 'vue'
 import { useUserDataStore } from '@/stores/user'
@@ -10,9 +9,9 @@ import { getFetchErrorMessage, log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
 import { MetaMaskUtil } from '@/utils/web3Util'
+import { useStorage } from '@vueuse/core'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
-const siweAuthApi = new SiweAuthAPI()
 
 function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
   return new SLSiweMessageCreator({
@@ -20,7 +19,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
     statement,
     nonce,
     version: '1',
-    chainId: '1'
+    chainId: 1
   })
 }
 
@@ -34,7 +33,7 @@ export function useSiwe() {
       addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
       return
     }
-    
+
     try {
       isProcessing.value = true
       const address = await ethersJsAdapter.getAddress()
@@ -53,9 +52,22 @@ export function useSiwe() {
 
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(address, statement, nonce.value.nonce)
-      const siweAuthService = new SIWEAuthService(siweMessageCreator, ethersJsAdapter, siweAuthApi)
 
-      await siweAuthService.authenticateUser()
+      const message = await siweMessageCreator.create()
+      const signature = await ethersJsAdapter.requestSign(message)
+
+      const { error: siweError, data: siweData } = await useCustomFetch<string>('auth/siwe')
+        .post({ signature, message })
+        .json()
+
+      if (siweError.value) {
+        log.info(getFetchErrorMessage(siweError.value))
+        addErrorToast(getFetchErrorMessage(siweError.value))
+        return
+      }
+      const token = siweData.value.accessToken
+      const storageToken = useStorage('authToken', token)
+      storageToken.value = token
 
       const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${address}`)
         .get()
