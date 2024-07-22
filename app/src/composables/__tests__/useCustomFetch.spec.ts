@@ -109,7 +109,7 @@ describe('useCustomFetch', () => {
 
     expect(data.value).toBe(null)
     expect(response.value?.ok).toBe(false)
-    expect(error.value).toMatchFileSnapshot('Unauthorized')
+    expect(error.value).toMatchInlineSnapshot('Unauthorized')
     // console.log('ds', { error: error.value, data: datua.value })
 
     expect(true).toBe(true)
