@@ -25,30 +25,21 @@ export class VotingService implements IVotingService {
   }
 
   async addProposal(proposal: Partial<Proposal>): Promise<any> {
-    try {
-      proposal.id = 0
-      const votingContract = await this.getVotingContract(VOTING_ADDRESS)
-      const tx = await votingContract.addProposal(proposal)
-      console.log(await this.getEvents())
-      await tx.wait()
-      return tx
-    } catch (e) {
-      console.log(e)
-    }
+    proposal.id = 0
+    const votingContract = await this.getVotingContract(VOTING_ADDRESS)
+    const tx = await votingContract.addProposal(proposal)
+    await tx.wait()
+    return tx
   }
   async getProposals(teamId: Number): Promise<any> {
     const votingContract = await this.getVotingContract(VOTING_ADDRESS)
-    try {
-      const proposals = await votingContract.getProposals(teamId)
-      if (proposals === '0x' || !proposals) {
-        console.log('No proposals found or returned data is empty.')
-        return []
-      }
-      console.log(proposals)
-      return proposals
-    } catch (e) {
-      console.log('Error fetching proposals:', e)
+    const proposals = await votingContract.getProposals(teamId)
+    if (proposals === '0x' || !proposals) {
+      console.log('No proposals found or returned data is empty.')
+      return []
     }
+    console.log(proposals)
+    return proposals
   }
   async concludeProposal(teamId: Number, proposalId: Number): Promise<any> {
     const votingContract = await this.getVotingContract(VOTING_ADDRESS)
@@ -78,11 +69,6 @@ export class VotingService implements IVotingService {
     return votingContract
   }
 
-  async getEvents(): Promise<EventLog[] | Log[]> {
-    const contractService = this.getContractService(VOTING_ADDRESS)
-
-    return await contractService.getEvents('ProposalAdded')
-  }
   private getContractService(votingAddress: string): SmartContract {
     return new SmartContract(votingAddress, VOTING_ABI)
   }
