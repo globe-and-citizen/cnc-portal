@@ -52,7 +52,7 @@ export async function fetchData(url: string): Promise<any> {
   return response.json()
 }
 
-describe.only('useCustomFetch', () => {
+describe('useCustomFetch', () => {
   it('Should return the correct data', async () => {
     const mockData = { data: 'mocked data' }
 
