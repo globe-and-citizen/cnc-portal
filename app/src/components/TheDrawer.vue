@@ -10,7 +10,7 @@
         <div class="rounded-full">
           <img
             alt="Tailwind CSS Navbar component"
-            src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+            src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
             class="w-[44px]"
           />
         </div>

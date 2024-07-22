@@ -47,4 +47,21 @@ describe('AccordionComponent', () => {
       expect(wrapper.findAll('h1').length).toBe(3)
     })
   })
+
+  describe('Emits', () => {
+    it('emits update:modelValue', async () => {
+      await wrapper.find('input[data-test="accordion-radio-1"]').trigger('click')
+
+      expect(wrapper.emitted('update:modelValue')).toEqual([[1]])
+    })
+
+    it('only renders selected accordion', async () => {
+      const checkedIndex = 1
+      await wrapper.find(`input[data-test="accordion-radio-${checkedIndex}"]`).trigger('click')
+
+      wrapper.findAll('input[data-test^="accordion-radio-"]').forEach((el, index) => {
+        expect((el.element as HTMLInputElement).checked).toEqual(index === checkedIndex)
+      })
+    })
+  })
 })

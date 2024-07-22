@@ -2,12 +2,27 @@
   <div class="stats bg-green-100 flex text-primary-content border-outline">
     <div class="stat flex flex-col justify-center items-center">
       <div class="stat-title">Team balance</div>
-      <span v-if="team.bankAddress">
-        <span
-          class="badge badge-sm"
-          :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
-          >{{ team.bankAddress }}</span
+      <span v-if="team.bankAddress" class="flex gap-2 items-center">
+        <ToolTip data-test="bank-address-tooltip" content="Click to see address in block explorer">
+          <span
+            class="badge badge-sm cursor-pointer"
+            data-test="team-bank-address"
+            @click="openExplorer(team.bankAddress)"
+            :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
+            >{{ team.bankAddress }}</span
+          >
+        </ToolTip>
+        <ToolTip
+          data-test="copy-address-tooltip"
+          :content="copied ? 'Copied!' : 'Click to copy address'"
         >
+          <ClipboardDocumentListIcon
+            v-if="isSupported && !copied"
+            class="size-5 cursor-pointer"
+            @click="copy(team.bankAddress)"
+          />
+          <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
+        </ToolTip>
       </span>
       <span
         class="loading loading-dots loading-xs"
@@ -61,7 +76,11 @@ import { NETWORK } from '@/constant'
 import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
+import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { useClipboard } from '@vueuse/core'
+import ToolTip from '@/components/ToolTip.vue'
 const tipAmount = ref(0)
+const { copy, copied, isSupported } = useClipboard()
 
 defineProps<{
   team: Partial<Team>
@@ -71,4 +90,8 @@ defineProps<{
   balanceLoading: boolean
 }>()
 const emits = defineEmits(['pushTip', 'sendTip', 'deposit', 'transfer'])
+
+const openExplorer = (address: string) => {
+  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
+}
 </script>
