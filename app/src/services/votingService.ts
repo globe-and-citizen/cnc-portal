@@ -68,8 +68,4 @@ export class VotingService implements IVotingService {
 
     return votingContract
   }
-
-  private getContractService(votingAddress: string): SmartContract {
-    return new SmartContract(votingAddress, VOTING_ABI)
-  }
 }
