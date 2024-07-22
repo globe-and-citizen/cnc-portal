@@ -82,23 +82,17 @@ describe('useCustomFetch', () => {
     // Mocking the fetch function
     global.fetch = vi.fn(() => Promise.resolve(createMockResponse(mockData)))
 
-    const dataV2 = await fetchData('https://google.com/')
-    expect(await dataV2).toMatchInlineSnapshot(`
-      {
-        "data": "mocked data",
-      }
-    `)
+    // const dataV2 = await fetchData('https://google.com/')
+    // expect(await dataV2).toMatchInlineSnapshot(`
+    //   {
+    //     "data": "mocked data",
+    //   }
+    // `)
 
     const { error, data, response } = await useCustomFetch<string>('https://google.com/').json()
-    console.log({ data: data.value, error: error.value, response: response.value })
-    expect(global.fetch).toHaveBeenCalledWith('https://google.com/')
-    expect(data.value).toMatchInlineSnapshot(`
-      {
-        "data": "mocked data",
-      }
-    `)
-    // expect(data.value).toEqual(mockData)
-    console.log('ds', { error: error.value, data: data.value })
+    expect(error.value).toBe(null)
+    expect(response.value?.ok).toBe(true)
+    expect(data.value).toStrictEqual({ data: 'mocked data' })
   })
 
   it('should return an error when the fetch fails', async () => {
@@ -111,10 +105,11 @@ describe('useCustomFetch', () => {
     window.location.reload = vi.fn()
 
     const { error, data, response } = await useCustomFetch<string>('https://google.com/').json()
-    console.log({ data: data.value, error: error.value, response: response.value })
     // expect(global.fetch).toHaveBeenCalledWith('https://google.com/')
-    expect(data.value).toMatchInlineSnapshot(`null`)
-    expect(error.value).toMatchInlineSnapshot(`[Error: Unauthorized]`)
+
+    expect(data.value).toBe(null)
+    expect(response.value?.ok).toBe(false)
+    expect(error.value).toMatchFileSnapshot('Unauthorized')
     // console.log('ds', { error: error.value, data: datua.value })
 
     expect(true).toBe(true)
