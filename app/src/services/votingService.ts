@@ -4,9 +4,7 @@ import VOTING_ABI from '@/artifacts/abi/voting.json'
 import type { Contract } from 'ethers'
 import { VOTING_ADDRESS } from '@/constant'
 import type { Proposal } from '@/types'
-import { SmartContract } from './contractService'
-import type { EventLog } from 'ethers'
-import type { Log } from 'ethers'
+
 export interface IVotingService {
   web3Library: IWeb3Library
   addProposal(proposal: Partial<Proposal>): Promise<any>
@@ -14,7 +12,6 @@ export interface IVotingService {
   concludeProposal(teamId: Number, proposalId: Number): Promise<any>
   voteDirective(teamId: Number, proposalId: Number, directive: Number): Promise<any>
   voteElection(teamId: Number, proposalId: Number, candidateAddress: string): Promise<any>
-  getEvents(): Promise<EventLog[] | Log[]>
 }
 
 export class VotingService implements IVotingService {
