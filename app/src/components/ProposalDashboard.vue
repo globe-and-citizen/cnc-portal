@@ -4,11 +4,11 @@
     <div class="flex justify-between">
       <div>
         <h2>Proposals</h2>
-        <span
+        <!-- <span
           class="badge badge-sm"
           :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
           >{{ team.bankAddress }}</span
-        >
+        > -->
       </div>
       <div>
         <button class="btn btn-primary btn-md" @click="showModal = !showModal">
