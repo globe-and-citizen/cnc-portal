@@ -53,7 +53,6 @@ export async function fetchData(url: string): Promise<any> {
 }
 
 describe.only('useCustomFetch', () => {
-
   it('Should return the correct data', async () => {
     const mockData = { data: 'mocked data' }
 
@@ -77,7 +76,6 @@ describe.only('useCustomFetch', () => {
     `)
     // expect(data.value).toEqual(mockData)
     console.log('ds', { error: error.value, data: data.value })
-
   })
 
   it('should return an error when the fetch fails', async () => {
