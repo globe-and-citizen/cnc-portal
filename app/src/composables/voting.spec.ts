@@ -9,8 +9,6 @@ import {
 import { VotingService } from '@/services/votingService'
 import type { Proposal } from '@/types'
 
-// Mock data for testing
-// const mockTransaction = { hash: '0x123' } // Declare mockTransaction at the top to avoid hoisting issues
 const mockTransaction = { hash: '0x123' }
 const mockProposal: Partial<Proposal> = {
   id: 1,
