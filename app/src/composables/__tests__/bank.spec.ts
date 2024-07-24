@@ -14,24 +14,8 @@ vi.mock('@/utils/web3Util')
 
 // mock BankService
 const teamId = '1'
-const bankAddress = '0x123'
 const amount = '1'
 const to = '0x123'
-const tx = {
-  hash: '0x1'
-}
-const mockEvents = [
-  {
-    transactionHash: '0x1',
-    data: '0x1',
-    topics: ['0x1', '0x2', '0x3'],
-    getBlock: vi.fn().mockImplementation(() =>
-      Promise.resolve({
-        date: new Date('2022-01-01 00:00:00')
-      })
-    )
-  }
-]
 
 const mockEventResults = [
   {
@@ -41,9 +25,25 @@ const mockEventResults = [
   }
 ]
 
-const { bankBalance } = vi.hoisted(() => {
+const { bankBalance, bankAddress, tx, mockEvents } = vi.hoisted(() => {
   return {
-    bankBalance: '1'
+    bankBalance: '1',
+    bankAddress: '0x123',
+    tx: {
+      hash: '0x1'
+    },
+    mockEvents: [
+      {
+        transactionHash: '0x1',
+        data: '0x1',
+        topics: ['0x1', '0x2', '0x3'],
+        getBlock: vi.fn().mockImplementation(() =>
+          Promise.resolve({
+            date: new Date('2022-01-01 00:00:00')
+          })
+        )
+      }
+    ]
   }
 })
 
