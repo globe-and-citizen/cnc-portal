@@ -25,7 +25,7 @@
       />
     </label>
 
-    <div v-for="(input, index) in team.members" :key="index" class="input-group">
+    <div v-for="(input, index) of team.members" :key="index" class="input-group">
       <label
         class="input input-bordered flex items-center gap-2 input-md"
         :class="{ 'input-error': !input.isValid }"
@@ -128,7 +128,7 @@
 </template>
 <script setup lang="ts">
 import type { User } from '@/types'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '../LoadingButton.vue'
 import { isAddress } from 'ethers'
@@ -168,16 +168,17 @@ const $v = useVuelidate(rules, { team })
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) {
-    console.log('Form is invalid: ', $v.value.team.members.$errors)
+    /*console.log('name: ', team.value.name)
+    console.log('members: ', team.value.members)*/
+    console.log('Form is invalid: ' /*$v.value.team.members.$model*/)
     return
   }
 
   console.log('Form is valid, submitting')
+  emits('addTeam')
 }
 
 const getMessages = (index: number) => {
-  /*console.log('index: ', index)
-  console.log('length: ', $v.value.team.members.$errors[0].$response.$errors/*[index-1].address)*/
   return $v.value.team.members.$errors[0].$response.$errors[index].address
 }
 
@@ -187,4 +188,12 @@ defineProps<{
   isLoading: boolean
 }>()
 const dropdown = ref<boolean>(true)
+
+onMounted(() => {
+  /*team.value.name = 'Valid Team Name'
+  team.value.members[0].name = 'Member 1'
+  team.value.members[0].address = '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
+
+  team.value.members.push({ name: 'Ravioli', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', isValid: false })*/
+})
 </script>
