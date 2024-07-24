@@ -50,17 +50,15 @@ const { bankBalance } = vi.hoisted(() => {
 const { bankService } = vi.hoisted(() => {
   return {
     bankService: {
-      createBankContract: vi.fn((_teamId: string) => Promise.resolve(bankAddress)),
-      deposit: vi.fn((_bankAddress, _amount) => Promise.resolve(tx)),
-      transfer: vi.fn((_bankAddress, _to, _amount) => Promise.resolve(tx)),
-      getEvents: vi.fn((_type: BankEventType[]) => Promise.resolve(mockEvents)),
+      createBankContract: vi.fn().mockReturnValue(Promise.resolve(bankAddress)),
+      deposit: vi.fn().mockReturnValue(Promise.resolve(tx)),
+      transfer: vi.fn().mockReturnValue(Promise.resolve(tx)),
+      getEvents: vi.fn().mockReturnValue(Promise.resolve(mockEvents)),
       getContract: vi.fn().mockImplementation(() => {
         return {
           address: bankAddress,
           interface: {
-            decodeEventLog: vi.fn(
-              (_type: BankEventType, _data: string, _topics: string[]) => mockEventResults[0].data
-            )
+            decodeEventLog: vi.fn().mockReturnValue(mockEventResults[0].data)
           }
         }
       }),
@@ -127,7 +125,7 @@ describe('Bank', () => {
     })
 
     describe('when error', () => {
-      let mockError = new Error('error')
+      const mockError = new Error('error')
 
       beforeEach(() => {
         vi.mocked(bankService.createBankContract).mockRejectedValue(mockError)
@@ -201,7 +199,7 @@ describe('Bank', () => {
     })
 
     describe('when error ', () => {
-      let mockError = new Error('error')
+      const mockError = new Error('error')
 
       beforeEach(() => {
         vi.mocked(bankService.web3Library.getBalance).mockRejectedValue(mockError)
@@ -280,7 +278,7 @@ describe('Bank', () => {
     })
 
     describe('when error', () => {
-      let mockError = new Error('error')
+      const mockError = new Error('error')
 
       beforeEach(() => {
         vi.mocked(bankService.deposit).mockRejectedValue(mockError)
@@ -367,7 +365,7 @@ describe('Bank', () => {
     })
 
     describe('when error', () => {
-      let mockError = new Error('error')
+      const mockError = new Error('error')
 
       beforeEach(() => {
         vi.mocked(bankService.transfer).mockRejectedValue(mockError)
@@ -444,7 +442,7 @@ describe('Bank', () => {
     })
 
     describe('when error', () => {
-      let mockError = new Error('error')
+      const mockError = new Error('error')
 
       beforeEach(() => {
         vi.mocked(bankService.getEvents).mockRejectedValue(mockError)

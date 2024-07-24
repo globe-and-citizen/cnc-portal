@@ -38,7 +38,7 @@ const bank = {
 // mock SmartContract
 const contractService = {
   getContract: vi.fn().mockReturnValue(bank),
-  getEvents: vi.fn((type: BankEventType) => events)
+  getEvents: vi.fn().mockReturnValueOnce(events)
 }
 vi.mock('@/services/contractService', () => {
   return {
