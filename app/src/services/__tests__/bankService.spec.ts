@@ -32,7 +32,7 @@ const bank = {
   },
   waitForDeployment: vi.fn().mockReturnValue({
     getAddress: vi.fn().mockReturnValue('0x123')
-  }),
+  })
 }
 
 // mock SmartContract
@@ -58,7 +58,7 @@ const mockEthersJs = {
     return {
       deploy: vi.fn().mockReturnValue(bank)
     }
-  }),
+  })
 }
 
 vi.mock('@/adapters/web3LibraryAdapter', () => {
