@@ -24,10 +24,12 @@
     "@heroicons/vue": "^2.1.4",
     "@vueuse/core": "^10.9.0",
     "dayjs": "^1.11.10",
+    "echarts": "^5.5.1",
     "ethers": "^6.13.1",
     "pinia": "^2.1.7",
     "siwe": "^2.1.4",
     "vue": "^3.4.15",
+    "vue-echarts": "^7.0.0-beta.0",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {

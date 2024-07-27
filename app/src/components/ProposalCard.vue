@@ -21,47 +21,11 @@
           }}
         </p>
       </div>
-      <div
-        class="flex flex-row items-center justify-center gap-5 w-1/2"
-        v-if="!proposal.isElection"
-      >
-        <div class="flex flex-col items-center justify-center gap-2 text-sm">
-          <span>Yes </span>
-          <span>No </span>
-          <span>Abstain </span>
-        </div>
-        <div class="flex flex-col items-center justify-center gap-5">
-          <progress
-            class="progress progress-success w-56"
-            :value="Number(proposal.votes?.yes)"
-            max="100"
-          ></progress>
-          <progress
-            class="progress progress-success w-56"
-            :value="Number(proposal.votes?.no)"
-            max="100"
-          ></progress>
-          <progress
-            class="progress progress-success w-56"
-            :value="Number(proposal.votes?.abstain)"
-            max="100"
-          ></progress>
-        </div>
+      <div class="w-1/2 h-24" v-if="!proposal.isElection">
+        <PieChart :data="chartData" title="Directive" />
       </div>
-      <div class="flex flex-row items-center justify-center gap-5 w-1/2" v-else>
-        <div class="flex flex-col items-center justify-center gap-2 text-sm">
-          <span v-for="user in (proposal as any).candidates.slice(0, 3)" :key="user.address">{{
-            user.name
-          }}</span>
-        </div>
-        <div class="flex flex-col items-center justify-center gap-5">
-          <progress
-            class="progress progress-success w-56"
-            v-for="user in (proposal as any).candidates.slice(0, 3)"
-            :key="user.address"
-            :value="Number(user?.votes)"
-          ></progress>
-        </div>
+      <div class="w-1/2 h-24" v-else>
+        <PieChart :data="chartData" title="Election" />
       </div>
     </div>
     <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
@@ -108,20 +72,33 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { Proposal } from '@/types/index'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useVoteElection, useVoteDirective, useConcludeProposal } from '@/composables/voting'
 import VoteForm from '@/components/forms/VoteForm.vue'
 import ProposalDetails from '@/components/ProposalDetails.vue'
 import ModalComponent from './ModalComponent.vue'
 import LoadingButton from './LoadingButton.vue'
-const { addSuccessToast, addErrorToast } = useToastStore()
+import PieChart from './PieChart.vue'
 
-defineProps<{
-  proposal: Partial<Proposal>
-  isDone?: boolean
-}>()
+const { addSuccessToast, addErrorToast } = useToastStore()
+const chartData = computed(() => {
+  const votes = props.proposal.votes || {}
+  if (props.proposal.isElection) {
+    return (props.proposal as any).candidates.map((candidate: any) => {
+      return { value: Number(candidate.votes) || 0, name: candidate.name }
+    })
+  } else {
+    return [
+      { value: Number(votes.yes) || 0, name: 'Yes' },
+      { value: Number(votes.no) || 0, name: 'No' },
+      { value: Number(votes.abstain) || 0, name: 'Abstain' }
+    ]
+  }
+})
+
+const props = defineProps(['proposal', 'isDone'])
+
 const emits = defineEmits(['getTeam'])
 
 const voteInput = ref<any>()
