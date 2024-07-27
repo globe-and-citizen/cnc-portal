@@ -25,6 +25,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
   function initialize(address _tipsAddress) public initializer {
     __Ownable_init(msg.sender);
+    __ReentrancyGuard_init();
+    __Pausable_init();
     tipsAddress = _tipsAddress;
   }
 
