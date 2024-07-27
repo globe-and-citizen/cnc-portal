@@ -158,7 +158,7 @@ import {
 } from '@/composables/bank'
 
 // Service
-import { AuthService } from '@/services/authService'
+// import { AuthService } from '@/services/authService'
 
 // Modals/Forms
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
@@ -437,8 +437,8 @@ const {
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
       memberaddress: memberToBeDeleted.value.address,
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${AuthService.getToken()}`
+      'Content-Type': 'application/json'
+      // Authorization: `Bearer ${AuthService.getToken()}`
     }
     return { options, url, cancel }
   }
