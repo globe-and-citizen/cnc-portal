@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import { computed, defineProps } from 'vue'
-import PieChart from './PieChart.vue'
+import PieChart from '@/components/PieChart.vue'
 const props = defineProps(['proposal'])
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}

@@ -2,7 +2,7 @@
   <v-chart class="chart" :option="option" autoresize v-if="props.data.length" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { PieChart } from 'echarts/charts'
@@ -24,7 +24,7 @@ const option = ref({
     formatter: '{a} <br/>{b} : {c} ({d}%)'
   },
   legend: {
-    data: props.data.map((item) => item.name),
+    data: props.data.map((item: any) => item.name),
     orient: 'vertical',
     left: 'left'
   },

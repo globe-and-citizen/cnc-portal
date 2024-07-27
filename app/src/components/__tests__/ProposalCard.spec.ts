@@ -75,7 +75,6 @@ describe('ProposalCard.vue', () => {
           ? proposalDirective.description.substring(0, 120) + '...'
           : proposalDirective.description
       expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
-      expect(wrapper.findAll('progress').length).toBe(3) // 3 progress bars for Yes, No, Abstain
       expect(wrapper.classes()).toContain('bg-blue-100') // blue background for directive
     })
 
@@ -90,7 +89,6 @@ describe('ProposalCard.vue', () => {
           ? proposalDirective.description.substring(0, 120) + '...'
           : proposalDirective.description
       expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
-      expect(wrapper.findAll('progress').length).toBe(proposalElection.candidates.length) // 1 progress bar per user
       proposalElection.candidates.forEach((user) => {
         expect(wrapper.text()).toContain(user.name)
       })

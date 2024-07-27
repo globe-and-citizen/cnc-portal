@@ -79,7 +79,7 @@ import VoteForm from '@/components/forms/VoteForm.vue'
 import ProposalDetails from '@/components/ProposalDetails.vue'
 import ModalComponent from './ModalComponent.vue'
 import LoadingButton from './LoadingButton.vue'
-import PieChart from './PieChart.vue'
+import PieChart from '@/components/PieChart.vue'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const chartData = computed(() => {
