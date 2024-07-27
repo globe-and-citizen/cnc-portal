@@ -15,7 +15,7 @@ export default defineConfig({
 
   use: {
     // We are using locally deployed MetaMask Test Dapp.
-    baseURL: 'http://localhost:9999'
+    baseURL: 'http://localhost:5173',
   },
 
   // Synpress currently only supports Chromium, however, this will change in the future.
@@ -25,11 +25,4 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] }
     }
   ],
-
-  // Serve MetaMask Test Dapp locally before starting the tests.
-  webServer: {
-    command: 'npm run serve:test-dapp',
-    url: 'http://localhost:9999',
-    reuseExistingServer: true
-  }
 })
