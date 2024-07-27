@@ -12,38 +12,8 @@
           <span v-if="isProcessing">Processing...</span>
           <span v-else>Sign In With Ethereum</span>
         </button>
-        <div class="flex justify-center items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="157"
-            height="22"
-            viewBox="0 0 157 22"
-            fill="none"
-          >
-            <path
-              d="M0 10.5H156"
-              stroke="#919EAB"
-              stroke-opacity="0.24"
-              stroke-linecap="square"
-              stroke-dasharray="2 3"
-            />
-          </svg>
-          <p class="p-2">OR</p>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="157"
-            height="22"
-            viewBox="0 0 157 22"
-            fill="none"
-          >
-            <path
-              d="M0 10.5H156"
-              stroke="#919EAB"
-              stroke-opacity="0.24"
-              stroke-linecap="square"
-              stroke-dasharray="2 3"
-            />
-          </svg>
+        <div class="flex w-full flex-col">
+          <div class="divider">OR</div>
         </div>
         <div class="flex justify-center gap-[8px]">
           <IconGoogle />

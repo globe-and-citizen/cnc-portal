@@ -3,6 +3,7 @@ import { BrowserProvider, /*, Signer */ ethers } from 'ethers'
 import { MetaMaskUtil } from '@/utils/web3Util'
 import type { Signer } from 'ethers'
 import type { ContractFactory } from 'ethers'
+import { log } from '@/utils/generalUtil'
 
 // Define interface for web3 library
 export interface IWeb3Library {
@@ -20,38 +21,56 @@ export interface IWeb3Library {
   sendTransaction(to: string, amount: string): Promise<any>
 }
 
-const metaMaskUtil = new MetaMaskUtil()
+// TODO handle the case when the provider is not available
+let metaMaskUtil: MetaMaskUtil
 
 // Adapter for ethers.js
 export class EthersJsAdapter implements IWeb3Library {
   private static instance: IWeb3Library | undefined
-  private provider: any
+
   //private provider: ethers.providers.Web3Provider | null = null;
+  private provider!: BrowserProvider
+
   //private signer: ethers.Signer | null = null;
-  private signer: any
-  /*private _address: Ref<string | null>
+  private signer: any | ethers.Signer
+  // private _address: Ref<string | null>
 
-  constructor() {
-    this._address = ref(null)
-  }*/
-
+  /**
+   * Initialize the provider and signer
+   */
   async initialize() {
-    // Initialize provider
+    log.info('Start Initializing the provider & the signer')
+
+    try {
+      metaMaskUtil = new MetaMaskUtil()
+    } catch (e) {
+      log.error('MetaMask is not installed')
+    }
+
+    // Stop the initialisation when MetaMask is not installed
+    if (!metaMaskUtil) {
+      return
+    }
     const metaProvider = metaMaskUtil.getProvider()
     this.provider = new BrowserProvider(metaProvider)
+
+    // Listen for account change
     metaProvider.on('accountsChanged', async (/*accounts: string[]*/) => {
+      log.info('Account changed')
       this.signer = await this.provider.getSigner()
     })
 
-    //this.signer = this.provider.getSigner();
+    log.info('Finish Initializing the provider & the signer')
   }
 
+  /**
+   * Connect wallet to the app
+   */
   async connectWallet(): Promise<void> {
     if (!this.provider) {
       //throw new Error('Ethers.js adapter is not initialized');
       this.initialize()
     }
-
     await metaMaskUtil.switchNetwork()
 
     await this.provider.send('eth_requestAccounts', [])
