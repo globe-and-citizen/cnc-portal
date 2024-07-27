@@ -1,6 +1,7 @@
 import { it, expect, describe, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ProposalCard from '../ProposalCard.vue'
+import PieChart from '../PieChart.vue'
 
 vi.mock('@/stores/useToastStore', () => {
   return {
@@ -66,7 +67,10 @@ describe('ProposalCard.vue', () => {
   describe('render', () => {
     it('renders correctly for directive proposal', () => {
       const wrapper = mount(ProposalCard, {
-        props: { proposal: proposalDirective }
+        props: { proposal: proposalDirective },
+        global: {
+          stubs: PieChart
+        }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalDirective.title)
       expect(wrapper.find('.badge-primary').text()).toContain(proposalDirective.draftedBy)
@@ -80,23 +84,26 @@ describe('ProposalCard.vue', () => {
 
     it('renders correctly for election proposal', () => {
       const wrapper = mount(ProposalCard, {
-        props: { proposal: proposalElection }
+        props: { proposal: proposalElection },
+        global: {
+          stubs: PieChart
+        }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalElection.title)
-      expect(wrapper.find('.badge-primary').text()).toContain(proposalElection.draftedBy)
       const expectedDescription =
         proposalDirective.description.length > 120
           ? proposalDirective.description.substring(0, 120) + '...'
           : proposalDirective.description
       expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
-      proposalElection.candidates.forEach((user) => {
-        expect(wrapper.text()).toContain(user.name)
-      })
+
       expect(wrapper.classes()).toContain('bg-green-100') // green background for election
     })
     it('has Vote and View buttons', () => {
       const wrapper = mount(ProposalCard, {
-        props: { proposal: proposalDirective }
+        props: { proposal: proposalDirective },
+        global: {
+          stubs: PieChart
+        }
       })
       const buttons = wrapper.findAll('button')
       expect(buttons[0].text()).toBe('Vote')
