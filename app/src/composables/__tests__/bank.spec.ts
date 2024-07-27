@@ -114,7 +114,7 @@ describe('Bank', () => {
         expect(isSuccess.value).toBe(true)
       })
 
-      it('should change state of error correctly', async () => {
+      it('should keeps the state of error', async () => {
         const { execute: deploy, error } = useDeployBankContract()
         const promise = deploy(teamId)
         expect(bankService.createBankContract).toHaveBeenCalledWith(teamId)
@@ -139,7 +139,7 @@ describe('Bank', () => {
         expect(error.value).toBe(mockError)
       })
 
-      it('should change state of isSuccess correctly', async () => {
+      it('should keeps the state of isSuccess to false', async () => {
         const { execute: deploy, isSuccess } = useDeployBankContract()
         expect(isSuccess.value).toBe(false)
         await deploy(teamId)
@@ -181,7 +181,7 @@ describe('Bank', () => {
         expect(isLoading.value).toBe(false)
       })
 
-      it('should change state of error correctly', async () => {
+      it('should keeps the state of error', async () => {
         const { execute: getBalance, error } = useBankBalance()
         expect(error.value).toBe(null)
         await getBalance(bankAddress)
@@ -213,7 +213,7 @@ describe('Bank', () => {
         expect(error.value).toBe(mockError)
       })
 
-      it('should change state of balance correctly', async () => {
+      it('should keeps state of balance to null', async () => {
         const { execute: getBalance, data: balance } = useBankBalance()
         expect(balance.value).toBe(null)
         await getBalance(bankAddress)
@@ -221,7 +221,7 @@ describe('Bank', () => {
         expect(balance.value).toBe(null)
       })
 
-      it('should change state of isLoading correctly', async () => {
+      it('should keeps state of isLoading correctly', async () => {
         const { execute: getBalance, isLoading } = useBankBalance()
         const promise = getBalance(bankAddress)
         expect(bankService.web3Library.getBalance).toHaveBeenCalledWith(bankAddress)
@@ -268,7 +268,7 @@ describe('Bank', () => {
         expect(isSuccess.value).toBe(true)
       })
 
-      it('should change state of error correctly', async () => {
+      it('should keeps state of error', async () => {
         const { execute: deposit, error } = useBankDeposit()
         expect(error.value).toBe(null)
         await deposit(bankAddress, amount)
@@ -284,7 +284,7 @@ describe('Bank', () => {
         vi.mocked(bankService.deposit).mockRejectedValue(mockError)
       })
 
-      it('should change state of transaction correctly', async () => {
+      it('should keeps state of transaction to be null', async () => {
         const { execute: deposit, transaction } = useBankDeposit()
         expect(transaction.value).toBe(null)
         await deposit(bankAddress, amount)
@@ -301,7 +301,7 @@ describe('Bank', () => {
         expect(isLoading.value).toBe(false)
       })
 
-      it('should change state of isSuccess correctly', async () => {
+      it('should keeps state of isSuccess to be false', async () => {
         const { execute: deposit, isSuccess } = useBankDeposit()
         expect(isSuccess.value).toBe(false)
         await deposit(bankAddress, amount)
@@ -355,7 +355,7 @@ describe('Bank', () => {
         expect(isSuccess.value).toBe(true)
       })
 
-      it('should change state of error correctly', async () => {
+      it('should keeps state of error', async () => {
         const { execute: transfer, error } = useBankTransfer()
         expect(error.value).toBe(null)
         await transfer(bankAddress, to, amount)
@@ -388,7 +388,7 @@ describe('Bank', () => {
         expect(isLoading.value).toBe(false)
       })
 
-      it('should change state of isSuccess correctly', async () => {
+      it('should keeps state of isSuccess to false', async () => {
         const { execute: transfer, isSuccess } = useBankTransfer()
         expect(isSuccess.value).toBe(false)
         await transfer(bankAddress, to, amount)
@@ -432,7 +432,7 @@ describe('Bank', () => {
         expect(loading.value).toBe(false)
       })
 
-      it('should change state of error correctly', async () => {
+      it('should keeps state of error', async () => {
         const { getEvents, error } = useBankEvents(bankAddress)
         expect(error.value).toBe(null)
         await getEvents(BankEventType.Deposit)
@@ -448,7 +448,7 @@ describe('Bank', () => {
         vi.mocked(bankService.getEvents).mockRejectedValue(mockError)
       })
 
-      it('should change state of events correctly', async () => {
+      it('should keeps state of events to be empty array', async () => {
         const { getEvents, events } = useBankEvents(bankAddress)
         expect(events.value).toStrictEqual([] as EventResult[])
         await getEvents(BankEventType.Deposit)
