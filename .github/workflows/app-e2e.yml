@@ -21,6 +21,12 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./app/package-lock.json
 
+      - name: Install Playwright dependencies
+        run: npx playwright install-deps
+
+      - name: Install browsers for Playwright
+        run: npx playwright install chromium
+
       - name: Install linux dependencies
         run: |
           sudo apt-get install --no-install-recommends -y \
