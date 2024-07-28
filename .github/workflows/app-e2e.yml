@@ -21,13 +21,18 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./app/package-lock.json
 
+      - name: Install linux dependencies
+        run: |
+          sudo apt-get install --no-install-recommends -y \
+          xvfb
+
       - name: 💾 Build Cache
         run: |
           npm install
-          npx synpress
+          xvfb-run npm run test:build:cache
         working-directory: ./app
 
       - name: 💻 Run E2E
         run: |
-          npm run test
+          xvfb-run npm run test
         working-directory: ./app
