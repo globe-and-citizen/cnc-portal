@@ -23,14 +23,17 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: ./app
 
-      - name: Install Playwright dependencies
+      - name: 🎭 Install Playwright dependencies
         run: npx playwright install-deps
+        working-directory: ./app
 
-      - name: Install browsers for Playwright
+      - name: 🌎 Install browsers for Playwright
         run: npx playwright install chromium
+        working-directory: ./app
 
-      - name: Install linux dependencies
+      - name: </> Install linux dependencies
         run: |
           sudo apt-get install --no-install-recommends -y \
           xvfb
