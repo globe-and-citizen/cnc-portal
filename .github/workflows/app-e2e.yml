@@ -1,0 +1,33 @@
+name: Frontend E2E Synpress Playwright
+
+on:
+  pull_request:
+    branches: ["*"]
+    paths:
+      - "app/**"
+  workflow_dispatch:
+
+jobs:
+  app-unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up NodeJS 20.10.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: "npm"
+          cache-dependency-path: ./app/package-lock.json
+
+      - name: 💾 Build Cache
+        run: |
+          npm install
+          npx synpress
+        working-directory: ./app
+
+      - name: 💻 Run E2E
+        run: |
+          npm run test
+        working-directory: ./app
