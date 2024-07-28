@@ -21,6 +21,9 @@ jobs:
           cache: "npm"
           cache-dependency-path: ./app/package-lock.json
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Install Playwright dependencies
         run: npx playwright install-deps
 
@@ -33,9 +36,7 @@ jobs:
           xvfb
 
       - name: 💾 Build Cache
-        run: |
-          npm install
-          xvfb-run npm run test:build:cache
+        run: xvfb-run npm run test:build:cache
         working-directory: ./app
 
       - name: 💻 Run E2E
