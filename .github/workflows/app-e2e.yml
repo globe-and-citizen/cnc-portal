@@ -45,6 +45,7 @@ jobs:
       - name: 🌐 Run Frontend
         run: |
           npm run dev &
+        working-directory: ./app
 
       - name: 💻 Run E2E
         run: |
