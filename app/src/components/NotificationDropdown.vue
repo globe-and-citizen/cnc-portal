@@ -26,7 +26,10 @@
         </a>
       </li>
       <!-- Pagination Controls -->
-      <div class="join flex justify-between items-center p-2">
+      <div
+        class="join flex justify-between items-center p-2"
+        v-if="paginatedNotifications.length > 0"
+      >
         <button
           class="join-item btn-primary btn btn-xs"
           :class="currentPage === 1 ? 'btn-disabled' : ''"
