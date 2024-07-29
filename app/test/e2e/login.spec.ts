@@ -9,6 +9,7 @@ const { expect } = test
 test.describe('Sign in', () => {
   test('should be able to sign in and redirect to the teams page', async ({ page, metamask }) => {
     // Mock API
+    const address = await metamask.getAccountAddress()
     await page.route('**/api/user/nonce/*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -23,7 +24,7 @@ test.describe('Sign in', () => {
         body: JSON.stringify({ success: true, accessToken: 'token' })
       })
     })
-    await page.route(`**/api/user/${await metamask.getAccountAddress()}`, async (route) => {
+    await page.route(`**/api/user/${address}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -34,9 +35,6 @@ test.describe('Sign in', () => {
         })
       })
     })
-
-    // Go to login page
-    await page.goto('/login')
 
     // Click sign-in button
     await page.getByTestId('sign-in').click()
