@@ -15,104 +15,104 @@ datasource db {
 }
 
 model User {
-  address       String         @id @unique
-  name          String?
-  nonce         String
-  teams         Team[]         @relation("MemberTeams")
-  ownedTeams    Team[]         @relation("OwnedTeams")
-  notifications Notification[]
-  roles         UserRole[]
+  address               String                @id @unique
+  name                  String?
+  nonce                 String
+  teams                 Team[]                @relation("MemberTeams")
+  ownedTeams            Team[]                @relation("OwnedTeams")
+  notifications         Notification[]
+  roles                 UserRole[]
 }
 
 model Team {
-  id           Int     @id @default(autoincrement())
-  members      User[]  @relation("MemberTeams")
-  owner        User    @relation("OwnedTeams", fields: [ownerAddress], references: [address])
-  ownerAddress String
-  description  String?
-  name         String  @unique
-  bankAddress  String? // A team can have no bank contract
+  id                    Int                   @id @default(autoincrement())
+  members               User[]                @relation("MemberTeams")
+  owner                 User                  @relation("OwnedTeams", fields: [ownerAddress], references: [address])
+  ownerAddress          String
+  description           String?
+  name                  String                @unique
+  bankAddress           String? // A team can have no bank contract
 }
 
 model Notification {
-  id          Int      @id @default(autoincrement())
-  subject     String?
-  message     String
-  isRead      Boolean  @default(false)
-  userAddress String
-  user        User     @relation(fields: [userAddress], references: [address])
-  createdAt   DateTime @default(now())
-  author      String?
-  resource    String?
+  id                    Int                   @id @default(autoincrement())
+  subject               String?
+  message               String
+  isRead                Boolean               @default(false)
+  userAddress           String
+  user                  User                  @relation(fields: [userAddress], references: [address])
+  createdAt             DateTime              @default(now())
+  author                String?
+  resource              String?
 }
 
 // Permissioning System Models
 
 model RoleCategory {
-  id           Int           @id @default(autoincrement())
-  name         String        @unique
-  description  String?
-  roles        Role[]
-  entitlements Entitlement[]
+  id                    Int                   @id @default(autoincrement())
+  name                  String                @unique
+  description           String?
+  roles                 Role[]
+  entitlements          Entitlement[]
 }
 
 model Role {
-  id             Int           @id @default(autoincrement())
-  name           String
-  description    String?
-  entitlements   Entitlement[]
-  roleCategoryId Int
-  users          UserRole[]
+  id                    Int                   @id @default(autoincrement())
+  name                  String
+  description           String?
+  entitlements          Entitlement[]
+  roleCategoryId        Int
+  users                 UserRole[]
 
-  roleCategory RoleCategory @relation(fields: [roleCategoryId], references: [id])
+  roleCategory          RoleCategory          @relation(fields: [roleCategoryId], references: [id])
 
   @@unique([name, roleCategoryId])
 }
 
 model EntitlementType {
-  id          Int           @id @default(autoincrement())
-  name        String        @unique //e.g. dividend, wage, salary, shares, access, vote
-  parameters  String? //eg. percentage:profit, rate:hour|week|month
-  Entitlement Entitlement[]
+  id                    Int                   @id @default(autoincrement())
+  name                  String                @unique //e.g. dividend, wage, salary, shares, access, vote
+  parameters            String? //eg. percentage:profit, rate:hour|week|month
+  Entitlement           Entitlement[]
 }
 
 model Entitlement {
-  id                Int     @id @default(autoincrement())
-  entitlementTypeId Int
-  value             String // $25/hr or 7% of profit
-  description       String?
-  roleCategoryId    Int?
-  roleId            Int?
+  id                    Int                   @id @default(autoincrement())
+  entitlementTypeId     Int
+  value                 String // $25/hr or 7% of profit
+  description           String?
+  roleCategoryId        Int?
+  roleId                Int?
 
-  roleCategory        RoleCategory?         @relation(fields: [roleCategoryId], references: [id])
-  role                Role?                 @relation(fields: [roleId], references: [id])
-  entitlementType     EntitlementType       @relation(fields: [entitlementTypeId], references: [id])
-  UserRoleEntitlement UserRoleEntitlement[]
+  roleCategory          RoleCategory?         @relation(fields: [roleCategoryId], references: [id])
+  role                  Role?                 @relation(fields: [roleId], references: [id])
+  entitlementType       EntitlementType       @relation(fields: [entitlementTypeId], references: [id])
+  UserRoleEntitlement   UserRoleEntitlement[]
 }
 
 model UserRole {
-  id          Int      @id @default(autoincrement())
-  userAddress String
-  roleId      Int
-  assignedAt  DateTime @default(now())
-  assignedBy  String
+  id                    Int                   @id @default(autoincrement())
+  userAddress           String
+  roleId                Int
+  assignedAt            DateTime              @default(now())
+  assignedBy            String
 
-  user         User                  @relation(fields: [userAddress], references: [address])
-  role         Role                  @relation(fields: [roleId], references: [id])
-  entitlements UserRoleEntitlement[]
+  user                  User                  @relation(fields: [userAddress], references: [address])
+  role                  Role                  @relation(fields: [roleId], references: [id])
+  entitlements          UserRoleEntitlement[]
 
   @@unique([userAddress, roleId])
 }
 
 model UserRoleEntitlement {
-  id            Int       @id @default(autoincrement())
-  userRoleId    Int
-  entitlementId Int
-  value         Float? // Unique value for each user for the entitlement
-  lastPayDate   DateTime? @default(now())
+  id                    Int                   @id @default(autoincrement())
+  userRoleId            Int
+  entitlementId         Int
+  value                 Float? // Unique value for each user for the entitlement
+  lastPayDate           DateTime?             @default(now())
 
-  userRole    UserRole    @relation(fields: [userRoleId], references: [id])
-  entitlement Entitlement @relation(fields: [entitlementId], references: [id])
+  userRole              UserRole              @relation(fields: [userRoleId], references: [id])
+  entitlement           Entitlement           @relation(fields: [entitlementId], references: [id])
 
   @@unique([userRoleId, entitlementId])
 }
