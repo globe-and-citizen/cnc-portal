@@ -36,9 +36,6 @@ test.describe('Sign in', () => {
       })
     })
 
-    // Go to login page
-    await page.goto('/login')
-
     // Click sign-in button
     await page.getByTestId('sign-in').click()
     await page.waitForLoadState('networkidle')
