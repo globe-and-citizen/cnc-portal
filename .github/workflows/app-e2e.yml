@@ -42,11 +42,6 @@ jobs:
         run: xvfb-run npm run test:build:cache
         working-directory: ./app
 
-      - name: 🌐 Run Frontend
-        run: |
-          npm run dev &
-        working-directory: ./app
-
       - name: 💻 Run E2E
         run: |
           xvfb-run npm run test
