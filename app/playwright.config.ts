@@ -14,7 +14,6 @@ export default defineConfig({
   workers: undefined,
 
   use: {
-    // We are using locally deployed MetaMask Test Dapp.
     baseURL: 'http://localhost:5173'
   },
 
@@ -24,5 +23,10 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] }
     }
-  ]
+  ],
+
+  webServer: {
+    command: 'npm run dev',
+    port: 5173
+  }
 })
