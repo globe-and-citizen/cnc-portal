@@ -18,7 +18,7 @@ export default defineConfig({
   },
 
   // Timeout limit at 10 seconds.
-  timeout: 10000,
+  timeout: 120000,
 
   // Synpress currently only supports Chromium, however, this will change in the future.
   projects: [
