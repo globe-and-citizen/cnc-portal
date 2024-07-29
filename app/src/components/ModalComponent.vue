@@ -4,7 +4,7 @@
     class="modal modal-bottom sm:modal-middle"
     :class="{ 'modal-open': toggleOpen }"
   >
-    <div class="modal-box">
+    <div class="modal-box overflow-y-visible">
       <button class="btn btn-sm absolute right-4 top-4" @click="toggleOpen = false">✕</button>
       <slot></slot>
     </div>

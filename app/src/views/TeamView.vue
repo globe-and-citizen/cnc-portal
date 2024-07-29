@@ -68,7 +68,6 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { logout } from '@/utils/navBarUtil'
 import type { TeamsResponse } from '@/types'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -77,7 +76,6 @@ const router = useRouter()
 
 const { addSuccessToast } = useToastStore()
 
-// const teams = ref<Team[]>([])
 /**
  * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
  * isFetching - Can be used to show loading spinner
@@ -93,9 +91,7 @@ const {
 
 watch(teamError, () => {
   if (teamError.value) {
-    if (teamError.value === 'Unauthorized') {
-      logout()
-    }
+    // TODO refactor this to use toast or someting better
     return useErrorHandler().handleError(new Error(teamError.value))
   }
 })
