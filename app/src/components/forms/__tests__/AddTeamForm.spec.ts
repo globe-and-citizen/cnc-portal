@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddTeamModal from '@/components/forms/AddTeamForm.vue'
-import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
-import LoadingButton from '@/components/LoadingButton.vue'
 import type { TeamInput, User } from '@/types'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
@@ -19,21 +17,9 @@ describe('AddTeamModal.vue', () => {
 
   const wrapper = mount(AddTeamModal, {
     props: {
-      team,
+      modelValue: team,
       users,
       isLoading: false
-    },
-    global: {
-      components: {
-        PlusCircleIcon,
-        MinusCircleIcon,
-        LoadingButton
-      }
-    },
-    data() {
-      return {
-        dropdown: true
-      }
     }
   })
   describe('Render', () => {
@@ -44,21 +30,15 @@ describe('AddTeamModal.vue', () => {
     it('shows dropdown when users are available', async () => {
       expect(wrapper.find('.dropdown-open').exists()).toBe(true)
     })
-    it('renders icon plus', () => {
-      expect(wrapper.findComponent(PlusCircleIcon).exists()).toBe(true)
-    })
-    it('renders icon minus', () => {
-      expect(wrapper.findComponent(MinusCircleIcon).exists()).toBe(true)
-    })
 
     it('updates team members when a user is selected from dropdown', async () => {
       await wrapper.find('.dropdown a').trigger('click')
-      expect(wrapper.vm.team.members[0].name).toBe(users[0].name)
-      expect(wrapper.vm.team.members[0].address).toBe(users[0].address)
+      expect(wrapper.vm.modelValue.members[0].name).toBe(users[0].name)
+      expect(wrapper.vm.modelValue.members[0].address).toBe(users[0].address)
     })
   })
 
-  describe.only('Emits', () => {
+  describe('Emits', () => {
     const teamV2: TeamInput = {
       name: 'Team Name',
       description: 'Team Description',
@@ -70,18 +50,6 @@ describe('AddTeamModal.vue', () => {
         modelValue: teamV2,
         users,
         isLoading: false
-      },
-      global: {
-        components: {
-          PlusCircleIcon,
-          MinusCircleIcon,
-          LoadingButton
-        }
-      },
-      data() {
-        return {
-          dropdown: true
-        }
       }
     })
     it('emits addTeam when submit button is clicked', async () => {
@@ -92,21 +60,24 @@ describe('AddTeamModal.vue', () => {
       await wrapperV2.find('[data-test="submit"]').trigger('click')
       expect(wrapperV2.emitted()).toHaveProperty('addTeam')
     })
+    it('Not emits on Error', async () => {
+      // TODO: fil the form with valid data
+
+      await wrapper.find('[data-test="submit"]').trigger('click')
+      expect(wrapper.emitted()).not.toHaveProperty('addTeam')
+    })
   })
   describe('Actions', () => {
     it('adds a new member input field when clicking the add icon', async () => {
-      const addButton = wrapper.findComponent(PlusCircleIcon)
-      await addButton.trigger('click')
-
       expect(wrapper.findAll('.input-group').length).toBe(1)
+      await wrapper.find('[data-test="add-member"]').trigger('click')
+
+      expect(wrapper.findAll('.input-group').length).toBe(2)
     })
 
     it('removes the last member input field when clicking the remove icon', async () => {
-      const addButton = wrapper.findComponent(PlusCircleIcon)
-      await addButton.trigger('click') // Add a member
-
-      const removeButton = wrapper.findComponent(MinusCircleIcon)
-      await removeButton.trigger('click') // Remove a member
+      expect(wrapper.findAll('.input-group').length).toBe(2)
+      await wrapper.find('[data-test="remove-member"]').trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(1)
     })

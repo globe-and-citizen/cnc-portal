@@ -91,6 +91,7 @@
   <div class="flex justify-end pt-3">
     <div
       class="w-6 h-6 cursor-pointer"
+      data-test="add-member"
       @click="
         () => {
           team.members.push({ name: '', address: '' })
@@ -101,6 +102,8 @@
     </div>
     <div
       class="w-6 h-6 cursor-pointer"
+      
+      data-test="remove-member"
       @click="
         () => {
           if (team.members.length > 1) {
@@ -123,13 +126,12 @@
 </template>
 <script setup lang="ts">
 import type { User } from '@/types'
-import { onMounted, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '../LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { helpers, required } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import { log } from '@/utils'
 
 // TODO: Type the team
 const team = defineModel({
@@ -156,6 +158,7 @@ const rules = {
   }
 }
 
+// Check if the member input is valid
 const isValidMember = (index: number) => {
   return $v.value.team.members.$errors[0]?.$response.$errors[index].address.length == 0
 }
@@ -178,9 +181,11 @@ const getMessages = (index: number) => {
 }
 
 const emits = defineEmits(['addTeam', 'searchUsers'])
+
 defineProps<{
   users: User[]
   isLoading: boolean
 }>()
+
 const dropdown = ref<boolean>(true)
 </script>
