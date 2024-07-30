@@ -3,6 +3,8 @@ import { mount } from '@vue/test-utils'
 import ProposalCard from '../ProposalCard.vue'
 import PieChart from '../PieChart.vue'
 
+vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
+
 vi.mock('@/stores/useToastStore', () => {
   return {
     useToastStore: vi.fn(() => ({
@@ -67,10 +69,7 @@ describe('ProposalCard.vue', () => {
   describe('render', () => {
     it('renders correctly for directive proposal', () => {
       const wrapper = mount(ProposalCard, {
-        props: { proposal: proposalDirective },
-        global: {
-          stubs: PieChart
-        }
+        props: { proposal: proposalDirective }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalDirective.title)
       expect(wrapper.find('.badge-primary').text()).toContain(proposalDirective.draftedBy)
@@ -84,10 +83,7 @@ describe('ProposalCard.vue', () => {
 
     it('renders correctly for election proposal', () => {
       const wrapper = mount(ProposalCard, {
-        props: { proposal: proposalElection },
-        global: {
-          stubs: PieChart
-        }
+        props: { proposal: proposalElection }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalElection.title)
       const expectedDescription =
@@ -100,10 +96,7 @@ describe('ProposalCard.vue', () => {
     })
     it('has Vote and View buttons', () => {
       const wrapper = mount(ProposalCard, {
-        props: { proposal: proposalDirective },
-        global: {
-          stubs: PieChart
-        }
+        props: { proposal: proposalDirective }
       })
       const buttons = wrapper.findAll('button')
       expect(buttons[0].text()).toBe('Vote')
