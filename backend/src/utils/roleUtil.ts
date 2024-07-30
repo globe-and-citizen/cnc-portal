@@ -11,6 +11,21 @@ interface ReqEntitlement {
   roleId?: number | null;
 }
 
+interface ReqRole {
+  id?: number,
+  name?: string,
+  description?: string,
+  entitlements?: ReqEntitlement[]
+}
+
+interface ReqRoleCategory {
+  id?: number,
+  name: string,
+  description?: string,
+  roles?: ReqRole[],
+  entitlements?: ReqEntitlement[]
+}
+
 export const deleteEntitlements = async (
   oldEnts: Entitlement[], 
   newEnts: ReqEntitlement[] | undefined
@@ -72,4 +87,21 @@ export const updateEntitlements  = async (
       })
     }
   }
+}
+
+export const replaceEmpty = (obj: ReqRoleCategory) => {
+  const emptyRole = { name: '', description: '', entitlements: [{ entitlementTypeId: 0, value: '' }] };
+  const emptyEntitlement = { entitlementTypeId: 0, value: '' };
+
+  // Check if the object has the roles property and it matches the emptyRole structure
+  if (obj.roles && JSON.stringify(obj.roles) === JSON.stringify([emptyRole])) {
+    obj.roles = [];
+  }
+
+  // Check if the object has the entitlements property and it matches the emptyEntitlement structure
+  if (obj.entitlements && JSON.stringify(obj.entitlements) === JSON.stringify([emptyEntitlement])) {
+    obj.entitlements = [];
+  }
+
+  return obj;
 }

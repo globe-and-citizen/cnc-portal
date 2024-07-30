@@ -78,6 +78,8 @@ export const updateRole = async (req: Request, res: Response) => {
       }
     })
 
+    console.log(`role: `, role)
+
     await deleteEntitlements(oldEnts, role.entitlements)
 
     await updateEntitlements(role.entitlements, 'roleId', role.id, res)
