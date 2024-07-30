@@ -7,10 +7,22 @@
 
   <!--Name, Description Inputs-->
   <div class="space-y-2">
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label 
+      class="input input-bordered flex items-center gap-2 input-md mt-4"
+      :class="{'input-error': $v.role.$errors.length}"
+    >
       <span class="w-24">Name</span>
-      <input type="text" class="grow" placeholder="Role name" v-model="role.name" />
+      <input 
+        type="text" 
+        class="grow" 
+        placeholder="Role name" 
+        v-model="role.name" 
+        @input="async () => { await $v.$validate() }"
+      />
     </label>
+    <FormInputError v-if="$v.role.$errors.length">
+      <div v-for="error of $v.role.$errors">{{ error.$message }}</div>
+    </FormInputError>
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24">Description</span>
       <input
@@ -31,7 +43,7 @@
     >
       <input type="radio" name="entitlement-accordion" />
       <div class="collapse-title text-l font-medium">
-        Entitlement - {{ getEntitlementName(input.type as unknown as number) ?? index + 1 }}
+        Entitlement - {{ getEntitlementName(input.entitlementTypeId as unknown as number) ?? index + 1 }}
       </div>
       <div class="collapse-content">
         <AddEntitlementForm
@@ -48,57 +60,69 @@
       class="w-6 h-6 cursor-pointer"
       @click="
         () => {
-          if (role.entitlements.length > 1) {
+          if (
+            role.entitlements.length > 1
+          ) {
             role.entitlements.pop()
           }
         }
       "
     >
-      <IconMinus />
+      <!--<IconMinus />-->
+      <MinusCircleIcon class="size-6"/>
     </div>
     <div
       class="w-6 h-6 cursor-pointer"
       @click="
         () => {
-          role.entitlements.push({ type: 0, rule: '' })
+          role?.entitlements?.push({ entitlementTypeId: 0, value: '' })
         }
       "
     >
-      <IconPlus />
+      <!--<IconPlus />-->
+      <PlusCircleIcon class="size-6"/>
     </div>
   </div>
 
   <!--Cancel Update Buttons-->
   <footer v-if="props.isSingleView" class="flex justify-center space-x-2 mt-4">
-    <button class="btn btn-primary">Update</button>
-    <button class="btn btn-active" @click="emits('closeModal')">Cancel</button>
+    <button v-if="props.categoryId" class="btn btn-primary" @click="handleClickAddRole(props.categoryId)">Add Role</button>
+    <button v-else class="btn btn-primary" @click="handleClickUpdate(/*(role as any).id*/)">Update</button>
+    <button class="btn btn-active" @click="() => {emits('closeModal'); emits('reload')}">Cancel</button>
   </footer>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import IconPlus from '@/components/icons/IconPlus.vue'
-import IconMinus from '@/components/icons/IconMinus.vue'
+import { ref, computed, onMounted } from 'vue'
+import { useCustomFetch } from "@/composables/useCustomFetch";
+import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import AddEntitlementForm from './AddEntitlementForm.vue'
+import FormInputError from '../FormInputError.vue';
+import type { EntitlementType, Role } from "@/types";
+import { useVuelidate } from "@vuelidate/core"
+import { helpers, required } from "@vuelidate/validators";
+import { useToastStore } from "@/stores/useToastStore";
+
+const { addErrorToast } = useToastStore()
 
 const getEntitlementName = (typeId: number) => {
-  const entitlement = entTypes.value.find((ent) => ent.id === typeId)
+  const entitlement = entTypes.value?.entTypes?.find((entType: EntitlementType) => entType.id === typeId)
   return entitlement ? entitlement.name : undefined
 }
 
 const getAvailableTypes = (index: number) => {
   return computed(() => {
-    const selectedTypes = role.value.entitlements.map((entitlement) => entitlement.type)
-    return entTypes.value.filter(
-      (type) =>
-        type.id === -1 ||
-        !selectedTypes.includes(type.id) ||
-        role.value.entitlements[index].type === type.id
+    const selectedTypes = role?.value?.entitlements?.map((entitlement) => entitlement.entitlementTypeId)
+    return entTypes.value?.entTypes?.filter(
+      (entType: EntitlementType) =>
+        entType.id === -1 ||
+        !selectedTypes?.includes(entType.id) ||
+        role?.value?.entitlements[index].entitlementTypeId === entType.id
     )
   })
 }
 
-const entTypes = ref([
+/*const entTypes = ref([
   { id: 1, name: 'salary' },
   { id: 2, name: 'dividend' },
   { id: 3, name: 'wage' },
@@ -106,9 +130,9 @@ const entTypes = ref([
   { id: 5, name: 'access' },
   { id: 6, name: 'vote' },
   { id: -1, name: '-- Create New --' }
-])
+])*/
 
-const emits = defineEmits(['closeModal'])
+const emits = defineEmits(['closeModal', 'reload'])
 
 const role = defineModel({
   default: {
@@ -116,12 +140,86 @@ const role = defineModel({
     description: '',
     entitlements: [
       {
-        type: 0,
-        rule: ''
+        entitlementTypeId: 0,
+        value: ''
       }
     ]
   }
 })
 
-const props = defineProps<{ isSingleView?: boolean }>()
+//#region validation
+const rules = {
+  role: {
+    name: { required }
+  }
+}
+
+const $v = useVuelidate(rules, { role })
+//#endregion validation
+
+const props = defineProps<{ 
+  isSingleView?: boolean; 
+  categoryId?: number;/*
+  _role?: Role*/
+}>()
+const roleEndPoint = ref('')
+
+const {
+  error: isGetEntTypesError,
+  execute: getEntTypesAPI,
+  data: entTypes
+} = useCustomFetch<{success: boolean; entTypes: {id: number; name: string}}>(`entitlement/types`, {
+  immediate: false
+})
+  .get()
+  .json()
+
+const {
+  execute: updateRoleAPI,
+  data: response
+} = useCustomFetch(roleEndPoint, {
+  immediate: false
+})
+  .put(role)
+  .json()
+
+const {
+  execute: createRoleAPI,
+  data: createRoleRes
+} = useCustomFetch(roleEndPoint, {
+  immediate: false
+})
+  .post(role)
+  .json()
+
+const handleClickUpdate = async (/*id: number*/) => {
+  await $v.value.$validate()
+  if ($v.value.$errors.length) {
+    addErrorToast('Form invalid, arboting...')
+    return
+  }
+  roleEndPoint.value = `role/`
+  //console.log('role: ', role)
+  await updateRoleAPI()
+  emits('reload')
+  //console.log('role: ', role.value)
+
+  emits('closeModal')
+}
+
+const handleClickAddRole = async (id: number) => {
+  await $v.value.$validate()
+  if ($v.value.$errors.length) {
+    addErrorToast('Form invalid, arboting...')
+    return
+  }
+  roleEndPoint.value = `role/${id}`
+  await createRoleAPI()
+  emits('reload')
+  emits('closeModal')
+}
+
+onMounted(async () => {
+  await getEntTypesAPI()
+})
 </script>
