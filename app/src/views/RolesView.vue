@@ -1,20 +1,20 @@
 <template>
   <div class="min-h-screen flex flex-col items-center">
     <div>
-      <h2 class="pt-10">Roles</h2>
+      <h2 class="pt-10">Role Categories</h2>
     </div>
 
     <div v-if="isRoleCategoriesFetching" class="loading loading-spinner loading-lg"></div>
 
-    <div class="pt-10" v-if="!isRoleCategoriesFetching && roleCategories">
+    <div class="pt-10" v-if="!isRoleCategoriesFetching && _roleCategories?.roleCategories">
       <!--If Some roles created-->
       <div
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
-        v-if="roleCategories.length != 0"
+        v-if="_roleCategories.roleCategories.length != 0"
       >
         <RoleCategoryCard
           data-test="teamcard"
-          v-for="roleCategory in roleCategories"
+          v-for="roleCategory in _roleCategories.roleCategories"
           :key="roleCategory.id"
           :role-category="roleCategory"
           class="cursor-pointer"
@@ -63,27 +63,29 @@
         :is-new="true"
         v-model="roleCategory"
         @close-modal="showAddRoleCategoryModal = !showAddRoleCategoryModal"
+        @create-role-category="isFetch = !isFetch"
       />
     </ModalComponent>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AddResourceCard from '@/components/AddResourceCard.vue'
 import RoleCategoryCard from '@/components/roles/RoleCategoryCard.vue'
 import AddRoleCategoryForm from '@/components/roles/AddRoleCategoryForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
+import { useCustomFetch } from "@/composables/useCustomFetch";
+import type { RoleCategory } from '@/types'
 const router = useRouter()
 
 const isRoleCategoriesFetching = ref(false)
-type RoleCategory = { id: number; name: string; description?: string; creator: string }
-const roleCategories = ref(Array<RoleCategory>())
+const isFetch = ref(false)
 const showAddRoleCategoryModal = ref(false)
 const roleCategoryError = ref('')
-const roleCategory = ref({
+const initRoleCategory = {
   name: '',
   description: '',
   roles: [
@@ -92,23 +94,48 @@ const roleCategory = ref({
       description: '',
       entitlements: [
         {
-          type: 0,
-          rule: ''
+          entitlementTypeId: 0,
+          value: ''
         }
       ]
     }
   ],
   entitlements: [
     {
-      type: 0,
-      rule: ''
+      entitlementTypeId: 0,
+      value: ''
     }
   ]
+}
+
+const roleCategory = ref(initRoleCategory)
+
+function navigateToRole(id: number | undefined) {
+  if (id) router.push('/roles/' + id)
+}
+
+const {
+  data: _roleCategories,
+  execute: getRoleCategoriesAPI
+} = useCustomFetch('role-category', {immediate: false})
+  .get()
+  .json()
+
+onMounted(async () => {
+  await getRoleCategoriesAPI()
+  console.log('_roleCategories: ', _roleCategories)
 })
 
-function navigateToRole(id: number) {
-  router.push('/roles/' + id)
-}
+watch(isFetch, async (newValue, oldValue) => {
+  if (newValue) {
+    await getRoleCategoriesAPI()
+    roleCategory.value.name = initRoleCategory.name
+    roleCategory.value.description = initRoleCategory.description
+    showAddRoleCategoryModal.value = false
+    isFetch.value = false
+    //console.log('[watch(isfetch)] roleCategory: ', roleCategory.value)
+  }
+})
 </script>
 
 <style scoped></style>

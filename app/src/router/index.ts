@@ -58,7 +58,7 @@ const router = createRouter({
           component: RolesView
         },
         {
-          path: '1',
+          path: ':id',
           name: 'single-roles',
           component: SingleRoleView
         }

@@ -5,13 +5,16 @@
       <section class="hero-container flex justify-center bg-white border rounded-xl">
         <div class="hero-content text-center bg-white p-10 w-full bg-base-200">
           <div class="max-w-md">
-            <h1 class="text-5xl font-bold">{{ data.name }}</h1>
+            <h1 class="text-5xl font-bold">{{ roleCategory?.roleCategory?.name }}</h1>
             <p class="py-6">
-              Welcome to our website. We are glad to have you here. Explore our content and enjoy
-              your stay!
+              {{ 
+                roleCategory?.roleCategory?.description? 
+                roleCategory?.roleCategory?.description:
+                `A role category`
+              }}
             </p>
             <button class="btn btn-primary mr-2" @click="handleEditCategory">Update</button>
-            <button class="btn btn-active">Delete</button>
+            <button class="btn btn-active" @click="handleDeleteCategory">Delete</button>
           </div>
         </div>
       </section>
@@ -33,7 +36,19 @@
             v-if="selectedTab === 'tab1'"
             class="tab-content bg-base-100 border-base-300 rounded-box p-6"
           >
-            <RoleTable :headings="headings" v-model="data" />
+            <RoleTable 
+              v-if="_roleCategory" 
+              :headings="headings" 
+              v-model="_roleCategory.roles" 
+              @reload="isReload = true"
+            />
+            <!--<RoleTable 
+              v-if="_roleCategory && _roleCategory.roles" 
+              :headings="headings" 
+              :roles="_roleCategory.roles"
+              @reload="isReload = true"
+            />-->
+
 
             <hr class="mt-5" />
 
@@ -82,52 +97,75 @@
     <ModalComponent v-model="showModal">
       <AddRoleCategoryForm
         v-if="showCategory"
-        v-model="data"
+        v-model="_roleCategory"
         :is-loading="false"
+        :category-id="_roleCategory?.id"
         @close-modal="handleEditCategory"
+        @reload="isReload = true"
       />
-      <AddRoleForm v-if="showRole" @close-modal="handleAddRole" :is-single-view="true" />
+      <AddRoleForm 
+        v-if="showRole" 
+        @close-modal="handleAddRole"
+        @reload="isReload = true"
+        v-model="initRole"
+        :is-single-view="true" 
+        :category-id="_roleCategory?.id"
+      />
     </ModalComponent>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import RoleTable from '@/components/roles/RoleTable.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import AddRoleForm from '@/components/roles/AddRoleForm.vue'
 import AddRoleCategoryForm from '@/components/roles/AddRoleCategoryForm.vue'
+import { useCustomFetch } from "@/composables/useCustomFetch";
+import { useRoute } from "vue-router";
+import type { RoleCategory } from "@/types";
+
+const route = useRoute()
 
 const headings = ['ID', 'Name', 'Description', 'Actions']
 const showModal = ref(false)
 const showCategory = ref(false)
 const showRole = ref(false)
+const isReload = ref(false)
 
-const data = ref({
-  name: 'C-Suite',
-  descrption: '',
-  roles: [
-    {
-      name: 'CTO',
-      description: 'Chief Trust Officer',
-      entitlements: [{ type: 3, rule: '$50.00:hour', isInit: true }]
-    },
-    {
-      name: 'CPO',
-      description: 'Chief Policy Officer',
-      entitlements: [{ type: 1, rule: `$4,000.00`, isInit: true }]
-    },
-    {
-      name: 'CFO',
-      description: 'Chief Financial Officer',
-      entitlements: [{ type: 2, rule: `$4,500.00:yearly`, isInit: true }]
-    }
-  ],
+const {
+  data: roleCategory,
+  execute: getRoleCategoryAPI
+} = useCustomFetch(`role-category/${route.params.id}`, {
+  immediate: false
+})
+  .get()
+  .json()
+
+const {
+  execute: deleteRoleCategoryAPI
+} = useCustomFetch(`role-category/${route.params.id}`, {
+  immediate: false
+})
+  .delete()
+  .json()
+
+const _roleCategory = ref<RoleCategory | null>(null)
+const initRole = ref({
+  name: '',
+  description: '',
   entitlements: [
-    { type: 6, rule: `1` },
-    { type: 2, rule: `$0.05:quarterly`, isInit: true }
+    {
+      entitlementTypeId: 0,
+      value: ''
+    }
   ]
 })
+
+const handleDeleteCategory = async () => {
+  await deleteRoleCategoryAPI()
+  //isReload.value = true
+}
 
 const handleEditCategory = () => {
   showModal.value = !showModal.value
@@ -138,4 +176,29 @@ const handleAddRole = () => {
   showRole.value = !showRole.value
 }
 const selectedTab = ref('tab1') // Set the default selected tab here
+
+const roles = computed(() => {
+  return _roleCategory.value?.roles
+})
+
+//Reloads page after update
+watch(isReload, async (newValue, oldValue) => {
+  console.log('isReload: ', newValue)
+  if (newValue) {
+    await getRoleCategoryAPI()
+    _roleCategory.value = roleCategory.value.roleCategory
+    //console.log(`_roleCategory: `, _roleCategory.value)
+    isReload.value = false
+  }
+})
+
+watch(_roleCategory, (newValue) => {
+  console.log("_roleCategory has changed")
+})
+
+onMounted(async () => {
+  await getRoleCategoryAPI()
+  console.log(`roleCategory: `, roleCategory.value)
+  _roleCategory.value = roleCategory.value.roleCategory
+})
 </script>
