@@ -1,12 +1,28 @@
 <template>
-  <select v-model="selectedResource" class="grow bg-white" @input="async () => { await $v.$validate() }">
+  <select
+    v-model="selectedResource"
+    class="grow bg-white"
+    @input="
+      async () => {
+        await $v.$validate()
+      }
+    "
+  >
     <option>-- Resource --</option>
     <option v-for="(item, index) in options.resources" :key="index">
       {{ item }}
     </option>
   </select>
 
-  <select v-model="selectedAcessLevel" class="grow bg-white" @input="async () => { await $v.$validate() }">
+  <select
+    v-model="selectedAcessLevel"
+    class="grow bg-white"
+    @input="
+      async () => {
+        await $v.$validate()
+      }
+    "
+  >
     <option>-- Access Level --</option>
     <option v-for="(item, index) in options.levels" :key="index">
       {{ item }}
@@ -16,8 +32,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { useVuelidate } from "@vuelidate/core";
-import { helpers, required } from "@vuelidate/validators";
+import { useVuelidate } from '@vuelidate/core'
+import { helpers, required } from '@vuelidate/validators'
 
 const options = ref({
   resources: ['teams', 'roles', 'app'],
@@ -55,25 +71,19 @@ const selectedAcessLevel = ref<string | null>(initAccessLevel.value)
 //#region validate
 const customValidators = {
   validResource: (value: string) => options.value.resources.includes(value),
-  validLevel: (value: string) => options.value.levels.includes(value),
+  validLevel: (value: string) => options.value.levels.includes(value)
 }
 
 const rules = {
-  selectedResource: {  
+  selectedResource: {
     required,
-    validOption: helpers.withMessage(
-      'Please select a resource', 
-      customValidators.validResource
-    )
+    validOption: helpers.withMessage('Please select a resource', customValidators.validResource)
   },
-  selectedAcessLevel: { 
+  selectedAcessLevel: {
     required,
-    validOption: helpers.withMessage(
-      'Please select an access level', 
-      customValidators.validLevel
-    ) 
+    validOption: helpers.withMessage('Please select an access level', customValidators.validLevel)
   }
-};
+}
 
 const $v = useVuelidate(rules, { selectedResource, selectedAcessLevel })
 //#endregion validate

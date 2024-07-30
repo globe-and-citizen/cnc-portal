@@ -7,21 +7,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useCustomFetch } from "@/composables/useCustomFetch";
+import { computed, onMounted } from 'vue'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 import AccessValueForm from './AccessValueForm.vue'
 import WageValueForm from './WageValueForm.vue'
 import TokenValueForm from './TokenValueForm.vue'
 import DividendValueForm from './DividendValueForm.vue'
-import { useVuelidate } from "@vuelidate/core";
+import { useVuelidate } from '@vuelidate/core'
 
-const $v = useVuelidate()
+useVuelidate()
 
-const {
-  error: isGetEntTypesError,
-  execute: getEntTypesAPI,
-  data: entTypes
-} = useCustomFetch<{success: boolean; entTypes: {id: number; name: string}}>(`entitlement/types`, {
+const { execute: getEntTypesAPI, data: entTypes } = useCustomFetch<{
+  success: boolean
+  entTypes: { id: number; name: string }
+}>(`entitlement/types`, {
   immediate: false
 })
   .get()
@@ -35,7 +34,6 @@ const entitlement = defineModel({
 })
 
 const entName = computed(() => {
-  console.log('entTypes: ', entTypes.value)
   const index = entTypes.value?.entTypes?.findIndex((item: { id: number; name: string }) => {
     return item.id === entitlement.value.entitlementTypeId
   })
@@ -44,12 +42,6 @@ const entName = computed(() => {
     return entTypes.value.entTypes[index].name
   } else return `-- Create New --`
 })
-
-/*watch($v.value.$errors, (newVal) => {
-  if ($v.value.$errors.length) {
-    console.log(`$errors: `, newVal)
-  }
-})*/
 
 onMounted(async () => {
   await getEntTypesAPI()

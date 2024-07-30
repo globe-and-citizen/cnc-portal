@@ -4,7 +4,7 @@
       <span class="font-bold">{{ props.text }}</span>
 
       <div class="w-5 h-5 cursor-pointer" @click="emits('openAddResourceModal')">
-        <PlusCircleIcon class="size-6"/>
+        <PlusCircleIcon class="size-6" />
       </div>
     </div>
   </div>

@@ -7,10 +7,10 @@
           <div class="max-w-md">
             <h1 class="text-5xl font-bold">{{ roleCategory?.roleCategory?.name }}</h1>
             <p class="py-6">
-              {{ 
-                roleCategory?.roleCategory?.description? 
-                roleCategory?.roleCategory?.description:
-                `A role category`
+              {{
+                roleCategory?.roleCategory?.description
+                  ? roleCategory?.roleCategory?.description
+                  : `A role category`
               }}
             </p>
             <button class="btn btn-primary mr-2" @click="handleEditCategory">Update</button>
@@ -36,10 +36,10 @@
             v-if="selectedTab === 'tab1'"
             class="tab-content bg-base-100 border-base-300 rounded-box p-6"
           >
-            <RoleTable 
-              v-if="_roleCategory" 
-              :headings="headings" 
-              v-model="_roleCategory.roles" 
+            <RoleTable
+              v-if="_roleCategory"
+              :headings="headings"
+              v-model="_roleCategory.roles"
               @reload="isReload = true"
             />
             <!--<RoleTable 
@@ -48,7 +48,6 @@
               :roles="_roleCategory.roles"
               @reload="isReload = true"
             />-->
-
 
             <hr class="mt-5" />
 
@@ -103,12 +102,12 @@
         @close-modal="handleEditCategory"
         @reload="isReload = true"
       />
-      <AddRoleForm 
-        v-if="showRole" 
+      <AddRoleForm
+        v-if="showRole"
         @close-modal="handleAddRole"
         @reload="isReload = true"
         v-model="initRole"
-        :is-single-view="true" 
+        :is-single-view="true"
         :category-id="_roleCategory?.id"
       />
     </ModalComponent>
@@ -116,14 +115,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import RoleTable from '@/components/roles/RoleTable.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import AddRoleForm from '@/components/roles/AddRoleForm.vue'
 import AddRoleCategoryForm from '@/components/roles/AddRoleCategoryForm.vue'
-import { useCustomFetch } from "@/composables/useCustomFetch";
-import { useRoute } from "vue-router";
-import type { RoleCategory } from "@/types";
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useRoute } from 'vue-router'
+import type { RoleCategory } from '@/types'
 
 const route = useRoute()
 
@@ -133,18 +132,16 @@ const showCategory = ref(false)
 const showRole = ref(false)
 const isReload = ref(false)
 
-const {
-  data: roleCategory,
-  execute: getRoleCategoryAPI
-} = useCustomFetch(`role-category/${route.params.id}`, {
-  immediate: false
-})
+const { data: roleCategory, execute: getRoleCategoryAPI } = useCustomFetch(
+  `role-category/${route.params.id}`,
+  {
+    immediate: false
+  }
+)
   .get()
   .json()
 
-const {
-  execute: deleteRoleCategoryAPI
-} = useCustomFetch(`role-category/${route.params.id}`, {
+const { execute: deleteRoleCategoryAPI } = useCustomFetch(`role-category/${route.params.id}`, {
   immediate: false
 })
   .delete()
@@ -177,28 +174,17 @@ const handleAddRole = () => {
 }
 const selectedTab = ref('tab1') // Set the default selected tab here
 
-const roles = computed(() => {
-  return _roleCategory.value?.roles
-})
-
 //Reloads page after update
-watch(isReload, async (newValue, oldValue) => {
-  console.log('isReload: ', newValue)
+watch(isReload, async (newValue) => {
   if (newValue) {
     await getRoleCategoryAPI()
     _roleCategory.value = roleCategory.value.roleCategory
-    //console.log(`_roleCategory: `, _roleCategory.value)
     isReload.value = false
   }
 })
 
-watch(_roleCategory, (newValue) => {
-  console.log("_roleCategory has changed")
-})
-
 onMounted(async () => {
   await getRoleCategoryAPI()
-  console.log(`roleCategory: `, roleCategory.value)
   _roleCategory.value = roleCategory.value.roleCategory
 })
 </script>

@@ -82,7 +82,6 @@ export const addRoleCategory = async (req: Request, res: Response) => {
     }
 
     roleCategory = replaceEmpty(roleCategory)
-    console.log(`Role category: `, roleCategory)
 
     const _roleCategory = await prisma.roleCategory.create({
       data: {

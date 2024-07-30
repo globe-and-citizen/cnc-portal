@@ -77,8 +77,7 @@ import RoleCategoryCard from '@/components/roles/RoleCategoryCard.vue'
 import AddRoleCategoryForm from '@/components/roles/AddRoleCategoryForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
-import { useCustomFetch } from "@/composables/useCustomFetch";
-import type { RoleCategory } from '@/types'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 const router = useRouter()
 
 const isRoleCategoriesFetching = ref(false)
@@ -114,26 +113,23 @@ function navigateToRole(id: number | undefined) {
   if (id) router.push('/roles/' + id)
 }
 
-const {
-  data: _roleCategories,
-  execute: getRoleCategoriesAPI
-} = useCustomFetch('role-category', {immediate: false})
+const { data: _roleCategories, execute: getRoleCategoriesAPI } = useCustomFetch('role-category', {
+  immediate: false
+})
   .get()
   .json()
 
 onMounted(async () => {
   await getRoleCategoriesAPI()
-  console.log('_roleCategories: ', _roleCategories)
 })
 
-watch(isFetch, async (newValue, oldValue) => {
+watch(isFetch, async (newValue) => {
   if (newValue) {
     await getRoleCategoriesAPI()
     roleCategory.value.name = initRoleCategory.name
     roleCategory.value.description = initRoleCategory.description
     showAddRoleCategoryModal.value = false
     isFetch.value = false
-    //console.log('[watch(isfetch)] roleCategory: ', roleCategory.value)
   }
 })
 </script>

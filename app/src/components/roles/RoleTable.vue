@@ -7,7 +7,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(row, rowIndex) in roles/*.roles*/" :key="rowIndex" class="hover">
+        <tr v-for="(row, rowIndex) in roles /*.roles*/" :key="rowIndex" class="hover">
           <th>{{ rowIndex + 1 }}</th>
           <td>{{ row.name }}</td>
           <td>{{ row.description }}</td>
@@ -15,9 +15,7 @@
             <button class="btn btn-primary mr-2" @click="handleClickUpdate(rowIndex)">
               Update
             </button>
-            <button class="btn btn-active" @click="handleClickDelete(rowIndex)">
-              Delete
-            </button>
+            <button class="btn btn-active" @click="handleClickDelete(rowIndex)">Delete</button>
           </td>
         </tr>
       </tbody>
@@ -26,7 +24,7 @@
 
   <ModalComponent v-model="showModal">
     <AddRoleForm
-      v-model="roles/*.roles*/[selectedIndex]"
+      v-model="roles /*.roles*/[selectedIndex]"
       :is-single-view="true"
       @close-modal="showModal = !showModal"
       @reload="emits('reload')"
@@ -40,11 +38,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import AddRoleForm from './AddRoleForm.vue'
-import { useCustomFetch } from "@/composables/useCustomFetch";
-import type { Role } from '@/types'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 interface TableProps {
   headings: string[]
@@ -54,17 +51,13 @@ const selectedIndex = ref(-1)
 const roleEndPoint = ref('')
 
 const {
-  execute: deleteRoleAPI,
-  data: deleteRes
+  execute: deleteRoleAPI /*,
+  data: deleteRes*/
 } = useCustomFetch(roleEndPoint, {
   immediate: false
 })
   .delete()
   .json()
-
-const selectedRole = computed(() => {
-  return selectedIndex.value !== -1 ? roles[selectedIndex.value] : undefined
-})
 
 const handleClickUpdate = (rowIndex: number) => {
   selectedIndex.value = rowIndex
@@ -82,34 +75,15 @@ const handleClickDelete = async (rowIndex: number) => {
 const emits = defineEmits(['reload'])
 
 defineProps<TableProps>()
-/*const props = defineProps({
-  headings: {
-    type: Array<string>,
-    required: true
-  },
-  roles: {
-    type: Array<Role>,
-    required: true
-  }
 
-})*/
-
-/*const { headings, roles } = props
-
-watch(() => roles, (newVal) => {
-  console.log("roles[RowTable]: ", newVal)
-})*/
-
-const /*data*/ roles = defineModel({
-  default: /*{
-    roles: */[
-      {
-        name: '',
-        description: '',
-        entitlements: [{ entitlementTypeId: 0, value: '' }]
-      }
-    ]
-  //}
+const roles = defineModel({
+  default: [
+    {
+      name: '',
+      description: '',
+      entitlements: [{ entitlementTypeId: 0, value: '' }]
+    }
+  ]
 })
 </script>
 

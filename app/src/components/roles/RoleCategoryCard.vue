@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="card h-36 w-80 border bg-green-100"
-  >
+  <div class="card h-36 w-80 border bg-green-100">
     <div class="card-body">
       <div class="flex flex-row justify-between items-start">
         <h1 class="card-title text-md overflow-hidden">

@@ -8,29 +8,26 @@
         </option>
       </select>
     </label>
-    <label 
+    <label
       class="input input-bordered flex items-center gap-2 input-md"
-      :class="{'input-error': $v.$errors.length}"
+      :class="{ 'input-error': $v.$errors.length }"
     >
       <span class="w-24">Value</span>
       <EntitlementValueForm v-model="entitlement" />
     </label>
     <FormInputError v-if="$v.$errors.length">
-      <div 
-        v-for="error of $v.$errors" :key="error.$uid"
-      >
+      <div v-for="error of $v.$errors" :key="error.$uid">
         {{ error.$message }}
       </div>
     </FormInputError>
-  </div>  
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, type ComputedRef, watch, onMounted } from 'vue'
+import { ref, type ComputedRef, watch } from 'vue'
 import EntitlementValueForm from './EntitlementValueForm.vue'
-import { useVuelidate } from "@vuelidate/core";
-import { required } from "@vuelidate/validators";
-import FormInputError from '../FormInputError.vue';
+import { useVuelidate } from '@vuelidate/core'
+import FormInputError from '../FormInputError.vue'
 
 const entitlement = defineModel({
   default: {
@@ -40,13 +37,7 @@ const entitlement = defineModel({
   }
 })
 
-//#region validation
-const rules = {
-  entitlement: { required }
-}
-
-const $v = useVuelidate(/*rules, { entitlement }*/)
-//#endregion validation
+const $v = useVuelidate()
 
 const props = defineProps<{
   availableTypes: ComputedRef<{ id: number; name: string }[]>
@@ -58,15 +49,8 @@ watch(
   () => entitlement.value.entitlementTypeId,
   (newType, oldType) => {
     if (!entitlement.value.isInit && newType !== oldType && oldType !== 0) {
-      console.log('reset!!!')
-      console.log('newType: ', newType, ', oldType: ', oldType)
-      console.log('entitlement.value: ', entitlement.value)
       entitlement.value.value = ''
-    } /*else entitlement.value.isInit = false*/
+    }
   }
 )
-
-onMounted(() => {
-  console.log('entitlement: ', entitlement.value)
-})
 </script>

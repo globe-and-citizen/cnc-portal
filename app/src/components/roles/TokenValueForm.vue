@@ -1,17 +1,21 @@
 <template>
-  <input 
-    type="text" 
-    class="w-24" 
-    placeholder="Put percentage" 
+  <input
+    type="text"
+    class="w-24"
+    placeholder="Put percentage"
     v-model="entitlement.value"
-    @input="async () => { await $v.$validate() }"
+    @input="
+      async () => {
+        await $v.$validate()
+      }
+    "
   />
   <span class="grow">of total supply</span>
 </template>
 
 <script setup lang="ts">
-import { useVuelidate } from "@vuelidate/core";
-import { required, numeric, minValue, maxValue } from "@vuelidate/validators";
+import { useVuelidate } from '@vuelidate/core'
+import { required, numeric, minValue, maxValue } from '@vuelidate/validators'
 const entitlement = defineModel({
   default: {
     value: '',

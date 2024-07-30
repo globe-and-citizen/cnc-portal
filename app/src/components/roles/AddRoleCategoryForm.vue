@@ -7,9 +7,9 @@
   <div class="max-h-[70vh] overflow-auto">
     <!--General Inputs-->
     <section class="flex flex-col gap-2">
-      <label 
-        class="input input-bordered flex items-center gap-2 input-md mt-4" 
-        :class="{'input-error': $v.roleCategory.name.$errors.length}"
+      <label
+        class="input input-bordered flex items-center gap-2 input-md mt-4"
+        :class="{ 'input-error': $v.roleCategory.name.$errors.length }"
       >
         <span class="w-24">Name</span>
         <input
@@ -17,17 +17,19 @@
           class="grow"
           placeholder="Enter a role category name"
           v-model="roleCategory.name"
-          @input="async () => { await $v.$validate() }"
+          @input="
+            async () => {
+              await $v.$validate()
+            }
+          "
         />
       </label>
       <FormInputError v-if="$v.roleCategory.name.$errors.length">
-        <div 
-          v-for="(error) of $v.roleCategory.name.$errors" :key="error.$uid"
-        >
+        <div v-for="error of $v.roleCategory.name.$errors" :key="error.$uid">
           {{ error.$message }}
         </div>
       </FormInputError>
-      
+
       <label class="input input-bordered flex items-center gap-2 input-md">
         <span class="w-24">Description</span>
         <input
@@ -70,7 +72,7 @@
           "
         >
           <!--<IconMinus />-->
-          <MinusCircleIcon class="size-6"/>
+          <MinusCircleIcon class="size-6" />
         </div>
         <div
           class="w-6 h-6 cursor-pointer"
@@ -90,7 +92,7 @@
           "
         >
           <!--<IconPlus />-->
-          <PlusCircleIcon class="size-6"/>
+          <PlusCircleIcon class="size-6" />
         </div>
       </div>
     </div>
@@ -129,7 +131,7 @@
         "
       >
         <!--<IconMinus />-->
-        <MinusCircleIcon class="size-6"/>
+        <MinusCircleIcon class="size-6" />
       </div>
       <div
         class="w-6 h-6 cursor-pointer"
@@ -143,7 +145,7 @@
         "
       >
         <!--<IconPlus />-->
-        <PlusCircleIcon class="size-6"/>
+        <PlusCircleIcon class="size-6" />
       </div>
     </div>
   </div>
@@ -151,13 +153,7 @@
   <div class="modal-action justify-center">
     <!-- if there is a button in form, it will close the modal -->
     <LoadingButton v-if="isLoading" color="primary min-w-24" />
-    <button
-      class="btn btn-primary"
-      @click="handleClickCreate"
-      v-else-if="isNew"
-    >
-      Create
-    </button>
+    <button class="btn btn-primary" @click="handleClickCreate" v-else-if="isNew">Create</button>
     <button v-else class="btn btn-primary" @click="handleClickUpdate">Update</button>
     <button class="btn btn-active" @click="emits('closeModal')">Cancel</button>
   </div>
@@ -169,9 +165,9 @@ import FormInputError from '../FormInputError.vue'
 import LoadingButton from '../LoadingButton.vue'
 import AddRoleForm from './AddRoleForm.vue'
 import AddEntitlementForm from './AddEntitlementForm.vue'
-import { useCustomFetch } from "@/composables/useCustomFetch";
+import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useVuelidate } from '@vuelidate/core'
-import { helpers, required } from '@vuelidate/validators'
+import { required } from '@vuelidate/validators'
 
 const roleCategory = defineModel({
   default: {
@@ -214,8 +210,8 @@ const roleCategoryEndPoint = ref('')
 const {
   //isFetching: isCreateRoleCategoryFetching,
   //error: isCreateRoleCategoryError,
-  execute: createRoleCategoryAPI,
-  data: _roleCategory
+  execute: createRoleCategoryAPI /*,
+  data: _roleCategory*/
 } = useCustomFetch(`role-category/`, {
   immediate: false
 })
@@ -223,18 +219,21 @@ const {
   .json()
 
 const {
-  error: isGetEntTypesError,
+  //error: isGetEntTypesError,
   execute: getEntTypesAPI,
   data: _entTypes
-} = useCustomFetch<{success: boolean; entTypes: {id: number; name: string}}>(`entitlement/types`, {
-  immediate: false
-})
+} = useCustomFetch<{ success: boolean; entTypes: { id: number; name: string } }>(
+  `entitlement/types`,
+  {
+    immediate: false
+  }
+)
   .get()
   .json()
 
 const {
-  execute: updateRoleCategoryAPI,
-  data: updateResponse
+  execute: updateRoleCategoryAPI /*,
+  data: updateResponse*/
 } = useCustomFetch(roleCategoryEndPoint, {
   immediate: false
 })
@@ -243,10 +242,12 @@ const {
 
 const getAvailableTypes = (index: number) => {
   return computed(() => {
-    const selectedTypes = roleCategory.value.entitlements.map((entitlement) => entitlement.entitlementTypeId)
+    const selectedTypes = roleCategory.value.entitlements.map(
+      (entitlement) => entitlement.entitlementTypeId
+    )
 
     return _entTypes.value?.entTypes.filter(
-      (type: {id: number; name: string}) =>
+      (type: { id: number; name: string }) =>
         type.id === -1 ||
         !selectedTypes.includes(type.id) ||
         roleCategory.value.entitlements[index].entitlementTypeId === type.id
@@ -255,7 +256,9 @@ const getAvailableTypes = (index: number) => {
 }
 
 const getEntitlementName = (typeId: number) => {
-  const entitlement = _entTypes.value?.entTypes.find((ent: {id: number; name: string}) => ent.id === typeId)
+  const entitlement = _entTypes.value?.entTypes.find(
+    (ent: { id: number; name: string }) => ent.id === typeId
+  )
   return entitlement ? entitlement.name : undefined
 }
 
@@ -265,9 +268,7 @@ const handleClickCreate = async () => {
     console.log('Errors found, aborting submission: ', $v.value)
     return
   }
-  //console.log('roleCategory: ', roleCategory)
   await createRoleCategoryAPI()
-  //console.log('_roleCategory: ', _roleCategory.roleCategory)
   emits('createRoleCategory')
 }
 
@@ -280,7 +281,6 @@ const handleClickUpdate = async () => {
 
 const emits = defineEmits(['createRoleCategory', 'searchUsers', 'closeModal', 'reload'])
 const props = defineProps<{
-  //users: User[]
   isNew?: boolean
   categoryId?: number
   isLoading: boolean

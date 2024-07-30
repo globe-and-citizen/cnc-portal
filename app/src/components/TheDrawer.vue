@@ -45,7 +45,7 @@
       </li>
       <li>
         <RouterLink to="/roles">
-          <IconNote />
+          <IdentificationIcon class="size-6" />
           Roles
         </RouterLink>
       </li>
@@ -62,7 +62,12 @@ li {
 </style>
 
 <script setup lang="ts">
-import { HomeIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import {
+  HomeIcon,
+  UsersIcon,
+  ClipboardDocumentListIcon,
+  IdentificationIcon
+} from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
 interface User {

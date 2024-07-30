@@ -1,5 +1,15 @@
 <template>
-  <input type="text" class="w-24" placeholder="Put amount" v-model="amount" @input="async () => { await $v.$validate() }" />
+  <input
+    type="text"
+    class="w-24"
+    placeholder="Put amount"
+    v-model="amount"
+    @input="
+      async () => {
+        await $v.$validate()
+      }
+    "
+  />
   <!--<div v-for="error of $v.amount.$errors" :key="error.$uid">{{ error.$message }}</div>-->
   <span>/token,</span>
   <select v-model="selectedFrequency" class="grow bg-white">
@@ -12,8 +22,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { useVuelidate } from "@vuelidate/core";
-import { numeric, helpers, required, minValue, maxValue } from "@vuelidate/validators";
+import { useVuelidate } from '@vuelidate/core'
+import { numeric, helpers, required, minValue, maxValue } from '@vuelidate/validators'
 
 const options = ref(['quarterly', 'half-yearly', 'yearly'])
 
@@ -46,17 +56,17 @@ const amount = ref<string | null>(initAmount.value)
 const selectedFrequency = ref<string | null>(initFrequency.value)
 
 //#region validate
-const validOption = (value: string) => options.value.includes(value);
+const validOption = (value: string) => options.value.includes(value)
 
 const rules = {
-  amount: { 
-    numeric, 
+  amount: {
+    numeric,
     required,
     minValue: minValue(1),
     maxValue: maxValue(100)
   },
   selectedFrequency: { validOption: helpers.withMessage('Please select a frequency', validOption) }
-};
+}
 
 const $v = useVuelidate(rules, { amount, selectedFrequency })
 //#endregion validate
