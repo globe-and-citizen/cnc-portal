@@ -1,8 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddTeamModal from '@/components/forms/AddTeamForm.vue'
 import type { TeamInput, User } from '@/types'
-import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
 describe('AddTeamModal.vue', () => {
   const team: TeamInput = {
@@ -22,6 +21,11 @@ describe('AddTeamModal.vue', () => {
       isLoading: false
     }
   })
+
+  // Reset props
+  beforeEach(() => {
+    wrapper.setProps({ modelValue: team, users, isLoading: false })
+  })
   describe('Render', () => {
     it('renders correctly with initial props', () => {
       expect(wrapper.find('h1').text()).toBe('Create New Team')
@@ -29,6 +33,12 @@ describe('AddTeamModal.vue', () => {
     })
     it('shows dropdown when users are available', async () => {
       expect(wrapper.find('.dropdown-open').exists()).toBe(true)
+    })
+    it('should show loading state', async () => {
+      wrapper.setProps({ isLoading: true })
+      // next tick
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('.loading').exists()).toBe(true)
     })
 
     it('updates team members when a user is selected from dropdown', async () => {
@@ -81,23 +91,28 @@ describe('AddTeamModal.vue', () => {
 
       expect(wrapper.findAll('.input-group').length).toBe(1)
     })
-    it('displays dropdown with users when dropdown is true', async () => {
-      const wrapper = mount(AddTeamForm, {
+
+    it('Should update the users in the dropdow when the userName is updated', async () => {
+      const wrapper = mount(AddTeamModal, {
         props: {
-          users: [
-            { name: 'Alice', address: '0x123' },
-            { name: 'Bob', address: '0x456' }
-          ],
+          modelValue: team,
+          users,
           isLoading: false
-        },
-        data() {
-          return {
+        }, data() {
+          return{
             dropdown: true
           }
         }
       })
-      expect(wrapper.find('.dropdown-open').exists()).toBe(true)
-      expect(wrapper.findAll('li').length).toBe(2)
+      await wrapper.find('.input-group input').setValue('Ravioli')
+      await wrapper.find('.input-group input').trigger("keyup.stop")
+
+      await wrapper.findAll('.input-group input')[1].setValue('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
+      await wrapper.findAll('.input-group input')[1].trigger("keyup.stop")
+      // next ti
+      await wrapper.find('.dropdown a').trigger('click')
+      expect(wrapper.vm.modelValue.members[0].name).toBe(users[0].name)
+      
     })
   })
 })
