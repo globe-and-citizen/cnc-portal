@@ -1,10 +1,10 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import BANK_ABI from '../artifacts/abi/bank.json'
-import PROXY_ABI from '../artifacts/abi/proxy.json'
+import BEACON_PROXY_ABI from '../artifacts/abi/beacon-proxy.json'
 import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { BANK_IMPL_ADDRESS } from '@/constant'
-import { PROXY_BYTECODE } from '@/artifacts/bytecode/proxy'
+import { BANK_IMPL_ADDRESS, BANK_BEACON_ADDRESS, TIPS_ADDRESS } from '@/constant'
+import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
@@ -79,15 +79,18 @@ export class BankService implements IBankService {
   }
 
   private async deployBankContract(): Promise<string> {
-    const proxyFactory = await this.web3Library.getFactoryContract(PROXY_ABI, PROXY_BYTECODE)
-    const proxyDeployment = await proxyFactory.deploy(
-      BANK_IMPL_ADDRESS,
-      await this.web3Library.getAddress(),
-      '0x'
+    const bankImplementation = await this.getContract(BANK_IMPL_ADDRESS)
+    const beaconProxyFactory = await this.web3Library.getFactoryContract(
+      BEACON_PROXY_ABI,
+      BEACON_PROXY_BYTECODE
     )
-    const proxy = await proxyDeployment.waitForDeployment()
-    await proxyDeployment.waitForDeployment()
+    const beaconProxyDeployment = await beaconProxyFactory.deploy(
+      BANK_BEACON_ADDRESS,
+      bankImplementation.interface.encodeFunctionData('initialize', [TIPS_ADDRESS])
+    )
+    const beaconProxy = await beaconProxyDeployment.waitForDeployment()
+    await beaconProxyDeployment.waitForDeployment()
 
-    return await proxy.getAddress()
+    return await beaconProxy.getAddress()
   }
 }
