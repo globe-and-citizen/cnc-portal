@@ -10,7 +10,7 @@ describe('AddTeamModal.vue', () => {
   const team: TeamInput = {
     name: '',
     description: '',
-    members: [{ name: '', address: '', isValid: true }]
+    members: [{ name: '', address: '' }]
   }
   const users: User[] = [
     { name: 'Ravioli', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' },
@@ -19,7 +19,6 @@ describe('AddTeamModal.vue', () => {
 
   const wrapper = mount(AddTeamModal, {
     props: {
-      showAddTeamModal: true,
       team,
       users,
       isLoading: false
@@ -58,12 +57,42 @@ describe('AddTeamModal.vue', () => {
       expect(wrapper.vm.team.members[0].address).toBe(users[0].address)
     })
   })
-  /*describe('Emits', () => {
-    it('emits addTeam when submit button is clicked', async () => {
-      await wrapper.find('button.btn-primary').trigger('click')
-      expect(wrapper.emitted()).toHaveProperty('addTeam')
+
+  describe.only('Emits', () => {
+    const teamV2: TeamInput = {
+      name: 'Team Name',
+      description: 'Team Description',
+      members: [{ name: 'Ravioli', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }]
+    }
+
+    const wrapperV2 = mount(AddTeamModal, {
+      props: {
+        modelValue: teamV2,
+        users,
+        isLoading: false
+      },
+      global: {
+        components: {
+          PlusCircleIcon,
+          MinusCircleIcon,
+          LoadingButton
+        }
+      },
+      data() {
+        return {
+          dropdown: true
+        }
+      }
     })
-  })*/
+    it('emits addTeam when submit button is clicked', async () => {
+      // TODO: fil the form with valid data
+      await wrapperV2.find('input[name="name"]').setValue('Team Name')
+      await wrapperV2.find('input[name="description"]').setValue('Team Description')
+
+      await wrapperV2.find('[data-test="submit"]').trigger('click')
+      expect(wrapperV2.emitted()).toHaveProperty('addTeam')
+    })
+  })
   describe('Actions', () => {
     it('adds a new member input field when clicking the add icon', async () => {
       const addButton = wrapper.findComponent(PlusCircleIcon)

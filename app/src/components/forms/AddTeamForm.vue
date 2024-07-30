@@ -5,7 +5,7 @@
     <div>
       <label class="input input-bordered flex items-center gap-2 input-md mt-4">
         <span class="w-24">Team Name</span>
-        <input type="text" class="grow" placeholder="Daisy" v-model="team.name" />
+        <input type="text" class="grow" placeholder="Daisy" v-model="team.name" name="name" />
       </label>
       <div
         class="pl-4 text-red-500 text-sm"
@@ -22,6 +22,7 @@
         class="grow"
         placeholder="Enter a short description"
         v-model="team.description"
+        name="description"
       />
     </label>
 
@@ -115,14 +116,14 @@
   <div class="modal-action justify-center">
     <!-- if there is a button in form, it will close the modal -->
     <LoadingButton v-if="isLoading" color="primary min-w-24" />
-    <button class="btn btn-primary" @click="submitForm" v-else>Submit</button>
+    <button class="btn btn-primary" data-test="submit" @click="submitForm" v-else>Submit</button>
 
     <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
   </div>
 </template>
 <script setup lang="ts">
 import type { User } from '@/types'
-import { ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '../LoadingButton.vue'
 import { isAddress } from 'ethers'
@@ -162,12 +163,13 @@ const isValidMember = (index: number) => {
 const $v = useVuelidate(rules, { team })
 
 const submitForm = () => {
+  // Touch to check validation
   $v.value.$touch()
+
+  // Checking the actual validation state
   if ($v.value.$invalid) {
-    log.info('Form is invalid')
     return
   }
-
   emits('addTeam')
 }
 
