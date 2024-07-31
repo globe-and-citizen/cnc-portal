@@ -1,5 +1,5 @@
 // UpdateTeamForm.spec.ts
-import { it, expect, describe, vi, beforeEach } from 'vitest'
+import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import UpdateTeamForm from '../UpdateTeamForm.vue'
 
