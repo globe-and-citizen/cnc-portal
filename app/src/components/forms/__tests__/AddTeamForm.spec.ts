@@ -98,21 +98,23 @@ describe('AddTeamModal.vue', () => {
           modelValue: team,
           users,
           isLoading: false
-        }, data() {
-          return{
+        },
+        data() {
+          return {
             dropdown: true
           }
         }
       })
       await wrapper.find('.input-group input').setValue('Ravioli')
-      await wrapper.find('.input-group input').trigger("keyup.stop")
+      await wrapper.find('.input-group input').trigger('keyup.stop')
 
-      await wrapper.findAll('.input-group input')[1].setValue('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
-      await wrapper.findAll('.input-group input')[1].trigger("keyup.stop")
+      await wrapper
+        .findAll('.input-group input')[1]
+        .setValue('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
+      await wrapper.findAll('.input-group input')[1].trigger('keyup.stop')
       // next ti
       await wrapper.find('.dropdown a').trigger('click')
       expect(wrapper.vm.modelValue.members[0].name).toBe(users[0].name)
-      
     })
   })
 })

@@ -102,7 +102,6 @@
     </div>
     <div
       class="w-6 h-6 cursor-pointer"
-      
       data-test="remove-member"
       @click="
         () => {
