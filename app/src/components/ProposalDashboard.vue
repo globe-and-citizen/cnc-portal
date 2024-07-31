@@ -1,6 +1,5 @@
 <template>
-  <div class="flex justify-center" v-if="!loadingGetProposals"></div>
-  <div class="flex flex-col" v-if="!loadingGetProposals">
+  <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
     <div class="flex justify-between">
       <div>
         <h2>Proposals</h2>

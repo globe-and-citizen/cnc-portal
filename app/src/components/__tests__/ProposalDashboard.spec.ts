@@ -69,5 +69,6 @@ describe('ProposalDashboard.vue', () => {
     })
     await wrapper.vm.$nextTick()
     expect(wrapper.find('span.loading').exists()).toBe(true)
+    expect(wrapper.find('[data-test="parent-div"]').exists()).toBe(false)
   })
 })
