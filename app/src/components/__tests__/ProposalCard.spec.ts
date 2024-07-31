@@ -1,8 +1,15 @@
 import { it, expect, describe, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ProposalCard from '../ProposalCard.vue'
-import PieChart from '../PieChart.vue'
-
+import { ref } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router';
+// Create a router instance
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: { template: '<div>Home</div>' } } // Basic route
+  ], // Define your routes here if needed
+});
 vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
 
 vi.mock('@/stores/useToastStore', () => {
@@ -18,21 +25,21 @@ vi.mock('@/composables/voting', () => {
   return {
     useVoteElection: vi.fn(() => ({
       execute: vi.fn(),
-      isLoading: vi.fn(),
+      isLoading: ref(true),
       error: vi.fn(),
-      isSuccess: vi.fn()
+      isSuccess: ref(true)
     })),
     useVoteDirective: vi.fn(() => ({
       execute: vi.fn(),
-      isLoading: vi.fn(),
+      isLoading: ref(true),
       error: vi.fn(),
-      isSuccess: vi.fn()
+      isSuccess: ref(true)
     })),
     useConcludeProposal: vi.fn(() => ({
       execute: vi.fn(),
-      isLoading: vi.fn(),
+      isLoading: ref(true),
       error: vi.fn(),
-      isSuccess: vi.fn()
+      isSuccess: ref(true)
     }))
   }
 })
@@ -69,6 +76,9 @@ describe('ProposalCard.vue', () => {
   describe('render', () => {
     it('renders correctly for directive proposal', () => {
       const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router] // Provide the router instance
+        },
         props: { proposal: proposalDirective }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalDirective.title)
@@ -83,6 +93,9 @@ describe('ProposalCard.vue', () => {
 
     it('renders correctly for election proposal', () => {
       const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router] // Provide the router instance
+        },
         props: { proposal: proposalElection }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalElection.title)
@@ -96,6 +109,9 @@ describe('ProposalCard.vue', () => {
     })
     it('has Vote and View buttons', () => {
       const wrapper = mount(ProposalCard, {
+        global: {
+        plugins: [router] // Provide the router instance
+      },
         props: { proposal: proposalDirective }
       })
       const buttons = wrapper.findAll('button')
