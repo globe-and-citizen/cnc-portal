@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddTeamModal from '@/components/forms/AddTeamForm.vue'
+import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import type { TeamInput, User } from '@/types'
 
-describe('AddTeamModal.vue', () => {
+describe('AddTeamForm.vue', () => {
   const team: TeamInput = {
     name: '',
     description: '',
@@ -14,7 +14,7 @@ describe('AddTeamModal.vue', () => {
     { name: 'Dasarath', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' }
   ]
 
-  const wrapper = mount(AddTeamModal, {
+  const wrapper = mount(AddTeamForm, {
     props: {
       modelValue: team,
       users,
@@ -55,7 +55,7 @@ describe('AddTeamModal.vue', () => {
       members: [{ name: 'Ravioli', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }]
     }
 
-    const wrapperV2 = mount(AddTeamModal, {
+    const wrapperV2 = mount(AddTeamForm, {
       props: {
         modelValue: teamV2,
         users,
@@ -93,7 +93,7 @@ describe('AddTeamModal.vue', () => {
     })
 
     it('Should update the users in the dropdow when the userName is updated', async () => {
-      const wrapper = mount(AddTeamModal, {
+      const wrapper = mount(AddTeamForm, {
         props: {
           modelValue: team,
           users,
