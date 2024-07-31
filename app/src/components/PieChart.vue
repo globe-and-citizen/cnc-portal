@@ -1,5 +1,11 @@
 <template>
-  <v-chart class="chart" :option="option" autoresize v-if="props.data.length" />
+  <v-chart
+    data-test="pie-chart"
+    class="chart"
+    :option="option"
+    autoresize
+    v-if="props.data.length"
+  />
 </template>
 
 <script setup lang="ts">
