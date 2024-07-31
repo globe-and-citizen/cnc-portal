@@ -71,7 +71,6 @@ vi.mock('@/services/votingService', () => {
 })
 
 describe('Voting Composables', () => {
-
   beforeEach(() => {
     // Clear mocks and reinitialize votingService before each test
     vi.clearAllMocks()
