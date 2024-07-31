@@ -24,6 +24,24 @@ const mockProposal: Partial<Proposal> = {
   isActive: true,
   voters: [{ isVoted: false, isEligible: true, memberAddress: '0x123', name: 'User1' }]
 }
+const mockElectionProposal: Partial<Proposal> = {
+  id: 2,
+  title: 'Election Proposal',
+  description: 'This is an election proposal.',
+  draftedBy: 'User2',
+  isElection: true,
+  votes: {
+    yes: 0,
+    no: 0,
+    abstain: 0
+  },
+  isActive: true,
+  voters: [{ isVoted: false, isEligible: true, memberAddress: '0x456', name: 'User2' }],
+  candidates: [
+    { name: 'Candidate A', votes: 0, candidateAddress: '0x123' },
+    { name: 'Candidate B', votes: 0, candidateAddress: '0x456' }
+  ]
+}
 // Mock the VotingService class
 vi.mock('@/services/votingService', () => {
   const mockTransaction = { hash: '0x123' }
@@ -62,7 +80,7 @@ describe('Voting Composables', () => {
   })
 
   describe('useAddProposal', () => {
-    it('should add a proposal successfully', async () => {
+    it('should add a directive proposal successfully', async () => {
       const { execute, isLoading, isSuccess, error, transaction } = useAddProposal()
 
       // Call the composable's execute function
@@ -75,7 +93,22 @@ describe('Voting Composables', () => {
       expect(transaction.value).toEqual(mockTransaction)
     })
   })
+  it('should initialize candidate votes to zero if proposal is an election', async () => {
+    const { execute, isLoading, isSuccess, error, transaction } = useAddProposal()
 
+    // Call the composable's execute function with an election proposal
+    await execute(mockElectionProposal)
+
+    // Assertions
+    expect(isLoading.value).toBe(false)
+    expect(isSuccess.value).toBe(true)
+    expect(error.value).toBe(null)
+    expect(transaction.value).toEqual(mockTransaction)
+
+    // Verify that candidate votes are initialized to zero
+    console.log(mockElectionProposal)
+    expect(mockElectionProposal.candidates?.every((candidate) => candidate.votes === 0)).toBe(true)
+  })
   describe('useGetProposals', () => {
     it('should fetch proposals successfully', async () => {
       const { execute, isLoading, isSuccess, error, data } = useGetProposals()
