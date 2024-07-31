@@ -16,7 +16,6 @@ describe('AddMemberModal.vue', () => {
       formData,
       users,
       isLoading: false,
-      showAddMemberForm: true
     }
   })
   // Test the rendering of the component
