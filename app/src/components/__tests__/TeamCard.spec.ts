@@ -11,7 +11,8 @@ describe('TeamCard', () => {
       bankAddress: null,
       id: '1',
       members: [],
-      ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+      ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+      votingAddress: null
     }
   }
 

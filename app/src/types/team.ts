@@ -7,6 +7,7 @@ export interface Team {
   bankAddress: string | null
   members: Member[]
   ownerAddress: string
+  votingAddress: string | null
 }
 export interface TeamsResponse {
   teams: Team[]
