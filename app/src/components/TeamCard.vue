@@ -1,7 +1,7 @@
 <template>
   <div
     class="card h-36 w-80 border"
-    :class="`${team.ownerAddress == useUserDataStore().address ? 'bg-green-100' : 'bg-blue-100'}`"
+    :class="`${team.ownerAddress == userStore.address ? 'bg-green-100' : 'bg-blue-100'}`"
   >
     <div class="card-body">
       <div class="flex flex-row justify-between items-start">
@@ -10,7 +10,7 @@
         </h1>
         <div
           class="badge badge-sm badge-primary"
-          v-if="team.ownerAddress == useUserDataStore().address"
+          v-if="team.ownerAddress == userStore.address"
         >
           Owner
         </div>
@@ -31,5 +31,6 @@ import type { Team } from '@/types'
 interface Props {
   team: Team
 }
+const userStore = useUserDataStore()
 const props = defineProps<Props>()
 </script>
