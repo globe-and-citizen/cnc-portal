@@ -8,10 +8,7 @@
         <h1 class="card-title text-md overflow-hidden">
           {{ props.team.name }}
         </h1>
-        <div
-          class="badge badge-sm badge-primary"
-          v-if="team.ownerAddress == userStore.address"
-        >
+        <div class="badge badge-sm badge-primary" v-if="team.ownerAddress == userStore.address">
           Owner
         </div>
         <div class="badge badge-sm badge-secondary" v-else>Employee</div>

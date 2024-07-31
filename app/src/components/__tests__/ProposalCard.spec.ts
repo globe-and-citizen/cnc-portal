@@ -2,14 +2,14 @@ import { it, expect, describe, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ProposalCard from '../ProposalCard.vue'
 import { ref } from 'vue'
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router'
 // Create a router instance
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: { template: '<div>Home</div>' } } // Basic route
-  ], // Define your routes here if needed
-});
+  ] // Define your routes here if needed
+})
 vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
 
 vi.mock('@/stores/useToastStore', () => {
@@ -110,8 +110,8 @@ describe('ProposalCard.vue', () => {
     it('has Vote and View buttons', () => {
       const wrapper = mount(ProposalCard, {
         global: {
-        plugins: [router] // Provide the router instance
-      },
+          plugins: [router] // Provide the router instance
+        },
         props: { proposal: proposalDirective }
       })
       const buttons = wrapper.findAll('button')

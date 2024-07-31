@@ -24,9 +24,9 @@ describe('BankTransactions', () => {
       const wrapper = mount(BankTransactions, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }, 
+        },
         props: {
-          bankAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+          bankAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
         }
       })
       expect(wrapper.find('div#bank-transactions').exists()).toBe(true)
