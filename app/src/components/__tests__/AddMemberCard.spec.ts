@@ -13,7 +13,6 @@ describe('AddMemberCard.vue', () => {
   })
   describe('Render', () => {
     it('renders text correctly', () => {
-      console.log(wrapper.html())
       expect(wrapper.text()).toBe('Add Member')
     })
     it('renders icon plus', () => {

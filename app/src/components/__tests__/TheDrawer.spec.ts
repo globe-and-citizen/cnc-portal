@@ -3,6 +3,17 @@ import { describe, it, expect } from 'vitest'
 import TheDrawer from '@/components/TheDrawer.vue'
 import { HomeIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { RouterLinkStub } from '@vue/test-utils'
+import { createRouter, createWebHistory } from 'vue-router'
+
+// Create a router instance with a basic route
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: { template: '<div>Home</div>' } },
+    { path: '/teams', component: { template: '<div>Teams</div>' } },
+    { path: '/transactions', component: { template: '<div>Teams</div>' } }
+  ]
+})
 
 describe('TheDrawer', () => {
   const name = 'John Doe'
@@ -10,6 +21,9 @@ describe('TheDrawer', () => {
 
   it('should render user information correctly', () => {
     const wrapper = mount(TheDrawer, {
+      global: {
+        plugins: [router] // Provide the router instance
+      },
       props: { user: { name, address } }
     })
 
@@ -19,6 +33,9 @@ describe('TheDrawer', () => {
 
   it('should render default user name when no name is provided', () => {
     const wrapper = mount(TheDrawer, {
+      global: {
+        plugins: [router] // Provide the router instance
+      },
       props: { user: { name: '', address } }
     })
 
@@ -27,6 +44,9 @@ describe('TheDrawer', () => {
 
   it('should emit toggleEditUserModal when the user card is clicked', async () => {
     const wrapper = mount(TheDrawer, {
+      global: {
+        plugins: [router] // Provide the router instance
+      },
       props: { user: { name, address } }
     })
 
@@ -38,6 +58,7 @@ describe('TheDrawer', () => {
     const wrapper = mount(TheDrawer, {
       props: { user: { name, address } },
       global: {
+        plugins: [router], // Provide the router instance
         stubs: { RouterLink: RouterLinkStub, HomeIcon, UsersIcon, ClipboardDocumentListIcon }
       }
     })

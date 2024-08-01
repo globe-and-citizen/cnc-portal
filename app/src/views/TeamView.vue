@@ -180,4 +180,3 @@ function navigateToTeam(id: string) {
 </script>
 
 <style scoped></style>
-@/composables/apis/team

@@ -71,12 +71,9 @@ vi.mock('@/services/votingService', () => {
 })
 
 describe('Voting Composables', () => {
-  let votingService: VotingService
-
   beforeEach(() => {
     // Clear mocks and reinitialize votingService before each test
     vi.clearAllMocks()
-    votingService = new VotingService()
   })
 
   describe('useAddProposal', () => {
