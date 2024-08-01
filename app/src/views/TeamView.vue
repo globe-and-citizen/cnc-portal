@@ -104,8 +104,7 @@ const team = ref<TeamInput>({
   members: [
     {
       name: '',
-      address: '',
-      isValid: false
+      address: ''
     }
   ]
 })
