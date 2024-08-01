@@ -39,8 +39,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import AddRoleForm from './AddRoleForm.vue'
+import ModalComponent from '@/components/ui/ModalComponent.vue'
+//import AddRoleForm from './AddRoleForm.vue'
+import AddRoleForm from '@/components/forms/roles/AddRoleForm.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
 interface TableProps {

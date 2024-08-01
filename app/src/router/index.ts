@@ -5,8 +5,8 @@ import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import ToastDemoView from '@/views/ToastDemoView.vue'
-import RolesView from '@/views/RolesView.vue'
-import SingleRoleView from '@/views/SingleRoleView.vue'
+import RoleCategoriesView from '@/views/RoleCategoriesView.vue'
+import RoleCategoryView from '@/views/RoleCategoryView.vue'
 import { useStorage } from '@vueuse/core'
 
 const router = createRouter({
@@ -54,13 +54,13 @@ const router = createRouter({
       children: [
         {
           path: '',
-          name: 'roles',
-          component: RolesView
+          name: 'role-categories',
+          component: RoleCategoriesView
         },
         {
           path: ':id',
-          name: 'single-roles',
-          component: SingleRoleView
+          name: 'role-category',
+          component: RoleCategoryView
         }
       ]
     }

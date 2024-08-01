@@ -116,10 +116,10 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import RoleTable from '@/components/roles/RoleTable.vue'
+import RoleTable from '@/components/sections/role-categories/RoleTable.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import AddRoleForm from '@/components/roles/AddRoleForm.vue'
-import AddRoleCategoryForm from '@/components/roles/AddRoleCategoryForm.vue'
+import AddRoleForm from '@/components/forms/roles/AddRoleForm.vue'
+import AddRoleCategoryForm from '@/components/forms/roles/AddRoleCategoryForm.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import type { RoleCategory } from '@/types'

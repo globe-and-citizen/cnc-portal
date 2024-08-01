@@ -23,3 +23,8 @@ export interface EntitlementType {
   id: number
   name: string
 }
+
+export interface RoleCategoryResponse {
+  success: boolean
+  roleCategories: RoleCategory[]
+}
