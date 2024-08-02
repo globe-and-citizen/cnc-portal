@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { VueWrapper, mount } from '@vue/test-utils'
-import DepositHistory from '@/components/bank-history/DepositHistory.vue'
+import TransferHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/TransferHistory.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import type { EventResult } from '@/types'
 import type { Result } from 'ethers'
@@ -9,15 +9,15 @@ import { useBankEvents } from '@/composables/bank'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
 
-const depositEvents: EventResult[] = [
+const sendToWalletEvents: EventResult[] = [
   {
     txHash: '0x1',
-    data: ['0xDepositor1', '1000000000000000000'] as Result, // 1 ETH
+    data: ['0xOwner', '0xMember1', '1000000000000000000'] as Result, // 1 ETH
     date: '2024-06-25'
   },
   {
     txHash: '0x2',
-    data: ['0xDepositor2', '2000000000000000000'] as Result, // 2 ETH
+    data: ['0xOwner', '0xMember2', '2000000000000000000'] as Result, // 2 ETH
     date: '2024-06-26'
   }
 ]
@@ -37,18 +37,18 @@ vi.mock('@/stores/useToastStore', () => ({
 
 vi.mock('@/composables/bank', () => ({
   useBankEvents: vi.fn().mockImplementation(() => ({
-    getEvents: vi.fn().mockReturnValue(depositEvents),
+    getEvents: vi.fn().mockReturnValue(sendToWalletEvents),
     loading: ref(false),
-    events: ref(depositEvents),
+    events: ref(sendToWalletEvents),
     error: ref(null)
   }))
 }))
 
-describe('DepositHistory', () => {
+describe('TransferHistory', () => {
   let wrapper: VueWrapper
 
   beforeEach(() => {
-    wrapper = mount(DepositHistory, {
+    wrapper = mount(TransferHistory, {
       props: {
         bankAddress: '0x123'
       },
@@ -67,25 +67,27 @@ describe('DepositHistory', () => {
       expect(wrapper.find('tbody tr').exists()).toBe(true)
 
       // table header
-      const header = ['No', 'Depositor', 'Amount', 'Date']
-      expect(wrapper.findAll('th').length).toBe(4)
+      const header = ['No', 'Sender', 'To', 'Amount', 'Date']
+      expect(wrapper.findAll('th').length).toBe(5)
       expect(wrapper.findAll('th').forEach((th, index) => expect(th.text()).toBe(header[index])))
 
       // table body
-      expect(wrapper.findAll('td').length).toBe(depositEvents.length * header.length)
+      expect(wrapper.findAll('td').length).toBe(sendToWalletEvents.length * header.length)
     })
 
     it('renders table body correctly', () => {
       const tableData = wrapper.findAll('td')
       const no = tableData[0].text()
-      const depositor = tableData[1].text()
-      const amount = tableData[2].text()
-      const date = tableData[3].text()
+      const sender = tableData[1].text()
+      const to = tableData[2].text()
+      const amount = tableData[3].text()
+      const date = tableData[4].text()
 
       expect(no).toEqual('1')
-      expect(depositor).toEqual(depositEvents[0].data[0])
+      expect(sender).toEqual(sendToWalletEvents[0].data[0])
+      expect(to).toEqual(sendToWalletEvents[0].data[1])
       expect(amount).toEqual('1 SepoliaETH')
-      expect(date).toEqual(depositEvents[0].date)
+      expect(date).toEqual(sendToWalletEvents[0].date)
     })
 
     it('renders skeleton loading if loading', () => {
@@ -96,7 +98,7 @@ describe('DepositHistory', () => {
         error: ref(null)
       }))
 
-      const wrapper = mount(DepositHistory, {
+      const wrapper = mount(TransferHistory, {
         props: {
           bankAddress: '0x123'
         }
@@ -104,7 +106,7 @@ describe('DepositHistory', () => {
       expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
     })
 
-    it('renders empty table when no deposit events', () => {
+    it('renders empty table when no transfer events', () => {
       ;(useBankEvents as Mock).mockImplementationOnce(() => ({
         getEvents: vi.fn().mockReturnValue([]),
         loading: ref(false),
@@ -112,15 +114,15 @@ describe('DepositHistory', () => {
         error: ref(null)
       }))
 
-      const wrapper = mount(DepositHistory, {
+      const wrapper = mount(TransferHistory, {
         props: {
           bankAddress: '0x123'
         }
       })
       const emtpyRow = wrapper.find('tr td.text-center.font-bold.text-lg')
       expect(emtpyRow.exists()).toBe(true)
-      expect(emtpyRow.text()).toBe('No Deposit transactions')
-      expect(emtpyRow.attributes('colspan')).toBe('4')
+      expect(emtpyRow.text()).toBe('No transfer transactions')
+      expect(emtpyRow.attributes('colspan')).toBe('5')
     })
   })
 
@@ -134,7 +136,7 @@ describe('DepositHistory', () => {
         error: ref(null)
       }))
 
-      mount(DepositHistory, {
+      mount(TransferHistory, {
         props: {
           bankAddress: '0x123'
         }

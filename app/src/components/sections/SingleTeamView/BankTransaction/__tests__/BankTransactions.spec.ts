@@ -1,11 +1,11 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import BankTransactions from '@/components/BankTransactions.vue'
+import BankTransactions from '@/components/sections/SingleTeamView/BankTransaction/BankTransactions.vue'
 import AccordionComponent from '@/components/AccordionComponent.vue'
-import DepositHistory from '@/components/bank-history/DepositHistory.vue'
-import TransferHistory from '@/components/bank-history/TransferHistory.vue'
-import TipsAddressChangedHistory from '@/components/bank-history/TipsAddressChangedHistory.vue'
-import SendToWalletHistory from '@/components/bank-history/SendToWalletHistory.vue'
+import DepositHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/DepositHistory.vue'
+import TransferHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/TransferHistory.vue'
+import TipsAddressChangedHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/TipsAddressChangedHistory.vue'
+import SendToWalletHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/SendToWalletHistory.vue'
 import { createTestingPinia } from '@pinia/testing'
 
 vi.mock('@/adapters/web3LibraryAdapter', () => {
