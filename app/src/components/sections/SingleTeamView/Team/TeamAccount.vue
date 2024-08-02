@@ -115,12 +115,7 @@ import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
-import {
-  useBankBalance,
-  useBankDeposit,
-  useDeployBankContract,
-  useBankTransfer
-} from '@/composables/bank'
+import { useBankBalance, useBankDeposit, useBankTransfer } from '@/composables/bank'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -160,7 +155,6 @@ const {
 const props = defineProps<{
   team: Partial<Team>
 }>()
-const emits = defineEmits(['transfer'])
 
 watch(depositSuccess, () => {
   if (depositSuccess.value) {
