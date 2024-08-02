@@ -210,7 +210,7 @@ const roleCategoryEndPoint = ref('')
 const {
   //isFetching: isCreateRoleCategoryFetching,
   //error: isCreateRoleCategoryError,
-  execute: executeCreateRoleCategory/*,
+  execute: executeCreateRoleCategory /*,
   data: _roleCategory*/
 } = useCustomFetch(`role-category/`, {
   immediate: false
@@ -232,7 +232,7 @@ const {
   .json()
 
 const {
-  execute: executeUpdateRoleCategory/*updateRoleCategoryAPI /*,
+  execute: executeUpdateRoleCategory /*updateRoleCategoryAPI /*,
   data: updateResponse*/
 } = useCustomFetch(roleCategoryEndPoint, {
   immediate: false

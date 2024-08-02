@@ -7,19 +7,17 @@
       />
     </div>
     <div v-else>
-      <NoRoleCategoriesDisplay 
-        v-model:show-add-role-category-modal="showAddRoleCategoryModal" 
-      />
+      <NoRoleCategoriesDisplay v-model:show-add-role-category-modal="showAddRoleCategoryModal" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { RoleCategoryResponse } from "@/types";
-import RoleCategoriesCardsDisplay from "./RoleCategoriesCardsDisplay.vue";
-import NoRoleCategoriesDisplay from "./NoRoleCategoriesDisplay.vue";
+import type { RoleCategoryResponse } from '@/types'
+import RoleCategoriesCardsDisplay from './RoleCategoriesCardsDisplay.vue'
+import NoRoleCategoriesDisplay from './NoRoleCategoriesDisplay.vue'
 
-const showAddRoleCategoryModal = defineModel<boolean>("showAddRoleCategoryModal")
-const _roleCategories = defineModel<RoleCategoryResponse>("_roleCategories")
+const showAddRoleCategoryModal = defineModel<boolean>('showAddRoleCategoryModal')
+const _roleCategories = defineModel<RoleCategoryResponse>('_roleCategories')
 //const isRoleCategoriesFetching = defineModel<boolean>("isRoleCategoriesFetching")
 </script>

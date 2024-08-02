@@ -155,7 +155,7 @@ const initRole = ref({
 
 const handleDeleteCategory = async () => {
   await executeDeleteRoleCategory()
-  //isReload.value = true
+  isReload.value = true
 }
 
 const handleEditCategory = () => {

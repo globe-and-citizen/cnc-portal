@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
-  >
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20">
     <RoleCategoryCard
       v-for="roleCategory in _roleCategories?.roleCategories"
       :key="roleCategory.id"
@@ -19,13 +17,13 @@
 </template>
 
 <script setup lang="ts">
-import AddResourceCard from "@/components/AddResourceCard.vue"
-import RoleCategoryCard from "@/components/sections/role-categories/RoleCategoryCard.vue"
-import type { RoleCategoryResponse } from "@/types";
-import { useRouter } from "vue-router"
+import AddResourceCard from '@/components/AddResourceCard.vue'
+import RoleCategoryCard from '@/components/sections/role-categories/RoleCategoryCard.vue'
+import type { RoleCategoryResponse } from '@/types'
+import { useRouter } from 'vue-router'
 
-const _roleCategories = defineModel<RoleCategoryResponse>("_roleCategories")
-const showAddRoleCategoryModal = defineModel<boolean>("showAddRoleCategoryModal")
+const _roleCategories = defineModel<RoleCategoryResponse>('_roleCategories')
+const showAddRoleCategoryModal = defineModel<boolean>('showAddRoleCategoryModal')
 
 const router = useRouter()
 

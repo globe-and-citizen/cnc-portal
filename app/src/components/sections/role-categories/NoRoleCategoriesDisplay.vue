@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import AddResourceCard from "@/components/AddResourceCard.vue"
+import AddResourceCard from '@/components/AddResourceCard.vue'
 import { useUserDataStore } from '@/stores/user'
-const showAddRoleCategoryModal = defineModel<boolean>("showAddRoleCategoryModal")
+const showAddRoleCategoryModal = defineModel<boolean>('showAddRoleCategoryModal')
 </script>

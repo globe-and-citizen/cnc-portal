@@ -179,29 +179,22 @@ const props = defineProps<{
 }>()
 const roleEndPoint = ref('')
 
-const {
-  execute: executeFetchEntitlementTypes,
-  data: entTypes
-} = useCustomFetch<{ success: boolean; entTypes: { id: number; name: string } }>(
-  `entitlement/types`,
-  {
-    immediate: false
-  }
-)
+const { execute: executeFetchEntitlementTypes, data: entTypes } = useCustomFetch<{
+  success: boolean
+  entTypes: { id: number; name: string }
+}>(`entitlement/types`, {
+  immediate: false
+})
   .get()
   .json()
 
-const {
-  execute: executeUpdateRole
-} = useCustomFetch(roleEndPoint, {
+const { execute: executeUpdateRole } = useCustomFetch(roleEndPoint, {
   immediate: false
 })
   .put(role)
   .json()
 
-const {
-  execute: executeCreateRole
-} = useCustomFetch(roleEndPoint, {
+const { execute: executeCreateRole } = useCustomFetch(roleEndPoint, {
   immediate: false
 })
   .post(role)

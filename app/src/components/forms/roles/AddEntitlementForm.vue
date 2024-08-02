@@ -27,7 +27,7 @@
 import { ref, type ComputedRef, watch } from 'vue'
 import EntitlementValueForm from './entitlement-value/EntitlementValueForm.vue'
 import { useVuelidate } from '@vuelidate/core'
-import FormErrorMessage from '../../ui/FormErrorMessage.vue';
+import FormErrorMessage from '../../ui/FormErrorMessage.vue'
 
 const entitlement = defineModel({
   default: {

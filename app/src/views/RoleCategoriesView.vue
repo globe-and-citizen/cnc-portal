@@ -7,13 +7,13 @@
     <div v-if="isRoleCategoriesFetching" class="loading loading-spinner loading-lg"></div>
 
     <RoleCategoriesMainDisplay
-      v-if="!isRoleCategoriesFetching && _roleCategories?.roleCategories" 
-      v-model:_role-categories="(_roleCategories as RoleCategoryResponse)" 
+      v-if="!isRoleCategoriesFetching && _roleCategories?.roleCategories"
+      v-model:_role-categories="_roleCategories as RoleCategoryResponse"
       v-model:show-add-role-category-modal="showAddRoleCategoryModal"
     />
 
     <!--Error Display-->
-    <RoleCategoriesErrorDisplay v-if="roleCategoryError"/>
+    <RoleCategoriesErrorDisplay v-if="roleCategoryError" />
 
     <!--Modal-->
     <ModalComponent v-model="showAddRoleCategoryModal">
@@ -35,7 +35,7 @@ import RoleCategoriesErrorDisplay from '@/components/sections/role-categories/Ro
 import AddRoleCategoryForm from '@/components/forms/roles/AddRoleCategoryForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { RoleCategoryResponse } from "@/types";
+import type { RoleCategoryResponse } from '@/types'
 
 const isRoleCategoriesFetching = ref(false)
 const isFetch = ref(false)
@@ -65,11 +65,10 @@ const roleCategory = ref({
 })
 
 const {
-  error: roleCategoryError, 
-  data: _roleCategories, 
+  error: roleCategoryError,
+  data: _roleCategories,
   execute: executeFetchRoleCategories
-} = useCustomFetch<RoleCategoryResponse>(
-  'role-category', {
+} = useCustomFetch<RoleCategoryResponse>('role-category', {
   immediate: false
 })
   .get()
