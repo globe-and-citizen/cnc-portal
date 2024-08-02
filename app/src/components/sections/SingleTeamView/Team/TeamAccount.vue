@@ -33,13 +33,17 @@
         {{ teamBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
       </div>
       <div class="stat-actions flex justify-center gap-2 items-center">
-        <button class="btn btn-xs btn-secondary" v-if="team.bankAddress" @click="emits('deposit')">
+        <button
+          class="btn btn-xs btn-secondary"
+          v-if="team.bankAddress"
+          @click="() => (depositModal = true)"
+        >
           Deposit
         </button>
         <button
           class="btn btn-xs btn-secondary"
           v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
-          @click="emits('transfer')"
+          @click="transferModal = true"
         >
           Transfer
         </button>
@@ -62,36 +66,198 @@
         <button
           v-else
           className="btn btn-primary btn-xs text-white "
-          @click="emits('pushTip', tipAmount)"
+          @click="pushTip(membersAddress, tipAmount, team.bankAddress)"
         >
           Send
         </button>
       </div>
     </div>
+    <ModalComponent v-model="depositModal">
+      <DepositBankForm
+        v-if="depositModal"
+        @close-modal="() => (depositModal = false)"
+        @deposit="async (amount: string) => depositToBank(amount)"
+        :loading="depositLoading"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="transferModal">
+      <TransferFromBankForm
+        v-if="transferModal"
+        @close-modal="() => (transferModal = false)"
+        @transfer="
+          async (to: string, amount: string) => {
+            console.log('to', to)
+            console.log('amount', amount)
+            transferFromBank(to, amount)
+          }
+        "
+        @searchMembers="(input) => searchUsers({ address: input, name: '' })"
+        :filteredMembers="foundUsers"
+        :loading="transferLoading"
+        :bank-balance="teamBalance"
+      />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
-import type { Team } from '@/types'
+import type { Team, User } from '@/types'
 import { NETWORK } from '@/constant'
-import { ref } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import ModalComponent from '@/components/ModalComponent.vue'
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import { useErrorHandler } from '@/composables/errorHandler'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useToastStore } from '@/stores/useToastStore'
+import { usePushTip } from '@/composables/tips'
+import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
+import {
+  useBankBalance,
+  useBankDeposit,
+  useDeployBankContract,
+  useBankTransfer
+} from '@/composables/bank'
+
 const tipAmount = ref(0)
+const transferModal = ref(false)
+
 const { copy, copied, isSupported } = useClipboard()
 
-defineProps<{
-  team: Partial<Team>
-  teamBalance: number
-  pushTipLoading: boolean
-  sendTipLoading: boolean
-  balanceLoading: boolean
-}>()
-const emits = defineEmits(['pushTip', 'sendTip', 'deposit', 'transfer'])
+const { addSuccessToast, addErrorToast } = useToastStore()
 
+const depositModal = ref(false)
+
+const {
+  execute: deposit,
+  isLoading: depositLoading,
+  isSuccess: depositSuccess,
+  error: depositError
+} = useBankDeposit()
+
+const {
+  execute: getBalance,
+  isLoading: balanceLoading,
+  data: teamBalance,
+  error: balanceError
+} = useBankBalance()
+const {
+  execute: transfer,
+  isLoading: transferLoading,
+  isSuccess: transferSuccess,
+  error: transferError
+} = useBankTransfer()
+const {
+  execute: pushTip,
+  isLoading: pushTipLoading,
+  isSuccess: pushTipSuccess,
+  error: pushTipError
+} = usePushTip()
+
+const props = defineProps<{
+  team: Partial<Team>
+}>()
+const emits = defineEmits(['transfer'])
+
+watch(depositSuccess, () => {
+  if (depositSuccess.value) {
+    addSuccessToast('Deposited successfully')
+  }
+})
+watch(depositError, () => {
+  if (depositError.value) {
+    addErrorToast('Failed to deposit')
+  }
+})
+watch(balanceError, () => {
+  if (balanceError.value) {
+    addErrorToast('Failed to fetch team balance')
+  }
+})
+watch(pushTipError, async () => {
+  if (pushTipError.value) {
+    addErrorToast(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
+  }
+})
+
+watch(pushTipSuccess, () => {
+  if (pushTipSuccess.value) {
+    addSuccessToast('Tips pushed successfully')
+  }
+})
+watch(transferSuccess, () => {
+  if (transferSuccess.value) {
+    addSuccessToast('Transferred successfully')
+  }
+})
+watch(transferError, () => {
+  if (transferError.value) {
+    addErrorToast('Failed to transfer')
+  }
+})
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
+const depositToBank = async (amount: string) => {
+  await deposit(props.team.bankAddress, amount)
+  if (depositSuccess.value) {
+    depositModal.value = false
+    await getBalance(props.team.bankAddress)
+  }
+}
+const transferFromBank = async (to: string, amount: string) => {
+  console.log(to, amount, props.team.bankAddress)
+  await transfer(props.team.bankAddress, to, amount)
+  if (transferSuccess.value) {
+    transferModal.value = false
+    await getBalance(props.team.bankAddress)
+  }
+}
+
+onMounted(() => {
+  if (props.team.bankAddress) getBalance(props.team.bankAddress)
+})
+const membersAddress = computed(() => {
+  return props.team.members?.map((member: { address: string }) => member.address) ?? []
+})
+const searchUserName = ref('')
+const searchUserAddress = ref('')
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    searchUserName.value = input.name
+    searchUserAddress.value = input.address
+    if (searchUserName.value || searchUserAddress.value) {
+      await executeSearchUser()
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
+  }
+}
+const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+const foundUsers = ref<User[]>([])
+
+watch(searchUserResponse, () => {
+  if (searchUserResponse.value?.ok && users.value?.users) {
+    foundUsers.value = users.value.users
+  }
+})
 </script>

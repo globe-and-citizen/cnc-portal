@@ -72,19 +72,7 @@
           </div>
         </template>
         <template #tab-1>
-          <TeamAccount
-            v-if="activeTab == 1"
-            :teamBalance="Number(teamBalance)"
-            :team="team"
-            @createBank="bankModal = true"
-            @deposit="depositModal = true"
-            @transfer="transferModal = true"
-            :pushTipLoading="pushTipLoading"
-            :sendTipLoading="sendTipLoading"
-            :balanceLoading="balanceLoading"
-            @pushTip="(amount: Number) => pushTip(membersAddress, amount, team.bankAddress)"
-            @sendTip="(amount: Number) => sendTip(membersAddress, amount, team.bankAddress)"
-          />
+          <TeamAccount v-if="activeTab == 1" :team="team" @createBank="bankModal = true" />
         </template>
         <template #tab-2>
           <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
@@ -116,26 +104,6 @@
         :loading="createBankLoading"
       />
     </ModalComponent>
-
-    <ModalComponent v-model="depositModal">
-      <DepositBankForm
-        v-if="depositModal"
-        @close-modal="() => (depositModal = false)"
-        @deposit="async (amount: string) => depositToBank(amount)"
-        :loading="depositLoading"
-      />
-    </ModalComponent>
-    <ModalComponent v-model="transferModal">
-      <TransferFromBankForm
-        v-if="transferModal"
-        @close-modal="() => (transferModal = false)"
-        @transfer="async (to: string, amount: string) => transferFromBank(to, amount)"
-        @searchMembers="(input) => searchUsers({ address: input, name: '' })"
-        :filteredMembers="foundUsers"
-        :loading="transferLoading"
-        :bank-balance="teamBalance"
-      />
-    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -149,21 +117,13 @@ import { useUserDataStore } from '@/stores/user'
 // Composables
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { usePushTip, useSendTip } from '@/composables/tips'
-import {
-  useBankBalance,
-  useBankDeposit,
-  useDeployBankContract,
-  useBankTransfer
-} from '@/composables/bank'
+import { useBankBalance, useDeployBankContract } from '@/composables/bank'
 
 // Service
 // import { AuthService } from '@/services/authService'
 
 // Modals/Forms
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import UpdateTeamForm from '@/components/sections/SingleTeamView/Team/forms/UpdateTeamForm.vue'
 import AddMemberForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberForm.vue'
 import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
@@ -185,8 +145,6 @@ const showDeleteMemberConfirmModal = ref(false)
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const bankModal = ref(false)
-const depositModal = ref(false)
-const transferModal = ref(false)
 const showAddMemberForm = ref(false)
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
 const isOwner = ref(false)
@@ -211,18 +169,7 @@ const router = useRouter()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 // Banking composables
-const {
-  execute: pushTip,
-  isLoading: pushTipLoading,
-  isSuccess: pushTipSuccess,
-  error: pushTipError
-} = usePushTip()
-const {
-  execute: sendTip,
-  isLoading: sendTipLoading,
-  isSuccess: sendTipSuccess,
-  error: sendTipError
-} = useSendTip()
+
 const {
   execute: getBalance,
   isLoading: balanceLoading,
@@ -236,40 +183,9 @@ const {
   isSuccess: createBankSuccess,
   error: createBankError
 } = useDeployBankContract()
-const {
-  execute: deposit,
-  isLoading: depositLoading,
-  isSuccess: depositSuccess,
-  error: depositError
-} = useBankDeposit()
-const {
-  execute: transfer,
-  isLoading: transferLoading,
-  isSuccess: transferSuccess,
-  error: transferError
-} = useBankTransfer()
 
 // Watchers for Banking functions
-watch(pushTipError, async () => {
-  if (pushTipError.value) {
-    addErrorToast(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
-  }
-})
-watch(sendTipError, () => {
-  if (sendTipError.value) {
-    addErrorToast(sendTipError.value.reason ? sendTipError.value.reason : 'Failed to send tip')
-  }
-})
-watch(pushTipSuccess, () => {
-  if (pushTipSuccess.value) {
-    addSuccessToast('Tips pushed successfully')
-  }
-})
-watch(sendTipSuccess, async () => {
-  if (sendTipSuccess.value) {
-    addSuccessToast('Tips sent successfully')
-  }
-})
+
 watch(balanceError, () => {
   if (balanceError.value) {
     addErrorToast('Failed to fetch team balance')
@@ -285,26 +201,6 @@ watch(createBankSuccess, async () => {
     addSuccessToast('Bank contract created successfully')
     bankModal.value = false
     await getTeamAPI()
-  }
-})
-watch(depositSuccess, () => {
-  if (depositSuccess.value) {
-    addSuccessToast('Deposited successfully')
-  }
-})
-watch(depositError, () => {
-  if (depositError.value) {
-    addErrorToast('Failed to deposit')
-  }
-})
-watch(transferSuccess, () => {
-  if (transferSuccess.value) {
-    addSuccessToast('Transferred successfully')
-  }
-})
-watch(transferError, () => {
-  if (transferError.value) {
-    addErrorToast('Failed to transfer')
   }
 })
 
@@ -472,20 +368,6 @@ const deployBankContract = async () => {
     await getBalance(team.value.bankAddress)
   }
 }
-const depositToBank = async (amount: string) => {
-  await deposit(team.value.bankAddress, amount)
-  if (depositSuccess.value) {
-    depositModal.value = false
-    await getBalance(team.value.bankAddress)
-  }
-}
-const transferFromBank = async (to: string, amount: string) => {
-  await transfer(team.value.bankAddress, to, amount)
-  if (transferSuccess.value) {
-    transferModal.value = false
-    await getBalance(team.value.bankAddress)
-  }
-}
 
 const {
   execute: executeSearchUser,
@@ -521,7 +403,4 @@ const searchUsers = async (input: { name: string; address: string }) => {
     return useErrorHandler().handleError(error)
   }
 }
-const membersAddress = computed(() => {
-  return team.value.members.map((member: { address: string }) => member.address)
-})
 </script>
