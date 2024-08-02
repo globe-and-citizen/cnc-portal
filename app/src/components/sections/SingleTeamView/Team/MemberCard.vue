@@ -26,27 +26,82 @@
           v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
           class="btn btn-error btn-xs"
           data-test="delete-member-button"
-          @click="emits('deleteMember', member)"
+          @click="() => (showDeleteMemberConfirmModal = true)"
         >
           Delete
         </button>
       </div>
     </div>
+    <ModalComponent v-model="showDeleteMemberConfirmModal">
+      <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+        Are you sure you want to delete
+        <span class="font-bold">{{ memberToBeDeleted.name }}</span>
+        with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
+        from the team?
+      </DeleteConfirmForm>
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
+import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import { useRoute } from 'vue-router'
 import type { MemberInput } from '@/types'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useErrorHandler } from '@/composables/errorHandler'
+import { useToastStore } from '@/stores/useToastStore'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
-const emits = defineEmits(['deleteMember'])
 const props = defineProps<{
   member: Partial<MemberInput>
   teamId: Number
   ownerAddress: String
 }>()
+const { addSuccessToast } = useToastStore()
+
+const emits = defineEmits(['getTeam'])
+
+const route = useRoute()
+
+const memberToBeDeleted = ref({ name: '', address: '', id: '' })
+const showDeleteMemberConfirmModal = ref(false)
+
+// useFetch instance for deleting member
+const {
+  error: deleteMemberError,
+  isFetching: memberIsDeleting,
+  execute: deleteMemberAPI
+} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: member.value.address ? member.value.address : '',
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .delete()
+  .json()
+// Watchers for deleting member
+watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () => {
+  if (!memberIsDeleting.value && !deleteMemberError.value) {
+    addSuccessToast('Member deleted successfully')
+    showDeleteMemberConfirmModal.value = false
+    emits('getTeam')
+  }
+})
+
+watch(deleteMemberError, () => {
+  if (deleteMemberError.value) {
+    useErrorHandler().handleError(new Error(deleteMemberError.value))
+    showDeleteMemberConfirmModal.value = false
+  }
+})
 const member = ref(props.member)
 const { copy, copied, isSupported } = useClipboard()
 

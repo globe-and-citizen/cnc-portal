@@ -1,16 +1,11 @@
 <template>
   <div class="flex min-h-screen justify-center">
-    <span v-if="teamIsFetching || balanceLoading" class="loading loading-spinner loading-lg"></span>
+    <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
 
-    <div
-      v-if="!(teamIsFetching || balanceLoading) && team"
-      class="pt-10 flex flex-col gap-5 w-full items-center"
-    >
+    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-full items-center">
       <div class="flex justify-between gap-5 w-full">
         <TeamDetails
           :team="team"
-          :balanceLoading="balanceLoading"
-          :teamBalance="Number(teamBalance)"
           @updateTeamModalOpen="updateTeamModalOpen"
           @deleteTeam="showDeleteTeamConfirmModal = true"
         />
@@ -58,16 +53,8 @@
               :ownerAddress="team.ownerAddress"
               :teamId="Number(team.id)"
               :member="member"
-              :isMemberDeleting="memberIsDeleting"
               :key="member.address"
-              @deleteMember="
-                (member) => {
-                  memberToBeDeleted.name = member.name
-                  memberToBeDeleted.id = member.id
-                  memberToBeDeleted.address = member.address
-                  showDeleteMemberConfirmModal = true
-                }
-              "
+              @getTeam="getTeamAPI"
             />
           </div>
         </template>
@@ -92,14 +79,6 @@
           <ProposalDashBoard :team="team" @getTeam="getTeamAPI" />
         </template>
       </TabNavigation>
-      <ModalComponent v-model="showDeleteMemberConfirmModal">
-        <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
-          Are you sure you want to delete
-          <span class="font-bold">{{ memberToBeDeleted.name }}</span>
-          with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
-          from the team?
-        </DeleteConfirmForm>
-      </ModalComponent>
     </div>
 
     <ModalComponent v-model="showModal">
@@ -128,7 +107,7 @@ import { useUserDataStore } from '@/stores/user'
 // Composables
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useBankBalance, useDeployBankContract } from '@/composables/bank'
+import { useDeployBankContract } from '@/composables/bank'
 
 // Service
 // import { AuthService } from '@/services/authService'
@@ -152,7 +131,6 @@ import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/P
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 
 // Modal control states
-const showDeleteMemberConfirmModal = ref(false)
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const bankModal = ref(false)
@@ -163,7 +141,6 @@ const isOwner = ref(false)
 // CRUD input refs
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
-const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const inputs = ref<Member[]>([])
@@ -182,12 +159,6 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 // Banking composables
 
 const {
-  execute: getBalance,
-  isLoading: balanceLoading,
-  data: teamBalance,
-  error: balanceError
-} = useBankBalance()
-const {
   contractAddress,
   execute: createBankContract,
   isLoading: createBankLoading,
@@ -197,11 +168,6 @@ const {
 
 // Watchers for Banking functions
 
-watch(balanceError, () => {
-  if (balanceError.value) {
-    addErrorToast('Failed to fetch team balance')
-  }
-})
 watch(createBankError, () => {
   if (createBankError.value) {
     addErrorToast('Failed to create bank contract')
@@ -248,7 +214,6 @@ onMounted(async () => {
   }
   if (team.value.bankAddress) {
     tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
-    await getBalance(team.value.bankAddress)
   }
 })
 
@@ -334,40 +299,6 @@ const updateTeamModalOpen = async () => {
   inputs.value = team.value.members
 }
 
-// useFetch instance for deleting member
-const {
-  error: deleteMemberError,
-  isFetching: memberIsDeleting,
-  execute: deleteMemberAPI
-} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    options.headers = {
-      memberaddress: memberToBeDeleted.value.address,
-      'Content-Type': 'application/json'
-      // Authorization: `Bearer ${AuthService.getToken()}`
-    }
-    return { options, url, cancel }
-  }
-})
-  .delete()
-  .json()
-// Watchers for deleting member
-watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () => {
-  if (!memberIsDeleting.value && !deleteMemberError.value) {
-    addSuccessToast('Member deleted successfully')
-    showDeleteMemberConfirmModal.value = false
-    getTeamAPI()
-  }
-})
-
-watch(deleteMemberError, () => {
-  if (deleteMemberError.value) {
-    useErrorHandler().handleError(new Error(deleteMemberError.value))
-    showDeleteMemberConfirmModal.value = false
-  }
-})
-
 const deployBankContract = async () => {
   const id = route.params.id
   await createBankContract(String(id))
@@ -376,7 +307,6 @@ const deployBankContract = async () => {
     bankModal.value = false
     tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
     await getTeamAPI()
-    await getBalance(team.value.bankAddress)
   }
 }
 
