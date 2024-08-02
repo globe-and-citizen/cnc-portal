@@ -45,7 +45,5 @@ import type { Team } from '@/types'
 const emits = defineEmits(['updateTeamModalOpen', 'deleteTeam'])
 defineProps<{
   team: Partial<Team>
-  teamBalance: number
-  balanceLoading: boolean
 }>()
 </script>

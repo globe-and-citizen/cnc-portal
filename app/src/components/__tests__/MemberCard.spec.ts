@@ -1,9 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import MemberCard from '@/components/MemberCard.vue'
+import MemberCard from '@/components/sections/SingleTeamView/Team/MemberCard.vue'
 import { useUserDataStore } from '@/stores/user'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn()
@@ -15,10 +16,20 @@ const mockClipboard = {
   copied: ref(false),
   isSupported: ref(true)
 }
-vi.mock('@vueuse/core', () => ({
-  useClipboard: vi.fn(() => mockClipboard)
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    useClipboard: vi.fn(() => mockClipboard)
+  }
+})
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  }))
 }))
-
 describe('MemberCard', () => {
   const member = { name: 'Dasarath', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }
   const teamId = 1
@@ -32,7 +43,10 @@ describe('MemberCard', () => {
   })
   const props = { member, teamId, ownerAddress }
   const wrapper = mount(MemberCard, {
-    props
+    props,
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
+    }
   })
   // Check if the component is rendered properly
   describe('Render', () => {
@@ -114,21 +128,7 @@ describe('MemberCard', () => {
       expect(wrapper.find('button[data-test="delete-member-button"]').exists()).toBe(false)
     })
   })
-  describe('Emits', () => {
-    it('emits deleteMember event when delete button is clicked', async () => {
-      const wrapper = mount(MemberCard, {
-        props: {
-          member: { name: 'John Doe', address: '0x123' },
-          teamId: 1,
-          ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
-        }
-      })
-      await wrapper.find('button[data-test="delete-member-button"]').trigger('click')
-
-      expect(wrapper.emitted().deleteMember).toBeTruthy()
-      expect(wrapper.emitted().deleteMember[0]).toEqual([{ name: 'John Doe', address: '0x123' }])
-    })
-
+  describe('Actions', () => {
     it('opens new window when show address button is clicked', async () => {
       const wrapper = mount(MemberCard, {
         props: {

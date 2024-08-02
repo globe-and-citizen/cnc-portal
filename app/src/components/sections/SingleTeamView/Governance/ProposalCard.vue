@@ -75,10 +75,10 @@
 import { ref, watch, computed } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useVoteElection, useVoteDirective, useConcludeProposal } from '@/composables/voting'
-import VoteForm from '@/components/forms/VoteForm.vue'
-import ProposalDetails from '@/components/ProposalDetails.vue'
-import ModalComponent from './ModalComponent.vue'
-import LoadingButton from './LoadingButton.vue'
+import VoteForm from '@/components/sections/SingleTeamView/Governance/forms/VoteForm.vue'
+import ProposalDetails from '@/components/sections/SingleTeamView/Governance/ProposalDetails.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
 import PieChart from '@/components/PieChart.vue'
 
 const { addSuccessToast, addErrorToast } = useToastStore()

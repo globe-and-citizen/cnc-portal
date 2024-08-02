@@ -22,7 +22,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import LoadingButton from '../LoadingButton.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
 const team = defineModel({
   default: {
     name: '',

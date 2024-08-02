@@ -1,7 +1,7 @@
 // ProposalDashboard.spec.ts
 import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ProposalDashboard from '../ProposalDashboard.vue'
+import ProposalDashboard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({ params: { id: '1' } }))

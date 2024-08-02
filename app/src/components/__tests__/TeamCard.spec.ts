@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import TeamCard from '@/components/TeamCard.vue'
+import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useUserDataStore } from '@/stores/user'
 

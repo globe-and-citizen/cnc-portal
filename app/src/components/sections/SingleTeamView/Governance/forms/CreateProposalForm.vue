@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '../LoadingButton.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
 import { ref } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useErrorHandler } from '@/composables/errorHandler'

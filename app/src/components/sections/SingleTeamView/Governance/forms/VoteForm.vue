@@ -72,7 +72,7 @@
 import type { Proposal } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
-import LoadingButton from '../LoadingButton.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
 const selectedCandidate = ref<string>()
 const selectedOption = ref<string | null>(null)
 
