@@ -127,7 +127,7 @@
 import type { User } from '@/types'
 import { ref } from 'vue'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
-import LoadingButton from '../LoadingButton.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { helpers, required } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'

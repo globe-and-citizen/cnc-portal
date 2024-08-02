@@ -61,15 +61,15 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import AddTeamCard from '@/components/AddTeamCard.vue'
-import TeamCard from '@/components/TeamCard.vue'
+import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
+import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { TeamsResponse } from '@/types'
-import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 const router = useRouter()

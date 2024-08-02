@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import MemberCard from '@/components/MemberCard.vue'
+import MemberCard from '@/components/sections/SingleTeamView/Team/MemberCard.vue'
 import { useUserDataStore } from '@/stores/user'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'

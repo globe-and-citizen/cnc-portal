@@ -164,19 +164,19 @@ import {
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import UpdateTeamForm from '@/components/forms/UpdateTeamForm.vue'
-import AddMemberForm from '@/components/forms/AddMemberForm.vue'
+import UpdateTeamForm from '@/components/sections/SingleTeamView/Team/forms/UpdateTeamForm.vue'
+import AddMemberForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberForm.vue'
 import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 
 //Components
-import MemberCard from '@/components/MemberCard.vue'
+import MemberCard from '@/components/sections/SingleTeamView/Team/MemberCard.vue'
 import AddMemberCard from '@/components/AddMemberCard.vue'
-import TeamDetails from '@/components/TeamDetails.vue'
+import TeamDetails from '@/components/sections/SingleTeamView/Team/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
-import TeamAccount from '@/components/TeamAccount.vue'
-import ProposalDashBoard from '@/components/ProposalDashboard.vue'
+import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.vue'
+import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
 
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
 

@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import TeamAccount from '@/components/TeamAccount.vue'
+import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'

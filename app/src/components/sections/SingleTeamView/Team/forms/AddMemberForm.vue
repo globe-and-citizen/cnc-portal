@@ -96,7 +96,7 @@ import { ref } from 'vue'
 import type { User } from '@/types'
 // import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/solid'
-import LoadingButton from '../LoadingButton.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 const emits = defineEmits(['updateForm', 'addMembers', 'searchUsers'])
 const props = defineProps<{
