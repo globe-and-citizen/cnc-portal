@@ -91,7 +91,7 @@
             transferFromBank(to, amount)
           }
         "
-        @searchMembers="(input) => searchUsers({ address: input, name: '' })"
+        @searchMembers="(input) => emits('searchUsers', input)"
         :filteredMembers="foundUsers"
         :loading="transferLoading"
         :bank-balance="teamBalance"
@@ -108,8 +108,7 @@ import { useUserDataStore } from '@/stores/user'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import { useErrorHandler } from '@/composables/errorHandler'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -151,9 +150,10 @@ const {
   isSuccess: pushTipSuccess,
   error: pushTipError
 } = usePushTip()
-
+const emits = defineEmits(['searchUsers'])
 const props = defineProps<{
   team: Partial<Team>
+  foundUsers: User[]
 }>()
 
 watch(depositSuccess, () => {
@@ -216,42 +216,5 @@ onMounted(() => {
 })
 const membersAddress = computed(() => {
   return props.team.members?.map((member: { address: string }) => member.address) ?? []
-})
-const searchUserName = ref('')
-const searchUserAddress = ref('')
-const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    searchUserName.value = input.name
-    searchUserAddress.value = input.address
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-}
-const {
-  execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
-} = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
-const foundUsers = ref<User[]>([])
-
-watch(searchUserResponse, () => {
-  if (searchUserResponse.value?.ok && users.value?.users) {
-    foundUsers.value = users.value.users
-  }
 })
 </script>

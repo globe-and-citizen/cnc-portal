@@ -72,7 +72,18 @@
           </div>
         </template>
         <template #tab-1>
-          <TeamAccount v-if="activeTab == 1" :team="team" @createBank="bankModal = true" />
+          <TeamAccount
+            v-if="activeTab == 1"
+            :team="team"
+            @createBank="bankModal = true"
+            :foundUsers="foundUsers"
+            @searchUsers="
+              (input) => {
+                console.log(input)
+                searchUsers({ name: '', address: input })
+              }
+            "
+          />
         </template>
         <template #tab-2>
           <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
