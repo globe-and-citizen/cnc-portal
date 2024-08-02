@@ -4,7 +4,7 @@
     <hr class="mt-4" />
   </div>
 
-  <div class="max-h-[70vh] overflow-auto">
+  <div class="max-h-[70vh] overflow-y-auto p-2">
     <!--General Inputs-->
     <section class="flex flex-col gap-2">
       <label
