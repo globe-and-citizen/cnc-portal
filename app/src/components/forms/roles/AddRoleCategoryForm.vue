@@ -210,7 +210,7 @@ const roleCategoryEndPoint = ref('')
 const {
   //isFetching: isCreateRoleCategoryFetching,
   //error: isCreateRoleCategoryError,
-  execute: createRoleCategoryAPI /*,
+  execute: executeCreateRoleCategory/*,
   data: _roleCategory*/
 } = useCustomFetch(`role-category/`, {
   immediate: false
@@ -220,7 +220,7 @@ const {
 
 const {
   //error: isGetEntTypesError,
-  execute: getEntTypesAPI,
+  execute: executeFetchEntitlementTypes,
   data: _entTypes
 } = useCustomFetch<{ success: boolean; entTypes: { id: number; name: string } }>(
   `entitlement/types`,
@@ -232,7 +232,7 @@ const {
   .json()
 
 const {
-  execute: updateRoleCategoryAPI /*,
+  execute: executeUpdateRoleCategory/*updateRoleCategoryAPI /*,
   data: updateResponse*/
 } = useCustomFetch(roleCategoryEndPoint, {
   immediate: false
@@ -268,13 +268,13 @@ const handleClickCreate = async () => {
     console.log('Errors found, aborting submission: ', $v.value)
     return
   }
-  await createRoleCategoryAPI()
+  await executeCreateRoleCategory()
   emits('createRoleCategory')
 }
 
 const handleClickUpdate = async () => {
   roleCategoryEndPoint.value = `role-category`
-  await updateRoleCategoryAPI()
+  await executeUpdateRoleCategory()
   emits('closeModal')
   emits('reload')
 }
@@ -287,6 +287,6 @@ const props = defineProps<{
 }>()
 
 onMounted(async () => {
-  await getEntTypesAPI()
+  await executeFetchEntitlementTypes()
 })
 </script>

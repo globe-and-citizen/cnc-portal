@@ -42,12 +42,6 @@
               v-model="_roleCategory.roles"
               @reload="isReload = true"
             />
-            <!--<RoleTable 
-              v-if="_roleCategory && _roleCategory.roles" 
-              :headings="headings" 
-              :roles="_roleCategory.roles"
-              @reload="isReload = true"
-            />-->
 
             <hr class="mt-5" />
 
@@ -132,7 +126,7 @@ const showCategory = ref(false)
 const showRole = ref(false)
 const isReload = ref(false)
 
-const { data: roleCategory, execute: getRoleCategoryAPI } = useCustomFetch(
+const { data: roleCategory, execute: executeFetchRoleCategory } = useCustomFetch(
   `role-category/${route.params.id}`,
   {
     immediate: false
@@ -141,7 +135,7 @@ const { data: roleCategory, execute: getRoleCategoryAPI } = useCustomFetch(
   .get()
   .json()
 
-const { execute: deleteRoleCategoryAPI } = useCustomFetch(`role-category/${route.params.id}`, {
+const { execute: executeDeleteRoleCategory } = useCustomFetch(`role-category/${route.params.id}`, {
   immediate: false
 })
   .delete()
@@ -160,7 +154,7 @@ const initRole = ref({
 })
 
 const handleDeleteCategory = async () => {
-  await deleteRoleCategoryAPI()
+  await executeDeleteRoleCategory()
   //isReload.value = true
 }
 
@@ -177,14 +171,14 @@ const selectedTab = ref('tab1') // Set the default selected tab here
 //Reloads page after update
 watch(isReload, async (newValue) => {
   if (newValue) {
-    await getRoleCategoryAPI()
+    await executeFetchRoleCategory()
     _roleCategory.value = roleCategory.value.roleCategory
     isReload.value = false
   }
 })
 
 onMounted(async () => {
-  await getRoleCategoryAPI()
+  await executeFetchRoleCategory()
   _roleCategory.value = roleCategory.value.roleCategory
 })
 </script>

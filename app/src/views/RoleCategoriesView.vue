@@ -40,8 +40,6 @@ import type { RoleCategoryResponse } from "@/types";
 const isRoleCategoriesFetching = ref(false)
 const isFetch = ref(false)
 const showAddRoleCategoryModal = ref(false)
-//const roleCategoryError = ref('')
-//const initRoleCategory = 
 
 const roleCategory = ref({
   name: '',
@@ -69,7 +67,7 @@ const roleCategory = ref({
 const {
   error: roleCategoryError, 
   data: _roleCategories, 
-  execute: getRoleCategoriesAPI 
+  execute: executeFetchRoleCategories
 } = useCustomFetch<RoleCategoryResponse>(
   'role-category', {
   immediate: false
@@ -79,7 +77,7 @@ const {
 
 watch(isFetch, async (newValue) => {
   if (newValue) {
-    await getRoleCategoriesAPI()
+    await executeFetchRoleCategories()
     roleCategory.value.name = ''
     roleCategory.value.description = ''
     showAddRoleCategoryModal.value = false
@@ -88,7 +86,7 @@ watch(isFetch, async (newValue) => {
 })
 
 onMounted(async () => {
-  await getRoleCategoriesAPI()
+  await executeFetchRoleCategories()
 })
 </script>
 

@@ -147,16 +147,6 @@ const getAvailableTypes = (index: number) => {
   })
 }
 
-/*const entTypes = ref([
-  { id: 1, name: 'salary' },
-  { id: 2, name: 'dividend' },
-  { id: 3, name: 'wage' },
-  { id: 4, name: 'tokens' },
-  { id: 5, name: 'access' },
-  { id: 6, name: 'vote' },
-  { id: -1, name: '-- Create New --' }
-])*/
-
 const emits = defineEmits(['closeModal', 'reload'])
 
 const role = defineModel({
@@ -190,8 +180,7 @@ const props = defineProps<{
 const roleEndPoint = ref('')
 
 const {
-  //error: isGetEntTypesError,
-  execute: getEntTypesAPI,
+  execute: executeFetchEntitlementTypes,
   data: entTypes
 } = useCustomFetch<{ success: boolean; entTypes: { id: number; name: string } }>(
   `entitlement/types`,
@@ -203,8 +192,7 @@ const {
   .json()
 
 const {
-  execute: updateRoleAPI /*,
-  data: response*/
+  execute: executeUpdateRole
 } = useCustomFetch(roleEndPoint, {
   immediate: false
 })
@@ -212,15 +200,14 @@ const {
   .json()
 
 const {
-  execute: createRoleAPI /*,
-  data: createRoleRes*/
+  execute: executeCreateRole
 } = useCustomFetch(roleEndPoint, {
   immediate: false
 })
   .post(role)
   .json()
 
-const handleClickUpdate = async (/*id: number*/) => {
+const handleClickUpdate = async () => {
   await $v.value.$validate()
   if ($v.value.$errors.length) {
     addErrorToast('Form invalid, arboting...')
@@ -228,7 +215,7 @@ const handleClickUpdate = async (/*id: number*/) => {
   }
   roleEndPoint.value = `role/`
 
-  await updateRoleAPI()
+  await executeUpdateRole()
   emits('reload')
   emits('closeModal')
 }
@@ -240,12 +227,12 @@ const handleClickAddRole = async (id: number) => {
     return
   }
   roleEndPoint.value = `role/${id}`
-  await createRoleAPI()
+  await executeCreateRole()
   emits('reload')
   emits('closeModal')
 }
 
 onMounted(async () => {
-  await getEntTypesAPI()
+  await executeFetchEntitlementTypes()
 })
 </script>
