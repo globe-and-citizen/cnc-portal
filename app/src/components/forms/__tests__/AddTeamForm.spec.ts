@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import type { TeamInput, User } from '@/types'
 
 describe('AddTeamForm.vue', () => {

@@ -1,7 +1,7 @@
 // UpdateTeamForm.spec.ts
 import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import UpdateTeamForm from '../UpdateTeamForm.vue'
+import UpdateTeamForm from '@/components/sections/SingleTeamView/Team/forms/UpdateTeamForm.vue'
 
 describe('UpdateTeamForm.vue', () => {
   const defaultTeam = {
