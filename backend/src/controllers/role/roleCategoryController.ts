@@ -63,7 +63,11 @@ export const deleteRoleCategory = async (req: Request, res: Response) => {
 
     await prisma.roleCategory.delete({
       where: { id: _id }
-    })    
+    })
+    
+    res.status(201).json({
+      success: true
+    })
   } catch (error) {
     return errorResponse(500, error, res)
   } finally {
