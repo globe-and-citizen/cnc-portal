@@ -38,4 +38,21 @@ describe('BankTransactions', () => {
       expect(wrapper.findComponent(SendToWalletHistory).exists()).toBe(true)
     })
   })
+
+  describe('Actions', () => {
+    it('should set activeAccordion to TransferHistory when click on TransferHistory accordion', async () => {
+      const wrapper = mount(BankTransactions, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        },
+        props: {
+          bankAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+        }
+      })
+
+      // Click on TransferHistory accordion
+      await wrapper.findAll('input[type="radio"]').at(1)!.trigger('click')
+      expect((wrapper.vm as any).activeAccordion).toBe(1)
+    })
+  })
 })

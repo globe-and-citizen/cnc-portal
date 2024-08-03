@@ -86,7 +86,7 @@ describe('SendToWalletHistory', () => {
       expect(no).toEqual('1')
       expect(ownerAddress).toEqual(sendToWalletEvents[0].data[0])
       expect(memberAddresses).toEqual(sendToWalletEvents[0].data[1].join(''))
-      expect(totalAmount).toEqual('1 SepoliaETH')
+      expect(totalAmount).toEqual(`1 ${NETWORK.currencySymbol}`)
       expect(date).toEqual(sendToWalletEvents[0].date)
     })
 

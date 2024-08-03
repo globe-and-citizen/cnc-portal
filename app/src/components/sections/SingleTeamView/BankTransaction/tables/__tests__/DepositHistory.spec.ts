@@ -31,8 +31,9 @@ vi.mock('@/adapters/web3LibraryAdapter', () => {
   }
 })
 
+const addErrorToastMock = vi.fn()
 vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: vi.fn().mockImplementation(() => ({ addErrorToast: vi.fn() }))
+  useToastStore: vi.fn().mockImplementation(() => ({ addErrorToast: addErrorToastMock }))
 }))
 
 vi.mock('@/composables/bank', () => ({
@@ -43,6 +44,8 @@ vi.mock('@/composables/bank', () => ({
     error: ref(null)
   }))
 }))
+
+window.open = vi.fn()
 
 describe('DepositHistory', () => {
   let wrapper: VueWrapper
@@ -75,6 +78,16 @@ describe('DepositHistory', () => {
       expect(wrapper.findAll('td').length).toBe(depositEvents.length * header.length)
     })
 
+    it('renders tbody with data if events exists', () => {
+      const tbody = wrapper.find('tbody[data-test="data-exists"]')
+      expect(tbody.isVisible()).toBeTruthy()
+    })
+
+    it('renders data with correct length', () => {
+      const tbody = wrapper.findAll('tbody tr')
+      expect(tbody.length).toBe(depositEvents.length)
+    })
+
     it('renders table body correctly', () => {
       const tableData = wrapper.findAll('td')
       const no = tableData[0].text()
@@ -84,8 +97,44 @@ describe('DepositHistory', () => {
 
       expect(no).toEqual('1')
       expect(depositor).toEqual(depositEvents[0].data[0])
-      expect(amount).toEqual('1 SepoliaETH')
+      expect(amount).toEqual(`1 ${NETWORK.currencySymbol}`)
       expect(date).toEqual(depositEvents[0].date)
+    })
+
+    it('renders empty tbody if events does not exists', () => {
+      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
+        getEvents: vi.fn().mockReturnValue([]),
+        loading: ref(false),
+        events: ref([]),
+        error: ref(null)
+      }))
+
+      const wrapper = mount(DepositHistory, {
+        props: {
+          bankAddress: '0x123'
+        }
+      })
+      const tbody = wrapper.find('tbody[data-test="data-not-exists"]')
+      expect(tbody.isVisible()).toBeTruthy()
+    })
+
+    it('renders empty row correctly when no deposit events', () => {
+      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
+        getEvents: vi.fn().mockReturnValue([]),
+        loading: ref(false),
+        events: ref([]),
+        error: ref(null)
+      }))
+
+      const wrapper = mount(DepositHistory, {
+        props: {
+          bankAddress: '0x123'
+        }
+      })
+      const emtpyRow = wrapper.find('td[data-test="empty-row"]')
+      expect(emtpyRow.exists()).toBe(true)
+      expect(emtpyRow.text()).toBe('No Deposit transactions')
+      expect(emtpyRow.attributes('colspan')).toBe('4')
     })
 
     it('renders skeleton loading if loading', () => {
@@ -143,11 +192,27 @@ describe('DepositHistory', () => {
     })
 
     it('opens transaction detail in a new window when a row is clicked', async () => {
-      global.open = vi.fn() // Mock window.open
-
-      const row = wrapper.findAll('tbody tr')[0]
+      const row = wrapper.find('tbody tr')
       await row.trigger('click')
-      expect(global.open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
+      expect(window.open).toHaveBeenCalledWith(
+        `${NETWORK.explorerUrl}/tx/${depositEvents[0].txHash}`,
+        '_blank'
+      )
+    })
+
+    it('calls addErrorToast when error exists', async () => {
+      mount(DepositHistory, {
+        props: {
+          bankAddress: '0x123'
+        },
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })],
+          mocks: {
+            error: new Error('Error')
+          }
+        },
+      })
+      expect(addErrorToastMock).toHaveBeenCalled()
     })
   })
 })

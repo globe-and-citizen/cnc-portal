@@ -12,7 +12,7 @@
             <th>Date</th>
           </tr>
         </thead>
-        <tbody v-if="(events?.length ?? 0) > 0">
+        <tbody data-test="data-exists" v-if="(events?.length ?? 0) > 0">
           <tr
             v-for="(event, index) in events"
             v-bind:key="event.txHash"
@@ -25,9 +25,9 @@
             <td>{{ event.date }}</td>
           </tr>
         </tbody>
-        <tbody v-else>
+        <tbody data-test="data-not-exists" v-else>
           <tr>
-            <td class="text-center font-bold text-lg" colspan="4">No Deposit transactions</td>
+            <td class="text-center font-bold text-lg" colspan="4" data-test="empty-row">No Deposit transactions</td>
           </tr>
         </tbody>
       </table>
@@ -60,6 +60,7 @@ const showTxDetail = (txHash: string) => {
 }
 
 watch(error, () => {
+  console.log('error', error.value)
   if (error.value) {
     addErrorToast(error.value.reason ? error.value.reason : 'Failed to get deposit events')
   }
