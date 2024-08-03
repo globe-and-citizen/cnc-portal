@@ -1,9 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.vue'
+import TeamAccount from '@/components/sections/SingleTeamView/Bank/TeamAccount.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
-import { NETWORK } from '@/constant'
 import { ref } from 'vue'
 
 vi.mock('@/stores/user', () => ({
@@ -133,6 +132,14 @@ describe('TeamAccount', () => {
     it('should show the deposit button when bank address exists', () => {
       const wrapper = createComponent()
       expect(wrapper.find('button').text()).toContain('Deposit')
+    })
+  })
+
+  describe('Emits', () => {
+    it('should open block explorer when bank address is clicked', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('[data-test="team-bank-address"]').trigger('click')
+      expect(wrapper.emitted('open-block-explorer')).toBeTruthy()
     })
   })
 

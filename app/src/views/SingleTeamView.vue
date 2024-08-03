@@ -65,8 +65,7 @@
             @createBank="bankModal = true"
             :foundUsers="foundUsers"
             @searchUsers="
-              (input) => {
-                console.log(input)
+              (input: string) => {
                 searchUsers({ name: '', address: input })
               }
             "
@@ -125,7 +124,7 @@ import TeamDetails from '@/components/sections/SingleTeamView/Team/TeamDetails.v
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/sections/SingleTeamView/BankTransaction/BankTransactions.vue'
-import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.vue'
+import TeamAccount from '@/components/sections/SingleTeamView/Bank/TeamAccount.vue'
 import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
 
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
