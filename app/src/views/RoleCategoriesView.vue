@@ -8,7 +8,7 @@
 
     <RoleCategoriesMainDisplay
       v-if="!isRoleCategoriesFetching && _roleCategories?.roleCategories"
-      v-model:_role-categories="_roleCategories as RoleCategoryResponse"
+      v-model:_role-categories="_roleCategories"
       v-model:show-add-role-category-modal="showAddRoleCategoryModal"
     />
 
@@ -21,7 +21,7 @@
         :is-loading="false"
         :is-new="true"
         v-model="roleCategory"
-        @close-modal="showAddRoleCategoryModal = !showAddRoleCategoryModal"
+        @close-modal="handleCloseModal"
         @create-role-category="isFetch = !isFetch"
       />
     </ModalComponent>
@@ -35,13 +35,14 @@ import RoleCategoriesErrorDisplay from '@/components/sections/role-categories/Ro
 import AddRoleCategoryForm from '@/components/forms/roles/AddRoleCategoryForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { RoleCategoryResponse } from '@/types'
+import type { RoleCategoryResponse, RoleCategory } from '@/types'
+import { deepClone } from '@/utils'
 
 const isRoleCategoriesFetching = ref(false)
 const isFetch = ref(false)
 const showAddRoleCategoryModal = ref(false)
 
-const roleCategory = ref({
+const initRoleCategory = {
   name: '',
   description: '',
   roles: [
@@ -62,7 +63,9 @@ const roleCategory = ref({
       value: ''
     }
   ]
-})
+}
+
+const roleCategory = ref(deepClone(initRoleCategory))
 
 const {
   error: roleCategoryError,
@@ -74,11 +77,20 @@ const {
   .get()
   .json()
 
+const handleCloseModal = () => {
+  showAddRoleCategoryModal.value = !showAddRoleCategoryModal.value
+  resetRoleCategoryRef()
+  console.log('initRoleCategory: ', initRoleCategory)
+}
+
+const resetRoleCategoryRef = () => {
+  roleCategory.value = deepClone(initRoleCategory)
+}
+
 watch(isFetch, async (newValue) => {
   if (newValue) {
     await executeFetchRoleCategories()
-    roleCategory.value.name = ''
-    roleCategory.value.description = ''
+    resetRoleCategoryRef()
     showAddRoleCategoryModal.value = false
     isFetch.value = false
   }

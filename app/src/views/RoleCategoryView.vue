@@ -3,7 +3,7 @@
     <div class="w-full mt-10">
       <!--Hero-->
       <section class="hero-container flex justify-center bg-white border rounded-xl">
-        <div class="hero-content text-center bg-white p-10 w-full bg-base-200">
+        <div class="hero-content text-center bg-white p-10 w-full">
           <div class="max-w-md">
             <h1 class="text-5xl font-bold">{{ roleCategory?.roleCategory?.name }}</h1>
             <p class="py-6">
