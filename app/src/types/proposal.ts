@@ -1,19 +1,25 @@
 export interface Proposal {
-  id: string
+  id: Number
   title: string
   description: string
-  teamId: string
   draftedBy: string
-  status: boolean
+  isActive: boolean
   isElection: boolean
+  teamId: Number
+  voters?: {
+    memberAddress: string
+    name: string
+    isEligible?: boolean
+    isVoted?: boolean
+  }[]
 
   votes?: {
     yes: number
     no: number
     abstain: number
   }
-  votesForUsers?: {
-    address: string
+  candidates?: {
+    candidateAddress: string
     name: string
     votes: number
   }[]

@@ -1,27 +1,55 @@
-import { it, describe, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import CreateProposalForm from '../CreateProposalForm.vue'
+import { describe, it, expect } from 'vitest'
+import CreateProposalForm from '@/components/sections/SingleTeamView/Governance/forms/CreateProposalForm.vue'
 
-describe('CreateProposalForm.vue', () => {
-  describe('render', () => {
-    it('renders form elements correctly', () => {
-      const wrapper = mount(CreateProposalForm)
+describe('CreateProposal.vue', () => {
+  describe('renders', () => {
+    it('renders correctly', () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false }
+      })
       expect(wrapper.find('h2').text()).toBe('Create Proposal')
-      expect(wrapper.find('select').exists()).toBe(true)
-      expect(wrapper.findAll('input').length).toBe(4) // 4 input fields by default: title, description, start time and end time
-      expect(wrapper.find('textarea').exists()).toBe(true)
-      expect(wrapper.find('button').text()).toBe('Create Proposal')
+    })
+  })
+
+  describe('emits', () => {
+    it('emits createProposal event when button is clicked', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false }
+      })
+
+      const button = wrapper.find('button')
+      await button.trigger('click')
+
+      expect(wrapper.emitted()).toHaveProperty('createProposal')
+    })
+  })
+  describe('actions', () => {
+    it('updates newProposalInput when input fields change', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false }
+      })
+
+      const titleInput = wrapper.find('input[placeholder="Title"]')
+      await titleInput.setValue('New Proposal Title')
+      expect((wrapper.vm as any).newProposalInput.title).toBe('New Proposal Title')
+
+      const descriptionInput = wrapper.find('textarea')
+      await descriptionInput.setValue('New Proposal Description')
+      expect((wrapper.vm as any).newProposalInput.description).toBe('New Proposal Description')
     })
 
-    it('shows candidate input when proposal type is election', async () => {
-      const wrapper = mount(CreateProposalForm)
-      await wrapper.find('select').setValue('election')
-      expect(wrapper.find('input[placeholder="Candidate"]').exists()).toBe(true)
-    })
-    it('does not show candidate input when proposal type is directive', async () => {
-      const wrapper = mount(CreateProposalForm)
-      await wrapper.find('select').setValue('directive')
-      expect(wrapper.find('input[placeholder="Candidate"]').exists()).toBe(false)
+    it('updates newProposalInput.isElection when select changes', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false }
+      })
+
+      const select = wrapper.find('select')
+      await select.setValue('true')
+      expect((wrapper.vm as any).newProposalInput.isElection).toBe(true)
+
+      await select.setValue('false')
+      expect((wrapper.vm as any).newProposalInput.isElection).toBe(false)
     })
   })
 })

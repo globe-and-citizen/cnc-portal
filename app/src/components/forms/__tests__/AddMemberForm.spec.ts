@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddMemberForm from '@/components/forms/AddMemberForm.vue'
+import AddMemberForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberForm.vue'
 
 describe('AddMemberModal.vue', () => {
   const formData = [
@@ -15,8 +15,7 @@ describe('AddMemberModal.vue', () => {
     props: {
       formData,
       users,
-      isLoading: false,
-      showAddMemberForm: true
+      isLoading: false
     }
   })
   // Test the rendering of the component
