@@ -2,7 +2,8 @@ import {
   prisma, 
   errorResponse, 
   deleteEntitlements,
-  updateEntitlements
+  updateEntitlements,
+  replaceEmpty
 } from "../../utils";
 import { type Entitlement } from "@prisma/client";
 import { Request, Response } from "express";
@@ -62,7 +63,11 @@ export const deleteRoleCategory = async (req: Request, res: Response) => {
 
     await prisma.roleCategory.delete({
       where: { id: _id }
-    })    
+    })
+    
+    res.status(201).json({
+      success: true
+    })
   } catch (error) {
     return errorResponse(500, error, res)
   } finally {
@@ -73,12 +78,14 @@ export const deleteRoleCategory = async (req: Request, res: Response) => {
 export const addRoleCategory = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address
 
-  const roleCategory = req.body
+  let roleCategory = req.body
 
   try {
     if (!roleCategory) {
       return errorResponse(404, 'Role category empty or not set', res)
     }
+
+    roleCategory = replaceEmpty(roleCategory)
 
     const _roleCategory = await prisma.roleCategory.create({
       data: {

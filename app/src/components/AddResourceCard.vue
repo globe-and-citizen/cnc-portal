@@ -4,14 +4,14 @@
       <span class="font-bold">{{ props.text }}</span>
 
       <div class="w-5 h-5 cursor-pointer" @click="emits('openAddResourceModal')">
-        <IconPlus />
+        <PlusCircleIcon class="size-6" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import IconPlus from '@/components/icons/IconPlus.vue'
+import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 const emits = defineEmits(['openAddResourceModal'])
 const props = defineProps(['text'])
 </script>

@@ -33,7 +33,7 @@ class Server {
       auth: "/api/auth/",
       notification: "/api/notification/",
       role: "/api/role/",
-      roleCategory: "/api/roleCategory/",
+      roleCategory: "/api/role-category/",
       entitlement: "/api/entitlement/",
       apidocs: "/api-docs",
     };
