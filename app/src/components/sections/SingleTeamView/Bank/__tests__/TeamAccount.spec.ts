@@ -2,8 +2,9 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import TeamAccount from '@/components/sections/SingleTeamView/Bank/TeamAccount.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
-import { setActivePinia, createPinia } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
+import { useClipboard } from '@vueuse/core'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
@@ -11,24 +12,23 @@ vi.mock('@/stores/user', () => ({
   }))
 }))
 
-const mockCopy = vi.fn()
-const mockClipboard = {
-  copy: mockCopy,
-  copied: ref(false),
-  isSupported: ref(true)
-}
-
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: any = await importOriginal()
+  const { computed, ref } = await import('vue')
+  const actual = await importOriginal<typeof import('@vueuse/core')>()
+
   return {
     ...actual,
-    useClipboard: vi.fn(() => mockClipboard)
+    useClipboard: vi.fn().mockReturnValue({
+      copied: computed(() => false),
+      isSupported: ref(true),
+      copy: vi.fn(),
+      text: computed(() => '')
+    })
   }
 })
+window.open = vi.fn()
 
 describe('TeamAccount', () => {
-  setActivePinia(createPinia())
-
   const createComponent = (props?: any) => {
     return mount(TeamAccount, {
       props: {
@@ -37,7 +37,11 @@ describe('TeamAccount', () => {
           ownerAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
           ...props?.team
         },
+        foundUsers: [],
         ...props
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy : vi.fn})]
       }
     })
   }
@@ -83,7 +87,12 @@ describe('TeamAccount', () => {
       const wrapper = createComponent()
 
       // mock clipboard
-      mockClipboard.isSupported.value = false
+      vi.mocked(useClipboard).mockReturnValueOnce({
+        copied: computed(() => false),
+        isSupported: ref(false),
+        copy: vi.fn(),
+        text: computed(() => '')
+      })
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(false)
@@ -93,8 +102,12 @@ describe('TeamAccount', () => {
       const wrapper = createComponent()
 
       // mock clipboard
-      mockClipboard.isSupported.value = false
-      mockClipboard.copied.value = true
+      vi.mocked(useClipboard).mockReturnValueOnce({
+        copied: computed(() => true),
+        isSupported: ref(true),
+        copy: vi.fn(),
+        text: computed(() => '')
+      })
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ClipboardDocumentCheckIcon).exists()).toBe(true)
@@ -104,8 +117,12 @@ describe('TeamAccount', () => {
       const wrapper = createComponent()
 
       // mock clipboard
-      mockClipboard.isSupported.value = false
-      mockClipboard.copied.value = true
+      vi.mocked(useClipboard).mockReturnValueOnce({
+        copied: computed(() => true),
+        isSupported: ref(true),
+        copy: vi.fn(),
+        text: computed(() => '')
+      })
       await wrapper.vm.$nextTick()
 
       const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
