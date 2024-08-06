@@ -71,7 +71,6 @@
             }
           "
         >
-          <!--<IconMinus />-->
           <MinusCircleIcon class="size-6" />
         </div>
         <div
@@ -91,7 +90,6 @@
             }
           "
         >
-          <!--<IconPlus />-->
           <PlusCircleIcon class="size-6" />
         </div>
       </div>
@@ -130,7 +128,6 @@
           }
         "
       >
-        <!--<IconMinus />-->
         <MinusCircleIcon class="size-6" />
       </div>
       <div
@@ -144,7 +141,6 @@
           }
         "
       >
-        <!--<IconPlus />-->
         <PlusCircleIcon class="size-6" />
       </div>
     </div>
@@ -182,8 +178,7 @@ const roleCategory = defineModel({
             entitlementTypeId: 0,
             value: ''
           }
-        ] /*,
-      isValid: false}*/
+        ]
       }
     ],
     entitlements: [
@@ -232,8 +227,7 @@ const {
   .json()
 
 const {
-  execute: executeUpdateRoleCategory /*updateRoleCategoryAPI /*,
-  data: updateResponse*/
+  execute: executeUpdateRoleCategory
 } = useCustomFetch(roleCategoryEndPoint, {
   immediate: false
 })

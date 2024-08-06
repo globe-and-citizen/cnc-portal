@@ -3,7 +3,6 @@
   <WageValueForm v-if="entName === `wage`" v-model="entitlement" />
   <TokenValueForm v-if="entName === `tokens`" v-model="entitlement" />
   <DividendValueForm v-if="entName === `dividend`" v-model="entitlement" />
-  <!--<div v-for="error of $v.$errors" :key="error.$uid">{{ error.$message }}</div>-->
 </template>
 
 <script setup lang="ts">

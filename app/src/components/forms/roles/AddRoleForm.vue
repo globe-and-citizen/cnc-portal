@@ -71,7 +71,6 @@
         }
       "
     >
-      <!--<IconMinus />-->
       <MinusCircleIcon class="size-6" />
     </div>
     <div
@@ -82,7 +81,6 @@
         }
       "
     >
-      <!--<IconPlus />-->
       <PlusCircleIcon class="size-6" />
     </div>
   </div>
@@ -96,7 +94,7 @@
     >
       Add Role
     </button>
-    <button v-else class="btn btn-primary" @click="handleClickUpdate(/*(role as any).id*/)">
+    <button v-else class="btn btn-primary" @click="handleClickUpdate()">
       Update
     </button>
     <button
@@ -174,8 +172,7 @@ const $v = useVuelidate(rules, { role })
 
 const props = defineProps<{
   isSingleView?: boolean
-  categoryId?: number /*
-  _role?: Role*/
+  categoryId?: number
 }>()
 const roleEndPoint = ref('')
 

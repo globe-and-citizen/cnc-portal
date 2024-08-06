@@ -94,6 +94,5 @@ watch([selectedResource, selectedAcessLevel], ([resource, level]) => {
   } else {
     entitlement.value.value = `${resource}:${level}`
   }
-  //console.log('entitlement.value.rule: ', entitlement.value.rule)
 })
 </script>

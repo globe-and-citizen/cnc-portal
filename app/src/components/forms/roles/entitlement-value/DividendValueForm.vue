@@ -10,7 +10,6 @@
       }
     "
   />
-  <!--<div v-for="error of $v.amount.$errors" :key="error.$uid">{{ error.$message }}</div>-->
   <span>/token,</span>
   <select v-model="selectedFrequency" class="grow bg-white">
     <option>-- Frequency --</option>
@@ -77,6 +76,5 @@ watch([amount, selectedFrequency], ([amount, frequency]) => {
   } else {
     entitlement.value.value = `${amount}:${frequency}`
   }
-  //console.log('entitlement.value.rule: ', entitlement.value.rule)
 })
 </script>
