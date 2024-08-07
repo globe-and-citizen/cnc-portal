@@ -36,7 +36,7 @@
           <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
-          <ProposalDashBoard :team="team" @getTeam="getTeamAPI" />
+          <ProposalSection :team="team" @getTeam="getTeamAPI" />
         </template>
       </TabNavigation>
     </div>
@@ -74,7 +74,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
 import TeamAccount from '@/components/sections/SingleTeamView/TeamAccount.vue'
-import ProposalDashBoard from '@/components/sections/SingleTeamView/ProposalSection.vue'
+import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'

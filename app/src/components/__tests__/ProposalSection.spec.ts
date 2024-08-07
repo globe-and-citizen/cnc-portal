@@ -1,7 +1,7 @@
-// ProposalDashboard.spec.ts
+// ProposalSection.spec.ts
 import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ProposalDashboard from '@/components/sections/SingleTeamView/ProposalSection.vue'
+import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({ params: { id: '1' } }))
@@ -34,11 +34,11 @@ vi.mock('@/composables/voting', () => ({
   }))
 }))
 
-describe('ProposalDashboard.vue', () => {
+describe('ProposalSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
-    wrapper = mount(ProposalDashboard, {
+    wrapper = mount(ProposalSection, {
       props: {
         team: {
           name: 'Test Team',
@@ -54,7 +54,7 @@ describe('ProposalDashboard.vue', () => {
   })
 
   it('shows loading spinner when loadingGetProposals is true', async () => {
-    wrapper = mount(ProposalDashboard, {
+    wrapper = mount(ProposalSection, {
       props: {
         team: {
           name: 'Test Team',
