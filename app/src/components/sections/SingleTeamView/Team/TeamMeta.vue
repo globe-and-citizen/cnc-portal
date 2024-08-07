@@ -95,6 +95,9 @@ watch([() => teamIsDeleting.value, () => deleteTeamError.value], async () => {
 })
 const updateTeamModalOpen = async () => {
   showModal.value = true
-  inputs.value = props.team.value.members
+  updateTeamInput.value.name = props.team.name
+  updateTeamInput.value.description = props.team.description
+  updateTeamInput.value.bankAddress = props.team.bankAddress
+  inputs.value = props.team.members
 }
 </script>
