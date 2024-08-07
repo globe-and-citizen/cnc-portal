@@ -55,26 +55,29 @@ describe('TeamMeta.vue ', () => {
       }
     })
   })
+  describe('renders', () => {
+    it('renders team name correctly', () => {
+      expect(wrapper.text()).toContain('Team')
+    })
 
-  it('renders team name correctly', () => {
-    expect(wrapper.text()).toContain('Team')
+    it('renders team description correctly', () => {
+      expect(wrapper.text()).toContain('Description')
+    })
   })
+  describe('Actions', () => {
+    it('should update team input data when updateTeamModalOpen is called', async () => {
+      const teamDetails = wrapper.findComponent(TeamDetails)
+      teamDetails.vm.$emit('updateTeamModalOpen')
 
-  it('renders team description correctly', () => {
-    expect(wrapper.text()).toContain('Description')
-  })
-  it('should update team input data when updateTeamModalOpen is called', async () => {
-    const teamDetails = wrapper.findComponent(TeamDetails)
-    teamDetails.vm.$emit('updateTeamModalOpen')
+      expect((wrapper.vm as any).updateTeamInput.name).toBe('Team')
+      expect((wrapper.vm as any).updateTeamInput.description).toBe('Description')
+      expect((wrapper.vm as any).updateTeamInput.bankAddress).toBe('0x892323')
+    })
+    it('opens delete confirmation modal when deleteTeam event is emitted', async () => {
+      const teamDetails = wrapper.findComponent(TeamDetails)
+      teamDetails.vm.$emit('deleteTeam')
 
-    expect((wrapper.vm as any).updateTeamInput.name).toBe('Team')
-    expect((wrapper.vm as any).updateTeamInput.description).toBe('Description')
-    expect((wrapper.vm as any).updateTeamInput.bankAddress).toBe('0x892323')
-  })
-  it('opens delete confirmation modal when deleteTeam event is emitted', async () => {
-    const teamDetails = wrapper.findComponent(TeamDetails)
-    teamDetails.vm.$emit('deleteTeam')
-
-    expect((wrapper.vm as any).showDeleteTeamConfirmModal).toBe(true)
+      expect((wrapper.vm as any).showDeleteTeamConfirmModal).toBe(true)
+    })
   })
 })
