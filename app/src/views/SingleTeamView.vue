@@ -51,7 +51,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 // Store imports
 import { useToastStore } from '@/stores/useToastStore'
@@ -76,7 +76,7 @@ import BankTransactions from '@/components/BankTransactions.vue'
 import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.vue'
 import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
 
-import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
+import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/Team/TeamMeta.vue'
 
 // Modal control states
@@ -92,7 +92,6 @@ const searchUserAddress = ref('')
 const activeTab = ref(0)
 
 const route = useRoute()
-const router = useRouter()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
