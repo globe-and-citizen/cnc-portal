@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import BankTransactions from '@/components/sections/SingleTeamView/BankTransaction/BankTransactions.vue'
+import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import AccordionComponent from '@/components/AccordionComponent.vue'
 import DepositHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/DepositHistory.vue'
 import TransferHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/TransferHistory.vue'
@@ -18,10 +18,10 @@ vi.mock('@/adapters/web3LibraryAdapter', () => {
   }
 })
 
-describe('BankTransactions', () => {
+describe('BankTransactionsSection', () => {
   describe('Render', () => {
     it('renders correctly', () => {
-      const wrapper = mount(BankTransactions, {
+      const wrapper = mount(BankTransactionsSection, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
         },
@@ -41,7 +41,7 @@ describe('BankTransactions', () => {
 
   describe('Actions', () => {
     it('should set activeAccordion to TransferHistory when click on TransferHistory accordion', async () => {
-      const wrapper = mount(BankTransactions, {
+      const wrapper = mount(BankTransactionsSection, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
         },
