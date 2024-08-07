@@ -59,7 +59,14 @@
           </div>
         </template>
         <template #tab-1>
-          <TeamAccount
+          <!-- TODO: All the others process should be donne in the Bank Section -->
+           
+          <!-- IT should be like this 
+           <BankSection
+            v-if="activeTab == 1"
+            :team="team"
+          /> -->
+          <BankSection
             v-if="activeTab == 1"
             :team="team"
             @createBank="bankModal = true"
@@ -124,7 +131,7 @@ import TeamDetails from '@/components/sections/SingleTeamView/Team/TeamDetails.v
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
-import TeamAccount from '@/components/sections/SingleTeamView/Bank/TeamAccount.vue'
+import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
 
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
