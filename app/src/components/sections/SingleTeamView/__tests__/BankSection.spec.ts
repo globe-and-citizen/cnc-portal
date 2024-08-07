@@ -1,9 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import TeamAccount from '@/components/sections/SingleTeamView/TeamAccount.vue'
+import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
-import { NETWORK } from '@/constant'
 import { ref } from 'vue'
 
 vi.mock('@/stores/user', () => ({
@@ -27,11 +26,11 @@ vi.mock('@vueuse/core', async (importOriginal) => {
   }
 })
 
-describe('TeamAccount', () => {
+describe('BankSection', () => {
   setActivePinia(createPinia())
 
   const createComponent = (props?: any) => {
-    return mount(TeamAccount, {
+    return mount(BankSection, {
       props: {
         team: {
           bankAddress: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6',

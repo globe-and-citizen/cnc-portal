@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { VueWrapper, mount } from '@vue/test-utils'
-import SendToWalletHistory from '@/components/bank-history/SendToWalletHistory.vue'
+import SendToWalletHistory from '@/components/sections/SingleTeamView/tables/SendToWalletHistory.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import type { EventResult } from '@/types'
 import type { Result } from 'ethers'
@@ -86,7 +86,7 @@ describe('SendToWalletHistory', () => {
       expect(no).toEqual('1')
       expect(ownerAddress).toEqual(sendToWalletEvents[0].data[0])
       expect(memberAddresses).toEqual(sendToWalletEvents[0].data[1].join(''))
-      expect(totalAmount).toEqual('1 SepoliaETH')
+      expect(totalAmount).toEqual(`1 ${NETWORK.currencySymbol}`)
       expect(date).toEqual(sendToWalletEvents[0].date)
     })
 

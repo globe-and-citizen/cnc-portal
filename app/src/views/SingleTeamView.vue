@@ -19,21 +19,10 @@
           </div>
         </template>
         <template #tab-1>
-          <TeamAccount
-            v-if="activeTab == 1"
-            :team="team"
-            @createBank="bankModal = true"
-            :foundUsers="foundUsers"
-            @searchUsers="
-              (input) => {
-                console.log(input)
-                searchUsers({ name: '', address: input })
-              }
-            "
-          />
+          <BankSection v-if="activeTab == 1" :team="team" />
         </template>
         <template #tab-2>
-          <BankTransactions v-if="activeTab == 2" :bank-address="team.bankAddress" />
+          <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
           <ProposalSection :team="team" @getTeam="getTeamAPI" />
@@ -72,8 +61,8 @@ import CreateBankForm from '@/components/forms/CreateBankForm.vue'
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
-import BankTransactions from '@/components/BankTransactions.vue'
-import TeamAccount from '@/components/sections/SingleTeamView/TeamAccount.vue'
+import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
+import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'

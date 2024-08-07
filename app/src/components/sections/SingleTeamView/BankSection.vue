@@ -86,12 +86,10 @@
         @close-modal="() => (transferModal = false)"
         @transfer="
           async (to: string, amount: string) => {
-            console.log('to', to)
-            console.log('amount', amount)
             transferFromBank(to, amount)
           }
         "
-        @searchMembers="(input) => emits('searchUsers', input)"
+        @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
         :loading="transferLoading"
         :bank-balance="teamBalance"
@@ -115,9 +113,14 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
 import { useBankBalance, useBankDeposit, useBankTransfer } from '@/composables/bank'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useErrorHandler } from '@/composables/errorHandler'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
+const foundUsers = ref<User[]>([])
+const searchUserName = ref('')
+const searchUserAddress = ref('')
 
 const { copy, copied, isSupported } = useClipboard()
 
@@ -150,10 +153,26 @@ const {
   isSuccess: pushTipSuccess,
   error: pushTipError
 } = usePushTip()
-const emits = defineEmits(['searchUsers'])
+const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
 const props = defineProps<{
   team: Partial<Team>
-  foundUsers: User[]
 }>()
 
 watch(depositSuccess, () => {
@@ -192,6 +211,12 @@ watch(transferError, () => {
     addErrorToast('Failed to transfer')
   }
 })
+watch(searchUserResponse, () => {
+  if (searchUserResponse.value?.ok && users.value?.users) {
+    foundUsers.value = users.value.users
+  }
+})
+
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
@@ -203,11 +228,21 @@ const depositToBank = async (amount: string) => {
   }
 }
 const transferFromBank = async (to: string, amount: string) => {
-  console.log(to, amount, props.team.bankAddress)
   await transfer(props.team.bankAddress, to, amount)
   if (transferSuccess.value) {
     transferModal.value = false
     await getBalance(props.team.bankAddress)
+  }
+}
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    searchUserName.value = input.name
+    searchUserAddress.value = input.address
+    if (searchUserName.value || searchUserAddress.value) {
+      await executeSearchUser()
+    }
+  } catch (error) {
+    return useErrorHandler().handleError(error)
   }
 }
 

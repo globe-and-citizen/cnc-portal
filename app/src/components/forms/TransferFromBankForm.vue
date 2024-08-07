@@ -12,7 +12,7 @@
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>To</p>
       |
-      <input type="text" class="grow" v-model="to" />
+      <input type="text" class="grow" data-test="recipient-input" v-model="to" />
     </label>
     <div
       v-if="dropdown"
@@ -43,7 +43,7 @@
   <label class="input input-bordered flex items-center gap-2 input-md mt-2">
     <p>Amount</p>
     |
-    <input type="text" class="grow" v-model="amount" />
+    <input type="text" class="grow" data-test="amount-input" v-model="amount" />
     |
     {{ NETWORK.currencySymbol }}
   </label>

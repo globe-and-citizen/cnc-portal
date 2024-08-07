@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { VueWrapper, mount } from '@vue/test-utils'
-import TipsAddressChangedHistory from '@/components/bank-history/TipsAddressChangedHistory.vue'
+import TransferHistory from '@/components/sections/SingleTeamView/tables/TransferHistory.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import type { EventResult } from '@/types'
 import type { Result } from 'ethers'
@@ -9,18 +9,27 @@ import { useBankEvents } from '@/composables/bank'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
 
-const tipsAddressChangedEvents: EventResult[] = [
+const sendToWalletEvents: EventResult[] = [
   {
     txHash: '0x1',
-    data: ['0xOwner', '0xOldAddress1', '0xNewAddress1'] as Result,
+    data: ['0xOwner', '0xMember1', '1000000000000000000'] as Result, // 1 ETH
     date: '2024-06-25'
   },
   {
     txHash: '0x2',
-    data: ['0xOwner', '0xOldAddress2', '0xNewAddress2'] as Result,
+    data: ['0xOwner', '0xMember2', '2000000000000000000'] as Result, // 2 ETH
     date: '2024-06-26'
   }
 ]
+vi.mock('@/adapters/web3LibraryAdapter', () => {
+  return {
+    EthersJsAdapter: {
+      getInstance: () => ({
+        formatEther: vi.fn((value) => (value / 1e18).toString()) // Mock implementation
+      })
+    }
+  }
+})
 
 vi.mock('@/stores/useToastStore', () => ({
   useToastStore: vi.fn().mockImplementation(() => ({ addErrorToast: vi.fn() }))
@@ -28,18 +37,18 @@ vi.mock('@/stores/useToastStore', () => ({
 
 vi.mock('@/composables/bank', () => ({
   useBankEvents: vi.fn().mockImplementation(() => ({
-    getEvents: vi.fn().mockReturnValue(tipsAddressChangedEvents),
+    getEvents: vi.fn().mockReturnValue(sendToWalletEvents),
     loading: ref(false),
-    events: ref(tipsAddressChangedEvents),
+    events: ref(sendToWalletEvents),
     error: ref(null)
   }))
 }))
 
-describe('TipsAddressChangedHistory', () => {
+describe('TransferHistory', () => {
   let wrapper: VueWrapper
 
   beforeEach(() => {
-    wrapper = mount(TipsAddressChangedHistory, {
+    wrapper = mount(TransferHistory, {
       props: {
         bankAddress: '0x123'
       },
@@ -58,27 +67,27 @@ describe('TipsAddressChangedHistory', () => {
       expect(wrapper.find('tbody tr').exists()).toBe(true)
 
       // table header
-      const header = ['No', 'Owner Address', 'Old Tips Address', 'New Tips Address', 'Date']
+      const header = ['No', 'Sender', 'To', 'Amount', 'Date']
       expect(wrapper.findAll('th').length).toBe(5)
       expect(wrapper.findAll('th').forEach((th, index) => expect(th.text()).toBe(header[index])))
 
       // table body
-      expect(wrapper.findAll('td').length).toBe(tipsAddressChangedEvents.length * header.length)
+      expect(wrapper.findAll('td').length).toBe(sendToWalletEvents.length * header.length)
     })
 
     it('renders table body correctly', () => {
       const tableData = wrapper.findAll('td')
       const no = tableData[0].text()
-      const ownerAddress = tableData[1].text()
-      const oldTipsAddress = tableData[2].text()
-      const newTipsAddress = tableData[3].text()
+      const sender = tableData[1].text()
+      const to = tableData[2].text()
+      const amount = tableData[3].text()
       const date = tableData[4].text()
 
       expect(no).toEqual('1')
-      expect(ownerAddress).toEqual(tipsAddressChangedEvents[0].data[0])
-      expect(oldTipsAddress).toEqual(tipsAddressChangedEvents[0].data[1])
-      expect(newTipsAddress).toEqual(tipsAddressChangedEvents[0].data[2])
-      expect(date).toEqual(tipsAddressChangedEvents[0].date)
+      expect(sender).toEqual(sendToWalletEvents[0].data[0])
+      expect(to).toEqual(sendToWalletEvents[0].data[1])
+      expect(amount).toEqual(`1 ${NETWORK.currencySymbol}`)
+      expect(date).toEqual(sendToWalletEvents[0].date)
     })
 
     it('renders skeleton loading if loading', () => {
@@ -89,7 +98,7 @@ describe('TipsAddressChangedHistory', () => {
         error: ref(null)
       }))
 
-      const wrapper = mount(TipsAddressChangedHistory, {
+      const wrapper = mount(TransferHistory, {
         props: {
           bankAddress: '0x123'
         }
@@ -97,7 +106,7 @@ describe('TipsAddressChangedHistory', () => {
       expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
     })
 
-    it('renders empty table when no tips address changed events', () => {
+    it('renders empty table when no transfer events', () => {
       ;(useBankEvents as Mock).mockImplementationOnce(() => ({
         getEvents: vi.fn().mockReturnValue([]),
         loading: ref(false),
@@ -105,14 +114,14 @@ describe('TipsAddressChangedHistory', () => {
         error: ref(null)
       }))
 
-      const wrapper = mount(TipsAddressChangedHistory, {
+      const wrapper = mount(TransferHistory, {
         props: {
           bankAddress: '0x123'
         }
       })
       const emtpyRow = wrapper.find('tr td.text-center.font-bold.text-lg')
       expect(emtpyRow.exists()).toBe(true)
-      expect(emtpyRow.text()).toBe('No tips address transactions')
+      expect(emtpyRow.text()).toBe('No transfer transactions')
       expect(emtpyRow.attributes('colspan')).toBe('5')
     })
   })
@@ -127,7 +136,7 @@ describe('TipsAddressChangedHistory', () => {
         error: ref(null)
       }))
 
-      mount(TipsAddressChangedHistory, {
+      mount(TransferHistory, {
         props: {
           bankAddress: '0x123'
         }
