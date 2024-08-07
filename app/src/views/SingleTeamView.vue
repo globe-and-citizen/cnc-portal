@@ -3,20 +3,7 @@
     <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
 
     <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-full items-center">
-      <div class="flex justify-between gap-5 w-full">
-        <TeamDetails
-          :team="team"
-          @updateTeamModalOpen="updateTeamModalOpen"
-          @deleteTeam="showDeleteTeamConfirmModal = true"
-        />
-        <ModalComponent v-model="showDeleteTeamConfirmModal">
-          <DeleteConfirmForm :isLoading="teamIsDeleting" @deleteItem="async () => deleteTeamAPI()">
-            Are you sure you want to delete the team
-            <span class="font-bold">{{ team.name }}</span
-            >?
-          </DeleteConfirmForm>
-        </ModalComponent>
-      </div>
+      <TeamMeta :team="team" @getTeam="getTeamAPI" />
       <button
         class="btn btn-primary btn-xs"
         @click="bankModal = true"
@@ -28,34 +15,7 @@
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
-            <div
-              class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4 w-full"
-            >
-              <span class="w-1/2">Name</span>
-              <span class="w-1/2">Address</span>
-              <AddMemberCard
-                class="w-1/2"
-                v-if="team.ownerAddress == useUserDataStore().address"
-                @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
-              />
-              <ModalComponent v-model="showAddMemberForm">
-                <AddMemberForm
-                  :isLoading="addMembersLoading"
-                  :users="foundUsers"
-                  :formData="teamMembers"
-                  @searchUsers="(input) => searchUsers(input)"
-                  @addMembers="handleAddMembers"
-                />
-              </ModalComponent>
-            </div>
-            <MemberCard
-              v-for="member in team.members"
-              :ownerAddress="team.ownerAddress"
-              :teamId="Number(team.id)"
-              :member="member"
-              :key="member.address"
-              @getTeam="getTeamAPI"
-            />
+            <TeamSection :team="team" :teamIsFetching="teamIsFetching" @getTeam="getTeamAPI" />
           </div>
         </template>
         <template #tab-1>
@@ -81,13 +41,6 @@
       </TabNavigation>
     </div>
 
-    <ModalComponent v-model="showModal">
-      <UpdateTeamForm
-        :teamIsUpdating="teamIsUpdating"
-        v-model="updateTeamInput"
-        @updateTeam="() => updateTeamAPI()"
-      />
-    </ModalComponent>
     <ModalComponent v-model="bankModal">
       <CreateBankForm
         @create-bank="async () => deployBankContract()"
@@ -114,14 +67,9 @@ import { useDeployBankContract } from '@/composables/bank'
 
 // Modals/Forms
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
-import UpdateTeamForm from '@/components/sections/SingleTeamView/Team/forms/UpdateTeamForm.vue'
-import AddMemberForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberForm.vue'
-import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 
 //Components
-import MemberCard from '@/components/sections/SingleTeamView/Team/MemberCard.vue'
-import AddMemberCard from '@/components/AddMemberCard.vue'
-import TeamDetails from '@/components/sections/SingleTeamView/Team/TeamDetails.vue'
+import TeamSection from '@/components/sections/SingleTeamView/Team/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
@@ -129,26 +77,18 @@ import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.v
 import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
 
 import { type Member, type Team, type User, SingleTeamTabs } from '@/types'
+import TeamMeta from '@/components/sections/SingleTeamView/Team/TeamMeta.vue'
 
 // Modal control states
-const showDeleteTeamConfirmModal = ref(false)
-const showModal = ref(false)
 const bankModal = ref(false)
-const showAddMemberForm = ref(false)
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
 const isOwner = ref(false)
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
-const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
-const inputs = ref<Member[]>([])
-const updateTeamInput = ref<Partial<Team>>({
-  name: '',
-  description: '',
-  bankAddress: ''
-})
+
 const activeTab = ref(0)
 
 const route = useRoute()
@@ -199,13 +139,7 @@ watch(getTeamError, () => {
     useErrorHandler().handleError(new Error(getTeamError.value))
   }
 })
-watch([() => teamIsFetching.value, () => getTeamError.value, () => team.value], async () => {
-  if (!teamIsFetching.value && !getTeamError.value && team.value) {
-    updateTeamInput.value.name = team.value.name
-    updateTeamInput.value.description = team.value.description
-    updateTeamInput.value.bankAddress = team.value.bankAddress
-  }
-})
+
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
 
@@ -216,88 +150,6 @@ onMounted(async () => {
     tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
   }
 })
-
-// useFetch instance for adding members to team
-const {
-  execute: executeAddMembers,
-  error: addMembersError,
-  isFetching: addMembersLoading
-} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
-  immediate: false
-})
-  .post({ data: teamMembers.value })
-  .json()
-// Watchers for adding members to team
-watch(addMembersError, () => {
-  if (addMembersError.value) {
-    useErrorHandler().handleError(new Error(addMembersError.value))
-  }
-})
-watch([() => addMembersLoading.value, () => addMembersError.value], async () => {
-  if (!addMembersLoading.value && !addMembersError.value) {
-    addSuccessToast('Members added successfully')
-    teamMembers.value = [{ name: '', address: '', isValid: false }]
-    foundUsers.value = []
-    await getTeamAPI()
-    showAddMemberForm.value = false
-  }
-})
-
-const handleAddMembers = async () => {
-  await executeAddMembers()
-}
-
-// useFetch instance for updating team details
-const {
-  execute: updateTeamAPI,
-  isFetching: teamIsUpdating,
-  error: updateTeamError
-} = useCustomFetch(`teams/${String(route.params.id)}`, {
-  immediate: false
-})
-  .json()
-  .put(updateTeamInput)
-// Watchers for updating team details
-watch(updateTeamError, () => {
-  if (updateTeamError.value) {
-    useErrorHandler().handleError(new Error(updateTeamError.value))
-  }
-})
-watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
-  if (!teamIsUpdating.value && !updateTeamError.value) {
-    addSuccessToast('Team updated successfully')
-    showModal.value = false
-    getTeamAPI()
-  }
-})
-
-// useFetch instance for deleting team
-const {
-  execute: deleteTeamAPI,
-  isFetching: teamIsDeleting,
-  error: deleteTeamError
-} = useCustomFetch(`teams/${String(route.params.id)}`, {
-  immediate: false
-})
-  .delete()
-  .json()
-// Watchers for deleting team
-watch(deleteTeamError, () => {
-  if (deleteTeamError.value) {
-    useErrorHandler().handleError(new Error(deleteTeamError.value))
-  }
-})
-watch([() => teamIsDeleting.value, () => deleteTeamError.value], async () => {
-  if (!teamIsDeleting.value && !deleteTeamError.value) {
-    addSuccessToast('Team deleted successfully')
-    showDeleteTeamConfirmModal.value = !showDeleteTeamConfirmModal.value
-    router.push('/teams')
-  }
-})
-const updateTeamModalOpen = async () => {
-  showModal.value = true
-  inputs.value = team.value.members
-}
 
 const deployBankContract = async () => {
   const id = route.params.id
