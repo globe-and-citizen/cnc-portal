@@ -34,9 +34,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import MemberCard from '@/components/sections/SingleTeamView/Team/MemberCard.vue'
-import AddMemberCard from '@/components/sections/SingleTeamView/Team/AddMemberCard.vue'
-import AddMemberForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberForm.vue'
+import MemberCard from '@/components/sections/SingleTeamView/MemberCard.vue'
+import AddMemberCard from '@/components/sections/SingleTeamView/AddMemberCard.vue'
+import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import type { User } from '@/types'
 import { useUserDataStore } from '@/stores/user'

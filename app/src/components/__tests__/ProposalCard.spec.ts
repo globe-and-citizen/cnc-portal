@@ -1,6 +1,6 @@
 import { it, expect, describe, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ProposalCard from '@/components/sections/SingleTeamView/Governance/ProposalCard.vue'
+import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
 import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 // Create a router instance

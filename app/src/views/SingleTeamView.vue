@@ -74,7 +74,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
 import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.vue'
-import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
+import ProposalDashBoard from '@/components/sections/SingleTeamView/ProposalSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/Team/TeamMeta.vue'

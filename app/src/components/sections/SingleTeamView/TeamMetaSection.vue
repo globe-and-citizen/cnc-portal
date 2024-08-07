@@ -23,9 +23,9 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import UpdateTeamForm from '@/components/sections/SingleTeamView/Team/forms/UpdateTeamForm.vue'
+import UpdateTeamForm from '@/components/sections/SingleTeamView/forms/UpdateTeamForm.vue'
 import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
-import TeamDetails from '@/components/sections/SingleTeamView/Team/TeamDetails.vue'
+import TeamDetails from '@/components/sections/SingleTeamView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { Member, Team } from '@/types'

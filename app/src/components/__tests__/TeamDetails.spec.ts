@@ -1,7 +1,7 @@
 // TeamDetails.spec.ts
 import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import TeamDetails from '../sections/SingleTeamView/Team/TeamDetails.vue'
+import TeamDetails from '../sections/SingleTeamView/TeamDetails.vue'
 
 describe('TeamDetails.vue', () => {
   let wrapper: ReturnType<typeof mount>

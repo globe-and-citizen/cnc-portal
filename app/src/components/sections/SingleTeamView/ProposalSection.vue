@@ -49,11 +49,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import ProposalCard from '@/components/sections/SingleTeamView/Governance/ProposalCard.vue'
+import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
 import type { Proposal } from '@/types/index'
 import { onMounted, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import CreateProposalForm from '@/components/sections/SingleTeamView/Governance/forms/CreateProposalForm.vue'
+import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 import { useAddProposal, useGetProposals } from '@/composables/voting'
