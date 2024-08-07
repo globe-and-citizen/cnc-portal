@@ -59,23 +59,9 @@
           </div>
         </template>
         <template #tab-1>
-          <!-- TODO: All the others process should be donne in the Bank Section -->
-           
-          <!-- IT should be like this 
-           <BankSection
-            v-if="activeTab == 1"
-            :team="team"
-          /> -->
           <BankSection
             v-if="activeTab == 1"
             :team="team"
-            @createBank="bankModal = true"
-            :foundUsers="foundUsers"
-            @searchUsers="
-              (input: string) => {
-                searchUsers({ name: '', address: input })
-              }
-            "
           />
         </template>
         <template #tab-2>
