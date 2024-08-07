@@ -195,7 +195,7 @@ describe('DepositHistory', () => {
       const row = wrapper.find('tbody tr')
       await row.trigger('click')
       expect(window.open).toHaveBeenCalledWith(
-        `${NETWORK.explorerUrl}/tx/${depositEvents[0].txHash}`,
+        `${NETWORK.blockExplorerUrl}/tx/${depositEvents[0].txHash}`,
         '_blank'
       )
     })
