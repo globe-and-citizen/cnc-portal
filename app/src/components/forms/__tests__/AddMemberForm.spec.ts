@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddMemberForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberForm.vue'
+import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 
 describe('AddMemberModal.vue', () => {
   const formData = [
