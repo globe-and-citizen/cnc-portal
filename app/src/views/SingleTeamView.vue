@@ -69,15 +69,15 @@ import { useDeployBankContract } from '@/composables/bank'
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
 
 //Components
-import TeamSection from '@/components/sections/SingleTeamView/Team/MemberSection.vue'
+import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactions from '@/components/BankTransactions.vue'
-import TeamAccount from '@/components/sections/SingleTeamView/Team/TeamAccount.vue'
+import TeamAccount from '@/components/sections/SingleTeamView/TeamAccount.vue'
 import ProposalDashBoard from '@/components/sections/SingleTeamView/ProposalSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
-import TeamMeta from '@/components/sections/SingleTeamView/Team/TeamMeta.vue'
+import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 
 // Modal control states
 const bankModal = ref(false)
