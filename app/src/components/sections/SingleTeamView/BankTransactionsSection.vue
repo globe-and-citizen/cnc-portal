@@ -26,10 +26,10 @@
 </template>
 
 <script setup lang="ts">
-import DepositHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/DepositHistory.vue'
-import TransferHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/TransferHistory.vue'
-import TipsAddressChangedHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/TipsAddressChangedHistory.vue'
-import SendToWalletHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/SendToWalletHistory.vue'
+import DepositHistory from '@/components/sections/SingleTeamView/tables/DepositHistory.vue'
+import TransferHistory from '@/components/sections/SingleTeamView/tables/TransferHistory.vue'
+import TipsAddressChangedHistory from '@/components/sections/SingleTeamView/tables/TipsAddressChangedHistory.vue'
+import SendToWalletHistory from '@/components/sections/SingleTeamView/tables/SendToWalletHistory.vue'
 import AccordionComponent from '@/components/AccordionComponent.vue'
 import { ref } from 'vue'
 
