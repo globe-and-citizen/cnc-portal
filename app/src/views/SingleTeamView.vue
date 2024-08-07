@@ -123,7 +123,7 @@ import AddMemberCard from '@/components/AddMemberCard.vue'
 import TeamDetails from '@/components/sections/SingleTeamView/Team/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
-import BankTransactions from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
+import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import TeamAccount from '@/components/sections/SingleTeamView/Bank/TeamAccount.vue'
 import ProposalDashBoard from '@/components/sections/SingleTeamView/Governance/ProposalDashboard.vue'
 
