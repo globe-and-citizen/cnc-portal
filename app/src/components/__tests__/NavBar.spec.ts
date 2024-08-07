@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { NETWORK } from '@/constant/index'
 import NavBar from '../NavBar.vue'
 import { mount } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 
 describe('NavBar', () => {
   const props = {
@@ -10,7 +11,12 @@ describe('NavBar', () => {
     balanceLoading: false,
     balance: '1.23456789'
   }
-  const wrapper = mount(NavBar, { props })
+  const wrapper = mount(NavBar, {
+    props,
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
+    }
+  })
 
   // Check if the component is rendered properly
   describe('Render', () => {

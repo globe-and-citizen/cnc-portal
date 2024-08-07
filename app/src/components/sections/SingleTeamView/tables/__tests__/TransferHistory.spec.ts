@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { VueWrapper, mount } from '@vue/test-utils'
-import TransferHistory from '@/components/sections/SingleTeamView/BankTransaction/tables/TransferHistory.vue'
+import TransferHistory from '@/components/sections/SingleTeamView/tables/TransferHistory.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import type { EventResult } from '@/types'
 import type { Result } from 'ethers'

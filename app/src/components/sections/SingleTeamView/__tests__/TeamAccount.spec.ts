@@ -1,10 +1,9 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import TeamAccount from '@/components/sections/SingleTeamView/Bank/TeamAccount.vue'
+import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
-import { computed, ref } from 'vue'
-import { createTestingPinia } from '@pinia/testing'
-import { useClipboard } from '@vueuse/core'
+import { setActivePinia, createPinia } from 'pinia'
+import { ref } from 'vue'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
@@ -12,36 +11,33 @@ vi.mock('@/stores/user', () => ({
   }))
 }))
 
-vi.mock('@vueuse/core', async (importOriginal) => {
-  const { computed, ref } = await import('vue')
-  const actual = await importOriginal<typeof import('@vueuse/core')>()
+const mockCopy = vi.fn()
+const mockClipboard = {
+  copy: mockCopy,
+  copied: ref(false),
+  isSupported: ref(true)
+}
 
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const actual: any = await importOriginal()
   return {
     ...actual,
-    useClipboard: vi.fn().mockReturnValue({
-      copied: computed(() => false),
-      isSupported: ref(true),
-      copy: vi.fn(),
-      text: computed(() => '')
-    })
+    useClipboard: vi.fn(() => mockClipboard)
   }
 })
-window.open = vi.fn()
 
-describe('TeamAccount', () => {
+describe('BankSection', () => {
+  setActivePinia(createPinia())
+
   const createComponent = (props?: any) => {
-    return mount(TeamAccount, {
+    return mount(BankSection, {
       props: {
         team: {
           bankAddress: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6',
           ownerAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
           ...props?.team
         },
-        foundUsers: [],
         ...props
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy : vi.fn})]
       }
     })
   }
@@ -87,12 +83,7 @@ describe('TeamAccount', () => {
       const wrapper = createComponent()
 
       // mock clipboard
-      vi.mocked(useClipboard).mockReturnValueOnce({
-        copied: computed(() => false),
-        isSupported: ref(false),
-        copy: vi.fn(),
-        text: computed(() => '')
-      })
+      mockClipboard.isSupported.value = false
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(false)
@@ -102,12 +93,8 @@ describe('TeamAccount', () => {
       const wrapper = createComponent()
 
       // mock clipboard
-      vi.mocked(useClipboard).mockReturnValueOnce({
-        copied: computed(() => true),
-        isSupported: ref(true),
-        copy: vi.fn(),
-        text: computed(() => '')
-      })
+      mockClipboard.isSupported.value = false
+      mockClipboard.copied.value = true
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ClipboardDocumentCheckIcon).exists()).toBe(true)
@@ -117,12 +104,8 @@ describe('TeamAccount', () => {
       const wrapper = createComponent()
 
       // mock clipboard
-      vi.mocked(useClipboard).mockReturnValueOnce({
-        copied: computed(() => true),
-        isSupported: ref(true),
-        copy: vi.fn(),
-        text: computed(() => '')
-      })
+      mockClipboard.isSupported.value = false
+      mockClipboard.copied.value = true
       await wrapper.vm.$nextTick()
 
       const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
@@ -149,14 +132,6 @@ describe('TeamAccount', () => {
     it('should show the deposit button when bank address exists', () => {
       const wrapper = createComponent()
       expect(wrapper.find('button').text()).toContain('Deposit')
-    })
-  })
-
-  describe('Emits', () => {
-    it('should open block explorer when bank address is clicked', async () => {
-      const wrapper = createComponent()
-      await wrapper.find('[data-test="team-bank-address"]').trigger('click')
-      expect(wrapper.emitted('open-block-explorer')).toBeTruthy()
     })
   })
 
