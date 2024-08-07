@@ -27,7 +27,9 @@
         </tbody>
         <tbody data-test="data-not-exists" v-else>
           <tr>
-            <td class="text-center font-bold text-lg" colspan="4" data-test="empty-row">No Deposit transactions</td>
+            <td class="text-center font-bold text-lg" colspan="4" data-test="empty-row">
+              No Deposit transactions
+            </td>
           </tr>
         </tbody>
       </table>

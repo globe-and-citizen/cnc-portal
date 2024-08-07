@@ -210,7 +210,7 @@ describe('DepositHistory', () => {
           mocks: {
             error: new Error('Error')
           }
-        },
+        }
       })
       expect(addErrorToastMock).toHaveBeenCalled()
     })

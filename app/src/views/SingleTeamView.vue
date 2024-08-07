@@ -59,10 +59,7 @@
           </div>
         </template>
         <template #tab-1>
-          <BankSection
-            v-if="activeTab == 1"
-            :team="team"
-          />
+          <BankSection v-if="activeTab == 1" :team="team" />
         </template>
         <template #tab-2>
           <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
