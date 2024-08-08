@@ -11,6 +11,7 @@ export interface Role {
   name: string
   description?: string
   entitlements?: Entitlement[]
+  roleCategory?: RoleCategory
 }
 
 export interface Entitlement {
