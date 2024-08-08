@@ -22,6 +22,13 @@
         >
           {{ copied ? 'Copied!' : 'Copy address' }}
         </button>
+        <!--Add/Edit User Roles-->
+        <button
+          @click="showAddEditMemberRoles = !showAddEditMemberRoles"
+          class="btn btn-active btn-xs"
+        >
+          Add Roles
+        </button>
         <button
           v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
           class="btn btn-error btn-xs"
@@ -40,6 +47,12 @@
         from the team?
       </DeleteConfirmForm>
     </ModalComponent>
+    <ModalComponent v-model="showAddEditMemberRoles">
+      <AddMemberRolesForm
+        :member-address="member.address"
+        v-model="member.roles"
+      />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -50,10 +63,11 @@ import { useRoute } from 'vue-router'
 import type { MemberInput } from '@/types'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import AddMemberRolesForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberRolesForm.vue'
 
 const props = defineProps<{
   member: Partial<MemberInput>
@@ -68,6 +82,7 @@ const route = useRoute()
 
 const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const showDeleteMemberConfirmModal = ref(false)
+const showAddEditMemberRoles = ref(false)
 
 // useFetch instance for deleting member
 const {
@@ -108,4 +123,8 @@ const { copy, copied, isSupported } = useClipboard()
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
+
+onMounted(() => {
+  console.log('member: ', props.member)
+})
 </script>
