@@ -1,0 +1,48 @@
+name: Frontend E2E Synpress Playwright
+
+on:
+  pull_request:
+    branches: ["*"]
+    paths:
+      - "app/**"
+  workflow_dispatch:
+
+jobs:
+  app-e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up NodeJS 20.10.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: "npm"
+          cache-dependency-path: ./app/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./app
+
+      - name: 🎭 Install Playwright dependencies
+        run: npx playwright install-deps
+        working-directory: ./app
+
+      - name: 🌎 Install browsers for Playwright
+        run: npx playwright install chromium
+        working-directory: ./app
+
+      - name: </> Install linux dependencies
+        run: |
+          sudo apt-get install --no-install-recommends -y \
+          xvfb
+
+      - name: 💾 Build Cache
+        run: xvfb-run npm run test:build:cache
+        working-directory: ./app
+
+      - name: 💻 Run E2E
+        run: |
+          xvfb-run npm run test
+        working-directory: ./app

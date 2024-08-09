@@ -29,3 +29,7 @@ coverage
 
 *.tsbuildinfo
 .env
+
+# Synpress
+.cache-synpress
+test-results
