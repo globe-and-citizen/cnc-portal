@@ -6,7 +6,7 @@ import {
   useVoteDirective,
   useVoteElection
 } from '@/composables/voting'
-import { VotingService } from '@/services/votingService'
+// import { VotingService } from '@/services/votingService'
 import type { Proposal } from '@/types'
 
 const mockTransaction = { hash: '0x123' }
