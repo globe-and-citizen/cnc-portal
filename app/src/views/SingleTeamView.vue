@@ -173,7 +173,7 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-const searchUsers = async (input: { name: string; address: string }) => {
+// const searchUsers = async (input: { name: string; address: string }) => {
   try {
     searchUserName.value = input.name
     searchUserAddress.value = input.address
