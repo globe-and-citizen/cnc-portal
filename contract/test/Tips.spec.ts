@@ -59,6 +59,39 @@ describe('Tips', function () {
       expect(member1EndingBalance).to.equal(member1StartingBalance + amountPerAddress)
       expect(member2EndingBalance).to.equal(member2StartingBalance + amountPerAddress)
     })
+
+    it('should revert and not change balances if a transfer fails', async function () {
+      let FailingRecipient = await ethers.getContractFactory("FailingRecipient");
+      let failingRecipient = await FailingRecipient.deploy();
+    
+      const teamMembers = [...recipientAddress, await failingRecipient.getAddress()];
+  
+      const initialBalances = await Promise.all(
+        teamMembers.map(async (address) => {
+          const balance = ethers.formatEther(await ethers.provider.getBalance(address))
+          console.log(`\tOld balance ${address}: ${balance}`)
+          return balance
+        })
+      );
+
+      console.log()
+  
+      await expect(
+        tips.connect(owner).pushTip(teamMembers, { value: TIP_AMOUNT })
+      ).to.be.reverted/*With("Failed to send ETH");*/
+  
+      const finalBalances = await Promise.all(
+        teamMembers.map(async (address) => {
+          const balance = ethers.formatEther(await ethers.provider.getBalance(address))
+          console.log(`\tNew balance ${address}: ${balance}`)
+          return balance
+        })
+      );
+  
+      for (let i = 0; i < teamMembers.length; i++) {
+        expect(finalBalances[i]).to.equal(initialBalances[i]);
+      }
+    })
   })
 
   describe('sendTip', function () {
