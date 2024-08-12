@@ -151,7 +151,7 @@ const deployBankContract = async () => {
 }
 
 const {
-  execute: executeSearchUser,
+  // execute: executeSearchUser,
   response: searchUserResponse,
   data: users
 } = useCustomFetch('user/search', {
