@@ -174,14 +174,14 @@ watch(searchUserResponse, () => {
   }
 })
 // const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    searchUserName.value = input.name
-    searchUserAddress.value = input.address
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
-    }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
-  }
-}
+//   try {
+//     searchUserName.value = input.name
+//     searchUserAddress.value = input.address
+//     if (searchUserName.value || searchUserAddress.value) {
+//       await executeSearchUser()
+//     }
+//   } catch (error) {
+//     return useErrorHandler().handleError(error)
+//   }
+// }
 </script>
