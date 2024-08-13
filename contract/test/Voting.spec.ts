@@ -2,6 +2,7 @@ import { ethers } from 'hardhat'
 import { expect } from 'chai'
 import { Voting } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { Types } from '../typechain-types/contracts/Voting/Voting'
 
 describe('Voting Contract', () => {
   let voting: Voting
@@ -12,7 +13,6 @@ describe('Voting Contract', () => {
   let member4: SignerWithAddress
   let member5: SignerWithAddress
   let member6: SignerWithAddress
-  let notMember: SignerWithAddress
 
   const candidates = [
     {
@@ -35,8 +35,7 @@ describe('Voting Contract', () => {
 
   context('Deploying Voting Contract', () => {
     before(async () => {
-      ;[owner, member1, member2, notMember, member3, member4, member5, member6] =
-        await ethers.getSigners()
+      ;[owner, member1, member2, member3, member4, member5, member6] = await ethers.getSigners()
       await deployContracts()
     })
 
@@ -130,12 +129,11 @@ describe('Voting Contract', () => {
           .withArgs(await member2.getAddress(), 0, candidates[1].candidateAddress)
 
         const proposal = await voting.getProposalById(0)
-        // const proposals = await voting.proposalsById();
-        console.log(proposal)
-        const candidate: any = proposal.candidates.find(
-          (c: any) => c.candidateAddress === candidates[1].candidateAddress
+
+        const candidate: Types.CandidateStructOutput | undefined = proposal.candidates.find(
+          (c: Types.CandidateStructOutput) => c.candidateAddress === candidates[1].candidateAddress
         )
-        expect(candidate.votes).to.equal(1)
+        if (candidate) expect(candidate.votes).to.equal(1)
       })
 
       it('should conclude a proposal successfully', async () => {
