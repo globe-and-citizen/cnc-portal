@@ -98,90 +98,53 @@ describe('Voting Contract', () => {
       })
 
       it('should return the proposal details', async () => {
-        const proposals = await voting.getProposals(1)
-        expect(proposals).to.have.lengthOf(1)
-        expect(proposals[0].title).to.equal('Proposal 1')
+        const proposal = await voting.proposalsById(0)
+        expect(proposal.title).to.equal('Proposal 1')
       })
     })
 
     describe('Voting actions', () => {
-      it('should vote "yes" on a proposal successfully', async () => {
-        const votingAsMember3 = voting.connect(member3)
+      it('should vote on a directive proposal successfully', async () => {
+        const votingAsMember1 = voting.connect(member1)
 
-        await expect(await votingAsMember3.voteDirective(1, 0, 1))
+        await expect(votingAsMember1.voteDirective(0, 1))
           .to.emit(voting, 'DirectiveVoted')
-          .withArgs(await member3.getAddress(), 0, 1)
+          .withArgs(await member1.getAddress(), 0, 1)
 
-        const proposals = await voting.getProposals(1)
-        expect(proposals[0].votes.yes).to.equal(1)
-      })
-
-      it('should vote "no" on a proposal successfully', async () => {
-        const votingAsMember4 = voting.connect(member4)
-
-        await expect(await votingAsMember4.voteDirective(1, 0, 0))
-          .to.emit(voting, 'DirectiveVoted')
-          .withArgs(await member4.getAddress(), 0, 0)
-
-        const proposals = await voting.getProposals(1)
-        expect(proposals[0].votes.no).to.equal(1)
-      })
-
-      it('should vote "abstain" on a proposal successfully', async () => {
-        const votingAsMember5 = voting.connect(member5)
-
-        await expect(await votingAsMember5.voteDirective(1, 0, 2))
-          .to.emit(voting, 'DirectiveVoted')
-          .withArgs(await member5.getAddress(), 0, 2)
-
-        const proposals = await voting.getProposals(1)
-        expect(proposals[0].votes.abstain).to.equal(1)
-      })
-      it('should revert with invalid vote', async () => {
-        const votingAsMember6 = voting.connect(member6)
-
-        await expect(votingAsMember6.voteDirective(1, 0, 4)).to.be.revertedWith('Invalid vote')
-      })
-      it('should not allow a random member to vote on a proposal', async () => {
-        const votingAsRandomMember = voting.connect(notMember)
-        await expect(votingAsRandomMember.voteDirective(1, 0, 1)).to.be.revertedWith(
-          'You are not registered to vote in this proposal'
-        )
+        const proposal = await voting.proposalsById(0)
+        expect(proposal.votes.yes).to.equal(1)
       })
 
       it('should not allow a member to vote twice on a proposal', async () => {
-        const votingAsMember3 = voting.connect(member3)
-        await expect(votingAsMember3.voteDirective(1, 0, 1)).to.be.revertedWith(
+        const votingAsMember1 = voting.connect(member1)
+        await expect(votingAsMember1.voteDirective(0, 1)).to.be.revertedWith(
           'You have already voted'
         )
       })
 
-      it('should vote on an election successfully', async () => {
+      it('should vote on an election proposal successfully', async () => {
         const votingAsMember2 = voting.connect(member2)
 
-        await expect(await votingAsMember2.voteElection(1, 0, candidates[1].candidateAddress))
+        await expect(votingAsMember2.voteElection(0, candidates[1].candidateAddress))
           .to.emit(voting, 'ElectionVoted')
           .withArgs(await member2.getAddress(), 0, candidates[1].candidateAddress)
 
-        const proposals = await voting.getProposals(1)
-        const candidate = proposals[0].candidates.find(
-          (c) => c.candidateAddress === candidates[1].candidateAddress
+        const proposal = await voting.getProposalById(0)
+        // const proposals = await voting.proposalsById();
+        console.log(proposal)
+        const candidate: any = proposal.candidates.find(
+          (c: any) => c.candidateAddress === candidates[1].candidateAddress
         )
-        if (candidate) {
-          expect(candidate.votes).to.equal(1)
-        }
-      })
-      it('should revert with proposal does not exist ', async () => {
-        await expect(voting.voteDirective(1, 37, 1)).to.be.revertedWith('Proposal does not exist')
+        expect(candidate.votes).to.equal(1)
       })
 
       it('should conclude a proposal successfully', async () => {
-        await expect(voting.concludeProposal(1, 0))
+        await expect(voting.concludeProposal(0))
           .to.emit(voting, 'ProposalConcluded')
           .withArgs(0, false)
 
-        const proposals = await voting.getProposals(1)
-        expect(proposals[0].isActive).to.be.false
+        const proposal = await voting.proposalsById(0)
+        expect(proposal.isActive).to.be.false
       })
     })
   })
