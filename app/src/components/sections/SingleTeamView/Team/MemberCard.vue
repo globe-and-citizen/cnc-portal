@@ -63,7 +63,7 @@ import { useRoute } from 'vue-router'
 import type { MemberInput } from '@/types'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -123,8 +123,4 @@ const { copy, copied, isSupported } = useClipboard()
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
-
-onMounted(() => {
-  console.log('member: ', props.member)
-})
 </script>

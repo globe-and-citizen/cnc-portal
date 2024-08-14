@@ -146,7 +146,11 @@ export const getRoleCategories = async (req: Request, res: Response) => {
         entitlements: true,
         roles: {
           include: {
-            entitlements: true
+            entitlements: {
+              include: {
+                entitlementType: true
+              }
+            }
           }
         }
       }
@@ -177,7 +181,11 @@ export const getRoleCategory = async (req: Request, res: Response) => {
         entitlements: true,
         roles: {
           include: {
-            entitlements: true
+            entitlements: {
+              include: {
+                entitlementType: true
+              }
+            }
           }
         }
       }

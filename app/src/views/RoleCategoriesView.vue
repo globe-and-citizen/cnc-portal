@@ -35,7 +35,7 @@ import RoleCategoriesErrorDisplay from '@/components/sections/role-categories/Ro
 import AddRoleCategoryForm from '@/components/forms/roles/AddRoleCategoryForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { RoleCategoryResponse, RoleCategory } from '@/types'
+import type { RoleCategoryResponse } from '@/types'
 import { deepClone } from '@/utils'
 
 const isRoleCategoriesFetching = ref(false)
