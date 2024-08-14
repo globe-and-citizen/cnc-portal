@@ -110,7 +110,7 @@ describe('Voting Composables', () => {
     it('should fetch proposals successfully', async () => {
       const { execute, isLoading, isSuccess, error, data } = useGetProposals()
 
-      await execute(1)
+      await execute()
 
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(true)

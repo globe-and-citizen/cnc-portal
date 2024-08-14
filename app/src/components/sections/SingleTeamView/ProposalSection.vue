@@ -138,6 +138,6 @@ const oldProposals = ref<Partial<Proposal>[]>([])
 const activeProposals = ref<Partial<Proposal>[]>([])
 
 onMounted(() => {
-  executeGetProposals(Number(route.params.id))
+  executeGetProposals()
 })
 </script>

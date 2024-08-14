@@ -47,10 +47,10 @@ export function useGetProposals() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function getProposals(teamId: Number) {
+  async function getProposals() {
     try {
       loading.value = true
-      proposals.value = await votingService.getProposals(teamId)
+      proposals.value = await votingService.getProposals()
       isSuccess.value = true
     } catch (err) {
       error.value = err
