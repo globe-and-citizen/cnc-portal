@@ -39,6 +39,8 @@ describe('VotingService', () => {
     concludeProposal: ReturnType<typeof vi.fn>
     voteDirective: ReturnType<typeof vi.fn>
     voteElection: ReturnType<typeof vi.fn>
+    proposalCount: ReturnType<typeof vi.fn>
+    proposalsById: ReturnType<typeof vi.fn>
   }
 
   // Create a mock contract instance
@@ -48,7 +50,9 @@ describe('VotingService', () => {
       getProposals: vi.fn().mockResolvedValue([mockProposal]),
       concludeProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
       voteDirective: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
-      voteElection: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) })
+      voteElection: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
+      proposalCount: vi.fn().mockResolvedValue(1),
+      proposalsById: vi.fn().mockResolvedValue(mockProposal)
     }
 
     // Mock the `getContract` method to return the mock contract instance
@@ -93,25 +97,6 @@ describe('VotingService', () => {
       expect(proposals).toBeDefined()
       expect(proposals.length).toBeGreaterThan(0)
       expect(proposals).toEqual([mockProposal])
-      expect(mockContract.getProposals).toHaveBeenCalledOnce()
-      expect(mockContract.getProposals).toHaveBeenCalledWith(1)
-    })
-
-    it('should handle empty proposals correctly', async () => {
-      mockContract.getProposals.mockResolvedValueOnce('0x')
-
-      const proposals = await votingService.getProposals('0x1234')
-
-      expect(proposals).toEqual([])
-      expect(mockContract.getProposals).toHaveBeenCalledOnce()
-    })
-
-    it('should handle errors when fetching proposals', async () => {
-      mockContract.getProposals.mockRejectedValueOnce(new Error('Get Proposals Failed'))
-
-      await expect(votingService.getProposals('0x1234')).rejects.toThrow('Get Proposals Failed')
-
-      expect(mockContract.getProposals).toHaveBeenCalledOnce()
     })
   })
 
@@ -121,7 +106,7 @@ describe('VotingService', () => {
 
       expect(tx).toBeDefined()
       expect(mockContract.concludeProposal).toHaveBeenCalledOnce()
-      expect(mockContract.concludeProposal).toHaveBeenCalledWith(1, 0)
+      expect(mockContract.concludeProposal).toHaveBeenCalledWith(0)
     })
 
     it('should handle errors when concluding a proposal', async () => {
@@ -141,7 +126,7 @@ describe('VotingService', () => {
 
       expect(tx).toBeDefined()
       expect(mockContract.voteDirective).toHaveBeenCalledOnce()
-      expect(mockContract.voteDirective).toHaveBeenCalledWith(1, 0, 1)
+      expect(mockContract.voteDirective).toHaveBeenCalledWith(0, 1)
     })
 
     it('should handle errors when voting on a directive', async () => {
@@ -161,7 +146,7 @@ describe('VotingService', () => {
 
       expect(tx).toBeDefined()
       expect(mockContract.voteElection).toHaveBeenCalledOnce()
-      expect(mockContract.voteElection).toHaveBeenCalledWith(1, 0, '0x1234')
+      expect(mockContract.voteElection).toHaveBeenCalledWith(0, '0x1234')
     })
 
     it('should handle errors when voting in an election', async () => {

@@ -31,6 +31,12 @@ vi.mock('@/composables/voting', () => ({
     isSuccess: vi.fn(),
     error: vi.fn(),
     data: vi.fn()
+  })),
+  useDeployVotingContract: vi.fn(() => ({
+    execute: vi.fn(),
+    isLoading: vi.fn(),
+    isSuccess: vi.fn(),
+    error: vi.fn()
   }))
 }))
 
