@@ -4,6 +4,10 @@ import VOTING_ABI from '@/artifacts/abi/voting.json'
 import type { Contract } from 'ethers'
 import { VOTING_ADDRESS } from '@/constant'
 import type { Proposal } from '@/types'
+import BEACON_PROXY_ABI from '../artifacts/abi/voting-beacon-proxy.json'
+import { SmartContract } from './contractService'
+import { VOTING_IMPL_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
+import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/voting-beacon-proxy'
 
 export interface IVotingService {
   web3Library: IWeb3Library
@@ -64,5 +68,29 @@ export class VotingService implements IVotingService {
     const votingContract = await this.web3Library.getContract(votingContractAddress, VOTING_ABI)
 
     return votingContract
+  }
+
+  async getContract(votingAddress: string): Promise<Contract> {
+    const contractService = this.getContractService(votingAddress)
+
+    return await contractService.getContract()
+  }
+  private getContractService(votingAddress: string): SmartContract {
+    return new SmartContract(votingAddress, VOTING_ABI)
+  }
+  private async deployVotingContract(): Promise<string> {
+    const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
+    const votingProxyFactory = await this.web3Library.getFactoryContract(
+      BEACON_PROXY_ABI,
+      BEACON_PROXY_BYTECODE
+    )
+    const beaconProxyDeployment = await votingProxyFactory.deploy(
+      VOTING_BEACON_ADDRESS,
+      votingImplementation.interface.encodeFunctionData('initialize', [])
+    )
+    const beaconProxy = await beaconProxyDeployment.waitForDeployment()
+    await beaconProxyDeployment.waitForDeployment()
+
+    return await beaconProxy.getAddress()
   }
 }
