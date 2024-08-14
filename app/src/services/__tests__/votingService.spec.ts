@@ -67,7 +67,7 @@ describe('VotingService', () => {
 
   describe('addProposal', () => {
     it('should add a proposal and return transaction', async () => {
-      const tx = await votingService.addProposal(mockProposal)
+      const tx = await votingService.addProposal('0x1234', mockProposal)
 
       expect(tx).toBeDefined()
       expect(mockContract.addProposal).toHaveBeenCalledOnce()
@@ -78,7 +78,9 @@ describe('VotingService', () => {
     it('should handle errors when adding a proposal', async () => {
       mockContract.addProposal.mockRejectedValueOnce(new Error('Add Proposal Failed'))
 
-      await expect(votingService.addProposal(mockProposal)).rejects.toThrow('Add Proposal Failed')
+      await expect(votingService.addProposal('0x1234', mockProposal)).rejects.toThrow(
+        'Add Proposal Failed'
+      )
 
       expect(mockContract.addProposal).toHaveBeenCalledOnce()
     })
@@ -86,7 +88,7 @@ describe('VotingService', () => {
 
   describe('getProposals', () => {
     it('should fetch proposals and return them', async () => {
-      const proposals = await votingService.getProposals(1)
+      const proposals = await votingService.getProposals('0x1234')
 
       expect(proposals).toBeDefined()
       expect(proposals.length).toBeGreaterThan(0)
@@ -98,7 +100,7 @@ describe('VotingService', () => {
     it('should handle empty proposals correctly', async () => {
       mockContract.getProposals.mockResolvedValueOnce('0x')
 
-      const proposals = await votingService.getProposals(1)
+      const proposals = await votingService.getProposals('0x1234')
 
       expect(proposals).toEqual([])
       expect(mockContract.getProposals).toHaveBeenCalledOnce()
@@ -107,7 +109,7 @@ describe('VotingService', () => {
     it('should handle errors when fetching proposals', async () => {
       mockContract.getProposals.mockRejectedValueOnce(new Error('Get Proposals Failed'))
 
-      await expect(votingService.getProposals(1)).rejects.toThrow('Get Proposals Failed')
+      await expect(votingService.getProposals('0x1234')).rejects.toThrow('Get Proposals Failed')
 
       expect(mockContract.getProposals).toHaveBeenCalledOnce()
     })
@@ -115,7 +117,7 @@ describe('VotingService', () => {
 
   describe('concludeProposal', () => {
     it('should conclude a proposal and return transaction', async () => {
-      const tx = await votingService.concludeProposal(1, 0)
+      const tx = await votingService.concludeProposal('0x1232', 0)
 
       expect(tx).toBeDefined()
       expect(mockContract.concludeProposal).toHaveBeenCalledOnce()
@@ -125,7 +127,9 @@ describe('VotingService', () => {
     it('should handle errors when concluding a proposal', async () => {
       mockContract.concludeProposal.mockRejectedValueOnce(new Error('Conclude Proposal Failed'))
 
-      await expect(votingService.concludeProposal(1, 0)).rejects.toThrow('Conclude Proposal Failed')
+      await expect(votingService.concludeProposal('0x1221', 0)).rejects.toThrow(
+        'Conclude Proposal Failed'
+      )
 
       expect(mockContract.concludeProposal).toHaveBeenCalledOnce()
     })
@@ -133,7 +137,7 @@ describe('VotingService', () => {
 
   describe('voteDirective', () => {
     it('should vote on a directive and return transaction', async () => {
-      const tx = await votingService.voteDirective(1, 0, 1)
+      const tx = await votingService.voteDirective('0x123', 0, 1)
 
       expect(tx).toBeDefined()
       expect(mockContract.voteDirective).toHaveBeenCalledOnce()
@@ -143,7 +147,9 @@ describe('VotingService', () => {
     it('should handle errors when voting on a directive', async () => {
       mockContract.voteDirective.mockRejectedValueOnce(new Error('Vote Directive Failed'))
 
-      await expect(votingService.voteDirective(1, 0, 1)).rejects.toThrow('Vote Directive Failed')
+      await expect(votingService.voteDirective('0x1232', 0, 1)).rejects.toThrow(
+        'Vote Directive Failed'
+      )
 
       expect(mockContract.voteDirective).toHaveBeenCalledOnce()
     })
@@ -151,7 +157,7 @@ describe('VotingService', () => {
 
   describe('voteElection', () => {
     it('should vote in an election and return transaction', async () => {
-      const tx = await votingService.voteElection(1, 0, '0x1234')
+      const tx = await votingService.voteElection('0x123', 0, '0x1234')
 
       expect(tx).toBeDefined()
       expect(mockContract.voteElection).toHaveBeenCalledOnce()
@@ -161,7 +167,7 @@ describe('VotingService', () => {
     it('should handle errors when voting in an election', async () => {
       mockContract.voteElection.mockRejectedValueOnce(new Error('Vote Election Failed'))
 
-      await expect(votingService.voteElection(1, 0, '0x1234')).rejects.toThrow(
+      await expect(votingService.voteElection('0x1234', 0, '0x1234')).rejects.toThrow(
         'Vote Election Failed'
       )
 
