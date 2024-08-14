@@ -40,12 +40,14 @@ export class VotingService implements IVotingService {
   }
   async getProposals(votingAddress: string): Promise<any> {
     const votingContract = await this.getVotingContract(votingAddress)
-    const proposals = await votingContract.proposalsById()
-    if (proposals === '0x' || !proposals) {
-      // console.log('No proposals found or returned data is empty.')
+    const proposalCount = await votingContract.proposalCount()
+    const proposals = []
+    if (proposalCount === 0) {
       return []
     }
-    // console.log(proposals)
+    for (let i = 0; i < proposalCount; i++) {
+      proposals.push(await votingContract.proposalsById(i))
+    }
     return proposals
   }
   async concludeProposal(votingAddress: string, proposalId: Number): Promise<any> {
