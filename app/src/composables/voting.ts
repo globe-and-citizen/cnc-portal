@@ -135,6 +135,7 @@ export function useDeployVotingContract() {
     try {
       loading.value = true
       contractAddress.value = await votingService.createVotingContract(teamId)
+      console.log('contractAddress', contractAddress.value)
       isSuccess.value = true
     } catch (err) {
       error.value = err
