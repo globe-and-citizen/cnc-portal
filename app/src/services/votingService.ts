@@ -27,9 +27,7 @@ export class VotingService implements IVotingService {
   }
   async createVotingContract(teamId: string): Promise<string> {
     const votingAddress = await this.deployVotingContract()
-    const response = await useCustomFetch<string>(`teams/voting/${teamId}`)
-      .put({ votingAddress })
-      .json()
+    const response = await useCustomFetch<string>(`teams/${teamId}`).put({ votingAddress }).json()
 
     return response.data.value.votingAddress
   }
