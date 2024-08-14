@@ -4,10 +4,10 @@ import VOTING_ABI from '@/artifacts/abi/voting.json'
 import type { Contract } from 'ethers'
 import { VOTING_ADDRESS } from '@/constant'
 import type { Proposal } from '@/types'
-import BEACON_PROXY_ABI from '../artifacts/abi/voting-beacon-proxy.json'
+import BEACON_PROXY_ABI from '../artifacts/abi/beacon-proxy.json'
 import { SmartContract } from './contractService'
 import { VOTING_IMPL_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
-import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/voting-beacon-proxy'
+import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 
 export interface IVotingService {
   web3Library: IWeb3Library
