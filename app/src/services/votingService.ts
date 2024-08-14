@@ -7,6 +7,7 @@ import BEACON_PROXY_ABI from '../artifacts/abi/beacon-proxy.json'
 import { SmartContract } from './contractService'
 import { VOTING_IMPL_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 export interface IVotingService {
   web3Library: IWeb3Library
@@ -15,6 +16,7 @@ export interface IVotingService {
   concludeProposal(votingAddress: string, proposalId: Number): Promise<any>
   voteDirective(votingAddress: string, proposalId: Number, directive: Number): Promise<any>
   voteElection(votingAddress: string, proposalId: Number, candidateAddress: string): Promise<any>
+  createVotingContract(teamId: string): Promise<string>
 }
 
 export class VotingService implements IVotingService {
@@ -23,7 +25,14 @@ export class VotingService implements IVotingService {
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
   }
+  async createVotingContract(teamId: string): Promise<string> {
+    const votingAddress = await this.deployVotingContract()
+    const response = await useCustomFetch<string>(`teams/voting/${teamId}`)
+      .put({ votingAddress })
+      .json()
 
+    return response.data.value.votingAddress
+  }
   async addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any> {
     proposal.id = 0
     const votingContract = await this.getVotingContract(votingAddress)

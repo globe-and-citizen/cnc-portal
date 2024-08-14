@@ -125,3 +125,23 @@ export function useVoteElection() {
 
   return { execute: voteElection, isLoading: loading, isSuccess, error, transaction }
 }
+export function useDeployVotingContract() {
+  const contractAddress = ref<string | null>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function deploy(teamId: string) {
+    try {
+      loading.value = true
+      contractAddress.value = await votingService.createVotingContract(teamId)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: deploy, isLoading: loading, isSuccess, error, contractAddress }
+}
