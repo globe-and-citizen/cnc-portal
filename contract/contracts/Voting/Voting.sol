@@ -22,13 +22,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     event ProposalConcluded(uint256 indexed proposalId, bool isActive);
 
     function initialize() public initializer {
-    __Ownable_init(msg.sender);
-    __ReentrancyGuard_init();
-    __Pausable_init();
+        __Ownable_init(msg.sender);
+        __ReentrancyGuard_init();
+        __Pausable_init();
   }
 
-    constructor() {
-    }
     function addProposal(Types.Proposal calldata _proposal) public {
         require(bytes(_proposal.title).length > 0, "Title cannot be empty");
 

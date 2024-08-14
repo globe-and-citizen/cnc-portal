@@ -101,7 +101,14 @@ describe('Voting Contract', () => {
         expect(proposal.title).to.equal('Proposal 1')
       })
     })
-
+    describe('OpenZeppelin', () => {
+      it('initializer', () => {
+        const votingAsOwner = voting.connect(owner)
+        expect(votingAsOwner.initialize()).to.be.revertedWith(
+          'Initializable: contract is already initialized'
+        )
+      })
+    })
     describe('Voting actions', () => {
       it('should vote on a directive proposal successfully', async () => {
         const votingAsMember1 = voting.connect(member1)
