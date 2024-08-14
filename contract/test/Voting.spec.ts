@@ -113,7 +113,32 @@ describe('Voting Contract', () => {
         const proposal = await voting.proposalsById(0)
         expect(proposal.votes.yes).to.equal(1)
       })
+      it('should vote "no" on a proposal successfully', async () => {
+        const votingAsMember4 = voting.connect(member4)
 
+        await expect(await votingAsMember4.voteDirective(0, 0))
+          .to.emit(voting, 'DirectiveVoted')
+          .withArgs(await member4.getAddress(), 0, 0)
+
+        const proposal = await voting.proposalsById(0)
+        expect(proposal.votes.no).to.equal(1)
+      })
+
+      it('should vote "abstain" on a proposal successfully', async () => {
+        const votingAsMember5 = voting.connect(member5)
+
+        await expect(await votingAsMember5.voteDirective(0, 2))
+          .to.emit(voting, 'DirectiveVoted')
+          .withArgs(await member5.getAddress(), 0, 2)
+
+        const proposal = await voting.proposalsById(0)
+        expect(proposal.votes.abstain).to.equal(1)
+      })
+      it('should revert with invalid vote', async () => {
+        const votingAsMember6 = voting.connect(member6)
+
+        await expect(votingAsMember6.voteDirective(0, 4)).to.be.revertedWith('Invalid vote')
+      })
       it('should not allow a member to vote twice on a proposal', async () => {
         const votingAsMember1 = voting.connect(member1)
         await expect(votingAsMember1.voteDirective(0, 1)).to.be.revertedWith(
