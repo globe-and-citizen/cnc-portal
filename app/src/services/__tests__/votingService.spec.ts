@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { VotingService } from './votingService'
+import { VotingService } from '@/services/votingService'
 import { type IWeb3Library, EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { Contract } from 'ethers'
 import type { Proposal } from '@/types'
