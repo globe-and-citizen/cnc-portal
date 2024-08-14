@@ -81,7 +81,7 @@ describe('Voting Composables', () => {
       const { execute, isLoading, isSuccess, error, transaction } = useAddProposal()
 
       // Call the composable's execute function
-      await execute(mockProposal)
+      await execute('0x123', mockProposal)
 
       // Assertions
       expect(isLoading.value).toBe(false)
@@ -94,7 +94,7 @@ describe('Voting Composables', () => {
     const { execute, isLoading, isSuccess, error, transaction } = useAddProposal()
 
     // Call the composable's execute function with an election proposal
-    await execute(mockElectionProposal)
+    await execute('0x123', mockElectionProposal)
 
     // Assertions
     expect(isLoading.value).toBe(false)
@@ -110,7 +110,7 @@ describe('Voting Composables', () => {
     it('should fetch proposals successfully', async () => {
       const { execute, isLoading, isSuccess, error, data } = useGetProposals()
 
-      await execute(1)
+      await execute('0x123')
 
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(true)
@@ -123,7 +123,7 @@ describe('Voting Composables', () => {
     it('should conclude a proposal successfully', async () => {
       const { execute, isLoading, isSuccess, error, transaction } = useConcludeProposal()
 
-      await execute(1, 0)
+      await execute('0x123', 0)
 
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(true)
@@ -136,7 +136,7 @@ describe('Voting Composables', () => {
     it('should vote on a directive successfully', async () => {
       const { execute, isLoading, isSuccess, error, transaction } = useVoteDirective()
 
-      await execute(1, 0, 1)
+      await execute('0x123', 0, 1)
 
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(true)
@@ -149,7 +149,7 @@ describe('Voting Composables', () => {
     it('should vote in an election successfully', async () => {
       const { execute, isLoading, isSuccess, error, transaction } = useVoteElection()
 
-      await execute(1, 0, '0xCandidateAddress')
+      await execute('0x123', 0, '0xCandidateAddress')
 
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(true)

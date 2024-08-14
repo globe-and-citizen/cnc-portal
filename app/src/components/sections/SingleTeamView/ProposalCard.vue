@@ -49,7 +49,7 @@
         <button
           v-else
           class="btn btn-sm btn-error mt-4"
-          @click="concludeProposal(Number($route.params.id), Number(proposal.id))"
+          @click="concludeProposal(team.votingAddress, Number(proposal.id))"
         >
           Yes
         </button>
@@ -60,10 +60,12 @@
         :isLoading="castingElectionVote || castingDirectiveVote"
         v-model="voteInput"
         @voteElection="
-          (value) => voteElection(value.teamId, value.proposalId, value.candidateAddress)
+          (value) => voteElection(team.votingAddress, value.proposalId, value.candidateAddress)
         "
         :proposal="proposal"
-        @voteDirective="(value) => voteDirective(value.teamId, value.proposalId, value.option)"
+        @voteDirective="
+          (value) => voteDirective(team.votingAddress, value.proposalId, value.option)
+        "
       />
     </ModalComponent>
     <ModalComponent v-model="showProposalDetailsModal">
@@ -97,7 +99,7 @@ const chartData = computed(() => {
   }
 })
 
-const props = defineProps(['proposal', 'isDone'])
+const props = defineProps(['proposal', 'isDone', 'team'])
 
 const emits = defineEmits(['getTeam'])
 
