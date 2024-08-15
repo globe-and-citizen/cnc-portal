@@ -72,6 +72,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddMemberRolesForm from '@/components/sections/SingleTeamView/Team/forms/AddMemberRolesForm.vue'
 import { log, parseError } from "@/utils";
+import { useVuelidate } from "@vuelidate/core";
 
 const props = defineProps<{
   member: Partial<MemberInput>
@@ -83,6 +84,8 @@ const { addSuccessToast } = useToastStore()
 const emits = defineEmits(['getTeam'])
 
 const route = useRoute()
+
+const v$ = useVuelidate()
 
 const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const showDeleteMemberConfirmModal = ref(false)
@@ -233,6 +236,11 @@ const signContract = async (contract: undefined | Object) => {
 
 const addRoles = async () => {
   isAddingRole.value = true
+  v$.value.$touch()
+  if (v$.value.$invalid) {
+    isAddingRole.value = false
+    return
+  }
   const contract = createContract()
   const signature = await signContract(contract)
   console.log(`member.roles: `, member.value.roles)

@@ -9,10 +9,14 @@
   <section v-if="roleCategories">
     <div 
       v-for="(role, index) of memberRoles" :key="index"
-      class="p-4"
+      class="p-4 flex flex-col gap-2"
     >
       <label class="input input-bordered flex items-center gap-2 input-md">
-        <select class="w-1/2 bg-white" v-model="role.role.roleCategoryId">
+        <select 
+          class="w-1/2 bg-white" 
+          v-model="role.role.roleCategoryId" 
+          @input="async () => {}"
+        >
           <option value="0">-- Select Role Category --</option>
           <option 
             v-for="(roleCategory) of roleCategories"
@@ -33,6 +37,12 @@
           </option>
         </select>
       </label>
+
+      <FormErrorMessage v-if="v$.$errors.length">
+        <div v-for="(message, index) of getErrors()" :key="index">
+          {{ message }}
+        </div>
+      </FormErrorMessage>
     </div>
   </section>
 
@@ -72,6 +82,9 @@ import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from "@/components/ui/LoadingButton.vue"
 import { deepClone } from "@/utils"
 import type { RoleCategory } from "@/types";
+import { useVuelidate } from '@vuelidate/core'
+import { helpers, minValue } from '@vuelidate/validators'
+import FormErrorMessage from "@/components/ui/FormErrorMessage.vue";
 
 //#region state
 const props = defineProps<{
@@ -102,7 +115,34 @@ const memberRoles = defineModel({
 const emits = defineEmits(["add-roles", "close-modal"])
 //#endregion state
 
+//#region validation
+const rules = {
+  memberRoles: {
+    $each: helpers.forEach({
+      roleId: {
+        minValue: helpers.withMessage('Role is required', minValue(1))
+      },
+      role: {
+        isValid: helpers.withMessage(
+          'Role category is required', 
+          (value: {roleCategoryId: number}) => {
+            return value.roleCategoryId > 0
+          }
+        )
+      }
+    })
+  }
+}
+
+const v$ = useVuelidate(rules, { memberRoles })
+//#endregion validation
+
 //#region helper functions
+const getErrors = () => {
+  return v$.value.$errors[0].$message instanceof Array?
+    v$.value.$errors[0].$message[0]:
+    []
+}
 const getRoles = (index: number) => {
   const id = memberRoles.value[index].role.roleCategoryId
   const roleCategory = roleCategories.find((category: RoleCategory) => category.id === id)
