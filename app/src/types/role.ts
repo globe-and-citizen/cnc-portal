@@ -18,6 +18,7 @@ export interface Entitlement {
   id?: number
   value: string
   entitlementTypeId: number
+  entitlementType?: EntitlementType 
 }
 
 export interface EntitlementType {

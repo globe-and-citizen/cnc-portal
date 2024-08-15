@@ -15,7 +15,7 @@
         <select class="w-1/2 bg-white" v-model="role.role.roleCategoryId">
           <option value="0">-- Select Role Category --</option>
           <option 
-            v-for="(roleCategory) of roleCategories?.roleCategories"
+            v-for="(roleCategory) of roleCategories"
             :key="roleCategory.id"
             :value="roleCategory.id"
           >
@@ -54,25 +54,32 @@
 
 <!--Action Buttons-->
   <section class="modal-action justify-center">
-    <LoadingButton v-if="false" color="primary min-w-24" />
-    <button class="btn btn-primary" @click="signContract">Add Roles</button>
-    <button class="btn btn-active" >Cancel</button>
+    <LoadingButton v-if="isAddingRole" color="primary min-w-24" />
+    <button v-else class="btn btn-primary" @click="emits('add-roles')">Add Roles</button>
+    <button 
+      class="btn btn-active"
+      :disabled="isAddingRole"
+      @click="emits('close-modal')"
+    >
+      Cancel
+    </button>
   </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from "vue";
+import { watch } from "vue";
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from "@/components/ui/LoadingButton.vue"
-import { useUserDataStore } from '@/stores/user'
-import { useCustomFetch } from "@/composables/useCustomFetch";
 import { deepClone } from "@/utils"
-import type { RoleCategory, Role } from "@/types";
+import type { RoleCategory } from "@/types";
 
 //#region state
 const props = defineProps<{
-  memberAddress: string | undefined;
+  isAddingRole: boolean;
+  roleCategories: RoleCategory[]
 }>()
+
+const {roleCategories} = props
 
 const initRole = {
   id: 0, 
@@ -91,98 +98,14 @@ const memberRoles = defineModel({
     }
   }]
 })
+
+const emits = defineEmits(["add-roles", "close-modal"])
 //#endregion state
 
 //#region helper functions
-const createContract = () => {
-  let contract
-  for (const memberRole of memberRoles.value) {
-    const roleCategory = roleCategories
-      .value
-      .roleCategories
-      .find((category: RoleCategory) => 
-        category.id === memberRole.role.roleCategoryId)
-
-    const role = roleCategory
-      .roles
-      .find(
-        (_role: Role) => 
-          _role.id === memberRole.roleId
-      )
-
-    const entitlements = []
-
-    for (const entitlement of role.entitlements) {
-      if (
-        entitlement.entitlementType.name === 'access' &&
-        entitlement.value.split(':')[0] === 'expense-account'
-      ) {
-        entitlements.push(entitlement.value)
-      }
-    }
-
-    if (entitlements.length > 0) {
-      contract = {
-        role: {
-          name: role.name,
-          entitlement: {
-            name: "access",
-            resource: entitlements[0].split(':')[0],
-            accessLevel: entitlements[0].split(':')[1]
-          }
-        },
-        assignedTo: props.memberAddress,
-        assignedBy: useUserDataStore().address
-      }
-    }
-  }
-
-  return contract
-}
-
-const signContract = async () => {
-  if (!createContract()) return
-  const params = [
-    useUserDataStore().address,
-    {
-      types: {
-        EIP712Domain: [
-          { name: "name", type: "string" },
-          { name: "version", type: "string" }
-        ],
-        Entitlement: [
-          { name: "name", type: "string" },
-          { name: "resource", type: "string" },
-          { name: "accessLevel", type: "string" }
-        ],
-        Role: [
-          { name: "name", type: "string" },
-          { name: "entitlement", type: "Entitlement" }
-        ],
-        Contract: [
-          { name: "assignedTo", type: "address" },
-          { name: "assignedBy", type: "address" },
-          { name: "role", type: "Role" }
-        ]
-      },
-      primaryType: "Contract",
-      domain: {
-        "name": "CNC Contract",
-        "version": "1"
-      },
-      message: createContract()
-    }
-  ]
-  try {
-    return await (window as any).ethereum.request({method: "eth_signTypedData_v4", params: params})
-  } catch (error) {
-    console.log(`error: `, error)
-  }
-}
-
 const getRoles = (index: number) => {
   const id = memberRoles.value[index].role.roleCategoryId
-  const roleCategory = roleCategories.value.roleCategories.find((category: RoleCategory) => category.id === id)
+  const roleCategory = roleCategories.find((category: RoleCategory) => category.id === id)
   return roleCategory? roleCategory.roles: []
 }
 
@@ -199,17 +122,6 @@ const removeRole = () => {
 };
 //#endregion helper functions
 
-//#region api
-const {
-  execute: executeFetchRoleCategories,
-  data: roleCategories
-} = useCustomFetch('role-category', {
-  immediate: false
-})
-  .get()
-  .json()
-//#endregion api
-
 watch(
   memberRoles, (newVal) => {
     if (newVal.length === 0) {
@@ -218,8 +130,4 @@ watch(
   },
   { immediate: true }
 );
-
-onMounted(async () => {
-  await executeFetchRoleCategories()
-})
 </script>
