@@ -191,8 +191,8 @@ const createContract = () => {
   return contract
 }
 
-const signContract = async () => {
-  if (!createContract()) return
+const signContract = async (contract: undefined | Object) => {
+  if (!contract) return
   const params = [
     useUserDataStore().address,
     {
@@ -221,7 +221,7 @@ const signContract = async () => {
         "name": "CNC Contract",
         "version": "1"
       },
-      message: createContract()
+      message: contract
     }
   ]
   try {
@@ -233,10 +233,11 @@ const signContract = async () => {
 
 const addRoles = async () => {
   isAddingRole.value = true
-  const signature = await signContract()
+  const contract = createContract()
+  const signature = await signContract(contract)
   console.log(`member.roles: `, member.value.roles)
   console.log(`signature: `, signature)
-  console.log(`contract: `, JSON.stringify(createContract()))
+  console.log(`contract: `, JSON.stringify(contract))
   isAddingRole.value = false
 }
 
