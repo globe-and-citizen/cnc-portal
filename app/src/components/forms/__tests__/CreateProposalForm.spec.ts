@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import CreateProposalForm from '@/components/sections/SingleTeamView/Governance/forms/CreateProposalForm.vue'
+import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 
 describe('CreateProposal.vue', () => {
   describe('renders', () => {

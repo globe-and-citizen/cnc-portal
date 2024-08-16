@@ -1,6 +1,6 @@
 import { it, describe, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddMemberCard from '../AddMemberCard.vue'
+import AddMemberCard from '../sections/SingleTeamView/AddMemberCard.vue'
 
 import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 describe('AddMemberCard.vue', () => {

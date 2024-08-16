@@ -8,7 +8,12 @@
     <div class="w-[240px] grow flex flex-col justify-center p-10">
       <h2 class="pb-4 flex justify-center">Sign in to CNC portal</h2>
       <div class="flex flex-col gap-5">
-        <button class="btn btn-primary w-full" @click="siwe" :disabled="isProcessing">
+        <button
+          data-testid="sign-in"
+          class="btn btn-primary w-full"
+          @click="siwe"
+          :disabled="isProcessing"
+        >
           <span v-if="isProcessing">Processing...</span>
           <span v-else>Sign In With Ethereum</span>
         </button>

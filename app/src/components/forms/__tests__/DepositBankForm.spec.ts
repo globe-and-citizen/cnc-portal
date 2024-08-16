@@ -44,5 +44,14 @@ describe('DepositBankModal.vue', () => {
       expect(wrapper.emitted()).toHaveProperty('deposit')
       expect(wrapper.emitted('deposit')?.[0]).toEqual(['100'])
     })
+
+    it('emits closeModal when close button is clicked', async () => {
+      const wrapper = mount(DepositBankForm, {
+        props: { loading: false }
+      })
+
+      await wrapper.find('.btn-error').trigger('click')
+      expect(wrapper.emitted()).toHaveProperty('closeModal')
+    })
   })
 })
