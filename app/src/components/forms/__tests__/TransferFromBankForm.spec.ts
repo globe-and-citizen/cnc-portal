@@ -1,5 +1,5 @@
 // TransferFromBankForm.spec.ts
-import { it, expect, describe, vi, beforeEach } from 'vitest'
+import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TransferFromBankForm from '../TransferFromBankForm.vue'
 
@@ -18,6 +18,7 @@ describe('TransferFromBankForm.vue', () => {
       }
     })
   })
+
   describe('Renders', () => {
     it('renders initial UI correctly', () => {
       expect(wrapper.find('h1').text()).toBe('Transfer from Bank Contract')
@@ -25,7 +26,24 @@ describe('TransferFromBankForm.vue', () => {
       expect(wrapper.find('.btn-error').text()).toBe('Cancel')
       expect(wrapper.find('.input-md input[type="text"]').element).toBeDefined()
     })
+
+    it('renders input transfer recipient correctly', async () => {
+      const recipientInput = wrapper.find('input[data-test="recipient-input"]')
+      expect(recipientInput.element).toBeDefined()
+      await recipientInput.setValue('0xAddress1')
+
+      expect((wrapper.vm as any).to).toBe('0xAddress1')
+    })
+
+    it('renders input transfer amount correctly', async () => {
+      const amountInput = wrapper.find('input[data-test="amount-input"]')
+      expect(amountInput.element).toBeDefined()
+      await amountInput.setValue('10')
+
+      expect((wrapper.vm as any).amount).toBe('10')
+    })
   })
+
   describe('Actions', () => {
     it('updates "to" value when selecting member from dropdown', async () => {
       const dropdownOption = wrapper.find('.dropdown-content a')

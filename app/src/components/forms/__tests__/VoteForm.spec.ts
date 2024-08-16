@@ -1,6 +1,6 @@
 import { it, expect, describe, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import VoteForm from '@/components/sections/SingleTeamView/Governance/forms/VoteForm.vue'
+import VoteForm from '@/components/sections/SingleTeamView/forms/VoteForm.vue'
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({
     params: {
