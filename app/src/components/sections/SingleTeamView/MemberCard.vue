@@ -52,7 +52,7 @@
         :role-categories="roleCategories"
         :is-adding-role="isAddingRole"
         v-model="member.roles"
-        @add-roles="addRoles"
+        @add-roles="emits('addRoles')"
         @close-modal="showAddEditMemberRoles = !showAddEditMemberRoles"
       />
     </ModalComponent>
@@ -71,27 +71,26 @@ import { useErrorHandler } from '@/composables/errorHandler'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddMemberRolesForm from '@/components/sections/SingleTeamView/forms/AddMemberRolesForm.vue'
-import { log, parseError } from "@/utils";
 import { useVuelidate } from "@vuelidate/core";
 
 const props = defineProps<{
+  isAddingRole: boolean
   member: Partial<MemberInput>
   teamId: Number
   ownerAddress: String
 }>()
 const { addSuccessToast } = useToastStore()
 
-const emits = defineEmits(['getTeam'])
+const emits = defineEmits(['getTeam', 'addRoles'])
 
 const route = useRoute()
 
-const v$ = useVuelidate()
+useVuelidate()
 
 const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const showDeleteMemberConfirmModal = ref(false)
 const showAddEditMemberRoles = ref(false)
 const roleCategories = ref<null | RoleCategory[]>(null)
-const isAddingRole = ref(false)
 
 // useFetch instance for deleting member
 const {
@@ -141,112 +140,6 @@ const { copy, copied, isSupported } = useClipboard()
 
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
-}
-
-const createContract = () => {
-  let contract
-  if (member.value.roles)
-    for (const memberRole of member.value.roles) {
-      const roleCategory = _roleCategories
-        .value
-        .roleCategories
-        .find((category: RoleCategory) => 
-          category.id === (memberRole as any).role.roleCategoryId)
-
-      if (roleCategory && roleCategory.roles) {
-        const role = roleCategory
-          .roles
-          .find(
-            (_role: Role) => 
-              _role.id === (memberRole as any).roleId
-          )
-
-        const entitlements = []
-
-        if (role && role.entitlements) {
-          for (const entitlement of role.entitlements) {
-            if (
-              entitlement.entitlementType &&
-              entitlement.entitlementType.name === 'access' &&
-              entitlement.value.split(':')[0] === 'expense-account'
-            ) {
-              entitlements.push(entitlement.value)
-            }
-          }
-
-          if (entitlements.length > 0) {
-            contract = {
-              role: {
-                name: role.name,
-                entitlement: {
-                  name: "access",
-                  resource: entitlements[0].split(':')[0],
-                  accessLevel: entitlements[0].split(':')[1]
-                }
-              },
-              assignedTo: member.value.address,
-              assignedBy: useUserDataStore().address
-            }
-          }
-        }
-      }
-    }
-  return contract
-}
-
-const signContract = async (contract: undefined | Object) => {
-  if (!contract) return
-  const params = [
-    useUserDataStore().address,
-    {
-      types: {
-        EIP712Domain: [
-          { name: "name", type: "string" },
-          { name: "version", type: "string" }
-        ],
-        Entitlement: [
-          { name: "name", type: "string" },
-          { name: "resource", type: "string" },
-          { name: "accessLevel", type: "string" }
-        ],
-        Role: [
-          { name: "name", type: "string" },
-          { name: "entitlement", type: "Entitlement" }
-        ],
-        Contract: [
-          { name: "assignedTo", type: "address" },
-          { name: "assignedBy", type: "address" },
-          { name: "role", type: "Role" }
-        ]
-      },
-      primaryType: "Contract",
-      domain: {
-        "name": "CNC Contract",
-        "version": "1"
-      },
-      message: contract
-    }
-  ]
-  try {
-    return await (window as any).ethereum.request({method: "eth_signTypedData_v4", params: params})
-  } catch (error) {
-    log.error(parseError(error))
-  }
-}
-
-const addRoles = async () => {
-  isAddingRole.value = true
-  v$.value.$touch()
-  if (v$.value.$invalid) {
-    isAddingRole.value = false
-    return
-  }
-  const contract = createContract()
-  const signature = await signContract(contract)
-  console.log(`member.roles: `, member.value.roles)
-  console.log(`signature: `, signature)
-  console.log(`contract: `, JSON.stringify(contract))
-  isAddingRole.value = false
 }
 
 onMounted(async () => {

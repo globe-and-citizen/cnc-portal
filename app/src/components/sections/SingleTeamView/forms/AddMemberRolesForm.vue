@@ -15,7 +15,7 @@
         <select 
           class="w-1/2 bg-white" 
           v-model="role.role.roleCategoryId" 
-          @input="async () => {}"
+          @input="async () => { await v$.$validate() }"
         >
           <option value="0">-- Select Role Category --</option>
           <option 
@@ -26,7 +26,11 @@
             {{ roleCategory?.name }}
           </option>
         </select>
-        <select class="w-1/2 bg-white" v-model="role.roleId">
+        <select 
+          class="w-1/2 bg-white" 
+          v-model="role.roleId" 
+          @input="async () => { await v$.$validate() }"
+        >
           <option value="0">-- Select Role --</option>
           <option
             v-for="(role, roleIndex) of getRoles(index)"
