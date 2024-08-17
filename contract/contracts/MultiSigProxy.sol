@@ -26,7 +26,9 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
   event ActionExecuted(uint256 indexed id, address indexed target, string _description, bytes data);
   event Approval(uint256 indexed id, address indexed approver);
 
-  function initialize (address _votingAddress) public initializer {
+  function initialize(address _votingAddress) public initializer {
+    __ReentrancyGuard_init();
+
     votingAddress = _votingAddress;
   }
 
