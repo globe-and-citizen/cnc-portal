@@ -21,7 +21,6 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
   }
 
   event BoardOfDirectorsChanged(address[] boardOfDirectors);
-  event VotingAddressChanged(address indexed oldAddress, address indexed newAddress);
   event ActionAdded(uint256 indexed id, address indexed target, string _description, bytes data);
   event ActionExecuted(uint256 indexed id, address indexed target, string _description, bytes data);
   event Approval(uint256 indexed id, address indexed approver);
@@ -56,14 +55,17 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
   ) external onlyBoardOfDirectors {
     require(_target != address(0), 'Invalid target address');
 
-    actions[actionCount] = Action(_target, _description, 0, false, _data);
+    actions[actionCount] = Action(_target, _description, 1, false, _data);
+
+    // Add the first approval
+    actionApprovers[actionCount].push(msg.sender);
+    actionApprovals[actionCount][msg.sender] = true;
     emit ActionAdded(actionCount, _target, _description, _data);
 
     actionCount++;
   }
 
   function approve(uint256 _actionId) external onlyBoardOfDirectors {
-    require(boardOfDirectors.length > 0, 'No board of directors set');
     require(!actions[_actionId].isExecuted, 'Action already executed');
     require(!actionApprovals[_actionId][msg.sender], 'Already approved');
 
@@ -75,21 +77,6 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
     if (actions[_actionId].approvalCount >= boardOfDirectors.length / 2) {
       call(_actionId);
     }
-  }
-
-  function call(uint256 _actionId) private nonReentrant {
-    require(boardOfDirectors.length > 0, 'No board of directors set');
-
-    Action storage _action = actions[_actionId];
-
-    require(!_action.isExecuted, 'Action already executed');
-    require(_action.approvalCount >= boardOfDirectors.length / 2, 'Not enough approvals');
-
-    (bool success, ) = _action.target.call(_action.data);
-    require(success, 'Call failed');
-
-    _action.isExecuted = true;
-    emit ActionExecuted(_actionId, _action.target, _action.description, _action.data);
   }
 
   function setBoardOfDirectors(address[] memory _boardOfDirectors) external onlyVoting {
@@ -104,6 +91,26 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
 
   function approvalCount(uint256 _actionId) external view returns (uint256) {
     return actions[_actionId].approvalCount;
+  }
+
+  function getBoardOfDirectors() external view returns (address[] memory) {
+    return boardOfDirectors;
+  }
+
+  function getActionApprovers(uint256 _actionId) external view returns (address[] memory) {
+    return actionApprovers[_actionId];
+  }
+
+  // Private functions
+
+  function call(uint256 _actionId) private nonReentrant {
+    Action storage _action = actions[_actionId];
+
+    (bool success, ) = _action.target.call(_action.data);
+    require(success, 'Call failed');
+
+    _action.isExecuted = true;
+    emit ActionExecuted(_actionId, _action.target, _action.description, _action.data);
   }
 
   modifier onlyVoting() {
