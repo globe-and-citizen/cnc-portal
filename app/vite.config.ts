@@ -11,15 +11,17 @@ export default defineConfig(({ mode }) => {
   // Validate .env file
   const env = loadEnv(mode, process.cwd(), '')
 
-  ENV_LIST.forEach((key) => {
-    if (!env[key]) {
-      throw new Error(`Missing ${key} in .env file`)
-    } else if (key.includes('ADDRESS') && !isAddress(env[key])) {
-      throw new Error(`Invalid address in ${key}`)
-    } else if (key.includes('URL') && !env[key].startsWith('http')) {
-      throw new Error(`Invalid URL in ${key}`)
-    }
-  })
+  if (!process.env.CI) {
+    ENV_LIST.forEach((key) => {
+      if (!env[key]) {
+        throw new Error(`Missing ${key} in .env file`)
+      } else if (key.includes('ADDRESS') && !isAddress(env[key])) {
+        throw new Error(`Invalid address in ${key}`)
+      } else if (key.includes('URL') && !env[key].startsWith('http')) {
+        throw new Error(`Invalid URL in ${key}`)
+      }
+    })
+  }
 
   return {
     plugins: [
