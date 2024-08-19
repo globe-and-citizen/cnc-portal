@@ -75,7 +75,7 @@ import { NETWORK } from '@/constant'
 import type { User } from '@/types'
 import { ref, watch } from 'vue'
 import { isAddress } from 'ethers'
-import { required, numeric, minValue, helpers } from '@vuelidate/validators'
+import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 
 const amount = ref<string>('0')
