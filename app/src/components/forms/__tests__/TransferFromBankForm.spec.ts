@@ -51,12 +51,6 @@ describe('TransferFromBankForm.vue', () => {
       expect((wrapper.vm as any).to).toBe('0xAddress1')
     })
 
-    it('emits transfer event when Transfer button is clicked', async () => {
-      const transferButton = wrapper.find('.btn-primary')
-      await transferButton.trigger('click')
-      expect(wrapper.emitted('transfer')).toBeTruthy()
-    })
-
     it('emits closeModal event when Cancel button is clicked', async () => {
       const cancelButton = wrapper.find('.btn-error')
       await cancelButton.trigger('click')

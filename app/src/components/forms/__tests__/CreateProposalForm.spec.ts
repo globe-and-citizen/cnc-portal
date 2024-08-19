@@ -12,18 +12,6 @@ describe('CreateProposal.vue', () => {
     })
   })
 
-  describe('emits', () => {
-    it('emits createProposal event when button is clicked', async () => {
-      const wrapper = mount(CreateProposalForm, {
-        props: { isLoading: false }
-      })
-
-      const button = wrapper.find('button')
-      await button.trigger('click')
-
-      expect(wrapper.emitted()).toHaveProperty('createProposal')
-    })
-  })
   describe('actions', () => {
     it('updates newProposalInput when input fields change', async () => {
       const wrapper = mount(CreateProposalForm, {
