@@ -176,7 +176,13 @@ const updateTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const { name, description, bankAddress, votingAddress } = req.body;
+  const {
+    name,
+    description,
+    bankAddress,
+    votingAddress,
+    boardOfDirectorsAddress,
+  } = req.body;
   const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
@@ -197,6 +203,7 @@ const updateTeam = async (req: Request, res: Response) => {
         description,
         bankAddress,
         votingAddress,
+        boardOfDirectorsAddress,
       },
       include: {
         members: {

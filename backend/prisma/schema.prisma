@@ -32,6 +32,7 @@ model Team {
   name         String  @unique
   bankAddress  String? // A team can have no bank contract
   votingAddress String?
+  boardOfDirectorsAddress String?
 }
 
 model Notification {
