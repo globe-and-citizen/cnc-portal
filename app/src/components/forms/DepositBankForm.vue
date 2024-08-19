@@ -20,7 +20,7 @@
 import LoadingButton from '@/components/LoadingButton.vue'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'
-import { required, numeric } from '@vuelidate/validators'
+import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 
 const amount = ref<string>('0')
@@ -28,11 +28,14 @@ const emits = defineEmits(['deposit', 'closeModal'])
 defineProps<{
   loading: boolean
 }>()
-
+const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
+  return parseFloat(value) > 0
+})
 const rules = {
   amount: {
     required,
-    numeric
+    numeric,
+    notZero
   }
 }
 

@@ -87,13 +87,16 @@ defineProps<{
   bankBalance: string | null
   filteredMembers: User[]
 }>()
-
+const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
+  return parseFloat(value) > 0
+})
 const rules = {
   to: {
     required,
     $valid: helpers.withMessage('Invalid address', (value: string | null) => {
       return value ? isAddress(value) : false
-    })
+    }),
+    notZero
   },
   amount: {
     required,
