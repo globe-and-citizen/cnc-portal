@@ -15,6 +15,13 @@
       <input type="text" class="grow" data-test="recipient-input" v-model="to" />
     </label>
     <div
+      class="pl-4 text-red-500 text-sm w-full text-left"
+      v-for="error of $v.to.$errors"
+      :key="error.$uid"
+    >
+      {{ error.$message }}
+    </div>
+    <div
       v-if="dropdown"
       class="dropdown w-full max-h-20"
       :class="{ 'dropdown-open': filteredMembers.length > 0 }"
@@ -47,12 +54,17 @@
     |
     {{ NETWORK.currencySymbol }}
   </label>
+  <div
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of $v.amount.$errors"
+    :key="error.$uid"
+  >
+    {{ error.$message }}
+  </div>
 
   <div class="modal-action justify-center">
     <LoadingButton color="primary" class="w-24" v-if="loading" />
-    <button class="btn btn-primary" @click="$emit('transfer', to, amount)" v-if="!loading">
-      Transfer
-    </button>
+    <button class="btn btn-primary" @click="submitForm" v-if="!loading">Transfer</button>
     <button class="btn btn-error" @click="$emit('closeModal')">Cancel</button>
   </div>
 </template>
@@ -62,6 +74,9 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import { NETWORK } from '@/constant'
 import type { User } from '@/types'
 import { ref, watch } from 'vue'
+import { isAddress } from 'ethers'
+import { required, numeric, minValue, helpers } from '@vuelidate/validators'
+import { useVuelidate } from '@vuelidate/core'
 
 const amount = ref<string>('0')
 const to = ref<string | null>(null)
@@ -72,9 +87,35 @@ defineProps<{
   bankBalance: string | null
   filteredMembers: User[]
 }>()
+
+const rules = {
+  to: {
+    required,
+    $valid: helpers.withMessage('Invalid address', (value: string | null) => {
+      return value ? isAddress(value) : false
+    })
+  },
+  amount: {
+    required,
+    numeric
+  }
+}
+
+const $v = useVuelidate(rules, { to, amount })
+
+const submitForm = () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) {
+    return
+  }
+  emit('transfer', to.value, amount.value)
+}
+
 watch(to, () => {
   if (to.value?.length ?? 0 > 0) {
     emit('searchMembers', to.value)
   }
 })
 </script>
+
+<style scoped></style>
