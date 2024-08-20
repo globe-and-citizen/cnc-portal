@@ -34,6 +34,11 @@ describe('AddMemberModal.vue', () => {
       expect((wrapper.vm as any).formData[0].address).toBe(users[0].address)
     })
   })
+  describe('Snapshot', () => {
+    it('matches the snapshot', () => {
+      expect(wrapper.html()).toMatchSnapshot()
+    })
+  })
 
   // Test the emitting of events
   describe('Emits', () => {
@@ -75,6 +80,17 @@ describe('AddMemberModal.vue', () => {
       await removeButton.trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(1)
+    })
+  })
+  describe('Validation', () => {
+    it('displays validation errors when form is invalid', async () => {
+      const inputFields = wrapper.findAll('input')
+      await inputFields[0].setValue('New Name')
+      await inputFields[1].setValue('0xNewAddress')
+
+      expect((wrapper.vm as any).formData[0].name).toBe('New Name')
+      expect((wrapper.vm as any).formData[0].address).toBe('0xNewAddress')
+      expect(wrapper.find('.text-red-500').exists()).toBe(true)
     })
   })
 })
