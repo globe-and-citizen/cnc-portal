@@ -10,7 +10,12 @@
         v-model="user.name"
       />
     </label>
-    <div class="pl-4 text-red-500 text-sm" v-for="error of $v.user.name.$errors" :key="error.$uid">
+    <div
+      class="pl-4 text-red-500 text-sm"
+      v-for="error of $v.user.name.$errors"
+      :key="error.$uid"
+      data-test="name-error"
+    >
       {{ error.$message }}
     </div>
     <label class="input input-bordered flex items-center gap-2 input-md input-disabled">
