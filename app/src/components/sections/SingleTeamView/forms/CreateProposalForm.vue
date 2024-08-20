@@ -2,7 +2,11 @@
   <div>
     <h2>Create Proposal</h2>
     <div class="flex flex-col gap-4 mt-2">
-      <select class="select select-primary w-full" v-model="newProposalInput.isElection">
+      <select
+        class="select select-primary w-full"
+        v-model="newProposalInput.isElection"
+        data-test="electionDiv"
+      >
         <option disabled selected>Type of Proposal</option>
         <option :value="true">Election</option>
         <option :value="false">Directive</option>
@@ -113,7 +117,12 @@
       <div class="flex justify-center">
         <LoadingButton v-if="isLoading" color="primary min-w-28" />
 
-        <button v-else class="btn btn-primary btn-md justify-center" @click="submitForm">
+        <button
+          v-else
+          class="btn btn-primary btn-md justify-center"
+          data-test="submitButton"
+          @click="submitForm"
+        >
           Create Proposal
         </button>
       </div>
