@@ -54,4 +54,39 @@ describe('DepositBankModal.vue', () => {
       expect(wrapper.emitted()).toHaveProperty('closeModal')
     })
   })
+  describe('form validation', () => {
+    it('shows error when amount is 0', async () => {
+      const wrapper = mount(DepositBankForm, {
+        props: { loading: false }
+      })
+
+      const amountInput = wrapper.find('input[data-test="amountInput"]')
+      console.log(amountInput)
+      await amountInput.setValue('0')
+      await wrapper.find('.btn-primary').trigger('click')
+      expect(wrapper.find('.text-red-500').exists()).toBe(true)
+    })
+    it('shows error when amount is empty', async () => {
+      const wrapper = mount(DepositBankForm, {
+        props: { loading: false }
+      })
+
+      const amountInput = wrapper.find('input[data-test="amountInput"]')
+      console.log(amountInput)
+      await amountInput.setValue('')
+      await wrapper.find('.btn-primary').trigger('click')
+      expect(wrapper.find('.text-red-500').exists()).toBe(true)
+    })
+    it('shows error when amount is not numeric', async () => {
+      const wrapper = mount(DepositBankForm, {
+        props: { loading: false }
+      })
+
+      const amountInput = wrapper.find('input[data-test="amountInput"]')
+      console.log(amountInput)
+      await amountInput.setValue('sdkjnvc')
+      await wrapper.find('.btn-primary').trigger('click')
+      expect(wrapper.find('.text-red-500').exists()).toBe(true)
+    })
+  })
 })
