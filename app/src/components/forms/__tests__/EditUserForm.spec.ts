@@ -115,4 +115,13 @@ describe('EditUserForm', () => {
       expect(mockCopy).toBeCalledWith(user.address)
     })
   })
+  describe('Form Validation', () => {
+    it('displays error message when name is empty', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('input[data-test="name-input"]').setValue('')
+      await wrapper.find('button[data-test="submit-edit-user"]').trigger('click')
+
+      expect(wrapper.find('[data-test="name-error"]').text()).toBe('Value is required')
+    })
+  })
 })

@@ -10,20 +10,14 @@ describe('CreateProposal.vue', () => {
       })
       expect(wrapper.find('h2').text()).toBe('Create Proposal')
     })
-  })
-
-  describe('emits', () => {
-    it('emits createProposal event when button is clicked', async () => {
+    it('renders election form', () => {
       const wrapper = mount(CreateProposalForm, {
         props: { isLoading: false }
       })
-
-      const button = wrapper.find('button')
-      await button.trigger('click')
-
-      expect(wrapper.emitted()).toHaveProperty('createProposal')
+      expect(wrapper.find('[data-test="electionDiv"]').exists()).toBe(true)
     })
   })
+
   describe('actions', () => {
     it('updates newProposalInput when input fields change', async () => {
       const wrapper = mount(CreateProposalForm, {
@@ -50,6 +44,17 @@ describe('CreateProposal.vue', () => {
 
       await select.setValue('false')
       expect((wrapper.vm as any).newProposalInput.isElection).toBe(false)
+    })
+  })
+  describe('emits', () => {
+    it('emits createProposal event when submit button is clicked', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false }
+      })
+
+      const submitButton = wrapper.find('button[data-test="submitButton"]')
+      await submitButton.trigger('click')
+      expect(wrapper.emitted('createProposal')).toBeTruthy()
     })
   })
 })
