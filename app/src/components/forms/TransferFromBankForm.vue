@@ -64,7 +64,9 @@
 
   <div class="modal-action justify-center">
     <LoadingButton color="primary" class="w-24" v-if="loading" />
-    <button class="btn btn-primary" @click="submitForm" v-if="!loading">Transfer</button>
+    <button class="btn btn-primary" @click="submitForm" v-if="!loading" data-test="transferButton">
+      Transfer
+    </button>
     <button class="btn btn-error" @click="$emit('closeModal')">Cancel</button>
   </div>
 </template>
@@ -95,12 +97,12 @@ const rules = {
     required,
     $valid: helpers.withMessage('Invalid address', (value: string | null) => {
       return value ? isAddress(value) : false
-    }),
-    notZero
+    })
   },
   amount: {
     required,
-    numeric
+    numeric,
+    notZero
   }
 }
 
