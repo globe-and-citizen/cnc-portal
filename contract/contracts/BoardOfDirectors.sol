@@ -123,6 +123,8 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   }
 
   function setOwners(address[] memory _owners) external onlySelf {
+    require(_owners.length > 0, 'Owners required');
+
     uint256 length = _owners.length;
     for (uint256 i = 0; i < length; i++) {
       require(_owners[i] != address(0), 'Invalid owner address');
