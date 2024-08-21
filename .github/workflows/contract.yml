@@ -2,7 +2,7 @@ name: Contract CI/CD
 
 on:
   pull_request:
-    branches: "*"
+    branches: "**"
     paths:
       - "contract/**"
   workflow_dispatch:

@@ -2,7 +2,11 @@
   <div>
     <h2>Create Proposal</h2>
     <div class="flex flex-col gap-4 mt-2">
-      <select class="select select-primary w-full" v-model="newProposalInput.isElection">
+      <select
+        class="select select-primary w-full"
+        v-model="newProposalInput.isElection"
+        data-test="electionDiv"
+      >
         <option disabled selected>Type of Proposal</option>
         <option :value="true">Election</option>
         <option :value="false">Directive</option>
@@ -13,12 +17,26 @@
         class="input input-primary w-full"
         v-model="newProposalInput.title"
       />
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        v-for="error of $v.title.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
 
       <textarea
         class="textarea textarea-primary h-24"
         placeholder="Description"
         v-model="newProposalInput.description"
       ></textarea>
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        v-for="error of $v.description.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
       <div v-if="newProposalInput.isElection">
         <div class="input-group">
           <label class="input input-primary flex items-center gap-2 input-md">
@@ -102,7 +120,8 @@
         <button
           v-else
           class="btn btn-primary btn-md justify-center"
-          @click="emits('createProposal')"
+          data-test="submitButton"
+          @click="submitForm"
         >
           Create Proposal
         </button>
@@ -117,6 +136,8 @@ import { ref } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useErrorHandler } from '@/composables/errorHandler'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
+import { required, minLength } from '@vuelidate/validators'
+import { useVuelidate } from '@vuelidate/core'
 
 const emits = defineEmits(['createProposal'])
 defineProps<{
@@ -140,6 +161,18 @@ const newProposalInput = defineModel({
     isElection: false
   }
 })
+const rules = {
+  title: {
+    required,
+    minLength: minLength(3)
+  },
+  description: {
+    required,
+    minLength: minLength(10)
+  }
+}
+
+const $v = useVuelidate(rules, newProposalInput.value)
 const { execute: executeSearchUser, data: users } = useCustomFetch('user/search', {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
@@ -161,5 +194,10 @@ const searchUsers = async () => {
   } catch (error) {
     return useErrorHandler().handleError(error)
   }
+}
+const submitForm = () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
+  emits('createProposal')
 }
 </script>
