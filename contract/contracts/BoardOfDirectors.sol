@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
-contract MultiSigProxy is ReentrancyGuardUpgradeable {
-  address public votingAddress;
+contract BoardOfDirectors is ReentrancyGuardUpgradeable {
+  address[] public owners;
   address[] public boardOfDirectors;
   uint256 public actionCount;
 
@@ -21,14 +21,19 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
   }
 
   event BoardOfDirectorsChanged(address[] boardOfDirectors);
+  event OwnersChanged(address[] owners);
   event ActionAdded(uint256 indexed id, address indexed target, string _description, bytes data);
   event ActionExecuted(uint256 indexed id, address indexed target, string _description, bytes data);
   event Approval(uint256 indexed id, address indexed approver);
 
-  function initialize(address _votingAddress) public initializer {
+  function initialize(address[] memory _owners) public initializer {
+    uint256 length = _owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      require(_owners[i] != address(0), 'Invalid owner address');
+    }
     __ReentrancyGuard_init();
 
-    votingAddress = _votingAddress;
+    owners = _owners;
   }
 
   function getActions(uint256 _startId, uint256 _limit) external view returns (Action[] memory) {
@@ -79,7 +84,7 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
     }
   }
 
-  function setBoardOfDirectors(address[] memory _boardOfDirectors) external onlyVoting {
+  function setBoardOfDirectors(address[] memory _boardOfDirectors) external onlyOwner {
     boardOfDirectors = _boardOfDirectors;
 
     emit BoardOfDirectorsChanged(_boardOfDirectors);
@@ -91,6 +96,10 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
 
   function approvalCount(uint256 _actionId) external view returns (uint256) {
     return actions[_actionId].approvalCount;
+  }
+
+  function getOwners() external view returns (address[] memory) {
+    return owners;
   }
 
   function getBoardOfDirectors() external view returns (address[] memory) {
@@ -113,9 +122,25 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
     emit ActionExecuted(_actionId, _action.target, _action.description, _action.data);
   }
 
-  modifier onlyVoting() {
-    require(msg.sender == votingAddress, 'Only voting contract can call this function');
-    _;
+  function setOwners(address[] memory _owners) external onlySelf {
+    uint256 length = _owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      require(_owners[i] != address(0), 'Invalid owner address');
+    }
+    owners = _owners;
+
+    emit OwnersChanged(_owners);
+  }
+
+  modifier onlyOwner() {
+    uint256 length = owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (msg.sender == owners[i]) {
+        _;
+        return;
+      }
+    }
+    revert('Only owner can call this function');
   }
 
   modifier onlyBoardOfDirectors() {
@@ -127,5 +152,10 @@ contract MultiSigProxy is ReentrancyGuardUpgradeable {
       }
     }
     revert('Only board of directors can call this function');
+  }
+
+  modifier onlySelf() {
+    require(msg.sender == address(this), 'Only self can call this function');
+    _;
   }
 }
