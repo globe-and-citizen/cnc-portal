@@ -8,8 +8,8 @@
   "BankProxyModule#ProxyAdmin": "0xc6D9eD8c18901002e6111aE5A2cb074034040d6A",
   "BankModule#Bank": "0x5466767aA6412f298dD61FbE4E3e40483030b39B",
   "Bank#Bank": "0xAd1569cF877b70B61dee6b5C3368c115Cc4aA49A",
-  "VotingBeaconModule#Voting": "0x0ca2ED7d2816B9605132c31ea33Dcef7B5300416",
-  "VotingBeaconModule#Beacon": "0xf879C44462Df7aEF0c425657378c0735B0D5dEb4",
+  "VotingBeaconModule#Voting": "0xC61C8fe948CC85FEfdC8E7B818628c1cb29dd0e2",
+  "VotingBeaconModule#Beacon": "0x54cDE6339Bd48D458b56246D7C599F2bc764DE08",
   "BoardOfDirectorsModule#BoardOfDirectors": "0xdf7Cd2828B50258A1595b3905EEf312216b3560c",
   "BoardOfDirectorsModule#Beacon": "0xf02a774287Be190a3c6B380761464d7a84f4Fb31"
 }
