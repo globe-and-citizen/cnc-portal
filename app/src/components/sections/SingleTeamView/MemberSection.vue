@@ -34,7 +34,7 @@
   />
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import MemberCard from '@/components/sections/SingleTeamView/MemberCard.vue'
 import AddMemberCard from '@/components/sections/SingleTeamView/AddMemberCard.vue'
@@ -57,7 +57,7 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 
 const route = useRoute()
 
-defineProps(['team', 'teamIsFetching'])
+const { team, teamIsFetching } = defineProps(['team', 'teamIsFetching'])
 const emits = defineEmits(['getTeam'])
 // useFetch instance for adding members to team
 const {
@@ -229,6 +229,16 @@ const signContract = async (contract: undefined | Object) => {
   }
 }
 
+const memberRolesData = ref<{}>()
+
+const {
+  execute: executeCreateMemberRoles
+} = useCustomFetch(`teams/${team.id}/member/add-roles`, {
+  immediate: false
+})
+  .post(memberRolesData)
+  .json()
+
 const addRoles = async (member: Partial<MemberInput>) => {
   isAddingRole.value = true
   if (v$.value.$errors.length > 0) {
@@ -241,6 +251,13 @@ const addRoles = async (member: Partial<MemberInput>) => {
   console.log(`member.roles: `, member.roles)
   console.log(`signature: `, signature)
   console.log(`contract: `, JSON.stringify(contract))
+  memberRolesData.value = {
+    member,
+    signature,
+    contract: JSON.stringify(contract)
+  }
+  console.log(`memberRolesData: `, memberRolesData.value)
+  await executeCreateMemberRoles()
   isAddingRole.value = false
 }
 </script>
