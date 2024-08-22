@@ -22,6 +22,18 @@
             Deploy BoD Contract
           </button>
           <LoadingButton color="primary min-w-28" v-if="isLoadingBoDDeployment" />
+          <button
+            class="btn btn-secondary"
+            v-if="team.boardOfDirectorsAddress"
+            @click="
+              () => {
+                executeGetBoardOfDirectors(String(team.boardOfDirectorsAddress))
+                showBoDModal = true
+              }
+            "
+          >
+            View BoD
+          </button>
         </div>
       </div>
       <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
@@ -46,7 +58,11 @@
           />
         </template>
       </TabNavigation>
-
+      <ModalComponent v-model="showBoDModal">
+        <h3>Board Of Directors</h3>
+        <hr />
+        {{ boardOfDirectors }}
+      </ModalComponent>
       <ModalComponent v-model="showModal">
         <CreateProposalForm
           v-model="newProposalInput"
@@ -79,7 +95,7 @@ import CreateProposalForm from '@/components/sections/SingleTeamView/forms/Creat
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 import { useAddProposal, useGetProposals, useDeployVotingContract } from '@/composables/voting'
-import { useDeployBoDContract } from '@/composables/bod'
+import { useDeployBoDContract, useGetBoardOfDirectors } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores/user'
@@ -88,6 +104,26 @@ import LoadingButton from '@/components/LoadingButton.vue'
 
 const emits = defineEmits(['getTeam'])
 const { addSuccessToast, addErrorToast } = useToastStore()
+const {
+  boardOfDirectors,
+  execute: executeGetBoardOfDirectors,
+  isSuccess: isSuccessGetBoardOfDirectors,
+  error: errorGetBoardOfDirectors
+} = useGetBoardOfDirectors()
+watch(isSuccessGetBoardOfDirectors, () => {
+  if (isSuccessGetBoardOfDirectors.value) {
+    console.log(isSuccessGetBoardOfDirectors.value)
+  }
+})
+watch(errorGetBoardOfDirectors, () => {
+  if (errorGetBoardOfDirectors.value) {
+    addErrorToast(
+      errorGetBoardOfDirectors.value.reason
+        ? errorGetBoardOfDirectors.value.reason
+        : 'Failed to get board of directors'
+    )
+  }
+})
 
 const {
   execute: executeVotingContract,
@@ -173,6 +209,7 @@ watch(errorAddProposal, () => {
 })
 
 const showModal = ref(false)
+const showBoDModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
 const route = useRoute()
