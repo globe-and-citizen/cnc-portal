@@ -46,7 +46,7 @@ export class VotingService implements IVotingService {
       return []
     }
     for (let i = 0; i < proposalCount; i++) {
-      proposals.push(await votingContract.proposalsById(i))
+      proposals.push(await votingContract.getProposalById(i))
     }
     return proposals
   }
