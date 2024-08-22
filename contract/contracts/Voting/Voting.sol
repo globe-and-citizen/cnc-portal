@@ -16,7 +16,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
 
 
     uint256 public proposalCount;
-    address public boardOfDirectorsAddress;
+    address public boardOfDirectorsContractAddress;
 
     event ProposalAdded(uint256 indexed proposalId, string title, string description);
     event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
@@ -107,6 +107,19 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         Types.Proposal storage proposal = proposalsById[proposalId];
         proposal.isActive = !proposal.isActive;
 
+        if(proposal.isElection){
+            address winner;
+            uint256 maxVotes = 0;
+            for (uint256 i = 0; i < proposal.candidates.length; i++) {
+                if (proposal.candidates[i].votes > maxVotes) {
+                    maxVotes = proposal.candidates[i].votes;
+                    winner = proposal.candidates[i].candidateAddress;
+                }
+            }
+            address[] memory winnerList;
+            winnerList[0]=winner;
+            IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+        }
         emit ProposalConcluded(proposalId, proposal.isActive);
     }
 
@@ -135,11 +148,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         }
     }
 
-    function setBoardOfDirectorsAddress(address _boardOfDirectorsAddress) public onlyOwner {
-        boardOfDirectorsAddress = _boardOfDirectorsAddress;
+    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) public onlyOwner {
+        boardOfDirectorsContractAddress = _boardOfDirectorsContractAddress;
     }
 
     function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
-        IBoardOfDirectors(boardOfDirectorsAddress).setBoardOfDirectors(_boardOfDirectors);
+        IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(_boardOfDirectors);
     }
 }
