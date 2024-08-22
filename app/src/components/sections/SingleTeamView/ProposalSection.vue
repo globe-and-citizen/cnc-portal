@@ -10,10 +10,18 @@
           >{{ team.bankAddress }}</span
         > -->
         </div>
-        <div>
+        <div class="flex justify-between gap-4">
           <button class="btn btn-primary btn-md" @click="showModal = !showModal">
             Create Proposal
           </button>
+          <button
+            class="btn btn-primary btn-md"
+            @click="executeDeployBoDContract(String(route.params.id))"
+            v-if="!isLoadingBoDDeployment && !team.boardOfDirectorsAddress"
+          >
+            Deploy BoD Contract
+          </button>
+          <LoadingButton color="primary min-w-28" v-if="isLoadingBoDDeployment" />
         </div>
       </div>
       <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
@@ -53,7 +61,11 @@
   </div>
   <div class="flex justify-center items-center" v-else>
     <LoadingButton color="primary min-w-28" v-if="loadingDeployVotingContract" />
-    <button v-else class="btn btn-primary btn-md" @click="execute(String(route.params.id))">
+    <button
+      v-else
+      class="btn btn-primary btn-md"
+      @click="executeVotingContract(String(route.params.id))"
+    >
       Create Voting Contract
     </button>
   </div>
@@ -67,6 +79,7 @@ import CreateProposalForm from '@/components/sections/SingleTeamView/forms/Creat
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 import { useAddProposal, useGetProposals, useDeployVotingContract } from '@/composables/voting'
+import { useDeployBoDContract } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores/user'
@@ -77,12 +90,31 @@ const emits = defineEmits(['getTeam'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const {
-  execute,
+  execute: executeVotingContract,
   isLoading: loadingDeployVotingContract,
   isSuccess: isSuccessDeployVotingContract,
   error: errorDeployVotingContract
 } = useDeployVotingContract()
-
+const {
+  execute: executeDeployBoDContract,
+  isLoading: isLoadingBoDDeployment,
+  isSuccess: isSuccessBoDDeployment
+} = useDeployBoDContract()
+watch(isSuccessBoDDeployment, () => {
+  if (isSuccessBoDDeployment.value) {
+    emits('getTeam')
+  }
+})
+watch(errorDeployVotingContract, () => {
+  if (errorDeployVotingContract.value) {
+    console.log(errorDeployVotingContract.value)
+    addErrorToast(
+      errorDeployVotingContract.value.reason
+        ? errorDeployVotingContract.value.reason
+        : 'Failed to deploy voting contract'
+    )
+  }
+})
 const {
   execute: executeAddProposal,
   isLoading: loadingAddProposal,

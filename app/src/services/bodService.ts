@@ -48,17 +48,24 @@ export class BoDService implements IBoDService {
   }
   private async deployBoDContract(): Promise<string> {
     const bodImplementation = await this.getContract(BOD_IMPL_ADDRESS)
-    const bodProxyFactory = await this.web3Library.getFactoryContract(
-      BEACON_PROXY_ABI,
-      BEACON_PROXY_BYTECODE
-    )
-    const beaconProxyDeployment = await bodProxyFactory.deploy(
-      BOD_BEACON_ADDRESS,
-      bodImplementation.interface.encodeFunctionData('initialize', [])
-    )
-    const beaconProxy = await beaconProxyDeployment.waitForDeployment()
-    await beaconProxyDeployment.waitForDeployment()
+    try {
+      const bodProxyFactory = await this.web3Library.getFactoryContract(
+        BEACON_PROXY_ABI,
+        BEACON_PROXY_BYTECODE
+      )
+      const beaconProxyDeployment = await bodProxyFactory.deploy(
+        BOD_BEACON_ADDRESS,
+        bodImplementation.interface.encodeFunctionData('initialize', [
+          ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E']
+        ])
+      )
+      const beaconProxy = await beaconProxyDeployment.waitForDeployment()
+      await beaconProxyDeployment.waitForDeployment()
 
-    return await beaconProxy.getAddress()
+      return await beaconProxy.getAddress()
+    } catch (e) {
+      console.log(e)
+      return ''
+    }
   }
 }
