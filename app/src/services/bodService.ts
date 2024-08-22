@@ -11,7 +11,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 export interface IBoDService {
   web3Library: IWeb3Library
 
-  createBODContract(teamId: string): Promise<string>
+  createBODContract(teamId: string, votingAddress: string): Promise<string>
   getBoardOfDirectors(bodAddress: string): Promise<string[]>
 }
 export class BoDService implements IBoDService {
@@ -25,8 +25,8 @@ export class BoDService implements IBoDService {
     const boardOfDirectors = await bodContract.getBoardOfDirectors()
     return boardOfDirectors
   }
-  async createBODContract(teamId: string): Promise<string> {
-    const boardOfDirectorsAddress = await this.deployBoDContract()
+  async createBODContract(teamId: string, votingAddress: string): Promise<string> {
+    const boardOfDirectorsAddress = await this.deployBoDContract(votingAddress)
     const response = await useCustomFetch<string>(`teams/${teamId}`)
       .put({ boardOfDirectorsAddress })
       .json()
@@ -46,7 +46,7 @@ export class BoDService implements IBoDService {
 
     return bodContract
   }
-  private async deployBoDContract(): Promise<string> {
+  private async deployBoDContract(votingAddress: string): Promise<string> {
     const bodImplementation = await this.getContract(BOD_IMPL_ADDRESS)
     try {
       const bodProxyFactory = await this.web3Library.getFactoryContract(
@@ -55,9 +55,7 @@ export class BoDService implements IBoDService {
       )
       const beaconProxyDeployment = await bodProxyFactory.deploy(
         BOD_BEACON_ADDRESS,
-        bodImplementation.interface.encodeFunctionData('initialize', [
-          ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E']
-        ])
+        bodImplementation.interface.encodeFunctionData('initialize', [[votingAddress]])
       )
       const beaconProxy = await beaconProxyDeployment.waitForDeployment()
       await beaconProxyDeployment.waitForDeployment()

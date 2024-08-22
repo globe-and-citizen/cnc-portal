@@ -8,10 +8,10 @@ export function useDeployBoDContract() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function deploy(teamId: string) {
+  async function deploy(teamId: string, votingAddress: string) {
     try {
       loading.value = true
-      contractAddress.value = await bodService.createBODContract(teamId)
+      contractAddress.value = await bodService.createBODContract(teamId, votingAddress)
       console.log('contractAddress', contractAddress.value)
       isSuccess.value = true
     } catch (err) {

@@ -16,7 +16,7 @@
           </button>
           <button
             class="btn btn-primary btn-md"
-            @click="executeDeployBoDContract(String(route.params.id))"
+            @click="executeDeployBoDContract(String(route.params.id), team.votingAddress)"
             v-if="
               !(isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress) &&
               !team.boardOfDirectorsAddress
