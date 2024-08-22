@@ -36,7 +36,7 @@ import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
 
 const options = ref({
-  resources: ['teams', 'roles', 'app'],
+  resources: ['teams', 'roles', 'app', 'expense-account'],
   levels: ['create', 'delete', 'update', 'read']
 })
 

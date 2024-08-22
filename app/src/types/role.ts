@@ -11,12 +11,14 @@ export interface Role {
   name: string
   description?: string
   entitlements?: Entitlement[]
+  roleCategory?: RoleCategory
 }
 
 export interface Entitlement {
   id?: number
   value: string
   entitlementTypeId: number
+  entitlementType?: EntitlementType 
 }
 
 export interface EntitlementType {
