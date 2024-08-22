@@ -12,18 +12,26 @@ export interface IBoDService {
   web3Library: IWeb3Library
 
   createBODContract(teamId: string): Promise<string>
+  getBoardOfDirectors(bodAddress: string): Promise<string[]>
 }
-export class bodService implements IBoDService {
+export class BoDService implements IBoDService {
   web3Library: IWeb3Library
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
   }
+  async getBoardOfDirectors(bodAddress: string): Promise<string[]> {
+    const bodContract = await this.getBoDContract(bodAddress)
+    const boardOfDirectors = await bodContract.getBoardOfDirectors()
+    return boardOfDirectors
+  }
   async createBODContract(teamId: string): Promise<string> {
-    const bodAddress = await this.deployBoDContract()
-    const response = await useCustomFetch<string>(`teams/${teamId}`).put({ bodAddress }).json()
+    const boardOfDirectorsAddress = await this.deployBoDContract()
+    const response = await useCustomFetch<string>(`teams/${teamId}`)
+      .put({ boardOfDirectorsAddress })
+      .json()
 
-    return response.data.value.bodAddress
+    return response.data.value.boardOfDirectorsAddress
   }
   async getContract(bodAddress: string): Promise<Contract> {
     const contractService = this.getContractService(bodAddress)
@@ -32,6 +40,11 @@ export class bodService implements IBoDService {
   }
   private getContractService(bodAddress: string): SmartContract {
     return new SmartContract(bodAddress, BOD_ABI)
+  }
+  private async getBoDContract(bodAddress: string): Promise<Contract> {
+    const bodContract = await this.web3Library.getContract(bodAddress, BOD_ABI)
+
+    return bodContract
   }
   private async deployBoDContract(): Promise<string> {
     const bodImplementation = await this.getContract(BOD_IMPL_ADDRESS)
