@@ -41,6 +41,7 @@ describe('VotingService', () => {
     voteElection: ReturnType<typeof vi.fn>
     proposalCount: ReturnType<typeof vi.fn>
     proposalsById: ReturnType<typeof vi.fn>
+    getProposalById: ReturnType<typeof vi.fn>
   }
 
   // Create a mock contract instance
@@ -52,7 +53,8 @@ describe('VotingService', () => {
       voteDirective: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
       voteElection: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
       proposalCount: vi.fn().mockResolvedValue(1),
-      proposalsById: vi.fn().mockResolvedValue(mockProposal)
+      proposalsById: vi.fn().mockResolvedValue(mockProposal),
+      getProposalById: vi.fn().mockResolvedValue(mockProposal)
     }
 
     // Mock the `getContract` method to return the mock contract instance

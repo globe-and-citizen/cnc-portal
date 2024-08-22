@@ -37,6 +37,12 @@ vi.mock('@/composables/voting', () => ({
     isLoading: vi.fn(),
     isSuccess: vi.fn(),
     error: vi.fn()
+  })),
+  useSetBoardOfDirectorsContractAddress: vi.fn(() => ({
+    execute: vi.fn(),
+    isLoading: vi.fn(),
+    isSuccess: vi.fn(),
+    error: vi.fn()
   }))
 }))
 
