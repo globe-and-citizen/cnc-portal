@@ -10,7 +10,6 @@ export function useDeployBoDContract() {
 
   async function deploy(teamId: string) {
     try {
-      console.log('teamId', teamId)
       loading.value = true
       contractAddress.value = await bodService.createBODContract(teamId)
       console.log('contractAddress', contractAddress.value)

@@ -17,11 +17,17 @@
           <button
             class="btn btn-primary btn-md"
             @click="executeDeployBoDContract(String(route.params.id))"
-            v-if="!isLoadingBoDDeployment && !team.boardOfDirectorsAddress"
+            v-if="
+              !(isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress) &&
+              !team.boardOfDirectorsAddress
+            "
           >
             Deploy BoD Contract
           </button>
-          <LoadingButton color="primary min-w-28" v-if="isLoadingBoDDeployment" />
+          <LoadingButton
+            color="primary min-w-28"
+            v-if="isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress"
+          />
           <button
             class="btn btn-secondary"
             v-if="team.boardOfDirectorsAddress"
@@ -94,7 +100,12 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import { useAddProposal, useGetProposals, useDeployVotingContract } from '@/composables/voting'
+import {
+  useAddProposal,
+  useGetProposals,
+  useDeployVotingContract,
+  useSetBoardOfDirectorsContractAddress
+} from '@/composables/voting'
 import { useDeployBoDContract, useGetBoardOfDirectors } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
@@ -107,12 +118,27 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const {
   boardOfDirectors,
   execute: executeGetBoardOfDirectors,
-  isSuccess: isSuccessGetBoardOfDirectors,
   error: errorGetBoardOfDirectors
 } = useGetBoardOfDirectors()
-watch(isSuccessGetBoardOfDirectors, () => {
-  if (isSuccessGetBoardOfDirectors.value) {
-    console.log(isSuccessGetBoardOfDirectors.value)
+const {
+  execute: executeSetBoardOfDirectorsContractAddress,
+  isLoading: isLoadingSetBoardOfDirectorsContractAddress,
+  isSuccess: isSuccessSetBoardOfDirectorsContractAddress,
+  error: errorSetBoardOfDirectorsContractAddress
+} = useSetBoardOfDirectorsContractAddress()
+watch(isSuccessSetBoardOfDirectorsContractAddress, () => {
+  if (isSuccessSetBoardOfDirectorsContractAddress.value) {
+    addSuccessToast('Board of directors contract address set successfully')
+    emits('getTeam')
+  }
+})
+watch(errorSetBoardOfDirectorsContractAddress, () => {
+  if (errorSetBoardOfDirectorsContractAddress.value) {
+    addErrorToast(
+      errorSetBoardOfDirectorsContractAddress.value.reason
+        ? errorSetBoardOfDirectorsContractAddress.value.reason
+        : 'Failed to set board of directors contract address'
+    )
   }
 })
 watch(errorGetBoardOfDirectors, () => {
@@ -134,11 +160,15 @@ const {
 const {
   execute: executeDeployBoDContract,
   isLoading: isLoadingBoDDeployment,
-  isSuccess: isSuccessBoDDeployment
+  isSuccess: isSuccessBoDDeployment,
+  contractAddress: boardOfDirectorsAddress
 } = useDeployBoDContract()
 watch(isSuccessBoDDeployment, () => {
   if (isSuccessBoDDeployment.value) {
-    emits('getTeam')
+    executeSetBoardOfDirectorsContractAddress(
+      String(props.team.votingAddress),
+      String(boardOfDirectorsAddress.value)
+    )
   }
 })
 watch(errorDeployVotingContract, () => {

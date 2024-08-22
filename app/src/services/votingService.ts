@@ -99,7 +99,6 @@ export class VotingService implements IVotingService {
   }
   private async deployVotingContract(): Promise<string> {
     const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
-    console.log('Voting implementation:', votingImplementation.interface.fragments)
     const votingProxyFactory = await this.web3Library.getFactoryContract(
       BEACON_PROXY_ABI,
       BEACON_PROXY_BYTECODE
