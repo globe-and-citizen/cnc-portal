@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project: true
+
+github_checks:
+  annotations: true
+
+flags:
+  app-unit-tests:
+    carryforward: true
+    paths:
+      - app
+  api-unit-tests:
+    carryforward: true
+    paths:
+      - backend
+  contract-unit-tests:
+    carryforward: true
+    paths:
+      - contract
