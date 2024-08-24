@@ -94,7 +94,7 @@ In the `./app` folder, create a `.env` file with the following variable:
   6. `hardhat` - The Hardhat Local Network
 - **VITE_APP_NETWORK_NAME**: The full name of the EVM compatible network the app uses. Example: `VITE_APP_NETWORK_NAME=Optimism Mainnet`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
 - **VITE_APP_RPC_URL**: The URL used to access the EVM compatible network the app uses. Example: `VITE_APP_RPC_URL=https://optimism-mainnet.infura.io`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
-- **VITE_APP_CHAIN_ID**: The Network ID used to sign transcations on the EVM compatible network that the app uses in hexadecimal. Example: `VITE_APP_CHAIN_ID=0xa`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
+- **VITE_APP_CHAIN_ID**: The Network ID used to sign transactions on the EVM compatible network that the app uses in hexadecimal. Example: `VITE_APP_CHAIN_ID=0xa`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
 - **VITE_APP_CURRENCY_SYMBOL**: The ticker symbol displayed for the network's currency. Example: `VITE_APP_CURRENCY_SYMBOL=ETH`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
 - **VITE_APP_BLOCK_EXPLORER_URL**: The URL for viewing transactions on the network the app uses. Example: `VITE_APP_BLOCK_EXPLORER_URL=https://optimistic.etherscan.io/`. This variable is optional.
 - **VITE_VOTING_IMPL_ADDRESS**: The address to which the voting contract is deployed to. This is essential for drafting/interacting with proposals.
