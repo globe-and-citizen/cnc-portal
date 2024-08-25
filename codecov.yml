@@ -14,7 +14,7 @@ flags:
     carryforward: true
     paths:
       - backend
-  contract-unit-test:
+  contract-unit-tests:
     carryforward: true
     paths:
       - contract
