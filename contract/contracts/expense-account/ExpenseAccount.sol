@@ -41,7 +41,7 @@ contract ExpenseAccount is
 
     event NewWithdrawal(address indexed withdrawr, uint256 amount);
 
-    error UnauthorizedAccess(address got, address expected);
+    error UnauthorizedAccess(address expected, address received);
     
     function initialize() public initializer {
         __Ownable_init(msg.sender);
@@ -49,7 +49,7 @@ contract ExpenseAccount is
     }
 
     function budgetLimitHash (BudgetLimit calldata limit) private pure returns( bytes32 ) {
-        return keccak256(abi.encodePacked(
+        return keccak256(abi.encode(
             BUDGETLIMIT_TYPEHASH,
             limit.approvedAddress,
             limit.budgetType,
@@ -78,7 +78,7 @@ contract ExpenseAccount is
         //require(signer == owner(), signer);
 
         if (signer != owner()) {
-            revert UnauthorizedAccess(signer, owner());
+            revert UnauthorizedAccess(owner(), signer);
         }
 
         require((block.timestamp <= limit.expiry), "Authorization expired");
