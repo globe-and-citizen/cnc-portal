@@ -3,6 +3,10 @@ pragma solidity ^0.8.24;
 
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
+/**
+ * @title BoardOfDirectors
+ * @dev A contract that manages a board of directors and their actions.
+ */
 contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   address[] public owners;
   address[] public boardOfDirectors;
@@ -27,6 +31,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   event Approval(uint256 indexed id, address indexed approver);
   event Revocation(uint256 indexed id, address indexed approver);
 
+  /**
+   * @dev Initializes the contract with the initial set of owners.
+   * @param _owners The initial set of owners.
+   */
   function initialize(address[] memory _owners) public initializer {
     uint256 length = _owners.length;
     for (uint256 i = 0; i < length; i++) {
@@ -37,6 +45,12 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     owners = _owners;
   }
 
+  /**
+   * @dev Returns an array of actions starting from a specific id.
+   * @param _startId The starting id of the actions.
+   * @param _limit The maximum number of actions to return.
+   * @return An array of actions.
+   */
   function getActions(uint256 _startId, uint256 _limit) external view returns (Action[] memory) {
     require(_startId < actionCount, 'Start id out of bounds');
 
@@ -54,6 +68,12 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     return paginatedActions;
   }
 
+  /**
+   * @dev Adds a new action to the board.
+   * @param _target The target address of the action.
+   * @param _description The description of the action.
+   * @param _data The function signature associated with the action target.
+   */
   function addAction(
     address _target,
     string memory _description,
@@ -71,6 +91,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     actionCount++;
   }
 
+  /**
+   * @dev Approves an action.
+   * @param _actionId The id of the action to approve.
+   */
   function approve(uint256 _actionId) external onlyBoardOfDirectors {
     require(!actions[_actionId].isExecuted, 'Action already executed');
     require(!actionApprovals[_actionId][msg.sender], 'Already approved');
@@ -85,6 +109,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     }
   }
 
+  /**
+   * @dev Revokes approval for an action.
+   * @param _actionId The id of the action to revoke approval for.
+   */
   function revoke(uint256 _actionId) external onlyBoardOfDirectors {
     require(!actions[_actionId].isExecuted, 'Action already executed');
     require(actionApprovals[_actionId][msg.sender], 'Not approved');
@@ -95,34 +123,65 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     emit Revocation(_actionId, msg.sender);
   }
 
+  /**
+   * @dev Sets the board of directors.
+   * @param _boardOfDirectors The new board of directors.
+   */
   function setBoardOfDirectors(address[] memory _boardOfDirectors) external onlyOwner {
     boardOfDirectors = _boardOfDirectors;
 
     emit BoardOfDirectorsChanged(_boardOfDirectors);
   }
 
+  /**
+   * @dev Checks if an action has been executed.
+   * @param _actionId The id of the action.
+   * @return A boolean indicating if the action has been executed.
+   */
   function isActionExecuted(uint256 _actionId) external view returns (bool) {
     return actions[_actionId].isExecuted;
   }
 
+  /**
+   * @dev Returns the approval count for an action.
+   * @param _actionId The id of the action.
+   * @return The approval count.
+   */
   function approvalCount(uint256 _actionId) external view returns (uint256) {
     return actions[_actionId].approvalCount;
   }
 
+  /**
+   * @dev Returns the array of owners.
+   * @return An array of owners.
+   */
   function getOwners() external view returns (address[] memory) {
     return owners;
   }
 
+  /**
+   * @dev Returns the array of board of directors.
+   * @return An array of board of directors.
+   */
   function getBoardOfDirectors() external view returns (address[] memory) {
     return boardOfDirectors;
   }
 
+  /**
+   * @dev Returns the array of approvers for an action.
+   * @param _actionId The id of the action.
+   * @return An array of approvers.
+   */
   function getActionApprovers(uint256 _actionId) external view returns (address[] memory) {
     return actionApprovers[_actionId];
   }
 
   // Private functions
 
+  /**
+   * @dev Executes an action.
+   * @param _actionId The id of the action to execute.
+   */
   function call(uint256 _actionId) private nonReentrant {
     Action storage _action = actions[_actionId];
 
@@ -133,6 +192,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     emit ActionExecuted(_actionId, _action.target, _action.description, _action.data);
   }
 
+  /**
+   * @dev Sets the owners of the contract.
+   * @param _owners The new owners.
+   */
   function setOwners(address[] memory _owners) external onlySelf {
     require(_owners.length > 0, 'Owners required');
 
@@ -145,6 +208,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     emit OwnersChanged(_owners);
   }
 
+  /**
+   * @dev Adds a new owner to the contract.
+   * @param _owner The new owner.
+   */
   function addOwner(address _owner) external onlySelf {
     require(_owner != address(0), 'Invalid owner address');
 
@@ -157,6 +224,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     emit OwnersChanged(owners);
   }
 
+  /**
+   * @dev Removes an owner from the contract.
+   * @param _owner The owner to remove.
+   */
   function removeOwner(address _owner) external onlySelf {
     uint256 length = owners.length;
     for (uint256 i = 0; i < length; i++) {
