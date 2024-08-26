@@ -478,9 +478,7 @@ describe('BoardOfDirectors', async () => {
       const { boD2, boardOfDirectorsProxy } = await addActionFixture()
 
       // try to revoke approval twice
-      await expect(boardOfDirectorsProxy.connect(boD2).revoke(0)).to.be.revertedWith(
-        'Not approved'
-      )
+      await expect(boardOfDirectorsProxy.connect(boD2).revoke(0)).to.be.revertedWith('Not approved')
     })
   })
 
