@@ -25,6 +25,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   event ActionAdded(uint256 indexed id, address indexed target, string _description, bytes data);
   event ActionExecuted(uint256 indexed id, address indexed target, string _description, bytes data);
   event Approval(uint256 indexed id, address indexed approver);
+  event Revocation(uint256 indexed id, address indexed approver);
 
   function initialize(address[] memory _owners) public initializer {
     uint256 length = _owners.length;
@@ -84,6 +85,16 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     }
   }
 
+  function revoke(uint256 _actionId) external onlyBoardOfDirectors {
+    require(!actions[_actionId].isExecuted, 'Action already executed');
+    require(actionApprovals[_actionId][msg.sender], 'Not approved');
+
+    actionApprovals[_actionId][msg.sender] = false;
+    actions[_actionId].approvalCount--;
+
+    emit Revocation(_actionId, msg.sender);
+  }
+
   function setBoardOfDirectors(address[] memory _boardOfDirectors) external onlyOwner {
     boardOfDirectors = _boardOfDirectors;
 
@@ -132,6 +143,33 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     owners = _owners;
 
     emit OwnersChanged(_owners);
+  }
+
+  function addOwner(address _owner) external onlySelf {
+    require(_owner != address(0), 'Invalid owner address');
+
+    uint256 length = owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      require(owners[i] != _owner, 'Owner already exists');
+    }
+    owners.push(_owner);
+
+    emit OwnersChanged(owners);
+  }
+
+  function removeOwner(address _owner) external onlySelf {
+    uint256 length = owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (owners[i] == _owner) {
+        owners[i] = owners[length - 1];
+        owners.pop();
+
+        emit OwnersChanged(owners);
+
+        return;
+      }
+    }
+    revert('Owner not found');
   }
 
   modifier onlyOwner() {
