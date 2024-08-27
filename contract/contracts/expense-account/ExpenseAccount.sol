@@ -10,9 +10,9 @@ contract ExpenseAccount is
     ReentrancyGuardUpgradeable, 
     PausableUpgradeable {
 
-    uint256 maxLimit;
+    uint256 public maxLimit;
 
-    mapping(address => bool) approvedAddresses;
+    mapping(address => bool) public approvedAddresses;
 
     event NewDeposit(address indexed depositor, uint256 amount);
 
