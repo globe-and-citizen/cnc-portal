@@ -14,7 +14,6 @@ export const ENV_LIST = [
   'VITE_APP_VOTING_BEACON_ADDRESS'
 ]
 
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Validate .env file
