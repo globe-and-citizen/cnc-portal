@@ -95,7 +95,7 @@ describe('BoardOfDirectors', async () => {
   }
 
   async function setOwnersFixture(
-    options: { includeZeroAddress?: boolean; emptyOnwers?: boolean } = {}
+    options: { includeZeroAddress?: boolean; emptyOwners?: boolean } = {}
   ) {
     const { founder, voting, boD1, boD2, boD3, boardOfDirectorsProxy } =
       await setBoardOfDirectorsFixture()
@@ -104,7 +104,7 @@ describe('BoardOfDirectors', async () => {
     if (options.includeZeroAddress) {
       owners.push(ethers.ZeroAddress)
     }
-    if (options.emptyOnwers) {
+    if (options.emptyOwners) {
       owners = []
     }
     await boardOfDirectorsProxy
@@ -121,6 +121,62 @@ describe('BoardOfDirectors', async () => {
       boD2,
       boD3,
       voting,
+      boardOfDirectorsProxy
+    }
+  }
+
+  async function addOwnerFixture(
+    options: { includeZeroAddress?: boolean; ownerAlreadyExists?: boolean } = {}
+  ) {
+    const { founder, boD1, boardOfDirectorsProxy, boD2 } = await setBoardOfDirectorsFixture()
+    let newOwnerAddress
+    if (options.ownerAlreadyExists) {
+      newOwnerAddress = founder.address
+    }
+    if (options.includeZeroAddress) {
+      newOwnerAddress = ethers.ZeroAddress
+    }
+    if (!newOwnerAddress) {
+      newOwnerAddress = (await ethers.getSigners())[6].address
+    }
+    // add owner by action
+    await boardOfDirectorsProxy
+      .connect(boD1)
+      .addAction(
+        await boardOfDirectorsProxy.getAddress(),
+        'addOwner',
+        boardOfDirectorsProxy.interface.encodeFunctionData('addOwner', [newOwnerAddress])
+      )
+
+    return {
+      founder,
+      boD1,
+      boD2,
+      boardOfDirectorsProxy
+    }
+  }
+
+  async function removeOwnerFixture(options: { removeNotOwner?: boolean } = {}) {
+    const { boD1, boD2, founder, boardOfDirectorsProxy } = await setOwnersFixture()
+
+    let ownerToRemove = founder.address
+    if (options.removeNotOwner) {
+      ownerToRemove = (await ethers.getSigners())[6].address
+    }
+
+    // remove owner by action
+    await boardOfDirectorsProxy
+      .connect(boD1)
+      .addAction(
+        await boardOfDirectorsProxy.getAddress(),
+        'removeOwner',
+        boardOfDirectorsProxy.interface.encodeFunctionData('removeOwner', [ownerToRemove])
+      )
+
+    return {
+      boD1,
+      boD2,
+      founder,
       boardOfDirectorsProxy
     }
   }
@@ -373,6 +429,59 @@ describe('BoardOfDirectors', async () => {
     })
   })
 
+  context('revoke', async () => {
+    it('should revoke approval correctly', async () => {
+      const { boD1, boardOfDirectorsProxy } = await addActionFixture()
+
+      // revoke approval
+      await boardOfDirectorsProxy.connect(boD1).revoke(0)
+
+      const action = await boardOfDirectorsProxy.actions(0)
+      expect(action.approvalCount).to.eq(0) // boD1 revoke the action
+      expect(await boardOfDirectorsProxy.actionApprovals(0, boD1.address)).to.be.false
+      expect(await boardOfDirectorsProxy.actionApprovers(0, 0)).to.eq(boD1.address)
+    })
+
+    it('should emits Revocation', async () => {
+      const { boD1, boardOfDirectorsProxy } = await addActionFixture()
+
+      // revoke approval
+      await expect(boardOfDirectorsProxy.connect(boD1).revoke(0))
+        .to.emit(boardOfDirectorsProxy, 'Revocation')
+        .withArgs(0, boD1.address)
+    })
+
+    it('should revert if not BoD calls revoke', async () => {
+      const { founder, boardOfDirectorsProxy } = await addActionFixture()
+
+      await expect(boardOfDirectorsProxy.connect(founder).revoke(0)).to.be.revertedWith(
+        'Only board of directors can call this function'
+      )
+    })
+
+    it('should revert if action is already executed', async () => {
+      const { boD2, boardOfDirectorsProxy } = await addActionFixture()
+
+      // approve action by boD2 and it will executed because 50% of BoDs approved
+      await boardOfDirectorsProxy.connect(boD2).approve(0)
+
+      // check if action is executed
+      expect((await boardOfDirectorsProxy.actions(0)).isExecuted).to.be.true
+
+      // try to revoke approval
+      await expect(boardOfDirectorsProxy.connect(boD2).revoke(0)).to.be.revertedWith(
+        'Action already executed'
+      )
+    })
+
+    it('should revert if BoD tries to revoke if action not approved yet', async () => {
+      const { boD2, boardOfDirectorsProxy } = await addActionFixture()
+
+      // try to revoke approval twice
+      await expect(boardOfDirectorsProxy.connect(boD2).revoke(0)).to.be.revertedWith('Not approved')
+    })
+  })
+
   context('isActionExecuted', async () => {
     it('should return true if action is executed', async () => {
       const { boD2, boardOfDirectorsProxy } = await addActionFixture()
@@ -450,10 +559,90 @@ describe('BoardOfDirectors', async () => {
     })
 
     it('should revert if owners is empty', async () => {
-      const { boD2, boardOfDirectorsProxy } = await setOwnersFixture({ emptyOnwers: true })
+      const { boD2, boardOfDirectorsProxy } = await setOwnersFixture({ emptyOwners: true })
 
       // approve to set owners
       await expect(boardOfDirectorsProxy.connect(boD2).approve(0)).to.be.revertedWith('Call failed')
+    })
+  })
+
+  context('addOwner', async () => {
+    it('should add owner by action correctly', async () => {
+      const { founder, boD2, boardOfDirectorsProxy } = await addOwnerFixture()
+
+      // add owner by action
+      await boardOfDirectorsProxy.connect(boD2).approve(0)
+
+      expect(await boardOfDirectorsProxy.getOwners()).to.include.members([founder.address])
+    })
+
+    it('should emit OwnersChanged', async () => {
+      const { boD2, boardOfDirectorsProxy } = await addOwnerFixture()
+      const randomSigner = (await ethers.getSigners())[6]
+      const oldOwners = await boardOfDirectorsProxy.getOwners()
+      // add owner by action
+      await expect(boardOfDirectorsProxy.connect(boD2).approve(0))
+        .to.emit(boardOfDirectorsProxy, 'OwnersChanged')
+        .withArgs(oldOwners.concat(randomSigner.address))
+    })
+
+    it('should revert if owner already exists', async () => {
+      const { boD2, boardOfDirectorsProxy } = await addOwnerFixture({ ownerAlreadyExists: true })
+
+      // try to add owner again
+      await expect(boardOfDirectorsProxy.connect(boD2).approve(0)).to.be.revertedWith('Call failed')
+    })
+
+    it('should revert if owner is zero address', async () => {
+      const { boD2, boardOfDirectorsProxy } = await addOwnerFixture({ includeZeroAddress: true })
+
+      // try to add owner again
+      await expect(boardOfDirectorsProxy.connect(boD2).approve(0)).to.be.revertedWith('Call failed')
+    })
+
+    it('should revert if called by other address', async () => {
+      const { founder, boD1, boardOfDirectorsProxy } = await addOwnerFixture()
+
+      await expect(boardOfDirectorsProxy.connect(founder).addOwner(boD1)).to.be.revertedWith(
+        'Only self can call this function'
+      )
+    })
+  })
+
+  context('removeOwner', async () => {
+    it('should remove owner by action correctly', async () => {
+      const { founder, boD2, boardOfDirectorsProxy } = await removeOwnerFixture()
+
+      // approve to remove owner
+      await boardOfDirectorsProxy.connect(boD2).approve(1)
+
+      expect(await boardOfDirectorsProxy.getOwners()).to.not.include.members([founder.address])
+    })
+
+    it('should emit OwnersChanged', async () => {
+      const { founder, boD2, boardOfDirectorsProxy } = await removeOwnerFixture()
+
+      const oldOwners = await boardOfDirectorsProxy.getOwners()
+
+      // approve to remove owner
+      await expect(boardOfDirectorsProxy.connect(boD2).approve(1))
+        .to.emit(boardOfDirectorsProxy, 'OwnersChanged')
+        .withArgs(oldOwners.filter((owner) => owner !== founder.address))
+    })
+
+    it('should revert if owner not found', async () => {
+      const { boD2, boardOfDirectorsProxy } = await removeOwnerFixture({ removeNotOwner: true })
+
+      // try to remove not owner
+      await expect(boardOfDirectorsProxy.connect(boD2).approve(1)).to.be.revertedWith('Call failed')
+    })
+
+    it('should revert if called by other address', async () => {
+      const { founder, boardOfDirectorsProxy } = await removeOwnerFixture()
+
+      await expect(boardOfDirectorsProxy.connect(founder).removeOwner(founder)).to.be.revertedWith(
+        'Only self can call this function'
+      )
     })
   })
 })

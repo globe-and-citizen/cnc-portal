@@ -1,12 +1,12 @@
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
+import tipsModule from './ProxyModule'
 
+// Module to deploy the Bank contract implementation and initialize it with the tips address
 const bankImplementationModule = buildModule('Bank', (moduleBuilder) => {
   const BankContractImplementation = moduleBuilder.contract('Bank')
 
-  // Use of polygon deployed tips contract addredd: look in .openzeppelin/polygon.json
-  moduleBuilder.call(BankContractImplementation, 'initialize', [
-    '0xDC0466d0406bf3770d08B1C681241465De5BF455'
-  ])
+  const { tips } = moduleBuilder.useModule(tipsModule)
+  moduleBuilder.call(BankContractImplementation, 'initialize', [tips.address])
 
   return { BankContractImplementation }
 })
