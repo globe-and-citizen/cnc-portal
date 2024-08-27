@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "./Types.sol";
+import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
 import "hardhat/console.sol";
 
 
@@ -15,6 +16,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
 
 
     uint256 public proposalCount;
+    address public boardOfDirectorsAddress;
 
     event ProposalAdded(uint256 indexed proposalId, string title, string description);
     event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
@@ -131,5 +133,13 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         } else {
             revert("Invalid vote");
         }
+    }
+
+    function setBoardOfDirectorsAddress(address _boardOfDirectorsAddress) public onlyOwner {
+        boardOfDirectorsAddress = _boardOfDirectorsAddress;
+    }
+
+    function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
+        IBoardOfDirectors(boardOfDirectorsAddress).setBoardOfDirectors(_boardOfDirectors);
     }
 }
