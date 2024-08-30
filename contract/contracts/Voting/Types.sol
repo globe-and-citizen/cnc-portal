@@ -26,6 +26,7 @@ library Types {
         string draftedBy;
         bool isElection;
         bool isActive;
+        uint256 winnerCount;
         DirectiveVotes votes;
         Candidate[] candidates;
         Member[] voters;

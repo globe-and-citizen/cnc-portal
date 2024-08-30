@@ -30,40 +30,42 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         __Pausable_init();
   }
 
- function addProposal(
-        string memory _title,
-        string memory _description,
-        string memory _draftedBy,
-        bool _isElection,
-        address[] memory _voters,
-        address[] memory _candidates
-    ) public {
-        require(bytes(_title).length > 0, "Title cannot be empty");
+    function addProposal(
+            string memory _title,
+            string memory _description,
+            string memory _draftedBy,
+            bool _isElection,
+            uint256 _winnerCount,
+            address[] memory _voters,
+            address[] memory _candidates
+        ) public {
+            require(bytes(_title).length > 0, "Title cannot be empty");
 
-        Types.Proposal storage newProposal = proposalsById[proposalCount];
-        newProposal.id = proposalCount;
-        newProposal.title = _title;
-        newProposal.description = _description;
-        newProposal.draftedBy = _draftedBy;
-        newProposal.isElection = _isElection;
-        newProposal.isActive = true;
+            Types.Proposal storage newProposal = proposalsById[proposalCount];
+            newProposal.id = proposalCount;
+            newProposal.title = _title;
+            newProposal.description = _description;
+            newProposal.draftedBy = _draftedBy;
+            newProposal.isElection = _isElection;
+            newProposal.isActive = true;
+            newProposal.winnerCount = _winnerCount;
 
-        for (uint256 i = 0; i < _voters.length; i++) {
-            Types.Member memory voter = Types.Member({isEligible:true, isVoted: false, memberAddress:_voters[i]});
-            newProposal.voters.push(voter);
+            for (uint256 i = 0; i < _voters.length; i++) {
+                Types.Member memory voter = Types.Member({isEligible:true, isVoted: false, memberAddress:_voters[i]});
+                newProposal.voters.push(voter);
+            }
+            if(_isElection){
+                require(_candidates.length > 0, "Candidates cannot be empty");
+                for (uint256 i = 0; i < _candidates.length; i++) {
+                        Types.Candidate memory candidate = Types.Candidate({candidateAddress:_candidates[i], votes:0});
+                        newProposal.candidates.push(candidate);
+                    }
+            }
+        
+            proposalsById[proposalCount] = newProposal;
+            emit ProposalAdded(proposalCount, _title, _description);
+            proposalCount++;
         }
-        if(_isElection){
-            require(_candidates.length > 0, "Candidates cannot be empty");
-             for (uint256 i = 0; i < _candidates.length; i++) {
-                    Types.Candidate memory candidate = Types.Candidate({candidateAddress:_candidates[i], votes:0});
-                    newProposal.candidates.push(candidate);
-                }
-        }
-       
-        proposalsById[proposalCount] = newProposal;
-        emit ProposalAdded(proposalCount, _title, _description);
-        proposalCount++;
-    }
 
 
 
@@ -118,17 +120,28 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         proposal.isActive = !proposal.isActive;
 
         if(proposal.isElection){
-            address winner;
-            uint256 maxVotes = 0;
-            for (uint256 i = 0; i < proposal.candidates.length; i++) {
-                if (proposal.candidates[i].votes > maxVotes) {
-                    maxVotes = proposal.candidates[i].votes;
-                    winner = proposal.candidates[i].candidateAddress;
-                }
+            uint256 winnerCount = proposal.winnerCount;
+            Types.Candidate[] memory candidates = proposal.candidates;
+
+            for (uint256 i = 0; i < candidates.length; i++) {
+                    for (uint256 j = i + 1; j < candidates.length; j++) {
+                        if (candidates[i].votes < candidates[j].votes) {
+                            Types.Candidate memory temp = candidates[i];
+                            candidates[i] = candidates[j];
+                            candidates[j] = temp;
+                        }
+                    }
+                }  
+            if (winnerCount > candidates.length) {
+            winnerCount = candidates.length;
             }
-           
-            address[] memory winnerList = new address[](1);
-            winnerList[0] = winner;
+
+            address[] memory winnerList = new address[](winnerCount);
+
+            for (uint256 i = 0; i < winnerCount; i++) {
+                winnerList[i] = candidates[i].candidateAddress;
+                console.log("Winner: ", winnerList[i]);
+            }
             IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
             emit BoardOfDirectorsSet(winnerList);
             emit ProposalConcluded(proposalId, proposal.isActive);

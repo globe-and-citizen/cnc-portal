@@ -108,6 +108,7 @@ describe('Voting Contract', () => {
             proposalElection.description,
             proposalElection.draftedBy,
             proposalElection.isElection,
+            2,
             proposalElection.voters,
             candidates
           )
@@ -122,6 +123,7 @@ describe('Voting Contract', () => {
             proposalElection.description,
             proposalElection.draftedBy,
             proposalElection.isElection,
+            2,
             proposalElection.voters,
             candidates
           )
@@ -209,6 +211,7 @@ describe('Voting Contract', () => {
           proposal.description,
           proposal.draftedBy,
           proposal.isElection,
+          0,
           proposal.voters,
           []
         )
@@ -217,6 +220,7 @@ describe('Voting Contract', () => {
           proposalElection.description,
           proposalElection.draftedBy,
           proposalElection.isElection,
+          2,
           proposalElection.voters,
           candidates
         )
@@ -225,22 +229,26 @@ describe('Voting Contract', () => {
           proposalElection.description,
           proposalElection.draftedBy,
           proposalElection.isElection,
+          2,
           proposalElection.voters,
           candidates
         )
         await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
-        console.log(await voting.proposalCount())
         await expect(voting.concludeProposal(1))
           .to.emit(voting, 'ProposalConcluded')
           .withArgs(1, false)
 
         const proposal1 = await voting.getProposalById(1)
         expect(proposal1.isActive).to.be.false
-        if (proposal1.isElection) {
-          await voting.connect(member1).voteElection(2, candidates[1])
+        const proposalEle = await voting.getProposalById(2)
+        console.log(proposalEle)
+        if (proposalEle.isElection) {
+          await voting.connect(member1).voteElection(2, candidates[0])
+          await voting.connect(member2).voteElection(2, candidates[1])
+
           await expect(voting.concludeProposal(2))
             .to.emit(voting, 'BoardOfDirectorsSet')
-            .withArgs([candidates[1]])
+            .withArgs([candidates[0], candidates[1]])
         }
       })
     })
