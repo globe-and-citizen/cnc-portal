@@ -13,7 +13,141 @@ describe('Voting Contract', () => {
   let member4: SignerWithAddress
   let member5: SignerWithAddress
   let member6: SignerWithAddress
+  async function deployFixture() {
+    const proposal = {
+      id: 0,
+      title: 'Proposal 1',
+      description: 'Description of Proposal 1',
+      draftedBy: await owner.getAddress(),
+      isElection: false,
+      votes: { yes: 0, no: 0, abstain: 0 },
+      candidates,
+      isActive: true,
+      teamId: 1,
+      voters: [
+        {
+          name: 'Member 1',
+          memberAddress: await member1.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 2',
+          memberAddress: await member2.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 3',
+          memberAddress: await member3.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 4',
+          memberAddress: await member4.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 5',
+          memberAddress: await member5.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 6',
+          memberAddress: await member6.getAddress(),
+          isVoted: false,
+          isEligible: true
+        }
+      ]
+    }
+    const proposalElection = {
+      id: 0,
+      title: 'Election 1',
+      description: 'Description of Election 1',
+      draftedBy: await owner.getAddress(),
+      isElection: true,
+      votes: { yes: 0, no: 0, abstain: 0 },
+      candidates,
+      isActive: true,
+      teamId: 1,
+      voters: [
+        {
+          name: 'Member 1',
+          memberAddress: await member1.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 2',
+          memberAddress: await member2.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 3',
+          memberAddress: await member3.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 4',
+          memberAddress: await member4.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 5',
+          memberAddress: await member5.getAddress(),
+          isVoted: false,
+          isEligible: true
+        },
+        {
+          name: 'Member 6',
+          memberAddress: await member6.getAddress(),
+          isVoted: false,
+          isEligible: true
+        }
+      ]
+    }
+    const [founder, boD1] = await ethers.getSigners()
+    const VotingFactory = await ethers.getContractFactory('Voting')
+    voting = await VotingFactory.connect(founder).deploy()
+    await voting.initialize()
 
+    const BoardOfDirectorsImplFactory = await ethers.getContractFactory('BoardOfDirectors')
+    const boardOfDirectorsImpl = await BoardOfDirectorsImplFactory.deploy()
+
+    const BoardOfDirectorsBeacon = await ethers.getContractFactory('Beacon')
+    const boardOfDirectorsBeacon = await BoardOfDirectorsBeacon.connect(founder).deploy(
+      await boardOfDirectorsImpl.getAddress()
+    )
+
+    const ProxyFactory = await ethers.getContractFactory('UserBeaconProxy')
+    const initialize = boardOfDirectorsImpl.interface.encodeFunctionData('initialize', [
+      [founder.address, await voting.getAddress()]
+    ])
+    const boardOfDirectorsProxyDeployment = await ProxyFactory.connect(founder).deploy(
+      await boardOfDirectorsBeacon.getAddress(),
+      initialize
+    )
+    const boardOfDirectorsProxy = await ethers.getContractAt(
+      'BoardOfDirectors',
+      await boardOfDirectorsProxyDeployment.getAddress()
+    )
+    await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
+
+    return {
+      proposal,
+      proposalElection,
+      founder,
+      boD1,
+      voting,
+      boardOfDirectorsProxy
+    }
+  }
   const candidates = [
     {
       name: 'Candidate 1',
@@ -27,73 +161,23 @@ describe('Voting Contract', () => {
     }
   ]
 
-  async function deployContracts() {
-    const VotingFactory = await ethers.getContractFactory('Voting')
-    voting = (await VotingFactory.deploy()) as Voting
-    await voting.waitForDeployment()
-  }
-
   context('Deploying Voting Contract', () => {
     before(async () => {
       ;[owner, member1, member2, member3, member4, member5, member6] = await ethers.getSigners()
-      await deployContracts()
+      await deployFixture()
     })
 
     describe('CRUD Members and Proposals', async () => {
       it('should add a proposal successfully', async () => {
-        const proposal = {
-          id: 0,
-          title: 'Proposal 1',
-          description: 'Description of Proposal 1',
-          draftedBy: await owner.getAddress(),
-          isElection: false,
-          votes: { yes: 0, no: 0, abstain: 0 },
-          candidates,
-          isActive: true,
-          teamId: 1,
-          voters: [
-            {
-              name: 'Member 1',
-              memberAddress: await member1.getAddress(),
-              isVoted: false,
-              isEligible: true
-            },
-            {
-              name: 'Member 2',
-              memberAddress: await member2.getAddress(),
-              isVoted: false,
-              isEligible: true
-            },
-            {
-              name: 'Member 3',
-              memberAddress: await member3.getAddress(),
-              isVoted: false,
-              isEligible: true
-            },
-            {
-              name: 'Member 4',
-              memberAddress: await member4.getAddress(),
-              isVoted: false,
-              isEligible: true
-            },
-            {
-              name: 'Member 5',
-              memberAddress: await member5.getAddress(),
-              isVoted: false,
-              isEligible: true
-            },
-            {
-              name: 'Member 6',
-              memberAddress: await member6.getAddress(),
-              isVoted: false,
-              isEligible: true
-            }
-          ]
-        }
-
+        const { proposal, proposalElection } = await deployFixture()
         await expect(voting.addProposal(proposal))
           .to.emit(voting, 'ProposalAdded')
           .withArgs(0, proposal.title, proposal.description)
+        // voting.addProposal
+
+        await expect(voting.addProposal(proposalElection))
+          .to.emit(voting, 'ProposalAdded')
+          .withArgs(1, proposalElection.title, proposalElection.description)
       })
 
       it('should return the proposal details', async () => {
@@ -161,7 +245,6 @@ describe('Voting Contract', () => {
           .withArgs(await member2.getAddress(), 0, candidates[1].candidateAddress)
 
         const proposal = await voting.getProposalById(0)
-
         const candidate: Types.CandidateStructOutput | undefined = proposal.candidates.find(
           (c: Types.CandidateStructOutput) => c.candidateAddress === candidates[1].candidateAddress
         )
@@ -169,12 +252,25 @@ describe('Voting Contract', () => {
       })
 
       it('should conclude a proposal successfully', async () => {
-        await expect(voting.concludeProposal(0))
-          .to.emit(voting, 'ProposalConcluded')
-          .withArgs(0, false)
+        const { boardOfDirectorsProxy, proposal, proposalElection } = await deployFixture()
 
-        const proposal = await voting.proposalsById(0)
-        expect(proposal.isActive).to.be.false
+        await voting.addProposal(proposal)
+        await voting.addProposal(proposalElection)
+        await voting.addProposal(proposalElection)
+        await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
+        console.log(await voting.proposalCount())
+        await expect(voting.concludeProposal(1))
+          .to.emit(voting, 'ProposalConcluded')
+          .withArgs(1, false)
+
+        const proposal1 = await voting.getProposalById(1)
+        expect(proposal1.isActive).to.be.false
+        if (proposal1.isElection) {
+          await voting.connect(member1).voteElection(2, candidates[1].candidateAddress)
+          await expect(voting.concludeProposal(2))
+            .to.emit(voting, 'BoardOfDirectorsSet')
+            .withArgs([candidates[1].candidateAddress])
+        }
       })
     })
   })

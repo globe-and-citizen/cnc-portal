@@ -29,7 +29,7 @@ describe('BoardOfDirectors', async () => {
       await boardOfDirectorsProxyDeployment.getAddress()
     )
     // set boardOfDirectors address in voting contract
-    await voting.setBoardOfDirectorsAddress(await boardOfDirectorsProxy.getAddress())
+    await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
 
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
