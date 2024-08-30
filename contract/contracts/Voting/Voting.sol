@@ -132,9 +132,6 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
                         }
                     }
                 }  
-            if (winnerCount > candidates.length) {
-            winnerCount = candidates.length;
-            }
 
             address[] memory winnerList = new address[](winnerCount);
 
