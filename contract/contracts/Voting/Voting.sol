@@ -30,34 +30,43 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         __Pausable_init();
   }
 
-    function addProposal(Types.Proposal calldata _proposal) public {
-        require(bytes(_proposal.title).length > 0, "Title cannot be empty");
+ function addProposal(
+        string memory _title,
+        string memory _description,
+        string memory _draftedBy,
+        bool _isElection,
+        address[] memory _voters,
+        address[] memory _candidates
+    ) public {
+        require(bytes(_title).length > 0, "Title cannot be empty");
 
         Types.Proposal storage newProposal = proposalsById[proposalCount];
-        
         newProposal.id = proposalCount;
-        newProposal.title = _proposal.title;
-        newProposal.description = _proposal.description;
-        newProposal.draftedBy = _proposal.draftedBy;
-        newProposal.isElection = _proposal.isElection;
-        newProposal.isActive = _proposal.isActive;
-        newProposal.teamId = _proposal.teamId;
+        newProposal.title = _title;
+        newProposal.description = _description;
+        newProposal.draftedBy = _draftedBy;
+        newProposal.isElection = _isElection;
+        newProposal.isActive = true;
 
-        for (uint256 i = 0; i < _proposal.candidates.length; i++) {
-            newProposal.candidates.push(_proposal.candidates[i]);
+        for (uint256 i = 0; i < _voters.length; i++) {
+            Types.Member memory voter = Types.Member({isEligible:true, isVoted: false, memberAddress:_voters[i]});
+            newProposal.voters.push(voter);
         }
-
-        for (uint256 i = 0; i < _proposal.voters.length; i++) {
-            newProposal.voters.push(_proposal.voters[i]);
+        if(_isElection){
+            require(_candidates.length > 0, "Candidates cannot be empty");
+             for (uint256 i = 0; i < _candidates.length; i++) {
+                    Types.Candidate memory candidate = Types.Candidate({candidateAddress:_candidates[i], votes:0});
+                    newProposal.candidates.push(candidate);
+                }
         }
-
-        newProposal.votes = _proposal.votes;
-
+       
         proposalsById[proposalCount] = newProposal;
-
-        emit ProposalAdded(proposalCount, _proposal.title, _proposal.description);
+        emit ProposalAdded(proposalCount, _title, _description);
         proposalCount++;
     }
+
+
+
 
 
     function voteDirective(uint256 proposalId, uint256 vote) public {

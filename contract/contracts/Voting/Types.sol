@@ -9,13 +9,11 @@ library Types {
     }
 
     struct Candidate {
-        string name;
         address candidateAddress;
         uint256 votes;
     }
 
     struct Member {
-        string name;
         bool isEligible;
         bool isVoted;
         address memberAddress;
@@ -28,7 +26,6 @@ library Types {
         string draftedBy;
         bool isElection;
         bool isActive;
-        uint256 teamId;
         DirectiveVotes votes;
         Candidate[] candidates;
         Member[] voters;
