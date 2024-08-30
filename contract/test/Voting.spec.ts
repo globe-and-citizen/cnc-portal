@@ -251,6 +251,50 @@ describe('Voting Contract', () => {
             .withArgs([candidates[0], candidates[1]])
         }
       })
+      it('should sort candidates based on the number of votes in descending order', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          proposalElection.draftedBy,
+          proposalElection.isElection,
+          2,
+          proposalElection.voters,
+          candidates
+        )
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+        await voting.connect(member3).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+
+        const proposal = await voting.getProposalById(0)
+        console.log(proposal)
+        const sortedCandidates = proposal.candidates
+
+        expect(sortedCandidates[0].candidateAddress).to.equal(candidates[0])
+        expect(sortedCandidates[0].votes).to.equal(1)
+
+        expect(sortedCandidates[1].candidateAddress).to.equal(candidates[1])
+        expect(sortedCandidates[1].votes).to.equal(2)
+      })
+      it('should emit an event when a directive proposal is concluded', async () => {
+        const { voting, proposal } = await deployFixture()
+
+        await voting.addProposal(
+          proposal.title,
+          proposal.description,
+          proposal.draftedBy,
+          proposal.isElection,
+          2,
+          proposal.voters,
+          []
+        )
+        await expect(voting.concludeProposal(0))
+          .to.emit(voting, 'ProposalConcluded')
+          .withArgs(0, false)
+      })
     })
   })
 })
