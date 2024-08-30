@@ -4,7 +4,9 @@ import {
   useGetProposals,
   useConcludeProposal,
   useVoteDirective,
-  useVoteElection
+  useVoteElection,
+  useDeployVotingContract,
+  useSetBoardOfDirectorsContractAddress
 } from '@/composables/voting'
 // import { VotingService } from '@/services/votingService'
 import type { Proposal } from '@/types'
@@ -44,6 +46,8 @@ const mockElectionProposal: Partial<Proposal> = {
 }
 // Mock the VotingService class
 vi.mock('@/services/votingService', () => {
+  const mockContractAddress = '0xVotingContractAddress'
+
   const mockTransaction = { hash: '0x123' }
   const mockProposal: Partial<Proposal> = {
     id: 1,
@@ -65,7 +69,9 @@ vi.mock('@/services/votingService', () => {
       getProposals: vi.fn().mockResolvedValue([mockProposal]),
       concludeProposal: vi.fn().mockResolvedValue(mockTransaction),
       voteDirective: vi.fn().mockResolvedValue(mockTransaction),
-      voteElection: vi.fn().mockResolvedValue(mockTransaction)
+      voteElection: vi.fn().mockResolvedValue(mockTransaction),
+      setBoardOfDirectorsContractAddress: vi.fn().mockResolvedValue(mockTransaction),
+      createVotingContract: vi.fn().mockResolvedValue(mockContractAddress)
     }))
   }
 })
@@ -155,6 +161,31 @@ describe('Voting Composables', () => {
       expect(isSuccess.value).toBe(true)
       expect(error.value).toBe(null)
       expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+  describe('useSetBoardOfDirectorsContractAddress', () => {
+    it('should set the Board of Directors contract address successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useSetBoardOfDirectorsContractAddress()
+
+      await execute('0xVotingAddress', '0xBoDAddress')
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+  describe('useDeployVotingContract', () => {
+    it('should deploy the voting contract successfully', async () => {
+      const { execute, isLoading, isSuccess, error, contractAddress } = useDeployVotingContract()
+
+      await execute('teamId')
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(contractAddress.value).toEqual('0xVotingContractAddress')
     })
   })
 })
