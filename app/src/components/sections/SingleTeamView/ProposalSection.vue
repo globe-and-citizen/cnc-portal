@@ -1,87 +1,93 @@
 <template>
   <div v-if="team.votingAddress">
-    <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
-      <div class="flex justify-between">
-        <div>
-          <h2>Proposals</h2>
-          <!-- <span
+    <div v-if="team.votingAddress && !team.boardOfDirectorsAddress">
+      <div class="flex justify-center">
+        <button
+          class="btn btn-primary btn-md"
+          @click="executeDeployBoDContract(String(route.params.id), team.votingAddress)"
+          v-if="
+            !(isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress) &&
+            !team.boardOfDirectorsAddress
+          "
+        >
+          Deploy BoD Contract
+        </button>
+        <LoadingButton
+          color="primary min-w-28"
+          v-if="isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress"
+        />
+      </div>
+    </div>
+    <div v-else>
+      <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
+        <div class="flex justify-between">
+          <div>
+            <h2>Proposals</h2>
+            <!-- <span
           class="badge badge-sm"
           :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
           >{{ team.bankAddress }}</span
         > -->
+          </div>
+          <div class="flex justify-between gap-4">
+            <button class="btn btn-primary btn-md" @click="showModal = !showModal">
+              Create Proposal
+            </button>
+            <button
+              class="btn btn-secondary"
+              v-if="team.boardOfDirectorsAddress"
+              @click="
+                () => {
+                  executeGetBoardOfDirectors(String(team.boardOfDirectorsAddress))
+                  showBoDModal = true
+                }
+              "
+            >
+              View BoD
+            </button>
+          </div>
         </div>
-        <div class="flex justify-between gap-4">
-          <button class="btn btn-primary btn-md" @click="showModal = !showModal">
-            Create Proposal
-          </button>
-          <button
-            class="btn btn-primary btn-md"
-            @click="executeDeployBoDContract(String(route.params.id), team.votingAddress)"
-            v-if="
-              !(isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress) &&
-              !team.boardOfDirectorsAddress
-            "
-          >
-            Deploy BoD Contract
-          </button>
-          <LoadingButton
-            color="primary min-w-28"
-            v-if="isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress"
+        <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
+          <template #tab-0>
+            <ProposalCard
+              v-for="proposal in activeProposals"
+              :proposal="proposal"
+              class="mt-10"
+              :team="team"
+              :key="proposal.title"
+              @getTeam="emits('getTeam')"
+            />
+          </template>
+          <template #tab-1>
+            <ProposalCard
+              v-for="proposal in oldProposals"
+              :proposal="proposal"
+              :team="team"
+              :isDone="true"
+              class="mt-10"
+              :key="proposal.title"
+            />
+          </template>
+        </TabNavigation>
+        <ModalComponent v-model="showBoDModal">
+          <h3>Board Of Directors</h3>
+          <hr />
+          {{ boardOfDirectors }}
+        </ModalComponent>
+        <ModalComponent v-model="showModal">
+          <CreateProposalForm
+            v-model="newProposalInput"
+            @createProposal="createProposal"
+            :isLoading="loadingAddProposal"
           />
-          <button
-            class="btn btn-secondary"
-            v-if="team.boardOfDirectorsAddress"
-            @click="
-              () => {
-                executeGetBoardOfDirectors(String(team.boardOfDirectorsAddress))
-                showBoDModal = true
-              }
-            "
-          >
-            View BoD
-          </button>
-        </div>
+        </ModalComponent>
       </div>
-      <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
-        <template #tab-0>
-          <ProposalCard
-            v-for="proposal in activeProposals"
-            :proposal="proposal"
-            class="mt-10"
-            :team="team"
-            :key="proposal.title"
-            @getTeam="emits('getTeam')"
-          />
-        </template>
-        <template #tab-1>
-          <ProposalCard
-            v-for="proposal in oldProposals"
-            :proposal="proposal"
-            :team="team"
-            :isDone="true"
-            class="mt-10"
-            :key="proposal.title"
-          />
-        </template>
-      </TabNavigation>
-      <ModalComponent v-model="showBoDModal">
-        <h3>Board Of Directors</h3>
-        <hr />
-        {{ boardOfDirectors }}
-      </ModalComponent>
-      <ModalComponent v-model="showModal">
-        <CreateProposalForm
-          v-model="newProposalInput"
-          @createProposal="createProposal"
-          :isLoading="loadingAddProposal"
-        />
-      </ModalComponent>
     </div>
     <div class="flex justify-center items-center" v-if="loadingGetProposals">
       <span class="loading loading-spinner loading-lg"></span>
     </div>
   </div>
-  <div class="flex justify-center items-center" v-else>
+  <div class="flex justify-center items-center" v-if="!team.votingAddress">
     <LoadingButton color="primary min-w-28" v-if="loadingDeployVotingContract" />
     <button
       v-else
