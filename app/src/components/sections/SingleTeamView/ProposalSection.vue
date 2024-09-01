@@ -72,7 +72,21 @@
         <ModalComponent v-model="showBoDModal">
           <h3>Board Of Directors</h3>
           <hr />
-          {{ boardOfDirectors }}
+          <div class="mt-4">
+            <ul v-if="boardOfDirectors?.length">
+              <li
+                v-for="(address, index) in boardOfDirectors"
+                :key="index"
+                class="text-sm flex justify-between"
+              >
+                <span v-if="team.members">
+                  {{ team.members.find((member) => member.address === address)?.name || 'Unknown' }}
+                </span>
+                {{ address }}
+              </li>
+            </ul>
+            <p v-else>No Board of Directors found.</p>
+          </div>
         </ModalComponent>
         <ModalComponent v-model="showModal">
           <CreateProposalForm
@@ -100,7 +114,7 @@
 </template>
 <script setup lang="ts">
 import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
-import type { Proposal } from '@/types/index'
+import type { Member, Proposal } from '@/types/index'
 import { onMounted, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
