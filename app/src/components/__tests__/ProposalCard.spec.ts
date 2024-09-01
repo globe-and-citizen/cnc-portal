@@ -79,7 +79,25 @@ describe('ProposalCard.vue', () => {
         global: {
           plugins: [router] // Provide the router instance
         },
-        props: { proposal: proposalDirective }
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1'
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalDirective.title)
       expect(wrapper.find('.badge-primary').text()).toContain(proposalDirective.draftedBy)
@@ -96,7 +114,25 @@ describe('ProposalCard.vue', () => {
         global: {
           plugins: [router] // Provide the router instance
         },
-        props: { proposal: proposalElection }
+        props: {
+          proposal: proposalElection,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1'
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalElection.title)
       const expectedDescription =
@@ -112,7 +148,25 @@ describe('ProposalCard.vue', () => {
         global: {
           plugins: [router] // Provide the router instance
         },
-        props: { proposal: proposalDirective }
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1'
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       const buttons = wrapper.findAll('button')
       expect(buttons[0].text()).toBe('Vote')

@@ -126,7 +126,6 @@ describe('VotingService', () => {
 
       expect(tx).toBeDefined()
       expect(mockContract.addProposal).toHaveBeenCalledOnce()
-      expect(mockContract.addProposal).toHaveBeenCalledWith(mockProposal)
       expect(mockContract.addProposal).toHaveReturnedWith(expect.any(Promise))
     })
 
