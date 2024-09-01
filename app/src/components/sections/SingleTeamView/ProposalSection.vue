@@ -114,7 +114,7 @@
 </template>
 <script setup lang="ts">
 import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
-import type { Member, Proposal } from '@/types/index'
+import type { Proposal } from '@/types/index'
 import { onMounted, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
