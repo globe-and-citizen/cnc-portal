@@ -258,6 +258,7 @@ const newProposalInput = ref<Partial<Proposal>>({
   isElection: false,
   voters: [],
   candidates: [],
+  winnerCount: 0,
   teamId: Number(route.params.id)
 })
 
