@@ -35,10 +35,7 @@ export class VotingService implements IVotingService {
     proposal.id = 0
     const votingContract = await this.getVotingContract(votingAddress)
     try {
-      if (!proposal.voters) {
-        proposal.voters = []
-      }
-      const voters = proposal.voters.map((voter) => voter.memberAddress)
+      const voters = proposal.voters?.map((voter) => voter.memberAddress)
       const candidates = proposal.candidates?.map((candidate) => candidate.candidateAddress)
       const tx = await votingContract.addProposal(
         proposal.title,
