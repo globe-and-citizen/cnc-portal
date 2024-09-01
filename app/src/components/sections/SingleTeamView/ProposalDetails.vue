@@ -17,12 +17,17 @@
 <script setup lang="ts">
 import { computed, defineProps } from 'vue'
 import PieChart from '@/components/PieChart.vue'
-const props = defineProps(['proposal'])
+import type { Member } from '@/types'
+const props = defineProps(['proposal', 'team'])
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}
   if (props.proposal.isElection) {
     return (props.proposal as any).candidates.map((candidate: any) => {
-      return { value: Number(candidate.votes) || 0, name: candidate.name }
+      const member = props.team.members.find((member: Member) => member.address === candidate[0])
+      return {
+        value: Number(candidate.votes) || 0,
+        name: member ? member.name : 'Unknown'
+      }
     })
   } else {
     return [
