@@ -14,24 +14,31 @@ contract ExpenseAccount is
 
     mapping(address => bool) public approvedAddresses;
 
-    event NewDeposit(address indexed depositor, uint256 amount);
+    event Deposited(address indexed depositor, uint256 amount);
 
-    event NewWithdrawal(address indexed withdrawer, uint256 amount);
+    event Transfer(address indexed sender, address indexed to, uint256 amount);
     
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
+    function initialize(address owner) public initializer {
+        __Ownable_init(owner);
+        __ReentrancyGuard_init();
+        __Pausable_init();
     }
 
-    function withdraw(
-        uint256 amount
-    ) external nonReentrant whenNotPaused {        
-        require(approvedAddresses[msg.sender], "Withdrawer not approved");
+    function transfer(
+        address _to,
+        uint256 _amount
+    ) external nonReentrant whenNotPaused {      
+        require(_to != address(0), "Address required");
 
-        require(amount <= maxLimit, "Max limit exceeded");
+        require(_amount > 0, "Amount must be greater than zero");
 
-        payable(msg.sender).transfer(amount);
+        require(approvedAddresses[msg.sender], "Sender not approved");
 
-        emit NewWithdrawal(msg.sender, amount);
+        require(_amount <= maxLimit, "Max limit exceeded");
+
+        payable(_to).transfer(_amount);
+
+        emit Transfer(msg.sender, _to,_amount);
     }
 
     function setMaxLimit(uint256 amount) external onlyOwner whenNotPaused {
@@ -59,6 +66,6 @@ contract ExpenseAccount is
     }
 
     receive() external payable {
-        emit NewDeposit(msg.sender, msg.value);
+        emit Deposited(msg.sender, msg.value);
      }
 }
