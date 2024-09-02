@@ -2,6 +2,7 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { ExpenseAccount } from '../typechain-types';
+import { extendEnvironment } from 'hardhat/config';
 
 describe("ExpenseAccount", () => {
   let expenseAccountProxy: ExpenseAccount;
@@ -36,6 +37,11 @@ describe("ExpenseAccount", () => {
 
         expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
         await expect(tx).to.emit(expenseAccountProxy, 'NewDeposit').withArgs(owner.address, amount)
+      })
+
+      it('Then I can get the smart contract balance', async () => {
+        const balance = await expenseAccountProxy.getBalance()
+        expect(balance).to.eq(ethers.parseEther('100'))
       })
 
       it('Then I can set a withdrawal limit', async () => {
