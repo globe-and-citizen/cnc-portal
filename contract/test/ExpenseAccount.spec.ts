@@ -21,7 +21,7 @@ describe('ExpenseAccount', () => {
 
     context('I want to deploy my Expense Account Smart Contract', () => {
       before(async () => {
-        [owner, withdrawer] = await ethers.getSigners()
+        ;[owner, withdrawer] = await ethers.getSigners()
         await deployContract(owner)
       })
 
