@@ -1,28 +1,27 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { ExpenseAccount } from '../typechain-types';
+import { ExpenseAccount } from '../typechain-types'
 
-describe("ExpenseAccount", () => {
-  let expenseAccountProxy: ExpenseAccount;
+describe('ExpenseAccount', () => {
+  let expenseAccountProxy: ExpenseAccount
 
   const deployContract = async (owner: SignerWithAddress) => {
-    const ExpenseAccountImplementation = await ethers.getContractFactory("ExpenseAccount");
+    const ExpenseAccountImplementation = await ethers.getContractFactory('ExpenseAccount')
     expenseAccountProxy = (await upgrades.deployProxy(
-      ExpenseAccountImplementation, 
-      [], 
-      {initializer: "initialize"}
-    )) as unknown as ExpenseAccount;
+      ExpenseAccountImplementation,
+      [owner.address],
+      { initializer: 'initialize' }
+    )) as unknown as ExpenseAccount
   }
 
-  describe("As CNC Company Founder", () => {
-    let owner: SignerWithAddress;
-    let withdrawer: SignerWithAddress;
-    let imposter: SignerWithAddress;
+  describe('As CNC Company Founder', () => {
+    let owner: SignerWithAddress
+    let withdrawer: SignerWithAddress
 
-    context("I want to deploy my Expense Account Smart Contract", () => {
+    context('I want to deploy my Expense Account Smart Contract', () => {
       before(async () => {
-        [owner, withdrawer, imposter] = await ethers.getSigners();
+        ;[owner, withdrawer] = await ethers.getSigners()
         await deployContract(owner)
       })
 
@@ -32,10 +31,13 @@ describe("ExpenseAccount", () => {
 
       it('Then I can deposit into the expense account contract', async () => {
         const amount = ethers.parseEther('100')
-        const tx = await owner.sendTransaction({ to: await expenseAccountProxy.getAddress(), value: amount })
+        const tx = await owner.sendTransaction({
+          to: await expenseAccountProxy.getAddress(),
+          value: amount
+        })
 
         expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
-        await expect(tx).to.emit(expenseAccountProxy, 'NewDeposit').withArgs(owner.address, amount)
+        await expect(tx).to.emit(expenseAccountProxy, 'Deposited').withArgs(owner.address, amount)
       })
 
       it('Then I can set a withdrawal limit', async () => {
@@ -43,23 +45,40 @@ describe("ExpenseAccount", () => {
         expect(await expenseAccountProxy.maxLimit()).to.eq(ethers.parseEther('10'))
       })
 
-      it('Then I can authorize a user to withdraw from the expense account', async () => {
+      it('Then I can authorize a user to send from the expense account', async () => {
         await expenseAccountProxy.approveAddress(withdrawer.address)
         expect(await expenseAccountProxy.approvedAddresses(withdrawer.address)).to.eq(true)
       })
 
-      it('Then an authorized user can withdraw from the expense account', async () => {
+      it('Then an authorized user can send from the expense account', async () => {
         const amount = ethers.parseEther('10')
-        const tx = await expenseAccountProxy.connect(withdrawer).withdraw(amount)
-        await expect(tx).to.emit(expenseAccountProxy, 'NewWithdrawal').withArgs(withdrawer.address, amount)
+        const tx = await expenseAccountProxy.connect(withdrawer).transfer(withdrawer, amount)
+        await expect(tx)
+          .to.emit(expenseAccountProxy, 'Transfer')
+          .withArgs(withdrawer.address, withdrawer.address, amount)
       })
 
-      it('Then a user cannot withdraw more than the set limit', async () => {
+      it('Then a user cannot send more than the set limit', async () => {
         const amount = ethers.parseEther('15')
-        await expect(expenseAccountProxy.connect(withdrawer).withdraw(amount))
-          .to
-          .be
-          .revertedWith('Max limit exceeded')
+        await expect(
+          expenseAccountProxy.connect(withdrawer).transfer(withdrawer.address, amount)
+        ).to.be.revertedWith('Max limit exceeded')
+      })
+
+      it('Then a user cannot send to zero address', async () => {
+        const amount = ethers.parseEther('15')
+        await expect(
+          expenseAccountProxy
+            .connect(withdrawer)
+            .transfer('0x0000000000000000000000000000000000000000', amount)
+        ).to.be.revertedWith('Address required')
+      })
+
+      it('Then a user cannot send a zero or negative amount', async () => {
+        const amount = ethers.parseEther('0')
+        await expect(
+          expenseAccountProxy.connect(withdrawer).transfer(withdrawer.address, amount)
+        ).to.be.revertedWith('Amount must be greater than zero')
       })
 
       it('Then I can unauthorize a user', async () => {
@@ -68,23 +87,22 @@ describe("ExpenseAccount", () => {
       })
 
       it('Then an unauthorized user cannot withdraw', async () => {
-        await expect(expenseAccountProxy.connect(withdrawer).withdraw(ethers.parseEther('5')))
-          .to
-          .be
-          .revertedWith('Withdrawer not approved')
+        await expect(
+          expenseAccountProxy
+            .connect(withdrawer)
+            .transfer(withdrawer.address, ethers.parseEther('5'))
+        ).to.be.revertedWith('Sender not approved')
       })
 
       it('Then I can pause the account', async () => {
         await expect(expenseAccountProxy.pause())
-          .to
-          .emit(expenseAccountProxy, 'Paused')
+          .to.emit(expenseAccountProxy, 'Paused')
           .withArgs(owner.address)
       })
 
       it('Then I can unpause the account', async () => {
         await expect(expenseAccountProxy.unpause())
-          .to
-          .emit(expenseAccountProxy, 'Unpaused')
+          .to.emit(expenseAccountProxy, 'Unpaused')
           .withArgs(owner.address)
       })
     })
