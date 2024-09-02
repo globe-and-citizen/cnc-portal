@@ -18,11 +18,10 @@ describe('ExpenseAccount', () => {
   describe('As CNC Company Founder', () => {
     let owner: SignerWithAddress
     let withdrawer: SignerWithAddress
-    let imposter: SignerWithAddress
 
     context('I want to deploy my Expense Account Smart Contract', () => {
       before(async () => {
-        ;[owner, withdrawer, imposter] = await ethers.getSigners()
+        [owner, withdrawer] = await ethers.getSigners()
         await deployContract(owner)
       })
 
