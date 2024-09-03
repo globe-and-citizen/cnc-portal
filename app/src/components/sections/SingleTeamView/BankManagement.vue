@@ -29,7 +29,7 @@
             <button class="btn btn-primary w-40 text-center" @click="transferOwnershipModal = true">
               Transfer Ownership
             </button>
-            <SkeletonLoading v-if="loadingOwner" class="w-44 h-6" />
+            <LoadingButton v-if="loadingOwner" class="w-44" color="primary" />
             <button
               class="btn btn-primary w-44 text-center"
               v-if="team.boardOfDirectorsAddress && !loadingOwner"
