@@ -48,7 +48,7 @@ describe('ProposalCard.vue', () => {
   const proposalDirective = {
     id: 0,
     title: 'Directive',
-    draftedBy: 'Ravioli',
+    draftedBy: '0x1',
     description:
       'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
     isElection: false,
@@ -63,7 +63,7 @@ describe('ProposalCard.vue', () => {
   const proposalElection = {
     id: 1,
     title: 'Election',
-    draftedBy: 'Beerbelliez',
+    draftedBy: '0x1',
     description:
       'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
 
@@ -100,7 +100,7 @@ describe('ProposalCard.vue', () => {
         }
       })
       expect(wrapper.find('.card-title').text()).toBe(proposalDirective.title)
-      expect(wrapper.find('.badge-primary').text()).toContain(proposalDirective.draftedBy)
+      expect(wrapper.find('.badge-primary').text()).toContain('member1')
       const expectedDescription =
         proposalDirective.description.length > 120
           ? proposalDirective.description.substring(0, 120) + '...'

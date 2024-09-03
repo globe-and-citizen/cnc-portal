@@ -4,7 +4,12 @@
       <div class="w-1/2">
         <h2 class="card-title">{{ proposal.title }}</h2>
         <span class="text-xs">
-          <span class="badge badge-primary badge-xs"> {{ proposal.draftedBy }}</span>
+          <span class="badge badge-primary badge-xs">
+            {{
+              team.members.find((member: Member) => member.address === proposal.draftedBy)?.name ||
+              'Unknown'
+            }}</span
+          >
 
           <!-- on
           <span class="badge badge-secondary badge-xs">

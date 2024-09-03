@@ -39,7 +39,6 @@ export class VotingService implements IVotingService {
     const tx = await votingContract.addProposal(
       proposal.title,
       proposal.description,
-      proposal.draftedBy,
       proposal.isElection,
       proposal.winnerCount,
       voters,

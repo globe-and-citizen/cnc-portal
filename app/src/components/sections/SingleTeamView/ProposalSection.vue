@@ -129,7 +129,6 @@ import {
 import { useDeployBoDContract, useGetBoardOfDirectors } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
-import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
 import LoadingButton from '@/components/LoadingButton.vue'
 
@@ -268,7 +267,6 @@ const props = defineProps<{ team: Partial<Team> }>()
 const newProposalInput = ref<Partial<Proposal>>({
   title: '',
   description: '',
-  draftedBy: '',
   isElection: false,
   voters: [],
   candidates: [],
@@ -277,7 +275,6 @@ const newProposalInput = ref<Partial<Proposal>>({
 })
 
 const createProposal = () => {
-  newProposalInput.value.draftedBy = useUserDataStore().name
   newProposalInput.value.voters = props.team.members?.map((member) => {
     return {
       name: member.name,
