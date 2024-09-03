@@ -62,6 +62,42 @@ export class BankService implements IBankService {
     return tx
   }
 
+  async isPaused(bankAddress: string): Promise<boolean> {
+    const bank = await this.getContract(bankAddress)
+
+    return await bank.paused()
+  }
+
+  async pause(bankAddress: string): Promise<any> {
+    const bank = await this.getContract(bankAddress)
+    const tx = await bank.pause()
+    await tx.wait()
+
+    return tx
+  }
+
+  async unpause(bankAddress: string): Promise<any> {
+    const bank = await this.getContract(bankAddress)
+    const tx = await bank.unpause()
+    await tx.wait()
+
+    return tx
+  }
+
+  async transferOwnership(bankAddress: string, newOwner: string): Promise<any> {
+    const bank = await this.getContract(bankAddress)
+    const tx = await bank.transferOwnership(newOwner)
+    await tx.wait()
+
+    return tx
+  }
+
+  async getOwner(bankAddress: string): Promise<string> {
+    const bank = await this.getContract(bankAddress)
+
+    return await bank.owner()
+  }
+
   async getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]> {
     const contractService = this.getContractService(bankAddress)
 

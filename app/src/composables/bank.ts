@@ -123,3 +123,104 @@ export function useBankEvents(bankAddress: string) {
 
   return { events, getEvents, loading, error }
 }
+
+export function useBankStatus(bankAddress: string): IContractReadFunction<boolean | null> {
+  const isPaused = ref<boolean | null>(null)
+  const loading = ref<boolean>(false)
+  const error = ref<any>(null)
+
+  async function getIsPaused(): Promise<void> {
+    try {
+      loading.value = true
+      isPaused.value = await bankService.isPaused(bankAddress)
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { data: isPaused, execute: getIsPaused, isLoading: loading, error }
+}
+
+export function useBankOwner(bankAddress: string): IContractReadFunction<string | null> {
+  const owner = ref<string | null>(null)
+  const loading = ref<boolean>(false)
+  const error = ref<any>(null)
+
+  async function getOwner(): Promise<void> {
+    try {
+      loading.value = true
+      owner.value = await bankService.getOwner(bankAddress)
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { data: owner, execute: getOwner, isLoading: loading, error }
+}
+
+export function useBankPause(bankAddress: string): IContractTransactionFunction {
+  const transaction = ref<any>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function pause(): Promise<void> {
+    try {
+      loading.value = true
+      transaction.value = await bankService.pause(bankAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: pause, isLoading: loading, isSuccess, error, transaction }
+}
+
+export function useBankUnpause(bankAddress: string): IContractTransactionFunction {
+  const transaction = ref<any>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function unpause(): Promise<void> {
+    try {
+      loading.value = true
+      transaction.value = await bankService.unpause(bankAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: unpause, isLoading: loading, isSuccess, error, transaction }
+}
+
+export function useBankTransferOwnership(bankAddress: string): IContractTransactionFunction {
+  const transaction = ref<any>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function transferOwnership(newOwner: string): Promise<void> {
+    try {
+      loading.value = true
+      transaction.value = await bankService.transferOwnership(bankAddress, newOwner)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: transferOwnership, isLoading: loading, isSuccess, error, transaction }
+}
