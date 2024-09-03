@@ -72,7 +72,21 @@
         <ModalComponent v-model="showBoDModal">
           <h3>Board Of Directors</h3>
           <hr />
-          {{ boardOfDirectors }}
+          <div class="mt-4">
+            <ul v-if="boardOfDirectors?.length">
+              <li
+                v-for="(address, index) in boardOfDirectors"
+                :key="index"
+                class="text-sm flex justify-between"
+              >
+                <span v-if="team.members">
+                  {{ team.members.find((member) => member.address === address)?.name || 'Unknown' }}
+                </span>
+                {{ address }}
+              </li>
+            </ul>
+            <p v-else>No Board of Directors found.</p>
+          </div>
         </ModalComponent>
         <ModalComponent v-model="showModal">
           <CreateProposalForm
@@ -115,7 +129,6 @@ import {
 import { useDeployBoDContract, useGetBoardOfDirectors } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
-import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
 import LoadingButton from '@/components/LoadingButton.vue'
 
@@ -254,15 +267,14 @@ const props = defineProps<{ team: Partial<Team> }>()
 const newProposalInput = ref<Partial<Proposal>>({
   title: '',
   description: '',
-  draftedBy: '',
   isElection: false,
   voters: [],
   candidates: [],
+  winnerCount: 0,
   teamId: Number(route.params.id)
 })
 
 const createProposal = () => {
-  newProposalInput.value.draftedBy = useUserDataStore().name
   newProposalInput.value.voters = props.team.members?.map((member) => {
     return {
       name: member.name,

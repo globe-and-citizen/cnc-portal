@@ -43,19 +43,58 @@ describe('VoteForm.vue', () => {
   describe('Renders ', () => {
     it('renders form correctly for election proposal', () => {
       const wrapper = mount(VoteForm, {
-        props: { proposal: proposalElection, isLoading: false }
+        props: {
+          proposal: proposalElection,
+          isLoading: false,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1',
+                teamId: 0
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       const candidates = wrapper.findAll('.form-control')
       expect(candidates.length).toBe(proposalElection.candidates.length)
       proposalElection.candidates.forEach((candidate, index) => {
-        expect(candidates[index].text()).toContain(candidate.name)
         expect(candidates[index].text()).toContain(candidate.candidateAddress)
       })
     })
 
     it('renders form correctly for non-election proposal', () => {
       const wrapper = mount(VoteForm, {
-        props: { proposal: proposalDirective, isLoading: false }
+        props: {
+          proposal: proposalDirective,
+          isLoading: false,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1',
+                teamId: 0
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       const options = wrapper.findAll('.form-control')
       expect(options.length).toBe(3) // Yes, No, Abstain
@@ -67,7 +106,27 @@ describe('VoteForm.vue', () => {
   describe('Actions', () => {
     it('casts vote for election proposal', async () => {
       const wrapper = mount(VoteForm, {
-        props: { proposal: proposalElection, isLoading: false }
+        props: {
+          proposal: proposalElection,
+          isLoading: false,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1',
+                teamId: 0
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       const radioButtons = wrapper.findAll('input[type="radio"]')
       await radioButtons[0].setValue() // Select first candidate
@@ -86,7 +145,27 @@ describe('VoteForm.vue', () => {
 
     it('casts vote of type yes for a directive proposal', async () => {
       const wrapper = mount(VoteForm, {
-        props: { proposal: proposalDirective, isLoading: false }
+        props: {
+          proposal: proposalDirective,
+          isLoading: false,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1',
+                teamId: 0
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       const yesButton = wrapper.find('[data-test="yesButton"]')
       await yesButton.setValue()
@@ -104,7 +183,27 @@ describe('VoteForm.vue', () => {
     })
     it('casts vote of type no for a directive proposal', async () => {
       const wrapper = mount(VoteForm, {
-        props: { proposal: proposalDirective, isLoading: false }
+        props: {
+          proposal: proposalDirective,
+          isLoading: false,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1',
+                teamId: 0
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       const noButton = wrapper.find('[data-test="noButton"]')
       await noButton.setValue()
@@ -122,7 +221,27 @@ describe('VoteForm.vue', () => {
     })
     it('casts vote of type abstain for a directive proposal', async () => {
       const wrapper = mount(VoteForm, {
-        props: { proposal: proposalDirective, isLoading: false }
+        props: {
+          proposal: proposalDirective,
+          isLoading: false,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [
+              {
+                id: '1',
+                name: 'member1',
+                address: '0x1',
+                teamId: 0
+              }
+            ],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
       })
       const abstainButton = wrapper.find('[data-test="abstainButton"]')
       await abstainButton.setValue()

@@ -4,7 +4,12 @@
       <div class="w-1/2">
         <h2 class="card-title">{{ proposal.title }}</h2>
         <span class="text-xs">
-          <span class="badge badge-primary badge-xs"> {{ proposal.draftedBy }}</span>
+          <span class="badge badge-primary badge-xs">
+            {{
+              team.members.find((member: Member) => member.address === proposal.draftedBy)?.name ||
+              'Unknown'
+            }}</span
+          >
 
           <!-- on
           <span class="badge badge-secondary badge-xs">
@@ -57,6 +62,7 @@
     </ModalComponent>
     <ModalComponent v-model="showVoteModal">
       <VoteForm
+        :team="team"
         :isLoading="castingElectionVote || castingDirectiveVote"
         v-model="voteInput"
         @voteElection="
@@ -69,7 +75,7 @@
       />
     </ModalComponent>
     <ModalComponent v-model="showProposalDetailsModal">
-      <ProposalDetails :proposal="proposal" />
+      <ProposalDetails :proposal="proposal" :team="team" />
     </ModalComponent>
   </div>
 </template>
@@ -82,13 +88,18 @@ import ProposalDetails from '@/components/sections/SingleTeamView/ProposalDetail
 import ModalComponent from '@/components/ModalComponent.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import PieChart from '@/components/PieChart.vue'
+import type { Member } from '@/types'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}
   if (props.proposal.isElection) {
     return (props.proposal as any).candidates.map((candidate: any) => {
-      return { value: Number(candidate.votes) || 0, name: candidate.name }
+      const member = props.team.members.find((member: Member) => member.address === candidate[0])
+      return {
+        value: Number(candidate.votes) || 0,
+        name: member ? member.name : 'Unknown'
+      }
     })
   } else {
     return [

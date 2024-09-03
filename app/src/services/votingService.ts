@@ -34,8 +34,18 @@ export class VotingService implements IVotingService {
   async addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any> {
     proposal.id = 0
     const votingContract = await this.getVotingContract(votingAddress)
-    const tx = await votingContract.addProposal(proposal)
+    const voters = proposal.voters?.map((voter) => voter.memberAddress)
+    const candidates = proposal.candidates?.map((candidate) => candidate.candidateAddress)
+    const tx = await votingContract.addProposal(
+      proposal.title,
+      proposal.description,
+      proposal.isElection,
+      proposal.winnerCount,
+      voters,
+      candidates
+    )
     await tx.wait()
+
     return tx
   }
   async getProposals(votingAddress: string): Promise<any> {

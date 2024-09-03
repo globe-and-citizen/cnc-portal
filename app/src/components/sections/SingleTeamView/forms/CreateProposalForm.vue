@@ -38,6 +38,14 @@
         {{ error.$message }}
       </div>
       <div v-if="newProposalInput.isElection">
+        <div class="mb-4">
+          <input
+            type="number"
+            class="input input-primary w-full"
+            placeholder="Number of Directors"
+            v-model="newProposalInput.winnerCount"
+          />
+        </div>
         <div class="input-group">
           <label class="input input-primary flex items-center gap-2 input-md">
             <input
@@ -158,7 +166,8 @@ const newProposalInput = defineModel({
         candidateAddress: ''
       }
     ],
-    isElection: false
+    isElection: false,
+    winnerCount: 0
   }
 })
 const rules = {
