@@ -224,11 +224,6 @@
         "type": "string"
       },
       {
-        "internalType": "string",
-        "name": "_draftedBy",
-        "type": "string"
-      },
-      {
         "internalType": "bool",
         "name": "_isElection",
         "type": "bool"
@@ -308,9 +303,9 @@
             "type": "string"
           },
           {
-            "internalType": "string",
+            "internalType": "address",
             "name": "draftedBy",
-            "type": "string"
+            "type": "address"
           },
           {
             "internalType": "bool",
@@ -469,9 +464,9 @@
         "type": "string"
       },
       {
-        "internalType": "string",
+        "internalType": "address",
         "name": "draftedBy",
-        "type": "string"
+        "type": "address"
       },
       {
         "internalType": "bool",
