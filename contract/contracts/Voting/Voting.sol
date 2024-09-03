@@ -33,7 +33,6 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     function addProposal(
             string memory _title,
             string memory _description,
-            string memory _draftedBy,
             bool _isElection,
             uint256 _winnerCount,
             address[] memory _voters,
@@ -45,7 +44,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             newProposal.id = proposalCount;
             newProposal.title = _title;
             newProposal.description = _description;
-            newProposal.draftedBy = _draftedBy;
+            newProposal.draftedBy = msg.sender;
             newProposal.isElection = _isElection;
             newProposal.isActive = true;
             newProposal.winnerCount = _winnerCount;

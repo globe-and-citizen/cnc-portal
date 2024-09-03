@@ -23,7 +23,7 @@ library Types {
         uint256 id;
         string title;
         string description;
-        string draftedBy;
+        address draftedBy;
         bool isElection;
         bool isActive;
         uint256 winnerCount;

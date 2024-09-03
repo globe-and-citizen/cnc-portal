@@ -106,7 +106,6 @@ describe('Voting Contract', () => {
           voting.addProposal(
             proposalElection.title,
             proposalElection.description,
-            proposalElection.draftedBy,
             proposalElection.isElection,
             2,
             proposalElection.voters,
@@ -121,7 +120,6 @@ describe('Voting Contract', () => {
           voting.addProposal(
             proposalElection.title,
             proposalElection.description,
-            proposalElection.draftedBy,
             proposalElection.isElection,
             2,
             proposalElection.voters,
@@ -209,7 +207,6 @@ describe('Voting Contract', () => {
         await voting.addProposal(
           proposal.title,
           proposal.description,
-          proposal.draftedBy,
           proposal.isElection,
           0,
           proposal.voters,
@@ -218,7 +215,6 @@ describe('Voting Contract', () => {
         await voting.addProposal(
           proposalElection.title,
           proposalElection.description,
-          proposalElection.draftedBy,
           proposalElection.isElection,
           2,
           proposalElection.voters,
@@ -227,7 +223,6 @@ describe('Voting Contract', () => {
         await voting.addProposal(
           proposalElection.title,
           proposalElection.description,
-          proposalElection.draftedBy,
           proposalElection.isElection,
           2,
           proposalElection.voters,
@@ -257,7 +252,6 @@ describe('Voting Contract', () => {
         await voting.addProposal(
           proposalElection.title,
           proposalElection.description,
-          proposalElection.draftedBy,
           proposalElection.isElection,
           2,
           proposalElection.voters,
@@ -285,7 +279,6 @@ describe('Voting Contract', () => {
         await voting.addProposal(
           proposal.title,
           proposal.description,
-          proposal.draftedBy,
           proposal.isElection,
           2,
           proposal.voters,
