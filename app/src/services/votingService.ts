@@ -34,8 +34,18 @@ export class VotingService implements IVotingService {
   async addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any> {
     proposal.id = 0
     const votingContract = await this.getVotingContract(votingAddress)
-    const tx = await votingContract.addProposal(proposal)
+    const voters = proposal.voters?.map((voter) => voter.memberAddress)
+    const candidates = proposal.candidates?.map((candidate) => candidate.candidateAddress)
+    const tx = await votingContract.addProposal(
+      proposal.title,
+      proposal.description,
+      proposal.isElection,
+      proposal.winnerCount,
+      voters,
+      candidates
+    )
     await tx.wait()
+
     return tx
   }
   async getProposals(votingAddress: string): Promise<any> {
@@ -46,7 +56,7 @@ export class VotingService implements IVotingService {
       return []
     }
     for (let i = 0; i < proposalCount; i++) {
-      proposals.push(await votingContract.proposalsById(i))
+      proposals.push(await votingContract.getProposalById(i))
     }
     return proposals
   }
@@ -56,6 +66,13 @@ export class VotingService implements IVotingService {
     await tx.wait()
 
     return tx
+  }
+  async setBoardOfDirectorsContractAddress(votingAddress: string, bodAddress: string) {
+    const votingContract = await this.getVotingContract(votingAddress)
+    const tx = await votingContract.setBoardOfDirectorsContractAddress(bodAddress)
+    await tx.wait()
+
+    return
   }
   async voteDirective(votingAddress: string, proposalId: Number, vote: Number): Promise<any> {
     const votingContract = await this.getVotingContract(votingAddress)
@@ -92,7 +109,6 @@ export class VotingService implements IVotingService {
   }
   private async deployVotingContract(): Promise<string> {
     const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
-    console.log('Voting implementation:', votingImplementation.interface.fragments)
     const votingProxyFactory = await this.web3Library.getFactoryContract(
       BEACON_PROXY_ABI,
       BEACON_PROXY_BYTECODE
