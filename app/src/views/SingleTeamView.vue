@@ -11,7 +11,7 @@
         data-test="createBank"
       >
         Create Bank Account
-      </button>
+    </button>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -25,7 +25,10 @@
           <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
-          <ProposalSection :team="team" @getTeam="getTeamAPI" />
+          <ProposalSection v-if="activeTab == 3" :team="team" @getTeam="getTeamAPI" />
+        </template>
+        <template #tab-4>
+          <ExpenseAccountSection :team="team"/>
         </template>
       </TabNavigation>
     </div>
@@ -64,6 +67,7 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
+import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
@@ -131,11 +135,16 @@ watch(getTeamError, () => {
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
 
-  if (team.value.ownerAddress == useUserDataStore().address) {
+  if (team?.value?.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
   }
-  if (team.value.bankAddress) {
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
+  if (team?.value?.bankAddress) {
+    tabs.value.push(
+      SingleTeamTabs.Bank, 
+      SingleTeamTabs.Transactions, 
+      SingleTeamTabs.Proposals,
+      SingleTeamTabs.Expenses
+    )
   }
 })
 
@@ -145,11 +154,15 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
+    tabs.value.push(
+      SingleTeamTabs.Bank, 
+      SingleTeamTabs.Transactions, 
+      SingleTeamTabs.Proposals,
+      SingleTeamTabs.Expenses
+    )
     await getTeamAPI()
   }
 }
-
 const {
   // execute: executeSearchUser,
   response: searchUserResponse,
@@ -184,4 +197,7 @@ watch(searchUserResponse, () => {
 //     return useErrorHandler().handleError(error)
 //   }
 // }
+/*onMounted(() => {
+  console.log("")
+})*/
 </script>
