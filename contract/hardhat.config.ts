@@ -7,7 +7,8 @@ import { NetworksUserConfig } from 'hardhat/types'
 
 dotenv.config()
 let networks: NetworksUserConfig = {
-  hardhat: {}
+  hardhat: {},
+  localhost: { url: 'http://localhost:8545' }
 }
 if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefined) {
   console.error('\x1b[33m Please set your SEPOLIA_URL and PRIVATE_KEY in a .env file\x1b[0m')
