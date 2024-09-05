@@ -35,9 +35,7 @@ export class ExpenseAccountService implements IExpenseAccountService {
   async isApprovedAddress(expenseAccountAddress: string, userAddress: string): Promise<boolean> {
     const expenseAccount = await this.getContract(expenseAccountAddress)
     const result = await expenseAccount.approvedAddresses(userAddress)
-    if (result)
-      return true
-    return false
+    return result
   }
 
   async transfer(
