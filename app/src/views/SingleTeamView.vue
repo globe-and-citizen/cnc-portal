@@ -28,7 +28,7 @@
           <ProposalSection v-if="activeTab == 3" :team="team" @getTeam="getTeamAPI" />
         </template>
         <template #tab-4>
-          <ExpenseAccountSection :team="team"/>
+          <ExpenseAccountSection v-if="activeTab == 4" :team="team"/>
         </template>
       </TabNavigation>
     </div>

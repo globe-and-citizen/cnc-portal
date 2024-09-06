@@ -61,7 +61,8 @@ export class ExpenseAccountService implements IExpenseAccountService {
 
   async getBalance(expenseAccountAddress: string): Promise<number> {
     const expenseAccount = await this.getContract(expenseAccountAddress)
-    const balance = await expenseAccount.getBalance()
+    let balance = await expenseAccount.getBalance()
+    balance = this.web3Library.formatEther(balance)
     return balance
   }
 

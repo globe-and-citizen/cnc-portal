@@ -4,6 +4,36 @@ import { log, parseError } from "@/utils";
 
 const expenseAccountService = new ExpenseAccountService()
 
+export function useExpenseAccountTransfer() {
+  const data = ref<string | null>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function transfer(
+    expenseAccountAddress: string,
+    to: string,
+    amount: string
+  ) {
+    try {
+      loading.value = true
+      data.value = await expenseAccountService.transfer(
+        expenseAccountAddress,
+        to,
+        Number(amount)
+      )
+      isSuccess.value = true
+    } catch (err) {
+      log.error(parseError(err))
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: transfer, isLoading: loading, isSuccess, error, data }
+}
+
 export function useExpenseAccountIsApprovedAddress() {
   const data = ref<boolean>(false)
   const loading = ref(false)
