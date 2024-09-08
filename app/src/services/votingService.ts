@@ -8,14 +8,23 @@ import { SmartContract } from './contractService'
 import { VOTING_IMPL_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import type { ContractTransaction } from 'ethers'
 
 export interface IVotingService {
   web3Library: IWeb3Library
-  addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any>
-  getProposals(votingAddress: string): Promise<any>
-  concludeProposal(votingAddress: string, proposalId: Number): Promise<any>
-  voteDirective(votingAddress: string, proposalId: Number, directive: Number): Promise<any>
-  voteElection(votingAddress: string, proposalId: Number, candidateAddress: string): Promise<any>
+  addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<ContractTransaction>
+  getProposals(votingAddress: string): Promise<Array<Partial<Proposal>>>
+  concludeProposal(votingAddress: string, proposalId: Number): Promise<ContractTransaction>
+  voteDirective(
+    votingAddress: string,
+    proposalId: Number,
+    directive: Number
+  ): Promise<ContractTransaction>
+  voteElection(
+    votingAddress: string,
+    proposalId: Number,
+    candidateAddress: string
+  ): Promise<ContractTransaction>
   createVotingContract(teamId: string): Promise<string>
 }
 
@@ -31,7 +40,10 @@ export class VotingService implements IVotingService {
 
     return response.data.value.votingAddress
   }
-  async addProposal(votingAddress: string, proposal: Partial<Proposal>): Promise<any> {
+  async addProposal(
+    votingAddress: string,
+    proposal: Partial<Proposal>
+  ): Promise<ContractTransaction> {
     proposal.id = 0
     const votingContract = await this.getVotingContract(votingAddress)
     const voters = proposal.voters?.map((voter) => voter.memberAddress)
@@ -48,7 +60,7 @@ export class VotingService implements IVotingService {
 
     return tx
   }
-  async getProposals(votingAddress: string): Promise<any> {
+  async getProposals(votingAddress: string): Promise<Array<Partial<Proposal>>> {
     const votingContract = await this.getVotingContract(votingAddress)
     const proposalCount = await votingContract.proposalCount()
     const proposals = []
@@ -60,7 +72,7 @@ export class VotingService implements IVotingService {
     }
     return proposals
   }
-  async concludeProposal(votingAddress: string, proposalId: Number): Promise<any> {
+  async concludeProposal(votingAddress: string, proposalId: Number): Promise<ContractTransaction> {
     const votingContract = await this.getVotingContract(votingAddress)
     const tx = await votingContract.concludeProposal(proposalId)
     await tx.wait()
@@ -74,7 +86,11 @@ export class VotingService implements IVotingService {
 
     return
   }
-  async voteDirective(votingAddress: string, proposalId: Number, vote: Number): Promise<any> {
+  async voteDirective(
+    votingAddress: string,
+    proposalId: Number,
+    vote: Number
+  ): Promise<ContractTransaction> {
     const votingContract = await this.getVotingContract(votingAddress)
     const tx = await votingContract.voteDirective(proposalId, vote)
     await tx.wait()
@@ -85,7 +101,7 @@ export class VotingService implements IVotingService {
     votingAddress: string,
     proposalId: Number,
     candidateAddress: string
-  ): Promise<any> {
+  ): Promise<ContractTransaction> {
     const votingContract = await this.getVotingContract(votingAddress)
     const tx = await votingContract.voteElection(proposalId, candidateAddress)
     await tx.wait()
@@ -105,7 +121,7 @@ export class VotingService implements IVotingService {
     return await contractService.getContract()
   }
   private getContractService(votingAddress: string): SmartContract {
-    return new SmartContract(votingAddress, VOTING_ABI)
+    return new SmartContract(votingAddress, VOTING_ABI as unknown as Contract)
   }
   private async deployVotingContract(): Promise<string> {
     const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
