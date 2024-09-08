@@ -9,10 +9,11 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
   struct EmployeeOffer {
     string contractUrl;
     uint256 salary;
-    uint256 status; // 0 - offered, 1 - accepted, 2 - rejected, 3 - resigned
+    uint256 status; // 0 - offered, 1 - accepted, 2 - rejected, 3 - resigned, 4 - fired
     uint256 startDate;
     uint256 endDate;
   }
+
 
   mapping(address => EmployeeOffer) private employeeOffers;
 
@@ -28,41 +29,13 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     __Pausable_init();
   }
 
-  // When offer created status is 0
-  // When offer accepted status is 1
-  // When offer rejected status is 2
-  // When offer resigned status is 3
-
-  // Create offer:
-
-  // - When there is no employee contract
-  // - When create offer status is 0
-
-  // Accept offer:
-
-  // - When offer status is 0
-  // - Then offer status is 1
-
-  // Reject offer:
-
-  // - When offer status is 0
-  // - Then offer status is 2
-
-  // Resign offer:
-
-  // - When offer status is 1
-  // - Then offer status is 3
-
-  // Fire Employee:
-
-  // - When offer status is 1
-  // - Then offer status is 4
-
-  // Update offer:
-
-  // - When offer status is 0, 1, 2, 3, 4
-  // - Then update offer
-  // - Then offer status is 0
+  /**
+   * @dev Create offer for employee: Offer status is set to 0
+   * @param _employee Employee address
+   * @param _contractUrl Contract URL
+   * @param _salary Salary
+   * @param _endDate End date
+   */
   function createOffer(
     address _employee,
     string memory _contractUrl,
@@ -70,6 +43,11 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     uint256 _endDate
   ) external onlyOwner nonReentrant whenNotPaused {
     require(_employee != address(0), 'Invalid employee address');
+    // Check if there is already an offer for the employee
+    require(
+      bytes(employeeOffers[_employee].contractUrl).length > 0,
+      'Employee already has an active offer'
+    );
     require(bytes(_contractUrl).length > 0, 'Invalid contract URL');
     require(_salary > 0, 'Invalid salary');
 
@@ -84,10 +62,14 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     emit EmployeeOffered(_employee, _salary, _contractUrl);
   }
 
+  /**
+   * @dev Accept offer : The Employee call this function to accept the offer: Offer status is set to 1
+   * @dev Employee can only accept the offer if the offer status is 0
+   *
+   */
   function acceptOffer() external nonReentrant whenNotPaused {
     require(bytes(employeeOffers[msg.sender].contractUrl).length > 0, 'No offer found');
     require(employeeOffers[msg.sender].status == 0, 'No Active offer found');
-    require(employeeOffers[msg.sender].status == 1, 'Offer already accepted');
 
     employeeOffers[msg.sender].status = 1;
     employeeOffers[msg.sender].startDate = block.timestamp;
@@ -99,10 +81,18 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     );
   }
 
+  // Reject offer:
+
+  // - When offer status is 0
+  // - Then offer status is 2
+
+  /**
+   * @dev Reject offer : The Employee call this function to reject the offer: Offer status is set to 2
+   * @dev Employee can only reject the offer if the offer status is 0
+   */
   function rejectOffer() external nonReentrant whenNotPaused {
     require(bytes(employeeOffers[msg.sender].contractUrl).length > 0, 'No offer found');
     require(employeeOffers[msg.sender].status == 0, 'No Active offer found');
-    require(employeeOffers[msg.sender].status == 2, 'Offer already rejected');
 
     employeeOffers[msg.sender].status = 2;
 
@@ -113,10 +103,12 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     );
   }
 
+  /**
+   * @dev Resign offer : The Employee call this function to resign the offer: Offer status is set to 3
+   */
   function resignOffer() external nonReentrant whenNotPaused {
     require(bytes(employeeOffers[msg.sender].contractUrl).length > 0, 'No offer found');
-    require(employeeOffers[msg.sender].status == 1, 'No Active offer found');
-    require(employeeOffers[msg.sender].status == 3, 'Offer already resigned');
+    require(employeeOffers[msg.sender].status == 1, 'No Accepted offer found');
 
     employeeOffers[msg.sender].status = 3;
     employeeOffers[msg.sender].endDate = block.timestamp;
@@ -128,11 +120,13 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     );
   }
 
+  /**
+   * @dev Fire Employee : The Owner call this function to fire the employee: Offer status is set to 4
+   */
+
   function fireEmployee(address _employee) external onlyOwner nonReentrant whenNotPaused {
     require(bytes(employeeOffers[_employee].contractUrl).length > 0, 'No offer found');
-    require(employeeOffers[_employee].status == 1, 'No Active offer found');
-    require(employeeOffers[_employee].status == 4, 'Employee already fired');
-
+    require(employeeOffers[_employee].status == 1, 'No Accepted offer found');
     employeeOffers[_employee].status = 4;
     employeeOffers[_employee].endDate = block.timestamp;
 
@@ -141,5 +135,34 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
       employeeOffers[_employee].salary,
       employeeOffers[_employee].contractUrl
     );
+  }
+
+  // Update offer:
+
+  // - When offer status is 0, 1, 2, 3, 4
+  // - Then update offer
+  // - Then offer status is 0
+
+  /**
+   * @dev Update offer : The Owner call this function to update the offer
+   */
+  function updateOffer(
+    address _employee,
+    uint256 _salary,
+    string memory _contractUrl
+  ) external onlyOwner nonReentrant whenNotPaused {
+    require(_employee != address(0), 'Invalid employee address');
+    require(bytes(_contractUrl).length > 0, 'Invalid contract URL');
+    require(_salary > 0, 'Invalid salary');
+
+    employeeOffers[_employee] = EmployeeOffer({
+      contractUrl: _contractUrl,
+      salary: _salary,
+      status: 0,
+      startDate: 0,
+      endDate: 0
+    });
+
+    emit EmployeeOffered(_employee, _salary, _contractUrl);
   }
 }
