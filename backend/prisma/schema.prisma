@@ -33,6 +33,7 @@ model Team {
   bankAddress  String? // A team can have no bank contract
   votingAddress String?
   boardOfDirectorsAddress String?
+  contracts    Contract[] // Relation to the Contract model
 }
 
 model Notification {
@@ -45,4 +46,16 @@ model Notification {
   createdAt     DateTime @default(now())
   author        String?
   resource      String?
+}
+
+model Contract {
+  id           Int       @id @default(autoincrement())
+  address      String    @unique
+  type         String
+  deployer     String
+  admins       String[]
+  teamId       Int
+  team         Team      @relation(fields: [teamId], references: [id])
+
+  @@index([address])
 }

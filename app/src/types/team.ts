@@ -1,5 +1,5 @@
 import type { Member } from './member'
-
+import type { ContractAddress } from './contract'
 export interface Team {
   id: string
   name: string
@@ -8,6 +8,10 @@ export interface Team {
   members: Member[]
   ownerAddress: string
   votingAddress: string | null
+  addCampaignAddress: string | null
+  addCampaignAddresses:string[]
+  contracts:[]
+  contract: ContractAddress |null
   boardOfDirectorsAddress: string | null
 }
 export interface TeamsResponse {
