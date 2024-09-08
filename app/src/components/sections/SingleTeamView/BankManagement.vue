@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col">
-    <h2 class="text-center border-b-2 border-black pb-10">Manage Bank</h2>
+    <h2 class="text-center border-b-2 border-black pb-10" data-test="title">Manage Bank</h2>
     <div class="flex flex-row gap-y-4 my-4">
       <div class="flex flex-row justify-around w-full">
         <div class="grid grid-rows-subgrid row-span-2 gap-y-4">
           <SkeletonLoading v-if="loadingPaused" class="w-40 h-12" />
-          <h3 v-if="!loadingPaused" class="font-bold text-xl">
+          <h3 v-if="!loadingPaused" class="font-bold text-xl" data-test="status">
             Status: {{ isPaused ? 'Paused' : 'Active' }}
           </h3>
           <LoadingButton color="primary" v-if="isPaused ? loadingUnpause : loadingPause" />
@@ -29,10 +29,11 @@
             <button class="btn btn-primary w-40 text-center" @click="transferOwnershipModal = true">
               Transfer Ownership
             </button>
-            <LoadingButton v-if="loadingOwner" class="w-44" color="primary" />
+            <LoadingButton v-if="transferOwnershipLoading" class="w-44" color="primary" />
             <button
               class="btn btn-primary w-44 text-center"
-              v-if="team.boardOfDirectorsAddress && !loadingOwner"
+              data-test="transfer-to-board-of-directors"
+              v-if="team.boardOfDirectorsAddress && !transferOwnershipLoading"
               @click="executeBank(transferOwnership, [team.boardOfDirectorsAddress])"
             >
               Transfer to Board Of Directors Contract
@@ -112,7 +113,7 @@ const {
 } = useBankTransferOwnership(props.team.bankAddress!)
 
 const executeBank = async (execute: Function, args: any[] = []) => {
-  if (currentUserAddress !== props.team.ownerAddress) {
+  if (currentUserAddress !== owner.value) {
     addErrorToast('You are not the owner of this bank')
     return
   }
@@ -169,6 +170,7 @@ watch(transferOwnershipError, () => {
 
 watch(transferOwnershipSuccess, () => {
   if (transferOwnershipSuccess.value) {
+    transferOwnershipModal.value = false
     addSuccessToast('Bank ownership transferred successfully')
   }
 })
