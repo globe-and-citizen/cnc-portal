@@ -172,8 +172,9 @@ watch(transferOwnershipError, () => {
   }
 })
 
-watch(transferOwnershipSuccess, () => {
+watch(transferOwnershipSuccess, async () => {
   if (transferOwnershipSuccess.value) {
+    await getOwner()
     transferOwnershipModal.value = false
     addSuccessToast('Bank ownership transferred successfully')
   }
