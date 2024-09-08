@@ -37,7 +37,7 @@ const validAddress = helpers.withMessage('Invalid address', (address) => isAddre
 const rules = {
   newOwner: {
     required,
-    validAddress,
+    validAddress
   }
 }
 

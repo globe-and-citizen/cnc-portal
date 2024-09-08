@@ -21,12 +21,16 @@
         <div class="text-center flex flex-col gap-y-4 items-center">
           <div>
             <h3 class="font-bold text-xl">Owner</h3>
-            <h3 v-if="!loadingOwner">{{ owner }}</h3>
+            <h3 v-if="!loadingOwner" data-test="owner">{{ owner }}</h3>
           </div>
           <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
 
           <div class="flex flex-row gap-x-4 justify-around w-full">
-            <button class="btn btn-primary w-40 text-center" @click="transferOwnershipModal = true">
+            <button
+              class="btn btn-primary w-40 text-center"
+              data-test="transfer-ownership"
+              @click="transferOwnershipModal = true"
+            >
               Transfer Ownership
             </button>
             <LoadingButton v-if="transferOwnershipLoading" class="w-44" color="primary" />
