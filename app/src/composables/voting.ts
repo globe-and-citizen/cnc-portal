@@ -42,7 +42,7 @@ export function useAddProposal() {
 }
 
 export function useGetProposals() {
-  const proposals = ref<Proposal[]>([])
+  const proposals = ref<Partial<Proposal>[]>([])
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
