@@ -4,7 +4,13 @@
   <div class="flex flex-col gap-5">
     <label class="input input-bordered flex items-center gap-2 input-md mt-4">
       <span class="w-28">New Owner</span>
-      <input type="text" class="grow" placeholder="0x123" v-model="newOwner" />
+      <input
+        type="text"
+        class="grow"
+        placeholder="0x123"
+        data-test="new-owner-input"
+        v-model="newOwner"
+      />
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
@@ -17,7 +23,9 @@
 
   <div class="modal-action justify-center">
     <LoadingButton color="primary min-w-24" v-if="transferOwnershipLoading" />
-    <button v-else class="btn btn-primary" @click="submitForm(newOwner)">Submit</button>
+    <button v-else class="btn btn-primary" data-test="submit-button" @click="submitForm(newOwner)">
+      Submit
+    </button>
   </div>
 </template>
 <script setup lang="ts">
