@@ -3,7 +3,12 @@ import {
   useBankBalance,
   useBankDeposit,
   useBankEvents,
+  useBankOwner,
+  useBankPause,
+  useBankStatus,
   useBankTransfer,
+  useBankTransferOwnership,
+  useBankUnpause,
   useDeployBankContract
 } from '../bank'
 import { BankEventType, type EventResult } from '@/types'
@@ -53,6 +58,11 @@ const { bankService } = vi.hoisted(() => {
       createBankContract: vi.fn().mockReturnValue(Promise.resolve(bankAddress)),
       deposit: vi.fn().mockReturnValue(Promise.resolve(tx)),
       transfer: vi.fn().mockReturnValue(Promise.resolve(tx)),
+      transferOwnership: vi.fn().mockReturnValue(Promise.resolve(tx)),
+      isPaused: vi.fn().mockReturnValue(Promise.resolve(false)),
+      pause: vi.fn().mockReturnValue(Promise.resolve(tx)),
+      unpause: vi.fn().mockReturnValue(Promise.resolve(tx)),
+      getOwner: vi.fn().mockReturnValue(Promise.resolve('0x123')),
       getEvents: vi.fn().mockReturnValue(Promise.resolve(mockEvents)),
       getContract: vi.fn().mockImplementation(() => {
         return {
@@ -469,6 +479,411 @@ describe('Bank', () => {
         expect(error.value).toBe(null)
         await getEvents(BankEventType.Deposit)
         expect(bankService.getEvents).toHaveBeenCalledWith(bankAddress, BankEventType.Deposit)
+        expect(error.value).toBe(mockError)
+      })
+    })
+  })
+
+  describe('useBankStatus', () => {
+    it('should set initial values correctly', async () => {
+      const { execute: getStatus, isLoading, error, data: status } = useBankStatus(bankAddress)
+      expect(getStatus).toBeInstanceOf(Function)
+      expect(isLoading.value).toBe(false)
+      expect(error.value).toBe(null)
+      expect(status.value).toBe(null)
+    })
+
+    describe('when success', () => {
+      it('should change state of status correctly', async () => {
+        const { execute: getStatus, data: status } = useBankStatus(bankAddress)
+        expect(status.value).toBe(null)
+        await getStatus()
+        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
+        expect(status.value).toBe(false)
+      })
+
+      it('should change state of loading correctly', async () => {
+        const { execute: getStatus, isLoading } = useBankStatus(bankAddress)
+        const promise = getStatus()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should keeps state of error', async () => {
+        const { execute: getStatus, error } = useBankStatus(bankAddress)
+        expect(error.value).toBe(null)
+        await getStatus()
+        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(null)
+      })
+    })
+
+    describe('when error', () => {
+      const mockError = new Error('error')
+
+      beforeEach(() => {
+        vi.mocked(bankService.isPaused).mockRejectedValue(mockError)
+      })
+
+      it('should keeps state of status to be null', async () => {
+        const { execute: getStatus, data: status } = useBankStatus(bankAddress)
+        expect(status.value).toBe(null)
+        await getStatus()
+        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
+        expect(status.value).toBe(null)
+      })
+
+      it('should change state of loading correctly', async () => {
+        const { execute: getStatus, isLoading } = useBankStatus(bankAddress)
+        const promise = getStatus()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should change state of error correctly', async () => {
+        const { execute: getStatus, error } = useBankStatus(bankAddress)
+        expect(error.value).toBe(null)
+        await getStatus()
+        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(mockError)
+      })
+    })
+  })
+
+  describe('useBankOwner', () => {
+    it('should set initial values correctly', async () => {
+      const { execute: getOwner, isLoading, error, data: owner } = useBankOwner(bankAddress)
+      expect(getOwner).toBeInstanceOf(Function)
+      expect(isLoading.value).toBe(false)
+      expect(error.value).toBe(null)
+      expect(owner.value).toBe(null)
+    })
+
+    describe('when success', () => {
+      it('should change state of owner correctly', async () => {
+        const { execute: getOwner, data: owner } = useBankOwner(bankAddress)
+        expect(owner.value).toBe(null)
+        await getOwner()
+        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
+        expect(owner.value).toBe('0x123')
+      })
+
+      it('should change state of loading correctly', async () => {
+        const { execute: getOwner, isLoading } = useBankOwner(bankAddress)
+        const promise = getOwner()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should keeps state of error', async () => {
+        const { execute: getOwner, error } = useBankOwner(bankAddress)
+        expect(error.value).toBe(null)
+        await getOwner()
+        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(null)
+      })
+    })
+
+    describe('when error', () => {
+      const mockError = new Error('error')
+
+      beforeEach(() => {
+        vi.mocked(bankService.getOwner).mockRejectedValue(mockError)
+      })
+
+      it('should keeps state of owner to be null', async () => {
+        const { execute: getOwner, data: owner } = useBankOwner(bankAddress)
+        expect(owner.value).toBe(null)
+        await getOwner()
+        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
+        expect(owner.value).toBe(null)
+      })
+
+      it('should change state of loading correctly', async () => {
+        const { execute: getOwner, isLoading } = useBankOwner(bankAddress)
+        const promise = getOwner()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should change state of error correctly', async () => {
+        const { execute: getOwner, error } = useBankOwner(bankAddress)
+        expect(error.value).toBe(null)
+        await getOwner()
+        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(mockError)
+      })
+    })
+  })
+
+  describe('useBankPause', () => {
+    it('should set initial values correctly', async () => {
+      const { execute: pause, isLoading, error, transaction, isSuccess } = useBankPause(bankAddress)
+      expect(pause).toBeInstanceOf(Function)
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(false)
+      expect(transaction.value).toBe(null)
+      expect(error.value).toBe(null)
+    })
+
+    describe('when success', () => {
+      it('should change state of transaction correctly', async () => {
+        const { execute: pause, transaction } = useBankPause(bankAddress)
+        expect(transaction.value).toBe(null)
+        await pause()
+        expect(bankService.pause).toHaveBeenCalledWith(bankAddress)
+        expect(transaction.value).not.toBe(tx)
+      })
+
+      it('should change state of isLoading correctly', async () => {
+        const { execute: pause, isLoading } = useBankPause(bankAddress)
+        const promise = pause()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should change state of isSuccess correctly', async () => {
+        const { execute: pause, isSuccess } = useBankPause(bankAddress)
+        expect(isSuccess.value).toBe(false)
+        await pause()
+        expect(bankService.pause).toHaveBeenCalledWith(bankAddress)
+        expect(isSuccess.value).toBe(true)
+      })
+
+      it('should keeps state of error', async () => {
+        const { execute: pause, error } = useBankPause(bankAddress)
+        expect(error.value).toBe(null)
+        await pause()
+        expect(bankService.pause).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(null)
+      })
+    })
+
+    describe('when error', () => {
+      const mockError = new Error('error')
+
+      beforeEach(() => {
+        vi.mocked(bankService.pause).mockRejectedValue(mockError)
+      })
+
+      it('should change state of transaction correctly', async () => {
+        const { execute: pause, transaction } = useBankPause(bankAddress)
+        expect(transaction.value).toBe(null)
+        await pause()
+        expect(bankService.pause).toHaveBeenCalledWith(bankAddress)
+        expect(transaction.value).toBe(null)
+      })
+
+      it('should change state of isLoading correctly', async () => {
+        const { execute: pause, isLoading } = useBankPause(bankAddress)
+        const promise = pause()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should keeps state of isSuccess to be false', async () => {
+        const { execute: pause, isSuccess } = useBankPause(bankAddress)
+        expect(isSuccess.value).toBe(false)
+        await pause()
+        expect(bankService.pause).toHaveBeenCalledWith(bankAddress)
+        expect(isSuccess.value).toBe(false)
+      })
+
+      it('should change state of error correctly', async () => {
+        const { execute: pause, error } = useBankPause(bankAddress)
+        expect(error.value).toBe(null)
+        await pause()
+        expect(bankService.pause).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(mockError)
+      })
+    })
+  })
+
+  describe('useBankUnpause', () => {
+    it('should set initial values correctly', async () => {
+      const {
+        execute: unpause,
+        isLoading,
+        error,
+        transaction,
+        isSuccess
+      } = useBankUnpause(bankAddress)
+      expect(unpause).toBeInstanceOf(Function)
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(false)
+      expect(transaction.value).toBe(null)
+      expect(error.value).toBe(null)
+    })
+
+    describe('when success', () => {
+      it('should change state of transaction correctly', async () => {
+        const { execute: unpause, transaction } = useBankUnpause(bankAddress)
+        expect(transaction.value).toBe(null)
+        await unpause()
+        expect(bankService.unpause).toHaveBeenCalledWith(bankAddress)
+        expect(transaction.value).not.toBe(tx)
+      })
+
+      it('should change state of isLoading correctly', async () => {
+        const { execute: unpause, isLoading } = useBankUnpause(bankAddress)
+        const promise = unpause()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should change state of isSuccess correctly', async () => {
+        const { execute: unpause, isSuccess } = useBankUnpause(bankAddress)
+        expect(isSuccess.value).toBe(false)
+        await unpause()
+        expect(bankService.unpause).toHaveBeenCalledWith(bankAddress)
+        expect(isSuccess.value).toBe(true)
+      })
+
+      it('should keeps state of error', async () => {
+        const { execute: unpause, error } = useBankUnpause(bankAddress)
+        expect(error.value).toBe(null)
+        await unpause()
+        expect(bankService.unpause).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(null)
+      })
+    })
+
+    describe('when error', () => {
+      const mockError = new Error('error')
+
+      beforeEach(() => {
+        vi.mocked(bankService.unpause).mockRejectedValue(mockError)
+      })
+
+      it('should change state of transaction correctly', async () => {
+        const { execute: unpause, transaction } = useBankUnpause(bankAddress)
+        expect(transaction.value).toBe(null)
+        await unpause()
+        expect(bankService.unpause).toHaveBeenCalledWith(bankAddress)
+        expect(transaction.value).toBe(null)
+      })
+
+      it('should change state of isLoading correctly', async () => {
+        const { execute: unpause, isLoading } = useBankUnpause(bankAddress)
+        const promise = unpause()
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should keeps state of isSuccess to be false', async () => {
+        const { execute: unpause, isSuccess } = useBankUnpause(bankAddress)
+        expect(isSuccess.value).toBe(false)
+        await unpause()
+        expect(bankService.unpause).toHaveBeenCalledWith(bankAddress)
+        expect(isSuccess.value).toBe(false)
+      })
+
+      it('should change state of error correctly', async () => {
+        const { execute: unpause, error } = useBankUnpause(bankAddress)
+        expect(error.value).toBe(null)
+        await unpause()
+        expect(bankService.unpause).toHaveBeenCalledWith(bankAddress)
+        expect(error.value).toBe(mockError)
+      })
+    })
+  })
+
+  describe('useBankTransferOwnership', () => {
+    it('should set initial values correctly', async () => {
+      const {
+        execute: transferOwnership,
+        isLoading,
+        error,
+        transaction,
+        isSuccess
+      } = useBankTransferOwnership(bankAddress)
+      expect(transferOwnership).toBeInstanceOf(Function)
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(false)
+      expect(transaction.value).toBe(null)
+      expect(error.value).toBe(null)
+    })
+
+    describe('when success', () => {
+      it('should change state of transaction correctly', async () => {
+        const { execute: transferOwnership, transaction } = useBankTransferOwnership(bankAddress)
+        expect(transaction.value).toBe(null)
+        await transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
+        expect(transaction.value).not.toBe(tx)
+      })
+
+      it('should change state of isLoading correctly', async () => {
+        const { execute: transferOwnership, isLoading } = useBankTransferOwnership(bankAddress)
+        const promise = transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should change state of isSuccess correctly', async () => {
+        const { execute: transferOwnership, isSuccess } = useBankTransferOwnership(bankAddress)
+        expect(isSuccess.value).toBe(false)
+        await transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
+        expect(isSuccess.value).toBe(true)
+      })
+
+      it('should keeps state of error', async () => {
+        const { execute: transferOwnership, error } = useBankTransferOwnership(bankAddress)
+        expect(error.value).toBe(null)
+        await transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
+        expect(error.value).toBe(null)
+      })
+    })
+
+    describe('when error', () => {
+      const mockError = new Error('error')
+
+      beforeEach(() => {
+        vi.mocked(bankService.transferOwnership).mockRejectedValue(mockError)
+      })
+
+      it('should change state of transaction correctly', async () => {
+        const { execute: transferOwnership, transaction } = useBankTransferOwnership(bankAddress)
+        expect(transaction.value).toBe(null)
+        await transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
+        expect(transaction.value).toBe(null)
+      })
+
+      it('should change state of isLoading correctly', async () => {
+        const { execute: transferOwnership, isLoading } = useBankTransferOwnership(bankAddress)
+        const promise = transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+
+      it('should keeps state of isSuccess to be false', async () => {
+        const { execute: transferOwnership, isSuccess } = useBankTransferOwnership(bankAddress)
+        expect(isSuccess.value).toBe(false)
+        await transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
+        expect(isSuccess.value).toBe(false)
+      })
+
+      it('should change state of error correctly', async () => {
+        const { execute: transferOwnership, error } = useBankTransferOwnership(bankAddress)
+        expect(error.value).toBe(null)
+        await transferOwnership(bankAddress, to)
+        expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(error.value).toBe(mockError)
       })
     })
