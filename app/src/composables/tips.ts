@@ -3,6 +3,7 @@ import type { EventResult, TipsEventType } from '@/types'
 import type { IContractReadFunction, IContractTransactionFunction } from '@/types/interfaces'
 import dayjs from 'dayjs'
 import type { Log } from 'ethers'
+import type { ContractTransaction } from 'ethers'
 import type { EventLog } from 'ethers'
 import { ref } from 'vue'
 
@@ -32,7 +33,7 @@ export function useTipsBalance(): IContractReadFunction<string | null> {
 }
 
 export function usePushTip(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const isLoading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -53,7 +54,7 @@ export function usePushTip(): IContractTransactionFunction {
 }
 
 export function useSendTip(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -74,7 +75,7 @@ export function useSendTip(): IContractTransactionFunction {
 }
 
 export function useWithdrawTips(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+  const transaction = ref<any>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -97,7 +98,7 @@ export function useWithdrawTips(): IContractTransactionFunction {
 export function useTipEvents() {
   const events = ref<EventResult[]>([])
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getEvents(type: TipsEventType): Promise<void> {
     try {
