@@ -3,6 +3,7 @@ import type { BankEventType, EventResult } from '@/types'
 import type { IContractReadFunction, IContractTransactionFunction } from '@/types/interfaces'
 import dayjs from 'dayjs'
 import type { Log } from 'ethers'
+import type { ContractTransaction } from 'ethers'
 import type { EventLog } from 'ethers'
 import { ref } from 'vue'
 
@@ -49,7 +50,7 @@ export function useBankBalance(): IContractReadFunction<string | null> {
 }
 
 export function useBankDeposit(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -70,7 +71,7 @@ export function useBankDeposit(): IContractTransactionFunction {
 }
 
 export function useBankTransfer(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)

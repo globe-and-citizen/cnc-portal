@@ -191,7 +191,7 @@ watch(balanceError, () => {
 })
 watch(pushTipError, async () => {
   if (pushTipError.value) {
-    addErrorToast(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
+    addErrorToast('Failed to push tip')
   }
 })
 

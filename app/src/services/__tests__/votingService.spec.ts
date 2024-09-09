@@ -98,7 +98,7 @@ describe('VotingService', () => {
 
       votingService = new VotingService(ethersJsAdapterMock as unknown as IWeb3Library)
 
-      await expect((votingService as any).deployVotingContract()).rejects.toThrow('Deploy Failed')
+      await expect(votingService.deployVotingContract()).rejects.toThrow('Deploy Failed')
     })
   })
 

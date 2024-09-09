@@ -123,7 +123,7 @@ export class VotingService implements IVotingService {
   private getContractService(votingAddress: string): SmartContract {
     return new SmartContract(votingAddress, VOTING_ABI as unknown as Contract)
   }
-  private async deployVotingContract(): Promise<string> {
+  async deployVotingContract(): Promise<string> {
     const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
     const votingProxyFactory = await this.web3Library.getFactoryContract(
       BEACON_PROXY_ABI,
