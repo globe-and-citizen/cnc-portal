@@ -16,12 +16,13 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
 
 
     uint256 public proposalCount;
-    address public boardOfDirectorsAddress;
+    address public boardOfDirectorsContractAddress;
 
     event ProposalAdded(uint256 indexed proposalId, string title, string description);
     event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
     event ElectionVoted(address indexed voter, uint256 indexed proposalId, address indexed candidateAddress);
     event ProposalConcluded(uint256 indexed proposalId, bool isActive);
+    event BoardOfDirectorsSet(address[] boardOfDirectors);
 
     function initialize() public initializer {
         __Ownable_init(msg.sender);
@@ -29,34 +30,44 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         __Pausable_init();
   }
 
-    function addProposal(Types.Proposal calldata _proposal) public {
-        require(bytes(_proposal.title).length > 0, "Title cannot be empty");
+    function addProposal(
+            string memory _title,
+            string memory _description,
+            bool _isElection,
+            uint256 _winnerCount,
+            address[] memory _voters,
+            address[] memory _candidates
+        ) public {
+            require(bytes(_title).length > 0, "Title cannot be empty");
 
-        Types.Proposal storage newProposal = proposalsById[proposalCount];
+            Types.Proposal storage newProposal = proposalsById[proposalCount];
+            newProposal.id = proposalCount;
+            newProposal.title = _title;
+            newProposal.description = _description;
+            newProposal.draftedBy = msg.sender;
+            newProposal.isElection = _isElection;
+            newProposal.isActive = true;
+            newProposal.winnerCount = _winnerCount;
+
+            for (uint256 i = 0; i < _voters.length; i++) {
+                Types.Member memory voter = Types.Member({isEligible:true, isVoted: false, memberAddress:_voters[i]});
+                newProposal.voters.push(voter);
+            }
+            if(_isElection){
+                require(_candidates.length > 0, "Candidates cannot be empty");
+                for (uint256 i = 0; i < _candidates.length; i++) {
+                        Types.Candidate memory candidate = Types.Candidate({candidateAddress:_candidates[i], votes:0});
+                        newProposal.candidates.push(candidate);
+                    }
+            }
         
-        newProposal.id = proposalCount;
-        newProposal.title = _proposal.title;
-        newProposal.description = _proposal.description;
-        newProposal.draftedBy = _proposal.draftedBy;
-        newProposal.isElection = _proposal.isElection;
-        newProposal.isActive = _proposal.isActive;
-        newProposal.teamId = _proposal.teamId;
-
-        for (uint256 i = 0; i < _proposal.candidates.length; i++) {
-            newProposal.candidates.push(_proposal.candidates[i]);
+            proposalsById[proposalCount] = newProposal;
+            emit ProposalAdded(proposalCount, _title, _description);
+            proposalCount++;
         }
 
-        for (uint256 i = 0; i < _proposal.voters.length; i++) {
-            newProposal.voters.push(_proposal.voters[i]);
-        }
 
-        newProposal.votes = _proposal.votes;
 
-        proposalsById[proposalCount] = newProposal;
-
-        emit ProposalAdded(proposalCount, _proposal.title, _proposal.description);
-        proposalCount++;
-    }
 
 
     function voteDirective(uint256 proposalId, uint256 vote) public {
@@ -107,6 +118,31 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         Types.Proposal storage proposal = proposalsById[proposalId];
         proposal.isActive = !proposal.isActive;
 
+        if(proposal.isElection){
+            uint256 winnerCount = proposal.winnerCount;
+            Types.Candidate[] memory candidates = proposal.candidates;
+
+            for (uint256 i = 0; i < candidates.length; i++) {
+                    for (uint256 j = i + 1; j < candidates.length; j++) {
+                        if (candidates[i].votes < candidates[j].votes) {
+                            Types.Candidate memory temp = candidates[i];
+                            candidates[i] = candidates[j];
+                            candidates[j] = temp;
+                        }
+                    }
+                }  
+
+            address[] memory winnerList = new address[](winnerCount);
+
+            for (uint256 i = 0; i < winnerCount; i++) {
+                winnerList[i] = candidates[i].candidateAddress;
+                console.log("Winner: ", winnerList[i]);
+            }
+            IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+            emit BoardOfDirectorsSet(winnerList);
+            emit ProposalConcluded(proposalId, proposal.isActive);
+            return;
+        }
         emit ProposalConcluded(proposalId, proposal.isActive);
     }
 
@@ -135,11 +171,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         }
     }
 
-    function setBoardOfDirectorsAddress(address _boardOfDirectorsAddress) public onlyOwner {
-        boardOfDirectorsAddress = _boardOfDirectorsAddress;
+    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) public onlyOwner {
+        boardOfDirectorsContractAddress = _boardOfDirectorsContractAddress;
     }
 
     function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
-        IBoardOfDirectors(boardOfDirectorsAddress).setBoardOfDirectors(_boardOfDirectors);
+        IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(_boardOfDirectors);
     }
 }

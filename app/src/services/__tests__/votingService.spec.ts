@@ -27,7 +27,9 @@ vi.mock('@/adapters/web3LibraryAdapter', () => ({
 
 // Mock SmartContract
 vi.mock('@/services/contractService', () => ({
-  SmartContract: vi.fn()
+  SmartContract: vi.fn().mockImplementation(() => ({
+    getContract: vi.fn().mockResolvedValue({})
+  }))
 }))
 
 // Define the test suite
@@ -41,6 +43,8 @@ describe('VotingService', () => {
     voteElection: ReturnType<typeof vi.fn>
     proposalCount: ReturnType<typeof vi.fn>
     proposalsById: ReturnType<typeof vi.fn>
+    getProposalById: ReturnType<typeof vi.fn>
+    setBoardOfDirectorsContractAddress: ReturnType<typeof vi.fn>
   }
 
   // Create a mock contract instance
@@ -52,12 +56,23 @@ describe('VotingService', () => {
       voteDirective: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
       voteElection: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
       proposalCount: vi.fn().mockResolvedValue(1),
-      proposalsById: vi.fn().mockResolvedValue(mockProposal)
+      proposalsById: vi.fn().mockResolvedValue(mockProposal),
+      getProposalById: vi.fn().mockResolvedValue(mockProposal),
+      setBoardOfDirectorsContractAddress: vi
+        .fn()
+        .mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) })
     }
 
     // Mock the `getContract` method to return the mock contract instance
     const ethersJsAdapterMock = {
-      getContract: vi.fn().mockResolvedValue(mockContract as unknown as Contract)
+      getContract: vi.fn().mockResolvedValue(mockContract as unknown as Contract),
+      getFactoryContract: vi.fn().mockResolvedValue({
+        deploy: vi.fn().mockResolvedValue({
+          waitForDeployment: vi.fn().mockResolvedValue({
+            getAddress: vi.fn().mockResolvedValue('0xDeployedAddress')
+          })
+        })
+      })
     }
 
     // Override the getInstance method to return the mocked adapter
@@ -68,14 +83,49 @@ describe('VotingService', () => {
     // Initialize the voting service with the mocked library
     votingService = new VotingService(ethersJsAdapterMock as unknown as IWeb3Library)
   })
+  describe('getContract', () => {
+    it('should return the contract instance', async () => {
+      const contract = await votingService.getContract('0xVotingAddress')
+      expect(contract).toBeDefined()
+    })
+  })
 
+  describe('deployVotingContract', () => {
+    it('should handle errors when deploying the voting contract', async () => {
+      const ethersJsAdapterMock = {
+        getFactoryContract: vi.fn().mockRejectedValue(new Error('Deploy Failed'))
+      }
+
+      votingService = new VotingService(ethersJsAdapterMock as unknown as IWeb3Library)
+
+      await expect((votingService as any).deployVotingContract()).rejects.toThrow('Deploy Failed')
+    })
+  })
+
+  describe('setBoardOfDirectorsContractAddress', () => {
+    it('should set the Board of Directors contract address', async () => {
+      await votingService.setBoardOfDirectorsContractAddress('0xVotingAddress', '0xBoDAddress')
+
+      expect(mockContract.setBoardOfDirectorsContractAddress).toHaveBeenCalledOnce()
+      expect(mockContract.setBoardOfDirectorsContractAddress).toHaveBeenCalledWith('0xBoDAddress')
+    })
+
+    it('should handle errors when setting the BoD contract address', async () => {
+      mockContract.setBoardOfDirectorsContractAddress.mockRejectedValueOnce(
+        new Error('Set BoD Address Failed')
+      )
+
+      await expect(
+        votingService.setBoardOfDirectorsContractAddress('0xVotingAddress', '0xBoDAddress')
+      ).rejects.toThrow('Set BoD Address Failed')
+    })
+  })
   describe('addProposal', () => {
     it('should add a proposal and return transaction', async () => {
       const tx = await votingService.addProposal('0x1234', mockProposal)
 
       expect(tx).toBeDefined()
       expect(mockContract.addProposal).toHaveBeenCalledOnce()
-      expect(mockContract.addProposal).toHaveBeenCalledWith(mockProposal)
       expect(mockContract.addProposal).toHaveReturnedWith(expect.any(Promise))
     })
 

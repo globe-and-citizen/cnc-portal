@@ -42,7 +42,7 @@ export function useAddProposal() {
 }
 
 export function useGetProposals() {
-  const proposals = ref<Proposal[]>([])
+  const proposals = ref<Partial<Proposal>[]>([])
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -124,6 +124,35 @@ export function useVoteElection() {
   }
 
   return { execute: voteElection, isLoading: loading, isSuccess, error, transaction }
+}
+export function useSetBoardOfDirectorsContractAddress() {
+  const transaction = ref<any>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function setBoardOfDirectorsContractAddress(votingAddress: string, bodAddress: string) {
+    try {
+      loading.value = true
+      transaction.value = await votingService.setBoardOfDirectorsContractAddress(
+        votingAddress,
+        bodAddress
+      )
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return {
+    execute: setBoardOfDirectorsContractAddress,
+    isLoading: loading,
+    isSuccess,
+    error,
+    transaction
+  }
 }
 export function useDeployVotingContract() {
   const contractAddress = ref<string | null>(null)
