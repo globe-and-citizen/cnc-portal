@@ -114,7 +114,6 @@ import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
 import { useBankBalance, useBankDeposit, useBankTransfer } from '@/composables/bank'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useErrorHandler } from '@/composables/errorHandler'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -242,7 +241,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
       await executeSearchUser()
     }
   } catch (error) {
-    return useErrorHandler().handleError(error)
+    addErrorToast('Failed to search users')
   }
 }
 

@@ -66,13 +66,13 @@ export class TipsService extends SmartContract {
     return await this.contract.getBalance(await this.web3Library.getAddress())
   }
 
-  async withdrawTips(): Promise<void> {
+  async withdrawTips(): Promise<ContractTransaction> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
 
     const tx = await this.contract.withdraw()
-    await tx.wait()
+    return await tx.wait()
   }
 
   async getEvents(type: TipsEventType): Promise<EventLog[] | Log[]> {

@@ -13,7 +13,6 @@ import EditUserForm from '@/components/forms/EditUserForm.vue'
 
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
-import { useErrorHandler } from './composables/errorHandler'
 import { useCustomFetch } from './composables/useCustomFetch'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -54,7 +53,7 @@ const {
 
 watch(userUpdateError, () => {
   if (userUpdateError.value) {
-    useErrorHandler().handleError(userUpdateError.value || 'Failed to update user')
+    addErrorToast(userUpdateError.value || 'Failed to update user')
   }
 })
 watch(updatedUser, () => {

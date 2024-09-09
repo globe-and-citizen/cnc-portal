@@ -1,7 +1,11 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
+import { setActivePinia, createPinia } from 'pinia'
 
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
 describe('CreateProposal.vue', () => {
   describe('renders', () => {
     it('renders correctly', () => {

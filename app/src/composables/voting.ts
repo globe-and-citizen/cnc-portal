@@ -1,11 +1,12 @@
 import { VotingService } from '@/services/votingService'
 import type { Proposal } from '@/types'
+import type { ContractTransaction } from 'ethers'
 import { ref } from 'vue'
 
 const votingService = new VotingService()
 
 export function useAddProposal() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -62,7 +63,7 @@ export function useGetProposals() {
   return { execute: getProposals, isLoading: loading, error, data: proposals, isSuccess }
 }
 export function useConcludeProposal() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -82,7 +83,7 @@ export function useConcludeProposal() {
   return { execute: concludeProposal, isLoading: loading, isSuccess, error, transaction }
 }
 export function useVoteDirective() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -102,7 +103,7 @@ export function useVoteDirective() {
   return { execute: voteDirective, isLoading: loading, isSuccess, error, transaction }
 }
 export function useVoteElection() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -126,7 +127,7 @@ export function useVoteElection() {
   return { execute: voteElection, isLoading: loading, isSuccess, error, transaction }
 }
 export function useSetBoardOfDirectorsContractAddress() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)

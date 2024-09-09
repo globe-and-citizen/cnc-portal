@@ -75,7 +75,7 @@ export function useSendTip(): IContractTransactionFunction {
 }
 
 export function useWithdrawTips(): IContractTransactionFunction {
-  const transaction = ref<any>()
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)

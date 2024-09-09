@@ -84,7 +84,7 @@ export class VotingService implements IVotingService {
     const tx = await votingContract.setBoardOfDirectorsContractAddress(bodAddress)
     await tx.wait()
 
-    return
+    return tx
   }
   async voteDirective(
     votingAddress: string,
