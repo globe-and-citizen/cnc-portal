@@ -1,9 +1,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-const sourceDir = path.join(__dirname, 'ignition/deployments')
+const sourceDir = path.join(__dirname, '../ignition/deployments')
 
-const destinationDir = path.resolve(__dirname, '../app/src/artifacts/deployed_addresses')
+const destinationDir = path.resolve(__dirname, '../../app/src/artifacts/deployed_addresses')
 
 if (!fs.existsSync(destinationDir)) {
   fs.mkdirSync(destinationDir, { recursive: true })
