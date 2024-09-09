@@ -1,5 +1,4 @@
-import type { Page } from '@playwright/test'
-import { MetaMask, metaMaskFixtures } from '@synthetixio/synpress/playwright'
+import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
 import basicSetup from 'test/wallet-setup/basic.setup'
 
 export const test = metaMaskFixtures(basicSetup).extend<{
