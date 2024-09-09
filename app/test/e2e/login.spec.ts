@@ -1,8 +1,8 @@
 import { testWithSynpress } from '@synthetixio/synpress'
 import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
-import basicSetup from '../wallet-setup/basic.setup'
+import differentNetworkSetup from '../wallet-setup/different-network.setup'
 
-const test = testWithSynpress(metaMaskFixtures(basicSetup))
+const test = testWithSynpress(metaMaskFixtures(differentNetworkSetup))
 
 const { expect } = test
 
@@ -40,6 +40,12 @@ test.describe('Sign in', () => {
     await page.getByTestId('sign-in').click()
 
     await page.waitForLoadState('networkidle')
+    // Switch network
+    // Note: default network metamask is Ethereum and the app default network is Sepolia
+    await metamask.approveSwitchNetwork()
+
+    // Wait for connect metamask popup to appear
+    await page.waitForTimeout(3000)
 
     // Connect to dapp
     await metamask.connectToDapp()
