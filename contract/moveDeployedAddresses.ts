@@ -17,7 +17,7 @@ function copyDeployedAddresses() {
     const deployedFilePath = path.join(chainPath, 'deployed_addresses.json')
 
     if (fs.existsSync(deployedFilePath)) {
-      const destFilePath = path.join(destinationDir, `${chainDir}-deployed_addresses.json`)
+      const destFilePath = path.join(destinationDir, `${chainDir}.json`)
       fs.copyFileSync(deployedFilePath, destFilePath)
       console.log(`Copied ${deployedFilePath} to ${destFilePath}`)
     }
