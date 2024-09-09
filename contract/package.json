@@ -8,6 +8,7 @@
     "coverage": "npx hardhat coverage",
     "lint": "npx eslint . --ext .ts",
     "format": "prettier --write .",
+    "moveDeployedAddresses": "nodemon --exec 'ts-node' moveDeployedAddresses.ts",
     "format-check": "npx prettier --check ."
   },
   "devDependencies": {
