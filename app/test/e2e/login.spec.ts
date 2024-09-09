@@ -38,13 +38,8 @@ test.describe('Sign in', () => {
 
     // Click sign-in button
     await page.getByTestId('sign-in').click()
-    await page.waitForLoadState('networkidle')
-    // Switch network
-    // Note: default network metamask is Ethereum and the app default network is Sepolia
-    await metamask.approveSwitchNetwork()
 
-    // Wait for connect metamask popup to appear
-    await page.waitForTimeout(3000)
+    await page.waitForLoadState('networkidle')
 
     // Connect to dapp
     await metamask.connectToDapp()
