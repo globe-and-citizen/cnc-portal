@@ -4,6 +4,90 @@ import { log, parseError } from "@/utils";
 
 const expenseAccountService = new ExpenseAccountService()
 
+export function useExpenseAccountApproveAddress() {
+  const data = ref<string | null>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function approveAddress(
+    expenseAccountAddress: string,
+    userAddress: string
+  ) {
+    try {
+      loading.value = true
+      data.value = await expenseAccountService.approveAddress(
+        expenseAccountAddress,
+        userAddress
+      )
+      isSuccess.value = true
+    } catch (err) {
+      log.error(parseError(err))
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: approveAddress, isLoading: loading, isSuccess, error, data }  
+}
+
+export function useExpenseAccountDisapproveAddress() {
+  const data = ref<string | null>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function disapproveAddress(
+    expenseAccountAddress: string,
+    userAddress: string
+  ) {
+    try {
+      loading.value = true
+      data.value = await expenseAccountService.disapproveAddress(
+        expenseAccountAddress,
+        userAddress
+      )
+      isSuccess.value = true
+    } catch (err) {
+      log.error(parseError(err))
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: disapproveAddress, isLoading: loading, isSuccess, error, data }  
+}
+
+export function useExpenseAccountSetLimit() {
+  const data = ref<string | null>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function setLimit(
+    expenseAccountAddress: string,
+    amount: string
+  ) {
+    try {
+      loading.value = true
+      data.value = await expenseAccountService.setMaxLimit(
+        expenseAccountAddress,
+        amount
+      )
+      isSuccess.value = true
+    } catch (err) {
+      log.error(parseError(err))
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: setLimit, isLoading: loading, isSuccess, error, data }  
+}
+
 export function useExpenseAccountTransfer() {
   const data = ref<string | null>(null)
   const loading = ref(false)
