@@ -12,10 +12,8 @@ describe('Dashboard', () => {
   })
 
   test('should be able to access the dashboard', async ({ page }) => {
-    await expect(page.locator('h1').first()).toHaveText('Welcome To the CNC portal')
-    await expect(page.locator('p').first()).toHaveText(
-      'Our Website is still in construction. Look into our wonderfull tip feature and try to tip your team'
-    )
-    await expect(page.locator('[data-testid="tip-your-team-button"]')).toHaveText('Tip your Team')
+    await page.locator('data-test=tip-button').click()
+    await page.waitForURL('http://localhost:5173/teams')
+    expect(page.url()).toContain('http://localhost:5173/teams')
   })
 })
