@@ -44,5 +44,5 @@ jobs:
 
       - name: 💻 Run E2E
         run: |
-          xvfb-run npm run test:headless
+          xvfb-run npm run test
         working-directory: ./app
