@@ -36,21 +36,21 @@
         <button
           class="btn btn-xs btn-secondary"
           v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
-          @click="transferModal = !transferModal"
+          @click="transferModal = true"
         >
           Transfer
         </button>
         <button
           class="btn btn-xs btn-secondary"
           v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
-          @click=""
+          @click="setLimitModal = true"
         >
           Set Limit
         </button>
         <button
           class="btn btn-xs btn-secondary"
           v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
-          @click=""
+          @click="approveUsersModal = true"
         >
           Approve Users
         </button>
@@ -70,6 +70,25 @@
           :bank-balance="`${contractBalance}`"
         />
       </ModalComponent>
+      <ModalComponent v-model="setLimitModal">
+        <SetLimitForm 
+          v-if="setLimitModal"
+          :loading="isLoadingSetLimit"
+          @close-modal="() => setLimitModal = false"
+          @set-limit="setExepenseAccountLimit"
+        />
+      </ModalComponent>
+      <ModalComponent v-model="approveUsersModal">
+        <ApproveUsersForm 
+          :loading-approve="isLoadingApproveAddress"
+          :loading-disapprove="isLoadingDisapproveAddress"
+          :approved-addresses="approvedAddresses"
+          :unapproved-addresses="unapprovedAddresses"
+          @approve-address="approveAddress"
+          @disapprove-address="disapproveAddress"
+          @close-modal="approveUsersModal = false"
+        />
+      </ModalComponent>
     </div>
 
     <div></div>
@@ -77,7 +96,9 @@
 
   <!-- Expense Account Not Yet Created -->
   <div class="flex justify-center items-center" v-else>
+    <LoadingButton class="w-24"color="primary" v-if="isLoadingDeploy"/>
     <button
+      v-else
       class="btn btn-primary"
       @click="async () => await deployExpenseAccount()"
       data-test="createExpenseAccount"
@@ -88,31 +109,49 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch, computed } from "vue";
 import type { Team, User } from "@/types";
 import { 
   useDeployExpenseAccountContract, 
   useExpenseAccountGetOwner,
   useExpenseAccountGetBalance,
   useExpenseAccountIsApprovedAddress,
-  useExpenseAccountTransfer 
+  useExpenseAccountTransfer,
+  useExpenseAccountSetLimit,
+  useExpenseAccountApproveAddress,
+  useExpenseAccountDisapproveAddress 
 } from "@/composables/useExpenseAccount";
 import { EXPENSE_ACCOUNT_ADDRESS, NETWORK } from "@/constant";
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from "@/components/ModalComponent.vue";
+import SetLimitForm from '@/components/sections/SingleTeamView/forms/SetLimitForm.vue'
+import ApproveUsersForm from "./forms/ApproveUsersForm.vue";
+import LoadingButton from '@/components/LoadingButton.vue'
 import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
-import { useUserDataStore } from '@/stores/user'
+import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const props = defineProps<{team: Partial<Team>}>()
-const approvedAddresses = ref<{[key: string]: boolean}>({})
+//const approvedAddresses = ref<{[key: string]: boolean}>({})
+const approvedAddresses = ref<Set<string>>(new Set())
 const transferModal = ref(false)
+const setLimitModal = ref(false)
+const approveUsersModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
+const unapprovedAddresses = ref<Set<string>>(new Set())
+/*const unapprovedAddresses = computed(() => {
+  return props.team.members?.map(member => {
+    console.log(`approvedAddresses.value[member.address]: `, approvedAddresses.value[member.address])
+    if (!approvedAddresses.value[member.address])
+      return member.address 
+  })
+})*/
 
+const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 
 const {
@@ -134,13 +173,33 @@ const {
   .json()
 
 const {
+  execute: executeExpenseAccountApproveAddress,
+  isLoading: isLoadingApproveAddress,
+  isSuccess: isSuccessApproveAddress
+} = useExpenseAccountApproveAddress()
+
+const {
+  execute: executeExpenseAccountDisapproveAddress,
+  isLoading: isLoadingDisapproveAddress,
+  isSuccess: isSuccessDisapproveAddress
+} = useExpenseAccountDisapproveAddress()
+
+const {
+  execute: executeExpenseAccountSetLimit,
+  isLoading: isLoadingSetLimit,
+  isSuccess: isSuccessMaxLimit
+} = useExpenseAccountSetLimit()
+
+const {
   execute: executeExpenseAccountTransfer
 } = useExpenseAccountTransfer()
 
 const {
   data: contractAddress,
   execute: executeDeployExpenseAccount,
-  isLoading: isLoadingDeploy
+  isLoading: isLoadingDeploy,
+  isSuccess: isSuccessDeploy,
+  error: errorDeploy
 } = useDeployExpenseAccountContract()
 
 const {
@@ -178,13 +237,38 @@ const getExpenseAccountOwner = async () => {
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
-  console.log('to: ', to, ', amount: ', amount)
+  //console.log('to: ', to, ', amount: ', amount)
   await executeExpenseAccountTransfer(
     EXPENSE_ACCOUNT_ADDRESS, 
     to,
     amount
   )
   await executeExpenseAccountGetBalance(EXPENSE_ACCOUNT_ADDRESS)
+}
+
+const setExepenseAccountLimit = async (amount: any) => {
+  await executeExpenseAccountSetLimit(
+    EXPENSE_ACCOUNT_ADDRESS,
+    amount.value
+  )
+}
+
+const approveAddress = async (address: string) => {
+  await executeExpenseAccountApproveAddress(
+    EXPENSE_ACCOUNT_ADDRESS,
+    address
+  )
+
+  await checkApprovedAddresses()
+}
+
+const disapproveAddress = async (address: string) => {
+  await executeExpenseAccountDisapproveAddress(
+    EXPENSE_ACCOUNT_ADDRESS,
+    address
+  )
+
+  await checkApprovedAddresses() 
 }
 
 const checkApprovedAddresses = async () => {
@@ -194,11 +278,14 @@ const checkApprovedAddresses = async () => {
         EXPENSE_ACCOUNT_ADDRESS,
         member.address
       )
-      console.log(`${member.address}`, isApprovedAddress.value)
-      if (isApprovedAddress.value)
-        approvedAddresses.value[member.address] = isApprovedAddress.value
+      if (isApprovedAddress.value) {
+        approvedAddresses.value.add(member.address)
+        unapprovedAddresses.value.delete(member.address)
+      } else {
+        unapprovedAddresses.value.add(member.address)
+        approvedAddresses.value.delete(member.address)
+      }
     }
-    console.log("approvedAddressed: ", approvedAddresses.value)
 }
 
 const openExplorer = (address: string) => {
@@ -215,6 +302,21 @@ const searchUsers = async (input: { name: string; address: string }) => {
   } catch (error) {
   }
 }
+
+watch(isSuccessMaxLimit, (newVal) => {
+  if (newVal)
+    addSuccessToast('Max Limit Successfully Set')
+})
+
+watch(isSuccessDeploy, (newVal) => {
+  if (newVal)
+    addSuccessToast('Expense Account Successfully Created')
+})
+
+watch(errorDeploy, (newVal) => {
+  if (errorDeploy)
+    addErrorToast('Error Deploying Creating Account')
+})
 onMounted(async () => {
   await getExpenseAccountBalance()
   await getExpenseAccountOwner()
