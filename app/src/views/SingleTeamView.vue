@@ -11,7 +11,7 @@
         data-test="createBank"
       >
         Create Bank Account
-    </button>
+      </button>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -28,7 +28,7 @@
           <ProposalSection v-if="activeTab == 3" :team="team" @getTeam="getTeamAPI" />
         </template>
         <template #tab-4>
-          <ExpenseAccountSection v-if="activeTab == 4" :team="team"/>
+          <ExpenseAccountSection v-if="activeTab == 4" :team="team" />
         </template>
       </TabNavigation>
     </div>
@@ -140,8 +140,8 @@ onMounted(async () => {
   }
   if (team?.value?.bankAddress) {
     tabs.value.push(
-      SingleTeamTabs.Bank, 
-      SingleTeamTabs.Transactions, 
+      SingleTeamTabs.Bank,
+      SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses
     )
@@ -155,8 +155,8 @@ const deployBankContract = async () => {
   if (team.value.bankAddress) {
     bankModal.value = false
     tabs.value.push(
-      SingleTeamTabs.Bank, 
-      SingleTeamTabs.Transactions, 
+      SingleTeamTabs.Bank,
+      SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses
     )

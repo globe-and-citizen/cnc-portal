@@ -2,10 +2,7 @@ import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapte
 import EXPENSE_ACCOUNT_LOGIC_ABI from '../artifacts/abi/expense-account.json'
 import FACTORY_BEACON_ABI from '../artifacts/abi/factory-beacon.json'
 import { useUserDataStore } from '@/stores/user'
-import { 
-    EXPENSE_ACCOUNT_BEACON_ADDRESS,
-    EXPENSE_ACCOUNT_LOGIC_ADDRESS 
-} from '@/constant'
+import { EXPENSE_ACCOUNT_BEACON_ADDRESS, EXPENSE_ACCOUNT_LOGIC_ADDRESS } from '@/constant'
 import { SmartContract } from './contractService'
 import type { Contract } from 'ethers'
 export interface IExpenseAccountService {
@@ -26,33 +23,24 @@ export class ExpenseAccountService implements IExpenseAccountService {
   }
 
   async getMaxLimit(expenseAccountAddress: string): Promise<number> {
-    const expenseAccount = await this.getContract(
-      expenseAccountAddress, 
-      EXPENSE_ACCOUNT_LOGIC_ABI
-    )
+    const expenseAccount = await this.getContract(expenseAccountAddress, EXPENSE_ACCOUNT_LOGIC_ABI)
     let maxLimit = await expenseAccount.maxLimit()
     maxLimit = this.web3Library.formatEther(maxLimit)
     return maxLimit
   }
 
-  async approveAddress(
-    expenseAccountAddress: string, 
-    userAddress: string
-  ): Promise<any> {
+  async approveAddress(expenseAccountAddress: string, userAddress: string): Promise<any> {
     const expenseAccount = await this.getContract(expenseAccountAddress, EXPENSE_ACCOUNT_LOGIC_ABI)
     const tx = await expenseAccount.approveAddress(userAddress)
     await tx.wait()
-    return tx    
+    return tx
   }
 
-  async disapproveAddress(
-    expenseAccountAddress: string, 
-    userAddress: string
-  ): Promise<any> {
+  async disapproveAddress(expenseAccountAddress: string, userAddress: string): Promise<any> {
     const expenseAccount = await this.getContract(expenseAccountAddress, EXPENSE_ACCOUNT_LOGIC_ABI)
     const tx = await expenseAccount.disapproveAddress(userAddress)
     await tx.wait()
-    return tx    
+    return tx
   }
 
   async setMaxLimit(address: string, amount: string): Promise<any> {
@@ -68,11 +56,7 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return result
   }
 
-  async transfer(
-    expenseAccountAddress: string, 
-    toAddress: string, 
-    amount: number
-  ): Promise<any> {
+  async transfer(expenseAccountAddress: string, toAddress: string, amount: number): Promise<any> {
     const expenseAccount = await this.getContract(expenseAccountAddress)
     const tx = await expenseAccount.transfer(toAddress, this.web3Library.parseEther(`${amount}`))
     await tx.wait()
@@ -97,23 +81,17 @@ export class ExpenseAccountService implements IExpenseAccountService {
   }
 
   private async deployExpenseAccountContract(): Promise<string> {
-    const expenseAccountLogic = await this.getContract(
-      EXPENSE_ACCOUNT_LOGIC_ADDRESS,
-      this.abi
-    )
+    const expenseAccountLogic = await this.getContract(EXPENSE_ACCOUNT_LOGIC_ADDRESS, this.abi)
 
     const expenseAccountFactoryBeacon = await this.getContract(
       EXPENSE_ACCOUNT_BEACON_ADDRESS,
       FACTORY_BEACON_ABI
     )
 
-    const tx = await expenseAccountFactoryBeacon
-      .createBeaconProxy(
-        expenseAccountLogic
-          .interface
-          .encodeFunctionData('initialize', [useUserDataStore().address])
-      )
-  
+    const tx = await expenseAccountFactoryBeacon.createBeaconProxy(
+      expenseAccountLogic.interface.encodeFunctionData('initialize', [useUserDataStore().address])
+    )
+
     const receipt = await tx.wait()
 
     let proxyAddress = ''
@@ -128,4 +106,3 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return proxyAddress
   }
 }
-

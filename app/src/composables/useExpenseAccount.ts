@@ -1,6 +1,6 @@
 import { ExpenseAccountService } from '@/services/expenseAccountService'
 import { ref } from 'vue'
-import { log, parseError } from "@/utils";
+import { log, parseError } from '@/utils'
 
 const expenseAccountService = new ExpenseAccountService()
 
@@ -10,14 +10,10 @@ export function useExpenseAccountGetMaxLimit() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function getMaxLimit(
-    expenseAccountAddress: string
-  ) {
+  async function getMaxLimit(expenseAccountAddress: string) {
     try {
       loading.value = true
-      data.value = await expenseAccountService.getMaxLimit(
-        expenseAccountAddress
-      )
+      data.value = await expenseAccountService.getMaxLimit(expenseAccountAddress)
       isSuccess.value = true
     } catch (err) {
       log.error(parseError(err))
@@ -27,7 +23,7 @@ export function useExpenseAccountGetMaxLimit() {
     }
   }
 
-  return { execute: getMaxLimit, isLoading: loading, isSuccess, error, data }  
+  return { execute: getMaxLimit, isLoading: loading, isSuccess, error, data }
 }
 
 export function useExpenseAccountApproveAddress() {
@@ -36,16 +32,10 @@ export function useExpenseAccountApproveAddress() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function approveAddress(
-    expenseAccountAddress: string,
-    userAddress: string
-  ) {
+  async function approveAddress(expenseAccountAddress: string, userAddress: string) {
     try {
       loading.value = true
-      data.value = await expenseAccountService.approveAddress(
-        expenseAccountAddress,
-        userAddress
-      )
+      data.value = await expenseAccountService.approveAddress(expenseAccountAddress, userAddress)
       isSuccess.value = true
     } catch (err) {
       log.error(parseError(err))
@@ -55,7 +45,7 @@ export function useExpenseAccountApproveAddress() {
     }
   }
 
-  return { execute: approveAddress, isLoading: loading, isSuccess, error, data }  
+  return { execute: approveAddress, isLoading: loading, isSuccess, error, data }
 }
 
 export function useExpenseAccountDisapproveAddress() {
@@ -64,16 +54,10 @@ export function useExpenseAccountDisapproveAddress() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function disapproveAddress(
-    expenseAccountAddress: string,
-    userAddress: string
-  ) {
+  async function disapproveAddress(expenseAccountAddress: string, userAddress: string) {
     try {
       loading.value = true
-      data.value = await expenseAccountService.disapproveAddress(
-        expenseAccountAddress,
-        userAddress
-      )
+      data.value = await expenseAccountService.disapproveAddress(expenseAccountAddress, userAddress)
       isSuccess.value = true
     } catch (err) {
       log.error(parseError(err))
@@ -83,7 +67,7 @@ export function useExpenseAccountDisapproveAddress() {
     }
   }
 
-  return { execute: disapproveAddress, isLoading: loading, isSuccess, error, data }  
+  return { execute: disapproveAddress, isLoading: loading, isSuccess, error, data }
 }
 
 export function useExpenseAccountSetLimit() {
@@ -92,16 +76,10 @@ export function useExpenseAccountSetLimit() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function setLimit(
-    expenseAccountAddress: string,
-    amount: string
-  ) {
+  async function setLimit(expenseAccountAddress: string, amount: string) {
     try {
       loading.value = true
-      data.value = await expenseAccountService.setMaxLimit(
-        expenseAccountAddress,
-        amount
-      )
+      data.value = await expenseAccountService.setMaxLimit(expenseAccountAddress, amount)
       isSuccess.value = true
     } catch (err) {
       log.error(parseError(err))
@@ -111,7 +89,7 @@ export function useExpenseAccountSetLimit() {
     }
   }
 
-  return { execute: setLimit, isLoading: loading, isSuccess, error, data }  
+  return { execute: setLimit, isLoading: loading, isSuccess, error, data }
 }
 
 export function useExpenseAccountTransfer() {
@@ -120,18 +98,10 @@ export function useExpenseAccountTransfer() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function transfer(
-    expenseAccountAddress: string,
-    to: string,
-    amount: string
-  ) {
+  async function transfer(expenseAccountAddress: string, to: string, amount: string) {
     try {
       loading.value = true
-      data.value = await expenseAccountService.transfer(
-        expenseAccountAddress,
-        to,
-        Number(amount)
-      )
+      data.value = await expenseAccountService.transfer(expenseAccountAddress, to, Number(amount))
       isSuccess.value = true
     } catch (err) {
       log.error(parseError(err))
@@ -150,16 +120,10 @@ export function useExpenseAccountIsApprovedAddress() {
   const error = ref<any>(null)
   const isSuccess = ref(false)
 
-  async function isApprovedAddress(
-    expenseAccountAddress: string,
-    userAddress: string
-  ) {
+  async function isApprovedAddress(expenseAccountAddress: string, userAddress: string) {
     try {
       loading.value = true
-      data.value = await expenseAccountService.isApprovedAddress(
-        expenseAccountAddress,
-        userAddress
-      )
+      data.value = await expenseAccountService.isApprovedAddress(expenseAccountAddress, userAddress)
       isSuccess.value = true
     } catch (err) {
       log.error(parseError(err))
