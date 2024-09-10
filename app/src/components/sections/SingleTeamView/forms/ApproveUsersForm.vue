@@ -12,9 +12,14 @@
             <th>{{ index + 1 }}</th>
             <td>{{ `${address.slice(0, 10)}...${address.slice(-10)}` }}</td>
             <td class="flex justify-end">
-              <LoadingButton color="error" class="w-24" v-if="loadingDisapprove" />
+              <LoadingButton
+                color="error"
+                class="w-28"
+                v-if="loadingDisapprove && address === addressToDisapprove"
+              />
               <button
-                v-if="!loadingDisapprove"
+                v-if="!loadingDisapprove || address !== addressToDisapprove"
+                :disabled="loadingDisapprove"
                 class="btn btn-error"
                 @click="submitDisapprove(address)"
               >
@@ -52,13 +57,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 
 const addressToApprove = ref<string>('')
+const addressToDisapprove = ref<string>('')
 
-defineProps<{
+const props = defineProps<{
   loadingApprove: boolean
   loadingDisapprove: boolean
   approvedAddresses: Set<string>
@@ -71,7 +77,16 @@ const submitApprove = () => {
   if (isAddress(addressToApprove.value)) emit('approveAddress', addressToApprove.value)
 }
 
-const submitDisapprove = (addressToDisapprove: string) => {
-  emit('disapproveAddress', addressToDisapprove)
+const submitDisapprove = (_addressToDisapprove: string) => {
+  addressToDisapprove.value = _addressToDisapprove
+  emit('disapproveAddress', _addressToDisapprove)
 }
+
+watch(
+  () => props.loadingApprove,
+  (newVal) => {
+    if (newVal) return
+    addressToApprove.value = ''
+  }
+)
 </script>
