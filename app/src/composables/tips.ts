@@ -12,7 +12,7 @@ const tipsService = new TipsService()
 export function useTipsBalance(): IContractReadFunction<string | null> {
   const balance = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getBalance() {
     try {
@@ -35,7 +35,7 @@ export function useTipsBalance(): IContractReadFunction<string | null> {
 export function usePushTip(): IContractTransactionFunction {
   const transaction = ref<ContractTransaction>()
   const isLoading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function pushTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
@@ -56,7 +56,7 @@ export function usePushTip(): IContractTransactionFunction {
 export function useSendTip(): IContractTransactionFunction {
   const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function sendTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
@@ -77,7 +77,7 @@ export function useSendTip(): IContractTransactionFunction {
 export function useWithdrawTips(): IContractTransactionFunction {
   const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function withdraw() {

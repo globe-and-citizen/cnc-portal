@@ -41,8 +41,11 @@ export class MetaMaskUtil {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: this.network.chainId }]
       })
-    } catch (error: any) {
-      if (error.code === 4902) {
+    } catch (error: unknown) {
+      interface ErrorCode {
+        code: number
+      }
+      if ((error as ErrorCode).code === 4902) {
         await this.provider.request({
           method: 'wallet_addEthereumChain',
           params: [

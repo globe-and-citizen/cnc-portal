@@ -4,6 +4,8 @@ import { MetaMaskUtil } from '@/utils/web3Util'
 import type { Signer } from 'ethers'
 import type { ContractFactory } from 'ethers'
 import { log } from '@/utils/generalUtil'
+import type { InterfaceAbi } from 'ethers'
+import type { TransactionResponse } from 'ethers'
 
 // Define interface for web3 library
 export interface IWeb3Library {
@@ -13,12 +15,11 @@ export interface IWeb3Library {
   //getAddressRef(): Promise<Ref<string | null>>
   getAddress(): Promise<string>
   getBalance(address: string): Promise<string>
-  getProvider(): any
-  getContract(address: string, abi: any): Promise<Contract>
-  getFactoryContract(abi: any, bytecode: string): Promise<ContractFactory>
+  getContract(address: string, abi: InterfaceAbi): Promise<Contract>
+  getFactoryContract(abi: InterfaceAbi, bytecode: string): Promise<ContractFactory>
   parseEther(value: string): bigint
   formatEther(value: bigint): string
-  sendTransaction(to: string, amount: string): Promise<any>
+  sendTransaction(to: string, amount: string): Promise<TransactionResponse>
 }
 
 // TODO handle the case when the provider is not available
@@ -106,7 +107,7 @@ export class EthersJsAdapter implements IWeb3Library {
     return this.formatEther(await this.provider.getBalance(address))
   }
 
-  async getContract(address: string, abi: any): Promise<Contract> {
+  async getContract(address: string, abi: InterfaceAbi): Promise<Contract> {
     if (!this.signer) {
       //throw new Error('Wallet is not connected');
       await this.connectWallet()
@@ -115,7 +116,7 @@ export class EthersJsAdapter implements IWeb3Library {
     return new ethers.Contract(address, abi, await this.signer)
   }
 
-  async getFactoryContract(abi: any, bytecode: string): Promise<ContractFactory> {
+  async getFactoryContract(abi: InterfaceAbi, bytecode: string): Promise<ContractFactory> {
     if (!this.signer) {
       await this.connectWallet()
     }
@@ -123,7 +124,7 @@ export class EthersJsAdapter implements IWeb3Library {
     return new ethers.ContractFactory(abi, bytecode, await this.signer)
   }
 
-  async sendTransaction(to: string, amount: string): Promise<any> {
+  async sendTransaction(to: string, amount: string): Promise<TransactionResponse> {
     if (!this.signer) {
       await this.connectWallet()
     }

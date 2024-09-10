@@ -21,7 +21,13 @@ describe('EditUserForm', () => {
     address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
   }
 
-  const createComponent = (props?: any) => {
+  const createComponent = (props?: {
+    isLoading?: boolean
+    modelValue?: {
+      name: string
+      address: string
+    }
+  }) => {
     return mount(EditUserForm, {
       props: {
         isLoading: false,
