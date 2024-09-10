@@ -1,5 +1,6 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import { TIPS_ADDRESS } from '@/constant'
+import type { ContractInterface, ContractTransaction } from 'ethers'
 import ABI from '../artifacts/abi/tips.json'
 import type { TipsEventType } from '@/types'
 import type { EventLog } from 'ethers'
@@ -10,11 +11,15 @@ import { SmartContract } from './contractService'
 export class TipsService extends SmartContract {
   bankService: IBankService
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
-    super(TIPS_ADDRESS, ABI, web3Library)
+    super(TIPS_ADDRESS, ABI as unknown as ContractInterface, web3Library)
     this.bankService = new BankService()
   }
 
-  async pushTip(addresses: string[], amount: number, bankAddress?: string): Promise<any> {
+  async pushTip(
+    addresses: string[],
+    amount: number,
+    bankAddress?: string
+  ): Promise<ContractTransaction> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
@@ -32,7 +37,11 @@ export class TipsService extends SmartContract {
     return tx
   }
 
-  async sendTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
+  async sendTip(
+    addresses: string[],
+    amount: number,
+    bankAddress?: string
+  ): Promise<ContractTransaction> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
@@ -70,13 +79,21 @@ export class TipsService extends SmartContract {
     return await super.getEvents(type)
   }
 
-  async bankPushTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
+  async bankPushTip(
+    bankAddress: string,
+    addresses: string[],
+    amount: number
+  ): Promise<ContractTransaction> {
     const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
     await tx.wait()
 
     return tx
   }
-  async bankSendTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
+  async bankSendTip(
+    bankAddress: string,
+    addresses: string[],
+    amount: number
+  ): Promise<ContractTransaction> {
     const tx = await this.bankService.sendTip(bankAddress, addresses, amount)
     await tx.wait()
 
