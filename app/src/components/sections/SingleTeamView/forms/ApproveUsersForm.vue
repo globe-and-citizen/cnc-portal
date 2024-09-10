@@ -8,7 +8,7 @@
     <div class="overflow-x-auto border border-gray-300 rounded-lg">
       <table class="table table-zebra">
         <tbody>
-          <tr v-for="(address, index) of approvedAddresses">
+          <tr v-for="(address, index) of approvedAddresses" :key="index">
             <th>{{ index+1 }}</th>
             <td>{{ `${address.slice(0, 10)}...${address.slice(-10)}` }}</td>
             <td class="flex justify-end">
@@ -52,7 +52,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue';
 import { isAddress } from 'ethers'
 
@@ -68,13 +68,11 @@ defineProps<{
 const emit = defineEmits(['closeModal', 'approveAddress', 'disapproveAddress'])
 
 const submitApprove = () => {
-  console.log('addressToApprove: ', addressToApprove.value)
   if (isAddress(addressToApprove.value))
     emit('approveAddress', addressToApprove.value)  
 }
 
 const submitDisapprove = (addressToDisapprove: string) => {
-  console.log('addressToDisapprove: ', addressToDisapprove)
   emit('disapproveAddress', addressToDisapprove)
 }
 </script>

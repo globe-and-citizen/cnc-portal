@@ -2,7 +2,7 @@
   <!-- Expense Account Created -->
   <div v-if="contractOwnerAddress">
     <div class="stats bg-green-100 flex text-primary-content border-outline flex-col justify-center items-center p-5">
-      <span v-if="team.bankAddress">
+      <span v-if="team.bankAddress" class="flex gap-2 items-center">
         <ToolTip data-test="bank-address-tooltip" content="Click to see address in block explorer">
           <span
             class="badge badge-sm cursor-pointer"
@@ -24,7 +24,7 @@
           <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
         </ToolTip>
       </span>
-      <div class="flex items-center">
+      <div class="flex items-center pt-3">
         <span
           class="loading loading-dots loading-xs"
           data-test="balance-loading"
@@ -113,7 +113,7 @@
 
   <!-- Expense Account Not Yet Created -->
   <div class="flex justify-center items-center" v-else>
-    <LoadingButton class="w-24"color="primary" v-if="isLoadingDeploy"/>
+    <LoadingButton class="w-24" color="primary" v-if="isLoadingDeploy"/>
     <button
       v-else
       class="btn btn-primary"
@@ -126,7 +126,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, computed } from "vue";
+//#region imports
+import { onMounted, ref, watch } from "vue";
 import type { Team, User } from "@/types";
 import { 
   useDeployExpenseAccountContract, 
@@ -150,7 +151,10 @@ import ToolTip from '@/components/ToolTip.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { parseError } from '@/utils'
+//#endregion imports
 
+//#region variable declarations
 const props = defineProps<{team: Partial<Team>}>()
 const approvedAddresses = ref<Set<string>>(new Set())
 const transferModal = ref(false)
@@ -163,11 +167,10 @@ const unapprovedAddresses = ref<Set<string>>(new Set())
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
+//#endregion variable declarations
 
 const {
-  execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
+  execute: executeSearchUser
 } = useCustomFetch('user/search', {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
@@ -182,32 +185,39 @@ const {
   .get()
   .json()
 
+//#region expense account composable
 const {
   execute: executeExpenseAccountGetMaxLimit,
   isLoading: isLoadingMaxLimit,
-  data: maxLimit
+  data: maxLimit,
+  error: errorGetMaxLimit
 } = useExpenseAccountGetMaxLimit()
 
 const {
   execute: executeExpenseAccountApproveAddress,
   isLoading: isLoadingApproveAddress,
-  isSuccess: isSuccessApproveAddress
+  isSuccess: isSuccessApproveAddress,
+  error: errorApproveAddress
 } = useExpenseAccountApproveAddress()
 
 const {
   execute: executeExpenseAccountDisapproveAddress,
   isLoading: isLoadingDisapproveAddress,
-  isSuccess: isSuccessDisapproveAddress
+  isSuccess: isSuccessDisapproveAddress,
+  error: errorDisapproveAddress
 } = useExpenseAccountDisapproveAddress()
 
 const {
   execute: executeExpenseAccountSetLimit,
   isLoading: isLoadingSetLimit,
-  isSuccess: isSuccessMaxLimit
+  isSuccess: isSuccessMaxLimit,
+  error: errorSetMaxLimit
 } = useExpenseAccountSetLimit()
 
 const {
-  execute: executeExpenseAccountTransfer
+  execute: executeExpenseAccountTransfer,
+  error: errorTransfer,
+  isSuccess: isSuccessTransfer
 } = useExpenseAccountTransfer()
 
 const {
@@ -220,20 +230,24 @@ const {
 
 const {
   data: contractOwnerAddress,
-  execute: executeExpenseAccountGetOwner
+  execute: executeExpenseAccountGetOwner,
+  error: errorGetOwner
 } = useExpenseAccountGetOwner()
 
 const {
   data: contractBalance,
   execute: executeExpenseAccountGetBalance,
-  isLoading: isLoadingBalance
+  isLoading: isLoadingBalance,
+  error: errorGetContractBalance
 } = useExpenseAccountGetBalance()
 
 const {
   data: isApprovedAddress,
   execute: executeExpenseAccountIsApprovedAddress
 } = useExpenseAccountIsApprovedAddress()
+//#endregion expense account composable
 
+//#region helper functions
 const deployExpenseAccount = async () => {
   await executeDeployExpenseAccount()
   await getExpenseAccountOwner()
@@ -318,8 +332,100 @@ const searchUsers = async (input: { name: string; address: string }) => {
       await executeSearchUser()
     }
   } catch (error) {
+    addErrorToast(parseError(error))
   }
 }
+//#endregion helper functions
+
+//#region watch error
+watch(errorDeploy, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorDeploy.value.reason?
+      errorDeploy.value.reason:
+      'Error Deploying Creating Account'
+    )
+})
+
+watch(errorSetMaxLimit, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorSetMaxLimit.value.reason?
+      errorSetMaxLimit.value.reason:
+      'Error Setting Max Limit'
+    )
+})
+
+watch(errorApproveAddress, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorApproveAddress.value.reason?
+      errorApproveAddress.value.reason:
+      'Error Approving Address'
+    )
+})
+
+watch(errorDisapproveAddress, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorDisapproveAddress.value.reason?
+      errorDisapproveAddress.value.reason:
+      'Error Disapproving Address'
+    )
+})
+
+watch(errorTransfer, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorTransfer.value.reason?
+      errorTransfer.value.reason:
+      'Error Making Transfer'
+    )
+})
+
+watch(errorGetContractBalance, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorGetContractBalance.value.reason?
+      errorGetContractBalance.value.reason:
+      'Error Getting Contract Balance'
+    )
+})
+
+watch(errorGetOwner, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorGetOwner.value.reason?
+      errorGetOwner.value.reason:
+      'Error Getting Contract Owner'
+    )
+})
+
+watch(errorGetMaxLimit, (newVal) => {
+  if (newVal)
+    addErrorToast(
+      errorGetMaxLimit.value.reason?
+      errorGetMaxLimit.value.reason:
+      'Error Getting Max Limit'
+    )
+})
+//#endregion watch error
+
+//#region watch success
+watch(isSuccessTransfer, (newVal) => {
+  if (newVal)
+    addSuccessToast('Transfer Successful')
+})
+
+watch(isSuccessApproveAddress, (newVal) => {
+  if (newVal)
+    addSuccessToast('Address Successfully Approved')
+})
+
+watch(isSuccessDisapproveAddress, (newVal) => {
+  if (newVal)
+    addSuccessToast('Address Successfully Disapproved')
+})
 
 watch(isSuccessMaxLimit, (newVal) => {
   if (newVal)
@@ -330,11 +436,8 @@ watch(isSuccessDeploy, (newVal) => {
   if (newVal)
     addSuccessToast('Expense Account Successfully Created')
 })
+//#endregion watch success
 
-watch(errorDeploy, (newVal) => {
-  if (errorDeploy)
-    addErrorToast('Error Deploying Creating Account')
-})
 onMounted(async () => {
   await getExpenseAccountBalance()
   await getExpenseAccountMaxLimit()
