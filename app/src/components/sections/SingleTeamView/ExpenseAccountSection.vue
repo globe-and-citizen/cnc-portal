@@ -36,9 +36,6 @@
             {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
         </div>
-
-        <!--<div class="h-8 border-l border-gray-400"></div>-->
-
         <span
           class="loading loading-dots loading-xs"
           data-test="balance-loading"
@@ -54,7 +51,8 @@
       <div class="stat-actions flex justify-center gap-2 items-center">
         <button
           class="btn btn-xs btn-secondary"
-          v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
+          :disabled="!approvedAddresses.has(useUserDataStore().address)"
+          v-if="team.bankAddress && approvedAddresses"
           @click="transferModal = true"
         >
           Transfer
@@ -154,7 +152,6 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const props = defineProps<{team: Partial<Team>}>()
-//const approvedAddresses = ref<{[key: string]: boolean}>({})
 const approvedAddresses = ref<Set<string>>(new Set())
 const transferModal = ref(false)
 const setLimitModal = ref(false)
@@ -163,13 +160,6 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const unapprovedAddresses = ref<Set<string>>(new Set())
-/*const unapprovedAddresses = computed(() => {
-  return props.team.members?.map(member => {
-    console.log(`approvedAddresses.value[member.address]: `, approvedAddresses.value[member.address])
-    if (!approvedAddresses.value[member.address])
-      return member.address 
-  })
-})*/
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
@@ -263,7 +253,6 @@ const getExpenseAccountOwner = async () => {
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
-  //console.log('to: ', to, ', amount: ', amount)
   await executeExpenseAccountTransfer(
     EXPENSE_ACCOUNT_ADDRESS, 
     to,
