@@ -4,6 +4,32 @@ import { log, parseError } from "@/utils";
 
 const expenseAccountService = new ExpenseAccountService()
 
+export function useExpenseAccountGetMaxLimit() {
+  const data = ref<number | null>(null)
+  const loading = ref(false)
+  const error = ref<any>(null)
+  const isSuccess = ref(false)
+
+  async function getMaxLimit(
+    expenseAccountAddress: string
+  ) {
+    try {
+      loading.value = true
+      data.value = await expenseAccountService.getMaxLimit(
+        expenseAccountAddress
+      )
+      isSuccess.value = true
+    } catch (err) {
+      log.error(parseError(err))
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: getMaxLimit, isLoading: loading, isSuccess, error, data }  
+}
+
 export function useExpenseAccountApproveAddress() {
   const data = ref<string | null>(null)
   const loading = ref(false)

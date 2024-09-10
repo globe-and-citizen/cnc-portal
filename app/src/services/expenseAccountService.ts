@@ -25,6 +25,16 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return await this.deployExpenseAccountContract()
   }
 
+  async getMaxLimit(expenseAccountAddress: string): Promise<number> {
+    const expenseAccount = await this.getContract(
+      expenseAccountAddress, 
+      EXPENSE_ACCOUNT_LOGIC_ABI
+    )
+    let maxLimit = await expenseAccount.maxLimit()
+    maxLimit = this.web3Library.formatEther(maxLimit)
+    return maxLimit
+  }
+
   async approveAddress(
     expenseAccountAddress: string, 
     userAddress: string

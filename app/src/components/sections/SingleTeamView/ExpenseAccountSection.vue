@@ -24,13 +24,32 @@
           <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
         </ToolTip>
       </span>
-      <span
-        class="loading loading-dots loading-xs"
-        data-test="balance-loading"
-        v-if="isLoadingBalance"
-      ></span>
-      <div class="stat-value text-3xl mt-2" v-else>
-        {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+      <div class="flex items-center">
+        <span
+          class="loading loading-dots loading-xs"
+          data-test="balance-loading"
+          v-if="isLoadingBalance"
+        ></span>
+        <div v-else>
+          <div class="stat-title">Balance</div>
+          <div class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3">
+            {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          </div>
+        </div>
+
+        <!--<div class="h-8 border-l border-gray-400"></div>-->
+
+        <span
+          class="loading loading-dots loading-xs"
+          data-test="balance-loading"
+          v-if="isLoadingMaxLimit"
+        ></span>
+        <div v-else class="pl-3">
+          <div class="stat-title">Max Limit</div>
+          <div class="stat-value text-3xl mt-2">
+            {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          </div>
+        </div>
       </div>
       <div class="stat-actions flex justify-center gap-2 items-center">
         <button
@@ -119,7 +138,8 @@ import {
   useExpenseAccountTransfer,
   useExpenseAccountSetLimit,
   useExpenseAccountApproveAddress,
-  useExpenseAccountDisapproveAddress 
+  useExpenseAccountDisapproveAddress,
+  useExpenseAccountGetMaxLimit 
 } from "@/composables/useExpenseAccount";
 import { EXPENSE_ACCOUNT_ADDRESS, NETWORK } from "@/constant";
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -171,6 +191,12 @@ const {
 })
   .get()
   .json()
+
+const {
+  execute: executeExpenseAccountGetMaxLimit,
+  isLoading: isLoadingMaxLimit,
+  data: maxLimit
+} = useExpenseAccountGetMaxLimit()
 
 const {
   execute: executeExpenseAccountApproveAddress,
@@ -251,6 +277,7 @@ const setExepenseAccountLimit = async (amount: any) => {
     EXPENSE_ACCOUNT_ADDRESS,
     amount.value
   )
+  await getExpenseAccountMaxLimit()
 }
 
 const approveAddress = async (address: string) => {
@@ -288,6 +315,10 @@ const checkApprovedAddresses = async () => {
     }
 }
 
+const getExpenseAccountMaxLimit = async () => {
+  await executeExpenseAccountGetMaxLimit(EXPENSE_ACCOUNT_ADDRESS)
+}
+
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
@@ -319,6 +350,7 @@ watch(errorDeploy, (newVal) => {
 })
 onMounted(async () => {
   await getExpenseAccountBalance()
+  await getExpenseAccountMaxLimit()
   await getExpenseAccountOwner()
   await checkApprovedAddresses()
 })
