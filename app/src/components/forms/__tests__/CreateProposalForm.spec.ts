@@ -2,7 +2,13 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach } from 'vitest'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import { setActivePinia, createPinia } from 'pinia'
-
+interface ComponentData {
+  newProposalInput: {
+    isElection: boolean
+    title: string
+    description: string
+  }
+}
 beforeEach(() => {
   setActivePinia(createPinia())
 })
@@ -30,11 +36,15 @@ describe('CreateProposal.vue', () => {
 
       const titleInput = wrapper.find('input[placeholder="Title"]')
       await titleInput.setValue('New Proposal Title')
-      expect((wrapper.vm as any).newProposalInput.title).toBe('New Proposal Title')
+      expect((wrapper.vm as unknown as ComponentData).newProposalInput.title).toBe(
+        'New Proposal Title'
+      )
 
       const descriptionInput = wrapper.find('textarea')
       await descriptionInput.setValue('New Proposal Description')
-      expect((wrapper.vm as any).newProposalInput.description).toBe('New Proposal Description')
+      expect((wrapper.vm as unknown as ComponentData).newProposalInput.description).toBe(
+        'New Proposal Description'
+      )
     })
 
     it('updates newProposalInput.isElection when select changes', async () => {
@@ -44,10 +54,11 @@ describe('CreateProposal.vue', () => {
 
       const select = wrapper.find('select')
       await select.setValue('true')
-      expect((wrapper.vm as any).newProposalInput.isElection).toBe(true)
+
+      expect((wrapper.vm as unknown as ComponentData).newProposalInput.isElection).toBe(true)
 
       await select.setValue('false')
-      expect((wrapper.vm as any).newProposalInput.isElection).toBe(false)
+      expect((wrapper.vm as unknown as ComponentData).newProposalInput.isElection).toBe(false)
     })
   })
   describe('emits', () => {

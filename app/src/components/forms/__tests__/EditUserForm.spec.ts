@@ -36,7 +36,7 @@ describe('EditUserForm', () => {
       const wrapper = createComponent()
       expect(wrapper.find('span[data-test="name-label"]').text()).toBe('Name')
       expect(wrapper.find('input[data-test="name-input"]').exists()).toBeTruthy()
-      expect(wrapper.props().modelValue.name).toBe(user.name)
+      expect(wrapper.props().modelValue?.name).toBe(user.name)
     })
 
     it('renders label and address with tooltip correctly', () => {

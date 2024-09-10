@@ -32,9 +32,9 @@ describe('App.vue', () => {
     let addWarningToast: ReturnType<typeof vi.fn>
     let addErrorToast: ReturnType<typeof vi.fn>
     let addToast: ReturnType<typeof vi.fn>
-    let balanceError: any
-    let withdrawError: any
-    let withdrawSuccess: any
+    let balanceError: ReturnType<typeof ref>
+    let withdrawError: ReturnType<typeof ref>
+    let withdrawSuccess: ReturnType<typeof ref>
 
     beforeEach(() => {
       setActivePinia(createPinia())
