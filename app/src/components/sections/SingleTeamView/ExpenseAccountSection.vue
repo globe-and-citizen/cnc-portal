@@ -1,6 +1,6 @@
 <template>
   <!-- Expense Account Created -->
-  <div v-if="ownerAddress">
+  <div v-if="contractOwnerAddress">
     <div class="stats bg-green-100 flex text-primary-content border-outline flex-col justify-center items-center p-5">
       <span v-if="team.bankAddress">
         <ToolTip data-test="bank-address-tooltip" content="Click to see address in block explorer">
@@ -59,14 +59,14 @@
         </button>
         <button
           class="btn btn-xs btn-secondary"
-          v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
+          v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
           @click="setLimitModal = true"
         >
           Set Limit
         </button>
         <button
           class="btn btn-xs btn-secondary"
-          v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
+          v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
           @click="approveUsersModal = true"
         >
           Approve Users
@@ -219,7 +219,7 @@ const {
 } = useDeployExpenseAccountContract()
 
 const {
-  data: ownerAddress,
+  data: contractOwnerAddress,
   execute: executeExpenseAccountGetOwner
 } = useExpenseAccountGetOwner()
 
@@ -244,12 +244,10 @@ const deployExpenseAccount = async () => {
 
 const getExpenseAccountBalance = async () => {
   await executeExpenseAccountGetBalance(EXPENSE_ACCOUNT_ADDRESS)
-  console.log("expenseAccountBalance: ", contractBalance.value)
 }
 
 const getExpenseAccountOwner = async () => {
   await executeExpenseAccountGetOwner(EXPENSE_ACCOUNT_ADDRESS)
-  console.log("expenseAccountOwner: ", ownerAddress.value)
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
