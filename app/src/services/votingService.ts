@@ -121,7 +121,7 @@ export class VotingService implements IVotingService {
     return await contractService.getContract()
   }
   private getContractService(votingAddress: string): SmartContract {
-    return new SmartContract(votingAddress, VOTING_ABI as unknown as Contract)
+    return new SmartContract(votingAddress, VOTING_ABI)
   }
   async deployVotingContract(): Promise<string> {
     const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)

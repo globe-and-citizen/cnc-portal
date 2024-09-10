@@ -66,7 +66,11 @@
         <button
           v-else
           className="btn btn-primary btn-xs text-white "
-          @click="pushTip(membersAddress, tipAmount, team.bankAddress)"
+          @click="
+            () => {
+              if (team.bankAddress) pushTip(membersAddress, tipAmount, team.bankAddress)
+            }
+          "
         >
           Send
         </button>
@@ -220,13 +224,16 @@ const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 const depositToBank = async (amount: string) => {
-  await deposit(props.team.bankAddress, amount)
-  if (depositSuccess.value) {
-    depositModal.value = false
-    await getBalance(props.team.bankAddress)
+  if (props.team.bankAddress) {
+    await deposit(props.team.bankAddress, amount)
+    if (depositSuccess.value) {
+      depositModal.value = false
+      await getBalance(props.team.bankAddress)
+    }
   }
 }
 const transferFromBank = async (to: string, amount: string) => {
+  if (!props.team.bankAddress) return
   await transfer(props.team.bankAddress, to, amount)
   if (transferSuccess.value) {
     transferModal.value = false

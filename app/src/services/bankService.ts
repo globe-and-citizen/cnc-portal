@@ -9,7 +9,7 @@ import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
-import type { ContractInterface, TransactionResponse } from 'ethers'
+import type { InterfaceAbi, TransactionResponse } from 'ethers'
 export interface IBankService {
   web3Library: IWeb3Library
   createBankContract(id: string): Promise<string>
@@ -84,7 +84,7 @@ export class BankService implements IBankService {
   }
 
   private getContractService(bankAddress: string): SmartContract {
-    return new SmartContract(bankAddress, BANK_ABI as unknown as ContractInterface)
+    return new SmartContract(bankAddress, BANK_ABI as InterfaceAbi)
   }
 
   private async deployBankContract(): Promise<string> {

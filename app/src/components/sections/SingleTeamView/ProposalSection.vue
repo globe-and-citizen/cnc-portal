@@ -153,20 +153,12 @@ watch(isSuccessSetBoardOfDirectorsContractAddress, () => {
 })
 watch(errorSetBoardOfDirectorsContractAddress, () => {
   if (errorSetBoardOfDirectorsContractAddress.value) {
-    addErrorToast(
-      errorSetBoardOfDirectorsContractAddress.value.reason
-        ? errorSetBoardOfDirectorsContractAddress.value.reason
-        : 'Failed to set board of directors contract address'
-    )
+    addErrorToast('Failed to set board of directors contract address')
   }
 })
 watch(errorGetBoardOfDirectors, () => {
   if (errorGetBoardOfDirectors.value) {
-    addErrorToast(
-      errorGetBoardOfDirectors.value.reason
-        ? errorGetBoardOfDirectors.value.reason
-        : 'Failed to get board of directors'
-    )
+    addErrorToast('Failed to get board of directors')
   }
 })
 
@@ -193,11 +185,7 @@ watch(isSuccessBoDDeployment, () => {
 watch(errorDeployVotingContract, () => {
   if (errorDeployVotingContract.value) {
     console.log(errorDeployVotingContract.value)
-    addErrorToast(
-      errorDeployVotingContract.value.reason
-        ? errorDeployVotingContract.value.reason
-        : 'Failed to deploy voting contract'
-    )
+    addErrorToast('Failed to deploy voting contract')
   }
 })
 const {
@@ -221,11 +209,7 @@ watch(isSuccessDeployVotingContract, () => {
 watch(errorDeployVotingContract, () => {
   if (errorDeployVotingContract.value) {
     console.log(errorDeployVotingContract.value)
-    addErrorToast(
-      errorDeployVotingContract.value.reason
-        ? errorDeployVotingContract.value.reason
-        : 'Failed to deploy voting contract'
-    )
+    addErrorToast('Failed to deploy voting contract')
   }
 })
 watch(isSuccessGetProposals, () => {
@@ -237,9 +221,7 @@ watch(isSuccessGetProposals, () => {
 })
 watch(errorGetProposals, () => {
   if (errorGetProposals.value) {
-    addErrorToast(
-      errorGetProposals.value.reason ? errorGetProposals.value.reason : 'Failed to get proposals'
-    )
+    addErrorToast('Failed to get proposals')
   }
 })
 watch(isSuccessAddProposal, () => {
@@ -251,9 +233,7 @@ watch(isSuccessAddProposal, () => {
 })
 watch(errorAddProposal, () => {
   if (errorAddProposal.value) {
-    addErrorToast(
-      errorAddProposal.value.reason ? errorAddProposal.value.reason : 'Failed to create proposal'
-    )
+    addErrorToast('Failed to create proposal')
   }
 })
 

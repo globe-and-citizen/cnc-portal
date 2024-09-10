@@ -102,12 +102,12 @@ watch(
 // Handle Balance error
 watch(balanceError, () => {
   if (balanceError.value) {
-    addErrorToast(balanceError.value?.reason || 'Failed to Get balance')
+    addErrorToast('Failed to Get balance')
   }
 })
 // Handle withdraw error
 watch(withdrawError, () => {
-  addErrorToast(withdrawError.value.reason || 'Failed to withdraw tips')
+  addErrorToast('Failed to withdraw tips')
 })
 
 // Handle withdraw success

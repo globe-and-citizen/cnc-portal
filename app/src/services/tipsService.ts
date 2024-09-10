@@ -1,17 +1,19 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import { TIPS_ADDRESS } from '@/constant'
-import type { ContractInterface, ContractTransaction } from 'ethers'
+import type { ContractTransaction } from 'ethers'
 import ABI from '../artifacts/abi/tips.json'
 import type { TipsEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { BankService, type IBankService } from './bankService'
 import { SmartContract } from './contractService'
+import type { InterfaceAbi } from 'ethers'
+import type { TransactionResponse } from 'ethers'
 
 export class TipsService extends SmartContract {
   bankService: IBankService
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
-    super(TIPS_ADDRESS, ABI as unknown as ContractInterface, web3Library)
+    super(TIPS_ADDRESS, ABI as InterfaceAbi, web3Library)
     this.bankService = new BankService()
   }
 
@@ -19,7 +21,7 @@ export class TipsService extends SmartContract {
     addresses: string[],
     amount: number,
     bankAddress?: string
-  ): Promise<ContractTransaction> {
+  ): Promise<TransactionResponse> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
@@ -41,7 +43,7 @@ export class TipsService extends SmartContract {
     addresses: string[],
     amount: number,
     bankAddress?: string
-  ): Promise<ContractTransaction> {
+  ): Promise<TransactionResponse> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
@@ -83,7 +85,7 @@ export class TipsService extends SmartContract {
     bankAddress: string,
     addresses: string[],
     amount: number
-  ): Promise<ContractTransaction> {
+  ): Promise<TransactionResponse> {
     const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
     await tx.wait()
 
@@ -93,7 +95,7 @@ export class TipsService extends SmartContract {
     bankAddress: string,
     addresses: string[],
     amount: number
-  ): Promise<ContractTransaction> {
+  ): Promise<TransactionResponse> {
     const tx = await this.bankService.sendTip(bankAddress, addresses, amount)
     await tx.wait()
 
