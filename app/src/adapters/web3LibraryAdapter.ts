@@ -33,7 +33,7 @@ export class EthersJsAdapter implements IWeb3Library {
   private provider!: BrowserProvider
 
   //private signer: ethers.Signer | null = null;
-  private signer: any | ethers.Signer
+  private signer!: ethers.Signer
   // private _address: Ref<string | null>
 
   /**
@@ -77,7 +77,7 @@ export class EthersJsAdapter implements IWeb3Library {
     await this.provider.send('eth_requestAccounts', [])
 
     // Get signer with connected wallet
-    this.signer = this.provider.getSigner()
+    this.signer = await this.provider.getSigner()
   }
 
   async requestSign(message: string): Promise<string> {
@@ -97,7 +97,7 @@ export class EthersJsAdapter implements IWeb3Library {
       await this.connectWallet()
     }
 
-    return (await this.signer).address
+    return await this.signer.getAddress()
   }
 
   async getBalance(address: string): Promise<string> {

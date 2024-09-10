@@ -7,14 +7,18 @@ The Goal of POO is to have an encapsulation of the attributes & restricts direct
 
 Here we juste need a function that return the provider and the network. No need to have an object for that
  */
+interface EthereumProvider {
+  request: (object: Object) => Promise<void>;
+  on: (event: string, callback: () => void) => void;
+}
 
 export class MetaMaskUtil {
-  private provider: any
+  private provider: EthereumProvider
   private network: Network
 
   constructor() {
     if ('ethereum' in window) {
-      this.provider = window.ethereum
+      this.provider = window.ethereum as EthereumProvider
     } else {
       throw new Error('MetaMask Not Installed')
     }
