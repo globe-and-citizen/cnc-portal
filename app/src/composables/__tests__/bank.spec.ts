@@ -816,14 +816,14 @@ describe('Bank', () => {
       it('should change state of transaction correctly', async () => {
         const { execute: transferOwnership, transaction } = useBankTransferOwnership(bankAddress)
         expect(transaction.value).toBe(null)
-        await transferOwnership(bankAddress, to)
+        await transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(transaction.value).not.toBe(tx)
       })
 
       it('should change state of isLoading correctly', async () => {
         const { execute: transferOwnership, isLoading } = useBankTransferOwnership(bankAddress)
-        const promise = transferOwnership(bankAddress, to)
+        const promise = transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(isLoading.value).toBe(true)
         await promise
@@ -833,7 +833,7 @@ describe('Bank', () => {
       it('should change state of isSuccess correctly', async () => {
         const { execute: transferOwnership, isSuccess } = useBankTransferOwnership(bankAddress)
         expect(isSuccess.value).toBe(false)
-        await transferOwnership(bankAddress, to)
+        await transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(isSuccess.value).toBe(true)
       })
@@ -841,7 +841,7 @@ describe('Bank', () => {
       it('should keeps state of error', async () => {
         const { execute: transferOwnership, error } = useBankTransferOwnership(bankAddress)
         expect(error.value).toBe(null)
-        await transferOwnership(bankAddress, to)
+        await transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(error.value).toBe(null)
       })
@@ -857,14 +857,14 @@ describe('Bank', () => {
       it('should change state of transaction correctly', async () => {
         const { execute: transferOwnership, transaction } = useBankTransferOwnership(bankAddress)
         expect(transaction.value).toBe(null)
-        await transferOwnership(bankAddress, to)
+        await transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(transaction.value).toBe(null)
       })
 
       it('should change state of isLoading correctly', async () => {
         const { execute: transferOwnership, isLoading } = useBankTransferOwnership(bankAddress)
-        const promise = transferOwnership(bankAddress, to)
+        const promise = transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(isLoading.value).toBe(true)
         await promise
@@ -874,7 +874,7 @@ describe('Bank', () => {
       it('should keeps state of isSuccess to be false', async () => {
         const { execute: transferOwnership, isSuccess } = useBankTransferOwnership(bankAddress)
         expect(isSuccess.value).toBe(false)
-        await transferOwnership(bankAddress, to)
+        await transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(isSuccess.value).toBe(false)
       })
@@ -882,7 +882,7 @@ describe('Bank', () => {
       it('should change state of error correctly', async () => {
         const { execute: transferOwnership, error } = useBankTransferOwnership(bankAddress)
         expect(error.value).toBe(null)
-        await transferOwnership(bankAddress, to)
+        await transferOwnership(to)
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(error.value).toBe(mockError)
       })
