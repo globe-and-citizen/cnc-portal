@@ -5,7 +5,7 @@ const bodService = new BoDService()
 export function useDeployBoDContract() {
   const contractAddress = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function deploy(teamId: string, votingAddress: string) {
@@ -26,7 +26,7 @@ export function useDeployBoDContract() {
 export function useGetBoardOfDirectors() {
   const boardOfDirectors = ref<string[] | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function getBoardOfDirectors(bodAddress: string) {

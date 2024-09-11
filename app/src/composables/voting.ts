@@ -1,13 +1,14 @@
 import { VotingService } from '@/services/votingService'
 import type { Proposal } from '@/types'
+import type { ContractTransaction } from 'ethers'
 import { ref } from 'vue'
 
 const votingService = new VotingService()
 
 export function useAddProposal() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function addProposal(votingAddress: string, proposal: Partial<Proposal>) {
@@ -44,7 +45,7 @@ export function useAddProposal() {
 export function useGetProposals() {
   const proposals = ref<Partial<Proposal>[]>([])
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function getProposals(votingAddress: string) {
@@ -62,9 +63,9 @@ export function useGetProposals() {
   return { execute: getProposals, isLoading: loading, error, data: proposals, isSuccess }
 }
 export function useConcludeProposal() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function concludeProposal(votingAddress: string, proposalId: Number) {
@@ -82,9 +83,9 @@ export function useConcludeProposal() {
   return { execute: concludeProposal, isLoading: loading, isSuccess, error, transaction }
 }
 export function useVoteDirective() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function voteDirective(votingAddress: string, proposalId: Number, directive: number) {
@@ -102,9 +103,9 @@ export function useVoteDirective() {
   return { execute: voteDirective, isLoading: loading, isSuccess, error, transaction }
 }
 export function useVoteElection() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function voteElection(votingAddress: string, proposalId: Number, candidateAddress: string) {
@@ -126,9 +127,9 @@ export function useVoteElection() {
   return { execute: voteElection, isLoading: loading, isSuccess, error, transaction }
 }
 export function useSetBoardOfDirectorsContractAddress() {
-  const transaction = ref<any>(null)
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function setBoardOfDirectorsContractAddress(votingAddress: string, bodAddress: string) {
@@ -157,7 +158,7 @@ export function useSetBoardOfDirectorsContractAddress() {
 export function useDeployVotingContract() {
   const contractAddress = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function deploy(teamId: string) {

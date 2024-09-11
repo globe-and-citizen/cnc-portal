@@ -9,13 +9,13 @@ import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
-import type { ContractInterface } from 'ethers'
+import type { InterfaceAbi, TransactionResponse } from 'ethers'
 export interface IBankService {
   web3Library: IWeb3Library
   createBankContract(id: string): Promise<string>
-  deposit(bankAddress: string, amount: string): Promise<any>
-  pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
-  sendTip(bankAddress: string, addresses: string[], amount: number): Promise<any>
+  deposit(bankAddress: string, amount: string): Promise<TransactionResponse>
+  pushTip(bankAddress: string, addresses: string[], amount: number): Promise<TransactionResponse>
+  sendTip(bankAddress: string, addresses: string[], amount: number): Promise<TransactionResponse>
   getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]>
 }
 
@@ -32,14 +32,14 @@ export class BankService implements IBankService {
     return response.data.value.bankAddress
   }
 
-  async deposit(bankAddress: string, amount: string): Promise<any> {
+  async deposit(bankAddress: string, amount: string): Promise<TransactionResponse> {
     const tx = await this.web3Library.sendTransaction(bankAddress, amount)
     await tx.wait()
 
     return tx
   }
 
-  async transfer(bankAddress: string, to: string, amount: string): Promise<any> {
+  async transfer(bankAddress: string, to: string, amount: string): Promise<TransactionResponse> {
     const bank = await this.getContract(bankAddress)
     const tx = await bank.transfer(to, this.web3Library.parseEther(amount))
     await tx.wait()
@@ -47,7 +47,11 @@ export class BankService implements IBankService {
     return tx
   }
 
-  async pushTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
+  async pushTip(
+    bankAddress: string,
+    addresses: string[],
+    amount: number
+  ): Promise<TransactionResponse> {
     const bank = await this.getContract(bankAddress)
     const tx = await bank.pushTip(addresses, this.web3Library.parseEther(amount.toString()))
     await tx.wait()
@@ -55,7 +59,11 @@ export class BankService implements IBankService {
     return tx
   }
 
-  async sendTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
+  async sendTip(
+    bankAddress: string,
+    addresses: string[],
+    amount: number
+  ): Promise<TransactionResponse> {
     const bank = await this.getContract(bankAddress)
     const tx = await bank.sendTip(addresses, this.web3Library.parseEther(amount.toString()))
     await tx.wait()
@@ -112,7 +120,7 @@ export class BankService implements IBankService {
   }
 
   private getContractService(bankAddress: string): SmartContract {
-    return new SmartContract(bankAddress, BANK_ABI as unknown as ContractInterface)
+    return new SmartContract(bankAddress, BANK_ABI as InterfaceAbi)
   }
 
   private async deployBankContract(): Promise<string> {

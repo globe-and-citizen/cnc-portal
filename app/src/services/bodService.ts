@@ -7,7 +7,6 @@ import { SmartContract } from './contractService'
 import { BOD_IMPL_ADDRESS, BOD_BEACON_ADDRESS } from '@/constant'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { ContractInterface } from 'ethers'
 
 export interface IBoDService {
   web3Library: IWeb3Library
@@ -40,7 +39,7 @@ export class BoDService implements IBoDService {
     return await contractService.getContract()
   }
   private getContractService(bodAddress: string): SmartContract {
-    return new SmartContract(bodAddress, BOD_ABI as unknown as ContractInterface)
+    return new SmartContract(bodAddress, BOD_ABI)
   }
   private async getBoDContract(bodAddress: string): Promise<Contract> {
     const bodContract = await this.web3Library.getContract(bodAddress, BOD_ABI)

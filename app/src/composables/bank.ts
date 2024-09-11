@@ -1,8 +1,8 @@
 import { BankService } from '@/services/bankService'
 import type { BankEventType, EventResult } from '@/types'
-import type { IContractReadFunction, IContractTransactionFunction } from '@/types/interfaces'
 import dayjs from 'dayjs'
 import type { Log } from 'ethers'
+import type { TransactionResponse } from 'ethers'
 import type { EventLog } from 'ethers'
 import { ref } from 'vue'
 
@@ -11,7 +11,7 @@ const bankService = new BankService()
 export function useDeployBankContract() {
   const contractAddress = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function deploy(teamId: string) {
@@ -29,10 +29,10 @@ export function useDeployBankContract() {
   return { execute: deploy, isLoading: loading, isSuccess, error, contractAddress }
 }
 
-export function useBankBalance(): IContractReadFunction<string | null> {
+export function useBankBalance() {
   const balance = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getBalance(address: string) {
     try {
@@ -48,10 +48,10 @@ export function useBankBalance(): IContractReadFunction<string | null> {
   return { execute: getBalance, isLoading: loading, error, data: balance }
 }
 
-export function useBankDeposit(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function useBankDeposit() {
+  const transaction = ref<TransactionResponse>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function deposit(bankAddress: string, amount: string) {
@@ -69,10 +69,10 @@ export function useBankDeposit(): IContractTransactionFunction {
   return { execute: deposit, isLoading: loading, isSuccess, error, transaction }
 }
 
-export function useBankTransfer(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function useBankTransfer() {
+  const transaction = ref<TransactionResponse>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function transfer(bankAddress: string, to: string, amount: string) {
@@ -93,7 +93,7 @@ export function useBankTransfer(): IContractTransactionFunction {
 export function useBankEvents(bankAddress: string) {
   const events = ref<EventResult[]>([])
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getEvents(type: BankEventType): Promise<void> {
     try {
