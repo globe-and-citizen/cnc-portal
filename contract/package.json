@@ -8,6 +8,7 @@
     "coverage": "npx hardhat coverage",
     "lint": "npx eslint . --ext .ts",
     "format": "prettier --write .",
+    "moveConstants": "nodemon scripts/moveConstants.ts",
     "format-check": "npx prettier --check ."
   },
   "devDependencies": {
