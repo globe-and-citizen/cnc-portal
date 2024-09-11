@@ -3,6 +3,13 @@ import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import UpdateTeamForm from '@/components/sections/SingleTeamView/forms/UpdateTeamForm.vue'
 
+interface ComponentData {
+  team: {
+    name: string
+    description: string
+    bankAddress: string
+  }
+}
 describe('UpdateTeamForm.vue', () => {
   const defaultTeam = {
     name: 'Test Team',
@@ -45,9 +52,11 @@ describe('UpdateTeamForm.vue', () => {
       await inputs[1].setValue('New Description')
       await inputs[2].setValue('0xabcdefabcdefabcdefabcdefabcdefabcdef')
 
-      expect((wrapper.vm as any).team.name).toBe('New Team Name')
-      expect((wrapper.vm as any).team.description).toBe('New Description')
-      expect((wrapper.vm as any).team.bankAddress).toBe('0xabcdefabcdefabcdefabcdefabcdefabcdef')
+      expect((wrapper.vm as unknown as ComponentData).team.name).toBe('New Team Name')
+      expect((wrapper.vm as unknown as ComponentData).team.description).toBe('New Description')
+      expect((wrapper.vm as unknown as ComponentData).team.bankAddress).toBe(
+        '0xabcdefabcdefabcdefabcdefabcdefabcdef'
+      )
     })
 
     it('emits updateTeam event when submit button is clicked', async () => {

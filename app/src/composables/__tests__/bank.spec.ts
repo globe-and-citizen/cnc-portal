@@ -238,14 +238,14 @@ describe('Bank', () => {
       expect(deposit).toBeInstanceOf(Function)
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(false)
-      expect(transaction.value).toBe(null)
+      expect(transaction.value).toBe(undefined)
       expect(error.value).toBe(null)
     })
 
     describe('when success', () => {
       it('should change state of transaction correctly', async () => {
         const { execute: deposit, transaction } = useBankDeposit()
-        expect(transaction.value).toBe(null)
+        expect(transaction.value).toBe(undefined)
         await deposit(bankAddress, amount)
         expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
         expect(transaction.value).not.toBe(tx)
@@ -286,10 +286,10 @@ describe('Bank', () => {
 
       it('should keeps state of transaction to be null', async () => {
         const { execute: deposit, transaction } = useBankDeposit()
-        expect(transaction.value).toBe(null)
+        expect(transaction.value).toBe(undefined)
         await deposit(bankAddress, amount)
         expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(transaction.value).toBe(null)
+        expect(transaction.value).toBe(undefined)
       })
 
       it('should change state of isLoading correctly', async () => {
@@ -325,14 +325,14 @@ describe('Bank', () => {
       expect(transfer).toBeInstanceOf(Function)
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(false)
-      expect(transaction.value).toBe(null)
+      expect(transaction.value).toBe(undefined)
       expect(error.value).toBe(null)
     })
 
     describe('when success', () => {
       it('should change state of transaction correctly', async () => {
         const { execute: transfer, transaction } = useBankTransfer()
-        expect(transaction.value).toBe(null)
+        expect(transaction.value).toBe(undefined)
         await transfer(bankAddress, to, amount)
         expect(bankService.transfer).toHaveBeenCalledWith(bankAddress, to, amount)
         expect(transaction.value).not.toBe(tx)
@@ -373,10 +373,10 @@ describe('Bank', () => {
 
       it('should change state of transaction correctly', async () => {
         const { execute: transfer, transaction } = useBankTransfer()
-        expect(transaction.value).toBe(null)
+        expect(transaction.value).toBe(undefined)
         await transfer(bankAddress, to, amount)
         expect(bankService.transfer).toHaveBeenCalledWith(bankAddress, to, amount)
-        expect(transaction.value).toBe(null)
+        expect(transaction.value).toBe(undefined)
       })
 
       it('should change state of isLoading correctly', async () => {

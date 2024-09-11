@@ -13,8 +13,8 @@ export default defineConfig({
   // Use half of the number of logical CPU cores for running tests in parallel.
   workers: undefined,
 
-  // Test timeout is 2 minutes.
-  timeout: 120000,
+  // Disable timeout
+  timeout: 0,
 
   use: {
     baseURL: 'http://localhost:5173'

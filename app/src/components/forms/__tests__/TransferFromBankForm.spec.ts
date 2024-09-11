@@ -4,6 +4,10 @@ import { mount } from '@vue/test-utils'
 import TransferFromBankForm from '../TransferFromBankForm.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 
+interface ComponentData {
+  to: string
+  amount: string
+}
 describe('TransferFromBankForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
@@ -46,7 +50,9 @@ describe('TransferFromBankForm.vue', () => {
       expect(recipientInput.element).toBeDefined()
       await recipientInput.setValue('0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E')
 
-      expect((wrapper.vm as any).to).toBe('0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E')
+      expect((wrapper.vm as unknown as ComponentData).to).toBe(
+        '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
+      )
     })
 
     it('renders input transfer amount correctly', async () => {
@@ -54,7 +60,7 @@ describe('TransferFromBankForm.vue', () => {
       expect(amountInput.element).toBeDefined()
       await amountInput.setValue('10')
 
-      expect((wrapper.vm as any).amount).toBe('10')
+      expect((wrapper.vm as unknown as ComponentData).amount).toBe('10')
     })
   })
 
@@ -62,7 +68,9 @@ describe('TransferFromBankForm.vue', () => {
     it('updates "to" value when selecting member from dropdown', async () => {
       const dropdownOption = wrapper.find('.dropdown-content a')
       await dropdownOption.trigger('click')
-      expect((wrapper.vm as any).to).toBe('0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E')
+      expect((wrapper.vm as unknown as ComponentData).to).toBe(
+        '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
+      )
     })
 
     it('emits closeModal event when Cancel button is clicked', async () => {

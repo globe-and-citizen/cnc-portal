@@ -4,6 +4,7 @@ import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
+import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
@@ -19,7 +20,7 @@ const mockClipboard = {
 }
 
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: any = await importOriginal()
+  const actual: T = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -29,7 +30,7 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 describe('BankSection', () => {
   setActivePinia(createPinia())
 
-  const createComponent = (props?: any) => {
+  const createComponent = (props?: { team?: {}; pushTipLoading?: boolean }) => {
     return mount(BankSection, {
       props: {
         team: {

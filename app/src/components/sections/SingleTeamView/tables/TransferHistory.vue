@@ -63,7 +63,7 @@ const showTxDetail = (txHash: string) => {
 
 watch(error, () => {
   if (error.value) {
-    addErrorToast(error.value.reason ? error.value.reason : 'Failed to get transfer events')
+    addErrorToast('Failed to get transfer events')
   }
 })
 </script>
