@@ -5,14 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import inject from '@rollup/plugin-inject'
 import { isAddress } from 'ethers'
 
-export const ENV_LIST = [
-  'VITE_APP_TIPS_ADDRESS',
-  'VITE_APP_BANK_IMPL_ADDRESS',
-  'VITE_APP_BACKEND_URL',
-  'VITE_APP_VOTING_IMPL_ADDRESS',
-  'VITE_APP_BANK_BEACON_ADDRESS',
-  'VITE_APP_VOTING_BEACON_ADDRESS'
-]
+export const ENV_LIST = ['VITE_APP_BACKEND_URL']
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {

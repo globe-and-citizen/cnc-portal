@@ -20,7 +20,8 @@
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write .",
-    "format-check": "prettier . --check"
+    "format-check": "prettier . --check",
+    "git:ignore-locally": "git update-index --assume-unchanged src/artifacts/deployed_addresses/chain-31337.json"
   },
   "dependencies": {
     "@heroicons/vue": "^2.1.4",
