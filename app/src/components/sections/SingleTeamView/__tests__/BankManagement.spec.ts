@@ -6,6 +6,10 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 
+interface ComponentData {
+  transferOwnershipModal: boolean
+}
+
 vi.mock('@/stores/useToastStore', () => ({
   useToastStore: vi.fn().mockReturnValue({
     addErrorToast: vi.fn(),
@@ -115,7 +119,7 @@ describe('BankManagement', () => {
       const wrapper = createComponent()
       const transferOwnershipButton = wrapper.find('button[data-test="transfer-ownership"]')
       await transferOwnershipButton.trigger('click')
-      expect((wrapper.vm as any).transferOwnershipModal).toBeTruthy()
+      expect((wrapper.vm as unknown as ComponentData).transferOwnershipModal).toBeTruthy()
     })
   })
 })

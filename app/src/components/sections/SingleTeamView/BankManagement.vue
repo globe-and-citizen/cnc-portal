@@ -116,7 +116,7 @@ const {
   isSuccess: transferOwnershipSuccess
 } = useBankTransferOwnership(props.team.bankAddress!)
 
-const executeBank = async (execute: Function, args: any[] = []) => {
+const executeBank = async (execute: Function, args: string[] = []) => {
   if (currentUserAddress !== owner.value) {
     addErrorToast('You are not the owner of this bank')
     return

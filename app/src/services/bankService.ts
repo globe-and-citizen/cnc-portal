@@ -77,7 +77,7 @@ export class BankService implements IBankService {
     return await bank.paused()
   }
 
-  async pause(bankAddress: string): Promise<any> {
+  async pause(bankAddress: string): Promise<TransactionResponse> {
     const bank = await this.getContract(bankAddress)
     const tx = await bank.pause()
     await tx.wait()
@@ -85,7 +85,7 @@ export class BankService implements IBankService {
     return tx
   }
 
-  async unpause(bankAddress: string): Promise<any> {
+  async unpause(bankAddress: string): Promise<TransactionResponse> {
     const bank = await this.getContract(bankAddress)
     const tx = await bank.unpause()
     await tx.wait()
@@ -93,7 +93,7 @@ export class BankService implements IBankService {
     return tx
   }
 
-  async transferOwnership(bankAddress: string, newOwner: string): Promise<any> {
+  async transferOwnership(bankAddress: string, newOwner: string): Promise<TransactionResponse> {
     const bank = await this.getContract(bankAddress)
     const tx = await bank.transferOwnership(newOwner)
     await tx.wait()
