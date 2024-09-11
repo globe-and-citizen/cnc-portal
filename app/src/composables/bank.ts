@@ -124,10 +124,10 @@ export function useBankEvents(bankAddress: string) {
   return { events, getEvents, loading, error }
 }
 
-export function useBankStatus(bankAddress: string): IContractReadFunction<boolean | null> {
+export function useBankStatus(bankAddress: string) {
   const isPaused = ref<boolean | null>(null)
   const loading = ref<boolean>(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getIsPaused(): Promise<void> {
     try {
@@ -143,10 +143,10 @@ export function useBankStatus(bankAddress: string): IContractReadFunction<boolea
   return { data: isPaused, execute: getIsPaused, isLoading: loading, error }
 }
 
-export function useBankOwner(bankAddress: string): IContractReadFunction<string | null> {
+export function useBankOwner(bankAddress: string) {
   const owner = ref<string | null>(null)
   const loading = ref<boolean>(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getOwner(): Promise<void> {
     try {
@@ -162,10 +162,10 @@ export function useBankOwner(bankAddress: string): IContractReadFunction<string 
   return { data: owner, execute: getOwner, isLoading: loading, error }
 }
 
-export function useBankPause(bankAddress: string): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function useBankPause(bankAddress: string) {
+  const transaction = ref<TransactionResponse | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function pause(): Promise<void> {
@@ -183,10 +183,10 @@ export function useBankPause(bankAddress: string): IContractTransactionFunction 
   return { execute: pause, isLoading: loading, isSuccess, error, transaction }
 }
 
-export function useBankUnpause(bankAddress: string): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function useBankUnpause(bankAddress: string) {
+  const transaction = ref<TransactionResponse | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function unpause(): Promise<void> {
@@ -204,10 +204,10 @@ export function useBankUnpause(bankAddress: string): IContractTransactionFunctio
   return { execute: unpause, isLoading: loading, isSuccess, error, transaction }
 }
 
-export function useBankTransferOwnership(bankAddress: string): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function useBankTransferOwnership(bankAddress: string) {
+  const transaction = ref<TransactionResponse | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function transferOwnership(newOwner: string): Promise<void> {
