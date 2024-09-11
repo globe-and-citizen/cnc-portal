@@ -1,6 +1,16 @@
 coverage:
   status:
-    project: true
+    project:
+      default: off
+      app:
+        flags:
+          - app-unit-tests
+      api:
+        flags:
+          - api-unit-tests
+      contract:
+        flags:
+          - contract-unit-tests
 
 github_checks:
   annotations: true
