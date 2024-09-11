@@ -1,104 +1,106 @@
 <template>
-  <div class="stats bg-green-100 flex text-primary-content border-outline">
-    <div class="stat flex flex-col justify-center items-center">
-      <div class="stat-title">Team balance</div>
-      <span v-if="team.bankAddress" class="flex gap-2 items-center">
-        <ToolTip data-test="bank-address-tooltip" content="Click to see address in block explorer">
-          <span
-            class="badge badge-sm cursor-pointer"
-            data-test="team-bank-address"
-            @click="openExplorer(team.bankAddress)"
-            :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
-            >{{ team.bankAddress }}</span
+  <div class="flex flex-col gap-y-4">
+    <div class="stats bg-green-100 flex text-primary-content border-outline">
+      <div class="stat flex flex-col justify-center items-center">
+        <div class="stat-title">Team balance</div>
+        <span v-if="team.bankAddress" class="flex gap-2 items-center">
+          <ToolTip
+            data-test="bank-address-tooltip"
+            content="Click to see address in block explorer"
           >
-        </ToolTip>
-        <ToolTip
-          data-test="copy-address-tooltip"
-          :content="copied ? 'Copied!' : 'Click to copy address'"
-        >
-          <ClipboardDocumentListIcon
-            v-if="isSupported && !copied"
-            class="size-5 cursor-pointer"
-            @click="copy(team.bankAddress)"
+            <span
+              class="badge badge-sm cursor-pointer"
+              data-test="team-bank-address"
+              @click="openExplorer(team.bankAddress)"
+              :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
+              >{{ team.bankAddress }}</span
+            >
+          </ToolTip>
+          <ToolTip
+            data-test="copy-address-tooltip"
+            :content="copied ? 'Copied!' : 'Click to copy address'"
+          >
+            <ClipboardDocumentListIcon
+              v-if="isSupported && !copied"
+              class="size-5 cursor-pointer"
+              @click="copy(team.bankAddress)"
+            />
+            <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
+          </ToolTip>
+        </span>
+        <span
+          class="loading loading-dots loading-xs"
+          data-test="balance-loading"
+          v-if="balanceLoading"
+        ></span>
+        <div class="stat-value text-3xl mt-2" v-else>
+          {{ teamBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+        </div>
+        <div class="stat-actions flex justify-center gap-2 items-center">
+          <button
+            class="btn btn-xs btn-secondary"
+            v-if="team.bankAddress"
+            @click="() => (depositModal = true)"
+          >
+            Deposit
+          </button>
+          <button
+            class="btn btn-xs btn-secondary"
+            v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
+            @click="transferModal = true"
+          >
+            Transfer
+          </button>
+        </div>
+      </div>
+      <div class="stat flex flex-col justify-center items-center">
+        <div class="stat-title">Send to Members</div>
+        <div class="stat-value text-sm mt-2">
+          <input
+            type="text"
+            size="5"
+            class="h-10 outline-neutral-content rounded-md border-neutral-content text-center"
+            placeholder="Tip"
+            v-model="tipAmount"
           />
-          <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
-        </ToolTip>
-      </span>
-      <span
-        class="loading loading-dots loading-xs"
-        data-test="balance-loading"
-        v-if="balanceLoading"
-      ></span>
-      <div class="stat-value text-3xl mt-2" v-else>
-        {{ teamBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          <span class="text-xs ml-2">{{ NETWORK.currencySymbol }}</span>
+        </div>
+        <div class="stat-actions justify-center flex">
+          <LoadingButton v-if="pushTipLoading" color="primary btn-xs" />
+          <button
+            v-else
+            className="btn btn-primary btn-xs text-white "
+            @click="pushTip(membersAddress, tipAmount, team.bankAddress ?? '')"
+          >
+            Send
+          </button>
+        </div>
       </div>
-      <div class="stat-actions flex justify-center gap-2 items-center">
-        <button
-          class="btn btn-xs btn-secondary"
-          v-if="team.bankAddress"
-          @click="() => (depositModal = true)"
-        >
-          Deposit
-        </button>
-        <button
-          class="btn btn-xs btn-secondary"
-          v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
-          @click="transferModal = true"
-        >
-          Transfer
-        </button>
-      </div>
-    </div>
-    <div class="stat flex flex-col justify-center items-center">
-      <div class="stat-title">Send to Members</div>
-      <div class="stat-value text-sm mt-2">
-        <input
-          type="text"
-          size="5"
-          class="h-10 outline-neutral-content rounded-md border-neutral-content text-center"
-          placeholder="Tip"
-          v-model="tipAmount"
+      <ModalComponent v-model="depositModal">
+        <DepositBankForm
+          v-if="depositModal"
+          @close-modal="() => (depositModal = false)"
+          @deposit="async (amount: string) => depositToBank(amount)"
+          :loading="depositLoading"
         />
-        <span class="text-xs ml-2">{{ NETWORK.currencySymbol }}</span>
-      </div>
-      <div class="stat-actions justify-center flex">
-        <LoadingButton v-if="pushTipLoading" color="primary btn-xs" />
-        <button
-          v-else
-          className="btn btn-primary btn-xs text-white "
-          @click="
-            () => {
-              if (team.bankAddress) pushTip(membersAddress, tipAmount, team.bankAddress)
+      </ModalComponent>
+      <ModalComponent v-model="transferModal">
+        <TransferFromBankForm
+          v-if="transferModal"
+          @close-modal="() => (transferModal = false)"
+          @transfer="
+            async (to: string, amount: string) => {
+              transferFromBank(to, amount)
             }
           "
-        >
-          Send
-        </button>
-      </div>
+          @searchMembers="(input) => searchUsers({ name: '', address: input })"
+          :filteredMembers="foundUsers"
+          :loading="transferLoading"
+          :bank-balance="teamBalance"
+        />
+      </ModalComponent>
     </div>
-    <ModalComponent v-model="depositModal">
-      <DepositBankForm
-        v-if="depositModal"
-        @close-modal="() => (depositModal = false)"
-        @deposit="async (amount: string) => depositToBank(amount)"
-        :loading="depositLoading"
-      />
-    </ModalComponent>
-    <ModalComponent v-model="transferModal">
-      <TransferFromBankForm
-        v-if="transferModal"
-        @close-modal="() => (transferModal = false)"
-        @transfer="
-          async (to: string, amount: string) => {
-            transferFromBank(to, amount)
-          }
-        "
-        @searchMembers="(input) => searchUsers({ name: '', address: input })"
-        :filteredMembers="foundUsers"
-        :loading="transferLoading"
-        :bank-balance="teamBalance"
-      />
-    </ModalComponent>
+    <BankManagement :team="team" />
   </div>
 </template>
 <script setup lang="ts">
@@ -110,6 +112,7 @@ import { useUserDataStore } from '@/stores/user'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import BankManagement from '@/components/sections/SingleTeamView/BankManagement.vue'
 
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
