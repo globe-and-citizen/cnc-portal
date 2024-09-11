@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 
-# /src/artifacts/deployed_addresses/chain-31337.json
+/src/artifacts/deployed_addresses/chain-31337.json
 
 node_modules
 .DS_Store
