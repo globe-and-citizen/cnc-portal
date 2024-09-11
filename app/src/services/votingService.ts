@@ -84,7 +84,7 @@ export class VotingService implements IVotingService {
     const tx = await votingContract.setBoardOfDirectorsContractAddress(bodAddress)
     await tx.wait()
 
-    return
+    return tx
   }
   async voteDirective(
     votingAddress: string,
@@ -121,9 +121,9 @@ export class VotingService implements IVotingService {
     return await contractService.getContract()
   }
   private getContractService(votingAddress: string): SmartContract {
-    return new SmartContract(votingAddress, VOTING_ABI as unknown as Contract)
+    return new SmartContract(votingAddress, VOTING_ABI)
   }
-  private async deployVotingContract(): Promise<string> {
+  async deployVotingContract(): Promise<string> {
     const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
     const votingProxyFactory = await this.web3Library.getFactoryContract(
       BEACON_PROXY_ABI,

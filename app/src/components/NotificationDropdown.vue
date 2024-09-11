@@ -86,7 +86,7 @@ watch(notifications, () => {
 })
 const isUnread = computed(() => {
   const idx = notifications.value?.data.findIndex(
-    (notification: any) => notification.isRead === false
+    (notification: Notification) => notification.isRead === false
   )
   return idx > -1
 })

@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 
+interface ComponentData {
+  formData: { name: string; address: string; isValid: boolean }[]
+  users: { name: string; address: string }[]
+}
 describe('AddMemberModal.vue', () => {
   const formData = [
     { name: 'Hermann', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E', isValid: true }
@@ -30,8 +34,8 @@ describe('AddMemberModal.vue', () => {
 
     it('updates formData when a user is selected from dropdown', async () => {
       await wrapper.find('.dropdown a').trigger('click')
-      expect((wrapper.vm as any).formData[0].name).toBe(users[0].name)
-      expect((wrapper.vm as any).formData[0].address).toBe(users[0].address)
+      expect((wrapper.vm as unknown as ComponentData).formData[0].name).toBe(users[0].name)
+      expect((wrapper.vm as unknown as ComponentData).formData[0].address).toBe(users[0].address)
     })
   })
   describe('Snapshot', () => {
@@ -88,8 +92,8 @@ describe('AddMemberModal.vue', () => {
       await inputFields[0].setValue('New Name')
       await inputFields[1].setValue('0xNewAddress')
 
-      expect((wrapper.vm as any).formData[0].name).toBe('New Name')
-      expect((wrapper.vm as any).formData[0].address).toBe('0xNewAddress')
+      expect((wrapper.vm as unknown as ComponentData).formData[0].name).toBe('New Name')
+      expect((wrapper.vm as unknown as ComponentData).formData[0].address).toBe('0xNewAddress')
       expect(wrapper.find('.text-red-500').exists()).toBe(true)
     })
   })

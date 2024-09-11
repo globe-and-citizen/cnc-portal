@@ -66,7 +66,11 @@
         <button
           v-else
           className="btn btn-primary btn-xs text-white "
-          @click="pushTip(membersAddress, tipAmount, team.bankAddress)"
+          @click="
+            () => {
+              if (team.bankAddress) pushTip(membersAddress, tipAmount, team.bankAddress)
+            }
+          "
         >
           Send
         </button>
@@ -114,7 +118,6 @@ import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
 import { useBankBalance, useBankDeposit, useBankTransfer } from '@/composables/bank'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useErrorHandler } from '@/composables/errorHandler'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -192,7 +195,7 @@ watch(balanceError, () => {
 })
 watch(pushTipError, async () => {
   if (pushTipError.value) {
-    addErrorToast(pushTipError.value.reason ? pushTipError.value.reason : 'Failed to push tip')
+    addErrorToast('Failed to push tip')
   }
 })
 
@@ -221,13 +224,16 @@ const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 const depositToBank = async (amount: string) => {
-  await deposit(props.team.bankAddress, amount)
-  if (depositSuccess.value) {
-    depositModal.value = false
-    await getBalance(props.team.bankAddress)
+  if (props.team.bankAddress) {
+    await deposit(props.team.bankAddress, amount)
+    if (depositSuccess.value) {
+      depositModal.value = false
+      await getBalance(props.team.bankAddress)
+    }
   }
 }
 const transferFromBank = async (to: string, amount: string) => {
+  if (!props.team.bankAddress) return
   await transfer(props.team.bankAddress, to, amount)
   if (transferSuccess.value) {
     transferModal.value = false
@@ -242,7 +248,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
       await executeSearchUser()
     }
   } catch (error) {
-    return useErrorHandler().handleError(error)
+    addErrorToast('Failed to search users')
   }
 }
 

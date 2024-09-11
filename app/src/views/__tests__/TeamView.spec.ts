@@ -15,7 +15,7 @@ const router = createRouter({
   ]
 })
 describe('TeamView.vue', () => {
-  let wrapper: any
+  let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -47,7 +47,11 @@ describe('TeamView.vue', () => {
     // })
 
     it('should render error message when there is an error', async () => {
-      wrapper.vm.teamError = 'Unable to fetch teams'
+      interface ComponentData {
+        teamError: string
+      }
+
+      ;(wrapper.vm as unknown as ComponentData).teamError = 'Unable to fetch teams'
       // await wrapper.setData({ teamError: 'Unable to fetch teams' })
       await wrapper.vm.$nextTick()
       expect(wrapper.find('.alert.alert-warning').exists()).toBe(true)

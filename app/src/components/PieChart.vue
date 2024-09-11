@@ -30,7 +30,7 @@ const option = ref({
     formatter: '{a} <br/>{b} : {c} ({d}%)'
   },
   legend: {
-    data: props.data.map((item: any) => item.name),
+    data: props.data.map((item: { name: string }) => item.name),
     orient: 'vertical',
     left: 'left'
   },

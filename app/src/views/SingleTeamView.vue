@@ -47,7 +47,6 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 
 // Composables
-import { useErrorHandler } from '@/composables/errorHandler'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useDeployBankContract } from '@/composables/bank'
 
@@ -124,7 +123,7 @@ const {
 // Watchers for getting team details
 watch(getTeamError, () => {
   if (getTeamError.value) {
-    useErrorHandler().handleError(new Error(getTeamError.value))
+    addErrorToast(getTeamError.value)
   }
 })
 
