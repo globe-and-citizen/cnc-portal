@@ -1,7 +1,7 @@
 <template>
   <h2>PushTip Transactions</h2>
   <SkeletonLoading v-if="pushTipLoading" class="w-full h-96 p-5" />
-  <div v-else class="overflow-x-auto bg-base-100 p-5">
+  <div v-else class="overflow-x-auto bg-base-100 p-5" data-test="table-push-tip-transactions">
     <table class="table table-zebra">
       <!-- head -->
       <thead>
@@ -28,8 +28,8 @@
               <li>{{ address }}</li>
             </ul>
           </td>
-          <td>{{ ethers.formatEther(pushTipEvent.data[2]) }} ETH</td>
-          <td>{{ ethers.formatEther(pushTipEvent.data[3]) }} ETH</td>
+          <td>{{ ethers.formatEther(pushTipEvent.data[2]) }} {{ NETWORK.currencySymbol }}</td>
+          <td>{{ ethers.formatEther(pushTipEvent.data[3]) }} {{ NETWORK.currencySymbol }}</td>
           <td>{{ pushTipEvent.date }}</td>
         </tr>
       </tbody>

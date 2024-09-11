@@ -1,7 +1,7 @@
 <template>
   <h2>TipWithdrawal Transactions</h2>
   <SkeletonLoading v-if="withdrawalTipLoading" class="w-full h-96 p-5" />
-  <div v-else class="overflow-x-auto bg-base-100 p-5">
+  <div v-else class="overflow-x-auto bg-base-100 p-5" data-test="table-tip-withdrawal-transactions">
     <table class="table table-zebra">
       <!-- head -->
       <thead>
@@ -21,7 +21,7 @@
         >
           <td>{{ index + 1 }}</td>
           <td class="truncate max-w-48">{{ withdrawalTipEvent.data[0] }}</td>
-          <td>{{ ethers.formatEther(withdrawalTipEvent.data[1]) }} ETH</td>
+          <td>{{ ethers.formatEther(withdrawalTipEvent.data[1]) }} {{ NETWORK.currencySymbol }}</td>
           <td>{{ withdrawalTipEvent.date }}</td>
         </tr>
       </tbody>

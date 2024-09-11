@@ -1,13 +1,13 @@
 <template>
   <h2>SendTip Transactions</h2>
   <SkeletonLoading v-if="sendTipLoading" class="w-full h-96 p-5" />
-  <div v-else class="overflow-x-auto bg-base-100 p-5">
+  <div v-else class="overflow-x-auto bg-base-100 p-5" data-test="table-send-tip-transactions">
     <table class="table table-zebra">
       <!-- head -->
       <thead>
         <tr class="font-bold text-lg">
-          <th>From</th>
           <th>N°</th>
+          <th>From</th>
           <th>Team Addresses</th>
           <th>Total Tip</th>
           <th class="truncate max-w-12">Tip Per Address</th>
@@ -28,8 +28,8 @@
               <li>{{ address }}</li>
             </ul>
           </td>
-          <td>{{ ethers.formatEther(sendTipEvent.data[2]) }} ETH</td>
-          <td>{{ ethers.formatEther(sendTipEvent.data[3]) }} ETH</td>
+          <td>{{ ethers.formatEther(sendTipEvent.data[2]) }} {{ NETWORK.currencySymbol }}</td>
+          <td>{{ ethers.formatEther(sendTipEvent.data[3]) }} {{ NETWORK.currencySymbol }}</td>
           <td>{{ sendTipEvent.date }}</td>
         </tr>
       </tbody>
