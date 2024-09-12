@@ -44,6 +44,7 @@ const mockContract: {
   owner: ReturnType<typeof vi.fn>
   paused: ReturnType<typeof vi.fn>
   isPaused: ReturnType<typeof vi.fn>
+  getOwner: ReturnType<typeof vi.fn>
 } = {
   addProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
   getProposals: vi.fn().mockResolvedValue([mockProposal]),
@@ -61,7 +62,8 @@ const mockContract: {
   transferOwnership: vi.fn().mockResolvedValue(tx),
   owner: vi.fn().mockResolvedValue(tx),
   paused: vi.fn().mockResolvedValue(false),
-  isPaused: vi.fn().mockResolvedValue(true)
+  isPaused: vi.fn().mockResolvedValue(true),
+  getOwner: vi.fn().mockReturnValue('0xOwnerAddress')
 }
 // Mock SmartContract
 const contractService = {
@@ -257,6 +259,13 @@ describe('VotingService', () => {
 
       expect(paused).toBeDefined()
       expect(paused).toBe(false)
+    })
+  })
+  describe('getOwner', () => {
+    it('should return the owner of the contract', async () => {
+      const result = await votingService.getOwner('0x123')
+      expect(result).toBeDefined()
+      expect(result).toMatchObject(tx)
     })
   })
 })
