@@ -9,6 +9,7 @@ import { VOTING_IMPL_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { ContractTransaction } from 'ethers'
+import type { TransactionResponse } from 'ethers'
 
 export interface IVotingService {
   web3Library: IWeb3Library
@@ -137,5 +138,40 @@ export class VotingService implements IVotingService {
     await beaconProxyDeployment.waitForDeployment()
 
     return await beaconProxy.getAddress()
+  }
+  async isPaused(votingAddress: string): Promise<boolean> {
+    const voting = await this.getContract(votingAddress)
+
+    return await voting.paused()
+  }
+
+  async pause(votingAddress: string): Promise<TransactionResponse> {
+    const voting = await this.getContract(votingAddress)
+    const tx = await voting.pause()
+    await tx.wait()
+
+    return tx
+  }
+
+  async unpause(votingAddress: string): Promise<TransactionResponse> {
+    const voting = await this.getContract(votingAddress)
+    const tx = await voting.unpause()
+    await tx.wait()
+
+    return tx
+  }
+
+  async transferOwnership(votingAddress: string, newOwner: string): Promise<TransactionResponse> {
+    const voting = await this.getContract(votingAddress)
+    const tx = await voting.transferOwnership(newOwner)
+    await tx.wait()
+
+    return tx
+  }
+
+  async getOwner(votingAddress: string): Promise<string> {
+    const voting = await this.getContract(votingAddress)
+
+    return await voting.owner()
   }
 }

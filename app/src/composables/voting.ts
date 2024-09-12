@@ -1,5 +1,6 @@
 import { VotingService } from '@/services/votingService'
 import type { Proposal } from '@/types'
+import type { TransactionResponse } from 'ethers'
 import type { ContractTransaction } from 'ethers'
 import { ref } from 'vue'
 
@@ -175,4 +176,104 @@ export function useDeployVotingContract() {
   }
 
   return { execute: deploy, isLoading: loading, isSuccess, error, contractAddress }
+}
+export function useVotingContractStatus(votingAddress: string) {
+  const isPaused = ref<boolean | null>(null)
+  const loading = ref<boolean>(false)
+  const error = ref<unknown>(null)
+
+  async function getIsPaused(): Promise<void> {
+    try {
+      loading.value = true
+      isPaused.value = await votingService.isPaused(votingAddress)
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { data: isPaused, execute: getIsPaused, isLoading: loading, error }
+}
+
+export function useVotingContractOwner(votingAddress: string) {
+  const owner = ref<string | null>(null)
+  const loading = ref<boolean>(false)
+  const error = ref<unknown>(null)
+
+  async function getOwner(): Promise<void> {
+    try {
+      loading.value = true
+      owner.value = await votingService.getOwner(votingAddress)
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { data: owner, execute: getOwner, isLoading: loading, error }
+}
+
+export function useVotingContractPause(votingAddress: string) {
+  const transaction = ref<TransactionResponse | null>(null)
+  const loading = ref(false)
+  const error = ref<unknown>(null)
+  const isSuccess = ref(false)
+
+  async function pause(): Promise<void> {
+    try {
+      loading.value = true
+      transaction.value = await votingService.pause(votingAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: pause, isLoading: loading, isSuccess, error, transaction }
+}
+
+export function useVotingContractUnpause(votingAddress: string) {
+  const transaction = ref<TransactionResponse | null>(null)
+  const loading = ref(false)
+  const error = ref<unknown>(null)
+  const isSuccess = ref(false)
+
+  async function unpause(): Promise<void> {
+    try {
+      loading.value = true
+      transaction.value = await votingService.unpause(votingAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: unpause, isLoading: loading, isSuccess, error, transaction }
+}
+
+export function useVotingContractTransferOwnership(votingAddress: string) {
+  const transaction = ref<TransactionResponse | null>(null)
+  const loading = ref(false)
+  const error = ref<unknown>(null)
+  const isSuccess = ref(false)
+
+  async function transferOwnership(newOwner: string): Promise<void> {
+    try {
+      loading.value = true
+      transaction.value = await votingService.transferOwnership(votingAddress, newOwner)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: transferOwnership, isLoading: loading, isSuccess, error, transaction }
 }

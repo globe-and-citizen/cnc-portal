@@ -45,7 +45,13 @@
             >
               View BoD
             </button>
+            <button class="btn btn-md btn-secondary" @click="showVotingControlModal = true">
+              Manage
+            </button>
           </div>
+          <ModalComponent v-model="showVotingControlModal">
+            <VotingManagement :team="team" />
+          </ModalComponent>
         </div>
         <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
           <template #tab-0>
@@ -131,7 +137,10 @@ import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import LoadingButton from '@/components/LoadingButton.vue'
+import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
 
+const props = defineProps<{ team: Partial<Team> }>()
+const showVotingControlModal = ref(false)
 const emits = defineEmits(['getTeam'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 const {
@@ -243,7 +252,6 @@ const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
 const route = useRoute()
 
-const props = defineProps<{ team: Partial<Team> }>()
 const newProposalInput = ref<Partial<Proposal>>({
   title: '',
   description: '',
