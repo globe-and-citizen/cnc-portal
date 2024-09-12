@@ -5,6 +5,10 @@ import { Contract } from 'ethers'
 import type { Proposal } from '@/types'
 
 // Mock proposal data
+const tx = {
+  txHash: '0x123',
+  wait: vi.fn()
+}
 const mockProposal: Partial<Proposal> = {
   id: 0,
   title: 'Test Proposal',
@@ -45,6 +49,11 @@ describe('VotingService', () => {
     proposalsById: ReturnType<typeof vi.fn>
     getProposalById: ReturnType<typeof vi.fn>
     setBoardOfDirectorsContractAddress: ReturnType<typeof vi.fn>
+    pause: ReturnType<typeof vi.fn>
+    unpause: ReturnType<typeof vi.fn>
+    transferOwnership: ReturnType<typeof vi.fn>
+    owner: ReturnType<typeof vi.fn>
+    paused: ReturnType<typeof vi.fn>
   }
 
   // Create a mock contract instance
@@ -60,7 +69,12 @@ describe('VotingService', () => {
       getProposalById: vi.fn().mockResolvedValue(mockProposal),
       setBoardOfDirectorsContractAddress: vi
         .fn()
-        .mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) })
+        .mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
+      pause: vi.fn().mockReturnValue(tx),
+      unpause: vi.fn().mockReturnValue(tx),
+      transferOwnership: vi.fn().mockReturnValue(tx),
+      owner: vi.fn().mockReturnValue(tx),
+      paused: vi.fn().mockReturnValue(false)
     }
 
     // Mock the `getContract` method to return the mock contract instance
