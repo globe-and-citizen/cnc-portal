@@ -28,7 +28,7 @@ vi.mock('@/adapters/web3LibraryAdapter', () => ({
     getInstance: vi.fn()
   }
 }))
-let mockContract: {
+const mockContract: {
   addProposal: ReturnType<typeof vi.fn>
   getProposals: ReturnType<typeof vi.fn>
   concludeProposal: ReturnType<typeof vi.fn>
@@ -43,8 +43,7 @@ let mockContract: {
   transferOwnership: ReturnType<typeof vi.fn>
   owner: ReturnType<typeof vi.fn>
   paused: ReturnType<typeof vi.fn>
-}
-mockContract = {
+} = {
   addProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
   getProposals: vi.fn().mockResolvedValue([mockProposal]),
   concludeProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
