@@ -1,139 +1,134 @@
 <template>
-  <!-- Expense Account Created -->
-  <div v-if="team.expenseAccountAddress">
-    <div
-      class="stats bg-green-100 flex text-primary-content border-outline flex-col justify-center items-center p-5"
-    >
-      <span v-if="team.bankAddress" class="flex gap-2 items-center">
-        <ToolTip data-test="bank-address-tooltip" content="Click to see address in block explorer">
-          <span
-            class="badge badge-sm cursor-pointer"
-            data-test="team-bank-address"
-            @click="openExplorer(team.expenseAccountAddress)"
-            :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
-            >{{ team.expenseAccountAddress }}</span
-          >
-        </ToolTip>
-        <ToolTip
-          data-test="copy-address-tooltip"
-          :content="copied ? 'Copied!' : 'Click to copy address'"
+  <div
+    v-if="team.expenseAccountAddress"
+    class="stats bg-green-100 flex text-primary-content border-outline flex-col justify-center items-center p-5"
+  >
+    <span class="flex gap-2 items-center">
+      <ToolTip
+        data-test="expense-account-address-tooltip"
+        content="Click to see address in block explorer"
+      >
+        <span
+          class="badge badge-sm cursor-pointer"
+          data-test="expense-account-address"
+          @click="openExplorer(team.expenseAccountAddress)"
+          :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
+          >{{ team.expenseAccountAddress }}</span
         >
-          <ClipboardDocumentListIcon
-            v-if="isSupported && !copied"
-            class="size-5 cursor-pointer"
-            @click="copy(team.expenseAccountAddress)"
-          />
-          <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
-        </ToolTip>
-      </span>
-      <div class="flex items-center pt-3">
-        <div>
-          <div class="stat-title pr-3">Balance</div>
-          <div 
-            v-if="isLoadingBalance || !contractBalance"
-            class="stat-value mt-1 border-r border-gray-400 pr-3"
-          >
-            <span
-              class="loading loading-dots loading-xs"
-              data-test="balance-loading"
-            >
-            </span>
-          </div>
-          <div
-            v-else
-            class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-          >
-            {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
+      </ToolTip>
+      <ToolTip
+        data-test="copy-address-tooltip"
+        :content="copied ? 'Copied!' : 'Click to copy address'"
+      >
+        <ClipboardDocumentListIcon
+          v-if="isSupported && !copied"
+          class="size-5 cursor-pointer"
+          @click="copy(team.expenseAccountAddress)"
+        />
+        <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
+      </ToolTip>
+    </span>
+    <div class="flex items-center pt-3">
+      <div>
+        <div class="stat-title pr-3">Balance</div>
+        <div
+          v-if="isLoadingBalance || !contractBalance"
+          class="stat-value mt-1 border-r border-gray-400 pr-3"
+        >
+          <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
         </div>
+        <div
+          v-else
+          class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+          data-test="contract-balance"
+        >
+          {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+        </div>
+      </div>
 
-        <div class="pl-3">
-          <div class="stat-title">Max Limit</div>
-          <div
-            v-if="isLoadingMaxLimit || !maxLimit"
-            class="stat-value mt-1 pr-3"  
-          >
-            <span
-              class="loading loading-dots loading-xs"
-              data-test="balance-loading"
-            ></span>
-          </div>
-          <div v-else class="stat-value text-3xl mt-2">
-            {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
+      <div class="pl-3">
+        <div class="stat-title">Max Limit</div>
+        <div v-if="isLoadingMaxLimit || !maxLimit" class="stat-value mt-1 pr-3">
+          <span class="loading loading-dots loading-xs" data-test="max-limit-loading"></span>
+        </div>
+        <div v-else class="stat-value text-3xl mt-2" data-test="max-limit">
+          {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
         </div>
       </div>
-      <div class="stat-actions flex justify-center gap-2 items-center">
-        <button
-          class="btn btn-xs btn-secondary"
-          :disabled="!approvedAddresses.has(useUserDataStore().address)"
-          v-if="team.bankAddress && approvedAddresses"
-          @click="transferModal = true"
-        >
-          Transfer
-        </button>
-        <button
-          class="btn btn-xs btn-secondary"
-          v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
-          @click="setLimitModal = true"
-        >
-          Set Limit
-        </button>
-        <button
-          class="btn btn-xs btn-secondary"
-          v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
-          @click="approveUsersModal = true"
-        >
-          Approve Users
-        </button>
-      </div>
-      <ModalComponent v-model="transferModal">
-        <TransferFromBankForm
-          v-if="transferModal"
-          @close-modal="() => (transferModal = false)"
-          @transfer="
-            async (to: string, amount: string) => {
-              transferFromExpenseAccount(to, amount)
-            }
-          "
-          @searchMembers="(input) => searchUsers({ name: '', address: input })"
-          :filteredMembers="foundUsers"
-          :loading="false"
-          :bank-balance="`${contractBalance}`"
-        />
-      </ModalComponent>
-      <ModalComponent v-model="setLimitModal">
-        <SetLimitForm
-          v-if="setLimitModal"
-          :loading="isLoadingSetLimit"
-          @close-modal="() => (setLimitModal = false)"
-          @set-limit="setExepenseAccountLimit"
-        />
-      </ModalComponent>
-      <ModalComponent v-model="approveUsersModal">
-        <ApproveUsersForm
-          :loading-approve="isLoadingApproveAddress"
-          :loading-disapprove="isLoadingDisapproveAddress"
-          :approved-addresses="approvedAddresses"
-          :unapproved-addresses="unapprovedAddresses"
-          @approve-address="approveAddress"
-          @disapprove-address="disapproveAddress"
-          @close-modal="approveUsersModal = false"
-        />
-      </ModalComponent>
     </div>
-
-    <div></div>
+    <div class="stat-actions flex justify-center gap-2 items-center">
+      <button
+        class="btn btn-xs btn-secondary"
+        :disabled="!approvedAddresses.has(useUserDataStore().address)"
+        v-if="team.bankAddress && approvedAddresses"
+        @click="transferModal = true"
+      >
+        Transfer
+      </button>
+      <button
+        class="btn btn-xs btn-secondary"
+        v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
+        @click="setLimitModal = true"
+      >
+        Set Limit
+      </button>
+      <button
+        class="btn btn-xs btn-secondary"
+        v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
+        @click="approveUsersModal = true"
+      >
+        Approve Users
+      </button>
+    </div>
+    <ModalComponent v-model="transferModal">
+      <TransferFromBankForm
+        v-if="transferModal"
+        @close-modal="() => (transferModal = false)"
+        @transfer="
+          async (to: string, amount: string) => {
+            transferFromExpenseAccount(to, amount)
+          }
+        "
+        @searchMembers="(input) => searchUsers({ name: '', address: input })"
+        :filteredMembers="foundUsers"
+        :loading="false"
+        :bank-balance="`${contractBalance}`"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="setLimitModal">
+      <SetLimitForm
+        v-if="setLimitModal"
+        :loading="isLoadingSetLimit"
+        @close-modal="() => (setLimitModal = false)"
+        @set-limit="setExepenseAccountLimit"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="approveUsersModal">
+      <ApproveUsersForm
+        :loading-approve="isLoadingApproveAddress"
+        :loading-disapprove="isLoadingDisapproveAddress"
+        :approved-addresses="approvedAddresses"
+        :unapproved-addresses="unapprovedAddresses"
+        @approve-address="approveAddress"
+        @disapprove-address="disapproveAddress"
+        @close-modal="approveUsersModal = false"
+      />
+    </ModalComponent>
   </div>
 
   <!-- Expense Account Not Yet Created -->
-  <div class="flex justify-center items-center" v-else>
-    <LoadingButton class="w-24" color="primary" v-if="isLoadingDeploy" />
+  <div class="flex justify-center items-center" v-if="!team.expenseAccountAddress">
+    <LoadingButton
+      class="w-24"
+      color="primary"
+      v-if="isLoadingDeploy"
+      data-test="loading-create-expense-account"
+    />
     <button
       v-else
       class="btn btn-primary"
       @click="async () => await deployExpenseAccount()"
-      data-test="createExpenseAccount"
+      data-test="create-expense-account"
     >
       Create Expense Account
     </button>
@@ -181,8 +176,8 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const unapprovedAddresses = ref<Set<string>>(new Set())
 const expenseAccountAddress = ref<{
-    expenseAccountAddress: string | null 
-  }>({expenseAccountAddress: null})
+  expenseAccountAddress: string | null
+}>({ expenseAccountAddress: null })
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
@@ -262,24 +257,18 @@ const { execute: executeSearchUser } = useCustomFetch('user/search', {
   .get()
   .json()
 
-const { 
-  execute: executeUpdateTeam,
-  data: teamU
-} = useCustomFetch(`teams/${props.team.id}`, {
+const { execute: executeUpdateTeam, data: teamU } = useCustomFetch(`teams/${props.team.id}`, {
   immediate: false
 })
   .put(expenseAccountAddress)
   .json()
-
 
 //#region helper functions
 const deployExpenseAccount = async () => {
   await executeDeployExpenseAccount()
   team.value.expenseAccountAddress = contractAddress.value
   //API call here
-  expenseAccountAddress
-   .value
-   .expenseAccountAddress = contractAddress.value
+  expenseAccountAddress.value.expenseAccountAddress = contractAddress.value
   await executeUpdateTeam()
 }
 
@@ -331,10 +320,7 @@ const disapproveAddress = async (address: string) => {
 const checkApprovedAddresses = async () => {
   if (team.value.members && team.value.expenseAccountAddress)
     for (const member of team.value.members) {
-      await executeExpenseAccountIsApprovedAddress(
-        team.value.expenseAccountAddress, 
-        member.address
-      )
+      await executeExpenseAccountIsApprovedAddress(team.value.expenseAccountAddress, member.address)
       if (isApprovedAddress.value) {
         approvedAddresses.value.add(member.address)
         unapprovedAddresses.value.delete(member.address)
@@ -450,12 +436,16 @@ watch(isSuccessDeploy, (newVal) => {
   if (newVal) addSuccessToast('Expense Account Successfully Created')
 })
 
-watch(() => team.value.expenseAccountAddress, async (newVal) => {
-  if (newVal) await init()
-})
+watch(
+  () => team.value.expenseAccountAddress,
+  async (newVal) => {
+    if (newVal) await init()
+  }
+)
 //#endregion watch success
 
 onMounted(async () => {
+  console.log('team.value.expenseAccountAddress: ', team.value.expenseAccountAddress)
   await init()
 })
 </script>
