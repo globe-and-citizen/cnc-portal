@@ -27,6 +27,11 @@ export interface IVotingService {
     candidateAddress: string
   ): Promise<ContractTransaction>
   createVotingContract(teamId: string): Promise<string>
+  pause(votingAddress: string): Promise<TransactionResponse>
+  unpause(votingAddress: string): Promise<TransactionResponse>
+  transferOwnership(votingAddress: string, newOwner: string): Promise<TransactionResponse>
+  isPaused(votingAddress: string): Promise<boolean>
+  getOwner(votingAddress: string): Promise<string>
 }
 
 export class VotingService implements IVotingService {
