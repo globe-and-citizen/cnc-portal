@@ -2,16 +2,9 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
-//import {  } from '@/composables/useExpenseAccount'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
-import { error } from 'console'
-import {
-  useDeployExpenseAccountContract,
-  useExpenseAccountGetBalance,
-  useExpenseAccountGetMaxLimit
-} from '@/composables/useExpenseAccount'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
@@ -34,7 +27,6 @@ vi.mock('@vueuse/core', async (importOriginal) => {
   }
 })
 
-// const mockExecuteDeployExpenseAccount = vi.fn()
 const mockDeployExpenseAccount = {
   data: ref<string | null>(null),
   isLoading: ref(false),
