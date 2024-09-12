@@ -9,7 +9,7 @@ export interface Team {
   ownerAddress: string
   votingAddress: string | null
   boardOfDirectorsAddress: string | null
-  expenseAccountAddress: string | null 
+  expenseAccountAddress: string | null
 }
 export interface TeamsResponse {
   teams: Team[]
