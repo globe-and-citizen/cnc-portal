@@ -445,7 +445,6 @@ watch(
 //#endregion watch success
 
 onMounted(async () => {
-  console.log('team.value.expenseAccountAddress: ', team.value.expenseAccountAddress)
   await init()
 })
 </script>
