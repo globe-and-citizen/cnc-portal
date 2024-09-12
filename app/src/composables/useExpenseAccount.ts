@@ -5,7 +5,7 @@ import { log, parseError } from '@/utils'
 const expenseAccountService = new ExpenseAccountService()
 
 export function useExpenseAccountGetMaxLimit() {
-  const data = ref<number | null>(null)
+  const data = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)
@@ -181,7 +181,7 @@ export function useExpenseAccountGetOwner() {
 }
 
 export function useExpenseAccountGetBalance() {
-  const data = ref<number | null>(null)
+  const data = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<any>(null)
   const isSuccess = ref(false)

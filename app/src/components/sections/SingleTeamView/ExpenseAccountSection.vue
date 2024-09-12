@@ -1,6 +1,6 @@
 <template>
   <!-- Expense Account Created -->
-  <div v-if="contractOwnerAddress">
+  <div v-if="team.expenseAccountAddress">
     <div
       class="stats bg-green-100 flex text-primary-content border-outline flex-col justify-center items-center p-5"
     >
@@ -9,9 +9,9 @@
           <span
             class="badge badge-sm cursor-pointer"
             data-test="team-bank-address"
-            @click="openExplorer(EXPENSE_ACCOUNT_ADDRESS)"
+            @click="openExplorer(team.expenseAccountAddress)"
             :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
-            >{{ EXPENSE_ACCOUNT_ADDRESS }}</span
+            >{{ team.expenseAccountAddress }}</span
           >
         </ToolTip>
         <ToolTip
@@ -21,31 +21,44 @@
           <ClipboardDocumentListIcon
             v-if="isSupported && !copied"
             class="size-5 cursor-pointer"
-            @click="copy(EXPENSE_ACCOUNT_ADDRESS)"
+            @click="copy(team.expenseAccountAddress)"
           />
           <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
         </ToolTip>
       </span>
       <div class="flex items-center pt-3">
-        <span
-          class="loading loading-dots loading-xs"
-          data-test="balance-loading"
-          v-if="isLoadingBalance"
-        ></span>
-        <div v-else>
-          <div class="stat-title">Balance</div>
-          <div class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3">
+        <div>
+          <div class="stat-title pr-3">Balance</div>
+          <div 
+            v-if="isLoadingBalance || !contractBalance"
+            class="stat-value mt-1 border-r border-gray-400 pr-3"
+          >
+            <span
+              class="loading loading-dots loading-xs"
+              data-test="balance-loading"
+            >
+            </span>
+          </div>
+          <div
+            v-else
+            class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+          >
             {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
         </div>
-        <span
-          class="loading loading-dots loading-xs"
-          data-test="balance-loading"
-          v-if="isLoadingMaxLimit"
-        ></span>
-        <div v-else class="pl-3">
+
+        <div class="pl-3">
           <div class="stat-title">Max Limit</div>
-          <div class="stat-value text-3xl mt-2">
+          <div
+            v-if="isLoadingMaxLimit || !maxLimit"
+            class="stat-value mt-1 pr-3"  
+          >
+            <span
+              class="loading loading-dots loading-xs"
+              data-test="balance-loading"
+            ></span>
+          </div>
+          <div v-else class="stat-value text-3xl mt-2">
             {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
         </div>
@@ -142,7 +155,7 @@ import {
   useExpenseAccountDisapproveAddress,
   useExpenseAccountGetMaxLimit
 } from '@/composables/useExpenseAccount'
-import { EXPENSE_ACCOUNT_ADDRESS, NETWORK } from '@/constant'
+import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import SetLimitForm from '@/components/sections/SingleTeamView/forms/SetLimitForm.vue'
@@ -158,6 +171,7 @@ import { parseError } from '@/utils'
 
 //#region variable declarations
 const props = defineProps<{ team: Partial<Team> }>()
+const team = ref(props.team)
 const approvedAddresses = ref<Set<string>>(new Set())
 const transferModal = ref(false)
 const setLimitModal = ref(false)
@@ -166,24 +180,13 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const unapprovedAddresses = ref<Set<string>>(new Set())
+const expenseAccountAddress = ref<{
+    expenseAccountAddress: string | null 
+  }>({expenseAccountAddress: null})
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 //#endregion variable declarations
-
-const { execute: executeSearchUser } = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
 
 //#region expense account composable
 const {
@@ -245,49 +248,93 @@ const { data: isApprovedAddress, execute: executeExpenseAccountIsApprovedAddress
   useExpenseAccountIsApprovedAddress()
 //#endregion expense account composable
 
+const { execute: executeSearchUser } = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+const { 
+  execute: executeUpdateTeam,
+  data: teamU
+} = useCustomFetch(`teams/${props.team.id}`, {
+  immediate: false
+})
+  .put(expenseAccountAddress)
+  .json()
+
+
 //#region helper functions
 const deployExpenseAccount = async () => {
   await executeDeployExpenseAccount()
-  await getExpenseAccountOwner()
-  await getExpenseAccountBalance()
+  team.value.expenseAccountAddress = contractAddress.value
   //API call here
-  console.log('contractAddress: ', contractAddress.value)
+  expenseAccountAddress
+   .value
+   .expenseAccountAddress = contractAddress.value
+  await executeUpdateTeam()
+}
+
+const init = async () => {
+  await getExpenseAccountBalance()
+  await getExpenseAccountMaxLimit()
+  await getExpenseAccountOwner()
+  await checkApprovedAddresses()
 }
 
 const getExpenseAccountBalance = async () => {
-  await executeExpenseAccountGetBalance(EXPENSE_ACCOUNT_ADDRESS)
+  if (team.value.expenseAccountAddress)
+    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
 }
 
 const getExpenseAccountOwner = async () => {
-  await executeExpenseAccountGetOwner(EXPENSE_ACCOUNT_ADDRESS)
+  if (team.value.expenseAccountAddress)
+    await executeExpenseAccountGetOwner(team.value.expenseAccountAddress)
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
-  await executeExpenseAccountTransfer(EXPENSE_ACCOUNT_ADDRESS, to, amount)
-  await executeExpenseAccountGetBalance(EXPENSE_ACCOUNT_ADDRESS)
+  if (team.value.expenseAccountAddress) {
+    await executeExpenseAccountTransfer(team.value.expenseAccountAddress, to, amount)
+    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
+  }
 }
 
 const setExepenseAccountLimit = async (amount: any) => {
-  await executeExpenseAccountSetLimit(EXPENSE_ACCOUNT_ADDRESS, amount.value)
-  await getExpenseAccountMaxLimit()
+  if (team.value.expenseAccountAddress) {
+    await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount.value)
+    await getExpenseAccountMaxLimit()
+  }
 }
 
 const approveAddress = async (address: string) => {
-  await executeExpenseAccountApproveAddress(EXPENSE_ACCOUNT_ADDRESS, address)
-
-  await checkApprovedAddresses()
+  if (team.value.expenseAccountAddress) {
+    await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
+    await checkApprovedAddresses()
+  }
 }
 
 const disapproveAddress = async (address: string) => {
-  await executeExpenseAccountDisapproveAddress(EXPENSE_ACCOUNT_ADDRESS, address)
-
-  await checkApprovedAddresses()
+  if (team.value.expenseAccountAddress) {
+    await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
+    await checkApprovedAddresses()
+  }
 }
 
 const checkApprovedAddresses = async () => {
-  if (props.team.members)
-    for (const member of props.team.members) {
-      await executeExpenseAccountIsApprovedAddress(EXPENSE_ACCOUNT_ADDRESS, member.address)
+  if (team.value.members && team.value.expenseAccountAddress)
+    for (const member of team.value.members) {
+      await executeExpenseAccountIsApprovedAddress(
+        team.value.expenseAccountAddress, 
+        member.address
+      )
       if (isApprovedAddress.value) {
         approvedAddresses.value.add(member.address)
         unapprovedAddresses.value.delete(member.address)
@@ -299,7 +346,8 @@ const checkApprovedAddresses = async () => {
 }
 
 const getExpenseAccountMaxLimit = async () => {
-  await executeExpenseAccountGetMaxLimit(EXPENSE_ACCOUNT_ADDRESS)
+  if (team.value.expenseAccountAddress)
+    await executeExpenseAccountGetMaxLimit(team.value.expenseAccountAddress)
 }
 
 const openExplorer = (address: string) => {
@@ -401,12 +449,13 @@ watch(isSuccessMaxLimit, (newVal) => {
 watch(isSuccessDeploy, (newVal) => {
   if (newVal) addSuccessToast('Expense Account Successfully Created')
 })
+
+watch(() => team.value.expenseAccountAddress, async (newVal) => {
+  if (newVal) await init()
+})
 //#endregion watch success
 
 onMounted(async () => {
-  await getExpenseAccountBalance()
-  await getExpenseAccountMaxLimit()
-  await getExpenseAccountOwner()
-  await checkApprovedAddresses()
+  await init()
 })
 </script>

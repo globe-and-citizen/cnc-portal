@@ -22,7 +22,7 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return await this.deployExpenseAccountContract()
   }
 
-  async getMaxLimit(expenseAccountAddress: string): Promise<number> {
+  async getMaxLimit(expenseAccountAddress: string): Promise<string> {
     const expenseAccount = await this.getContract(expenseAccountAddress, EXPENSE_ACCOUNT_LOGIC_ABI)
     let maxLimit = await expenseAccount.maxLimit()
     maxLimit = this.web3Library.formatEther(maxLimit)
@@ -73,7 +73,7 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return ownerAddress
   }
 
-  async getBalance(expenseAccountAddress: string): Promise<number> {
+  async getBalance(expenseAccountAddress: string): Promise<string> {
     const expenseAccount = await this.getContract(expenseAccountAddress)
     let balance = await expenseAccount.getBalance()
     balance = this.web3Library.formatEther(balance)
