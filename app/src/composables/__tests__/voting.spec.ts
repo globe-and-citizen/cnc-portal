@@ -119,7 +119,6 @@ describe('Voting Composables', () => {
     expect(transaction.value).toEqual(mockTransaction)
 
     // Verify that candidate votes are initialized to zero
-    console.log(mockElectionProposal)
     expect(mockElectionProposal.candidates?.every((candidate) => candidate.votes === 0)).toBe(true)
   })
   describe('useGetProposals', () => {

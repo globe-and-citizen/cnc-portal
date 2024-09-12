@@ -245,7 +245,6 @@ describe('VotingService', () => {
   })
   describe('transferOwnership', () => {
     it('should transfer ownership and return transaction', async () => {
-      console.log(votingService)
       const tx = await votingService.transferOwnership('0x123', '0xNewOwner')
 
       expect(tx).toBeDefined()

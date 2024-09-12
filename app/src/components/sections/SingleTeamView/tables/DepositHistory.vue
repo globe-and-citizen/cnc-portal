@@ -62,7 +62,6 @@ const showTxDetail = (txHash: string) => {
 }
 
 watch(error, () => {
-  console.log('error', error.value)
   if (error.value) {
     addErrorToast('Failed to get deposit events')
   }
