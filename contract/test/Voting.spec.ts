@@ -288,6 +288,17 @@ describe('Voting Contract', () => {
           .to.emit(voting, 'ProposalConcluded')
           .withArgs(0, false)
       })
+      it('Then I can pause the contract', async () => {
+        await voting.pause()
+
+        expect(await voting.paused()).to.be.true
+      })
+
+      it('Then I can unpause the contract', async () => {
+        await voting.unpause()
+
+        expect(await voting.paused()).to.be.false
+      })
     })
   })
 })
