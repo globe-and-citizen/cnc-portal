@@ -18,15 +18,11 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
-      target: build
+      target: development
       args:
-        VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
         VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
-        VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
     environment:
-      VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
       VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
-      VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
     ports:
       - "5173:5173" # Adjust port as needed
     volumes:
