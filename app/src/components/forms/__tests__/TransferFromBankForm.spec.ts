@@ -16,6 +16,7 @@ describe('TransferFromBankForm.vue', () => {
       props: {
         loading: false,
         bankBalance: '100',
+        service: "Test Service",
         filteredMembers: [
           { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
           { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -30,6 +31,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: true,
           bankBalance: '100',
+          service: "Test Service",
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -39,7 +41,7 @@ describe('TransferFromBankForm.vue', () => {
       expect(wrapper.findComponent(LoadingButton).exists()).toBe(true)
     })
     it('renders initial UI correctly', () => {
-      expect(wrapper.find('h1').text()).toBe('Transfer from Bank Contract')
+      expect(wrapper.find('h1').text()).toBe('Transfer from Test Service Contract')
       expect(wrapper.find('.btn-primary').text()).toBe('Transfer')
       expect(wrapper.find('.btn-error').text()).toBe('Cancel')
       expect(wrapper.find('.input-md input[type="text"]').element).toBeDefined()
@@ -96,6 +98,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: false,
           bankBalance: '100',
+          service: 'Test Service',
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -116,6 +119,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: false,
           bankBalance: '100',
+          service: 'Test Service',
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -133,6 +137,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: false,
           bankBalance: '100',
+          service: 'Test Service',
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
