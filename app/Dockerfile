@@ -1,5 +1,5 @@
-# Use Node.js 18 as the base image
-FROM node:18-alpine as development  
+# Use Node.js 18 AS the base image
+FROM node:18-alpine AS development  
 
 
 # Set the working directory inside the container
@@ -28,7 +28,7 @@ EXPOSE 5173
 # Command to run the application in development mode
 CMD ["npm", "run", "dev"]
 
-FROM node:18-alpine as build
+FROM node:18-alpine AS build
 
 # Set the working directory in the container
 WORKDIR /app
@@ -46,7 +46,7 @@ ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
 RUN npm run build
 
 # Use nginx base image for serving Vue app
-FROM nginx:latest as production
+FROM nginx:latest AS production
 
 # Copy built app from build-stage to nginx server
 COPY --from=build /app/dist /usr/share/nginx/html
