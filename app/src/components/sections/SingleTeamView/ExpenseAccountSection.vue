@@ -93,6 +93,7 @@
         :filteredMembers="foundUsers"
         :loading="false"
         :bank-balance="`${contractBalance}`"
+        service="Expense Account"
       />
     </ModalComponent>
     <ModalComponent v-model="setLimitModal">
