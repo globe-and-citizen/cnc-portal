@@ -7,7 +7,6 @@ steps:
     id: 'Build The Image'
     env:
       - 'VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL'
-      - 'VITE_APP_TIPS_ADDRESS=$_VITE_APP_TIPS_ADDRESS'
       - 'VITE_APP_NETWORK_ALIAS=$_VITE_APP_NETWORK_ALIAS'
 
   # Push the image to Google Artifact Registry
@@ -46,5 +45,4 @@ steps:
 
 substitutions:
   _VITE_APP_BACKEND_URL: 'https://cnc-portal-api-prod-neg4ztdcia-wl.a.run.app'
-  _VITE_APP_TIPS_ADDRESS: '0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B'
   _VITE_APP_NETWORK_ALIAS: 'sepolia'
