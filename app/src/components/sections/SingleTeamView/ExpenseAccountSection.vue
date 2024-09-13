@@ -138,7 +138,7 @@
 
 <script setup lang="ts">
 //#region imports
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, type Ref } from 'vue'
 import type { Team, User } from '@/types'
 import {
   useDeployExpenseAccountContract,
@@ -258,7 +258,7 @@ const { execute: executeSearchUser } = useCustomFetch('user/search', {
   .get()
   .json()
 
-const { execute: executeUpdateTeam, data: teamU } = useCustomFetch(`teams/${props.team.id}`, {
+const { execute: executeUpdateTeam } = useCustomFetch(`teams/${props.team.id}`, {
   immediate: false
 })
   .put(expenseAccountAddress)
@@ -297,7 +297,7 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   }
 }
 
-const setExepenseAccountLimit = async (amount: any) => {
+const setExepenseAccountLimit = async (amount: Ref) => {
   if (team.value.expenseAccountAddress) {
     await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount.value)
     await getExpenseAccountMaxLimit()
