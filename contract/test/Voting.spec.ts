@@ -236,7 +236,6 @@ describe('Voting Contract', () => {
         const proposal1 = await voting.getProposalById(1)
         expect(proposal1.isActive).to.be.false
         const proposalEle = await voting.getProposalById(2)
-        console.log(proposalEle)
         if (proposalEle.isElection) {
           await voting.connect(member1).voteElection(2, candidates[0])
           await voting.connect(member2).voteElection(2, candidates[1])
@@ -264,7 +263,6 @@ describe('Voting Contract', () => {
         await voting.concludeProposal(0)
 
         const proposal = await voting.getProposalById(0)
-        console.log(proposal)
         const sortedCandidates = proposal.candidates
 
         expect(sortedCandidates[0].candidateAddress).to.equal(candidates[0])

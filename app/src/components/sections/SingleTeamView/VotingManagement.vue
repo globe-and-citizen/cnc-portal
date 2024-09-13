@@ -129,7 +129,6 @@ watch(errorOwner, () => {
 
 watch(errorPause, () => {
   if (errorPause.value) {
-    console.log(errorPause.value)
     addErrorToast('Failed to pause voting contract')
   }
 })

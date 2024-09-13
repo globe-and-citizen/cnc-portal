@@ -193,7 +193,6 @@ watch(isSuccessBoDDeployment, () => {
 })
 watch(errorDeployVotingContract, () => {
   if (errorDeployVotingContract.value) {
-    console.log(errorDeployVotingContract.value)
     addErrorToast('Failed to deploy voting contract')
   }
 })
@@ -217,7 +216,6 @@ watch(isSuccessDeployVotingContract, () => {
 })
 watch(errorDeployVotingContract, () => {
   if (errorDeployVotingContract.value) {
-    console.log(errorDeployVotingContract.value)
     addErrorToast('Failed to deploy voting contract')
   }
 })
@@ -235,7 +233,6 @@ watch(errorGetProposals, () => {
 })
 watch(isSuccessAddProposal, () => {
   if (isSuccessAddProposal.value) {
-    console.log(isSuccessAddProposal.value)
     addSuccessToast('Proposal created successfully')
     emits('getTeam')
   }

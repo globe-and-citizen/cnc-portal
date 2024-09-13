@@ -12,7 +12,6 @@ export function useDeployBoDContract() {
     try {
       loading.value = true
       contractAddress.value = await bodService.createBODContract(teamId, votingAddress)
-      console.log('contractAddress', contractAddress.value)
       isSuccess.value = true
     } catch (err) {
       error.value = err
