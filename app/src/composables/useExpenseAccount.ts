@@ -7,7 +7,7 @@ const expenseAccountService = new ExpenseAccountService()
 export function useExpenseAccountGetMaxLimit() {
   const data = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function getMaxLimit(expenseAccountAddress: string) {
@@ -27,9 +27,9 @@ export function useExpenseAccountGetMaxLimit() {
 }
 
 export function useExpenseAccountApproveAddress() {
-  const data = ref<string | null>(null)
+  const data = ref<unknown | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function approveAddress(expenseAccountAddress: string, userAddress: string) {
@@ -49,9 +49,9 @@ export function useExpenseAccountApproveAddress() {
 }
 
 export function useExpenseAccountDisapproveAddress() {
-  const data = ref<string | null>(null)
+  const data = ref<unknown | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function disapproveAddress(expenseAccountAddress: string, userAddress: string) {
@@ -71,9 +71,9 @@ export function useExpenseAccountDisapproveAddress() {
 }
 
 export function useExpenseAccountSetLimit() {
-  const data = ref<string | null>(null)
+  const data = ref<unknown | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function setLimit(expenseAccountAddress: string, amount: string) {
@@ -93,9 +93,9 @@ export function useExpenseAccountSetLimit() {
 }
 
 export function useExpenseAccountTransfer() {
-  const data = ref<string | null>(null)
+  const data = ref<unknown | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function transfer(expenseAccountAddress: string, to: string, amount: string) {
@@ -117,7 +117,7 @@ export function useExpenseAccountTransfer() {
 export function useExpenseAccountIsApprovedAddress() {
   const data = ref<boolean>(false)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function isApprovedAddress(expenseAccountAddress: string, userAddress: string) {
@@ -139,7 +139,7 @@ export function useExpenseAccountIsApprovedAddress() {
 export function useDeployExpenseAccountContract() {
   const data = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function deploy() {
@@ -161,7 +161,7 @@ export function useDeployExpenseAccountContract() {
 export function useExpenseAccountGetOwner() {
   const data = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function getOwner(address: string) {
@@ -183,7 +183,7 @@ export function useExpenseAccountGetOwner() {
 export function useExpenseAccountGetBalance() {
   const data = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function getBalance(address: string) {

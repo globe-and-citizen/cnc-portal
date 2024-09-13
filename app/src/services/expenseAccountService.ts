@@ -4,7 +4,7 @@ import FACTORY_BEACON_ABI from '../artifacts/abi/factory-beacon.json'
 import { useUserDataStore } from '@/stores/user'
 import { EXPENSE_ACCOUNT_BEACON_ADDRESS, EXPENSE_ACCOUNT_LOGIC_ADDRESS } from '@/constant'
 import { SmartContract } from './contractService'
-import type { Contract } from 'ethers'
+import type { Contract, InterfaceAbi } from 'ethers'
 export interface IExpenseAccountService {
   web3Library: IWeb3Library
   createExpenseAccountContract(id: string): Promise<string>
@@ -12,7 +12,7 @@ export interface IExpenseAccountService {
 
 export class ExpenseAccountService implements IExpenseAccountService {
   web3Library: IWeb3Library
-  abi: any = EXPENSE_ACCOUNT_LOGIC_ABI
+  abi: InterfaceAbi = EXPENSE_ACCOUNT_LOGIC_ABI
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
@@ -29,21 +29,21 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return maxLimit
   }
 
-  async approveAddress(expenseAccountAddress: string, userAddress: string): Promise<any> {
+  async approveAddress(expenseAccountAddress: string, userAddress: string): Promise<unknown> {
     const expenseAccount = await this.getContract(expenseAccountAddress, EXPENSE_ACCOUNT_LOGIC_ABI)
     const tx = await expenseAccount.approveAddress(userAddress)
     await tx.wait()
     return tx
   }
 
-  async disapproveAddress(expenseAccountAddress: string, userAddress: string): Promise<any> {
+  async disapproveAddress(expenseAccountAddress: string, userAddress: string): Promise<unknown> {
     const expenseAccount = await this.getContract(expenseAccountAddress, EXPENSE_ACCOUNT_LOGIC_ABI)
     const tx = await expenseAccount.disapproveAddress(userAddress)
     await tx.wait()
     return tx
   }
 
-  async setMaxLimit(address: string, amount: string): Promise<any> {
+  async setMaxLimit(address: string, amount: string): Promise<unknown> {
     const expenseAccount = await this.getContract(address, EXPENSE_ACCOUNT_LOGIC_ABI)
     const tx = await expenseAccount.setMaxLimit(this.web3Library.parseEther(`${amount}`))
     await tx.wait()
@@ -56,14 +56,14 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return result
   }
 
-  async transfer(expenseAccountAddress: string, toAddress: string, amount: number): Promise<any> {
+  async transfer(expenseAccountAddress: string, toAddress: string, amount: number): Promise<unknown> {
     const expenseAccount = await this.getContract(expenseAccountAddress)
     const tx = await expenseAccount.transfer(toAddress, this.web3Library.parseEther(`${amount}`))
     await tx.wait()
     return tx
   }
 
-  private async getContract(address: string, abi: any = this.abi): Promise<Contract> {
+  private async getContract(address: string, abi = this.abi): Promise<Contract> {
     return await new SmartContract(address, abi).getContract()
   }
 
