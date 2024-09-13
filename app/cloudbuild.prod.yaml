@@ -4,17 +4,13 @@ steps:
     script: |
       docker build \
         --build-arg VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL \
-        --build-arg VITE_APP_TIPS_ADDRESS=$_VITE_APP_TIPS_ADDRESS \
         --build-arg VITE_APP_NETWORK_ALIAS=$_VITE_APP_NETWORK_ALIAS \
-        --build-arg VITE_APP_BANK_IMPL_ADDRESS=$_VITE_APP_BANK_IMPL_ADDRESS \
         -t ${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-app:$SHORT_SHA ./app
     automapSubstitutions: true
     id: 'Build The Image'
     env:
       - 'VITE_APP_BACKEND_URL=$_VITE_APP_BACKEND_URL'
-      - 'VITE_APP_TIPS_ADDRESS=$_VITE_APP_TIPS_ADDRESS'
       - 'VITE_APP_NETWORK_ALIAS=$_VITE_APP_NETWORK_ALIAS'
-      - 'VITE_APP_BANK_IMPL_ADDRESS=$_VITE_APP_BANK_IMPL_ADDRESS'
 
   # Push the image to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -51,7 +47,5 @@ steps:
       - 'Push The Image'
 
 substitutions:
-  _VITE_APP_BACKEND_URL: 'https://cnc-portal-api-prod-neg4ztdcia-wl.a.run.app'
-  _VITE_APP_TIPS_ADDRESS: '0xDC0466d0406bf3770d08B1C681241465De5BF455'
+  _VITE_APP_BACKEND_URL: 'https://api.cncportal.io'
   _VITE_APP_NETWORK_ALIAS: 'polygon'
-  _VITE_APP_BANK_IMPL_ADDRESS: '0x44cbf5B995a40d93a839a0516C411b2aB1Ed3a2B'
