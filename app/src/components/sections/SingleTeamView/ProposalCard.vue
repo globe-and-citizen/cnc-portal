@@ -88,16 +88,24 @@ import ProposalDetails from '@/components/sections/SingleTeamView/ProposalDetail
 import ModalComponent from '@/components/ModalComponent.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import PieChart from '@/components/PieChart.vue'
-import type { Member } from '@/types'
+import type { Member, Proposal } from '@/types'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}
   if (props.proposal.isElection) {
-    return (props.proposal as any).candidates.map((candidate: any) => {
-      const member = props.team.members.find((member: Member) => member.address === candidate[0])
+    interface Candidate {
+      votes: string
+      name: string
+      address: string
+    }
+    return (props.proposal as Partial<Proposal>)?.candidates?.map((candidate: unknown) => {
+      const candidateObj = candidate as Candidate
+      const member = props.team.members.find(
+        (member: Member) => member.address === candidateObj.address
+      )
       return {
-        value: Number(candidate.votes) || 0,
+        value: Number(candidateObj.votes) || 0,
         name: member ? member.name : 'Unknown'
       }
     })
@@ -114,7 +122,17 @@ const props = defineProps(['proposal', 'isDone', 'team'])
 
 const emits = defineEmits(['getTeam'])
 
-const voteInput = ref<any>()
+const voteInput = ref<{
+  title: ''
+  description: ''
+  candidates: [
+    {
+      name: ''
+      candidateAddress: ''
+    }
+  ]
+  isElection: false
+}>()
 const showVoteModal = ref(false)
 const showConcludeConfirmModal = ref(false)
 const showProposalDetailsModal = ref(false)

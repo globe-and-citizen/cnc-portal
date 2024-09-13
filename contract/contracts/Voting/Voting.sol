@@ -178,4 +178,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
         IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(_boardOfDirectors);
     }
+     function pause() external onlyOwner {
+        _pause();
+    }
+
+  function unpause() external onlyOwner {
+        _unpause();
+    }
 }

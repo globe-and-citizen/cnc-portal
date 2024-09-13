@@ -6,6 +6,11 @@ import {
   useVoteDirective,
   useVoteElection,
   useDeployVotingContract,
+  useVotingContractOwner,
+  useVotingContractPause,
+  useVotingContractStatus,
+  useVotingContractTransferOwnership,
+  useVotingContractUnpause,
   useSetBoardOfDirectorsContractAddress
 } from '@/composables/voting'
 // import { VotingService } from '@/services/votingService'
@@ -71,7 +76,12 @@ vi.mock('@/services/votingService', () => {
       voteDirective: vi.fn().mockResolvedValue(mockTransaction),
       voteElection: vi.fn().mockResolvedValue(mockTransaction),
       setBoardOfDirectorsContractAddress: vi.fn().mockResolvedValue(mockTransaction),
-      createVotingContract: vi.fn().mockResolvedValue(mockContractAddress)
+      createVotingContract: vi.fn().mockResolvedValue(mockContractAddress),
+      pause: vi.fn().mockResolvedValue(mockTransaction),
+      transferOwnership: vi.fn().mockResolvedValue(mockTransaction),
+      unpause: vi.fn().mockResolvedValue(mockTransaction),
+      isPaused: vi.fn().mockResolvedValue(true),
+      getOwner: vi.fn().mockResolvedValue('0xOwnerAddress')
     }))
   }
 })
@@ -109,7 +119,6 @@ describe('Voting Composables', () => {
     expect(transaction.value).toEqual(mockTransaction)
 
     // Verify that candidate votes are initialized to zero
-    console.log(mockElectionProposal)
     expect(mockElectionProposal.candidates?.every((candidate) => candidate.votes === 0)).toBe(true)
   })
   describe('useGetProposals', () => {
@@ -186,6 +195,67 @@ describe('Voting Composables', () => {
       expect(isSuccess.value).toBe(true)
       expect(error.value).toBe(null)
       expect(contractAddress.value).toEqual('0xVotingContractAddress')
+    })
+  })
+  describe('useVotingContractOwner', async () => {
+    it('should fetch the owner of the voting contract successfully', async () => {
+      const { execute, isLoading, error, data } = useVotingContractOwner('0xVotingContractAddress')
+
+      await execute()
+
+      expect(isLoading.value).toBe(false)
+      expect(error.value).toBe(null)
+      expect(data.value).toEqual('0xOwnerAddress')
+    })
+  })
+  describe('useVotingContractPause', () => {
+    it('should pause the voting contract successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useVotingContractPause('0xVotingContractAddress')
+
+      await execute()
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+  describe('useVotingContractStatus', () => {
+    it('should fetch the status of the voting contract successfully', async () => {
+      const { execute, isLoading, error, data } = useVotingContractStatus('0xVotingContractAddress')
+
+      await execute()
+
+      expect(isLoading.value).toBe(false)
+      expect(error.value).toBe(null)
+      expect(data.value).toEqual(true)
+    })
+  })
+  describe('useVotingContractTransferOwnership', () => {
+    it('should transfer ownership of the voting contract successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useVotingContractTransferOwnership('0xVotingContractAddress')
+
+      await execute('0xNewOwnerAddress')
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+  describe('useVotingContractUnpause', () => {
+    it('should unpause the voting contract successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useVotingContractUnpause('0xVotingContractAddress')
+
+      await execute()
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
     })
   })
 })
