@@ -5,6 +5,7 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
+import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
@@ -20,7 +21,7 @@ const mockClipboard = {
 }
 
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: any = await importOriginal()
+  const actual: T = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -31,7 +32,7 @@ const mockDeployExpenseAccount = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   isSuccess: ref(false),
-  error: ref<any>(null),
+  error: ref<T | null>(null),
   execute: vi.fn()
 }
 
@@ -39,7 +40,7 @@ const mockExpenseAccountGetBalance = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   isSuccess: ref(false),
-  error: ref<any>(null),
+  error: ref<T | null>(null),
   execute: vi.fn()
 }
 
@@ -47,12 +48,12 @@ const mockExpenseAccountGetMaxLimit = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   isSuccess: ref(false),
-  error: ref<any>(null),
+  error: ref<T | null>(null),
   execute: vi.fn()
 }
 
 vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
-  const actual: any = await importOriginal()
+  const actual: T = await importOriginal()
   return {
     ...actual,
     useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
@@ -64,7 +65,7 @@ vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
 describe('ExpenseAccountSection', () => {
   setActivePinia(createPinia())
 
-  const createComponent = (props?: any) => {
+  const createComponent = (props?: {team: {}}) => {
     return mount(ExpenseAccountSection, {
       props: {
         team: {
