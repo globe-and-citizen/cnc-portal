@@ -9,6 +9,7 @@ import { VOTING_IMPL_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { ContractTransaction } from 'ethers'
+import type { TransactionResponse } from 'ethers'
 
 export interface IVotingService {
   web3Library: IWeb3Library
@@ -26,6 +27,11 @@ export interface IVotingService {
     candidateAddress: string
   ): Promise<ContractTransaction>
   createVotingContract(teamId: string): Promise<string>
+  pause(votingAddress: string): Promise<TransactionResponse>
+  unpause(votingAddress: string): Promise<TransactionResponse>
+  transferOwnership(votingAddress: string, newOwner: string): Promise<TransactionResponse>
+  isPaused(votingAddress: string): Promise<boolean>
+  getOwner(votingAddress: string): Promise<string>
 }
 
 export class VotingService implements IVotingService {
@@ -84,7 +90,7 @@ export class VotingService implements IVotingService {
     const tx = await votingContract.setBoardOfDirectorsContractAddress(bodAddress)
     await tx.wait()
 
-    return
+    return tx
   }
   async voteDirective(
     votingAddress: string,
@@ -121,9 +127,9 @@ export class VotingService implements IVotingService {
     return await contractService.getContract()
   }
   private getContractService(votingAddress: string): SmartContract {
-    return new SmartContract(votingAddress, VOTING_ABI as unknown as Contract)
+    return new SmartContract(votingAddress, VOTING_ABI)
   }
-  private async deployVotingContract(): Promise<string> {
+  async deployVotingContract(): Promise<string> {
     const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
     const votingProxyFactory = await this.web3Library.getFactoryContract(
       BEACON_PROXY_ABI,
@@ -137,5 +143,40 @@ export class VotingService implements IVotingService {
     await beaconProxyDeployment.waitForDeployment()
 
     return await beaconProxy.getAddress()
+  }
+  async isPaused(votingAddress: string): Promise<boolean> {
+    const voting = await this.getContract(votingAddress)
+
+    return await voting.paused()
+  }
+
+  async pause(votingAddress: string): Promise<TransactionResponse> {
+    const voting = await this.getContract(votingAddress)
+    const tx = await voting.pause()
+    await tx.wait()
+
+    return tx
+  }
+
+  async unpause(votingAddress: string): Promise<TransactionResponse> {
+    const voting = await this.getContract(votingAddress)
+    const tx = await voting.unpause()
+    await tx.wait()
+
+    return tx
+  }
+
+  async transferOwnership(votingAddress: string, newOwner: string): Promise<TransactionResponse> {
+    const voting = await this.getContract(votingAddress)
+    const tx = await voting.transferOwnership(newOwner)
+    await tx.wait()
+
+    return tx
+  }
+
+  async getOwner(votingAddress: string): Promise<string> {
+    const voting = await this.getContract(votingAddress)
+
+    return await voting.owner()
   }
 }

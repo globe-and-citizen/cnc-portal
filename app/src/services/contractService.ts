@@ -1,26 +1,26 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import type { Log } from 'ethers'
+import type { InterfaceAbi } from 'ethers'
 import type { EventLog } from 'ethers'
 import type { Contract } from 'ethers'
-import type { ContractInterface } from 'ethers'
 
 interface ISmartContract {
   contract: Contract | undefined
   contractAddress: string
-  contractAbi: ContractInterface
-  getContract(address: string, abi: ContractInterface): Promise<Contract>
+  contractAbi: InterfaceAbi
+  getContract(address: string, abi: InterfaceAbi): Promise<Contract>
   getEvents(type: string): Promise<EventLog[] | Log[]>
 }
 
 export class SmartContract implements ISmartContract {
   contract: Contract | undefined
   contractAddress: string
-  contractAbi: ContractInterface
+  contractAbi: InterfaceAbi
   web3Library: IWeb3Library
 
   constructor(
     contractAddress: string,
-    contractAbi: ContractInterface,
+    contractAbi: InterfaceAbi,
     web3Library: IWeb3Library = EthersJsAdapter.getInstance()
   ) {
     this.contractAddress = contractAddress

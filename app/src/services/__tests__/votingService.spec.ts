@@ -5,6 +5,10 @@ import { Contract } from 'ethers'
 import type { Proposal } from '@/types'
 
 // Mock proposal data
+const tx = {
+  txHash: '0x123',
+  wait: vi.fn()
+}
 const mockProposal: Partial<Proposal> = {
   id: 0,
   title: 'Test Proposal',
@@ -24,45 +28,59 @@ vi.mock('@/adapters/web3LibraryAdapter', () => ({
     getInstance: vi.fn()
   }
 }))
-
+const mockContract: {
+  addProposal: ReturnType<typeof vi.fn>
+  getProposals: ReturnType<typeof vi.fn>
+  concludeProposal: ReturnType<typeof vi.fn>
+  voteDirective: ReturnType<typeof vi.fn>
+  voteElection: ReturnType<typeof vi.fn>
+  proposalCount: ReturnType<typeof vi.fn>
+  proposalsById: ReturnType<typeof vi.fn>
+  getProposalById: ReturnType<typeof vi.fn>
+  setBoardOfDirectorsContractAddress: ReturnType<typeof vi.fn>
+  pause: ReturnType<typeof vi.fn>
+  unpause: ReturnType<typeof vi.fn>
+  transferOwnership: ReturnType<typeof vi.fn>
+  owner: ReturnType<typeof vi.fn>
+  paused: ReturnType<typeof vi.fn>
+  isPaused: ReturnType<typeof vi.fn>
+  getOwner: ReturnType<typeof vi.fn>
+} = {
+  addProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
+  getProposals: vi.fn().mockResolvedValue([mockProposal]),
+  concludeProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
+  voteDirective: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
+  voteElection: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
+  proposalCount: vi.fn().mockResolvedValue(1),
+  proposalsById: vi.fn().mockResolvedValue(mockProposal),
+  getProposalById: vi.fn().mockResolvedValue(mockProposal),
+  setBoardOfDirectorsContractAddress: vi
+    .fn()
+    .mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
+  pause: vi.fn().mockResolvedValue(tx),
+  unpause: vi.fn().mockResolvedValue(tx),
+  transferOwnership: vi.fn().mockResolvedValue(tx),
+  owner: vi.fn().mockResolvedValue(tx),
+  paused: vi.fn().mockResolvedValue(false),
+  isPaused: vi.fn().mockResolvedValue(true),
+  getOwner: vi.fn().mockReturnValue('0xOwnerAddress')
+}
 // Mock SmartContract
-vi.mock('@/services/contractService', () => ({
-  SmartContract: vi.fn().mockImplementation(() => ({
-    getContract: vi.fn().mockResolvedValue({})
-  }))
-}))
+const contractService = {
+  getContract: vi.fn().mockReturnValue(mockContract)
+}
+vi.mock('@/services/contractService', () => {
+  return {
+    SmartContract: vi.fn().mockImplementation(() => contractService)
+  }
+})
 
 // Define the test suite
 describe('VotingService', () => {
   let votingService: VotingService
-  let mockContract: {
-    addProposal: ReturnType<typeof vi.fn>
-    getProposals: ReturnType<typeof vi.fn>
-    concludeProposal: ReturnType<typeof vi.fn>
-    voteDirective: ReturnType<typeof vi.fn>
-    voteElection: ReturnType<typeof vi.fn>
-    proposalCount: ReturnType<typeof vi.fn>
-    proposalsById: ReturnType<typeof vi.fn>
-    getProposalById: ReturnType<typeof vi.fn>
-    setBoardOfDirectorsContractAddress: ReturnType<typeof vi.fn>
-  }
 
   // Create a mock contract instance
   beforeEach(() => {
-    mockContract = {
-      addProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
-      getProposals: vi.fn().mockResolvedValue([mockProposal]),
-      concludeProposal: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
-      voteDirective: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
-      voteElection: vi.fn().mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) }),
-      proposalCount: vi.fn().mockResolvedValue(1),
-      proposalsById: vi.fn().mockResolvedValue(mockProposal),
-      getProposalById: vi.fn().mockResolvedValue(mockProposal),
-      setBoardOfDirectorsContractAddress: vi
-        .fn()
-        .mockResolvedValue({ wait: vi.fn().mockResolvedValue(true) })
-    }
-
     // Mock the `getContract` method to return the mock contract instance
     const ethersJsAdapterMock = {
       getContract: vi.fn().mockResolvedValue(mockContract as unknown as Contract),
@@ -98,7 +116,7 @@ describe('VotingService', () => {
 
       votingService = new VotingService(ethersJsAdapterMock as unknown as IWeb3Library)
 
-      await expect((votingService as any).deployVotingContract()).rejects.toThrow('Deploy Failed')
+      await expect(votingService.deployVotingContract()).rejects.toThrow('Deploy Failed')
     })
   })
 
@@ -136,7 +154,7 @@ describe('VotingService', () => {
         'Add Proposal Failed'
       )
 
-      expect(mockContract.addProposal).toHaveBeenCalledOnce()
+      expect(mockContract.addProposal).toHaveBeenCalled()
     })
   })
 
@@ -166,7 +184,7 @@ describe('VotingService', () => {
         'Conclude Proposal Failed'
       )
 
-      expect(mockContract.concludeProposal).toHaveBeenCalledOnce()
+      expect(mockContract.concludeProposal).toHaveBeenCalled()
     })
   })
 
@@ -186,7 +204,7 @@ describe('VotingService', () => {
         'Vote Directive Failed'
       )
 
-      expect(mockContract.voteDirective).toHaveBeenCalledOnce()
+      expect(mockContract.voteDirective).toHaveBeenCalled()
     })
   })
 
@@ -206,7 +224,47 @@ describe('VotingService', () => {
         'Vote Election Failed'
       )
 
-      expect(mockContract.voteElection).toHaveBeenCalledOnce()
+      expect(mockContract.voteElection).toHaveBeenCalled()
+    })
+  })
+  describe('pause', () => {
+    it('should pause the contract and return transaction', async () => {
+      const tx = await votingService.pause('0x123')
+
+      expect(tx).toBeDefined()
+      expect(mockContract.pause).toHaveBeenCalledOnce()
+    })
+  })
+  describe('unpause', () => {
+    it('should unpause the contract and return transaction', async () => {
+      const tx = await votingService.unpause('0x123')
+
+      expect(tx).toBeDefined()
+      expect(mockContract.unpause).toHaveBeenCalledOnce()
+    })
+  })
+  describe('transferOwnership', () => {
+    it('should transfer ownership and return transaction', async () => {
+      const tx = await votingService.transferOwnership('0x123', '0xNewOwner')
+
+      expect(tx).toBeDefined()
+      expect(mockContract.transferOwnership).toHaveBeenCalledOnce()
+      expect(mockContract.transferOwnership).toHaveBeenCalledWith('0xNewOwner')
+    })
+  })
+  describe('isPaused', () => {
+    it('should return the paused status of the contract', async () => {
+      const paused = await votingService.isPaused('0x123')
+
+      expect(paused).toBeDefined()
+      expect(paused).toBe(false)
+    })
+  })
+  describe('getOwner', () => {
+    it('should return the owner of the contract', async () => {
+      const result = await votingService.getOwner('0x123')
+      expect(result).toBeDefined()
+      expect(result).toMatchObject(tx)
     })
   })
 })

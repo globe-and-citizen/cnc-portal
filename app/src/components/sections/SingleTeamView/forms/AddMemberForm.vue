@@ -130,7 +130,6 @@ const rules = {
 const $v = useVuelidate(rules, { formData })
 
 const submitForm = () => {
-  console.log($v.value)
   $v.value.$touch()
   if ($v.value.$invalid) return
   emits('addMembers', formData.value)
