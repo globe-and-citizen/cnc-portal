@@ -15,7 +15,7 @@
     "test:build:cache": "synpress",
     "test:headless": "HEADLESS=true playwright test",
     "coverage": "npx serve coverage/",
-    "prod": "node  dist/index.js",
+    "prod": "node dist/index.js",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",

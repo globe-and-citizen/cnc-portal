@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        VITE_APP_BACKEND_URL: "https://cnc-portal-api-prod-neg4ztdcia-wl.a.run.app"
+        VITE_APP_BACKEND_URL: "http://localhost:3000"
         VITE_APP_NETWORK_ALIAS: polygon
     # environment:
     #   VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
