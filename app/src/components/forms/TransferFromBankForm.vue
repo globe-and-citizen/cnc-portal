@@ -1,11 +1,12 @@
 <template>
   <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
   <h3 class="pt-8">
-    This will transfer {{ amount }} {{ NETWORK.currencySymbol }} from the team {{ service.toLowerCase() }} contract to this
-    address {{ to }}.
+    This will transfer {{ amount }} {{ NETWORK.currencySymbol }} from the team
+    {{ service.toLowerCase() }} contract to this address {{ to }}.
   </h3>
   <h3 class="pt-4">
-    Current team {{ service.toLowerCase() }} contract's balance {{ bankBalance }} {{ NETWORK.currencySymbol }}
+    Current team {{ service.toLowerCase() }} contract's balance {{ bankBalance }}
+    {{ NETWORK.currencySymbol }}
   </h3>
 
   <div class="flex flex-col items-center">

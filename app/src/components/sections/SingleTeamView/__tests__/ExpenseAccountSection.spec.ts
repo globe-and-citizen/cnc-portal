@@ -65,7 +65,7 @@ vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
 describe('ExpenseAccountSection', () => {
   setActivePinia(createPinia())
 
-  const createComponent = (props?: {team: {}}) => {
+  const createComponent = (props?: { team: {} }) => {
     return mount(ExpenseAccountSection, {
       props: {
         team: {

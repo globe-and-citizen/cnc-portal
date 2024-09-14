@@ -56,7 +56,11 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return result
   }
 
-  async transfer(expenseAccountAddress: string, toAddress: string, amount: number): Promise<unknown> {
+  async transfer(
+    expenseAccountAddress: string,
+    toAddress: string,
+    amount: number
+  ): Promise<unknown> {
     const expenseAccount = await this.getContract(expenseAccountAddress)
     const tx = await expenseAccount.transfer(toAddress, this.web3Library.parseEther(`${amount}`))
     await tx.wait()

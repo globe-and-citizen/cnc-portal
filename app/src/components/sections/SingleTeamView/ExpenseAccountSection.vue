@@ -353,49 +353,41 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
-const errorMessage = (error: {}, message: string) => 
-    "reason" in error ? error.reason as string: message
+const errorMessage = (error: {}, message: string) =>
+  'reason' in error ? (error.reason as string) : message
 //#endregion helper functions
-  
+
 //#region watch error
 watch(errorDeploy, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Deploying Creating Account'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Deploying Creating Account'))
 })
 
 watch(errorSetMaxLimit, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Setting Max Limit'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Setting Max Limit'))
 })
 
 watch(errorApproveAddress, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Approving Address'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Approving Address'))
 })
 
 watch(errorDisapproveAddress, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Disapproving Address'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Disapproving Address'))
 })
 
 watch(errorTransfer, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Making Transfer'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Making Transfer'))
 })
 
 watch(errorGetContractBalance, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Getting Contract Balance'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Balance'))
 })
 
 watch(errorGetOwner, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })
 
 watch(errorGetMaxLimit, (newVal) => {
-  if (newVal)
-    addErrorToast(errorMessage(newVal, 'Error Getting Max Limit'))
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Max Limit'))
 })
 //#endregion watch error
 

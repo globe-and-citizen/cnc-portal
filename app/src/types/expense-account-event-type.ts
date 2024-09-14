@@ -1,4 +1,4 @@
 export enum ExpenseAccountEventType {
-    Deposit = "Deposted",
-    Transfer = "Transfer"
+  Deposit = 'Deposted',
+  Transfer = 'Transfer'
 }
