@@ -100,7 +100,13 @@ const chartData = computed(() => {
       address: string
     }
     return (props.proposal as Partial<Proposal>)?.candidates?.map((candidate: unknown) => {
-      const candidateObj = candidate as Candidate
+      let candidateObj: Candidate = {
+        votes: '',
+        name: '',
+        address: ''
+      }
+      candidateObj.address = String((candidate as Array<Candidate>)[0])
+      candidateObj.votes = String((candidate as Array<Candidate>)[1])
       const member = props.team.members.find(
         (member: Member) => member.address === candidateObj.address
       )
