@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="team.expenseAccountAddress"
-    class="stats bg-green-100 flex text-primary-content border-outline flex-col justify-center items-center p-5"
+    class="stats bg-green-100 flex text-primary-content border-outline flex-col justify-center items-center p-5 overflow-visible"
   >
     <span class="flex gap-2 items-center">
       <ToolTip
@@ -56,7 +56,7 @@
         </div>
       </div>
     </div>
-    <div class="stat-actions flex justify-center gap-2 items-center">
+    <div class="stat-actions flex justify-center gap-2 items-center mt-8">
       <button
         class="btn btn-xs btn-secondary"
         :disabled="!approvedAddresses.has(useUserDataStore().address)"
@@ -352,67 +352,50 @@ const searchUsers = async (input: { name: string; address: string }) => {
     addErrorToast(parseError(error))
   }
 }
-//#endregion helper functions
 
+const errorMessage = (error: {}, message: string) => 
+    "reason" in error ? error.reason as string: message
+//#endregion helper functions
+  
 //#region watch error
 watch(errorDeploy, (newVal) => {
   if (newVal)
-    addErrorToast(
-      errorDeploy.value.reason ? errorDeploy.value.reason : 'Error Deploying Creating Account'
-    )
+    addErrorToast(errorMessage(newVal, 'Error Deploying Creating Account'))
 })
 
 watch(errorSetMaxLimit, (newVal) => {
   if (newVal)
-    addErrorToast(
-      errorSetMaxLimit.value.reason ? errorSetMaxLimit.value.reason : 'Error Setting Max Limit'
-    )
+    addErrorToast(errorMessage(newVal, 'Error Setting Max Limit'))
 })
 
 watch(errorApproveAddress, (newVal) => {
   if (newVal)
-    addErrorToast(
-      errorApproveAddress.value.reason
-        ? errorApproveAddress.value.reason
-        : 'Error Approving Address'
-    )
+    addErrorToast(errorMessage(newVal, 'Error Approving Address'))
 })
 
 watch(errorDisapproveAddress, (newVal) => {
   if (newVal)
-    addErrorToast(
-      errorDisapproveAddress.value.reason
-        ? errorDisapproveAddress.value.reason
-        : 'Error Disapproving Address'
-    )
+    addErrorToast(errorMessage(newVal, 'Error Disapproving Address'))
 })
 
 watch(errorTransfer, (newVal) => {
   if (newVal)
-    addErrorToast(errorTransfer.value.reason ? errorTransfer.value.reason : 'Error Making Transfer')
+    addErrorToast(errorMessage(newVal, 'Error Making Transfer'))
 })
 
 watch(errorGetContractBalance, (newVal) => {
   if (newVal)
-    addErrorToast(
-      errorGetContractBalance.value.reason
-        ? errorGetContractBalance.value.reason
-        : 'Error Getting Contract Balance'
-    )
+    addErrorToast(errorMessage(newVal, 'Error Getting Contract Balance'))
 })
 
 watch(errorGetOwner, (newVal) => {
   if (newVal)
-    addErrorToast(
-      errorGetOwner.value.reason ? errorGetOwner.value.reason : 'Error Getting Contract Owner'
-    )
+    addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })
 
 watch(errorGetMaxLimit, (newVal) => {
   if (newVal)
-    addErrorToast(
-      errorGetMaxLimit.value.reason ? errorGetMaxLimit.value.reason : 'Error Getting Max Limit'
-    )
+    addErrorToast(errorMessage(newVal, 'Error Getting Max Limit'))
 })
 //#endregion watch error
 
