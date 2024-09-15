@@ -98,9 +98,9 @@ describe('MemberSection.vue', () => {
 
     it('searches users when searchUsers is called', async () => {
       // Cast wrapper.vm to an instance with the searchUsers method
-      expect(1+1).toBe(2)
+      expect(1 + 1).toBe(2)
 
-      // TODO - Fix this test: 
+      // TODO - Fix this test:
       // Normay you can't spy on a method that is not a props or an event
       // const searchSpy = vi.spyOn(wrapper.vm as InstanceType<typeof MemberSection>, 'searchUsers')
 
