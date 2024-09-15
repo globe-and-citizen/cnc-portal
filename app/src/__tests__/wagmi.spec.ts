@@ -11,7 +11,7 @@ vi.mock('@wagmi/vue', async () => {
   }
 })
 
-import { config } from './wagmi.config'
+import { config } from '../wagmi.config'
 
 describe('wagmi.config.ts', () => {
   it('should create a config with the correct chains and transports', () => {
