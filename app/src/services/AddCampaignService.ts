@@ -11,10 +11,11 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 export interface IAddCampaignService {
   web3Library: IWeb3Library
   createAdCampaignManager(_bankContractAddress:string, _costPerClick:string,_costPerImpression:string,deployerAddress:string,teamId:string): Promise<string>
-//   createAdCampaign(budget: string): Promise<string>
-//   claimPayment(campaignCode: string, currentAmountSpent: string): Promise<any>
-//   requestWithdrawal(campaignCode: string, currentAmountSpent: string): Promise<any>
+  //createAdCampaign(budget: string): Promise<string>
+  //claimPayment(campaignCode: string, currentAmountSpent: string): Promise<any>
+  //requestWithdrawal(campaignCode: string, currentAmountSpent: string): Promise<any>
   getEvents(bankAddress: string, type: string): Promise<EventLog[] | Log[]>
+  getContractData(addCampaignContractAddress: string): Promise<{ key: string; value: string }[]>; // Updated type for the return value
 }
 
 export class AddCampaignService implements IAddCampaignService {
@@ -70,6 +71,38 @@ export class AddCampaignService implements IAddCampaignService {
 //     return tx
 //   }
 
+  // Updated getContractData method included in the interface
+  async getContractData(addCampaignContractAddress: string): Promise<{ key: string; value: string }[]> {
+    const contractService = this.getContractService(addCampaignContractAddress);
+    
+    const contract = await contractService.getContract(); // Retrieve contract instance
+     const datas: Array<{ key: string; value: string }> = []; 
+
+    // Loop through ABI to find viewable or pure functions
+    for (const item of ADD_CAMPAIGN_ARTIFACT['abi']) {
+      if (
+        item.type === 'function' &&
+        (item.stateMutability === 'view' || item.stateMutability === 'pure') &&
+        item.inputs.length === 0
+      ) {
+        try {
+          // Dynamically call the contract function using its name
+          const result = await contract[item.name]();
+          console.log(`Retrieved ${item.name}: ${result}`);
+
+          // Add to the array of key-value pairs
+          datas.push({
+            key: item.name,
+            value: result.toString() // Convert BigNumber or other types to string
+          });
+        } catch (error) {
+          console.error(`Error calling ${item.name}:`, error);
+        }
+      }
+    }
+    return datas;
+  }
+
   async getEvents(addCampaignAddress: string, type: "CampaignCreated"): Promise<EventLog[] | Log[]> {
     const contractService = this.getContractService(addCampaignAddress)
 
@@ -83,6 +116,8 @@ export class AddCampaignService implements IAddCampaignService {
   }
 
   private getContractService(addCampaignContractAddress: string): SmartContract {
-    return new SmartContract(addCampaignContractAddress, ADD_CAMPAIGN_ARTIFACT)
+    return new SmartContract(addCampaignContractAddress, ADD_CAMPAIGN_ARTIFACT['abi'])
   }
+
+  
 }

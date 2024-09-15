@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 
-import { ref,computed  } from 'vue'
+import { ref,computed,watch  } from 'vue'
 const emit=defineEmits(['createAddCampaign'])
 const props=defineProps<{
   loading: boolean,
@@ -46,11 +46,16 @@ const props=defineProps<{
 
 const costPerClick= ref()
 const costPerImpression= ref()
+const _bankAddress= ref("")
 
-const _bankAddress = computed(() => {
-  console.log("the received bank address ", props.bankAddress);
-  return props.bankAddress;
-});
+watch(
+  () => props.bankAddress, // Watching the prop
+  (newBankAddress) => {
+    _bankAddress.value = newBankAddress; // Update _bankAddress when bankAddress prop changes
+    console.log("Received bank address:", newBankAddress);
+  },
+  { immediate: true } // Ensure it runs the first time when the component is initialized
+);
 
 const viewContractCode = () => {
   const url = 'https://polygonscan.com/address/0x30625FE0E430C3cCc27A60702B79dE7824BE7fD5#code'; // Replace with your desired URL
