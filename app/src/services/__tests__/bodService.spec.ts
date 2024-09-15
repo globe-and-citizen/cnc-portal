@@ -88,7 +88,10 @@ describe('BoDService', () => {
     })
 
     it('should handle errors when creating BOD contract', async () => {
-      ;(useCustomFetch('teams/teamId').json as any).mockRejectedValueOnce(
+      interface mockReturn {
+        mockRejectedValueOnce: (error: Error) => {}
+      }
+      ;(useCustomFetch('teams/teamId').json as unknown as mockReturn).mockRejectedValueOnce(
         new Error('Creation Failed')
       )
 

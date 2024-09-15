@@ -142,11 +142,12 @@
 import LoadingButton from '@/components/LoadingButton.vue'
 import { ref } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useErrorHandler } from '@/composables/errorHandler'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import { useToastStore } from '@/stores/useToastStore'
 
+const { addErrorToast } = useToastStore()
 const emits = defineEmits(['createProposal'])
 defineProps<{
   isLoading: boolean
@@ -200,8 +201,8 @@ const searchUsers = async () => {
     if (searchUserName.value || searchUserAddress.value) {
       await executeSearchUser()
     }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
+  } catch (error: unknown) {
+    if (error instanceof Error) addErrorToast(error.message)
   }
 }
 const submitForm = () => {

@@ -89,7 +89,7 @@ export function useSiwe() {
       useUserDataStore().setAuthStatus(true)
 
       router.push('/teams')
-    } catch (_error: any) {
+    } catch (_error) {
       log.info(parseError(_error))
       addErrorToast(parseError(_error))
       log.info('SIWE rejected')
