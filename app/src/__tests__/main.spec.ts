@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from 'vitest'
 import { setupApp } from '../main'
 import { createApp } from 'vue'
 import { WagmiPlugin } from '@wagmi/vue'
-import { VueQueryPlugin } from '@tanstack/vue-query'
+import { config } from '../wagmi.config'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 
-// Mock the required modules
 vi.mock('@wagmi/vue', async () => {
   const originalModule = await vi.importActual<typeof import('@wagmi/vue')>('@wagmi/vue')
   return {
@@ -38,10 +38,11 @@ vi.mock('vue', async () => {
 describe('main.ts', () => {
   it('should create a Vue app instance and register plugins', () => {
     const app = setupApp()
+    const queryClient = new QueryClient()
 
     expect(createApp).toHaveBeenCalled()
 
-    expect(WagmiPlugin.install).toHaveBeenCalledWith(app, expect.anything())
-    expect(VueQueryPlugin.install).toHaveBeenCalledWith(app, expect.anything())
+    expect(WagmiPlugin.install).toHaveBeenCalledWith(app, { config })
+    expect(VueQueryPlugin.install).toHaveBeenCalledWith(app, { queryClient })
   })
 })
