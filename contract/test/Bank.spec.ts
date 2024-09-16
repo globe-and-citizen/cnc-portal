@@ -40,6 +40,7 @@ describe('Bank', () => {
         expect(await bankProxy.tipsAddress()).to.eq(await tipsProxy.getAddress())
       })
 
+      // Todo test any address can deposit into the bank, bank owner and simple user
       it('Then I can deposit into the bank contract', async () => {
         const amount = ethers.parseEther('10')
         const tx = await owner.sendTransaction({ to: await bankProxy.getAddress(), value: amount })
@@ -48,6 +49,7 @@ describe('Bank', () => {
         expect(tx).to.emit(bankProxy, 'Deposit').withArgs(owner.address, amount)
       })
 
+      // TODO: test another addres can't transfer from the bank
       it('Then I can transfer fund from my bank contract to an address (contractor)', async () => {
         const amount = ethers.parseEther('1')
         const tx = await bankProxy.transfer(contractor.address, amount)
@@ -59,6 +61,7 @@ describe('Bank', () => {
           .withArgs(owner.address, contractor.address, amount)
       })
 
+      // TODO: test another addres can't send tips
       it('Then I can send tips to all contractors including team members', async () => {
         const amount = ethers.parseEther('3')
         const amountPerAddress = ethers.parseEther('1')
@@ -73,6 +76,7 @@ describe('Bank', () => {
         expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
       })
 
+      // TODO: test another addres can't push tips
       it('Then I can push tips to all contractors including team members', async () => {
         const amount = ethers.parseEther('3')
         const amountPerAddress = ethers.parseEther('1')
@@ -87,6 +91,7 @@ describe('Bank', () => {
         expect(tx).to.changeEtherBalance(member2, amountPerAddress)
       })
 
+      // TODO: test another addres can't change tips address
       it('Then I can edit tips contract address', async () => {
         const newTipsAddress = (await ethers.getSigners())[4]
         const tx = await bankProxy.changeTipsAddress(newTipsAddress.address)
@@ -94,6 +99,8 @@ describe('Bank', () => {
         expect(tx).to.emit(bankProxy, 'SetTipsAddress').withArgs(newTipsAddress.address)
       })
 
+      // TODO: test another addres can't pause the contract
+      // and only function that have the onlyOwner and whenNotPaused modifier can be called
       it('Then I can pause the contract', async () => {
         await bankProxy.pause()
 
@@ -101,6 +108,7 @@ describe('Bank', () => {
         await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
       })
 
+      // TODO: test another addres can't unpause the contract
       it('Then I can unpause the contract', async () => {
         await bankProxy.unpause()
 
