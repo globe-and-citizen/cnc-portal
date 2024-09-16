@@ -60,21 +60,22 @@
       <button
         class="btn btn-xs btn-secondary"
         :disabled="!approvedAddresses.has(useUserDataStore().address)"
-        v-if="team.bankAddress && approvedAddresses"
+        v-if="approvedAddresses"
         @click="transferModal = true"
+        data-test="transfer-button"
       >
         Transfer
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
+        v-if="contractOwnerAddress == useUserDataStore().address"
         @click="setLimitModal = true"
       >
         Set Limit
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="team.bankAddress && contractOwnerAddress == useUserDataStore().address"
+        v-if="contractOwnerAddress == useUserDataStore().address"
         @click="approveUsersModal = true"
       >
         Approve Users
