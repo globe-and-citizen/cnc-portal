@@ -10,8 +10,8 @@
   "Bank#Bank": "0xAd1569cF877b70B61dee6b5C3368c115Cc4aA49A",
   "BoardOfDirectorsModule#BoardOfDirectors": "0x1524880c000BFBE04A2aaBf6e7b38f8Ff7fC2893",
   "BoardOfDirectorsModule#Beacon": "0x358Ca90b755398ecC2c4432D127BF06918fE0947",
-  "VotingBeaconModule#Beacon": "0xE3800CF28Ea59E5A963eFBD917881B9E1F07269B",
+  "VotingBeaconModule#Beacon": "0xe79e5e40705D4b1d162FC90d0c067C7eEC10d348",
   "BankBeaconModule#Bank": "0x2B1DF3Fc58855b88fD8A956E90cA9425aAA06B19",
   "BankBeaconModule#Beacon": "0x5fF152D282c0154c819b5CA8e11B808A71d94a7b",
-  "VotingBeaconModule#Voting": "0x486F0Db000Ac65411055618bb895474930574e93"
+  "VotingBeaconModule#Voting": "0x94Ac99BCD44FB9D13F227aB7AF74d80B8F974086"
 }

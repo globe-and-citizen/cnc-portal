@@ -52,7 +52,10 @@ describe('BankTransactionsSection', () => {
 
       // Click on TransferHistory accordion
       await wrapper.findAll('input[type="radio"]').at(1)!.trigger('click')
-      expect((wrapper.vm as any).activeAccordion).toBe(1)
+      interface ComponentData {
+        activeAccordion: number
+      }
+      expect((wrapper.vm as unknown as ComponentData).activeAccordion).toBe(1)
     })
   })
 })

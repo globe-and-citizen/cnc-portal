@@ -9,7 +9,7 @@
     </p>
 
     <button class="mt-6 btn btn-secondary">
-      <RouterLink to="/teams">Tip your Team</RouterLink>
+      <RouterLink to="/teams" data-test="tip-button">Tip your Team</RouterLink>
     </button>
   </div>
 </template>
