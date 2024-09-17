@@ -6,13 +6,15 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
+import { createTestingPinia } from '@pinia/testing'
+//import { useUserDataStore } from '@/stores/user'
 
 
-vi.mock('@/stores/user', () => ({
-  useUserDataStore: vi.fn(() => ({
-    address: '0xApprovedAddress'
-  }))
-}))
+// vi.mock('@/stores/user', () => ({
+//   useUserDataStore: vi.fn(() => ({
+//     address: '0xApprovedAddress'
+//   }))
+// }))
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -121,7 +123,17 @@ describe('ExpenseAccountSection', () => {
         ...props
       },
       data,
-      global
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              user: { address: '0xInitialUser' }
+            }
+          })
+        ],
+        ...global
+      }
     })
   }
 
