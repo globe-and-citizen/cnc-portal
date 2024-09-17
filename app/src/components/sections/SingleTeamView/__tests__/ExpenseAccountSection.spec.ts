@@ -15,6 +15,13 @@ import { createTestingPinia } from '@pinia/testing'
 //   }))
 // }))
 
+interface ComponentData {
+  transferModal: boolean
+  setLimitModal: boolean
+  approveUsersModal: boolean
+  approvedAddresses: Set<string>
+}
+
 const mockCopy = vi.fn()
 const mockClipboard = {
   copy: mockCopy,
@@ -61,6 +68,7 @@ const mockExpenseAccountIsApprovedAddress = {
   error: ref<T | null>(null),
   execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
     // You can add custom logic here to update `data` based on arguments
+
     if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
       mockExpenseAccountIsApprovedAddress.data.value = true
     } else {
@@ -309,27 +317,19 @@ describe('ExpenseAccountSection', () => {
       expect(button.exists()).toBeTruthy()
       expect((button.element as HTMLButtonElement).disabled).toBe(true) // Button should be disabled
     })
-    // it('should enable the transfer button if user approved', async () => {
-    //   const wrapper = createComponent({
-    //     props: {
-    //       team: {
-    //         expenseAccountAddress: `0xExpenseAccount`,
-    //         members: [
-    //           { address: `0xApprovedAddress` },
-    //           { address: `0xUnapprovedAddress` }
-    //         ]
-    //       }
-    //     }
-    //   })
+    it('should enable the transfer button if user approved', async () => {
+      const wrapper = createComponent()
 
-    //   await wrapper.vm.$nextTick()
+      ;(wrapper.vm as unknown as ComponentData).approvedAddresses = new Set(['0xInitialUser'])
 
-    //   const button = wrapper.find('[data-test="transfer-button"]')
-    //   expect(button.exists()).toBeTruthy()
+      await wrapper.vm.$nextTick()
 
-    //   // Cast to HTMLButtonElement
-    //   expect((button.element as HTMLButtonElement).disabled).toBe(false) // Button should be enabled
-    // })
+      const button = wrapper.find('[data-test="transfer-button"]')
+      expect(button.exists()).toBeTruthy()
+
+      // Cast to HTMLButtonElement
+      expect(button.attributes().disabled).toBeUndefined() // Button should be enabled
+    })
     it('should show the set limit button if is the owner', async () => {
       const wrapper = createComponent({
         global: {
@@ -371,6 +371,59 @@ describe('ExpenseAccountSection', () => {
       const wrapper = createComponent()
       const button = wrapper.find('[data-test="approve-users-button"]')
       expect(button.exists()).toBeFalsy()
+    })
+    it('should show transfer modal', async () => {
+      const wrapper = createComponent()
+
+      ;(wrapper.vm as unknown as ComponentData).approvedAddresses = new Set(['0xInitialUser'])
+
+      await wrapper.vm.$nextTick()
+
+      const transferButton = wrapper.find('[data-test="transfer-button"]')
+
+      await transferButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).transferModal).toBeTruthy()
+    })
+    it('should show set limit modal', async () => {
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xContractOwner' }
+              }
+            })
+          ]
+        }
+      })
+
+      const setLimitButton = wrapper.find('[data-test="set-limit-button"]')
+
+      await setLimitButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).setLimitModal).toBeTruthy()
+    })
+    it('should show approve users modal', async () => {
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xContractOwner' }
+              }
+            })
+          ]
+        }
+      })
+
+      const approveUsersButton = wrapper.find('[data-test="approve-users-button"]')
+
+      await approveUsersButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).approveUsersModal).toBeTruthy()
     })
   })
 })
