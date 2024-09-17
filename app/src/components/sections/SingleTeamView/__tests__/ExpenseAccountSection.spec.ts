@@ -7,9 +7,10 @@ import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 
+
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
-    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+    address: '0xApprovedAddress'
   }))
 }))
 
@@ -52,29 +53,75 @@ const mockExpenseAccountGetMaxLimit = {
   execute: vi.fn()
 }
 
+const mockExpenseAccountIsApprovedAddress = {
+  data: ref<boolean>(false),  // Simulating `isApprovedAddress`
+  isLoading: ref(false),
+  isSuccess: ref(false),
+  error: ref<T | null>(null),
+  execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
+    // You can add custom logic here to update `data` based on arguments
+    if (
+      expenseAccountAddress === '0xExpenseAccount' &&
+      memberAddress === '0xApprovedAddress'
+    ) {
+      mockExpenseAccountIsApprovedAddress.data.value = true
+    } else {
+      mockExpenseAccountIsApprovedAddress.data.value = false
+    }
+  })
+}
+
+const mockExpenseAccountGetOwner = {
+  data: ref<string | null>(null),
+  loading: ref(false),
+  error: ref<T | null>(null),
+  isSuccess: ref(false),
+  execute: vi.fn(() => {
+    mockExpenseAccountGetOwner.data.value = `0xContractOwner`
+  })
+}
+
 vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
   const actual: T = await importOriginal()
   return {
     ...actual,
     useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
     useExpenseAccountGetBalance: vi.fn(() => mockExpenseAccountGetBalance),
-    useDeployExpenseAccountContract: vi.fn(() => mockDeployExpenseAccount)
+    useDeployExpenseAccountContract: vi.fn(() => mockDeployExpenseAccount),
+    useExpenseAccountIsApprovedAddress: vi.fn(() => mockExpenseAccountIsApprovedAddress),
+    useExpenseAccountGetOwner: vi.fn(() => mockExpenseAccountGetOwner)
   }
 })
 
 describe('ExpenseAccountSection', () => {
   setActivePinia(createPinia())
 
-  const createComponent = (props?: { team: {} }) => {
+  interface Props {
+    team?: {};
+  }
+  
+  interface ComponentOptions {
+    props?: Props;
+    data?: () => Record<string, any>;
+    global?: Record<string, any>;
+  }
+
+  const createComponent = ({
+    props = {},
+    data = () => ({}),
+    global = {}
+  }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
         team: {
-          expenseAccountAddress: '0x8aCd85898458400f7Db866d53FCFF6f0D49741FF',
-          ownerAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+          expenseAccountAddress: '0xExpenseAccount',
+          ownerAddress: '0xOwner',
           ...props?.team
         },
         ...props
-      }
+      },
+      data,
+      global
     })
   }
 
@@ -82,8 +129,10 @@ describe('ExpenseAccountSection', () => {
     it('should show expense account if expense account address exists', () => {
       const team = { expenseAccountAddress: '0x123' }
       const wrapper = createComponent({
-        team: {
-          ...team
+        props:{
+          team: {
+            ...team
+          }
         }
       })
 
@@ -104,9 +153,9 @@ describe('ExpenseAccountSection', () => {
     it('should show create expense account button if expense account is not deployed', () => {
       const team = { expenseAccountAddress: null }
       const wrapper = createComponent({
-        team: {
+        props: {team: {
           ...team
-        }
+        }}
       })
 
       expect(wrapper.find('[data-test="create-expense-account"]').exists()).toBeTruthy()
@@ -114,9 +163,9 @@ describe('ExpenseAccountSection', () => {
     it('should show loading button if contract is being deployed', async () => {
       const team = { expenseAccountAddress: null }
       const wrapper = createComponent({
-        team: {
+        props: {team: {
           ...team
-        }
+        }}
       })
 
       mockDeployExpenseAccount.isLoading.value = true
@@ -127,9 +176,9 @@ describe('ExpenseAccountSection', () => {
     it('should hide create button if contract is being deployed', async () => {
       const team = { expenseAccountAddress: null }
       const wrapper = createComponent({
-        team: {
+        props: {team: {
           ...team
-        }
+        }}
       })
 
       mockDeployExpenseAccount.isLoading.value = true
@@ -239,5 +288,33 @@ describe('ExpenseAccountSection', () => {
         `${maxLimit} ${NETWORK.currencySymbol}`
       )
     })
+    it('should disable the transfer button if user not approved', async () => {
+      const wrapper = createComponent()
+
+      const button = wrapper.find('[data-test="transfer-button"]')
+      expect(button.exists()).toBeTruthy()
+      expect((button.element as HTMLButtonElement).disabled).toBe(true) // Button should be disabled
+    })
+    // it('should enable the transfer button if user approved', async () => {
+    //   const wrapper = createComponent({
+    //     props: {
+    //       team: {
+    //         expenseAccountAddress: `0xExpenseAccount`,
+    //         members: [
+    //           { address: `0xApprovedAddress` },
+    //           { address: `0xUnapprovedAddress` }
+    //         ]
+    //       }
+    //     }
+    //   })
+
+    //   await wrapper.vm.$nextTick()
+  
+    //   const button = wrapper.find('[data-test="transfer-button"]')
+    //   expect(button.exists()).toBeTruthy()
+      
+    //   // Cast to HTMLButtonElement
+    //   expect((button.element as HTMLButtonElement).disabled).toBe(false) // Button should be enabled
+    // })
   })
 })

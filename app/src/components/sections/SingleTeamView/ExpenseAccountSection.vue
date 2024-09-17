@@ -70,6 +70,7 @@
         class="btn btn-xs btn-secondary"
         v-if="contractOwnerAddress == useUserDataStore().address"
         @click="setLimitModal = true"
+        data-test="set-limit-button"
       >
         Set Limit
       </button>
@@ -326,7 +327,10 @@ const checkApprovedAddresses = async () => {
       if (isApprovedAddress.value) {
         approvedAddresses.value.add(member.address)
         unapprovedAddresses.value.delete(member.address)
+        console.log(`approvedAddresses: `, approvedAddresses.value)
+        console.log(`address in set: `, approvedAddresses.value.has(useUserDataStore().address))
       } else {
+        // console.log(`unapprovedAddress: `, member.address)
         unapprovedAddresses.value.add(member.address)
         approvedAddresses.value.delete(member.address)
       }
@@ -422,6 +426,8 @@ watch(
 //#endregion watch success
 
 onMounted(async () => {
+  //console.log(`team.value.members`, team.value.members, `team.value.expenseAccountAddress`, team.value.expenseAccountAddress)
   await init()
+  //console.log(`contractOwner: `, contractOwnerAddress.value, `activeUser`, useUserDataStore().address)
 })
 </script>
