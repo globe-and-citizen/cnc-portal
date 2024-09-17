@@ -9,7 +9,6 @@ import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 import { createTestingPinia } from '@pinia/testing'
 //import { useUserDataStore } from '@/stores/user'
 
-
 // vi.mock('@/stores/user', () => ({
 //   useUserDataStore: vi.fn(() => ({
 //     address: '0xApprovedAddress'
@@ -56,16 +55,13 @@ const mockExpenseAccountGetMaxLimit = {
 }
 
 const mockExpenseAccountIsApprovedAddress = {
-  data: ref<boolean>(false),  // Simulating `isApprovedAddress`
+  data: ref<boolean>(false), // Simulating `isApprovedAddress`
   isLoading: ref(false),
   isSuccess: ref(false),
   error: ref<T | null>(null),
   execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
     // You can add custom logic here to update `data` based on arguments
-    if (
-      expenseAccountAddress === '0xExpenseAccount' &&
-      memberAddress === '0xApprovedAddress'
-    ) {
+    if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
       mockExpenseAccountIsApprovedAddress.data.value = true
     } else {
       mockExpenseAccountIsApprovedAddress.data.value = false
@@ -99,13 +95,13 @@ describe('ExpenseAccountSection', () => {
   setActivePinia(createPinia())
 
   interface Props {
-    team?: {};
+    team?: {}
   }
-  
+
   interface ComponentOptions {
-    props?: Props;
-    data?: () => Record<string, any>;
-    global?: Record<string, any>;
+    props?: Props
+    data?: () => Record<string, unknown>
+    global?: Record<string, unknown>
   }
 
   const createComponent = ({
@@ -141,7 +137,7 @@ describe('ExpenseAccountSection', () => {
     it('should show expense account if expense account address exists', () => {
       const team = { expenseAccountAddress: '0x123' }
       const wrapper = createComponent({
-        props:{
+        props: {
           team: {
             ...team
           }
@@ -165,9 +161,11 @@ describe('ExpenseAccountSection', () => {
     it('should show create expense account button if expense account is not deployed', () => {
       const team = { expenseAccountAddress: null }
       const wrapper = createComponent({
-        props: {team: {
-          ...team
-        }}
+        props: {
+          team: {
+            ...team
+          }
+        }
       })
 
       expect(wrapper.find('[data-test="create-expense-account"]').exists()).toBeTruthy()
@@ -175,9 +173,11 @@ describe('ExpenseAccountSection', () => {
     it('should show loading button if contract is being deployed', async () => {
       const team = { expenseAccountAddress: null }
       const wrapper = createComponent({
-        props: {team: {
-          ...team
-        }}
+        props: {
+          team: {
+            ...team
+          }
+        }
       })
 
       mockDeployExpenseAccount.isLoading.value = true
@@ -188,9 +188,11 @@ describe('ExpenseAccountSection', () => {
     it('should hide create button if contract is being deployed', async () => {
       const team = { expenseAccountAddress: null }
       const wrapper = createComponent({
-        props: {team: {
-          ...team
-        }}
+        props: {
+          team: {
+            ...team
+          }
+        }
       })
 
       mockDeployExpenseAccount.isLoading.value = true
@@ -321,12 +323,54 @@ describe('ExpenseAccountSection', () => {
     //   })
 
     //   await wrapper.vm.$nextTick()
-  
+
     //   const button = wrapper.find('[data-test="transfer-button"]')
     //   expect(button.exists()).toBeTruthy()
-      
+
     //   // Cast to HTMLButtonElement
     //   expect((button.element as HTMLButtonElement).disabled).toBe(false) // Button should be enabled
     // })
+    it('should show the set limit button if is the owner', async () => {
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xContractOwner' }
+              }
+            })
+          ]
+        }
+      })
+      const button = wrapper.find('[data-test="set-limit-button"]')
+      expect(button.exists()).toBeTruthy()
+    })
+    it('should hide the set limit button if is not the owner', async () => {
+      const wrapper = createComponent()
+      const button = wrapper.find('[data-test="set-limit-button"]')
+      expect(button.exists()).toBeFalsy()
+    })
+    it('should show the approve users button if is the owner', async () => {
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xContractOwner' }
+              }
+            })
+          ]
+        }
+      })
+      const button = wrapper.find('[data-test="approve-users-button"]')
+      expect(button.exists()).toBeTruthy()
+    })
+    it('should hide the approve users button if is not the owner', async () => {
+      const wrapper = createComponent()
+      const button = wrapper.find('[data-test="approve-users-button"]')
+      expect(button.exists()).toBeFalsy()
+    })
   })
 })

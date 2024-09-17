@@ -78,6 +78,7 @@
         class="btn btn-xs btn-secondary"
         v-if="contractOwnerAddress == useUserDataStore().address"
         @click="approveUsersModal = true"
+        data-test="approve-users-button"
       >
         Approve Users
       </button>
