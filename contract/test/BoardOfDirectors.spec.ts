@@ -213,18 +213,7 @@ describe('BoardOfDirectors', async () => {
   })
 
   context('setBoardOfDirectors', async () => {
-    it('should set BoDs correctly from voting contract', async () => {
-      const { founder, boD1, boD2, boD3, voting, boardOfDirectorsProxy } = await deployFixture()
-
-      // voting contract calls setBoardOfDirectors to set BoDs
-      await voting.connect(founder).setBoardOfDirectors([boD1.address, boD2.address, boD3.address])
-
-      const boardOfDirectors = await boardOfDirectorsProxy.getBoardOfDirectors()
-      expect(boardOfDirectors).to.have.lengthOf(3)
-      expect(boardOfDirectors).to.include.members([boD1.address, boD2.address, boD3.address])
-    })
-
-    it('should emits BoardOfDirectorsChanged', async () => {
+    it('should set BoDs correctly from voting contract & should emits BoardOfDirectorsChanged', async () => {
       const { founder, boD1, boD2, boD3, voting, boardOfDirectorsProxy } = await deployFixture()
 
       // voting contract calls setBoardOfDirectors to set BoDs
@@ -233,6 +222,10 @@ describe('BoardOfDirectors', async () => {
       )
         .to.emit(boardOfDirectorsProxy, 'BoardOfDirectorsChanged')
         .withArgs([boD1.address, boD2.address, boD3.address])
+
+      const boardOfDirectors = await boardOfDirectorsProxy.getBoardOfDirectors()
+      expect(boardOfDirectors).to.have.lengthOf(3)
+      expect(boardOfDirectors).to.include.members([boD1.address, boD2.address, boD3.address])
     })
 
     it('should revert if not owner calls setBoardOfDirectors', async () => {
