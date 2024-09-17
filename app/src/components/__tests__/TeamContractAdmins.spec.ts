@@ -1,5 +1,5 @@
 import {mount} from '@vue/test-utils'
-import {describe, it, expect, vi } from 'vitest'
+import {describe, it, expect } from 'vitest'
 import TeamContractAdmins from '@/components/TeamContractAdmins.vue'
 
 describe('TeamContractAdmins', ()=>{
@@ -35,9 +35,9 @@ describe('TeamContractAdmins', ()=>{
         expect(rows[0].findAll('td')[0].text()).toBe(adminsData[0])//
         expect(rows[0].findAll('td')[1].find('button').exists()).toBe(true)//Remove button exists
     
-       //check first admin row
-       expect(rows[1].find('th').text()).toBe('1')//Index
-       expect(rows[1].findAll('td')[0].text()).toBe(adminsData[0])//
+       //check second admin row
+       expect(rows[1].find('th').text()).toBe('2')//Index
+       expect(rows[1].findAll('td')[0].text()).toBe(adminsData[1])//
        expect(rows[1].findAll('td')[1].find('button').exists()).toBe(true)//Remove button exists
     })
 

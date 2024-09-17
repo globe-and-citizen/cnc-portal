@@ -47,7 +47,7 @@ import {  UsersIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import type { ContractAddress } from '@/types';
 import { onMounted, ref } from 'vue';
-import TeamContractAdmins from './TeamContractsAdmin.vue';
+import TeamContractAdmins from './TeamContractAdmins.vue';
 // Define props
 const props = defineProps<{
   contracts: ContractAddress[]

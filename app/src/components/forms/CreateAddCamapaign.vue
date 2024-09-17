@@ -63,7 +63,8 @@ const viewContractCode = () => {
 }
 
 const emitCreateAddCampaign = () => {
-  if (costPerClick.value !== null && costPerImpression.value !== null) {
+  if (costPerClick.value !== null && costPerClick.value !== undefined &&
+      costPerImpression.value !== null && costPerImpression.value !== undefined) {
     emit('createAddCampaign',  costPerClick.value, costPerImpression.value )
   } else {
     alert('Please enter valid numeric values for both rates.')

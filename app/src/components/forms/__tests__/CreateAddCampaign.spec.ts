@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
+import CreateAddCampaign from '@/components/forms/CreateAddCamapaign.vue'
 
 describe('CreateAddCampaign.vue', () => {
   describe('render', () => {
@@ -47,10 +47,9 @@ describe('CreateAddCampaign.vue', () => {
         props: { loading: false, bankAddress: '0x123456' }
       })
 
-      await wrapper.setData({
-        costPerClick: 0.1,
-        costPerImpression: 0.2
-      })
+      // Directly set the ref values
+      wrapper.vm.costPerClick = 0.1
+      wrapper.vm.costPerImpression = 0.2
 
       await wrapper.find('.btn-primary').trigger('click')
 
@@ -62,11 +61,11 @@ describe('CreateAddCampaign.vue', () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { loading: false, bankAddress: '0x123456' }
       })
-
-      // Leave the values as null
+  
+      // Leave the values as null (default state)
       await wrapper.find('.btn-primary').trigger('click')
-
-      expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
+  
+      expect(wrapper.emitted('createAddCampaign')).toBeUndefined()  // This should now pass
     })
   })
 })

@@ -59,7 +59,7 @@
 import { ref } from 'vue';
 import { UsersIcon } from '@heroicons/vue/24/outline';
 import ModalComponent from '@/components/ModalComponent.vue';
-import TeamContractAdmins from './TeamContractsAdmin.vue';
+import TeamContractAdmins from './TeamContractAdmins.vue';
 import TeamContractsDetail from './TeamContractsDetail.vue';
 import { AddCampaignService } from '@/services/AddCampaignService';
 import type { ContractAddress } from '@/types';
