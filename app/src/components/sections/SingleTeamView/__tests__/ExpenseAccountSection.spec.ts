@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { NETWORK } from '@/constant'
 import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 import { createTestingPinia } from '@pinia/testing'
@@ -28,6 +28,7 @@ interface ComponentData {
   approvedAddresses: Set<string>
   foundUsers: User[]
   transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
+  setExpenseAccountLimit: (amount: Ref) => Promise<void>
 }
 
 const mockCopy = vi.fn()
@@ -397,7 +398,7 @@ describe('ExpenseAccountSection', () => {
       expect((wrapper.vm as unknown as ComponentData).transferModal).toBeTruthy()
 
       const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
-      expect((transferFromBankForm).exists()).toBe(true)
+      expect(transferFromBankForm.exists()).toBe(true)
     })
     it('should show set limit modal', async () => {
       const wrapper = createComponent({
@@ -446,12 +447,13 @@ describe('ExpenseAccountSection', () => {
       ;(wrapper.vm as unknown as ComponentData).transferModal = true
 
       it('should pass corrent props to TransferFromBankForm', async () => {
-  
-        (wrapper.vm as unknown as ComponentData).foundUsers = [{ name: 'John Doe', address: '0x1234' }]
+        ;(wrapper.vm as unknown as ComponentData).foundUsers = [
+          { name: 'John Doe', address: '0x1234' }
+        ]
         await wrapper.vm.$nextTick()
-  
+
         const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
-        expect((transferFromBankForm).exists()).toBe(true)
+        expect(transferFromBankForm.exists()).toBe(true)
         expect(transferFromBankForm.props()).toEqual({
           filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
           service: 'Expense Account',
@@ -462,7 +464,7 @@ describe('ExpenseAccountSection', () => {
       it('should call transferFromExpenseAccount when @transfer is emitted', async () => {
         const transferForm = wrapper.findComponent(TransferFromBankForm)
         const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
-        expect((transferFromBankForm).exists()).toBe(true)
+        expect(transferFromBankForm.exists()).toBe(true)
 
         const spy = vi.spyOn(wrapper.vm as unknown as ComponentData, 'transferFromExpenseAccount')
 
@@ -474,6 +476,42 @@ describe('ExpenseAccountSection', () => {
 
         transferForm.vm.$emit('closeModal')
         expect((wrapper.vm as unknown as ComponentData).transferModal).toBe(false)
+      })
+    })
+
+    describe('SetLimitForm', async () => {
+      const wrapper = createComponent()
+
+      ;(wrapper.vm as unknown as ComponentData).setLimitModal = true
+
+      it('should pass corrent props to TransferFromBankForm', async () => {
+        await wrapper.vm.$nextTick()
+
+        const setLimitForm = wrapper.findComponent(SetLimitForm)
+        expect(setLimitForm.exists()).toBe(true)
+        expect(setLimitForm.props()).toEqual({
+          loading: false
+        })
+      })
+      it('should call setExpenseAccountLimit when @set-limit is emitted', async () => {
+        const setLimitForm = wrapper.findComponent(SetLimitForm)
+        expect(setLimitForm.exists()).toBe(true)
+
+        const spy = vi.spyOn(wrapper.vm as unknown as ComponentData, 'setExpenseAccountLimit')
+
+        setLimitForm.vm.$emit('setLimit', ref('20'))
+
+        expect(setLimitForm.emitted('setLimit')).toStrictEqual([[ref('20')]])
+        //expect(spy).toHaveBeenCalledWith(ref('20'))
+      })
+      it('should close the modal when SetLimitForm @close-modal is emitted', async () => {
+        ;(wrapper.vm as unknown as ComponentData).setLimitModal = true
+        await wrapper.vm.$nextTick()
+        const setLimitForm = wrapper.findComponent(SetLimitForm)
+        expect(setLimitForm.exists()).toBe(true)
+
+        setLimitForm.vm.$emit('closeModal')
+        expect((wrapper.vm as unknown as ComponentData).setLimitModal).toBe(false)
       })
     })
   })
