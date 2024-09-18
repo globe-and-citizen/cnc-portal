@@ -25,7 +25,14 @@
           <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
-          <ProposalSection :team="team" @getTeam="getTeamAPI" />
+          <ProposalSection
+            :team="team"
+            @getTeam="getTeamAPI"
+            @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
+          />
+        </template>
+        <template #tab-4>
+          <BoardOfDirectorsSection v-if="activeTab == 4" :team="team" />
         </template>
       </TabNavigation>
     </div>
@@ -63,6 +70,7 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
+import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
@@ -77,7 +85,7 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 
-const activeTab = ref(0)
+const activeTab = ref(4)
 
 const route = useRoute()
 
@@ -135,6 +143,9 @@ onMounted(async () => {
   }
   if (team.value.bankAddress) {
     tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
+  }
+  if (team.value.boardOfDirectorsAddress) {
+    tabs.value.push(SingleTeamTabs.BoardOfDirectors)
   }
 })
 

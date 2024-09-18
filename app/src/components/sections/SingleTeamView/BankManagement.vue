@@ -37,7 +37,11 @@
             <button
               class="btn btn-primary w-44 text-center"
               data-test="transfer-to-board-of-directors"
-              v-if="team.boardOfDirectorsAddress && !transferOwnershipLoading"
+              v-if="
+                team.boardOfDirectorsAddress &&
+                team.boardOfDirectorsAddress != owner &&
+                !transferOwnershipLoading
+              "
               @click="executeBank(transferOwnership, [team.boardOfDirectorsAddress])"
             >
               Transfer to Board Of Directors Contract
