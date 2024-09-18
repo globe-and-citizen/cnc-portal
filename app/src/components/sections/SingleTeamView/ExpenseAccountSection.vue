@@ -94,7 +94,7 @@
         "
         @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
-        :loading="false"
+        :loading="isLoadingTransfer"
         :bank-balance="`${contractBalance}`"
         service="Expense Account"
       />
@@ -219,6 +219,7 @@ const {
 
 const {
   execute: executeExpenseAccountTransfer,
+  isLoading: isLoadingTransfer,
   error: errorTransfer,
   isSuccess: isSuccessTransfer
 } = useExpenseAccountTransfer()
@@ -297,6 +298,8 @@ const getExpenseAccountOwner = async () => {
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountAddress) {
     await executeExpenseAccountTransfer(team.value.expenseAccountAddress, to, amount)
+    if (isSuccessTransfer.value) 
+      transferModal.value = false
     await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
   }
 }
