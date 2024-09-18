@@ -298,9 +298,8 @@ const getExpenseAccountOwner = async () => {
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountAddress) {
     await executeExpenseAccountTransfer(team.value.expenseAccountAddress, to, amount)
-    if (isSuccessTransfer.value) 
-      transferModal.value = false
     await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
+    if (isSuccessTransfer.value) transferModal.value = false
   }
 }
 
@@ -315,6 +314,7 @@ const approveAddress = async (address: string) => {
   if (team.value.expenseAccountAddress) {
     await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
     await checkApprovedAddresses()
+    if (isSuccessApproveAddress.value) approveUsersModal.value = false
   }
 }
 
@@ -322,6 +322,7 @@ const disapproveAddress = async (address: string) => {
   if (team.value.expenseAccountAddress) {
     await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
     await checkApprovedAddresses()
+    if (isSuccessDisapproveAddress.value) approveUsersModal.value = false
   }
 }
 
