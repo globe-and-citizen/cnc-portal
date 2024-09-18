@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
@@ -7,6 +7,12 @@ import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 import { createTestingPinia } from '@pinia/testing'
+import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import SetLimitForm from '../forms/SetLimitForm.vue'
+import ApproveUsersForm from '../forms/ApproveUsersForm.vue'
+import type { User } from '@/types'
+import { BankService } from '@/services/bankService'
+import { beforeEach } from 'node:test'
 //import { useUserDataStore } from '@/stores/user'
 
 // vi.mock('@/stores/user', () => ({
@@ -20,6 +26,8 @@ interface ComponentData {
   setLimitModal: boolean
   approveUsersModal: boolean
   approvedAddresses: Set<string>
+  foundUsers: User[]
+  transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
 }
 
 const mockCopy = vi.fn()
@@ -110,12 +118,14 @@ describe('ExpenseAccountSection', () => {
     props?: Props
     data?: () => Record<string, unknown>
     global?: Record<string, unknown>
+    methods?: Record<string, (...args: unknown[]) => unknown> // Add methods here
   }
 
   const createComponent = ({
     props = {},
     data = () => ({}),
-    global = {}
+    global = {},
+    methods = {}
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
@@ -127,6 +137,7 @@ describe('ExpenseAccountSection', () => {
         ...props
       },
       data,
+      methods,
       global: {
         plugins: [
           createTestingPinia({
@@ -384,6 +395,9 @@ describe('ExpenseAccountSection', () => {
       await transferButton.trigger('click')
       await wrapper.vm.$nextTick()
       expect((wrapper.vm as unknown as ComponentData).transferModal).toBeTruthy()
+
+      const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
+      expect((transferFromBankForm).exists()).toBe(true)
     })
     it('should show set limit modal', async () => {
       const wrapper = createComponent({
@@ -404,6 +418,7 @@ describe('ExpenseAccountSection', () => {
       await setLimitButton.trigger('click')
       await wrapper.vm.$nextTick()
       expect((wrapper.vm as unknown as ComponentData).setLimitModal).toBeTruthy()
+      expect(wrapper.findComponent(SetLimitForm).exists()).toBe(true)
     })
     it('should show approve users modal', async () => {
       const wrapper = createComponent({
@@ -424,6 +439,42 @@ describe('ExpenseAccountSection', () => {
       await approveUsersButton.trigger('click')
       await wrapper.vm.$nextTick()
       expect((wrapper.vm as unknown as ComponentData).approveUsersModal).toBeTruthy()
+      expect(wrapper.findComponent(ApproveUsersForm).exists()).toBe(true)
+    })
+    describe('TransferFromBankForm', async () => {
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as ComponentData).transferModal = true
+
+      it('should pass corrent props to TransferFromBankForm', async () => {
+  
+        (wrapper.vm as unknown as ComponentData).foundUsers = [{ name: 'John Doe', address: '0x1234' }]
+        await wrapper.vm.$nextTick()
+  
+        const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
+        expect((transferFromBankForm).exists()).toBe(true)
+        expect(transferFromBankForm.props()).toEqual({
+          filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
+          service: 'Expense Account',
+          bankBalance: '0.0',
+          loading: false
+        })
+      })
+      it('should call transferFromExpenseAccount when @transfer is emitted', async () => {
+        const transferForm = wrapper.findComponent(TransferFromBankForm)
+        const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
+        expect((transferFromBankForm).exists()).toBe(true)
+
+        const spy = vi.spyOn(wrapper.vm as unknown as ComponentData, 'transferFromExpenseAccount')
+
+        transferForm.vm.$emit('transfer', '0xRecipientAddress', '500')
+        expect(spy).toHaveBeenCalledWith('0xRecipientAddress', '500')
+      })
+      it('should close the modal when TransferFromBankForm @close-modal is emitted', async () => {
+        const transferForm = wrapper.findComponent(TransferFromBankForm)
+
+        transferForm.vm.$emit('closeModal')
+        expect((wrapper.vm as unknown as ComponentData).transferModal).toBe(false)
+      })
     })
   })
 })
