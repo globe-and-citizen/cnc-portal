@@ -104,7 +104,7 @@
         v-if="setLimitModal"
         :loading="isLoadingSetLimit"
         @close-modal="() => (setLimitModal = false)"
-        @set-limit="setExepenseAccountLimit"
+        @set-limit="setExpenseAccountLimit"
       />
     </ModalComponent>
     <ModalComponent v-model="approveUsersModal">
@@ -300,7 +300,7 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   }
 }
 
-const setExepenseAccountLimit = async (amount: Ref) => {
+const setExpenseAccountLimit = async (amount: Ref) => {
   if (team.value.expenseAccountAddress) {
     await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount.value)
     await getExpenseAccountMaxLimit()
