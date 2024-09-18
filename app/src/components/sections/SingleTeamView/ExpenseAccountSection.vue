@@ -109,6 +109,7 @@
     </ModalComponent>
     <ModalComponent v-model="approveUsersModal">
       <ApproveUsersForm
+        v-if="approveUsersModal"
         :loading-approve="isLoadingApproveAddress"
         :loading-disapprove="isLoadingDisapproveAddress"
         :approved-addresses="approvedAddresses"

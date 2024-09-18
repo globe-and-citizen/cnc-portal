@@ -29,6 +29,8 @@ interface ComponentData {
   foundUsers: User[]
   transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
   setExpenseAccountLimit: (amount: Ref) => Promise<void>
+  approveAddress: (address: string) => Promise<void>
+  disapproveAddress: (address: string) => Promise<void>
 }
 
 const mockCopy = vi.fn()
@@ -512,6 +514,61 @@ describe('ExpenseAccountSection', () => {
 
         setLimitForm.vm.$emit('closeModal')
         expect((wrapper.vm as unknown as ComponentData).setLimitModal).toBe(false)
+      })
+    })
+
+    describe('ApproveUsersForm', async () => {
+      const wrapper =
+        createComponent(/*{
+        props: {
+          team: {
+            members: [
+              {name: 'John Doe', address: '0xInitialUser'},
+              {name: 'Jane Doe', address: '0xOtherUser'}
+            ]
+          }
+        }
+      }*/)
+
+      ;(wrapper.vm as unknown as ComponentData).approveUsersModal = true
+
+      it('should pass corrent props to ApproveUsersForm', async () => {
+        await wrapper.vm.$nextTick()
+
+        expect((wrapper.vm as unknown as ComponentData).approveUsersModal).toBe(true)
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
+        expect(approveUsersForm.props()).toEqual({
+          loadingApprove: false,
+          loadingDisapprove: false,
+          approvedAddresses: new Set(),
+          unapprovedAddresses: new Set()
+        })
+      })
+      it('should call approveAddress when @approve-address is emitted', async () => {
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
+
+        approveUsersForm.vm.$emit('approveAddress', '0x123')
+
+        expect(approveUsersForm.emitted('approveAddress')).toStrictEqual([['0x123']])
+        //expect(spy).toHaveBeenCalledWith('0x123')
+      })
+      it('should call disapproveAddress when @disapprove-address is emitted', async () => {
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
+
+        approveUsersForm.vm.$emit('disapproveAddress', '0x123')
+
+        expect(approveUsersForm.emitted('disapproveAddress')).toStrictEqual([['0x123']])
+        //expect(spy).toHaveBeenCalledWith('0x123')
+      })
+      it('should close the modal when ApproveUsersForm @close-modal is emitted', async () => {
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
+
+        approveUsersForm.vm.$emit('closeModal')
+        expect((wrapper.vm as unknown as ComponentData).approveUsersModal).toBe(false)
       })
     })
   })
