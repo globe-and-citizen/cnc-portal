@@ -28,7 +28,7 @@
         <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
       </ToolTip>
     </span>
-    <div class="flex items-center pt-3">
+    <div class="flex items-center pt-3" style="border-width: 0">
       <div>
         <div class="stat-title pr-3">Balance</div>
         <div
