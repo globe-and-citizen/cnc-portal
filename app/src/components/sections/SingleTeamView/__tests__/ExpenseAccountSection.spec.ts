@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeAll } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
@@ -11,15 +11,6 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import SetLimitForm from '../forms/SetLimitForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersForm.vue'
 import type { User } from '@/types'
-import { BankService } from '@/services/bankService'
-import { beforeEach } from 'node:test'
-//import { useUserDataStore } from '@/stores/user'
-
-// vi.mock('@/stores/user', () => ({
-//   useUserDataStore: vi.fn(() => ({
-//     address: '0xApprovedAddress'
-//   }))
-// }))
 
 interface ComponentData {
   transferModal: boolean
@@ -73,13 +64,11 @@ const mockExpenseAccountGetMaxLimit = {
 }
 
 const mockExpenseAccountIsApprovedAddress = {
-  data: ref<boolean>(false), // Simulating `isApprovedAddress`
+  data: ref<boolean>(false),
   isLoading: ref(false),
   isSuccess: ref(false),
   error: ref<T | null>(null),
   execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
-    // You can add custom logic here to update `data` based on arguments
-
     if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
       mockExpenseAccountIsApprovedAddress.data.value = true
     } else {
@@ -121,14 +110,12 @@ describe('ExpenseAccountSection', () => {
     props?: Props
     data?: () => Record<string, unknown>
     global?: Record<string, unknown>
-    methods?: Record<string, (...args: unknown[]) => unknown> // Add methods here
   }
 
   const createComponent = ({
     props = {},
     data = () => ({}),
-    global = {},
-    methods = {}
+    global = {}
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
@@ -140,7 +127,6 @@ describe('ExpenseAccountSection', () => {
         ...props
       },
       data,
-      methods,
       global: {
         plugins: [
           createTestingPinia({
@@ -499,12 +485,9 @@ describe('ExpenseAccountSection', () => {
         const setLimitForm = wrapper.findComponent(SetLimitForm)
         expect(setLimitForm.exists()).toBe(true)
 
-        const spy = vi.spyOn(wrapper.vm as unknown as ComponentData, 'setExpenseAccountLimit')
-
         setLimitForm.vm.$emit('setLimit', ref('20'))
 
         expect(setLimitForm.emitted('setLimit')).toStrictEqual([[ref('20')]])
-        //expect(spy).toHaveBeenCalledWith(ref('20'))
       })
       it('should close the modal when SetLimitForm @close-modal is emitted', async () => {
         ;(wrapper.vm as unknown as ComponentData).setLimitModal = true
@@ -518,17 +501,7 @@ describe('ExpenseAccountSection', () => {
     })
 
     describe('ApproveUsersForm', async () => {
-      const wrapper =
-        createComponent(/*{
-        props: {
-          team: {
-            members: [
-              {name: 'John Doe', address: '0xInitialUser'},
-              {name: 'Jane Doe', address: '0xOtherUser'}
-            ]
-          }
-        }
-      }*/)
+      const wrapper = createComponent()
 
       ;(wrapper.vm as unknown as ComponentData).approveUsersModal = true
 
@@ -552,7 +525,6 @@ describe('ExpenseAccountSection', () => {
         approveUsersForm.vm.$emit('approveAddress', '0x123')
 
         expect(approveUsersForm.emitted('approveAddress')).toStrictEqual([['0x123']])
-        //expect(spy).toHaveBeenCalledWith('0x123')
       })
       it('should call disapproveAddress when @disapprove-address is emitted', async () => {
         const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
@@ -561,7 +533,6 @@ describe('ExpenseAccountSection', () => {
         approveUsersForm.vm.$emit('disapproveAddress', '0x123')
 
         expect(approveUsersForm.emitted('disapproveAddress')).toStrictEqual([['0x123']])
-        //expect(spy).toHaveBeenCalledWith('0x123')
       })
       it('should close the modal when ApproveUsersForm @close-modal is emitted', async () => {
         const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
