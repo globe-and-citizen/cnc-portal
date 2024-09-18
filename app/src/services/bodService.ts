@@ -1,6 +1,6 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 import type { Contract } from 'ethers'
 import BEACON_PROXY_ABI from '../artifacts/abi/beacon-proxy.json'
 import { SmartContract } from './contractService'
