@@ -2,9 +2,6 @@ import { getNetwork } from './network'
 import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
-export const EXPENSE_ACCOUNT_BEACON_ADDRESS = import.meta.env
-  .VITE_APP_EXPENSE_ACCOUNT_BEACON_ADDRESS
-export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = import.meta.env.VITE_APP_EXPENSE_ACCOUNT_LOGIC_ADDRESS
 
 export const NETWORK = getNetwork()
 interface AddressMapping {
@@ -15,6 +12,8 @@ interface AddressMapping {
   'VotingBeaconModule#Voting': string
   'BoardOfDirectorsModule#Beacon': string
   'BoardOfDirectorsModule#BoardOfDirectors': string
+  'ExpenseAccountModule#ExpenseAccount'?: string
+  'ExpenseAccountModule#FactoryBeacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -33,5 +32,7 @@ export const VOTING_BEACON_ADDRESS = addresses['VotingBeaconModule#Beacon'] || '
 export const VOTING_IMPL_ADDRESS = addresses['VotingBeaconModule#Voting'] || ''
 export const BOD_BEACON_ADDRESS = addresses['BoardOfDirectorsModule#Beacon'] || ''
 export const BOD_IMPL_ADDRESS = addresses['BoardOfDirectorsModule#BoardOfDirectors'] || ''
+export const EXPENSE_ACCOUNT_BEACON_ADDRESS = addresses['ExpenseAccountModule#FactoryBeacon'] || ''
+export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = addresses['ExpenseAccountModule#ExpenseAccount'] || ''
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
