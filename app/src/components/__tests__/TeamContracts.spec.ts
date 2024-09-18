@@ -8,8 +8,8 @@ import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
 // Mock AddCampaignService methods
 vi.mock('@/services/AddCampaignService', () => ({
   AddCampaignService: vi.fn().mockImplementation(() => ({
-    getContractData: vi.fn().mockResolvedValue([{ key: 'costPerClick', value: '10' }]),
-  })),
+    getContractData: vi.fn().mockResolvedValue([{ key: 'costPerClick', value: '10' }])
+  }))
 }))
 
 describe('TeamContracts.vue', () => {
@@ -17,13 +17,13 @@ describe('TeamContracts.vue', () => {
     {
       type: 'Campaign',
       address: '0x1234567890abcdef1234567890abcdef12345678',
-      admins: ['admin1', 'admin2'],
+      admins: ['admin1', 'admin2']
     },
     {
       type: 'Campaign',
       address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-      admins: ['admin3'],
-    },
+      admins: ['admin3']
+    }
   ]
 
   it('renders contract rows correctly', () => {
@@ -38,7 +38,9 @@ describe('TeamContracts.vue', () => {
     // Check that the content of the first row is correct
     const firstRow = rows[0]
     expect(firstRow.text()).toContain(contracts[0].type)
-    expect(firstRow.text()).toContain(contracts[0].address.slice(0, 6) + '...' + contracts[0].address.slice(-4))
+    expect(firstRow.text()).toContain(
+      contracts[0].address.slice(0, 6) + '...' + contracts[0].address.slice(-4)
+    )
   })
 
   it('opens the admin modal with correct admins on button click', async () => {

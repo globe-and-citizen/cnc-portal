@@ -9,9 +9,9 @@ export interface Team {
   ownerAddress: string
   votingAddress: string | null
   addCampaignAddress: string | null
-  addCampaignAddresses:string[]
-  contracts:[]
-  contract: ContractAddress |null
+  addCampaignAddresses: string[]
+  contracts: []
+  contract: ContractAddress | null
   boardOfDirectorsAddress: string | null
 }
 export interface TeamsResponse {

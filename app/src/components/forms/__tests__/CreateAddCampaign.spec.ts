@@ -61,11 +61,11 @@ describe('CreateAddCampaign.vue', () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { loading: false, bankAddress: '0x123456' }
       })
-  
+
       // Leave the values as null (default state)
       await wrapper.find('.btn-primary').trigger('click')
-  
-      expect(wrapper.emitted('createAddCampaign')).toBeUndefined()  // This should now pass
+
+      expect(wrapper.emitted('createAddCampaign')).toBeUndefined() // This should now pass
     })
   })
 })

@@ -1,5 +1,5 @@
 <template>
-  <div  id="team-contracts" class="overflow-x-auto">
+  <div id="team-contracts" class="overflow-x-auto">
     <table class="table">
       <!-- head -->
       <thead>
@@ -13,12 +13,16 @@
       </thead>
       <tbody>
         <!-- row 1 -->
-        <tr  v-for="(contract, index) in contracts" :key="index" class="bg-base-200">
-          <th>{{index}}</th>
-          <td>{{contract.type}}</td>
-          <td>{{contract.address}}</td>
+        <tr v-for="(contract, index) in contracts" :key="index" class="bg-base-200">
+          <th>{{ index }}</th>
+          <td>{{ contract.type }}</td>
+          <td>{{ contract.address }}</td>
           <td>
-            <a :href="'https://polygonscan.com/address/' + contract.address" target="_blank" rel="noopener noreferrer">
+            <a
+              :href="'https://polygonscan.com/address/' + contract.address"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {{ contract.address.slice(0, 6) + '...' + contract.address.slice(-4) }}
             </a>
           </td>
@@ -30,37 +34,32 @@
         </tr>
       </tbody>
     </table>
-    
-    <ModalComponent v-model="contractAdminDialog.show" >
-      <div class=" max-w-lg">
+
+    <ModalComponent v-model="contractAdminDialog.show">
+      <div class="max-w-lg">
         <h3 class="text-lg font-bold">contract Admin list</h3>
         <TeamContractAdmins :admins="contractAdminDialog.admins" />
       </div>
-      
     </ModalComponent>
   </div>
 </template>
 
 <script setup lang="ts">
-import {  UsersIcon } from '@heroicons/vue/24/outline'
+import { UsersIcon } from '@heroicons/vue/24/outline'
 
 import ModalComponent from '@/components/ModalComponent.vue'
-import type { ContractAddress } from '@/types';
-import {  ref } from 'vue';
-import TeamContractAdmins from './TeamContractAdmins.vue';
+import type { ContractAddress } from '@/types'
+import { ref } from 'vue'
+import TeamContractAdmins from './TeamContractAdmins.vue'
 // Define props
 defineProps<{
   contracts: ContractAddress[]
-}>();
+}>()
 
+const contractAdminDialog = ref({ title: '', show: false, admins: [''] })
 
-const contractAdminDialog=ref({title:'', show:false,admins:['']})
-
-
-const openAdminsModal= (admins: string[])=> {
-  contractAdminDialog.value.admins = admins;
-  contractAdminDialog.value.show=true;
+const openAdminsModal = (admins: string[]) => {
+  contractAdminDialog.value.admins = admins
+  contractAdminDialog.value.show = true
 }
-
-
 </script>

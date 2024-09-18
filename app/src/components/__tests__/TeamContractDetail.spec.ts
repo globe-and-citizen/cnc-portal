@@ -44,17 +44,16 @@ describe('TeamContractsDetail.vue', () => {
     expect(rows[1].findAll('td')[1].text()).toBe('5 MATIC') // Value
   })
 
+  //   it('emits "removeAdmin" when the remove button is clicked', async () => {
+  //     const wrapper = mount(TeamContractsDetail, {
+  //       props: {
+  //         datas: testData
+  //       }
+  //     })
 
-//   it('emits "removeAdmin" when the remove button is clicked', async () => {
-//     const wrapper = mount(TeamContractsDetail, {
-//       props: {
-//         datas: testData
-//       }
-//     })
-
-//    
-//     // await wrapper.find('button').trigger('click')
-//     // expect(wrapper.emitted('removeAdmin')).toHaveLength(1)
-//     // expect(wrapper.emitted('removeAdmin')![0]).toEqual(['costPerClick'])
-//   })
+  //
+  //     // await wrapper.find('button').trigger('click')
+  //     // expect(wrapper.emitted('removeAdmin')).toHaveLength(1)
+  //     // expect(wrapper.emitted('removeAdmin')![0]).toEqual(['costPerClick'])
+  //   })
 })

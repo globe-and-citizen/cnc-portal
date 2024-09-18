@@ -42,7 +42,7 @@
           <BankTransactionsSection v-if="activeTab == 3" :bank-address="team.bankAddress" />
         </template>
         <template #tab-4>
-          <ProposalSection  :team="team" @getTeam="getTeamAPI" />
+          <ProposalSection :team="team" @getTeam="getTeamAPI" />
         </template>
       </TabNavigation>
     </div>
@@ -55,7 +55,10 @@
     </ModalComponent>
     <ModalComponent v-model="addCampaignModal">
       <CreateAddCamapaign
-        @create-add-campaign="async ( _costPerClick:number, _costPerImpression:number) => deployAddCampaignContract(_costPerClick,_costPerImpression)"
+        @create-add-campaign="
+          async (_costPerClick: number, _costPerImpression: number) =>
+            deployAddCampaignContract(_costPerClick, _costPerImpression)
+        "
         :loading="createAddCampaignLoading"
         :bankAddress="_teamBankContractAddress"
       />
@@ -74,7 +77,6 @@ import { useUserDataStore } from '@/stores/user'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useDeployBankContract } from '@/composables/bank'
 import { useDeployAddCampaignContract } from '@/composables/addCampaign'
-
 
 // Service
 // import { AuthService } from '@/services/authService'
@@ -97,7 +99,7 @@ import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 
 // Modal control states
 const bankModal = ref(false)
-const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members,SingleTeamTabs.Contracts])
+const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members, SingleTeamTabs.Contracts])
 const isOwner = ref(false)
 const addCampaignModal = ref(false)
 
@@ -125,13 +127,12 @@ const {
 const {
   contractAddress: addCampaignContractAddress,
   execute: createAddCampaign,
-  isLoading: createAddCampaignLoading,
+  isLoading: createAddCampaignLoading
   //isSuccess: CreateAddCamapaignSuccess,
   //error: CreateAddCamapaignError
 } = useDeployAddCampaignContract()
 
-const _teamBankContractAddress=ref('')
-
+const _teamBankContractAddress = ref('')
 
 // Watchers for Banking functions
 
@@ -176,9 +177,11 @@ onMounted(async () => {
   if (team.value.bankAddress) {
     tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
   }
-  _teamBankContractAddress.value=team.value?.bankAddress ? 
-         team.value.bankAddress : 
-         (team.value?.ownerAddress ? team.value.ownerAddress : "");
+  _teamBankContractAddress.value = team.value?.bankAddress
+    ? team.value.bankAddress
+    : team.value?.ownerAddress
+      ? team.value.ownerAddress
+      : ''
 })
 
 const deployBankContract = async () => {
@@ -217,20 +220,25 @@ watch(searchUserResponse, () => {
   }
 })
 
-const deployAddCampaignContract = async ( _costPerClick:number, _costPerImpression:number ) => {
+const deployAddCampaignContract = async (_costPerClick: number, _costPerImpression: number) => {
   const id = route.params.id
   // Update the ref values with new data
 
-  await createAddCampaign(_teamBankContractAddress.value.toString(),_costPerClick,_costPerImpression, useUserDataStore().address,String(id));
-  
+  await createAddCampaign(
+    _teamBankContractAddress.value.toString(),
+    _costPerClick,
+    _costPerImpression,
+    useUserDataStore().address,
+    String(id)
+  )
+
   //addCampaignContractAddress.value="0x503b62DA4e895f2659eF342fB39bB1545aBbDe3F"
   //optional default value for contract address
-  if(addCampaignContractAddress.value){
+  if (addCampaignContractAddress.value) {
     addCampaignModal.value = false
     await getTeamAPI()
- }
+  }
 }
-
 
 // const searchUsers = async (input: { name: string; address: string }) => {
 //   try {
