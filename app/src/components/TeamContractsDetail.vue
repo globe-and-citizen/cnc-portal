@@ -24,18 +24,14 @@
   </template>
   
   <script setup lang="ts">
-  import { defineProps, defineEmits } from 'vue';
+  import { defineProps } from 'vue';
   
   defineProps<{
     datas: Array<{ key: string; value: string }>;
 
   }>();
   
-  const emit = defineEmits(['removeAdmin']);
-  
-  // function removeAdmin(admin: string) {
-  //   console.log("remove admin")
-  // }
+ 
   </script>
   
   <style scoped>

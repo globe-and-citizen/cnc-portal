@@ -126,8 +126,8 @@ const {
   contractAddress: addCampaignContractAddress,
   execute: createAddCampaign,
   isLoading: createAddCampaignLoading,
-  isSuccess: CreateAddCamapaignSuccess,
-  error: CreateAddCamapaignError
+  //isSuccess: CreateAddCamapaignSuccess,
+  //error: CreateAddCamapaignError
 } = useDeployAddCampaignContract()
 
 const _teamBankContractAddress=ref('')

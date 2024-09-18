@@ -1,5 +1,5 @@
 import { AddCampaignService} from '@/services/AddCampaignService'
-import type { BankEventType, EventResult } from '@/types'
+
 import { ref } from 'vue'
 
 
@@ -8,7 +8,7 @@ const addCamapaignService = new AddCampaignService()
 export function useDeployAddCampaignContract() {
   const contractAddress = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref()
   const isSuccess = ref(false)
   
   

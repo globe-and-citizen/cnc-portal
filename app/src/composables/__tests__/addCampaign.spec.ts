@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useDeployAddCampaignContract } from '@/composables/addCampaign'
-import { AddCampaignService } from '@/services/AddCampaignService'
+//import { AddCampaignService } from '@/services/AddCampaignService'
 
 // Mock AddCampaignService methods for both tests
 vi.mock('@/services/AddCampaignService', () => ({
@@ -10,11 +10,12 @@ vi.mock('@/services/AddCampaignService', () => ({
 }))
 
 describe('useDeployAddCampaignContract', () => {
-  let addCampaignService: any
+  //let addCampaignService: any
+
 
   beforeEach(() => {
     // Reset the mock implementations before each test
-    addCampaignService = new AddCampaignService()
+    //addCampaignService = new AddCampaignService()
     vi.clearAllMocks()
   })
 

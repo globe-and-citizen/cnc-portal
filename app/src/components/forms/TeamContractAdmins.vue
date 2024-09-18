@@ -23,20 +23,15 @@
   </template>
   
   <script setup lang="ts">
-  import { defineProps, defineEmits } from 'vue';
+  import { defineProps } from 'vue';
   
   defineProps<{
     admins: string[];
   }>();
   
-  const emit = defineEmits(['removeAdmin']);
   
   function removeAdmin(admin: string) {
-    console.log("remove admin")
+    console.log("remove admin=== ", admin)
   }
   </script>
-  
-  <style scoped>
-  /* Add any custom styles if necessary */
-  </style>
-  
+ 

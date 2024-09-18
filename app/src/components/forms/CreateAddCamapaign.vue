@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 
-import { ref,computed,watch  } from 'vue'
+import { ref,watch  } from 'vue'
 const emit=defineEmits(['createAddCampaign'])
 const props=defineProps<{
   loading: boolean,

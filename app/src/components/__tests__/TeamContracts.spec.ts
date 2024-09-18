@@ -4,7 +4,6 @@ import TeamContracts from '@/components/TeamContracts.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from '@/components/TeamContractAdmins.vue'
 import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
-import { AddCampaignService } from '@/services/AddCampaignService'
 
 // Mock AddCampaignService methods
 vi.mock('@/services/AddCampaignService', () => ({
