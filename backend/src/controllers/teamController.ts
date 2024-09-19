@@ -182,6 +182,7 @@ const updateTeam = async (req: Request, res: Response) => {
     bankAddress,
     votingAddress,
     boardOfDirectorsAddress,
+    expenseAccountAddress
   } = req.body;
   const callerAddress = (req as any).address;
   try {
@@ -196,6 +197,7 @@ const updateTeam = async (req: Request, res: Response) => {
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, "Unauthorized", res);
     }
+    console.log(`req.body: `, req.body)
     const teamU = await prisma.team.update({
       where: { id: Number(id) },
       data: {
@@ -204,6 +206,7 @@ const updateTeam = async (req: Request, res: Response) => {
         bankAddress,
         votingAddress,
         boardOfDirectorsAddress,
+        expenseAccountAddress
       },
       include: {
         members: {
