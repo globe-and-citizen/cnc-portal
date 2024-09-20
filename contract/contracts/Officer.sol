@@ -60,7 +60,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit TeamCreated( _founders, _members);
     }
 
-    function deployBankAccount() external onlyOwner {
+    function deployBankAccount() external onlyOwners {
         require(bankAccountContract == address(0), "Bank account contract already deployed");
         BeaconProxy proxy = new BeaconProxy(
             bankAccountBeacon,
@@ -71,10 +71,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit ContractDeployed("BankAccount", address(proxy));
     }
 
-    function deployVotingContract() external onlyOwner {
+    function deployVotingContract() external onlyOwners {
         require(votingContract == address(0), "Governance contract already deployed");
 
-        console.log("Deploying Governance Contract",votingContractBeacon);
 
         require(votingContractBeacon != address(0), "Invalid governance contract beacon");
 
@@ -85,7 +84,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         
         votingContract = address(proxy);
 
-        console.log("Voting Contract deployed at: ", votingContract);
 
         emit ContractDeployed("VotingContract", votingContract);
     }
@@ -98,5 +96,18 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     function getTeam() external view returns (address[] memory, address[] memory , address , address ) {
         return (founders, members, bankAccountContract, votingContract);
+    }
+    modifier onlyOwners{
+        if (msg.sender == owner()) {
+             _;
+            return;
+        }
+        for (uint256 i = 0; i < founders.length; i++) {
+            if (msg.sender == founders[i]) {
+                _;
+                return;
+            }
+        }
+        revert("You are not authorized to perform this action");
     }
 }

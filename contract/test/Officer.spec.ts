@@ -7,7 +7,10 @@ describe('Officer Contract', function () {
   let Officer, officer: unknown
   let BankAccount, VotingContract
   let bankAccountBeacon, votingContractBeacon
-  let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress
+  let owner: SignerWithAddress,
+    addr1: SignerWithAddress,
+    addr2: SignerWithAddress,
+    addr3: SignerWithAddress
 
   this.beforeAll(async function () {
     BankAccount = await ethers.getContractFactory('Bank')
@@ -15,8 +18,7 @@ describe('Officer Contract', function () {
 
     VotingContract = await ethers.getContractFactory('Voting')
     votingContractBeacon = await upgrades.deployBeacon(VotingContract)
-    console.log(votingContractBeacon)
-    ;[owner, addr1, addr2] = await ethers.getSigners()
+    ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
     Officer = await ethers.getContractFactory('Officer')
     officer = await upgrades.deployProxy(
@@ -68,8 +70,21 @@ describe('Officer Contract', function () {
   })
 
   it('Should fail if non-founder or non-owner tries to deploy', async function () {
-    await expect(
-      (officer as Officer).connect(addr2).deployBankAccount()
-    ).to.be.revertedWithCustomError(officer as Officer, 'OwnableUnauthorizedAccount')
+    BankAccount = await ethers.getContractFactory('Bank')
+    bankAccountBeacon = await upgrades.deployBeacon(BankAccount)
+
+    VotingContract = await ethers.getContractFactory('Voting')
+    votingContractBeacon = await upgrades.deployBeacon(VotingContract)
+    ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
+
+    Officer = await ethers.getContractFactory('Officer')
+    officer = await upgrades.deployProxy(
+      Officer,
+      [await bankAccountBeacon.getAddress(), await votingContractBeacon.getAddress()],
+      { initializer: 'initialize' }
+    )
+    await expect((officer as Officer).connect(addr3).deployBankAccount()).to.be.revertedWith(
+      'You are not authorized to perform this action'
+    )
   })
 })
