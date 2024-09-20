@@ -48,7 +48,9 @@ describe('Officer Contract', function () {
     expect(team[3]).to.be.not.equal('0x0000000000000000000000000000000000000000')
   })
   it('Should deploy the BankAccount contract via BeaconProxy', async function () {
-    await (officer as Officer).connect(owner).deployBankAccount()
+    await (officer as Officer)
+      .connect(owner)
+      .deployBankAccount(ethers.Wallet.createRandom().address)
 
     const team = await (officer as Officer).getTeam()
     expect(team[2]).to.be.not.equal('0x0000000000000000000000000000000000000000')
@@ -83,16 +85,16 @@ describe('Officer Contract', function () {
       [await bankAccountBeacon.getAddress(), await votingContractBeacon.getAddress()],
       { initializer: 'initialize' }
     )
-    await expect((officer as Officer).connect(addr3).deployBankAccount()).to.be.revertedWith(
-      'You are not authorized to perform this action'
-    )
+
+    await expect(
+      (officer as Officer).connect(addr3).deployBankAccount(ethers.Wallet.createRandom().address)
+    ).to.be.revertedWith('You are not authorized to perform this action')
     await (officer as Officer)
       .connect(owner)
       .createTeam([addr1.address, addr2.address], ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'])
 
-    await expect((officer as Officer).connect(addr2).deployBankAccount()).to.emit(
-      officer as Officer,
-      'ContractDeployed'
-    )
+    await expect(
+      (officer as Officer).connect(addr2).deployBankAccount(ethers.Wallet.createRandom().address)
+    ).to.emit(officer as Officer, 'ContractDeployed')
   })
 })

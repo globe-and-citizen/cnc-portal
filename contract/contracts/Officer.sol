@@ -60,11 +60,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit TeamCreated( _founders, _members);
     }
 
-    function deployBankAccount() external onlyOwners {
+    function deployBankAccount(address tipsAddress) external onlyOwners {
         require(bankAccountContract == address(0), "Bank account contract already deployed");
         BeaconProxy proxy = new BeaconProxy(
             bankAccountBeacon,
-            abi.encodeWithSelector(IBankAccount.initialize.selector, owner())
+            abi.encodeWithSelector(IBankAccount.initialize.selector, tipsAddress)
         );
         bankAccountContract = address(proxy);
 
