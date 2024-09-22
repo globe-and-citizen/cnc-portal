@@ -120,7 +120,6 @@ const {
 } = useGetActions(props.team.boardOfDirectorsAddress!)
 
 const addAction = (action: Partial<Action>) => {
-  console.log('addAction', action)
   writeContract({
     abi: BOD_ABI,
     address: props.team.boardOfDirectorsAddress as Address,
@@ -137,7 +136,6 @@ watch(actionCount, () => {
 })
 watch(errorActionCount, () => {
   if (errorActionCount.value) {
-    console.log('errorActionCount', errorActionCount.value)
     addErrorToast(errorActionCount.value.message)
     startIndex.value = null
   }
@@ -151,7 +149,6 @@ watch(addStatus, () => {
 })
 watch(errorActions, () => {
   if (errorActions.value) {
-    console.log('errorActions', errorActions.value)
     addErrorToast('Failed to get actions')
   }
 })
