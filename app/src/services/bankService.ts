@@ -1,5 +1,5 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
-import BANK_ABI from '../artifacts/abi/bank.json'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 import BEACON_PROXY_ABI from '../artifacts/abi/beacon-proxy.json'
 import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
