@@ -13,5 +13,7 @@
   "VotingBeaconModule#Beacon": "0xe79e5e40705D4b1d162FC90d0c067C7eEC10d348",
   "BankBeaconModule#Bank": "0x2B1DF3Fc58855b88fD8A956E90cA9425aAA06B19",
   "BankBeaconModule#Beacon": "0x5fF152D282c0154c819b5CA8e11B808A71d94a7b",
-  "VotingBeaconModule#Voting": "0x94Ac99BCD44FB9D13F227aB7AF74d80B8F974086"
+  "VotingBeaconModule#Voting": "0x94Ac99BCD44FB9D13F227aB7AF74d80B8F974086",
+  "ExpenseAccountModule#ExpenseAccount": "0xa794dA95F4803866Eed0f1536D13275e0cFb5318",
+  "ExpenseAccountModule#FactoryBeacon": "0x5Bc1A424cc1E36Bbb9C911e4d8b21Cd8612b8363"
 }

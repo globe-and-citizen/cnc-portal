@@ -32,7 +32,10 @@
           />
         </template>
         <template #tab-4>
-          <BoardOfDirectorsSection v-if="activeTab == 4" :team="team" />
+          <ExpenseAccountSection v-if="activeTab == 4" :team="team" />
+        </template>
+        <template #tab-5>
+          <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
       </TabNavigation>
     </div>
@@ -70,6 +73,7 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
+import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
@@ -138,11 +142,16 @@ watch(getTeamError, () => {
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
 
-  if (team.value.ownerAddress == useUserDataStore().address) {
+  if (team?.value?.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
   }
-  if (team.value.bankAddress) {
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
+  if (team?.value?.bankAddress) {
+    tabs.value.push(
+      SingleTeamTabs.Bank,
+      SingleTeamTabs.Transactions,
+      SingleTeamTabs.Proposals,
+      SingleTeamTabs.Expenses
+    )
   }
   if (team.value.boardOfDirectorsAddress) {
     tabs.value.push(SingleTeamTabs.BoardOfDirectors)
@@ -155,11 +164,15 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions, SingleTeamTabs.Proposals)
+    tabs.value.push(
+      SingleTeamTabs.Bank,
+      SingleTeamTabs.Transactions,
+      SingleTeamTabs.Proposals,
+      SingleTeamTabs.Expenses
+    )
     await getTeamAPI()
   }
 }
-
 const {
   // execute: executeSearchUser,
   response: searchUserResponse,
@@ -194,4 +207,7 @@ watch(searchUserResponse, () => {
 //     return useErrorHandler().handleError(error)
 //   }
 // }
+/*onMounted(() => {
+  console.log("")
+})*/
 </script>
