@@ -1,0 +1,383 @@
+export const BANK_ABI = [
+  {
+    inputs: [],
+    name: 'EnforcedPause',
+    type: 'error'
+  },
+  {
+    inputs: [],
+    name: 'ExpectedPause',
+    type: 'error'
+  },
+  {
+    inputs: [],
+    name: 'InvalidInitialization',
+    type: 'error'
+  },
+  {
+    inputs: [],
+    name: 'NotInitializing',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'owner',
+        type: 'address'
+      }
+    ],
+    name: 'OwnableInvalidOwner',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      }
+    ],
+    name: 'OwnableUnauthorizedAccount',
+    type: 'error'
+  },
+  {
+    inputs: [],
+    name: 'ReentrancyGuardReentrantCall',
+    type: 'error'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'depositor',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'Deposited',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: 'uint64',
+        name: 'version',
+        type: 'uint64'
+      }
+    ],
+    name: 'Initialized',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'previousOwner',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'newOwner',
+        type: 'address'
+      }
+    ],
+    name: 'OwnershipTransferred',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      }
+    ],
+    name: 'Paused',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'addressWhoPushes',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'address[]',
+        name: 'teamMembers',
+        type: 'address[]'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'totalAmount',
+        type: 'uint256'
+      }
+    ],
+    name: 'PushTip',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'addressWhoSends',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'address[]',
+        name: 'teamMembers',
+        type: 'address[]'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'totalAmount',
+        type: 'uint256'
+      }
+    ],
+    name: 'SendTip',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'addressWhoChanged',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'oldAddress',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'newAddress',
+        type: 'address'
+      }
+    ],
+    name: 'TipsAddressChanged',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'sender',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'to',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'Transfer',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      }
+    ],
+    name: 'Unpaused',
+    type: 'event'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_tipsAddress',
+        type: 'address'
+      }
+    ],
+    name: 'changeTipsAddress',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_tipsAddress',
+        type: 'address'
+      }
+    ],
+    name: 'initialize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'pause',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'paused',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address[]',
+        name: '_addresses',
+        type: 'address[]'
+      },
+      {
+        internalType: 'uint256',
+        name: '_amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'pushTip',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address[]',
+        name: '_addresses',
+        type: 'address[]'
+      },
+      {
+        internalType: 'uint256',
+        name: '_amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'sendTip',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'tipsAddress',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_to',
+        type: 'address'
+      },
+      {
+        internalType: 'uint256',
+        name: '_amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'transfer',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'newOwner',
+        type: 'address'
+      }
+    ],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'unpause',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    stateMutability: 'payable',
+    type: 'receive'
+  }
+] as const
