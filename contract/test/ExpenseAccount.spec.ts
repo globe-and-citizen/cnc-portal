@@ -98,7 +98,7 @@ describe('ExpenseAccount', () => {
       })
 
       // This is a little bit strange. It's like a user need to be unauthorize sepecially then he can't withdraw
-      // Because a user who never been authorized can't withdraw. It need to be checked also here, so you need to check it also 
+      // Because a user who never been authorized can't withdraw. It need to be checked also here, so you need to check it also
       it('Then an unauthorized user cannot withdraw', async () => {
         await expect(
           expenseAccountProxy
