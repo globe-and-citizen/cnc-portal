@@ -11,22 +11,38 @@
       >
         Create Officer Contract
       </button>
-      <div v-else></div>
+      <div v-else>
+        <div class="flex flex-col justify-center items-center">
+          <div>
+            Officer contract deployed at:
+            <span class="badge badge-md badge-primary">
+              {{ team?.officerAddress }}
+            </span>
+          </div>
+          <div v-if="showCreateTeam">
+            <button class="btn btn-primary btn-sm">Create Team</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { deployContract, getTransactionCount } from '@wagmi/core'
-import { encodeFunctionData, getContractAddress } from 'viem'
+import { deployContract, getTransactionCount, readContract } from '@wagmi/core'
+import { encodeFunctionData, getContractAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import BEACON_PROXY_ABI from '@/artifacts/abi/beacon-proxy.json'
 import OFFICER_ABI from '@/artifacts/abi/officer.json'
 import { BOD_BEACON_ADDRESS, OFFICER_BEACON, VOTING_BEACON_ADDRESS } from '@/constant'
-import { useAccount } from '@wagmi/vue'
-import { onMounted, ref } from 'vue'
+import { useAccount, useReadContract } from '@wagmi/vue'
+import { onMounted, ref, watch } from 'vue'
+import { useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+
+const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps(['team'])
+const showCreateTeam = ref(false)
 const officerAddress = ref<{
   officerAddress: string | null
 }>({ officerAddress: null })
@@ -66,7 +82,31 @@ const deployOfficerContract = async () => {
     console.log(e)
   }
 }
-onMounted(() => {
-  console.log(props.team)
+const {
+  data: getTeamData,
+  error: errorGetTeam,
+  refetch: refetchGetTeam
+} = useReadContract({
+  abi: OFFICER_ABI,
+  address: props.team.officerAddress as Address,
+  functionName: 'getTeam'
+})
+onMounted(async () => {
+  if (props.team.officerAddress) {
+    refetchGetTeam()
+  }
+})
+watch(getTeamData, (value) => {
+  if (value) {
+    console.log(getTeamData.value)
+    if (Array.isArray(getTeamData.value) && getTeamData.value[0].length == 0) {
+      showCreateTeam.value = true
+    }
+  }
+})
+watch(errorGetTeam, (value) => {
+  if (value) {
+    addErrorToast('Error fetching team data')
+  }
 })
 </script>
