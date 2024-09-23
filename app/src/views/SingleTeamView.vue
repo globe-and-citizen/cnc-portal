@@ -12,6 +12,14 @@
       >
         Create Bank Account
       </button>
+      <button
+        class="btn btn-primary btn-xs"
+        @click="officerModal = true"
+        v-if="team.ownerAddress == useUserDataStore().address"
+        data-test="manageOfficer"
+      >
+        Manage Deployments
+      </button>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -39,6 +47,9 @@
         :loading="createBankLoading"
       />
     </ModalComponent>
+    <ModalComponent v-model="officerModal">
+      <OfficerForm :team="team" />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -58,6 +69,7 @@ import { useDeployBankContract } from '@/composables/bank'
 
 // Modals/Forms
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
+import OfficerForm from '@/components/forms/OfficerForm.vue'
 
 //Components
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
@@ -75,6 +87,7 @@ import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 const bankModal = ref(false)
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
 const isOwner = ref(false)
+const officerModal = ref(false)
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
