@@ -52,6 +52,22 @@ describe('Bank', () => {
         await expect(tx).to.changeEtherBalance(contractor, transferAmount)
       })
 
+      it("should fail when the to adddress is null, the ammount is 0 or the sender doesn't have enough funds", async () => {
+        const transferAmount = ethers.parseEther('1')
+
+        // Transfer to null address
+        const tx = bankProxy.transfer(ethers.ZeroAddress, transferAmount)
+        await expect(tx).to.be.revertedWith('Address cannot be zero')
+
+        // Transfer 0 amount
+        const tx2 = bankProxy.transfer(contractor.address, 0)
+        await expect(tx2).to.be.revertedWith('Amount must be greater than zero')
+
+        // Transfer more than the sender has
+        const tx3 = bankProxy.transfer(contractor.address, ethers.parseEther('100'))
+        await expect(tx3).to.be.revertedWith('Failed to transfer')
+      })
+
       it('should allow any address to deposit but not transfer funds', async () => {
         const depositAmount = ethers.parseEther('5')
         const transferAmount = ethers.parseEther('1')
