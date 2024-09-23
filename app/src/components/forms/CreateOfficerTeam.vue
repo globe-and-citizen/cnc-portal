@@ -1,0 +1,181 @@
+<template>
+  <div>
+    <h4 class="text-lg font-bold mb-4">Create Team</h4>
+
+    <div class="mb-4">
+      <h5 class="text-md font-bold">Add Founders</h5>
+      <div
+        v-for="(input, index) in selectedFounders"
+        :key="'founder-' + index"
+        class="input-group mt-3"
+      >
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <input
+            type="text"
+            class="w-24"
+            v-model="input.name"
+            @keyup.stop="searchUsers(input, 'founder')"
+            :placeholder="'Founder Name ' + (index + 1)"
+          />
+          |
+          <input
+            type="text"
+            class="grow"
+            v-model="input.address"
+            @keyup.stop="searchUsers(input, 'founder')"
+            :placeholder="'Wallet Address ' + (index + 1)"
+          />
+          <span class="badge badge-primary">Mandatory</span>
+        </label>
+      </div>
+
+      <div
+        class="dropdown"
+        :class="{ 'dropdown-open': !!founderUsers.length }"
+        v-if="showFounderDropdown"
+      >
+        <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
+          <li v-for="user in founderUsers" :key="user.address">
+            <a @click="selectFounder({ name: user.name || '', address: user.address || '' })">
+              {{ user.name }} | {{ user.address }}
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="flex justify-end pt-3">
+        <PlusCircleIcon class="w-6 h-6 cursor-pointer text-green-700" @click="addFounder()" />
+        <MinusCircleIcon class="w-6 h-6 cursor-pointer text-red-700" @click="removeFounder()" />
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <h5 class="text-md font-bold">Add Members</h5>
+      <div
+        v-for="(input, index) in selectedMembers"
+        :key="'member-' + index"
+        class="input-group mt-3"
+      >
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <input
+            type="text"
+            class="w-24"
+            v-model="input.name"
+            @keyup.stop="searchUsers(input, 'member')"
+            :placeholder="'Member Name ' + (index + 1)"
+          />
+          |
+          <input
+            type="text"
+            class="grow"
+            v-model="input.address"
+            @keyup.stop="searchUsers(input, 'member')"
+            :placeholder="'Wallet Address ' + (index + 1)"
+          />
+          <span class="badge badge-primary">Mandatory</span>
+        </label>
+      </div>
+
+      <div
+        class="dropdown"
+        :class="{ 'dropdown-open': !!memberUsers.length }"
+        v-if="showMemberDropdown"
+      >
+        <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
+          <li v-for="user in memberUsers" :key="user.address">
+            <a @click="selectMember({ name: user.name || '', address: user.address || '' })">
+              {{ user.name }} | {{ user.address }}
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="flex justify-end pt-3">
+        <PlusCircleIcon class="w-6 h-6 cursor-pointer text-green-700" @click="addMember()" />
+        <MinusCircleIcon class="w-6 h-6 cursor-pointer text-red-700" @click="removeMember()" />
+      </div>
+    </div>
+    <div class="flex justify-center">
+      <button @click="createTeam" class="btn btn-primary">Create Team</button>
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import { PlusCircleIcon } from '@heroicons/vue/24/outline'
+import { MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { ref } from 'vue'
+import { useToastStore } from '@/stores'
+import type { User } from '@/types'
+
+const props = defineProps(['team'])
+const { addErrorToast } = useToastStore()
+
+const founderUsers = ref<Partial<User>[]>([])
+const memberUsers = ref<Partial<User>[]>([])
+const selectedFounders = ref([{ name: '', address: '' }])
+const selectedMembers = ref([{ name: '', address: '' }])
+const showFounderDropdown = ref(false)
+const showMemberDropdown = ref(false)
+
+const createTeam = async () => {
+  console.log(selectedFounders.value)
+  console.log(selectedMembers.value)
+}
+
+const selectFounder = (user: { name: string; address: string }) => {
+  const lastIndex = selectedFounders.value.length - 1
+  selectedFounders.value[lastIndex].name = user.name
+  selectedFounders.value[lastIndex].address = user.address
+  showFounderDropdown.value = false
+}
+
+const selectMember = (user: { name: string; address: string }) => {
+  const lastIndex = selectedMembers.value.length - 1
+  selectedMembers.value[lastIndex].name = user.name
+  selectedMembers.value[lastIndex].address = user.address
+  showMemberDropdown.value = false
+}
+
+const addFounder = () => {
+  selectedFounders.value.push({ name: '', address: '' })
+}
+
+const removeFounder = () => {
+  if (selectedFounders.value.length > 1) selectedFounders.value.pop()
+}
+
+const addMember = () => {
+  selectedMembers.value.push({ name: '', address: '' })
+}
+
+const removeMember = () => {
+  if (selectedMembers.value.length > 1) selectedMembers.value.pop()
+}
+
+const searchUsers = async (
+  input: { name: string; address: string },
+  type: 'founder' | 'member'
+) => {
+  try {
+    if (props.team.members) {
+      const result = props.team.members.filter((user: Partial<User>) => {
+        if (user.name && user.address)
+          return (
+            user.name.toLowerCase().includes(input.name.toLowerCase()) ||
+            user.address.toLowerCase().includes(input.address.toLowerCase())
+          )
+      })
+
+      if (type === 'founder') {
+        founderUsers.value = result
+        showFounderDropdown.value = result.length > 0
+      } else if (type === 'member') {
+        memberUsers.value = result
+        showMemberDropdown.value = result.length > 0
+      }
+    }
+  } catch (error) {
+    addErrorToast('Failed to search users')
+  }
+}
+</script>

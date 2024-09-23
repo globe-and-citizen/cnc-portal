@@ -20,7 +20,7 @@
             </span>
           </div>
           <div v-if="showCreateTeam">
-            <button class="btn btn-primary btn-sm">Create Team</button>
+            <CreateOfficerTeam :team="team" />
           </div>
         </div>
       </div>
@@ -28,7 +28,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { deployContract, getTransactionCount, readContract } from '@wagmi/core'
+import { deployContract, getTransactionCount, writeContract } from '@wagmi/core'
+import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { encodeFunctionData, getContractAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
