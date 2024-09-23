@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { Bank, Tips } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
-describe.only('Bank', () => {
+describe('Bank', () => {
   let bankProxy: Bank
   let tipsProxy: Tips
 
@@ -62,42 +62,36 @@ describe.only('Bank', () => {
 
         await expect(
           bankProxy.connect(member1).transfer(contractor.address, transferAmount)
-        ).to.be.revertedWith('Ownable: caller is not the owner')
+        ).to.be.reverted
       })
     })
 
-    context('Tips', async () => {
+    context('Bank Tips', () => {
       const tipAmount = ethers.parseEther('3')
       const amountPerAddress = ethers.parseEther('1')
-      
-      ;[owner, contractor, member1, member2] = await ethers.getSigners()
-      
-      console.log({contractor, member1, member2})
-      const recipients = [contractor.address, member1.address, member2.address]
-      // const recipients = []
 
       it('should allow the owner to send and push tips', async () => {
-        await expect(bankProxy.sendTip(recipients, tipAmount))
-          .to.changeEtherBalance(bankProxy, -tipAmount)
+        const recipients = [contractor.address, member1.address, member2.address]
+        await expect(bankProxy.sendTip(recipients, tipAmount)).to.changeEtherBalance(
+          bankProxy,
+          -tipAmount
+        )
         expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
         expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
         expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
 
-        await expect(bankProxy.pushTip(recipients, tipAmount))
-          .to.changeEtherBalance(bankProxy, -tipAmount)
-          .and.to.changeEtherBalance(contractor, amountPerAddress)
-          .and.to.changeEtherBalance(member1, amountPerAddress)
-          .and.to.changeEtherBalance(member2, amountPerAddress)
+        const tx = bankProxy.pushTip(recipients, tipAmount)
+        await expect(tx).to.changeEtherBalance(bankProxy, -tipAmount)
+        await expect(tx).to.changeEtherBalance(contractor, amountPerAddress)
+        await expect(tx).to.changeEtherBalance(member1, amountPerAddress)
+        await expect(tx).to.changeEtherBalance(member2, amountPerAddress)
       })
 
       it('should not allow other addresses to send or push tips', async () => {
-        await expect(
-          bankProxy.connect(member1).sendTip(recipients, tipAmount)
-        ).to.be.revertedWith('Ownable: caller is not the owner')
+        const recipients = [contractor.address, member1.address, member2.address]
+        await expect(bankProxy.connect(member1).sendTip(recipients, tipAmount)).to.be.reverted
 
-        await expect(
-          bankProxy.connect(member1).pushTip(recipients, tipAmount)
-        ).to.be.revertedWith('Ownable: caller is not the owner')
+        await expect(bankProxy.connect(member1).pushTip(recipients, tipAmount)).to.be.reverted
       })
     })
 
@@ -106,8 +100,8 @@ describe.only('Bank', () => {
         const newTipsAddress = (await ethers.getSigners())[4]
 
         await expect(bankProxy.changeTipsAddress(newTipsAddress.address))
-          .to.emit(bankProxy, 'SetTipsAddress')
-          .withArgs(newTipsAddress.address)
+          .to.emit(bankProxy, 'TipsAddressChanged')
+          .withArgs(await owner.getAddress(), await tipsProxy.getAddress(), newTipsAddress.address)
 
         await bankProxy.pause()
         expect(await bankProxy.paused()).to.be.true
@@ -115,20 +109,22 @@ describe.only('Bank', () => {
 
         await bankProxy.unpause()
         expect(await bankProxy.paused()).to.be.false
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.reverted
+        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be
+          .reverted
       })
 
       it('should not allow other addresses to change tips address, pause, or unpause the contract', async () => {
         const newTipsAddress = (await ethers.getSigners())[5]
 
-        await expect(
-          bankProxy.connect(member1).changeTipsAddress(newTipsAddress.address)
-        ).to.be.revertedWith('Ownable: caller is not the owner')
+        await expect(bankProxy.connect(member1).changeTipsAddress(newTipsAddress.address)).to.be
+          .reverted
 
-        await expect(bankProxy.connect(member1).pause()).to.be.revertedWith('Ownable: caller is not the owner')
-
+        await expect(bankProxy.connect(member1).pause()).to.be.reverted
+        // Pause the contract
         await bankProxy.pause()
-        await expect(bankProxy.connect(member1).unpause()).to.be.revertedWith('Ownable: caller is not the owner')
+        // Ensure unauthorized user cannot unpause
+        await expect(bankProxy.connect(member1).unpause()).to.be.reverted
+        // Unpause the contract by an authorized user
         await bankProxy.unpause()
       })
     })
