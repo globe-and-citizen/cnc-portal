@@ -3,9 +3,14 @@ import boardOfDirectorsBeaconModule from './BoardOfDirectorsBeaconModule'
 import VotingBeaconModule from './VotingBeaconModule'
 
 export default buildModule('Officer', (m) => {
+  const beaconAdmin = m.getAccount(0)
   const officer = m.contract('Officer')
-  const { beacon } = m.useModule(boardOfDirectorsBeaconModule)
+  const { beacon: BoDBeacon } = m.useModule(boardOfDirectorsBeaconModule)
   const { beacon: votingBeacon } = m.useModule(VotingBeaconModule)
-  m.call(officer, 'initialize', [beacon, votingBeacon])
-  return { officer }
+  m.call(officer, 'initialize', [BoDBeacon, votingBeacon])
+  const beacon = m.contract('Beacon', [officer], {
+    from: beaconAdmin
+  })
+
+  return { beacon, officer }
 })
