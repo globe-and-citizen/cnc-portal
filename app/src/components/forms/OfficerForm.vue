@@ -66,7 +66,7 @@ import { useAccount, useReadContract } from '@wagmi/vue'
 import { onMounted, ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { Member, User } from '@/types'
+import type { Member } from '@/types'
 
 const { addErrorToast } = useToastStore()
 const props = defineProps(['team'])
@@ -133,8 +133,8 @@ watch(getTeamData, (value) => {
       showCreateTeam.value = true
     } else {
       showCreateTeam.value = false
-      founders.value = (getTeamData.value as [Partial<User>[], Partial<User>[]])[0]
-      members.value = (getTeamData.value as [Partial<User>[], Partial<User>[]])[1]
+      founders.value = (getTeamData.value as [Address[], Address[]])[0] as [Address, Address]
+      members.value = (getTeamData.value as [Address[], Address[]])[1] as Address[]
     }
   }
 })
