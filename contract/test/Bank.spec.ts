@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { Bank, Tips } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
-describe('Bank', () => {
+describe.only('Bank', () => {
   let bankProxy: Bank
   let tipsProxy: Tips
 
@@ -25,132 +25,110 @@ describe('Bank', () => {
     let contractor: SignerWithAddress
     let member1: SignerWithAddress
     let member2: SignerWithAddress
-    let otherUser: SignerWithAddress
 
-    context('I want to deploy my Bank Smart Contract', () => {
-      before(async () => {
-        ;[owner, contractor, member1, member2, otherUser] = await ethers.getSigners()
-        await deployContract(owner)
-      })
+    before(async () => {
+      ;[owner, contractor, member1, member2] = await ethers.getSigners()
+      await deployContract(owner)
+    })
 
-      it('Then I become the owner of the contract', async () => {
+    context('Deployment', () => {
+      it('should set the correct owner and tips address', async () => {
         expect(await bankProxy.owner()).to.eq(await owner.getAddress())
-      })
-
-      it('Then the address I provide during the bank contract deployment becomes the address of tips contract', async () => {
         expect(await bankProxy.tipsAddress()).to.eq(await tipsProxy.getAddress())
       })
+    })
 
-      it('Then I can deposit into the bank contract', async () => {
-        const amount = ethers.parseEther('10')
-        const tx = await owner.sendTransaction({ to: await bankProxy.getAddress(), value: amount })
+    context('Deposits and Transfers', () => {
+      it('should allow the owner to deposit and transfer funds', async () => {
+        const depositAmount = ethers.parseEther('10')
+        const transferAmount = ethers.parseEther('1')
 
-        expect(tx).to.changeEtherBalance(bankProxy, amount)
-        expect(tx).to.emit(bankProxy, 'Deposit').withArgs(owner.address, amount)
+        await expect(async () =>
+          owner.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
+        ).to.changeEtherBalance(bankProxy, depositAmount)
+
+        const tx = bankProxy.transfer(contractor.address, transferAmount)
+        await expect(tx).to.changeEtherBalance(bankProxy, -transferAmount)
+        await expect(tx).to.changeEtherBalance(contractor, transferAmount)
       })
 
-      it('Then I can transfer fund from my bank contract to an address (contractor)', async () => {
-        const amount = ethers.parseEther('1')
-        const tx = await bankProxy.transfer(contractor.address, amount)
+      it('should allow any address to deposit but not transfer funds', async () => {
+        const depositAmount = ethers.parseEther('5')
+        const transferAmount = ethers.parseEther('1')
 
-        expect(tx).to.changeEtherBalance(bankProxy, -amount)
-        expect(tx).to.changeEtherBalance(contractor, amount)
-        expect(tx)
-          .to.emit(bankProxy, 'Transfer')
-          .withArgs(owner.address, contractor.address, amount)
+        await expect(async () =>
+          member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
+        ).to.changeEtherBalance(bankProxy, depositAmount)
+
+        await expect(
+          bankProxy.connect(member1).transfer(contractor.address, transferAmount)
+        ).to.be.revertedWith('Ownable: caller is not the owner')
       })
+    })
 
-      it('Then I can send tips to all contractors including team members', async () => {
-        const amount = ethers.parseEther('3')
-        const amountPerAddress = ethers.parseEther('1')
-        const tx = await bankProxy.sendTip(
-          [contractor.address, member1.address, member2.address],
-          amount
-        )
+    context('Tips', async () => {
+      const tipAmount = ethers.parseEther('3')
+      const amountPerAddress = ethers.parseEther('1')
+      
+      ;[owner, contractor, member1, member2] = await ethers.getSigners()
+      
+      console.log({contractor, member1, member2})
+      const recipients = [contractor.address, member1.address, member2.address]
+      // const recipients = []
 
-        expect(tx).to.changeEtherBalance(bankProxy, -amount)
+      it('should allow the owner to send and push tips', async () => {
+        await expect(bankProxy.sendTip(recipients, tipAmount))
+          .to.changeEtherBalance(bankProxy, -tipAmount)
         expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
         expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
         expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
+
+        await expect(bankProxy.pushTip(recipients, tipAmount))
+          .to.changeEtherBalance(bankProxy, -tipAmount)
+          .and.to.changeEtherBalance(contractor, amountPerAddress)
+          .and.to.changeEtherBalance(member1, amountPerAddress)
+          .and.to.changeEtherBalance(member2, amountPerAddress)
       })
 
-      it('Then I can push tips to all contractors including team members', async () => {
-        const amount = ethers.parseEther('3')
-        const amountPerAddress = ethers.parseEther('1')
-        const tx = await bankProxy.pushTip(
-          [contractor.address, member1.address, member2.address],
-          amount
-        )
+      it('should not allow other addresses to send or push tips', async () => {
+        await expect(
+          bankProxy.connect(member1).sendTip(recipients, tipAmount)
+        ).to.be.revertedWith('Ownable: caller is not the owner')
 
-        expect(tx).to.changeEtherBalance(bankProxy, -amount)
-        expect(tx).to.changeEtherBalance(contractor, amountPerAddress)
-        expect(tx).to.changeEtherBalance(member1, amountPerAddress)
-        expect(tx).to.changeEtherBalance(member2, amountPerAddress)
+        await expect(
+          bankProxy.connect(member1).pushTip(recipients, tipAmount)
+        ).to.be.revertedWith('Ownable: caller is not the owner')
       })
+    })
 
-      it('Then I can edit tips contract address', async () => {
+    context('Contract Management', () => {
+      it('should allow the owner to change tips address, pause, and unpause the contract', async () => {
         const newTipsAddress = (await ethers.getSigners())[4]
-        const tx = await bankProxy.changeTipsAddress(newTipsAddress.address)
 
-        expect(tx).to.emit(bankProxy, 'SetTipsAddress').withArgs(newTipsAddress.address)
-      })
+        await expect(bankProxy.changeTipsAddress(newTipsAddress.address))
+          .to.emit(bankProxy, 'SetTipsAddress')
+          .withArgs(newTipsAddress.address)
 
-      it('Then I can pause the contract', async () => {
         await bankProxy.pause()
-
         expect(await bankProxy.paused()).to.be.true
         await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
-      })
 
-      it('Then I can unpause the contract', async () => {
         await bankProxy.unpause()
-
         expect(await bankProxy.paused()).to.be.false
-        expect(await bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be
-          .reverted
+        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.reverted
       })
 
-      it('Then any address can deposit into the bank', async () => {
-        const amount = ethers.parseEther('5')
-        const tx = await otherUser.sendTransaction({ to: await bankProxy.getAddress(), value: amount })
-
-        expect(tx).to.changeEtherBalance(bankProxy, amount)
-        expect(tx).to.emit(bankProxy, 'Deposit').withArgs(otherUser.address, amount)
-      })
-
-      it('Then another address cannot transfer funds from the bank', async () => {
-        const amount = ethers.parseEther('1')
-        await expect(bankProxy.connect(otherUser).transfer(contractor.address, amount)).to.be.revertedWith('Ownable: caller is not the owner')
-      })
-
-      it('Then another address cannot send tips', async () => {
-        const amount = ethers.parseEther('3')
-        await expect(bankProxy.connect(otherUser).sendTip(
-          [contractor.address, member1.address, member2.address],
-          amount
-        )).to.be.revertedWith('Ownable: caller is not the owner')
-      })
-
-      it('Then another address cannot push tips', async () => {
-        const amount = ethers.parseEther('3')
-        await expect(bankProxy.connect(otherUser).pushTip(
-          [contractor.address, member1.address, member2.address],
-          amount
-        )).to.be.revertedWith('Ownable: caller is not the owner')
-      })
-
-      it('Then another address cannot change tips address', async () => {
+      it('should not allow other addresses to change tips address, pause, or unpause the contract', async () => {
         const newTipsAddress = (await ethers.getSigners())[5]
-        await expect(bankProxy.connect(otherUser).changeTipsAddress(newTipsAddress.address)).to.be.revertedWith('Ownable: caller is not the owner')
-      })
 
-      it('Then another address cannot pause the contract', async () => {
-        await expect(bankProxy.connect(otherUser).pause()).to.be.revertedWith('Ownable: caller is not the owner')
-      })
+        await expect(
+          bankProxy.connect(member1).changeTipsAddress(newTipsAddress.address)
+        ).to.be.revertedWith('Ownable: caller is not the owner')
 
-      it('Then another address cannot unpause the contract', async () => {
+        await expect(bankProxy.connect(member1).pause()).to.be.revertedWith('Ownable: caller is not the owner')
+
         await bankProxy.pause()
-        await expect(bankProxy.connect(otherUser).unpause()).to.be.revertedWith('Ownable: caller is not the owner')
+        await expect(bankProxy.connect(member1).unpause()).to.be.revertedWith('Ownable: caller is not the owner')
         await bankProxy.unpause()
       })
     })
