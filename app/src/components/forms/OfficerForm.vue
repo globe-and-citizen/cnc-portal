@@ -133,7 +133,7 @@ watch(getTeamData, (value) => {
       showCreateTeam.value = true
     } else {
       showCreateTeam.value = false
-      founders.value = (getTeamData.value as [Address[], Address[]])[0] as [Address, Address]
+      founders.value = (getTeamData.value as [Address[], Address[]])[0] as Address[]
       members.value = (getTeamData.value as [Address[], Address[]])[1] as Address[]
     }
   }
