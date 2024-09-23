@@ -20,6 +20,9 @@
       >
         Manage Deployments
       </button>
+      <ModalComponent v-model="officerModal">
+        <OfficerForm :team="team" />
+      </ModalComponent>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -46,9 +49,6 @@
         @create-bank="async () => deployBankContract()"
         :loading="createBankLoading"
       />
-    </ModalComponent>
-    <ModalComponent v-model="officerModal">
-      <OfficerForm :team="team" />
     </ModalComponent>
   </div>
 </template>
