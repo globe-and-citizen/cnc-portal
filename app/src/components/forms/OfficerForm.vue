@@ -12,15 +12,41 @@
         Create Officer Contract
       </button>
       <div v-else>
-        <div class="flex flex-col justify-center items-center">
+        <div class="flex flex-col justify-center">
           <div>
             Officer contract deployed at:
-            <span class="badge badge-md badge-primary">
+            <span class="badge badge-primary badge-sm">
               {{ team?.officerAddress }}
             </span>
           </div>
           <div v-if="showCreateTeam">
             <CreateOfficerTeam :team="team" />
+          </div>
+          <div v-else>
+            <div class="flex flex-col">
+              <h5 class="text-md font-bold">Founders</h5>
+              <div v-for="(founderAddress, index) in founders" :key="index">
+                <span v-if="team && team.members" class="badge badge-primary badge-sm">
+                  {{
+                    team.members.find((member: Member) => member.address == founderAddress)?.name ||
+                    'Unknown Member'
+                  }}
+                  | {{ founderAddress }}
+                </span>
+              </div>
+            </div>
+            <div class="flex flex-col">
+              <h5 class="text-md font-bold">Members</h5>
+              <div v-for="(memberAddress, index) in members" :key="index">
+                <span v-if="team && team.members" class="badge badge-secondary badge-sm">
+                  {{
+                    team.members.find((member: Member) => member.address == memberAddress)?.name ||
+                    'Unknown Member'
+                  }}
+                  | {{ memberAddress }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -28,7 +54,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { deployContract, getTransactionCount, writeContract } from '@wagmi/core'
+import { deployContract, getTransactionCount } from '@wagmi/core'
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { encodeFunctionData, getContractAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
@@ -40,10 +66,13 @@ import { useAccount, useReadContract } from '@wagmi/vue'
 import { onMounted, ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import type { Member, User } from '@/types'
 
-const { addErrorToast, addSuccessToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 const props = defineProps(['team'])
 const showCreateTeam = ref(false)
+const founders = ref<Address[]>([])
+const members = ref<Address[]>([])
 const officerAddress = ref<{
   officerAddress: string | null
 }>({ officerAddress: null })
@@ -102,6 +131,10 @@ watch(getTeamData, (value) => {
     console.log(getTeamData.value)
     if (Array.isArray(getTeamData.value) && getTeamData.value[0].length == 0) {
       showCreateTeam.value = true
+    } else {
+      showCreateTeam.value = false
+      founders.value = (getTeamData.value as [Partial<User>[], Partial<User>[]])[0]
+      members.value = (getTeamData.value as [Partial<User>[], Partial<User>[]])[1]
     }
   }
 })

@@ -103,9 +103,13 @@
 <script setup lang="ts">
 import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 import { MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { writeContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import OFFICER_ABI from '@/artifacts/abi/officer.json'
 import { ref } from 'vue'
 import { useToastStore } from '@/stores'
 import type { User } from '@/types'
+import type { Address } from 'viem'
 
 const props = defineProps(['team'])
 const { addErrorToast } = useToastStore()
@@ -118,8 +122,19 @@ const showFounderDropdown = ref(false)
 const showMemberDropdown = ref(false)
 
 const createTeam = async () => {
-  console.log(selectedFounders.value)
-  console.log(selectedMembers.value)
+  try {
+    const founders: Address[] = selectedFounders.value.map((founder) => founder.address as Address)
+    const members: Address[] = selectedMembers.value.map((member) => member.address as Address)
+    await writeContract(config, {
+      abi: OFFICER_ABI,
+      address: props.team.officerAddress,
+      functionName: 'createTeam',
+      args: [founders, members]
+    })
+  } catch (error) {
+    console.error(error)
+    addErrorToast('Failed to create team')
+  }
 }
 
 const selectFounder = (user: { name: string; address: string }) => {
