@@ -127,6 +127,36 @@ describe('Bank', () => {
         // Unpause the contract by an authorized user
         await bankProxy.unpause()
       })
+
+      it('should only allow function execution when not paused', async () => {
+      
+        // Pause the contract
+        await bankProxy.pause();
+        expect(await bankProxy.paused()).to.be.true;
+      
+        // Attempt to call a function protected by whenNotPaused and expect it to revert
+        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted;
+
+        // Attempt to call sendTip function protected by whenNotPaused and expect it to revert
+        const recipients = [contractor.address, member1.address, member2.address];
+        const tipAmount = ethers.parseEther('3');
+        await expect(bankProxy.sendTip(recipients, tipAmount)).to.be.reverted;
+
+        // Attempt to call pushTip function protected by whenNotPaused and expect it to revert
+        await expect(bankProxy.pushTip(recipients, tipAmount)).to.be.reverted;
+
+        // Attempt to call changeTipsAddress function protected by whenNotPaused and expect it to revert
+        const newTipsAddress = (await ethers.getSigners())[4];
+        await expect(bankProxy.changeTipsAddress(newTipsAddress.address)).to.be.reverted;
+      
+        // Unpause the contract
+        await bankProxy.unpause();
+        expect(await bankProxy.paused()).to.be.false;
+      
+        // Call the same function again and expect it to succeed
+        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.reverted;
+      });
+
     })
   })
 })
