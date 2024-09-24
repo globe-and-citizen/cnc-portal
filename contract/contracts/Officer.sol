@@ -72,7 +72,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         require(votingContract == address(0), "Governance contract already deployed");
 
 
-        require(votingContractBeacon != address(0), "Invalid governance contract beacon");
 
         BeaconProxy proxy = new BeaconProxy(
             votingContractBeacon,
