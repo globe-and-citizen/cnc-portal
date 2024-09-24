@@ -106,4 +106,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         }
         revert("You are not authorized to perform this action");
     }
+     function pause() external onlyOwners {
+        _pause();
+    }
+
+  function unpause() external onlyOwners {
+        _unpause();
+    }
 }

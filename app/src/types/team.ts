@@ -10,6 +10,7 @@ export interface Team {
   votingAddress: string | null
   boardOfDirectorsAddress: string | null
   expenseAccountAddress?: string | null
+  officerAddress?: string | null
 }
 export interface TeamsResponse {
   teams: Team[]
