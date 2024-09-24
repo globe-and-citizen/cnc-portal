@@ -9,7 +9,6 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
-import "hardhat/console.sol";
 
 interface IBankAccount {
     function initialize(address tipsAddress) external;
@@ -44,10 +43,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    function createTeam(
     address[] memory _founders, 
     address[] memory _members
-    ) external {
+    ) external  whenNotPaused {
         require(_founders.length > 0, "Must have at least one founder");
-        bankAccountContract = address(0);
-        votingContract = address(0);
 
         for (uint256 i = 0; i < _founders.length; i++) {
             require(_founders[i] != address(0), "Invalid founder address");
@@ -60,7 +57,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit TeamCreated( _founders, _members);
     }
 
-    function deployBankAccount(address tipsAddress) external onlyOwners {
+    function deployBankAccount(address tipsAddress) external onlyOwners whenNotPaused {
         require(bankAccountContract == address(0), "Bank account contract already deployed");
         BeaconProxy proxy = new BeaconProxy(
             bankAccountBeacon,
@@ -71,11 +68,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit ContractDeployed("BankAccount", address(proxy));
     }
 
-    function deployVotingContract() external onlyOwners {
+    function deployVotingContract() external onlyOwners whenNotPaused {
         require(votingContract == address(0), "Governance contract already deployed");
 
 
-        require(votingContractBeacon != address(0), "Invalid governance contract beacon");
 
         BeaconProxy proxy = new BeaconProxy(
             votingContractBeacon,
@@ -89,7 +85,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     }
 
 
-    function transferOwnershipToBOD(address newOwner) external {
+    function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
