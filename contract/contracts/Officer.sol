@@ -89,7 +89,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     }
 
 
-    function transferOwnershipToBOD(address newOwner) external {
+    function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
