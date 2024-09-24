@@ -47,6 +47,10 @@
                 </span>
               </div>
             </div>
+            <div class="flex justify-between mt-4">
+              <button class="btn btn-primary btn-sm" v-if="!isBankDeployed">Deploy Bank</button>
+              <button class="btn btn-primary btn-sm" v-if="!isVotingDeployed">Deploy Voting</button>
+            </div>
           </div>
         </div>
       </div>
@@ -56,7 +60,7 @@
 <script setup lang="ts">
 import { deployContract, getTransactionCount } from '@wagmi/core'
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
-import { encodeFunctionData, getContractAddress, type Address } from 'viem'
+import { encodeFunctionData, getContractAddress, zeroAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import BEACON_PROXY_ABI from '@/artifacts/abi/beacon-proxy.json'
@@ -71,6 +75,8 @@ import type { Member } from '@/types'
 const { addErrorToast } = useToastStore()
 const props = defineProps(['team'])
 const showCreateTeam = ref(false)
+const isBankDeployed = ref(false)
+const isVotingDeployed = ref(false)
 const founders = ref<Address[]>([])
 const members = ref<Address[]>([])
 const officerAddress = ref<{
@@ -135,6 +141,10 @@ watch(getTeamData, (value) => {
       showCreateTeam.value = false
       founders.value = (getTeamData.value as [Address[], Address[]])[0] as Address[]
       members.value = (getTeamData.value as [Address[], Address[]])[1] as Address[]
+      isBankDeployed.value =
+        ((getTeamData.value as Address)[2] as Address) != zeroAddress ? true : false
+      isVotingDeployed.value =
+        ((getTeamData.value as Address)[3] as Address) != zeroAddress ? true : false
     }
   }
 })
