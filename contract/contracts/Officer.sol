@@ -71,7 +71,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit ContractDeployed("BankAccount", address(proxy));
     }
 
-    function deployVotingContract() external onlyOwners {
+    function deployVotingContract() external onlyOwners whenNotPaused {
         require(votingContract == address(0), "Governance contract already deployed");
 
 
