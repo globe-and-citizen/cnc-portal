@@ -61,10 +61,16 @@ describe('VoteForm.vue', () => {
             ],
             ownerAddress: '0x1',
             votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
+            boardOfDirectorsAddress: '0x1',
+            addCampaignAddress: null, 
+            contracts: [],
+            contract: null,
+            addCampaignAddresses:[] 
+          },
         }
       })
+
+      
       const candidates = wrapper.findAll('.form-control')
       expect(candidates.length).toBe(proposalElection.candidates.length)
       proposalElection.candidates.forEach((candidate, index) => {
@@ -92,7 +98,11 @@ describe('VoteForm.vue', () => {
             ],
             ownerAddress: '0x1',
             votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            boardOfDirectorsAddress: '0x1',
+            addCampaignAddress: null, 
+            contracts: [],
+            contract: null,
+            addCampaignAddresses:[] 
           }
         }
       })
@@ -124,7 +134,11 @@ describe('VoteForm.vue', () => {
             ],
             ownerAddress: '0x1',
             votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            boardOfDirectorsAddress: '0x1',
+            addCampaignAddress: null, 
+            contracts: [],
+            contract: null,
+            addCampaignAddresses:[] 
           }
         }
       })
@@ -163,7 +177,11 @@ describe('VoteForm.vue', () => {
             ],
             ownerAddress: '0x1',
             votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            boardOfDirectorsAddress: '0x1',
+            addCampaignAddress: null, 
+            contracts: [],
+            contract: null,
+            addCampaignAddresses:[] 
           }
         }
       })
@@ -201,7 +219,11 @@ describe('VoteForm.vue', () => {
             ],
             ownerAddress: '0x1',
             votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            boardOfDirectorsAddress: '0x1',
+            addCampaignAddress: null, 
+            contracts: [],
+            contract: null,
+            addCampaignAddresses:[] 
           }
         }
       })
@@ -239,7 +261,11 @@ describe('VoteForm.vue', () => {
             ],
             ownerAddress: '0x1',
             votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            boardOfDirectorsAddress: '0x1',
+            addCampaignAddress: null, 
+            contracts: [],
+            contract: null,
+            addCampaignAddresses:[] 
           }
         }
       })

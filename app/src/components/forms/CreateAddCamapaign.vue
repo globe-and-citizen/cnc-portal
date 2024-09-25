@@ -4,7 +4,7 @@
     <h3 class="pt-8">By clicking "Deploy Advertisement</h3>
     <label class="input input-bordered flex items-center gap-2 input-md mt-4">
       <span class="w-28">Bank Contract</span>
-      <input type="string" class="grow" v-model="_bankAddress" required disabled />
+      <input type="string" class="grow" v-model="_bankAddress" :disabled="true" required data-testid="bank-address-input"/>
     </label>
     <label class="input input-bordered flex items-center gap-2 input-md mt-4">
       <span class="w-28">click rate</span>

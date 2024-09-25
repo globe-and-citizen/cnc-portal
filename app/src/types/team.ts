@@ -10,7 +10,7 @@ export interface Team {
   votingAddress: string | null
   addCampaignAddress: string | null
   addCampaignAddresses: string[]
-  contracts: []
+  contracts: ContractAddress[]
   contract: ContractAddress | null
   boardOfDirectorsAddress: string | null
 }

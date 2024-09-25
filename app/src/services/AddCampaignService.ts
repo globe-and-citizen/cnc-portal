@@ -108,18 +108,21 @@ export class AddCampaignService implements IAddCampaignService {
       if (
         item.type === 'function' &&
         (item.stateMutability === 'view' || item.stateMutability === 'pure') &&
-        item.inputs.length === 0
+        item.inputs?.length === 0
       ) {
         try {
           // Dynamically call the contract function using its name
-          const result = await contract[item.name]()
-          console.log(`Retrieved ${item.name}: ${result}`)
+          if(item?.name)
+          {
+            const result = await contract[item.name]()
 
-          // Add to the array of key-value pairs
-          datas.push({
-            key: item.name,
-            value: result.toString() // Convert BigNumber or other types to string
-          })
+            // Add to the array of key-value pairs
+            datas.push({
+              key: item.name,
+              value: result.toString() // Convert BigNumber or other types to string
+            })
+          }
+          
         } catch (error) {
           console.error(`Error calling ${item.name}:`, error)
         }

@@ -17,12 +17,14 @@ describe('TeamContracts.vue', () => {
     {
       type: 'Campaign',
       address: '0x1234567890abcdef1234567890abcdef12345678',
-      admins: ['admin1', 'admin2']
+      admins: ['admin1', 'admin2'],
+      deployer: '0xdeployer1Address' 
     },
     {
       type: 'Campaign',
       address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-      admins: ['admin3']
+      admins: ['admin3'],
+      deployer: '0xdeployer1Address' 
     }
   ]
 
