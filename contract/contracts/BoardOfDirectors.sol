@@ -11,8 +11,12 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   address[] public owners;
   address[] public boardOfDirectors;
   uint256 public actionCount;
+  uint256 public pendingActionCount;
+  uint256 public executedActionCount;
 
   mapping(uint256 => Action) public actions;
+  mapping(uint256 => Action) public pendingActions;
+  mapping(uint256 => Action) public executedActions;
   mapping(uint256 => mapping(address => bool)) public actionApprovals;
   mapping(uint256 => address[]) public actionApprovers;
 
@@ -46,23 +50,46 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   }
 
   /**
-   * @dev Returns an array of actions starting from a specific id.
+   * @dev Returns an array of pending actions starting from a specific id.
    * @param _startId The starting id of the actions.
    * @param _limit The maximum number of actions to return.
-   * @return An array of actions.
+   * @return An array of pending actions.
    */
-  function getActions(uint256 _startId, uint256 _limit) external view returns (Action[] memory) {
-    require(_startId < actionCount, 'Start id out of bounds');
+  function getPendingActions(uint256 _startId, uint256 _limit) external view returns (Action[] memory) {
+    require(_startId < pendingActionCount, 'Start id out of bounds');
 
     uint256 endId = _startId + _limit;
-    if (endId > actionCount) {
-      endId = actionCount;
+    if (endId > pendingActionCount) {
+      endId = pendingActionCount;
     }
 
     Action[] memory paginatedActions = new Action[](endId - _startId);
 
     for (uint256 i = _startId; i < endId; i++) {
-      paginatedActions[i - _startId] = actions[i];
+      paginatedActions[i - _startId] = pendingActions[i];
+    }
+
+    return paginatedActions;
+  }
+
+  /**
+    * @dev Returns an array of executed actions starting from a specific id.
+    * @param _startId The starting id of the actions.
+    * @param _limit The maximum number of actions to return.
+    * @return An array of executed actions.
+    */
+  function getExecutedActions(uint256 _startId, uint256 _limit) external view returns (Action[] memory) {
+    require(_startId < executedActionCount, 'Start id out of bounds');
+
+    uint256 endId = _startId + _limit;
+    if (endId > executedActionCount) {
+      endId = executedActionCount;
+    }
+
+    Action[] memory paginatedActions = new Action[](endId - _startId);
+
+    for (uint256 i = _startId; i < endId; i++) {
+      paginatedActions[i - _startId] = executedActions[i];
     }
 
     return paginatedActions;
@@ -81,7 +108,9 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   ) external onlyBoardOfDirectors {
     require(_target != address(0), 'Invalid target address');
 
-    actions[actionCount] = Action(_target, _description, 1, false, _data);
+    Action memory _action = Action(_target, _description, 1, false, _data);
+    actions[actionCount] = _action;
+    pendingActions[actionCount] = _action;
 
     // Add the first approval
     actionApprovers[actionCount].push(msg.sender);
@@ -89,6 +118,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     emit ActionAdded(actionCount, _target, _description, _data);
 
     actionCount++;
+    pendingActionCount++;
   }
 
   /**
@@ -189,6 +219,11 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     require(success, 'Call failed');
 
     _action.isExecuted = true;
+    executedActions[_actionId] = _action;
+    delete pendingActions[_actionId];
+    pendingActionCount--;
+    executedActionCount++;
+
     emit ActionExecuted(_actionId, _action.target, _action.description, _action.data);
   }
 
