@@ -53,7 +53,7 @@
               <button
                 class="btn btn-primary btn-sm"
                 v-if="!isBankDeployed && !isLoadingDeployBank"
-                @click="deployBank"
+                @click="deployBankAccount"
               >
                 Deploy Bank
               </button>
@@ -61,7 +61,7 @@
               <button
                 class="btn btn-primary btn-sm"
                 v-if="!isVotingDeployed && !isLoadingDeployVoting"
-                @click="deployVoting"
+                @click="deployVotingContract"
               >
                 Deploy Voting
               </button>
@@ -77,168 +77,138 @@
   </div>
 </template>
 <script setup lang="ts">
-import { deployContract, getTransactionCount, writeContract, readContract } from '@wagmi/core'
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
-import { encodeFunctionData, getContractAddress, zeroAddress, type Address } from 'viem'
-import { config } from '@/wagmi.config'
-import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
-import BEACON_PROXY_ABI from '@/artifacts/abi/beacon-proxy.json'
-import OFFICER_ABI from '@/artifacts/abi/officer.json'
-import { BOD_BEACON_ADDRESS, OFFICER_BEACON, TIPS_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
-import { useAccount, useReadContract } from '@wagmi/vue'
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import {
+  useDeployOfficerContract,
+  useDeployBank,
+  useDeployVoting,
+  useGetOfficerTeam
+} from '@/composables/officer'
 import { useToastStore } from '@/stores'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
-const isLoadingDeployBank = ref(false)
-const isLoadingDeployVoting = ref(false)
+
 const props = defineProps(['team'])
+const emits = defineEmits(['getTeam'])
+
 const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
 const isVotingDeployed = ref(false)
-const founders = ref<Address[]>([])
-const members = ref<Address[]>([])
-const createOfficerLoading = ref(false)
-const emits = defineEmits(['getTeam'])
-const officerAddress = ref<{
-  officerAddress: string | null
-}>({ officerAddress: null })
-const { address: currentAddress } = useAccount()
-const { execute: executeUpdateTeam } = useCustomFetch(`teams/${props.team.id}`, {
-  immediate: false
-})
-  .put(officerAddress)
-  .json()
+const founders = ref<string[]>([])
+const members = ref<string[]>([])
+
+// Setup composables
+const {
+  execute: deployOfficer,
+  isLoading: createOfficerLoading,
+  error: deployOfficerError,
+  isSuccess: deployOfficerSuccess
+} = useDeployOfficerContract()
+const {
+  execute: deployBank,
+  isLoading: isLoadingDeployBank,
+  isSuccess: deployBankSuccess,
+  error: deployBankError
+} = useDeployBank()
+const {
+  execute: deployVoting,
+  isLoading: isLoadingDeployVoting,
+  isSuccess: deployVotingSuccess,
+  error: deployVotingError
+} = useDeployVoting()
+
+// Fetch officer team details using composable
+const { execute: fetchOfficerTeam, isLoading: isLoadingGetTeam, officerTeam } = useGetOfficerTeam()
+
+// Deploy Officer Contract
 const deployOfficerContract = async () => {
   try {
-    createOfficerLoading.value = true
-    const encodedFunction = encodeFunctionData({
-      abi: OFFICER_ABI,
-      functionName: 'initialize',
-      args: [BOD_BEACON_ADDRESS, VOTING_BEACON_ADDRESS]
-    })
-
-    await deployContract(config, {
-      abi: BEACON_PROXY_ABI,
-      bytecode: BEACON_PROXY_BYTECODE,
-      args: [OFFICER_BEACON, encodedFunction]
-    })
-    let nonce
-    if (currentAddress.value) {
-      nonce = await getTransactionCount(config, { address: currentAddress.value })
-    }
-    if (nonce && currentAddress.value) {
-      officerAddress.value.officerAddress = getContractAddress({
-        from: currentAddress.value,
-        nonce: BigInt(nonce)
-      })
-      addSuccessToast('Officer contract created successfully')
-
-      await executeUpdateTeam()
-      createOfficerLoading.value = false
-      emits('getTeam')
-    }
+    await deployOfficer(props.team.id)
   } catch (e) {
-    createOfficerLoading.value = false
-    console.log(e)
     addErrorToast('Failed to deploy officer contract')
+    console.log(e)
   }
 }
-const {
-  data: getTeamData,
-  error: errorGetTeam,
-  refetch: refetchGetTeam,
-  isLoading: isLoadingGetTeam
-} = useReadContract({
-  abi: OFFICER_ABI,
-  address: props.team.officerAddress as Address,
-  functionName: 'getTeam'
-})
-onMounted(async () => {
-  if (props.team.officerAddress) {
-    refetchGetTeam()
+
+// Deploy Bank
+const deployBankAccount = async () => {
+  try {
+    await deployBank(props.team.officerAddress)
+    addSuccessToast('Bank deployed successfully')
+    emits('getTeam')
+  } catch (e) {
+    addErrorToast('Failed to deploy bank')
+    console.log(e)
   }
-})
-watch(getTeamData, (value) => {
+}
+
+// Deploy Voting
+const deployVotingContract = async () => {
+  try {
+    await deployVoting(props.team.officerAddress)
+    addSuccessToast('Voting deployed successfully')
+    emits('getTeam')
+  } catch (e) {
+    addErrorToast('Failed to deploy voting')
+    console.log(e)
+  }
+}
+
+// Watch officer team data and update state
+watch(officerTeam, (value) => {
   if (value) {
-    if (Array.isArray(getTeamData.value) && getTeamData.value[0].length == 0) {
+    if (value.founders.length === 0) {
       showCreateTeam.value = true
     } else {
       showCreateTeam.value = false
-      founders.value = (getTeamData.value as [Address[], Address[]])[0] as Address[]
-      members.value = (getTeamData.value as [Address[], Address[]])[1] as Address[]
-      isBankDeployed.value =
-        ((getTeamData.value as Address)[2] as Address) != zeroAddress ? true : false
-      isVotingDeployed.value =
-        ((getTeamData.value as Address)[3] as Address) != zeroAddress ? true : false
+      founders.value = value.founders
+      members.value = value.members
+      isBankDeployed.value = value.bankAddress !== ''
+      isVotingDeployed.value = value.votingAddress !== ''
     }
   }
 })
-watch(errorGetTeam, (value) => {
-  if (value) {
-    console.log(errorGetTeam.value)
-    addErrorToast('Error fetching team data')
-  }
-})
-const deployBank = async () => {
-  if (props.team.officerAddress) {
-    isLoadingDeployBank.value = true
-    try {
-      await writeContract(config, {
-        abi: OFFICER_ABI,
-        address: props.team.officerAddress,
-        functionName: 'deployBankAccount',
-        args: [TIPS_ADDRESS]
-      })
-      addSuccessToast('Bank deployed successfully')
-      isLoadingDeployBank.value = false
-      refetchGetTeam()
-    } catch (e) {
-      isLoadingDeployBank.value = false
-      console.log(e)
-      addErrorToast('Failed to deploy bank')
-    }
-  }
-}
-const deployVoting = async () => {
-  if (props.team.officerAddress) {
-    isLoadingDeployVoting.value = true
-    try {
-      await writeContract(config, {
-        abi: OFFICER_ABI,
-        address: props.team.officerAddress,
-        functionName: 'deployVotingContract'
-      })
-      addSuccessToast('Voting deployed successfully')
-      isLoadingDeployVoting.value = false
-      interface returntype {
-        founder: Address[]
-        members: Address[]
-        bankAddress: Address
-        votingAddress: Address
-      }
-      const data: Array<returntype> = (await readContract(config, {
-        abi: OFFICER_ABI,
-        address: props.team.officerAddress,
-        functionName: 'getTeam'
-      })) as Array<returntype>
 
-      useCustomFetch(`teams/${props.team.id}`, {
-        immediate: false
-      })
-        .put({
-          votingAddress: data[3]
-        })
-        .json()
-      console.log(data)
-    } catch (e) {
-      isLoadingDeployVoting.value = false
-      console.log(e)
-      addErrorToast('Failed to deploy voting')
-    }
+watch(deployOfficerSuccess, (value) => {
+  if (value) {
+    addSuccessToast('Officer contract deployed successfully')
+    emits('getTeam')
   }
-}
+})
+watch(deployOfficerError, (value) => {
+  if (value) {
+    addErrorToast('Failed to deploy officer contract')
+  }
+})
+watch(deployBankSuccess, (value) => {
+  if (value) {
+    addSuccessToast('Bank deployed successfully')
+    emits('getTeam')
+  }
+})
+watch(deployBankError, (value) => {
+  if (value) {
+    addErrorToast('Failed to deploy bank')
+  }
+})
+watch(deployVotingSuccess, (value) => {
+  if (value) {
+    addSuccessToast('Voting deployed successfully')
+    emits('getTeam')
+  }
+})
+watch(deployVotingError, (value) => {
+  if (value) {
+    addErrorToast('Failed to deploy voting')
+  }
+})
+// Fetch the officer team when mounted
+onMounted(() => {
+  if (props.team.officerAddress) {
+    fetchOfficerTeam(props.team.officerAddress)
+  }
+})
 </script>
