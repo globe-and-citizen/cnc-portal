@@ -341,6 +341,7 @@ describe('BoardOfDirectors', async () => {
       expect(actions[0].approvalCount).to.eq(1) // boD1 automatically approves the action
       expect(actions[0].isExecuted).to.be.false
       expect(await boardOfDirectorsProxy.pendingActionCount()).to.eq(1)
+      expect(await boardOfDirectorsProxy.executedActionCount()).to.eq(0)
     })
   })
 
@@ -354,6 +355,8 @@ describe('BoardOfDirectors', async () => {
       const actions = await boardOfDirectorsProxy.getExecutedActions(0, 1) // get first action limit 1
       expect(actions).to.have.lengthOf(1)
       expect(actions[0].isExecuted).to.be.true
+      expect(await boardOfDirectorsProxy.pendingActionCount()).to.eq(0)
+      expect(await boardOfDirectorsProxy.executedActionCount()).to.eq(1)
     })
 
     it('should return all executed actions if limit is greater than executedActionCount', async () => {
