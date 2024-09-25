@@ -21,7 +21,16 @@
         Manage Deployments
       </button>
       <ModalComponent v-model="officerModal">
-        <OfficerForm :team="team" />
+        <OfficerForm
+          :team="team"
+          @getTeam="
+            () => {
+              officerModal = false
+              addSuccessToast('Officer contract created successfully')
+              getTeamAPI()
+            }
+          "
+        />
       </ModalComponent>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
@@ -140,6 +149,7 @@ const {
 // Watchers for getting team details
 watch(getTeamError, () => {
   if (getTeamError.value) {
+    console.error(getTeamError.value)
     addErrorToast(getTeamError.value)
   }
 })

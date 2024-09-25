@@ -6,12 +6,14 @@
     <div class="flex items-center justify-center mt-4">
       <button
         class="btn btn-primary btn-sm"
-        v-if="!team?.officerAddress"
+        v-if="!team?.officerAddress && !createOfficerLoading"
         @click="deployOfficerContract"
       >
         Create Officer Contract
       </button>
-      <div v-else>
+      <LoadingButton :color="'primary min-w-24'" v-if="createOfficerLoading" />
+
+      <div v-if="team?.officerAddress && !createOfficerLoading">
         <div class="flex flex-col justify-center">
           <div>
             Officer contract deployed at:
@@ -19,10 +21,10 @@
               {{ team?.officerAddress }}
             </span>
           </div>
-          <div v-if="showCreateTeam">
-            <CreateOfficerTeam :team="team" />
+          <div v-if="showCreateTeam && !isLoadingGetTeam">
+            <CreateOfficerTeam :team="team" @getTeam="emits('getTeam')" />
           </div>
-          <div v-else>
+          <div v-if="!showCreateTeam && !isLoadingGetTeam">
             <div class="flex flex-col">
               <h5 class="text-md font-bold">Founders</h5>
               <div v-for="(founderAddress, index) in founders" :key="index">
@@ -52,6 +54,9 @@
               <button class="btn btn-primary btn-sm" v-if="!isVotingDeployed">Deploy Voting</button>
             </div>
           </div>
+          <div v-if="isLoadingGetTeam">
+            <span class="loading loading-spinner loading-lg"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -70,6 +75,7 @@ import { useAccount, useReadContract } from '@wagmi/vue'
 import { onMounted, ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
 
 const { addErrorToast } = useToastStore()
@@ -79,6 +85,8 @@ const isBankDeployed = ref(false)
 const isVotingDeployed = ref(false)
 const founders = ref<Address[]>([])
 const members = ref<Address[]>([])
+const createOfficerLoading = ref(false)
+const emits = defineEmits(['getTeam'])
 const officerAddress = ref<{
   officerAddress: string | null
 }>({ officerAddress: null })
@@ -90,6 +98,7 @@ const { execute: executeUpdateTeam } = useCustomFetch(`teams/${props.team.id}`, 
   .json()
 const deployOfficerContract = async () => {
   try {
+    createOfficerLoading.value = true
     const encodedFunction = encodeFunctionData({
       abi: OFFICER_ABI,
       functionName: 'initialize',
@@ -110,18 +119,22 @@ const deployOfficerContract = async () => {
         from: currentAddress.value,
         nonce: BigInt(nonce)
       })
-      console.log(officerAddress.value.officerAddress)
+
       await executeUpdateTeam()
+      createOfficerLoading.value = false
+      emits('getTeam')
     }
-    // console.log(result)
   } catch (e) {
+    createOfficerLoading.value = false
     console.log(e)
+    addErrorToast('Failed to deploy officer contract')
   }
 }
 const {
   data: getTeamData,
   error: errorGetTeam,
-  refetch: refetchGetTeam
+  refetch: refetchGetTeam,
+  isLoading: isLoadingGetTeam
 } = useReadContract({
   abi: OFFICER_ABI,
   address: props.team.officerAddress as Address,
@@ -134,7 +147,6 @@ onMounted(async () => {
 })
 watch(getTeamData, (value) => {
   if (value) {
-    console.log(getTeamData.value)
     if (Array.isArray(getTeamData.value) && getTeamData.value[0].length == 0) {
       showCreateTeam.value = true
     } else {
@@ -150,6 +162,7 @@ watch(getTeamData, (value) => {
 })
 watch(errorGetTeam, (value) => {
   if (value) {
+    console.log(errorGetTeam.value)
     addErrorToast('Error fetching team data')
   }
 })

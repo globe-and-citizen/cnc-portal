@@ -96,7 +96,10 @@
       </div>
     </div>
     <div class="flex justify-center">
-      <button @click="createTeam" class="btn btn-primary">Create Team</button>
+      <button @click="createTeam" class="btn btn-primary" v-if="!createTeamLoading">
+        Create Team
+      </button>
+      <LoadingButton :color="'primary min-w-24'" v-else />
     </div>
   </div>
 </template>
@@ -110,6 +113,7 @@ import { ref } from 'vue'
 import { useToastStore } from '@/stores'
 import type { User } from '@/types'
 import type { Address } from 'viem'
+import LoadingButton from '../LoadingButton.vue'
 
 const props = defineProps(['team'])
 const { addErrorToast } = useToastStore()
@@ -120,9 +124,12 @@ const selectedFounders = ref([{ name: '', address: '' }])
 const selectedMembers = ref([{ name: '', address: '' }])
 const showFounderDropdown = ref(false)
 const showMemberDropdown = ref(false)
+const createTeamLoading = ref(false)
 
+const emits = defineEmits(['getTeam'])
 const createTeam = async () => {
   try {
+    createTeamLoading.value = true
     const founders: Address[] = selectedFounders.value.map((founder) => founder.address as Address)
     const members: Address[] = selectedMembers.value.map((member) => member.address as Address)
     await writeContract(config, {
@@ -131,8 +138,12 @@ const createTeam = async () => {
       functionName: 'createTeam',
       args: [founders, members]
     })
+    console.log('Team created successfully')
+    createTeamLoading.value = false
+    emits('getTeam')
   } catch (error) {
     console.error(error)
+    createTeamLoading.value = false
     addErrorToast('Failed to create team')
   }
 }
