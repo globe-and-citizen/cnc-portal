@@ -50,8 +50,22 @@
               </div>
             </div>
             <div class="flex justify-between mt-4">
-              <button class="btn btn-primary btn-sm" v-if="!isBankDeployed">Deploy Bank</button>
-              <button class="btn btn-primary btn-sm" v-if="!isVotingDeployed">Deploy Voting</button>
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="!isBankDeployed && !isLoadingDeployBank"
+                @click="deployBank"
+              >
+                Deploy Bank
+              </button>
+              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployBank" />
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="!isVotingDeployed && !isLoadingDeployVoting"
+                @click="deployVoting"
+              >
+                Deploy Voting
+              </button>
+              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployVoting" />
             </div>
           </div>
           <div v-if="isLoadingGetTeam">
@@ -63,14 +77,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { deployContract, getTransactionCount } from '@wagmi/core'
+import { deployContract, getTransactionCount, writeContract, readContract } from '@wagmi/core'
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { encodeFunctionData, getContractAddress, zeroAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import BEACON_PROXY_ABI from '@/artifacts/abi/beacon-proxy.json'
 import OFFICER_ABI from '@/artifacts/abi/officer.json'
-import { BOD_BEACON_ADDRESS, OFFICER_BEACON, VOTING_BEACON_ADDRESS } from '@/constant'
+import { BOD_BEACON_ADDRESS, OFFICER_BEACON, TIPS_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
 import { useAccount, useReadContract } from '@wagmi/vue'
 import { onMounted, ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
@@ -79,6 +93,8 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+const isLoadingDeployBank = ref(false)
+const isLoadingDeployVoting = ref(false)
 const props = defineProps(['team'])
 const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
@@ -167,4 +183,62 @@ watch(errorGetTeam, (value) => {
     addErrorToast('Error fetching team data')
   }
 })
+const deployBank = async () => {
+  if (props.team.officerAddress) {
+    isLoadingDeployBank.value = true
+    try {
+      await writeContract(config, {
+        abi: OFFICER_ABI,
+        address: props.team.officerAddress,
+        functionName: 'deployBankAccount',
+        args: [TIPS_ADDRESS]
+      })
+      addSuccessToast('Bank deployed successfully')
+      isLoadingDeployBank.value = false
+      refetchGetTeam()
+    } catch (e) {
+      isLoadingDeployBank.value = false
+      console.log(e)
+      addErrorToast('Failed to deploy bank')
+    }
+  }
+}
+const deployVoting = async () => {
+  if (props.team.officerAddress) {
+    isLoadingDeployVoting.value = true
+    try {
+      await writeContract(config, {
+        abi: OFFICER_ABI,
+        address: props.team.officerAddress,
+        functionName: 'deployVotingContract'
+      })
+      addSuccessToast('Voting deployed successfully')
+      isLoadingDeployVoting.value = false
+      interface returntype {
+        founder: Address[]
+        members: Address[]
+        bankAddress: Address
+        votingAddress: Address
+      }
+      const data: Array<returntype> = (await readContract(config, {
+        abi: OFFICER_ABI,
+        address: props.team.officerAddress,
+        functionName: 'getTeam'
+      })) as Array<returntype>
+
+      useCustomFetch(`teams/${props.team.id}`, {
+        immediate: false
+      })
+        .put({
+          votingAddress: data[3]
+        })
+        .json()
+      console.log(data)
+    } catch (e) {
+      isLoadingDeployVoting.value = false
+      console.log(e)
+      addErrorToast('Failed to deploy voting')
+    }
+  }
+}
 </script>

@@ -132,12 +132,13 @@ const createTeam = async () => {
     createTeamLoading.value = true
     const founders: Address[] = selectedFounders.value.map((founder) => founder.address as Address)
     const members: Address[] = selectedMembers.value.map((member) => member.address as Address)
-    await writeContract(config, {
+    const tx = await writeContract(config, {
       abi: OFFICER_ABI,
       address: props.team.officerAddress,
       functionName: 'createTeam',
       args: [founders, members]
     })
+    console.log(tx)
     createTeamLoading.value = false
     addSuccessToast('Team created successfully')
     emits('getTeam')
