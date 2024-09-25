@@ -16,6 +16,6 @@
   "VotingBeaconModule#Voting": "0x94Ac99BCD44FB9D13F227aB7AF74d80B8F974086",
   "ExpenseAccountModule#ExpenseAccount": "0xa794dA95F4803866Eed0f1536D13275e0cFb5318",
   "ExpenseAccountModule#FactoryBeacon": "0x5Bc1A424cc1E36Bbb9C911e4d8b21Cd8612b8363",
-  "Officer#Officer": "0x2D008b32802b8e8D42589C3a13273b254dE14d59",
-  "Officer#Beacon": "0xfAa89021491950F0f33bd51dD4780DAB38C9d40D"
+  "Officer#Officer": "0x37530F586ef0855b16f89D22a5Acb5D74468A5C8",
+  "Officer#Beacon": "0x10ADc74350174216c5B6f65318E9bbEa7d795BA8"
 }

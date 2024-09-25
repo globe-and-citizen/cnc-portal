@@ -51,12 +51,10 @@ describe('Officer Contract', function () {
   it('Should deploy the Voting and BoD contract via BeaconProxy', async function () {
     await (officer as Officer).connect(owner).deployVotingContract()
 
-    await (officer as Officer).connect(owner).deployBoDContract()
-
     const team = await (officer as Officer).getTeam()
     expect(team[3]).to.be.not.equal('0x0000000000000000000000000000000000000000')
 
-    // expect(team[4]).to.be.not.equal('0x0000000000000000000000000000000000000000')
+    expect(team[4]).to.be.not.equal('0x0000000000000000000000000000000000000000')
   })
   it('Should deploy the BankAccount contract via BeaconProxy', async function () {
     await (officer as Officer)

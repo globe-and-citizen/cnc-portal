@@ -71,13 +71,7 @@ export class OfficerService implements IOfficerService {
 
     return tx
   }
-  async deployBod(officerAddress: string): Promise<void> {
-    const officerContract = await this.getOfficerContract(officerAddress)
-    const tx = await officerContract.deployBoDContract()
-    await tx.wait()
 
-    return tx
-  }
   async createTeam(officerAddress: string, founders: string[], members: string[]): Promise<string> {
     const officerContract = await this.getOfficerContract(officerAddress)
     const tx = await officerContract.createTeam(founders, members)

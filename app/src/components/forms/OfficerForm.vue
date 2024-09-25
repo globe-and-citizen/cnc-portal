@@ -84,14 +84,6 @@
                 Deploy Voting
               </button>
               <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployVoting" />
-              <button
-                class="btn btn-primary btn-sm"
-                v-if="!isLoadingDeployBoD && isVotingDeployed && !isBoDDeployed"
-                @click="deployBoD"
-              >
-                Deploy BoD
-              </button>
-              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployBoD" />
             </div>
           </div>
           <div v-if="isLoadingGetTeam">
@@ -109,8 +101,7 @@ import {
   useDeployOfficerContract,
   useDeployBank,
   useDeployVoting,
-  useGetOfficerTeam,
-  useDeployBoD
+  useGetOfficerTeam
 } from '@/composables/officer'
 import { useToastStore } from '@/stores'
 import LoadingButton from '@/components/LoadingButton.vue'
@@ -149,12 +140,6 @@ const {
   isSuccess: deployVotingSuccess,
   error: deployVotingError
 } = useDeployVoting()
-const {
-  execute: deployBoDContract,
-  isLoading: isLoadingDeployBoD,
-  isSuccess: deployBoDSuccess,
-  error: deployBoDError
-} = useDeployBoD()
 
 // Fetch officer team details using composable
 const { execute: fetchOfficerTeam, isLoading: isLoadingGetTeam, officerTeam } = useGetOfficerTeam()
@@ -169,15 +154,6 @@ const deployOfficerContract = async () => {
   }
 }
 
-// Deploy BoD
-const deployBoD = async () => {
-  try {
-    await deployBoDContract(props.team.officerAddress)
-  } catch (e) {
-    addErrorToast('Failed to deploy BoD contract')
-    console.log(e)
-  }
-}
 // Deploy Bank
 const deployBankAccount = async () => {
   await deployBank(props.team.officerAddress)
@@ -219,18 +195,7 @@ watch(officerTeam, async (value) => {
     }
   }
 })
-watch(deployBoDSuccess, (value) => {
-  if (value) {
-    addSuccessToast('BoD contract deployed successfully')
-    emits('getTeam')
-  }
-})
-watch(deployBoDError, (value) => {
-  if (value) {
-    console.log(value)
-    addErrorToast('Failed to deploy BoD contract')
-  }
-})
+
 watch(deployOfficerSuccess, (value) => {
   if (value) {
     addSuccessToast('Officer contract deployed successfully')

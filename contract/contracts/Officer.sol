@@ -77,10 +77,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     }
 
     function deployVotingContract() external onlyOwners whenNotPaused  {
-        require(votingContract == address(0), "Governance contract already deployed");
-
-
-
         BeaconProxy proxy = new BeaconProxy(
             votingContractBeacon,
             abi.encodeWithSelector(IVotingContract.initialize.selector) 
@@ -90,22 +86,19 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
 
         emit ContractDeployed("VotingContract", votingContract);
-    }
-    function deployBoDContract() external onlyOwners whenNotPaused{
-        require(bodContract == address(0), "Board of Directors contract already deployed");
-        require(votingContract != address(0), "Voting contract not deployed");
         
         address[] memory args = new address[](1);
         args[0] = votingContract;
-         BeaconProxy proxy = new BeaconProxy(
+
+         BeaconProxy proxyBod = new BeaconProxy(
             bodContractBeacon,
             abi.encodeWithSelector(IBodContract.initialize.selector, args) 
         );
-        bodContract = address(proxy);
+        bodContract = address(proxyBod);
 
         emit ContractDeployed("BoDContract", bodContract);
     }
-
+  
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
