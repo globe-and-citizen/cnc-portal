@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { createConfig } from '@wagmi/vue'
-import { mainnet, sepolia, polygon } from '@wagmi/vue/chains'
+import { mainnet, sepolia, polygon, hardhat } from '@wagmi/vue/chains'
 
 vi.mock('@wagmi/vue', async () => {
   const originalModule = await vi.importActual<typeof import('@wagmi/vue')>('@wagmi/vue')
@@ -20,7 +20,8 @@ describe('wagmi.config.ts', () => {
       transports: {
         [mainnet.id]: 'mocked-http-transport',
         [sepolia.id]: 'mocked-http-transport',
-        [polygon.id]: 'mocked-http-transport'
+        [polygon.id]: 'mocked-http-transport',
+        [hardhat.id]: 'mocked-http-transport'
       }
     })
 
