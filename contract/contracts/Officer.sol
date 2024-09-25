@@ -9,6 +9,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
+import 'hardhat/console.sol';
 
 interface IBankAccount {
     function initialize(address tipsAddress) external;
@@ -18,26 +19,33 @@ interface IVotingContract {
     function initialize() external;
 }
 
+interface IBodContract {
+    function initialize(address[] memory votingAddress) external;
+}
+
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
     
     address[] founders;
     address[] members;
     address bankAccountContract;
     address votingContract;
+    address bodContract;
 
     address public bankAccountBeacon;
     address public employeeContractBeacon;
     address public votingContractBeacon;
+    address public bodContractBeacon;
 
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
 
-  function initialize( address _bankAccountBeacon, address _votingContractBeacon) public initializer {
+  function initialize( address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon) public initializer {
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
         __Pausable_init();
         bankAccountBeacon = _bankAccountBeacon;
         votingContractBeacon = _votingContractBeacon;
+        bodContractBeacon = _bodContractBeacon;
     }
 
    function createTeam(
@@ -57,7 +65,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit TeamCreated( _founders, _members);
     }
 
-    function deployBankAccount(address tipsAddress) external onlyOwners whenNotPaused returns(address) {
+    function deployBankAccount(address tipsAddress) external onlyOwners whenNotPaused  {
         require(bankAccountContract == address(0), "Bank account contract already deployed");
         BeaconProxy proxy = new BeaconProxy(
             bankAccountBeacon,
@@ -66,10 +74,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         bankAccountContract = address(proxy);
 
         emit ContractDeployed("BankAccount", address(proxy));
-        return bankAccountContract;
     }
 
-    function deployVotingContract() external onlyOwners whenNotPaused returns (address) {
+    function deployVotingContract() external onlyOwners whenNotPaused  {
         require(votingContract == address(0), "Governance contract already deployed");
 
 
@@ -83,17 +90,29 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
 
         emit ContractDeployed("VotingContract", votingContract);
-        return votingContract;
     }
+    function deployBoDContract() external onlyOwners whenNotPaused{
+        require(bodContract == address(0), "Board of Directors contract already deployed");
+        require(votingContract != address(0), "Voting contract not deployed");
+        
+        address[] memory args = new address[](1);
+        args[0] = votingContract;
+         BeaconProxy proxy = new BeaconProxy(
+            bodContractBeacon,
+            abi.encodeWithSelector(IBodContract.initialize.selector, args) 
+        );
+        bodContract = address(proxy);
 
+        emit ContractDeployed("BoDContract", bodContract);
+    }
 
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
 
-    function getTeam() external view returns (address[] memory, address[] memory , address , address ) {
-        return (founders, members, bankAccountContract, votingContract);
+    function getTeam() external view returns (address[] memory, address[] memory , address , address, address ) {
+        return (founders, members, bankAccountContract, votingContract, bodContract);
     }
     modifier onlyOwners{
         if (msg.sender == owner()) {

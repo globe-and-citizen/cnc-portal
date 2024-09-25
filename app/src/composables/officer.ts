@@ -49,6 +49,7 @@ export function useGetOfficerTeam() {
     members: string[]
     bankAddress: string
     votingAddress: string
+    bodAddress: string
   } | null>(null)
   const loading = ref(false)
   const error = ref<unknown>(null)
@@ -107,4 +108,24 @@ export function useDeployVoting() {
   }
 
   return { execute: deployVoting, isLoading: loading, isSuccess, error }
+}
+
+export function useDeployBoD() {
+  const loading = ref(false)
+  const error = ref<unknown>(null)
+  const isSuccess = ref(false)
+
+  async function deployBoD(officerAddress: string) {
+    try {
+      loading.value = true
+      await officerService.deployBod(officerAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: deployBoD, isLoading: loading, isSuccess, error }
 }

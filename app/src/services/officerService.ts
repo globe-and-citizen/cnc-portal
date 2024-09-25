@@ -2,7 +2,13 @@ import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapte
 import OFFICER_ABI from '@/artifacts/abi/officer.json'
 import BEACON_PROXY_ABI from '@/artifacts/abi/beacon-proxy.json'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
-import { BOD_BEACON_ADDRESS, OFFICER_BEACON, TIPS_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
+import {
+  BANK_BEACON_ADDRESS,
+  BOD_BEACON_ADDRESS,
+  OFFICER_BEACON,
+  TIPS_ADDRESS,
+  VOTING_BEACON_ADDRESS
+} from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { Contract } from 'ethers'
 
@@ -37,6 +43,7 @@ export class OfficerService implements IOfficerService {
     members: string[]
     bankAddress: string
     votingAddress: string
+    bodAddress: string
   }> {
     const officerContract = await this.getOfficerContract(officerAddress)
     const team = await officerContract.getTeam()
@@ -44,7 +51,8 @@ export class OfficerService implements IOfficerService {
       founders: team[0] as string[],
       members: team[1] as string[],
       bankAddress: team[2] as string,
-      votingAddress: team[3] as string
+      votingAddress: team[3] as string,
+      bodAddress: team[4] as string
     }
   }
 
@@ -59,6 +67,13 @@ export class OfficerService implements IOfficerService {
   async deployVoting(officerAddress: string): Promise<void> {
     const officerContract = await this.getOfficerContract(officerAddress)
     const tx = await officerContract.deployVotingContract()
+    await tx.wait()
+
+    return tx
+  }
+  async deployBod(officerAddress: string): Promise<void> {
+    const officerContract = await this.getOfficerContract(officerAddress)
+    const tx = await officerContract.deployBoDContract()
     await tx.wait()
 
     return tx
@@ -79,8 +94,9 @@ export class OfficerService implements IOfficerService {
     const beaconProxyDeployment = await bodProxyFactory.deploy(
       OFFICER_BEACON,
       officerImplementation.interface.encodeFunctionData('initialize', [
-        BOD_BEACON_ADDRESS,
-        VOTING_BEACON_ADDRESS
+        BANK_BEACON_ADDRESS,
+        VOTING_BEACON_ADDRESS,
+        BOD_BEACON_ADDRESS
       ])
     )
     const beaconProxy = await beaconProxyDeployment.waitForDeployment()

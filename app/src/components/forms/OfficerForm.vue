@@ -49,6 +49,24 @@
                 </span>
               </div>
             </div>
+            <div class="flex flex-col">
+              <h5 class="text-md font-bold">Deployments</h5>
+              <div>
+                <span v-if="isBankDeployed" class="badge badge-primary badge-sm">
+                  Bank deployed at: {{ team?.bankAddress }}
+                </span>
+              </div>
+              <div>
+                <span v-if="isVotingDeployed" class="badge badge-primary badge-sm">
+                  Voting deployed at: {{ team?.votingAddress }}
+                </span>
+              </div>
+              <div>
+                <span v-if="isBoDDeployed" class="badge badge-primary badge-sm">
+                  BoD deployed at: {{ team?.boardOfDirectorsAddress }}
+                </span>
+              </div>
+            </div>
             <div class="flex justify-between mt-4">
               <button
                 class="btn btn-primary btn-sm"
@@ -66,6 +84,14 @@
                 Deploy Voting
               </button>
               <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployVoting" />
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="!isLoadingDeployBoD && isVotingDeployed && !isBoDDeployed"
+                @click="deployBoD"
+              >
+                Deploy BoD
+              </button>
+              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployBoD" />
             </div>
           </div>
           <div v-if="isLoadingGetTeam">
@@ -83,7 +109,8 @@ import {
   useDeployOfficerContract,
   useDeployBank,
   useDeployVoting,
-  useGetOfficerTeam
+  useGetOfficerTeam,
+  useDeployBoD
 } from '@/composables/officer'
 import { useToastStore } from '@/stores'
 import LoadingButton from '@/components/LoadingButton.vue'
@@ -99,6 +126,7 @@ const emits = defineEmits(['getTeam'])
 const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
 const isVotingDeployed = ref(false)
+const isBoDDeployed = ref(false)
 const founders = ref<string[]>([])
 const members = ref<string[]>([])
 
@@ -121,6 +149,12 @@ const {
   isSuccess: deployVotingSuccess,
   error: deployVotingError
 } = useDeployVoting()
+const {
+  execute: deployBoDContract,
+  isLoading: isLoadingDeployBoD,
+  isSuccess: deployBoDSuccess,
+  error: deployBoDError
+} = useDeployBoD()
 
 // Fetch officer team details using composable
 const { execute: fetchOfficerTeam, isLoading: isLoadingGetTeam, officerTeam } = useGetOfficerTeam()
@@ -135,26 +169,23 @@ const deployOfficerContract = async () => {
   }
 }
 
-// Deploy Bank
-const deployBankAccount = async () => {
+// Deploy BoD
+const deployBoD = async () => {
   try {
-    await deployBank(props.team.officerAddress)
-    addSuccessToast('Bank deployed successfully')
-    emits('getTeam')
+    await deployBoDContract(props.team.officerAddress)
   } catch (e) {
-    addErrorToast('Failed to deploy bank')
+    addErrorToast('Failed to deploy BoD contract')
     console.log(e)
   }
+}
+// Deploy Bank
+const deployBankAccount = async () => {
+  await deployBank(props.team.officerAddress)
 }
 
 // Deploy Voting
 const deployVotingContract = async () => {
-  try {
-    await deployVoting(props.team.officerAddress)
-  } catch (e) {
-    addErrorToast('Failed to deploy voting')
-    console.log(e)
-  }
+  await deployVoting(props.team.officerAddress)
 }
 
 // Watch officer team data and update state
@@ -177,12 +208,35 @@ watch(officerTeam, async (value) => {
           .put({ votingAddress: value.votingAddress })
           .json()
       }
+      if (props.team.bodAddress != value.bodAddress) {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ boardOfDirectorsAddress: value.bodAddress })
+          .json()
+      }
       isBankDeployed.value = value.bankAddress != ethers.ZeroAddress
       isVotingDeployed.value = value.votingAddress != ethers.ZeroAddress
+      isBoDDeployed.value = value.bodAddress != ethers.ZeroAddress
     }
   }
 })
-
+watch(deployBoDSuccess, (value) => {
+  if (value) {
+    addSuccessToast('BoD contract deployed successfully')
+    emits('getTeam')
+  }
+})
+watch(deployBoDError, (value) => {
+  if (value) {
+    console.log(value)
+    addErrorToast('Failed to deploy BoD contract')
+  }
+})
+watch(deployOfficerSuccess, (value) => {
+  if (value) {
+    addSuccessToast('Officer contract deployed successfully')
+    emits('getTeam')
+  }
+})
 watch(deployOfficerSuccess, (value) => {
   if (value) {
     addSuccessToast('Officer contract deployed successfully')
