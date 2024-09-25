@@ -88,6 +88,8 @@ import {
 import { useToastStore } from '@/stores'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
+import { ethers } from 'ethers'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -149,8 +151,6 @@ const deployBankAccount = async () => {
 const deployVotingContract = async () => {
   try {
     await deployVoting(props.team.officerAddress)
-    addSuccessToast('Voting deployed successfully')
-    emits('getTeam')
   } catch (e) {
     addErrorToast('Failed to deploy voting')
     console.log(e)
@@ -158,7 +158,7 @@ const deployVotingContract = async () => {
 }
 
 // Watch officer team data and update state
-watch(officerTeam, (value) => {
+watch(officerTeam, async (value) => {
   if (value) {
     if (value.founders.length === 0) {
       showCreateTeam.value = true
@@ -166,8 +166,19 @@ watch(officerTeam, (value) => {
       showCreateTeam.value = false
       founders.value = value.founders
       members.value = value.members
-      isBankDeployed.value = value.bankAddress !== ''
-      isVotingDeployed.value = value.votingAddress !== ''
+      console.log(value)
+      if (props.team.bankAddress != value.bankAddress) {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ bankAddress: value.bankAddress })
+          .json()
+      }
+      if (props.team.votingAddress != value.votingAddress) {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ votingAddress: value.votingAddress })
+          .json()
+      }
+      isBankDeployed.value = value.bankAddress != ethers.ZeroAddress
+      isVotingDeployed.value = value.votingAddress != ethers.ZeroAddress
     }
   }
 })

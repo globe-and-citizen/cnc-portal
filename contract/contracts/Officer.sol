@@ -57,7 +57,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit TeamCreated( _founders, _members);
     }
 
-    function deployBankAccount(address tipsAddress) external onlyOwners whenNotPaused {
+    function deployBankAccount(address tipsAddress) external onlyOwners whenNotPaused returns(address) {
         require(bankAccountContract == address(0), "Bank account contract already deployed");
         BeaconProxy proxy = new BeaconProxy(
             bankAccountBeacon,
@@ -66,9 +66,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         bankAccountContract = address(proxy);
 
         emit ContractDeployed("BankAccount", address(proxy));
+        return bankAccountContract;
     }
 
-    function deployVotingContract() external onlyOwners whenNotPaused {
+    function deployVotingContract() external onlyOwners whenNotPaused returns (address) {
         require(votingContract == address(0), "Governance contract already deployed");
 
 
@@ -82,6 +83,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
 
         emit ContractDeployed("VotingContract", votingContract);
+        return votingContract;
     }
 
 

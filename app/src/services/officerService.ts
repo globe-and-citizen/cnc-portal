@@ -50,12 +50,18 @@ export class OfficerService implements IOfficerService {
 
   async deployBank(officerAddress: string): Promise<void> {
     const officerContract = await this.getOfficerContract(officerAddress)
-    await officerContract.deployBankAccount(TIPS_ADDRESS)
+    const tx = await officerContract.deployBankAccount(TIPS_ADDRESS)
+
+    const bankAddress = await tx.wait()
+    console.log('Bank Address:', bankAddress)
   }
 
   async deployVoting(officerAddress: string): Promise<void> {
     const officerContract = await this.getOfficerContract(officerAddress)
-    await officerContract.deployVotingContract()
+    const tx = await officerContract.deployVotingContract()
+    await tx.wait()
+
+    return tx
   }
   async createTeam(officerAddress: string, founders: string[], members: string[]): Promise<string> {
     const officerContract = await this.getOfficerContract(officerAddress)
