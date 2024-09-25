@@ -26,7 +26,6 @@
           @getTeam="
             () => {
               officerModal = false
-              addSuccessToast('Officer contract created successfully')
               getTeamAPI()
             }
           "

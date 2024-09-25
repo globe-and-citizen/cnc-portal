@@ -78,7 +78,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
 
-const { addErrorToast } = useToastStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps(['team'])
 const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
@@ -119,6 +119,7 @@ const deployOfficerContract = async () => {
         from: currentAddress.value,
         nonce: BigInt(nonce)
       })
+      addSuccessToast('Officer contract created successfully')
 
       await executeUpdateTeam()
       createOfficerLoading.value = false

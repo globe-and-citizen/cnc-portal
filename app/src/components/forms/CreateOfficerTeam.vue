@@ -116,7 +116,7 @@ import type { Address } from 'viem'
 import LoadingButton from '../LoadingButton.vue'
 
 const props = defineProps(['team'])
-const { addErrorToast } = useToastStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
 
 const founderUsers = ref<Partial<User>[]>([])
 const memberUsers = ref<Partial<User>[]>([])
@@ -138,8 +138,8 @@ const createTeam = async () => {
       functionName: 'createTeam',
       args: [founders, members]
     })
-    console.log('Team created successfully')
     createTeamLoading.value = false
+    addSuccessToast('Team created successfully')
     emits('getTeam')
   } catch (error) {
     console.error(error)
