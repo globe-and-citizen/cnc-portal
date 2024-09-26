@@ -29,6 +29,11 @@ describe('ExpenseAccount', () => {
         expect(await expenseAccountProxy.owner()).to.eq(await owner.getAddress())
       })
 
+      it('Then as the contract owner I\'m an approved user by default', async () => {
+        const isApproved = await expenseAccountProxy.approvedAddresses(owner.address)
+        expect(isApproved).to.eq(true)
+      })
+
       it('Then I can deposit into the expense account contract', async () => {
         const amount = ethers.parseEther('100')
         const tx = await owner.sendTransaction({
