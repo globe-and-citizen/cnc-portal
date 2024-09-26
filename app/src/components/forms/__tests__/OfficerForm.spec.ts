@@ -103,6 +103,9 @@ describe('OfficerForm.vue', () => {
     await button.trigger('click')
 
     expect(mockDeployOfficer.execute).toHaveBeenCalled()
+    expect(mockDeployOfficer.isLoading.value).toBe(false)
+    expect(mockDeployOfficer.error.value).toBe(null)
+    expect(mockDeployOfficer.contractAddress.value).toBe(null)
   })
 
   it('shows loading spinner during officer deployment', async () => {
@@ -127,6 +130,8 @@ describe('OfficerForm.vue', () => {
     await bankButton.trigger('click')
 
     expect(mockDeployBank.execute).toHaveBeenCalled()
+    expect(mockDeployBank.isLoading.value).toBe(false)
+    expect(mockDeployBank.error.value).toBe(null)
   })
 
   it('calls deployVotingContract when voting deploy button is clicked', async () => {
@@ -140,5 +145,7 @@ describe('OfficerForm.vue', () => {
     await votingButton.trigger('click')
 
     expect(mockDeployVoting.execute).toHaveBeenCalled()
+    expect(mockDeployVoting.isLoading.value).toBe(false)
+    expect(mockDeployVoting.error.value).toBe(null)
   })
 })
