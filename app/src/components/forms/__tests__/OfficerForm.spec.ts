@@ -118,6 +118,27 @@ describe('OfficerForm.vue', () => {
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
   })
+  it('calls deployOfficerContract on button click', async () => {
+    const wrapper = mount(OfficerForm, {
+      props: { team: { officerAddress: null } }
+    })
+
+    const button = wrapper.find('button')
+    await button.trigger('click')
+    await wrapper.vm.$nextTick() // Wait for DOM updates
+
+    expect(mockDeployOfficer.execute).toHaveBeenCalled()
+    expect(mockDeployOfficer.isLoading.value).toBe(false)
+    expect(mockDeployOfficer.error.value).toBe(null)
+  })
+  it('shows loading spinner when officer contract is deploying', async () => {
+    mockDeployOfficer.isLoading.value = true
+    const wrapper = mount(OfficerForm, {
+      props: { team: { officerAddress: null } }
+    })
+
+    expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
+  })
 
   it('calls deployBankAccount when bank deploy button is clicked', async () => {
     const wrapper: VueWrapper = mount(OfficerForm, {

@@ -60,4 +60,35 @@ describe('CreateOfficerTeam.vue', () => {
     await (wrapper.vm as unknown as mock).removeFounder()
     expect((wrapper.vm as unknown as mock).selectedFounders.length).toBe(foundersCount - 1)
   })
+  it('adds a new member', async () => {
+    interface mock {
+      selectedMembers: Array<{ name: string; address: string }>
+      addMember: () => void
+    }
+    const initialMembersCount = (wrapper.vm as unknown as mock).selectedMembers.length
+    await (wrapper.vm as unknown as mock).addMember()
+    expect((wrapper.vm as unknown as mock).selectedMembers.length).toBe(initialMembersCount + 1)
+  })
+  it('removes a member', async () => {
+    interface mock {
+      selectedMembers: Array<{ name: string; address: string }>
+      addMember: () => void
+      removeMember: () => void
+    }
+    await (wrapper.vm as unknown as mock).addMember() // Add a member first
+    const membersCount = (wrapper.vm as unknown as mock).selectedMembers.length
+    await (wrapper.vm as unknown as mock).removeMember()
+    expect((wrapper.vm as unknown as mock).selectedMembers.length).toBe(membersCount - 1)
+  })
+  it('shows founder dropdown when search results are found', async () => {
+    interface mock {
+      searchUsers: (
+        input: { name: string; address: string },
+        type: 'founder' | 'member'
+      ) => Promise<void>
+      showFounderDropdown: boolean
+    }
+    await (wrapper.vm as unknown as mock).searchUsers({ name: 'John', address: '' }, 'founder')
+    expect((wrapper.vm as unknown as mock).showFounderDropdown).toBe(true)
+  })
 })
