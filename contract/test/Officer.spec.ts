@@ -64,7 +64,18 @@ describe('Officer Contract', function () {
     const team = await (officer as Officer).getTeam()
     expect(team[2]).to.be.not.equal('0x0000000000000000000000000000000000000000')
   })
+  it('should pause the contract', async function () {
+    await (officer as Officer).connect(owner).pause()
 
+    const paused = await (officer as Officer).paused()
+    expect(paused).to.be.true
+  })
+  it('should unpause the contract', async function () {
+    await (officer as Officer).connect(owner).unpause()
+
+    const paused = await (officer as Officer).paused()
+    expect(paused).to.be.false
+  })
   it('Should transfer ownership to a new owner', async function () {
     const team = await (officer as Officer).connect(owner).transferOwnershipToBOD(addr1.address)
 
