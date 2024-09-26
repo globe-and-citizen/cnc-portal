@@ -23,8 +23,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   event SendTip(address indexed addressWhoSends, address[] teamMembers, uint256 totalAmount);
   event PushTip(address indexed addressWhoPushes, address[] teamMembers, uint256 totalAmount);
 
-  function initialize(address _tipsAddress, address _sender) public initializer {
-    __Ownable_init(_sender);
+  function initialize(address _tipsAddress) public initializer {
+    __Ownable_init(msg.sender);
     __ReentrancyGuard_init();
     __Pausable_init();
     tipsAddress = _tipsAddress;

@@ -14,14 +14,10 @@ describe('Bank', () => {
     })) as unknown as Tips
 
     const BankImplementation = await ethers.getContractFactory('Bank')
-    bankProxy = (await upgrades.deployProxy(
-      BankImplementation,
-      [await tipsProxy.getAddress(), await owner.getAddress()],
-      {
-        initializer: 'initialize',
-        initialOwner: await owner.getAddress()
-      }
-    )) as unknown as Bank
+    bankProxy = (await upgrades.deployProxy(BankImplementation, [await tipsProxy.getAddress()], {
+      initializer: 'initialize',
+      initialOwner: await owner.getAddress()
+    })) as unknown as Bank
   }
 
   describe('As A User (Owner of a wallet/address)', () => {

@@ -17,8 +17,7 @@ describe('BankBeacon', () => {
     await bankImplementation.waitForDeployment()
 
     const encodedInitialize = bankImplementation.interface.encodeFunctionData('initialize', [
-      await tipsProxy.getAddress(),
-      await superAdmin.getAddress()
+      await tipsProxy.getAddress()
     ])
 
     // deploy admin beacon as superadmin
@@ -32,27 +31,16 @@ describe('BankBeacon', () => {
     const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
     const bankBeaconProxy1 = await BankBeaconProxy.connect(user1).deploy(
       await beacon.getAddress(),
-      bankImplementation.interface.encodeFunctionData('initialize', [
-        await tipsProxy.getAddress(),
-        await user1.getAddress()
-      ])
+      encodedInitialize
     )
     await bankBeaconProxy1.waitForDeployment()
 
     // deploy bank beacon proxy 2
     const bankBeaconProxy2 = await BankBeaconProxy.connect(user2).deploy(
       await beacon.getAddress(),
-      bankImplementation.interface.encodeFunctionData('initialize', [
-        await tipsProxy.getAddress(),
-        await user2.getAddress()
-      ])
+      encodedInitialize
     )
     await bankBeaconProxy2.waitForDeployment()
-
-    const encodedInitialize3 = bankImplementation.interface.encodeFunctionData('initialize', [
-      await tipsProxy.getAddress(),
-      await user3.getAddress()
-    ])
 
     return {
       superAdmin,
@@ -62,7 +50,6 @@ describe('BankBeacon', () => {
       tipsProxy,
       bankBeaconProxy1,
       bankBeaconProxy2,
-      encodedInitialize3,
       beacon,
       bankImplementation,
       encodedInitialize
@@ -78,12 +65,12 @@ describe('BankBeacon', () => {
     })
 
     it('should deploy beacon proxy correctly', async () => {
-      const { beacon, user3, encodedInitialize3 } = await loadFixture(deployFixture)
+      const { beacon, user3, encodedInitialize } = await loadFixture(deployFixture)
 
       const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
       const beaconProxy = await BankBeaconProxy.connect(user3).deploy(
         await beacon.getAddress(),
-        encodedInitialize3
+        encodedInitialize
       )
       await beaconProxy.waitForDeployment()
 
