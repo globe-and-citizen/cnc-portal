@@ -17,7 +17,23 @@ describe('BankBeacon', () => {
     await bankImplementation.waitForDeployment()
 
     const encodedInitialize = bankImplementation.interface.encodeFunctionData('initialize', [
-      await tipsProxy.getAddress()
+      await tipsProxy.getAddress(),
+      await superAdmin.getAddress()
+    ])
+
+    const encodedInitialize1 = bankImplementation.interface.encodeFunctionData('initialize', [
+      await tipsProxy.getAddress(),
+      await user1.getAddress()
+    ])
+
+    const encodedInitialize2 = bankImplementation.interface.encodeFunctionData('initialize', [
+      await tipsProxy.getAddress(),
+      await user2.getAddress()
+    ])
+
+    const encodedInitialize3 = bankImplementation.interface.encodeFunctionData('initialize', [
+      await tipsProxy.getAddress(),
+      await user3.getAddress()
     ])
 
     // deploy admin beacon as superadmin
@@ -31,14 +47,14 @@ describe('BankBeacon', () => {
     const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
     const bankBeaconProxy1 = await BankBeaconProxy.connect(user1).deploy(
       await beacon.getAddress(),
-      encodedInitialize
+      encodedInitialize1
     )
     await bankBeaconProxy1.waitForDeployment()
 
     // deploy bank beacon proxy 2
     const bankBeaconProxy2 = await BankBeaconProxy.connect(user2).deploy(
       await beacon.getAddress(),
-      encodedInitialize
+      encodedInitialize2
     )
     await bankBeaconProxy2.waitForDeployment()
 
@@ -52,7 +68,10 @@ describe('BankBeacon', () => {
       bankBeaconProxy2,
       beacon,
       bankImplementation,
-      encodedInitialize
+      encodedInitialize,
+      encodedInitialize1,
+      encodedInitialize2,
+      encodedInitialize3
     }
   }
 
@@ -65,12 +84,12 @@ describe('BankBeacon', () => {
     })
 
     it('should deploy beacon proxy correctly', async () => {
-      const { beacon, user3, encodedInitialize } = await loadFixture(deployFixture)
+      const { beacon, user3, encodedInitialize3 } = await loadFixture(deployFixture)
 
       const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
       const beaconProxy = await BankBeaconProxy.connect(user3).deploy(
         await beacon.getAddress(),
-        encodedInitialize
+        encodedInitialize3
       )
       await beaconProxy.waitForDeployment()
 

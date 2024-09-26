@@ -12,11 +12,11 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import 'hardhat/console.sol';
 
 interface IBankAccount {
-    function initialize(address tipsAddress) external;
+    function initialize(address tipsAddress, address _sender) external;
 }
 
 interface IVotingContract {
-    function initialize() external;
+    function initialize(address _sender) external;
 }
 
 interface IBodContract {
@@ -69,7 +69,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         require(bankAccountContract == address(0), "Bank account contract already deployed");
         BeaconProxy proxy = new BeaconProxy(
             bankAccountBeacon,
-            abi.encodeWithSelector(IBankAccount.initialize.selector, tipsAddress)
+            abi.encodeWithSelector(IBankAccount.initialize.selector, tipsAddress, msg.sender)
         );
         bankAccountContract = address(proxy);
 
@@ -79,7 +79,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     function deployVotingContract() external onlyOwners whenNotPaused  {
         BeaconProxy proxy = new BeaconProxy(
             votingContractBeacon,
-            abi.encodeWithSelector(IVotingContract.initialize.selector) 
+            abi.encodeWithSelector(IVotingContract.initialize.selector, msg.sender) 
         );
         
         votingContract = address(proxy);
