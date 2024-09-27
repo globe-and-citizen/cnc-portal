@@ -20,6 +20,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
   }
 
   mapping(address => EmployeeOffers) private employeeOffers;
+  address[] private employeeAddresses;
 
   event EmployeeOffered(address indexed employee, uint256 salary, string contractUrl);
   event EmployeeAccepted(address indexed employee, uint256 salary, string contractUrl);
@@ -43,6 +44,10 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     require(_employee != address(0), 'Invalid employee address');
     require(bytes(_contractUrl).length > 0, 'Invalid contract URL');
     require(_salary > 0, 'Invalid salary');
+
+    if (employeeOffers[_employee].pendingOffer.status == 0 && bytes(employeeOffers[_employee].pendingOffer.contractUrl).length == 0) {
+      employeeAddresses.push(_employee);
+    }
 
     employeeOffers[_employee].pendingOffer = EmployeeOffer({
       contractUrl: _contractUrl,
@@ -142,5 +147,13 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     });
 
     emit EmployeeOffered(_employee, _salary, _contractUrl);
+  }
+
+  function listEmployees() external view returns (address[] memory) {
+    return employeeAddresses;
+  }
+
+  function getEmployeeOffers(address _employee) external view returns (EmployeeOffers memory) {
+    return employeeOffers[_employee];
   }
 }
