@@ -9,8 +9,8 @@
   "BoardOfDirectorsModule#Beacon": "0x594A52823410cf5E3FE8D8b923327EF15aC0FE38",
   "ExpenseAccountModule#ExpenseAccount": "0x57FeCB77dd9BF9168B3B26958a43f8233BbA66d2",
   "ExpenseAccountModule#FactoryBeacon": "0x43653f0652dE8C9a8F496D044847d7816a462480",
-  "Officer#Officer": "0xbEA7DCa2241dB67Cd10A7F4469880179e93ad184",
-  "Officer#Beacon": "0x8651ec919D3083F004C485AE78C3303131652F9F",
+  "Officer#Officer": "0xAa4C7d2e1d1140F4B7fE4AeA4220051Da17f3c5A",
+  "Officer#Beacon": "0xb165288D9da18A5857594704C62b1AD8D7eB8615",
   "VotingBeaconModule#Voting": "0x68ce7F14E3e3A13BF44519Fd21d8E707758E1d07",
   "VotingBeaconModule#Beacon": "0x6c715F62c6B4e906C02733D37ea7c1cfdE2433B5"
 }
