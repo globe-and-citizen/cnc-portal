@@ -6,7 +6,6 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
-
 contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -201,5 +200,10 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
       'Offer has not expired yet'
     );
     delete employeeOffers[_employee].pendingOffer;
+  }
+
+  // Function to check if an address is an employee
+  function isEmployee(address _address) external view returns (bool) {
+    return employees.contains(_address) && employeeOffers[_address].activeOffer.status == OfferStatus.Accepted;
   }
 }
