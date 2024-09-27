@@ -33,7 +33,7 @@
               }
             "
           >
-            {{ suggestion }} {{ suggestion == props.team.bankAddress ? '(Bank Address)' : '' }}
+            {{ suggestion }} {{ suggestionContractName(suggestion) }}
           </a>
         </li>
       </ul>
@@ -82,5 +82,19 @@ const target = ref('')
 const description = ref('')
 const data = ref('')
 const showTargetSuggestion = ref(false)
-const targetSuggestions = ref<string[]>([props.team.bankAddress!])
+const targetSuggestions = ref<string[]>([
+  props.team.bankAddress!,
+  ...(props.team.expenseAccountAddress ? [props.team.expenseAccountAddress] : [])
+])
+
+const suggestionContractName = (contractAddress: string) => {
+  switch (contractAddress) {
+    case props.team.bankAddress:
+      return '(Bank Address)'
+    case props.team.expenseAccountAddress:
+      return '(Expense A/c Address)'
+    default:
+      break;
+  }
+}
 </script>
