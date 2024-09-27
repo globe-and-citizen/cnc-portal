@@ -27,8 +27,8 @@
                   <th>{{ index + 1 }}</th>
                   <td>
                     {{
-                      team.members?.filter((member) => member.address == boardOfDirector)[0].name ??
-                      'Unknown'
+                      team.members?.filter((member) => member.address == boardOfDirector)[0]
+                        ?.name ?? 'Unknown'
                     }}
                   </td>
                   <td>{{ boardOfDirector }}</td>
@@ -62,7 +62,7 @@
           Transfer bank ownership
         </button>
       </div>
-      <BoDAction :team="team" :board-of-directors="boardOfDirectors ?? []" />
+      <BoDAction :team="team" :board-of-directors="(boardOfDirectors as Address[]) ?? []" />
     </div>
   </div>
 </template>
@@ -110,7 +110,7 @@ const { writeContract, status } = useWriteContract()
 const { addErrorToast } = useToastStore()
 const currentAddress = useUserDataStore().address
 
-const transferBankOwnership = async () => {
+const transferBankOwnership = () => {
   writeContract({
     abi: BANK_ABI,
     address: props.team.bankAddress! as Address,

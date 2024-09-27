@@ -21,7 +21,10 @@
         <div class="text-center flex flex-col gap-y-4 items-center">
           <div>
             <h3 class="font-bold text-xl">Owner</h3>
-            <h3 v-if="!loadingOwner" data-test="owner">{{ owner }}</h3>
+            <h3 v-if="!loadingOwner" data-test="owner">
+              {{ owner }}
+              {{ owner == team.boardOfDirectorsAddress ? '(Board Of Directors Contract)' : '' }}
+            </h3>
           </div>
           <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
 

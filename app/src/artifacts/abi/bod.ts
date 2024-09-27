@@ -225,6 +225,11 @@ export const BOD_ABI = [
     name: 'actions',
     outputs: [
       {
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      },
+      {
         internalType: 'address',
         name: 'target',
         type: 'address'
@@ -341,6 +346,63 @@ export const BOD_ABI = [
     type: 'function'
   },
   {
+    inputs: [],
+    name: 'executedActionCount',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    name: 'executedActions',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      },
+      {
+        internalType: 'address',
+        name: 'target',
+        type: 'address'
+      },
+      {
+        internalType: 'string',
+        name: 'description',
+        type: 'string'
+      },
+      {
+        internalType: 'uint256',
+        name: 'approvalCount',
+        type: 'uint256'
+      },
+      {
+        internalType: 'bool',
+        name: 'isExecuted',
+        type: 'bool'
+      },
+      {
+        internalType: 'bytes',
+        name: 'data',
+        type: 'bytes'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
     inputs: [
       {
         internalType: 'uint256',
@@ -349,6 +411,19 @@ export const BOD_ABI = [
       }
     ],
     name: 'getActionApprovers',
+    outputs: [
+      {
+        internalType: 'address[]',
+        name: '',
+        type: 'address[]'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'getBoardOfDirectors',
     outputs: [
       {
         internalType: 'address[]',
@@ -372,10 +447,15 @@ export const BOD_ABI = [
         type: 'uint256'
       }
     ],
-    name: 'getActions',
+    name: 'getExecutedActions',
     outputs: [
       {
         components: [
+          {
+            internalType: 'uint256',
+            name: 'id',
+            type: 'uint256'
+          },
           {
             internalType: 'address',
             name: 'target',
@@ -412,7 +492,7 @@ export const BOD_ABI = [
   },
   {
     inputs: [],
-    name: 'getBoardOfDirectors',
+    name: 'getOwners',
     outputs: [
       {
         internalType: 'address[]',
@@ -424,13 +504,56 @@ export const BOD_ABI = [
     type: 'function'
   },
   {
-    inputs: [],
-    name: 'getOwners',
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '_startId',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: '_limit',
+        type: 'uint256'
+      }
+    ],
+    name: 'getPendingActions',
     outputs: [
       {
-        internalType: 'address[]',
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'id',
+            type: 'uint256'
+          },
+          {
+            internalType: 'address',
+            name: 'target',
+            type: 'address'
+          },
+          {
+            internalType: 'string',
+            name: 'description',
+            type: 'string'
+          },
+          {
+            internalType: 'uint256',
+            name: 'approvalCount',
+            type: 'uint256'
+          },
+          {
+            internalType: 'bool',
+            name: 'isExecuted',
+            type: 'bool'
+          },
+          {
+            internalType: 'bytes',
+            name: 'data',
+            type: 'bytes'
+          }
+        ],
+        internalType: 'struct BoardOfDirectors.Action[]',
         name: '',
-        type: 'address[]'
+        type: 'tuple[]'
       }
     ],
     stateMutability: 'view',
@@ -482,6 +605,63 @@ export const BOD_ABI = [
         internalType: 'address',
         name: '',
         type: 'address'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'pendingActionCount',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    name: 'pendingActions',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: 'id',
+        type: 'uint256'
+      },
+      {
+        internalType: 'address',
+        name: 'target',
+        type: 'address'
+      },
+      {
+        internalType: 'string',
+        name: 'description',
+        type: 'string'
+      },
+      {
+        internalType: 'uint256',
+        name: 'approvalCount',
+        type: 'uint256'
+      },
+      {
+        internalType: 'bool',
+        name: 'isExecuted',
+        type: 'bool'
+      },
+      {
+        internalType: 'bytes',
+        name: 'data',
+        type: 'bytes'
       }
     ],
     stateMutability: 'view',

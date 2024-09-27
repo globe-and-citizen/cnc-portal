@@ -21,6 +21,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   mapping(uint256 => address[]) public actionApprovers;
 
   struct Action {
+    uint256 id;
     address target;
     string description;
     uint256 approvalCount;
@@ -108,7 +109,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   ) external onlyBoardOfDirectors {
     require(_target != address(0), 'Invalid target address');
 
-    Action memory _action = Action(_target, _description, 1, false, _data);
+    Action memory _action = Action(actionCount, _target, _description, 1, false, _data);
     actions[actionCount] = _action;
     pendingActions[actionCount] = _action;
 

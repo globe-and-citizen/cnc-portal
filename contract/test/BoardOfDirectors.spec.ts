@@ -318,6 +318,7 @@ describe('BoardOfDirectors', async () => {
 
       const actions = await boardOfDirectorsProxy.getPendingActions(0, 1) // get first action limit 1
       expect(actions).to.have.lengthOf(1)
+      expect(actions[0].id).to.eq(0)
       expect(actions[0].target).to.eq(await bank.getAddress())
       expect(actions[0].description).to.eq('deposit')
       expect(actions[0].data).to.eq(actionData)
@@ -335,6 +336,7 @@ describe('BoardOfDirectors', async () => {
 
       const actions = await boardOfDirectorsProxy.getPendingActions(0, 2) // get all pending actions
       expect(actions).to.have.lengthOf(1)
+      expect(actions[0].id).to.eq(0)
       expect(actions[0].target).to.eq(await bank.getAddress())
       expect(actions[0].description).to.eq('deposit')
       expect(actions[0].data).to.eq(actionData)

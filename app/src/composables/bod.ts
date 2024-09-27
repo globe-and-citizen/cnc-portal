@@ -49,7 +49,7 @@ export function useGetBoardOfDirectors() {
   return { execute: getBoardOfDirectors, isLoading: loading, isSuccess, error, boardOfDirectors }
 }
 
-export function useGetActions(bodAddress: string) {
+export function useGetActions(bodAddress: string, isPending: boolean = true) {
   const actions = ref<Action[] | null>(null)
   const loading = ref(false)
   const error = ref<unknown>(null)
@@ -60,7 +60,7 @@ export function useGetActions(bodAddress: string) {
       actions.value = (await readContract(config, {
         address: bodAddress as Address,
         abi: BOD_ABI,
-        functionName: 'getActions',
+        functionName: isPending ? 'getPendingActions' : 'getExecutedActions',
         args: [startIndex, limit]
       })) as Action[]
     } catch (err) {
@@ -71,4 +71,27 @@ export function useGetActions(bodAddress: string) {
   }
 
   return { execute: getActions, isLoading: loading, error, data: actions }
+}
+
+export function useGetActionsCount(bodAddress: string, isPending: boolean = true) {
+  const count = ref<bigint | null>(null)
+  const loading = ref(false)
+  const error = ref<unknown>(null)
+
+  async function getActionsCount() {
+    try {
+      loading.value = true
+      count.value = (await readContract(config, {
+        address: bodAddress as Address,
+        abi: BOD_ABI,
+        functionName: isPending ? 'pendingActionCount' : 'executedActionCount'
+      })) as bigint
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: getActionsCount, isLoading: loading, error, data: count }
 }

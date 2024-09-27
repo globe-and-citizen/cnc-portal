@@ -1,42 +1,49 @@
 <template>
-  <SkeletonLoading v-if="actionLoading || actionCountLoading" class="w-full h-48" />
+  <SkeletonLoading
+    v-if="
+      pendingActionLoading ||
+      pendingActionsCountLoading ||
+      executedActionsLoading ||
+      executedActionsCountLoading
+    "
+    class="w-full h-48"
+  />
   <div v-else class="flex flex-col gap-4">
     <h2 class="text-center">Actions</h2>
     <div id="bod-actions" class="overflow-x-auto flex flex-col gap-4">
-      <table class="table table-zebra text-center border border-solid">
-        <thead>
-          <tr class="table-row-border">
-            <th>No</th>
-            <th>Target</th>
-            <th>Description</th>
-            <th>Approval Count</th>
-            <th>Executed</th>
-            <th>Function Signature</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="actionCount == BigInt(0)">
-            <td class="text-center font-bold text-lg h-96" colspan="6" rowspan="10">No actions</td>
-          </tr>
-          <tr v-else class="hover cursor-pointer" v-for="(action, index) in actions" :key="index">
-            <th>{{ index + 1 }}</th>
-            <td>{{ action.target }}</td>
-            <td>{{ action.description }}</td>
-            <td>{{ action.approvalCount }}</td>
-            <td>{{ action.isExecuted }}</td>
-            <td>{{ action.data.slice(0, 10) }}...</td>
-          </tr>
-        </tbody>
-      </table>
+      <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
+        <template #tab-0 v-if="isPending"
+          ><ActionTable
+            :actions="pendingActions ?? []"
+            :actionCount="pendingActionsCount ?? BigInt(0)"
+            :board-of-directors="boardOfDirectors"
+            :team="team"
+            @refetch="fetchPendingActionsCount()"
+        /></template>
+        <template #tab-1 v-if="!isPending"
+          ><ActionTable
+            :actions="exectuedActions ?? []"
+            :actionCount="executedActionsCount ?? BigInt(0)"
+            :board-of-directors="boardOfDirectors as Address[]"
+            :team="team"
+            @refetch="fetchPendingActionsCount()"
+        /></template>
+      </TabNavigation>
       <div class="flex justify-center join">
         <button
           class="join-item btn"
-          :class="{ 'btn-disabled': actionCount == BigInt(0) || page == 1 }"
+          :class="{
+            'btn-disabled':
+              (isPending ? pendingActionsCount == BigInt(0) : executedActionsCount == BigInt(0)) ||
+              page == 1
+          }"
           @click="
             () => {
               page -= 1
               startIndex = BigInt((page - 1) * 1)
-              fetchActions(startIndex, limit)
+              isPending
+                ? fetchPendingActions(startIndex, limit)
+                : fetchExecutedActions(startIndex, limit)
             }
           "
         >
@@ -47,13 +54,16 @@
           class="join-item btn"
           :class="{
             'btn-disabled':
-              actionCount == BigInt(0) || BigInt(page) * limit >= (actionCount ?? BigInt(0)) / limit
+              currentCount.value == BigInt(0) ||
+              BigInt(page) * limit >= (currentCount.value ?? BigInt(0)) / limit
           }"
           @click="
             () => {
               page += 1
               startIndex = BigInt((page - 1) * 1)
-              fetchActions(startIndex, limit)
+              isPending
+                ? fetchPendingActions(startIndex, limit)
+                : fetchExecutedActions(startIndex, limit)
             }
           "
         >
@@ -77,21 +87,25 @@
   </ModalComponent>
 </template>
 <script setup lang="ts">
+import TabNavigation from '@/components/TabNavigation.vue'
+import ActionTable from '@/components/sections/SingleTeamView/tables/ActionTable.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import AddActionForm from '@/components/sections/SingleTeamView/forms/AddActionForm.vue'
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import type { Team } from '@/types'
-import { useReadContract, useWriteContract } from '@wagmi/vue'
+import { useWriteContract } from '@wagmi/vue'
 import type { Address } from 'viem'
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { useGetActions } from '@/composables/bod'
+import { useGetActions, useGetActionsCount } from '@/composables/bod'
 import type { Action } from '@/types'
 
+const activeTab = ref(0)
+const tabs = ['Pending', 'Executed']
 const props = defineProps<{
   team: Partial<Team>
-  boardOfDirectors: readonly Address[]
+  boardOfDirectors: Address[]
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
@@ -102,22 +116,32 @@ const actionModal = ref(false)
 const { writeContract, status: addStatus, error: addError } = useWriteContract()
 
 const {
-  data: actionCount,
-  error: errorActionCount,
-  isLoading: actionCountLoading,
-  refetch: refetchActionCount
-} = useReadContract({
-  abi: BOD_ABI,
-  address: props.team.boardOfDirectorsAddress as Address,
-  functionName: 'actionCount'
-})
+  data: pendingActionsCount,
+  isLoading: pendingActionsCountLoading,
+  error: pendingActionsCountError,
+  execute: fetchPendingActionsCount
+} = useGetActionsCount(props.team.boardOfDirectorsAddress!)
 
 const {
-  data: actions,
-  isLoading: actionLoading,
-  error: errorActions,
-  execute: fetchActions
+  data: executedActionsCount,
+  isLoading: executedActionsCountLoading,
+  error: executedActionsCountError,
+  execute: fetchExecutedActionsCount
+} = useGetActionsCount(props.team.boardOfDirectorsAddress!, false)
+
+const {
+  data: pendingActions,
+  isLoading: pendingActionLoading,
+  error: errorPendingActions,
+  execute: fetchPendingActions
 } = useGetActions(props.team.boardOfDirectorsAddress!)
+
+const {
+  data: exectuedActions,
+  isLoading: executedActionsLoading,
+  error: errorExecutedActions,
+  execute: fetchExecutedActions
+} = useGetActions(props.team.boardOfDirectorsAddress!, false)
 
 const addAction = (action: Partial<Action>) => {
   writeContract({
@@ -128,27 +152,49 @@ const addAction = (action: Partial<Action>) => {
   })
 }
 
-watch(actionCount, () => {
-  if ((actionCount.value ?? BigInt(0)) > BigInt(0)) {
+const isPending = computed(() => activeTab.value === 0)
+const currentCount = computed(
+  () => (isPending.value ? pendingActionsCount : executedActionsCount) ?? BigInt(0)
+)
+
+watch(pendingActionsCount, () => {
+  if ((pendingActionsCount.value ?? BigInt(0)) > BigInt(0)) {
     startIndex.value = BigInt(0)
-    fetchActions(startIndex.value, limit.value)
+    fetchPendingActions(startIndex.value, limit.value)
   }
 })
-watch(errorActionCount, () => {
-  if (errorActionCount.value) {
-    addErrorToast(errorActionCount.value.message)
+watch(executedActionsCount, () => {
+  if ((executedActionsCount.value ?? BigInt(0)) > BigInt(0)) {
+    startIndex.value = BigInt(0)
+    fetchExecutedActions(startIndex.value, limit.value)
+  }
+})
+watch(pendingActionsCountError, () => {
+  if (pendingActionsCountError.value) {
+    addErrorToast('Failed to get pending actions')
+    startIndex.value = null
+  }
+})
+watch(executedActionsCountError, () => {
+  if (executedActionsCountError.value) {
+    addErrorToast('Failed to get executed actions')
     startIndex.value = null
   }
 })
 watch(addStatus, () => {
   if (addStatus.value === 'success') {
     actionModal.value = false
-    refetchActionCount()
+    fetchPendingActionsCount()
     addSuccessToast('Action added successfully')
   }
 })
-watch(errorActions, () => {
-  if (errorActions.value) {
+watch(errorPendingActions, () => {
+  if (errorPendingActions.value) {
+    addErrorToast('Failed to get actions')
+  }
+})
+watch(errorExecutedActions, () => {
+  if (errorExecutedActions.value) {
     addErrorToast('Failed to get actions')
   }
 })
@@ -156,5 +202,17 @@ watch(addError, () => {
   if (addError.value) {
     addErrorToast(addError.value.message)
   }
+})
+watch(isPending, () => {
+  page.value = 1
+  if (isPending.value) {
+    fetchPendingActionsCount()
+  } else {
+    fetchExecutedActionsCount()
+  }
+})
+
+onMounted(() => {
+  fetchPendingActionsCount()
 })
 </script>
