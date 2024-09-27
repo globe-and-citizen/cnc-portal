@@ -24,15 +24,16 @@ model User {
 }
 
 model Team {
-  id                        Int     @id @default(autoincrement())
-  members                   User[]  @relation("MemberTeams")
-  owner                     User    @relation("OwnedTeams", fields: [ownerAddress], references: [address])
-  ownerAddress              String
-  description               String?
-  name                      String  @unique
-  bankAddress               String? // A team can have no bank contract
-  votingAddress             String?
-  boardOfDirectorsAddress   String?
+  id           Int     @id @default(autoincrement())
+  members      User[]  @relation("MemberTeams")
+  owner        User    @relation("OwnedTeams", fields: [ownerAddress], references: [address])
+  ownerAddress String
+  description  String?
+  name         String  @unique
+  bankAddress  String? // A team can have no bank contract
+  votingAddress String?
+  boardOfDirectorsAddress String?
+  contracts    Contract[] // Relation to the Contract model
   expenseAccountAddress     String?
 }
 
@@ -46,4 +47,16 @@ model Notification {
   createdAt                 DateTime @default(now())
   author                    String?
   resource                  String?
+}
+
+model Contract {
+  id           Int       @id @default(autoincrement())
+  address      String    @unique
+  type         String
+  deployer     String
+  admins       String[]
+  teamId       Int
+  team         Team      @relation(fields: [teamId], references: [id])
+
+  @@index([address])
 }

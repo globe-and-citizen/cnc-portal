@@ -4,14 +4,28 @@
 
     <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-full items-center">
       <TeamMeta :team="team" @getTeam="getTeamAPI" />
-      <button
-        class="btn btn-primary btn-xs"
-        @click="bankModal = true"
-        v-if="!team.bankAddress && team.ownerAddress == useUserDataStore().address"
-        data-test="createBank"
-      >
-        Create Bank Account
-      </button>
+      <div class="grid grid-cols-4 gap-2">
+        <div>
+          <button
+            class="btn btn-primary btn-xs"
+            @click="bankModal = true"
+            v-if="!team.bankAddress && team.ownerAddress == useUserDataStore().address"
+            data-test="createBank"
+          >
+            Create Bank Account
+          </button>
+        </div>
+        <div>
+          <button
+            class="btn btn-primary btn-xs"
+            @click="addCampaignModal = true"
+            v-if="!team.addCampaignAddress && team.ownerAddress == useUserDataStore().address"
+            data-test="createAddCampaign"
+          >
+            Deploy advertise contract
+          </button>
+        </div>
+      </div>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -19,16 +33,20 @@
           </div>
         </template>
         <template #tab-1>
-          <BankSection v-if="activeTab == 1" :team="team" />
+          <TeamContracts v-if="activeTab == 1" :contracts="team.contracts" />
         </template>
         <template #tab-2>
-          <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
+          <BankSection v-if="activeTab == 2" :team="team" />
         </template>
         <template #tab-3>
-          <ProposalSection v-if="activeTab == 3" :team="team" @getTeam="getTeamAPI" />
+          <BankTransactionsSection v-if="activeTab == 3" :bank-address="team.bankAddress" />
         </template>
         <template #tab-4>
-          <ExpenseAccountSection v-if="activeTab == 4" :team="team" />
+          <ProposalSection :team="team" @getTeam="getTeamAPI" />
+          <ProposalSection v-if="activeTab == 4" :team="team" @getTeam="getTeamAPI" />
+        </template>
+        <template #tab-5>
+          <ExpenseAccountSection v-if="activeTab == 5" :team="team" />
         </template>
       </TabNavigation>
     </div>
@@ -37,6 +55,16 @@
       <CreateBankForm
         @create-bank="async () => deployBankContract()"
         :loading="createBankLoading"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="addCampaignModal">
+      <CreateAddCamapaign
+        @create-add-campaign="
+          async (_costPerClick: number, _costPerImpression: number) =>
+            deployAddCampaignContract(_costPerClick, _costPerImpression)
+        "
+        :loading="createAddCampaignLoading"
+        :bankAddress="_teamBankContractAddress"
       />
     </ModalComponent>
   </div>
@@ -52,18 +80,21 @@ import { useUserDataStore } from '@/stores/user'
 // Composables
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useDeployBankContract } from '@/composables/bank'
+import { useDeployAddCampaignContract } from '@/composables/addCampaign'
 
 // Service
 // import { AuthService } from '@/services/authService'
 
 // Modals/Forms
 import CreateBankForm from '@/components/forms/CreateBankForm.vue'
+import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
 
 //Components
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
+import TeamContracts from '@/components/TeamContracts.vue'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
@@ -73,8 +104,9 @@ import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 
 // Modal control states
 const bankModal = ref(false)
-const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
+const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members, SingleTeamTabs.Contracts])
 const isOwner = ref(false)
+const addCampaignModal = ref(false)
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
@@ -96,6 +128,16 @@ const {
   isSuccess: createBankSuccess,
   error: createBankError
 } = useDeployBankContract()
+
+const {
+  contractAddress: addCampaignContractAddress,
+  execute: createAddCampaign,
+  isLoading: createAddCampaignLoading
+  //isSuccess: CreateAddCamapaignSuccess,
+  //error: CreateAddCamapaignError
+} = useDeployAddCampaignContract()
+
+const _teamBankContractAddress = ref('')
 
 // Watchers for Banking functions
 
@@ -145,6 +187,11 @@ onMounted(async () => {
       SingleTeamTabs.Expenses
     )
   }
+  _teamBankContractAddress.value = team.value?.bankAddress
+    ? team.value.bankAddress
+    : team.value?.ownerAddress
+      ? team.value.ownerAddress
+      : ''
 })
 
 const deployBankContract = async () => {
@@ -153,6 +200,7 @@ const deployBankContract = async () => {
   team.value.bankAddress = contractAddress.value
   if (team.value.bankAddress) {
     bankModal.value = false
+    addSuccessToast('Team updated successfully')
     tabs.value.push(
       SingleTeamTabs.Bank,
       SingleTeamTabs.Transactions,
@@ -185,6 +233,27 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
+
+const deployAddCampaignContract = async (_costPerClick: number, _costPerImpression: number) => {
+  const id = route.params.id
+  // Update the ref values with new data
+
+  await createAddCampaign(
+    _teamBankContractAddress.value.toString(),
+    _costPerClick,
+    _costPerImpression,
+    useUserDataStore().address,
+    String(id)
+  )
+
+  //addCampaignContractAddress.value="0x503b62DA4e895f2659eF342fB39bB1545aBbDe3F"
+  //optional default value for contract address
+  if (addCampaignContractAddress.value) {
+    addCampaignModal.value = false
+    await getTeamAPI()
+  }
+}
+
 // const searchUsers = async (input: { name: string; address: string }) => {
 //   try {
 //     searchUserName.value = input.name

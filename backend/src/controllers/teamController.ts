@@ -94,6 +94,7 @@ const getTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
+        contracts: true, // Include contracts in the response
       },
     });
 
@@ -123,6 +124,7 @@ const getTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
+        contracts: true, // Include contracts in the response
       },
     });
     res.status(200).json(team);
@@ -179,8 +181,10 @@ const updateTeam = async (req: Request, res: Response) => {
     bankAddress,
     votingAddress,
     boardOfDirectorsAddress,
+    contract,
     expenseAccountAddress,
   } = req.body;
+  
   const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
@@ -193,6 +197,22 @@ const updateTeam = async (req: Request, res: Response) => {
     }
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, "Unauthorized", res);
+    }
+    // Create a new contract if one is provided
+    if (contract) {
+      if (!isAddress(contract.address)) {
+        return errorResponse(400, "Invalid contract address", res);
+      }
+
+      await prisma.contract.create({
+        data: {
+          address: contract.address,
+          type: contract.type,
+          deployer: contract.deployer,
+          admins: contract.admins,
+          teamId: team.id,
+        },
+      });
     }
     const teamU = await prisma.team.update({
       where: { id: Number(id) },
@@ -211,6 +231,7 @@ const updateTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
+        contracts:true
       },
     });
     res.status(200).json(teamU);
