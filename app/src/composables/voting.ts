@@ -156,26 +156,7 @@ export function useSetBoardOfDirectorsContractAddress() {
     transaction
   }
 }
-export function useDeployVotingContract() {
-  const contractAddress = ref<string | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-  const isSuccess = ref(false)
 
-  async function deploy(teamId: string) {
-    try {
-      loading.value = true
-      contractAddress.value = await votingService.createVotingContract(teamId)
-      isSuccess.value = true
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: deploy, isLoading: loading, isSuccess, error, contractAddress }
-}
 export function useVotingContractStatus(votingAddress: string) {
   const isPaused = ref<boolean | null>(null)
   const loading = ref<boolean>(false)

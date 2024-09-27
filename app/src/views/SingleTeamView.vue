@@ -51,13 +51,6 @@
         </template>
       </TabNavigation>
     </div>
-
-    <ModalComponent v-model="bankModal">
-      <CreateBankForm
-        @create-bank="async () => deployBankContract()"
-        :loading="createBankLoading"
-      />
-    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -70,13 +63,11 @@ import { useUserDataStore } from '@/stores/user'
 
 // Composables
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useDeployBankContract } from '@/composables/bank'
 
 // Service
 // import { AuthService } from '@/services/authService'
 
 // Modals/Forms
-import CreateBankForm from '@/components/forms/CreateBankForm.vue'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
 
 //Components
@@ -106,32 +97,9 @@ const activeTab = ref(0)
 
 const route = useRoute()
 
-const { addSuccessToast, addErrorToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 
 // Banking composables
-
-const {
-  contractAddress,
-  execute: createBankContract,
-  isLoading: createBankLoading,
-  isSuccess: createBankSuccess,
-  error: createBankError
-} = useDeployBankContract()
-
-// Watchers for Banking functions
-
-watch(createBankError, () => {
-  if (createBankError.value) {
-    addErrorToast('Failed to create bank contract')
-  }
-})
-watch(createBankSuccess, async () => {
-  if (createBankSuccess.value) {
-    addSuccessToast('Bank contract created successfully')
-    bankModal.value = false
-    await getTeamAPI()
-  }
-})
 
 // useFetch instance for getting team details
 const {
@@ -169,21 +137,6 @@ onMounted(async () => {
   }
 })
 
-const deployBankContract = async () => {
-  const id = route.params.id
-  await createBankContract(String(id))
-  team.value.bankAddress = contractAddress.value
-  if (team.value.bankAddress) {
-    bankModal.value = false
-    tabs.value.push(
-      SingleTeamTabs.Bank,
-      SingleTeamTabs.Transactions,
-      SingleTeamTabs.Proposals,
-      SingleTeamTabs.Expenses
-    )
-    await getTeamAPI()
-  }
-}
 const {
   // execute: executeSearchUser,
   response: searchUserResponse,

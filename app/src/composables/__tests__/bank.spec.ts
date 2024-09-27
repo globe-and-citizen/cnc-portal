@@ -8,8 +8,7 @@ import {
   useBankStatus,
   useBankTransfer,
   useBankTransferOwnership,
-  useBankUnpause,
-  useDeployBankContract
+  useBankUnpause
 } from '../bank'
 import { BankEventType, type EventResult } from '@/types'
 import type { Result } from 'ethers'
@@ -18,7 +17,7 @@ import type { Result } from 'ethers'
 vi.mock('@/utils/web3Util')
 
 // mock BankService
-const teamId = '1'
+// const teamId = '1'
 const amount = '1'
 const to = '0x123'
 
@@ -89,85 +88,6 @@ vi.mock('@/services/bankService', () => {
 })
 
 describe('Bank', () => {
-  describe('useDeployBankContract', () => {
-    it('should set initial values correctly', async () => {
-      const {
-        execute: deploy,
-        isLoading,
-        isSuccess,
-        error,
-        contractAddress
-      } = useDeployBankContract()
-      expect(deploy).toBeInstanceOf(Function)
-      expect(isLoading.value).toBe(false)
-      expect(isSuccess.value).toBe(false)
-      expect(error.value).toBe(null)
-      expect(contractAddress.value).toBe(null)
-    })
-
-    describe('when success', () => {
-      it('should change state of loading correctly', async () => {
-        const { execute: deploy, isLoading } = useDeployBankContract()
-        const promise = deploy(teamId)
-        expect(bankService.createBankContract).toHaveBeenCalledWith(teamId)
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should change state of isSuccess correctly', async () => {
-        const { execute: deploy, isSuccess } = useDeployBankContract()
-        const promise = deploy(teamId)
-        expect(bankService.createBankContract).toHaveBeenCalledWith(teamId)
-        expect(isSuccess.value).toBe(false)
-        await promise
-        expect(isSuccess.value).toBe(true)
-      })
-
-      it('should keeps the state of error', async () => {
-        const { execute: deploy, error } = useDeployBankContract()
-        const promise = deploy(teamId)
-        expect(bankService.createBankContract).toHaveBeenCalledWith(teamId)
-        expect(error.value).toBe(null)
-        await promise
-        expect(error.value).toBe(null)
-      })
-    })
-
-    describe('when error', () => {
-      const mockError = new Error('error')
-
-      beforeEach(() => {
-        vi.mocked(bankService.createBankContract).mockRejectedValue(mockError)
-      })
-
-      it('should change state of error correctly', async () => {
-        const { execute: deploy, error } = useDeployBankContract()
-        expect(error.value).toBe(null)
-        await deploy(teamId)
-        expect(bankService.createBankContract).toHaveBeenCalledWith(teamId)
-        expect(error.value).toBe(mockError)
-      })
-
-      it('should keeps the state of isSuccess to false', async () => {
-        const { execute: deploy, isSuccess } = useDeployBankContract()
-        expect(isSuccess.value).toBe(false)
-        await deploy(teamId)
-        expect(bankService.createBankContract).toHaveBeenCalledWith(teamId)
-        expect(isSuccess.value).toBe(false)
-      })
-
-      it('should change state of isLoading correctly', async () => {
-        const { execute: deploy, isLoading } = useDeployBankContract()
-        const promise = deploy(teamId)
-        expect(bankService.createBankContract).toHaveBeenCalledWith(teamId)
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-    })
-  })
-
   describe('useBankBalance', () => {
     it('should set initial values correctly', async () => {
       const { execute: getBalance, isLoading, error, data: balance } = useBankBalance()
