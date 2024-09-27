@@ -13,6 +13,7 @@ export interface Team {
   contracts: ContractAddress[]
   contract: ContractAddress | null
   boardOfDirectorsAddress: string | null
+  expenseAccountAddress?: string | null
 }
 export interface TeamsResponse {
   teams: Team[]

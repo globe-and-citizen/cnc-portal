@@ -15,12 +15,12 @@ datasource db {
 }
 
 model User {
-  address       String  @id @unique
-  name          String?
-  nonce         String
-  teams         Team[]  @relation("MemberTeams")
-  ownedTeams    Team[]  @relation("OwnedTeams")
-  notifications Notification[]
+  address                   String  @id @unique
+  name                      String?
+  nonce                     String
+  teams                     Team[]  @relation("MemberTeams")
+  ownedTeams                Team[]  @relation("OwnedTeams")
+  notifications             Notification[]
 }
 
 model Team {
@@ -34,18 +34,19 @@ model Team {
   votingAddress String?
   boardOfDirectorsAddress String?
   contracts    Contract[] // Relation to the Contract model
+  expenseAccountAddress     String?
 }
 
 model Notification {
-  id            Int      @id @default(autoincrement())
-  subject       String?
-  message       String
-  isRead        Boolean  @default(false)
-  userAddress   String
-  user          User     @relation(fields: [userAddress], references: [address])
-  createdAt     DateTime @default(now())
-  author        String?
-  resource      String?
+  id                        Int      @id @default(autoincrement())
+  subject                   String?
+  message                   String
+  isRead                    Boolean  @default(false)
+  userAddress               String
+  user                      User     @relation(fields: [userAddress], references: [address])
+  createdAt                 DateTime @default(now())
+  author                    String?
+  resource                  String?
 }
 
 model Contract {

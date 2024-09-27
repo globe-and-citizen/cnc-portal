@@ -97,6 +97,7 @@
           :filteredMembers="foundUsers"
           :loading="transferLoading"
           :bank-balance="teamBalance"
+          service="Bank"
         />
       </ModalComponent>
     </div>
