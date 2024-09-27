@@ -172,24 +172,27 @@ watch(officerTeam, async (value) => {
       showCreateTeam.value = false
       founders.value = value.founders
       members.value = value.members
-      if (props.team.bankAddress != value.bankAddress) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ bankAddress: value.bankAddress })
-          .json()
-      }
-      if (props.team.votingAddress != value.votingAddress) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ votingAddress: value.votingAddress })
-          .json()
-      }
-      if (props.team.bodAddress != value.bodAddress) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ boardOfDirectorsAddress: value.bodAddress })
-          .json()
-      }
       isBankDeployed.value = value.bankAddress != ethers.ZeroAddress
       isVotingDeployed.value = value.votingAddress != ethers.ZeroAddress
       isBoDDeployed.value = value.bodAddress != ethers.ZeroAddress
+      if (props.team.bankAddress != value.bankAddress && isBankDeployed.value) {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ bankAddress: value.bankAddress })
+          .json()
+        emits('getTeam')
+      }
+      if (props.team.votingAddress != value.votingAddress && isVotingDeployed.value) {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ votingAddress: value.votingAddress })
+          .json()
+        emits('getTeam')
+      }
+      if (props.team.boardOfDirectorsAddress != value.bodAddress && isBoDDeployed.value) {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ boardOfDirectorsAddress: value.bodAddress })
+          .json()
+        emits('getTeam')
+      }
     }
   }
 })
