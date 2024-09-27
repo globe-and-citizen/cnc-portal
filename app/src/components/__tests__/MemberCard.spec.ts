@@ -5,6 +5,7 @@ import { useUserDataStore } from '@/stores/user'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+// import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn()
@@ -17,7 +18,7 @@ const mockClipboard = {
   isSupported: ref(true)
 }
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: any = await importOriginal()
+  const actual: Object = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -39,7 +40,10 @@ describe('MemberCard', () => {
   }
 
   beforeEach(() => {
-    ;(useUserDataStore as any).mockReturnValue(userDataStore)
+    interface mockReturn {
+      mockReturnValue: (address: Object) => {}
+    }
+    ;(useUserDataStore as unknown as mockReturn).mockReturnValue(userDataStore)
   })
   const props = { member, teamId, ownerAddress }
   const wrapper = mount(MemberCard, {

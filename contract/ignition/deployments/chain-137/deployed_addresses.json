@@ -1,6 +1,15 @@
 {
-  "ProxyModule#Tips": "0x6c94e5dDC5a36F893b61257d9dd31BEf2117630f",
+  "ProxyModule#Tips": "0xfF143025180344114BAc59CAED0F211912311A53",
   "Bank#Bank": "0x44cbf5B995a40d93a839a0516C411b2aB1Ed3a2B",
   "BankBeaconModule#Bank": "0x6Da2378818bE657a0C238d5A34c428136a47245B",
-  "BankBeaconModule#Beacon": "0x081Ea1Ad20233323e0a1dAE902171b7aa957c6C4"
+  "BankBeaconModule#Beacon": "0x081Ea1Ad20233323e0a1dAE902171b7aa957c6C4",
+  "VotingBeaconModule#Voting": "0x79C6CEEdbA203e681B52292A4031b34f4Ed9A563",
+  "VotingBeaconModule#Beacon": "0x08ba308475e7Da419E3CCD1AE39787ebFcB2E9E6",
+  "BoardOfDirectorsModule#BoardOfDirectors": "0x0615D66660CaDC9e55eb1757765D7eDEF7C1124c",
+  "BoardOfDirectorsModule#Beacon": "0x16616252A352e112FCed24C4db17317E9a254891",
+  "ProxyModule#TransparentUpgradeableProxy": "0x97fD4892E5c98ab60cC510f95723Cd762d03AA35",
+  "ProxyModule#ProxyAdmin": "0x5Ee2dFBE2A8C5c54bae25d132887A8127D59D665",
+  "TipsModule#Tips": "0x97fD4892E5c98ab60cC510f95723Cd762d03AA35",
+  "ExpenseAccountModule#ExpenseAccount": "0x904F11Ed07D7195EAdD1cc4C8feE5D264eac8bf3",
+  "ExpenseAccountModule#FactoryBeacon": "0x2BDd227842e8C9D3899367b4F2BB4083eD200348"
 }

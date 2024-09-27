@@ -12,7 +12,6 @@ const addTeam = async (req: Request, res: Response) => {
   */
   const { name, members, description } = req.body;
   const callerAddress = (req as any).address;
-  console.log("Members:", members);
   try {
     // Validate all members' wallet addresses
     for (const member of members) {
@@ -73,7 +72,6 @@ const addTeam = async (req: Request, res: Response) => {
     );
     res.status(201).json(team);
   } catch (error: any) {
-    console.log("Error:", error);
     return errorResponse(500, error.message, res);
   }
 };
@@ -165,7 +163,6 @@ const getAllTeams = async (req: Request, res: Response) => {
 
     res.status(200).json(memberTeams);
   } catch (error: any) {
-    console.log("Error:", error);
     return errorResponse(500, error.message, res);
   }
 };
@@ -182,6 +179,7 @@ const updateTeam = async (req: Request, res: Response) => {
     bankAddress,
     votingAddress,
     boardOfDirectorsAddress,
+    expenseAccountAddress,
   } = req.body;
   const callerAddress = (req as any).address;
   try {
@@ -204,6 +202,7 @@ const updateTeam = async (req: Request, res: Response) => {
         bankAddress,
         votingAddress,
         boardOfDirectorsAddress,
+        expenseAccountAddress,
       },
       include: {
         members: {
@@ -305,11 +304,9 @@ const deleteMember = async (req: Request, res: Response) => {
         },
       },
     });
-    console.log("Updated Team:", updatedTeam);
     res.status(200).json({ success: true, team: updatedTeam });
   } catch (error: any) {
     // Handle errors
-    console.log("Error:", error);
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
 };
@@ -349,7 +346,6 @@ const addMembers = async (req: Request, res: Response) => {
       .status(201)
       .json({ members: updatedTeam?.members, success: true });
   } catch (error: any) {
-    console.log("Error:", error);
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
 };

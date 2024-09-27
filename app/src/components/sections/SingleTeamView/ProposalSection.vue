@@ -45,7 +45,13 @@
             >
               View BoD
             </button>
+            <button class="btn btn-md btn-secondary" @click="showVotingControlModal = true">
+              Manage
+            </button>
           </div>
+          <ModalComponent v-model="showVotingControlModal">
+            <VotingManagement :team="team" />
+          </ModalComponent>
         </div>
         <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
           <template #tab-0>
@@ -131,7 +137,10 @@ import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import LoadingButton from '@/components/LoadingButton.vue'
+import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
 
+const props = defineProps<{ team: Partial<Team> }>()
+const showVotingControlModal = ref(false)
 const emits = defineEmits(['getTeam'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 const {
@@ -153,20 +162,12 @@ watch(isSuccessSetBoardOfDirectorsContractAddress, () => {
 })
 watch(errorSetBoardOfDirectorsContractAddress, () => {
   if (errorSetBoardOfDirectorsContractAddress.value) {
-    addErrorToast(
-      errorSetBoardOfDirectorsContractAddress.value.reason
-        ? errorSetBoardOfDirectorsContractAddress.value.reason
-        : 'Failed to set board of directors contract address'
-    )
+    addErrorToast('Failed to set board of directors contract address')
   }
 })
 watch(errorGetBoardOfDirectors, () => {
   if (errorGetBoardOfDirectors.value) {
-    addErrorToast(
-      errorGetBoardOfDirectors.value.reason
-        ? errorGetBoardOfDirectors.value.reason
-        : 'Failed to get board of directors'
-    )
+    addErrorToast('Failed to get board of directors')
   }
 })
 
@@ -192,12 +193,7 @@ watch(isSuccessBoDDeployment, () => {
 })
 watch(errorDeployVotingContract, () => {
   if (errorDeployVotingContract.value) {
-    console.log(errorDeployVotingContract.value)
-    addErrorToast(
-      errorDeployVotingContract.value.reason
-        ? errorDeployVotingContract.value.reason
-        : 'Failed to deploy voting contract'
-    )
+    addErrorToast('Failed to deploy voting contract')
   }
 })
 const {
@@ -220,12 +216,7 @@ watch(isSuccessDeployVotingContract, () => {
 })
 watch(errorDeployVotingContract, () => {
   if (errorDeployVotingContract.value) {
-    console.log(errorDeployVotingContract.value)
-    addErrorToast(
-      errorDeployVotingContract.value.reason
-        ? errorDeployVotingContract.value.reason
-        : 'Failed to deploy voting contract'
-    )
+    addErrorToast('Failed to deploy voting contract')
   }
 })
 watch(isSuccessGetProposals, () => {
@@ -237,23 +228,18 @@ watch(isSuccessGetProposals, () => {
 })
 watch(errorGetProposals, () => {
   if (errorGetProposals.value) {
-    addErrorToast(
-      errorGetProposals.value.reason ? errorGetProposals.value.reason : 'Failed to get proposals'
-    )
+    addErrorToast('Failed to get proposals')
   }
 })
 watch(isSuccessAddProposal, () => {
   if (isSuccessAddProposal.value) {
-    console.log(isSuccessAddProposal.value)
     addSuccessToast('Proposal created successfully')
     emits('getTeam')
   }
 })
 watch(errorAddProposal, () => {
   if (errorAddProposal.value) {
-    addErrorToast(
-      errorAddProposal.value.reason ? errorAddProposal.value.reason : 'Failed to create proposal'
-    )
+    addErrorToast('Failed to create proposal')
   }
 })
 
@@ -263,7 +249,6 @@ const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
 const route = useRoute()
 
-const props = defineProps<{ team: Partial<Team> }>()
 const newProposalInput = ref<Partial<Proposal>>({
   title: '',
   description: '',

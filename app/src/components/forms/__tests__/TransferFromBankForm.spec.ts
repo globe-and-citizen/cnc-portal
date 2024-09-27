@@ -4,6 +4,10 @@ import { mount } from '@vue/test-utils'
 import TransferFromBankForm from '../TransferFromBankForm.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 
+interface ComponentData {
+  to: string
+  amount: string
+}
 describe('TransferFromBankForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
@@ -12,6 +16,7 @@ describe('TransferFromBankForm.vue', () => {
       props: {
         loading: false,
         bankBalance: '100',
+        service: 'Test Service',
         filteredMembers: [
           { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
           { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -26,6 +31,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: true,
           bankBalance: '100',
+          service: 'Test Service',
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -35,7 +41,7 @@ describe('TransferFromBankForm.vue', () => {
       expect(wrapper.findComponent(LoadingButton).exists()).toBe(true)
     })
     it('renders initial UI correctly', () => {
-      expect(wrapper.find('h1').text()).toBe('Transfer from Bank Contract')
+      expect(wrapper.find('h1').text()).toBe('Transfer from Test Service Contract')
       expect(wrapper.find('.btn-primary').text()).toBe('Transfer')
       expect(wrapper.find('.btn-error').text()).toBe('Cancel')
       expect(wrapper.find('.input-md input[type="text"]').element).toBeDefined()
@@ -46,7 +52,9 @@ describe('TransferFromBankForm.vue', () => {
       expect(recipientInput.element).toBeDefined()
       await recipientInput.setValue('0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E')
 
-      expect((wrapper.vm as any).to).toBe('0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E')
+      expect((wrapper.vm as unknown as ComponentData).to).toBe(
+        '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
+      )
     })
 
     it('renders input transfer amount correctly', async () => {
@@ -54,7 +62,7 @@ describe('TransferFromBankForm.vue', () => {
       expect(amountInput.element).toBeDefined()
       await amountInput.setValue('10')
 
-      expect((wrapper.vm as any).amount).toBe('10')
+      expect((wrapper.vm as unknown as ComponentData).amount).toBe('10')
     })
   })
 
@@ -62,7 +70,9 @@ describe('TransferFromBankForm.vue', () => {
     it('updates "to" value when selecting member from dropdown', async () => {
       const dropdownOption = wrapper.find('.dropdown-content a')
       await dropdownOption.trigger('click')
-      expect((wrapper.vm as any).to).toBe('0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E')
+      expect((wrapper.vm as unknown as ComponentData).to).toBe(
+        '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
+      )
     })
 
     it('emits closeModal event when Cancel button is clicked', async () => {
@@ -88,6 +98,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: false,
           bankBalance: '100',
+          service: 'Test Service',
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -108,6 +119,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: false,
           bankBalance: '100',
+          service: 'Test Service',
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -125,6 +137,7 @@ describe('TransferFromBankForm.vue', () => {
         props: {
           loading: false,
           bankBalance: '100',
+          service: 'Test Service',
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }

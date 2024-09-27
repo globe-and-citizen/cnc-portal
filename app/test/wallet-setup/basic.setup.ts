@@ -8,4 +8,5 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
   const metamask = new MetaMask(context, walletPage, PASSWORD)
 
   await metamask.importWallet(SEED_PHRASE)
+  await metamask.switchNetwork('sepolia', true)
 })
