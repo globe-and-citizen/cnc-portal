@@ -5,7 +5,6 @@ import {
   useConcludeProposal,
   useVoteDirective,
   useVoteElection,
-  useDeployVotingContract,
   useVotingContractOwner,
   useVotingContractPause,
   useVotingContractStatus,
@@ -185,18 +184,7 @@ describe('Voting Composables', () => {
       expect(transaction.value).toEqual(mockTransaction)
     })
   })
-  describe('useDeployVotingContract', () => {
-    it('should deploy the voting contract successfully', async () => {
-      const { execute, isLoading, isSuccess, error, contractAddress } = useDeployVotingContract()
 
-      await execute('teamId')
-
-      expect(isLoading.value).toBe(false)
-      expect(isSuccess.value).toBe(true)
-      expect(error.value).toBe(null)
-      expect(contractAddress.value).toEqual('0xVotingContractAddress')
-    })
-  })
   describe('useVotingContractOwner', async () => {
     it('should fetch the owner of the voting contract successfully', async () => {
       const { execute, isLoading, error, data } = useVotingContractOwner('0xVotingContractAddress')

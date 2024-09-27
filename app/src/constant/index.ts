@@ -14,6 +14,8 @@ interface AddressMapping {
   'BoardOfDirectorsModule#BoardOfDirectors': string
   'ExpenseAccountModule#ExpenseAccount'?: string
   'ExpenseAccountModule#FactoryBeacon'?: string
+  'Officer#Officer'?: string
+  'Officer#Beacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -34,5 +36,7 @@ export const BOD_BEACON_ADDRESS = addresses['BoardOfDirectorsModule#Beacon'] || 
 export const BOD_IMPL_ADDRESS = addresses['BoardOfDirectorsModule#BoardOfDirectors'] || ''
 export const EXPENSE_ACCOUNT_BEACON_ADDRESS = addresses['ExpenseAccountModule#FactoryBeacon'] || ''
 export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = addresses['ExpenseAccountModule#ExpenseAccount'] || ''
+export const OFFICER_ADDRESS = addresses['Officer#Officer'] || ''
+export const OFFICER_BEACON = addresses['Officer#Beacon'] || ''
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL

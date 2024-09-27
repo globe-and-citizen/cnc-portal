@@ -108,18 +108,6 @@ describe('VotingService', () => {
     })
   })
 
-  describe('deployVotingContract', () => {
-    it('should handle errors when deploying the voting contract', async () => {
-      const ethersJsAdapterMock = {
-        getFactoryContract: vi.fn().mockRejectedValue(new Error('Deploy Failed'))
-      }
-
-      votingService = new VotingService(ethersJsAdapterMock as unknown as IWeb3Library)
-
-      await expect(votingService.deployVotingContract()).rejects.toThrow('Deploy Failed')
-    })
-  })
-
   describe('setBoardOfDirectorsContractAddress', () => {
     it('should set the Board of Directors contract address', async () => {
       await votingService.setBoardOfDirectorsContractAddress('0xVotingAddress', '0xBoDAddress')

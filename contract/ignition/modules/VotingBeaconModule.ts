@@ -1,15 +1,14 @@
-import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 
-const votingBeaconModule = buildModule("VotingBeaconModule", (m) => {
-  const beaconAdmin = m.getAccount(0);
-  const votingImplementation = m.contract("Voting");
-  
-  m.call(votingImplementation, 'initialize')
-  const beacon = m.contract("Beacon", [votingImplementation], {
-    from: beaconAdmin,
-  });
+const votingBeaconModule = buildModule('VotingBeaconModule', (m) => {
+  const beaconAdmin = m.getAccount(0)
+  const votingImplementation = m.contract('Voting')
 
-  return { beacon, votingImplementation };
-});
+  const beacon = m.contract('Beacon', [votingImplementation], {
+    from: beaconAdmin
+  })
 
-export default votingBeaconModule;
+  return { beacon, votingImplementation }
+})
+
+export default votingBeaconModule

@@ -242,6 +242,11 @@ export const BANK_ABI = [
         internalType: 'address',
         name: '_tipsAddress',
         type: 'address'
+      },
+      {
+        internalType: 'address',
+        name: '_sender',
+        type: 'address'
       }
     ],
     name: 'initialize',
