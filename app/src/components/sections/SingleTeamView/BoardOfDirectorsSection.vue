@@ -39,7 +39,88 @@
         </div>
       </div>
       <div class="divider"></div>
-      <SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
+      <!-- Start Contract Owners Table -->
+      <div class="overflow-x-auto">
+        <table class="table table-zebra text-center">
+        <thead>
+          <tr>
+            <th>Contract Name</th>
+            <th>Contract Owner</th>
+            <th>Transfer Ownership</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Bank
+            </td>
+            <td>
+              <SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
+              <h4>
+                {{ bankOwner }} ({{
+                  bankOwner == team.boardOfDirectorsAddress
+                    ? 'Board of Directors Contract'
+                    : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ?? 'Unknown')
+                }})
+              </h4>
+            </td>
+            <td class="flex justify-end">
+              <LoadingButton 
+                v-if="status === 'pending'" 
+                color="primary" 
+                class="w-48" 
+              />
+              <button
+                v-if="
+                  bankOwner == currentAddress &&
+                  bankOwner != team.boardOfDirectorsAddress &&
+                  status != 'pending'
+                "
+                class="btn btn-primary"
+                @click="transferBankOwnership"
+              >
+                Transfer bank ownership
+              </button>
+            </td>
+          </tr>
+          <tr v-if="team.expenseAccountAddress">
+            <td>
+              Expense A/c
+            </td>
+            <td>
+              <SkeletonLoading v-if="isLoadingExpenseOwner" class="w-full h-6" />
+              <h4>
+                {{ expenseOwner }} ({{
+                  expenseOwner == team.boardOfDirectorsAddress
+                    ? 'Board of Directors Contract'
+                    : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ?? 'Unknown')
+                }})
+              </h4>
+            </td>
+            <td class="flex justify-end">
+              <LoadingButton 
+                v-if="status === 'pending'" 
+                color="primary" 
+                class="w-48" 
+              />
+              <button
+                v-if="
+                  expenseOwner == currentAddress &&
+                  expenseOwner != team.boardOfDirectorsAddress &&
+                  status != 'pending'
+                "
+                class="btn btn-primary"
+                @click="transferExpenseOwnership"
+              >
+                Transfer expense ownership
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+      <!-- End Contract Owners Table -->
+      <!--<SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
       <h4>
         <span class="font-bold">Bank Contract Owner</span>: {{ bankOwner }} ({{
           bankOwner == team.boardOfDirectorsAddress
@@ -61,7 +142,7 @@
         >
           Transfer bank ownership
         </button>
-      </div>
+      </div>-->
       <BoDAction :team="team" :board-of-directors="boardOfDirectors ?? []" />
     </div>
   </div>
@@ -80,7 +161,11 @@ import { useReadContract, useWriteContract } from '@wagmi/vue'
 import { watch } from 'vue'
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import { BANK_ABI } from '@/artifacts/abi/bank'
+import  EXPENSE_ABI from '@/artifacts/abi/expense-account.json'
 import type { Address } from 'viem'
+import { ref } from 'vue'
+
+const writingContract = ref<string | null | undefined>('')
 
 const props = defineProps<{
   team: Partial<Team>
@@ -105,18 +190,43 @@ const {
   address: props.team.bankAddress! as Address,
   functionName: 'owner'
 })
+const {
+  data: expenseOwner,
+  isLoading: isLoadingExpenseOwner,
+  error: errorExpenseOwner,
+  refetch: refetchExpenseOwner
+} = useReadContract({
+  abi: EXPENSE_ABI,
+  address: props.team.expenseAccountAddress as Address,
+  functionName: 'owner'
+})
 
 const { writeContract, status } = useWriteContract()
 const { addErrorToast } = useToastStore()
 const currentAddress = useUserDataStore().address
 
 const transferBankOwnership = async () => {
+  writingContract.value = props.team.bankAddress
   writeContract({
     abi: BANK_ABI,
     address: props.team.bankAddress! as Address,
     functionName: 'transferOwnership',
     args: [props.team.boardOfDirectorsAddress! as Address]
   })
+  writingContract.value = null
+}
+
+const transferExpenseOwnership = async () => {
+  writingContract.value = props.team.expenseAccountAddress
+  console.log(`writingContract.value`, writingContract.value)
+  console.log(`props.team.expenseAccountAddress`, writingContract.value === props.team.expenseAccountAddress)
+  writeContract({
+    abi: EXPENSE_ABI,
+    address: props.team.expenseAccountAddress as Address,
+    functionName: 'transferOwnership',
+    args: [props.team.boardOfDirectorsAddress! as Address]
+  })
+  writingContract.value = null
 }
 
 watch(error, () => {
