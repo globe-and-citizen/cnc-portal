@@ -14,14 +14,19 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     uint256 endDate;
   }
 
+  struct EmployeeOffers {
+    EmployeeOffer activeOffer;
+    EmployeeOffer pendingOffer;
+  }
 
-  mapping(address => EmployeeOffer) private employeeOffers;
+  mapping(address => EmployeeOffers) private employeeOffers;
 
   event EmployeeOffered(address indexed employee, uint256 salary, string contractUrl);
   event EmployeeAccepted(address indexed employee, uint256 salary, string contractUrl);
   event EmployeeRejected(address indexed employee, uint256 salary, string contractUrl);
   event EmployeeResigned(address indexed employee, uint256 salary, string contractUrl);
   event EmployeeFired(address indexed employee, uint256 salary, string contractUrl);
+  event EmployeeOfferApproved(address indexed employee, uint256 salary, string contractUrl);
 
   function initialize() public initializer {
     __Ownable_init(msg.sender);
@@ -29,13 +34,6 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     __Pausable_init();
   }
 
-  /**
-   * @dev Create offer for employee: Offer status is set to 0
-   * @param _employee Employee address
-   * @param _contractUrl Contract URL
-   * @param _salary Salary
-   * @param _endDate End date
-   */
   function createOffer(
     address _employee,
     string memory _contractUrl,
@@ -43,15 +41,10 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     uint256 _endDate
   ) external onlyOwner nonReentrant whenNotPaused {
     require(_employee != address(0), 'Invalid employee address');
-    // Check if there is already an offer for the employee
-    require(
-      bytes(employeeOffers[_employee].contractUrl).length > 0,
-      'Employee already has an active offer'
-    );
     require(bytes(_contractUrl).length > 0, 'Invalid contract URL');
     require(_salary > 0, 'Invalid salary');
 
-    employeeOffers[_employee] = EmployeeOffer({
+    employeeOffers[_employee].pendingOffer = EmployeeOffer({
       contractUrl: _contractUrl,
       salary: _salary,
       status: 0,
@@ -62,90 +55,75 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     emit EmployeeOffered(_employee, _salary, _contractUrl);
   }
 
-  /**
-   * @dev Accept offer : The Employee call this function to accept the offer: Offer status is set to 1
-   * @dev Employee can only accept the offer if the offer status is 0
-   *
-   */
   function acceptOffer() external nonReentrant whenNotPaused {
-    require(bytes(employeeOffers[msg.sender].contractUrl).length > 0, 'No offer found');
-    require(employeeOffers[msg.sender].status == 0, 'No Active offer found');
+    require(bytes(employeeOffers[msg.sender].pendingOffer.contractUrl).length > 0, 'No pending offer found');
+    require(employeeOffers[msg.sender].pendingOffer.status == 0, 'No active pending offer found');
 
-    employeeOffers[msg.sender].status = 1;
-    employeeOffers[msg.sender].startDate = block.timestamp;
+    employeeOffers[msg.sender].pendingOffer.status = 1;
+    employeeOffers[msg.sender].pendingOffer.startDate = block.timestamp;
 
     emit EmployeeAccepted(
       msg.sender,
-      employeeOffers[msg.sender].salary,
-      employeeOffers[msg.sender].contractUrl
+      employeeOffers[msg.sender].pendingOffer.salary,
+      employeeOffers[msg.sender].pendingOffer.contractUrl
     );
   }
 
-  // Reject offer:
+  function approvePendingOffer(address _employee) external onlyOwner nonReentrant whenNotPaused {
+    require(bytes(employeeOffers[_employee].pendingOffer.contractUrl).length > 0, 'No pending offer found');
+    require(employeeOffers[_employee].pendingOffer.status == 1, 'Pending offer not accepted by employee');
 
-  // - When offer status is 0
-  // - Then offer status is 2
+    employeeOffers[_employee].activeOffer = employeeOffers[_employee].pendingOffer;
+    delete employeeOffers[_employee].pendingOffer;
 
-  /**
-   * @dev Reject offer : The Employee call this function to reject the offer: Offer status is set to 2
-   * @dev Employee can only reject the offer if the offer status is 0
-   */
+    emit EmployeeOfferApproved(
+      _employee,
+      employeeOffers[_employee].activeOffer.salary,
+      employeeOffers[_employee].activeOffer.contractUrl
+    );
+  }
+
   function rejectOffer() external nonReentrant whenNotPaused {
-    require(bytes(employeeOffers[msg.sender].contractUrl).length > 0, 'No offer found');
-    require(employeeOffers[msg.sender].status == 0, 'No Active offer found');
+    require(bytes(employeeOffers[msg.sender].pendingOffer.contractUrl).length > 0, 'No pending offer found');
+    require(employeeOffers[msg.sender].pendingOffer.status == 0, 'No active pending offer found');
 
-    employeeOffers[msg.sender].status = 2;
+    employeeOffers[msg.sender].pendingOffer.status = 2;
 
     emit EmployeeRejected(
       msg.sender,
-      employeeOffers[msg.sender].salary,
-      employeeOffers[msg.sender].contractUrl
+      employeeOffers[msg.sender].pendingOffer.salary,
+      employeeOffers[msg.sender].pendingOffer.contractUrl
     );
   }
 
-  /**
-   * @dev Resign offer : The Employee call this function to resign the offer: Offer status is set to 3
-   */
   function resignOffer() external nonReentrant whenNotPaused {
-    require(bytes(employeeOffers[msg.sender].contractUrl).length > 0, 'No offer found');
-    require(employeeOffers[msg.sender].status == 1, 'No Accepted offer found');
+    require(bytes(employeeOffers[msg.sender].activeOffer.contractUrl).length > 0, 'No active offer found');
+    require(employeeOffers[msg.sender].activeOffer.status == 1, 'No accepted active offer found');
 
-    employeeOffers[msg.sender].status = 3;
-    employeeOffers[msg.sender].endDate = block.timestamp;
+    employeeOffers[msg.sender].activeOffer.status = 3;
+    employeeOffers[msg.sender].activeOffer.endDate = block.timestamp;
 
     emit EmployeeResigned(
       msg.sender,
-      employeeOffers[msg.sender].salary,
-      employeeOffers[msg.sender].contractUrl
+      employeeOffers[msg.sender].activeOffer.salary,
+      employeeOffers[msg.sender].activeOffer.contractUrl
     );
   }
 
-  /**
-   * @dev Fire Employee : The Owner call this function to fire the employee: Offer status is set to 4
-   */
-
   function fireEmployee(address _employee) external onlyOwner nonReentrant whenNotPaused {
-    require(bytes(employeeOffers[_employee].contractUrl).length > 0, 'No offer found');
-    require(employeeOffers[_employee].status == 1, 'No Accepted offer found');
-    employeeOffers[_employee].status = 4;
-    employeeOffers[_employee].endDate = block.timestamp;
+    require(bytes(employeeOffers[_employee].activeOffer.contractUrl).length > 0, 'No active offer found');
+    require(employeeOffers[_employee].activeOffer.status == 1, 'No accepted active offer found');
+
+    employeeOffers[_employee].activeOffer.status = 4;
+    employeeOffers[_employee].activeOffer.endDate = block.timestamp;
 
     emit EmployeeFired(
       _employee,
-      employeeOffers[_employee].salary,
-      employeeOffers[_employee].contractUrl
+      employeeOffers[_employee].activeOffer.salary,
+      employeeOffers[_employee].activeOffer.contractUrl
     );
   }
 
-  // Update offer:
-
-  // - When offer status is 0, 1, 2, 3, 4
-  // - Then update offer
-  // - Then offer status is 0
-
-  /**
-   * @dev Update offer : The Owner call this function to update the offer
-   */
   function updateOffer(
     address _employee,
     uint256 _salary,
@@ -155,7 +133,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     require(bytes(_contractUrl).length > 0, 'Invalid contract URL');
     require(_salary > 0, 'Invalid salary');
 
-    employeeOffers[_employee] = EmployeeOffer({
+    employeeOffers[_employee].pendingOffer = EmployeeOffer({
       contractUrl: _contractUrl,
       salary: _salary,
       status: 0,
