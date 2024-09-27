@@ -62,7 +62,6 @@ export class BoDService implements IBoDService {
 
       return await beaconProxy.getAddress()
     } catch (e) {
-      console.log(e)
       return ''
     }
   }

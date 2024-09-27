@@ -60,8 +60,7 @@ export class OfficerService implements IOfficerService {
     const officerContract = await this.getOfficerContract(officerAddress)
     const tx = await officerContract.deployBankAccount(TIPS_ADDRESS)
 
-    const bankAddress = await tx.wait()
-    console.log('Bank Address:', bankAddress)
+    await tx.wait()
   }
 
   async deployVoting(officerAddress: string): Promise<void> {

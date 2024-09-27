@@ -150,7 +150,6 @@ const deployOfficerContract = async () => {
     await deployOfficer(props.team.id)
   } catch (e) {
     addErrorToast('Failed to deploy officer contract')
-    console.log(e)
   }
 }
 
@@ -173,7 +172,6 @@ watch(officerTeam, async (value) => {
       showCreateTeam.value = false
       founders.value = value.founders
       members.value = value.members
-      console.log(value)
       if (props.team.bankAddress != value.bankAddress) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ bankAddress: value.bankAddress })

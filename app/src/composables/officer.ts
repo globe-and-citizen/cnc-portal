@@ -11,7 +11,6 @@ export function useDeployOfficerContract() {
 
   async function deployOfficer(teamId: string) {
     try {
-      console.log('deployOfficer')
       loading.value = true
       contractAddress.value = await officerService.createOfficerContract(teamId)
       isSuccess.value = true
