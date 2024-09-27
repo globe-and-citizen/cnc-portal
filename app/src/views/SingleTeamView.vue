@@ -12,6 +12,25 @@
       >
         Create Bank Account
       </button>
+      <button
+        class="btn btn-primary btn-xs"
+        @click="officerModal = true"
+        v-if="team.ownerAddress == useUserDataStore().address"
+        data-test="manageOfficer"
+      >
+        Manage Deployments
+      </button>
+      <ModalComponent v-model="officerModal">
+        <OfficerForm
+          :team="team"
+          @getTeam="
+            () => {
+              officerModal = false
+              getTeamAPI()
+            }
+          "
+        />
+      </ModalComponent>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -32,13 +51,6 @@
         </template>
       </TabNavigation>
     </div>
-
-    <ModalComponent v-model="bankModal">
-      <CreateBankForm
-        @create-bank="async () => deployBankContract()"
-        :loading="createBankLoading"
-      />
-    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -51,13 +63,12 @@ import { useUserDataStore } from '@/stores/user'
 
 // Composables
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useDeployBankContract } from '@/composables/bank'
 
 // Service
 // import { AuthService } from '@/services/authService'
 
 // Modals/Forms
-import CreateBankForm from '@/components/forms/CreateBankForm.vue'
+import OfficerForm from '@/components/forms/OfficerForm.vue'
 
 //Components
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
@@ -75,6 +86,7 @@ import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 const bankModal = ref(false)
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
 const isOwner = ref(false)
+const officerModal = ref(false)
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
@@ -85,32 +97,9 @@ const activeTab = ref(0)
 
 const route = useRoute()
 
-const { addSuccessToast, addErrorToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 
 // Banking composables
-
-const {
-  contractAddress,
-  execute: createBankContract,
-  isLoading: createBankLoading,
-  isSuccess: createBankSuccess,
-  error: createBankError
-} = useDeployBankContract()
-
-// Watchers for Banking functions
-
-watch(createBankError, () => {
-  if (createBankError.value) {
-    addErrorToast('Failed to create bank contract')
-  }
-})
-watch(createBankSuccess, async () => {
-  if (createBankSuccess.value) {
-    addSuccessToast('Bank contract created successfully')
-    bankModal.value = false
-    await getTeamAPI()
-  }
-})
 
 // useFetch instance for getting team details
 const {
@@ -127,6 +116,7 @@ const {
 // Watchers for getting team details
 watch(getTeamError, () => {
   if (getTeamError.value) {
+    console.error(getTeamError.value)
     addErrorToast(getTeamError.value)
   }
 })
@@ -147,21 +137,6 @@ onMounted(async () => {
   }
 })
 
-const deployBankContract = async () => {
-  const id = route.params.id
-  await createBankContract(String(id))
-  team.value.bankAddress = contractAddress.value
-  if (team.value.bankAddress) {
-    bankModal.value = false
-    tabs.value.push(
-      SingleTeamTabs.Bank,
-      SingleTeamTabs.Transactions,
-      SingleTeamTabs.Proposals,
-      SingleTeamTabs.Expenses
-    )
-    await getTeamAPI()
-  }
-}
 const {
   // execute: executeSearchUser,
   response: searchUserResponse,

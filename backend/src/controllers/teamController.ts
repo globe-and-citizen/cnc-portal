@@ -180,6 +180,7 @@ const updateTeam = async (req: Request, res: Response) => {
     votingAddress,
     boardOfDirectorsAddress,
     expenseAccountAddress,
+    officerAddress,
   } = req.body;
   const callerAddress = (req as any).address;
   try {
@@ -203,6 +204,7 @@ const updateTeam = async (req: Request, res: Response) => {
         votingAddress,
         boardOfDirectorsAddress,
         expenseAccountAddress,
+        officerAddress,
       },
       include: {
         members: {

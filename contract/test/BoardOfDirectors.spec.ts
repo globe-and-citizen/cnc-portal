@@ -6,7 +6,7 @@ describe('BoardOfDirectors', async () => {
     const [founder, boD1, boD2, boD3, mockTipsAddress] = await ethers.getSigners()
     const VotingFactory = await ethers.getContractFactory('Voting')
     const voting = await VotingFactory.connect(founder).deploy()
-    await voting.initialize()
+    await voting.initialize(await founder.getAddress())
 
     const BoardOfDirectorsImplFactory = await ethers.getContractFactory('BoardOfDirectors')
     const boardOfDirectorsImpl = await BoardOfDirectorsImplFactory.deploy()
@@ -33,7 +33,7 @@ describe('BoardOfDirectors', async () => {
 
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
-    await bank.initialize(mockTipsAddress)
+    await bank.initialize(mockTipsAddress, await founder.getAddress())
 
     // transfer ownership of bank to boardOfDirectors
     // so that only boardOfDirectors can call bank functions

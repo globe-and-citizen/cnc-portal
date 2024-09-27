@@ -1,24 +1,6 @@
 <template>
   <div v-if="team.votingAddress">
-    <div v-if="team.votingAddress && !team.boardOfDirectorsAddress">
-      <div class="flex justify-center">
-        <button
-          class="btn btn-primary btn-md"
-          @click="executeDeployBoDContract(String(route.params.id), team.votingAddress)"
-          v-if="
-            !(isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress) &&
-            !team.boardOfDirectorsAddress
-          "
-        >
-          Deploy BoD Contract
-        </button>
-        <LoadingButton
-          color="primary min-w-28"
-          v-if="isLoadingBoDDeployment || isLoadingSetBoardOfDirectorsContractAddress"
-        />
-      </div>
-    </div>
-    <div v-else>
+    <div>
       <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
         <div class="flex justify-between">
           <div>
@@ -107,16 +89,6 @@
       <span class="loading loading-spinner loading-lg"></span>
     </div>
   </div>
-  <div class="flex justify-center items-center" v-if="!team.votingAddress">
-    <LoadingButton color="primary min-w-28" v-if="loadingDeployVotingContract" />
-    <button
-      v-else
-      class="btn btn-primary btn-md"
-      @click="executeVotingContract(String(route.params.id))"
-    >
-      Create Voting Contract
-    </button>
-  </div>
 </template>
 <script setup lang="ts">
 import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
@@ -126,17 +98,11 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import {
-  useAddProposal,
-  useGetProposals,
-  useDeployVotingContract,
-  useSetBoardOfDirectorsContractAddress
-} from '@/composables/voting'
-import { useDeployBoDContract, useGetBoardOfDirectors } from '@/composables/bod'
+import { useAddProposal, useGetProposals } from '@/composables/voting'
+import { useGetBoardOfDirectors } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
-import LoadingButton from '@/components/LoadingButton.vue'
 import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
 
 const props = defineProps<{ team: Partial<Team> }>()
@@ -148,54 +114,13 @@ const {
   execute: executeGetBoardOfDirectors,
   error: errorGetBoardOfDirectors
 } = useGetBoardOfDirectors()
-const {
-  execute: executeSetBoardOfDirectorsContractAddress,
-  isLoading: isLoadingSetBoardOfDirectorsContractAddress,
-  isSuccess: isSuccessSetBoardOfDirectorsContractAddress,
-  error: errorSetBoardOfDirectorsContractAddress
-} = useSetBoardOfDirectorsContractAddress()
-watch(isSuccessSetBoardOfDirectorsContractAddress, () => {
-  if (isSuccessSetBoardOfDirectorsContractAddress.value) {
-    addSuccessToast('Board of directors contract address set successfully')
-    emits('getTeam')
-  }
-})
-watch(errorSetBoardOfDirectorsContractAddress, () => {
-  if (errorSetBoardOfDirectorsContractAddress.value) {
-    addErrorToast('Failed to set board of directors contract address')
-  }
-})
+
 watch(errorGetBoardOfDirectors, () => {
   if (errorGetBoardOfDirectors.value) {
     addErrorToast('Failed to get board of directors')
   }
 })
 
-const {
-  execute: executeVotingContract,
-  isLoading: loadingDeployVotingContract,
-  isSuccess: isSuccessDeployVotingContract,
-  error: errorDeployVotingContract
-} = useDeployVotingContract()
-const {
-  execute: executeDeployBoDContract,
-  isLoading: isLoadingBoDDeployment,
-  isSuccess: isSuccessBoDDeployment,
-  contractAddress: boardOfDirectorsAddress
-} = useDeployBoDContract()
-watch(isSuccessBoDDeployment, () => {
-  if (isSuccessBoDDeployment.value) {
-    executeSetBoardOfDirectorsContractAddress(
-      String(props.team.votingAddress),
-      String(boardOfDirectorsAddress.value)
-    )
-  }
-})
-watch(errorDeployVotingContract, () => {
-  if (errorDeployVotingContract.value) {
-    addErrorToast('Failed to deploy voting contract')
-  }
-})
 const {
   execute: executeAddProposal,
   isLoading: loadingAddProposal,
@@ -209,16 +134,7 @@ const {
   error: errorGetProposals,
   data: proposals
 } = useGetProposals()
-watch(isSuccessDeployVotingContract, () => {
-  if (isSuccessDeployVotingContract.value) {
-    emits('getTeam')
-  }
-})
-watch(errorDeployVotingContract, () => {
-  if (errorDeployVotingContract.value) {
-    addErrorToast('Failed to deploy voting contract')
-  }
-})
+
 watch(isSuccessGetProposals, () => {
   if (isSuccessGetProposals.value) {
     const proposalsList = Object.values(proposals.value)

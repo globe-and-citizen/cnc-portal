@@ -24,8 +24,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     event ProposalConcluded(uint256 indexed proposalId, bool isActive);
     event BoardOfDirectorsSet(address[] boardOfDirectors);
 
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
+    function initialize(address _sender) public initializer {
+        __Ownable_init(_sender);
         __ReentrancyGuard_init();
         __Pausable_init();
   }

@@ -11,5 +11,7 @@
   "ProxyModule#ProxyAdmin": "0x5Ee2dFBE2A8C5c54bae25d132887A8127D59D665",
   "TipsModule#Tips": "0x97fD4892E5c98ab60cC510f95723Cd762d03AA35",
   "ExpenseAccountModule#ExpenseAccount": "0x904F11Ed07D7195EAdD1cc4C8feE5D264eac8bf3",
-  "ExpenseAccountModule#FactoryBeacon": "0x2BDd227842e8C9D3899367b4F2BB4083eD200348"
+  "ExpenseAccountModule#FactoryBeacon": "0x2BDd227842e8C9D3899367b4F2BB4083eD200348",
+  "Officer#Officer": "0xe0A63e568b034E5931a7DD8a8B75a2B91358dB18",
+  "Officer#Beacon": "0xE30064355035f19526bA616020Ba3E8D103D8908"
 }
