@@ -143,10 +143,11 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   /**
    * @dev Checks if an action has been approved by an address.
    * @param _actionId The id of the action.
+    * @param _address The address to check approval for.
    * @return A boolean indicating if the action has been approved.
    */
-  function isApproved(uint256 _actionId) external view returns (bool) {
-    return actions[_actionId].approvals[msg.sender];
+  function isApproved(uint256 _actionId, address _address) external view returns (bool) {
+    return actions[_actionId].approvals[_address];
   }
 
   /**

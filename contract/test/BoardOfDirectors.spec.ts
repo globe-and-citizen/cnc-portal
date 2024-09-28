@@ -224,6 +224,26 @@ describe('BoardOfDirectors', async () => {
       expect(boardOfDirectors).to.include.members([boD1.address, boD2.address, boD3.address])
     })
 
+    it('should remove existing board members before setting new ones', async () => {
+      const { founder, boD1, boD2, boD3, voting, boardOfDirectorsProxy } = await deployFixture()
+
+      // Initially set some board members
+      await voting.connect(founder).setBoardOfDirectors([boD1.address, boD2.address])
+
+      let boardOfDirectors = await boardOfDirectorsProxy.getBoardOfDirectors()
+      expect(boardOfDirectors).to.have.lengthOf(2)
+      expect(boardOfDirectors).to.include.members([boD1.address, boD2.address])
+
+      // Now set a different board of directors
+      await voting.connect(founder).setBoardOfDirectors([boD2.address, boD3.address])
+
+      // Ensure the previous members were removed and the new ones were set
+      boardOfDirectors = await boardOfDirectorsProxy.getBoardOfDirectors()
+      expect(boardOfDirectors).to.have.lengthOf(2)
+      expect(boardOfDirectors).to.include.members([boD2.address, boD3.address])
+      expect(boardOfDirectors).to.not.include.members([boD1.address])
+    })
+
     it('should emits BoardOfDirectorsChanged', async () => {
       const { founder, boD1, boD2, boD3, voting, boardOfDirectorsProxy } = await deployFixture()
 
@@ -304,75 +324,6 @@ describe('BoardOfDirectors', async () => {
     })
   })
 
-  context('getPendingActions', async () => {
-    it('should paginate actions', async () => {
-      const { boD1, boardOfDirectorsProxy, bank, founder } = await addActionFixture()
-      const actionData = bank.interface.encodeFunctionData('transfer', [
-        founder.address,
-        ethers.parseEther('5')
-      ])
-      // add another action
-      await boardOfDirectorsProxy
-        .connect(boD1)
-        .addAction(await bank.getAddress(), 'deposit', actionData)
-
-      const actions = await boardOfDirectorsProxy.getPendingActions(0, 1) // get first action limit 1
-      expect(actions).to.have.lengthOf(1)
-      expect(actions[0].id).to.eq(0)
-      expect(actions[0].target).to.eq(await bank.getAddress())
-      expect(actions[0].description).to.eq('deposit')
-      expect(actions[0].data).to.eq(actionData)
-      expect(actions[0].approvalCount).to.eq(1) // boD1 automatically approves the action
-      expect(actions[0].isExecuted).to.be.false
-      expect(await boardOfDirectorsProxy.actionCount()).to.eq(2)
-    })
-
-    it('should return all pending actions if limit is greater than pendingActionCount', async () => {
-      const { boardOfDirectorsProxy, bank, founder } = await addActionFixture()
-      const actionData = bank.interface.encodeFunctionData('transfer', [
-        founder.address,
-        ethers.parseEther('5')
-      ])
-
-      const actions = await boardOfDirectorsProxy.getPendingActions(0, 2) // get all pending actions
-      expect(actions).to.have.lengthOf(1)
-      expect(actions[0].id).to.eq(0)
-      expect(actions[0].target).to.eq(await bank.getAddress())
-      expect(actions[0].description).to.eq('deposit')
-      expect(actions[0].data).to.eq(actionData)
-      expect(actions[0].approvalCount).to.eq(1) // boD1 automatically approves the action
-      expect(actions[0].isExecuted).to.be.false
-      expect(await boardOfDirectorsProxy.pendingActionCount()).to.eq(1)
-      expect(await boardOfDirectorsProxy.executedActionCount()).to.eq(0)
-    })
-  })
-
-  context('getExecutedActions', async () => {
-    it('should paginate executed actions', async () => {
-      const { boD2, boardOfDirectorsProxy } = await addActionFixture()
-
-      // approve action by boD2 it will be executed because 50% of BoDs approved
-      await boardOfDirectorsProxy.connect(boD2).approve(0)
-
-      const actions = await boardOfDirectorsProxy.getExecutedActions(0, 1) // get first action limit 1
-      expect(actions).to.have.lengthOf(1)
-      expect(actions[0].isExecuted).to.be.true
-      expect(await boardOfDirectorsProxy.pendingActionCount()).to.eq(0)
-      expect(await boardOfDirectorsProxy.executedActionCount()).to.eq(1)
-    })
-
-    it('should return all executed actions if limit is greater than executedActionCount', async () => {
-      const { boD2, boardOfDirectorsProxy } = await addActionFixture()
-
-      // approve action by boD2 it will be executed because 50% of BoDs approved
-      await boardOfDirectorsProxy.connect(boD2).approve(0)
-
-      const actions = await boardOfDirectorsProxy.getExecutedActions(0, 2) // get all executed actions
-      expect(actions).to.have.lengthOf(1)
-      expect(actions[0].isExecuted).to.be.true
-    })
-  })
-
   context('approve', async () => {
     it('should approve action correctly', async () => {
       const { boD2, boardOfDirectorsProxy } = await addActionFixture()
@@ -382,8 +333,7 @@ describe('BoardOfDirectors', async () => {
 
       const action = await boardOfDirectorsProxy.actions(0)
       expect(action.approvalCount).to.eq(2) // boD1 and boD2 approve the action
-      expect(await boardOfDirectorsProxy.actionApprovals(0, boD2.address)).to.be.true
-      expect(await boardOfDirectorsProxy.actionApprovers(0, 1)).to.eq(boD2.address)
+      expect(await boardOfDirectorsProxy.isApproved(0, boD2.address)).to.be.true
     })
 
     it('should emits Approval', async () => {
@@ -467,8 +417,7 @@ describe('BoardOfDirectors', async () => {
 
       const action = await boardOfDirectorsProxy.actions(0)
       expect(action.approvalCount).to.eq(0) // boD1 revoke the action
-      expect(await boardOfDirectorsProxy.actionApprovals(0, boD1.address)).to.be.false
-      expect(await boardOfDirectorsProxy.actionApprovers(0, 0)).to.eq(boD1.address)
+      expect(await boardOfDirectorsProxy.isApproved(0, boD1.address)).to.be.false
     })
 
     it('should emits Revocation', async () => {
@@ -544,16 +493,6 @@ describe('BoardOfDirectors', async () => {
       const boardOfDirectors = await boardOfDirectorsProxy.getBoardOfDirectors()
       expect(boardOfDirectors).to.have.lengthOf(3)
       expect(boardOfDirectors).to.include.members([boD1.address, boD2.address, boD3.address])
-    })
-  })
-
-  context('getActionApprovers', async () => {
-    it('should return all BoDs who approved the action', async () => {
-      const { boD1, boardOfDirectorsProxy } = await addActionFixture()
-
-      const actionApprovers = await boardOfDirectorsProxy.getActionApprovers(0)
-      expect(actionApprovers).to.have.lengthOf(1)
-      expect(actionApprovers).to.include.members([boD1.address])
     })
   })
 
