@@ -101,7 +101,7 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 
-const activeTab = ref(5)
+const activeTab = ref(0)
 
 const route = useRoute()
 
