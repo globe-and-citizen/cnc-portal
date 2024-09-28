@@ -93,13 +93,31 @@ const to = ref<string | null>(null)
 const description = ref<string>('')
 const dropdown = ref<boolean>(true)
 const emit = defineEmits(['transfer', 'closeModal', 'searchMembers'])
-const props = defineProps<{
-  loading: boolean
-  bankBalance: string | null
-  filteredMembers: User[]
-  service: string
-  asBod: boolean
-}>()
+const props = defineProps({
+  loading: {
+    type: Boolean,
+    required: true
+  },
+  bankBalance: {
+    type: String,
+    required: false,
+    default: '0'
+  },
+  filteredMembers: {
+    type: Array<User>,
+    required: true,
+    default: []
+  },
+  service: {
+    type: String,
+    required: true
+  },
+  asBod: {
+    type: Boolean,
+    required: false,
+    default: false
+  }
+})
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })

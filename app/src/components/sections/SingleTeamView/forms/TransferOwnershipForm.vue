@@ -63,10 +63,17 @@ import { isAddress } from 'ethers'
 const newOwner = ref('')
 const description = ref('')
 const emits = defineEmits(['transferOwnership'])
-const props = defineProps<{
-  transferOwnershipLoading: boolean
-  asBod: boolean
-}>()
+const props = defineProps({
+  transferOwnershipLoading: {
+    type: Boolean,
+    required: true
+  },
+  asBod: {
+    type: Boolean,
+    required: false,
+    default: false
+  }
+})
 
 const validAddress = helpers.withMessage('Invalid address', (address) => isAddress(address))
 const rules = {

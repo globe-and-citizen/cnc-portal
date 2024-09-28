@@ -109,7 +109,7 @@
           @searchMembers="(input) => searchUsers({ name: '', address: input })"
           :filteredMembers="foundUsers"
           :loading="transferLoading || addActionLoading"
-          :bank-balance="teamBalance"
+          :bank-balance="teamBalance || '0'"
           service="Bank"
           :asBod="owner == team.boardOfDirectorsAddress"
         />
