@@ -165,7 +165,11 @@ watch(errorApprovalCount, () => {
 })
 
 onMounted(async () => {
-  await executeIsApproved(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  await executeIsApproved(
+    props.team.boardOfDirectorsAddress!,
+    props.action.actionId,
+    currentAddress
+  )
   await executeApprovalCount(props.team.boardOfDirectorsAddress!, props.action.actionId)
 })
 </script>

@@ -12,7 +12,7 @@ export interface IBoDService {
   addAction(bodAddress: string, action: Partial<Action>): Promise<void>
   approve(actionId: number, bodAddress: string): Promise<void>
   revoke(actionId: number, bodAddress: string): Promise<void>
-  isApproved(actionId: number, bodAddress: string): Promise<boolean>
+  isApproved(actionId: number, address: string, bodAddress: string): Promise<boolean>
   isExecuted(actionId: number, bodAddress: string): Promise<boolean>
   getApprovalCount(actionId: number, bodAddress: string): Promise<number>
 }
@@ -63,9 +63,9 @@ export class BoDService implements IBoDService {
     await tx.wait()
   }
 
-  async isApproved(actionId: number, bodAddress: string): Promise<boolean> {
+  async isApproved(actionId: number, address: string, bodAddress: string): Promise<boolean> {
     const bodContract = await this.getBoDContract(bodAddress)
-    const approvers = await bodContract.isApproved(actionId)
+    const approvers = await bodContract.isApproved(actionId, address)
 
     return approvers
   }

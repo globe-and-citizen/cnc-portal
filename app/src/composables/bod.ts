@@ -122,10 +122,10 @@ export function useIsActionApproved() {
   const loading = ref(false)
   const error = ref<unknown>(null)
 
-  async function isApproved(bodAddress: string, actionId: number) {
+  async function isApproved(bodAddress: string, actionId: number, address: string) {
     try {
       loading.value = true
-      data.value = await bodService.isApproved(actionId, bodAddress)
+      data.value = await bodService.isApproved(actionId, bodAddress, address)
     } catch (err) {
       error.value = err
       console.log(err)
