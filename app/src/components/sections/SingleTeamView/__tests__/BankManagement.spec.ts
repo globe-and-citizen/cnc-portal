@@ -43,10 +43,10 @@ describe('BankManagement', () => {
         team: {
           bankAddress: '0x1234567890123456789012345678901234567890',
           ownerAddress: '0x1234567890123456789012345678901234567890',
-          boardOfDirectorsAddress: '0x0987654321098765432109876543210987654321',
+          boardOfDirectorsAddress: '0x0987654321098765432109876543210987654321'
         },
         bankOwner: '0x1234567890123456789012345678901234567890',
-        loadingOwner: false,
+        loadingOwner: false
       },
       global: {
         plugins: [
