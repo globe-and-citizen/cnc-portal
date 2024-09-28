@@ -16,6 +16,7 @@ interface IBankAccount {
 
 interface IVotingContract {
     function initialize(address _sender) external;
+    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external;
 }
 
 interface IBodContract {
@@ -94,6 +95,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             abi.encodeWithSelector(IBodContract.initialize.selector, args) 
         );
         bodContract = address(proxyBod);
+
+        IVotingContract(votingContract).setBoardOfDirectorsContractAddress(bodContract);
 
         emit ContractDeployed("BoDContract", bodContract);
     }
