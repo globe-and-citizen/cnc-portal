@@ -69,8 +69,17 @@
           <LoadingButton v-if="pushTipLoading" color="primary btn-xs" />
           <button
             v-else
-            className="btn btn-primary btn-xs text-white "
-            @click="pushTip(membersAddress, tipAmount, team.bankAddress ?? '')"
+            className="btn btn-primary btn-xs text-white"
+            :disabled="tipAmount <= 0"
+            @click="
+              () => {
+                if (owner == team.boardOfDirectorsAddress) {
+                  pushTipModal = true
+                } else {
+                  pushTip(membersAddress, tipAmount, team.bankAddress!)
+                }
+              }
+            "
           >
             Send
           </button>
@@ -89,19 +98,32 @@
           v-if="transferModal"
           @close-modal="() => (transferModal = false)"
           @transfer="
-            async (to: string, amount: string) => {
-              transferFromBank(to, amount)
+            async (to: string, amount: string, description: string) => {
+              if (owner == team.boardOfDirectorsAddress) {
+                await addTransferAction(to, amount, description)
+              } else {
+                await transferFromBank(to, amount)
+              }
             }
           "
           @searchMembers="(input) => searchUsers({ name: '', address: input })"
           :filteredMembers="foundUsers"
-          :loading="transferLoading"
+          :loading="transferLoading || addActionLoading"
           :bank-balance="teamBalance"
           service="Bank"
+          :asBod="owner == team.boardOfDirectorsAddress"
+        />
+      </ModalComponent>
+      <ModalComponent v-model="pushTipModal">
+        <DescriptionActionForm
+          v-if="pushTipModal"
+          @submit="async (description: string) => addPushTipAction(description)"
+          :loading="addActionLoading"
+          actionName="Send Tip"
         />
       </ModalComponent>
     </div>
-    <BankManagement :team="team" />
+    <BankManagement :team="team" :bank-owner="owner ?? ''" :loading-owner="loadingOwner" />
   </div>
 </template>
 <script setup lang="ts">
@@ -120,11 +142,16 @@ import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
-import { useBankBalance, useBankDeposit, useBankTransfer } from '@/composables/bank'
+import { useBankBalance, useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useAddAction } from '@/composables/bod'
+import { BankService } from '@/services/bankService'
+import type { Address } from 'viem'
+import DescriptionActionForm from './forms/DescriptionActionForm.vue'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
+const pushTipModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
@@ -161,6 +188,12 @@ const {
   error: pushTipError
 } = usePushTip()
 const {
+  execute: executeAddAction,
+  error: errorAddAction,
+  isLoading: addActionLoading,
+  isSuccess: addActionSuccess
+} = useAddAction()
+const {
   execute: executeSearchUser,
   response: searchUserResponse,
   data: users
@@ -181,6 +214,41 @@ const {
 const props = defineProps<{
   team: Partial<Team>
 }>()
+
+const {
+  data: owner,
+  error: errorOwner,
+  isLoading: loadingOwner,
+  execute: getOwner
+} = useBankOwner(props.team.bankAddress!)
+
+const bankService = new BankService()
+
+const addTransferAction = async (to: string, amount: string, description: string) => {
+  await executeAddAction(props.team, {
+    targetAddress: props.team.bankAddress! as Address,
+    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'transfer', [
+      to,
+      amount
+    ])) as Address,
+    description
+  })
+  transferModal.value = false
+}
+const addPushTipAction = async (description: string) => {
+  await executeAddAction(props.team, {
+    targetAddress: props.team.bankAddress! as Address,
+    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'pushTip', [
+      membersAddress.value,
+      tipAmount.value
+    ])) as Address,
+    description
+  })
+  if (errorAddAction.value) return
+
+  pushTipModal.value = false
+  tipAmount.value = 0
+}
 
 watch(depositSuccess, () => {
   if (depositSuccess.value) {
@@ -223,6 +291,23 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
+watch(errorOwner, () => {
+  if (errorOwner.value) {
+    addErrorToast('Failed to get bank owner')
+  }
+})
+watch(errorAddAction, () => {
+  if (errorAddAction.value) {
+    console.log(errorAddAction.value)
+    addErrorToast('Failed to add action')
+  }
+})
+watch(addActionSuccess, () => {
+  console.log(addActionSuccess.value)
+  if (addActionSuccess.value) {
+    addSuccessToast('Action added successfully')
+  }
+})
 
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
@@ -256,8 +341,9 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (props.team.bankAddress) getBalance(props.team.bankAddress)
+  await getOwner()
 })
 const membersAddress = computed(() => {
   return props.team.members?.map((member: { address: string }) => member.address) ?? []

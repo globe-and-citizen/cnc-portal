@@ -1,36 +1,45 @@
 <template>
   <div class="flex flex-col gap-8">
-    <h2>Action #{{ action.id }}</h2>
-
-    <SkeletonLoading v-if="approversLoading" class="w-96 h-6" />
-
-    <div v-if="(approvers?.length ?? 0) > 0 && !approversLoading">
-      <div class="overflow-x-auto">
-        <table class="table table-xs text-center">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Name</th>
-              <th>Address</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(approver, index) in approvers" :key="index" class="hover">
-              <th>{{ index + 1 }}</th>
-              <td>
-                {{
-                  team.members?.filter((member) => member.address == approver)[0].name ?? 'Unknown'
-                }}
-              </td>
-              <td>{{ approver }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="flex flex-row gap-5 items-center">
+      <h2>Action #{{ action.actionId }}</h2>
+      <div class="badge badge-sm" :class="`${isApproved ? 'badge-primary' : 'badge-secondary'}`">
+        {{ isApproved ? 'Approved by You' : 'Waiting for your approval' }}
       </div>
     </div>
-    <div class="flex justify-center">
+
+    <SkeletonLoading v-if="isApprovedLoading || approvalCountLoading" class="w-96 h-6" />
+    <div v-else>
+      <div class="flex flex-col justify-between gap-1 text-sm">
+        <p>Description: {{ action.description }}</p>
+        <p>
+          Target Address:
+          <span class="text-xs badge badge-sm badge-primary"
+            >{{ action.targetAddress }}
+            {{ action.targetAddress == team.bankAddress ? '(Bank)' : '' }}</span
+          >
+        </p>
+        <p>Is Executed: {{ action.isExecuted }}</p>
+        <p>
+          Approvals {{ approvalCount }}/{{ boardOfDirectors.length }} board of directors approved
+        </p>
+        <p>
+          Created By:
+          <span class="text-xs badge badge-sm badge-primary"
+            >{{ action.userAddress }}
+            {{
+              team.members?.filter((member) => member.address == action.userAddress)?.[0].name
+            }}</span
+          >
+        </p>
+      </div>
+    </div>
+
+    <div
+      v-if="!action.isExecuted || !boardOfDirectors.includes(currentAddress as Address)"
+      class="flex justify-center"
+    >
       <LoadingButton
-        v-if="status === 'pending' || isConfirming"
+        v-if="loadingApprove || loadingRevoke"
         color="primary"
         class="w-48 text-center"
       />
@@ -46,16 +55,47 @@
 </template>
 <script setup lang="ts">
 import type { Action, Team } from '@/types'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Address } from 'viem'
-import { BOD_ABI } from '@/artifacts/abi/bod'
-import { watch } from 'vue'
 import { useToastStore, useUserDataStore } from '@/stores'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
+import {
+  useApprovalCount,
+  useApproveAction,
+  useIsActionApproved,
+  useRevokeAction,
+  useActionExecuted
+} from '@/composables/bod'
+import { onMounted, watch } from 'vue'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
+const {
+  data: isApproved,
+  error: errorIsApproved,
+  isLoading: isApprovedLoading,
+  execute: executeIsApproved
+} = useIsActionApproved()
+const {
+  execute: approve,
+  error: errorApprove,
+  isLoading: loadingApprove,
+  isSuccess: successApprove
+} = useApproveAction()
+const {
+  execute: revoke,
+  error: errorRevoke,
+  isLoading: loadingRevoke,
+  isSuccess: successRevoke
+} = useRevokeAction()
+const {
+  data: approvalCount,
+  error: errorApprovalCount,
+  isLoading: approvalCountLoading,
+  execute: executeApprovalCount
+} = useApprovalCount()
+const { data: isExecuted, execute: executeIsExecuted } = useActionExecuted()
 
 const props = defineProps<{
   action: Action
@@ -64,73 +104,68 @@ const props = defineProps<{
 }>()
 const emits = defineEmits(['closeModal'])
 
-const {
-  data: approvers,
-  isLoading: approversLoading,
-  error: approversError
-} = useReadContract({
-  abi: BOD_ABI,
-  address: props.team.boardOfDirectorsAddress! as Address,
-  functionName: 'getActionApprovers',
-  args: [props.action.id]
-})
-
-const { data: isApproved, error: isApprovedError } = useReadContract({
-  abi: BOD_ABI,
-  address: props.team.boardOfDirectorsAddress! as Address,
-  functionName: 'actionApprovals',
-  args: [props.action.id, currentAddress as Address]
-})
-
-const { data: hash, status, writeContractAsync } = useWriteContract()
-const {
-  isLoading: isConfirming,
-  error: confirmError,
-  isSuccess
-} = useWaitForTransactionReceipt({
-  hash
-})
 const approveAction = async () => {
-  await writeContractAsync({
-    abi: BOD_ABI,
-    address: props.team.boardOfDirectorsAddress! as Address,
-    functionName: 'approve',
-    args: [props.action.id]
-  })
-}
-const revokeAction = async () => {
-  await writeContractAsync({
-    abi: BOD_ABI,
-    address: props.team.boardOfDirectorsAddress! as Address,
-    functionName: 'revoke',
-    args: [props.action.id]
-  })
+  await approve(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  if (errorApprove.value) {
+    return
+  }
+
+  await executeIsExecuted(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  if (isExecuted.value) {
+    useCustomFetch(`actions/${props.action.id}`, {
+      immediate: true
+    }).patch({
+      isExecuted: true
+    })
+  }
+
+  emits('closeModal')
 }
 
-watch(approversError, () => {
-  if (approversError.value) {
-    addErrorToast('Failed to fetch approvers')
+const revokeAction = async () => {
+  await revoke(props.team.boardOfDirectorsAddress!, props.action.actionId)
+
+  if (errorRevoke.value) {
+    return
+  }
+  emits('closeModal')
+}
+
+watch(errorIsApproved, () => {
+  if (errorIsApproved.value) {
+    addErrorToast('Failed to get action approval status')
   }
 })
-watch(isApprovedError, () => {
-  if (isApprovedError.value) {
-    addErrorToast('Failed to fetch approval status')
+watch(errorApprove, () => {
+  if (errorApprove.value) {
+    addErrorToast('Failed to approve action')
   }
 })
-// watch(isSuccess, () => {
-//   if (isSuccess.value) {
-//     addSuccessToast(`Action ${isApproved ? 'revoked' : 'approved'}   successfully`)
-//     emits('closeModal')
-//   }
-// })
-// watch(status, () => {
-//   if (status.value === 'error') {
-//     addErrorToast(`Failed to ${isApproved ? 'revoke' : 'approve'} transaction`)
-//   }
-// })
-// watch(confirmError, () => {
-//   if (confirmError.value) {
-//     addErrorToast(`Failed to ${isApproved ? 'revoke' : 'approve'} transaction`)
-//   }
-// })
+watch(errorRevoke, () => {
+  if (errorRevoke.value) {
+    addErrorToast('Failed to revoke action')
+  }
+})
+watch(successApprove, () => {
+  if (successApprove.value) {
+    addSuccessToast('Action approved')
+    emits('closeModal')
+  }
+})
+watch(successRevoke, () => {
+  if (successRevoke.value) {
+    addSuccessToast('Action revoked')
+    emits('closeModal')
+  }
+})
+watch(errorApprovalCount, () => {
+  if (errorApprovalCount.value) {
+    addErrorToast('Failed to get approval count')
+  }
+})
+
+onMounted(async () => {
+  await executeIsApproved(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  await executeApprovalCount(props.team.boardOfDirectorsAddress!, props.action.actionId)
+})
 </script>

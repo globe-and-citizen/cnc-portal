@@ -9,11 +9,18 @@
     {{ NETWORK.currencySymbol }}
   </h3>
 
+  <h3 v-if="asBod" class="pt-2 text-red-500">This is will create a board of direction's action</h3>
+
   <div class="flex flex-col items-center">
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>To</p>
       |
       <input type="text" class="grow" data-test="recipient-input" v-model="to" />
+    </label>
+    <label v-if="asBod" class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+      <p>Description</p>
+      |
+      <input type="text" class="grow" data-test="amount-input" v-model="description" />
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
@@ -83,13 +90,15 @@ import { useVuelidate } from '@vuelidate/core'
 
 const amount = ref<string>('0')
 const to = ref<string | null>(null)
+const description = ref<string>('')
 const dropdown = ref<boolean>(true)
 const emit = defineEmits(['transfer', 'closeModal', 'searchMembers'])
-defineProps<{
+const props = defineProps<{
   loading: boolean
   bankBalance: string | null
   filteredMembers: User[]
   service: string
+  asBod: boolean
 }>()
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
@@ -105,17 +114,22 @@ const rules = {
     required,
     numeric,
     notZero
+  },
+  description: {
+    required: helpers.withMessage('Description is required', (value: string) => {
+      return props.asBod ? value.length > 0 : true
+    })
   }
 }
 
-const $v = useVuelidate(rules, { to, amount })
+const $v = useVuelidate(rules, { to, amount, description })
 
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) {
     return
   }
-  emit('transfer', to.value, amount.value)
+  emit('transfer', to.value, amount.value, description.value)
 }
 
 watch(to, () => {

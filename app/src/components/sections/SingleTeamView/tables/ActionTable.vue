@@ -5,33 +5,29 @@
         <th>No</th>
         <th>Target</th>
         <th>Description</th>
-        <th>Approval Count</th>
         <th>Executed</th>
         <th>Function Signature</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-if="actionCount == BigInt(0)">
+      <tr v-if="actionCount == 0">
         <td class="text-center font-bold text-lg h-96" colspan="6" rowspan="10">No actions</td>
       </tr>
       <tr
         v-else
-        class="hover"
-        :class="{ 'cursor-pointer': !action.isExecuted }"
+        class="hover cursor-pointer"
         v-for="(action, index) in actions"
         :key="index"
         @click="
           () => {
-            if (action.isExecuted) return
             selectedAction = action
             approveModal = true
           }
         "
       >
         <th>{{ index + 1 }}</th>
-        <td>{{ action.target }}</td>
+        <td>{{ action.targetAddress }}</td>
         <td>{{ action.description }}</td>
-        <td>{{ action.approvalCount }}</td>
         <td>{{ action.isExecuted }}</td>
         <td>{{ action.data.slice(0, 10) }}...</td>
       </tr>
@@ -59,7 +55,7 @@ const selectedAction = ref<Action | null>(null)
 const approveModal = ref(false)
 
 defineProps<{
-  actionCount: bigint
+  actionCount: number
   actions: Action[]
   team: Partial<Team>
   boardOfDirectors: Address[]

@@ -53,7 +53,7 @@
         class="btn btn-primary"
         @click.prevent="
           $emit('addAction', {
-            target,
+            targetAddress: target,
             description,
             data
           })
