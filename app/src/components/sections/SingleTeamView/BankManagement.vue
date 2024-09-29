@@ -115,7 +115,7 @@ import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import DescriptionActionForm from './forms/DescriptionActionForm.vue'
-import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
+import { useAddAction } from '@/composables/bod'
 import { BankService } from '@/services/bankService'
 import type { Address } from 'viem'
 
@@ -133,6 +133,7 @@ const props = defineProps<{
   team: Partial<Team>
   bankOwner: string
   loadingOwner: boolean
+  isBod: boolean
 }>()
 const emits = defineEmits(['getOwner'])
 
@@ -169,11 +170,9 @@ const {
   isLoading: addActionLoading,
   isSuccess: addActionSuccess
 } = useAddAction()
-const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
 
 const isOwner = computed(() => props.bankOwner === currentUserAddress)
 const isOwnerBod = computed(() => props.bankOwner === props.team.boardOfDirectorsAddress)
-const isBod = computed(() => boardOfDirectors.value?.includes(currentUserAddress))
 
 const executeBank = async (execute: Function, args: string[] = []) => {
   if (args.length === 0) {
@@ -264,6 +263,5 @@ watch(addActionSuccess, () => {
 
 onMounted(async () => {
   await getIsPaused()
-  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
 })
 </script>

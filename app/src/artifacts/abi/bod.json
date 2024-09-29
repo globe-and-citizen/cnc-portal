@@ -347,6 +347,11 @@
         "internalType": "uint256",
         "name": "_actionId",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_address",
+        "type": "address"
       }
     ],
     "name": "isApproved",

@@ -128,7 +128,6 @@ export function useIsActionApproved() {
       data.value = await bodService.isApproved(actionId, bodAddress, address)
     } catch (err) {
       error.value = err
-      console.log(err)
     } finally {
       loading.value = false
     }

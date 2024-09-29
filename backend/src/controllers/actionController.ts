@@ -68,13 +68,13 @@ const addAction = async (req: Request, res: Response) => {
 };
 
 const executeAction = async (req: Request, res: Response) => {
-  const { actionId } = req.params;
-  if (!actionId) return errorResponse(400, "Action ID empty or not set", res);
+  const { id } = req.params;
+  if (!id) return errorResponse(400, "Action ID empty or not set", res);
 
   try {
     const action = await prisma.boardOfDirectorActions.findUnique({
       where: {
-        id: parseInt(actionId as string),
+        id: parseInt(id as string),
       },
     });
 
@@ -82,7 +82,7 @@ const executeAction = async (req: Request, res: Response) => {
 
     await prisma.boardOfDirectorActions.update({
       where: {
-        id: parseInt(actionId as string),
+        id: parseInt(id as string),
       },
       data: {
         isExecuted: true,

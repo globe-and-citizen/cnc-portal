@@ -14,8 +14,8 @@
         /></template>
         <template #tab-1 v-if="!isPending"
           ><ActionTable
-            :actions="exectuedActions?.data ?? []"
-            :actionCount="exectuedActions?.total ?? 0"
+            :actions="executedActions?.data ?? []"
+            :actionCount="executedActions?.total ?? 0"
             :board-of-directors="boardOfDirectors"
             :team="team"
             @refetch="async () => await fetchExecutedActions()"
@@ -119,7 +119,7 @@ const {
   isFetching: executedActionsLoading,
   error: errorExecutedActions,
   execute: fetchExecutedActions,
-  data: exectuedActions
+  data: executedActions
 } = useCustomFetch<ActionResponse>(`actions`, {
   immediate: false,
   beforeFetch: ({ options, url }) => {
@@ -132,7 +132,9 @@ const {
 
     return { options, url }
   }
-}).get()
+})
+  .get()
+  .json()
 
 const addAction = async (action: Action) => {
   await executeAddAction(props.team!, action)
@@ -142,7 +144,7 @@ const addAction = async (action: Action) => {
 
 const isPending = computed(() => activeTab.value === 0)
 const currentCount = computed(
-  () => (isPending.value ? pendingActions.value?.total : exectuedActions.value?.total) ?? 0
+  () => (isPending.value ? pendingActions.value?.total : executedActions.value?.total) ?? 0
 )
 
 watch(errorPendingActions, () => {

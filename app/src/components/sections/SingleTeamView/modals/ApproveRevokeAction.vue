@@ -114,9 +114,7 @@ const approveAction = async () => {
   if (isExecuted.value) {
     useCustomFetch(`actions/${props.action.id}`, {
       immediate: true
-    }).patch({
-      isExecuted: true
-    })
+    }).patch()
   }
 
   emits('closeModal')

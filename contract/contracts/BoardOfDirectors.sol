@@ -66,11 +66,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     _action.target = _target;
     _action.description = _description;
     _action.data = _data;
-    _action.approvalCount = 1;
-    _action.approvals[msg.sender] = true;
     _action.createdBy = msg.sender;
 
     // Add the first approval
+    _action.approvalCount = 1;
     _action.approvals[msg.sender] = true;
     emit ActionAdded(actionCount, _target, _description, _data);
 

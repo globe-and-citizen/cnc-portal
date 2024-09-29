@@ -1,6 +1,6 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import BOD_ABI from '@/artifacts/abi/bod.json'
-import type { Contract } from 'ethers'
+import { type Contract } from 'ethers'
 import { SmartContract } from './contractService'
 import type { Action } from '@/types'
 
@@ -63,7 +63,7 @@ export class BoDService implements IBoDService {
     await tx.wait()
   }
 
-  async isApproved(actionId: number, address: string, bodAddress: string): Promise<boolean> {
+  async isApproved(actionId: number, bodAddress: string, address: string): Promise<boolean> {
     const bodContract = await this.getBoDContract(bodAddress)
     const approvers = await bodContract.isApproved(actionId, address)
 

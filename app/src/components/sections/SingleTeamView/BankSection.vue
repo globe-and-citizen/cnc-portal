@@ -46,7 +46,7 @@
           </button>
           <button
             class="btn btn-xs btn-secondary"
-            v-if="team.bankAddress && team.ownerAddress == useUserDataStore().address"
+            v-if="team.bankAddress && (team.ownerAddress == useUserDataStore().address || isBod)"
             @click="transferModal = true"
           >
             Transfer
@@ -123,7 +123,12 @@
         />
       </ModalComponent>
     </div>
-    <BankManagement :team="team" :bank-owner="owner ?? ''" :loading-owner="loadingOwner" />
+    <BankManagement
+      :team="team"
+      :bank-owner="owner ?? ''"
+      :loading-owner="loadingOwner"
+      :isBod="isBod ?? false"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -144,10 +149,11 @@ import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
 import { useBankBalance, useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useAddAction } from '@/composables/bod'
+import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
 import { BankService } from '@/services/bankService'
 import type { Address } from 'viem'
 import DescriptionActionForm from './forms/DescriptionActionForm.vue'
+import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -155,6 +161,7 @@ const pushTipModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
+const ethers = EthersJsAdapter.getInstance()
 
 const { copy, copied, isSupported } = useClipboard()
 
@@ -187,6 +194,8 @@ const {
   isSuccess: pushTipSuccess,
   error: pushTipError
 } = usePushTip()
+const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
+const isBod = computed(() => boardOfDirectors.value?.includes(useUserDataStore().address))
 const {
   execute: executeAddAction,
   error: errorAddAction,
@@ -229,10 +238,11 @@ const addTransferAction = async (to: string, amount: string, description: string
     targetAddress: props.team.bankAddress! as Address,
     data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'transfer', [
       to,
-      amount
+      ethers.parseEther(amount)
     ])) as Address,
     description
   })
+  if (errorAddAction.value) return
   transferModal.value = false
 }
 const addPushTipAction = async (description: string) => {
@@ -240,7 +250,7 @@ const addPushTipAction = async (description: string) => {
     targetAddress: props.team.bankAddress! as Address,
     data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'pushTip', [
       membersAddress.value,
-      tipAmount.value
+      ethers.parseEther(tipAmount.value.toString())
     ])) as Address,
     description
   })
@@ -298,12 +308,10 @@ watch(errorOwner, () => {
 })
 watch(errorAddAction, () => {
   if (errorAddAction.value) {
-    console.log(errorAddAction.value)
     addErrorToast('Failed to add action')
   }
 })
 watch(addActionSuccess, () => {
-  console.log(addActionSuccess.value)
   if (addActionSuccess.value) {
     addSuccessToast('Action added successfully')
   }
@@ -344,6 +352,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
 onMounted(async () => {
   if (props.team.bankAddress) getBalance(props.team.bankAddress)
   await getOwner()
+  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
 })
 const membersAddress = computed(() => {
   return props.team.members?.map((member: { address: string }) => member.address) ?? []
