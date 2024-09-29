@@ -55,7 +55,7 @@ describe('Voting Contract', () => {
     const [founder, boD1] = await ethers.getSigners()
     const VotingFactory = await ethers.getContractFactory('Voting')
     voting = await VotingFactory.connect(founder).deploy()
-    await voting.initialize()
+    await voting.initialize(await founder.getAddress())
 
     const BoardOfDirectorsImplFactory = await ethers.getContractFactory('BoardOfDirectors')
     const boardOfDirectorsImpl = await BoardOfDirectorsImplFactory.deploy()
@@ -136,9 +136,9 @@ describe('Voting Contract', () => {
       })
     })
     describe('OpenZeppelin', () => {
-      it('initializer', () => {
+      it('initializer', async () => {
         const votingAsOwner = voting.connect(owner)
-        expect(votingAsOwner.initialize()).to.be.revertedWith(
+        expect(votingAsOwner.initialize(await owner.getAddress())).to.be.revertedWith(
           'Initializable: contract is already initialized'
         )
       })

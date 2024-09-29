@@ -9,7 +9,7 @@ describe('BoardOfDirectors', async () => {
     // deploy voting contract and initialize
     const VotingFactory = await ethers.getContractFactory('Voting')
     const voting = await VotingFactory.connect(founder).deploy()
-    await voting.initialize()
+    await voting.initialize(await founder.getAddress())
 
     // deploy boardOfDirectors implementation
     const BoardOfDirectorsImplFactory = await ethers.getContractFactory('BoardOfDirectors')
@@ -42,7 +42,7 @@ describe('BoardOfDirectors', async () => {
 
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
-    await bank.initialize(mockTipsAddress)
+    await bank.initialize(mockTipsAddress, await founder.getAddress())
 
     // transfer ownership of bank to boardOfDirectors
     // so that only boardOfDirectors can call bank functions
@@ -306,7 +306,7 @@ describe('BoardOfDirectors', async () => {
     })
   })
 
-  context('getActions', async () => {
+  context('getPendingActions', async () => {
     it('should paginate actions', async () => {
       const { boD1, boardOfDirectorsProxy, bank, founder } = await addActionFixture()
       const actionData = bank.interface.encodeFunctionData('transfer', [
@@ -318,7 +318,7 @@ describe('BoardOfDirectors', async () => {
         .connect(boD1)
         .addAction(await bank.getAddress(), 'deposit', actionData)
 
-      const actions = await boardOfDirectorsProxy.getActions(0, 1) // get first action limit 1
+      const actions = await boardOfDirectorsProxy.getPendingActions(0, 1) // get first action limit 1
       expect(actions).to.have.lengthOf(1)
       expect(actions[0].target).to.eq(await bank.getAddress())
       expect(actions[0].description).to.eq('deposit')
@@ -328,21 +328,48 @@ describe('BoardOfDirectors', async () => {
       expect(await boardOfDirectorsProxy.actionCount()).to.eq(2)
     })
 
-    it('should return all actions if limit is greater than actionCount', async () => {
+    it('should return all pending actions if limit is greater than pendingActionCount', async () => {
       const { boardOfDirectorsProxy, bank, founder } = await addActionFixture()
       const actionData = bank.interface.encodeFunctionData('transfer', [
         founder.address,
         ethers.parseEther('5')
       ])
 
-      const actions = await boardOfDirectorsProxy.getActions(0, 2) // get all actions
+      const actions = await boardOfDirectorsProxy.getPendingActions(0, 2) // get all pending actions
       expect(actions).to.have.lengthOf(1)
       expect(actions[0].target).to.eq(await bank.getAddress())
       expect(actions[0].description).to.eq('deposit')
       expect(actions[0].data).to.eq(actionData)
       expect(actions[0].approvalCount).to.eq(1) // boD1 automatically approves the action
       expect(actions[0].isExecuted).to.be.false
-      expect(await boardOfDirectorsProxy.actionCount()).to.eq(1)
+      expect(await boardOfDirectorsProxy.pendingActionCount()).to.eq(1)
+      expect(await boardOfDirectorsProxy.executedActionCount()).to.eq(0)
+    })
+  })
+
+  context('getExecutedActions', async () => {
+    it('should paginate executed actions', async () => {
+      const { boD2, boardOfDirectorsProxy } = await addActionFixture()
+
+      // approve action by boD2 it will be executed because 50% of BoDs approved
+      await boardOfDirectorsProxy.connect(boD2).approve(0)
+
+      const actions = await boardOfDirectorsProxy.getExecutedActions(0, 1) // get first action limit 1
+      expect(actions).to.have.lengthOf(1)
+      expect(actions[0].isExecuted).to.be.true
+      expect(await boardOfDirectorsProxy.pendingActionCount()).to.eq(0)
+      expect(await boardOfDirectorsProxy.executedActionCount()).to.eq(1)
+    })
+
+    it('should return all executed actions if limit is greater than executedActionCount', async () => {
+      const { boD2, boardOfDirectorsProxy } = await addActionFixture()
+
+      // approve action by boD2 it will be executed because 50% of BoDs approved
+      await boardOfDirectorsProxy.connect(boD2).approve(0)
+
+      const actions = await boardOfDirectorsProxy.getExecutedActions(0, 2) // get all executed actions
+      expect(actions).to.have.lengthOf(1)
+      expect(actions[0].isExecuted).to.be.true
     })
   })
 
