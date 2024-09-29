@@ -140,7 +140,7 @@ describe('BankBeacon', () => {
 
       const bankBeacon = await ethers.getContractAt('Bank', await bankBeaconProxy1.getAddress())
       const paused = await bankBeacon.paused()
-      expect(paused).to.to.be.false
+      expect(paused).to.be.false
     })
 
     it('should write correctly', async () => {

@@ -29,6 +29,10 @@ describe('ExpenseAccount', () => {
         expect(await expenseAccountProxy.owner()).to.eq(await owner.getAddress())
       })
 
+      //TODO: anyone can deposit into the expense account
+      // The owner, the withdrawer, or any other address: That mean 3 test cases. 3 3 transaction to check that
+      // Here you assert that there is an event emited, but you don't check if the balance is updated
+      // The test can be donne with a random value, and the test will pass
       it('Then I can deposit into the expense account contract', async () => {
         const amount = ethers.parseEther('100')
         const tx = await owner.sendTransaction({
@@ -40,11 +44,13 @@ describe('ExpenseAccount', () => {
         await expect(tx).to.emit(expenseAccountProxy, 'Deposited').withArgs(owner.address, amount)
       })
 
+      // the check of the balance will be donne in the first test, so you don't need to check it here
       it('Then I can get the smart contract balance', async () => {
         const balance = await expenseAccountProxy.getBalance()
         expect(balance).to.eq(ethers.parseEther('100'))
       })
 
+      // OK noting to say here
       it('Then I can set a withdrawal limit', async () => {
         await expenseAccountProxy.setMaxLimit(ethers.parseEther('10'))
         expect(await expenseAccountProxy.maxLimit()).to.eq(ethers.parseEther('10'))
@@ -91,6 +97,8 @@ describe('ExpenseAccount', () => {
         expect(await expenseAccountProxy.approvedAddresses(withdrawer.address)).to.eq(false)
       })
 
+      // This is a little bit strange. It's like a user need to be unauthorize sepecially then he can't withdraw
+      // Because a user who never been authorized can't withdraw. It need to be checked also here, so you need to check it also
       it('Then an unauthorized user cannot withdraw', async () => {
         await expect(
           expenseAccountProxy
@@ -104,6 +112,9 @@ describe('ExpenseAccount', () => {
           .to.emit(expenseAccountProxy, 'Paused')
           .withArgs(owner.address)
       })
+
+      // After pause no one can deposit, withdraw, or transfer
+      // and only function that have the onlyOwner and whenNotPaused modifier can be called
 
       it('Then I can unpause the account', async () => {
         await expect(expenseAccountProxy.unpause())
