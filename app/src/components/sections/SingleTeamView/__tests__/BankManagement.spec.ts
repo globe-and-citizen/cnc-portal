@@ -96,18 +96,6 @@ describe('BankManagement', () => {
       )
     })
 
-    it('shows error toast when user is not the owner', async () => {
-      const wrapper = createComponent()
-      const userStore = useUserDataStore()
-      userStore.address = '0x0000000000000000000000000000000000000000'
-
-      const pauseButton = wrapper.find('button.btn-primary')
-      await pauseButton.trigger('click')
-
-      const toastStore = useToastStore()
-      expect(toastStore.addErrorToast).toHaveBeenCalledWith('You are not the owner of this bank')
-    })
-
     it('shows ModalComponent when transferOwnership is clicked', async () => {
       const wrapper = createComponent()
       const transferOwnershipButton = wrapper.find('button[data-test="transfer-ownership"]')

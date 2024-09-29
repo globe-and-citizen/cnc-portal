@@ -446,7 +446,8 @@ describe('ExpenseAccountSection', () => {
           filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
           service: 'Expense Account',
           bankBalance: '0.0',
-          loading: false
+          loading: false,
+          asBod: false
         })
       })
       it('should call transferFromExpenseAccount when @transfer is emitted', async () => {
