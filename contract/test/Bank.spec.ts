@@ -177,7 +177,9 @@ describe('Bank', () => {
       })
 
       it('should not allow to initialize the contract again', async () => {
-        await expect(bankProxy.initialize(await tipsProxy.getAddress())).to.be.reverted
+        const tipsAddress= await tipsProxy.getAddress()
+        const ownerAddress = await owner.getAddress()
+        await expect(bankProxy.initialize(tipsAddress, ownerAddress)).to.be.reverted
       })
     })
   })
