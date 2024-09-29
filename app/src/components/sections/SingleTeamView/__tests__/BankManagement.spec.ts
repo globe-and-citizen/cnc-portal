@@ -2,20 +2,11 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import BankManagement from '../BankManagement.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { useToastStore } from '@/stores/useToastStore'
-import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 
 interface ComponentData {
   transferOwnershipModal: boolean
 }
-
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: vi.fn().mockReturnValue({
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  })
-}))
 
 vi.mock('@/composables/bank', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/composables/bank')>()
