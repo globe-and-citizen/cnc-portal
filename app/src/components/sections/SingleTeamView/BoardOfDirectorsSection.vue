@@ -66,7 +66,7 @@
             </td>
             <td class="flex justify-end">
               <LoadingButton 
-                v-if="status === 'pending'" 
+                v-if="loadingTransferOwnership" 
                 color="primary" 
                 class="w-48" 
               />
@@ -74,10 +74,10 @@
                 v-if="
                   bankOwner == currentAddress &&
                   bankOwner != team.boardOfDirectorsAddress &&
-                  status != 'pending'
+                  !loadingTransferOwnership
                 "
                 class="btn btn-primary"
-                @click="transferBankOwnership"
+                @click="async () => await executeTransferOwnership(team.boardOfDirectorsAddress!)"
               >
                 Transfer bank ownership
               </button>
@@ -161,6 +161,7 @@ import { onMounted, watch } from 'vue'
 import  EXPENSE_ABI from '@/artifacts/abi/expense-account.json'
 import type { Address } from 'viem'
 import { ref } from 'vue'
+import { useReadContract, useWriteContract } from '@wagmi/vue'
 
 const writingContract = ref<string | null | undefined>('')
 import { useBankOwner, useBankTransferOwnership } from '@/composables/bank'
@@ -200,6 +201,7 @@ const {
   isLoading: loadingTransferOwnership
 } = useBankTransferOwnership(props.team.bankAddress!)
 
+const { writeContract, status } = useWriteContract()
 const { addErrorToast } = useToastStore()
 const currentAddress = useUserDataStore().address
 
