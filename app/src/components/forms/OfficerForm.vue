@@ -66,6 +66,11 @@
                   BoD deployed at: {{ team?.boardOfDirectorsAddress }}
                 </span>
               </div>
+              <div>
+                <span v-if="isExpenseDeployed" class="badge badge-primary badge-sm">
+                  Expense deployed at: {{ team?.expenseAccountAddress }}
+                </span>
+              </div>
             </div>
             <div class="flex justify-between mt-4">
               <button
@@ -76,6 +81,14 @@
                 Deploy Bank
               </button>
               <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployBank" />
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="!isExpenseDeployed && !isLoadingDeployExpense"
+                @click="deployExpenseAccount"
+              >
+                Deploy Expense
+              </button>
+              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployExpense" />
               <button
                 class="btn btn-primary btn-sm"
                 v-if="!isVotingDeployed && !isLoadingDeployVoting"
@@ -101,7 +114,8 @@ import {
   useDeployOfficerContract,
   useDeployBank,
   useDeployVoting,
-  useGetOfficerTeam
+  useGetOfficerTeam,
+  useDeployExpenseAccount
 } from '@/composables/officer'
 import { useToastStore } from '@/stores'
 import LoadingButton from '@/components/LoadingButton.vue'
@@ -118,6 +132,7 @@ const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
 const isVotingDeployed = ref(false)
 const isBoDDeployed = ref(false)
+const isExpenseDeployed = ref(false)
 const founders = ref<string[]>([])
 const members = ref<string[]>([])
 
@@ -140,6 +155,12 @@ const {
   isSuccess: deployVotingSuccess,
   error: deployVotingError
 } = useDeployVoting()
+const {
+  execute: deployExpense,
+  isLoading: isLoadingDeployExpense,
+  isSuccess: deployExpenseSuccess,
+  error: deployExpenseError
+} = useDeployExpenseAccount()
 
 // Fetch officer team details using composable
 const { execute: fetchOfficerTeam, isLoading: isLoadingGetTeam, officerTeam } = useGetOfficerTeam()
@@ -163,6 +184,10 @@ const deployVotingContract = async () => {
   await deployVoting(props.team.officerAddress)
 }
 
+const deployExpenseAccount = async () => {
+  await deployExpense(props.team.officerAddress)
+}
+
 // Watch officer team data and update state
 watch(officerTeam, async (value) => {
   if (value) {
@@ -175,6 +200,7 @@ watch(officerTeam, async (value) => {
       isBankDeployed.value = value.bankAddress != ethers.ZeroAddress
       isVotingDeployed.value = value.votingAddress != ethers.ZeroAddress
       isBoDDeployed.value = value.bodAddress != ethers.ZeroAddress
+      isExpenseDeployed.value = value.expenseAccountAddress != ethers.ZeroAddress
       if (props.team.bankAddress != value.bankAddress && isBankDeployed.value) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ bankAddress: value.bankAddress })
@@ -193,7 +219,28 @@ watch(officerTeam, async (value) => {
           .json()
         emits('getTeam')
       }
+      if (
+        props.team.expenseAccountAddress != value.expenseAccountAddress &&
+        value.expenseAccountAddress != ethers.ZeroAddress
+      ) {
+        console.log('updating expense account')
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ expenseAccountAddress: value.expenseAccountAddress })
+          .json()
+        emits('getTeam')
+      }
     }
+  }
+})
+watch(deployExpenseSuccess, (value) => {
+  if (value) {
+    addSuccessToast('Expense account deployed successfully')
+    emits('getTeam')
+  }
+})
+watch(deployExpenseError, (value) => {
+  if (value) {
+    addErrorToast('Failed to deploy expense account')
   }
 })
 
