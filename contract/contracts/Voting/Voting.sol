@@ -24,8 +24,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     event ProposalConcluded(uint256 indexed proposalId, bool isActive);
     event BoardOfDirectorsSet(address[] boardOfDirectors);
 
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
+    function initialize(address _sender) public initializer {
+        __Ownable_init(_sender);
         __ReentrancyGuard_init();
         __Pausable_init();
   }
@@ -138,6 +138,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
                 winnerList[i] = candidates[i].candidateAddress;
                 console.log("Winner: ", winnerList[i]);
             }
+            console.log(boardOfDirectorsContractAddress);
             IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
             emit BoardOfDirectorsSet(winnerList);
             emit ProposalConcluded(proposalId, proposal.isActive);
@@ -171,10 +172,9 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         }
     }
 
-    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) public onlyOwner {
+    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) public  {
         boardOfDirectorsContractAddress = _boardOfDirectorsContractAddress;
     }
-
     function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
         IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(_boardOfDirectors);
     }

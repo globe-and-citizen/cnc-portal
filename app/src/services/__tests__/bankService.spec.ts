@@ -55,7 +55,6 @@ vi.mock('@/services/contractService', () => {
 const mockEthersJs = {
   initialize: vi.fn(),
   connectWallet: vi.fn(),
-  deployBankContract: vi.fn(),
   sendTransaction: vi.fn().mockReturnValue(tx),
   getContract: vi.fn().mockReturnValue(bank),
   parseEther: vi.fn((value) => (value / 1e18).toString()),
@@ -95,14 +94,6 @@ describe('Bank Service', () => {
   beforeEach(() => {
     EthersJsAdapter['getInstance'] = vi.fn().mockReturnValue(mockEthersJs)
     bankService = new BankService()
-  })
-
-  describe('createBankContract', () => {
-    it('should create a new bank contract', async () => {
-      const result = await bankService.createBankContract('123')
-      expect(useCustomFetchMock.put).toHaveBeenCalled()
-      expect(result).toBe('0x123')
-    })
   })
 
   describe('deposit', () => {

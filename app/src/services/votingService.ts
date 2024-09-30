@@ -3,11 +3,7 @@ import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapte
 import VOTING_ABI from '@/artifacts/abi/voting.json'
 import type { Contract } from 'ethers'
 import type { Proposal } from '@/types'
-import BEACON_PROXY_ABI from '../artifacts/abi/beacon-proxy.json'
 import { SmartContract } from './contractService'
-import { VOTING_IMPL_ADDRESS, VOTING_BEACON_ADDRESS } from '@/constant'
-import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { ContractTransaction } from 'ethers'
 import type { TransactionResponse } from 'ethers'
 
@@ -26,7 +22,6 @@ export interface IVotingService {
     proposalId: Number,
     candidateAddress: string
   ): Promise<ContractTransaction>
-  createVotingContract(teamId: string): Promise<string>
   pause(votingAddress: string): Promise<TransactionResponse>
   unpause(votingAddress: string): Promise<TransactionResponse>
   transferOwnership(votingAddress: string, newOwner: string): Promise<TransactionResponse>
@@ -40,12 +35,7 @@ export class VotingService implements IVotingService {
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
   }
-  async createVotingContract(teamId: string): Promise<string> {
-    const votingAddress = await this.deployVotingContract()
-    const response = await useCustomFetch<string>(`teams/${teamId}`).put({ votingAddress }).json()
 
-    return response.data.value.votingAddress
-  }
   async addProposal(
     votingAddress: string,
     proposal: Partial<Proposal>
@@ -129,21 +119,7 @@ export class VotingService implements IVotingService {
   private getContractService(votingAddress: string): SmartContract {
     return new SmartContract(votingAddress, VOTING_ABI)
   }
-  async deployVotingContract(): Promise<string> {
-    const votingImplementation = await this.getContract(VOTING_IMPL_ADDRESS)
-    const votingProxyFactory = await this.web3Library.getFactoryContract(
-      BEACON_PROXY_ABI,
-      BEACON_PROXY_BYTECODE
-    )
-    const beaconProxyDeployment = await votingProxyFactory.deploy(
-      VOTING_BEACON_ADDRESS,
-      votingImplementation.interface.encodeFunctionData('initialize', [])
-    )
-    const beaconProxy = await beaconProxyDeployment.waitForDeployment()
-    await beaconProxyDeployment.waitForDeployment()
 
-    return await beaconProxy.getAddress()
-  }
   async isPaused(votingAddress: string): Promise<boolean> {
     const voting = await this.getContract(votingAddress)
 
