@@ -89,7 +89,7 @@ const suggestionContractName = (contractAddress: string) => {
     case props.team.expenseAccountAddress:
       return '(Expense A/c Address)'
     default:
-      break;
+      break
   }
 }
 </script>

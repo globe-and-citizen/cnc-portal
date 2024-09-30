@@ -11,15 +11,10 @@ export function useExpenseAccountTransferOwnership(expenseAccountAddress: string
   const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
-  async function transferExpenseOwnership(
-    newOwner: string
-  ) {
+  async function transferExpenseOwnership(newOwner: string) {
     try {
       loading.value = true
-      data.value = await expenseAccountService.transferOwnership(
-        expenseAccountAddress,
-        newOwner
-      )
+      data.value = await expenseAccountService.transferOwnership(expenseAccountAddress, newOwner)
       isSuccess.value = true
     } catch (err) {
       log.error(parseError(err))
@@ -29,7 +24,7 @@ export function useExpenseAccountTransferOwnership(expenseAccountAddress: string
     }
   }
 
-  return { execute: transferExpenseOwnership, isLoading: loading, isSuccess, error, data }  
+  return { execute: transferExpenseOwnership, isLoading: loading, isSuccess, error, data }
 }
 
 export function useExpenseAccountGetMaxLimit() {

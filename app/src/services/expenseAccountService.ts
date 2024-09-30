@@ -22,7 +22,10 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return await this.deployExpenseAccountContract()
   }
 
-  async transferOwnership(expenseAccountAddress: string, newOwner: string): Promise<TransactionResponse> {
+  async transferOwnership(
+    expenseAccountAddress: string,
+    newOwner: string
+  ): Promise<TransactionResponse> {
     const expenseAccount = await this.getContract(expenseAccountAddress)
     const tx = await expenseAccount.transferOwnership(newOwner)
     await tx.wait()

@@ -43,107 +43,78 @@
       <div class="overflow-x-auto">
         <h2 class="mb-5 text-center">Transfer Ownership (From Founders to Board of Directors)</h2>
         <table class="table table-zebra text-center">
-        <thead>
-          <tr>
-            <th>Contract Name</th>
-            <th>Contract Owner</th>
-            <th>Transfer Ownership</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              Bank
-            </td>
-            <td>
-              <SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
-              <h4>
-                {{ bankOwner }} ({{
-                  bankOwner == team.boardOfDirectorsAddress
-                    ? 'Board of Directors Contract'
-                    : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ?? 'Unknown')
-                }})
-              </h4>
-            </td>
-            <td class="flex justify-end">
-              <LoadingButton 
-                v-if="loadingTransferOwnership" 
-                color="primary" 
-                class="w-48" 
-              />
-              <button
-                v-if="
-                  bankOwner == currentAddress &&
-                  bankOwner != team.boardOfDirectorsAddress &&
-                  !loadingTransferOwnership
-                "
-                class="btn btn-primary"
-                @click="async () => await executeTransferOwnership(team.boardOfDirectorsAddress!)"
-              >
-                Transfer bank ownership
-              </button>
-            </td>
-          </tr>
-          <tr v-if="team.expenseAccountAddress">
-            <td>
-              Expense A/c
-            </td>
-            <td>
-              <SkeletonLoading v-if="isLoadingExpenseOwner" class="w-full h-6" />
-              <h4>
-                {{ expenseOwner }} ({{
-                  expenseOwner == team.boardOfDirectorsAddress
-                    ? 'Board of Directors Contract'
-                    : (team.members?.filter((member) => member.address == expenseOwner)[0]?.name ?? 'Unknown')
-                }})
-              </h4>
-            </td>
-            <td class="flex justify-end">
-              <LoadingButton 
-                v-if="loadingTransferExpenseOwnership" 
-                color="primary" 
-                class="w-48" 
-              />
-              <button
-                v-if="
-                  expenseOwner == currentAddress &&
-                  expenseOwner != team.boardOfDirectorsAddress &&
-                  !loadingTransferExpenseOwnership
-                "
-                class="btn btn-primary"
-                @click="async () => await transferExpenseOwnership(team.boardOfDirectorsAddress!)"
-              >
-                Transfer expense ownership
-              </button>
-            </td>
-          </tr>
-        </tbody>
+          <thead>
+            <tr>
+              <th>Contract Name</th>
+              <th>Contract Owner</th>
+              <th>Transfer Ownership</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Bank</td>
+              <td>
+                <SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
+                <h4>
+                  {{ bankOwner }} ({{
+                    bankOwner == team.boardOfDirectorsAddress
+                      ? 'Board of Directors Contract'
+                      : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ??
+                        'Unknown')
+                  }})
+                </h4>
+              </td>
+              <td class="flex justify-end">
+                <LoadingButton v-if="loadingTransferOwnership" color="primary" class="w-48" />
+                <button
+                  v-if="
+                    bankOwner == currentAddress &&
+                    bankOwner != team.boardOfDirectorsAddress &&
+                    !loadingTransferOwnership
+                  "
+                  class="btn btn-primary"
+                  @click="async () => await executeTransferOwnership(team.boardOfDirectorsAddress!)"
+                >
+                  Transfer bank ownership
+                </button>
+              </td>
+            </tr>
+            <tr v-if="team.expenseAccountAddress">
+              <td>Expense A/c</td>
+              <td>
+                <SkeletonLoading v-if="isLoadingExpenseOwner" class="w-full h-6" />
+                <h4>
+                  {{ expenseOwner }} ({{
+                    expenseOwner == team.boardOfDirectorsAddress
+                      ? 'Board of Directors Contract'
+                      : (team.members?.filter((member) => member.address == expenseOwner)[0]
+                          ?.name ?? 'Unknown')
+                  }})
+                </h4>
+              </td>
+              <td class="flex justify-end">
+                <LoadingButton
+                  v-if="loadingTransferExpenseOwnership"
+                  color="primary"
+                  class="w-48"
+                />
+                <button
+                  v-if="
+                    expenseOwner == currentAddress &&
+                    expenseOwner != team.boardOfDirectorsAddress &&
+                    !loadingTransferExpenseOwnership
+                  "
+                  class="btn btn-primary"
+                  @click="async () => await transferExpenseOwnership(team.boardOfDirectorsAddress!)"
+                >
+                  Transfer expense ownership
+                </button>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
       <!-- End Contract Owners Table -->
-      <!--<SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
-      <h4>
-        <span class="font-bold">Bank Contract Owner</span>: {{ bankOwner }} ({{
-          bankOwner == team.boardOfDirectorsAddress
-            ? 'Board of Directors Contract'
-            : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ?? 'Unknown')
-        }})
-      </h4>
-
-      <div class="flex justify-center">
-        <LoadingButton v-if="loadingTransferOwnership" color="primary" class="w-48" />
-        <button
-          v-if="
-            bankOwner == currentAddress &&
-            bankOwner != team.boardOfDirectorsAddress &&
-            !loadingTransferOwnership
-          "
-          class="btn btn-primary"
-          @click="async () => await executeTransferOwnership(team.boardOfDirectorsAddress!)"
-        >
-          Transfer bank ownership
-        </button>
-      </div>-->
       <BoDAction :team="team" :board-of-directors="(boardOfDirectors as Address[]) ?? []" />
     </div>
   </div>
@@ -159,16 +130,12 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 import { onMounted, watch } from 'vue'
-import  EXPENSE_ABI from '@/artifacts/abi/expense-account.json'
 import type { Address } from 'viem'
-import { ref } from 'vue'
-import { useReadContract, useWriteContract } from '@wagmi/vue'
-import { 
-  useExpenseAccountTransferOwnership, 
-  useExpenseAccountGetOwner 
+import {
+  useExpenseAccountTransferOwnership,
+  useExpenseAccountGetOwner
 } from '@/composables/useExpenseAccount'
 
-const writingContract = ref<string | null | undefined>('')
 import { useBankOwner, useBankTransferOwnership } from '@/composables/bank'
 import { useGetBoardOfDirectors } from '@/composables/bod'
 
@@ -187,7 +154,7 @@ const {
   data: expenseOwner,
   isLoading: isLoadingExpenseOwner,
   error: errorExpenseOwner,
-  execute: executeGetExpenseOwner,
+  execute: executeGetExpenseOwner
 } = useExpenseAccountGetOwner()
 
 const {
@@ -196,16 +163,6 @@ const {
   isLoading,
   execute: executeGetBoardOfDirectors
 } = useGetBoardOfDirectors()
-// const {
-//   data: expenseOwner,
-//   isLoading: isLoadingExpenseOwner,
-//   error: errorExpenseOwner,
-//   refetch: refetchExpenseOwner
-// } = useReadContract({
-//   abi: EXPENSE_ABI,
-//   address: props.team.expenseAccountAddress as Address,
-//   functionName: 'owner'
-// })
 
 const {
   error: errorTransferOwnership,
@@ -220,29 +177,13 @@ const {
   isSuccess: successTransferExpenseOwnerShip
 } = useExpenseAccountTransferOwnership(props.team.expenseAccountAddress!)
 
-const { writeContract, status } = useWriteContract()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const currentAddress = useUserDataStore().address
 
 const executeTransferOwnership = async (newOwner: string) => {
-  writingContract.value = props.team.bankAddress
   await transferBankOwnership(newOwner)
   await executeBankOwner()
-  writingContract.value = null
 }
-
-// const transferExpenseOwnership = async () => {
-//   writingContract.value = props.team.expenseAccountAddress
-//   console.log(`writingContract.value`, writingContract.value)
-//   console.log(`props.team.expenseAccountAddress`, writingContract.value === props.team.expenseAccountAddress)
-//   writeContract({
-//     abi: EXPENSE_ABI,
-//     address: props.team.expenseAccountAddress as Address,
-//     functionName: 'transferOwnership',
-//     args: [props.team.boardOfDirectorsAddress! as Address]
-//   })
-//   writingContract.value = null
-// }
 
 watch(error, () => {
   if (error.value) {
@@ -281,11 +222,5 @@ onMounted(async () => {
   await executeBankOwner()
   if (props.team.expenseAccountAddress)
     await executeGetExpenseOwner(props.team.expenseAccountAddress)
-  console.log(
-    `expenseOwner`, 
-    expenseOwner.value, 
-    `boardOfDirectorsAddress`, 
-    props.team.boardOfDirectorsAddress
-  )
 })
 </script>
