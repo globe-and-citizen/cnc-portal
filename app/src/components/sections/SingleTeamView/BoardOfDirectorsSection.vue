@@ -93,7 +93,7 @@
                 {{ expenseOwner }} ({{
                   expenseOwner == team.boardOfDirectorsAddress
                     ? 'Board of Directors Contract'
-                    : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ?? 'Unknown')
+                    : (team.members?.filter((member) => member.address == expenseOwner)[0]?.name ?? 'Unknown')
                 }})
               </h4>
             </td>
@@ -110,7 +110,7 @@
                   !loadingTransferExpenseOwnership
                 "
                 class="btn btn-primary"
-                @click="async () => await transferExpenseOwnership(team.expenseAccountAddress!)"
+                @click="async () => await transferExpenseOwnership(team.boardOfDirectorsAddress!)"
               >
                 Transfer expense ownership
               </button>
@@ -162,7 +162,10 @@ import  EXPENSE_ABI from '@/artifacts/abi/expense-account.json'
 import type { Address } from 'viem'
 import { ref } from 'vue'
 import { useReadContract, useWriteContract } from '@wagmi/vue'
-import { useExpenseAccountTransferOwnership } from '@/composables/useExpenseAccount'
+import { 
+  useExpenseAccountTransferOwnership, 
+  useExpenseAccountGetOwner 
+} from '@/composables/useExpenseAccount'
 
 const writingContract = ref<string | null | undefined>('')
 import { useBankOwner, useBankTransferOwnership } from '@/composables/bank'
@@ -180,21 +183,28 @@ const {
 } = useBankOwner(props.team.bankAddress!)
 
 const {
+  data: expenseOwner,
+  isLoading: isLoadingExpenseOwner,
+  error: errorExpenseOwner,
+  execute: executeGetExpenseOwner
+} = useExpenseAccountGetOwner()
+
+const {
   boardOfDirectors,
   error,
   isLoading,
   execute: executeGetBoardOfDirectors
 } = useGetBoardOfDirectors()
-const {
-  data: expenseOwner,
-  isLoading: isLoadingExpenseOwner,
-  error: errorExpenseOwner,
-  refetch: refetchExpenseOwner
-} = useReadContract({
-  abi: EXPENSE_ABI,
-  address: props.team.expenseAccountAddress as Address,
-  functionName: 'owner'
-})
+// const {
+//   data: expenseOwner,
+//   isLoading: isLoadingExpenseOwner,
+//   error: errorExpenseOwner,
+//   refetch: refetchExpenseOwner
+// } = useReadContract({
+//   abi: EXPENSE_ABI,
+//   address: props.team.expenseAccountAddress as Address,
+//   functionName: 'owner'
+// })
 
 const {
   error: errorTransferOwnership,
@@ -251,5 +261,13 @@ watch(errorTransferOwnership, () => {
 onMounted(async () => {
   await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
   await executeBankOwner()
+  if (props.team.expenseAccountAddress)
+    await executeGetExpenseOwner(props.team.expenseAccountAddress)
+  console.log(
+    `expenseOwner`, 
+    expenseOwner.value, 
+    `boardOfDirectorsAddress`, 
+    props.team.boardOfDirectorsAddress
+  )
 })
 </script>
