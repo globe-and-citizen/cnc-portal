@@ -43,8 +43,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
 
-  function initialize( address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon, address _expenseAccountBeacon) public initializer {
-        __Ownable_init(msg.sender);
+  function initialize(address owner, address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon, address _expenseAccountBeacon) public initializer {
+        __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
         bankAccountBeacon = _bankAccountBeacon;

@@ -11,9 +11,14 @@ export default buildModule('Officer', (m) => {
   const { beacon: BoDBeacon } = m.useModule(boardOfDirectorsBeaconModule)
   const { beacon: votingBeacon } = m.useModule(VotingBeaconModule)
   const { expenseAccountFactoryBeacon } = m.useModule(ExpenseAccountModule)
-  console.log(BoDBeacon, expenseAccountFactoryBeacon)
-  m.call(officer, 'initialize', [bankBeacon, votingBeacon, BoDBeacon, expenseAccountFactoryBeacon])
-  const beacon = m.contract('Beacon', [officer], {
+  m.call(officer, 'initialize', [
+    beaconAdmin,
+    bankBeacon,
+    votingBeacon,
+    BoDBeacon,
+    expenseAccountFactoryBeacon
+  ])
+  const beacon = m.contract('FactoryBeacon', [officer], {
     from: beaconAdmin
   })
 

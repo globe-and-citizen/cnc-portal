@@ -31,6 +31,7 @@ describe('Officer Contract', function () {
     officer = await upgrades.deployProxy(
       Officer,
       [
+        await owner.getAddress(),
         await bankAccountBeacon.getAddress(),
         await votingContractBeacon.getAddress(),
         await bodBeacon.getAddress(),
@@ -119,6 +120,7 @@ describe('Officer Contract', function () {
     officer = await upgrades.deployProxy(
       Officer,
       [
+        await addr1.getAddress(),
         await bankAccountBeacon.getAddress(),
         await votingContractBeacon.getAddress(),
         await bodBeacon.getAddress(),
