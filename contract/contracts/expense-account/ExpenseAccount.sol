@@ -22,6 +22,7 @@ contract ExpenseAccount is
         __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
+        approvedAddresses[owner] = true;
     }
 
     function transfer(
