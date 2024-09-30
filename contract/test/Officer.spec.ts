@@ -72,7 +72,7 @@ describe('Officer Contract', function () {
     await (officer as Officer).connect(owner).deployExpenseAccount()
 
     const team = await (officer as Officer).getTeam()
-    expect(team[3]).to.be.not.equal('0x0000000000000000000000000000000000000000')
+    expect(team[5]).to.be.not.equal('0x0000000000000000000000000000000000000000')
   })
   it('should pause the contract', async function () {
     await (officer as Officer).connect(owner).pause()

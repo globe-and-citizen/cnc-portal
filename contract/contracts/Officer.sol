@@ -110,9 +110,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             expenseAccountBeacon,
             abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
         );
-        address expenseAccount = address(proxy);
+         expenseAccountContract = address(proxy);
 
-        emit ContractDeployed("ExpenseAccount", expenseAccount);
+        emit ContractDeployed("ExpenseAccount", expenseAccountContract);
     }
   
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
