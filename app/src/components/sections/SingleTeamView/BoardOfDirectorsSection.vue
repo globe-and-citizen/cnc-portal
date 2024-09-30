@@ -99,7 +99,7 @@
             </td>
             <td class="flex justify-end">
               <LoadingButton 
-                v-if="status === 'pending'" 
+                v-if="loadingTransferExpenseOwnership" 
                 color="primary" 
                 class="w-48" 
               />
@@ -107,10 +107,10 @@
                 v-if="
                   expenseOwner == currentAddress &&
                   expenseOwner != team.boardOfDirectorsAddress &&
-                  status != 'pending'
+                  !loadingTransferExpenseOwnership
                 "
                 class="btn btn-primary"
-                @click="transferExpenseOwnership"
+                @click="async () => await transferExpenseOwnership(team.expenseAccountAddress!)"
               >
                 Transfer expense ownership
               </button>
@@ -162,6 +162,7 @@ import  EXPENSE_ABI from '@/artifacts/abi/expense-account.json'
 import type { Address } from 'viem'
 import { ref } from 'vue'
 import { useReadContract, useWriteContract } from '@wagmi/vue'
+import { useExpenseAccountTransferOwnership } from '@/composables/useExpenseAccount'
 
 const writingContract = ref<string | null | undefined>('')
 import { useBankOwner, useBankTransferOwnership } from '@/composables/bank'
@@ -201,6 +202,12 @@ const {
   isLoading: loadingTransferOwnership
 } = useBankTransferOwnership(props.team.bankAddress!)
 
+const {
+  error: errorTransferExpenseOwnership,
+  execute: transferExpenseOwnership,
+  isLoading: loadingTransferExpenseOwnership
+} = useExpenseAccountTransferOwnership(props.team.expenseAccountAddress!)
+
 const { writeContract, status } = useWriteContract()
 const { addErrorToast } = useToastStore()
 const currentAddress = useUserDataStore().address
@@ -212,18 +219,18 @@ const executeTransferOwnership = async (newOwner: string) => {
   writingContract.value = null
 }
 
-const transferExpenseOwnership = async () => {
-  writingContract.value = props.team.expenseAccountAddress
-  console.log(`writingContract.value`, writingContract.value)
-  console.log(`props.team.expenseAccountAddress`, writingContract.value === props.team.expenseAccountAddress)
-  writeContract({
-    abi: EXPENSE_ABI,
-    address: props.team.expenseAccountAddress as Address,
-    functionName: 'transferOwnership',
-    args: [props.team.boardOfDirectorsAddress! as Address]
-  })
-  writingContract.value = null
-}
+// const transferExpenseOwnership = async () => {
+//   writingContract.value = props.team.expenseAccountAddress
+//   console.log(`writingContract.value`, writingContract.value)
+//   console.log(`props.team.expenseAccountAddress`, writingContract.value === props.team.expenseAccountAddress)
+//   writeContract({
+//     abi: EXPENSE_ABI,
+//     address: props.team.expenseAccountAddress as Address,
+//     functionName: 'transferOwnership',
+//     args: [props.team.boardOfDirectorsAddress! as Address]
+//   })
+//   writingContract.value = null
+// }
 
 watch(error, () => {
   if (error.value) {

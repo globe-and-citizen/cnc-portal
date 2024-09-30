@@ -5,14 +5,13 @@ import { TransactionResponse } from 'ethers'
 
 const expenseAccountService = new ExpenseAccountService()
 
-export function useExpenseAccountTransferOwnership() {
+export function useExpenseAccountTransferOwnership(expenseAccountAddress: string) {
   const data = ref<TransactionResponse | null>(null)
   const loading = ref(false)
   const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function transferExpenseOwnership(
-    expenseAccountAddress: string,
     newOwner: string
   ) {
     try {
