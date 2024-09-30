@@ -22,6 +22,9 @@ interface IVotingContract {
 interface IBodContract {
     function initialize(address[] memory votingAddress) external;
 }
+interface IExpenseAccount {
+    function initialize(address _sender) external;
+}
 
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
     
@@ -30,22 +33,24 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address bankAccountContract;
     address votingContract;
     address bodContract;
+    address expenseAccountContract;
 
     address public bankAccountBeacon;
-    address public employeeContractBeacon;
     address public votingContractBeacon;
     address public bodContractBeacon;
+    address public expenseAccountBeacon;
 
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
 
-  function initialize( address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon) public initializer {
+  function initialize( address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon, address _expenseAccountBeacon) public initializer {
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
         __Pausable_init();
         bankAccountBeacon = _bankAccountBeacon;
         votingContractBeacon = _votingContractBeacon;
         bodContractBeacon = _bodContractBeacon;
+        expenseAccountBeacon = _expenseAccountBeacon;
     }
 
    function createTeam(
@@ -100,14 +105,23 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
         emit ContractDeployed("BoDContract", bodContract);
     }
+    function deployExpenseAccount() external onlyOwners whenNotPaused  {
+        BeaconProxy proxy = new BeaconProxy(
+            expenseAccountBeacon,
+            abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
+        );
+        address expenseAccount = address(proxy);
+
+        emit ContractDeployed("ExpenseAccount", expenseAccount);
+    }
   
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
 
-    function getTeam() external view returns (address[] memory, address[] memory , address , address, address ) {
-        return (founders, members, bankAccountContract, votingContract, bodContract);
+    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
+        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract);
     }
     modifier onlyOwners{
         if (msg.sender == owner()) {

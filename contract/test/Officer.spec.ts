@@ -5,8 +5,8 @@ import { Officer } from '../typechain-types'
 
 describe('Officer Contract', function () {
   let Officer, officer: unknown
-  let BankAccount, VotingContract
-  let bankAccountBeacon, votingContractBeacon
+  let BankAccount, VotingContract, ExpenseAccount
+  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon
   let BoD, bodBeacon
   let owner: SignerWithAddress,
     addr1: SignerWithAddress,
@@ -22,6 +22,9 @@ describe('Officer Contract', function () {
 
     BoD = await ethers.getContractFactory('BoardOfDirectors')
     bodBeacon = await upgrades.deployBeacon(BoD)
+
+    ExpenseAccount = await ethers.getContractFactory('ExpenseAccount')
+    expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
     Officer = await ethers.getContractFactory('Officer')
@@ -30,7 +33,8 @@ describe('Officer Contract', function () {
       [
         await bankAccountBeacon.getAddress(),
         await votingContractBeacon.getAddress(),
-        await bodBeacon.getAddress()
+        await bodBeacon.getAddress(),
+        await expenseAccountBeacon.getAddress()
       ],
       { initializer: 'initialize' }
     )
@@ -63,6 +67,12 @@ describe('Officer Contract', function () {
 
     const team = await (officer as Officer).getTeam()
     expect(team[2]).to.be.not.equal('0x0000000000000000000000000000000000000000')
+  })
+  it('Should deploy the ExpenseAccount contract via BeaconProxy', async function () {
+    await (officer as Officer).connect(owner).deployExpenseAccount()
+
+    const team = await (officer as Officer).getTeam()
+    expect(team[3]).to.be.not.equal('0x0000000000000000000000000000000000000000')
   })
   it('should pause the contract', async function () {
     await (officer as Officer).connect(owner).pause()
@@ -102,13 +112,17 @@ describe('Officer Contract', function () {
     bodBeacon = await upgrades.deployBeacon(BoD)
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
+    ExpenseAccount = await ethers.getContractFactory('ExpenseAccount')
+    expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
+
     Officer = await ethers.getContractFactory('Officer')
     officer = await upgrades.deployProxy(
       Officer,
       [
         await bankAccountBeacon.getAddress(),
         await votingContractBeacon.getAddress(),
-        await bodBeacon.getAddress()
+        await bodBeacon.getAddress(),
+        await expenseAccountBeacon.getAddress()
       ],
       { initializer: 'initialize' }
     )
