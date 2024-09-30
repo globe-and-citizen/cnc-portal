@@ -5,7 +5,6 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { NETWORK } from '@/constant'
-import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import SetLimitForm from '../forms/SetLimitForm.vue'
@@ -32,7 +31,7 @@ const mockClipboard = {
 }
 
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: T = await importOriginal()
+  const actual: Object = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -43,7 +42,7 @@ const mockDeployExpenseAccount = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   isSuccess: ref(false),
-  error: ref<T | null>(null),
+  error: ref(null),
   execute: vi.fn()
 }
 
@@ -51,7 +50,7 @@ const mockExpenseAccountGetBalance = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   isSuccess: ref(false),
-  error: ref<T | null>(null),
+  error: ref(null),
   execute: vi.fn()
 }
 
@@ -59,7 +58,7 @@ const mockExpenseAccountGetMaxLimit = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   isSuccess: ref(false),
-  error: ref<T | null>(null),
+  error: ref(null),
   execute: vi.fn()
 }
 
@@ -67,7 +66,7 @@ const mockExpenseAccountIsApprovedAddress = {
   data: ref<boolean>(false),
   isLoading: ref(false),
   isSuccess: ref(false),
-  error: ref<T | null>(null),
+  error: ref(null),
   execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
     if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
       mockExpenseAccountIsApprovedAddress.data.value = true
@@ -80,7 +79,7 @@ const mockExpenseAccountIsApprovedAddress = {
 const mockExpenseAccountGetOwner = {
   data: ref<string | null>(null),
   loading: ref(false),
-  error: ref<T | null>(null),
+  error: ref(null),
   isSuccess: ref(false),
   execute: vi.fn(() => {
     mockExpenseAccountGetOwner.data.value = `0xContractOwner`
@@ -88,7 +87,7 @@ const mockExpenseAccountGetOwner = {
 }
 
 vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
-  const actual: T = await importOriginal()
+  const actual: Object = await importOriginal()
   return {
     ...actual,
     useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),

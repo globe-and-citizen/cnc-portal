@@ -201,6 +201,13 @@
   },
   {
     "inputs": [],
+    "name": "deployExpenseAccount",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "deployVotingContract",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -208,7 +215,7 @@
   },
   {
     "inputs": [],
-    "name": "employeeContractBeacon",
+    "name": "expenseAccountBeacon",
     "outputs": [
       {
         "internalType": "address",
@@ -247,6 +254,11 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -267,6 +279,11 @@
       {
         "internalType": "address",
         "name": "_bodContractBeacon",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_expenseAccountBeacon",
         "type": "address"
       }
     ],

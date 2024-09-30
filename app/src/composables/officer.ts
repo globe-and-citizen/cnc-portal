@@ -23,6 +23,25 @@ export function useDeployOfficerContract() {
 
   return { execute: deployOfficer, isLoading: loading, isSuccess, error, contractAddress }
 }
+export function useDeployExpenseAccount() {
+  const loading = ref(false)
+  const error = ref<unknown>(null)
+  const isSuccess = ref(false)
+
+  async function deployExpenseAccount(officerAddress: string) {
+    try {
+      loading.value = true
+      await officerService.deployExpenseAccount(officerAddress)
+      isSuccess.value = true
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: deployExpenseAccount, isLoading: loading, isSuccess, error }
+}
 export function useCreateTeam() {
   const loading = ref(false)
   const error = ref<unknown>(null)
@@ -49,6 +68,7 @@ export function useGetOfficerTeam() {
     bankAddress: string
     votingAddress: string
     bodAddress: string
+    expenseAccountAddress: string
   } | null>(null)
   const loading = ref(false)
   const error = ref<unknown>(null)

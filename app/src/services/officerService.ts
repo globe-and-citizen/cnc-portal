@@ -5,6 +5,7 @@ import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
+  EXPENSE_ACCOUNT_BEACON_ADDRESS,
   OFFICER_BEACON,
   TIPS_ADDRESS,
   VOTING_BEACON_ADDRESS
@@ -16,9 +17,14 @@ export interface IOfficerService {
   web3Library: IWeb3Library
 
   createOfficerContract(teamId: string): Promise<string>
-  getOfficerTeam(
-    officerAddress: string
-  ): Promise<{ founders: string[]; members: string[]; bankAddress: string; votingAddress: string }>
+  getOfficerTeam(officerAddress: string): Promise<{
+    founders: string[]
+    members: string[]
+    bankAddress: string
+    votingAddress: string
+    bodAddress: string
+    expenseAccountAddress: string
+  }>
   deployBank(officerAddress: string): Promise<void>
   deployVoting(officerAddress: string): Promise<void>
   createTeam(officerAddress: string, founders: string[], members: string[]): Promise<string>
@@ -44,6 +50,7 @@ export class OfficerService implements IOfficerService {
     bankAddress: string
     votingAddress: string
     bodAddress: string
+    expenseAccountAddress: string
   }> {
     const officerContract = await this.getOfficerContract(officerAddress)
     const team = await officerContract.getTeam()
@@ -52,7 +59,8 @@ export class OfficerService implements IOfficerService {
       members: team[1] as string[],
       bankAddress: team[2] as string,
       votingAddress: team[3] as string,
-      bodAddress: team[4] as string
+      bodAddress: team[4] as string,
+      expenseAccountAddress: team[5] as string
     }
   }
 
@@ -66,6 +74,13 @@ export class OfficerService implements IOfficerService {
   async deployVoting(officerAddress: string): Promise<void> {
     const officerContract = await this.getOfficerContract(officerAddress)
     const tx = await officerContract.deployVotingContract()
+    await tx.wait()
+
+    return tx
+  }
+  async deployExpenseAccount(officerAddress: string): Promise<void> {
+    const officerContract = await this.getOfficerContract(officerAddress)
+    const tx = await officerContract.deployExpenseAccount()
     await tx.wait()
 
     return tx
@@ -89,7 +104,8 @@ export class OfficerService implements IOfficerService {
       officerImplementation.interface.encodeFunctionData('initialize', [
         BANK_BEACON_ADDRESS,
         VOTING_BEACON_ADDRESS,
-        BOD_BEACON_ADDRESS
+        BOD_BEACON_ADDRESS,
+        EXPENSE_ACCOUNT_BEACON_ADDRESS
       ])
     )
     const beaconProxy = await beaconProxyDeployment.waitForDeployment()

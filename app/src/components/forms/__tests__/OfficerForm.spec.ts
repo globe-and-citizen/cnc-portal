@@ -5,7 +5,8 @@ import {
   useDeployOfficerContract,
   useDeployBank,
   useDeployVoting,
-  useGetOfficerTeam
+  useGetOfficerTeam,
+  useDeployExpenseAccount
 } from '@/composables/officer'
 import { ref } from 'vue'
 
@@ -14,7 +15,8 @@ vi.mock('@/composables/officer', () => ({
   useDeployOfficerContract: vi.fn(),
   useDeployBank: vi.fn(),
   useDeployVoting: vi.fn(),
-  useGetOfficerTeam: vi.fn()
+  useGetOfficerTeam: vi.fn(),
+  useDeployExpenseAccount: vi.fn()
 }))
 
 vi.mock('@/stores/useToastStore', () => {
@@ -31,6 +33,7 @@ describe('OfficerForm.vue', () => {
   let mockDeployBank: ReturnType<typeof useDeployBank>
   let mockDeployVoting: ReturnType<typeof useDeployVoting>
   let mockGetOfficerTeam: ReturnType<typeof useGetOfficerTeam>
+  let mockDeployExpenseAccount: ReturnType<typeof useDeployExpenseAccount>
 
   beforeEach(() => {
     // Mock return values for composables
@@ -63,14 +66,22 @@ describe('OfficerForm.vue', () => {
         members: ['0x456'],
         bankAddress: '',
         votingAddress: '',
-        bodAddress: ''
+        bodAddress: '',
+        expenseAccountAddress: ''
       })
+    }
+    mockDeployExpenseAccount = {
+      execute: vi.fn(),
+      isLoading: ref(false),
+      isSuccess: ref(false),
+      error: ref(null)
     }
     // Mock composables return values
     vi.mocked(useDeployOfficerContract).mockReturnValue(mockDeployOfficer)
     vi.mocked(useDeployBank).mockReturnValue(mockDeployBank)
     vi.mocked(useDeployVoting).mockReturnValue(mockDeployVoting)
     vi.mocked(useGetOfficerTeam).mockReturnValue(mockGetOfficerTeam)
+    vi.mocked(useDeployExpenseAccount).mockReturnValue(mockDeployExpenseAccount)
   })
   it('renders officer deployment button when no officer contract is deployed', () => {
     const wrapper: VueWrapper = mount(OfficerForm, {
@@ -162,7 +173,7 @@ describe('OfficerForm.vue', () => {
       }
     })
 
-    const votingButton = wrapper.findAll('button')[1]
+    const votingButton = wrapper.findAll('button')[2]
     await votingButton.trigger('click')
 
     expect(mockDeployVoting.execute).toHaveBeenCalled()
