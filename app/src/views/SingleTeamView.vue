@@ -44,10 +44,17 @@
           <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
-          <ProposalSection v-if="activeTab == 3" :team="team" @getTeam="getTeamAPI" />
+          <ProposalSection
+            :team="team"
+            @getTeam="getTeamAPI"
+            @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
+          />
         </template>
         <template #tab-4>
           <ExpenseAccountSection v-if="activeTab == 4" :team="team" />
+        </template>
+        <template #tab-5>
+          <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
       </TabNavigation>
     </div>
@@ -78,6 +85,7 @@ import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTr
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
+import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
@@ -134,6 +142,9 @@ onMounted(async () => {
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses
     )
+  }
+  if (team.value.boardOfDirectorsAddress) {
+    tabs.value.push(SingleTeamTabs.BoardOfDirectors)
   }
 })
 

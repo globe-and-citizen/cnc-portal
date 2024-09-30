@@ -107,7 +107,7 @@ import VotingManagement from '@/components/sections/SingleTeamView/VotingManagem
 
 const props = defineProps<{ team: Partial<Team> }>()
 const showVotingControlModal = ref(false)
-const emits = defineEmits(['getTeam'])
+const emits = defineEmits(['getTeam', 'addBodTab'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 const {
   boardOfDirectors,

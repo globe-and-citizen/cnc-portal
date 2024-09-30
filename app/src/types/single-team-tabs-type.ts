@@ -3,5 +3,6 @@ export enum SingleTeamTabs {
   Transactions = 'Transactions',
   Bank = 'Bank',
   Proposals = 'Proposals',
-  Expenses = 'Expenses'
+  Expenses = 'Expenses',
+  BoardOfDirectors = 'Board Of Directors'
 }

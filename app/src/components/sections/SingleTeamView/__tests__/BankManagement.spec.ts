@@ -2,20 +2,11 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import BankManagement from '../BankManagement.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { useToastStore } from '@/stores/useToastStore'
-import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 
 interface ComponentData {
   transferOwnershipModal: boolean
 }
-
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: vi.fn().mockReturnValue({
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  })
-}))
 
 vi.mock('@/composables/bank', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/composables/bank')>()
@@ -44,7 +35,10 @@ describe('BankManagement', () => {
           bankAddress: '0x1234567890123456789012345678901234567890',
           ownerAddress: '0x1234567890123456789012345678901234567890',
           boardOfDirectorsAddress: '0x0987654321098765432109876543210987654321'
-        }
+        },
+        bankOwner: '0x1234567890123456789012345678901234567890',
+        loadingOwner: false,
+        isBod: false
       },
       global: {
         plugins: [
@@ -92,18 +86,6 @@ describe('BankManagement', () => {
       expect(wrapper.find('button[data-test="transfer-to-board-of-directors"]').text()).toBe(
         'Transfer to Board Of Directors Contract'
       )
-    })
-
-    it('shows error toast when user is not the owner', async () => {
-      const wrapper = createComponent()
-      const userStore = useUserDataStore()
-      userStore.address = '0x0000000000000000000000000000000000000000'
-
-      const pauseButton = wrapper.find('button.btn-primary')
-      await pauseButton.trigger('click')
-
-      const toastStore = useToastStore()
-      expect(toastStore.addErrorToast).toHaveBeenCalledWith('You are not the owner of this bank')
     })
 
     it('shows ModalComponent when transferOwnership is clicked', async () => {
