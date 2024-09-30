@@ -41,6 +41,7 @@
       <div class="divider"></div>
       <!-- Start Contract Owners Table -->
       <div class="overflow-x-auto">
+        <h2 class="mb-5 text-center">Transfer Ownership (From Founders to Board of Directors)</h2>
         <table class="table table-zebra text-center">
         <thead>
           <tr>
@@ -256,6 +257,16 @@ watch(errorBankOwner, () => {
 watch(errorTransferOwnership, () => {
   if (errorTransferOwnership.value) {
     addErrorToast('Failed to transfer bank ownership')
+  }
+})
+watch(errorExpenseOwner, (newVal) => {
+  if (newVal) {
+    addErrorToast('Error getting expense owner')
+  }
+})
+watch(errorTransferExpenseOwnership, (newVal) => {
+  if (newVal) {
+    addErrorToast('Failed to transfer expense ownership')
   }
 })
 watch(successTransferExpenseOwnerShip, async (newVal) => {
