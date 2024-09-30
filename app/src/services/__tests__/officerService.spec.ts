@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { OfficerService } from '@/services/officerService'
 import { type IWeb3Library, EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { Contract } from 'ethers'
+import { setActivePinia, createPinia } from 'pinia'
+
 import { reactive } from 'vue'
 
 // Mock data
@@ -58,6 +60,7 @@ const mockContract = {
   deployVotingContract: vi.fn().mockResolvedValue(tx),
   deployExpenseAccount: vi.fn().mockResolvedValue(tx),
   createTeam: vi.fn().mockResolvedValue(tx),
+  createBeaconProxy: vi.fn().mockResolvedValue(tx),
   interface: {
     encodeFunctionData: vi.fn()
   }
@@ -80,6 +83,8 @@ describe('OfficerService', () => {
   let officerService: OfficerService
 
   beforeEach(() => {
+    setActivePinia(createPinia())
+
     // Mock the `getInstance` method to return the mocked web3 library
     ;(EthersJsAdapter.getInstance as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
       web3LibraryMock
@@ -96,7 +101,7 @@ describe('OfficerService', () => {
     })
 
     it('should handle errors when creating officer contract', async () => {
-      web3LibraryMock.getFactoryContract.mockRejectedValueOnce(new Error('Create Failed'))
+      mockContract.createBeaconProxy.mockRejectedValueOnce(new Error('Create Failed'))
 
       await expect(officerService.createOfficerContract(mockTeamId)).rejects.toThrow(
         'Create Failed'
