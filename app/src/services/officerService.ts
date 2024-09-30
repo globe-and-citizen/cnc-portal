@@ -1,6 +1,7 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import OFFICER_ABI from '@/artifacts/abi/officer.json'
 import FACTORY_BEACON_ABI from '../artifacts/abi/factory-beacon.json'
+import { useUserDataStore } from '@/stores/user'
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
@@ -99,6 +100,7 @@ export class OfficerService implements IOfficerService {
     const bodProxyFactory = await this.getContract(OFFICER_BEACON, FACTORY_BEACON_ABI)
     const tx = await bodProxyFactory.createBeaconProxy(
       officerImplementation.interface.encodeFunctionData('initialize', [
+        useUserDataStore().address,
         BANK_BEACON_ADDRESS,
         VOTING_BEACON_ADDRESS,
         BOD_BEACON_ADDRESS,
