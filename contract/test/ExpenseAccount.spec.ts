@@ -29,7 +29,7 @@ describe('ExpenseAccount', () => {
         expect(await expenseAccountProxy.owner()).to.eq(await owner.getAddress())
       })
 
-      it('Then as the contract owner I\'m an approved user by default', async () => {
+      it("Then as the contract owner I'm an approved user by default", async () => {
         const isApproved = await expenseAccountProxy.approvedAddresses(owner.address)
         expect(isApproved).to.eq(true)
       })
