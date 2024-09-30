@@ -1,6 +1,5 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import OFFICER_ABI from '@/artifacts/abi/officer.json'
-import BEACON_PROXY_ABI from '@/artifacts/abi/beacon-proxy.json'
 import FACTORY_BEACON_ABI from '../artifacts/abi/factory-beacon.json'
 import {
   BANK_BEACON_ADDRESS,
@@ -12,7 +11,7 @@ import {
   VOTING_BEACON_ADDRESS
 } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { Contract, ContractInterface, InterfaceAbi } from 'ethers'
+import type { Contract, InterfaceAbi } from 'ethers'
 import { SmartContract } from './contractService'
 
 export interface IOfficerService {
@@ -95,33 +94,29 @@ export class OfficerService implements IOfficerService {
   }
 
   private async deployOfficerContract(): Promise<string> {
-    try {
-      const officerImplementation = await this.getContract(OFFICER_ADDRESS, OFFICER_ABI)
+    const officerImplementation = await this.getContract(OFFICER_ADDRESS, OFFICER_ABI)
 
-      const bodProxyFactory = await this.getContract(OFFICER_BEACON, FACTORY_BEACON_ABI)
-      const tx = await bodProxyFactory.createBeaconProxy(
-        officerImplementation.interface.encodeFunctionData('initialize', [
-          BANK_BEACON_ADDRESS,
-          VOTING_BEACON_ADDRESS,
-          BOD_BEACON_ADDRESS,
-          EXPENSE_ACCOUNT_BEACON_ADDRESS
-        ])
-      )
-      const receipt = await tx.wait()
+    const bodProxyFactory = await this.getContract(OFFICER_BEACON, FACTORY_BEACON_ABI)
+    const tx = await bodProxyFactory.createBeaconProxy(
+      officerImplementation.interface.encodeFunctionData('initialize', [
+        BANK_BEACON_ADDRESS,
+        VOTING_BEACON_ADDRESS,
+        BOD_BEACON_ADDRESS,
+        EXPENSE_ACCOUNT_BEACON_ADDRESS
+      ])
+    )
+    const receipt = await tx.wait()
 
-      let proxyAddress = ''
-      if (receipt) {
-        for (const log of receipt.logs) {
-          if ('fragment' in log && log.fragment.name === 'BeaconProxyCreated') {
-            proxyAddress = log.args[0]
-          }
+    let proxyAddress = ''
+    if (receipt) {
+      for (const log of receipt.logs) {
+        if ('fragment' in log && log.fragment.name === 'BeaconProxyCreated') {
+          proxyAddress = log.args[0]
         }
       }
-
-      return proxyAddress
-    } catch (error) {
-      console.log(error)
     }
+
+    return proxyAddress
   }
   private async getContract(address: string, abi: InterfaceAbi): Promise<Contract> {
     return await new SmartContract(address, abi).getContract()
