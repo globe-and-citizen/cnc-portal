@@ -6,7 +6,7 @@ import { network } from 'hardhat'
 function getDeployedAddresses() {
   let chainId: number | undefined
   
-  if (network.name = "localhost")
+  if (network.name === "localhost")
     chainId = 31337
   else 
     chainId = network.config.chainId
@@ -51,7 +51,7 @@ export default buildModule('ExpenseAccountUpgradeModule', (m) => {
   const newExpenseAccountImplementation = m.contract('ExpenseAccount')
 
   // Call the beacon's upgrade function to set the new implementation
-  const upgradeTx = m.call(expenseAccountFactoryBeacon, 'upgradeTo', [newExpenseAccountImplementation], {
+  m.call(expenseAccountFactoryBeacon, 'upgradeTo', [newExpenseAccountImplementation], {
     from: beaconOwner,
   })
 
