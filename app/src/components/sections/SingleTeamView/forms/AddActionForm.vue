@@ -44,12 +44,7 @@
     </label>
     <label class="input input-bordered flex items-center gap-4">
       Function Signature
-      <input
-        type="text"
-        class="grow"
-        v-model="data"
-        placeholder="Enter the function signature"
-      />
+      <input type="text" class="grow" v-model="data" placeholder="Enter the function signature" />
     </label>
     <div class="form-control">
       <LoadingButton v-if="loading" color="primary" class="w-full" />
@@ -58,7 +53,7 @@
         class="btn btn-primary"
         @click.prevent="
           $emit('addAction', {
-            target,
+            targetAddress: target,
             description,
             data
           })

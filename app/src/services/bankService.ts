@@ -1,5 +1,5 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
-import { BANK_ABI } from '@/artifacts/abi/bank'
+import BANK_ABI from '@/artifacts/abi/bank.json'
 import BEACON_PROXY_ABI from '../artifacts/abi/beacon-proxy.json'
 import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -117,6 +117,22 @@ export class BankService implements IBankService {
     const contractService = this.getContractService(bankAddress)
 
     return await contractService.getContract()
+  }
+
+  async getFunctionSignature(
+    bankAddress: string,
+    functionName: string,
+    args: unknown[]
+  ): Promise<string> {
+    const bank = await this.getContract(bankAddress)
+    args.map((arg) => {
+      if (typeof arg === 'number') {
+        this.web3Library.parseEther(arg.toString())
+      }
+    })
+    const functionSignature = bank.interface.encodeFunctionData(functionName, args)
+
+    return functionSignature
   }
 
   private getContractService(bankAddress: string): SmartContract {

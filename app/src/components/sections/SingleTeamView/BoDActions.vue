@@ -1,44 +1,33 @@
 <template>
-  <SkeletonLoading v-if="actionLoading || actionCountLoading" class="w-full h-48" />
+  <SkeletonLoading v-if="pendingActionLoading || executedActionsLoading" class="w-full h-48" />
   <div v-else class="flex flex-col gap-4">
     <h2 class="text-center">Actions</h2>
     <div id="bod-actions" class="overflow-x-auto flex flex-col gap-4">
-      <table class="table table-zebra text-center border border-solid">
-        <thead>
-          <tr class="table-row-border">
-            <th>No</th>
-            <th>Target</th>
-            <th>Description</th>
-            <th>Approval Count</th>
-            <th>Executed</th>
-            <th>Function Signature</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="actionCount == BigInt(0)">
-            <td class="text-center font-bold text-lg h-96" colspan="6" rowspan="10">No actions</td>
-          </tr>
-          <tr v-else class="hover cursor-pointer" v-for="(action, index) in actions" :key="index">
-            <th>{{ index + 1 }}</th>
-            <td>{{ action.target }}</td>
-            <td>{{ action.description }}</td>
-            <td>{{ action.approvalCount }}</td>
-            <td>{{ action.isExecuted }}</td>
-            <td>{{ action.data.slice(0, 10) }}...</td>
-          </tr>
-        </tbody>
-      </table>
+      <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
+        <template #tab-0 v-if="isPending"
+          ><ActionTable
+            :actions="pendingActions?.data ?? []"
+            :actionCount="pendingActions?.total ?? 0"
+            :board-of-directors="boardOfDirectors"
+            :team="team"
+            @refetch="async () => await fetchPendingActions()"
+        /></template>
+        <template #tab-1 v-if="!isPending"
+          ><ActionTable
+            :actions="executedActions?.data ?? []"
+            :actionCount="executedActions?.total ?? 0"
+            :board-of-directors="boardOfDirectors"
+            :team="team"
+            @refetch="async () => await fetchExecutedActions()"
+        /></template>
+      </TabNavigation>
       <div class="flex justify-center join">
         <button
           class="join-item btn"
-          :class="{ 'btn-disabled': actionCount == BigInt(0) || page == 1 }"
-          @click="
-            () => {
-              page -= 1
-              startIndex = BigInt((page - 1) * 1)
-              fetchActions(startIndex, limit)
-            }
-          "
+          :class="{
+            'btn-disabled': currentCount == 0 || page == 1
+          }"
+          @click="() => (page -= 1)"
         >
           «
         </button>
@@ -46,23 +35,16 @@
         <button
           class="join-item btn"
           :class="{
-            'btn-disabled':
-              actionCount == BigInt(0) || BigInt(page) * limit >= (actionCount ?? BigInt(0)) / limit
+            'btn-disabled': currentCount <= page * limit || currentCount == 0
           }"
-          @click="
-            () => {
-              page += 1
-              startIndex = BigInt((page - 1) * 1)
-              fetchActions(startIndex, limit)
-            }
-          "
+          @click="() => (page += 1)"
         >
           »
         </button>
       </div>
     </div>
     <div class="flex flex-col w-full">
-      <div class="flex justify-end">
+      <div class="flex justify-end" v-if="boardOfDirectors.includes(currentAddress as Address)">
         <button class="btn btn-primary w-40" @click="actionModal = true">Add action</button>
       </div>
     </div>
@@ -70,91 +52,155 @@
   <ModalComponent v-model="actionModal">
     <AddActionForm
       v-if="actionModal"
-      @addAction="(action: Partial<Action>) => addAction(action)"
-      :loading="addStatus == 'pending'"
+      @addAction="(action: Partial<Action>) => addAction(action as Action)"
+      :loading="addActionLoading"
       :team="team"
     />
   </ModalComponent>
 </template>
 <script setup lang="ts">
+import TabNavigation from '@/components/TabNavigation.vue'
+import ActionTable from '@/components/sections/SingleTeamView/tables/ActionTable.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import AddActionForm from '@/components/sections/SingleTeamView/forms/AddActionForm.vue'
-import { BOD_ABI } from '@/artifacts/abi/bod'
-import type { Team } from '@/types'
-import { useReadContract, useWriteContract } from '@wagmi/vue'
+import type { ActionResponse, Team } from '@/types'
 import type { Address } from 'viem'
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useAddAction } from '@/composables/bod'
 import { useToastStore } from '@/stores/useToastStore'
-import { useGetActions } from '@/composables/bod'
 import type { Action } from '@/types'
+import { useUserDataStore } from '@/stores'
 
+const activeTab = ref(0)
+const tabs = ['Pending', 'Executed']
 const props = defineProps<{
   team: Partial<Team>
-  boardOfDirectors: readonly Address[]
+  boardOfDirectors: Address[]
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
+const { address: currentAddress } = useUserDataStore()
 
 const page = ref(1)
-const startIndex = ref<bigint | null>(null)
-const limit = ref<bigint>(BigInt(10))
+const limit = ref<number>(10)
 const actionModal = ref(false)
-const { writeContract, status: addStatus, error: addError } = useWriteContract()
+const getActionsUrl = ref('actions')
 
 const {
-  data: actionCount,
-  error: errorActionCount,
-  isLoading: actionCountLoading,
-  refetch: refetchActionCount
-} = useReadContract({
-  abi: BOD_ABI,
-  address: props.team.boardOfDirectorsAddress as Address,
-  functionName: 'actionCount'
+  error: errorAddAction,
+  execute: executeAddAction,
+  isLoading: addActionLoading,
+  isSuccess: addActionsSuccess
+} = useAddAction()
+
+const {
+  isFetching: pendingActionLoading,
+  error: errorPendingActions,
+  execute: fetchPendingActions,
+  data: pendingActions
+} = useCustomFetch<ActionResponse>(`actions`, {
+  immediate: false,
+  beforeFetch: ({ options, url }) => {
+    const params = new URLSearchParams()
+    params.append('teamId', props.team.id?.toString() ?? '')
+    params.append('page', page.value?.toString() ?? '1')
+    params.append('take', limit.value?.toString() ?? '10')
+    params.append('isExecuted', 'false')
+    url += `?${params.toString()}`
+
+    return { options, url }
+  }
 })
+  .get()
+  .json()
 
 const {
-  data: actions,
-  isLoading: actionLoading,
-  error: errorActions,
-  execute: fetchActions
-} = useGetActions(props.team.boardOfDirectorsAddress!)
+  isFetching: executedActionsLoading,
+  error: errorExecutedActions,
+  execute: fetchExecutedActions,
+  data: executedActions
+} = useCustomFetch<ActionResponse>(`actions`, {
+  immediate: false,
+  beforeFetch: ({ options, url }) => {
+    const params = new URLSearchParams()
+    params.append('teamId', props.team.id?.toString() ?? '')
+    params.append('page', page.value?.toString() ?? '1')
+    params.append('take', limit.value?.toString() ?? '10')
+    params.append('isExecuted', 'true')
+    url += `?${params.toString()}`
 
-const addAction = (action: Partial<Action>) => {
-  writeContract({
-    abi: BOD_ABI,
-    address: props.team.boardOfDirectorsAddress as Address,
-    functionName: 'addAction',
-    args: [action.target!, action.description!, action.data as Address]
-  })
+    return { options, url }
+  }
+})
+  .get()
+  .json()
+
+const addAction = async (action: Action) => {
+  await executeAddAction(props.team!, action)
+
+  await fetchPendingActions()
 }
 
-watch(actionCount, () => {
-  if ((actionCount.value ?? BigInt(0)) > BigInt(0)) {
-    startIndex.value = BigInt(0)
-    fetchActions(startIndex.value, limit.value)
-  }
-})
-watch(errorActionCount, () => {
-  if (errorActionCount.value) {
-    addErrorToast(errorActionCount.value.message)
-    startIndex.value = null
-  }
-})
-watch(addStatus, () => {
-  if (addStatus.value === 'success') {
-    actionModal.value = false
-    refetchActionCount()
-    addSuccessToast('Action added successfully')
-  }
-})
-watch(errorActions, () => {
-  if (errorActions.value) {
+const isPending = computed(() => activeTab.value === 0)
+const currentCount = computed(
+  () => (isPending.value ? pendingActions.value?.total : executedActions.value?.total) ?? 0
+)
+
+watch(errorPendingActions, () => {
+  if (errorPendingActions.value) {
     addErrorToast('Failed to get actions')
   }
 })
-watch(addError, () => {
-  if (addError.value) {
-    addErrorToast(addError.value.message)
+watch(errorExecutedActions, () => {
+  if (errorExecutedActions.value) {
+    addErrorToast('Failed to get actions')
   }
+})
+watch(isPending, async () => {
+  page.value = 1
+  const params = new URLSearchParams()
+  params.append('teamId', props.team.id?.toString() ?? '')
+  params.append('page', page.value?.toString() ?? '1')
+  params.append('take', limit.value?.toString() ?? '10')
+  if (isPending.value) {
+    params.append('isExecuted', 'false')
+    getActionsUrl.value = `actions?${params.toString()}`
+    await fetchPendingActions()
+  } else {
+    params.append('isExecuted', 'true')
+    getActionsUrl.value = `actions?${params.toString()}`
+    await fetchExecutedActions()
+  }
+})
+watch(page, async () => {
+  const params = new URLSearchParams()
+  params.append('teamId', props.team.id?.toString() ?? '')
+  params.append('page', page.value?.toString() ?? '1')
+  params.append('take', limit.value?.toString() ?? '10')
+  if (isPending.value) {
+    params.append('isExecuted', 'false')
+    getActionsUrl.value = `actions?${params.toString()}`
+    await fetchPendingActions()
+  } else {
+    params.append('isExecuted', 'true')
+    getActionsUrl.value = `actions?${params.toString()}`
+    await fetchExecutedActions()
+  }
+})
+watch(errorAddAction, () => {
+  if (errorAddAction.value) {
+    addErrorToast('Failed to add action')
+  }
+})
+watch(addActionsSuccess, () => {
+  if (addActionsSuccess.value) {
+    addSuccessToast('Action added')
+    actionModal.value = false
+  }
+})
+
+onMounted(async () => {
+  await fetchPendingActions()
 })
 </script>

@@ -21,6 +21,7 @@ model User {
   teams                     Team[]  @relation("MemberTeams")
   ownedTeams                Team[]  @relation("OwnedTeams")
   notifications             Notification[]
+  BoardOfDirectorActions    BoardOfDirectorActions[]
 }
 
 model Team {
@@ -34,6 +35,8 @@ model Team {
   votingAddress             String?
   boardOfDirectorsAddress   String?
   expenseAccountAddress     String?
+  officerAddress            String?
+  BoardOfDirectorActions    BoardOfDirectorActions[]
 }
 
 model Notification {
@@ -46,4 +49,18 @@ model Notification {
   createdAt                 DateTime @default(now())
   author                    String?
   resource                  String?
+}
+
+model BoardOfDirectorActions {
+  id                        Int      @id @default(autoincrement())
+  actionId                  Int
+  description               String
+  targetAddress             String
+  userAddress               String
+  isExecuted                Boolean  @default(false)
+  data                      String
+  createdBy                 User     @relation(fields: [userAddress], references: [address])
+  teamId                    Int
+  team                      Team     @relation(fields: [teamId], references: [id])
+  createdAt                 DateTime @default(now())
 }

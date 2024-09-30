@@ -8,7 +8,7 @@
     </div>
     <div class="flex flex-col gap-8 my-4">
       <SkeletonLoading v-if="isLoading" class="w-full h-48" />
-      <div v-if="boardOfDirectors?.length == 0 && !isLoading">
+      <div v-if="boardOfDirectors?.length == 0 && !isLoading" class="text-red-600 font-bold">
         You must add board of directors by doing election voting from proposal
       </div>
       <div id="list-bod">
@@ -27,8 +27,8 @@
                   <th>{{ index + 1 }}</th>
                   <td>
                     {{
-                      team.members?.filter((member) => member.address == boardOfDirector)[0].name ??
-                      'Unknown'
+                      team.members?.filter((member) => member.address == boardOfDirector)[0]
+                        ?.name ?? 'Unknown'
                     }}
                   </td>
                   <td>{{ boardOfDirector }}</td>
@@ -130,20 +130,20 @@
       </h4>
 
       <div class="flex justify-center">
-        <LoadingButton v-if="status === 'pending'" color="primary" class="w-48" />
+        <LoadingButton v-if="loadingTransferOwnership" color="primary" class="w-48" />
         <button
           v-if="
             bankOwner == currentAddress &&
             bankOwner != team.boardOfDirectorsAddress &&
-            status != 'pending'
+            !loadingTransferOwnership
           "
           class="btn btn-primary"
-          @click="transferBankOwnership"
+          @click="async () => await executeTransferOwnership(team.boardOfDirectorsAddress!)"
         >
           Transfer bank ownership
         </button>
       </div>-->
-      <BoDAction :team="team" :board-of-directors="boardOfDirectors ?? []" />
+      <BoDAction :team="team" :board-of-directors="(boardOfDirectors as Address[]) ?? []" />
     </div>
   </div>
 </template>
@@ -157,39 +157,32 @@ import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
-import { useReadContract, useWriteContract } from '@wagmi/vue'
-import { watch } from 'vue'
-import { BOD_ABI } from '@/artifacts/abi/bod'
-import { BANK_ABI } from '@/artifacts/abi/bank'
+import { onMounted, watch } from 'vue'
 import  EXPENSE_ABI from '@/artifacts/abi/expense-account.json'
 import type { Address } from 'viem'
 import { ref } from 'vue'
 
 const writingContract = ref<string | null | undefined>('')
+import { useBankOwner, useBankTransferOwnership } from '@/composables/bank'
+import { useGetBoardOfDirectors } from '@/composables/bod'
 
 const props = defineProps<{
   team: Partial<Team>
 }>()
 
 const {
-  data: boardOfDirectors,
-  error,
-  isLoading
-} = useReadContract({
-  abi: BOD_ABI,
-  address: props.team.boardOfDirectorsAddress! as Address,
-  functionName: 'getBoardOfDirectors'
-})
-const {
   data: bankOwner,
   isLoading: isLoadingBankOwner,
   error: errorBankOwner,
-  refetch: refetchBankOwner
-} = useReadContract({
-  abi: BANK_ABI,
-  address: props.team.bankAddress! as Address,
-  functionName: 'owner'
-})
+  execute: executeBankOwner
+} = useBankOwner(props.team.bankAddress!)
+
+const {
+  boardOfDirectors,
+  error,
+  isLoading,
+  execute: executeGetBoardOfDirectors
+} = useGetBoardOfDirectors()
 const {
   data: expenseOwner,
   isLoading: isLoadingExpenseOwner,
@@ -201,18 +194,19 @@ const {
   functionName: 'owner'
 })
 
-const { writeContract, status } = useWriteContract()
+const {
+  error: errorTransferOwnership,
+  execute: transferBankOwnership,
+  isLoading: loadingTransferOwnership
+} = useBankTransferOwnership(props.team.bankAddress!)
+
 const { addErrorToast } = useToastStore()
 const currentAddress = useUserDataStore().address
 
-const transferBankOwnership = async () => {
+const executeTransferOwnership = async (newOwner: string) => {
   writingContract.value = props.team.bankAddress
-  writeContract({
-    abi: BANK_ABI,
-    address: props.team.bankAddress! as Address,
-    functionName: 'transferOwnership',
-    args: [props.team.boardOfDirectorsAddress! as Address]
-  })
+  await transferBankOwnership(newOwner)
+  await executeBankOwner()
   writingContract.value = null
 }
 
@@ -239,9 +233,14 @@ watch(errorBankOwner, () => {
     addErrorToast('Failed to get bank owner')
   }
 })
-watch(status, () => {
-  if (status.value === 'success') {
-    refetchBankOwner()
+watch(errorTransferOwnership, () => {
+  if (errorTransferOwnership.value) {
+    addErrorToast('Failed to transfer bank ownership')
   }
+})
+
+onMounted(async () => {
+  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
+  await executeBankOwner()
 })
 </script>

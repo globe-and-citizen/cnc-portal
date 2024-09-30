@@ -12,7 +12,20 @@
           <button
             v-if="isPaused ? !loadingUnpause : !loadingPause"
             class="btn btn-primary row-start-2"
-            @click="isPaused ? executeBank(unpause) : executeBank(pause)"
+            :class="{
+              'btn-disabled': !isOwner && !isOwnerBod && !isBod
+            }"
+            @click="
+              () => {
+                if (isOwnerBod && isBod) {
+                  descriptionModal.show = true
+                  descriptionModal.actionName = isPaused ? 'Unpause Bank' : 'Pause Bank'
+                  descriptionModal.onSubmit = addPauseAction
+                } else {
+                  isPaused ? executeBank(unpause) : executeBank(pause)
+                }
+              }
+            "
           >
             {{ isPaused ? 'Unpause' : 'Pause' }}
           </button>
@@ -21,7 +34,10 @@
         <div class="text-center flex flex-col gap-y-4 items-center">
           <div>
             <h3 class="font-bold text-xl">Owner</h3>
-            <h3 v-if="!loadingOwner" data-test="owner">{{ owner }}</h3>
+            <h3 v-if="!loadingOwner" data-test="owner">
+              {{ bankOwner }}
+              {{ bankOwner == team.boardOfDirectorsAddress ? '(Board Of Directors Contract)' : '' }}
+            </h3>
           </div>
           <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
 
@@ -39,7 +55,7 @@
               data-test="transfer-to-board-of-directors"
               v-if="
                 team.boardOfDirectorsAddress &&
-                team.boardOfDirectorsAddress != owner &&
+                team.boardOfDirectorsAddress != bankOwner &&
                 !transferOwnershipLoading
               "
               @click="executeBank(transferOwnership, [team.boardOfDirectorsAddress])"
@@ -54,8 +70,31 @@
   <ModalComponent v-model="transferOwnershipModal">
     <TransferOwnershipForm
       v-if="transferOwnershipModal"
-      @transferOwnership="async (newOwner: string) => executeBank(transferOwnership, [newOwner])"
-      :transferOwnershipLoading="transferOwnershipLoading"
+      @transferOwnership="
+        async (newOwner: string, description: string) => {
+          if (bankOwner == team.boardOfDirectorsAddress) {
+            addTransferOwnershipAction(newOwner, description)
+          } else {
+            await executeBank(transferOwnership, [newOwner])
+          }
+        }
+      "
+      :transferOwnershipLoading="transferOwnershipLoading || addActionLoading"
+      :asBod="isOwnerBod && isBod!"
+    />
+  </ModalComponent>
+  <ModalComponent v-if="descriptionModal.show" v-model="descriptionModal.show">
+    <DescriptionActionForm
+      v-if="descriptionModal.show"
+      @submit="
+        async () => {
+          await descriptionModal.onSubmit()
+          descriptionModal.show = false
+        }
+      "
+      v-model:description="description"
+      :actionName="descriptionModal.actionName"
+      :loading="addActionLoading"
     />
   </ModalComponent>
 </template>
@@ -67,7 +106,6 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
 import {
   useBankStatus,
-  useBankOwner,
   useBankPause,
   useBankUnpause,
   useBankTransferOwnership
@@ -75,15 +113,29 @@ import {
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import DescriptionActionForm from './forms/DescriptionActionForm.vue'
+import { useAddAction } from '@/composables/bod'
+import { BankService } from '@/services/bankService'
+import type { Address } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentUserAddress } = useUserDataStore()
 const transferOwnershipModal = ref(false)
+const description = ref('')
+const descriptionModal = reactive({
+  show: false,
+  actionName: '',
+  onSubmit: async () => {}
+})
 
 const props = defineProps<{
   team: Partial<Team>
+  bankOwner: string
+  loadingOwner: boolean
+  isBod: boolean
 }>()
+const emits = defineEmits(['getOwner'])
 
 const {
   data: isPaused,
@@ -91,13 +143,6 @@ const {
   execute: getIsPaused,
   isLoading: loadingPaused
 } = useBankStatus(props.team.bankAddress!)
-
-const {
-  data: owner,
-  error: errorOwner,
-  isLoading: loadingOwner,
-  execute: getOwner
-} = useBankOwner(props.team.bankAddress!)
 
 const {
   isLoading: loadingPause,
@@ -119,17 +164,44 @@ const {
   isLoading: transferOwnershipLoading,
   isSuccess: transferOwnershipSuccess
 } = useBankTransferOwnership(props.team.bankAddress!)
+const {
+  execute: executeAddAction,
+  error: errorAddAction,
+  isLoading: addActionLoading,
+  isSuccess: addActionSuccess
+} = useAddAction()
+
+const isOwner = computed(() => props.bankOwner === currentUserAddress)
+const isOwnerBod = computed(() => props.bankOwner === props.team.boardOfDirectorsAddress)
 
 const executeBank = async (execute: Function, args: string[] = []) => {
-  if (currentUserAddress !== owner.value) {
-    addErrorToast('You are not the owner of this bank')
-    return
-  }
   if (args.length === 0) {
     await execute()
   } else {
     await execute(...args)
   }
+}
+const bankService = new BankService()
+
+const addPauseAction = async () => {
+  await executeAddAction(props.team, {
+    description: description.value,
+    data: (await bankService.getFunctionSignature(
+      props.team.bankAddress!,
+      isPaused ? 'unpause' : 'pause',
+      []
+    )) as Address,
+    targetAddress: props.team.bankAddress! as Address
+  })
+}
+const addTransferOwnershipAction = async (newOwner: string, description: string) => {
+  await executeAddAction(props.team, {
+    description,
+    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'transferOwnership', [
+      newOwner
+    ])) as Address,
+    targetAddress: props.team.bankAddress! as Address
+  })
 }
 
 watch(errorPaused, () => {
@@ -137,13 +209,6 @@ watch(errorPaused, () => {
     addErrorToast('Failed to get bank status')
   }
 })
-
-watch(errorOwner, () => {
-  if (errorOwner.value) {
-    addErrorToast('Failed to get bank owner')
-  }
-})
-
 watch(errorPause, () => {
   if (errorPause.value) {
     addErrorToast('Failed to pause bank')
@@ -178,14 +243,25 @@ watch(transferOwnershipError, () => {
 
 watch(transferOwnershipSuccess, async () => {
   if (transferOwnershipSuccess.value) {
-    await getOwner()
+    emits('getOwner')
     transferOwnershipModal.value = false
     addSuccessToast('Bank ownership transferred successfully')
+  }
+})
+watch(errorAddAction, () => {
+  if (errorAddAction.value) {
+    addErrorToast('Failed to add action')
+  }
+})
+watch(addActionSuccess, () => {
+  if (addActionSuccess.value) {
+    addSuccessToast('Action added')
+    descriptionModal.show = false
+    transferOwnershipModal.value = false
   }
 })
 
 onMounted(async () => {
   await getIsPaused()
-  await getOwner()
 })
 </script>
