@@ -56,6 +56,7 @@ const mockContract = {
     ]),
   deployBankAccount: vi.fn().mockResolvedValue(tx),
   deployVotingContract: vi.fn().mockResolvedValue(tx),
+  deployExpenseAccount: vi.fn().mockResolvedValue(tx),
   createTeam: vi.fn().mockResolvedValue(tx),
   interface: {
     encodeFunctionData: vi.fn()
@@ -167,6 +168,21 @@ describe('OfficerService', () => {
       await expect(
         officerService.createTeam(mockOfficerAddress, mockTeam.founders, mockTeam.members)
       ).rejects.toThrow('Create Team Failed')
+    })
+  })
+  describe('deployExpenseAccount', () => {
+    it('should deploy the expense account contract', async () => {
+      await officerService.deployExpenseAccount(mockOfficerAddress)
+
+      expect(mockContract.deployExpenseAccount).toHaveBeenCalledOnce()
+    })
+
+    it('should handle errors when deploying the expense account', async () => {
+      mockContract.deployExpenseAccount.mockRejectedValueOnce(new Error('Deploy Expense Failed'))
+
+      await expect(officerService.deployExpenseAccount(mockOfficerAddress)).rejects.toThrow(
+        'Deploy Expense Failed'
+      )
     })
   })
 })

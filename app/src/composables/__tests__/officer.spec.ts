@@ -4,7 +4,8 @@ import {
   useCreateTeam,
   useGetOfficerTeam,
   useDeployBank,
-  useDeployVoting
+  useDeployVoting,
+  useDeployExpenseAccount
 } from '@/composables/officer'
 // Mock the OfficerService class
 vi.mock('@/services/officerService', () => {
@@ -14,7 +15,8 @@ vi.mock('@/services/officerService', () => {
     members: ['0xMember1', '0xMember2'],
     bankAddress: '0xBankAddress',
     votingAddress: '0xVotingAddress',
-    bodAddress: '0xBoDAddress'
+    bodAddress: '0xBoDAddress',
+    expenseAccountAddress: '0xExpenseAccountAddress'
   }
   return {
     OfficerService: vi.fn().mockImplementation(() => ({
@@ -22,7 +24,8 @@ vi.mock('@/services/officerService', () => {
       createTeam: vi.fn().mockResolvedValue(mockContractAddress),
       getOfficerTeam: vi.fn().mockResolvedValue(mockOfficerTeam),
       deployBank: vi.fn().mockResolvedValue(mockContractAddress),
-      deployVoting: vi.fn().mockResolvedValue(mockContractAddress)
+      deployVoting: vi.fn().mockResolvedValue(mockContractAddress),
+      deployExpenseAccount: vi.fn().mockResolvedValue(mockContractAddress)
     }))
   }
 })
@@ -71,7 +74,8 @@ describe('Officer Composables', () => {
         members: ['0xMember1', '0xMember2'],
         bankAddress: '0xBankAddress',
         votingAddress: '0xVotingAddress',
-        bodAddress: '0xBoDAddress'
+        bodAddress: '0xBoDAddress',
+        expenseAccountAddress: '0xExpenseAccountAddress'
       })
     })
   })
@@ -91,6 +95,17 @@ describe('Officer Composables', () => {
   describe('useDeployVoting', () => {
     it('should deploy the voting contract successfully', async () => {
       const { execute, isLoading, isSuccess, error } = useDeployVoting()
+
+      await execute('0xOfficerAddress')
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+    })
+  })
+  describe('useDeployExpenseAccount', () => {
+    it('should deploy the expense account successfully', async () => {
+      const { execute, isLoading, isSuccess, error } = useDeployExpenseAccount()
 
       await execute('0xOfficerAddress')
 
