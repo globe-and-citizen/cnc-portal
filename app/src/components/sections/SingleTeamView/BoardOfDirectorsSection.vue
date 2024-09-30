@@ -186,7 +186,7 @@ const {
   data: expenseOwner,
   isLoading: isLoadingExpenseOwner,
   error: errorExpenseOwner,
-  execute: executeGetExpenseOwner
+  execute: executeGetExpenseOwner,
 } = useExpenseAccountGetOwner()
 
 const {
@@ -215,11 +215,12 @@ const {
 const {
   error: errorTransferExpenseOwnership,
   execute: transferExpenseOwnership,
-  isLoading: loadingTransferExpenseOwnership
+  isLoading: loadingTransferExpenseOwnership,
+  isSuccess: successTransferExpenseOwnerShip
 } = useExpenseAccountTransferOwnership(props.team.expenseAccountAddress!)
 
 const { writeContract, status } = useWriteContract()
-const { addErrorToast } = useToastStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
 const currentAddress = useUserDataStore().address
 
 const executeTransferOwnership = async (newOwner: string) => {
@@ -255,6 +256,12 @@ watch(errorBankOwner, () => {
 watch(errorTransferOwnership, () => {
   if (errorTransferOwnership.value) {
     addErrorToast('Failed to transfer bank ownership')
+  }
+})
+watch(successTransferExpenseOwnerShip, async (newVal) => {
+  if (newVal) {
+    addSuccessToast('Successfully transfered Expense A/c ownership')
+    await executeGetExpenseOwner(props.team.expenseAccountAddress!)
   }
 })
 
