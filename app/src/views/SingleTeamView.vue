@@ -158,19 +158,28 @@ watch(searchUserResponse, () => {
   }
 })
 const setTabs = () => {
-  if (team?.value?.bankAddress) {
+  if (team?.value?.bankAddress && tabs.value.findIndex((tab) => tab == SingleTeamTabs.Bank) == -1) {
     tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
   }
 
-  if (team?.value?.votingAddress) {
+  if (
+    team?.value?.votingAddress &&
+    tabs.value.findIndex((tab) => tab == SingleTeamTabs.Proposals) == -1
+  ) {
     tabs.value.push(SingleTeamTabs.Proposals)
   }
 
-  if (team?.value?.expenseAccountAddress) {
+  if (
+    team?.value?.expenseAccountAddress &&
+    tabs.value.findIndex((tab) => tab == SingleTeamTabs.Expenses) == -1
+  ) {
     tabs.value.push(SingleTeamTabs.Expenses)
   }
 
-  if (team?.value?.boardOfDirectorsAddress) {
+  if (
+    team?.value?.boardOfDirectorsAddress &&
+    tabs.value.findIndex((tab) => tab == SingleTeamTabs.BoardOfDirectors) == -1
+  ) {
     tabs.value.push(SingleTeamTabs.BoardOfDirectors)
   }
 }
