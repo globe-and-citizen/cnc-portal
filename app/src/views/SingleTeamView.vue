@@ -4,14 +4,7 @@
 
     <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-full items-center">
       <TeamMeta :team="team" @getTeam="getTeamAPI" />
-      <button
-        class="btn btn-primary btn-xs"
-        @click="bankModal = true"
-        v-if="!team.bankAddress && team.ownerAddress == useUserDataStore().address"
-        data-test="createBank"
-      >
-        Create Bank Account
-      </button>
+
       <button
         class="btn btn-primary btn-xs"
         @click="officerModal = true"
@@ -71,9 +64,6 @@ import { useUserDataStore } from '@/stores/user'
 // Composables
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
-// Service
-// import { AuthService } from '@/services/authService'
-
 // Modals/Forms
 import OfficerForm from '@/components/forms/OfficerForm.vue'
 
@@ -91,7 +81,6 @@ import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 
 // Modal control states
-const bankModal = ref(false)
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
 const isOwner = ref(false)
 const officerModal = ref(false)
@@ -122,6 +111,14 @@ const {
   .json()
 
 // Watchers for getting team details
+watch(team, () => {
+  if (team.value) {
+    if (team.value.ownerAddress == useUserDataStore().address) {
+      isOwner.value = true
+    }
+    setTabs()
+  }
+})
 watch(getTeamError, () => {
   if (getTeamError.value) {
     console.error(getTeamError.value)
@@ -131,21 +128,10 @@ watch(getTeamError, () => {
 
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
-
   if (team?.value?.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
   }
-  if (team?.value?.bankAddress) {
-    tabs.value.push(
-      SingleTeamTabs.Bank,
-      SingleTeamTabs.Transactions,
-      SingleTeamTabs.Proposals,
-      SingleTeamTabs.Expenses
-    )
-  }
-  if (team.value.boardOfDirectorsAddress) {
-    tabs.value.push(SingleTeamTabs.BoardOfDirectors)
-  }
+  setTabs()
 })
 
 const {
@@ -171,18 +157,30 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-// const searchUsers = async (input: { name: string; address: string }) => {
-//   try {
-//     searchUserName.value = input.name
-//     searchUserAddress.value = input.address
-//     if (searchUserName.value || searchUserAddress.value) {
-//       await executeSearchUser()
-//     }
-//   } catch (error) {
-//     return useErrorHandler().handleError(error)
-//   }
-// }
-/*onMounted(() => {
-  console.log("")
-})*/
+const setTabs = () => {
+  if (team?.value?.bankAddress && tabs.value.findIndex((tab) => tab == SingleTeamTabs.Bank) == -1) {
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+  }
+
+  if (
+    team?.value?.votingAddress &&
+    tabs.value.findIndex((tab) => tab == SingleTeamTabs.Proposals) == -1
+  ) {
+    tabs.value.push(SingleTeamTabs.Proposals)
+  }
+
+  if (
+    team?.value?.expenseAccountAddress &&
+    tabs.value.findIndex((tab) => tab == SingleTeamTabs.Expenses) == -1
+  ) {
+    tabs.value.push(SingleTeamTabs.Expenses)
+  }
+
+  if (
+    team?.value?.boardOfDirectorsAddress &&
+    tabs.value.findIndex((tab) => tab == SingleTeamTabs.BoardOfDirectors) == -1
+  ) {
+    tabs.value.push(SingleTeamTabs.BoardOfDirectors)
+  }
+}
 </script>

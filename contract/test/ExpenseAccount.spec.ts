@@ -29,6 +29,11 @@ describe('ExpenseAccount', () => {
         expect(await expenseAccountProxy.owner()).to.eq(await owner.getAddress())
       })
 
+      it("Then as the contract owner I'm an approved user by default", async () => {
+        const isApproved = await expenseAccountProxy.approvedAddresses(owner.address)
+        expect(isApproved).to.eq(true)
+      })
+
       //TODO: anyone can deposit into the expense account
       // The owner, the withdrawer, or any other address: That mean 3 test cases. 3 3 transaction to check that
       // Here you assert that there is an event emited, but you don't check if the balance is updated
