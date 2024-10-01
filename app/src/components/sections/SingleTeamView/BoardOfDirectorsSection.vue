@@ -3,7 +3,7 @@
     <div class="flex flex-row items-center gap-2">
       <h2 class="text-2xl font-bold">Board of Directors</h2>
       <ToolTip content="To change the board of directors you need to do an election">
-        <InformationCircleIcon class="size-6" />
+        <InformationCircleIcon data-test="information-icon" class="size-6" />
       </ToolTip>
     </div>
     <div class="flex flex-col gap-8 my-4">
@@ -25,7 +25,7 @@
               <tbody>
                 <tr v-for="(boardOfDirector, index) in boardOfDirectors" :key="index" class="hover">
                   <th>{{ index + 1 }}</th>
-                  <td>
+                  <td :data-test="`bod-member-name${index + 1}`">
                     {{
                       team.members?.filter((member) => member.address == boardOfDirector)[0]
                         ?.name ?? 'Unknown'
@@ -222,5 +222,7 @@ onMounted(async () => {
   await executeBankOwner()
   if (props.team.expenseAccountAddress)
     await executeGetExpenseOwner(props.team.expenseAccountAddress)
+
+  console.log(`board of directors`, props.team.boardOfDirectorsAddress)
 })
 </script>
