@@ -5,6 +5,8 @@ import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import type { TransactionResponse } from 'ethers'
+import LoadingButton from '@/components/LoadingButton.vue'
 // import type { User } from '@/types'
 // import {
 //   useExpenseAccountTransferOwnership,
@@ -30,6 +32,22 @@ vi.mock('@/composables/bod', async (importOriginal) => {
   return {
     ...actual,
     useGetBoardOfDirectors: vi.fn(() => mockGetBoardOfDirectors)
+  }
+})
+
+const mockBankTransferOwnership = {
+  transaction: ref<TransactionResponse | null>(null),
+  isLoading: ref(false),
+  error: <unknown>null,
+  isSuccess: false,
+  execute: vi.fn()
+}
+
+vi.mock('@/composables/bank', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useBankTransferOwnership: vi.fn(() => mockBankTransferOwnership)
   }
 })
 
@@ -119,6 +137,30 @@ describe('BoardOfDirectorsSection', () => {
       const bodMemberName2 = wrapper.find('[data-test="bod-member-name2"]')
       expect(bodMemberName2.exists()).toBeTruthy()
       expect(bodMemberName2.text()).toContain('Unknown')
+    })
+
+    it('Should show loading button when transfering bank', async () => {
+      const team = {
+        expenseAccountAddress: '0x123'
+      }
+      const wrapper = createComponent({
+        props: {
+          team: {
+            ...team
+          }
+        }
+      })
+
+      // const transferExpenseOwnershipButton = wrapper
+      //   .find('[data-test="transfer-expense-ownership-button"]')
+
+      // expect(transferExpenseOwnershipButton.exists()).toBeTruthy()
+
+      mockBankTransferOwnership.isLoading.value = true
+
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findComponent(LoadingButton).exists()).toBeTruthy()
     })
   })
 })

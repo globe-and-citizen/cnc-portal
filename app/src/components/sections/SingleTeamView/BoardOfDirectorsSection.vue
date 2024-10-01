@@ -65,8 +65,14 @@
                 </h4>
               </td>
               <td class="flex justify-end">
-                <LoadingButton v-if="loadingTransferOwnership" color="primary" class="w-48" />
+                <LoadingButton
+                  data-test="loading-bank-transfer"
+                  v-if="loadingTransferOwnership"
+                  color="primary"
+                  class="w-48"
+                />
                 <button
+                  data-test="transfer-expense-ownership-button"
                   v-if="
                     bankOwner == currentAddress &&
                     bankOwner != team.boardOfDirectorsAddress &&

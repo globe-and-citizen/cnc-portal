@@ -1,6 +1,6 @@
 <template>
   <div id="add-action-form" class="flex flex-col gap-4">
-    <h2>Add Action</h2>
+    <!--<h2>Add Action</h2>
     <label class="input input-bordered flex items-center gap-4">
       Target
       <input
@@ -61,35 +61,35 @@
       >
         Add
       </button>
-    </div>
+    </div>-->
   </div>
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
-import type { Team } from '@/types'
-import { ref } from 'vue'
+// import LoadingButton from '@/components/LoadingButton.vue'
+// import type { Team } from '@/types'
+// import { ref } from 'vue'
 
-const props = defineProps<{ team: Partial<Team>; loading: boolean }>()
-defineEmits(['addAction'])
+// const props = defineProps<{ team: Partial<Team>; loading: boolean }>()
+// defineEmits(['addAction'])
 
-const target = ref('')
-const description = ref('')
-const data = ref('')
-const showTargetSuggestion = ref(false)
-const targetSuggestions = ref<string[]>([
-  props.team.bankAddress!,
-  ...(props.team.expenseAccountAddress ? [props.team.expenseAccountAddress] : [])
-])
+// const target = ref('')
+// const description = ref('')
+// const data = ref('')
+// const showTargetSuggestion = ref(false)
+// const targetSuggestions = ref<string[]>([
+//   props.team.bankAddress!,
+//   ...(props.team.expenseAccountAddress ? [props.team.expenseAccountAddress] : [])
+// ])
 
-const suggestionContractName = (contractAddress: string) => {
-  switch (contractAddress) {
-    case props.team.bankAddress:
-      return '(Bank Address)'
-    case props.team.expenseAccountAddress:
-      return '(Expense A/c Address)'
-    default:
-      break
-  }
-}
+// const suggestionContractName = (contractAddress: string) => {
+//   switch (contractAddress) {
+//     case props.team.bankAddress:
+//       return '(Bank Address)'
+//     case props.team.expenseAccountAddress:
+//       return '(Expense A/c Address)'
+//     default:
+//       break
+//   }
+// }
 </script>
