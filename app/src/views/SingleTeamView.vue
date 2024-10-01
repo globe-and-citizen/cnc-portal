@@ -64,9 +64,6 @@ import { useUserDataStore } from '@/stores/user'
 // Composables
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
-// Service
-// import { AuthService } from '@/services/authService'
-
 // Modals/Forms
 import OfficerForm from '@/components/forms/OfficerForm.vue'
 
@@ -114,6 +111,14 @@ const {
   .json()
 
 // Watchers for getting team details
+watch(team, () => {
+  if (team.value) {
+    if (team.value.ownerAddress == useUserDataStore().address) {
+      isOwner.value = true
+    }
+    setTabs()
+  }
+})
 watch(getTeamError, () => {
   if (getTeamError.value) {
     console.error(getTeamError.value)
@@ -123,25 +128,10 @@ watch(getTeamError, () => {
 
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
-
   if (team?.value?.ownerAddress == useUserDataStore().address) {
     isOwner.value = true
   }
-  if (team?.value?.bankAddress) {
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
-  }
-
-  if (team?.value?.votingAddress) {
-    tabs.value.push(SingleTeamTabs.Proposals)
-  }
-
-  if (team?.value?.expenseAccountAddress) {
-    tabs.value.push(SingleTeamTabs.Expenses)
-  }
-
-  if (team?.value?.boardOfDirectorsAddress) {
-    tabs.value.push(SingleTeamTabs.BoardOfDirectors)
-  }
+  setTabs()
 })
 
 const {
@@ -167,18 +157,21 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-// const searchUsers = async (input: { name: string; address: string }) => {
-//   try {
-//     searchUserName.value = input.name
-//     searchUserAddress.value = input.address
-//     if (searchUserName.value || searchUserAddress.value) {
-//       await executeSearchUser()
-//     }
-//   } catch (error) {
-//     return useErrorHandler().handleError(error)
-//   }
-// }
-/*onMounted(() => {
-  console.log("")
-})*/
+const setTabs = () => {
+  if (team?.value?.bankAddress) {
+    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
+  }
+
+  if (team?.value?.votingAddress) {
+    tabs.value.push(SingleTeamTabs.Proposals)
+  }
+
+  if (team?.value?.expenseAccountAddress) {
+    tabs.value.push(SingleTeamTabs.Expenses)
+  }
+
+  if (team?.value?.boardOfDirectorsAddress) {
+    tabs.value.push(SingleTeamTabs.BoardOfDirectors)
+  }
+}
 </script>
