@@ -122,22 +122,6 @@
   </div>
 
   <!-- Expense Account Not Yet Created -->
-  <div class="flex justify-center items-center" v-if="!team.expenseAccountAddress">
-    <LoadingButton
-      class="w-24"
-      color="primary"
-      v-if="isLoadingDeploy"
-      data-test="loading-create-expense-account"
-    />
-    <button
-      v-else
-      class="btn btn-primary"
-      @click="async () => await deployExpenseAccount()"
-      data-test="create-expense-account"
-    >
-      Create Expense Account
-    </button>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -145,7 +129,6 @@
 import { onMounted, ref, watch, type Ref } from 'vue'
 import type { Team, User } from '@/types'
 import {
-  useDeployExpenseAccountContract,
   useExpenseAccountGetOwner,
   useExpenseAccountGetBalance,
   useExpenseAccountIsApprovedAddress,
@@ -160,7 +143,6 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import SetLimitForm from '@/components/sections/SingleTeamView/forms/SetLimitForm.vue'
 import ApproveUsersForm from './forms/ApproveUsersForm.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
@@ -180,9 +162,6 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const unapprovedAddresses = ref<Set<string>>(new Set())
-const expenseAccountAddress = ref<{
-  expenseAccountAddress: string | null
-}>({ expenseAccountAddress: null })
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
@@ -225,14 +204,6 @@ const {
 } = useExpenseAccountTransfer()
 
 const {
-  data: contractAddress,
-  execute: executeDeployExpenseAccount,
-  isLoading: isLoadingDeploy,
-  isSuccess: isSuccessDeploy,
-  error: errorDeploy
-} = useDeployExpenseAccountContract()
-
-const {
   data: contractOwnerAddress,
   execute: executeExpenseAccountGetOwner,
   error: errorGetOwner
@@ -263,20 +234,7 @@ const { execute: executeSearchUser } = useCustomFetch('user/search', {
   .get()
   .json()
 
-const { execute: executeUpdateTeam } = useCustomFetch(`teams/${props.team.id}`, {
-  immediate: false
-})
-  .put(expenseAccountAddress)
-  .json()
-
 //#region helper functions
-const deployExpenseAccount = async () => {
-  await executeDeployExpenseAccount()
-  team.value.expenseAccountAddress = contractAddress.value
-  //API call here
-  expenseAccountAddress.value.expenseAccountAddress = contractAddress.value
-  await executeUpdateTeam()
-}
 
 const init = async () => {
   await getExpenseAccountBalance()
@@ -366,9 +324,6 @@ const errorMessage = (error: {}, message: string) =>
 //#endregion helper functions
 
 //#region watch error
-watch(errorDeploy, (newVal) => {
-  if (newVal) addErrorToast(errorMessage(newVal, 'Error Deploying Creating Account'))
-})
 
 watch(errorSetMaxLimit, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Setting Max Limit'))
@@ -414,10 +369,6 @@ watch(isSuccessDisapproveAddress, (newVal) => {
 
 watch(isSuccessMaxLimit, (newVal) => {
   if (newVal) addSuccessToast('Max Limit Successfully Set')
-})
-
-watch(isSuccessDeploy, (newVal) => {
-  if (newVal) addSuccessToast('Expense Account Successfully Created')
 })
 
 watch(

@@ -165,33 +165,7 @@ describe('ExpenseAccountSection', () => {
         'Click to see address in block explorer'
       )
     })
-    it('should show create expense account button if expense account is not deployed', () => {
-      const team = { expenseAccountAddress: null }
-      const wrapper = createComponent({
-        props: {
-          team: {
-            ...team
-          }
-        }
-      })
 
-      expect(wrapper.find('[data-test="create-expense-account"]').exists()).toBeTruthy()
-    })
-    it('should show loading button if contract is being deployed', async () => {
-      const team = { expenseAccountAddress: null }
-      const wrapper = createComponent({
-        props: {
-          team: {
-            ...team
-          }
-        }
-      })
-
-      mockDeployExpenseAccount.isLoading.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="loading-create-expense-account"]').exists()).toBeTruthy()
-    })
     it('should hide create button if contract is being deployed', async () => {
       const team = { expenseAccountAddress: null }
       const wrapper = createComponent({
