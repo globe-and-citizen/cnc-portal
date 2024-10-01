@@ -3,6 +3,13 @@ import { mount } from '@vue/test-utils'
 import SingleTeamView from '@/views/SingleTeamView.vue' // Update the import path as necessary
 import { createPinia, setActivePinia } from 'pinia'
 
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  }))
+}))
 describe('SingleTeamView', () => {
   interface wrapperType {
     vm: {
@@ -20,15 +27,13 @@ describe('SingleTeamView', () => {
 
   beforeEach(async () => {
     setActivePinia(createPinia())
-    vi.mock('vue-router', () => ({
-      useRoute: vi.fn(() => ({
-        params: {
-          id: 0
-        }
-      }))
-    }))
 
-    wrapper = mount(SingleTeamView)
+    wrapper = mount(SingleTeamView, {
+      global: {
+        plugins: [createPinia()],
+        mocks: {}
+      }
+    })
   })
 
   it('renders loading spinner when team is being fetched', async () => {
