@@ -84,7 +84,8 @@ const props = defineProps<{
 const emit = defineEmits(['closeModal', 'approveAddress', 'disapproveAddress'])
 
 const submitApprove = () => {
-  if (isAddress(addressToApprove.value)) emit('approveAddress', addressToApprove.value, description.value)
+  if (isAddress(addressToApprove.value))
+    emit('approveAddress', addressToApprove.value, description.value)
 }
 
 const submitDisapprove = (_addressToDisapprove: string) => {

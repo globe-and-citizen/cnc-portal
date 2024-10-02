@@ -68,10 +68,7 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="
-          contractOwnerAddress == useUserDataStore().address ||
-          isBodAction()
-        "
+        v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
         @click="setLimitModal = true"
         data-test="set-limit-button"
       >
@@ -79,10 +76,7 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="
-          contractOwnerAddress == useUserDataStore().address ||
-          isBodAction()
-        "
+        v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
         @click="approveUsersModal = true"
         data-test="approve-users-button"
       >
@@ -117,12 +111,10 @@
       <ApproveUsersForm
         v-if="approveUsersModal"
         :loading-approve="
-          isLoadingApproveAddress || 
-          (isLoadingAddAction && action === 'approve-users')
+          isLoadingApproveAddress || (isLoadingAddAction && action === 'approve-users')
         "
         :loading-disapprove="
-          isLoadingDisapproveAddress || 
-          (isLoadingAddAction && action === 'approve-users')
+          isLoadingDisapproveAddress || (isLoadingAddAction && action === 'approve-users')
         "
         :approved-addresses="approvedAddresses"
         :unapproved-addresses="unapprovedAddresses"
@@ -193,10 +185,7 @@ const {
   error: errorAddAction,
   isSuccess: isSuccessAddAction
 } = useAddAction()
-const {
-  boardOfDirectors,
-  execute: executeGetBoardOfDirectors
-} = useGetBoardOfDirectors()
+const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
 const {
   execute: executeExpenseAccountGetMaxLimit,
   isLoading: isLoadingMaxLimit,
@@ -303,18 +292,19 @@ const approveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'approve-users'
-      const functionSignature = await expenseAccountService
-        .getFunctionSignature(
-          team.value.expenseAccountAddress,
-          'approveAddress',
-          [address]
-        )
+      const functionSignature = await expenseAccountService.getFunctionSignature(
+        team.value.expenseAccountAddress,
+        'approveAddress',
+        [address]
+      )
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
         description
       })
-      console.log(`perfoming bod address approval ${address}, ${description}, ${functionSignature}...`)
+      console.log(
+        `perfoming bod address approval ${address}, ${description}, ${functionSignature}...`
+      )
       action.value = ''
       if (isSuccessAddAction.value) approveUsersModal.value = false
     } else {
@@ -327,11 +317,12 @@ const approveAddress = async (address: string, description: string) => {
 
 const isBodAction = () => {
   if (
-    contractOwnerAddress.value?.toLocaleLowerCase() === 
-    team.value.boardOfDirectorsAddress?.toLocaleLowerCase() &&
+    contractOwnerAddress.value?.toLocaleLowerCase() ===
+      team.value.boardOfDirectorsAddress?.toLocaleLowerCase() &&
     boardOfDirectors.value
   )
-    return boardOfDirectors.value.map(address => address.toLocaleLowerCase())
+    return boardOfDirectors.value
+      .map((address) => address.toLocaleLowerCase())
       .includes(useUserDataStore().address.toLocaleLowerCase())
 
   return false
@@ -341,20 +332,21 @@ const disapproveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'approve-users'
-      const functionSignature = await expenseAccountService
-        .getFunctionSignature(
-          team.value.expenseAccountAddress,
-          'disapproveAddress',
-          [address]
-        )
+      const functionSignature = await expenseAccountService.getFunctionSignature(
+        team.value.expenseAccountAddress,
+        'disapproveAddress',
+        [address]
+      )
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
         description
       })
-      console.log(`perfoming bod address disapproval ${address}, ${description}, ${functionSignature}...`)
+      console.log(
+        `perfoming bod address disapproval ${address}, ${description}, ${functionSignature}...`
+      )
       action.value = ''
-      if (isSuccessAddAction.value) approveUsersModal.value = false    
+      if (isSuccessAddAction.value) approveUsersModal.value = false
     } else {
       await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
       await checkApprovedAddresses()
@@ -403,6 +395,9 @@ const errorMessage = (error: {}, message: string) =>
 //#endregion helper functions
 
 //#region watch error
+watch(errorAddAction, (newVal) => {
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Adding Action'))
+})
 
 watch(errorSetMaxLimit, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Setting Max Limit'))
@@ -434,6 +429,10 @@ watch(errorGetMaxLimit, (newVal) => {
 //#endregion watch error
 
 //#region watch success
+watch(isSuccessAddAction, (newVal) => {
+  if (newVal) addSuccessToast('Action Added Successfully')
+})
+
 watch(isSuccessTransfer, (newVal) => {
   if (newVal) addSuccessToast('Transfer Successful')
 })
