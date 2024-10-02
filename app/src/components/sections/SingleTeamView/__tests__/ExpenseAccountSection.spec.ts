@@ -487,6 +487,7 @@ describe('ExpenseAccountSection', () => {
         expect(approveUsersForm.exists()).toBe(true)
         expect(approveUsersForm.props()).toEqual({
           loadingApprove: false,
+          isBodAction: false,
           loadingDisapprove: false,
           approvedAddresses: new Set(),
           unapprovedAddresses: new Set()
