@@ -31,7 +31,7 @@
       </table>
     </div>
   </div>
-  <div class="mt-5" v-if="unapprovedAddresses.size > 0">
+  <div class="mt-5 gap-2" v-if="unapprovedAddresses.size > 0">
     <div class="text-lg font-medium">Unapproved Addresses</div>
     <label class="input input-bordered flex items-center gap-2 input-md">
       <select v-model="addressToApprove" class="bg-white">
@@ -40,6 +40,11 @@
           {{ address }}
         </option>
       </select>
+    </label>
+
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <span class="w-24">description</span>
+      <input type="text" class="grow" data-test="description-input" v-model="description" />
     </label>
 
     <div class="modal-action justify-center">
@@ -63,18 +68,20 @@ import { isAddress } from 'ethers'
 
 const addressToApprove = ref<string>('')
 const addressToDisapprove = ref<string>('')
+const description = ref<string>('')
 
 const props = defineProps<{
   loadingApprove: boolean
   loadingDisapprove: boolean
   approvedAddresses: Set<string>
   unapprovedAddresses: Set<string>
+  isBodAction: boolean
 }>()
 
 const emit = defineEmits(['closeModal', 'approveAddress', 'disapproveAddress'])
 
 const submitApprove = () => {
-  if (isAddress(addressToApprove.value)) emit('approveAddress', addressToApprove.value)
+  if (isAddress(addressToApprove.value)) emit('approveAddress', addressToApprove.value, description.value)
 }
 
 const submitDisapprove = (_addressToDisapprove: string) => {

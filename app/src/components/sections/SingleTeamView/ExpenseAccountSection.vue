@@ -70,8 +70,7 @@
         class="btn btn-xs btn-secondary"
         v-if="
           contractOwnerAddress == useUserDataStore().address ||
-          boardOfDirectors?.map(address => address.toLocaleLowerCase())
-            .includes(useUserDataStore().address.toLocaleLowerCase())
+          isBodAction()
         "
         @click="setLimitModal = true"
         data-test="set-limit-button"
@@ -82,8 +81,7 @@
         class="btn btn-xs btn-secondary"
         v-if="
           contractOwnerAddress == useUserDataStore().address ||
-          boardOfDirectors?.map(address => address.toLocaleLowerCase())
-            .includes(useUserDataStore().address.toLocaleLowerCase())
+          isBodAction()
         "
         @click="approveUsersModal = true"
         data-test="approve-users-button"
@@ -122,6 +120,7 @@
         :loading-disapprove="isLoadingDisapproveAddress"
         :approved-addresses="approvedAddresses"
         :unapproved-addresses="unapprovedAddresses"
+        :is-bod-action="isBodAction()"
         @approve-address="approveAddress"
         @disapprove-address="disapproveAddress"
         @close-modal="approveUsersModal = false"
@@ -283,12 +282,28 @@ const setExpenseAccountLimit = async (amount: Ref) => {
   }
 }
 
-const approveAddress = async (address: string) => {
+const approveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
-    await checkApprovedAddresses()
-    if (isSuccessApproveAddress.value) approveUsersModal.value = false
+    if (isBodAction()) {
+      console.log(`perfoming bod address approval ${address}, ${description}...`)
+    } else {
+      await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
+      await checkApprovedAddresses()
+      if (isSuccessApproveAddress.value) approveUsersModal.value = false
+    }
   }
+}
+
+const isBodAction = () => {
+  if (
+    contractOwnerAddress.value?.toLocaleLowerCase() === 
+    team.value.boardOfDirectorsAddress?.toLocaleLowerCase() &&
+    boardOfDirectors.value
+  )
+    return boardOfDirectors.value.map(address => address.toLocaleLowerCase())
+      .includes(useUserDataStore().address.toLocaleLowerCase())
+
+  return false
 }
 
 const disapproveAddress = async (address: string) => {
