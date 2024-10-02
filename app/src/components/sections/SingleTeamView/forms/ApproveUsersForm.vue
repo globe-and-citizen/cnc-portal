@@ -2,6 +2,13 @@
   <h1 class="font-bold text-2xl mb-5">Approve/Disapprove Users</h1>
   <hr />
 
+  <div v-if="isBodAction">
+    <p class="pt-2 text-red-500">This will create a board of directors action</p>
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <span class="w-24">description</span>
+      <input type="text" class="grow" data-test="description-input" v-model="description" />
+    </label>
+  </div>
   <!--List of approved addressed with dissaprove button on each-->
   <div v-if="approvedAddresses.size > 0" class="mt-5">
     <div class="text-lg font-medium">Approved Addresses</div>
@@ -31,6 +38,7 @@
       </table>
     </div>
   </div>
+
   <div class="mt-5 gap-2" v-if="unapprovedAddresses.size > 0">
     <div class="text-lg font-medium">Unapproved Addresses</div>
     <label class="input input-bordered flex items-center gap-2 input-md">
@@ -40,11 +48,6 @@
           {{ address }}
         </option>
       </select>
-    </label>
-
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-      <span class="w-24">description</span>
-      <input type="text" class="grow" data-test="description-input" v-model="description" />
     </label>
 
     <div class="modal-action justify-center">
@@ -86,7 +89,7 @@ const submitApprove = () => {
 
 const submitDisapprove = (_addressToDisapprove: string) => {
   addressToDisapprove.value = _addressToDisapprove
-  emit('disapproveAddress', _addressToDisapprove)
+  emit('disapproveAddress', _addressToDisapprove, description.value)
 }
 
 watch(

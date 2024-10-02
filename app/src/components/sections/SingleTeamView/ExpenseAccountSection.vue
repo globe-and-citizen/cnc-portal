@@ -120,7 +120,10 @@
           isLoadingApproveAddress || 
           (isLoadingAddAction && action === 'approve-users')
         "
-        :loading-disapprove="isLoadingDisapproveAddress"
+        :loading-disapprove="
+          isLoadingDisapproveAddress || 
+          (isLoadingAddAction && action === 'approve-users')
+        "
         :approved-addresses="approvedAddresses"
         :unapproved-addresses="unapprovedAddresses"
         :is-bod-action="isBodAction()"
@@ -187,7 +190,8 @@ const expenseAccountService = new ExpenseAccountService()
 const {
   execute: executeAddAction,
   isLoading: isLoadingAddAction,
-  error: errorAddAction
+  error: errorAddAction,
+  isSuccess: isSuccessAddAction
 } = useAddAction()
 const {
   boardOfDirectors,
@@ -312,6 +316,7 @@ const approveAddress = async (address: string, description: string) => {
       })
       console.log(`perfoming bod address approval ${address}, ${description}, ${functionSignature}...`)
       action.value = ''
+      if (isSuccessAddAction.value) approveUsersModal.value = false
     } else {
       await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
       await checkApprovedAddresses()
@@ -332,11 +337,29 @@ const isBodAction = () => {
   return false
 }
 
-const disapproveAddress = async (address: string) => {
+const disapproveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
-    await checkApprovedAddresses()
-    if (isSuccessDisapproveAddress.value) approveUsersModal.value = false
+    if (isBodAction()) {
+      action.value = 'approve-users'
+      const functionSignature = await expenseAccountService
+        .getFunctionSignature(
+          team.value.expenseAccountAddress,
+          'disapproveAddress',
+          [address]
+        )
+      await executeAddAction(props.team, {
+        targetAddress: props.team.expenseAccountAddress as Address,
+        data: functionSignature as Address,
+        description
+      })
+      console.log(`perfoming bod address disapproval ${address}, ${description}, ${functionSignature}...`)
+      action.value = ''
+      if (isSuccessAddAction.value) approveUsersModal.value = false    
+    } else {
+      await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
+      await checkApprovedAddresses()
+      if (isSuccessDisapproveAddress.value) approveUsersModal.value = false
+    }
   }
 }
 
