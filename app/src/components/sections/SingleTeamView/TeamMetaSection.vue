@@ -42,10 +42,9 @@ const route = useRoute()
 const router = useRouter()
 const inputs = ref<Member[]>([])
 
-const updateTeamInput = ref<Partial<Team>>({
+const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
-  description: '',
-  bankAddress: ''
+  description: ''
 })
 // useFetch instance for updating team details
 const {
@@ -97,7 +96,6 @@ const updateTeamModalOpen = async () => {
   showModal.value = true
   updateTeamInput.value.name = props.team.name
   updateTeamInput.value.description = props.team.description
-  updateTeamInput.value.bankAddress = props.team.bankAddress
   inputs.value = props.team.members
 }
 </script>
