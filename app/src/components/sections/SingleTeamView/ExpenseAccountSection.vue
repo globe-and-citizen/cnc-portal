@@ -116,7 +116,10 @@
     <ModalComponent v-model="approveUsersModal">
       <ApproveUsersForm
         v-if="approveUsersModal"
-        :loading-approve="isLoadingApproveAddress"
+        :loading-approve="
+          isLoadingApproveAddress || 
+          (isLoadingAddAction && action === 'approve-users')
+        "
         :loading-disapprove="isLoadingDisapproveAddress"
         :approved-addresses="approvedAddresses"
         :unapproved-addresses="unapprovedAddresses"
@@ -157,6 +160,9 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError } from '@/utils'
 import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
+import { ExpenseAccountService } from '@/services/expenseAccountService'
+import type { Address } from 'viem'
+
 //#endregion imports
 
 //#region variable declarations
@@ -170,12 +176,19 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const unapprovedAddresses = ref<Set<string>>(new Set())
+const action = ref('')
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
+const expenseAccountService = new ExpenseAccountService()
 //#endregion variable declarations
 
 //#region expense account composable
+const {
+  execute: executeAddAction,
+  isLoading: isLoadingAddAction,
+  error: errorAddAction
+} = useAddAction()
 const {
   boardOfDirectors,
   execute: executeGetBoardOfDirectors
@@ -285,7 +298,20 @@ const setExpenseAccountLimit = async (amount: Ref) => {
 const approveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
-      console.log(`perfoming bod address approval ${address}, ${description}...`)
+      action.value = 'approve-users'
+      const functionSignature = await expenseAccountService
+        .getFunctionSignature(
+          team.value.expenseAccountAddress,
+          'approveAddress',
+          [address]
+        )
+      await executeAddAction(props.team, {
+        targetAddress: props.team.expenseAccountAddress as Address,
+        data: functionSignature as Address,
+        description
+      })
+      console.log(`perfoming bod address approval ${address}, ${description}, ${functionSignature}...`)
+      action.value = ''
     } else {
       await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
       await checkApprovedAddresses()
