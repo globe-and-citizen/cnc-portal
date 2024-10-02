@@ -68,7 +68,11 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="contractOwnerAddress == useUserDataStore().address"
+        v-if="
+          contractOwnerAddress == useUserDataStore().address ||
+          boardOfDirectors?.map(address => address.toLocaleLowerCase())
+            .includes(useUserDataStore().address.toLocaleLowerCase())
+        "
         @click="setLimitModal = true"
         data-test="set-limit-button"
       >
@@ -76,7 +80,11 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="contractOwnerAddress == useUserDataStore().address"
+        v-if="
+          contractOwnerAddress == useUserDataStore().address ||
+          boardOfDirectors?.map(address => address.toLocaleLowerCase())
+            .includes(useUserDataStore().address.toLocaleLowerCase())
+        "
         @click="approveUsersModal = true"
         data-test="approve-users-button"
       >
@@ -149,6 +157,7 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError } from '@/utils'
+import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
 //#endregion imports
 
 //#region variable declarations
@@ -168,6 +177,10 @@ const { copy, copied, isSupported } = useClipboard()
 //#endregion variable declarations
 
 //#region expense account composable
+const {
+  boardOfDirectors,
+  execute: executeGetBoardOfDirectors
+} = useGetBoardOfDirectors()
 const {
   execute: executeExpenseAccountGetMaxLimit,
   isLoading: isLoadingMaxLimit,
@@ -241,6 +254,8 @@ const init = async () => {
   await getExpenseAccountMaxLimit()
   await getExpenseAccountOwner()
   await checkApprovedAddresses()
+  if (team.value.boardOfDirectorsAddress)
+    await executeGetBoardOfDirectors(team.value.boardOfDirectorsAddress)
 }
 
 const getExpenseAccountBalance = async () => {
