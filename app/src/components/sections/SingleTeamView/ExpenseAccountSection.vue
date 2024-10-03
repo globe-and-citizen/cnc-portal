@@ -102,7 +102,10 @@
     <ModalComponent v-model="setLimitModal">
       <SetLimitForm
         v-if="setLimitModal"
-        :loading="isLoadingSetLimit"
+        :loading="
+          isLoadingSetLimit || (isLoadingAddAction && action === 'set-max-limit')
+        "
+        :is-bod-action="isBodAction()"
         @close-modal="() => (setLimitModal = false)"
         @set-limit="setExpenseAccountLimit"
       />
@@ -157,6 +160,7 @@ import { parseError } from '@/utils'
 import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
 import { ExpenseAccountService } from '@/services/expenseAccountService'
 import type { Address } from 'viem'
+import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 //#endregion imports
 
@@ -176,6 +180,7 @@ const action = ref('')
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const expenseAccountService = new ExpenseAccountService()
+const web3Library = new EthersJsAdapter()
 //#endregion variable declarations
 
 //#region expense account composable
@@ -281,10 +286,24 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   }
 }
 
-const setExpenseAccountLimit = async (amount: Ref) => {
+const setExpenseAccountLimit = async (amount: string, description: string) => {
   if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount.value)
-    await getExpenseAccountMaxLimit()
+    if (isBodAction()) {
+      action.value = 'set-max-limit'
+      const functionSignature = await expenseAccountService.getFunctionSignature(
+        team.value.expenseAccountAddress,
+        'setMaxLimit',
+        [web3Library.parseEther(amount)]
+      )
+      await executeAddAction(props.team, {
+        targetAddress: props.team.expenseAccountAddress as Address,
+        data: functionSignature as Address,
+        description
+      })
+    } else {
+      await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount)
+      await getExpenseAccountMaxLimit()
+    }
   }
 }
 
