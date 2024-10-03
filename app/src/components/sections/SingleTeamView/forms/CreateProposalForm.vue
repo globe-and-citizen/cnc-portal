@@ -105,7 +105,7 @@
           </ul>
         </div>
         <div
-          class="flex m-4 text-sm gap-4 justify-between"
+          class="flex m-4 text-xs gap-4 justify-between"
           v-for="(candidate, index) in newProposalInput.candidates"
           :key="index"
         >
@@ -116,7 +116,7 @@
             {{ candidate.candidateAddress }}
           </span>
           <MinusCircleIcon
-            class="w-4 cursor-pointer"
+            class="w-4 text-red-500 cursor-pointer"
             @click="() => newProposalInput.candidates.splice(index, 1)"
           />
         </div>
