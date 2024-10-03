@@ -1,8 +1,31 @@
 import { ExpenseAccountService } from '@/services/expenseAccountService'
 import { ref } from 'vue'
 import { log, parseError } from '@/utils'
+import { TransactionResponse } from 'ethers'
 
 const expenseAccountService = new ExpenseAccountService()
+
+export function useExpenseAccountTransferOwnership(expenseAccountAddress: string) {
+  const data = ref<TransactionResponse | null>(null)
+  const loading = ref(false)
+  const error = ref<unknown>(null)
+  const isSuccess = ref(false)
+
+  async function transferExpenseOwnership(newOwner: string) {
+    try {
+      loading.value = true
+      data.value = await expenseAccountService.transferOwnership(expenseAccountAddress, newOwner)
+      isSuccess.value = true
+    } catch (err) {
+      log.error(parseError(err))
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { execute: transferExpenseOwnership, isLoading: loading, isSuccess, error, data }
+}
 
 export function useExpenseAccountGetMaxLimit() {
   const data = ref<string | null>(null)

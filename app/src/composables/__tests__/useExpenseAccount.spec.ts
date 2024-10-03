@@ -8,7 +8,8 @@ import {
   useExpenseAccountApproveAddress,
   useExpenseAccountDisapproveAddress,
   useExpenseAccountIsApprovedAddress,
-  useExpenseAccountTransfer
+  useExpenseAccountTransfer,
+  useExpenseAccountTransferOwnership
 } from '../useExpenseAccount'
 //import { ExpenseAccountEventType, type EventResult } from '@/types'
 import type { Result } from 'ethers'
@@ -74,6 +75,7 @@ const { expenseAccountService } = vi.hoisted(() => {
       approveAddress: vi.fn().mockReturnValue(Promise.resolve(tx)),
       disapproveAddress: vi.fn().mockReturnValue(Promise.resolve(tx)),
       isApprovedAddress: vi.fn().mockReturnValue(Promise.resolve(true)),
+      transferOwnership: vi.fn().mockReturnValue(Promise.resolve(tx)),
       getContract: vi.fn().mockImplementation(() => {
         return {
           address: expenseAccountAddress,
@@ -957,6 +959,118 @@ describe('Expense Account Composables', () => {
           expenseAccountAddress,
           to,
           Number(amount)
+        )
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+    })
+  })
+
+  // useExpenseAccountTransferOwnership
+  describe('useExpenseAccountTransferOwnership', () => {
+    it('should set initial values correctly', () => {
+      const {
+        execute: transferOwnership,
+        isLoading,
+        isSuccess,
+        error,
+        data: result
+      } = useExpenseAccountTransferOwnership(expenseAccountAddress)
+      expect(transferOwnership).toBeInstanceOf(Function)
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(false)
+      expect(error.value).toBe(null)
+      expect(result.value).toBe(null)
+    })
+
+    describe('when success', () => {
+      it('should change state of isLoading correctly', async () => {
+        const { execute: transferOwnership, isLoading } =
+          useExpenseAccountTransferOwnership(expenseAccountAddress)
+        const promise = transferOwnership(`0xNewOwner`)
+        expect(expenseAccountService.transferOwnership).toHaveBeenCalledWith(
+          expenseAccountAddress,
+          `0xNewOwner`
+        )
+        expect(isLoading.value).toBe(true)
+        await promise
+        expect(isLoading.value).toBe(false)
+      })
+      it('should change state of isSuccess correctly', async () => {
+        const { execute: transferOwnership, isSuccess } =
+          useExpenseAccountTransferOwnership(expenseAccountAddress)
+        const promise = transferOwnership('0xNewOwner')
+        expect(expenseAccountService.transferOwnership).toHaveBeenCalledWith(
+          expenseAccountAddress,
+          `0xNewOwner`
+        )
+        expect(isSuccess.value).toBe(false)
+        await promise
+        expect(isSuccess.value).toBe(true)
+      })
+      it('should keep the state of error', async () => {
+        const { execute: transferOwnership, error } =
+          useExpenseAccountTransferOwnership(expenseAccountAddress)
+        const promise = transferOwnership('0xNewOwner')
+        expect(expenseAccountService.transferOwnership).toHaveBeenCalledWith(
+          expenseAccountAddress,
+          `0xNewOwner`
+        )
+        expect(error.value).toBe(null)
+        await promise
+        expect(error.value).toBe(null)
+      })
+      it('should change state of transfer data correctly', async () => {
+        const { execute: transferOwnership, data } =
+          useExpenseAccountTransferOwnership(expenseAccountAddress)
+        const promise = transferOwnership('0xNewOwner')
+        expect(expenseAccountService.transferOwnership).toHaveBeenCalledWith(
+          expenseAccountAddress,
+          `0xNewOwner`
+        )
+        expect(data.value).toBe(null)
+        await promise
+        expect(data.value).toStrictEqual(tx)
+      })
+    })
+
+    describe('when error', () => {
+      const mockError = new Error('error')
+
+      beforeEach(() => {
+        vi.mocked(expenseAccountService.transferOwnership).mockRejectedValue(mockError)
+      })
+
+      it('should change state of error correctly', async () => {
+        const { execute: transferOwnership, error } =
+          useExpenseAccountTransferOwnership(expenseAccountAddress)
+        expect(error.value).toBe(null)
+        await transferOwnership(`0xNewOwner`)
+        expect(expenseAccountService.transferOwnership).toHaveBeenCalledWith(
+          expenseAccountAddress,
+          `0xNewOwner`
+        )
+        expect(error.value).toBe(mockError)
+      })
+      it('should keep the state of isSuccess to false', async () => {
+        const { execute: transferOwnership, isSuccess } =
+          useExpenseAccountTransferOwnership(expenseAccountAddress)
+        expect(isSuccess.value).toBe(false)
+        await transferOwnership('0xNewOwner')
+        expect(expenseAccountService.transferOwnership).toHaveBeenCalledWith(
+          expenseAccountAddress,
+          `0xNewOwner`
+        )
+        expect(isSuccess.value).toBe(false)
+      })
+      it('should change state of isLoading correctly', async () => {
+        const { execute: transferOwnership, isLoading } =
+          useExpenseAccountTransferOwnership(expenseAccountAddress)
+        const promise = transferOwnership('0xNewOwner')
+        expect(expenseAccountService.transferOwnership).toHaveBeenCalledWith(
+          expenseAccountAddress,
+          '0xNewOwner'
         )
         expect(isLoading.value).toBe(true)
         await promise
