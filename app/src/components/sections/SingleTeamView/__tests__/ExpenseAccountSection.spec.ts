@@ -10,8 +10,8 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import SetLimitForm from '../forms/SetLimitForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersForm.vue'
 import type { User } from '@/types'
-import { useExpenseAccountSetLimit } from '@/composables/useExpenseAccount'
-import { error } from 'console'
+import { ExpenseAccountService } from '@/services/expenseAccountService'
+import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 interface ComponentData {
   transferModal: boolean
@@ -19,11 +19,38 @@ interface ComponentData {
   approveUsersModal: boolean
   approvedAddresses: Set<string>
   foundUsers: User[]
+  action: string
   transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
   setExpenseAccountLimit: (amount: Ref) => Promise<void>
   approveAddress: (address: string) => Promise<void>
   disapproveAddress: (address: string) => Promise<void>
+  isBodAction: () => boolean
 }
+
+vi.mock('@/services/expenseAccountService', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+
+  const ExpenseAccountService = vi.fn()
+  ExpenseAccountService.prototype.getFunctionSignature = vi.fn()
+  return {
+    ...actual,
+    ExpenseAccountService
+  }
+})
+
+vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+
+  // Step 2: Mock the class itself and its instance methods
+  const EthersJsAdapter = vi.fn()
+  EthersJsAdapter.prototype.parseEther = vi.fn((amount: string) => `${amount}*10^18`)
+
+  // Step 3: Mock the static method getInstance
+  //@ts-ignore
+  EthersJsAdapter['getInstance'] = vi.fn()
+
+  return { ...actual, EthersJsAdapter }
+})
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -95,8 +122,7 @@ const mockExpenseAccountSetMaxLimit = {
   execute: vi.fn((expenseAccountAddress: string, amount: string) => {
     if (expenseAccountAddress && !isNaN(Number(amount)))
       mockExpenseAccountSetMaxLimit.isSuccess.value = true
-    else 
-      mockExpenseAccountSetMaxLimit.error.value = 'An error has occured'
+    else mockExpenseAccountSetMaxLimit.error.value = 'An error has occured'
   })
 }
 
@@ -110,6 +136,27 @@ vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
     useExpenseAccountIsApprovedAddress: vi.fn(() => mockExpenseAccountIsApprovedAddress),
     useExpenseAccountGetOwner: vi.fn(() => mockExpenseAccountGetOwner),
     useExpenseAccountSetLimit: vi.fn(() => mockExpenseAccountSetMaxLimit)
+  }
+})
+
+const mockGetBoardOfDirectors = {
+  boardOfDirectors: ref<string[] | null>(null),
+  execute: vi.fn()
+}
+
+const mockAddAction = {
+  isLoading: ref(false),
+  error: ref<unknown>(null),
+  isSuccess: ref(true),
+  execute: vi.fn()
+}
+
+vi.mock('@/composables/bod', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useGetBoardOfDirectors: vi.fn(() => mockGetBoardOfDirectors),
+    useAddAction: vi.fn(() => mockAddAction)
   }
 })
 
@@ -136,6 +183,7 @@ describe('ExpenseAccountSection', () => {
         team: {
           expenseAccountAddress: '0xExpenseAccount',
           ownerAddress: '0xOwner',
+          boardOfDirectorsAddress: null,
           ...props?.team
         },
         ...props
@@ -487,6 +535,7 @@ describe('ExpenseAccountSection', () => {
         await wrapper.vm.$nextTick()
         expect(mockExpenseAccountSetMaxLimit.isSuccess.value).toBe(true)
       })
+
       it('should close the modal when SetLimitForm @close-modal is emitted', async () => {
         ;(wrapper.vm as unknown as ComponentData).setLimitModal = true
         await wrapper.vm.$nextTick()
@@ -539,6 +588,52 @@ describe('ExpenseAccountSection', () => {
 
         approveUsersForm.vm.$emit('closeModal')
         expect((wrapper.vm as unknown as ComponentData).approveUsersModal).toBe(false)
+      })
+    })
+  })
+
+  describe('Methods', () => {
+    it('should call the correct function depending on for set limit', async () => {
+      const team = {
+        expenseAccountAddress: '0xExpenseAccount',
+        ownerAddress: '0xInitialUser',
+        boardOfDirectorsAddress: '0xBoardOfDirectors'
+      }
+      const _wrapper = createComponent({
+        props: {
+          team: {
+            ...team
+          }
+        }
+      })
+
+      mockGetBoardOfDirectors.boardOfDirectors.value = ['0xInitialUser']
+      mockExpenseAccountGetOwner.data.value = '0xBoardOfDirectors'
+      ;(_wrapper.vm as unknown as ComponentData).setLimitModal = true
+      await _wrapper.vm.$nextTick()
+
+      expect((_wrapper.vm as unknown as ComponentData).isBodAction()).toBe(true)
+      const setLimitForm = _wrapper.findComponent(SetLimitForm)
+      expect(setLimitForm.exists()).toBe(true)
+
+      const amount = '20'
+      const description = 'test description'
+
+      setLimitForm.vm.$emit('setLimit', amount, description)
+      await _wrapper.vm.$nextTick()
+
+      expect((_wrapper.vm as unknown as ComponentData).action).toBe('set-max-limit')
+      expect(ExpenseAccountService.prototype.getFunctionSignature).toBeCalledWith(
+        '0xExpenseAccount',
+        'setMaxLimit',
+        [`${amount}*10^18`]
+      )
+      expect(EthersJsAdapter.prototype.parseEther).toBeCalledWith(amount)
+      console.log('props', _wrapper.props())
+      expect(mockAddAction.execute).toBeCalledWith(_wrapper.props('team'), {
+        data: undefined,
+        description,
+        targetAddress: _wrapper.props('team').expenseAccountAddress
       })
     })
   })
