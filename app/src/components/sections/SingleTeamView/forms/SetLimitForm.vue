@@ -3,7 +3,9 @@
   <hr />
   <div class="mt-5">
     <div v-if="isBodAction">
-      <p class="pt-2 text-red-500">This will create a board of directors action</p>
+      <p data-test="bod-notification" class="pt-2 text-red-500">
+        This will create a board of directors action
+      </p>
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
         <span class="w-24">Description</span>
         <input
