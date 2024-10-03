@@ -121,7 +121,7 @@ const rules = {
     $valid: helpers.withMessage(
       'At least one member is required',
       (value: Array<{ name: string; address: string }>) => {
-        return value.some((v) => v.name && v.address)
+        return value.some((v) => v.address)
       }
     )
   }

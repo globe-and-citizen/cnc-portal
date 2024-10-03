@@ -158,29 +158,19 @@ watch(searchUserResponse, () => {
   }
 })
 const setTabs = () => {
-  if (team?.value?.bankAddress && tabs.value.findIndex((tab) => tab == SingleTeamTabs.Bank) == -1) {
-    tabs.value.push(SingleTeamTabs.Bank, SingleTeamTabs.Transactions)
-  }
-
   if (
-    team?.value?.votingAddress &&
-    tabs.value.findIndex((tab) => tab == SingleTeamTabs.Proposals) == -1
-  ) {
-    tabs.value.push(SingleTeamTabs.Proposals)
-  }
-
-  if (
-    team?.value?.expenseAccountAddress &&
-    tabs.value.findIndex((tab) => tab == SingleTeamTabs.Expenses) == -1
-  ) {
-    tabs.value.push(SingleTeamTabs.Expenses)
-  }
-
-  if (
-    team?.value?.boardOfDirectorsAddress &&
-    tabs.value.findIndex((tab) => tab == SingleTeamTabs.BoardOfDirectors) == -1
-  ) {
-    tabs.value.push(SingleTeamTabs.BoardOfDirectors)
-  }
+    team.value.bankAddress &&
+    team.value.votingAddress &&
+    team.value.boardOfDirectorsAddress &&
+    team.value.expenseAccountAddress
+  )
+    tabs.value = [
+      SingleTeamTabs.Members,
+      SingleTeamTabs.Bank,
+      SingleTeamTabs.Transactions,
+      SingleTeamTabs.Proposals,
+      SingleTeamTabs.Expenses,
+      SingleTeamTabs.BoardOfDirectors
+    ]
 }
 </script>
