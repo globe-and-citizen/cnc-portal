@@ -55,8 +55,6 @@ import { ref, watch, computed, onMounted } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction } from '@/composables/bod'
 import { useToastStore } from '@/stores/useToastStore'
-import type { Action } from '@/types'
-import { useUserDataStore } from '@/stores'
 
 const activeTab = ref(0)
 const tabs = ['Pending', 'Executed']
@@ -65,19 +63,13 @@ const props = defineProps<{
   boardOfDirectors: Address[]
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
-const { address: currentAddress } = useUserDataStore()
 
 const page = ref(1)
 const limit = ref<number>(10)
 const actionModal = ref(false)
 const getActionsUrl = ref('actions')
 
-const {
-  error: errorAddAction,
-  execute: executeAddAction,
-  isLoading: addActionLoading,
-  isSuccess: addActionsSuccess
-} = useAddAction()
+const { error: errorAddAction, isSuccess: addActionsSuccess } = useAddAction()
 
 const {
   isFetching: pendingActionLoading,
@@ -120,12 +112,6 @@ const {
 })
   .get()
   .json()
-
-const addAction = async (action: Action) => {
-  await executeAddAction(props.team!, action)
-
-  await fetchPendingActions()
-}
 
 const isPending = computed(() => activeTab.value === 0)
 const currentCount = computed(

@@ -6,11 +6,11 @@
       <p class="pt-2 text-red-500">This will create a board of directors action</p>
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
         <span class="w-24">Description</span>
-        <input 
-          type="text" 
-          class="grow" 
-          data-test="description-input" 
-          v-model="description" 
+        <input
+          type="text"
+          class="grow"
+          data-test="description-input"
+          v-model="description"
           placeholder="Enter an action description..."
         />
       </label>

@@ -102,9 +102,7 @@
     <ModalComponent v-model="setLimitModal">
       <SetLimitForm
         v-if="setLimitModal"
-        :loading="
-          isLoadingSetLimit || (isLoadingAddAction && action === 'set-max-limit')
-        "
+        :loading="isLoadingSetLimit || (isLoadingAddAction && action === 'set-max-limit')"
         :is-bod-action="isBodAction()"
         @close-modal="() => (setLimitModal = false)"
         @set-limit="setExpenseAccountLimit"
@@ -134,7 +132,7 @@
 
 <script setup lang="ts">
 //#region imports
-import { onMounted, ref, watch, type Ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import type { Team, User } from '@/types'
 import {
   useExpenseAccountGetOwner,
@@ -321,9 +319,6 @@ const approveAddress = async (address: string, description: string) => {
         data: functionSignature as Address,
         description
       })
-      console.log(
-        `perfoming bod address approval ${address}, ${description}, ${functionSignature}...`
-      )
       action.value = ''
       if (isSuccessAddAction.value) approveUsersModal.value = false
     } else {
@@ -361,9 +356,6 @@ const disapproveAddress = async (address: string, description: string) => {
         data: functionSignature as Address,
         description
       })
-      console.log(
-        `perfoming bod address disapproval ${address}, ${description}, ${functionSignature}...`
-      )
       action.value = ''
       if (isSuccessAddAction.value) approveUsersModal.value = false
     } else {
@@ -478,5 +470,6 @@ watch(
 
 onMounted(async () => {
   await init()
+  // console.log('bodAddressOnMounted', team.value.boardOfDirectorsAddress)
 })
 </script>
