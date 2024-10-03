@@ -68,7 +68,7 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="contractOwnerAddress == useUserDataStore().address"
+        v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
         @click="setLimitModal = true"
         data-test="set-limit-button"
       >
@@ -76,7 +76,7 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="contractOwnerAddress == useUserDataStore().address"
+        v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
         @click="approveUsersModal = true"
         data-test="approve-users-button"
       >
@@ -102,7 +102,8 @@
     <ModalComponent v-model="setLimitModal">
       <SetLimitForm
         v-if="setLimitModal"
-        :loading="isLoadingSetLimit"
+        :loading="isLoadingSetLimit || (isLoadingAddAction && action === 'set-max-limit')"
+        :is-bod-action="isBodAction()"
         @close-modal="() => (setLimitModal = false)"
         @set-limit="setExpenseAccountLimit"
       />
@@ -110,10 +111,15 @@
     <ModalComponent v-model="approveUsersModal">
       <ApproveUsersForm
         v-if="approveUsersModal"
-        :loading-approve="isLoadingApproveAddress"
-        :loading-disapprove="isLoadingDisapproveAddress"
+        :loading-approve="
+          isLoadingApproveAddress || (isLoadingAddAction && action === 'approve-users')
+        "
+        :loading-disapprove="
+          isLoadingDisapproveAddress || (isLoadingAddAction && action === 'approve-users')
+        "
         :approved-addresses="approvedAddresses"
         :unapproved-addresses="unapprovedAddresses"
+        :is-bod-action="isBodAction()"
         @approve-address="approveAddress"
         @disapprove-address="disapproveAddress"
         @close-modal="approveUsersModal = false"
@@ -126,7 +132,7 @@
 
 <script setup lang="ts">
 //#region imports
-import { onMounted, ref, watch, type Ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import type { Team, User } from '@/types'
 import {
   useExpenseAccountGetOwner,
@@ -149,6 +155,11 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError } from '@/utils'
+import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
+import { ExpenseAccountService } from '@/services/expenseAccountService'
+import type { Address } from 'viem'
+import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+
 //#endregion imports
 
 //#region variable declarations
@@ -162,12 +173,22 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const unapprovedAddresses = ref<Set<string>>(new Set())
+const action = ref('')
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
+const expenseAccountService = new ExpenseAccountService()
+const web3Library = new EthersJsAdapter()
 //#endregion variable declarations
 
 //#region expense account composable
+const {
+  execute: executeAddAction,
+  isLoading: isLoadingAddAction,
+  error: errorAddAction,
+  isSuccess: isSuccessAddAction
+} = useAddAction()
+const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
 const {
   execute: executeExpenseAccountGetMaxLimit,
   isLoading: isLoadingMaxLimit,
@@ -241,6 +262,8 @@ const init = async () => {
   await getExpenseAccountMaxLimit()
   await getExpenseAccountOwner()
   await checkApprovedAddresses()
+  if (team.value.boardOfDirectorsAddress)
+    await executeGetBoardOfDirectors(team.value.boardOfDirectorsAddress)
 }
 
 const getExpenseAccountBalance = async () => {
@@ -261,26 +284,85 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   }
 }
 
-const setExpenseAccountLimit = async (amount: Ref) => {
+const setExpenseAccountLimit = async (amount: string, description: string) => {
   if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount.value)
-    await getExpenseAccountMaxLimit()
+    if (isBodAction()) {
+      action.value = 'set-max-limit'
+      const functionSignature = await expenseAccountService.getFunctionSignature(
+        team.value.expenseAccountAddress,
+        'setMaxLimit',
+        [web3Library.parseEther(amount)]
+      )
+      await executeAddAction(props.team, {
+        targetAddress: props.team.expenseAccountAddress as Address,
+        data: functionSignature as Address,
+        description
+      })
+    } else {
+      await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount)
+      await getExpenseAccountMaxLimit()
+    }
   }
 }
 
-const approveAddress = async (address: string) => {
+const approveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
-    await checkApprovedAddresses()
-    if (isSuccessApproveAddress.value) approveUsersModal.value = false
+    if (isBodAction()) {
+      action.value = 'approve-users'
+      const functionSignature = await expenseAccountService.getFunctionSignature(
+        team.value.expenseAccountAddress,
+        'approveAddress',
+        [address]
+      )
+      await executeAddAction(props.team, {
+        targetAddress: props.team.expenseAccountAddress as Address,
+        data: functionSignature as Address,
+        description
+      })
+      action.value = ''
+      if (isSuccessAddAction.value) approveUsersModal.value = false
+    } else {
+      await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
+      await checkApprovedAddresses()
+      if (isSuccessApproveAddress.value) approveUsersModal.value = false
+    }
   }
 }
 
-const disapproveAddress = async (address: string) => {
+const isBodAction = () => {
+  if (
+    contractOwnerAddress.value?.toLocaleLowerCase() ===
+      team.value.boardOfDirectorsAddress?.toLocaleLowerCase() &&
+    boardOfDirectors.value
+  )
+    return boardOfDirectors.value
+      .map((address) => address.toLocaleLowerCase())
+      .includes(useUserDataStore().address.toLocaleLowerCase())
+
+  return false
+}
+
+const disapproveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
-    await checkApprovedAddresses()
-    if (isSuccessDisapproveAddress.value) approveUsersModal.value = false
+    if (isBodAction()) {
+      action.value = 'approve-users'
+      const functionSignature = await expenseAccountService.getFunctionSignature(
+        team.value.expenseAccountAddress,
+        'disapproveAddress',
+        [address]
+      )
+      await executeAddAction(props.team, {
+        targetAddress: props.team.expenseAccountAddress as Address,
+        data: functionSignature as Address,
+        description
+      })
+      action.value = ''
+      if (isSuccessAddAction.value) approveUsersModal.value = false
+    } else {
+      await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
+      await checkApprovedAddresses()
+      if (isSuccessDisapproveAddress.value) approveUsersModal.value = false
+    }
   }
 }
 
@@ -324,6 +406,9 @@ const errorMessage = (error: {}, message: string) =>
 //#endregion helper functions
 
 //#region watch error
+watch(errorAddAction, (newVal) => {
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Adding Action'))
+})
 
 watch(errorSetMaxLimit, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Setting Max Limit'))
@@ -355,6 +440,10 @@ watch(errorGetMaxLimit, (newVal) => {
 //#endregion watch error
 
 //#region watch success
+watch(isSuccessAddAction, (newVal) => {
+  if (newVal) addSuccessToast('Action Added Successfully')
+})
+
 watch(isSuccessTransfer, (newVal) => {
   if (newVal) addSuccessToast('Transfer Successful')
 })
@@ -381,5 +470,6 @@ watch(
 
 onMounted(async () => {
   await init()
+  // console.log('bodAddressOnMounted', team.value.boardOfDirectorsAddress)
 })
 </script>

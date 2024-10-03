@@ -2,6 +2,13 @@
   <h1 class="font-bold text-2xl mb-5">Approve/Disapprove Users</h1>
   <hr />
 
+  <div v-if="isBodAction">
+    <p class="pt-2 text-red-500">This will create a board of directors action</p>
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <span class="w-24">description</span>
+      <input type="text" class="grow" data-test="description-input" v-model="description" />
+    </label>
+  </div>
   <!--List of approved addressed with dissaprove button on each-->
   <div v-if="approvedAddresses.size > 0" class="mt-5">
     <div class="text-lg font-medium">Approved Addresses</div>
@@ -31,7 +38,8 @@
       </table>
     </div>
   </div>
-  <div class="mt-5" v-if="unapprovedAddresses.size > 0">
+
+  <div class="mt-5 gap-2" v-if="unapprovedAddresses.size > 0">
     <div class="text-lg font-medium">Unapproved Addresses</div>
     <label class="input input-bordered flex items-center gap-2 input-md">
       <select v-model="addressToApprove" class="bg-white">
@@ -63,23 +71,26 @@ import { isAddress } from 'ethers'
 
 const addressToApprove = ref<string>('')
 const addressToDisapprove = ref<string>('')
+const description = ref<string>('')
 
 const props = defineProps<{
   loadingApprove: boolean
   loadingDisapprove: boolean
   approvedAddresses: Set<string>
   unapprovedAddresses: Set<string>
+  isBodAction: boolean
 }>()
 
 const emit = defineEmits(['closeModal', 'approveAddress', 'disapproveAddress'])
 
 const submitApprove = () => {
-  if (isAddress(addressToApprove.value)) emit('approveAddress', addressToApprove.value)
+  if (isAddress(addressToApprove.value))
+    emit('approveAddress', addressToApprove.value, description.value)
 }
 
 const submitDisapprove = (_addressToDisapprove: string) => {
   addressToDisapprove.value = _addressToDisapprove
-  emit('disapproveAddress', _addressToDisapprove)
+  emit('disapproveAddress', _addressToDisapprove, description.value)
 }
 
 watch(
