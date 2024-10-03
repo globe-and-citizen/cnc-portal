@@ -105,7 +105,7 @@
           </ul>
         </div>
         <div
-          class="flex m-4 text-sm gap-4 justify-between"
+          class="flex m-4 text-xs gap-4 justify-between"
           v-for="(candidate, index) in newProposalInput.candidates"
           :key="index"
         >
@@ -116,9 +116,15 @@
             {{ candidate.candidateAddress }}
           </span>
           <MinusCircleIcon
-            class="w-4 cursor-pointer"
+            class="w-4 text-red-500 cursor-pointer"
             @click="() => newProposalInput.candidates.splice(index, 1)"
           />
+        </div>
+        <div
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-if="newProposalInput.isElection && $v.candidates.$error"
+        >
+          {{ $v.candidates.$errors[0]?.$message }}
         </div>
       </div>
 
@@ -156,6 +162,21 @@ const dropdown = ref<boolean>(true)
 
 const searchUserName = ref('')
 const searchUserAddress = ref('')
+interface Candidate {
+  name: string
+  candidateAddress: string
+}
+const uniqueCandidates = () => {
+  return {
+    $validator: (candidates: Candidate[]) => {
+      if (!Array.isArray(candidates) || candidates.length === 0) return true
+      const addresses = candidates.map((c) => c.candidateAddress)
+      const uniqueAddresses = new Set(addresses)
+      return addresses.length === uniqueAddresses.size
+    },
+    $message: 'Duplicate candidates are not allowed.'
+  }
+}
 
 const newProposalInput = defineModel({
   default: {
@@ -179,6 +200,9 @@ const rules = {
   description: {
     required,
     minLength: minLength(10)
+  },
+  candidates: {
+    uniqueCandidates: uniqueCandidates()
   }
 }
 
@@ -208,6 +232,7 @@ const searchUsers = async () => {
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
+
   emits('createProposal')
 }
 </script>
