@@ -43,27 +43,12 @@
         </button>
       </div>
     </div>
-    <div class="flex flex-col w-full">
-      <div class="flex justify-end" v-if="boardOfDirectors.includes(currentAddress as Address)">
-        <button class="btn btn-primary w-40" @click="actionModal = true">Add action</button>
-      </div>
-    </div>
   </div>
-  <ModalComponent v-model="actionModal">
-    <AddActionForm
-      v-if="actionModal"
-      @addAction="(action: Partial<Action>) => addAction(action as Action)"
-      :loading="addActionLoading"
-      :team="team"
-    />
-  </ModalComponent>
 </template>
 <script setup lang="ts">
 import TabNavigation from '@/components/TabNavigation.vue'
 import ActionTable from '@/components/sections/SingleTeamView/tables/ActionTable.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import AddActionForm from '@/components/sections/SingleTeamView/forms/AddActionForm.vue'
 import type { ActionResponse, Team } from '@/types'
 import type { Address } from 'viem'
 import { ref, watch, computed, onMounted } from 'vue'
