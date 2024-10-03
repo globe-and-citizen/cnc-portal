@@ -18,6 +18,7 @@ interface ComponentData {
   setLimitModal: boolean
   approveUsersModal: boolean
   approvedAddresses: Set<string>
+  unapprovedAddresses: Set<string>
   foundUsers: User[]
   action: string
   transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
@@ -25,6 +26,7 @@ interface ComponentData {
   approveAddress: (address: string) => Promise<void>
   disapproveAddress: (address: string) => Promise<void>
   isBodAction: () => boolean
+  init: () => Promise<void>
 }
 
 vi.mock('@/services/expenseAccountService', async (importOriginal) => {
@@ -97,7 +99,9 @@ const mockExpenseAccountIsApprovedAddress = {
   isSuccess: ref(false),
   error: ref(null),
   execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
+    console.log(`expenseAccountAddress ${expenseAccountAddress}, memberAddress ${memberAddress}`)
     if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
+      console.log(`set approved address true`)
       mockExpenseAccountIsApprovedAddress.data.value = true
     } else {
       mockExpenseAccountIsApprovedAddress.data.value = false
@@ -635,6 +639,121 @@ describe('ExpenseAccountSection', () => {
         description,
         targetAddress: _wrapper.props('team').expenseAccountAddress
       })
+    })
+    it('should call the correct function depending approve user', async () => {
+      const team = {
+        expenseAccountAddress: '0xExpenseAccount',
+        ownerAddress: '0xInitialUser',
+        boardOfDirectorsAddress: '0xBoardOfDirectors'
+      }
+      const _wrapper = createComponent({
+        props: {
+          team: {
+            ...team
+          }
+        }
+      })
+
+      mockGetBoardOfDirectors.boardOfDirectors.value = ['0xInitialUser']
+      mockExpenseAccountGetOwner.data.value = '0xBoardOfDirectors'
+      ;(_wrapper.vm as unknown as ComponentData).approveUsersModal = true
+      await _wrapper.vm.$nextTick()
+
+      expect((_wrapper.vm as unknown as ComponentData).isBodAction()).toBe(true)
+      const approveUsersForm = _wrapper.findComponent(ApproveUsersForm)
+      expect(approveUsersForm.exists()).toBe(true)
+
+      const addressToApprove = '0xTestUser'
+      const description = 'test description'
+
+      approveUsersForm.vm.$emit('approveAddress', addressToApprove, description)
+      await _wrapper.vm.$nextTick()
+
+      expect((_wrapper.vm as unknown as ComponentData).action).toBe('approve-users')
+      expect(ExpenseAccountService.prototype.getFunctionSignature).toBeCalledWith(
+        '0xExpenseAccount',
+        'approveAddress',
+        [addressToApprove]
+      )
+      //expect(EthersJsAdapter.prototype.parseEther).toBeCalledWith(amount)
+      console.log('props', _wrapper.props())
+      expect(mockAddAction.execute).toBeCalledWith(_wrapper.props('team'), {
+        data: undefined,
+        description,
+        targetAddress: _wrapper.props('team').expenseAccountAddress
+      })
+    })
+    it('should call the correct function depending disapprove user', async () => {
+      const team = {
+        expenseAccountAddress: '0xExpenseAccount',
+        ownerAddress: '0xInitialUser',
+        boardOfDirectorsAddress: '0xBoardOfDirectors'
+      }
+      const _wrapper = createComponent({
+        props: {
+          team: {
+            ...team
+          }
+        }
+      })
+
+      mockGetBoardOfDirectors.boardOfDirectors.value = ['0xInitialUser']
+      mockExpenseAccountGetOwner.data.value = '0xBoardOfDirectors'
+      ;(_wrapper.vm as unknown as ComponentData).approveUsersModal = true
+      await _wrapper.vm.$nextTick()
+
+      expect((_wrapper.vm as unknown as ComponentData).isBodAction()).toBe(true)
+      const approveUsersForm = _wrapper.findComponent(ApproveUsersForm)
+      expect(approveUsersForm.exists()).toBe(true)
+
+      const addressToApprove = '0xTestUser'
+      const description = 'test description'
+
+      approveUsersForm.vm.$emit('disapproveAddress', addressToApprove, description)
+      await _wrapper.vm.$nextTick()
+
+      expect((_wrapper.vm as unknown as ComponentData).action).toBe('approve-users')
+      expect(ExpenseAccountService.prototype.getFunctionSignature).toBeCalledWith(
+        '0xExpenseAccount',
+        'approveAddress',
+        [addressToApprove]
+      )
+      //expect(EthersJsAdapter.prototype.parseEther).toBeCalledWith(amount)
+      console.log('props', _wrapper.props())
+      expect(mockAddAction.execute).toBeCalledWith(_wrapper.props('team'), {
+        data: undefined,
+        description,
+        targetAddress: _wrapper.props('team').expenseAccountAddress
+      })
+    })
+    it('should check approved users correctly', async () => {
+      const team = {
+        expenseAccountAddress: '0xExpenseAccount',
+        ownerAddress: '0xInitialUser',
+        boardOfDirectorsAddress: '0xBoardOfDirectors',
+        members: [{ address: '0xApprovedAddress' }, { address: '0xDisapprovedAddress' }]
+      }
+      const _wrapper = createComponent({
+        props: {
+          team: {
+            ...team
+          }
+        }
+      })
+
+      await (_wrapper.vm as unknown as ComponentData).init()
+      await _wrapper.vm.$nextTick()
+
+      expect(mockExpenseAccountIsApprovedAddress.execute).toBeCalledWith(
+        _wrapper.props('team').expenseAccountAddress,
+        '0xApprovedAddress'
+      )
+      expect(mockExpenseAccountIsApprovedAddress.execute).toBeCalledWith(
+        _wrapper.props('team').expenseAccountAddress,
+        '0xDisapprovedAddress'
+      )
+
+      //expect((_wrapper.vm as unknown as ComponentData).unapprovedAddresses).toBe(new Set(['0xApprovedAddress']))
     })
   })
 })
