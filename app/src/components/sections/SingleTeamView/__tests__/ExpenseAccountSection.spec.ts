@@ -10,6 +10,8 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import SetLimitForm from '../forms/SetLimitForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersForm.vue'
 import type { User } from '@/types'
+import { useExpenseAccountSetLimit } from '@/composables/useExpenseAccount'
+import { error } from 'console'
 
 interface ComponentData {
   transferModal: boolean
@@ -86,6 +88,18 @@ const mockExpenseAccountGetOwner = {
   })
 }
 
+const mockExpenseAccountSetMaxLimit = {
+  isLoading: ref(false),
+  error: ref<unknown>(null),
+  isSuccess: ref(false),
+  execute: vi.fn((expenseAccountAddress: string, amount: string) => {
+    if (expenseAccountAddress && !isNaN(Number(amount)))
+      mockExpenseAccountSetMaxLimit.isSuccess.value = true
+    else 
+      mockExpenseAccountSetMaxLimit.error.value = 'An error has occured'
+  })
+}
+
 vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
@@ -94,7 +108,8 @@ vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
     useExpenseAccountGetBalance: vi.fn(() => mockExpenseAccountGetBalance),
     useDeployExpenseAccountContract: vi.fn(() => mockDeployExpenseAccount),
     useExpenseAccountIsApprovedAddress: vi.fn(() => mockExpenseAccountIsApprovedAddress),
-    useExpenseAccountGetOwner: vi.fn(() => mockExpenseAccountGetOwner)
+    useExpenseAccountGetOwner: vi.fn(() => mockExpenseAccountGetOwner),
+    useExpenseAccountSetLimit: vi.fn(() => mockExpenseAccountSetMaxLimit)
   }
 })
 
@@ -452,16 +467,25 @@ describe('ExpenseAccountSection', () => {
         const setLimitForm = wrapper.findComponent(SetLimitForm)
         expect(setLimitForm.exists()).toBe(true)
         expect(setLimitForm.props()).toEqual({
+          isBodAction: false,
           loading: false
         })
+
+        mockExpenseAccountSetMaxLimit.isLoading.value = true
+        await wrapper.vm.$nextTick()
+        expect(setLimitForm.props('loading')).toBe(true)
+        expect(setLimitForm.props('isBodAction')).toBe(false)
       })
       it('should call setExpenseAccountLimit when @set-limit is emitted', async () => {
         const setLimitForm = wrapper.findComponent(SetLimitForm)
         expect(setLimitForm.exists()).toBe(true)
 
-        setLimitForm.vm.$emit('setLimit', ref('20'))
+        setLimitForm.vm.$emit('setLimit', '20', 'test description')
 
-        expect(setLimitForm.emitted('setLimit')).toStrictEqual([[ref('20')]])
+        expect(setLimitForm.emitted('setLimit')).toStrictEqual([['20', 'test description']])
+        expect(mockExpenseAccountSetMaxLimit.execute).toBeCalledWith('0xExpenseAccount', '20')
+        await wrapper.vm.$nextTick()
+        expect(mockExpenseAccountSetMaxLimit.isSuccess.value).toBe(true)
       })
       it('should close the modal when SetLimitForm @close-modal is emitted', async () => {
         ;(wrapper.vm as unknown as ComponentData).setLimitModal = true
