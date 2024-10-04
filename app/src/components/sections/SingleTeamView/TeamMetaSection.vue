@@ -28,7 +28,7 @@ import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import TeamDetails from '@/components/sections/SingleTeamView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { Member, Team } from '@/types'
+import type { Member } from '@/types'
 import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 
@@ -42,10 +42,9 @@ const route = useRoute()
 const router = useRouter()
 const inputs = ref<Member[]>([])
 
-const updateTeamInput = ref<Partial<Team>>({
+const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
-  description: '',
-  bankAddress: ''
+  description: ''
 })
 // useFetch instance for updating team details
 const {
@@ -97,7 +96,6 @@ const updateTeamModalOpen = async () => {
   showModal.value = true
   updateTeamInput.value.name = props.team.name
   updateTeamInput.value.description = props.team.description
-  updateTeamInput.value.bankAddress = props.team.bankAddress
   inputs.value = props.team.members
 }
 </script>
