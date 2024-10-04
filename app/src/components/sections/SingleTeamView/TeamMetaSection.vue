@@ -28,7 +28,7 @@ import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import TeamDetails from '@/components/sections/SingleTeamView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { Member, Team } from '@/types'
+import type { Member } from '@/types'
 import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 
