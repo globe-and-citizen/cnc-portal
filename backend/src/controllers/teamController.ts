@@ -240,6 +240,9 @@ const deleteTeam = async (req: Request, res: Response) => {
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, "Unauthorized", res);
     }
+    await prisma.boardOfDirectorActions.deleteMany({
+      where: { teamId: Number(id) }
+    })
     const teamD = await prisma.team.delete({
       where: {
         id: Number(id),

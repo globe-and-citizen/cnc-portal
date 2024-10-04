@@ -4,7 +4,7 @@ import FACTORY_BEACON_ABI from '../artifacts/abi/factory-beacon.json'
 import { useUserDataStore } from '@/stores/user'
 import { EXPENSE_ACCOUNT_BEACON_ADDRESS, EXPENSE_ACCOUNT_LOGIC_ADDRESS } from '@/constant'
 import { SmartContract } from './contractService'
-import type { Contract, InterfaceAbi } from 'ethers'
+import type { Contract, InterfaceAbi, TransactionResponse } from 'ethers'
 export interface IExpenseAccountService {
   web3Library: IWeb3Library
   createExpenseAccountContract(id: string): Promise<string>
@@ -20,6 +20,33 @@ export class ExpenseAccountService implements IExpenseAccountService {
 
   async createExpenseAccountContract(): Promise<string> {
     return await this.deployExpenseAccountContract()
+  }
+
+  async getFunctionSignature(
+    expenseAccountAddresss: string,
+    functionName: string,
+    args: unknown[]
+  ): Promise<string> {
+    const expenseAccount = await this.getContract(expenseAccountAddresss)
+    args.map((arg) => {
+      if (typeof arg === 'number') {
+        this.web3Library.parseEther(arg.toString())
+      }
+    })
+    const functionSignature = expenseAccount.interface.encodeFunctionData(functionName, args)
+
+    return functionSignature
+  }
+
+  async transferOwnership(
+    expenseAccountAddress: string,
+    newOwner: string
+  ): Promise<TransactionResponse> {
+    const expenseAccount = await this.getContract(expenseAccountAddress)
+    const tx = await expenseAccount.transferOwnership(newOwner)
+    await tx.wait()
+
+    return tx
   }
 
   async getMaxLimit(expenseAccountAddress: string): Promise<string> {
