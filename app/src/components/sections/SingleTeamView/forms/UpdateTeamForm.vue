@@ -24,10 +24,6 @@
     >
       {{ error.$message }}
     </div>
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-30">Bank Smart Contract Address</span>
-      <input type="text" class="grow" v-model="team.bankAddress" />
-    </label>
   </div>
 
   <div class="modal-action justify-center">
@@ -42,8 +38,7 @@ import { useVuelidate } from '@vuelidate/core'
 const team = defineModel({
   default: {
     name: '',
-    description: '',
-    bankAddress: ''
+    description: ''
   }
 })
 const emits = defineEmits(['updateTeam'])

@@ -188,7 +188,7 @@ const addPauseAction = async () => {
     description: description.value,
     data: (await bankService.getFunctionSignature(
       props.team.bankAddress!,
-      isPaused ? 'unpause' : 'pause',
+      isPaused.value ? 'unpause' : 'pause',
       []
     )) as Address,
     targetAddress: props.team.bankAddress! as Address
