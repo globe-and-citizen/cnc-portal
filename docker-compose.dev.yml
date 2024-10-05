@@ -18,9 +18,7 @@ services:
       dockerfile: Dockerfile
       target: development
       args:
-        VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
-    environment:
-      VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
+        VITE_APP_BACKEND_URL: "http://localhost:3000"
     ports:
       - "5173:5173" # Adjust port as needed
     volumes:
@@ -40,7 +38,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:newpassword@db:5432/cnc-db
       PORT: 3000
-      FRONTEND_URL: http://localhost
+      FRONTEND_URL: http://localhost:5173
       NODE_ENV: development
       SECRET_KEY: "secret-key"
 
