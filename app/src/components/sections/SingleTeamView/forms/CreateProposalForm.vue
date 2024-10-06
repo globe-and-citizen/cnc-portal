@@ -19,7 +19,7 @@
       />
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
-        v-for="error of $v.title.$errors"
+        v-for="error of $v.proposal.title.$errors"
         :key="error.$uid"
       >
         {{ error.$message }}
@@ -32,7 +32,7 @@
       ></textarea>
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
-        v-for="error of $v.description.$errors"
+        v-for="error of $v.proposal.description.$errors"
         :key="error.$uid"
       >
         {{ error.$message }}
@@ -122,9 +122,9 @@
         </div>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-if="newProposalInput.isElection && $v.candidates.$error"
+          v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
         >
-          {{ $v.candidates.$errors[0]?.$message }}
+          {{ $v.proposal.candidates.$errors[0]?.$message }}
         </div>
       </div>
 
@@ -147,7 +147,7 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Proposal } from '@/types/index'
-import { ref, toRefs } from 'vue'
+import { ref } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
 import { required, minLength } from '@vuelidate/validators'
