@@ -163,7 +163,6 @@ const isValidMember = (index: number) => {
   return $v.value.team.members.$errors[0]?.$response.$errors[index].address.length == 0
 }
 
-
 const submitForm = () => {
   // Touch to check validation
   $v.value.$touch()
