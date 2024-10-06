@@ -22,6 +22,6 @@ export interface Proposal {
   candidates?: {
     candidateAddress: string
     name: string
-    votes: number
+    votes?: number
   }[]
 }
