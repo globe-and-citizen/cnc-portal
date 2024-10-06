@@ -5,7 +5,7 @@ import router from '@/router'
 import { ref } from 'vue'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types'
-import { getFetchErrorMessage, log, parseError } from '@/utils'
+import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
 import { MetaMaskUtil } from '@/utils/web3Util'
@@ -44,9 +44,8 @@ export function useSiwe() {
         .json()
 
       if (fetchError.value) {
-        log.info(getFetchErrorMessage(fetchError.value))
-        addErrorToast(getFetchErrorMessage(fetchError.value))
-        log.info('SIWE rejected')
+        log.info('fetchError.value', fetchError.value)
+        addErrorToast('Unable to fetch nonce')
         return
       }
 
@@ -61,8 +60,8 @@ export function useSiwe() {
         .json()
 
       if (siweError.value) {
-        log.info(getFetchErrorMessage(siweError.value))
-        addErrorToast(getFetchErrorMessage(siweError.value))
+        log.info('siweError.value', siweError.value)
+        addErrorToast('Unable to authenticate with SIWE')
         return
       }
       const token = siweData.value.accessToken
@@ -74,9 +73,8 @@ export function useSiwe() {
         .json()
 
       if (fetchUserError.value) {
-        log.info(getFetchErrorMessage(fetchUserError.value))
-        addErrorToast(getFetchErrorMessage(fetchUserError.value))
-        log.info('SIWE rejected')
+        log.info('fetchUserError.value', fetchUserError.value)
+        addErrorToast('Unable to fetch user data')
         return
       }
 
@@ -91,8 +89,7 @@ export function useSiwe() {
       router.push('/teams')
     } catch (_error) {
       log.info(parseError(_error))
-      addErrorToast(parseError(_error))
-      log.info('SIWE rejected')
+      addErrorToast("Couldn't authenticate with SIWE")
     } finally {
       isProcessing.value = false
     }

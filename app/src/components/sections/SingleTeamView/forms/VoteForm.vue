@@ -84,19 +84,6 @@ const selectedOption = ref<string | null>(null)
 
 const route = useRoute()
 const emits = defineEmits(['voteElection', 'voteDirective'])
-defineModel({
-  default: {
-    title: '',
-    description: '',
-    candidates: [
-      {
-        name: '',
-        candidateAddress: ''
-      }
-    ],
-    isElection: false
-  }
-})
 const props = defineProps<{
   team: Team
   proposal: Partial<Proposal>
