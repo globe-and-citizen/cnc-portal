@@ -16,13 +16,13 @@ describe('CreateProposal.vue', () => {
   describe('renders', () => {
     it('renders correctly', () => {
       const wrapper = mount(CreateProposalForm, {
-        props: { isLoading: false }
+        props: { isLoading: false, team: {} }
       })
       expect(wrapper.find('h2').text()).toBe('Create Proposal')
     })
     it('renders election form', () => {
       const wrapper = mount(CreateProposalForm, {
-        props: { isLoading: false }
+        props: { isLoading: false, team: {} }
       })
       expect(wrapper.find('[data-test="electionDiv"]').exists()).toBe(true)
     })
@@ -31,7 +31,7 @@ describe('CreateProposal.vue', () => {
   describe('actions', () => {
     it('updates newProposalInput when input fields change', async () => {
       const wrapper = mount(CreateProposalForm, {
-        props: { isLoading: false }
+        props: { isLoading: false, team: {} }
       })
 
       const titleInput = wrapper.find('input[placeholder="Title"]')
@@ -49,7 +49,7 @@ describe('CreateProposal.vue', () => {
 
     it('updates newProposalInput.isElection when select changes', async () => {
       const wrapper = mount(CreateProposalForm, {
-        props: { isLoading: false }
+        props: { isLoading: false, team: {} }
       })
 
       const select = wrapper.find('select')
@@ -64,7 +64,7 @@ describe('CreateProposal.vue', () => {
   describe('emits', () => {
     it('emits createProposal event when submit button is clicked', async () => {
       const wrapper = mount(CreateProposalForm, {
-        props: { isLoading: false }
+        props: { isLoading: false, team: {} }
       })
 
       const submitButton = wrapper.find('button[data-test="submitButton"]')
