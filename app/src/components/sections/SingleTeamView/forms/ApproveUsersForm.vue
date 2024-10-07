@@ -133,10 +133,12 @@ const submitApprove = () => {
 }
 
 const submitDisapprove = (_addressToDisapprove: string) => {
+  action.value = 'disapprove'
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
+  action.value = ''
   addressToDisapprove.value = _addressToDisapprove
   emit('disapproveAddress', _addressToDisapprove, description.value)
 }
