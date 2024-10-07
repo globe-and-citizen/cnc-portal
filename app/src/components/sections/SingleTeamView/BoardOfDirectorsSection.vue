@@ -228,7 +228,5 @@ onMounted(async () => {
   await executeBankOwner()
   if (props.team.expenseAccountAddress)
     await executeGetExpenseOwner(props.team.expenseAccountAddress)
-
-  console.log(`board of directors`, props.team.boardOfDirectorsAddress)
 })
 </script>

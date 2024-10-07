@@ -24,7 +24,6 @@ describe('SetLimitForm', () => {
   describe('Render', () => {
     it('should bod notification and description input if BoD action', () => {
       const wrapper = createComponent({ props: { isBodAction: true } })
-      console.log(`wrapper.props`, wrapper.props())
       expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="description-input"]').exists()).toBe(true)
     })

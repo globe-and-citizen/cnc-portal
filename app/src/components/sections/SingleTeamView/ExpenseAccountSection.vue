@@ -470,6 +470,5 @@ watch(
 
 onMounted(async () => {
   await init()
-  // console.log('bodAddressOnMounted', team.value.boardOfDirectorsAddress)
 })
 </script>
