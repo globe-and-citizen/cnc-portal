@@ -186,21 +186,29 @@ const searchUsers = async (
   type: 'founder' | 'member'
 ) => {
   try {
+    const members = props.team.members
     if (props.team.members) {
-      const result = props.team.members.filter((user: Partial<User>) => {
-        if (user.name && user.address)
-          return (
-            user.name.toLowerCase().includes(input.name.toLowerCase()) ||
-            user.address.toLowerCase().includes(input.address.toLowerCase())
-          )
-      })
-
+      const result = {
+        users: members.filter((member: { name: string; address: string }) => {
+          if (input.name && input.address) {
+            return (
+              member.name.toLowerCase().includes(input.name.toLowerCase()) &&
+              member.address.toLowerCase().includes(input.address.toLowerCase())
+            )
+          } else if (input.name) {
+            return member.name.toLowerCase().includes(input.name.toLowerCase())
+          } else if (input.address) {
+            return member.address.toLowerCase().includes(input.address.toLowerCase())
+          }
+          return false
+        })
+      }
       if (type === 'founder') {
-        founderUsers.value = result
-        showFounderDropdown.value = result.length > 0
+        founderUsers.value = result.users
+        showFounderDropdown.value = result.users.length > 0
       } else if (type === 'member') {
-        memberUsers.value = result
-        showMemberDropdown.value = result.length > 0
+        memberUsers.value = result.users
+        showMemberDropdown.value = result.users.length > 0
       }
     }
   } catch (error) {
