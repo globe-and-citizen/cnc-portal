@@ -78,6 +78,7 @@
         </ModalComponent>
         <ModalComponent v-model="showModal">
           <CreateProposalForm
+            :team="team"
             v-model="newProposalInput"
             @createProposal="createProposal"
             :isLoading="loadingAddProposal"
