@@ -19,7 +19,7 @@
       />
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
-        v-for="error of $v.title.$errors"
+        v-for="error of $v.proposal.title.$errors"
         :key="error.$uid"
       >
         {{ error.$message }}
@@ -32,7 +32,7 @@
       ></textarea>
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
-        v-for="error of $v.description.$errors"
+        v-for="error of $v.proposal.description.$errors"
         :key="error.$uid"
       >
         {{ error.$message }}
@@ -89,7 +89,7 @@
               <a
                 @click="
                   () => {
-                    newProposalInput.candidates.push({
+                    newProposalInput.candidates?.push({
                       name: user.name,
                       candidateAddress: user.address
                     })
@@ -117,14 +117,14 @@
           </span>
           <MinusCircleIcon
             class="w-4 text-red-500 cursor-pointer"
-            @click="() => newProposalInput.candidates.splice(index, 1)"
+            @click="() => newProposalInput.candidates?.splice(index, 1)"
           />
         </div>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-if="newProposalInput.isElection && $v.candidates.$error"
+          v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
         >
-          {{ $v.candidates.$errors[0]?.$message }}
+          {{ $v.proposal.candidates.$errors[0]?.$message }}
         </div>
       </div>
 
@@ -146,6 +146,7 @@
 
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
+import type { Proposal } from '@/types/index'
 import { ref } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
@@ -178,7 +179,7 @@ const uniqueCandidates = () => {
   }
 }
 
-const newProposalInput = defineModel({
+const newProposalInput = defineModel<Partial<Proposal>>({
   default: {
     title: '',
     description: '',
@@ -193,20 +194,24 @@ const newProposalInput = defineModel({
   }
 })
 const rules = {
-  title: {
-    required,
-    minLength: minLength(3)
-  },
-  description: {
-    required,
-    minLength: minLength(10)
-  },
-  candidates: {
-    uniqueCandidates: uniqueCandidates()
+  proposal: {
+    title: {
+      required,
+      minLength: minLength(3)
+    },
+    description: {
+      required,
+      minLength: minLength(10)
+    },
+    candidates: {
+      required,
+      uniqueCandidates: uniqueCandidates()
+    }
   }
 }
 
-const $v = useVuelidate(rules, newProposalInput.value)
+const $v = useVuelidate(rules, { proposal: newProposalInput })
+
 const { execute: executeSearchUser, data: users } = useCustomFetch('user/search', {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {

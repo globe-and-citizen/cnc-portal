@@ -43,8 +43,8 @@ describe('AddTeamForm.vue', () => {
 
     it('updates team members when a user is selected from dropdown', async () => {
       await wrapper.find('.dropdown a').trigger('click')
-      expect(wrapper.vm.modelValue.members[0].name).toBe(users[0].name)
-      expect(wrapper.vm.modelValue.members[0].address).toBe(users[0].address)
+      expect(wrapper.vm.modelValue?.members[0].name).toBe(users[0].name)
+      expect(wrapper.vm.modelValue?.members[0].address).toBe(users[0].address)
     })
   })
 
@@ -114,7 +114,7 @@ describe('AddTeamForm.vue', () => {
       await wrapper.findAll('.input-group input')[1].trigger('keyup.stop')
       // next ti
       await wrapper.find('.dropdown a').trigger('click')
-      expect(wrapper.vm.modelValue.members[0].name).toBe(users[0].name)
+      expect(wrapper.vm.modelValue?.members[0].name).toBe(users[0].name)
     })
   })
 })

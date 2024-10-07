@@ -7,14 +7,12 @@ interface ComponentData {
   team: {
     name: string
     description: string
-    bankAddress: string
   }
 }
 describe('UpdateTeamForm.vue', () => {
   const defaultTeam = {
     name: 'Test Team',
-    description: 'This is a test team',
-    bankAddress: '0x1234567890abcdef1234567890abcdef12345678'
+    description: 'This is a test team'
   }
 
   let wrapper: ReturnType<typeof mount>
@@ -50,13 +48,9 @@ describe('UpdateTeamForm.vue', () => {
       const inputs = wrapper.findAll('input')
       await inputs[0].setValue('New Team Name')
       await inputs[1].setValue('New Description')
-      await inputs[2].setValue('0xabcdefabcdefabcdefabcdefabcdefabcdef')
 
       expect((wrapper.vm as unknown as ComponentData).team.name).toBe('New Team Name')
       expect((wrapper.vm as unknown as ComponentData).team.description).toBe('New Description')
-      expect((wrapper.vm as unknown as ComponentData).team.bankAddress).toBe(
-        '0xabcdefabcdefabcdefabcdefabcdefabcdef'
-      )
     })
 
     it('emits updateTeam event when submit button is clicked', async () => {

@@ -10,7 +10,6 @@ interface ComponentData {
   updateTeamInput: {
     name: string
     description: string
-    bankAddress: string
   }
   showDeleteTeamConfirmModal: boolean
 }
@@ -30,7 +29,6 @@ describe('TeamMeta.vue ', () => {
     id: '1',
     name: 'Team',
     description: 'Description',
-    bankAddress: '0x892323',
     members: [{ name: 'Alice', address: '0x8238923' }]
   }
 
@@ -84,7 +82,6 @@ describe('TeamMeta.vue ', () => {
       expect((wrapper.vm as unknown as ComponentData).updateTeamInput.description).toBe(
         'Description'
       )
-      expect((wrapper.vm as unknown as ComponentData).updateTeamInput.bankAddress).toBe('0x892323')
     })
     it('opens delete confirmation modal when deleteTeam event is emitted', async () => {
       const teamDetails = wrapper.findComponent(TeamDetails)

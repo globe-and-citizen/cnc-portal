@@ -74,14 +74,3 @@ const parseErrorInfo = (info: MetaMaskErrorInfo) => {
 
   return A[1].trim()
 }
-
-export function getFetchErrorMessage(status: number | string) {
-  switch (status) {
-    case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON` || `Unauthorized`:
-      return `You can't make this request`
-    case `Internal Server Error`:
-      return 'An error occurred, try again later'
-    default:
-      return 'A network error occurred'
-  }
-}
