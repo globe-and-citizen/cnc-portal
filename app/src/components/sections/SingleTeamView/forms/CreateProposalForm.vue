@@ -151,7 +151,6 @@ import { ref } from 'vue'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import { useToastStore } from '@/stores/useToastStore'
 
 const emits = defineEmits(['createProposal'])
 const props = defineProps<{
