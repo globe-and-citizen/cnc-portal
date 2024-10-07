@@ -33,7 +33,7 @@ describe('SetLimitForm', () => {
     it('emits setLimitForm when submit button is clicked', async () => {
       const wrapper = createComponent()
       ;(wrapper.vm as unknown as ComponentData).amount = '0.20'
-      ;(wrapper.vm as unknown as ComponentData).description = "Test descriptions"
+      ;(wrapper.vm as unknown as ComponentData).description = 'Test descriptions'
       await wrapper.vm.$nextTick()
       await wrapper.find('button[data-test="transferButton"]').trigger('click')
       expect(wrapper.emitted('setLimit')).toBeTruthy()

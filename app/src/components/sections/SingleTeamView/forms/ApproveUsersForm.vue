@@ -6,11 +6,11 @@
     <p class="pt-2 text-red-500">This will create a board of directors action</p>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">description</span>
-      <input 
-        type="text" 
-        class="grow" 
-        data-test="description-input" 
-        v-model="description" 
+      <input
+        type="text"
+        class="grow"
+        data-test="description-input"
+        v-model="description"
         placeholder="Enter a description"
       />
     </label>
@@ -90,7 +90,7 @@ import { ref, watch } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
-import { required, numeric, helpers } from '@vuelidate/validators'
+import { helpers } from '@vuelidate/validators'
 
 const addressToApprove = ref<string>('')
 const addressToDisapprove = ref<string>('')
@@ -99,12 +99,12 @@ const action = ref<'approve' | 'disapprove' | ''>('')
 const rules = {
   addressToApprove: {
     required: helpers.withMessage('Address is required', (value: string) => {
-      return action.value === 'approve'? isAddress(value) : true
+      return action.value === 'approve' ? isAddress(value) : true
     })
-  }, 
+  },
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
-      return props.isBodAction? value.length > 0 : true
+      return props.isBodAction ? value.length > 0 : true
     })
   }
 }
@@ -117,7 +117,7 @@ const props = defineProps<{
   isBodAction: boolean
 }>()
 
-const v$ = useVuelidate(rules, {addressToApprove, description})
+const v$ = useVuelidate(rules, { addressToApprove, description })
 
 const emit = defineEmits(['closeModal', 'approveAddress', 'disapproveAddress'])
 

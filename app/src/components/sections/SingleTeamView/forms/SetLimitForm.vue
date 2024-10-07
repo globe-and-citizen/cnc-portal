@@ -18,12 +18,12 @@
       </label>
 
       <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of v$.description.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        v-for="error of v$.description.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
     </div>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Amount</span>
@@ -69,7 +69,7 @@ const notZero = helpers.withMessage('Amount must be greater than 0', (value: str
 const rules = {
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
-      return props.isBodAction? value.length > 0 : true
+      return props.isBodAction ? value.length > 0 : true
     })
   },
   amount: {
