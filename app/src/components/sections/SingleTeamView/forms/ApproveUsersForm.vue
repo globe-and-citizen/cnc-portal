@@ -3,7 +3,7 @@
   <hr />
 
   <div v-if="isBodAction">
-    <p class="pt-2 text-red-500">This will create a board of directors action</p>
+    <p data-test="bod-notification" class="pt-2 text-red-500">This will create a board of directors action</p>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">description</span>
       <input
@@ -33,11 +33,13 @@
             <td>{{ `${address.slice(0, 10)}...${address.slice(-10)}` }}</td>
             <td class="flex justify-end">
               <LoadingButton
+                data-test="loading-disapprove"
                 color="error"
                 class="w-28"
                 v-if="loadingDisapprove && address === addressToDisapprove"
               />
               <button
+                data-test="disapprove-button"
                 v-if="!loadingDisapprove || address !== addressToDisapprove"
                 :disabled="loadingDisapprove"
                 class="btn btn-error"
@@ -72,12 +74,12 @@
     </div>
 
     <div class="modal-action justify-center">
-      <LoadingButton color="primary" class="w-24" v-if="loadingApprove" />
+      <LoadingButton data-test="loading-approve" color="primary" class="w-24" v-if="loadingApprove" />
       <button
         class="btn btn-primary"
         @click="submitApprove"
         v-if="!loadingApprove"
-        data-test="transferButton"
+        data-test="approve-button"
       >
         Approve
       </button>
