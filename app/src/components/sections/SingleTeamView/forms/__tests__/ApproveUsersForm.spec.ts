@@ -1,11 +1,24 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ApproveUsersForm from '../ApproveUsersForm.vue'
+import { type Ref } from 'vue'
+import { type Validation, type ValidationRuleWithParams } from '@vuelidate/core'
 
 interface ComponentData {
   addressToApprove: string
   addressToDisapprove: string
   description: string
+  action: string
+  v$: Ref<
+    Validation<{
+      addressToApprove: {
+        required: ValidationRuleWithParams<object, unknown>
+      }
+      description: {
+        required: ValidationRuleWithParams<object, unknown>
+      }
+    }>
+  >
 }
 
 describe('ApproveUsersForm', () => {
@@ -66,7 +79,9 @@ describe('ApproveUsersForm', () => {
       expect(wrapper.find('[data-test="loading-approve"]').exists()).toBeTruthy()
     })
     it('should show description error when no description is entered', async () => {
-      const wrapper = createComponent({ props: { isBodAction: true, unapprovedAddresses: new Set(['0xUnapprovedAddress']) } })
+      const wrapper = createComponent({
+        props: { isBodAction: true, unapprovedAddresses: new Set(['0xUnapprovedAddress']) }
+      })
       expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
       const approveButton = wrapper.find('[data-test="approve-button"]')
       expect(approveButton.exists()).toBeTruthy()
@@ -77,15 +92,15 @@ describe('ApproveUsersForm', () => {
       expect(descriptionError.text()).toBe('Description is required')
     })
     it('should show address to approve error when no address is selected', async () => {
-      const wrapper = createComponent({ 
-        props: { 
-          unapprovedAddresses: new Set(['0xUnapprovedAddress']) 
-        } 
+      const wrapper = createComponent({
+        props: {
+          unapprovedAddresses: new Set(['0xUnapprovedAddress'])
+        }
       })
       const approveButton = wrapper.find('[data-test="approve-button"]')
       expect(approveButton.exists()).toBeTruthy()
       approveButton.trigger('click')
-      await wrapper.vm.$nextTick()    
+      await wrapper.vm.$nextTick()
       const approveError = wrapper.find('[data-test="approve-error"]')
       expect(approveError.exists()).toBeTruthy()
       expect(approveError.text()).toBe('Address is required')
@@ -102,7 +117,7 @@ describe('ApproveUsersForm', () => {
       await wrapper.vm.$nextTick()
       expect((wrapper.vm as unknown as ComponentData).addressToDisapprove).toBe('0xApprovedAddress')
     })
-    it('should update description', async () => {
+    it('should update description when description is entered in description input', async () => {
       const wrapper = createComponent({ props: { isBodAction: true } })
       const descriptionInput = wrapper.find('[data-test="description-input"]')
       expect(descriptionInput.exists()).toBeTruthy()
@@ -118,14 +133,59 @@ describe('ApproveUsersForm', () => {
       await selectInput.setValue('0xDisapprovedAddress')
     })
   })
-  // describe('Emits', () => {
-  //   it('emits setLimitForm when submit button is clicked', async () => {
-  //     const wrapper = createComponent()
-  //     ;(wrapper.vm as unknown as ComponentData).amount = '0.20'
-  //     ;(wrapper.vm as unknown as ComponentData).description = 'Test descriptions'
-  //     await wrapper.vm.$nextTick()
-  //     await wrapper.find('button[data-test="transferButton"]').trigger('click')
-  //     expect(wrapper.emitted('setLimit')).toBeTruthy()
-  //   })
-  // })
+  describe('Emits', () => {
+    it('should emit approveAddress when submit button is clicked', async () => {
+      const addressToApprove = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      const wrapper = createComponent({
+        props: {
+          unapprovedAddresses: new Set([addressToApprove])
+        }
+      })
+      const selectInput = wrapper.find('select')
+      expect(selectInput.exists()).toBeTruthy()
+      selectInput.setValue(addressToApprove)
+      expect((wrapper.vm as unknown as ComponentData).addressToApprove).toBe(addressToApprove)
+      await wrapper.vm.$nextTick()
+      await wrapper.find('button[data-test="approve-button"]').trigger('click')
+      expect(wrapper.emitted('approveAddress')).toBeTruthy()
+    })
+    it('should not emit approve address if form is invalid', async () => {
+      const addressToApprove = '0xSomeAddress'
+      const wrapper = createComponent({
+        props: {
+          unapprovedAddresses: new Set([addressToApprove])
+        }
+      })
+      await wrapper.find('button[data-test="approve-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      //@ts-ignore
+      expect(wrapper.vm.v$.$invalid).toBe(true)
+      expect(wrapper.emitted('approveAddress')).toBeFalsy()
+    })
+    it('should not emit disapprove address if form is invalid', async () => {
+      const addressToDisapprove = '0xSomeAddress'
+      const wrapper = createComponent({
+        props: {
+          isBodAction: true,
+          approvedAddresses: new Set([addressToDisapprove])
+        }
+      })
+      await wrapper.find('button[data-test="disapprove-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      //@ts-ignore
+      expect(wrapper.vm.v$.$invalid).toBe(true)
+      expect(wrapper.emitted('disapproveAddress')).toBeFalsy()
+    })
+    it('should emit close modal when cancel button is clicked', async () => {
+      const wrapper = createComponent({
+        props: {
+          unapprovedAddresses: new Set(['0xUnapprovedAddress'])
+        }
+      })
+      const cancelButton = wrapper.find('[data-test=cancel-button]')
+      expect(cancelButton.exists()).toBeTruthy()
+      cancelButton.trigger('click')
+      expect(wrapper.emitted('closeModal')).toBeTruthy()
+    })
+  })
 })

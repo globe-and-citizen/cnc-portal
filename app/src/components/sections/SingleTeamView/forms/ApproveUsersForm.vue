@@ -17,7 +17,7 @@
       />
     </label>
     <div
-    data-test="description-error"
+      data-test="description-error"
       class="pl-4 text-red-500 text-sm w-full text-left"
       v-for="error of v$.description.$errors"
       :key="error.$uid"
@@ -92,7 +92,9 @@
       >
         Approve
       </button>
-      <button class="btn btn-error" @click="$emit('closeModal')">Cancel</button>
+      <button data-test="cancel-button" class="btn btn-error" @click="$emit('closeModal')">
+        Cancel
+      </button>
     </div>
   </div>
 </template>
