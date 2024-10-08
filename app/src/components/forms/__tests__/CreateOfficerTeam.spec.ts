@@ -28,7 +28,7 @@ describe('CreateOfficerTeam.vue', () => {
       props: {
         team: {
           officerAddress: '0x123456789',
-          members: [{ name: 'John Doe', address: '0xabc' }]
+          members: [{ name: 'John Doe', address: '0xabc', id: '1', teamId: 1 }]
         }
       }
     })
