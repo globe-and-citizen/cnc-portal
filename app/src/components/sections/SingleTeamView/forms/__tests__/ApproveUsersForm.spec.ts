@@ -1,6 +1,5 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import SetLimitForm from '../SetLimitForm.vue'
 import ApproveUsersForm from '../ApproveUsersForm.vue'
 
 interface ComponentData {
@@ -33,33 +32,65 @@ describe('ApproveUsersForm', () => {
       expect(wrapper.find('[data-test="description-input"]').exists()).toBe(true)
     })
     it('should show approved addresses list if there are approved addresses', () => {
-      const wrapper = createComponent({props: { approvedAddresses: new Set(['0xApprovedAddress']) }})
+      const wrapper = createComponent({
+        props: { approvedAddresses: new Set(['0xApprovedAddress']) }
+      })
       expect(wrapper.find('[class="table table-zebra"]').exists()).toBe(true)
     })
     it('should show loading button when disapproving address', async () => {
-      const wrapper = createComponent({ 
-        props: { 
-          loadingDisapprove: true, 
-          approvedAddresses: new Set(['0xAddressToDisapprove'])} 
+      const wrapper = createComponent({
+        props: {
+          loadingDisapprove: true,
+          approvedAddresses: new Set(['0xAddressToDisapprove'])
+        }
       })
       ;(wrapper.vm as unknown as ComponentData).addressToDisapprove = '0xAddressToDisapprove'
       await wrapper.vm.$nextTick()
-      expect((wrapper.find('[data-test="loading-disapprove"]')).exists()).toBeTruthy()
+      expect(wrapper.find('[data-test="loading-disapprove"]').exists()).toBeTruthy()
     })
     it('should show disapproved addresses', () => {
-      const wrapper = createComponent({ props: { unapprovedAddresses: new Set(['0xUnapprovedAddress']) } })
+      const wrapper = createComponent({
+        props: { unapprovedAddresses: new Set(['0xUnapprovedAddress']) }
+      })
       expect(wrapper.find('select').exists()).toBeTruthy()
     })
     it('should show loading button when approving address', async () => {
-      const wrapper = createComponent({ 
-        props: { 
+      const wrapper = createComponent({
+        props: {
           loadingApprove: true,
-          unapprovedAddresses: new Set(['0xAddressToApprove']) 
-        } 
+          unapprovedAddresses: new Set(['0xAddressToApprove'])
+        }
       })
       ;(wrapper.vm as unknown as ComponentData).addressToDisapprove = '0xAddressToApprove'
       await wrapper.vm.$nextTick()
-      expect((wrapper.find('[data-test="loading-approve"]')).exists()).toBeTruthy()
+      expect(wrapper.find('[data-test="loading-approve"]').exists()).toBeTruthy()
+    })
+  })
+  describe('State & V-Model', () => {
+    it('should update address to disapprove when disapproving', async () => {
+      const wrapper = createComponent({
+        props: { approvedAddresses: new Set(['0xApprovedAddress']) }
+      })
+      const disapproveButton = wrapper.find('[data-test="disapprove-button"]')
+      expect(disapproveButton.exists()).toBe(true)
+      disapproveButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).addressToDisapprove).toBe('0xApprovedAddress')
+    })
+    it('should update description', async () => {
+      const wrapper = createComponent({ props: { isBodAction: true } })
+      const descriptionInput = wrapper.find('[data-test="description-input"]')
+      expect(descriptionInput.exists()).toBeTruthy()
+      await descriptionInput.setValue('test description')
+      expect((wrapper.vm as unknown as ComponentData).description).toBe('test description')
+    })
+    it('should update address to approve when approving', async () => {
+      const wrapper = createComponent({
+        props: { unapprovedAddresses: new Set(['0xDisapprovedAddress']) }
+      })
+      const selectInput = wrapper.find('select')
+      expect(selectInput.exists()).toBeTruthy()
+      await selectInput.setValue('0xDisapprovedAddress')
     })
   })
   // describe('Emits', () => {
