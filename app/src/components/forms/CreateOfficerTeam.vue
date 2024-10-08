@@ -109,12 +109,14 @@ import { MinusCircleIcon } from '@heroicons/vue/24/outline'
 
 import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
-import type { User } from '@/types'
+import type { Team, User } from '@/types'
 import type { Address } from 'viem'
 import LoadingButton from '../LoadingButton.vue'
 import { useCreateTeam } from '@/composables/officer'
 
-const props = defineProps(['team'])
+const props = defineProps<{
+  team: Partial<Team>
+}>()
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const founderUsers = ref<Partial<User>[]>([])
@@ -148,6 +150,7 @@ const createTeam = async () => {
   createTeamLoading.value = true
   const founders: Address[] = selectedFounders.value.map((founder) => founder.address as Address)
   const members: Address[] = selectedMembers.value.map((member) => member.address as Address)
+  if (!props.team.officerAddress) return
   createTeamCall(props.team.officerAddress, founders, members)
 }
 
@@ -182,28 +185,37 @@ const removeMember = () => {
 }
 
 const searchUsers = async (
-  input: { name: string; address: string },
+  input: { name?: string; address: string },
   type: 'founder' | 'member'
 ) => {
   try {
-    if (props.team.members) {
-      const result = props.team.members.filter((user: Partial<User>) => {
-        if (user.name && user.address)
-          return (
-            user.name.toLowerCase().includes(input.name.toLowerCase()) ||
-            user.address.toLowerCase().includes(input.address.toLowerCase())
-          )
-      })
-
+    const members = props.team.members
+    if (members) {
+      const result = {
+        users: members.filter((member: { name: string; address: string }) => {
+          if (input.name && input.address && member.name) {
+            return (
+              member.name.toLowerCase().includes(input.name.toLowerCase()) &&
+              member.address.toLowerCase().includes(input.address.toLowerCase())
+            )
+          } else if (input.name && member.name) {
+            return member.name.toLowerCase().includes(input.name.toLowerCase())
+          } else if (input.address) {
+            return member.address.toLowerCase().includes(input.address.toLowerCase())
+          }
+          return false
+        })
+      }
       if (type === 'founder') {
-        founderUsers.value = result
-        showFounderDropdown.value = result.length > 0
+        founderUsers.value = result.users
+        showFounderDropdown.value = result.users.length > 0
       } else if (type === 'member') {
-        memberUsers.value = result
-        showMemberDropdown.value = result.length > 0
+        memberUsers.value = result.users
+        showMemberDropdown.value = result.users.length > 0
       }
     }
   } catch (error) {
+    console.error(error)
     addErrorToast('Failed to search users')
   }
 }

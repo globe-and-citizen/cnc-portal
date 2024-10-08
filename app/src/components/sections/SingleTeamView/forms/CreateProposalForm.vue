@@ -146,18 +146,16 @@
 
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
-import type { Proposal } from '@/types/index'
+import type { Proposal, Team } from '@/types/index'
 import { ref } from 'vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import { useToastStore } from '@/stores/useToastStore'
 
-const { addErrorToast } = useToastStore()
 const emits = defineEmits(['createProposal'])
-defineProps<{
+const props = defineProps<{
   isLoading: boolean
+  team: Partial<Team>
 }>()
 const dropdown = ref<boolean>(true)
 
@@ -212,26 +210,30 @@ const rules = {
 
 const $v = useVuelidate(rules, { proposal: newProposalInput })
 
-const { execute: executeSearchUser, data: users } = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
+interface User {
+  name: string
+  address: string
+}
+
+const users = ref<{ users: User[] }>({ users: [] })
 const searchUsers = async () => {
-  try {
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
-    }
-  } catch (error: unknown) {
-    if (error instanceof Error) addErrorToast(error.message)
+  const members = props.team.members
+  if (!members) return
+
+  users.value = {
+    users: members.filter((member) => {
+      if (searchUserName.value && searchUserAddress.value) {
+        return (
+          member.name.toLowerCase().includes(searchUserName.value.toLowerCase()) &&
+          member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
+        )
+      } else if (searchUserName.value) {
+        return member.name.toLowerCase().includes(searchUserName.value.toLowerCase())
+      } else if (searchUserAddress.value) {
+        return member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
+      }
+      return false
+    })
   }
 }
 const submitForm = () => {
