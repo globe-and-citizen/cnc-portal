@@ -17,6 +17,7 @@
       />
     </label>
     <div
+    data-test="description-error"
       class="pl-4 text-red-500 text-sm w-full text-left"
       v-for="error of v$.description.$errors"
       :key="error.$uid"
@@ -68,6 +69,7 @@
     </label>
 
     <div
+      data-test="approve-error"
       class="pl-4 text-red-500 text-sm w-full text-left"
       v-for="error of v$.addressToApprove.$errors"
       :key="error.$uid"
