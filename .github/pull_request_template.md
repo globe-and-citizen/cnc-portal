@@ -4,6 +4,10 @@ Please include a summary of the changes and the related issue. Please also inclu
 
 Fixes # (issue)
 
+## Contribution
+
+For your PR please add a commnent to eache file edited to explain the changes you made.
+
 ## Type of change
 
 Please delete options that are not relevant.
