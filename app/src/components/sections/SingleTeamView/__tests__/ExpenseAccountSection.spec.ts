@@ -99,9 +99,7 @@ const mockExpenseAccountIsApprovedAddress = {
   isSuccess: ref(false),
   error: ref(null),
   execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
-    console.log(`expenseAccountAddress ${expenseAccountAddress}, memberAddress ${memberAddress}`)
     if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
-      console.log(`set approved address true`)
       mockExpenseAccountIsApprovedAddress.data.value = true
     } else {
       mockExpenseAccountIsApprovedAddress.data.value = false
@@ -633,7 +631,6 @@ describe('ExpenseAccountSection', () => {
         [`${amount}*10^18`]
       )
       expect(EthersJsAdapter.prototype.parseEther).toBeCalledWith(amount)
-      console.log('props', _wrapper.props())
       expect(mockAddAction.execute).toBeCalledWith(_wrapper.props('team'), {
         data: undefined,
         description,
@@ -676,7 +673,6 @@ describe('ExpenseAccountSection', () => {
         [addressToApprove]
       )
       //expect(EthersJsAdapter.prototype.parseEther).toBeCalledWith(amount)
-      console.log('props', _wrapper.props())
       expect(mockAddAction.execute).toBeCalledWith(_wrapper.props('team'), {
         data: undefined,
         description,
@@ -719,7 +715,6 @@ describe('ExpenseAccountSection', () => {
         [addressToApprove]
       )
       //expect(EthersJsAdapter.prototype.parseEther).toBeCalledWith(amount)
-      console.log('props', _wrapper.props())
       expect(mockAddAction.execute).toBeCalledWith(_wrapper.props('team'), {
         data: undefined,
         description,
