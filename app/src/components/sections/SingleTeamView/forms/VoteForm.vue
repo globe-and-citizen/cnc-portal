@@ -9,7 +9,13 @@
         class="form-control"
       >
         <label class="m-2 label cursor-pointer border rounded-lg">
-          <span class="label-text">{{ candidate.name }} | {{ candidate.candidateAddress }}</span>
+          <span class="label-text"
+            >{{
+              props.team.members.find((member: Member) => member.address === (candidate as any)[0])
+                ?.name
+            }}
+            | {{ candidate.candidateAddress }}</span
+          >
           <input
             type="radio"
             name="candidate"
@@ -69,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Proposal } from '@/types/index'
+import type { Member, Proposal, Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
@@ -78,20 +84,8 @@ const selectedOption = ref<string | null>(null)
 
 const route = useRoute()
 const emits = defineEmits(['voteElection', 'voteDirective'])
-defineModel({
-  default: {
-    title: '',
-    description: '',
-    candidates: [
-      {
-        name: '',
-        candidateAddress: ''
-      }
-    ],
-    isElection: false
-  }
-})
 const props = defineProps<{
+  team: Team
   proposal: Partial<Proposal>
   isLoading: boolean
 }>()

@@ -9,22 +9,29 @@ The Crypto Native Corporation Portal (CNC Portal) has the potential to be an ext
 
 ## Table of Contents
 
-1. [Database setup](#setting-up-postgres-database)
-   1. [Install using docker](#installing-the-database-using-docker)
-   2. [Running prisma migrations](#running-prisma-migrations)
-2. [Project structure](#folder-structure)
-3. [Environment variables](#environment-variables)
-   1. [Frontend](#frontend)
-   2. [Backend](#backend)
-4. [Running the application](#running-the-application)
-   1. [Run docker containers](#1--run-docker-containers)
-   2. [Run locally](#2--run-locally)
+- [CNC PORTAL](#cnc-portal)
+  - [Table of Contents](#table-of-contents)
+  - [Setting up postgres database](#setting-up-postgres-database)
+    - [Installing the database using docker](#installing-the-database-using-docker)
+      - [Running prisma migrations](#running-prisma-migrations)
+  - [Folder structure](#folder-structure)
+  - [Environment Variables](#environment-variables)
+    - [Backend](#backend)
+    - [Frontend](#frontend)
+      - [Constants](#constants)
+      - [Environment variables](#environment-variables-1)
+  - [Running the application](#running-the-application)
+    - [1- Run docker containers](#1--run-docker-containers)
+    - [2- Run locally](#2--run-locally)
+      - [Install dependencies](#install-dependencies)
+      - [Start the app in development mode](#start-the-app-in-development-mode)
+  - [Contribution guidline](#contribution-guidline)
 
 ## Setting up postgres database
 
 Note: If you plan on using `docker-compose up` at the root directory, you can skip this part as that sets the database up automatically
 
-### Installing the database using docker:
+### Installing the database using docker
 
 To create and run a PostgreSQL Docker container with the correct port and database URL as specified in your .env file, you can use the following command:
 
@@ -32,12 +39,12 @@ To create and run a PostgreSQL Docker container with the correct port and databa
 
 Here's the breakdown:
 
---name cnc-db: This names your Docker container cnc-db.
--e POSTGRES_USER=root: This sets the PostgreSQL username to root.
--e POSTGRES_PASSWORD=root: This sets the PostgreSQL password to root.
--e POSTGRES_DB=cnc-db: This creates a database named cnc-db.
--p 5432:5432: This maps port 5432 in the Docker container to port 5432 on your host machine.
--d postgres: This runs the postgres Docker image in detached mode.
+- `--name cnc-db`: This names your Docker container cnc-db.
+- `-e POSTGRES_USER=root`: This sets the PostgreSQL username to root.
+- `-e POSTGRES_PASSWORD=root`: This sets the PostgreSQL password to root.
+- `-e POSTGRES_DB=cnc-db`: This creates a database named cnc-db.
+- `-p 5432:5432`: This maps port 5432 in the Docker container to port 5432 on your host machine.
+- `-d postgres`: This runs the postgres Docker image in detached mode.
 
 After running this command, you should be able to connect to your PostgreSQL database at postgresql://root:root@localhost:5432/cnc-db.
 
@@ -64,14 +71,26 @@ In the `./backend` folder, create a `.env` file with the following variables:
 
 - **DATABASE_URL**: A valid PostgreSQL database URL. Example:
   `DATABASE_URL=postgres://username:password@localhost:5432/database_name`
+  
+  ***PS** : If you are using the docker container we setup in the top section, the URL should be: `DATABASE_URL=postgres://root:root@localhost:5432/cnc-db`*
 
 - **SECRET_KEY**: An HS256 compatible key for securing the application. Example:
-  `SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`
+  `SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`²
 
 - **FRONTEND_URL**: The URL for the frontend application. Example:
   `FRONTEND_URL=http://localhost:5173`
 
 ### Frontend
+
+#### Constants
+
+First, go to ./app folder and run `npm run git:ignore-locally`. This command will ignore changes made to the deployed_addresses of the local hardhat network ensuring no conflict.
+
+Go to the ./contract folder and run `npm run moveConstants`
+
+This action will copy your deployed_addresses from different chains to `src/artifacts/deployed_addresses` directory and imports these constants in `src/constant/index.ts`.
+
+#### Environment variables
 
 In the `./app` folder, create a `.env` file with the following variable:
 
@@ -79,13 +98,7 @@ In the `./app` folder, create a `.env` file with the following variable:
   `VITE_APP_BACKEND_URL=http://localhost:8000`
 - **VITE_APP_ETHERSCAN_URL**: The URL to see transaction detail. Example:
   `VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
-- **VITE_APP_TIPS_ADDRESS**: The URL to Tips smart contract. Example:
-  `VITE_APP_TIPS_ADDRESS=0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B`
-- **VITE_APP_VITE_BANK_IMPL_ADDRESS**=: The bank implementation address
-  `VITE_BANK_IMPL_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9`
-- **VITE_APP_VITE_BANK_BEACON_ADDRESS**=: The bank beacon address
-  `VITE_BANK_IMPL_ADDRESS=0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9`
-- _VITE_APP_NETWORK_ALIAS_: The string identifier of an EVM compatible network that the app uses. Example: `VITE_APP_NETWORK_ALIAS=polygon`. This variable is optional but if you don't set your own network parameters it has to be provided. Use this if you want to use one of the preset networks which the application provides. Available options are:
+- ***VITE_APP_NETWORK_ALIAS***: The string identifier of an EVM compatible network that the app uses. Example: `VITE_APP_NETWORK_ALIAS=polygon`. This variable is optional but if you don't set your own network parameters it has to be provided. Use this if you want to use one of the preset networks which the application provides. Available options are:
   1. `etherem` - The Ethereum Main Network
   2. `polygon` - The Polygon Main Network
   3. `sepolia` - The Sepolia Test Network
@@ -109,11 +122,11 @@ In the root directory run
 docker compose up --build
 ```
 
-Then access the app at [http://localhost:5173](http://localhost:5173) and the backend endpoints at [http://localhost:5173](http://localhost:5173).
+Then access the app at [http://localhost:5173](http://localhost:5173) and the backend endpoints at [http://localhost:3000](http://localhost:3000).
 
 Note: This sets up the database at port 5432 with the container volume name as "db". While accessing the database make sure to reference this as the host. For example, the DATABASE_URL variable in the .env file, should be specified as db:5432 as shown below instead of 127.0.0.1:5432 or localhost:5432.
 
-` DATABASE_URL=postgres://postgres:cnc@postgres@db:5432/postgres`
+`DATABASE_URL=postgres://postgres:cnc@postgres@db:5432/postgres`
 
 ### 2- Run locally
 
@@ -137,4 +150,35 @@ In `./backend` folder
 
 ```bash
 npm run start
+```
+
+## Contribution guidline
+
+Make sur you run the following commands before submitting your PR:
+
+- /app
+
+```bash
+npm run build
+npm run test:unit
+npm run type-check
+npm run lint
+npm run format
+```
+
+- /backend
+
+```bash
+npm run build
+npm run test
+npm run lint
+npm run format
+```
+
+- /contract
+
+```bash
+npm run test
+npm run lint
+npm run format
 ```

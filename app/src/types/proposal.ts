@@ -6,6 +6,7 @@ export interface Proposal {
   isActive: boolean
   isElection: boolean
   teamId: Number
+  winnerCount: Number
   voters?: {
     memberAddress: string
     name: string
@@ -21,6 +22,6 @@ export interface Proposal {
   candidates?: {
     candidateAddress: string
     name: string
-    votes: number
+    votes?: number
   }[]
 }

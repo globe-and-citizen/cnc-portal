@@ -2,7 +2,11 @@
   <div>
     <h2>Create Proposal</h2>
     <div class="flex flex-col gap-4 mt-2">
-      <select class="select select-primary w-full" v-model="newProposalInput.isElection">
+      <select
+        class="select select-primary w-full"
+        v-model="newProposalInput.isElection"
+        data-test="electionDiv"
+      >
         <option disabled selected>Type of Proposal</option>
         <option :value="true">Election</option>
         <option :value="false">Directive</option>
@@ -13,13 +17,35 @@
         class="input input-primary w-full"
         v-model="newProposalInput.title"
       />
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        v-for="error of $v.proposal.title.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
 
       <textarea
         class="textarea textarea-primary h-24"
         placeholder="Description"
         v-model="newProposalInput.description"
       ></textarea>
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        v-for="error of $v.proposal.description.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
       <div v-if="newProposalInput.isElection">
+        <div class="mb-4">
+          <input
+            type="number"
+            class="input input-primary w-full"
+            placeholder="Number of Directors"
+            v-model="newProposalInput.winnerCount"
+          />
+        </div>
         <div class="input-group">
           <label class="input input-primary flex items-center gap-2 input-md">
             <input
@@ -63,7 +89,7 @@
               <a
                 @click="
                   () => {
-                    newProposalInput.candidates.push({
+                    newProposalInput.candidates?.push({
                       name: user.name,
                       candidateAddress: user.address
                     })
@@ -79,7 +105,7 @@
           </ul>
         </div>
         <div
-          class="flex m-4 text-sm gap-4 justify-between"
+          class="flex m-4 text-xs gap-4 justify-between"
           v-for="(candidate, index) in newProposalInput.candidates"
           :key="index"
         >
@@ -90,9 +116,15 @@
             {{ candidate.candidateAddress }}
           </span>
           <MinusCircleIcon
-            class="w-4 cursor-pointer"
-            @click="() => newProposalInput.candidates.splice(index, 1)"
+            class="w-4 text-red-500 cursor-pointer"
+            @click="() => newProposalInput.candidates?.splice(index, 1)"
           />
+        </div>
+        <div
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
+        >
+          {{ $v.proposal.candidates.$errors[0]?.$message }}
         </div>
       </div>
 
@@ -102,7 +134,8 @@
         <button
           v-else
           class="btn btn-primary btn-md justify-center"
-          @click="emits('createProposal')"
+          data-test="submitButton"
+          @click="submitForm"
         >
           Create Proposal
         </button>
@@ -113,21 +146,38 @@
 
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
+import type { Proposal, Team } from '@/types/index'
 import { ref } from 'vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useErrorHandler } from '@/composables/errorHandler'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
+import { required, minLength } from '@vuelidate/validators'
+import { useVuelidate } from '@vuelidate/core'
 
 const emits = defineEmits(['createProposal'])
-defineProps<{
+const props = defineProps<{
   isLoading: boolean
+  team: Partial<Team>
 }>()
 const dropdown = ref<boolean>(true)
 
 const searchUserName = ref('')
 const searchUserAddress = ref('')
+interface Candidate {
+  name: string
+  candidateAddress: string
+}
+const uniqueCandidates = () => {
+  return {
+    $validator: (candidates: Candidate[]) => {
+      if (!Array.isArray(candidates) || candidates.length === 0) return true
+      const addresses = candidates.map((c) => c.candidateAddress)
+      const uniqueAddresses = new Set(addresses)
+      return addresses.length === uniqueAddresses.size
+    },
+    $message: 'Duplicate candidates are not allowed.'
+  }
+}
 
-const newProposalInput = defineModel({
+const newProposalInput = defineModel<Partial<Proposal>>({
   default: {
     title: '',
     description: '',
@@ -137,29 +187,59 @@ const newProposalInput = defineModel({
         candidateAddress: ''
       }
     ],
-    isElection: false
+    isElection: false,
+    winnerCount: 0
   }
 })
-const { execute: executeSearchUser, data: users } = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
-const searchUsers = async () => {
-  try {
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
+const rules = {
+  proposal: {
+    title: {
+      required,
+      minLength: minLength(3)
+    },
+    description: {
+      required,
+      minLength: minLength(10)
+    },
+    candidates: {
+      required,
+      uniqueCandidates: uniqueCandidates()
     }
-  } catch (error) {
-    return useErrorHandler().handleError(error)
   }
+}
+
+const $v = useVuelidate(rules, { proposal: newProposalInput })
+
+interface User {
+  name: string
+  address: string
+}
+
+const users = ref<{ users: User[] }>({ users: [] })
+const searchUsers = async () => {
+  const members = props.team.members
+  if (!members) return
+
+  users.value = {
+    users: members.filter((member) => {
+      if (searchUserName.value && searchUserAddress.value) {
+        return (
+          member.name.toLowerCase().includes(searchUserName.value.toLowerCase()) &&
+          member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
+        )
+      } else if (searchUserName.value) {
+        return member.name.toLowerCase().includes(searchUserName.value.toLowerCase())
+      } else if (searchUserAddress.value) {
+        return member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
+      }
+      return false
+    })
+  }
+}
+const submitForm = () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
+
+  emits('createProposal')
 }
 </script>

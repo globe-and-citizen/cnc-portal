@@ -1,61 +1,94 @@
 <template>
   <div v-if="team.votingAddress">
-    <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
-      <div class="flex justify-between">
-        <div>
-          <h2>Proposals</h2>
-          <!-- <span
+    <div>
+      <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
+        <div class="flex justify-between">
+          <div>
+            <h2>Proposals</h2>
+            <!-- <span
           class="badge badge-sm"
           :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
           >{{ team.bankAddress }}</span
         > -->
+          </div>
+          <div class="flex justify-between gap-4">
+            <button class="btn btn-primary btn-md" @click="showModal = !showModal">
+              Create Proposal
+            </button>
+            <button
+              class="btn btn-secondary"
+              v-if="team.boardOfDirectorsAddress"
+              @click="
+                () => {
+                  executeGetBoardOfDirectors(String(team.boardOfDirectorsAddress))
+                  showBoDModal = true
+                }
+              "
+            >
+              View BoD
+            </button>
+            <button class="btn btn-md btn-secondary" @click="showVotingControlModal = true">
+              Manage
+            </button>
+          </div>
+          <ModalComponent v-model="showVotingControlModal">
+            <VotingManagement :team="team" />
+          </ModalComponent>
         </div>
-        <div>
-          <button class="btn btn-primary btn-md" @click="showModal = !showModal">
-            Create Proposal
-          </button>
-        </div>
+        <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
+          <template #tab-0>
+            <ProposalCard
+              v-for="proposal in activeProposals"
+              :proposal="proposal"
+              class="mt-10"
+              :team="team"
+              :key="proposal.title"
+              @getTeam="emits('getTeam')"
+            />
+          </template>
+          <template #tab-1>
+            <ProposalCard
+              v-for="proposal in oldProposals"
+              :proposal="proposal"
+              :team="team"
+              :isDone="true"
+              class="mt-10"
+              :key="proposal.title"
+            />
+          </template>
+        </TabNavigation>
+        <ModalComponent v-model="showBoDModal">
+          <h3>Board Of Directors</h3>
+          <hr />
+          <div class="mt-4">
+            <ul v-if="boardOfDirectors?.length">
+              <li
+                v-for="(address, index) in boardOfDirectors"
+                :key="index"
+                class="text-sm flex justify-between"
+              >
+                <span v-if="team.members">
+                  {{ team.members.find((member) => member.address === address)?.name || 'Unknown' }}
+                </span>
+                {{ address }}
+              </li>
+            </ul>
+            <p v-else>No Board of Directors found.</p>
+          </div>
+        </ModalComponent>
+        <ModalComponent v-model="showModal">
+          <CreateProposalForm
+            :team="team"
+            v-model="newProposalInput"
+            @createProposal="createProposal"
+            :isLoading="loadingAddProposal"
+          />
+        </ModalComponent>
       </div>
-      <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
-        <template #tab-0>
-          <ProposalCard
-            v-for="proposal in activeProposals"
-            :proposal="proposal"
-            class="mt-10"
-            :team="team"
-            :key="proposal.title"
-            @getTeam="emits('getTeam')"
-          />
-        </template>
-        <template #tab-1>
-          <ProposalCard
-            v-for="proposal in oldProposals"
-            :proposal="proposal"
-            :team="team"
-            :isDone="true"
-            class="mt-10"
-            :key="proposal.title"
-          />
-        </template>
-      </TabNavigation>
-
-      <ModalComponent v-model="showModal">
-        <CreateProposalForm
-          v-model="newProposalInput"
-          @createProposal="createProposal"
-          :isLoading="loadingAddProposal"
-        />
-      </ModalComponent>
     </div>
     <div class="flex justify-center items-center" v-if="loadingGetProposals">
       <span class="loading loading-spinner loading-lg"></span>
     </div>
-  </div>
-  <div class="flex justify-center items-center" v-else>
-    <LoadingButton color="primary min-w-28" v-if="loadingDeployVotingContract" />
-    <button v-else class="btn btn-primary btn-md" @click="execute(String(route.params.id))">
-      Create Voting Contract
-    </button>
   </div>
 </template>
 <script setup lang="ts">
@@ -66,22 +99,28 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import { useAddProposal, useGetProposals, useDeployVotingContract } from '@/composables/voting'
+import { useAddProposal, useGetProposals } from '@/composables/voting'
+import { useGetBoardOfDirectors } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
-import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
-import LoadingButton from '@/components/LoadingButton.vue'
+import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
 
-const emits = defineEmits(['getTeam'])
+const props = defineProps<{ team: Partial<Team> }>()
+const showVotingControlModal = ref(false)
+const emits = defineEmits(['getTeam', 'addBodTab'])
 const { addSuccessToast, addErrorToast } = useToastStore()
-
 const {
-  execute,
-  isLoading: loadingDeployVotingContract,
-  isSuccess: isSuccessDeployVotingContract,
-  error: errorDeployVotingContract
-} = useDeployVotingContract()
+  boardOfDirectors,
+  execute: executeGetBoardOfDirectors,
+  error: errorGetBoardOfDirectors
+} = useGetBoardOfDirectors()
+
+watch(errorGetBoardOfDirectors, () => {
+  if (errorGetBoardOfDirectors.value) {
+    addErrorToast('Failed to get board of directors')
+  }
+})
 
 const {
   execute: executeAddProposal,
@@ -96,21 +135,7 @@ const {
   error: errorGetProposals,
   data: proposals
 } = useGetProposals()
-watch(isSuccessDeployVotingContract, () => {
-  if (isSuccessDeployVotingContract.value) {
-    emits('getTeam')
-  }
-})
-watch(errorDeployVotingContract, () => {
-  if (errorDeployVotingContract.value) {
-    console.log(errorDeployVotingContract.value)
-    addErrorToast(
-      errorDeployVotingContract.value.reason
-        ? errorDeployVotingContract.value.reason
-        : 'Failed to deploy voting contract'
-    )
-  }
-})
+
 watch(isSuccessGetProposals, () => {
   if (isSuccessGetProposals.value) {
     const proposalsList = Object.values(proposals.value)
@@ -120,44 +145,38 @@ watch(isSuccessGetProposals, () => {
 })
 watch(errorGetProposals, () => {
   if (errorGetProposals.value) {
-    addErrorToast(
-      errorGetProposals.value.reason ? errorGetProposals.value.reason : 'Failed to get proposals'
-    )
+    addErrorToast('Failed to get proposals')
   }
 })
 watch(isSuccessAddProposal, () => {
   if (isSuccessAddProposal.value) {
-    console.log(isSuccessAddProposal.value)
     addSuccessToast('Proposal created successfully')
     emits('getTeam')
   }
 })
 watch(errorAddProposal, () => {
   if (errorAddProposal.value) {
-    addErrorToast(
-      errorAddProposal.value.reason ? errorAddProposal.value.reason : 'Failed to create proposal'
-    )
+    addErrorToast('Failed to create proposal')
   }
 })
 
 const showModal = ref(false)
+const showBoDModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
 const route = useRoute()
 
-const props = defineProps<{ team: Partial<Team> }>()
 const newProposalInput = ref<Partial<Proposal>>({
   title: '',
   description: '',
-  draftedBy: '',
   isElection: false,
   voters: [],
   candidates: [],
+  winnerCount: 0,
   teamId: Number(route.params.id)
 })
 
 const createProposal = () => {
-  newProposalInput.value.draftedBy = useUserDataStore().name
   newProposalInput.value.voters = props.team.members?.map((member) => {
     return {
       name: member.name,

@@ -67,7 +67,6 @@ import type { MemberInput, RoleCategory, Role } from '@/types'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
 import { ref, watch, onMounted } from 'vue'
-import { useErrorHandler } from '@/composables/errorHandler'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddMemberRolesForm from '@/components/sections/SingleTeamView/forms/AddMemberRolesForm.vue'
@@ -79,7 +78,7 @@ const props = defineProps<{
   teamId: Number
   ownerAddress: String
 }>()
-const { addSuccessToast } = useToastStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 const emits = defineEmits(['getTeam', 'addRoles'])
 
@@ -131,7 +130,7 @@ watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () =>
 
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
-    useErrorHandler().handleError(new Error(deleteMemberError.value))
+    addErrorToast(deleteMemberError.value)
     showDeleteMemberConfirmModal.value = false
   }
 })

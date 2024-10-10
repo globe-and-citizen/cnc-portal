@@ -8,6 +8,7 @@ import teamRoutes from "../routes/teamRoutes";
 import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 import notificationRoutes from "../routes/notificationRoute";
+import actionRoutes from "../routes/actionsRoute";
 import roleRoutes from "../routes/roleRoutes";
 import roleCategoryRoutes from "../routes/roleCategoryRoutes"
 import entitlementRoutes from "../routes/entitlementRoutes"
@@ -32,6 +33,7 @@ class Server {
       user: "/api/user/",
       auth: "/api/auth/",
       notification: "/api/notification/",
+      actions: '/api/actions/',
       role: "/api/role/",
       roleCategory: "/api/role-category/",
       entitlement: "/api/entitlement/",
@@ -73,6 +75,7 @@ class Server {
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
     this.app.use(this.paths.notification, notificationRoutes);
+    this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.role, roleRoutes)
     this.app.use(this.paths.roleCategory, roleCategoryRoutes)
     this.app.use(this.paths.entitlement, entitlementRoutes)
