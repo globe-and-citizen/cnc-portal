@@ -45,7 +45,7 @@ describe('MemberCard', () => {
     }
     ;(useUserDataStore as unknown as mockReturn).mockReturnValue(userDataStore)
   })
-  const props = { member, teamId, ownerAddress }
+  const props = { isAddingRole:false, member, teamId, ownerAddress }
   const wrapper = mount(MemberCard, {
     props,
     global: {
@@ -61,6 +61,7 @@ describe('MemberCard', () => {
     it('shows delete button if user is the owner and not the member', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
@@ -74,6 +75,7 @@ describe('MemberCard', () => {
     it('shows show-address button', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
@@ -85,6 +87,7 @@ describe('MemberCard', () => {
     it('shows copy address button', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
@@ -96,6 +99,7 @@ describe('MemberCard', () => {
     it('shows "Copied!" when address is copied', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
@@ -109,6 +113,7 @@ describe('MemberCard', () => {
     it('does not show copy button if copy not supported', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x456'
@@ -123,6 +128,7 @@ describe('MemberCard', () => {
     it('does not show delete button if user is not the owner', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x456'
@@ -136,6 +142,7 @@ describe('MemberCard', () => {
     it('opens new window when show address button is clicked', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
@@ -151,6 +158,7 @@ describe('MemberCard', () => {
     it('copies address when copy address button is clicked', async () => {
       const wrapper = mount(MemberCard, {
         props: {
+          isAddingRole: false,
           member: { name: 'John Doe', address: '0x123' },
           teamId: 1,
           ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
