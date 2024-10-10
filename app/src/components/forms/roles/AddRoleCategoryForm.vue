@@ -226,9 +226,7 @@ const {
   .get()
   .json()
 
-const {
-  execute: executeUpdateRoleCategory
-} = useCustomFetch(roleCategoryEndPoint, {
+const { execute: executeUpdateRoleCategory } = useCustomFetch(roleCategoryEndPoint, {
   immediate: false
 })
   .put(roleCategory)

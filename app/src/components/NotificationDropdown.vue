@@ -56,8 +56,8 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
-import { useUserDataStore } from "@/stores/user"
-import { log, parseError } from "@/utils";
+import { useUserDataStore } from '@/stores/user'
+import { log, parseError } from '@/utils'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
@@ -65,16 +65,10 @@ const totalPages = ref(0)
 
 const endpointUrl = ref('')
 
-const {
-  data: notifications,
-  execute: executeFetchNotifications
-} = useCustomFetch<NotificationResponse>('notification')
-  .get()
-  .json()
+const { data: notifications, execute: executeFetchNotifications } =
+  useCustomFetch<NotificationResponse>('notification').get().json()
 
-const {
-  execute: executeUpdateNotifications
-} = useCustomFetch<NotificationResponse>(endpointUrl, {
+const { execute: executeUpdateNotifications } = useCustomFetch<NotificationResponse>(endpointUrl, {
   immediate: false
 })
   .put()
@@ -93,15 +87,12 @@ const isUnread = computed(() => {
 const getResource = (notification: Notification) => {
   if (notification.resource) {
     const resourceArr = notification.resource.split('/')
-    return resourceArr 
+    return resourceArr
   } else return []
 }
 
-const {
-  execute: executeFetchMemberContract,
-  data: memberContract
-} = useCustomFetch(endpointUrl, { 
-  immediate: false, 
+const { execute: executeFetchMemberContract, data: memberContract } = useCustomFetch(endpointUrl, {
+  immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
       memberaddress: `${useUserDataStore().address}`,
@@ -116,9 +107,7 @@ const {
 
 const signature = ref('')
 
-const {
-  execute: executeAddMemberSignature
-} = useCustomFetch(endpointUrl, {
+const { execute: executeAddMemberSignature } = useCustomFetch(endpointUrl, {
   immediate: false
 })
   .put()
@@ -130,8 +119,7 @@ const updateNotification = async (notification: Notification) => {
     endpointUrl.value = `teams/${resource[1]}/member/contract`
     //get contract
     await executeFetchMemberContract()
-    const contract = JSON
-      .parse(JSON.parse(memberContract.value.contract))
+    const contract = JSON.parse(JSON.parse(memberContract.value.contract))
     //sign contract
     signature.value = await signContract(contract)
     //save signature
@@ -151,35 +139,35 @@ const signContract = async (contract: undefined | Object) => {
     {
       types: {
         EIP712Domain: [
-          { name: "name", type: "string" },
-          { name: "version", type: "string" }
+          { name: 'name', type: 'string' },
+          { name: 'version', type: 'string' }
         ],
         Entitlement: [
-          { name: "name", type: "string" },
-          { name: "resource", type: "string" },
-          { name: "accessLevel", type: "string" }
+          { name: 'name', type: 'string' },
+          { name: 'resource', type: 'string' },
+          { name: 'accessLevel', type: 'string' }
         ],
         Role: [
-          { name: "name", type: "string" },
-          { name: "entitlement", type: "Entitlement" }
+          { name: 'name', type: 'string' },
+          { name: 'entitlement', type: 'Entitlement' }
         ],
         Contract: [
-          { name: "assignedTo", type: "address" },
-          { name: "assignedBy", type: "address" },
-          { name: "role", type: "Role" }
+          { name: 'assignedTo', type: 'address' },
+          { name: 'assignedBy', type: 'address' },
+          { name: 'role', type: 'Role' }
         ]
       },
-      primaryType: "Contract",
+      primaryType: 'Contract',
       domain: {
-        "name": "CNC Contract",
-        "version": "1"
+        name: 'CNC Contract',
+        version: '1'
       },
       message: contract
     }
   ]
   try {
     //@ts-ignore
-    return await window.ethereum.request({method: "eth_signTypedData_v4", params: params})
+    return await window.ethereum.request({ method: 'eth_signTypedData_v4', params: params })
   } catch (error) {
     log.error(parseError(error))
   }

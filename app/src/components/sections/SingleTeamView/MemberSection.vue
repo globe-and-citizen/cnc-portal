@@ -45,8 +45,8 @@ import { useUserDataStore } from '@/stores/user'
 
 import { useToastStore } from '@/stores/useToastStore'
 import { useRoute } from 'vue-router'
-import { log, parseError } from "@/utils";
-import { useVuelidate } from "@vuelidate/core";
+import { log, parseError } from '@/utils'
+import { useVuelidate } from '@vuelidate/core'
 
 const showAddMemberForm = ref(false)
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
@@ -132,12 +132,12 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
-const {
-  execute: executeFetchRoleCategories,
-  data: _roleCategories
-} = useCustomFetch('role-category', {
-  immediate: false
-})
+const { execute: executeFetchRoleCategories, data: _roleCategories } = useCustomFetch(
+  'role-category',
+  {
+    immediate: false
+  }
+)
   .get()
   .json()
 
@@ -146,21 +146,18 @@ const createContract = async (member: Partial<MemberInput>) => {
   if (member.roles)
     for (const memberRole of member.roles) {
       await executeFetchRoleCategories()
-      const roleCategory = _roleCategories
-        .value
-        .roleCategories
-        .find((category: RoleCategory) => 
+      const roleCategory = _roleCategories.value.roleCategories.find(
+        (category: RoleCategory) =>
           //@ts-ignore
-          category.id === memberRole.role.roleCategoryId)
+          category.id === memberRole.role.roleCategoryId
+      )
 
       if (roleCategory && roleCategory.roles) {
-        const role = roleCategory
-          .roles
-          .find(
-            (_role: Role) => 
-              //@ts-ignore
-              _role.id === memberRole.roleId
-          )
+        const role = roleCategory.roles.find(
+          (_role: Role) =>
+            //@ts-ignore
+            _role.id === memberRole.roleId
+        )
 
         const entitlements = []
 
@@ -180,7 +177,7 @@ const createContract = async (member: Partial<MemberInput>) => {
               role: {
                 name: role.name,
                 entitlement: {
-                  name: "access",
+                  name: 'access',
                   resource: entitlements[0].split(':')[0],
                   accessLevel: entitlements[0].split(':')[1]
                 }
@@ -202,35 +199,35 @@ const signContract = async (contract: undefined | Object) => {
     {
       types: {
         EIP712Domain: [
-          { name: "name", type: "string" },
-          { name: "version", type: "string" }
+          { name: 'name', type: 'string' },
+          { name: 'version', type: 'string' }
         ],
         Entitlement: [
-          { name: "name", type: "string" },
-          { name: "resource", type: "string" },
-          { name: "accessLevel", type: "string" }
+          { name: 'name', type: 'string' },
+          { name: 'resource', type: 'string' },
+          { name: 'accessLevel', type: 'string' }
         ],
         Role: [
-          { name: "name", type: "string" },
-          { name: "entitlement", type: "Entitlement" }
+          { name: 'name', type: 'string' },
+          { name: 'entitlement', type: 'Entitlement' }
         ],
         Contract: [
-          { name: "assignedTo", type: "address" },
-          { name: "assignedBy", type: "address" },
-          { name: "role", type: "Role" }
+          { name: 'assignedTo', type: 'address' },
+          { name: 'assignedBy', type: 'address' },
+          { name: 'role', type: 'Role' }
         ]
       },
-      primaryType: "Contract",
+      primaryType: 'Contract',
       domain: {
-        "name": "CNC Contract",
-        "version": "1"
+        name: 'CNC Contract',
+        version: '1'
       },
       message: contract
     }
   ]
   try {
     //@ts-ignore
-    return await window.ethereum.request({method: "eth_signTypedData_v4", params: params})
+    return await window.ethereum.request({ method: 'eth_signTypedData_v4', params: params })
   } catch (error) {
     log.error(parseError(error))
   }
@@ -238,9 +235,7 @@ const signContract = async (contract: undefined | Object) => {
 
 const memberRolesData = ref<{}>()
 
-const {
-  execute: executeCreateMemberRoles
-} = useCustomFetch(`teams/${team.id}/member/add-roles`, {
+const { execute: executeCreateMemberRoles } = useCustomFetch(`teams/${team.id}/member/add-roles`, {
   immediate: false
 })
   .post(memberRolesData)

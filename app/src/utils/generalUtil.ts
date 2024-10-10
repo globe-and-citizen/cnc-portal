@@ -34,7 +34,7 @@ export const log = {
  * Creates an independent copy of the object so
  * as to avoid creating references to the original
  * object when you want to assign to its value
- * 
+ *
  * @param obj - Any object
  * @returns - The cloned object
  */
@@ -58,19 +58,19 @@ export const log = {
 // }
 export const deepClone = <T>(obj: T): T => {
   if (obj === null || typeof obj !== 'object') {
-    return obj;
+    return obj
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item)) as unknown as T;
+    return obj.map((item) => deepClone(item)) as unknown as T
   }
 
-  const clonedObj = {} as { [K in keyof T]: T[K] };
+  const clonedObj = {} as { [K in keyof T]: T[K] }
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      clonedObj[key as keyof T] = deepClone(obj[key as keyof T]);
+      clonedObj[key as keyof T] = deepClone(obj[key as keyof T])
     }
   }
 
-  return clonedObj;
-};
+  return clonedObj
+}

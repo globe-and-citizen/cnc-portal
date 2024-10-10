@@ -30,7 +30,7 @@ describe('NotificationDropdown.vue', () => {
     // Mock the fetch function to return the mock notifications
     vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
       const actual: Object = await importOriginal()
-      return ({
+      return {
         ...actual,
         useCustomFetch: () => ({
           json: () => ({
@@ -49,7 +49,7 @@ describe('NotificationDropdown.vue', () => {
             })
           })
         })
-      })
+      }
     })
 
     wrapper = mount(NotificationDropdown, {

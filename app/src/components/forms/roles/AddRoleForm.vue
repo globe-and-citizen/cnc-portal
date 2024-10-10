@@ -94,9 +94,7 @@
     >
       Add Role
     </button>
-    <button v-else class="btn btn-primary" @click="handleClickUpdate()">
-      Update
-    </button>
+    <button v-else class="btn btn-primary" @click="handleClickUpdate()">Update</button>
     <button
       class="btn btn-active"
       @click="

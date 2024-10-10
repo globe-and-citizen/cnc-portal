@@ -45,7 +45,7 @@ describe('MemberCard', () => {
     }
     ;(useUserDataStore as unknown as mockReturn).mockReturnValue(userDataStore)
   })
-  const props = { isAddingRole:false, member, teamId, ownerAddress }
+  const props = { isAddingRole: false, member, teamId, ownerAddress }
   const wrapper = mount(MemberCard, {
     props,
     global: {
