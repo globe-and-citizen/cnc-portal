@@ -34,7 +34,7 @@
   />
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import MemberCard from '@/components/sections/SingleTeamView/MemberCard.vue'
 import AddMemberCard from '@/components/sections/SingleTeamView/AddMemberCard.vue'
@@ -150,14 +150,16 @@ const createContract = async (member: Partial<MemberInput>) => {
         .value
         .roleCategories
         .find((category: RoleCategory) => 
-          category.id === (memberRole as any).role.roleCategoryId)
+          //@ts-ignore
+          category.id === memberRole.role.roleCategoryId)
 
       if (roleCategory && roleCategory.roles) {
         const role = roleCategory
           .roles
           .find(
             (_role: Role) => 
-              _role.id === (memberRole as any).roleId
+              //@ts-ignore
+              _role.id === memberRole.roleId
           )
 
         const entitlements = []
@@ -227,7 +229,8 @@ const signContract = async (contract: undefined | Object) => {
     }
   ]
   try {
-    return await (window as any).ethereum.request({method: "eth_signTypedData_v4", params: params})
+    //@ts-ignore
+    return await window.ethereum.request({method: "eth_signTypedData_v4", params: params})
   } catch (error) {
     log.error(parseError(error))
   }

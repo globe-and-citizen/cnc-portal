@@ -67,7 +67,8 @@ const handleClickUpdate = (rowIndex: number) => {
 
 const handleClickDelete = async (rowIndex: number) => {
   selectedIndex.value = rowIndex
-  const id = (roles.value[rowIndex] as any).id
+  //@ts-ignore
+  const id = roles.value[rowIndex].id
   roleEndPoint.value = `role/${id}`
   await deleteRoleAPI()
   emits('reload')

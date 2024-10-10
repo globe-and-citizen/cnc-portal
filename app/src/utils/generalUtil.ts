@@ -38,7 +38,7 @@ export const log = {
  * @param obj - Any object
  * @returns - The cloned object
  */
-export const deepClone = (obj: any): any => {
+export const deepClone = (obj: unknown): unknown => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -47,10 +47,10 @@ export const deepClone = (obj: any): any => {
     return obj.map(item => deepClone(item));
   }
 
-  const clonedObj: { [key: string]: any } = {};
+  const clonedObj: { [key: string]: unknown } = {};
   for (const key in obj) {
     if (/*obj.hasOwnProperty(key)*/Object.prototype.hasOwnProperty.call(obj, key)) {
-      clonedObj[key] = deepClone((obj as { [key: string]: any })[key]);
+      clonedObj[key] = deepClone((obj as { [key: string]: unknown })[key]);
     }
   }
 

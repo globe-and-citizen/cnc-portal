@@ -178,7 +178,8 @@ const signContract = async (contract: undefined | Object) => {
     }
   ]
   try {
-    return await (window as any).ethereum.request({method: "eth_signTypedData_v4", params: params})
+    //@ts-ignore
+    return await window.ethereum.request({method: "eth_signTypedData_v4", params: params})
   } catch (error) {
     log.error(parseError(error))
   }
