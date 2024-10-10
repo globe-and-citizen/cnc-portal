@@ -4,7 +4,7 @@
     "networkName": "Polygon Mainnet",
     "rpcUrl": "https://polygon-mainnet.infura.io",
     "blockExplorerUrl": "https://polygonscan.com/",
-    "currencySymbol": "MATIC"
+    "currencySymbol": "POL"
   },
   "hardhat": {
     "chainId": "0x7a69",
@@ -31,7 +31,7 @@
     "networkName": "Polygon Amoy Testnet",
     "rpcUrl": "https://rpc-amoy.polygon.technology",
     "blockExplorerUrl": "https://amoy.polygonscan.com",
-    "currencySymbol": "MATIC"
+    "currencySymbol": "AMOYPOL"
   },
   "holesky": {
     "chainId": "0x4268",
