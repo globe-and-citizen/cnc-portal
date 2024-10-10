@@ -15,9 +15,36 @@
           Target Address:
           <span class="text-xs badge badge-sm badge-primary"
             >{{ action.targetAddress }}
-            {{ action.targetAddress == team.bankAddress ? '(Bank)' : '' }}</span
+            {{
+              action.targetAddress == team.bankAddress
+                ? '(Bank)'
+                : action.targetAddress == team.expenseAccountAddress
+                  ? '(Expense Account)'
+                  : ''
+            }}</span
           >
         </p>
+        <p>
+          Function Name:
+          {{
+            action.targetAddress == team.bankAddress
+              ? bankFunctionName
+              : action.targetAddress == team.expenseAccountAddress
+                ? expenseFunctionName
+                : 'Unknown'
+          }}
+        </p>
+        <p>Parameters:</p>
+        <ul v-if="action.targetAddress == team.expenseAccountAddress">
+          <li v-for="(arg, index) in expenseArgs" :key="index">
+            {{ '  ' }} - {{ expenseInputs?.[index] }}: {{ arg }}
+          </li>
+        </ul>
+        <ul v-if="action.targetAddress == team.bankAddress">
+          <li v-for="(arg, index) in bankArgs" :key="index">
+            {{ '  ' }} - {{ bankInputs?.[index] }}: {{ arg }}
+          </li>
+        </ul>
         <p>Is Executed: {{ action.isExecuted }}</p>
         <p>
           Approvals {{ approvalCount }}/{{ boardOfDirectors.length }} board of directors approved
@@ -68,6 +95,8 @@ import {
 } from '@/composables/bod'
 import { onMounted, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useBankGetFunction } from '@/composables/bank'
+import { useExpenseGetFunction } from '@/composables/useExpenseAccount'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
@@ -104,6 +133,18 @@ const props = defineProps<{
 }>()
 const emits = defineEmits(['closeModal'])
 
+const {
+  data: bankFunctionName,
+  args: bankArgs,
+  inputs: bankInputs,
+  execute: getBankFunctionName
+} = useBankGetFunction(props.team.bankAddress!)
+const {
+  data: expenseFunctionName,
+  args: expenseArgs,
+  inputs: expenseInputs,
+  execute: getExpenseFunctionName
+} = useExpenseGetFunction(props.team.expenseAccountAddress!)
 const approveAction = async () => {
   await approve(props.team.boardOfDirectorsAddress!, props.action.actionId)
   if (errorApprove.value) {
@@ -169,5 +210,10 @@ onMounted(async () => {
     currentAddress
   )
   await executeApprovalCount(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  if (props.action.targetAddress == props.team.bankAddress) {
+    await getBankFunctionName(props.action.data)
+  } else if (props.action.targetAddress == props.team.expenseAccountAddress) {
+    await getExpenseFunctionName(props.action.data)
+  }
 })
 </script>
