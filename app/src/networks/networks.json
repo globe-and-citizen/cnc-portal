@@ -31,7 +31,7 @@
     "networkName": "Polygon Amoy Testnet",
     "rpcUrl": "https://rpc-amoy.polygon.technology",
     "blockExplorerUrl": "https://amoy.polygonscan.com",
-    "currencySymbol": "POL"
+    "currencySymbol": "AMOYPOL"
   },
   "holesky": {
     "chainId": "0x4268",
