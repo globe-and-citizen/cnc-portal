@@ -4,7 +4,13 @@ import {
   useGetProposals,
   useConcludeProposal,
   useVoteDirective,
-  useVoteElection
+  useVoteElection,
+  useVotingContractOwner,
+  useVotingContractPause,
+  useVotingContractStatus,
+  useVotingContractTransferOwnership,
+  useVotingContractUnpause,
+  useSetBoardOfDirectorsContractAddress
 } from '@/composables/voting'
 // import { VotingService } from '@/services/votingService'
 import type { Proposal } from '@/types'
@@ -44,6 +50,8 @@ const mockElectionProposal: Partial<Proposal> = {
 }
 // Mock the VotingService class
 vi.mock('@/services/votingService', () => {
+  const mockContractAddress = '0xVotingContractAddress'
+
   const mockTransaction = { hash: '0x123' }
   const mockProposal: Partial<Proposal> = {
     id: 1,
@@ -65,7 +73,14 @@ vi.mock('@/services/votingService', () => {
       getProposals: vi.fn().mockResolvedValue([mockProposal]),
       concludeProposal: vi.fn().mockResolvedValue(mockTransaction),
       voteDirective: vi.fn().mockResolvedValue(mockTransaction),
-      voteElection: vi.fn().mockResolvedValue(mockTransaction)
+      voteElection: vi.fn().mockResolvedValue(mockTransaction),
+      setBoardOfDirectorsContractAddress: vi.fn().mockResolvedValue(mockTransaction),
+      createVotingContract: vi.fn().mockResolvedValue(mockContractAddress),
+      pause: vi.fn().mockResolvedValue(mockTransaction),
+      transferOwnership: vi.fn().mockResolvedValue(mockTransaction),
+      unpause: vi.fn().mockResolvedValue(mockTransaction),
+      isPaused: vi.fn().mockResolvedValue(true),
+      getOwner: vi.fn().mockResolvedValue('0xOwnerAddress')
     }))
   }
 })
@@ -103,7 +118,6 @@ describe('Voting Composables', () => {
     expect(transaction.value).toEqual(mockTransaction)
 
     // Verify that candidate votes are initialized to zero
-    console.log(mockElectionProposal)
     expect(mockElectionProposal.candidates?.every((candidate) => candidate.votes === 0)).toBe(true)
   })
   describe('useGetProposals', () => {
@@ -150,6 +164,81 @@ describe('Voting Composables', () => {
       const { execute, isLoading, isSuccess, error, transaction } = useVoteElection()
 
       await execute('0x123', 0, '0xCandidateAddress')
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+  describe('useSetBoardOfDirectorsContractAddress', () => {
+    it('should set the Board of Directors contract address successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useSetBoardOfDirectorsContractAddress()
+
+      await execute('0xVotingAddress', '0xBoDAddress')
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+
+  describe('useVotingContractOwner', async () => {
+    it('should fetch the owner of the voting contract successfully', async () => {
+      const { execute, isLoading, error, data } = useVotingContractOwner('0xVotingContractAddress')
+
+      await execute()
+
+      expect(isLoading.value).toBe(false)
+      expect(error.value).toBe(null)
+      expect(data.value).toEqual('0xOwnerAddress')
+    })
+  })
+  describe('useVotingContractPause', () => {
+    it('should pause the voting contract successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useVotingContractPause('0xVotingContractAddress')
+
+      await execute()
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+  describe('useVotingContractStatus', () => {
+    it('should fetch the status of the voting contract successfully', async () => {
+      const { execute, isLoading, error, data } = useVotingContractStatus('0xVotingContractAddress')
+
+      await execute()
+
+      expect(isLoading.value).toBe(false)
+      expect(error.value).toBe(null)
+      expect(data.value).toEqual(true)
+    })
+  })
+  describe('useVotingContractTransferOwnership', () => {
+    it('should transfer ownership of the voting contract successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useVotingContractTransferOwnership('0xVotingContractAddress')
+
+      await execute('0xNewOwnerAddress')
+
+      expect(isLoading.value).toBe(false)
+      expect(isSuccess.value).toBe(true)
+      expect(error.value).toBe(null)
+      expect(transaction.value).toEqual(mockTransaction)
+    })
+  })
+  describe('useVotingContractUnpause', () => {
+    it('should unpause the voting contract successfully', async () => {
+      const { execute, isLoading, isSuccess, error, transaction } =
+        useVotingContractUnpause('0xVotingContractAddress')
+
+      await execute()
 
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(true)

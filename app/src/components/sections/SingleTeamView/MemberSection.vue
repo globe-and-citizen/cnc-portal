@@ -123,8 +123,12 @@ const searchUsers = async (input: { name: string; address: string }) => {
     if (searchUserName.value || searchUserAddress.value) {
       await executeSearchUser()
     }
-  } catch (error: any) {
-    addErrorToast(error.message)
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      addErrorToast(error.message)
+    } else {
+      addErrorToast('An unknown error occurred')
+    }
   }
 }
 

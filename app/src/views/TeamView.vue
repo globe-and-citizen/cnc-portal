@@ -65,7 +65,6 @@ import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { TeamsResponse } from '@/types'
@@ -74,7 +73,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 const router = useRouter()
 
-const { addSuccessToast } = useToastStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 /**
  * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
@@ -92,7 +91,7 @@ const {
 watch(teamError, () => {
   if (teamError.value) {
     // TODO refactor this to use toast or someting better
-    return useErrorHandler().handleError(new Error(teamError.value))
+    addErrorToast(teamError.value)
   }
 })
 
@@ -122,7 +121,7 @@ const {
 
 watch(createTeamError, () => {
   if (createTeamError.value) {
-    return useErrorHandler().handleError(new Error(createTeamError.value))
+    addErrorToast(createTeamError.value)
   }
 })
 watch(

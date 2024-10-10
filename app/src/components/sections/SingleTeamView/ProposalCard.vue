@@ -4,7 +4,12 @@
       <div class="w-1/2">
         <h2 class="card-title">{{ proposal.title }}</h2>
         <span class="text-xs">
-          <span class="badge badge-primary badge-xs"> {{ proposal.draftedBy }}</span>
+          <span class="badge badge-primary badge-xs">
+            {{
+              team.members.find((member: Member) => member.address === proposal.draftedBy)?.name ||
+              'Unknown'
+            }}</span
+          >
 
           <!-- on
           <span class="badge badge-secondary badge-xs">
@@ -57,6 +62,7 @@
     </ModalComponent>
     <ModalComponent v-model="showVoteModal">
       <VoteForm
+        :team="team"
         :isLoading="castingElectionVote || castingDirectiveVote"
         v-model="voteInput"
         @voteElection="
@@ -69,7 +75,7 @@
       />
     </ModalComponent>
     <ModalComponent v-model="showProposalDetailsModal">
-      <ProposalDetails :proposal="proposal" />
+      <ProposalDetails :proposal="proposal" :team="team" />
     </ModalComponent>
   </div>
 </template>
@@ -82,13 +88,32 @@ import ProposalDetails from '@/components/sections/SingleTeamView/ProposalDetail
 import ModalComponent from '@/components/ModalComponent.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import PieChart from '@/components/PieChart.vue'
+import type { Member, Proposal } from '@/types'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}
   if (props.proposal.isElection) {
-    return (props.proposal as any).candidates.map((candidate: any) => {
-      return { value: Number(candidate.votes) || 0, name: candidate.name }
+    interface Candidate {
+      votes: string
+      name: string
+      address: string
+    }
+    return (props.proposal as Partial<Proposal>)?.candidates?.map((candidate: unknown) => {
+      let candidateObj: Candidate = {
+        votes: '',
+        name: '',
+        address: ''
+      }
+      candidateObj.address = String((candidate as Array<Candidate>)[0])
+      candidateObj.votes = String((candidate as Array<Candidate>)[1])
+      const member = props.team.members.find(
+        (member: Member) => member.address === candidateObj.address
+      )
+      return {
+        value: Number(candidateObj.votes) || 0,
+        name: member ? member.name : 'Unknown'
+      }
     })
   } else {
     return [
@@ -103,7 +128,17 @@ const props = defineProps(['proposal', 'isDone', 'team'])
 
 const emits = defineEmits(['getTeam'])
 
-const voteInput = ref<any>()
+const voteInput = ref<{
+  title: ''
+  description: ''
+  candidates: [
+    {
+      name: ''
+      candidateAddress: ''
+    }
+  ]
+  isElection: false
+}>()
 const showVoteModal = ref(false)
 const showConcludeConfirmModal = ref(false)
 const showProposalDetailsModal = ref(false)

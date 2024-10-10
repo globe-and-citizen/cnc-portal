@@ -2,7 +2,7 @@ name: Frontend Vitest Unit Tests
 
 on:
   pull_request:
-    branches: "*"
+    branches: "**"
     paths:
       - "app/**"
   workflow_dispatch:

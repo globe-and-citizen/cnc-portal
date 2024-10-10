@@ -6,6 +6,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { setActivePinia, createPinia } from 'pinia'
 
+interface ComponentData {
+  updateTeamInput: {
+    name: string
+    description: string
+  }
+  showDeleteTeamConfirmModal: boolean
+}
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(),
   useRouter: vi.fn()
@@ -22,7 +29,6 @@ describe('TeamMeta.vue ', () => {
     id: '1',
     name: 'Team',
     description: 'Description',
-    bankAddress: '0x892323',
     members: [{ name: 'Alice', address: '0x8238923' }]
   }
 
@@ -41,10 +47,13 @@ describe('TeamMeta.vue ', () => {
 
   // Setup before each test
   beforeEach(() => {
+    interface mockReturn {
+      mockReturnValue: (address: Object) => {}
+    }
     setActivePinia(createPinia())
-    ;(useRoute as any).mockReturnValue(mockRoute)
-    ;(useRouter as any).mockReturnValue(mockRouter)
-    ;(useToastStore as any).mockReturnValue({
+    ;(useRoute as unknown as mockReturn).mockReturnValue(mockRoute)
+    ;(useRouter as unknown as mockReturn).mockReturnValue(mockRouter)
+    ;(useToastStore as unknown as mockReturn).mockReturnValue({
       addSuccessToast,
       addErrorToast
     })
@@ -69,15 +78,16 @@ describe('TeamMeta.vue ', () => {
       const teamDetails = wrapper.findComponent(TeamDetails)
       teamDetails.vm.$emit('updateTeamModalOpen')
 
-      expect((wrapper.vm as any).updateTeamInput.name).toBe('Team')
-      expect((wrapper.vm as any).updateTeamInput.description).toBe('Description')
-      expect((wrapper.vm as any).updateTeamInput.bankAddress).toBe('0x892323')
+      expect((wrapper.vm as unknown as ComponentData).updateTeamInput.name).toBe('Team')
+      expect((wrapper.vm as unknown as ComponentData).updateTeamInput.description).toBe(
+        'Description'
+      )
     })
     it('opens delete confirmation modal when deleteTeam event is emitted', async () => {
       const teamDetails = wrapper.findComponent(TeamDetails)
       teamDetails.vm.$emit('deleteTeam')
 
-      expect((wrapper.vm as any).showDeleteTeamConfirmModal).toBe(true)
+      expect((wrapper.vm as unknown as ComponentData).showDeleteTeamConfirmModal).toBe(true)
     })
   })
 })

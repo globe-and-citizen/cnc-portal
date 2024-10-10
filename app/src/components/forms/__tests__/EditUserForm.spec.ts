@@ -21,7 +21,13 @@ describe('EditUserForm', () => {
     address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
   }
 
-  const createComponent = (props?: any) => {
+  const createComponent = (props?: {
+    isLoading?: boolean
+    modelValue?: {
+      name: string
+      address: string
+    }
+  }) => {
     return mount(EditUserForm, {
       props: {
         isLoading: false,
@@ -36,7 +42,7 @@ describe('EditUserForm', () => {
       const wrapper = createComponent()
       expect(wrapper.find('span[data-test="name-label"]').text()).toBe('Name')
       expect(wrapper.find('input[data-test="name-input"]').exists()).toBeTruthy()
-      expect(wrapper.props().modelValue.name).toBe(user.name)
+      expect(wrapper.props().modelValue?.name).toBe(user.name)
     })
 
     it('renders label and address with tooltip correctly', () => {
@@ -113,6 +119,15 @@ describe('EditUserForm', () => {
       await wrapper.findComponent(ClipboardDocumentListIcon).trigger('click')
 
       expect(mockCopy).toBeCalledWith(user.address)
+    })
+  })
+  describe('Form Validation', () => {
+    it('displays error message when name is empty', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('input[data-test="name-input"]').setValue('')
+      await wrapper.find('button[data-test="submit-edit-user"]').trigger('click')
+
+      expect(wrapper.find('[data-test="name-error"]').text()).toBe('Value is required')
     })
   })
 })

@@ -5,6 +5,7 @@ node_modules
 /cache
 /artifacts
 /ignition/deployments/chain-31337
+/ignition/deployments/*/build-info
 
 # TypeChain files
 /typechain

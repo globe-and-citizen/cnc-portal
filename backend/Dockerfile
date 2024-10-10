@@ -1,5 +1,5 @@
-# Use Node.js 14 as the base image
-FROM node:18-alpine as development  
+# Use Node.js 14 AS the base image
+FROM node:18-alpine AS development  
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -24,7 +24,7 @@ ENV PORT $PORT
 CMD ["npm", "run", "start"]
 
 # Build stage
-FROM development as production
+FROM development AS production
 RUN npm run build
 
 CMD ["npm", "run", "prod"]

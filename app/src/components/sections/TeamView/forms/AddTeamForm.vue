@@ -156,13 +156,12 @@ const rules = {
     }
   }
 }
+const $v = useVuelidate(rules, { team })
 
 // Check if the member input is valid
 const isValidMember = (index: number) => {
   return $v.value.team.members.$errors[0]?.$response.$errors[index].address.length == 0
 }
-
-const $v = useVuelidate(rules, { team })
 
 const submitForm = () => {
   // Touch to check validation

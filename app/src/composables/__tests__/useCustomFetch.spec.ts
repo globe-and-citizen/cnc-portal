@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 //   const init: ResponseInit = { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/json' } }
 //   return new Response(blob, init)
 // }
-const createMockResponse = (data: any): Response => {
+const createMockResponse = (data: unknown): Response => {
   return {
     ok: true,
     status: 200,
@@ -26,7 +26,7 @@ const createMockResponse = (data: any): Response => {
   } as Response
 }
 
-const createMock401Response = (data: any): Response => {
+const createMock401Response = (data: unknown): Response => {
   return {
     ok: false,
     status: 401,
@@ -45,7 +45,7 @@ const createMock401Response = (data: any): Response => {
     text: async () => ''
   } as Response
 }
-export async function fetchData(url: string): Promise<any> {
+export async function fetchData(url: string) {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error('Network response was not ok')

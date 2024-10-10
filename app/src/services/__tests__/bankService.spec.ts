@@ -26,6 +26,11 @@ const bank = {
   pushTip: vi.fn().mockReturnValue(tx),
   sendTip: vi.fn().mockReturnValue(tx),
   getEvents: vi.fn().mockReturnValue(events),
+  pause: vi.fn().mockReturnValue(tx),
+  unpause: vi.fn().mockReturnValue(tx),
+  transferOwnership: vi.fn().mockReturnValue(tx),
+  owner: vi.fn().mockReturnValue(tx),
+  paused: vi.fn().mockReturnValue(false),
   queryFilter: vi.fn(),
   interface: {
     encodeFunctionData: vi.fn()
@@ -50,7 +55,6 @@ vi.mock('@/services/contractService', () => {
 const mockEthersJs = {
   initialize: vi.fn(),
   connectWallet: vi.fn(),
-  deployBankContract: vi.fn(),
   sendTransaction: vi.fn().mockReturnValue(tx),
   getContract: vi.fn().mockReturnValue(bank),
   parseEther: vi.fn((value) => (value / 1e18).toString()),
@@ -90,14 +94,6 @@ describe('Bank Service', () => {
   beforeEach(() => {
     EthersJsAdapter['getInstance'] = vi.fn().mockReturnValue(mockEthersJs)
     bankService = new BankService()
-  })
-
-  describe('createBankContract', () => {
-    it('should create a new bank contract', async () => {
-      const result = await bankService.createBankContract('123')
-      expect(useCustomFetchMock.put).toHaveBeenCalled()
-      expect(result).toBe('0x123')
-    })
   })
 
   describe('deposit', () => {
@@ -151,6 +147,46 @@ describe('Bank Service', () => {
       const result = await bankService.getContract('0x123')
       expect(contractService.getContract).toHaveBeenCalled()
       expect(result).toMatchObject(bank)
+    })
+  })
+
+  describe('pause', () => {
+    it('should pause bank contract', async () => {
+      const result = await bankService.pause('0x123')
+      expect(bank.pause).toHaveBeenCalled()
+      expect(result).toMatchObject(tx)
+    })
+  })
+
+  describe('unpause', () => {
+    it('should unpause bank contract', async () => {
+      const result = await bankService.unpause('0x123')
+      expect(bank.unpause).toHaveBeenCalled()
+      expect(result).toMatchObject(tx)
+    })
+  })
+
+  describe('transferOwnership', () => {
+    it('should transfer ownership of bank contract', async () => {
+      const result = await bankService.transferOwnership('0x123', '0x456')
+      expect(bank.transferOwnership).toHaveBeenCalledWith('0x456')
+      expect(result).toMatchObject(tx)
+    })
+  })
+
+  describe('getOwner', () => {
+    it('should get owner of bank contract', async () => {
+      const result = await bankService.getOwner('0x123')
+      expect(bank.owner).toHaveBeenCalled()
+      expect(result).toMatchObject(tx)
+    })
+  })
+
+  describe('isPaused', () => {
+    it('should check if bank contract is paused', async () => {
+      const result = await bankService.isPaused('0x123')
+      expect(bank.paused).toHaveBeenCalled()
+      expect(result).toBeFalsy()
     })
   })
 })

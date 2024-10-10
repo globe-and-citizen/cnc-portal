@@ -16,11 +16,11 @@ type MetaMaskErrorInfo = {
  * @param error - The error object to be parsed. It can be of any type.
  * @returns A string containing the error message.
  */
-export const parseError = (error: any) => {
+export const parseError = (error: unknown) => {
   let message: string
 
   if (error instanceof Error) {
-    if ('info' in error && isMetaMaskErrorInfo(error.info)) {
+    if ('info' in error && isMetaMaskErrorInfo(error.info as MetaMaskErrorInfo)) {
       message = `Metamask Error: ${parseErrorInfo(error.info as MetaMaskErrorInfo)}`
     } else {
       message = error.message
@@ -42,7 +42,10 @@ export const parseError = (error: any) => {
  * @returns A `boolean` indicating whether the supplied object implements
  * the MetaMaskErrorInfo interface
  */
-const isMetaMaskErrorInfo = (info: any): info is MetaMaskErrorInfo => {
+const isMetaMaskErrorInfo = (info: {
+  error: { code: number; message: string }
+  payload: { method: string; params: string[]; jsonrpc: string }
+}): info is MetaMaskErrorInfo => {
   return (
     typeof info === 'object' &&
     info !== null &&
@@ -54,7 +57,7 @@ const isMetaMaskErrorInfo = (info: any): info is MetaMaskErrorInfo => {
     typeof info.payload === 'object' &&
     typeof info.payload.method === 'string' &&
     Array.isArray(info.payload.params) &&
-    info.payload.params.every((param: any) => typeof param === 'string') &&
+    info.payload.params.every((param: unknown) => typeof param === 'string') &&
     typeof info.payload.jsonrpc === 'string'
   )
 }
@@ -70,15 +73,4 @@ const parseErrorInfo = (info: MetaMaskErrorInfo) => {
   const A: string[] = info.error.message.split(':')
 
   return A[1].trim()
-}
-
-export function getFetchErrorMessage(status: number | string) {
-  switch (status) {
-    case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON` || `Unauthorized`:
-      return `You can't make this request`
-    case `Internal Server Error`:
-      return 'An error occurred, try again later'
-    default:
-      return 'A network error occurred'
-  }
 }
