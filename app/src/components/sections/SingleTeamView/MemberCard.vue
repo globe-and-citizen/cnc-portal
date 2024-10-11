@@ -30,7 +30,7 @@
           Add Roles
         </button>
         <button
-          v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
+          v-if="member.address != ownerAddress && ownerAddress == useUserDataStore()?.address"
           class="btn btn-error btn-xs"
           data-test="delete-member-button"
           @click="() => (showDeleteMemberConfirmModal = true)"
@@ -143,6 +143,6 @@ const openExplorer = (address: string) => {
 
 onMounted(async () => {
   await executeFetchRoleCategories()
-  roleCategories.value = _roleCategories.value.roleCategories
+  roleCategories.value = _roleCategories.value?.roleCategories
 })
 </script>
