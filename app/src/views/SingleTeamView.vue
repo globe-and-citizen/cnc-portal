@@ -24,32 +24,6 @@
           "
         />
       </ModalComponent>
-      <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
-        <template #tab-0>
-          <div id="members" v-if="activeTab == 0">
-            <TeamSection :team="team" :teamIsFetching="teamIsFetching" @getTeam="getTeamAPI" />
-          </div>
-        </template>
-        <template #tab-1>
-          <BankSection v-if="activeTab == 1" :team="team" />
-        </template>
-        <template #tab-2>
-          <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
-        </template>
-        <template #tab-3>
-          <ProposalSection
-            :team="team"
-            @getTeam="getTeamAPI"
-            @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
-          />
-        </template>
-        <template #tab-4>
-          <ExpenseAccountSection v-if="activeTab == 4" :team="team" />
-        </template>
-        <template #tab-5>
-          <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
-        </template>
-      </TabNavigation>
     </div>
   </div>
 </template>
