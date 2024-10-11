@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ApproveRevokeAction from '../ApproveRevokeAction.vue'
 import { createTestingPinia } from '@pinia/testing'
 import {
