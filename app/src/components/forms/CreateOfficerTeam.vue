@@ -155,13 +155,28 @@ const createTeam = async () => {
 }
 
 const selectFounder = (user: { name: string; address: string }) => {
+  const lowerAddress = user.address.toLowerCase()
+  if (
+    selectedFounders.value.some((f) => f.address.toLowerCase() === lowerAddress) ||
+    selectedMembers.value.some((m) => m.address.toLowerCase() === lowerAddress)
+  ) {
+    addErrorToast('This address is already selected')
+    return
+  }
   const lastIndex = selectedFounders.value.length - 1
   selectedFounders.value[lastIndex].name = user.name
   selectedFounders.value[lastIndex].address = user.address
   showFounderDropdown.value = false
 }
-
 const selectMember = (user: { name: string; address: string }) => {
+  const lowerAddress = user.address.toLowerCase()
+  if (
+    selectedFounders.value.some((f) => f.address.toLowerCase() === lowerAddress) ||
+    selectedMembers.value.some((m) => m.address.toLowerCase() === lowerAddress)
+  ) {
+    addErrorToast('This address is already selected')
+    return
+  }
   const lastIndex = selectedMembers.value.length - 1
   selectedMembers.value[lastIndex].name = user.name
   selectedMembers.value[lastIndex].address = user.address
