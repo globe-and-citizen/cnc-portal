@@ -1,8 +1,12 @@
 <template>
   <div class="flex flex-col gap-8">
     <div class="flex flex-row gap-5 items-center">
-      <h2>Action #{{ action.actionId }}</h2>
-      <div class="badge badge-sm" :class="`${isApproved ? 'badge-primary' : 'badge-secondary'}`">
+      <h2 data-test="action-title">Action #{{ action.actionId }}</h2>
+      <div
+        data-test="action-status"
+        class="badge badge-sm"
+        :class="`${isApproved ? 'badge-primary' : 'badge-secondary'}`"
+      >
         {{ isApproved ? 'Approved by You' : 'Waiting for your approval' }}
       </div>
     </div>
@@ -10,8 +14,8 @@
     <SkeletonLoading v-if="isApprovedLoading || approvalCountLoading" class="w-96 h-6" />
     <div v-else>
       <div class="flex flex-col justify-between gap-1 text-sm">
-        <p>Description: {{ action.description }}</p>
-        <p>
+        <p data-test="action-description">Description: {{ action.description }}</p>
+        <p data-test="action-target-address">
           Target Address:
           <span class="text-xs badge badge-sm badge-primary"
             >{{ action.targetAddress }}
@@ -20,11 +24,11 @@
                 ? '(Bank)'
                 : action.targetAddress == team.expenseAccountAddress
                   ? '(Expense Account)'
-                  : ''
+                  : '(Unknown)'
             }}</span
           >
         </p>
-        <p>
+        <p data-test="action-function-name">
           Function Name:
           {{
             action.targetAddress == team.bankAddress
@@ -34,27 +38,30 @@
                 : 'Unknown'
           }}
         </p>
-        <p>Parameters:</p>
-        <ul v-if="action.targetAddress == team.expenseAccountAddress">
-          <li v-for="(arg, index) in expenseArgs" :key="index">
+        <p data-test="action-parameters-title">Parameters:</p>
+        <ul
+          data-test="action-parameters-expense"
+          v-if="action.targetAddress == team.expenseAccountAddress"
+        >
+          <li data-test="expense-params" v-for="(arg, index) in expenseArgs" :key="index">
             {{ '  ' }} - {{ expenseInputs?.[index] }}: {{ arg }}
           </li>
         </ul>
-        <ul v-if="action.targetAddress == team.bankAddress">
-          <li v-for="(arg, index) in bankArgs" :key="index">
+        <ul data-test="action-parameters-bank" v-if="action.targetAddress == team.bankAddress">
+          <li data-test="bank-params" v-for="(arg, index) in bankArgs" :key="index">
             {{ '  ' }} - {{ bankInputs?.[index] }}: {{ arg }}
           </li>
         </ul>
-        <p>Is Executed: {{ action.isExecuted }}</p>
-        <p>
+        <p data-test="action-is-executed">Is Executed: {{ action.isExecuted }}</p>
+        <p data-test="action-approval-count">
           Approvals {{ approvalCount }}/{{ boardOfDirectors.length }} board of directors approved
         </p>
-        <p>
+        <p data-test="action-created-by">
           Created By:
           <span class="text-xs badge badge-sm badge-primary"
             >{{ action.userAddress }}
             {{
-              team.members?.filter((member) => member.address == action.userAddress)?.[0].name
+              team.members?.filter((member) => member.address == action.userAddress)?.[0]?.name
             }}</span
           >
         </p>
@@ -62,8 +69,9 @@
     </div>
 
     <div
-      v-if="!action.isExecuted || !boardOfDirectors.includes(currentAddress as Address)"
+      v-if="!action.isExecuted && boardOfDirectors.includes(currentAddress as Address)"
       class="flex justify-center"
+      data-test="button-flex"
     >
       <LoadingButton
         v-if="loadingApprove || loadingRevoke"
@@ -73,6 +81,7 @@
       <button
         v-else
         class="btn btn-primary w-48"
+        data-test="approve-revoke-button"
         @click="async () => (isApproved ? await revokeAction() : await approveAction())"
       >
         {{ isApproved ? 'Revoke' : 'Approve' }}
