@@ -61,23 +61,20 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import AddTeamCard from '@/components/AddTeamCard.vue'
-import TeamCard from '@/components/TeamCard.vue'
+import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
+import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { useErrorHandler } from '@/composables/errorHandler'
 
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { logout } from '@/utils/navBarUtil'
 import type { TeamsResponse } from '@/types'
-import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 const router = useRouter()
 
-const { addSuccessToast } = useToastStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
-// const teams = ref<Team[]>([])
 /**
  * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
  * isFetching - Can be used to show loading spinner
@@ -93,10 +90,8 @@ const {
 
 watch(teamError, () => {
   if (teamError.value) {
-    if (teamError.value === 'Unauthorized') {
-      logout()
-    }
-    return useErrorHandler().handleError(new Error(teamError.value))
+    // TODO refactor this to use toast or someting better
+    addErrorToast(teamError.value)
   }
 })
 
@@ -108,8 +103,7 @@ const team = ref<TeamInput>({
   members: [
     {
       name: '',
-      address: '',
-      isValid: false
+      address: ''
     }
   ]
 })
@@ -127,7 +121,7 @@ const {
 
 watch(createTeamError, () => {
   if (createTeamError.value) {
-    return useErrorHandler().handleError(new Error(createTeamError.value))
+    addErrorToast(createTeamError.value)
   }
 })
 watch(
@@ -185,4 +179,3 @@ function navigateToTeam(id: string) {
 </script>
 
 <style scoped></style>
-@/composables/apis/team

@@ -31,7 +31,14 @@ describe('Tips', function () {
     expect(tips.deploymentTransaction()).is.exist
     expect(await tips.connect(sender).owner()).to.equal(owner.address)
   })
-
+  it('should update the push limit', async () => {
+    await tips.connect(owner).updatePushLimit(50)
+    expect(await tips.pushLimit()).to.equal(50)
+  })
+  it('should retrieve contract balance', async () => {
+    const balance = await tips.getContractBalance()
+    expect(balance).to.equal(0)
+  })
   describe('pushTip', function () {
     it('should emit a PushTip event when a tip is pushed', async function () {
       const amountPerAddress = ethers.parseEther('10')
@@ -110,6 +117,36 @@ describe('Tips', function () {
       await expect(tips.connect(member1).withdraw())
         .to.emit(tips, 'TipWithdrawal')
         .withArgs(member1.address, amountPerAddress)
+    })
+  })
+  describe('pause', () => {
+    it('Should allow only owner to pause the contract', async function () {
+      await expect(tips.connect(owner).pause()).to.emit(tips, 'Paused').withArgs(owner.address)
+
+      expect(tips.connect(member1).pause()).to.be.revertedWithCustomError
+    })
+
+    it('Should allow only owner to unpause the contract', async function () {
+      await tips.connect(owner).pause()
+
+      await expect(tips.connect(owner).unpause()).to.emit(tips, 'Unpaused').withArgs(owner.address)
+
+      expect(tips.connect(member1).unpause()).to.be.revertedWithCustomError
+    })
+
+    it('Should not allow tips to be pushed when paused', async function () {
+      await tips.connect(owner).pause()
+
+      expect(tips.connect(member1).pushTip([member2.address], { value: ethers.parseEther('1') })).to
+        .be.revertedWithCustomError
+    })
+
+    it('Should allow tips to be pushed when unpaused', async function () {
+      await tips.connect(owner).pause()
+      await tips.connect(owner).unpause()
+      await expect(
+        tips.connect(member1).pushTip([member1.address], { value: ethers.parseEther('1') })
+      ).to.emit(tips, 'PushTip')
     })
   })
 })

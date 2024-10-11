@@ -2,9 +2,7 @@ name: Backend Vitest Unit Tests
 
 on:
   pull_request:
-    branches:
-      - master
-      - develop
+    branches: "**"
     paths:
       - "backend/**"
   workflow_dispatch:

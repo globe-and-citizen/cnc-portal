@@ -6,6 +6,7 @@ export interface Notification {
   userAddress: string
   createdAt: Date
   author: string | null
+  resource: string | null
 }
 
 export interface NotificationResponse {

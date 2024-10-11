@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:16-alpine
@@ -18,15 +16,10 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
-      target: build
+      target: production
       args:
-        VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
-        VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
-        VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
-    environment:
-      VITE_APP_TIPS_ADDRESS: "0x61e14D15A6BBCEd28c9B54D90a846fAa1e45aC1B"
-      VITE_APP_BACKEND_URL: "https://cnc-portal-neg4ztdcia-wl.a.run.app"
-      VITE_APP_ETHERSCAN_URL: https://sepolia.etherscan.io/
+        VITE_APP_BACKEND_URL: "https://api.cncportal.io"
+        VITE_APP_NETWORK_ALIAS: polygon
     ports:
       - "80:80" # Adjust port as needed
     volumes:
@@ -35,7 +28,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development
+      target: production
     ports:
       - "3000:3000" # Adjust port as needed
     volumes:
@@ -47,7 +40,7 @@ services:
       DATABASE_URL: postgres://postgres:newpassword@db:5432/cnc-db
       PORT: 3000
       FRONTEND_URL: http://localhost
-      NODE_ENV: development
+      NODE_ENV: prod
       SECRET_KEY: "secret-key"
 
 volumes:

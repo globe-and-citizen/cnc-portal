@@ -4,6 +4,10 @@ Please include a summary of the changes and the related issue. Please also inclu
 
 Fixes # (issue)
 
+## Contribution
+
+For your PR please add a commnent to eache file edited to explain the changes you made.
+
 ## Type of change
 
 Please delete options that are not relevant.
@@ -13,10 +17,38 @@ Please delete options that are not relevant.
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] This change requires a documentation update
 
+## Checklist
 
-# Checklist:
+Make sur you run the following commands before submitting your PR:
 
-* **Please check if the PR fulfills these requirements**
+- /app
+
+```bash
+npm run build
+npm run test:unit
+npm run type-check
+npm run lint
+npm run format
+```
+
+- /backend
+
+```bash
+npm run build
+npm run test
+npm run lint
+npm run format
+```
+
+- /contract
+
+```bash
+npm run test
+npm run lint
+npm run format
+```
+
+- **Please check if the PR fulfills these requirements**
 
 - [ ] The commit message follows our guidelines
 - [ ] Tests for the changes have been added (for bug fixes/features)

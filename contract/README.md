@@ -59,7 +59,7 @@ npx hardhat ignition deploy ./ignition/modules/[yourIgnitionScript].ts --network
 ps: to make the verify working you need to have the `ETHERSCAN_API_KEY` on your .env file
 
 - Verify a contract:
-If you have a contract deploy on a network and you need to verify it you can use the following command:
+  If you have a contract deploy on a network and you need to verify it you can use the following command:
 
 ```bash
 npx hardhat verify --network polygon [contractAddress]

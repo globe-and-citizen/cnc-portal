@@ -8,42 +8,17 @@
     <div class="w-[240px] grow flex flex-col justify-center p-10">
       <h2 class="pb-4 flex justify-center">Sign in to CNC portal</h2>
       <div class="flex flex-col gap-5">
-        <button class="btn btn-primary w-full" @click="siwe" :disabled="isProcessing">
+        <button
+          data-testid="sign-in"
+          class="btn btn-primary w-full"
+          @click="siwe"
+          :disabled="isProcessing"
+        >
           <span v-if="isProcessing">Processing...</span>
           <span v-else>Sign In With Ethereum</span>
         </button>
-        <div class="flex justify-center items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="157"
-            height="22"
-            viewBox="0 0 157 22"
-            fill="none"
-          >
-            <path
-              d="M0 10.5H156"
-              stroke="#919EAB"
-              stroke-opacity="0.24"
-              stroke-linecap="square"
-              stroke-dasharray="2 3"
-            />
-          </svg>
-          <p class="p-2">OR</p>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="157"
-            height="22"
-            viewBox="0 0 157 22"
-            fill="none"
-          >
-            <path
-              d="M0 10.5H156"
-              stroke="#919EAB"
-              stroke-opacity="0.24"
-              stroke-linecap="square"
-              stroke-dasharray="2 3"
-            />
-          </svg>
+        <div class="flex w-full flex-col">
+          <div class="divider">OR</div>
         </div>
         <div class="flex justify-center gap-[8px]">
           <IconGoogle />
@@ -60,6 +35,7 @@ import IconGoogle from '@/components/icons/IconGoogle.vue'
 import IconFacebook from '@/components/icons/IconFacebook.vue'
 import IconTwitter from '@/components/icons/IconTwitter.vue'
 import { useSiwe } from '@/composables/useSiwe'
+
 const { isProcessing, siwe } = useSiwe()
 </script>
 

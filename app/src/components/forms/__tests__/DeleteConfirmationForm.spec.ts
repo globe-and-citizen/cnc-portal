@@ -6,7 +6,7 @@ import LoadingButton from '@/components/LoadingButton.vue'
 describe('DeleteConfirmation.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
-  const createComponent = (propsData: any) => {
+  const createComponent = (propsData: { isLoading: boolean }) => {
     wrapper = mount(DeleteConfirmation, {
       props: {
         ...propsData

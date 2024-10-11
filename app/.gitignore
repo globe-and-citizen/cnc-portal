@@ -7,6 +7,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+
+/src/artifacts/deployed_addresses/chain-31337.json
+
 node_modules
 .DS_Store
 dist
@@ -29,3 +32,7 @@ coverage
 
 *.tsbuildinfo
 .env
+
+# Synpress
+.cache-synpress
+test-results

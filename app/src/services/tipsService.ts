@@ -1,48 +1,27 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
 import { TIPS_ADDRESS } from '@/constant'
+import type { ContractTransaction } from 'ethers'
 import ABI from '../artifacts/abi/tips.json'
 import type { TipsEventType } from '@/types'
 import type { EventLog } from 'ethers'
-import type { Contract } from 'ethers'
 import type { Log } from 'ethers'
 import { BankService, type IBankService } from './bankService'
-
-interface ISmartContract {
-  contract: Contract | undefined
-  contractAddress: string
-  contractAbi: any
-  getContract(address: string, abi: any): Promise<Contract>
-}
-
-export class SmartContract implements ISmartContract {
-  contract: Contract | undefined
-  contractAddress: string
-  contractAbi: any
-  web3Library: IWeb3Library
-
-  constructor(web3Library: IWeb3Library, contractAddress: string, contractAbi: any) {
-    this.web3Library = web3Library
-    this.contractAddress = contractAddress
-    this.contractAbi = contractAbi
-  }
-
-  async getContract(): Promise<Contract> {
-    if (!this.contract) {
-      this.contract = await this.web3Library.getContract(this.contractAddress, this.contractAbi)
-    }
-
-    return this.contract
-  }
-}
+import { SmartContract } from './contractService'
+import type { InterfaceAbi } from 'ethers'
+import type { TransactionResponse } from 'ethers'
 
 export class TipsService extends SmartContract {
   bankService: IBankService
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
-    super(web3Library, TIPS_ADDRESS, ABI)
+    super(TIPS_ADDRESS, ABI as InterfaceAbi, web3Library)
     this.bankService = new BankService()
   }
 
-  async pushTip(addresses: string[], amount: number, bankAddress?: string): Promise<any> {
+  async pushTip(
+    addresses: string[],
+    amount: number,
+    bankAddress?: string
+  ): Promise<TransactionResponse> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
@@ -60,7 +39,11 @@ export class TipsService extends SmartContract {
     return tx
   }
 
-  async sendTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
+  async sendTip(
+    addresses: string[],
+    amount: number,
+    bankAddress?: string
+  ): Promise<TransactionResponse> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
@@ -85,36 +68,34 @@ export class TipsService extends SmartContract {
     return await this.contract.getBalance(await this.web3Library.getAddress())
   }
 
-  async withdrawTips(): Promise<void> {
+  async withdrawTips(): Promise<ContractTransaction> {
     if (!this.contract) {
       this.contract = await super.getContract()
     }
 
     const tx = await this.contract.withdraw()
-    await tx.wait()
+    return await tx.wait()
   }
 
-  // TODO use a builder pattern for this
   async getEvents(type: TipsEventType): Promise<EventLog[] | Log[]> {
-    if (!this.contract) {
-      this.contract = await super.getContract()
-    }
-
-    return this.contract.queryFilter(type)
+    return await super.getEvents(type)
   }
 
-  async bankPushTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
-    try {
-      const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
-      await tx.wait()
+  async bankPushTip(
+    bankAddress: string,
+    addresses: string[],
+    amount: number
+  ): Promise<TransactionResponse> {
+    const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
+    await tx.wait()
 
-      return tx
-    } catch (error) {
-      console.log(error)
-      throw error
-    }
+    return tx
   }
-  async bankSendTip(bankAddress: string, addresses: string[], amount: number): Promise<any> {
+  async bankSendTip(
+    bankAddress: string,
+    addresses: string[],
+    amount: number
+  ): Promise<TransactionResponse> {
     const tx = await this.bankService.sendTip(bankAddress, addresses, amount)
     await tx.wait()
 

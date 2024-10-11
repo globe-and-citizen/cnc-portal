@@ -1,42 +1,30 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AddTeamModal from '@/components/forms/AddTeamForm.vue'
-import IconPlus from '@/components/icons/IconPlus.vue'
-import IconMinus from '@/components/icons/IconMinus.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import type { TeamInput, User } from '@/types'
-import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
-describe('AddTeamModal.vue', () => {
+describe('AddTeamForm.vue', () => {
   const team: TeamInput = {
     name: '',
     description: '',
-    members: [{ name: '', address: '', isValid: true }]
+    members: [{ name: '', address: '' }]
   }
   const users: User[] = [
     { name: 'Ravioli', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' },
     { name: 'Dasarath', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' }
   ]
 
-  const wrapper = mount(AddTeamModal, {
+  const wrapper = mount(AddTeamForm, {
     props: {
-      showAddTeamModal: true,
-      team,
+      modelValue: team,
       users,
       isLoading: false
-    },
-    global: {
-      components: {
-        IconPlus,
-        IconMinus,
-        LoadingButton
-      }
-    },
-    data() {
-      return {
-        dropdown: true
-      }
     }
+  })
+
+  // Reset props
+  beforeEach(() => {
+    wrapper.setProps({ modelValue: team, users, isLoading: false })
   })
   describe('Render', () => {
     it('renders correctly with initial props', () => {
@@ -46,49 +34,69 @@ describe('AddTeamModal.vue', () => {
     it('shows dropdown when users are available', async () => {
       expect(wrapper.find('.dropdown-open').exists()).toBe(true)
     })
-    it('renders icon plus', () => {
-      expect(wrapper.findComponent(IconPlus).exists()).toBe(true)
-    })
-    it('renders icon minus', () => {
-      expect(wrapper.findComponent(IconMinus).exists()).toBe(true)
+    it('should show loading state', async () => {
+      wrapper.setProps({ isLoading: true })
+      // next tick
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('.loading').exists()).toBe(true)
     })
 
     it('updates team members when a user is selected from dropdown', async () => {
       await wrapper.find('.dropdown a').trigger('click')
-      expect(wrapper.vm.team.members[0].name).toBe(users[0].name)
-      expect(wrapper.vm.team.members[0].address).toBe(users[0].address)
+      expect(wrapper.vm.modelValue?.members[0].name).toBe(users[0].name)
+      expect(wrapper.vm.modelValue?.members[0].address).toBe(users[0].address)
     })
   })
+
   describe('Emits', () => {
+    const teamV2: TeamInput = {
+      name: 'Team Name',
+      description: 'Team Description',
+      members: [{ name: 'Ravioli', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }]
+    }
+
+    const wrapperV2 = mount(AddTeamForm, {
+      props: {
+        modelValue: teamV2,
+        users,
+        isLoading: false
+      }
+    })
     it('emits addTeam when submit button is clicked', async () => {
-      await wrapper.find('button.btn-primary').trigger('click')
-      expect(wrapper.emitted()).toHaveProperty('addTeam')
+      // TODO: fil the form with valid data
+      await wrapperV2.find('input[name="name"]').setValue('Team Name')
+      await wrapperV2.find('input[name="description"]').setValue('Team Description')
+
+      await wrapperV2.find('[data-test="submit"]').trigger('click')
+      expect(wrapperV2.emitted()).toHaveProperty('addTeam')
+    })
+    it('Not emits on Error', async () => {
+      // TODO: fil the form with valid data
+
+      await wrapper.find('[data-test="submit"]').trigger('click')
+      expect(wrapper.emitted()).not.toHaveProperty('addTeam')
     })
   })
   describe('Actions', () => {
     it('adds a new member input field when clicking the add icon', async () => {
-      const addButton = wrapper.findComponent(IconPlus)
-      await addButton.trigger('click')
-
       expect(wrapper.findAll('.input-group').length).toBe(1)
+      await wrapper.find('[data-test="add-member"]').trigger('click')
+
+      expect(wrapper.findAll('.input-group').length).toBe(2)
     })
 
     it('removes the last member input field when clicking the remove icon', async () => {
-      const addButton = wrapper.findComponent(IconPlus)
-      await addButton.trigger('click') // Add a member
-
-      const removeButton = wrapper.findComponent(IconMinus)
-      await removeButton.trigger('click') // Remove a member
+      expect(wrapper.findAll('.input-group').length).toBe(2)
+      await wrapper.find('[data-test="remove-member"]').trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(1)
     })
-    it('displays dropdown with users when dropdown is true', async () => {
+
+    it('Should update the users in the dropdow when the userName is updated', async () => {
       const wrapper = mount(AddTeamForm, {
         props: {
-          users: [
-            { name: 'Alice', address: '0x123' },
-            { name: 'Bob', address: '0x456' }
-          ],
+          modelValue: team,
+          users,
           isLoading: false
         },
         data() {
@@ -97,8 +105,16 @@ describe('AddTeamModal.vue', () => {
           }
         }
       })
-      expect(wrapper.find('.dropdown-open').exists()).toBe(true)
-      expect(wrapper.findAll('li').length).toBe(2)
+      await wrapper.find('.input-group input').setValue('Ravioli')
+      await wrapper.find('.input-group input').trigger('keyup.stop')
+
+      await wrapper
+        .findAll('.input-group input')[1]
+        .setValue('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
+      await wrapper.findAll('.input-group input')[1].trigger('keyup.stop')
+      // next ti
+      await wrapper.find('.dropdown a').trigger('click')
+      expect(wrapper.vm.modelValue?.members[0].name).toBe(users[0].name)
     })
   })
 })

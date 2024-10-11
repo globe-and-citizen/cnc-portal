@@ -1,17 +1,18 @@
 import { TipsService } from '@/services/tipsService'
 import type { EventResult, TipsEventType } from '@/types'
-import type { IContractReadFunction, IContractTransactionFunction } from '@/types/interfaces'
 import dayjs from 'dayjs'
+import type { TransactionResponse } from 'ethers'
 import type { Log } from 'ethers'
+import type { ContractTransaction } from 'ethers'
 import type { EventLog } from 'ethers'
 import { ref } from 'vue'
 
 const tipsService = new TipsService()
 
-export function useTipsBalance(): IContractReadFunction<string | null> {
+export function useTipsBalance() {
   const balance = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getBalance() {
     try {
@@ -31,10 +32,10 @@ export function useTipsBalance(): IContractReadFunction<string | null> {
   return { isLoading: loading, error, data: balance, execute }
 }
 
-export function usePushTip(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function usePushTip() {
+  const transaction = ref<TransactionResponse>()
   const isLoading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function pushTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
@@ -52,10 +53,10 @@ export function usePushTip(): IContractTransactionFunction {
   return { execute: pushTip, isLoading, error, isSuccess, transaction }
 }
 
-export function useSendTip(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function useSendTip() {
+  const transaction = ref<TransactionResponse>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function sendTip(addresses: string[], amount: number, bankAddress?: string): Promise<void> {
@@ -73,10 +74,10 @@ export function useSendTip(): IContractTransactionFunction {
   return { execute: sendTip, isLoading: loading, error, isSuccess, transaction }
 }
 
-export function useWithdrawTips(): IContractTransactionFunction {
-  const transaction = ref<any>(null)
+export function useWithdrawTips() {
+  const transaction = ref<ContractTransaction>()
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
   const isSuccess = ref(false)
 
   async function withdraw() {
@@ -97,7 +98,7 @@ export function useWithdrawTips(): IContractTransactionFunction {
 export function useTipEvents() {
   const events = ref<EventResult[]>([])
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref<unknown>(null)
 
   async function getEvents(type: TipsEventType): Promise<void> {
     try {
