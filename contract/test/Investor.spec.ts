@@ -241,9 +241,7 @@ describe('Investor Contract', () => {
 
     it('should not add mint agreement if already exist', async () => {
       expect(
-        investorProxy
-          .connect(owner)
-          .addMintAgreement(owner.address, ethers.parseEther('100'), true)
+        investorProxy.connect(owner).addMintAgreement(owner.address, ethers.parseEther('100'), true)
       ).to.be.revertedWith('Agreement already exist')
     })
   })
