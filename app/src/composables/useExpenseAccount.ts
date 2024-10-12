@@ -230,7 +230,7 @@ export function useExpenseAccountGetBalance() {
 export function useExpenseGetFunction(expenseAccountAddress: string) {
   const functionName = ref<string | undefined>()
   const inputs = ref<string[] | undefined>([])
-  const args = ref<string[] | undefined>()
+  const args = ref<string[] | undefined>([])
 
   async function getFunction(data: string) {
     try {
