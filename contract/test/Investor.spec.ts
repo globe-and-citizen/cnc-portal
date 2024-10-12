@@ -78,11 +78,11 @@ describe('Investor Contract', () => {
         initialAgreements.reduce((acc, agreement) => acc + BigInt(agreement.amount), BigInt(0))
       )
 
-      Array(owner, investor1, investor2, investor3).forEach(async (investor) => {
+      for (const investor of [owner, investor1, investor2, investor3]) {
         expect(await investorProxy.balanceOf(investor.address)).to.eq(
           initialAgreements.find((agreement) => agreement.investor === investor.address)!.amount
         )
-      })
+      }
     })
 
     it('should emits Minted event', async () => {
@@ -144,7 +144,7 @@ describe('Investor Contract', () => {
        * */
 
       const dividend = ethers.parseEther('1000')
-      const tx = await investorProxy.connect(owner).distributeDividends({
+      await investorProxy.connect(owner).distributeDividends({
         value: dividend
       })
 
