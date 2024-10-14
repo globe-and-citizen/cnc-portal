@@ -9,13 +9,21 @@ import {
   useExpenseAccountDisapproveAddress,
   useExpenseAccountIsApprovedAddress,
   useExpenseAccountTransfer,
-  useExpenseAccountTransferOwnership
+  useExpenseAccountTransferOwnership,
+  useExpenseGetFunction
 } from '../useExpenseAccount'
 //import { ExpenseAccountEventType, type EventResult } from '@/types'
 import type { Result } from 'ethers'
 
 // mock web3Util
 vi.mock('@/utils/web3Util')
+vi.mock('@/utils', async (importOriginal) => {
+  const original: Object = await importOriginal()
+  return {
+    ...original,
+    log: mockLog
+  }
+})
 
 // mock expenseAccountService
 const amount = '1'
@@ -35,7 +43,9 @@ const {
   expenseAccountOwner,
   expenseAccountUser,
   expenseAccountMaxLimit,
-  tx
+  tx,
+  mockFunc,
+  mockLog
   //mockEvents
 } = vi.hoisted(() => {
   return {
@@ -58,7 +68,23 @@ const {
           })
         )
       }
-    ]
+    ],
+    mockFunc: {
+      name: 'setMaxLimit',
+      args: [BigInt(1000000000000000000n)],
+      fragment: {
+        inputs: [
+          {
+            name: 'amount',
+            type: 'uint256'
+          }
+        ]
+      }
+    },
+    mockLog: {
+      error: vi.fn(),
+      parseError: vi.fn()
+    }
   }
 })
 
@@ -80,7 +106,8 @@ const { expenseAccountService } = vi.hoisted(() => {
         return {
           address: expenseAccountAddress,
           interface: {
-            decodeEventLog: vi.fn().mockReturnValue(mockEventResults[0].data)
+            decodeEventLog: vi.fn().mockReturnValue(mockEventResults[0].data),
+            parseTransaction: vi.fn().mockReturnValue(mockFunc)
           }
         }
       }),
@@ -1076,6 +1103,35 @@ describe('Expense Account Composables', () => {
         await promise
         expect(isLoading.value).toBe(false)
       })
+    })
+  })
+
+  describe('useExpenseGetFunction', () => {
+    it('should set initial values correctly', () => {
+      const {
+        execute: getFunction,
+        data,
+        inputs,
+        args
+      } = useExpenseGetFunction(expenseAccountAddress)
+
+      expect(getFunction).toBeInstanceOf(Function)
+      expect(data.value).toBe(undefined)
+      expect(inputs.value).toStrictEqual([])
+      expect(args.value).toStrictEqual([])
+    })
+
+    it('should returns data correctly', async () => {
+      const {
+        execute: getFunction,
+        data,
+        inputs,
+        args
+      } = useExpenseGetFunction(expenseAccountAddress)
+      await getFunction('data')
+      expect(data.value).toStrictEqual('setMaxLimit')
+      expect(args.value).toStrictEqual(['1.0'])
+      expect(inputs.value).toStrictEqual(['amount'])
     })
   })
 })

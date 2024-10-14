@@ -3,6 +3,7 @@ import {
   useBankBalance,
   useBankDeposit,
   useBankEvents,
+  useBankGetFunction,
   useBankOwner,
   useBankPause,
   useBankStatus,
@@ -15,6 +16,13 @@ import type { Result } from 'ethers'
 
 // mock web3Util
 vi.mock('@/utils/web3Util')
+vi.mock('@/utils', async (importOriginal) => {
+  const original: Object = await importOriginal()
+  return {
+    ...original,
+    log: mockLog
+  }
+})
 
 // mock BankService
 // const teamId = '1'
@@ -29,7 +37,7 @@ const mockEventResults = [
   }
 ]
 
-const { bankBalance, bankAddress, tx, mockEvents } = vi.hoisted(() => {
+const { bankBalance, bankAddress, tx, mockEvents, mockFunc, mockLog } = vi.hoisted(() => {
   return {
     bankBalance: '1',
     bankAddress: '0x123',
@@ -47,7 +55,27 @@ const { bankBalance, bankAddress, tx, mockEvents } = vi.hoisted(() => {
           })
         )
       }
-    ]
+    ],
+    mockFunc: {
+      name: 'transfer',
+      args: ['0x123', BigInt(1000000000000000000n)],
+      fragment: {
+        inputs: [
+          {
+            name: 'to',
+            type: 'address'
+          },
+          {
+            name: 'amount',
+            type: 'uint256'
+          }
+        ]
+      }
+    },
+    mockLog: {
+      error: vi.fn(),
+      parseError: vi.fn()
+    }
   }
 })
 
@@ -67,7 +95,8 @@ const { bankService } = vi.hoisted(() => {
         return {
           address: bankAddress,
           interface: {
-            decodeEventLog: vi.fn().mockReturnValue(mockEventResults[0].data)
+            decodeEventLog: vi.fn().mockReturnValue(mockEventResults[0].data),
+            parseTransaction: vi.fn().mockReturnValue(mockFunc)
           }
         }
       }),
@@ -806,6 +835,33 @@ describe('Bank', () => {
         expect(bankService.transferOwnership).toHaveBeenCalledWith(bankAddress, to)
         expect(error.value).toBe(mockError)
       })
+    })
+  })
+
+  describe('useBankGetFunction', () => {
+    it('should set initial values correctly', () => {
+      const { execute: getFunction, data, inputs, args } = useBankGetFunction(bankAddress)
+
+      expect(getFunction).toBeInstanceOf(Function)
+      expect(data.value).toBe(undefined)
+      expect(inputs.value).toStrictEqual([])
+      expect(args.value).toStrictEqual([])
+    })
+
+    it('should returns data correctly', async () => {
+      const { execute: getFunction, data, args, inputs } = useBankGetFunction(bankAddress)
+      await getFunction('data')
+      expect(data.value).toStrictEqual('transfer')
+      expect(args.value).toStrictEqual(['0x123', '1.0'])
+      expect(inputs.value).toStrictEqual(['to', 'amount'])
+    })
+
+    it('logs error when getFunction fails', async () => {
+      const mockError = new Error('error')
+      vi.mocked(bankService.getContract).mockRejectedValue(mockError)
+      const { execute: getFunction } = useBankGetFunction(bankAddress)
+      await getFunction('data')
+      expect(mockLog.error).toHaveBeenCalled()
     })
   })
 })

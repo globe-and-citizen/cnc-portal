@@ -94,7 +94,7 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return tx
   }
 
-  private async getContract(address: string, abi = this.abi): Promise<Contract> {
+  async getContract(address: string, abi = this.abi): Promise<Contract> {
     return await new SmartContract(address, abi).getContract()
   }
 
