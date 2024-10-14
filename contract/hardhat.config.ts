@@ -61,7 +61,7 @@ const config: HardhatUserConfig = {
     enabled: true,
     currency: 'USD',
     coinmarketcap: process.env.COINMARKETCAP_KEY,
-    token: 'MATIC'
+    token: 'POL'
   }
 }
 

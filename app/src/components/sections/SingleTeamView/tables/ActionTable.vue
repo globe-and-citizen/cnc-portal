@@ -39,7 +39,7 @@
       :board-of-directors="boardOfDirectors"
       :team="team"
       @closeModal="approveModal = false"
-      @onSuccess="$emit('refetch')"
+      @on-executed="emits('refetch')"
     />
   </ModalComponent>
 </template>
@@ -60,5 +60,5 @@ defineProps<{
   team: Partial<Team>
   boardOfDirectors: Address[]
 }>()
-defineEmits(['refetch'])
+const emits = defineEmits(['refetch'])
 </script>
