@@ -121,6 +121,18 @@ const getTeam = async (req: Request, res: Response) => {
           select: {
             address: true,
             name: true,
+            roles: {
+              select: {
+                id: true,
+                roleId: true,
+                role: {
+                  select: {
+                    name: true,
+                    roleCategoryId: true
+                  }
+                }
+              }
+            }
           },
         },
       },

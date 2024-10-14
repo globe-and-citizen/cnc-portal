@@ -22,6 +22,13 @@
         >
           {{ copied ? 'Copied!' : 'Copy address' }}
         </button>
+        <!--Add/Edit User Roles-->
+        <button
+          @click="showAddEditMemberRoles = !showAddEditMemberRoles"
+          class="btn btn-active btn-xs"
+        >
+          Add Roles
+        </button>
         <button
           v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
           class="btn btn-error btn-xs"
@@ -40,6 +47,15 @@
         from the team?
       </DeleteConfirmForm>
     </ModalComponent>
+    <ModalComponent v-if="roleCategories" v-model="showAddEditMemberRoles">
+      <AddMemberRolesForm
+        :role-categories="roleCategories"
+        :is-adding-role="isAddingRole"
+        v-model="member.roles"
+        @add-roles="emits('addRoles')"
+        @close-modal="showAddEditMemberRoles = !showAddEditMemberRoles"
+      />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -47,26 +63,33 @@ import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useRoute } from 'vue-router'
-import type { MemberInput } from '@/types'
+import type { MemberInput, RoleCategory, Role } from '@/types'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import AddMemberRolesForm from '@/components/sections/SingleTeamView/forms/AddMemberRolesForm.vue'
+import { useVuelidate } from "@vuelidate/core";
 
 const props = defineProps<{
+  isAddingRole: boolean
   member: Partial<MemberInput>
   teamId: Number
   ownerAddress: String
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-const emits = defineEmits(['getTeam'])
+const emits = defineEmits(['getTeam', 'addRoles'])
 
 const route = useRoute()
 
+useVuelidate()
+
 const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const showDeleteMemberConfirmModal = ref(false)
+const showAddEditMemberRoles = ref(false)
+const roleCategories = ref<null | RoleCategory[]>(null)
 
 // useFetch instance for deleting member
 const {
@@ -85,6 +108,16 @@ const {
   }
 })
   .delete()
+  .json()
+
+// useFetch fetch role categories
+const {
+  execute: executeFetchRoleCategories,
+  data: _roleCategories
+} = useCustomFetch('role-category', {
+  immediate: false
+})
+  .get()
   .json()
 // Watchers for deleting member
 watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () => {
@@ -107,4 +140,9 @@ const { copy, copied, isSupported } = useClipboard()
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
+
+onMounted(async () => {
+ await executeFetchRoleCategories()
+ roleCategories.value = _roleCategories.value.roleCategories
+})
 </script>
