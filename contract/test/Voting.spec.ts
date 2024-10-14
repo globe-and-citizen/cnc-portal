@@ -13,6 +13,7 @@ describe('Voting Contract', () => {
   let member4: SignerWithAddress
   let member5: SignerWithAddress
   let member6: SignerWithAddress
+  let unknownAddress: SignerWithAddress
   async function deployFixture() {
     const proposal = {
       id: 0,
@@ -95,7 +96,8 @@ describe('Voting Contract', () => {
 
   context('Deploying Voting Contract', () => {
     before(async () => {
-      ;[owner, member1, member2, member3, member4, member5, member6] = await ethers.getSigners()
+      ;[owner, member1, member2, member3, member4, member5, member6, unknownAddress] =
+        await ethers.getSigners()
       await deployFixture()
     })
 
@@ -179,6 +181,12 @@ describe('Voting Contract', () => {
         const votingAsMember6 = voting.connect(member6)
 
         await expect(votingAsMember6.voteDirective(0, 4)).to.be.revertedWith('Invalid vote')
+      })
+      it('should not allow a non-member to vote on a proposal', async () => {
+        const votingAsUnknown = voting.connect(unknownAddress)
+        await expect(votingAsUnknown.voteDirective(0, 1)).to.be.revertedWith(
+          'You are not registered to vote in this proposal'
+        )
       })
       it('should not allow a member to vote twice on a proposal', async () => {
         const votingAsMember1 = voting.connect(member1)
