@@ -140,7 +140,7 @@ const props = defineProps<{
   team: Partial<Team>
   boardOfDirectors: Address[]
 }>()
-const emits = defineEmits(['closeModal'])
+const emits = defineEmits(['closeModal', 'onExecuted'])
 
 const {
   data: bankFunctionName,
@@ -162,9 +162,10 @@ const approveAction = async () => {
 
   await executeIsExecuted(props.team.boardOfDirectorsAddress!, props.action.actionId)
   if (isExecuted.value) {
-    useCustomFetch(`actions/${props.action.id}`, {
+    await useCustomFetch(`actions/${props.action.id}`, {
       immediate: true
     }).patch()
+    emits('onExecuted')
   }
 
   emits('closeModal')
@@ -197,13 +198,11 @@ watch(errorRevoke, () => {
 watch(successApprove, () => {
   if (successApprove.value) {
     addSuccessToast('Action approved')
-    emits('closeModal')
   }
 })
 watch(successRevoke, () => {
   if (successRevoke.value) {
     addSuccessToast('Action revoked')
-    emits('closeModal')
   }
 })
 watch(errorApprovalCount, () => {
