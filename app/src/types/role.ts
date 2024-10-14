@@ -30,3 +30,12 @@ export interface RoleCategoryResponse {
   success: boolean
   roleCategories: RoleCategory[]
 }
+
+export interface MemberRole {
+  id: number
+  role: {
+    name?: string
+    roleCategoryId: number
+  }
+  roleId: number
+}

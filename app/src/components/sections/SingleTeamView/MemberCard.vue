@@ -144,5 +144,6 @@ const openExplorer = (address: string) => {
 onMounted(async () => {
   await executeFetchRoleCategories()
   roleCategories.value = _roleCategories.value?.roleCategories
+  console.log(`member.roles`, member.value.roles)
 })
 </script>
