@@ -54,10 +54,7 @@
             Role - {{ input.name ? input.name : index + 1 }}
           </div>
           <div class="collapse-content">
-            <AddRoleForm
-              v-if="roleCategory.roles" 
-              v-model="roleCategory.roles[index]" 
-            />
+            <AddRoleForm v-if="roleCategory.roles" v-model="roleCategory.roles[index]" />
           </div>
         </div>
       </section>
@@ -68,10 +65,7 @@
           class="w-6 h-6 cursor-pointer"
           @click="
             () => {
-              if (
-                roleCategory.roles &&
-                roleCategory.roles.length > 1
-              ) {
+              if (roleCategory.roles && roleCategory.roles.length > 1) {
                 roleCategory.roles.pop()
               }
             }
@@ -129,10 +123,7 @@
         class="w-6 h-6 cursor-pointer"
         @click="
           () => {
-            if (
-              roleCategory.entitlements &&
-              roleCategory.entitlements.length > 1
-            ) {
+            if (roleCategory.entitlements && roleCategory.entitlements.length > 1) {
               roleCategory.entitlements.pop()
             }
           }
@@ -253,8 +244,8 @@ const getAvailableTypes = (index: number) => {
       (type: { id: number; name: string }) =>
         type.id === -1 ||
         !selectedTypes?.includes(type.id) ||
-        roleCategory.value.entitlements &&
-        roleCategory.value.entitlements[index].entitlementTypeId === type.id
+        (roleCategory.value.entitlements &&
+          roleCategory.value.entitlements[index].entitlementTypeId === type.id)
     )
   })
 }

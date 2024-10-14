@@ -34,7 +34,7 @@ const isInit = ref(true)
 const entitlement = defineModel({
   default: {
     entitlementTypeId: 0,
-    value: '',
+    value: ''
     //isInit: true //so entitlement value isn't cleared on load
   }
 })

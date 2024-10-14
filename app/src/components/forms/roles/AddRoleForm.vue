@@ -66,10 +66,7 @@
       class="w-6 h-6 cursor-pointer"
       @click="
         () => {
-          if (
-            role.entitlements &&
-            role.entitlements.length > 1
-          ) {
+          if (role.entitlements && role.entitlements.length > 1) {
             role.entitlements.pop()
           }
         }
@@ -142,8 +139,8 @@ const getAvailableTypes = (index: number) => {
       (entType: EntitlementType) =>
         entType.id === -1 ||
         !selectedTypes?.includes(entType.id) ||
-        role?.value?.entitlements &&
-        role?.value?.entitlements[index].entitlementTypeId === entType.id
+        (role?.value?.entitlements &&
+          role?.value?.entitlements[index].entitlementTypeId === entType.id)
     )
   })
 }
