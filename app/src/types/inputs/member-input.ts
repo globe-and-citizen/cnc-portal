@@ -1,4 +1,4 @@
-import type { MemberRole, Role } from '../role'
+import type { MemberRole } from '../role'
 
 export interface MemberInput {
   name: string

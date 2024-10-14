@@ -89,7 +89,7 @@
 
     <ModalComponent v-model="showModal">
       <AddRoleCategoryForm
-        v-if="showCategory"
+        v-if="showCategory && _roleCategory"
         v-model="_roleCategory"
         :is-loading="false"
         :category-id="_roleCategory?.id"
