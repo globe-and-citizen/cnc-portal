@@ -255,6 +255,9 @@ const deleteTeam = async (req: Request, res: Response) => {
     await prisma.boardOfDirectorActions.deleteMany({
       where: { teamId: Number(id) }
     })
+    await prisma.memberTeamsData.deleteMany({
+      where: { teamId: Number(id) }
+    })
     const teamD = await prisma.team.delete({
       where: {
         id: Number(id),
