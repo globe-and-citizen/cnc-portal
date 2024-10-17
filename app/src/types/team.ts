@@ -22,13 +22,13 @@ export interface TeamResponse {
   success: boolean
 }
 export interface MemberTeamsData {
-  userAddress: string,
+  userAddress: string
   roles: {
-    id: number;
-    roleId: number;
+    id: number
+    roleId: number
     role: {
-      name: string;
-      roleCategoryId: number;
+      name: string
+      roleCategoryId: number
     }
   }[]
 }

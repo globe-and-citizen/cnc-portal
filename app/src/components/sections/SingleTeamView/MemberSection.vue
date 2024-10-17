@@ -145,17 +145,21 @@ const { execute: executeFetchRoleCategories, data: _roleCategories } = useCustom
 const getMemberTeamsData = (userAddress: string) => {
   const emptyMemberTeamsData: MemberTeamsData = {
     userAddress,
-    roles: [{
-      id: 0,
-      roleId: 0,
-      role: {
-        name: '',
-        roleCategoryId: 0
+    roles: [
+      {
+        id: 0,
+        roleId: 0,
+        role: {
+          name: '',
+          roleCategoryId: 0
+        }
       }
-    }]
+    ]
   }
-  const memberTeamsData = team.memberTeamsData.find((item: MemberTeamsData) => item.userAddress === userAddress)
-  return memberTeamsData? memberTeamsData: emptyMemberTeamsData
+  const memberTeamsData = team.memberTeamsData?.find(
+    (item: MemberTeamsData) => item.userAddress === userAddress
+  )
+  return memberTeamsData ? memberTeamsData : emptyMemberTeamsData
 }
 
 const createContract = async (member: Partial<MemberInput>) => {

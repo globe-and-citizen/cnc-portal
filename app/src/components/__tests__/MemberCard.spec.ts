@@ -45,6 +45,17 @@ describe('MemberCard', () => {
     }
     ;(useUserDataStore as unknown as mockReturn).mockReturnValue(userDataStore)
   })
+  // const memberTeamsData = {
+  //   userAddress: "0xUserAddress",
+  //   roles: [{
+  //     id: 0,
+  //     roleId: 0,
+  //     role: {
+  //       name: '',
+  //       roleCategoryId: 0
+  //     }
+  //   }]
+  // }
   const props = { isAddingRole: false, member, teamId, ownerAddress }
   const wrapper = mount(MemberCard, {
     props,
