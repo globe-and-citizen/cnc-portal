@@ -52,7 +52,7 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
         }
     }
 
-    function distributeDividends() external payable onlyOwner nonReentrant {
+    function distributeDividends() external payable nonReentrant {
         uint256 totalSupply = totalSupply();
         require(totalSupply > 0, "No tokens minted");
 
@@ -66,7 +66,11 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
         }
     }
 
-    function addMintAgreement(address _investor, uint256 _amount, bool _isActive) external onlyOwner whenNotPaused {
+    function addMintAgreement(address _investor, uint256 _amount, bool _isActive, uint256 _signingBonus)
+        external
+        onlyOwner
+        whenNotPaused
+    {
         require(_investor != address(0), "Invalid investor address");
         require(!investors.contains(_investor), "Investor already exists");
         require(_amount > 0, "Invalid amount");
@@ -77,6 +81,7 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
         agreement.isActive = _isActive;
 
         investors.add(_investor);
+        _mint(_investor, _signingBonus);
 
         emit MintAgreementAdded(_investor, _amount, _isActive);
     }
