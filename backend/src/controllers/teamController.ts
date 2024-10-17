@@ -116,6 +116,23 @@ const getTeam = async (req: Request, res: Response) => {
         id: Number(id),
       },
       include: {
+        memberTeamsData: {
+          select: {
+            userAddress: true,
+            roles: {
+              select: {
+                id: true,
+                roleId: true,
+                role: {
+                  select: {
+                    name: true,
+                    roleCategoryId: true
+                  }
+                }
+              }
+            }
+          }
+        },
         members: {
           where: filterQuery,
           select: {

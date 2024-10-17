@@ -75,6 +75,7 @@ import { useVuelidate } from '@vuelidate/core'
 const props = defineProps<{
   isAddingRole: boolean
   member: Partial<MemberInput>
+  memberTeamsData: Partial<MemberInput>
   teamId: Number
   ownerAddress: String
 }>()
@@ -144,6 +145,6 @@ const openExplorer = (address: string) => {
 onMounted(async () => {
   await executeFetchRoleCategories()
   roleCategories.value = _roleCategories.value?.roleCategories
-  console.log(`member.roles`, member.value.roles)
+  console.log(`memberTeamsData`, props.memberTeamsData)
 })
 </script>

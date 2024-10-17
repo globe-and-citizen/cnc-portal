@@ -28,19 +28,20 @@
     :ownerAddress="team.ownerAddress"
     :teamId="Number(team.id)"
     :member="member"
+    :member-teams-data="getMemberTeamsData(member.address)"
     :key="member.address"
     @getTeam="emits('getTeam')"
     @add-roles="addRoles(member)"
   />
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import MemberCard from '@/components/sections/SingleTeamView/MemberCard.vue'
 import AddMemberCard from '@/components/sections/SingleTeamView/AddMemberCard.vue'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import type { User, MemberInput, RoleCategory, Role } from '@/types'
+import type { User, MemberInput, RoleCategory, Role, MemberTeamsData } from '@/types'
 import { useUserDataStore } from '@/stores/user'
 
 import { useToastStore } from '@/stores/useToastStore'
@@ -140,6 +141,22 @@ const { execute: executeFetchRoleCategories, data: _roleCategories } = useCustom
 )
   .get()
   .json()
+
+const getMemberTeamsData = (userAddress: string) => {
+  const emptyMemberTeamsData: MemberTeamsData = {
+    userAddress,
+    roles: [{
+      id: 0,
+      roleId: 0,
+      role: {
+        name: '',
+        roleCategoryId: 0
+      }
+    }]
+  }
+  const memberTeamsData = team.memberTeamsData.find((item: MemberTeamsData) => item.userAddress === userAddress)
+  return memberTeamsData? memberTeamsData: emptyMemberTeamsData
+}
 
 const createContract = async (member: Partial<MemberInput>) => {
   let contract
@@ -262,4 +279,8 @@ const addRoles = async (member: Partial<MemberInput>) => {
   await executeCreateMemberRoles()
   isAddingRole.value = false
 }
+
+onMounted(() => {
+  console.log(`team: `, team)
+})
 </script>
