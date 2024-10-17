@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import {MintAgreement} from "./Investor/types/MintAgreement.sol";
 
 import 'hardhat/console.sol';
 
@@ -26,6 +27,10 @@ interface IExpenseAccount {
     function initialize(address _sender) external;
 }
 
+interface IInvestor {
+    function initialize(string memory _name, string memory _symbol, MintAgreement[] memory _mintAgreements) external;
+}
+
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
     
     address[] founders;
@@ -39,6 +44,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address public votingContractBeacon;
     address public bodContractBeacon;
     address public expenseAccountBeacon;
+
+    address public investorContract;
+    address public investorBeacon;
 
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
@@ -114,15 +122,45 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
         emit ContractDeployed("ExpenseAccount", expenseAccountContract);
     }
+
+    function deployInvestorContract(string memory _name, string memory _symbol, MintAgreement[] memory _mintAgreements) external onlyOwners whenNotPaused  {
+        require(investorContract == address(0), "Investor contract already deployed");
+        require(investorBeacon != address(0), "Investor beacon not set");
+
+        BeaconProxy proxy = new BeaconProxy(
+            investorBeacon,
+            abi.encodeWithSelector(IInvestor.initialize.selector, _name, _symbol, _mintAgreements)
+        );
+        investorContract = address(proxy);
+
+        emit ContractDeployed("InvestorContract", investorContract);
+    }
   
+    function setInvestorBeacon(address _investorBeacon) external onlyOwners whenNotPaused {
+        investorBeacon = _investorBeacon;
+    }
+
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
 
-    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
-        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract);
+    function getTeam()
+        external
+        view
+        returns (address[] memory, address[] memory, address, address, address, address, address)
+    {
+        return (
+            founders,
+            members,
+            bankAccountContract,
+            votingContract,
+            bodContract,
+            expenseAccountContract,
+            investorContract
+        );
     }
+
     modifier onlyOwners{
         if (msg.sender == owner()) {
              _;
