@@ -30,7 +30,7 @@
           Add Roles
         </button>
         <button
-          v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
+          v-if="member.address != ownerAddress && ownerAddress == useUserDataStore()?.address"
           class="btn btn-error btn-xs"
           data-test="delete-member-button"
           @click="() => (showDeleteMemberConfirmModal = true)"
@@ -63,18 +63,19 @@ import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useRoute } from 'vue-router'
-import type { MemberInput, RoleCategory, Role } from '@/types'
+import type { MemberInput, RoleCategory } from '@/types'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
 import { ref, watch, onMounted } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddMemberRolesForm from '@/components/sections/SingleTeamView/forms/AddMemberRolesForm.vue'
-import { useVuelidate } from "@vuelidate/core";
+import { useVuelidate } from '@vuelidate/core'
 
 const props = defineProps<{
   isAddingRole: boolean
   member: Partial<MemberInput>
+  //memberTeamsData: Partial<MemberInput>
   teamId: Number
   ownerAddress: String
 }>()
@@ -111,12 +112,12 @@ const {
   .json()
 
 // useFetch fetch role categories
-const {
-  execute: executeFetchRoleCategories,
-  data: _roleCategories
-} = useCustomFetch('role-category', {
-  immediate: false
-})
+const { execute: executeFetchRoleCategories, data: _roleCategories } = useCustomFetch(
+  'role-category',
+  {
+    immediate: false
+  }
+)
   .get()
   .json()
 // Watchers for deleting member
@@ -142,7 +143,8 @@ const openExplorer = (address: string) => {
 }
 
 onMounted(async () => {
- await executeFetchRoleCategories()
- roleCategories.value = _roleCategories.value.roleCategories
+  await executeFetchRoleCategories()
+  roleCategories.value = _roleCategories.value?.roleCategories
+  //console.log(`memberTeamsData`, props.memberTeamsData)
 })
 </script>

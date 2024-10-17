@@ -34,23 +34,41 @@ export const log = {
  * Creates an independent copy of the object so
  * as to avoid creating references to the original
  * object when you want to assign to its value
- * 
+ *
  * @param obj - Any object
  * @returns - The cloned object
  */
-export const deepClone = (obj: any): any => {
+// export const deepClone = (obj: any): any => {
+//   if (obj === null || typeof obj !== 'object') {
+//     return obj;
+//   }
+
+//   if (Array.isArray(obj)) {
+//     return obj.map(item => deepClone(item));
+//   }
+
+//   const clonedObj: { [key: string]: any } = {};
+//   for (const key in obj) {
+//     if (/*obj.hasOwnProperty(key)*/Object.prototype.hasOwnProperty.call(obj, key)) {
+//       clonedObj[key] = deepClone((obj as { [key: string]: any })[key]);
+//     }
+//   }
+
+//   return clonedObj
+// }
+export const deepClone = <T>(obj: T): T => {
   if (obj === null || typeof obj !== 'object') {
-    return obj;
+    return obj
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item));
+    return obj.map((item) => deepClone(item)) as unknown as T
   }
 
-  const clonedObj: { [key: string]: any } = {};
+  const clonedObj = {} as { [K in keyof T]: T[K] }
   for (const key in obj) {
-    if (/*obj.hasOwnProperty(key)*/Object.prototype.hasOwnProperty.call(obj, key)) {
-      clonedObj[key] = deepClone((obj as { [key: string]: any })[key]);
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      clonedObj[key as keyof T] = deepClone(obj[key as keyof T])
     }
   }
 

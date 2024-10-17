@@ -116,6 +116,23 @@ const getTeam = async (req: Request, res: Response) => {
         id: Number(id),
       },
       include: {
+        memberTeamsData: {
+          select: {
+            userAddress: true,
+            roles: {
+              select: {
+                id: true,
+                roleId: true,
+                role: {
+                  select: {
+                    name: true,
+                    roleCategoryId: true
+                  }
+                }
+              }
+            }
+          }
+        },
         members: {
           where: filterQuery,
           select: {
@@ -255,6 +272,9 @@ const deleteTeam = async (req: Request, res: Response) => {
     await prisma.boardOfDirectorActions.deleteMany({
       where: { teamId: Number(id) }
     })
+    await prisma.memberTeamsData.deleteMany({
+      where: { teamId: Number(id) }
+    })
     const teamD = await prisma.team.delete({
       where: {
         id: Number(id),
@@ -321,6 +341,32 @@ const deleteMember = async (req: Request, res: Response) => {
         },
       },
     });
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: String(memberAddress),
+          teamId: Number(id)
+        }
+      }
+    })
+    if (memberTeamsData) {
+      //delete user roles
+      await prisma.userRole.deleteMany({
+        where: {
+          userAddress: String(memberAddress),
+          memberTeamsDataId: memberTeamsData.id
+        }
+      })
+      //delete member teams data
+      await prisma.memberTeamsData.delete({
+        where: {
+          userAddress_teamId: {
+            userAddress: String(memberAddress),
+            teamId: Number(id)
+          }
+        }
+      })
+    }
     res.status(200).json({ success: true, team: updatedTeam });
   } catch (error: any) {
     // Handle errors
@@ -398,6 +444,160 @@ const buildFilterMember = (queryParams: Request["query"]) => {
   return filterQuery;
 };
 
+const addMemberRoles = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const rolesData = req.body
+
+  try {
+    console.log('roleData: ', JSON.stringify(rolesData))
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) }
+    })
+    const ownerAddress = team?.ownerAddress
+    const userAddress = rolesData.member.address
+    if (callerAddress !== ownerAddress) {
+      return errorResponse(403, `Action not authorized`, res)
+    }
+    //assign roles to user
+    for (const role of rolesData.member.roles) {
+      console.log(`role: `, role)
+      if (ownerAddress) {
+        let memberTeamsData = await prisma.memberTeamsData.findUnique({
+          where:{
+            userAddress_teamId: {
+              userAddress,
+              teamId: Number(id)
+            }
+          }
+        })
+        if (!memberTeamsData)
+          memberTeamsData = await prisma.memberTeamsData.create({
+            data: {
+              userAddress,
+              teamId: Number(id)
+            }
+          })
+        const userRole = await prisma.userRole.findUnique({
+          where: {
+            userAddress_roleId: {
+              userAddress,
+              roleId: Number(role.roleId)
+            }
+          }
+        })
+        if (!userRole)
+          await prisma.userRole.create({
+            data: {
+              userAddress,
+              roleId: Number(role.roleId),
+              assignedBy: ownerAddress,
+              memberTeamsDataId: memberTeamsData?.id
+            }
+          })
+      }
+      const _role = await prisma.role.findUnique({
+        where: { id: Number(role.roleId) }
+      })
+      const owner = await prisma.user.findUnique({
+        where: { address: ownerAddress }
+      })
+      //send notification
+      await addNotification(
+        [userAddress],
+        {
+          message: `You have been assigned a new role: ${_role?.name} by ${owner?.name}`,
+          subject: `Role Assignment`,
+          author: `${ownerAddress}` || "",
+          resource: `role-assignment/${id}`,
+        }
+      );
+    }
+    //create contract
+    await prisma.memberTeamsData.update({
+      where: {
+        userAddress_teamId: {
+          userAddress: rolesData.member.address,
+          teamId: Number(id)
+        }
+      },
+      data: {
+        contract: JSON.stringify(rolesData.contract),
+        ownerSignature: rolesData.signature
+      }
+    })
+    // await prisma.memberTeamsData.create({
+    //   data: {
+    //     contract: JSON.stringify(rolesData.contract),
+    //     ownerSignature: rolesData.signature,
+    //     teamId: Number(id),
+    //     userAddress: rolesData.member.address
+    //   }
+    // })
+    res.status(201)
+      .json({
+        success: true
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  }
+}
+
+const getMemberContract = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const memberAddress = req.headers.memberaddress
+
+  try {
+    if (isNaN(Number(id)))
+      return errorResponse(400, 'Invalid ID Format', res)
+    
+    if (!memberAddress)
+      return errorResponse(400, 'No Member Address Supplied', res)
+
+    if (typeof memberAddress === "string") {
+      const contract = await prisma.memberTeamsData.findUnique({
+        where: {
+          userAddress_teamId: {
+            userAddress: memberAddress,
+            teamId: Number(id)
+          }
+        }})
+
+      res.status(201)
+      .json({
+        success: true,
+        contract: contract?.contract
+      })
+    }  
+  } catch (error) {
+    return errorResponse(500, error, res)
+  }
+}
+
+const addMemberSignature = async (req: Request, res: Response) => {
+  const { id, signature } = req.params
+  const callerAddress = (req as any).address
+  try {
+    //console.log(`signature: `, signature)
+    await prisma.memberTeamsData.update({
+      where: {
+        userAddress_teamId: {
+          userAddress: callerAddress,
+          teamId: Number(id)
+        }
+      }, 
+      data: { memberSignature: signature }
+    })
+    
+    res.status(201)
+      .json({
+        success: true
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  }
+}
+
 export {
   addTeam,
   updateTeam,
@@ -406,4 +606,7 @@ export {
   getAllTeams,
   deleteMember,
   addMembers,
+  addMemberRoles,
+  getMemberContract,
+  addMemberSignature
 };

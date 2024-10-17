@@ -15,14 +15,13 @@
       <li v-for="notification in paginatedNotifications" :key="notification.id">
         <a
           @click="updateNotification(notification)"
-          :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
+          :href="getResource(notification)[0] === `teams` ? `/${notification.resource}` : `#`"
         >
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">
               {{ notification.message }}
             </span>
           </div>
-          <!--<div class="notification__footer">{{ notification.author }} {{ notification.createdAt }}</div>-->
         </a>
       </li>
       <!-- Pagination Controls -->
@@ -57,25 +56,19 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { useUserDataStore } from '@/stores/user'
+import { log, parseError } from '@/utils'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
 const totalPages = ref(0)
 
-const updateEndPoint = ref('')
-const {
-  //isFetching: isNotificationsFetching,
-  //error: notificationError,
-  data: notifications,
-  execute: executeFetchNotifications
-} = useCustomFetch<NotificationResponse>('notification').json()
+const endpointUrl = ref('')
 
-const {
-  //isFetching: isUpdateNotificationsFetching,
-  //error: isUpdateNotificationError,
-  execute: executeUpdateNotifications
-  //data: _notifications
-} = useCustomFetch<NotificationResponse>(updateEndPoint, {
+const { data: notifications, execute: executeFetchNotifications } =
+  useCustomFetch<NotificationResponse>('notification').get().json()
+
+const { execute: executeUpdateNotifications } = useCustomFetch<NotificationResponse>(endpointUrl, {
   immediate: false
 })
   .put()
@@ -91,20 +84,93 @@ const isUnread = computed(() => {
   return idx > -1
 })
 
-const isInvitation = (notification: Notification) => {
+const getResource = (notification: Notification) => {
   if (notification.resource) {
     const resourceArr = notification.resource.split('/')
-    if (resourceArr[0] === 'teams') return true
-  }
-
-  return false
+    return resourceArr
+  } else return []
 }
 
+const { execute: executeFetchMemberContract, data: memberContract } = useCustomFetch(endpointUrl, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: `${useUserDataStore().address}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+const signature = ref('')
+
+const { execute: executeAddMemberSignature } = useCustomFetch(endpointUrl, {
+  immediate: false
+})
+  .put()
+  .json()
+
 const updateNotification = async (notification: Notification) => {
-  updateEndPoint.value = `notification/${notification.id}`
+  const resource = getResource(notification)
+  if (resource[0] === `role-assignment`) {
+    endpointUrl.value = `teams/${resource[1]}/member/contract`
+    //get contract
+    await executeFetchMemberContract()
+    const contract = JSON.parse(JSON.parse(memberContract.value.contract))
+    //sign contract
+    signature.value = await signContract(contract)
+    //save signature
+    endpointUrl.value = `teams/${resource[1]}/member/signature/${signature.value}`
+    await executeAddMemberSignature()
+  }
+  endpointUrl.value = `notification/${notification.id}`
 
   await executeUpdateNotifications()
   await executeFetchNotifications()
+}
+
+const signContract = async (contract: undefined | Object) => {
+  if (!contract) return
+  const params = [
+    useUserDataStore().address,
+    {
+      types: {
+        EIP712Domain: [
+          { name: 'name', type: 'string' },
+          { name: 'version', type: 'string' }
+        ],
+        Entitlement: [
+          { name: 'name', type: 'string' },
+          { name: 'resource', type: 'string' },
+          { name: 'accessLevel', type: 'string' }
+        ],
+        Role: [
+          { name: 'name', type: 'string' },
+          { name: 'entitlement', type: 'Entitlement' }
+        ],
+        Contract: [
+          { name: 'assignedTo', type: 'address' },
+          { name: 'assignedBy', type: 'address' },
+          { name: 'role', type: 'Role' }
+        ]
+      },
+      primaryType: 'Contract',
+      domain: {
+        name: 'CNC Contract',
+        version: '1'
+      },
+      message: contract
+    }
+  ]
+  try {
+    //@ts-ignore
+    return await window.ethereum.request({ method: 'eth_signTypedData_v4', params: params })
+  } catch (error) {
+    log.error(parseError(error))
+  }
 }
 
 const paginatedNotifications = computed(() => {

@@ -23,6 +23,7 @@ model User {
   notifications                     Notification[]
   BoardOfDirectorActions            BoardOfDirectorActions[]
   roles                             UserRole[]
+  memberTeamsData                   MemberTeamsData[]     
 }
 
 model Team {
@@ -38,6 +39,21 @@ model Team {
   expenseAccountAddress              String?
   officerAddress                     String?
   BoardOfDirectorActions             BoardOfDirectorActions[]
+  memberTeamsData                    MemberTeamsData[]     
+}
+
+model MemberTeamsData {
+  id                                 Int                   @id @default(autoincrement())  // Add an ID for easy referencing
+  user                               User                  @relation(fields: [userAddress], references: [address])
+  team                               Team                  @relation(fields: [teamId], references: [id])
+  userAddress                        String
+  teamId                             Int
+  contract                           String?
+  memberSignature                    String?          
+  ownerSignature                     String?
+  roles                              UserRole[]
+
+  @@unique([userAddress, teamId]) 
 }
 
 model Notification {
@@ -116,7 +132,9 @@ model UserRole {
   roleId                Int
   assignedAt            DateTime              @default(now())
   assignedBy            String
+  memberTeamsDataId     Int // team for which role is assigned for
 
+  memberTeamsData       MemberTeamsData       @relation(fields: [memberTeamsDataId], references: [id])
   user                  User                  @relation(fields: [userAddress], references: [address])
   role                  Role                  @relation(fields: [roleId], references: [id])
   entitlements          UserRoleEntitlement[]
@@ -128,7 +146,7 @@ model UserRoleEntitlement {
   id                    Int                   @id @default(autoincrement())
   userRoleId            Int
   entitlementId         Int
-  value                 Float? // Unique value for each user for the entitlement
+  value                 String? // Unique value for each user for the entitlement
   lastPayDate           DateTime?             @default(now())
 
   userRole              UserRole              @relation(fields: [userRoleId], references: [id])

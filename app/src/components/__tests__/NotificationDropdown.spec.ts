@@ -28,19 +28,29 @@ describe('NotificationDropdown.vue', () => {
 
   beforeEach(() => {
     // Mock the fetch function to return the mock notifications
-    vi.mock('@/composables/useCustomFetch', () => ({
-      useCustomFetch: () => ({
-        json: () => ({
-          data: ref({ data: mockNotifications }),
-          execute: vi.fn()
-        }),
-        put: () => ({
+    vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
+      const actual: Object = await importOriginal()
+      return {
+        ...actual,
+        useCustomFetch: () => ({
           json: () => ({
+            data: ref({ data: mockNotifications }),
             execute: vi.fn()
+          }),
+          put: () => ({
+            json: () => ({
+              execute: vi.fn()
+            })
+          }),
+          get: () => ({
+            json: () => ({
+              data: ref({ data: mockNotifications }),
+              execute: vi.fn()
+            })
           })
         })
-      })
-    }))
+      }
+    })
 
     wrapper = mount(NotificationDropdown, {
       props: {}

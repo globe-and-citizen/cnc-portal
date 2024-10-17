@@ -18,7 +18,7 @@ export interface Entitlement {
   id?: number
   value: string
   entitlementTypeId: number
-  entitlementType?: EntitlementType 
+  entitlementType?: EntitlementType
 }
 
 export interface EntitlementType {
@@ -29,4 +29,13 @@ export interface EntitlementType {
 export interface RoleCategoryResponse {
   success: boolean
   roleCategories: RoleCategory[]
+}
+
+export interface MemberRole {
+  id: number
+  role: {
+    name?: string
+    roleCategoryId: number
+  }
+  roleId: number
 }

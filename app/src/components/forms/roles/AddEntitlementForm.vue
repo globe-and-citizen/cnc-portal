@@ -29,11 +29,13 @@ import EntitlementValueForm from './entitlement-value/EntitlementValueForm.vue'
 import { useVuelidate } from '@vuelidate/core'
 import FormErrorMessage from '../../ui/FormErrorMessage.vue'
 
+const isInit = ref(true)
+
 const entitlement = defineModel({
   default: {
     entitlementTypeId: 0,
-    value: '',
-    isInit: true //so entitlement value isn't cleared on load
+    value: ''
+    //isInit: true //so entitlement value isn't cleared on load
   }
 })
 
@@ -48,7 +50,10 @@ const availableTypes = ref(props.availableTypes)
 watch(
   () => entitlement.value.entitlementTypeId,
   (newType, oldType) => {
-    if (!entitlement.value.isInit && newType !== oldType && oldType !== 0) {
+    // if (!entitlement.value.isInit && newType !== oldType && oldType !== 0) {
+    //   entitlement.value.value = ''
+    // }
+    if (!isInit.value && newType !== oldType && oldType !== 0) {
       entitlement.value.value = ''
     }
   }

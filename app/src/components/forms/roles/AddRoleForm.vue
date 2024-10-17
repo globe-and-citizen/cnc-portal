@@ -52,6 +52,7 @@
       </div>
       <div class="collapse-content">
         <AddEntitlementForm
+          v-if="role.entitlements"
           v-model="role.entitlements[index]"
           :available-types="getAvailableTypes(index)"
         />
@@ -65,7 +66,7 @@
       class="w-6 h-6 cursor-pointer"
       @click="
         () => {
-          if (role.entitlements.length > 1) {
+          if (role.entitlements && role.entitlements.length > 1) {
             role.entitlements.pop()
           }
         }
@@ -94,9 +95,7 @@
     >
       Add Role
     </button>
-    <button v-else class="btn btn-primary" @click="handleClickUpdate()">
-      Update
-    </button>
+    <button v-else class="btn btn-primary" @click="handleClickUpdate()">Update</button>
     <button
       class="btn btn-active"
       @click="
@@ -117,7 +116,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import AddEntitlementForm from './AddEntitlementForm.vue'
 import FormErrorMessage from '../../ui/FormErrorMessage.vue'
-import type { EntitlementType } from '@/types'
+import type { EntitlementType, Role } from '@/types'
 import { useVuelidate } from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
 import { useToastStore } from '@/stores/useToastStore'
@@ -140,14 +139,15 @@ const getAvailableTypes = (index: number) => {
       (entType: EntitlementType) =>
         entType.id === -1 ||
         !selectedTypes?.includes(entType.id) ||
-        role?.value?.entitlements[index].entitlementTypeId === entType.id
+        (role?.value?.entitlements &&
+          role?.value?.entitlements[index].entitlementTypeId === entType.id)
     )
   })
 }
 
 const emits = defineEmits(['closeModal', 'reload'])
 
-const role = defineModel({
+const role = defineModel<Role>({
   default: {
     name: '',
     description: '',

@@ -28,25 +28,26 @@
     :ownerAddress="team.ownerAddress"
     :teamId="Number(team.id)"
     :member="member"
+    :member-teams-data="getMemberTeamsData(member.address)"
     :key="member.address"
     @getTeam="emits('getTeam')"
     @add-roles="addRoles(member)"
   />
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import MemberCard from '@/components/sections/SingleTeamView/MemberCard.vue'
 import AddMemberCard from '@/components/sections/SingleTeamView/AddMemberCard.vue'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import type { User, MemberInput, RoleCategory, Role } from '@/types'
+import type { User, MemberInput, RoleCategory, Role, MemberTeamsData } from '@/types'
 import { useUserDataStore } from '@/stores/user'
 
 import { useToastStore } from '@/stores/useToastStore'
 import { useRoute } from 'vue-router'
-import { log, parseError } from "@/utils";
-import { useVuelidate } from "@vuelidate/core";
+import { log, parseError } from '@/utils'
+import { useVuelidate } from '@vuelidate/core'
 
 const showAddMemberForm = ref(false)
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
@@ -57,7 +58,7 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 
 const route = useRoute()
 
-defineProps(['team', 'teamIsFetching'])
+const { team, teamIsFetching } = defineProps(['team', 'teamIsFetching'])
 const emits = defineEmits(['getTeam'])
 // useFetch instance for adding members to team
 const {
@@ -132,33 +133,52 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
-const {
-  execute: executeFetchRoleCategories,
-  data: _roleCategories
-} = useCustomFetch('role-category', {
-  immediate: false
-})
+const { execute: executeFetchRoleCategories, data: _roleCategories } = useCustomFetch(
+  'role-category',
+  {
+    immediate: false
+  }
+)
   .get()
   .json()
+
+const getMemberTeamsData = (userAddress: string) => {
+  const emptyMemberTeamsData: MemberTeamsData = {
+    userAddress,
+    roles: [
+      {
+        id: 0,
+        roleId: 0,
+        role: {
+          name: '',
+          roleCategoryId: 0
+        }
+      }
+    ]
+  }
+  const memberTeamsData = team.memberTeamsData?.find(
+    (item: MemberTeamsData) => item.userAddress === userAddress
+  )
+  return memberTeamsData ? memberTeamsData : emptyMemberTeamsData
+}
 
 const createContract = async (member: Partial<MemberInput>) => {
   let contract
   if (member.roles)
     for (const memberRole of member.roles) {
       await executeFetchRoleCategories()
-      const roleCategory = _roleCategories
-        .value
-        .roleCategories
-        .find((category: RoleCategory) => 
-          category.id === (memberRole as any).role.roleCategoryId)
+      const roleCategory = _roleCategories.value.roleCategories.find(
+        (category: RoleCategory) =>
+          //@ts-ignore
+          category.id === memberRole.role.roleCategoryId
+      )
 
       if (roleCategory && roleCategory.roles) {
-        const role = roleCategory
-          .roles
-          .find(
-            (_role: Role) => 
-              _role.id === (memberRole as any).roleId
-          )
+        const role = roleCategory.roles.find(
+          (_role: Role) =>
+            //@ts-ignore
+            _role.id === memberRole.roleId
+        )
 
         const entitlements = []
 
@@ -178,7 +198,7 @@ const createContract = async (member: Partial<MemberInput>) => {
               role: {
                 name: role.name,
                 entitlement: {
-                  name: "access",
+                  name: 'access',
                   resource: entitlements[0].split(':')[0],
                   accessLevel: entitlements[0].split(':')[1]
                 }
@@ -200,38 +220,47 @@ const signContract = async (contract: undefined | Object) => {
     {
       types: {
         EIP712Domain: [
-          { name: "name", type: "string" },
-          { name: "version", type: "string" }
+          { name: 'name', type: 'string' },
+          { name: 'version', type: 'string' }
         ],
         Entitlement: [
-          { name: "name", type: "string" },
-          { name: "resource", type: "string" },
-          { name: "accessLevel", type: "string" }
+          { name: 'name', type: 'string' },
+          { name: 'resource', type: 'string' },
+          { name: 'accessLevel', type: 'string' }
         ],
         Role: [
-          { name: "name", type: "string" },
-          { name: "entitlement", type: "Entitlement" }
+          { name: 'name', type: 'string' },
+          { name: 'entitlement', type: 'Entitlement' }
         ],
         Contract: [
-          { name: "assignedTo", type: "address" },
-          { name: "assignedBy", type: "address" },
-          { name: "role", type: "Role" }
+          { name: 'assignedTo', type: 'address' },
+          { name: 'assignedBy', type: 'address' },
+          { name: 'role', type: 'Role' }
         ]
       },
-      primaryType: "Contract",
+      primaryType: 'Contract',
       domain: {
-        "name": "CNC Contract",
-        "version": "1"
+        name: 'CNC Contract',
+        version: '1'
       },
       message: contract
     }
   ]
   try {
-    return await (window as any).ethereum.request({method: "eth_signTypedData_v4", params: params})
+    //@ts-ignore
+    return await window.ethereum.request({ method: 'eth_signTypedData_v4', params: params })
   } catch (error) {
     log.error(parseError(error))
   }
 }
+
+const memberRolesData = ref<{}>()
+
+const { execute: executeCreateMemberRoles } = useCustomFetch(`teams/${team.id}/member/add-roles`, {
+  immediate: false
+})
+  .post(memberRolesData)
+  .json()
 
 const addRoles = async (member: Partial<MemberInput>) => {
   isAddingRole.value = true
@@ -245,6 +274,17 @@ const addRoles = async (member: Partial<MemberInput>) => {
   console.log(`member.roles: `, member.roles)
   console.log(`signature: `, signature)
   console.log(`contract: `, JSON.stringify(contract))
+  memberRolesData.value = {
+    member,
+    signature,
+    contract: JSON.stringify(contract)
+  }
+  console.log(`memberRolesData: `, memberRolesData.value)
+  await executeCreateMemberRoles()
   isAddingRole.value = false
 }
+
+onMounted(() => {
+  console.log(`team: `, team)
+})
 </script>

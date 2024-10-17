@@ -54,7 +54,7 @@
             Role - {{ input.name ? input.name : index + 1 }}
           </div>
           <div class="collapse-content">
-            <AddRoleForm v-model="roleCategory.roles[index]" />
+            <AddRoleForm v-if="roleCategory.roles" v-model="roleCategory.roles[index]" />
           </div>
         </div>
       </section>
@@ -65,7 +65,7 @@
           class="w-6 h-6 cursor-pointer"
           @click="
             () => {
-              if (roleCategory.roles.length > 1) {
+              if (roleCategory.roles && roleCategory.roles.length > 1) {
                 roleCategory.roles.pop()
               }
             }
@@ -77,7 +77,7 @@
           class="w-6 h-6 cursor-pointer"
           @click="
             () => {
-              roleCategory.roles.push({
+              roleCategory?.roles?.push({
                 name: '',
                 description: '',
                 entitlements: [
@@ -109,6 +109,7 @@
         </div>
         <div class="collapse-content">
           <AddEntitlementForm
+            v-if="roleCategory.entitlements"
             v-model="roleCategory.entitlements[index]"
             :available-types="getAvailableTypes(index)"
           />
@@ -122,7 +123,7 @@
         class="w-6 h-6 cursor-pointer"
         @click="
           () => {
-            if (roleCategory.entitlements.length > 1) {
+            if (roleCategory.entitlements && roleCategory.entitlements.length > 1) {
               roleCategory.entitlements.pop()
             }
           }
@@ -134,7 +135,7 @@
         class="w-6 h-6 cursor-pointer"
         @click="
           () => {
-            roleCategory.entitlements.push({
+            roleCategory?.entitlements?.push({
               entitlementTypeId: 0,
               value: ''
             })
@@ -164,8 +165,9 @@ import AddEntitlementForm from './AddEntitlementForm.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useVuelidate } from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
+import type { RoleCategory } from '@/types'
 
-const roleCategory = defineModel({
+const roleCategory = defineModel<RoleCategory>({
   default: {
     name: '',
     description: '',
@@ -226,9 +228,7 @@ const {
   .get()
   .json()
 
-const {
-  execute: executeUpdateRoleCategory
-} = useCustomFetch(roleCategoryEndPoint, {
+const { execute: executeUpdateRoleCategory } = useCustomFetch(roleCategoryEndPoint, {
   immediate: false
 })
   .put(roleCategory)
@@ -236,15 +236,16 @@ const {
 
 const getAvailableTypes = (index: number) => {
   return computed(() => {
-    const selectedTypes = roleCategory.value.entitlements.map(
+    const selectedTypes = roleCategory.value.entitlements?.map(
       (entitlement) => entitlement.entitlementTypeId
     )
 
     return _entTypes.value?.entTypes.filter(
       (type: { id: number; name: string }) =>
         type.id === -1 ||
-        !selectedTypes.includes(type.id) ||
-        roleCategory.value.entitlements[index].entitlementTypeId === type.id
+        !selectedTypes?.includes(type.id) ||
+        (roleCategory.value.entitlements &&
+          roleCategory.value.entitlements[index].entitlementTypeId === type.id)
     )
   })
 }

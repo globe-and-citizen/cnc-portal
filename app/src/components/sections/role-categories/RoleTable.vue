@@ -43,6 +43,7 @@ import ModalComponent from '@/components/ui/ModalComponent.vue'
 //import AddRoleForm from './AddRoleForm.vue'
 import AddRoleForm from '@/components/forms/roles/AddRoleForm.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import type { Role } from '@/types'
 
 interface TableProps {
   headings: string[]
@@ -67,7 +68,8 @@ const handleClickUpdate = (rowIndex: number) => {
 
 const handleClickDelete = async (rowIndex: number) => {
   selectedIndex.value = rowIndex
-  const id = (roles.value[rowIndex] as any).id
+  //@ts-ignore
+  const id = roles.value[rowIndex].id
   roleEndPoint.value = `role/${id}`
   await deleteRoleAPI()
   emits('reload')
@@ -77,7 +79,7 @@ const emits = defineEmits(['reload'])
 
 defineProps<TableProps>()
 
-const roles = defineModel({
+const roles = defineModel<Role[]>({
   default: [
     {
       name: '',
