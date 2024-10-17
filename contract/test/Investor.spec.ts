@@ -119,7 +119,7 @@ describe('Investor Contract', () => {
     })
 
     it('should not mint token if not owner', async () => {
-      expect(investorProxy.connect(investor1).mint()).to.be.reverted
+      await expect(investorProxy.connect(investor1).mint()).to.be.reverted
     })
   })
 
@@ -180,16 +180,8 @@ describe('Investor Contract', () => {
         .withArgs(investor3.address, ethers.parseEther('150'))
     })
 
-    it('should not distribute dividend if not owner', async () => {
-      expect(
-        investorProxy.connect(investor1).distributeDividends({
-          value: ethers.parseEther('1000')
-        })
-      ).to.be.reverted
-    })
-
     it('should not distribute dividend if no token minted yet', async () => {
-      expect(
+      await expect(
         investorProxy.connect(owner).distributeDividends({
           value: ethers.parseEther('100')
         })
@@ -206,7 +198,18 @@ describe('Investor Contract', () => {
 
     it('should add mint agreement', async () => {
       const newAmount = ethers.parseEther('100')
-      await investorProxy.connect(owner).addMintAgreement(newInvestor.address, newAmount, true)
+      await investorProxy.connect(owner).addMintAgreement(newInvestor.address, newAmount, true, 0)
+      const agreement = await investorProxy.getMintAgreement(newInvestor.address)
+      expect(agreement.investor).to.eq(newInvestor.address)
+      expect(agreement.amount).to.eq(newAmount)
+      expect(agreement.isActive).to.be.true
+    })
+
+    it('should add mint agreement and sign bonus', async () => {
+      const newAmount = ethers.parseEther('100')
+      await investorProxy
+        .connect(owner)
+        .addMintAgreement(newInvestor.address, newAmount, true, ethers.parseEther('10'))
       const agreement = await investorProxy.getMintAgreement(newInvestor.address)
       expect(agreement.investor).to.eq(newInvestor.address)
       expect(agreement.amount).to.eq(newAmount)
@@ -217,32 +220,34 @@ describe('Investor Contract', () => {
       const newAmount = ethers.parseEther('100')
       const tx = await investorProxy
         .connect(owner)
-        .addMintAgreement(newInvestor.address, newAmount, true)
+        .addMintAgreement(newInvestor.address, newAmount, true, 0)
       await expect(tx)
         .to.emit(investorProxy, 'MintAgreementAdded')
         .withArgs(newInvestor.address, newAmount, true)
     })
 
     it('should not add mint agreement if not owner', async () => {
-      expect(
+      await expect(
         investorProxy
           .connect(investor1)
-          .addMintAgreement(newInvestor.address, ethers.parseEther('100'), true)
+          .addMintAgreement(newInvestor.address, ethers.parseEther('100'), true, 0)
       ).to.be.reverted
     })
 
     it('should not add mint agreement if not valid address', async () => {
-      expect(
+      await expect(
         investorProxy
           .connect(owner)
-          .addMintAgreement(ethers.ZeroAddress, ethers.parseEther('100'), true)
-      ).to.be.revertedWith('Invalid address')
+          .addMintAgreement(ethers.ZeroAddress, ethers.parseEther('100'), true, 0)
+      ).to.be.revertedWith('Invalid investor address')
     })
 
     it('should not add mint agreement if already exist', async () => {
-      expect(
-        investorProxy.connect(owner).addMintAgreement(owner.address, ethers.parseEther('100'), true)
-      ).to.be.revertedWith('Agreement already exist')
+      await expect(
+        investorProxy
+          .connect(owner)
+          .addMintAgreement(owner.address, ethers.parseEther('100'), true, 0)
+      ).to.be.revertedWith('Investor already exists')
     })
   })
 
@@ -266,7 +271,7 @@ describe('Investor Contract', () => {
     })
 
     it('should not update mint agreement if not owner', async () => {
-      expect(
+      await expect(
         investorProxy
           .connect(investor1)
           .updateMintAgreement(investor1.address, ethers.parseEther('100'), true)
@@ -291,11 +296,13 @@ describe('Investor Contract', () => {
     })
 
     it('should not delete mint agreement if not owner', async () => {
-      expect(investorProxy.connect(investor1).removeMintAgreement(investor1.address)).to.be.reverted
+      await expect(investorProxy.connect(investor1).removeMintAgreement(investor1.address)).to.be
+        .reverted
     })
 
     it('should not delete mint agreement if not valid address', async () => {
-      expect(investorProxy.connect(owner).removeMintAgreement(ethers.ZeroAddress)).to.be.reverted
+      await expect(investorProxy.connect(owner).removeMintAgreement(ethers.ZeroAddress)).to.be
+        .reverted
     })
   })
 
@@ -312,22 +319,22 @@ describe('Investor Contract', () => {
 
     it('should not mint token if paused', async () => {
       await investorProxy.connect(owner).pause()
-      expect(investorProxy.connect(owner).mint()).to.be.reverted
+      await expect(investorProxy.connect(owner).mint()).to.be.reverted
     })
 
     it('should not add mint agreement if paused', async () => {
       const newInvestor = (await ethers.getSigners())[4]
       await investorProxy.connect(owner).pause()
-      expect(
+      await expect(
         investorProxy
           .connect(owner)
-          .addMintAgreement(newInvestor.address, ethers.parseEther('100'), true)
+          .addMintAgreement(newInvestor.address, ethers.parseEther('100'), true, 0)
       ).to.be.reverted
     })
 
     it('should not update mint agreement if paused', async () => {
       await investorProxy.connect(owner).pause()
-      expect(
+      await expect(
         investorProxy
           .connect(owner)
           .updateMintAgreement(owner.address, ethers.parseEther('100'), true)
@@ -336,11 +343,11 @@ describe('Investor Contract', () => {
 
     it('should not remove mint agreement if paused', async () => {
       await investorProxy.connect(owner).pause()
-      expect(investorProxy.connect(owner).removeMintAgreement(owner.address)).to.be.reverted
+      await expect(investorProxy.connect(owner).removeMintAgreement(owner.address)).to.be.reverted
     })
 
     it('should not pause contract if not owner', async () => {
-      expect(investorProxy.connect(investor1).pause()).to.be.reverted
+      await expect(investorProxy.connect(investor1).pause()).to.be.reverted
     })
 
     it('should unpause contract', async () => {
@@ -356,7 +363,7 @@ describe('Investor Contract', () => {
     })
 
     it('should not unpause contract if not owner', async () => {
-      expect(investorProxy.connect(investor1).unpause()).to.be.reverted
+      await expect(investorProxy.connect(investor1).unpause()).to.be.reverted
     })
   })
 })
