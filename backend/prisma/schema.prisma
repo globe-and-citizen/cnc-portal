@@ -51,6 +51,7 @@ model MemberTeamsData {
   contract                           String?
   memberSignature                    String?          
   ownerSignature                     String?
+  roles                              UserRole[]
 
   @@unique([userAddress, teamId]) 
 }
@@ -131,7 +132,9 @@ model UserRole {
   roleId                Int
   assignedAt            DateTime              @default(now())
   assignedBy            String
+  memberTeamsDataId     Int // team for which role is assigned for
 
+  memberTeamsData       MemberTeamsData       @relation(fields: [memberTeamsDataId], references: [id])
   user                  User                  @relation(fields: [userAddress], references: [address])
   role                  Role                  @relation(fields: [roleId], references: [id])
   entitlements          UserRoleEntitlement[]
