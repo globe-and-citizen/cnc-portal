@@ -324,6 +324,32 @@ const deleteMember = async (req: Request, res: Response) => {
         },
       },
     });
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: String(memberAddress),
+          teamId: Number(id)
+        }
+      }
+    })
+    if (memberTeamsData) {
+      //delete user roles
+      await prisma.userRole.deleteMany({
+        where: {
+          userAddress: String(memberAddress),
+          memberTeamsDataId: memberTeamsData.id
+        }
+      })
+      //delete member teams data
+      await prisma.memberTeamsData.delete({
+        where: {
+          userAddress_teamId: {
+            userAddress: String(memberAddress),
+            teamId: Number(id)
+          }
+        }
+      })
+    }
     res.status(200).json({ success: true, team: updatedTeam });
   } catch (error: any) {
     // Handle errors
@@ -419,14 +445,40 @@ const addMemberRoles = async (req: Request, res: Response) => {
     //assign roles to user
     for (const role of rolesData.member.roles) {
       console.log(`role: `, role)
-      if (ownerAddress)
-        await prisma.userRole.create({
-          data: {
-            userAddress,
-            roleId: Number(role.roleId),
-            assignedBy: ownerAddress
+      if (ownerAddress) {
+        let memberTeamsData = await prisma.memberTeamsData.findUnique({
+          where:{
+            userAddress_teamId: {
+              userAddress,
+              teamId: Number(id)
+            }
           }
         })
+        if (!memberTeamsData)
+          memberTeamsData = await prisma.memberTeamsData.create({
+            data: {
+              userAddress,
+              teamId: Number(id)
+            }
+          })
+        const userRole = await prisma.userRole.findUnique({
+          where: {
+            userAddress_roleId: {
+              userAddress,
+              roleId: Number(role.roleId)
+            }
+          }
+        })
+        if (!userRole)
+          await prisma.userRole.create({
+            data: {
+              userAddress,
+              roleId: Number(role.roleId),
+              assignedBy: ownerAddress,
+              memberTeamsDataId: memberTeamsData?.id
+            }
+          })
+      }
       const _role = await prisma.role.findUnique({
         where: { id: Number(role.roleId) }
       })
@@ -445,14 +497,26 @@ const addMemberRoles = async (req: Request, res: Response) => {
       );
     }
     //create contract
-    await prisma.memberTeamsData.create({
+    await prisma.memberTeamsData.update({
+      where: {
+        userAddress_teamId: {
+          userAddress: rolesData.member.address,
+          teamId: Number(id)
+        }
+      },
       data: {
         contract: JSON.stringify(rolesData.contract),
-        ownerSignature: rolesData.signature,
-        teamId: Number(id),
-        userAddress: rolesData.member.address
+        ownerSignature: rolesData.signature
       }
     })
+    // await prisma.memberTeamsData.create({
+    //   data: {
+    //     contract: JSON.stringify(rolesData.contract),
+    //     ownerSignature: rolesData.signature,
+    //     teamId: Number(id),
+    //     userAddress: rolesData.member.address
+    //   }
+    // })
     res.status(201)
       .json({
         success: true
