@@ -2,11 +2,8 @@
   <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
   <!-- <LoadingButton color="primary"></LoadingButton> -->
 
-  <div
-    class="flex text-sm font-bold justify-between items-center py-6"
-    v-if="!teamIsFetching && team"
-  >
-    <span class="text-3xl">Team Members List</span>
+  <div class="flex justify-between py-6" v-if="!teamIsFetching && team">
+    <span class="text-3xl font-bold">Team Members List</span>
 
     <button
       v-if="team.ownerAddress == userDataStore.address"

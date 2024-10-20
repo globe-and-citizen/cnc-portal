@@ -3,28 +3,7 @@
     <th>{{ member.index ?? '' }}</th>
     <td>{{ member.name }}</td>
     <td>
-      <div class="flex gap-4">
-        <ToolTip
-          data-test="member-address-tooltip"
-          content="Click to see address in block explorer"
-          @click="openExplorer(member.address ?? '')"
-        >
-          <span class="cursor-pointer underline">{{ member.address }}</span>
-        </ToolTip>
-
-        <ToolTip
-          data-test="copy-address-tooltip"
-          :content="copied ? 'Copied!' : 'Click to copy address'"
-          v-if="isSupported"
-        >
-          <ClipboardDocumentListIcon
-            class="size-5 cursor-pointer"
-            @click="copy(member.address ?? '')"
-            v-if="!copied"
-          />
-          <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
-        </ToolTip>
-      </div>
+      <AddressToolTip :address="member.address ?? ''" />
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
       <button
@@ -50,20 +29,14 @@
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
 import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
-import {
-  ClipboardDocumentListIcon,
-  ClipboardDocumentCheckIcon,
-  TrashIcon
-} from '@heroicons/vue/24/outline'
-import ToolTip from '@/components/ToolTip.vue'
+import { TrashIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useRoute } from 'vue-router'
 import type { MemberInput } from '@/types'
-import { useClipboard } from '@vueuse/core'
-import { NETWORK } from '@/constant'
 import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 
 interface Member extends MemberInput {
   index: number
@@ -74,7 +47,6 @@ const props = defineProps<{
   ownerAddress: String
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
-const { copy, copied, isSupported } = useClipboard()
 const userDataStore = useUserDataStore()
 const route = useRoute()
 
@@ -101,7 +73,7 @@ const {
 })
   .delete()
   .json()
-// Watchers for deleting member
+// Watchers for deNETWORKleting member
 watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () => {
   if (!memberIsDeleting.value && !deleteMemberError.value) {
     addSuccessToast('Member deleted successfully')
@@ -116,8 +88,4 @@ watch(deleteMemberError, () => {
     showDeleteMemberConfirmModal.value = false
   }
 })
-
-const openExplorer = (address: string) => {
-  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
-}
 </script>
