@@ -29,10 +29,10 @@
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
       <button
         v-if="member.address != ownerAddress && ownerAddress == userDataStore.address"
-        class="btn btn-error flex gap-4"
+        class="btn btn-error btn-sm flex gap-4"
         @click="() => (showDeleteMemberConfirmModal = true)"
       >
-        Delete <TrashIcon class="size-5" />
+        <TrashIcon class="size-4" />
       </button>
     </td>
     <div>
