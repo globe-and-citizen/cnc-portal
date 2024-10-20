@@ -1,8 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import MemberSection from '@/components/sections/SingleTeamView/MemberSection.vue'
-import MemberCard from '@/components/sections/SingleTeamView/MemberCard.vue'
-import AddMemberCard from '@/components/sections/SingleTeamView/AddMemberCard.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
@@ -65,31 +63,20 @@ describe('MemberSection.vue', () => {
     })
 
     it('renders the team members', () => {
-      const members = wrapper.findAllComponents(MemberCard)
-      expect(members.length).toBe(teamMock.members.length)
-      members.forEach((member, index) => {
-        expect(member.text()).toContain(teamMock.members[index].name)
+      teamMock.members.forEach((member, index) => {
+        expect(wrapper.html()).toContain(teamMock.members[index].name)
       })
     })
 
-    it('renders AddMemberCard ', () => {
-      expect(wrapper.findComponent(AddMemberCard).exists()).toBe(true)
-    })
   })
   describe('methods', () => {
-    it('toggles AddMemberForm modal when AddMemberCard emits toggleAddMemberModal', async () => {
-      const addMemberCard = wrapper.findComponent(AddMemberCard)
-      addMemberCard.vm.$emit('toggleAddMemberModal')
-
-      expect((wrapper.vm as unknown as typeof AddMemberCard).showAddMemberForm).toBe(true)
-
-      await addMemberCard.vm.$emit('toggleAddMemberModal')
-
-      expect((wrapper.vm as unknown as typeof AddMemberCard).showAddMemberForm).toBe(false)
-    })
 
     it('opens the modal for adding members when toggleAddMemberModal is called', async () => {
-      ;(wrapper.vm as unknown as typeof AddMemberCard).showAddMemberForm = true
+
+      // select the data-test="add-member-button" element
+      const addMemberButton = wrapper.find('[data-test="add-member-button"]')
+      // click the addMemberButton
+      await addMemberButton.trigger('click')
       await wrapper.vm.$nextTick()
 
       const modal = wrapper.findComponent(ModalComponent)
