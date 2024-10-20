@@ -65,7 +65,6 @@ import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
-const userDataStore = useUserDataStore()
 interface Member extends MemberInput {
   index: number
 }
@@ -75,10 +74,14 @@ const props = defineProps<{
   ownerAddress: String
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
+const { copy, copied, isSupported } = useClipboard()
+const userDataStore = useUserDataStore()
+const route = useRoute()
 
 const emits = defineEmits(['getTeam'])
 
-const route = useRoute()
+
+const member = ref(props.member)
 const showDeleteMemberConfirmModal = ref(false)
 
 // useFetch instance for deleting member
@@ -114,8 +117,6 @@ watch(deleteMemberError, () => {
     showDeleteMemberConfirmModal.value = false
   }
 })
-const member = ref(props.member)
-const { copy, copied, isSupported } = useClipboard()
 
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
