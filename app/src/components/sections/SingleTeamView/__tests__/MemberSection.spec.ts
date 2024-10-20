@@ -67,12 +67,9 @@ describe('MemberSection.vue', () => {
         expect(wrapper.html()).toContain(teamMock.members[index].name)
       })
     })
-
   })
   describe('methods', () => {
-
     it('opens the modal for adding members when toggleAddMemberModal is called', async () => {
-
       // select the data-test="add-member-button" element
       const addMemberButton = wrapper.find('[data-test="add-member-button"]')
       // click the addMemberButton
