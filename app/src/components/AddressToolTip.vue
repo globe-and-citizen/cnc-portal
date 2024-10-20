@@ -1,7 +1,7 @@
 <template>
   <div class="flex gap-4">
     <ToolTip
-      data-test="member-address-tooltip"
+      data-test="address-tooltip"
       content="Click to see address in block explorer"
       @click="openExplorer(address)"
     >
