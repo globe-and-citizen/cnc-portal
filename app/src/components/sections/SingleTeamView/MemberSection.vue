@@ -13,9 +13,9 @@
       @click="
         () => {
           showAddMemberForm = !showAddMemberForm
-          console.log('showAddMemberForm', showAddMemberForm)
         }
       "
+      data-test="add-member-button"
       class="btn btn-primary w-max"
     >
       <PlusCircleIcon class="size-6" /> Add a new Member
@@ -58,6 +58,8 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import MemberRow from '@/components/sections/SingleTeamView/MemberRow.vue'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
@@ -65,10 +67,9 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import type { User } from '@/types'
 import { useUserDataStore } from '@/stores/user'
 
-const userDataStore = useUserDataStore()
 import { useToastStore } from '@/stores/useToastStore'
-import { useRoute } from 'vue-router'
 
+const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 
