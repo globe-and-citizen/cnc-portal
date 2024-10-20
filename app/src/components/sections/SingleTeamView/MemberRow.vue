@@ -39,8 +39,8 @@
       <ModalComponent v-model="showDeleteMemberConfirmModal">
         <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
           Are you sure you want to delete
-          <span class="font-bold">{{ memberToBeDeleted.name }}</span>
-          with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
+          <span class="font-bold">{{ member.name }}</span>
+          with address <span class="font-bold">{{ member.address }}</span>
           from the team?
         </DeleteConfirmForm>
       </ModalComponent>
@@ -79,8 +79,6 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const emits = defineEmits(['getTeam'])
 
 const route = useRoute()
-
-const memberToBeDeleted = ref({ name: '', address: '', id: '' })
 const showDeleteMemberConfirmModal = ref(false)
 
 // useFetch instance for deleting member
