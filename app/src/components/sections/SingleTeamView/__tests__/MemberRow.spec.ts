@@ -28,7 +28,7 @@ vi.mock('@vueuse/core', async () => {
     useClipboard: () => {
       const clipboard = {
         copy: vi.fn(() => {
-          console.log("Copied")
+          console.log('Copied')
           clipboard.copied = true
         }),
         copied: false,
@@ -38,10 +38,8 @@ vi.mock('@vueuse/core', async () => {
     }
   }
 })
-// vi.mock('@vueuse/core', () => ({
-// }))
 
-describe.only('MemberRow.vue', () => {
+describe('MemberRow.vue', () => {
   let wrapper: ReturnType<typeof mount>
   const props = {
     ownerAddress: 'owner123',
@@ -78,7 +76,7 @@ describe.only('MemberRow.vue', () => {
       expect(wrapper.text()).toContain(props.member.address)
     })
 
-    it("render the copy button in the copyed stat", () => {
+    it('render the copy button in the copyed stat', () => {
       vi.mock('@vueuse/core', async () => {
         const originalModule = await vi.importActual<typeof vueuse>('@vueuse/core')
         return {
@@ -96,7 +94,7 @@ describe.only('MemberRow.vue', () => {
       expect(wrapper.find('[data-test="copy-address-tooltip"]').exists()).toBe(false)
     })
 
-    it("not render the copy button if copy is not supported", () => {
+    it('not render the copy button if copy is not supported', () => {
       vi.mock('@vueuse/core', async () => {
         const originalModule = await vi.importActual<typeof vueuse>('@vueuse/core')
         return {
@@ -116,7 +114,6 @@ describe.only('MemberRow.vue', () => {
   })
 
   describe('methods', () => {
-
     // test on click on data-test="member-address-tooltip" that open in a new tab
     it('should open the address in a new tab', async () => {
       const open = vi.fn()

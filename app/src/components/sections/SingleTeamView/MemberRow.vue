@@ -80,7 +80,6 @@ const route = useRoute()
 
 const emits = defineEmits(['getTeam'])
 
-
 const member = ref(props.member)
 const showDeleteMemberConfirmModal = ref(false)
 
