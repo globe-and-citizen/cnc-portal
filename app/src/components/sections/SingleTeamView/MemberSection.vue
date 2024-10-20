@@ -48,7 +48,7 @@
           v-for="(member, index) in team.members"
           :ownerAddress="team.ownerAddress"
           :teamId="Number(team.id)"
-          :member="{ ...member, index }"
+          :member="{ ...member, index: index + 1 }"
           :key="member.address"
           @getTeam="emits('getTeam')"
         />
