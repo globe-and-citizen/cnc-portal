@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
+import * as vueuse from '@vueuse/core'
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn()
@@ -20,21 +21,25 @@ vi.mock('vue-router', () => ({
 }))
 
 // Partially mock @vueuse/core
-// vi.mock('@vueuse/core', async () => {
-//   const originalModule = await vi.importActual<typeof vueuse>('@vueuse/core')
-//   return {
-//     ...originalModule,
-//     createFetch: vi.fn() // Mock createFetch
-//   }
-// })
+vi.mock('@vueuse/core', async () => {
+  const originalModule = await vi.importActual<typeof vueuse>('@vueuse/core')
+  return {
+    ...originalModule,
+    useClipboard: () => {
+      const clipboard = {
+        copy: vi.fn(() => {
+          console.log("Copied")
+          clipboard.copied = true
+        }),
+        copied: false,
+        isSupported: true
+      }
+      return clipboard
+    }
+  }
+})
 // vi.mock('@vueuse/core', () => ({
-//   useClipboard: () => ({
-//   copy: vi.fn(),
-//   copied: false,
-//   isSupported: true
-//   })
 // }))
-
 
 describe.only('MemberRow.vue', () => {
   let wrapper: ReturnType<typeof mount>
@@ -65,7 +70,6 @@ describe.only('MemberRow.vue', () => {
     wrapper = mount(MemberRow, {
       props: { ...props }
     })
-
   })
 
   describe('renders', () => {
@@ -73,28 +77,55 @@ describe.only('MemberRow.vue', () => {
       expect(wrapper.text()).toContain(props.member.name)
       expect(wrapper.text()).toContain(props.member.address)
     })
+
+    it("render the copy button in the copyed stat", () => {
+      vi.mock('@vueuse/core', async () => {
+        const originalModule = await vi.importActual<typeof vueuse>('@vueuse/core')
+        return {
+          ...originalModule,
+          useClipboard: () => {
+            const clipboard = {
+              copy: vi.fn(),
+              copied: true,
+              isSupported: true
+            }
+            return clipboard
+          }
+        }
+      })
+      expect(wrapper.find('[data-test="copy-address-tooltip"]').exists()).toBe(false)
+    })
+
+    it("not render the copy button if copy is not supported", () => {
+      vi.mock('@vueuse/core', async () => {
+        const originalModule = await vi.importActual<typeof vueuse>('@vueuse/core')
+        return {
+          ...originalModule,
+          useClipboard: () => {
+            const clipboard = {
+              copy: vi.fn(),
+              copied: false,
+              isSupported: false
+            }
+            return clipboard
+          }
+        }
+      })
+      expect(wrapper.find('[data-test="copy-address-tooltip"]').exists()).toBe(false)
+    })
   })
 
-  // describe('methods', () => {
-    // test on click on data-test="copy-address-tooltip"
-    // it('should copy the address to the clipboard', async () => {
-    //   const copyButton = wrapper.find('[data-test="copy-address-tooltip"]')
-    //   console.log(wrapper.html())
-    //   expect(copyButton.exists()).toBe(true)
-    //   await copyButton.trigger('click')
-    //   // expected to call the mocked useClipboard() composable copy() function called with the address
-    //   // expect(useClipboard().copy).toHaveBeenCalledWith(props.member.address)
-    // })
+  describe('methods', () => {
 
     // test on click on data-test="member-address-tooltip" that open in a new tab
-    // it('should open the address in a new tab', async () => {
-    //   const open = vi.fn()
-    //   global.open = open
-    //   await wrapper.find('[data-test="member-address-tooltip"]').trigger('click')
-    //   expect(open).toHaveBeenCalledWith(
-    //     `https://sepolia.etherscan.io/address/${props.member.address}`,
-    //     '_blank'
-    //   )
-    // })
-  // })
+    it('should open the address in a new tab', async () => {
+      const open = vi.fn()
+      global.open = open
+      await wrapper.find('[data-test="member-address-tooltip"]').trigger('click')
+      expect(open).toHaveBeenCalledWith(
+        `https://sepolia.etherscan.io/address/${props.member.address}`,
+        '_blank'
+      )
+    })
+  })
 })
