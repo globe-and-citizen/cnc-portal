@@ -38,7 +38,24 @@ describe('CreateOfficerTeam.vue', () => {
     expect(wrapper.exists()).toBe(true)
     expect(wrapper.find('h4').text()).toBe('Create Team')
   })
-
+  it('selects a member', async () => {
+    interface mock {
+      selectMember: (user: { name: string; address: string }) => void
+      selectedMembers: Array<{ name: string; address: string }>
+    }
+    const user = { name: 'Bob Smith', address: '0xghi' }
+    await (wrapper.vm as unknown as mock).selectMember(user)
+    expect((wrapper.vm as unknown as mock).selectedMembers[0]).toEqual(user)
+  })
+  it('prevents selecting duplicate addresses', async () => {
+    interface mock {
+      selectFounder: (user: { name: string; address: string }) => void
+      selectedFounders: Array<{ name: string; address: string }>
+    }
+    const user = { name: 'Jane Doe', address: '0xdef' }
+    await (wrapper.vm as unknown as mock).selectFounder(user)
+    expect((wrapper.vm as unknown as mock).selectedFounders.length).toBe(1)
+  })
   it('adds a new founder', async () => {
     interface mock {
       selectedFounders: Array<{ name: string; address: string }>
@@ -90,5 +107,23 @@ describe('CreateOfficerTeam.vue', () => {
     }
     await (wrapper.vm as unknown as mock).searchUsers({ name: 'John', address: '' }, 'founder')
     expect((wrapper.vm as unknown as mock).showFounderDropdown).toBe(true)
+  })
+  describe('Component Lifecycle', () => {
+    it('adds and removes event listener', () => {
+      const addSpy = vi.spyOn(document, 'addEventListener')
+      const removeSpy = vi.spyOn(document, 'removeEventListener')
+
+      const wrapper = mount(CreateOfficerTeam, {
+        props: {
+          team: {}
+        }
+      })
+
+      expect(addSpy).toHaveBeenCalledWith('click', expect.any(Function))
+
+      wrapper.unmount()
+
+      expect(removeSpy).toHaveBeenCalledWith('click', expect.any(Function))
+    })
   })
 })
