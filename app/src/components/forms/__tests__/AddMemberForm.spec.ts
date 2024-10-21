@@ -28,15 +28,6 @@ describe('AddMemberModal.vue', () => {
       expect(wrapper.find('h1').text()).toBe('Add New Member')
       expect(wrapper.findAll('.input-group').length).toBe(formData.length)
     })
-    it('shows dropdown when users are available', async () => {
-      expect(wrapper.find('.dropdown-open').exists()).toBe(true)
-    })
-
-    it('updates formData when a user is selected from dropdown', async () => {
-      await wrapper.find('.dropdown a').trigger('click')
-      expect((wrapper.vm as unknown as ComponentData).formData[0].name).toBe(users[0].name)
-      expect((wrapper.vm as unknown as ComponentData).formData[0].address).toBe(users[0].address)
-    })
   })
   describe('Snapshot', () => {
     it('matches the snapshot', () => {

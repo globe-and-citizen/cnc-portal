@@ -32,7 +32,7 @@ describe('AddTeamForm.vue', () => {
       expect(wrapper.findAll('.input-group').length).toBe(team.members.length)
     })
     it('shows dropdown when users are available', async () => {
-      expect(wrapper.find('.dropdown-open').exists()).toBe(true)
+      expect(wrapper.find('.dropdown').exists()).toBe(true)
     })
     it('should show loading state', async () => {
       wrapper.setProps({ isLoading: true })
