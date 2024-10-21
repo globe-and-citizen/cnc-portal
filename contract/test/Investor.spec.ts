@@ -2,47 +2,47 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { Investor, Investor__factory } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { MintAgreementStruct } from '../typechain-types/contracts/Investor/Investor'
+import { StockGrantStruct } from '../typechain-types/contracts/Investor/Investor'
 
 describe('Investor Contract', () => {
   let InvestorImplementation: Investor__factory
   let investorProxy: Investor
   let owner: SignerWithAddress
-  let investor1: SignerWithAddress
-  let investor2: SignerWithAddress
-  let investor3: SignerWithAddress
-  let initialAgreements: MintAgreementStruct[]
+  let shareholder1: SignerWithAddress
+  let shareholder2: SignerWithAddress
+  let shareholder3: SignerWithAddress
+  let initialStockGrants: StockGrantStruct[]
   const name = 'Investor'
   const symbol = 'INV'
 
   beforeEach(async function () {
-    ;[owner, investor1, investor2, investor3] = await ethers.getSigners()
+    ;[owner, shareholder1, shareholder2, shareholder3] = await ethers.getSigners()
     InvestorImplementation = await ethers.getContractFactory('Investor')
-    initialAgreements = [
+    initialStockGrants = [
       {
         amount: ethers.parseEther('50'),
-        investor: owner.address,
+        shareholder: owner.address,
         isActive: true,
         lastMinted: 0,
         totalMinted: 0
       },
       {
         amount: ethers.parseEther('20'),
-        investor: investor1.address,
+        shareholder: shareholder1.address,
         isActive: true,
         lastMinted: 0,
         totalMinted: 0
       },
       {
         amount: ethers.parseEther('15'),
-        investor: investor2.address,
+        shareholder: shareholder2.address,
         isActive: true,
         lastMinted: 0,
         totalMinted: 0
       },
       {
         amount: ethers.parseEther('15'),
-        investor: investor3.address,
+        shareholder: shareholder3.address,
         isActive: true,
         lastMinted: 0,
         totalMinted: 0
@@ -51,7 +51,7 @@ describe('Investor Contract', () => {
     investorProxy = (await upgrades.deployProxy(InvestorImplementation, [
       name,
       symbol,
-      initialAgreements
+      initialStockGrants
     ])) as unknown as Investor
   })
 
@@ -71,16 +71,17 @@ describe('Investor Contract', () => {
   })
 
   context('Minting', () => {
-    it('should mint token based on mint agreements', async () => {
+    it('should mint token based on stock grant', async () => {
       const tx = await investorProxy.connect(owner).mint()
       await tx.wait()
       expect(await investorProxy.totalSupply()).to.eq(
-        initialAgreements.reduce((acc, agreement) => acc + BigInt(agreement.amount), BigInt(0))
+        initialStockGrants.reduce((acc, stockGrant) => acc + BigInt(stockGrant.amount), BigInt(0))
       )
 
-      for (const investor of [owner, investor1, investor2, investor3]) {
-        expect(await investorProxy.balanceOf(investor.address)).to.eq(
-          initialAgreements.find((agreement) => agreement.investor === investor.address)!.amount
+      for (const shareholder of [owner, shareholder1, shareholder2, shareholder3]) {
+        expect(await investorProxy.balanceOf(shareholder.address)).to.eq(
+          initialStockGrants.find((stockGrant) => stockGrant.shareholder === shareholder.address)!
+            .amount
         )
       }
     })
@@ -89,57 +90,57 @@ describe('Investor Contract', () => {
       const tx = await investorProxy.connect(owner).mint()
       await expect(tx)
         .to.emit(investorProxy, 'Minted')
-        .withArgs(owner.address, initialAgreements[0].amount)
+        .withArgs(owner.address, initialStockGrants[0].amount)
         .to.emit(investorProxy, 'Minted')
-        .withArgs(investor1.address, initialAgreements[1].amount)
+        .withArgs(shareholder1.address, initialStockGrants[1].amount)
         .to.emit(investorProxy, 'Minted')
-        .withArgs(investor2.address, initialAgreements[2].amount)
+        .withArgs(shareholder2.address, initialStockGrants[2].amount)
         .to.emit(investorProxy, 'Minted')
-        .withArgs(investor3.address, initialAgreements[3].amount)
+        .withArgs(shareholder3.address, initialStockGrants[3].amount)
     })
 
     it('should change lastMinted and totalMinted after minting', async () => {
       const tx = await investorProxy.connect(owner).mint()
       await tx.wait()
       const time = (await ethers.provider.getBlock(tx.blockHash!))?.timestamp
-      const agreements = await investorProxy.getMintAgreements()
-      agreements.forEach((agreement, index) => {
-        expect(agreement.lastMinted).to.eq(time)
-        expect(agreement.totalMinted).to.eq(initialAgreements[index].amount)
+      const stockGrants = await investorProxy.getStockGrants()
+      stockGrants.forEach((stockGrant, index) => {
+        expect(stockGrant.lastMinted).to.eq(time)
+        expect(stockGrant.totalMinted).to.eq(initialStockGrants[index].amount)
       })
     })
 
-    it('should not mint or skip minting token to inactive agreement', async () => {
+    it('should not mint or skip minting token to inactive stock grant', async () => {
       await investorProxy
         .connect(owner)
-        .updateMintAgreement(investor1.address, initialAgreements[1].amount, false)
+        .updateStockGrant(shareholder1.address, initialStockGrants[1].amount, false)
       await investorProxy.connect(owner).mint()
 
-      expect(await investorProxy.balanceOf(investor1.address)).to.eq(0)
+      expect(await investorProxy.balanceOf(shareholder1.address)).to.eq(0)
     })
 
     it('should not mint token if not owner', async () => {
-      await expect(investorProxy.connect(investor1).mint()).to.be.reverted
+      await expect(investorProxy.connect(shareholder1).mint()).to.be.reverted
     })
   })
 
   context('Distribute Dividend', () => {
-    it('should distribute dividend to all investors', async () => {
+    it('should distribute dividend to all shareholders', async () => {
       // mint token first
       await mint()
 
       /**
        * owner = 50%
-       * investor1 = 20%
-       * investor2 = 15%
-       * investor3 = 15%
+       * shareholder1 = 20%
+       * shareholder2 = 15%
+       * shareholder3 = 15%
        * totalSupply = 100
        * dividend = 1000
        * expected amount:
        * owner = 500
-       * investor1 = 200
-       * investor2 = 150
-       * investor3 = 150
+       * shareholder1 = 200
+       * shareholder2 = 150
+       * shareholder3 = 150
        * total = 1000
        * */
 
@@ -148,15 +149,17 @@ describe('Investor Contract', () => {
         value: dividend
       })
 
-      const agreements = await investorProxy.getMintAgreements()
+      const stockGrants = await investorProxy.getStockGrants()
       const expectedAmounts = [
         ethers.parseEther('500'),
         ethers.parseEther('200'),
         ethers.parseEther('150'),
         ethers.parseEther('150')
       ]
-      agreements.forEach(async (agreement, index) => {
-        expect(await ethers.provider.getBalance(agreement.investor)).to.eq(expectedAmounts[index])
+      stockGrants.forEach(async (stockGrant, index) => {
+        expect(await ethers.provider.getBalance(stockGrant.shareholder)).to.eq(
+          expectedAmounts[index]
+        )
       })
     })
 
@@ -171,13 +174,13 @@ describe('Investor Contract', () => {
         .withArgs(owner.address, ethers.parseEther('500'))
       await expect(tx)
         .to.emit(investorProxy, 'DividendDistributed')
-        .withArgs(investor1.address, ethers.parseEther('200'))
+        .withArgs(shareholder1.address, ethers.parseEther('200'))
       await expect(tx)
         .to.emit(investorProxy, 'DividendDistributed')
-        .withArgs(investor2.address, ethers.parseEther('150'))
+        .withArgs(shareholder2.address, ethers.parseEther('150'))
       await expect(tx)
         .to.emit(investorProxy, 'DividendDistributed')
-        .withArgs(investor3.address, ethers.parseEther('150'))
+        .withArgs(shareholder3.address, ethers.parseEther('150'))
     })
 
     it('should not distribute dividend if no token minted yet', async () => {
@@ -189,120 +192,115 @@ describe('Investor Contract', () => {
     })
   })
 
-  context('Add Mint Agreement', () => {
-    let newInvestor: SignerWithAddress
+  context('Add Stock Grant', () => {
+    let newShareholder: SignerWithAddress
 
     beforeEach(async () => {
-      newInvestor = (await ethers.getSigners())[4]
+      newShareholder = (await ethers.getSigners())[4]
     })
 
-    it('should add mint agreement', async () => {
+    it('should add stock grant', async () => {
       const newAmount = ethers.parseEther('100')
-      await investorProxy.connect(owner).addMintAgreement(newInvestor.address, newAmount, true, 0)
-      const agreement = await investorProxy.getMintAgreement(newInvestor.address)
-      expect(agreement.investor).to.eq(newInvestor.address)
-      expect(agreement.amount).to.eq(newAmount)
-      expect(agreement.isActive).to.be.true
+      await investorProxy.connect(owner).addStockGrant(newShareholder.address, newAmount, true, 0)
+      const stockGrant = await investorProxy.getStockGrant(newShareholder.address)
+      expect(stockGrant.shareholder).to.eq(newShareholder.address)
+      expect(stockGrant.amount).to.eq(newAmount)
+      expect(stockGrant.isActive).to.be.true
     })
 
-    it('should add mint agreement and sign bonus', async () => {
+    it('should add stock grant and sign bonus', async () => {
       const newAmount = ethers.parseEther('100')
       await investorProxy
         .connect(owner)
-        .addMintAgreement(newInvestor.address, newAmount, true, ethers.parseEther('10'))
-      const agreement = await investorProxy.getMintAgreement(newInvestor.address)
-      expect(agreement.investor).to.eq(newInvestor.address)
-      expect(agreement.amount).to.eq(newAmount)
-      expect(agreement.isActive).to.be.true
+        .addStockGrant(newShareholder.address, newAmount, true, ethers.parseEther('10'))
+      const stockGrant = await investorProxy.getStockGrant(newShareholder.address)
+      expect(stockGrant.shareholder).to.eq(newShareholder.address)
+      expect(stockGrant.amount).to.eq(newAmount)
+      expect(stockGrant.isActive).to.be.true
     })
 
-    it('should emit MintAgreementAdded event', async () => {
+    it('should emit StockGrantAdded event', async () => {
       const newAmount = ethers.parseEther('100')
       const tx = await investorProxy
         .connect(owner)
-        .addMintAgreement(newInvestor.address, newAmount, true, 0)
+        .addStockGrant(newShareholder.address, newAmount, true, 0)
       await expect(tx)
-        .to.emit(investorProxy, 'MintAgreementAdded')
-        .withArgs(newInvestor.address, newAmount, true)
+        .to.emit(investorProxy, 'StockGrantAdded')
+        .withArgs(newShareholder.address, newAmount, true)
     })
 
-    it('should not add mint agreement if not owner', async () => {
+    it('should not add stock grant if not owner', async () => {
       await expect(
         investorProxy
-          .connect(investor1)
-          .addMintAgreement(newInvestor.address, ethers.parseEther('100'), true, 0)
+          .connect(shareholder1)
+          .addStockGrant(newShareholder.address, ethers.parseEther('100'), true, 0)
       ).to.be.reverted
     })
 
-    it('should not add mint agreement if not valid address', async () => {
+    it('should not add stock grant if not valid address', async () => {
       await expect(
         investorProxy
           .connect(owner)
-          .addMintAgreement(ethers.ZeroAddress, ethers.parseEther('100'), true, 0)
-      ).to.be.revertedWith('Invalid investor address')
+          .addStockGrant(ethers.ZeroAddress, ethers.parseEther('100'), true, 0)
+      ).to.be.revertedWith('Invalid shareholder address')
     })
 
-    it('should not add mint agreement if already exist', async () => {
+    it('should not add stock grant if already exist', async () => {
       await expect(
-        investorProxy
-          .connect(owner)
-          .addMintAgreement(owner.address, ethers.parseEther('100'), true, 0)
-      ).to.be.revertedWith('Investor already exists')
+        investorProxy.connect(owner).addStockGrant(owner.address, ethers.parseEther('100'), true, 0)
+      ).to.be.revertedWith('Shareholder already exists')
     })
   })
 
-  context('Update Mint Agreement', () => {
-    it('should update mint agreement', async () => {
+  context('Update Stock Grant', () => {
+    it('should update stock grant', async () => {
       const newAmount = ethers.parseEther('100')
-      await investorProxy.connect(owner).updateMintAgreement(owner.address, newAmount, false)
-      const agreement = await investorProxy.getMintAgreement(owner.address)
-      expect(agreement.amount).to.eq(newAmount)
-      expect(agreement.isActive).to.be.false
+      await investorProxy.connect(owner).updateStockGrant(owner.address, newAmount, false)
+      const stockGrant = await investorProxy.getStockGrant(owner.address)
+      expect(stockGrant.amount).to.eq(newAmount)
+      expect(stockGrant.isActive).to.be.false
     })
 
-    it('should emit MintAgreementUpdated event', async () => {
+    it('should emit StockGrantUpdated event', async () => {
       const newAmount = ethers.parseEther('100')
-      const tx = await investorProxy
-        .connect(owner)
-        .updateMintAgreement(owner.address, newAmount, true)
+      const tx = await investorProxy.connect(owner).updateStockGrant(owner.address, newAmount, true)
       await expect(tx)
-        .to.emit(investorProxy, 'MintAgreementUpdated')
+        .to.emit(investorProxy, 'StockGrantUpdated')
         .withArgs(owner.address, newAmount, true)
     })
 
-    it('should not update mint agreement if not owner', async () => {
+    it('should not update stock grant if not owner', async () => {
       await expect(
         investorProxy
-          .connect(investor1)
-          .updateMintAgreement(investor1.address, ethers.parseEther('100'), true)
+          .connect(shareholder1)
+          .updateStockGrant(shareholder1.address, ethers.parseEther('100'), true)
       ).to.be.reverted
     })
   })
 
-  context('Remove Mint Agreement', () => {
-    it('should delete mint agreement', async () => {
-      await investorProxy.connect(owner).removeMintAgreement(investor1.address)
-      const agreement = await investorProxy.getMintAgreement(investor1.address)
-      const investors = await investorProxy.getInvestors()
-      expect(agreement.investor).to.eq(ethers.ZeroAddress)
-      expect(agreement.amount).to.eq(0)
-      expect(agreement.isActive).to.be.false
-      expect(investors).to.not.include(investor1.address)
+  context('Remove Stock Grant', () => {
+    it('should delete stock grant', async () => {
+      await investorProxy.connect(owner).removeStockGrant(shareholder1.address)
+      const stockGrant = await investorProxy.getStockGrant(shareholder1.address)
+      const investors = await investorProxy.getShareholders()
+      expect(stockGrant.shareholder).to.eq(ethers.ZeroAddress)
+      expect(stockGrant.amount).to.eq(0)
+      expect(stockGrant.isActive).to.be.false
+      expect(investors).to.not.include(shareholder1.address)
     })
 
-    it('should emit MintAgreementRemoved event', async () => {
-      const tx = await investorProxy.connect(owner).removeMintAgreement(owner.address)
-      await expect(tx).to.emit(investorProxy, 'MintAgreementRemoved').withArgs(owner.address)
+    it('should emit StockGrantRemoved event', async () => {
+      const tx = await investorProxy.connect(owner).removeStockGrant(owner.address)
+      await expect(tx).to.emit(investorProxy, 'StockGrantRemoved').withArgs(owner.address)
     })
 
-    it('should not delete mint agreement if not owner', async () => {
-      await expect(investorProxy.connect(investor1).removeMintAgreement(investor1.address)).to.be
+    it('should not delete stock grant if not owner', async () => {
+      await expect(investorProxy.connect(shareholder1).removeStockGrant(shareholder1.address)).to.be
         .reverted
     })
 
-    it('should not delete mint agreement if not valid address', async () => {
-      await expect(investorProxy.connect(owner).removeMintAgreement(ethers.ZeroAddress)).to.be
-        .reverted
+    it('should not delete stock grant if not valid address', async () => {
+      await expect(investorProxy.connect(owner).removeStockGrant(ethers.ZeroAddress)).to.be.reverted
     })
   })
 
@@ -322,32 +320,30 @@ describe('Investor Contract', () => {
       await expect(investorProxy.connect(owner).mint()).to.be.reverted
     })
 
-    it('should not add mint agreement if paused', async () => {
-      const newInvestor = (await ethers.getSigners())[4]
+    it('should not add stock grant if paused', async () => {
+      const newShareholder = (await ethers.getSigners())[4]
       await investorProxy.connect(owner).pause()
       await expect(
         investorProxy
           .connect(owner)
-          .addMintAgreement(newInvestor.address, ethers.parseEther('100'), true, 0)
+          .addStockGrant(newShareholder.address, ethers.parseEther('100'), true, 0)
       ).to.be.reverted
     })
 
-    it('should not update mint agreement if paused', async () => {
+    it('should not update stock grant if paused', async () => {
       await investorProxy.connect(owner).pause()
       await expect(
-        investorProxy
-          .connect(owner)
-          .updateMintAgreement(owner.address, ethers.parseEther('100'), true)
+        investorProxy.connect(owner).updateStockGrant(owner.address, ethers.parseEther('100'), true)
       ).to.be.reverted
     })
 
-    it('should not remove mint agreement if paused', async () => {
+    it('should not remove stock grant if paused', async () => {
       await investorProxy.connect(owner).pause()
-      await expect(investorProxy.connect(owner).removeMintAgreement(owner.address)).to.be.reverted
+      await expect(investorProxy.connect(owner).removeStockGrant(owner.address)).to.be.reverted
     })
 
     it('should not pause contract if not owner', async () => {
-      await expect(investorProxy.connect(investor1).pause()).to.be.reverted
+      await expect(investorProxy.connect(shareholder1).pause()).to.be.reverted
     })
 
     it('should unpause contract', async () => {
@@ -363,7 +359,7 @@ describe('Investor Contract', () => {
     })
 
     it('should not unpause contract if not owner', async () => {
-      await expect(investorProxy.connect(investor1).unpause()).to.be.reverted
+      await expect(investorProxy.connect(shareholder1).unpause()).to.be.reverted
     })
   })
 })

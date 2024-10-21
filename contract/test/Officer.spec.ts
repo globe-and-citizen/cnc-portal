@@ -84,7 +84,7 @@ describe('Officer Contract', function () {
     await officer.deployInvestorContract('Investor', 'INV', [
       {
         amount: ethers.parseEther('1000'),
-        investor: addr1.address,
+        shareholder: addr1.address,
         isActive: true,
         lastMinted: 0,
         totalMinted: 0
