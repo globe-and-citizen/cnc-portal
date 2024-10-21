@@ -84,7 +84,7 @@ describe('ExpenseAccount (EIP712)', () => {
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .transfer(amount, budgetLimit, v, r, s)
+            .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
 
           const receipt = await tx.wait()
 
@@ -94,7 +94,7 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx).to.changeEtherBalance(withdrawer, amount)
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
-            .withArgs(withdrawer.address, amount)
+            .withArgs(withdrawer.address, withdrawer.address, amount)
         })
 
         it('amount per period', async () => {
@@ -110,7 +110,7 @@ describe('ExpenseAccount (EIP712)', () => {
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .transfer(amount, budgetLimit, v, r, s)
+            .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
 
           const receipt = await tx.wait()
 
@@ -120,7 +120,7 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx).to.changeEtherBalance(withdrawer, amount)
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
-            .withArgs(withdrawer.address, amount)
+            .withArgs(withdrawer.address, withdrawer.address, amount)
         })
 
         it('amount per transaction', async () => {
@@ -136,7 +136,7 @@ describe('ExpenseAccount (EIP712)', () => {
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .transfer(amount, budgetLimit, v, r, s)
+            .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
 
           const receipt = await tx.wait()
 
@@ -146,7 +146,7 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx).to.changeEtherBalance(withdrawer, amount)
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
-            .withArgs(withdrawer.address, amount)
+            .withArgs(withdrawer.address, withdrawer.address, amount)
         })
       })
     })

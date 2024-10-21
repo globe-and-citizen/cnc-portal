@@ -39,7 +39,7 @@ contract ExpenseAccountEIP712 is
 
     event Deposited(address indexed depositor, uint256 amount);
 
-    event Transfer(address indexed withdrawer, uint256 amount);
+    event Transfer(address indexed withdrawer, address indexed to, uint256 amount);
 
     error UnauthorizedAccess(address expected, address received);
 
@@ -61,6 +61,7 @@ contract ExpenseAccountEIP712 is
     }
 
     function transfer(
+        address to,
         uint256 amount, 
         BudgetLimit calldata limit, 
         uint8 v, 
@@ -88,19 +89,19 @@ contract ExpenseAccountEIP712 is
         if (limit.budgetType == BudgetType.TransactionsPerPeriod) {
             require(balances[digest].transactionCount <= limit.value, "Transaction limit reached");
             balances[digest].transactionCount++;
-            payable(limit.approvedAddress).transfer(amount);
+            payable(to).transfer(amount);
         } else if (limit.budgetType == BudgetType.AmountPerPeriod) {
             //require(balances[digest].amountWithdrawn+amount <= limit.value, "Authorized amount exceeded");
             if (balances[digest].amountWithdrawn+amount > limit.value) {
                 revert AuthorizedAmountExceeded(balances[digest].amountWithdrawn+amount);
             }
-            payable(limit.approvedAddress).transfer(amount);
+            payable(to).transfer(amount);
         } else {
             require(amount <= limit.value, "Authorized amount exceeded");
-            payable(limit.approvedAddress).transfer(amount);
+            payable(to).transfer(amount);
         }
 
-        emit Transfer(limit.approvedAddress, amount);
+        emit Transfer(limit.approvedAddress, to, amount);
     }
 
     function pause() external onlyOwner {
