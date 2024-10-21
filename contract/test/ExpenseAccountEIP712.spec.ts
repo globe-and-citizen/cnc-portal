@@ -6,7 +6,7 @@ import { ExpenseAccountEIP712 } from '../typechain-types'
 describe('ExpenseAccount (EIP712)', () => {
   let expenseAccountProxy: ExpenseAccountEIP712
 
-  const deployContract = async (owner: SignerWithAddress) => {
+  const deployContract = async () => {
     const ExpenseAccountImplementation = await ethers.getContractFactory('ExpenseAccountEIP712')
     expenseAccountProxy = (await upgrades.deployProxy(ExpenseAccountImplementation, [], {
       initializer: 'initialize'
@@ -16,7 +16,6 @@ describe('ExpenseAccount (EIP712)', () => {
   describe('As CNC Company Founder', () => {
     let owner: SignerWithAddress
     let withdrawer: SignerWithAddress
-    let imposter: SignerWithAddress
     const DOMAIN_NAME = 'CNCExpenseAccount'
     const DOMAIN_VERSION = '1'
     let chainId: bigint
@@ -33,8 +32,8 @@ describe('ExpenseAccount (EIP712)', () => {
 
     context('I want to deploy my Expense Account Smart Contract', () => {
       before(async () => {
-        ;[owner, withdrawer, imposter] = await ethers.getSigners()
-        await deployContract(owner)
+        ;[owner, withdrawer] = await ethers.getSigners()
+        await deployContract()
         chainId = (await ethers.provider.getNetwork()).chainId
         verifyingContract = await expenseAccountProxy.getAddress()
       })
@@ -72,7 +71,7 @@ describe('ExpenseAccount (EIP712)', () => {
             ]
           }
 
-          const balance = await expenseAccountProxy.getBalance()
+          //const balance = await expenseAccountProxy.getBalance()
           //console.log('\tcontract balance: ', balance)
         })
         it('transactions per period', async () => {
