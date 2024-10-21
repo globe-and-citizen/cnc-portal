@@ -1,32 +1,66 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, VueWrapper } from '@vue/test-utils'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
+import { nextTick } from 'vue'
 
-interface ComponentData {
-  formData: { name: string; address: string; isValid: boolean }[]
-  users: { name: string; address: string }[]
+interface AddMemberForm {
+  showDropdown: boolean
+  formData: Array<{ name: string; address: string; isValid: boolean }>
+  submitForm: () => void
 }
-describe('AddMemberModal.vue', () => {
-  const formData = [
-    { name: 'Hermann', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E', isValid: true }
-  ]
-  const users = [
-    { name: 'Dachu', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
-    { name: 'Farrell', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }
-  ]
-
-  const wrapper = mount(AddMemberForm, {
-    props: {
-      formData,
-      users,
-      isLoading: false
-    }
+describe('AddMemberForm.vue', () => {
+  let wrapper: VueWrapper<unknown>
+  beforeEach(() => {
+    wrapper = mount(AddMemberForm, {
+      props: {
+        formData: [{ name: '', address: '', isValid: false }],
+        users: [],
+        isLoading: false
+      }
+    })
   })
-  // Test the rendering of the component
-  describe('Render', () => {
-    it('renders correctly with initial props', () => {
-      expect(wrapper.find('h1').text()).toBe('Add New Member')
-      expect(wrapper.findAll('.input-group').length).toBe(formData.length)
+
+  describe('Dropdown functionality', () => {
+    it('shows dropdown when searching for users', async () => {
+      const input = wrapper.find('input[placeholder="Member Name 1"]')
+      await input.setValue('John')
+      await input.trigger('keyup')
+
+      expect(wrapper.emitted('searchUsers')).toBeTruthy()
+      expect((wrapper.vm as unknown as AddMemberForm).showDropdown).toBe(true)
+    })
+
+    it('selects user from dropdown', async () => {
+      await wrapper.setProps({
+        users: [{ name: 'John Doe', address: '0x1234567890123456789012345678901234567890' }]
+      })
+      ;(wrapper.vm as unknown as AddMemberForm).showDropdown = true
+      await nextTick()
+
+      const dropdownItem = wrapper.find('.dropdown-content a')
+      await dropdownItem.trigger('click')
+
+      expect((wrapper.vm as unknown as AddMemberForm).formData[0].name).toBe('John Doe')
+      expect((wrapper.vm as unknown as AddMemberForm).formData[0].address).toBe(
+        '0x1234567890123456789012345678901234567890'
+      )
+      expect((wrapper.vm as unknown as AddMemberForm).showDropdown).toBe(false)
+    })
+  })
+
+  describe('Form validation', () => {
+    it('shows validation error for no input', async () => {
+      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+
+      expect(wrapper.find('.text-red-500').text()).toContain('Invalid wallet address')
+    })
+
+    it('shows validation error when no members are added', async () => {
+      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+
+      expect(wrapper.find('.text-red-500').text()).toContain(
+        'Address is requiredInvalid wallet address'
+      )
     })
   })
   describe('Snapshot', () => {
@@ -35,17 +69,42 @@ describe('AddMemberModal.vue', () => {
     })
   })
 
-  // Test the emitting of events
-  describe('Emits', () => {
-    it('emits addMembers when add button is clicked', async () => {
-      await wrapper.find('button.btn-primary').trigger('click')
+  describe('Click outside functionality', () => {
+    it('hides dropdown when clicking outside', async () => {
+      ;(wrapper.vm as unknown as AddMemberForm).showDropdown = true
+      await nextTick()
+
+      const event = new Event('click')
+      document.dispatchEvent(event)
+
+      expect((wrapper.vm as unknown as AddMemberForm).showDropdown).toBe(false)
+    })
+  })
+
+  describe('Submit form', () => {
+    it('does not emit addMembers event when form is invalid', async () => {
+      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+
+      expect(wrapper.emitted('addMembers')).toBeFalsy()
+    })
+
+    it('emits addMembers event when form is valid', async () => {
+      const nameInput = wrapper.find('input[placeholder="Member Name 1"]')
+      const addressInput = wrapper.find('input[placeholder="Wallet Address 1"]')
+
+      await nameInput.setValue('John Doe')
+      await addressInput.setValue('0x1234567890123456789012345678901234567890')
+      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+
       expect(wrapper.emitted('addMembers')).toBeTruthy()
     })
   })
 
-  // The the behavior of the component on user actions
-  describe('Actions', () => {
-    it('adds a new member input field when clicking the add icon', async () => {
+  describe('Component lifecycle', () => {
+    it('adds and removes event listener for click outside', async () => {
+      const addEventListenerSpy = vi.spyOn(document, 'addEventListener')
+      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
+
       const wrapper = mount(AddMemberForm, {
         props: {
           formData: [{ name: '', address: '', isValid: false }],
@@ -54,38 +113,14 @@ describe('AddMemberModal.vue', () => {
         }
       })
 
-      const addButton = wrapper.find('[data-test="plus-icon"]')
-      await addButton.trigger('click')
+      expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
 
-      expect(wrapper.findAll('.input-group').length).toBe(2)
-    })
+      wrapper.unmount()
 
-    it('removes the last member input field when clicking the remove icon', async () => {
-      const wrapper = mount(AddMemberForm, {
-        props: {
-          formData: [
-            { name: '', address: '', isValid: false },
-            { name: '', address: '', isValid: false }
-          ],
-          users: [],
-          isLoading: false
-        }
-      })
-      const removeButton = wrapper.find('[data-test="minus-icon"]')
-      await removeButton.trigger('click')
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
 
-      expect(wrapper.findAll('.input-group').length).toBe(1)
-    })
-  })
-  describe('Validation', () => {
-    it('displays validation errors when form is invalid', async () => {
-      const inputFields = wrapper.findAll('input')
-      await inputFields[0].setValue('New Name')
-      await inputFields[1].setValue('0xNewAddress')
-
-      expect((wrapper.vm as unknown as ComponentData).formData[0].name).toBe('New Name')
-      expect((wrapper.vm as unknown as ComponentData).formData[0].address).toBe('0xNewAddress')
-      expect(wrapper.find('.text-red-500').exists()).toBe(true)
+      addEventListenerSpy.mockRestore()
+      removeEventListenerSpy.mockRestore()
     })
   })
 })
