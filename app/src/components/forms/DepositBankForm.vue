@@ -1,8 +1,9 @@
 <template>
-  <h1 class="font-bold text-2xl">Deposit to Team Bank Contract</h1>
-  <h3 class="pt-8">
+  <span class="font-bold text-2xl">Deposit to Team Bank Contract</span>
+  <br />
+  <span class="pt-8">
     This will deposit {{ amount }} {{ NETWORK.currencySymbol }} to the team bank contract.
-  </h3>
+  </span>
 
   <input
     type="text"

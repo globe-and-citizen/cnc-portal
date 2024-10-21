@@ -1,51 +1,34 @@
 <template>
-  <div class="flex flex-col gap-y-4">
-    <div class="stats bg-green-100 flex text-primary-content border-outline">
-      <div class="stat flex flex-col justify-center items-center">
-        <div class="stat-title">Team balance</div>
-        <span v-if="team.bankAddress" class="flex gap-2 items-center">
-          <ToolTip
-            data-test="bank-address-tooltip"
-            content="Click to see address in block explorer"
-          >
-            <span
-              class="badge badge-sm cursor-pointer"
-              data-test="team-bank-address"
-              @click="openExplorer(team.bankAddress)"
-              :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
-              >{{ team.bankAddress }}</span
-            >
-          </ToolTip>
-          <ToolTip
-            data-test="copy-address-tooltip"
-            :content="copied ? 'Copied!' : 'Click to copy address'"
-          >
-            <ClipboardDocumentListIcon
-              v-if="isSupported && !copied"
-              class="size-5 cursor-pointer"
-              @click="copy(team.bankAddress)"
-            />
-            <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
-          </ToolTip>
-        </span>
-        <span
-          class="loading loading-dots loading-xs"
-          data-test="balance-loading"
-          v-if="balanceLoading"
-        ></span>
-        <div class="stat-value text-3xl mt-2" v-else>
-          {{ teamBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+  <div class="flex flex-col gap-y-4 py-6">
+    <span class="text-3xl font-bold">Team Bank Account</span>
+
+    <div class="divider m-0"></div>
+    <div>
+      <div class="flex justify-between">
+        <div>
+          <span>Bank Balance</span>
+          <div class="font-extrabold text-4xl">
+            {{ teamBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          </div>
+          <span>≈ $ 1.28</span>
         </div>
-        <div class="stat-actions flex justify-center gap-2 items-center">
+        <div class="flex gap-4">
           <button
-            class="btn btn-xs btn-secondary"
+            class="btn btn-secondary"
             v-if="team.bankAddress"
             @click="() => (depositModal = true)"
           >
             Deposit
           </button>
           <button
-            class="btn btn-xs btn-secondary"
+            class="btn btn-secondary"
+            v-if="team.bankAddress"
+            @click="() => (pushTipModal = true)"
+          >
+            Tips the Team
+          </button>
+          <button
+            class="btn btn-secondary"
             v-if="team.bankAddress && (team.ownerAddress == useUserDataStore().address || isBod)"
             @click="transferModal = true"
           >
@@ -53,75 +36,14 @@
           </button>
         </div>
       </div>
-      <div class="stat flex flex-col justify-center items-center">
-        <div class="stat-title">Send to Members</div>
-        <div class="stat-value text-sm mt-2">
-          <input
-            type="text"
-            size="5"
-            class="h-10 outline-neutral-content rounded-md border-neutral-content text-center"
-            placeholder="Tip"
-            v-model="tipAmount"
-          />
-          <span class="text-xs ml-2">{{ NETWORK.currencySymbol }}</span>
-        </div>
-        <div class="stat-actions justify-center flex">
-          <LoadingButton v-if="pushTipLoading" color="primary btn-xs" />
-          <button
-            v-else
-            className="btn btn-primary btn-xs text-white"
-            :disabled="tipAmount <= 0"
-            @click="
-              () => {
-                if (owner == team.boardOfDirectorsAddress) {
-                  pushTipModal = true
-                } else {
-                  pushTip(membersAddress, tipAmount, team.bankAddress!)
-                }
-              }
-            "
-          >
-            Send
-          </button>
-        </div>
+      <div class="flex gap-4 justify-end">
+        <span>Bank Address </span><AddressToolTip :address="team.bankAddress ?? ''" />
       </div>
-      <ModalComponent v-model="depositModal">
-        <DepositBankForm
-          v-if="depositModal"
-          @close-modal="() => (depositModal = false)"
-          @deposit="async (amount: string) => depositToBank(amount)"
-          :loading="depositLoading"
-        />
-      </ModalComponent>
-      <ModalComponent v-model="transferModal">
-        <TransferFromBankForm
-          v-if="transferModal"
-          @close-modal="() => (transferModal = false)"
-          @transfer="
-            async (to: string, amount: string, description: string) => {
-              if (owner == team.boardOfDirectorsAddress) {
-                await addTransferAction(to, amount, description)
-              } else {
-                await transferFromBank(to, amount)
-              }
-            }
-          "
-          @searchMembers="(input) => searchUsers({ name: '', address: input })"
-          :filteredMembers="foundUsers"
-          :loading="transferLoading || addActionLoading"
-          :bank-balance="teamBalance || '0'"
-          service="Bank"
-          :asBod="owner == team.boardOfDirectorsAddress"
-        />
-      </ModalComponent>
-      <ModalComponent v-model="pushTipModal">
-        <DescriptionActionForm
-          v-if="pushTipModal"
-          @submit="async (description: string) => addPushTipAction(description)"
-          :loading="addActionLoading"
-          actionName="Send Tip"
-        />
-      </ModalComponent>
+    </div>
+
+    <div class="divider m-0"></div>
+    <div>
+      <span class="text-3xl font-bold">Team Bank Hisotry</span>
     </div>
     <BankManagement
       :team="team"
@@ -129,6 +51,59 @@
       :loading-owner="loadingOwner"
       :isBod="isBod ?? false"
     />
+
+    <ModalComponent v-model="depositModal">
+      <DepositBankForm
+        v-if="depositModal"
+        @close-modal="() => (depositModal = false)"
+        @deposit="async (amount: string) => depositToBank(amount)"
+        :loading="depositLoading"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="transferModal">
+      <TransferFromBankForm
+        v-if="transferModal"
+        @close-modal="() => (transferModal = false)"
+        @transfer="
+          async (to: string, amount: string, description: string) => {
+            if (owner == team.boardOfDirectorsAddress) {
+              await addTransferAction(to, amount, description)
+            } else {
+              await transferFromBank(to, amount)
+            }
+          }
+        "
+        @searchMembers="(input) => searchUsers({ name: '', address: input })"
+        :filteredMembers="foundUsers"
+        :loading="transferLoading || addActionLoading"
+        :bank-balance="teamBalance || '0'"
+        service="Bank"
+        :asBod="owner == team.boardOfDirectorsAddress"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="pushTipModal">
+      <div class="flex flex-col gap-4 justify-start">
+        <span class="font-bold text-2xl">Tips The Team</span>
+        <span>
+          This Send tips to all team Members {{ tipAmount }} {{ NETWORK.currencySymbol }}
+        </span>
+
+        <input
+          type="text"
+          size="5"
+          class="input input-bordered w-full"
+          placeholder="Tip"
+          v-model="tipAmount"
+        />
+
+        <div class="text-center">
+          <LoadingButton v-if="false" class="w-44" color="primary" />
+          <button v-if="!false" class="btn btn-primary w-44 text-center" @click="() => {}">
+            Send Tips
+          </button>
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -137,7 +112,6 @@ import { NETWORK } from '@/constant'
 import { onMounted, ref, watch, computed } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import BankManagement from '@/components/sections/SingleTeamView/BankManagement.vue'
@@ -145,15 +119,13 @@ import BankManagement from '@/components/sections/SingleTeamView/BankManagement.
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useClipboard } from '@vueuse/core'
-import ToolTip from '@/components/ToolTip.vue'
 import { useBankBalance, useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
 import { BankService } from '@/services/bankService'
 import type { Address } from 'viem'
-import DescriptionActionForm from './forms/DescriptionActionForm.vue'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -162,8 +134,6 @@ const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const ethers = EthersJsAdapter.getInstance()
-
-const { copy, copied, isSupported } = useClipboard()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
@@ -317,9 +287,6 @@ watch(addActionSuccess, () => {
   }
 })
 
-const openExplorer = (address: string) => {
-  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
-}
 const depositToBank = async (amount: string) => {
   if (props.team.bankAddress) {
     await deposit(props.team.bankAddress, amount)
