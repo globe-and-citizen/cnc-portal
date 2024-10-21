@@ -37,9 +37,9 @@ contract ExpenseAccountEIP712 is
 
     mapping(bytes32 => Balance) balances;
 
-    event NewDeposit(address indexed depositor, uint256 amount);
+    event Deposited(address indexed depositor, uint256 amount);
 
-    event NewWithdrawal(address indexed withdrawer, uint256 amount);
+    event Transfer(address indexed withdrawer, uint256 amount);
 
     error UnauthorizedAccess(address expected, address received);
 
@@ -60,7 +60,7 @@ contract ExpenseAccountEIP712 is
         ));
     }
 
-    function withdraw(
+    function transfer(
         uint256 amount, 
         BudgetLimit calldata limit, 
         uint8 v, 
@@ -100,7 +100,7 @@ contract ExpenseAccountEIP712 is
             payable(limit.approvedAddress).transfer(amount);
         }
 
-        emit NewWithdrawal(limit.approvedAddress, amount);
+        emit Transfer(limit.approvedAddress, amount);
     }
 
     function pause() external onlyOwner {
@@ -116,6 +116,6 @@ contract ExpenseAccountEIP712 is
     }
 
     receive() external payable {
-        emit NewDeposit(msg.sender, msg.value);
+        emit Deposited(msg.sender, msg.value);
      }
 }

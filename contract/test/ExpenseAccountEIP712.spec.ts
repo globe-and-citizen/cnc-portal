@@ -49,11 +49,11 @@ describe('ExpenseAccount (EIP712)', () => {
           value: amount
         })
 
-        expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
-        expect(tx).to.emit(expenseAccountProxy, 'NewDeposit').withArgs(owner.address, amount)
+        await expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
+        await expect(tx).to.emit(expenseAccountProxy, 'Deposited').withArgs(owner.address, amount)
       })
 
-      describe('Then I can authorize a user to withdraw from the expense account by;', async () => {
+      describe('Then I can authorize a user to transfer from the expense account by;', async () => {
         beforeEach(async () => {
           domain = {
             name: DOMAIN_NAME,
@@ -70,10 +70,8 @@ describe('ExpenseAccount (EIP712)', () => {
               { name: 'expiry', type: 'uint256' }
             ]
           }
-
-          //const balance = await expenseAccountProxy.getBalance()
-          //console.log('\tcontract balance: ', balance)
         })
+
         it('transactions per period', async () => {
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -81,22 +79,24 @@ describe('ExpenseAccount (EIP712)', () => {
             value: 10,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
-
           const signature = await owner.signTypedData(domain, types, budgetLimit)
           const { v, r, s } = ethers.Signature.from(signature)
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .withdraw(amount, budgetLimit, v, r, s)
+            .transfer(amount, budgetLimit, v, r, s)
 
           const receipt = await tx.wait()
 
           console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
           // Try to exceed the transaction limit
-          expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
-          expect(tx).to.emit(expenseAccountProxy, 'NewWithdrawl').withArgs(withdrawer.address, 1)
+          await expect(tx).to.changeEtherBalance(withdrawer, amount)
+          await expect(tx)
+            .to.emit(expenseAccountProxy, 'Transfer')
+            .withArgs(withdrawer.address, amount)
         })
+
         it('amount per period', async () => {
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -110,16 +110,19 @@ describe('ExpenseAccount (EIP712)', () => {
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .withdraw(amount, budgetLimit, v, r, s)
+            .transfer(amount, budgetLimit, v, r, s)
 
           const receipt = await tx.wait()
 
           console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
           // Try to exceed the transaction limit
-          //expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
-          expect(withdrawer).to.changeEtherBalance(withdrawer, amount)
+          await expect(tx).to.changeEtherBalance(withdrawer, amount)
+          await expect(tx)
+            .to.emit(expenseAccountProxy, 'Transfer')
+            .withArgs(withdrawer.address, amount)
         })
+
         it('amount per transaction', async () => {
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -133,15 +136,17 @@ describe('ExpenseAccount (EIP712)', () => {
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .withdraw(amount, budgetLimit, v, r, s)
+            .transfer(amount, budgetLimit, v, r, s)
 
           const receipt = await tx.wait()
 
           console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
           // Try to exceed the transaction limit
-          //expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
-          expect(withdrawer).to.changeEtherBalance(withdrawer, amount)
+          await expect(tx).to.changeEtherBalance(withdrawer, amount)
+          await expect(tx)
+            .to.emit(expenseAccountProxy, 'Transfer')
+            .withArgs(withdrawer.address, amount)
         })
       })
     })
