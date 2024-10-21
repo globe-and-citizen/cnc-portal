@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { ExpenseAccount } from '../typechain-types'
 
-describe('ExpenseAccount', () => {
+describe('ExpenseAccount (Current Implementation)', () => {
   let expenseAccountProxy: ExpenseAccount
 
   const deployContract = async (owner: SignerWithAddress) => {
@@ -57,13 +57,19 @@ describe('ExpenseAccount', () => {
 
       // OK noting to say here
       it('Then I can set a withdrawal limit', async () => {
-        await expenseAccountProxy.setMaxLimit(ethers.parseEther('10'))
+        const tx = await expenseAccountProxy.setMaxLimit(ethers.parseEther('10'))
         expect(await expenseAccountProxy.maxLimit()).to.eq(ethers.parseEther('10'))
+
+        const receipt = await tx.wait()
+        console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
       })
 
       it('Then I can authorize a user to send from the expense account', async () => {
-        await expenseAccountProxy.approveAddress(withdrawer.address)
+        const tx = await expenseAccountProxy.approveAddress(withdrawer.address)
         expect(await expenseAccountProxy.approvedAddresses(withdrawer.address)).to.eq(true)
+
+        const receipt = await tx.wait()
+        console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
       })
 
       it('Then an authorized user can send from the expense account', async () => {
@@ -72,6 +78,9 @@ describe('ExpenseAccount', () => {
         await expect(tx)
           .to.emit(expenseAccountProxy, 'Transfer')
           .withArgs(withdrawer.address, withdrawer.address, amount)
+
+          const receipt = await tx.wait()
+          console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
       })
 
       it('Then a user cannot send more than the set limit', async () => {
