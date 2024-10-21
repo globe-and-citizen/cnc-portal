@@ -86,6 +86,7 @@ const handleAddMembers = async () => {
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const foundUsers = ref<User[]>([])
+const lastUpdatedInput = ref<'name' | 'address'>('name')
 
 const {
   execute: executeSearchUser,
@@ -95,9 +96,11 @@ const {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    if (lastUpdatedInput.value === 'name' && searchUserName.value) {
+      params.append('name', searchUserName.value)
+    } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
+      params.append('address', searchUserAddress.value)
+    }
     url += '?' + params.toString()
     return { options, url, cancel }
   }
@@ -112,11 +115,15 @@ watch(searchUserResponse, () => {
 })
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
-    searchUserName.value = input.name
-    searchUserAddress.value = input.address
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
+    if (input.name !== searchUserName.value) {
+      searchUserName.value = input.name
+      lastUpdatedInput.value = 'name'
     }
+    if (input.address !== searchUserAddress.value) {
+      searchUserAddress.value = input.address
+      lastUpdatedInput.value = 'address'
+    }
+    await executeSearchUser()
   } catch (error: unknown) {
     if (error instanceof Error) {
       addErrorToast(error.message)

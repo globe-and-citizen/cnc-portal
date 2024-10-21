@@ -13,7 +13,7 @@
           type="text"
           class="w-24"
           v-model="input.name"
-          @keyup.stop="searchUsers(input, 'founder')"
+          @keyup.stop="searchUsers(input, 'founder', 'name')"
           :placeholder="'Founder Name ' + (index + 1)"
         />
         |
@@ -21,9 +21,10 @@
           type="text"
           class="grow"
           v-model="input.address"
-          @keyup.stop="searchUsers(input, 'founder')"
+          @keyup.stop="searchUsers(input, 'founder', 'address')"
           :placeholder="'Wallet Address ' + (index + 1)"
         />
+
         <span class="badge badge-primary">Mandatory</span>
       </label>
     </div>
@@ -60,7 +61,7 @@
           type="text"
           class="w-24"
           v-model="input.name"
-          @keyup.stop="searchUsers(input, 'member')"
+          @keyup.stop="searchUsers(input, 'member', 'name')"
           :placeholder="'Member Name ' + (index + 1)"
         />
         |
@@ -68,7 +69,7 @@
           type="text"
           class="grow"
           v-model="input.address"
-          @keyup.stop="searchUsers(input, 'member')"
+          @keyup.stop="searchUsers(input, 'member', 'address')"
           :placeholder="'Wallet Address ' + (index + 1)"
         />
         <span class="badge badge-primary">Mandatory</span>
@@ -123,6 +124,9 @@ const selectedFounders = ref([{ name: '', address: '' }])
 const selectedMembers = ref([{ name: '', address: '' }])
 const showFounderDropdown = ref(false)
 const showMemberDropdown = ref(false)
+const lastUpdatedInput = ref<'founderName' | 'founderAddress' | 'memberName' | 'memberAddress'>(
+  'founderName'
+)
 
 const formRef = ref<HTMLElement | null>(null)
 
@@ -215,27 +219,34 @@ const removeMember = () => {
 }
 
 const searchUsers = async (
-  input: { name?: string; address: string },
-  type: 'founder' | 'member'
+  input: { name?: string; address?: string },
+  type: 'founder' | 'member',
+  field: 'name' | 'address'
 ) => {
   try {
+    // Track the last updated input based on the provided field
+    if (type === 'founder') {
+      lastUpdatedInput.value = field === 'name' ? 'founderName' : 'founderAddress'
+    } else if (type === 'member') {
+      lastUpdatedInput.value = field === 'name' ? 'memberName' : 'memberAddress'
+    }
+
     const members = props.team.members
     if (members) {
       const result = {
         users: members.filter((member: { name: string; address: string }) => {
-          if (input.name && input.address && member.name) {
-            return (
-              member.name.toLowerCase().includes(input.name.toLowerCase()) &&
-              member.address.toLowerCase().includes(input.address.toLowerCase())
-            )
-          } else if (input.name && member.name) {
-            return member.name.toLowerCase().includes(input.name.toLowerCase())
-          } else if (input.address) {
-            return member.address.toLowerCase().includes(input.address.toLowerCase())
+          if (lastUpdatedInput.value === 'founderName' || lastUpdatedInput.value === 'memberName') {
+            return member.name.toLowerCase().includes(input.name?.toLowerCase() || '')
+          } else if (
+            lastUpdatedInput.value === 'founderAddress' ||
+            lastUpdatedInput.value === 'memberAddress'
+          ) {
+            return member.address.toLowerCase().includes(input.address?.toLowerCase() || '')
           }
           return false
         })
       }
+
       if (type === 'founder') {
         founderUsers.value = result.users
         showFounderDropdown.value = result.users.length > 0
