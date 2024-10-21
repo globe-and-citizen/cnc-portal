@@ -1,8 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import type { TeamInput, User } from '@/types'
 
+interface AddTeamForm {
+  team: TeamInput
+  users: User[]
+  isLoading: boolean
+  dropdown: boolean
+}
 describe('AddTeamForm.vue', () => {
   const team: TeamInput = {
     name: '',
@@ -115,6 +121,62 @@ describe('AddTeamForm.vue', () => {
       // next ti
       await wrapper.find('.dropdown a').trigger('click')
       expect(wrapper.vm.modelValue?.members[0].name).toBe(users[0].name)
+    })
+  })
+  describe('Validation', () => {
+    it('shows error message for empty team name', async () => {
+      await wrapper.find('input[name="name"]').setValue('')
+      await wrapper.find('[data-test="submit"]').trigger('click')
+      expect(wrapper.find('.text-red-500').text()).toContain('Value is required')
+    })
+
+    it('shows error message for invalid wallet address', async () => {
+      await wrapper.find('[data-test="submit"]').trigger('click')
+      expect(wrapper.find('.text-red-500').text()).toContain('Value is required')
+    })
+  })
+
+  describe('Component Lifecycle', () => {
+    it('adds and removes event listener', () => {
+      const addSpy = vi.spyOn(document, 'addEventListener')
+      const removeSpy = vi.spyOn(document, 'removeEventListener')
+
+      const wrapper = mount(AddTeamForm, {
+        props: {
+          modelValue: team,
+          users,
+          isLoading: false
+        }
+      })
+
+      expect(addSpy).toHaveBeenCalledWith('click', expect.any(Function))
+
+      wrapper.unmount()
+
+      expect(removeSpy).toHaveBeenCalledWith('click', expect.any(Function))
+    })
+  })
+  describe('Edge Cases', () => {
+    it('handles empty users array', async () => {
+      await wrapper.setProps({ users: [] })
+      expect(wrapper.find('.dropdown').exists()).toBe(true)
+    })
+
+    it('prevents removing last member', async () => {
+      while ((wrapper.vm as unknown as AddTeamForm).team.members.length > 1) {
+        await wrapper.find('[data-test="remove-member"]').trigger('click')
+      }
+      await wrapper.find('[data-test="remove-member"]').trigger('click')
+      expect((wrapper.vm as unknown as AddTeamForm).team.members.length).toBe(1)
+    })
+
+    it('handles maximum number of members', async () => {
+      for (let i = 0; i < 10; i++) {
+        await wrapper.find('[data-test="add-member"]').trigger('click')
+      }
+      expect((wrapper.vm as unknown as AddTeamForm).team.members.length).toBe(11)
+      await wrapper.find('[data-test="add-member"]').trigger('click')
+      expect((wrapper.vm as unknown as AddTeamForm).team.members.length).toBe(12)
     })
   })
 })
