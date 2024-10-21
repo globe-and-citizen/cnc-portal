@@ -6,22 +6,22 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {MintAgreement} from "./types/MintAgreement.sol";
+import {StockGrant} from "./types/StockGrant.sol";
 
 contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    EnumerableSet.AddressSet private investors;
-    mapping(address => MintAgreement) private mintAgreements;
+    EnumerableSet.AddressSet private shareholders;
+    mapping(address => StockGrant) private stockGrants;
 
-    event Minted(address indexed investor, uint256 amount);
-    event MintAgreementAdded(address indexed investor, uint256 amount, bool isActive);
-    event MintAgreementUpdated(address indexed investor, uint256 amount, bool isActive);
-    event MintAgreementRemoved(address indexed investor);
-    event DividendDistributed(address indexed investor, uint256 amount);
+    event Minted(address indexed shareholder, uint256 amount);
+    event StockGrantAdded(address indexed shareholder, uint256 amount, bool isActive);
+    event StockGrantUpdated(address indexed shareholder, uint256 amount, bool isActive);
+    event StockGrantRemoved(address indexed shareholder);
+    event DividendDistributed(address indexed shareholder, uint256 amount);
     event MintingStateChanged(bool state);
 
-    function initialize(string calldata _name, string calldata _symbol, MintAgreement[] calldata _mintAgreements)
+    function initialize(string calldata _name, string calldata _symbol, StockGrant[] calldata _stockGrants)
         external
         initializer
     {
@@ -29,25 +29,25 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
         __Pausable_init();
-        for (uint256 i = 0; i < _mintAgreements.length; i++) {
-            require(_mintAgreements[i].investor != address(0), "Invalid investor address");
+        for (uint256 i = 0; i < _stockGrants.length; i++) {
+            require(_stockGrants[i].shareholder != address(0), "Invalid shareholder address");
 
-            MintAgreement memory agreement = _mintAgreements[i];
-            investors.add(agreement.investor);
-            mintAgreements[agreement.investor] = agreement;
+            StockGrant memory stockGrant = _stockGrants[i];
+            shareholders.add(stockGrant.shareholder);
+            stockGrants[stockGrant.shareholder] = stockGrant;
         }
     }
 
     function mint() external onlyOwner whenNotPaused nonReentrant {
-        for (uint256 i = 0; i < investors.length(); i++) {
-            address investor = investors.at(i);
-            MintAgreement storage agreement = mintAgreements[investor];
-            if (agreement.isActive) {
-                agreement.totalMinted += agreement.amount;
-                agreement.lastMinted = block.timestamp;
-                _mint(investor, agreement.amount);
+        for (uint256 i = 0; i < shareholders.length(); i++) {
+            address shareholder = shareholders.at(i);
+            StockGrant storage stockGrant = stockGrants[shareholder];
+            if (stockGrant.isActive) {
+                stockGrant.totalMinted += stockGrant.amount;
+                stockGrant.lastMinted = block.timestamp;
+                _mint(shareholder, stockGrant.amount);
 
-                emit Minted(investor, agreement.amount);
+                emit Minted(shareholder, stockGrant.amount);
             }
         }
     }
@@ -56,8 +56,8 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
         uint256 totalSupply = totalSupply();
         require(totalSupply > 0, "No tokens minted");
 
-        for (uint256 i = 0; i < investors.length(); i++) {
-            address account = investors.at(i);
+        for (uint256 i = 0; i < shareholders.length(); i++) {
+            address account = shareholders.at(i);
             uint256 balance = balanceOf(account);
             uint256 dividend = (msg.value * balance) / totalSupply;
             payable(account).transfer(dividend);
@@ -66,62 +66,62 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
         }
     }
 
-    function addMintAgreement(address _investor, uint256 _amount, bool _isActive, uint256 _signingBonus)
+    function addStockGrant(address _shareholder, uint256 _amount, bool _isActive, uint256 _signingBonus)
         external
         onlyOwner
         whenNotPaused
     {
-        require(_investor != address(0), "Invalid investor address");
-        require(!investors.contains(_investor), "Investor already exists");
+        require(_shareholder != address(0), "Invalid shareholder address");
+        require(!shareholders.contains(_shareholder), "Shareholder already exists");
         require(_amount > 0, "Invalid amount");
 
-        MintAgreement storage agreement = mintAgreements[_investor];
-        agreement.investor = _investor;
-        agreement.amount = _amount;
-        agreement.isActive = _isActive;
+        StockGrant storage stockGrant = stockGrants[_shareholder];
+        stockGrant.shareholder = _shareholder;
+        stockGrant.amount = _amount;
+        stockGrant.isActive = _isActive;
 
-        investors.add(_investor);
-        _mint(_investor, _signingBonus);
+        shareholders.add(_shareholder);
+        _mint(_shareholder, _signingBonus);
 
-        emit MintAgreementAdded(_investor, _amount, _isActive);
+        emit StockGrantAdded(_shareholder, _amount, _isActive);
     }
 
-    function updateMintAgreement(address _investor, uint256 _amount, bool _isActive) external onlyOwner whenNotPaused {
-        require(_investor != address(0), "Invalid investor address");
+    function updateStockGrant(address _shareholder, uint256 _amount, bool _isActive) external onlyOwner whenNotPaused {
+        require(_shareholder != address(0), "Invalid shareholder address");
         require(_amount > 0, "Invalid amount");
 
-        MintAgreement storage agreement = mintAgreements[_investor];
-        agreement.amount = _amount;
-        agreement.isActive = _isActive;
+        StockGrant storage stockGrant = stockGrants[_shareholder];
+        stockGrant.amount = _amount;
+        stockGrant.isActive = _isActive;
 
-        emit MintAgreementUpdated(_investor, _amount, _isActive);
+        emit StockGrantUpdated(_shareholder, _amount, _isActive);
     }
 
-    function removeMintAgreement(address _investor) external onlyOwner whenNotPaused {
-        require(_investor != address(0), "Invalid investor address");
-        require(investors.contains(_investor), "Investor not found");
+    function removeStockGrant(address _shareholder) external onlyOwner whenNotPaused {
+        require(_shareholder != address(0), "Invalid shareholder address");
+        require(shareholders.contains(_shareholder), "Shareholder not found");
 
-        investors.remove(_investor);
-        delete mintAgreements[_investor];
+        shareholders.remove(_shareholder);
+        delete stockGrants[_shareholder];
 
-        emit MintAgreementRemoved(_investor);
+        emit StockGrantRemoved(_shareholder);
     }
 
-    function getInvestors() external view returns (address[] memory) {
-        return investors.values();
+    function getShareholders() external view returns (address[] memory) {
+        return shareholders.values();
     }
 
-    function getMintAgreement(address _investor) external view returns (MintAgreement memory) {
-        return mintAgreements[_investor];
+    function getStockGrant(address _shareholder) external view returns (StockGrant memory) {
+        return stockGrants[_shareholder];
     }
 
-    function getMintAgreements() external view returns (MintAgreement[] memory) {
-        MintAgreement[] memory agreements = new MintAgreement[](investors.length());
-        for (uint256 i = 0; i < investors.length(); i++) {
-            agreements[i] = mintAgreements[investors.at(i)];
+    function getStockGrants() external view returns (StockGrant[] memory) {
+        StockGrant[] memory stockGrant = new StockGrant[](shareholders.length());
+        for (uint256 i = 0; i < shareholders.length(); i++) {
+            stockGrant[i] = stockGrants[shareholders.at(i)];
         }
 
-        return agreements;
+        return stockGrant;
     }
 
     function pause() external onlyOwner {

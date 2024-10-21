@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {MintAgreement} from "./Investor/types/MintAgreement.sol";
+import {StockGrant} from "./Investor/types/StockGrant.sol";
 
 import 'hardhat/console.sol';
 
@@ -28,7 +28,7 @@ interface IExpenseAccount {
 }
 
 interface IInvestor {
-    function initialize(string memory _name, string memory _symbol, MintAgreement[] memory _mintAgreements) external;
+    function initialize(string memory _name, string memory _symbol, StockGrant[] memory _stockGrants) external;
 }
 
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
@@ -123,13 +123,13 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit ContractDeployed("ExpenseAccount", expenseAccountContract);
     }
 
-    function deployInvestorContract(string memory _name, string memory _symbol, MintAgreement[] memory _mintAgreements) external onlyOwners whenNotPaused  {
+    function deployInvestorContract(string memory _name, string memory _symbol, StockGrant[] memory _stockGrants) external onlyOwners whenNotPaused  {
         require(investorContract == address(0), "Investor contract already deployed");
         require(investorBeacon != address(0), "Investor beacon not set");
 
         BeaconProxy proxy = new BeaconProxy(
             investorBeacon,
-            abi.encodeWithSelector(IInvestor.initialize.selector, _name, _symbol, _mintAgreements)
+            abi.encodeWithSelector(IInvestor.initialize.selector, _name, _symbol, _stockGrants)
         );
         investorContract = address(proxy);
 
