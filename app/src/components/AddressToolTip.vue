@@ -11,13 +11,13 @@
     <ToolTip
       data-test="copy-address-tooltip"
       :content="copied ? 'Copied!' : 'Click to copy address'"
+      @click="() =>{
+        copy(address)
+        console.log('copied', copied)
+      }"
       v-if="isSupported"
     >
-      <ClipboardDocumentListIcon
-        class="size-5 cursor-pointer"
-        @click="copy(address)"
-        v-if="!copied"
-      />
+      <ClipboardDocumentListIcon class="size-5 cursor-pointer" v-if="!copied" />
       <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
     </ToolTip>
   </div>
