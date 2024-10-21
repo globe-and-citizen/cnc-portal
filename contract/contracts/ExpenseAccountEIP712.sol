@@ -91,10 +91,10 @@ contract ExpenseAccountEIP712 is
             balances[digest].transactionCount++;
             payable(to).transfer(amount);
         } else if (limit.budgetType == BudgetType.AmountPerPeriod) {
-            //require(balances[digest].amountWithdrawn+amount <= limit.value, "Authorized amount exceeded");
             if (balances[digest].amountWithdrawn+amount > limit.value) {
                 revert AuthorizedAmountExceeded(balances[digest].amountWithdrawn+amount);
             }
+            balances[digest].amountWithdrawn+=amount;
             payable(to).transfer(amount);
         } else {
             require(amount <= limit.value, "Authorized amount exceeded");
