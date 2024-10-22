@@ -70,6 +70,10 @@ contract ExpenseAccountEIP712 is
     ) external whenNotPaused {        
         require(msg.sender == limit.approvedAddress, "Withdrawer not approved");
 
+        require(to != address(0), "Address required");
+
+        require(amount > 0, "Amount must be greater than zero");
+
         bytes32 digest = keccak256(abi.encodePacked(
             "\x19\x01",
             _domainSeparatorV4(),
