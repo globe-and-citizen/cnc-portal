@@ -46,7 +46,7 @@
             v-model="newProposalInput.winnerCount"
           />
         </div>
-        <div class="input-group">
+        <div class="input-group" ref="formRef">
           <label class="input input-primary flex items-center gap-2 input-md">
             <input
               type="text"
@@ -55,7 +55,7 @@
               @keyup.stop="
                 () => {
                   searchUsers()
-                  dropdown = true
+                  showDropdown = true
                 }
               "
               placeholder="Candidate Name"
@@ -68,7 +68,7 @@
               @keyup.stop="
                 () => {
                   searchUsers()
-                  dropdown = true
+                  showDropdown = true
                 }
               "
               placeholder="Address"
@@ -78,7 +78,7 @@
 
         <div
           class="dropdown"
-          v-if="dropdown"
+          v-if="showDropdown"
           :class="{ 'dropdown-open': users && users.users && users.users.length > 0 }"
         >
           <ul
@@ -95,7 +95,7 @@
                     })
                     searchUserName = ''
                     searchUserAddress = ''
-                    dropdown = false
+                    showDropdown = false
                   }
                 "
               >
@@ -147,7 +147,7 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Proposal, Team } from '@/types/index'
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
@@ -157,7 +157,6 @@ const props = defineProps<{
   isLoading: boolean
   team: Partial<Team>
 }>()
-const dropdown = ref<boolean>(true)
 
 const searchUserName = ref('')
 const searchUserAddress = ref('')
@@ -242,4 +241,20 @@ const submitForm = () => {
 
   emits('createProposal')
 }
+const formRef = ref<HTMLElement | null>(null)
+const showDropdown = ref<boolean>(false)
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (formRef.value && !formRef.value.contains(event.target as Node)) {
+    showDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
