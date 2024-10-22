@@ -16,6 +16,7 @@ describe('ExpenseAccount (EIP712)', () => {
   describe('As CNC Company Founder', () => {
     let owner: SignerWithAddress
     let withdrawer: SignerWithAddress
+    let imposter: SignerWithAddress
     const DOMAIN_NAME = 'CNCExpenseAccount'
     const DOMAIN_VERSION = '1'
     let chainId: bigint
@@ -32,10 +33,26 @@ describe('ExpenseAccount (EIP712)', () => {
 
     context('I want to deploy my Expense Account Smart Contract', () => {
       before(async () => {
-        ;[owner, withdrawer] = await ethers.getSigners()
+        ;[owner, withdrawer, imposter] = await ethers.getSigners()
         await deployContract()
         chainId = (await ethers.provider.getNetwork()).chainId
         verifyingContract = await expenseAccountProxy.getAddress()
+
+        domain = {
+          name: DOMAIN_NAME,
+          version: DOMAIN_VERSION,
+          chainId,
+          verifyingContract
+        }
+
+        types = {
+          BudgetLimit: [
+            { name: 'approvedAddress', type: 'address' },
+            { name: 'budgetType', type: 'uint8' },
+            { name: 'value', type: 'uint256' },
+            { name: 'expiry', type: 'uint256' }
+          ]
+        }
       })
 
       it('Then I become the owner of the contract', async () => {
@@ -54,23 +71,23 @@ describe('ExpenseAccount (EIP712)', () => {
       })
 
       describe('Then I can authorize a user to transfer from the expense account by;', async () => {
-        beforeEach(async () => {
-          domain = {
-            name: DOMAIN_NAME,
-            version: DOMAIN_VERSION,
-            chainId,
-            verifyingContract
-          }
+        // beforeEach(async () => {
+        //   domain = {
+        //     name: DOMAIN_NAME,
+        //     version: DOMAIN_VERSION,
+        //     chainId,
+        //     verifyingContract
+        //   }
 
-          types = {
-            BudgetLimit: [
-              { name: 'approvedAddress', type: 'address' },
-              { name: 'budgetType', type: 'uint8' },
-              { name: 'value', type: 'uint256' },
-              { name: 'expiry', type: 'uint256' }
-            ]
-          }
-        })
+        //   types = {
+        //     BudgetLimit: [
+        //       { name: 'approvedAddress', type: 'address' },
+        //       { name: 'budgetType', type: 'uint8' },
+        //       { name: 'value', type: 'uint256' },
+        //       { name: 'expiry', type: 'uint256' }
+        //     ]
+        //   }
+        // })
 
         it('transactions per period', async () => {
           const budgetLimit = {
@@ -79,6 +96,9 @@ describe('ExpenseAccount (EIP712)', () => {
             value: 10,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
+          const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
+
+          const beforeTxCount = (await expenseAccountProxy.balances(digest)).transactionCount
           const signature = await owner.signTypedData(domain, types, budgetLimit)
           const { v, r, s } = ethers.Signature.from(signature)
           const amount = ethers.parseEther('5')
@@ -95,6 +115,8 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
+          const afterTxCount = (await expenseAccountProxy.balances(digest)).transactionCount
+          expect(afterTxCount).to.be.equal(beforeTxCount+BigInt(1))
         })
 
         it('amount per period', async () => {
@@ -105,6 +127,10 @@ describe('ExpenseAccount (EIP712)', () => {
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
+          const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
+
+          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(digest)).amountWithdrawn
+
           const signature = await owner.signTypedData(domain, types, budgetLimit)
           const { v, r, s } = ethers.Signature.from(signature)
           const amount = ethers.parseEther('5')
@@ -116,17 +142,18 @@ describe('ExpenseAccount (EIP712)', () => {
 
           console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
-          // Try to exceed the transaction limit
           await expect(tx).to.changeEtherBalance(withdrawer, amount)
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
+          const afterAmountWithdrawn = (await expenseAccountProxy.balances(digest)).amountWithdrawn
+          expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn+amount)
         })
 
         it('amount per transaction', async () => {
           const budgetLimit = {
             approvedAddress: withdrawer.address,
-            budgetType: 2, // AmountPerPeriod
+            budgetType: 2, // AmountPerTransaction
             value: ethers.parseEther('10'),
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
