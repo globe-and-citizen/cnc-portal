@@ -70,6 +70,11 @@ describe('ExpenseAccount (EIP712)', () => {
         await expect(tx).to.emit(expenseAccountProxy, 'Deposited').withArgs(owner.address, amount)
       })
 
+      it('Then I can get the contract balance', async () => {
+        const balance = await expenseAccountProxy.getBalance()
+        expect(balance).to.be.equal(ethers.parseEther('100'))
+      })
+
       describe('Then I can authorize a user to transfer from the expense account by;', async () => {
         // beforeEach(async () => {
         //   domain = {
