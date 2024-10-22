@@ -54,7 +54,7 @@
               v-model="searchUserName"
               @keyup.stop="
                 () => {
-                  searchUsers()
+                  searchUsers('name')
                   showDropdown = true
                 }
               "
@@ -67,7 +67,7 @@
               v-model="searchUserAddress"
               @keyup.stop="
                 () => {
-                  searchUsers()
+                  searchUsers('address')
                   showDropdown = true
                 }
               "
@@ -215,20 +215,19 @@ interface User {
 }
 
 const users = ref<{ users: User[] }>({ users: [] })
-const searchUsers = async () => {
+
+const lastUpdatedInput = ref<'name' | 'address'>('name')
+
+const searchUsers = async (field: 'name' | 'address') => {
+  lastUpdatedInput.value = field
   const members = props.team.members
   if (!members) return
 
   users.value = {
     users: members.filter((member) => {
-      if (searchUserName.value && searchUserAddress.value) {
-        return (
-          member.name.toLowerCase().includes(searchUserName.value.toLowerCase()) &&
-          member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
-        )
-      } else if (searchUserName.value) {
+      if (lastUpdatedInput.value === 'name' && searchUserName.value) {
         return member.name.toLowerCase().includes(searchUserName.value.toLowerCase())
-      } else if (searchUserAddress.value) {
+      } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
         return member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
       }
       return false
