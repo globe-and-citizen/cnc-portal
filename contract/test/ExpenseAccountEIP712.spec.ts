@@ -116,7 +116,7 @@ describe('ExpenseAccount (EIP712)', () => {
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
           const afterTxCount = (await expenseAccountProxy.balances(digest)).transactionCount
-          expect(afterTxCount).to.be.equal(beforeTxCount+BigInt(1))
+          expect(afterTxCount).to.be.equal(beforeTxCount + BigInt(1))
         })
 
         it('amount per period', async () => {
@@ -147,7 +147,7 @@ describe('ExpenseAccount (EIP712)', () => {
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
           const afterAmountWithdrawn = (await expenseAccountProxy.balances(digest)).amountWithdrawn
-          expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn+amount)
+          expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
         })
 
         it('amount per transaction', async () => {
@@ -175,6 +175,147 @@ describe('ExpenseAccount (EIP712)', () => {
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
         })
+      })
+
+      describe("Then a user can't transfer if;", () => {
+        it('the signer is not the contract owner', async () => {
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetType: 2, // AmountPerTransaction
+            value: ethers.parseEther('10'),
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await imposter.signTypedData(domain, types, budgetLimit)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('5')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+          ).to.be.revertedWithCustomError(expenseAccountProxy, 'UnauthorizedAccess')
+        })
+        it('the total amount transferred exceeds the budget limit', async () => {
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetType: 1, // AmountPerPeriod
+            value: ethers.parseEther('10'),
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('15')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+          ).to.be.revertedWithCustomError(expenseAccountProxy, 'AuthorizedAmountExceeded')
+        })
+        it('the amount per transaction exceeds the budget limit', async () => {
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetType: 2, // AmountPerPeriod
+            value: ethers.parseEther('10'),
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('15')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+          ).to.be.revertedWith('Authorized amount exceeded')
+        })
+        it('the number of transactions exceed the transaction limit', async () => {
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetType: 0, // TransactionsPerPeriod
+            value: 0,
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('5')
+          const N = budgetLimit.value + 1
+          for (let i = 0; i <= N; i++) {
+            if (i < N) {
+              await expenseAccountProxy
+                .connect(withdrawer)
+                .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+              continue
+            }
+            await expect(
+              expenseAccountProxy
+                .connect(withdrawer)
+                .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+            ).to.be.revertedWith('Transaction limit reached')
+          }
+        })
+        it('the to address is a zero address', async () => {
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetType: 0, // TransactionsPerPeriod
+            value: 0,
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('5')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer('0x0000000000000000000000000000000000000000', amount, budgetLimit, v, r, s)
+          ).to.be.revertedWith('Address required')
+        })
+        it('the amount is zero or negative', async () => {
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetType: 0, // TransactionsPerPeriod
+            value: 0,
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('0')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+          ).to.be.revertedWith('Amount must be greater than zero')
+        })
+        it('the approval has expired', async () => {
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetType: 0, // TransactionsPerPeriod
+            value: 0,
+            expiry: Math.floor(Date.now() / 1000) - 60 * 60 // 1 hour before now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('5')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+          ).to.be.revertedWith('Authorization expired')
+        })
+      })
+      it('Then I can pause the account', async () => {
+        await expect(expenseAccountProxy.pause())
+          .to.emit(expenseAccountProxy, 'Paused')
+          .withArgs(owner.address)
+      })
+      it('Then I can unpause the account', async () => {
+        await expect(expenseAccountProxy.unpause())
+          .to.emit(expenseAccountProxy, 'Unpaused')
+          .withArgs(owner.address)
       })
     })
   })
