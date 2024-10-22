@@ -35,7 +35,7 @@ contract ExpenseAccountEIP712 is
         uint256 amountWithdrawn;
     }
 
-    mapping(bytes32 => Balance) balances;
+    mapping(bytes32 => Balance) public balances;
 
     event Deposited(address indexed depositor, uint256 amount);
 
