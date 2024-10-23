@@ -11,7 +11,7 @@
         <button
           data-testid="sign-in"
           class="btn btn-primary w-full"
-          @click="siwe"
+          @click="async () => await open()"
           :disabled="isProcessing"
         >
           <span v-if="isProcessing">Processing...</span>
@@ -35,8 +35,18 @@ import IconGoogle from '@/components/icons/IconGoogle.vue'
 import IconFacebook from '@/components/icons/IconFacebook.vue'
 import IconTwitter from '@/components/icons/IconTwitter.vue'
 import { useSiwe } from '@/composables/useSiwe'
+import { useAppKit, useWalletInfo } from '@reown/appkit/vue'
+import { watch } from 'vue'
 
 const { isProcessing, siwe } = useSiwe()
+const { open } = useAppKit()
+const { walletInfo } = useWalletInfo()
+
+watch(walletInfo, async () => {
+  if (walletInfo.value) {
+    await siwe()
+  }
+})
 </script>
 
 <style scoped>

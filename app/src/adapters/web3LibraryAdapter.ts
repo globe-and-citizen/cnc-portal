@@ -55,12 +55,6 @@ export class EthersJsAdapter implements IWeb3Library {
     const metaProvider = metaMaskUtil.getProvider()
     this.provider = new BrowserProvider(metaProvider)
 
-    // Listen for account change
-    metaProvider.on('accountsChanged', async (/*accounts: string[]*/) => {
-      log.info('Account changed')
-      this.signer = await this.provider.getSigner()
-    })
-
     log.info('Finish Initializing the provider & the signer')
   }
 

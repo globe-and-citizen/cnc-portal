@@ -14,6 +14,10 @@ import EditUserForm from '@/components/forms/EditUserForm.vue'
 // import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { useCustomFetch } from './composables/useCustomFetch'
+import { hardhat, polygon, sepolia } from 'viem/chains'
+import { WagmiProvider } from 'wagmi'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { createAppKit, useAppKit } from '@reown/appkit/vue'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const toggleSide = ref(true)
@@ -50,6 +54,25 @@ const {
   error: userUpdateError,
   execute: executeUpdateUser
 } = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(updateUserInput).json()
+
+const metadata = {
+  name: 'CNC Portal',
+  description: 'Crypto Native Corporation Portal',
+  url: 'cncportal.io',
+  icons: ['https://avatars.githubusercontent.com/u/179229932']
+}
+const networks = [polygon, sepolia, hardhat]
+const wagmiAdapter = new WagmiAdapter({
+  projectId: import.meta.env.VITE_APP_REOWN_PROJECT_ID!,
+  networks
+})
+
+createAppKit({
+  adapters: [wagmiAdapter],
+  networks: [polygon, sepolia, hardhat],
+  metadata,
+  projectId: import.meta.env.VITE_APP_REOWN_PROJECT_ID!
+})
 
 watch(userUpdateError, () => {
   if (userUpdateError.value) {
