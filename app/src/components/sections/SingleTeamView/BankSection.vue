@@ -32,7 +32,7 @@
           </Button>
         </div>
       </div>
-      <div class="flex gap-4 justify-end">
+      <div class="flex gap-4 justify-end" data-test="team-bank-address">
         <span>Bank Address </span><AddressToolTip :address="team.bankAddress ?? ''" />
       </div>
     </div>
@@ -83,6 +83,7 @@
 
         <div class="text-center">
           <LoadingButton v-if="false" class="w-44" color="primary" />
+          <!-- TODO send tips to all team members -->
           <button v-if="!false" class="btn btn-primary w-44 text-center" @click="() => {}">
             Send Tips
           </button>
@@ -176,7 +177,7 @@ const {
   .json()
 
 const props = defineProps<{
-  team: Partial<Team>
+  team: Pick<Team, "bankAddress" | "boardOfDirectorsAddress" | "ownerAddress">
 }>()
 
 const {
