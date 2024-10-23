@@ -1,5 +1,5 @@
 <template>
-  <h1 class="font-bold text-2xl mb-5">Approve/Disapprove Users EIP712</h1>
+  <h1 class="font-bold text-2xl mb-5">Approve User EIP712</h1>
   <hr />
 
   <div v-if="isBodAction">
@@ -27,7 +27,7 @@
   </div>
   
   <!--Search user to approve-->
-  <div v-for="(input, index) in formData" :key="index" class="input-group mt-3">
+  <div v-for="(input, index) in formData" :key="index" class="input-group mt-3 mb-2">
     <label class="input input-bordered flex items-center gap-2 input-md">
       <input
         type="text"
@@ -154,7 +154,7 @@ const props = defineProps<{
 const date = ref<Date>(new Date())
 const description = ref<string>('')
 const formData = ref(props.formData)
-const dropdown = ref<boolean>(true)
+const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
 const budgetLimitTypes = ref([
   {id: 0, name: "Transactions per period"},
