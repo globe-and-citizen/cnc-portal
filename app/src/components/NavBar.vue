@@ -69,7 +69,17 @@
             </a>
           </li>
           <li><a>Settings</a></li>
-          <li><a @click="logout()">Logout</a></li>
+          <li>
+            <a
+              @click="
+                () => {
+                  disconnect()
+                  logout()
+                }
+              "
+              >Logout</a
+            >
+          </li>
         </ul>
       </div>
     </div>
@@ -82,9 +92,11 @@ import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
 import { Bars3Icon } from '@heroicons/vue/24/solid'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import { useDisconnect } from '@wagmi/vue'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 const { logout } = useAuth()
+const { disconnect } = useDisconnect()
 
 defineProps<{
   withdrawLoading: boolean
