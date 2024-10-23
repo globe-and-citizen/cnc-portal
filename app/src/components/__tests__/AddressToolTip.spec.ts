@@ -80,7 +80,7 @@ describe('AddressToolTip.vue', () => {
       global.open = open
       await wrapper.find('[data-test="address-tooltip"]').trigger('click')
       expect(open).toHaveBeenCalledWith(
-        `https://sepolia.etherscan.io/address/${props.member.address}`,
+        `https://sepolia.etherscan.io/address/${props.address}`,
         '_blank'
       )
     })
