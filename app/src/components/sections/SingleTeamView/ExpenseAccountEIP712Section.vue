@@ -116,14 +116,8 @@
         :loading-approve="
           isLoadingApproveAddress || (isLoadingAddAction && action === 'approve-users')
         "
-        :loading-disapprove="
-          isLoadingDisapproveAddress || (isLoadingAddAction && action === 'approve-users')
-        "
-        :approved-addresses="approvedAddresses"
-        :unapproved-addresses="unapprovedAddresses"
         :is-bod-action="isBodAction()"
-        @approve-address="approveAddress"
-        @disapprove-address="disapproveAddress"
+        @approve-user="console.log(`approve user eip712`)"
         @close-modal="approveUsersModal = false"
       />
     </ModalComponent>

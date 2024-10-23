@@ -25,6 +25,7 @@
       {{ error.$message }}
     </div>
   </div>
+  
   <!--Search user to approve-->
   <div v-for="(input, index) in formData" :key="index" class="input-group mt-3">
     <label class="input input-bordered flex items-center gap-2 input-md">
@@ -81,8 +82,8 @@
   <!--Select budget limit type-->
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md">
-      <select v-model="addressToApprove" class="bg-white grow">
-        <option disabled value="">-- Select a budget limit type --</option>
+      <select v-model="budgetLimitType" class="bg-white grow">
+        <option disabled :value="null">-- Select a budget limit type --</option>
         <option v-for="(type, index) of budgetLimitTypes" :key="type.id" :value="type.id">
           {{ type.name }}
         </option>
@@ -134,20 +135,15 @@ import type { User } from '@/types'
 
 const props = defineProps<{
   loadingApprove: boolean
-  loadingDisapprove: boolean
-  approvedAddresses: Set<string>
-  unapprovedAddresses: Set<string>
   isBodAction: boolean
   formData: Array<{ name: string; address: string }>
   users: User[]
 }>()
 
-const addressToApprove = ref<string>('')
-const addressToDisapprove = ref<string>('')
 const description = ref<string>('')
-const action = ref<'approve' | 'disapprove' | ''>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(true)
+const budgetLimitType = ref<0 | 1 | 2 | null>(null)
 const budgetLimitTypes = ref([
   {id: 0, name: "Transactions per period"},
   {id: 1, name: "Amount per period"},
@@ -155,9 +151,9 @@ const budgetLimitTypes = ref([
 ])
 
 const rules = {
-  addressToApprove: {
-    required: helpers.withMessage('Address is required', (value: string) => {
-      return action.value === 'approve' ? isAddress(value) : true
+  budgetLimitType: {
+    required: helpers.withMessage('Budget limit type is required', (value: string) => {
+      return value? true : false
     })
   },
   description: {
@@ -167,37 +163,15 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { addressToApprove, description })
+const v$ = useVuelidate(rules, { budgetLimitType, description })
 
-const emit = defineEmits(['closeModal', 'approveAddress', 'disapproveAddress', 'searchUsers'])
+const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
 const submitApprove = () => {
-  action.value = 'approve'
+  console.log(`Budget limit type`, budgetLimitType.value)
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
-  action.value = ''
-  if (isAddress(addressToApprove.value))
-    emit('approveAddress', addressToApprove.value, description.value)
 }
-
-const submitDisapprove = (_addressToDisapprove: string) => {
-  action.value = 'disapprove'
-  v$.value.$touch()
-  if (v$.value.$invalid) {
-    return
-  }
-  action.value = ''
-  addressToDisapprove.value = _addressToDisapprove
-  emit('disapproveAddress', _addressToDisapprove, description.value)
-}
-
-watch(
-  () => props.loadingApprove,
-  (newVal) => {
-    if (newVal) return
-    addressToApprove.value = ''
-  }
-)
 </script>
