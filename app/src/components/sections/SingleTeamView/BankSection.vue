@@ -8,49 +8,34 @@
         <div>
           <span>Bank Balance</span>
           <div class="font-extrabold text-4xl">
-            {{ teamBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+            <span class="inline-block w-16 h-10">
+              <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
+              <span v-else>{{ teamBalance }} </span></span
+            >
+            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
           <span>≈ $ 1.28</span>
         </div>
         <div class="flex gap-4">
-          <button
-            class="btn btn-secondary"
-            v-if="team.bankAddress"
-            @click="() => (depositModal = true)"
-          >
+          <Button variant="secondary" v-if="team.bankAddress" @click="() => (depositModal = true)">
             Deposit
-          </button>
-          <button
-            class="btn btn-secondary"
-            v-if="team.bankAddress"
-            @click="() => (pushTipModal = true)"
-          >
+          </Button>
+          <Button variant="secondary" v-if="team.bankAddress" @click="() => (pushTipModal = true)">
             Tips the Team
-          </button>
-          <button
-            class="btn btn-secondary"
+          </Button>
+          <Button
+            variant="secondary"
             v-if="team.bankAddress && (team.ownerAddress == useUserDataStore().address || isBod)"
             @click="transferModal = true"
           >
             Transfer
-          </button>
+          </Button>
         </div>
       </div>
       <div class="flex gap-4 justify-end">
         <span>Bank Address </span><AddressToolTip :address="team.bankAddress ?? ''" />
       </div>
     </div>
-
-    <div class="divider m-0"></div>
-    <div>
-      <span class="text-3xl font-bold">Team Bank Hisotry</span>
-    </div>
-    <BankManagement
-      :team="team"
-      :bank-owner="owner ?? ''"
-      :loading-owner="loadingOwner"
-      :isBod="isBod ?? false"
-    />
 
     <ModalComponent v-model="depositModal">
       <DepositBankForm
@@ -114,7 +99,7 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import BankManagement from '@/components/sections/SingleTeamView/BankManagement.vue'
+import Button from '@/components/ButtonUI.vue'
 
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
