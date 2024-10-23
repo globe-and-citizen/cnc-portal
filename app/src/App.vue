@@ -20,10 +20,11 @@
 
       <!-- Responsive Drawer and Content -->
       <div class="lg:flex">
+        <!-- Drawer -->
         <div
           v-if="toggleSide"
-          class="fixed inset-y-0 left-0 lg:relative lg:transform-none transition-transform duration-300 ease-in-out"
-          :class="{ '-translate-x-full lg:translate-x-0': !toggleSide }"
+          class="fixed lg:relative inset-y-0 left-0 z-20 bg-base-100 shadow-xl transition-transform duration-300 ease-in-out"
+          :class="{ '-translate-x-full': !toggleSide }"
         >
           <Drawer
             :user="{ name, address }"
@@ -36,10 +37,17 @@
           />
         </div>
 
+        <!-- Overlay -->
+        <div
+          v-if="toggleSide"
+          class="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+          @click="toggleSide = false"
+        ></div>
+
         <!-- Content Wrapper -->
         <div
-          class="flex-1 lg:ml-72 transition-all duration-300 ease-in-out"
-          :style="{ marginLeft: toggleSide ? '300px' : '0' }"
+          class="flex-grow transition-all duration-300 ease-in-out"
+          :class="{ 'lg:ml-72': toggleSide }"
         >
           <div class="p-5 md:p-10 lg:p-20">
             <RouterView />
@@ -168,9 +176,5 @@ watch(withdrawSuccess, () => {
 </script>
 
 <style scoped>
-@media (max-width: 1024px) {
-  .drawer-content {
-    margin-left: 0 !important;
-  }
-}
+/* No additional styles needed */
 </style>
