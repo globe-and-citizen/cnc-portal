@@ -90,25 +90,13 @@ describe('MemberRow.vue', () => {
   })
 
   describe('methods', () => {
-    // TODO: Find a way to watch on the copy function
-    // it.only("should copy the member's address to the clipboard", async () => {
-    //   mockClipboard.isSupported.value = true
-    //   mockClipboard.copied.value = false
-    //   await wrapper.vm.$nextTick()
-
-    //   await wrapper.find('[data-test="copy-address-tooltip"]').trigger('click')
-    //   await wrapper.vm.$nextTick()
-    //   expect(mockCopy).toHaveBeenCalledWith(props.member.address)
-    //   expect(mockClipboard.copied.value).toBe(true)
-    // })
-    it('should open the address in a new tab', async () => {
-      const open = vi.fn()
-      global.open = open
-      await wrapper.find('[data-test="address-tooltip"]').trigger('click')
-      expect(open).toHaveBeenCalledWith(
-        `https://sepolia.etherscan.io/address/${props.member.address}`,
-        '_blank'
-      )
+    interface ComponentData {
+      showDeleteMemberConfirmModal: boolean
+    }
+    it('should show the modal when delete button is clicked', async () => {
+      await wrapper.find('[data-test="delete-member-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).showDeleteMemberConfirmModal).toBe(true)
     })
   })
 })

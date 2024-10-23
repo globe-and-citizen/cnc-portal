@@ -10,6 +10,7 @@
         v-if="member.address != ownerAddress && ownerAddress == userDataStore.address"
         class="btn btn-error btn-sm flex gap-4"
         @click="() => (showDeleteMemberConfirmModal = true)"
+        data-test="delete-member-button"
       >
         <TrashIcon class="size-4" />
       </button>
