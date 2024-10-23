@@ -14,17 +14,17 @@
         <TrashIcon class="size-4" />
       </button>
     </td>
-    <div>
-      <ModalComponent v-model="showDeleteMemberConfirmModal">
-        <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
-          Are you sure you want to delete
-          <span class="font-bold">{{ member.name }}</span>
-          with address <span class="font-bold">{{ member.address }}</span>
-          from the team?
-        </DeleteConfirmForm>
-      </ModalComponent>
-    </div>
   </tr>
+  <div>
+    <ModalComponent v-model="showDeleteMemberConfirmModal">
+      <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+        Are you sure you want to delete
+        <span class="font-bold">{{ member.name }}</span>
+        with address <span class="font-bold">{{ member.address }}</span>
+        from the team?
+      </DeleteConfirmForm>
+    </ModalComponent>
+  </div>
 </template>
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
