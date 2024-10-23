@@ -53,24 +53,23 @@ describe('AddressToolTip.vue', () => {
       expect(wrapper.find('[data-test="copy-address-tooltip"]').exists()).toBe(false)
     })
   })
-  
-  describe('methods', () => {
 
+  describe('methods', () => {
     // TODO: Find a way to watch on the copy function
-    it.only("should copy the member's address to the clipboard", async () => {
+    it("should copy the member's address to the clipboard", async () => {
       mockClipboard.isSupported.value = true
-      mockClipboard.copied.value = false 
+      mockClipboard.copied.value = false
       await wrapper.vm.$nextTick()
 
       // console.log('wrapper', wrapper.html())
       await wrapper.find('[data-test="copy-address-tooltip"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      // Note: Once clicked, copied value is reactive there is no way (for the moment) to check when the result is true 
-      
+      // Note: Once clicked, copied value is reactive there is no way (for the moment) to check when the result is true
+
       // const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
       //   name: 'ClipboardDocumentCheckIcon'
-      // })  
+      // })
 
       // console.log('copyAddressTooltip', copyAddressTooltip)
       // expect(mockCopy).toHaveBeenCalledWith(props.member.address)

@@ -90,11 +90,10 @@ describe('MemberRow.vue', () => {
   })
 
   describe('methods', () => {
-
     // TODO: Find a way to watch on the copy function
     // it.only("should copy the member's address to the clipboard", async () => {
     //   mockClipboard.isSupported.value = true
-    //   mockClipboard.copied.value = false 
+    //   mockClipboard.copied.value = false
     //   await wrapper.vm.$nextTick()
 
     //   await wrapper.find('[data-test="copy-address-tooltip"]').trigger('click')

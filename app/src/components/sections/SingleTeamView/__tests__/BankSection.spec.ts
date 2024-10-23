@@ -1,4 +1,4 @@
-import { mount,enableAutoUnmount } from '@vue/test-utils'
+import { mount, enableAutoUnmount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
@@ -10,11 +10,10 @@ vi.mock('@/stores/user', () => ({
   }))
 }))
 
-
 const team = {
   bankAddress: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6',
   ownerAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
-  boardOfDirectorsAddress : '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
+  boardOfDirectorsAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
 }
 describe('BankSection', () => {
   let wrapper: ReturnType<typeof mount>
@@ -35,7 +34,6 @@ describe('BankSection', () => {
 
   describe('Render', () => {
     it('should show team bank address', () => {
-
       expect(wrapper.find('[data-test="team-bank-address"]').exists()).toBeTruthy()
       expect(wrapper.find('[data-test="team-bank-address"]').text()).toContain(team.bankAddress)
     })
