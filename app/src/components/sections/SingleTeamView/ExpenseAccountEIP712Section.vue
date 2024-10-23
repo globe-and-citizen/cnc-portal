@@ -119,6 +119,7 @@
         :is-bod-action="isBodAction()"
         @approve-user="console.log(`approve user eip712`)"
         @close-modal="approveUsersModal = false"
+        @search-users="(input) => searchUsers(input)"
       />
     </ModalComponent>
   </div>
@@ -238,7 +239,11 @@ const { data: isApprovedAddress, execute: executeExpenseAccountIsApprovedAddress
   useExpenseAccountIsApprovedAddress()
 //#endregion expense account composable
 
-const { execute: executeSearchUser } = useCustomFetch('user/search', {
+const { 
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users 
+} = useCustomFetch('user/search', {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     const params = new URLSearchParams()
@@ -251,6 +256,12 @@ const { execute: executeSearchUser } = useCustomFetch('user/search', {
 })
   .get()
   .json()
+
+watch(searchUserResponse, () => {
+  if (searchUserResponse.value?.ok && users.value?.users) {
+    foundUsers.value = users.value.users
+  }
+})
 
 //#region helper functions
 
@@ -393,6 +404,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
     if (searchUserName.value || searchUserAddress.value) {
       await executeSearchUser()
     }
+    console.log(`foundUsers`, foundUsers.value)
   } catch (error) {
     addErrorToast(parseError(error))
   }

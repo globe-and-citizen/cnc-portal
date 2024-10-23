@@ -97,11 +97,20 @@
       <span class="w-24">Limit</span>
       <input
         type="text"
-        class="grow"
+        class="grow pl-4"
         data-test="description-input"
         v-model="description"
         placeholder="Enter a limit value"
       />
+    </label>
+  </div>
+
+  <div class="mt-2">
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <span class="w-24">Expiry</span>
+      <div class="grow">
+        <VueDatePicker v-model="date" />
+      </div>
     </label>
   </div>
 
@@ -132,6 +141,8 @@ import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers } from '@vuelidate/validators'
 import type { User } from '@/types'
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -140,6 +151,7 @@ const props = defineProps<{
   users: User[]
 }>()
 
+const date = ref<Date>(new Date())
 const description = ref<string>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(true)
@@ -169,9 +181,15 @@ const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
 const submitApprove = () => {
   console.log(`Budget limit type`, budgetLimitType.value)
+  console.log(`date`, date.value)
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
 }
 </script>
+<style>
+.dp__input {
+  border: none;
+}
+</style>
