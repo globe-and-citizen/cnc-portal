@@ -84,7 +84,15 @@
         <div class="text-center">
           <LoadingButton v-if="false" class="w-44" color="primary" />
           <!-- TODO send tips to all team members -->
-          <button v-if="!false" class="btn btn-primary w-44 text-center" @click="() => {}">
+          <button
+            v-if="!false"
+            class="btn btn-primary w-44 text-center"
+            @click="
+              () => {
+                addPushTipAction('Pushed tips to all team members')
+              }
+            "
+          >
             Send Tips
           </button>
         </div>
@@ -145,8 +153,8 @@ const {
   error: transferError
 } = useBankTransfer()
 const {
-  execute: pushTip,
-  isLoading: pushTipLoading,
+  // execute: pushTip,
+  // isLoading: pushTipLoading,
   isSuccess: pushTipSuccess,
   error: pushTipError
 } = usePushTip()
@@ -183,7 +191,7 @@ const props = defineProps<{
 const {
   data: owner,
   error: errorOwner,
-  isLoading: loadingOwner,
+  // isLoading: loadingOwner,
   execute: getOwner
 } = useBankOwner(props.team.bankAddress!)
 
