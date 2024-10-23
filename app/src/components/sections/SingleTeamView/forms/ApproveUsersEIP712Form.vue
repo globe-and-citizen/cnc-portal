@@ -25,7 +25,7 @@
       {{ error.$message }}
     </div>
   </div>
-  <!--List of approved addressed with dissaprove button on each-->
+  <!--Search user to approve-->
   <div v-for="(input, index) in formData" :key="index" class="input-group mt-3">
     <label class="input input-bordered flex items-center gap-2 input-md">
       <input
@@ -78,76 +78,50 @@
     </ul>
   </div>
 
-  <div v-if="approvedAddresses.size > 0" class="mt-5">
-    <div class="text-lg font-medium">Approved Addresses</div>
-    <div class="overflow-x-auto border border-gray-300 rounded-lg">
-      <table class="table table-zebra">
-        <tbody>
-          <tr v-for="(address, index) of approvedAddresses" :key="index">
-            <th>{{ index + 1 }}</th>
-            <td>{{ `${address.slice(0, 10)}...${address.slice(-10)}` }}</td>
-            <td class="flex justify-end">
-              <LoadingButton
-                data-test="loading-disapprove"
-                color="error"
-                class="w-28"
-                v-if="loadingDisapprove && address === addressToDisapprove"
-              />
-              <button
-                data-test="disapprove-button"
-                v-if="!loadingDisapprove || address !== addressToDisapprove"
-                :disabled="loadingDisapprove"
-                class="btn btn-error"
-                @click="submitDisapprove(address)"
-              >
-                Disapprove
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="mt-5 gap-2" v-if="unapprovedAddresses.size > 0">
-    <div class="text-lg font-medium">Unapproved Addresses</div>
+  <!--Select budget limit type-->
+  <div>
     <label class="input input-bordered flex items-center gap-2 input-md">
-      <select v-model="addressToApprove" class="bg-white">
-        <option disabled value="">-- Select an address to approve --</option>
-        <option v-for="(address, index) of unapprovedAddresses" :key="index" :value="address">
-          {{ address }}
+      <select v-model="addressToApprove" class="bg-white grow">
+        <option disabled value="">-- Select a budget limit type --</option>
+        <option v-for="(type, index) of budgetLimitTypes" :key="type.id" :value="type.id">
+          {{ type.name }}
         </option>
       </select>
     </label>
+  </div>
 
-    <div
-      data-test="approve-error"
-      class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of v$.addressToApprove.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
-
-    <div class="modal-action justify-center">
-      <LoadingButton
-        data-test="loading-approve"
-        color="primary"
-        class="w-24"
-        v-if="loadingApprove"
+  <!-- Budget limit value -->
+  <div>
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <span class="w-24">Limit</span>
+      <input
+        type="text"
+        class="grow"
+        data-test="description-input"
+        v-model="description"
+        placeholder="Enter a limit value"
       />
-      <button
-        class="btn btn-primary"
-        @click="submitApprove"
-        v-if="!loadingApprove"
-        data-test="approve-button"
-      >
-        Approve
-      </button>
-      <button data-test="cancel-button" class="btn btn-error" @click="$emit('closeModal')">
-        Cancel
-      </button>
-    </div>
+    </label>
+  </div>
+
+  <div class="modal-action justify-center">
+    <LoadingButton
+      data-test="loading-approve"
+      color="primary"
+      class="w-24"
+      v-if="loadingApprove"
+    />
+    <button
+      class="btn btn-primary"
+      @click="submitApprove"
+      v-if="!loadingApprove"
+      data-test="approve-button"
+    >
+      Approve
+    </button>
+    <button data-test="cancel-button" class="btn btn-error" @click="$emit('closeModal')">
+      Cancel
+    </button>
   </div>
 </template>
 <script setup lang="ts">
@@ -174,6 +148,11 @@ const description = ref<string>('')
 const action = ref<'approve' | 'disapprove' | ''>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(true)
+const budgetLimitTypes = ref([
+  {id: 0, name: "Transactions per period"},
+  {id: 1, name: "Amount per period"},
+  {id: 2, name: "Amount per transaction"},
+])
 
 const rules = {
   addressToApprove: {
