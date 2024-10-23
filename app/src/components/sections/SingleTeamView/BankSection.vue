@@ -185,7 +185,7 @@ const {
   .json()
 
 const props = defineProps<{
-  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | "members">
+  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
 }>()
 
 const {
