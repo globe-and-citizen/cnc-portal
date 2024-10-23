@@ -12,17 +12,17 @@
           v-for="team in teams"
           :key="team.id"
           :team="team"
-          class="cursor-pointer"
+          class="cursor-pointer transition duration-300 hover:scale-105"
           @click="navigateToTeam(team.id)"
         />
         <div class="flex justify-center">
           <AddTeamCard
             @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
-            class="w-80 text-xl"
+            class="w-80 text-xl hover:scale-105 transform transition"
           />
         </div>
       </div>
-      <div class="flex flex-col items-center" v-if="teams.length == 0">
+      <div class="flex flex-col items-center animate-fade-in" v-if="teams.length == 0">
         <img src="../assets/login-illustration.png" alt="Login illustration" width="300" />
 
         <span class="font-bold text-sm text-gray-500 my-4"
@@ -33,7 +33,7 @@
         <div class="flex justify-center">
           <AddTeamCard
             @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
-            class="w-72 h-16 text-sm"
+            class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
           />
         </div>
       </div>
