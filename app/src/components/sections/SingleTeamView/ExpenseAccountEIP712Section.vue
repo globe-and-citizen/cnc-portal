@@ -169,7 +169,7 @@
           :form-data="teamMembers"
           :users="foundUsers"
           :loading-approve="
-            false
+            loadingApprove
           "
           :is-bod-action="isBodAction()"
           @approve-user="approveUser"
@@ -223,6 +223,7 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const unapprovedAddresses = ref<Set<string>>(new Set())
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
+const loadingApprove = ref(false)
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
@@ -314,6 +315,7 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
 }
 
 const approveUser = async (data: {}) => {
+  loadingApprove.value = true
   const provider = await web3Library
     .getProvider()
   const signer = await web3Library
@@ -339,6 +341,7 @@ const approveUser = async (data: {}) => {
 
   const signature = await signer.signTypedData(domain, types, data)
   console.log(`signature: `, signature)
+  loadingApprove.value = false
 }
 
 const isBodAction = () => {

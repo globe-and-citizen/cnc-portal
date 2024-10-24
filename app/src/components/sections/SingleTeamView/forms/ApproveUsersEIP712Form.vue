@@ -129,7 +129,12 @@
     >
       Approve
     </button>
-    <button data-test="cancel-button" class="btn btn-error" @click="clear">
+    <button 
+      data-test="cancel-button" 
+      class="btn btn-error" 
+      @click="clear"
+      :disabled="loadingApprove"
+    >
       Cancel
     </button>
   </div>
