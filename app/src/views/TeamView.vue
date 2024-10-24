@@ -46,15 +46,13 @@
       </div>
     </div>
     <ModalComponent v-model="showAddTeamModal">
-      <div class="h-[420px] overflow-auto">
-        <AddTeamForm
-          :isLoading="createTeamFetching"
-          v-model="team"
-          :users="foundUsers"
-          @searchUsers="(input) => searchUsers(input)"
-          @addTeam="executeCreateTeam"
-        />
-      </div>
+      <AddTeamForm
+        :isLoading="createTeamFetching"
+        v-model="team"
+        :users="foundUsers"
+        @searchUsers="(input) => searchUsers(input)"
+        @addTeam="executeCreateTeam"
+      />
     </ModalComponent>
   </div>
 </template>
