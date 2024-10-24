@@ -18,18 +18,32 @@
   </tr>
   <div>
     <ModalComponent v-model="showDeleteMemberConfirmModal">
-      <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+      <p class="font-bold text-lg">Confirmation</p>
+      <hr class="" />
+      <p class="py-4">
         Are you sure you want to delete
         <span class="font-bold">{{ member.name }}</span>
         with address <span class="font-bold">{{ member.address }}</span>
         from the team?
-      </DeleteConfirmForm>
+      </p>
+      <div class="modal-action justify-center">
+        <ButtonUI v-if="memberIsDeleting" loading variant="error" />
+        <ButtonUI
+          v-else
+          variant="error"
+          @click="deleteMemberAPI()"
+          data-test="delete-member-confirm-button"
+          >Delete</ButtonUI
+        >
+        <ButtonUI variant="primary" @click="showDeleteMemberConfirmModal = false">
+          Cancel
+        </ButtonUI>
+      </div>
     </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
-import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import { TrashIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useRoute } from 'vue-router'
@@ -38,6 +52,7 @@ import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 interface Member extends MemberInput {
   index: number

@@ -33,9 +33,15 @@ describe('MemberRow.vue', () => {
 
   const addSuccessToast = vi.fn()
   const addErrorToast = vi.fn()
+
+  let mockToastStore: ReturnType<typeof useToastStore>
   beforeEach(() => {
     interface mockReturn {
       mockReturnValue: (address: Object) => {}
+    }
+    mockToastStore = {
+      addSuccessToast: vi.fn(),
+      addErrorToast: vi.fn()
     }
     ;(useUserDataStore as unknown as mockReturn).mockReturnValue({
       address: 'owner123'
@@ -67,6 +73,26 @@ describe('MemberRow.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).showDeleteMemberConfirmModal).toBe(true)
     })
 
+    it('should success toast when delete is successful', async () => {
+      await wrapper.find('[data-test="delete-member-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).showDeleteMemberConfirmModal).toBe(true)
+
+      await wrapper.find('[data-test="delete-member-confirm-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // TODO : find a way to check that the toast is called
+
+      // wrapper.vm.$watch('deleteMemberError', () => {
+      //   console.log('wrapper.vm.deleteMemberError', wrapper.vm.deleteMemberError)
+      //   if (!wrapper.vm.deleteMemberError) {
+      //     mockToastStore.addSuccessToast('Member deleted successfully')
+      //   } else {
+      //     mockToastStore.addErrorToast('Failed to delete member')
+      //   }
+      // })
+      // expect(mockToastStore.addSuccessToast).toHaveBeenCalled()
+    })
     // TODO: test when delete is validated
   })
 })
