@@ -34,15 +34,15 @@ describe('MemberRow.vue', () => {
   const addSuccessToast = vi.fn()
   const addErrorToast = vi.fn()
 
-  let mockToastStore: ReturnType<typeof useToastStore>
+  // let mockToastStore: ReturnType<typeof useToastStore>
   beforeEach(() => {
     interface mockReturn {
       mockReturnValue: (address: Object) => {}
     }
-    mockToastStore = {
-      addSuccessToast: vi.fn(),
-      addErrorToast: vi.fn()
-    }
+    // mockToastStore = {
+    //   addSuccessToast: vi.fn(),
+    //   addErrorToast: vi.fn()
+    // }
     ;(useUserDataStore as unknown as mockReturn).mockReturnValue({
       address: 'owner123'
     })
