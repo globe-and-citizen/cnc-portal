@@ -29,6 +29,7 @@
     "@tanstack/vue-query": "^5.54.1",
     "@vuelidate/core": "^2.0.3",
     "@vuelidate/validators": "^2.0.4",
+    "@vuepic/vue-datepicker": "^9.0.3",
     "@vueuse/core": "^11.1.0",
     "@wagmi/vue": "^0.0.48",
     "buffer": "^6.0.3",
