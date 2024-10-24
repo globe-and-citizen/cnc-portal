@@ -12,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+// TODO : delete this compoent and improve the modale component
 import LoadingButton from '../LoadingButton.vue'
 
 const emit = defineEmits(['toggleDeleteConfirmModal', 'deleteItem'])

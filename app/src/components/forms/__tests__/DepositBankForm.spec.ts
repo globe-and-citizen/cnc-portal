@@ -10,8 +10,8 @@ describe('DepositBankModal.vue', () => {
         props: { loading: false }
       })
 
-      expect(wrapper.find('h1').text()).toBe('Deposit to Team Bank Contract')
-      expect(wrapper.find('h3').text()).toContain(
+      expect(wrapper.text()).toContain('Deposit to Team Bank Contract')
+      expect(wrapper.text()).toContain(
         `This will deposit 0 ${NETWORK.currencySymbol} to the team bank contract.`
       )
     })

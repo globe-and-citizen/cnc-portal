@@ -146,7 +146,7 @@ watch(withdrawSuccess, () => {
               <RouterView />
             </div>
           </div>
-          <div v-if="toggleSide" @toggleSideButton="handleChange">
+          <div v-if="toggleSide">
             <Drawer
               :user="{ name, address }"
               @openEditUserModal="
