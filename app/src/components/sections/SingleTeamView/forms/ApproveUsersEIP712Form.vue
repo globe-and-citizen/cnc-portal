@@ -79,6 +79,23 @@
     </ul>
   </div>
 
+  <div
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.formData.$errors"
+    :key="error.$uid"
+  >
+    <div v-if="Array.isArray(error.$message)">
+      <div v-for="(errorObj, index) of error.$message" :key="index">
+        <div v-for="(error, index1) of errorObj" :key="index1">
+          {{ error }}
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      {{ error.$message }}
+    </div>
+  </div>
+
   <!--Select budget limit type-->
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md">
@@ -89,6 +106,15 @@
         </option>
       </select>
     </label>
+  </div>
+
+  <div
+    data-test="approve-error"
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.budgetLimitType.$errors"
+    :key="error.$uid"
+  >
+    {{ error.$message }}
   </div>
 
   <!-- Budget limit value -->
@@ -103,6 +129,15 @@
         placeholder="Enter a limit value"
       />
     </label>
+  </div>
+
+  <div
+    data-test="approve-error"
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.limitValue.$errors"
+    :key="error.$uid"
+  >
+    {{ error.$message }}
   </div>
 
   <div class="mt-2">
@@ -144,7 +179,7 @@ import { ref, watch } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { ethers, isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
-import { helpers } from '@vuelidate/validators'
+import { helpers, numeric, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
@@ -169,6 +204,25 @@ const budgetLimitTypes = ref([
 ])
 
 const rules = {
+  formData: {
+    $each: helpers.forEach({
+      address: {
+        required: helpers.withMessage('Address is required', required),
+        $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
+      }
+    }),
+
+    $valid: helpers.withMessage(
+      'At least one member is required',
+      (value: Array<{ name: string; address: string }>) => {
+        return value.some((v) => v.address)
+      }
+    )
+  },
+  limitValue: {
+    required,
+    numeric
+  },
   budgetLimitType: {
     required: helpers.withMessage('Budget limit type is required', (value: string) => {
       return value? true : false
@@ -181,7 +235,7 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { budgetLimitType, description })
+const v$ = useVuelidate(rules, { budgetLimitType, description, limitValue, formData })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -192,6 +246,10 @@ const clear = () => {
 }
 
 const submitApprove = () => {
+  v$.value.$touch()
+  if (v$.value.$invalid) {
+    return
+  }
   emit(
     'approveUser', {
       approvedAddress: formData.value[0].address,
@@ -202,10 +260,6 @@ const submitApprove = () => {
         0
     }
   )
-  v$.value.$touch()
-  if (v$.value.$invalid) {
-    return
-  }
 }
 </script>
 <style>
