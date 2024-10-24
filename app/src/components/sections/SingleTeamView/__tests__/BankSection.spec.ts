@@ -13,7 +13,8 @@ vi.mock('@/stores/user', () => ({
 const team = {
   bankAddress: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6',
   ownerAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
-  boardOfDirectorsAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
+  boardOfDirectorsAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
+  members: []
 }
 describe('BankSection', () => {
   let wrapper: ReturnType<typeof mount>
