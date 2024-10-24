@@ -129,7 +129,7 @@
     >
       Approve
     </button>
-    <button data-test="cancel-button" class="btn btn-error" @click="$emit('closeModal')">
+    <button data-test="cancel-button" class="btn btn-error" @click="clear">
       Cancel
     </button>
   </div>
@@ -152,7 +152,7 @@ const props = defineProps<{
 }>()
 
 const limitValue = ref('')
-const date = ref<Date>(new Date())
+const date = ref<Date | string>('')
 const description = ref<string>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(false)
@@ -180,13 +180,21 @@ const v$ = useVuelidate(rules, { budgetLimitType, description })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
+const clear = () => {
+  limitValue.value = ''
+  budgetLimitType.value = null
+  date.value = ''
+}
+
 const submitApprove = () => {
   emit(
     'approveUser', {
       approvedAddress: formData.value[0].address,
       budgetType: budgetLimitType.value,
       value: limitValue.value,
-      expiry: Math.floor(date.value.getTime()/1000)
+      expiry: typeof date.value === 'object'? 
+        Math.floor(date.value.getTime()/1000):
+        0
     }
   )
   v$.value.$touch()
