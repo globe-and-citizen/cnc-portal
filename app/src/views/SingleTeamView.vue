@@ -49,6 +49,9 @@
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
+        <template #tab-6>
+          <ContractManagement></ContractManagement> 
+        </template>
       </TabNavigation>
     </div>
   </div>
@@ -79,6 +82,7 @@ import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardO
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import ContractManagement from '@/components/sections/SingleTeamView/ContractManagement.vue'
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
@@ -170,7 +174,8 @@ const setTabs = () => {
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses,
-      SingleTeamTabs.BoardOfDirectors
+      SingleTeamTabs.BoardOfDirectors,
+      SingleTeamTabs.Contract
     ]
 }
 </script>
