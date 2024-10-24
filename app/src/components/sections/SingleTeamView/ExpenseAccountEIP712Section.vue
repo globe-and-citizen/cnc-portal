@@ -134,7 +134,7 @@
           false
         "
         :is-bod-action="isBodAction()"
-        @approve-user="console.log(`approve user eip712`)"
+        @approve-user="approveUser"
         @close-modal="approveUsersModal = false"
         @search-users="(input) => searchUsers(input)"
       />
@@ -271,6 +271,34 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
     if (isSuccessTransfer.value) transferModal.value = false
   }
+}
+
+const approveUser = async (data: {}) => {
+  const provider = await web3Library
+    .getProvider()
+  const signer = await web3Library
+    .getSigner()
+  const chainId = (await provider.getNetwork()).chainId
+  const verifyingContract = team.value.expenseAccountAddress
+
+  const domain = {
+    name: 'CNCExpenseAccount',
+    version: '1',
+    chainId,
+    verifyingContract
+  }
+
+  const types = {
+    BudgetLimit: [
+      { name: 'approvedAddress', type: 'address' },
+      { name: 'budgetType', type: 'uint8' },
+      { name: 'value', type: 'uint256' },
+      { name: 'expiry', type: 'uint256' }
+    ]
+  }
+
+  const signature = await signer.signTypedData(domain, types, data)
+  console.log(`signature: `, signature)
 }
 
 const isBodAction = () => {

@@ -99,7 +99,7 @@
         type="text"
         class="grow pl-4"
         data-test="description-input"
-        v-model="description"
+        v-model="limitValue"
         placeholder="Enter a limit value"
       />
     </label>
@@ -137,7 +137,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { isAddress } from 'ethers'
+import { ethers, isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers } from '@vuelidate/validators'
 import type { User } from '@/types'
@@ -151,6 +151,7 @@ const props = defineProps<{
   users: User[]
 }>()
 
+const limitValue = ref('')
 const date = ref<Date>(new Date())
 const description = ref<string>('')
 const formData = ref(props.formData)
@@ -180,8 +181,14 @@ const v$ = useVuelidate(rules, { budgetLimitType, description })
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
 const submitApprove = () => {
-  console.log(`Budget limit type`, budgetLimitType.value)
-  console.log(`date`, date.value)
+  emit(
+    'approveUser', {
+      approvedAddress: formData.value[0].address,
+      budgetType: budgetLimitType.value,
+      value: limitValue.value,
+      expiry: Math.floor(date.value.getTime()/1000)
+    }
+  )
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
