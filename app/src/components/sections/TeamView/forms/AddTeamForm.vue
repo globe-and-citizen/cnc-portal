@@ -1,6 +1,6 @@
 <template>
-  <h1 class="font-bold text-2xl">Create New Team</h1>
-  <hr class="" />
+  <h1 class="font-bold text-2xl mb-4">Create New Team</h1>
+  <hr class="mb-6" />
   <div class="flex flex-col gap-5">
     <div>
       <label class="input input-bordered flex items-center gap-2 input-md mt-4">
@@ -35,10 +35,11 @@
           type="text"
           class="w-24"
           v-model="input.name"
+          @focus="() => setActiveInput(index)"
           @keyup.stop="
             () => {
               emits('searchUsers', input)
-              dropdown = true
+              showDropdown = true
             }
           "
           :placeholder="'Member Name ' + (index + 1)"
@@ -48,10 +49,11 @@
           type="text"
           class="grow"
           v-model="input.address"
+          @focus="() => setActiveInput(index)"
           @keyup.stop="
             () => {
               emits('searchUsers', input)
-              dropdown = true
+              showDropdown = true
             }
           "
           :placeholder="'Wallet Address ' + (index + 1)"
@@ -68,7 +70,11 @@
       </div>
     </div>
   </div>
-  <div class="dropdown" :class="{ 'dropdown-open': !!users && users.length > 0 }" v-if="dropdown">
+  <div
+    class="dropdown"
+    :class="{ 'dropdown-open': showDropdown && !!users && users.length > 0 }"
+    ref="formRef"
+  >
     <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
       <li v-for="user in users" :key="user.address">
         <a
@@ -78,7 +84,7 @@
               if (l >= 0) {
                 team.members[l].name = user.name ?? ''
                 team.members[l].address = user.address ?? ''
-                dropdown = false
+                showDropdown = false
               }
             }
           "
@@ -90,7 +96,7 @@
   </div>
   <div class="flex justify-end pt-3">
     <div
-      class="w-6 h-6 cursor-pointer"
+      class="w-6 h-6 cursor-pointer mr-2"
       data-test="add-member"
       @click="
         () => {
@@ -115,24 +121,37 @@
     </div>
   </div>
 
-  <div class="modal-action justify-center">
-    <!-- if there is a button in form, it will close the modal -->
+  <div class="modal-action justify-center mt-6">
     <LoadingButton v-if="isLoading" color="primary min-w-24" />
     <button class="btn btn-primary" data-test="submit" @click="submitForm" v-else>Submit</button>
-
-    <!-- <button class="btn" @click="showModal = !showModal">Close</button> -->
   </div>
 </template>
 <script setup lang="ts">
 import type { User } from '@/types'
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { helpers, required } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 
-// TODO: Type the team
+const formRef = ref<HTMLElement | null>(null)
+const showDropdown = ref<boolean>(false)
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (formRef.value && !formRef.value.contains(event.target as Node)) {
+    showDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
 const team = defineModel({
   default: {
     name: '',
@@ -185,5 +204,9 @@ defineProps<{
   isLoading: boolean
 }>()
 
-const dropdown = ref<boolean>(true)
+const activeInputIndex = ref<number | null>(null)
+
+const setActiveInput = (index: number) => {
+  activeInputIndex.value = index
+}
 </script>

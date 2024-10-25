@@ -1,17 +1,23 @@
 <template>
   <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
+  <!-- <LoadingButton color="primary"></LoadingButton> -->
 
-  <div
-    class="bg-base-100 flex h-16 items-center rounded-xl text-sm font-bold justify-between px-4 w-full"
-    v-if="!teamIsFetching && team"
-  >
-    <span class="w-1/2">Name</span>
-    <span class="w-1/2">Address</span>
-    <AddMemberCard
-      class="w-1/2"
-      v-if="team.ownerAddress == useUserDataStore().address"
-      @toggleAddMemberModal="showAddMemberForm = !showAddMemberForm"
-    />
+  <div class="flex justify-between py-6" v-if="!teamIsFetching && team">
+    <span class="text-3xl font-bold">Team Members List</span>
+
+    <button
+      v-if="team.ownerAddress == userDataStore.address"
+      @click="
+        () => {
+          showAddMemberForm = !showAddMemberForm
+        }
+      "
+      data-test="add-member-button"
+      class="btn btn-primary w-max"
+    >
+      <PlusCircleIcon class="size-6" /> Add a new Member
+    </button>
+
     <ModalComponent v-model="showAddMemberForm">
       <AddMemberForm
         :isLoading="addMembersLoading"
@@ -22,28 +28,45 @@
       />
     </ModalComponent>
   </div>
-  <MemberCard
-    v-for="member in team.members"
-    :ownerAddress="team.ownerAddress"
-    :teamId="Number(team.id)"
-    :member="member"
-    :key="member.address"
-    @getTeam="emits('getTeam')"
-  />
+  <div class="divider m-0"></div>
+  <div class="overflow-x-auto">
+    <table class="table table-zebra">
+      <!-- head -->
+      <thead class="text-sm font-bold">
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Address</th>
+          <th v-if="team.ownerAddress === userDataStore.address">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <MemberRow
+          v-for="(member, index) in team.members"
+          :ownerAddress="team.ownerAddress"
+          :teamId="Number(team.id)"
+          :member="{ ...member, index: index + 1 }"
+          :key="member.address"
+          @getTeam="emits('getTeam')"
+        />
+      </tbody>
+    </table>
+  </div>
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import MemberCard from '@/components/sections/SingleTeamView/MemberCard.vue'
-import AddMemberCard from '@/components/sections/SingleTeamView/AddMemberCard.vue'
+import MemberRow from '@/components/sections/SingleTeamView/MemberRow.vue'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import type { User } from '@/types'
 import { useUserDataStore } from '@/stores/user'
 
 import { useToastStore } from '@/stores/useToastStore'
-import { useRoute } from 'vue-router'
 
+const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 
@@ -53,12 +76,14 @@ const route = useRoute()
 
 defineProps(['team', 'teamIsFetching'])
 const emits = defineEmits(['getTeam'])
+const teamId = String(route.params.id)
+
 // useFetch instance for adding members to team
 const {
   execute: executeAddMembers,
   error: addMembersError,
   isFetching: addMembersLoading
-} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
+} = useCustomFetch(`teams/${teamId}/member`, {
   immediate: false
 })
   .post({ data: teamMembers.value })
@@ -86,6 +111,7 @@ const handleAddMembers = async () => {
 const searchUserName = ref('')
 const searchUserAddress = ref('')
 const foundUsers = ref<User[]>([])
+const lastUpdatedInput = ref<'name' | 'address'>('name')
 
 const {
   execute: executeSearchUser,
@@ -95,9 +121,11 @@ const {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    if (lastUpdatedInput.value === 'name' && searchUserName.value) {
+      params.append('name', searchUserName.value)
+    } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
+      params.append('address', searchUserAddress.value)
+    }
     url += '?' + params.toString()
     return { options, url, cancel }
   }
@@ -112,11 +140,15 @@ watch(searchUserResponse, () => {
 })
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
-    searchUserName.value = input.name
-    searchUserAddress.value = input.address
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
+    if (input.name !== searchUserName.value) {
+      searchUserName.value = input.name
+      lastUpdatedInput.value = 'name'
     }
+    if (input.address !== searchUserAddress.value) {
+      searchUserAddress.value = input.address
+      lastUpdatedInput.value = 'address'
+    }
+    await executeSearchUser()
   } catch (error: unknown) {
     if (error instanceof Error) {
       addErrorToast(error.message)
