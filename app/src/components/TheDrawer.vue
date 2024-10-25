@@ -1,9 +1,9 @@
 <template>
   <div
-    class="flex flex-col bg-gradient-to-br from-blue-900 to-green-900 items-center pt-28 w-80 min-h-full text-white fixed px-6 gap-6 shadow-2xl transition-all duration-300 ease-in-out transform"
+    class="flex flex-col items-center pt-28 w-80 min-h-full bg-white fixed px-6 gap-6 shadow-2xl transition-all duration-300 ease-in-out transform"
   >
     <div
-      class="w-full flex flex-row justify-start gap-4 bg-white bg-opacity-10 backdrop-blur-lg rounded-xl px-5 py-4 cursor-pointer hover:bg-opacity-20 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
+      class="w-full flex flex-row justify-start gap-4 bg-opacity-10 backdrop-blur-lg rounded-xl px-5 py-4 cursor-pointer hover:bg-opacity-20 transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg"
       data-test="edit-user-card"
       @click="emits('openEditUserModal')"
     >
@@ -29,19 +29,19 @@
         >
           {{ user.name || 'User' }}
         </p>
-        <p class="text-xs text-gray-300 font-mono" data-test="formatted-address">
+        <p class="text-xs text-slate-500" data-test="formatted-address">
           {{ formatedUserAddress }}
         </p>
       </div>
     </div>
-    <ul class="menu w-full rounded-box gap-3 bg-white bg-opacity-5 backdrop-blur-sm p-4">
+    <ul class="menu w-full rounded-box gap-3 shadow-lg bg-opacity-5 backdrop-blur-sm p-4">
       <li class="menu-title opacity-75 uppercase tracking-wider text-xs font-bold mb-2">
         Navigation
       </li>
       <li v-for="(item, index) in menuItems" :key="index" class="relative group">
         <RouterLink
           :to="item.route"
-          class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:bg-white hover:bg-opacity-10 group-hover:text-green-400"
+          class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:bg-opacity-10 group-hover:text-green-400"
         >
           <component
             :is="item.icon"
@@ -74,7 +74,7 @@ const props = defineProps<{
 
 const formatedUserAddress = computed(() => {
   return props.user.address
-    ? props.user.address.substring(0, 6) +
+    ? props.user.address.substring(0, 10) +
         '...' +
         props.user.address.substring(props.user.address.length - 4)
     : ''

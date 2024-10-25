@@ -27,7 +27,7 @@ describe('TheDrawer', () => {
       props: { user: { name, address } }
     })
     expect(wrapper.find("[data-test='user-name'").text()).toContain(name)
-    expect(wrapper.find("[data-test='formatted-address'").text()).toBe('0xc0ff...4979')
+    expect(wrapper.find("[data-test='formatted-address'").text()).toBe('0xc0ffee25...4979')
   })
 
   it('should render default user name when no name is provided', () => {
