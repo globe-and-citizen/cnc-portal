@@ -26,9 +26,8 @@ describe('TheDrawer', () => {
       },
       props: { user: { name, address } }
     })
-
-    expect(wrapper.find('p.font-semibold.text-lg').text()).toBe(name)
-    expect(wrapper.find('p.text-slate-500').text()).toBe('0xc0ffee25...10F9d54979')
+    expect(wrapper.find("[data-test='user-name'").text()).toContain(name)
+    expect(wrapper.find("[data-test='formatted-address'").text()).toBe('0xc0ffee25...4979')
   })
 
   it('should render default user name when no name is provided', () => {
@@ -39,7 +38,7 @@ describe('TheDrawer', () => {
       props: { user: { name: '', address } }
     })
 
-    expect(wrapper.find('p.font-semibold.text-lg').text()).toBe('User')
+    expect(wrapper.find("[data-test='user-name'").text()).toBe('User')
   })
 
   it('should emit toggleEditUserModal when the user card is clicked', async () => {
@@ -50,7 +49,7 @@ describe('TheDrawer', () => {
       props: { user: { name, address } }
     })
 
-    await wrapper.find('.card').trigger('click')
+    await wrapper.find("[data-test='edit-user-card']").trigger('click')
     expect(wrapper.emitted().openEditUserModal).toBeTruthy()
   })
 
