@@ -175,6 +175,59 @@ watch(withdrawSuccess, () => {
 })
 </script>
 
-<style scoped>
-/* No additional styles needed */
-</style>
+<template>
+  <div class="min-h-screen m-0 bg-base-200">
+    <RouterView name="login" />
+    <div v-if="userStore.isAuth">
+      <NavBar
+        @toggleSideButton="handleChange"
+        @toggleEditUserModal="
+          () => {
+            updateUserInput = { name, address }
+            showModal = true
+          }
+        "
+        @withdraw="withdraw()"
+        :withdrawLoading="withdrawLoading"
+        @getBalance="getBalance()"
+        :balance="balance ? balance : '0'"
+        :balanceLoading="balanceLoading"
+      />
+      <div class="content-wrapper">
+        <div class="drawer lg:drawer-open">
+          <div
+            class="drawer-content flex flex-col"
+            :style="{ marginLeft: toggleSide ? '300px' : '0' }"
+          >
+            <div class="m-20">
+              <RouterView />
+            </div>
+          </div>
+          <div v-if="toggleSide" @toggleSideButton="handleChange">
+            <Drawer
+              :user="{ name, address }"
+              @openEditUserModal="
+                () => {
+                  showModal = true
+                  updateUserInput = { name, address }
+                }
+              "
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ModalComponent v-model="showModal">
+      <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
+      <EditUserForm
+        v-model="updateUserInput"
+        @submitEditUser="handleUserUpdate"
+        :isLoading="userIsUpdating"
+      />
+    </ModalComponent>
+    <ToastContainer position="bottom-right" />
+  </div>
+</template>
+
+<style scoped></style>
