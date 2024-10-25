@@ -2,7 +2,7 @@
   <nav
     class="fixed top-0 left-0 right-0 z-50 shadow-lg transition-all duration-300 ease-in-out bg-white"
   >
-    <div class="flex container justify-between py-3 px-3">
+    <div class="flex justify-between py-3 px-3">
       <div class="flex items-center justify-between lg:w-80">
         <div class="relative group">
           <img
