@@ -4,6 +4,7 @@
   >
     <div
       class="w-full flex flex-row justify-start gap-4 bg-white bg-opacity-10 backdrop-blur-lg rounded-xl px-5 py-4 cursor-pointer hover:bg-opacity-20 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg"
+      data-test="edit-user-card"
       @click="emits('openEditUserModal')"
     >
       <div tabindex="0" role="button" class="relative group">
@@ -24,10 +25,11 @@
       <div class="flex flex-col">
         <p
           class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500"
+          data-test="user-name"
         >
           {{ user.name || 'User' }}
         </p>
-        <p class="text-xs text-gray-300 font-mono">
+        <p class="text-xs text-gray-300 font-mono" data-test="formatted-address">
           {{ formatedUserAddress }}
         </p>
       </div>
