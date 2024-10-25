@@ -49,7 +49,7 @@
           class="flex-grow transition-all duration-300 ease-in-out"
           :class="{ 'lg:ml-72': toggleSide }"
         >
-          <div class="p-5 mt-10 md:p-10 lg:p-20">
+          <div class="p-5 mt-10 md:p-10">
             <RouterView />
           </div>
         </div>
