@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { NETWORK } from '@/constant/index'
 import NavBar from '../NavBar.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
