@@ -34,7 +34,11 @@
               <div v-if="balanceLoading" class="flex items-center" data-test="balance-loading">
                 <span class="loading loading-spinner loading-xs text-green-400"></span>
               </div>
-              <div v-else class="font-mono text-xs sm:text-sm hidden sm:inline-block">
+              <div
+                v-else
+                class="font-mono text-xs sm:text-sm hidden sm:inline-block"
+                data-test="balance-with-symbol"
+              >
                 {{ balance?.slice(0, 5) }} {{ NETWORK.currencySymbol }}
               </div>
             </div>
