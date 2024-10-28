@@ -104,12 +104,9 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
-import {
-  useBankStatus,
-  useBankPause,
-  useBankUnpause,
-  useBankTransferOwnership
-} from '@/composables/bank'
+import { useBankPause, useBankUnpause, useBankTransferOwnership } from '@/composables/bank'
+import { useReadContract } from '@wagmi/vue'
+import BankABI from '@/artifacts/abi/bank.json'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
@@ -140,9 +137,13 @@ const emits = defineEmits(['getOwner'])
 const {
   data: isPaused,
   error: errorPaused,
-  execute: getIsPaused,
-  isLoading: loadingPaused
-} = useBankStatus(props.team.bankAddress!)
+  isLoading: loadingPaused,
+  refetch: getIsPaused
+} = useReadContract({
+  functionName: 'paused',
+  address: props.team.bankAddress! as Address,
+  abi: BankABI
+})
 
 const {
   isLoading: loadingPause,

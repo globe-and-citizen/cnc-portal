@@ -142,8 +142,10 @@ import {
   useExpenseAccountGetOwner
 } from '@/composables/useExpenseAccount'
 
-import { useBankOwner, useBankTransferOwnership } from '@/composables/bank'
+import { useBankTransferOwnership } from '@/composables/bank'
 import { useGetBoardOfDirectors } from '@/composables/bod'
+import { useReadContract } from '@wagmi/vue'
+import BankABI from '@/artifacts/abi/bank.json'
 
 const props = defineProps<{
   team: Partial<Team>
@@ -153,8 +155,12 @@ const {
   data: bankOwner,
   isLoading: isLoadingBankOwner,
   error: errorBankOwner,
-  execute: executeBankOwner
-} = useBankOwner(props.team.bankAddress!)
+  refetch: executeBankOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: props.team.bankAddress! as Address,
+  abi: BankABI
+})
 
 const {
   data: expenseOwner,

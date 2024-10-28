@@ -110,6 +110,7 @@
       </div>
     </ModalComponent>
   </div>
+  <BankManagement :isBod="isBod" :team="team" :bankOwner="owner" :loadingOwner="loadingOwner" />
 </template>
 <script setup lang="ts">
 import type { Team, User } from '@/types'
@@ -124,14 +125,16 @@ import Button from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
-import { useBalance } from '@wagmi/vue'
+import { useBankDeposit, useBankTransfer } from '@/composables/bank'
+import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
 import { BankService } from '@/services/bankService'
 import type { Address } from 'viem'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import BankManagement from './BankManagement.vue'
+import BankABI from '@/artifacts/abi/bank.json'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -204,8 +207,12 @@ const {
   data: owner,
   error: errorOwner,
   // isLoading: loadingOwner,
-  execute: getOwner
-} = useBankOwner(props.team.bankAddress!)
+  refetch: getOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: props.team.bankAddress! as Address,
+  abi: BankABI
+})
 
 const bankService = new BankService()
 

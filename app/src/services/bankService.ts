@@ -71,12 +71,6 @@ export class BankService implements IBankService {
     return tx
   }
 
-  async isPaused(bankAddress: string): Promise<boolean> {
-    const bank = await this.getContract(bankAddress)
-
-    return await bank.paused()
-  }
-
   async pause(bankAddress: string): Promise<TransactionResponse> {
     const bank = await this.getContract(bankAddress)
     const tx = await bank.pause()
@@ -99,12 +93,6 @@ export class BankService implements IBankService {
     await tx.wait()
 
     return tx
-  }
-
-  async getOwner(bankAddress: string): Promise<string> {
-    const bank = await this.getContract(bankAddress)
-
-    return await bank.owner()
   }
 
   async getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]> {

@@ -87,44 +87,6 @@ export function useBankEvents(bankAddress: string) {
   return { events, getEvents, loading, error }
 }
 
-export function useBankStatus(bankAddress: string) {
-  const isPaused = ref<boolean | null>(null)
-  const loading = ref<boolean>(false)
-  const error = ref<unknown>(null)
-
-  async function getIsPaused(): Promise<void> {
-    try {
-      loading.value = true
-      isPaused.value = await bankService.isPaused(bankAddress)
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { data: isPaused, execute: getIsPaused, isLoading: loading, error }
-}
-
-export function useBankOwner(bankAddress: string) {
-  const owner = ref<string | null>(null)
-  const loading = ref<boolean>(false)
-  const error = ref<unknown>(null)
-
-  async function getOwner(): Promise<void> {
-    try {
-      loading.value = true
-      owner.value = await bankService.getOwner(bankAddress)
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { data: owner, execute: getOwner, isLoading: loading, error }
-}
-
 export function useBankPause(bankAddress: string) {
   const transaction = ref<TransactionResponse | null>(null)
   const loading = ref(false)
