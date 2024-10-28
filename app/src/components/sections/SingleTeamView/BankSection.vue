@@ -10,7 +10,7 @@
           <div class="font-extrabold text-3xl sm:text-4xl">
             <span class="inline-block w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-              <span v-else>{{ teamBalance }} </span>
+              <span v-else>{{ teamBalance.formatted }} </span>
             </span>
             <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
@@ -124,7 +124,8 @@ import Button from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useBankBalance, useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
+import { useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
+import { useBalance } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
 import { BankService } from '@/services/bankService'
@@ -143,7 +144,9 @@ const ethers = EthersJsAdapter.getInstance()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const depositModal = ref(false)
-
+const props = defineProps<{
+  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
+}>()
 const {
   execute: deposit,
   isLoading: depositLoading,
@@ -152,11 +155,13 @@ const {
 } = useBankDeposit()
 
 const {
-  execute: getBalance,
-  isLoading: balanceLoading,
   data: teamBalance,
-  error: balanceError
-} = useBankBalance()
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: props.team.bankAddress as `${Address}`
+})
 const {
   execute: transfer,
   isLoading: transferLoading,
@@ -194,10 +199,6 @@ const {
 })
   .get()
   .json()
-
-const props = defineProps<{
-  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
-}>()
 
 const {
   data: owner,
@@ -243,6 +244,12 @@ watch(depositSuccess, () => {
 watch(depositError, () => {
   if (depositError.value) {
     addErrorToast('Failed to deposit')
+  }
+})
+watch(balanceLoading, () => {
+  console.log('teamBalance', teamBalance.value)
+  if (balanceLoading.value) {
+    addErrorToast('Failed to fetch team balance')
   }
 })
 watch(balanceError, () => {
@@ -297,7 +304,7 @@ const depositToBank = async (amount: string) => {
     await deposit(props.team.bankAddress, amount)
     if (depositSuccess.value) {
       depositModal.value = false
-      await getBalance(props.team.bankAddress)
+      await fetchBalance()
     }
   }
 }
@@ -306,7 +313,7 @@ const transferFromBank = async (to: string, amount: string) => {
   await transfer(props.team.bankAddress, to, amount)
   if (transferSuccess.value) {
     transferModal.value = false
-    await getBalance(props.team.bankAddress)
+    await fetchBalance()
   }
 }
 const searchUsers = async (input: { name: string; address: string }) => {
@@ -322,7 +329,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
 }
 
 onMounted(async () => {
-  if (props.team.bankAddress) getBalance(props.team.bankAddress)
+  if (props.team.bankAddress) fetchBalance()
   await getOwner()
   await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
 })

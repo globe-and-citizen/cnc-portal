@@ -11,25 +11,6 @@ import { ref } from 'vue'
 const bankService = new BankService()
 const ethers = EthersJsAdapter.getInstance()
 
-export function useBankBalance() {
-  const balance = ref<string | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-
-  async function getBalance(address: string) {
-    try {
-      loading.value = true
-      balance.value = (await bankService.web3Library.getBalance(address)).toString()
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: getBalance, isLoading: loading, error, data: balance }
-}
-
 export function useBankDeposit() {
   const transaction = ref<TransactionResponse>()
   const loading = ref(false)
