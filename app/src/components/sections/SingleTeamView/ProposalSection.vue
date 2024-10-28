@@ -20,7 +20,7 @@
               v-if="team.boardOfDirectorsAddress"
               @click="
                 () => {
-                  executeGetBoardOfDirectors(String(team.boardOfDirectorsAddress))
+                  executeGetBoardOfDirectors()
                   showBoDModal = true
                 }
               "

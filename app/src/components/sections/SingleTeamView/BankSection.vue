@@ -9,7 +9,7 @@
           <div class="font-extrabold text-3xl sm:text-4xl">
             <span class="inline-block w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-              <span v-else>{{ teamBalance.formatted }} </span>
+              <span v-else>{{ teamBalance?.formatted }} </span>
             </span>
             <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
@@ -72,7 +72,7 @@
         @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
         :loading="transferLoading || addActionLoading"
-        :bank-balance="teamBalance.formatted || '0'"
+        :bank-balance="teamBalance?.formatted || '0'"
         service="Bank"
         :asBod="owner == team.boardOfDirectorsAddress"
       />

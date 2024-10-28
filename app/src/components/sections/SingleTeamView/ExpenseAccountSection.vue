@@ -95,7 +95,7 @@
         @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
         :loading="isLoadingTransfer"
-        :bank-balance="`${contractBalance.formatted}`"
+        :bank-balance="`${contractBalance?.formatted}`"
         service="Expense Account"
       />
     </ModalComponent>

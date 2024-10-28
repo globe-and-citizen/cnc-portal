@@ -1,12 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  useBankBalance,
   useBankDeposit,
   useBankEvents,
   useBankGetFunction,
-  useBankOwner,
   useBankPause,
-  useBankStatus,
   useBankTransfer,
   useBankTransferOwnership,
   useBankUnpause
@@ -117,80 +114,6 @@ vi.mock('@/services/bankService', () => {
 })
 
 describe('Bank', () => {
-  describe('useBankBalance', () => {
-    it('should set initial values correctly', async () => {
-      const { execute: getBalance, isLoading, error, data: balance } = useBankBalance()
-      expect(getBalance).toBeInstanceOf(Function)
-      expect(isLoading.value).toBe(false)
-      expect(error.value).toBe(null)
-      expect(balance.value).toBe(null)
-    })
-
-    describe('when success', () => {
-      beforeEach(() => {
-        vi.mocked(bankService.web3Library.getBalance).mockReturnValue(bankBalance)
-      })
-
-      it('should change state of isLoading correctly', async () => {
-        const { execute: getBalance, isLoading } = useBankBalance()
-        const promise = getBalance(bankAddress)
-        expect(bankService.web3Library.getBalance).toHaveBeenCalledWith(bankAddress)
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should keeps the state of error', async () => {
-        const { execute: getBalance, error } = useBankBalance()
-        expect(error.value).toBe(null)
-        await getBalance(bankAddress)
-        expect(bankService.web3Library.getBalance).toHaveBeenCalledWith(bankAddress)
-        expect(error.value).toBe(null)
-      })
-
-      it('should change state of balance correctly', async () => {
-        const { execute: getBalance, data: balance } = useBankBalance()
-        expect(balance.value).toBe(null)
-        await getBalance(bankAddress)
-        expect(bankService.web3Library.getBalance).toHaveBeenCalledWith(bankAddress)
-        expect(balance.value).toBe(bankBalance)
-      })
-    })
-
-    describe('when error ', () => {
-      const mockError = new Error('error')
-
-      beforeEach(() => {
-        vi.mocked(bankService.web3Library.getBalance).mockRejectedValue(mockError)
-      })
-
-      it('should change state of error correctly', async () => {
-        const { execute: getBalance, error } = useBankBalance()
-        expect(error.value).toBe(null)
-        await getBalance(bankAddress)
-        expect(bankService.web3Library.getBalance).toHaveBeenCalledWith(bankAddress)
-        expect(error.value).toBe(mockError)
-      })
-
-      it('should keeps state of balance to null', async () => {
-        const { execute: getBalance, data: balance } = useBankBalance()
-        expect(balance.value).toBe(null)
-        await getBalance(bankAddress)
-        expect(bankService.web3Library.getBalance).toHaveBeenCalledWith(bankAddress)
-        expect(balance.value).toBe(null)
-      })
-
-      it('should keeps state of isLoading correctly', async () => {
-        const { execute: getBalance, isLoading } = useBankBalance()
-        const promise = getBalance(bankAddress)
-        expect(bankService.web3Library.getBalance).toHaveBeenCalledWith(bankAddress)
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-    })
-  })
-
   describe('useBankDeposit', () => {
     it('should set initial values correctly', async () => {
       const { execute: deposit, isLoading, error, transaction, isSuccess } = useBankDeposit()
@@ -428,142 +351,6 @@ describe('Bank', () => {
         expect(error.value).toBe(null)
         await getEvents(BankEventType.Deposit)
         expect(bankService.getEvents).toHaveBeenCalledWith(bankAddress, BankEventType.Deposit)
-        expect(error.value).toBe(mockError)
-      })
-    })
-  })
-
-  describe('useBankStatus', () => {
-    it('should set initial values correctly', async () => {
-      const { execute: getStatus, isLoading, error, data: status } = useBankStatus(bankAddress)
-      expect(getStatus).toBeInstanceOf(Function)
-      expect(isLoading.value).toBe(false)
-      expect(error.value).toBe(null)
-      expect(status.value).toBe(null)
-    })
-
-    describe('when success', () => {
-      it('should change state of status correctly', async () => {
-        const { execute: getStatus, data: status } = useBankStatus(bankAddress)
-        expect(status.value).toBe(null)
-        await getStatus()
-        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
-        expect(status.value).toBe(false)
-      })
-
-      it('should change state of loading correctly', async () => {
-        const { execute: getStatus, isLoading } = useBankStatus(bankAddress)
-        const promise = getStatus()
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should keeps state of error', async () => {
-        const { execute: getStatus, error } = useBankStatus(bankAddress)
-        expect(error.value).toBe(null)
-        await getStatus()
-        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
-        expect(error.value).toBe(null)
-      })
-    })
-
-    describe('when error', () => {
-      const mockError = new Error('error')
-
-      beforeEach(() => {
-        vi.mocked(bankService.isPaused).mockRejectedValue(mockError)
-      })
-
-      it('should keeps state of status to be null', async () => {
-        const { execute: getStatus, data: status } = useBankStatus(bankAddress)
-        expect(status.value).toBe(null)
-        await getStatus()
-        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
-        expect(status.value).toBe(null)
-      })
-
-      it('should change state of loading correctly', async () => {
-        const { execute: getStatus, isLoading } = useBankStatus(bankAddress)
-        const promise = getStatus()
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should change state of error correctly', async () => {
-        const { execute: getStatus, error } = useBankStatus(bankAddress)
-        expect(error.value).toBe(null)
-        await getStatus()
-        expect(bankService.isPaused).toHaveBeenCalledWith(bankAddress)
-        expect(error.value).toBe(mockError)
-      })
-    })
-  })
-
-  describe('useBankOwner', () => {
-    it('should set initial values correctly', async () => {
-      const { execute: getOwner, isLoading, error, data: owner } = useBankOwner(bankAddress)
-      expect(getOwner).toBeInstanceOf(Function)
-      expect(isLoading.value).toBe(false)
-      expect(error.value).toBe(null)
-      expect(owner.value).toBe(null)
-    })
-
-    describe('when success', () => {
-      it('should change state of owner correctly', async () => {
-        const { execute: getOwner, data: owner } = useBankOwner(bankAddress)
-        expect(owner.value).toBe(null)
-        await getOwner()
-        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
-        expect(owner.value).toBe('0x123')
-      })
-
-      it('should change state of loading correctly', async () => {
-        const { execute: getOwner, isLoading } = useBankOwner(bankAddress)
-        const promise = getOwner()
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should keeps state of error', async () => {
-        const { execute: getOwner, error } = useBankOwner(bankAddress)
-        expect(error.value).toBe(null)
-        await getOwner()
-        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
-        expect(error.value).toBe(null)
-      })
-    })
-
-    describe('when error', () => {
-      const mockError = new Error('error')
-
-      beforeEach(() => {
-        vi.mocked(bankService.getOwner).mockRejectedValue(mockError)
-      })
-
-      it('should keeps state of owner to be null', async () => {
-        const { execute: getOwner, data: owner } = useBankOwner(bankAddress)
-        expect(owner.value).toBe(null)
-        await getOwner()
-        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
-        expect(owner.value).toBe(null)
-      })
-
-      it('should change state of loading correctly', async () => {
-        const { execute: getOwner, isLoading } = useBankOwner(bankAddress)
-        const promise = getOwner()
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should change state of error correctly', async () => {
-        const { execute: getOwner, error } = useBankOwner(bankAddress)
-        expect(error.value).toBe(null)
-        await getOwner()
-        expect(bankService.getOwner).toHaveBeenCalledWith(bankAddress)
         expect(error.value).toBe(mockError)
       })
     })

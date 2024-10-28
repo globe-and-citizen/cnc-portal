@@ -173,20 +173,4 @@ describe('Bank Service', () => {
       expect(result).toMatchObject(tx)
     })
   })
-
-  describe('getOwner', () => {
-    it('should get owner of bank contract', async () => {
-      const result = await bankService.getOwner('0x123')
-      expect(bank.owner).toHaveBeenCalled()
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('isPaused', () => {
-    it('should check if bank contract is paused', async () => {
-      const result = await bankService.isPaused('0x123')
-      expect(bank.paused).toHaveBeenCalled()
-      expect(result).toBeFalsy()
-    })
-  })
 })
