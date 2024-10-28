@@ -42,7 +42,7 @@
           class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
           data-test="contract-balance"
         >
-          {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          {{ contractBalance.formatted }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
         </div>
       </div>
 
@@ -95,7 +95,7 @@
         @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
         :loading="isLoadingTransfer"
-        :bank-balance="`${contractBalance}`"
+        :bank-balance="`${contractBalance.formatted}`"
         service="Expense Account"
       />
     </ModalComponent>
@@ -135,8 +135,6 @@
 import { onMounted, ref, watch } from 'vue'
 import type { Team, User } from '@/types'
 import {
-  useExpenseAccountGetOwner,
-  useExpenseAccountGetBalance,
   useExpenseAccountIsApprovedAddress,
   useExpenseAccountTransfer,
   useExpenseAccountSetLimit,
@@ -159,8 +157,9 @@ import { useAddAction } from '@/composables/bod'
 import { ExpenseAccountService } from '@/services/expenseAccountService'
 import type { Address } from 'viem'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { useReadContract } from '@wagmi/vue'
+import { useBalance, useReadContract } from '@wagmi/vue'
 import BoDABI from '@/artifacts/abi/bod.json'
+import expenseAccountABI from '@/artifacts/abi/expense-account.json'
 
 //#endregion imports
 
@@ -232,16 +231,22 @@ const {
 
 const {
   data: contractOwnerAddress,
-  execute: executeExpenseAccountGetOwner,
+  refetch: executeExpenseAccountGetOwner,
   error: errorGetOwner
-} = useExpenseAccountGetOwner()
+} = useReadContract({
+  functionName: 'owner',
+  address: team.value.expenseAccountAddress as Address,
+  abi: expenseAccountABI
+})
 
 const {
   data: contractBalance,
-  execute: executeExpenseAccountGetBalance,
+  refetch: executeExpenseAccountGetBalance,
   isLoading: isLoadingBalance,
   error: errorGetContractBalance
-} = useExpenseAccountGetBalance()
+} = useBalance({
+  address: team.value.expenseAccountAddress as Address
+})
 
 const { data: isApprovedAddress, execute: executeExpenseAccountIsApprovedAddress } =
   useExpenseAccountIsApprovedAddress()
@@ -272,19 +277,17 @@ const init = async () => {
 }
 
 const getExpenseAccountBalance = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
+  if (team.value.expenseAccountAddress) await executeExpenseAccountGetBalance()
 }
 
 const getExpenseAccountOwner = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetOwner(team.value.expenseAccountAddress)
+  if (team.value.expenseAccountAddress) await executeExpenseAccountGetOwner()
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountAddress) {
     await executeExpenseAccountTransfer(team.value.expenseAccountAddress, to, amount)
-    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
+    await executeExpenseAccountGetBalance()
     if (isSuccessTransfer.value) transferModal.value = false
   }
 }
@@ -336,7 +339,7 @@ const approveAddress = async (address: string, description: string) => {
 
 const isBodAction = () => {
   if (
-    contractOwnerAddress.value?.toLocaleLowerCase() ===
+    (contractOwnerAddress.value as string)?.toLocaleLowerCase() ===
       team.value.boardOfDirectorsAddress?.toLocaleLowerCase() &&
     boardOfDirectors.value
   )

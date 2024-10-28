@@ -98,19 +98,6 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return await new SmartContract(address, abi).getContract()
   }
 
-  async getOwner(expenseAccountAddress: string): Promise<string> {
-    const expenseAccount = await this.getContract(expenseAccountAddress)
-    const ownerAddress = await expenseAccount.owner()
-    return ownerAddress
-  }
-
-  async getBalance(expenseAccountAddress: string): Promise<string> {
-    const expenseAccount = await this.getContract(expenseAccountAddress)
-    let balance = await expenseAccount.getBalance()
-    balance = this.web3Library.formatEther(balance)
-    return balance
-  }
-
   private async deployExpenseAccountContract(): Promise<string> {
     const expenseAccountLogic = await this.getContract(EXPENSE_ACCOUNT_LOGIC_ADDRESS, this.abi)
 

@@ -137,15 +137,13 @@ import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 import { onMounted, watch } from 'vue'
 import type { Address } from 'viem'
-import {
-  useExpenseAccountTransferOwnership,
-  useExpenseAccountGetOwner
-} from '@/composables/useExpenseAccount'
+import { useExpenseAccountTransferOwnership } from '@/composables/useExpenseAccount'
 
 import { useBankTransferOwnership } from '@/composables/bank'
 import { useReadContract } from '@wagmi/vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
+import expenseAccountABI from '@/artifacts/abi/expense-account.json'
 
 const props = defineProps<{
   team: Partial<Team>
@@ -166,8 +164,12 @@ const {
   data: expenseOwner,
   isLoading: isLoadingExpenseOwner,
   error: errorExpenseOwner,
-  execute: executeGetExpenseOwner
-} = useExpenseAccountGetOwner()
+  refetch: executeGetExpenseOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: props.team.expenseAccountAddress as Address,
+  abi: expenseAccountABI
+})
 
 const {
   data: boardOfDirectors,
@@ -229,14 +231,13 @@ watch(errorTransferExpenseOwnership, (newVal) => {
 watch(successTransferExpenseOwnerShip, async (newVal) => {
   if (newVal) {
     addSuccessToast('Successfully transfered Expense A/c ownership')
-    await executeGetExpenseOwner(props.team.expenseAccountAddress!)
+    await executeGetExpenseOwner()
   }
 })
 
 onMounted(async () => {
   await executeGetBoardOfDirectors()
   await executeBankOwner()
-  if (props.team.expenseAccountAddress)
-    await executeGetExpenseOwner(props.team.expenseAccountAddress)
+  if (props.team.expenseAccountAddress) await executeGetExpenseOwner()
 })
 </script>

@@ -183,50 +183,6 @@ export function useDeployExpenseAccountContract() {
   return { execute: deploy, isLoading: loading, isSuccess, error, data }
 }
 
-export function useExpenseAccountGetOwner() {
-  const data = ref<string | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-  const isSuccess = ref(false)
-
-  async function getOwner(address: string) {
-    try {
-      loading.value = true
-      data.value = await expenseAccountService.getOwner(address)
-      isSuccess.value = true
-    } catch (err) {
-      log.error(parseError(err))
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: getOwner, isLoading: loading, isSuccess, error, data }
-}
-
-export function useExpenseAccountGetBalance() {
-  const data = ref<string | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-  const isSuccess = ref(false)
-
-  async function getBalance(address: string) {
-    try {
-      loading.value = true
-      data.value = await expenseAccountService.getBalance(address)
-      isSuccess.value = true
-    } catch (err) {
-      log.error(parseError(err))
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: getBalance, isLoading: loading, isSuccess, error, data }
-}
-
 export function useExpenseGetFunction(expenseAccountAddress: string) {
   const functionName = ref<string | undefined>()
   const inputs = ref<string[] | undefined>([])
