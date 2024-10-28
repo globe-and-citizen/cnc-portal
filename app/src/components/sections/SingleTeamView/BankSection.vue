@@ -110,7 +110,7 @@
       </div>
     </ModalComponent>
   </div>
-  <BankManagement :isBod="isBod" :team="team" :bankOwner="owner" :loadingOwner="loadingOwner" />
+  <!-- <BankManagement :isBod="isBod" :team="team" :bankOwner="owner" :loadingOwner="loadingOwner" /> -->
 </template>
 <script setup lang="ts">
 import type { Team, User } from '@/types'
