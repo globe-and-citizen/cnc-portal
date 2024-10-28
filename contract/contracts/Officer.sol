@@ -3,60 +3,32 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-
-import 'hardhat/console.sol';
-
-interface IBankAccount {
-    function initialize(address tipsAddress, address _sender) external;
-}
-
-interface IVotingContract {
-    function initialize(address _sender) external;
-    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external;
-}
-
-interface IBodContract {
-    function initialize(address[] memory votingAddress) external;
-}
-interface IExpenseAccount {
-    function initialize(address _sender) external;
-}
-
-contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
-    
+contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
     address[] founders;
     address[] members;
-    address bankAccountContract;
-    address votingContract;
-    address bodContract;
-    address expenseAccountContract;
+    mapping(string => address) public contractBeacons;
 
-    address public bankAccountBeacon;
-    address public votingContractBeacon;
-    address public bodContractBeacon;
-    address public expenseAccountBeacon;
+    event ContractDeployed(string contractType, address deployedAddress);
+    event BeaconConfigured(string contractType, address beaconAddress);
+    event TeamCreated(address[] founders, address[] members);
 
-    event TeamCreated( address[] founders, address[] members);
-    event ContractDeployed( string contractType, address contractAddress);
 
-  function initialize(address owner, address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon, address _expenseAccountBeacon) public initializer {
-        __Ownable_init(owner);
+    function initialize(address _owner) public initializer {
+        __Ownable_init(_owner);
         __ReentrancyGuard_init();
         __Pausable_init();
-        bankAccountBeacon = _bankAccountBeacon;
-        votingContractBeacon = _votingContractBeacon;
-        bodContractBeacon = _bodContractBeacon;
-        expenseAccountBeacon = _expenseAccountBeacon;
     }
 
-   function createTeam(
-    address[] memory _founders, 
-    address[] memory _members
-    ) external  whenNotPaused {
+    function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwner {
+        contractBeacons[contractType] = beaconAddress;
+        emit BeaconConfigured(contractType, beaconAddress);
+    }
+
+    function createTeam(address[] memory _founders, address[] memory _members) external  whenNotPaused {
         require(_founders.length > 0, "Must have at least one founder");
 
         for (uint256 i = 0; i < _founders.length; i++) {
@@ -70,60 +42,22 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit TeamCreated( _founders, _members);
     }
 
-    function deployBankAccount(address tipsAddress) external onlyOwners whenNotPaused  {
-        require(bankAccountContract == address(0), "Bank account contract already deployed");
+    function deployContract(string calldata contractType, bytes calldata initializerData) external onlyOwner whenNotPaused {
+        address beaconAddress = contractBeacons[contractType];
+        require(beaconAddress != address(0), "Beacon not configured for this contract type");
+
         BeaconProxy proxy = new BeaconProxy(
-            bankAccountBeacon,
-            abi.encodeWithSelector(IBankAccount.initialize.selector, tipsAddress, msg.sender)
+            beaconAddress,
+            initializerData
         );
-        bankAccountContract = address(proxy);
+        address proxyAddress = address(proxy);
 
-        emit ContractDeployed("BankAccount", address(proxy));
+        emit ContractDeployed(contractType, proxyAddress);
     }
-
-    function deployVotingContract() external onlyOwners whenNotPaused  {
-        BeaconProxy proxy = new BeaconProxy(
-            votingContractBeacon,
-            abi.encodeWithSelector(IVotingContract.initialize.selector, msg.sender) 
-        );
-        
-        votingContract = address(proxy);
-
-
-        emit ContractDeployed("VotingContract", votingContract);
-        
-        address[] memory args = new address[](1);
-        args[0] = votingContract;
-
-         BeaconProxy proxyBod = new BeaconProxy(
-            bodContractBeacon,
-            abi.encodeWithSelector(IBodContract.initialize.selector, args) 
-        );
-        bodContract = address(proxyBod);
-
-        IVotingContract(votingContract).setBoardOfDirectorsContractAddress(bodContract);
-
-        emit ContractDeployed("BoDContract", bodContract);
-    }
-    function deployExpenseAccount() external onlyOwners whenNotPaused  {
-        BeaconProxy proxy = new BeaconProxy(
-            expenseAccountBeacon,
-            abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
-        );
-         expenseAccountContract = address(proxy);
-
-        emit ContractDeployed("ExpenseAccount", expenseAccountContract);
-    }
-  
-    function transferOwnershipToBOD(address newOwner) external whenNotPaused {
-        transferOwnership(newOwner);
-        emit OwnershipTransferred(owner(), newOwner);
-    }
-
-    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
-        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract);
-    }
-    modifier onlyOwners{
+    function getTeam() external view returns (address[] memory, address[] memory  ) {
+        return (founders, members);
+        }
+     modifier onlyOwners{
         if (msg.sender == owner()) {
              _;
             return;

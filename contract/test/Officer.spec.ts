@@ -4,7 +4,7 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { Officer } from '../typechain-types'
 
 describe('Officer Contract', function () {
-  let Officer, officer: unknown
+  let Officer, officer: Officer
   let BankAccount, VotingContract, ExpenseAccount
   let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon
   let BoD, bodBeacon
@@ -13,7 +13,8 @@ describe('Officer Contract', function () {
     addr2: SignerWithAddress,
     addr3: SignerWithAddress
 
-  this.beforeAll(async function () {
+  before(async function () {
+    // Deploy implementations
     BankAccount = await ethers.getContractFactory('Bank')
     bankAccountBeacon = await upgrades.deployBeacon(BankAccount)
 
@@ -27,117 +28,124 @@ describe('Officer Contract', function () {
     expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
+    // Deploy Officer contract
     Officer = await ethers.getContractFactory('Officer')
-    officer = await upgrades.deployProxy(
-      Officer,
-      [
-        await owner.getAddress(),
-        await bankAccountBeacon.getAddress(),
-        await votingContractBeacon.getAddress(),
-        await bodBeacon.getAddress(),
-        await expenseAccountBeacon.getAddress()
-      ],
-      { initializer: 'initialize' }
-    )
+    officer = (await upgrades.deployProxy(Officer, [owner.address], {
+      initializer: 'initialize'
+    })) as unknown as Officer
+
+    // Configure beacons
+    await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
+    await officer.connect(owner).configureBeacon('Voting', await votingContractBeacon.getAddress())
+    await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
+    await officer
+      .connect(owner)
+      .configureBeacon('ExpenseAccount', await expenseAccountBeacon.getAddress())
   })
 
   it('Should create a new team', async function () {
-    const founders = [addr1.address, addr2.address]
-    const tx = await (officer as Officer)
-      .connect(owner)
-      .createTeam(founders, ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'])
-
+    const founders = [await addr1.getAddress(), await addr2.getAddress()]
+    const members = ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E']
+    const tx = await officer.connect(owner).createTeam(founders, members)
     await tx.wait()
-    const team = await (officer as Officer).getTeam()
 
-    expect(team[0][0]).to.equal(addr1.address)
-    expect(team[0][1]).to.equal(addr2.address)
-  })
-  it('Should deploy the Voting and BoD contract via BeaconProxy', async function () {
-    await (officer as Officer).connect(owner).deployVotingContract()
-
-    const team = await (officer as Officer).getTeam()
-    expect(team[3]).to.be.not.equal('0x0000000000000000000000000000000000000000')
-
-    expect(team[4]).to.be.not.equal('0x0000000000000000000000000000000000000000')
-  })
-  it('Should deploy the BankAccount contract via BeaconProxy', async function () {
-    await (officer as Officer)
-      .connect(owner)
-      .deployBankAccount(ethers.Wallet.createRandom().address)
-
-    const team = await (officer as Officer).getTeam()
-    expect(team[2]).to.be.not.equal('0x0000000000000000000000000000000000000000')
-  })
-  it('Should deploy the ExpenseAccount contract via BeaconProxy', async function () {
-    await (officer as Officer).connect(owner).deployExpenseAccount()
-
-    const team = await (officer as Officer).getTeam()
-    expect(team[5]).to.be.not.equal('0x0000000000000000000000000000000000000000')
-  })
-  it('should pause the contract', async function () {
-    await (officer as Officer).connect(owner).pause()
-
-    const paused = await (officer as Officer).paused()
-    expect(paused).to.be.true
-  })
-  it('should unpause the contract', async function () {
-    await (officer as Officer).connect(owner).unpause()
-
-    const paused = await (officer as Officer).paused()
-    expect(paused).to.be.false
-  })
-  it('Should transfer ownership to a new owner', async function () {
-    const team = await (officer as Officer).connect(owner).transferOwnershipToBOD(addr1.address)
-
-    const receipt = await team.wait()
-    interface TransactionReceipt {
-      logs: {
-        args: {
-          newOwner: string
-        }
-      }[]
-    }
-
-    expect((receipt as unknown as TransactionReceipt).logs[0].args.newOwner).to.equal(addr1.address)
+    // Access founders array
+    const teamFounders = await officer.connect(owner).getTeam()
+    console.log('Team Founders:', teamFounders)
+    expect(teamFounders[0][0]).to.equal(await addr1.getAddress())
+    expect(teamFounders[0][1]).to.equal(await addr2.getAddress())
   })
 
-  it('Should fail if non-founder or non-owner tries to deploy and should allow other founders to deploy', async function () {
-    BankAccount = await ethers.getContractFactory('Bank')
-    bankAccountBeacon = await upgrades.deployBeacon(BankAccount)
+  it('Should deploy the Voting and BoD contracts via BeaconProxy', async function () {
+    // Prepare initializer arguments
+    const votingAdmin = owner.address // or any address you want as admin
+    const bodDirectors = [addr1.address, addr2.address] // array of director addresses
 
-    VotingContract = await ethers.getContractFactory('Voting')
-    votingContractBeacon = await upgrades.deployBeacon(VotingContract)
+    // Encode initializer data with correct arguments
+    const votingInitData = VotingContract.interface.encodeFunctionData('initialize', [votingAdmin])
+    const bodInitData = BoD.interface.encodeFunctionData('initialize', [bodDirectors])
 
-    BoD = await ethers.getContractFactory('BoardOfDirectors')
-    bodBeacon = await upgrades.deployBeacon(BoD)
-    ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
+    console.log('Voting Init Data:', votingInitData)
 
-    ExpenseAccount = await ethers.getContractFactory('ExpenseAccount')
-    expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
-
-    Officer = await ethers.getContractFactory('Officer')
-    officer = await upgrades.deployProxy(
-      Officer,
-      [
-        await addr1.getAddress(),
-        await bankAccountBeacon.getAddress(),
-        await votingContractBeacon.getAddress(),
-        await bodBeacon.getAddress(),
-        await expenseAccountBeacon.getAddress()
-      ],
-      { initializer: 'initialize' }
+    // Deploy Voting contract
+    await expect(officer.connect(owner).deployContract('Voting', votingInitData)).to.emit(
+      officer,
+      'ContractDeployed'
     )
 
-    await expect(
-      (officer as Officer).connect(addr3).deployBankAccount(ethers.Wallet.createRandom().address)
-    ).to.be.revertedWith('You are not authorized to perform this action')
-    await (officer as Officer)
-      .connect(owner)
-      .createTeam([addr1.address, addr2.address], ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'])
+    // Deploy Board of Directors contract
+    await expect(officer.connect(owner).deployContract('BoardOfDirectors', bodInitData)).to.emit(
+      officer,
+      'ContractDeployed'
+    )
+  })
 
-    await expect(
-      (officer as Officer).connect(addr2).deployBankAccount(ethers.Wallet.createRandom().address)
-    ).to.emit(officer as Officer, 'ContractDeployed')
+  it('Should deploy the BankAccount contract via BeaconProxy', async function () {
+    const bankInitData = BankAccount.interface.encodeFunctionData(
+      'initialize',
+      ethers.Wallet.createRandom().address
+    )
+
+    await expect(officer.connect(owner).deployContract('Bank', bankInitData)).to.emit(
+      officer,
+      'ContractDeployed'
+    )
+  })
+
+  it('Should deploy the ExpenseAccount contract via BeaconProxy', async function () {
+    const expenseInitData = ExpenseAccount.interface.encodeFunctionData(
+      'initialize',
+      await owner.getAddress()
+    )
+
+    await expect(officer.connect(owner).deployContract('ExpenseAccount', expenseInitData)).to.emit(
+      officer,
+      'ContractDeployed'
+    )
+  })
+
+  it('should pause the contract', async function () {
+    await officer.connect(owner).pause()
+    const paused = await officer.paused()
+    expect(paused).to.be.true
+  })
+
+  it('should unpause the contract', async function () {
+    await officer.connect(owner).unpause()
+    const paused = await officer.paused()
+    expect(paused).to.be.false
+  })
+
+  it('Should transfer ownership to a new owner', async function () {
+    const tx = await officer.connect(owner).transferOwnership(addr1.address)
+    const receipt = await tx.wait()
+
+    const event = receipt.events?.find((e) => e.event === 'OwnershipTransferred')
+    expect(event?.args?.newOwner).to.equal(addr1.address)
+  })
+
+  it('Should restrict deployment to owners and founders', async function () {
+    // Re-deploy Officer contract with addr1 as owner
+    Officer = await ethers.getContractFactory('Officer')
+    officer = (await upgrades.deployProxy(Officer, [addr1.address], {
+      initializer: 'initialize'
+    })) as Officer
+
+    // Configure beacons
+    await officer.connect(addr1).configureBeacon('Bank', bankAccountBeacon.address)
+
+    // Non-founder/non-owner should fail
+    await expect(officer.connect(addr3).deployContract('Bank', '0x')).to.be.revertedWith(
+      'You are not authorized to perform this action'
+    )
+
+    // Create team with addr1 and addr2 as founders
+    await officer.connect(addr1).createTeam([addr1.address, addr2.address], ['0x...'])
+
+    // Founder (addr2) should succeed
+    await expect(officer.connect(addr2).deployContract('Bank', '0x')).to.emit(
+      officer,
+      'ContractDeployed'
+    )
   })
 })
