@@ -155,10 +155,12 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError } from '@/utils'
-import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
+import { useAddAction } from '@/composables/bod'
 import { ExpenseAccountService } from '@/services/expenseAccountService'
 import type { Address } from 'viem'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { useReadContract } from '@wagmi/vue'
+import BoDABI from '@/artifacts/abi/bod.json'
 
 //#endregion imports
 
@@ -188,7 +190,11 @@ const {
   error: errorAddAction,
   isSuccess: isSuccessAddAction
 } = useAddAction()
-const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
+const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: team.value.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
 const {
   execute: executeExpenseAccountGetMaxLimit,
   isLoading: isLoadingMaxLimit,
@@ -262,8 +268,7 @@ const init = async () => {
   await getExpenseAccountMaxLimit()
   await getExpenseAccountOwner()
   await checkApprovedAddresses()
-  if (team.value.boardOfDirectorsAddress)
-    await executeGetBoardOfDirectors(team.value.boardOfDirectorsAddress)
+  if (team.value.boardOfDirectorsAddress) await executeGetBoardOfDirectors()
 }
 
 const getExpenseAccountBalance = async () => {
@@ -335,7 +340,7 @@ const isBodAction = () => {
       team.value.boardOfDirectorsAddress?.toLocaleLowerCase() &&
     boardOfDirectors.value
   )
-    return boardOfDirectors.value
+    return (boardOfDirectors.value as Array<Address>)
       .map((address) => address.toLocaleLowerCase())
       .includes(useUserDataStore().address.toLocaleLowerCase())
 

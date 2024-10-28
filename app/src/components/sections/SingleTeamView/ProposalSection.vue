@@ -100,21 +100,27 @@ import CreateProposalForm from '@/components/sections/SingleTeamView/forms/Creat
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 import { useAddProposal, useGetProposals } from '@/composables/voting'
-import { useGetBoardOfDirectors } from '@/composables/bod'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
+import { useReadContract } from '@wagmi/vue'
+import BoDABI from '@/artifacts/abi/bod.json'
+import type { Address } from 'viem'
 
 const props = defineProps<{ team: Partial<Team> }>()
 const showVotingControlModal = ref(false)
 const emits = defineEmits(['getTeam', 'addBodTab'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 const {
-  boardOfDirectors,
-  execute: executeGetBoardOfDirectors,
+  data: boardOfDirectors,
+  refetch: executeGetBoardOfDirectors,
   error: errorGetBoardOfDirectors
-} = useGetBoardOfDirectors()
+} = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
 
 watch(errorGetBoardOfDirectors, () => {
   if (errorGetBoardOfDirectors.value) {

@@ -5,46 +5,6 @@ import { useCustomFetch } from './useCustomFetch'
 
 const bodService = new BoDService()
 
-export function useGetBoardOfDirectors() {
-  const boardOfDirectors = ref<string[] | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-  const isSuccess = ref(false)
-
-  async function getBoardOfDirectors(bodAddress: string) {
-    try {
-      loading.value = true
-      boardOfDirectors.value = await bodService.getBoardOfDirectors(bodAddress)
-      isSuccess.value = true
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: getBoardOfDirectors, isLoading: loading, isSuccess, error, boardOfDirectors }
-}
-
-export function useGetActionCount() {
-  const actionCount = ref<number | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-
-  async function getActionCount(bodAddress: string) {
-    try {
-      loading.value = true
-      actionCount.value = await bodService.getActionCount(bodAddress)
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: getActionCount, isLoading: loading, error, data: actionCount }
-}
-
 export function useAddAction() {
   const loading = ref(false)
   const error = ref<unknown>(null)
@@ -115,25 +75,6 @@ export function useRevokeAction() {
   }
 
   return { execute: revoke, isLoading: loading, error, isSuccess }
-}
-
-export function useIsActionApproved() {
-  const data = ref<boolean | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-
-  async function isApproved(bodAddress: string, actionId: number, address: string) {
-    try {
-      loading.value = true
-      data.value = await bodService.isApproved(actionId, bodAddress, address)
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: isApproved, isLoading: loading, error, data }
 }
 
 export function useApprovalCount() {

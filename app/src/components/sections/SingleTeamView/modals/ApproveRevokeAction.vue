@@ -98,7 +98,6 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import {
   useApprovalCount,
   useApproveAction,
-  useIsActionApproved,
   useRevokeAction,
   useActionExecuted
 } from '@/composables/bod'
@@ -106,6 +105,14 @@ import { onMounted, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useBankGetFunction } from '@/composables/bank'
 import { useExpenseGetFunction } from '@/composables/useExpenseAccount'
+import { useReadContract } from '@wagmi/vue'
+
+const props = defineProps<{
+  action: Action
+  team: Partial<Team>
+  boardOfDirectors: Address[]
+}>()
+const emits = defineEmits(['closeModal', 'onExecuted'])
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
@@ -113,8 +120,11 @@ const {
   data: isApproved,
   error: errorIsApproved,
   isLoading: isApprovedLoading,
-  execute: executeIsApproved
-} = useIsActionApproved()
+  refetch: executeIsApproved
+} = useReadContract({
+  functionName: 'actionCount',
+  address: props.team.boardOfDirectorsAddress as Address
+})
 const {
   execute: approve,
   error: errorApprove,
@@ -134,13 +144,6 @@ const {
   execute: executeApprovalCount
 } = useApprovalCount()
 const { data: isExecuted, execute: executeIsExecuted } = useActionExecuted()
-
-const props = defineProps<{
-  action: Action
-  team: Partial<Team>
-  boardOfDirectors: Address[]
-}>()
-const emits = defineEmits(['closeModal', 'onExecuted'])
 
 const {
   data: bankFunctionName,

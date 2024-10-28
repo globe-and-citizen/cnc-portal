@@ -143,9 +143,9 @@ import {
 } from '@/composables/useExpenseAccount'
 
 import { useBankTransferOwnership } from '@/composables/bank'
-import { useGetBoardOfDirectors } from '@/composables/bod'
 import { useReadContract } from '@wagmi/vue'
 import BankABI from '@/artifacts/abi/bank.json'
+import BoDABI from '@/artifacts/abi/bod.json'
 
 const props = defineProps<{
   team: Partial<Team>
@@ -170,11 +170,15 @@ const {
 } = useExpenseAccountGetOwner()
 
 const {
-  boardOfDirectors,
+  data: boardOfDirectors,
   error,
   isLoading,
-  execute: executeGetBoardOfDirectors
-} = useGetBoardOfDirectors()
+  refetch: executeGetBoardOfDirectors
+} = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
 
 const {
   error: errorTransferOwnership,
@@ -230,7 +234,7 @@ watch(successTransferExpenseOwnerShip, async (newVal) => {
 })
 
 onMounted(async () => {
-  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
+  await executeGetBoardOfDirectors()
   await executeBankOwner()
   if (props.team.expenseAccountAddress)
     await executeGetExpenseOwner(props.team.expenseAccountAddress)

@@ -7,7 +7,6 @@ import type { Action } from '@/types'
 export interface IBoDService {
   web3Library: IWeb3Library
 
-  getBoardOfDirectors(bodAddress: string): Promise<string[]>
   getActionCount(bodAddress: string): Promise<number>
   addAction(bodAddress: string, action: Partial<Action>): Promise<void>
   approve(actionId: number, bodAddress: string): Promise<void>
@@ -21,11 +20,6 @@ export class BoDService implements IBoDService {
 
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     this.web3Library = web3Library
-  }
-  async getBoardOfDirectors(bodAddress: string): Promise<string[]> {
-    const bodContract = await this.getBoDContract(bodAddress)
-    const boardOfDirectors = await bodContract.getBoardOfDirectors()
-    return boardOfDirectors
   }
 
   async getActionCount(bodAddress: string): Promise<number> {

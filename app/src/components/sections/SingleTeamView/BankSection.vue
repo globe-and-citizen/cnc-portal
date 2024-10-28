@@ -1,7 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
     <span class="text-2xl sm:text-3xl font-bold">Team Bank Account</span>
-
     <div class="divider m-0"></div>
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -128,13 +127,14 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useBankDeposit, useBankTransfer } from '@/composables/bank'
 import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
+import { useAddAction } from '@/composables/bod'
 import { BankService } from '@/services/bankService'
 import type { Address } from 'viem'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
+import BoDABI from '@/artifacts/abi/bod.json'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -177,8 +177,15 @@ const {
   isSuccess: pushTipSuccess,
   error: pushTipError
 } = usePushTip()
-const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
-const isBod = computed(() => boardOfDirectors.value?.includes(useUserDataStore().address))
+const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
+const isBod = computed(() =>
+  (boardOfDirectors.value as Array<Address>)?.includes(useUserDataStore().address as Address)
+)
+
 const {
   execute: executeAddAction,
   error: errorAddAction,
@@ -338,7 +345,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
 onMounted(async () => {
   if (props.team.bankAddress) fetchBalance()
   await getOwner()
-  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
+  await executeGetBoardOfDirectors()
 })
 const membersAddress = computed(() => {
   return props.team.members?.map((member: { address: string }) => member.address) ?? []
