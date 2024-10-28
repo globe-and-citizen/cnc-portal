@@ -34,22 +34,10 @@
           </ToolTip>
         </span>
 
-        <!--<div>
-        <div v-if="false" class="stat-value mt-1 pr-3">
-          <span class="loading loading-dots loading-xs" data-test="max-limit-loading"></span>
-        </div>
-        <div v-else class="stat-value text-3xl mt-2" data-test="max-limit">
-          {{ new Date().toLocaleString('en-US') }}
-        </div>
-      </div>-->
-
         <div class="flex items-center pt-3 mt-10" style="border-width: 0">
           <div>
             <div class="stat-title pr-3">Balance</div>
-            <div
-              v-if="isLoadingBalance || !contractBalance"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
+            <div v-if="false" class="stat-value mt-1 border-r border-gray-400 pr-3">
               <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
             </div>
             <div
@@ -57,16 +45,13 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="contract-balance"
             >
-              {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
 
           <div class="pl-3">
             <div class="stat-title pr-3">Max Limit</div>
-            <div
-              v-if="isLoadingBalance || !contractBalance"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
+            <div v-if="false" class="stat-value mt-1 border-r border-gray-400 pr-3">
               <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
             </div>
             <div
@@ -74,29 +59,19 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="contract-balance"
             >
-              {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
 
           <div class="pl-3">
             <div class="stat-title pr-3">Limit Balance</div>
-            <div v-if="isLoadingBalance || !contractBalance" class="stat-value mt-1 pr-3">
+            <div v-if="false" class="stat-value mt-1 pr-3">
               <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
             </div>
             <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="contract-balance">
-              {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
-
-          <!--<div class="pl-3">
-          <div class="stat-title">Expiry</div>
-          <div v-if="false" class="stat-value mt-1 pr-3">
-            <span class="loading loading-dots loading-xs" data-test="max-limit-loading"></span>
-          </div>
-          <div v-else class="stat-value text-3xl mt-2" data-test="max-limit">
-            {{ new Date().toLocaleString('en-US') }}
-          </div>
-        </div>-->
         </div>
 
         <div class="stat-title text-center mt-10">
@@ -104,64 +79,29 @@
           <span class="font-bold text-black">{{ new Date().toLocaleString('en-US') }}</span>
         </div>
 
-        <!--<div>
-        <div v-if="false" class="stat-value pr-3">
-          <span class="loading loading-dots loading-xs" data-test="max-limit-loading"></span>
-        </div>
-        <div v-else class="stat-value text-3xl mt-2" data-test="max-limit">
-          {{ new Date().toLocaleString('en-US') }}
-        </div>
-      </div>-->
-
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
           <button
             class="btn btn-secondary"
-            :disabled="!approvedAddresses.has(useUserDataStore().address)"
-            v-if="approvedAddresses"
+            :disabled="!(useUserDataStore().address === contractOwnerAddress)"
+            v-if="true"
             @click="transferModal = true"
             data-test="transfer-button"
           >
             Transfer
           </button>
-          <!--<button
-          class="btn btn-xs btn-secondary"
-          v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
-          @click="approveUsersModal = true"
-          data-test="approve-users-button"
-        >
-          Approve Users
-        </button>-->
         </div>
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
             v-if="transferModal"
             @close-modal="() => (transferModal = false)"
-            @transfer="
-              async (to: string, amount: string) => {
-                transferFromExpenseAccount(to, amount)
-              }
-            "
+            @transfer="async (to: string, amount: string) => {}"
             @searchMembers="(input) => searchUsers({ name: '', address: input })"
             :filteredMembers="foundUsers"
-            :loading="isLoadingTransfer"
-            :bank-balance="`${contractBalance}`"
+            :loading="false"
+            :bank-balance="`${0.0}`"
             service="Expense Account"
           />
         </ModalComponent>
-        <!--<ModalComponent v-model="approveUsersModal">
-        <ApproveUsersForm
-          v-if="approveUsersModal"
-          :form-data="teamMembers"
-          :users="foundUsers"
-          :loading-approve="
-            false
-          "
-          :is-bod-action="isBodAction()"
-          @approve-user="approveUser"
-          @close-modal="approveUsersModal = false"
-          @search-users="(input) => searchUsers(input)"
-        />
-      </ModalComponent>-->
       </section>
 
       <!-- Approve User Form -->
@@ -190,13 +130,7 @@
 //#region imports
 import { onMounted, ref, watch } from 'vue'
 import type { Team, User } from '@/types'
-import {
-  useExpenseAccountGetOwner,
-  useExpenseAccountGetBalance,
-  useExpenseAccountIsApprovedAddress,
-  useExpenseAccountTransfer,
-  useExpenseAccountGetMaxLimit
-} from '@/composables/useExpenseAccount'
+import { useExpenseAccountGetOwner } from '@/composables/useExpenseAccount'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -207,9 +141,6 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
-// import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
-// import { ExpenseAccountService } from '@/services/expenseAccountService'
-// import type { Address } from 'viem'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 //#endregion imports
@@ -217,53 +148,25 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 //#region variable declarations
 const props = defineProps<{ team: Partial<Team> }>()
 const team = ref(props.team)
-const approvedAddresses = ref<Set<string>>(new Set())
 const transferModal = ref(false)
 const approveUsersModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
-const unapprovedAddresses = ref<Set<string>>(new Set())
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 
-const { addSuccessToast, addErrorToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
-// const expenseAccountService = new ExpenseAccountService()
 const web3Library = new EthersJsAdapter()
 //#endregion variable declarations
 
 //#region expense account composable
 const {
-  execute: executeExpenseAccountGetMaxLimit,
-  // isLoading: isLoadingMaxLimit,
-  // data: maxLimit,
-  error: errorGetMaxLimit
-} = useExpenseAccountGetMaxLimit()
-
-const {
-  execute: executeExpenseAccountTransfer,
-  isLoading: isLoadingTransfer,
-  error: errorTransfer,
-  isSuccess: isSuccessTransfer
-} = useExpenseAccountTransfer()
-
-const {
   data: contractOwnerAddress,
   execute: executeExpenseAccountGetOwner,
   error: errorGetOwner
 } = useExpenseAccountGetOwner()
-
-const {
-  data: contractBalance,
-  execute: executeExpenseAccountGetBalance,
-  isLoading: isLoadingBalance,
-  error: errorGetContractBalance
-} = useExpenseAccountGetBalance()
-
-const { data: isApprovedAddress, execute: executeExpenseAccountIsApprovedAddress } =
-  useExpenseAccountIsApprovedAddress()
-//#endregion expense account composable
 
 const {
   execute: executeSearchUser,
@@ -288,32 +191,15 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-
 //#region helper functions
 
 const init = async () => {
-  await getExpenseAccountBalance()
-  await getExpenseAccountMaxLimit()
   await getExpenseAccountOwner()
-  await checkApprovedAddresses()
-}
-
-const getExpenseAccountBalance = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
 }
 
 const getExpenseAccountOwner = async () => {
   if (team.value.expenseAccountAddress)
     await executeExpenseAccountGetOwner(team.value.expenseAccountAddress)
-}
-
-const transferFromExpenseAccount = async (to: string, amount: string) => {
-  if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountTransfer(team.value.expenseAccountAddress, to, amount)
-    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
-    if (isSuccessTransfer.value) transferModal.value = false
-  }
 }
 
 const approveUser = async (data: {}) => {
@@ -354,25 +240,6 @@ const isBodAction = () => {
   return false
 }
 
-const checkApprovedAddresses = async () => {
-  if (team.value.members && team.value.expenseAccountAddress)
-    for (const member of team.value.members) {
-      await executeExpenseAccountIsApprovedAddress(team.value.expenseAccountAddress, member.address)
-      if (isApprovedAddress.value) {
-        approvedAddresses.value.add(member.address)
-        unapprovedAddresses.value.delete(member.address)
-      } else {
-        unapprovedAddresses.value.add(member.address)
-        approvedAddresses.value.delete(member.address)
-      }
-    }
-}
-
-const getExpenseAccountMaxLimit = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetMaxLimit(team.value.expenseAccountAddress)
-}
-
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
@@ -394,26 +261,8 @@ const errorMessage = (error: {}, message: string) =>
 //#endregion helper functions
 
 //#region watch error
-watch(errorTransfer, (newVal) => {
-  if (newVal) addErrorToast(errorMessage(newVal, 'Error Making Transfer'))
-})
-
-watch(errorGetContractBalance, (newVal) => {
-  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Balance'))
-})
-
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
-})
-
-watch(errorGetMaxLimit, (newVal) => {
-  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Max Limit'))
-})
-//#endregion watch error
-
-//#region watch success
-watch(isSuccessTransfer, (newVal) => {
-  if (newVal) addSuccessToast('Transfer Successful')
 })
 
 watch(

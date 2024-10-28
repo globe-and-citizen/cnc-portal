@@ -25,7 +25,7 @@
       {{ error.$message }}
     </div>
   </div>
-  
+
   <!--Search user to approve-->
   <div v-for="(input, index) in formData" :key="index" class="input-group mt-3 mb-2">
     <label class="input input-bordered flex items-center gap-2 input-md">
@@ -101,7 +101,7 @@
     <label class="input input-bordered flex items-center gap-2 input-md">
       <select v-model="budgetLimitType" class="bg-white grow">
         <option disabled :value="null">-- Select a budget limit type --</option>
-        <option v-for="(type) of budgetLimitTypes" :key="type.id" :value="type.id">
+        <option v-for="type of budgetLimitTypes" :key="type.id" :value="type.id">
           {{ type.name }}
         </option>
       </select>
@@ -150,12 +150,7 @@
   </div>
 
   <div class="modal-action justify-center">
-    <LoadingButton
-      data-test="loading-approve"
-      color="primary"
-      class="w-24"
-      v-if="loadingApprove"
-    />
+    <LoadingButton data-test="loading-approve" color="primary" class="w-24" v-if="loadingApprove" />
     <button
       class="btn btn-primary"
       @click="submitApprove"
@@ -164,9 +159,9 @@
     >
       Approve
     </button>
-    <button 
-      data-test="cancel-button" 
-      class="btn btn-error" 
+    <button
+      data-test="cancel-button"
+      class="btn btn-error"
       @click="clear"
       :disabled="loadingApprove"
     >
@@ -181,8 +176,8 @@ import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import type { User } from '@/types'
-import VueDatePicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
+import VueDatePicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -198,9 +193,9 @@ const formData = ref(props.formData)
 const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
 const budgetLimitTypes = ref([
-  {id: 0, name: "Transactions per period"},
-  {id: 1, name: "Amount per period"},
-  {id: 2, name: "Amount per transaction"},
+  { id: 0, name: 'Transactions per period' },
+  { id: 1, name: 'Amount per period' },
+  { id: 2, name: 'Amount per transaction' }
 ])
 
 const rules = {
@@ -225,7 +220,7 @@ const rules = {
   },
   budgetLimitType: {
     required: helpers.withMessage('Budget limit type is required', (value: string) => {
-      return value? true : false
+      return value ? true : false
     })
   },
   description: {
@@ -250,16 +245,12 @@ const submitApprove = () => {
   if (v$.value.$invalid) {
     return
   }
-  emit(
-    'approveUser', {
-      approvedAddress: formData.value[0].address,
-      budgetType: budgetLimitType.value,
-      value: limitValue.value,
-      expiry: typeof date.value === 'object'? 
-        Math.floor(date.value.getTime()/1000):
-        0
-    }
-  )
+  emit('approveUser', {
+    approvedAddress: formData.value[0].address,
+    budgetType: budgetLimitType.value,
+    value: limitValue.value,
+    expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
+  })
 }
 </script>
 <style>
