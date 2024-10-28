@@ -95,17 +95,13 @@ import type { Address } from 'viem'
 import { useToastStore, useUserDataStore } from '@/stores'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import {
-  useApprovalCount,
-  useApproveAction,
-  useRevokeAction,
-  useActionExecuted
-} from '@/composables/bod'
+import { useApproveAction, useRevokeAction } from '@/composables/bod'
 import { onMounted, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useBankGetFunction } from '@/composables/bank'
 import { useExpenseGetFunction } from '@/composables/useExpenseAccount'
 import { useReadContract } from '@wagmi/vue'
+import BoDABI from '@/artifacts/abi/bod.json'
 
 const props = defineProps<{
   action: Action
@@ -122,8 +118,10 @@ const {
   isLoading: isApprovedLoading,
   refetch: executeIsApproved
 } = useReadContract({
-  functionName: 'actionCount',
-  address: props.team.boardOfDirectorsAddress as Address
+  functionName: 'isApproved',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI,
+  args: [props.action.actionId, currentAddress]
 })
 const {
   execute: approve,
@@ -141,9 +139,19 @@ const {
   data: approvalCount,
   error: errorApprovalCount,
   isLoading: approvalCountLoading,
-  execute: executeApprovalCount
-} = useApprovalCount()
-const { data: isExecuted, execute: executeIsExecuted } = useActionExecuted()
+  refetch: executeApprovalCount
+} = useReadContract({
+  functionName: 'approvalCount',
+  abi: BoDABI,
+  address: props.team.boardOfDirectorsAddress as Address,
+  args: [props.action.actionId]
+})
+const { data: isExecuted, refetch: executeIsExecuted } = useReadContract({
+  functionName: 'isActionExecuted',
+  abi: BoDABI,
+  address: props.team.boardOfDirectorsAddress as Address,
+  args: [props.action.actionId]
+})
 
 const {
   data: bankFunctionName,
@@ -163,7 +171,7 @@ const approveAction = async () => {
     return
   }
 
-  await executeIsExecuted(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  await executeIsExecuted()
   if (isExecuted.value) {
     await useCustomFetch(`actions/${props.action.id}`, {
       immediate: true
@@ -190,6 +198,7 @@ watch(errorIsApproved, () => {
 })
 watch(errorApprove, () => {
   if (errorApprove.value) {
+    console.log(errorApprove.value)
     addErrorToast('Failed to approve action')
   }
 })
@@ -215,12 +224,8 @@ watch(errorApprovalCount, () => {
 })
 
 onMounted(async () => {
-  await executeIsApproved(
-    props.team.boardOfDirectorsAddress!,
-    props.action.actionId,
-    currentAddress
-  )
-  await executeApprovalCount(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  await executeIsApproved()
+  await executeApprovalCount()
   if (props.action.targetAddress == props.team.bankAddress) {
     await getBankFunctionName(props.action.data)
   } else if (props.action.targetAddress == props.team.expenseAccountAddress) {

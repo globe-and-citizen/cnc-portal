@@ -2,7 +2,10 @@ import { ref } from 'vue'
 import { BoDService } from '@/services/bodService'
 import type { Action, Team } from '@/types'
 import { useCustomFetch } from './useCustomFetch'
-
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import type { Address } from 'viem'
+import BoDABI from '@/artifacts/abi/bod.json'
 const bodService = new BoDService()
 
 export function useAddAction() {
@@ -14,7 +17,12 @@ export function useAddAction() {
     try {
       isSuccess.value = false
       loading.value = true
-      const actionCount = await bodService.getActionCount(team.boardOfDirectorsAddress!)
+      const actionCount = await readContract(config, {
+        address: team.boardOfDirectorsAddress as Address,
+        functionName: 'actionCount',
+        abi: BoDABI
+      })
+      // const actionCount = await bodService.getActionCount(team.boardOfDirectorsAddress!)
       await bodService.addAction(team.boardOfDirectorsAddress!, action)
 
       useCustomFetch(`actions`, {
@@ -28,6 +36,7 @@ export function useAddAction() {
       })
       isSuccess.value = true
     } catch (err) {
+      console.error(err)
       error.value = err
     } finally {
       loading.value = false
@@ -75,42 +84,4 @@ export function useRevokeAction() {
   }
 
   return { execute: revoke, isLoading: loading, error, isSuccess }
-}
-
-export function useApprovalCount() {
-  const data = ref<number | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-
-  async function getApprovalCount(bodAddress: string, actionId: number) {
-    try {
-      loading.value = true
-      data.value = await bodService.getApprovalCount(actionId, bodAddress)
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: getApprovalCount, isLoading: loading, error, data }
-}
-
-export function useActionExecuted() {
-  const data = ref<boolean | null>(null)
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-
-  async function isExecuted(bodAddress: string, actionId: number) {
-    try {
-      loading.value = true
-      data.value = await bodService.isExecuted(actionId, bodAddress)
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: isExecuted, isLoading: loading, error, data }
 }
