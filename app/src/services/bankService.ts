@@ -13,7 +13,6 @@ import type { InterfaceAbi, TransactionResponse } from 'ethers'
 export interface IBankService {
   web3Library: IWeb3Library
   createBankContract(id: string): Promise<string>
-  deposit(bankAddress: string, amount: string): Promise<TransactionResponse>
   pushTip(bankAddress: string, addresses: string[], amount: number): Promise<TransactionResponse>
   sendTip(bankAddress: string, addresses: string[], amount: number): Promise<TransactionResponse>
   getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]>
@@ -30,13 +29,6 @@ export class BankService implements IBankService {
     const bankAddress = await this.deployBankContract()
     const response = await useCustomFetch<string>(`teams/${teamId}`).put({ bankAddress }).json()
     return response.data.value.bankAddress
-  }
-
-  async deposit(bankAddress: string, amount: string): Promise<TransactionResponse> {
-    const tx = await this.web3Library.sendTransaction(bankAddress, amount)
-    await tx.wait()
-
-    return tx
   }
 
   async transfer(bankAddress: string, to: string, amount: string): Promise<TransactionResponse> {

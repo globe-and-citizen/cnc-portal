@@ -11,27 +11,6 @@ import { ref } from 'vue'
 const bankService = new BankService()
 const ethers = EthersJsAdapter.getInstance()
 
-export function useBankDeposit() {
-  const transaction = ref<TransactionResponse>()
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-  const isSuccess = ref(false)
-
-  async function deposit(bankAddress: string, amount: string) {
-    try {
-      loading.value = true
-      transaction.value = await bankService.deposit(bankAddress, amount)
-      isSuccess.value = true
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { execute: deposit, isLoading: loading, isSuccess, error, transaction }
-}
-
 export function useBankTransfer() {
   const transaction = ref<TransactionResponse>()
   const loading = ref(false)

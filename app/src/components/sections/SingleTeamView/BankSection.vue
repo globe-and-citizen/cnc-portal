@@ -120,11 +120,11 @@ import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import Button from '@/components/ButtonUI.vue'
-
+import { useSendTransaction } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useBankDeposit, useBankTransfer } from '@/composables/bank'
+import { useBankTransfer } from '@/composables/bank'
 import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction } from '@/composables/bod'
@@ -151,11 +151,11 @@ const props = defineProps<{
   team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
 }>()
 const {
-  execute: deposit,
-  isLoading: depositLoading,
-  isSuccess: depositSuccess,
-  error: depositError
-} = useBankDeposit()
+  sendTransaction,
+  isPending: depositLoading,
+  isSuccess: sendTransactionSuccess,
+  error: sendTransactionError
+} = useSendTransaction()
 
 const {
   data: teamBalance,
@@ -249,14 +249,15 @@ const addPushTipAction = async (description: string) => {
   pushTipModal.value = false
   tipAmount.value = 0
 }
-
-watch(depositSuccess, () => {
-  if (depositSuccess.value) {
+watch(sendTransactionSuccess, () => {
+  if (sendTransactionSuccess.value) {
     addSuccessToast('Deposited successfully')
+    depositModal.value = false
+    fetchBalance()
   }
 })
-watch(depositError, () => {
-  if (depositError.value) {
+watch(sendTransactionError, () => {
+  if (sendTransactionError.value) {
     addErrorToast('Failed to deposit')
   }
 })
@@ -314,11 +315,10 @@ watch(addActionSuccess, () => {
 
 const depositToBank = async (amount: string) => {
   if (props.team.bankAddress) {
-    await deposit(props.team.bankAddress, amount)
-    if (depositSuccess.value) {
-      depositModal.value = false
-      await fetchBalance()
-    }
+    sendTransaction({
+      to: props.team.bankAddress as Address,
+      value: ethers.parseEther(amount)
+    })
   }
 }
 const transferFromBank = async (to: string, amount: string) => {
