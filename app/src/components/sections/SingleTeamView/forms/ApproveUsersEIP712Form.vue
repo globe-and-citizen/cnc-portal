@@ -101,7 +101,7 @@
     <label class="input input-bordered flex items-center gap-2 input-md">
       <select v-model="budgetLimitType" class="bg-white grow">
         <option disabled :value="null">-- Select a budget limit type --</option>
-        <option v-for="(type, index) of budgetLimitTypes" :key="type.id" :value="type.id">
+        <option v-for="(type) of budgetLimitTypes" :key="type.id" :value="type.id">
           {{ type.name }}
         </option>
       </select>
@@ -175,9 +175,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { ethers, isAddress } from 'ethers'
+import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import type { User } from '@/types'

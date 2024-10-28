@@ -220,7 +220,7 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError } from '@/utils'
 // import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
-import { ExpenseAccountService } from '@/services/expenseAccountService'
+// import { ExpenseAccountService } from '@/services/expenseAccountService'
 // import type { Address } from 'viem'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
@@ -241,15 +241,15 @@ const loadingApprove = ref(false)
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
-const expenseAccountService = new ExpenseAccountService()
+// const expenseAccountService = new ExpenseAccountService()
 const web3Library = new EthersJsAdapter()
 //#endregion variable declarations
 
 //#region expense account composable
 const {
   execute: executeExpenseAccountGetMaxLimit,
-  isLoading: isLoadingMaxLimit,
-  data: maxLimit,
+  // isLoading: isLoadingMaxLimit,
+  // data: maxLimit,
   error: errorGetMaxLimit
 } = useExpenseAccountGetMaxLimit()
 
