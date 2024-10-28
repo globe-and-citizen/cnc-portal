@@ -8,11 +8,14 @@
     </div>
     <div class="flex flex-col gap-8 my-4">
       <SkeletonLoading v-if="isLoading" class="w-full h-48" />
-      <div v-if="boardOfDirectors?.length == 0 && !isLoading" class="text-red-600 font-bold">
+      <div
+        v-if="(boardOfDirectors as Array<string>)?.length == 0 && !isLoading"
+        class="text-red-600 font-bold"
+      >
         You must add board of directors by doing election voting from proposal
       </div>
       <div id="list-bod">
-        <div v-if="(boardOfDirectors?.length ?? 0) > 0 && !isLoading">
+        <div v-if="((boardOfDirectors as Array<string>)?.length ?? 0) > 0 && !isLoading">
           <div class="overflow-x-auto">
             <table class="table table-zebra text-center">
               <thead>

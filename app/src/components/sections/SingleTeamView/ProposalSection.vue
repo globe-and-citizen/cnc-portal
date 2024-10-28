@@ -61,7 +61,7 @@
           <h3>Board Of Directors</h3>
           <hr />
           <div class="mt-4">
-            <ul v-if="boardOfDirectors?.length">
+            <ul v-if="(boardOfDirectors as Array<string>)?.length">
               <li
                 v-for="(address, index) in boardOfDirectors"
                 :key="index"
