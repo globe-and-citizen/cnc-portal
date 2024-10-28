@@ -8,7 +8,7 @@
     <!-- Expense A/c Info Section -->
     <section class="stat flex flex-col justify-center items-center">
 
-      <div class="stat-title text-center">Approval Expiry</div>
+      <div class="stat-title text-center">Expense Account Address</div>
 
       <span class="flex gap-2 items-center">
         <ToolTip
@@ -36,14 +36,14 @@
         </ToolTip>
       </span>
 
-      <div>
+      <!--<div>
         <div v-if="false" class="stat-value mt-1 pr-3">
           <span class="loading loading-dots loading-xs" data-test="max-limit-loading"></span>
         </div>
         <div v-else class="stat-value text-3xl mt-2" data-test="max-limit">
           {{ new Date().toLocaleString('en-US') }}
         </div>
-      </div>
+      </div>-->
 
       <div class="flex items-center pt-3 mt-10" style="border-width: 0">
         <div>
@@ -107,9 +107,23 @@
           </div>
         </div>-->
       </div>
+
+      <div class="stat-title text-center mt-10">
+        Approval Expiry: <span class="font-bold text-black">{{ new Date().toLocaleString('en-US') }}</span>
+      </div>
+
+      <!--<div>
+        <div v-if="false" class="stat-value pr-3">
+          <span class="loading loading-dots loading-xs" data-test="max-limit-loading"></span>
+        </div>
+        <div v-else class="stat-value text-3xl mt-2" data-test="max-limit">
+          {{ new Date().toLocaleString('en-US') }}
+        </div>
+      </div>-->
+
       <div class="stat-actions flex justify-center gap-2 items-center mt-8">
         <button
-          class="btn btn-xs btn-secondary"
+          class="btn btn-secondary"
           :disabled="!approvedAddresses.has(useUserDataStore().address)"
           v-if="approvedAddresses"
           @click="transferModal = true"
