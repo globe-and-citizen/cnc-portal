@@ -133,7 +133,7 @@ import { BankService } from '@/services/bankService'
 import type { Address } from 'viem'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import BankManagement from './BankManagement.vue'
+// import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 
 const tipAmount = ref(0)
