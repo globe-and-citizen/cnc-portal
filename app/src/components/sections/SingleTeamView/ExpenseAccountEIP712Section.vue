@@ -52,12 +52,12 @@
           <div class="pl-3">
             <div class="stat-title pr-3">Max Limit</div>
             <div v-if="false" class="stat-value mt-1 border-r border-gray-400 pr-3">
-              <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
+              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
             </div>
             <div
               v-else
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="contract-balance"
+              data-test="max-limit"
             >
               {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
@@ -66,9 +66,9 @@
           <div class="pl-3">
             <div class="stat-title pr-3">Limit Balance</div>
             <div v-if="false" class="stat-value mt-1 pr-3">
-              <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
+              <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
             </div>
-            <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="contract-balance">
+            <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
               {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
@@ -82,7 +82,7 @@
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
           <button
             class="btn btn-secondary"
-            :disabled="!(useUserDataStore().address === contractOwnerAddress)"
+            :disabled="useUserDataStore().address !== contractOwnerAddress"
             v-if="true"
             @click="transferModal = true"
             data-test="transfer-button"
@@ -98,7 +98,7 @@
             @searchMembers="(input) => searchUsers({ name: '', address: input })"
             :filteredMembers="foundUsers"
             :loading="false"
-            :bank-balance="`${0.0}`"
+            :bank-balance="`${'0.0'}`"
             service="Expense Account"
           />
         </ModalComponent>
@@ -106,7 +106,7 @@
 
       <!-- Approve User Form -->
       <section
-        v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
+        v-if="contractOwnerAddress === useUserDataStore().address || isBodAction()"
         class="stat flex flex-col justify-center items-center"
       >
         <div class="w-3/4">
