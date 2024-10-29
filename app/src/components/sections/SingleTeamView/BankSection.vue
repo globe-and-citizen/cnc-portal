@@ -134,7 +134,6 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
-import { config } from '@/wagmi.config'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
