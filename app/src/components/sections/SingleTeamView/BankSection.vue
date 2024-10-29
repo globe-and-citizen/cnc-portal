@@ -8,7 +8,7 @@
         <div>
           <span>Bank Balance</span>
           <div class="font-extrabold text-4xl">
-            <span class="inline-block w-16 h-10">
+            <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
               <span v-else>{{ teamBalance }} </span></span
             >
