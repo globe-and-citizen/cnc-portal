@@ -81,7 +81,7 @@
             :team="team"
             v-model="newProposalInput"
             @createProposal="createProposal"
-            :isLoading="loadingAddProposal"
+            :isLoading="loadingAddProposal || isConfirmingAddProposal"
           />
         </ModalComponent>
       </div>
@@ -99,13 +99,15 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import { useAddProposal, useGetProposals } from '@/composables/voting'
+import { useGetProposals } from '@/composables/voting'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
 import { useReadContract } from '@wagmi/vue'
 import BoDABI from '@/artifacts/abi/bod.json'
+import VotingABI from '@/artifacts/abi/voting.json'
 import type { Address } from 'viem'
 
 const props = defineProps<{ team: Partial<Team> }>()
@@ -129,11 +131,17 @@ watch(errorGetBoardOfDirectors, () => {
 })
 
 const {
-  execute: executeAddProposal,
-  isLoading: loadingAddProposal,
-  isSuccess: isSuccessAddProposal,
+  data: hashAddProposal,
+  writeContract: addProposal,
+  isPending: loadingAddProposal,
   error: errorAddProposal
-} = useAddProposal()
+} = useWriteContract()
+
+const { isLoading: isConfirmingAddProposal, isSuccess: isConfirmedAddProposal } =
+  useWaitForTransactionReceipt({
+    hash: hashAddProposal
+  })
+
 const {
   execute: executeGetProposals,
   isLoading: loadingGetProposals,
@@ -152,12 +160,6 @@ watch(isSuccessGetProposals, () => {
 watch(errorGetProposals, () => {
   if (errorGetProposals.value) {
     addErrorToast('Failed to get proposals')
-  }
-})
-watch(isSuccessAddProposal, () => {
-  if (isSuccessAddProposal.value) {
-    addSuccessToast('Proposal created successfully')
-    emits('getTeam')
   }
 })
 watch(errorAddProposal, () => {
@@ -189,10 +191,34 @@ const createProposal = () => {
       memberAddress: member.address
     }
   })
-  if (props.team.votingAddress) executeAddProposal(props.team.votingAddress, newProposalInput.value)
+  if (props.team.votingAddress) {
+    addProposal({
+      address: props.team.votingAddress! as Address,
+      abi: VotingABI,
+      functionName: 'addProposal',
+      args: [
+        newProposalInput.value.title,
+        newProposalInput.value.description,
+        newProposalInput.value.isElection,
+        newProposalInput.value.winnerCount,
+        newProposalInput.value.voters!.map((voter) => voter.memberAddress) as Address[],
+        newProposalInput.value.candidates!.map(
+          (candidate) => candidate.candidateAddress
+        ) as Address[]
+      ]
+    })
+  }
 }
 const oldProposals = ref<Partial<Proposal>[]>([])
 const activeProposals = ref<Partial<Proposal>[]>([])
+
+watch(isConfirmingAddProposal, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedAddProposal.value) {
+    addSuccessToast('Proposal created successfully')
+    executeGetProposals(props.team.votingAddress!)
+    showModal.value = false
+  }
+})
 
 onMounted(() => {
   if (props.team.votingAddress) executeGetProposals(props.team.votingAddress)
