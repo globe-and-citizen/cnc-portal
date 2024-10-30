@@ -8,9 +8,18 @@
           <h3 v-if="!loadingPaused" class="font-bold text-xl" data-test="status">
             Status: {{ isPaused ? 'Paused' : 'Active' }}
           </h3>
-          <LoadingButton color="primary" v-if="isPaused ? loadingUnpause : loadingPause" />
+          <LoadingButton
+            color="primary"
+            v-if="
+              isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
+            "
+          />
           <button
-            v-if="isPaused ? !loadingUnpause : !loadingPause"
+            v-if="
+              isPaused
+                ? !loadingUnpause || !isConfirmingUnpause
+                : !loadingPause || !isConfirmingPause
+            "
             class="btn btn-primary row-start-2"
             :class="{
               'btn-disabled': !isOwner && !isOwnerBod && !isBod
@@ -22,7 +31,17 @@
                   descriptionModal.actionName = isPaused ? 'Unpause Bank' : 'Pause Bank'
                   descriptionModal.onSubmit = addPauseAction
                 } else {
-                  isPaused ? executeBank(unpause) : executeBank(pause)
+                  isPaused
+                    ? unpause({
+                        address: props.team.bankAddress! as Address,
+                        abi: BankABI,
+                        functionName: 'unpause'
+                      })
+                    : pause({
+                        address: props.team.bankAddress! as Address,
+                        abi: BankABI,
+                        functionName: 'pause'
+                      })
                 }
               }
             "
@@ -58,7 +77,14 @@
                 team.boardOfDirectorsAddress != bankOwner &&
                 !transferOwnershipLoading
               "
-              @click="executeBank(transferOwnership, [team.boardOfDirectorsAddress])"
+              @click="
+                transferOwnership({
+                  address: props.team.bankAddress! as Address,
+                  abi: BankABI,
+                  functionName: 'transferOwnership',
+                  args: [team.boardOfDirectorsAddress]
+                })
+              "
             >
               Transfer to Board Of Directors Contract
             </button>
@@ -75,11 +101,18 @@
           if (bankOwner == team.boardOfDirectorsAddress) {
             addTransferOwnershipAction(newOwner, description)
           } else {
-            await executeBank(transferOwnership, [newOwner])
+            transferOwnership({
+              address: props.team.bankAddress! as Address,
+              abi: BankABI,
+              functionName: 'transferOwnership',
+              args: [newOwner]
+            })
           }
         }
       "
-      :transferOwnershipLoading="transferOwnershipLoading || addActionLoading"
+      :transferOwnershipLoading="
+        transferOwnershipLoading || addActionLoading || isConfirmingTransferOwnership
+      "
       :asBod="isOwnerBod && isBod!"
     />
   </ModalComponent>
@@ -104,8 +137,7 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
-import { useBankPause, useBankUnpause, useBankTransferOwnership } from '@/composables/bank'
-import { useReadContract } from '@wagmi/vue'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
@@ -146,25 +178,54 @@ const {
 })
 
 const {
-  isLoading: loadingPause,
-  execute: pause,
+  isPending: loadingPause,
+  writeContract: pause,
   error: errorPause,
-  isSuccess: successPause
-} = useBankPause(props.team.bankAddress!)
-
+  data: pauseHash
+} = useWriteContract()
+const { isLoading: isConfirmingPause, isSuccess: isConfirmedPause } = useWaitForTransactionReceipt({
+  hash: pauseHash
+})
+watch(isConfirmingPause, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedPause.value) {
+    addSuccessToast('Bank paused successfully')
+    getIsPaused()
+  }
+})
 const {
-  execute: unpause,
+  writeContract: unpause,
   error: unpauseError,
-  isLoading: loadingUnpause,
-  isSuccess: unpauseSuccess
-} = useBankUnpause(props.team.bankAddress!)
+  isPending: loadingUnpause,
+  data: unpauseHash
+} = useWriteContract()
+const { isLoading: isConfirmingUnpause, isSuccess: isConfirmedUnpause } =
+  useWaitForTransactionReceipt({
+    hash: unpauseHash
+  })
+watch(isConfirmingUnpause, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedUnpause.value) {
+    addSuccessToast('Bank unpaused successfully')
+    getIsPaused()
+  }
+})
 
 const {
-  execute: transferOwnership,
+  writeContract: transferOwnership,
   error: transferOwnershipError,
-  isLoading: transferOwnershipLoading,
-  isSuccess: transferOwnershipSuccess
-} = useBankTransferOwnership(props.team.bankAddress!)
+  isPending: transferOwnershipLoading,
+  data: transferOwnershipHash
+} = useWriteContract()
+const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransferOwnership } =
+  useWaitForTransactionReceipt({
+    hash: transferOwnershipHash
+  })
+watch(isConfirmingTransferOwnership, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    emits('getOwner')
+    transferOwnershipModal.value = false
+    addSuccessToast('Bank ownership transferred successfully')
+  }
+})
 const {
   execute: executeAddAction,
   error: errorAddAction,
@@ -175,13 +236,6 @@ const {
 const isOwner = computed(() => props.bankOwner === currentUserAddress)
 const isOwnerBod = computed(() => props.bankOwner === props.team.boardOfDirectorsAddress)
 
-const executeBank = async (execute: Function, args: string[] = []) => {
-  if (args.length === 0) {
-    await execute()
-  } else {
-    await execute(...args)
-  }
-}
 const bankService = new BankService()
 
 const addPauseAction = async () => {
@@ -216,23 +270,9 @@ watch(errorPause, () => {
   }
 })
 
-watch(successPause, async () => {
-  if (successPause.value) {
-    addSuccessToast('Bank paused successfully')
-    await getIsPaused()
-  }
-})
-
 watch(unpauseError, () => {
   if (unpauseError.value) {
     addErrorToast('Failed to unpause bank')
-  }
-})
-
-watch(unpauseSuccess, async () => {
-  if (unpauseSuccess.value) {
-    addSuccessToast('Bank unpaused successfully')
-    await getIsPaused()
   }
 })
 
@@ -242,13 +282,6 @@ watch(transferOwnershipError, () => {
   }
 })
 
-watch(transferOwnershipSuccess, async () => {
-  if (transferOwnershipSuccess.value) {
-    emits('getOwner')
-    transferOwnershipModal.value = false
-    addSuccessToast('Bank ownership transferred successfully')
-  }
-})
 watch(errorAddAction, () => {
   if (errorAddAction.value) {
     addErrorToast('Failed to add action')
