@@ -93,13 +93,29 @@
         />
 
         <div class="text-center">
-          <LoadingButton v-if="false" class="w-full sm:w-44" color="primary" />
+          <LoadingButton
+            v-if="isConfirmingPushTip || pushTipLoading"
+            class="w-full sm:w-44"
+            color="primary"
+          />
           <button
-            v-if="!false"
+            v-if="!(isConfirmingPushTip || pushTipLoading)"
             class="btn btn-primary w-full sm:w-44 text-center"
             @click="
-              () => {
-                addPushTipAction('Pushed tips to all team members')
+              async () => {
+                if (owner == team.boardOfDirectorsAddress) {
+                  addPushTipAction('Pushed tips to all team members')
+                } else {
+                  const members = team.members.map((member) => member.address)
+                  console.log(members, ethers.parseEther(tipAmount.toString()))
+                  pushTip({
+                    address: team.bankAddress as Address,
+                    abi: BankABI,
+                    functionName: 'pushTip',
+                    args: [members, ethers.parseEther(tipAmount.toString())],
+                    value: ethers.parseEther(tipAmount.toString())
+                  })
+                }
               }
             "
           >
@@ -122,7 +138,6 @@ import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import Button from '@/components/ButtonUI.vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -170,11 +185,22 @@ const {
 })
 
 const {
-  // execute: pushTip,
-  // isLoading: pushTipLoading,
-  isSuccess: pushTipSuccess,
+  data: pushTipHash,
+  writeContract: pushTip,
+  isPending: pushTipLoading,
   error: pushTipError
-} = usePushTip()
+} = useWriteContract()
+const { isLoading: isConfirmingPushTip, isSuccess: isConfirmedPushTip } =
+  useWaitForTransactionReceipt({
+    hash: pushTipHash
+  })
+
+watch(isConfirmedPushTip, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedPushTip.value) {
+    addSuccessToast('Tips pushed successfully')
+    pushTipModal.value = false
+  }
+})
 const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadContract({
   functionName: 'getBoardOfDirectors',
   address: props.team.boardOfDirectorsAddress as Address,
@@ -272,12 +298,7 @@ watch(balanceError, () => {
 watch(pushTipError, async () => {
   if (pushTipError.value) {
     addErrorToast('Failed to push tip')
-  }
-})
-
-watch(pushTipSuccess, () => {
-  if (pushTipSuccess.value) {
-    addSuccessToast('Tips pushed successfully')
+    console.log(pushTipError.value)
   }
 })
 
