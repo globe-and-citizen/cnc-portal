@@ -16,40 +16,6 @@ vi.mock('@/stores/useToastStore', () => ({
   })
 }))
 
-vi.mock('@/composables/voting', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/composables/voting')>()
-  return {
-    ...actual,
-    useVotingContractStatus: vi.fn().mockReturnValue({
-      isLoading: false,
-      error: null,
-      data: false,
-      execute: vi.fn()
-    }),
-    useVotingContractOwner: vi.fn().mockReturnValue({
-      isLoading: false,
-      error: null,
-      data: '0x1234567890123456789012345678901234567890',
-      execute: vi.fn()
-    }),
-    useVotingContractPause: vi.fn().mockReturnValue({
-      isLoading: false,
-      error: null,
-      execute: vi.fn()
-    }),
-    useVotingContractUnpause: vi.fn().mockReturnValue({
-      isLoading: false,
-      error: null,
-      execute: vi.fn()
-    }),
-    useVotingContractTransferOwnership: vi.fn().mockReturnValue({
-      isLoading: false,
-      error: null,
-      execute: vi.fn()
-    })
-  }
-})
-
 describe('VotingManagement', () => {
   function createComponent() {
     return mount(VotingManagement, {
