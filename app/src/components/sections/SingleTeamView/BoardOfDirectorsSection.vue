@@ -70,7 +70,7 @@
               <td class="flex justify-end">
                 <LoadingButton
                   data-test="loading-bank-transfer"
-                  v-if="loadingTransferOwnership"
+                  v-if="loadingTransferOwnership || isConfirmingTransferOwnership"
                   color="primary"
                   class="w-48"
                 />
@@ -79,10 +79,19 @@
                   v-if="
                     bankOwner == currentAddress &&
                     bankOwner != team.boardOfDirectorsAddress &&
-                    !loadingTransferOwnership
+                    !loadingTransferOwnership &&
+                    !isConfirmingTransferOwnership
                   "
                   class="btn btn-primary"
-                  @click="async () => await executeTransferOwnership(team.boardOfDirectorsAddress!)"
+                  @click="
+                    async () =>
+                      transferBankOwnership({
+                        address: props.team.bankAddress! as Address,
+                        abi: BankABI,
+                        functionName: 'transferOwnership',
+                        args: [team.boardOfDirectorsAddress]
+                      })
+                  "
                 >
                   Transfer bank ownership
                 </button>
@@ -142,8 +151,7 @@ import { onMounted, watch } from 'vue'
 import type { Address } from 'viem'
 import { useExpenseAccountTransferOwnership } from '@/composables/useExpenseAccount'
 
-import { useBankTransferOwnership } from '@/composables/bank'
-import { useReadContract } from '@wagmi/vue'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
 import expenseAccountABI from '@/artifacts/abi/expense-account.json'
@@ -186,10 +194,23 @@ const {
 })
 
 const {
+  writeContract: transferBankOwnership,
   error: errorTransferOwnership,
-  execute: transferBankOwnership,
-  isLoading: loadingTransferOwnership
-} = useBankTransferOwnership(props.team.bankAddress!)
+  isPending: loadingTransferOwnership,
+  data: hashTransferOwnership
+} = useWriteContract()
+
+const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransferOwnership } =
+  useWaitForTransactionReceipt({
+    hash: hashTransferOwnership
+  })
+
+watch(isConfirmedTransferOwnership, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    addSuccessToast('Successfully transfered Bank ownership')
+    executeBankOwner()
+  }
+})
 
 const {
   error: errorTransferExpenseOwnership,
@@ -200,11 +221,6 @@ const {
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const currentAddress = useUserDataStore().address
-
-const executeTransferOwnership = async (newOwner: string) => {
-  await transferBankOwnership(newOwner)
-  await executeBankOwner()
-}
 
 watch(error, () => {
   if (error.value) {
