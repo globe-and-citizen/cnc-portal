@@ -46,7 +46,7 @@ describe('ApproveUsersForm', () => {
     })
     it('should show description error when no description is entered', async () => {
       const wrapper = createComponent({
-        props: { isBodAction: true/*, unapprovedAddresses: new Set(['0xUnapprovedAddress'])*/ }
+        props: { isBodAction: true /*, unapprovedAddresses: new Set(['0xUnapprovedAddress'])*/ }
       })
       expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
       const approveButton = wrapper.find('[data-test="approve-button"]')
@@ -93,8 +93,8 @@ describe('ApproveUsersForm', () => {
       const approveButton = wrapper.find('[data-test="approve-button"]')
       expect(approveButton.exists()).toBeTruthy()
       approveButton.trigger('click')
-      await wrapper.vm.$nextTick()    
-      
+      await wrapper.vm.$nextTick()
+
       const limitTypeError = wrapper.find('[data-test="limit-type-error"]')
       expect(limitTypeError.exists()).toBeTruthy()
       expect(limitTypeError.text()).toBe('Budget limit type is required')
@@ -109,8 +109,8 @@ describe('ApproveUsersForm', () => {
       const approveButton = wrapper.find('[data-test="approve-button"]')
       expect(approveButton.exists()).toBeTruthy()
       approveButton.trigger('click')
-      await wrapper.vm.$nextTick()    
-      
+      await wrapper.vm.$nextTick()
+
       const limitValueError = wrapper.find('[data-test="limit-value-error"]')
       expect(limitValueError.exists()).toBeTruthy()
       expect(limitValueError.text()).toBe('Value is required')
@@ -175,12 +175,14 @@ describe('ApproveUsersForm', () => {
       nameInput.setValue('Test Name')
       nameInput.trigger('keyup')
       expect(wrapper.emitted('searchUsers')).toBeTruthy()
-      expect(wrapper.emitted('searchUsers')?.[0]).toEqual([{ name: 'Test Name', address: "" }])
+      expect(wrapper.emitted('searchUsers')?.[0]).toEqual([{ name: 'Test Name', address: '' }])
 
       addressInput.setValue('0xSearchAddress')
       nameInput.trigger('keyup')
       expect(wrapper.emitted('searchUsers')).toBeTruthy()
-      expect(wrapper.emitted('searchUsers')?.[0]).toEqual([{ name: "Test Name", address: "0xSearchAddress" }])
+      expect(wrapper.emitted('searchUsers')?.[0]).toEqual([
+        { name: 'Test Name', address: '0xSearchAddress' }
+      ])
     })
     it('should not emit approve address if form is invalid', async () => {
       const wrapper = createComponent()
