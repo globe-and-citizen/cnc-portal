@@ -107,7 +107,6 @@
                   addPushTipAction('Pushed tips to all team members')
                 } else {
                   const members = team.members.map((member) => member.address)
-                  console.log(members, ethers.parseEther(tipAmount.toString()))
                   pushTip({
                     address: team.bankAddress as Address,
                     abi: BankABI,
@@ -298,7 +297,6 @@ watch(balanceError, () => {
 watch(pushTipError, async () => {
   if (pushTipError.value) {
     addErrorToast('Failed to push tip')
-    console.log(pushTipError.value)
   }
 })
 

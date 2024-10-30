@@ -162,7 +162,6 @@ const fetchProposals = async () => {
       })
       proposalsList.push(proposal as Partial<Proposal>)
     }
-    console.log(activeProposals.value)
 
     activeProposals.value = proposalsList.filter(
       (proposal) => proposal.isActive

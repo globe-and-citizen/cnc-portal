@@ -234,8 +234,6 @@ const searchUsers = async (field: 'name' | 'address') => {
   }
 }
 const submitForm = () => {
-  console.log('Creating proposal')
-
   $v.value.$touch()
   if ($v.value.$invalid) return
   emits('createProposal')
