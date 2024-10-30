@@ -50,11 +50,21 @@
       <hr />
       <span class="mt-4">Are you sure you want to conclude this proposal?</span>
       <div class="flex justify-center">
-        <LoadingButton v-if="concludingProposal" color="error mt-4 min-w-16 btn-sm" />
+        <LoadingButton
+          v-if="concludingProposal || isConfirmingConcludeProposal"
+          color="error mt-4 min-w-16 btn-sm"
+        />
         <button
           v-else
           class="btn btn-sm btn-error mt-4"
-          @click="concludeProposal(team.votingAddress, Number(proposal.id))"
+          @click="
+            concludeProposal({
+              address: props.team.votingAddress as Address,
+              abi: VotingABI,
+              functionName: 'concludeProposal',
+              args: [Number(proposal.id)]
+            })
+          "
         >
           Yes
         </button>
@@ -63,7 +73,12 @@
     <ModalComponent v-model="showVoteModal">
       <VoteForm
         :team="team"
-        :isLoading="castingElectionVote || castingDirectiveVote || isConfirmingVoteElection"
+        :isLoading="
+          castingElectionVote ||
+          castingDirectiveVote ||
+          isConfirmingVoteElection ||
+          isConfirmingVoteDirective
+        "
         v-model="voteInput"
         @voteElection="
           (value) =>
@@ -76,7 +91,13 @@
         "
         :proposal="proposal"
         @voteDirective="
-          (value) => voteDirective(team.votingAddress, value.proposalId, value.option)
+          (value) =>
+            voteDirective({
+              address: props.team.votingAddress as Address,
+              abi: VotingABI,
+              functionName: 'voteDirective',
+              args: [value.proposalId, value.option]
+            })
         "
       />
     </ModalComponent>
@@ -88,7 +109,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { useVoteElection, useVoteDirective, useConcludeProposal } from '@/composables/voting'
 import VotingABI from '@/artifacts/abi/voting.json'
 import VoteForm from '@/components/sections/SingleTeamView/forms/VoteForm.vue'
 import ProposalDetails from '@/components/sections/SingleTeamView/ProposalDetails.vue'
@@ -146,11 +166,22 @@ const showConcludeConfirmModal = ref(false)
 const showProposalDetailsModal = ref(false)
 
 const {
-  execute: concludeProposal,
-  isLoading: concludingProposal,
+  writeContract: concludeProposal,
+  isPending: concludingProposal,
   error: concludeError,
-  isSuccess: concludeSuccess
-} = useConcludeProposal()
+  data: hashConcludeProposal
+} = useWriteContract()
+const { isLoading: isConfirmingConcludeProposal, isSuccess: isConfirmedConcludeProposal } =
+  useWaitForTransactionReceipt({
+    hash: hashConcludeProposal
+  })
+watch(isConfirmingConcludeProposal, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedConcludeProposal.value) {
+    addSuccessToast('Proposal concluded')
+    showConcludeConfirmModal.value = false
+    emits('getTeam')
+  }
+})
 const {
   writeContract: voteElection,
   data: hashVoteElection,
@@ -170,36 +201,35 @@ watch(isConfirmingVoteElection, (isConfirming, wasConfirming) => {
 })
 
 const {
-  execute: voteDirective,
-  isLoading: castingDirectiveVote,
+  writeContract: voteDirective,
+  isPending: castingDirectiveVote,
   error: directiveError,
-  isSuccess: directiveSuccess
-} = useVoteDirective()
+  data: hashVoteDirective
+} = useWriteContract()
 
-watch(electionError, () => {
-  if (electionError.value) {
-    addErrorToast('Error casting election vote')
-  }
-})
-watch(directiveSuccess, () => {
-  if (directiveSuccess.value) {
+const { isLoading: isConfirmingVoteDirective, isSuccess: isConfirmedVoteDirective } =
+  useWaitForTransactionReceipt({
+    hash: hashVoteDirective
+  })
+watch(isConfirmingVoteDirective, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedVoteDirective.value) {
     addSuccessToast('Directive vote casted')
     showVoteModal.value = false
     emits('getTeam')
   }
 })
+watch(electionError, () => {
+  if (electionError.value) {
+    addErrorToast('Error casting election vote')
+  }
+})
+
 watch(directiveError, () => {
   if (directiveError.value) {
     addErrorToast('Error casting directive vote')
   }
 })
-watch(concludeSuccess, () => {
-  if (concludeSuccess.value) {
-    addSuccessToast('Proposal concluded')
-    showConcludeConfirmModal.value = false
-    emits('getTeam')
-  }
-})
+
 watch(concludeError, () => {
   if (concludeError.value) {
     addErrorToast('Error concluding proposal')
