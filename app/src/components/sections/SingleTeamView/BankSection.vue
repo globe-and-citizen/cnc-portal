@@ -53,7 +53,7 @@
         v-if="depositModal"
         @close-modal="() => (depositModal = false)"
         @deposit="async (amount: string) => depositToBank(amount)"
-        :loading="depositLoading"
+        :loading="depositLoading || isConfirmingDeposit"
       />
     </ModalComponent>
     <ModalComponent v-model="transferModal">
@@ -71,7 +71,7 @@
         "
         @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
-        :loading="transferLoading || addActionLoading"
+        :loading="transferLoading || addActionLoading || isConfirmingTransfer"
         :bank-balance="teamBalance?.formatted || '0'"
         service="Bank"
         :asBod="owner == team.boardOfDirectorsAddress"
@@ -120,8 +120,7 @@ import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import Button from '@/components/ButtonUI.vue'
-import { useSendTransaction } from '@wagmi/vue'
-import { writeContract } from '@wagmi/core'
+import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -135,7 +134,6 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
-import { config } from '@/wagmi.config'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -154,9 +152,13 @@ const props = defineProps<{
 const {
   sendTransaction,
   isPending: depositLoading,
-  isSuccess: sendTransactionSuccess,
-  error: sendTransactionError
+  error: sendTransactionError,
+  data: depositHash
 } = useSendTransaction()
+
+const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
+  hash: depositHash
+})
 
 const {
   data: teamBalance,
@@ -245,8 +247,8 @@ const addPushTipAction = async (description: string) => {
   pushTipModal.value = false
   tipAmount.value = 0
 }
-watch(sendTransactionSuccess, () => {
-  if (sendTransactionSuccess.value) {
+watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Deposited successfully')
     depositModal.value = false
     fetchBalance()
@@ -308,26 +310,27 @@ const depositToBank = async (amount: string) => {
     })
   }
 }
-const transferLoading = ref(false)
+
+const {
+  data: transferHash,
+  isPending: transferLoading,
+  error: transferError,
+  writeContract: transfer
+} = useWriteContract()
 const transferFromBank = async (to: string, amount: string) => {
   if (!props.team.bankAddress) return
-  try {
-    transferLoading.value = true
-    await writeContract(config, {
-      address: props.team.bankAddress as Address,
-      abi: BankABI,
-      functionName: 'transfer',
-      args: [to, ethers.parseEther(amount)]
-    })
-
-    transferModal.value = false
-    transferLoading.value = false
-    await fetchBalance()
-  } catch (error) {
-    transferLoading.value = false
-    addErrorToast('Failed to transfer from bank')
-  }
+  transfer({
+    address: props.team.bankAddress as Address,
+    abi: BankABI,
+    functionName: 'transfer',
+    args: [to, ethers.parseEther(amount)]
+  })
 }
+
+const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
+  hash: transferHash
+})
+
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
     searchUserName.value = input.name
@@ -339,6 +342,20 @@ const searchUsers = async (input: { name: string; address: string }) => {
     addErrorToast('Failed to search users')
   }
 }
+
+watch(transferError, () => {
+  if (transferError.value) {
+    addErrorToast('Failed to transfer from bank')
+  }
+})
+
+watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Transferred successfully')
+    transferModal.value = false
+    fetchBalance()
+  }
+})
 
 onMounted(async () => {
   if (props.team.bankAddress) fetchBalance()
