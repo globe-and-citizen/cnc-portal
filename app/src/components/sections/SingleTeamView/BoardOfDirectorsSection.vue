@@ -112,7 +112,7 @@
               </td>
               <td class="flex justify-end">
                 <LoadingButton
-                  v-if="loadingTransferExpenseOwnership"
+                  v-if="loadingTransferExpenseOwnership || isConfirmingExpenseTransferOwnership"
                   color="primary"
                   class="w-48"
                 />
@@ -120,10 +120,19 @@
                   v-if="
                     expenseOwner == currentAddress &&
                     expenseOwner != team.boardOfDirectorsAddress &&
-                    !loadingTransferExpenseOwnership
+                    !loadingTransferExpenseOwnership &&
+                    !isConfirmingExpenseTransferOwnership
                   "
                   class="btn btn-primary"
-                  @click="async () => await transferExpenseOwnership(team.boardOfDirectorsAddress!)"
+                  @click="
+                    async () =>
+                      transferExpenseOwnership({
+                        address: props.team.expenseAccountAddress as Address,
+                        abi: expenseAccountABI,
+                        functionName: 'transferOwnership',
+                        args: [team.boardOfDirectorsAddress]
+                      })
+                  "
                 >
                   Transfer expense ownership
                 </button>
@@ -149,7 +158,6 @@ import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 import { onMounted, watch } from 'vue'
 import type { Address } from 'viem'
-import { useExpenseAccountTransferOwnership } from '@/composables/useExpenseAccount'
 
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import BankABI from '@/artifacts/abi/bank.json'
@@ -214,10 +222,23 @@ watch(isConfirmedTransferOwnership, (isConfirming, wasConfirming) => {
 
 const {
   error: errorTransferExpenseOwnership,
-  execute: transferExpenseOwnership,
-  isLoading: loadingTransferExpenseOwnership,
-  isSuccess: successTransferExpenseOwnerShip
-} = useExpenseAccountTransferOwnership(props.team.expenseAccountAddress!)
+  writeContract: transferExpenseOwnership,
+  isPending: loadingTransferExpenseOwnership,
+  data: transferExpenseOwnershipHash
+} = useWriteContract()
+
+const {
+  isLoading: isConfirmingExpenseTransferOwnership,
+  isSuccess: isConfirmedTransferOwnershipExpense
+} = useWaitForTransactionReceipt({
+  hash: transferExpenseOwnershipHash
+})
+watch(isConfirmedTransferOwnershipExpense, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedTransferOwnershipExpense.value) {
+    addSuccessToast('Successfully transfered Expense A/c ownership')
+    executeGetExpenseOwner()
+  }
+})
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const currentAddress = useUserDataStore().address
@@ -245,12 +266,6 @@ watch(errorExpenseOwner, (newVal) => {
 watch(errorTransferExpenseOwnership, (newVal) => {
   if (newVal) {
     addErrorToast('Failed to transfer expense ownership')
-  }
-})
-watch(successTransferExpenseOwnerShip, async (newVal) => {
-  if (newVal) {
-    addSuccessToast('Successfully transfered Expense A/c ownership')
-    await executeGetExpenseOwner()
   }
 })
 
