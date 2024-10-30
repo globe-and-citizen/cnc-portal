@@ -258,8 +258,6 @@ const { execute: executeSearchUser } = useCustomFetch('user/search', {
 
 //#region helper functions
 
-
-
 const init = async () => {
   await getExpenseAccountBalance()
   await getExpenseAccountMaxLimit()
