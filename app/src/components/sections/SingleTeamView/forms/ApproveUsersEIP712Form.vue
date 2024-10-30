@@ -32,6 +32,7 @@
       <input
         type="text"
         class="w-24"
+        :data-test="`name-input-${index}`"
         v-model="input.name"
         @keyup.stop="
           () => {
@@ -45,6 +46,7 @@
       <input
         type="text"
         class="grow"
+        :data-test="`address-input-${index}`"
         v-model="input.address"
         @keyup.stop="
           () => {
@@ -83,6 +85,7 @@
     class="pl-4 text-red-500 text-sm w-full text-left"
     v-for="error of v$.formData.$errors"
     :key="error.$uid"
+    data-test="address-error"
   >
     <div v-if="Array.isArray(error.$message)">
       <div v-for="(errorObj, index) of error.$message" :key="index">
@@ -109,7 +112,7 @@
   </div>
 
   <div
-    data-test="approve-error"
+    data-test="limit-type-error"
     class="pl-4 text-red-500 text-sm w-full text-left"
     v-for="error of v$.budgetLimitType.$errors"
     :key="error.$uid"
@@ -124,7 +127,7 @@
       <input
         type="text"
         class="grow pl-4"
-        data-test="description-input"
+        data-test="limit-value-input"
         v-model="limitValue"
         placeholder="Enter a limit value"
       />
@@ -132,7 +135,7 @@
   </div>
 
   <div
-    data-test="approve-error"
+    data-test="limit-value-error"
     class="pl-4 text-red-500 text-sm w-full text-left"
     v-for="error of v$.limitValue.$errors"
     :key="error.$uid"
@@ -143,7 +146,7 @@
   <div class="mt-2">
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Expiry</span>
-      <div class="grow">
+      <div class="grow" data-test="date-picker">
         <VueDatePicker v-model="date" />
       </div>
     </label>
