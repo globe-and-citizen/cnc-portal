@@ -12,7 +12,7 @@
           class="badge badge-sm cursor-pointer"
           data-test="expense-account-address"
           @click="openExplorer(team.expenseAccountAddress)"
-          :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
+          :class="`${team.ownerAddress == currentUserAddress ? 'badge-primary' : 'badge-secondary'}`"
           >{{ team.expenseAccountAddress }}</span
         >
       </ToolTip>
@@ -59,7 +59,7 @@
     <div class="stat-actions flex justify-center gap-2 items-center mt-8">
       <button
         class="btn btn-xs btn-secondary"
-        :disabled="!approvedAddresses.has(useUserDataStore().address)"
+        :disabled="!approvedAddresses.has(currentUserAddress)"
         v-if="approvedAddresses"
         @click="transferModal = true"
         data-test="transfer-button"
@@ -68,7 +68,7 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
+        v-if="contractOwnerAddress == currentUserAddress || isBodAction()"
         @click="setLimitModal = true"
         data-test="set-limit-button"
       >
@@ -76,7 +76,7 @@
       </button>
       <button
         class="btn btn-xs btn-secondary"
-        v-if="contractOwnerAddress == useUserDataStore().address || isBodAction()"
+        v-if="contractOwnerAddress == currentUserAddress || isBodAction()"
         @click="approveUsersModal = true"
         data-test="approve-users-button"
       >
@@ -163,6 +163,7 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 //#endregion imports
 
 //#region variable declarations
+const currentUserAddress = useUserDataStore().address
 const props = defineProps<{ team: Partial<Team> }>()
 const team = ref(props.team)
 const approvedAddresses = ref<Set<string>>(new Set())
@@ -256,6 +257,8 @@ const { execute: executeSearchUser } = useCustomFetch('user/search', {
   .json()
 
 //#region helper functions
+
+
 
 const init = async () => {
   await getExpenseAccountBalance()
