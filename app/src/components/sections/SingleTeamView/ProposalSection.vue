@@ -99,7 +99,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
-import { useGetProposals } from '@/composables/voting'
+import { readContract } from '@wagmi/core'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
@@ -109,6 +109,7 @@ import { useReadContract } from '@wagmi/vue'
 import BoDABI from '@/artifacts/abi/bod.json'
 import VotingABI from '@/artifacts/abi/voting.json'
 import type { Address } from 'viem'
+import { config } from '@/wagmi.config'
 
 const props = defineProps<{ team: Partial<Team> }>()
 const showVotingControlModal = ref(false)
@@ -141,27 +142,39 @@ const { isLoading: isConfirmingAddProposal, isSuccess: isConfirmedAddProposal } 
   useWaitForTransactionReceipt({
     hash: hashAddProposal
   })
+const loadingGetProposals = ref(false)
 
-const {
-  execute: executeGetProposals,
-  isLoading: loadingGetProposals,
-  isSuccess: isSuccessGetProposals,
-  error: errorGetProposals,
-  data: proposals
-} = useGetProposals()
+const fetchProposals = async () => {
+  try {
+    loadingGetProposals.value = true
+    const proposalCount = (await readContract(config, {
+      address: props.team.votingAddress as Address,
+      abi: VotingABI,
+      functionName: 'proposalCount'
+    })) as number
+    const proposalsList = []
+    for (let i = 0; i < proposalCount; i++) {
+      const proposal = await readContract(config, {
+        address: props.team.votingAddress as Address,
+        abi: VotingABI,
+        functionName: 'getProposalById',
+        args: [i]
+      })
+      proposalsList.push(proposal as Partial<Proposal>)
+    }
+    console.log(activeProposals.value)
 
-watch(isSuccessGetProposals, () => {
-  if (isSuccessGetProposals.value) {
-    const proposalsList = Object.values(proposals.value)
-    activeProposals.value = proposalsList.filter((proposal) => proposal.isActive)
+    activeProposals.value = proposalsList.filter(
+      (proposal) => proposal.isActive
+    ) as Partial<Proposal>[]
     oldProposals.value = proposalsList.filter((proposal) => !proposal.isActive)
-  }
-})
-watch(errorGetProposals, () => {
-  if (errorGetProposals.value) {
+  } catch (error) {
     addErrorToast('Failed to get proposals')
+  } finally {
+    loadingGetProposals.value = false
   }
-})
+}
+
 watch(errorAddProposal, () => {
   if (errorAddProposal.value) {
     addErrorToast('Failed to create proposal')
@@ -215,12 +228,12 @@ const activeProposals = ref<Partial<Proposal>[]>([])
 watch(isConfirmingAddProposal, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddProposal.value) {
     addSuccessToast('Proposal created successfully')
-    executeGetProposals(props.team.votingAddress!)
+    fetchProposals()
     showModal.value = false
   }
 })
 
 onMounted(() => {
-  if (props.team.votingAddress) executeGetProposals(props.team.votingAddress)
+  if (props.team.votingAddress) fetchProposals()
 })
 </script>
