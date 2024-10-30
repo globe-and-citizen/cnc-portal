@@ -96,14 +96,6 @@ describe('Bank Service', () => {
     bankService = new BankService()
   })
 
-  describe('deposit', () => {
-    it('should deposit to bank contract', async () => {
-      const result = await bankService.deposit('0x123', '100')
-      expect(bankService.web3Library.sendTransaction).toHaveBeenCalledWith('0x123', '100')
-      expect(result).toMatchObject(tx)
-    })
-  })
-
   describe('transfer', () => {
     it('should transfer from bank contract', async () => {
       const result = await bankService.transfer('0x123', '0x456', '100')

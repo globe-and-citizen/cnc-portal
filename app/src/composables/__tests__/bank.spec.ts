@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  useBankDeposit,
   useBankEvents,
   useBankGetFunction,
   useBankPause,
@@ -114,93 +113,6 @@ vi.mock('@/services/bankService', () => {
 })
 
 describe('Bank', () => {
-  describe('useBankDeposit', () => {
-    it('should set initial values correctly', async () => {
-      const { execute: deposit, isLoading, error, transaction, isSuccess } = useBankDeposit()
-      expect(deposit).toBeInstanceOf(Function)
-      expect(isLoading.value).toBe(false)
-      expect(isSuccess.value).toBe(false)
-      expect(transaction.value).toBe(undefined)
-      expect(error.value).toBe(null)
-    })
-
-    describe('when success', () => {
-      it('should change state of transaction correctly', async () => {
-        const { execute: deposit, transaction } = useBankDeposit()
-        expect(transaction.value).toBe(undefined)
-        await deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(transaction.value).not.toBe(tx)
-      })
-
-      it('should change state of isLoading correctly', async () => {
-        const { execute: deposit, isLoading } = useBankDeposit()
-        const promise = deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should change state of isSuccess correctly', async () => {
-        const { execute: deposit, isSuccess } = useBankDeposit()
-        expect(isSuccess.value).toBe(false)
-        await deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(isSuccess.value).toBe(true)
-      })
-
-      it('should keeps state of error', async () => {
-        const { execute: deposit, error } = useBankDeposit()
-        expect(error.value).toBe(null)
-        await deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(error.value).toBe(null)
-      })
-    })
-
-    describe('when error', () => {
-      const mockError = new Error('error')
-
-      beforeEach(() => {
-        vi.mocked(bankService.deposit).mockRejectedValue(mockError)
-      })
-
-      it('should keeps state of transaction to be null', async () => {
-        const { execute: deposit, transaction } = useBankDeposit()
-        expect(transaction.value).toBe(undefined)
-        await deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(transaction.value).toBe(undefined)
-      })
-
-      it('should change state of isLoading correctly', async () => {
-        const { execute: deposit, isLoading } = useBankDeposit()
-        const promise = deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(isLoading.value).toBe(true)
-        await promise
-        expect(isLoading.value).toBe(false)
-      })
-
-      it('should keeps state of isSuccess to be false', async () => {
-        const { execute: deposit, isSuccess } = useBankDeposit()
-        expect(isSuccess.value).toBe(false)
-        await deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(isSuccess.value).toBe(false)
-      })
-
-      it('should change state of error correctly', async () => {
-        const { execute: deposit, error } = useBankDeposit()
-        expect(error.value).toBe(null)
-        await deposit(bankAddress, amount)
-        expect(bankService.deposit).toHaveBeenCalledWith(bankAddress, amount)
-        expect(error.value).toBe(mockError)
-      })
-    })
-  })
-
   describe('useBankTransfer', () => {
     it('should set initial values correctly', async () => {
       const { execute: transfer, isLoading, error, transaction, isSuccess } = useBankTransfer()
