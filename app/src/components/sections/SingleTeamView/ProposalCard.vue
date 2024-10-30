@@ -63,10 +63,16 @@
     <ModalComponent v-model="showVoteModal">
       <VoteForm
         :team="team"
-        :isLoading="castingElectionVote || castingDirectiveVote"
+        :isLoading="castingElectionVote || castingDirectiveVote || isConfirmingVoteElection"
         v-model="voteInput"
         @voteElection="
-          (value) => voteElection(team.votingAddress, value.proposalId, value.candidateAddress)
+          (value) =>
+            voteElection({
+              address: props.team.votingAddress as Address,
+              abi: VotingABI,
+              functionName: 'voteElection',
+              args: [value.proposalId, value.candidateAddress]
+            })
         "
         :proposal="proposal"
         @voteDirective="
@@ -83,12 +89,15 @@
 import { ref, watch, computed } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useVoteElection, useVoteDirective, useConcludeProposal } from '@/composables/voting'
+import VotingABI from '@/artifacts/abi/voting.json'
 import VoteForm from '@/components/sections/SingleTeamView/forms/VoteForm.vue'
 import ProposalDetails from '@/components/sections/SingleTeamView/ProposalDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import PieChart from '@/components/PieChart.vue'
 import type { Member, Proposal } from '@/types'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import type { Address } from 'viem'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const chartData = computed(() => {
@@ -143,11 +152,23 @@ const {
   isSuccess: concludeSuccess
 } = useConcludeProposal()
 const {
-  execute: voteElection,
-  isLoading: castingElectionVote,
-  error: electionError,
-  isSuccess: electionSuccess
-} = useVoteElection()
+  writeContract: voteElection,
+  data: hashVoteElection,
+  isPending: castingElectionVote,
+  error: electionError
+} = useWriteContract()
+const { isLoading: isConfirmingVoteElection, isSuccess: isConfirmedVoteElection } =
+  useWaitForTransactionReceipt({
+    hash: hashVoteElection
+  })
+watch(isConfirmingVoteElection, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedVoteElection.value) {
+    addSuccessToast('Election vote casted')
+    showVoteModal.value = false
+    emits('getTeam')
+  }
+})
+
 const {
   execute: voteDirective,
   isLoading: castingDirectiveVote,
@@ -155,13 +176,6 @@ const {
   isSuccess: directiveSuccess
 } = useVoteDirective()
 
-watch(electionSuccess, () => {
-  if (electionSuccess.value) {
-    addSuccessToast('Election vote casted')
-    showVoteModal.value = false
-    emits('getTeam')
-  }
-})
 watch(electionError, () => {
   if (electionError.value) {
     addErrorToast('Error casting election vote')
