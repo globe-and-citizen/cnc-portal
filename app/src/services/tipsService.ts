@@ -8,56 +8,12 @@ import type { Log } from 'ethers'
 import { BankService, type IBankService } from './bankService'
 import { SmartContract } from './contractService'
 import type { InterfaceAbi } from 'ethers'
-import type { TransactionResponse } from 'ethers'
 
 export class TipsService extends SmartContract {
   bankService: IBankService
   constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
     super(TIPS_ADDRESS, ABI as InterfaceAbi, web3Library)
     this.bankService = new BankService()
-  }
-
-  async pushTip(
-    addresses: string[],
-    amount: number,
-    bankAddress?: string
-  ): Promise<TransactionResponse> {
-    if (!this.contract) {
-      this.contract = await super.getContract()
-    }
-
-    if (bankAddress) {
-      return await this.bankPushTip(bankAddress, addresses, amount)
-    }
-
-    const tx = await this.contract.pushTip(addresses, {
-      value: this.web3Library.parseEther(amount.toString())
-    })
-
-    await tx.wait()
-
-    return tx
-  }
-
-  async sendTip(
-    addresses: string[],
-    amount: number,
-    bankAddress?: string
-  ): Promise<TransactionResponse> {
-    if (!this.contract) {
-      this.contract = await super.getContract()
-    }
-
-    if (bankAddress) {
-      return await this.bankSendTip(bankAddress, addresses, amount)
-    }
-
-    const tx = await this.contract.sendTip(addresses, {
-      value: this.web3Library.parseEther(amount.toString())
-    })
-    await tx.wait()
-
-    return tx
   }
 
   async getBalance(): Promise<bigint> {
@@ -79,26 +35,5 @@ export class TipsService extends SmartContract {
 
   async getEvents(type: TipsEventType): Promise<EventLog[] | Log[]> {
     return await super.getEvents(type)
-  }
-
-  async bankPushTip(
-    bankAddress: string,
-    addresses: string[],
-    amount: number
-  ): Promise<TransactionResponse> {
-    const tx = await this.bankService.pushTip(bankAddress, addresses, amount)
-    await tx.wait()
-
-    return tx
-  }
-  async bankSendTip(
-    bankAddress: string,
-    addresses: string[],
-    amount: number
-  ): Promise<TransactionResponse> {
-    const tx = await this.bankService.sendTip(bankAddress, addresses, amount)
-    await tx.wait()
-
-    return tx
   }
 }

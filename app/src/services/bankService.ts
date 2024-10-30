@@ -9,12 +9,11 @@ import { BankEventType } from '@/types'
 import type { EventLog } from 'ethers'
 import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
-import type { InterfaceAbi, TransactionResponse } from 'ethers'
+import type { InterfaceAbi } from 'ethers'
 export interface IBankService {
   web3Library: IWeb3Library
   createBankContract(id: string): Promise<string>
-  pushTip(bankAddress: string, addresses: string[], amount: number): Promise<TransactionResponse>
-  sendTip(bankAddress: string, addresses: string[], amount: number): Promise<TransactionResponse>
+
   getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]>
 }
 
@@ -29,62 +28,6 @@ export class BankService implements IBankService {
     const bankAddress = await this.deployBankContract()
     const response = await useCustomFetch<string>(`teams/${teamId}`).put({ bankAddress }).json()
     return response.data.value.bankAddress
-  }
-
-  async transfer(bankAddress: string, to: string, amount: string): Promise<TransactionResponse> {
-    const bank = await this.getContract(bankAddress)
-    const tx = await bank.transfer(to, this.web3Library.parseEther(amount))
-    await tx.wait()
-
-    return tx
-  }
-
-  async pushTip(
-    bankAddress: string,
-    addresses: string[],
-    amount: number
-  ): Promise<TransactionResponse> {
-    const bank = await this.getContract(bankAddress)
-    const tx = await bank.pushTip(addresses, this.web3Library.parseEther(amount.toString()))
-    await tx.wait()
-
-    return tx
-  }
-
-  async sendTip(
-    bankAddress: string,
-    addresses: string[],
-    amount: number
-  ): Promise<TransactionResponse> {
-    const bank = await this.getContract(bankAddress)
-    const tx = await bank.sendTip(addresses, this.web3Library.parseEther(amount.toString()))
-    await tx.wait()
-
-    return tx
-  }
-
-  async pause(bankAddress: string): Promise<TransactionResponse> {
-    const bank = await this.getContract(bankAddress)
-    const tx = await bank.pause()
-    await tx.wait()
-
-    return tx
-  }
-
-  async unpause(bankAddress: string): Promise<TransactionResponse> {
-    const bank = await this.getContract(bankAddress)
-    const tx = await bank.unpause()
-    await tx.wait()
-
-    return tx
-  }
-
-  async transferOwnership(bankAddress: string, newOwner: string): Promise<TransactionResponse> {
-    const bank = await this.getContract(bankAddress)
-    const tx = await bank.transferOwnership(newOwner)
-    await tx.wait()
-
-    return tx
   }
 
   async getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]> {
