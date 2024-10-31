@@ -130,7 +130,6 @@
 //#region imports
 import { onMounted, ref, watch } from 'vue'
 import type { Team, User } from '@/types'
-import { useExpenseAccountGetOwner } from '@/composables/useExpenseAccount'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -142,6 +141,9 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { useReadContract } from '@wagmi/vue'
+import expenseAccountABI from '@/artifacts/abi/expense-account.json'
+import type { Address } from 'viem'
 
 //#endregion imports
 
@@ -164,9 +166,13 @@ const web3Library = new EthersJsAdapter()
 //#region expense account composable
 const {
   data: contractOwnerAddress,
-  execute: executeExpenseAccountGetOwner,
+  refetch: executeExpenseAccountGetOwner,
   error: errorGetOwner
-} = useExpenseAccountGetOwner()
+} = useReadContract({
+  functionName: 'owner',
+  address: team.value.expenseAccountAddress as Address,
+  abi: expenseAccountABI
+})
 
 const {
   execute: executeSearchUser,
@@ -198,8 +204,7 @@ const init = async () => {
 }
 
 const getExpenseAccountOwner = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetOwner(team.value.expenseAccountAddress)
+  if (team.value.expenseAccountAddress) await executeExpenseAccountGetOwner()
 }
 
 const approveUser = async (data: {}) => {
