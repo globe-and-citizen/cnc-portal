@@ -16,7 +16,7 @@ export function useAddAction() {
   const {
     data: hash,
     writeContract: executeAddAction,
-    isPending: addActionLoading,
+    isPending: addActionLoading
   } = useWriteContract()
 
   const {
