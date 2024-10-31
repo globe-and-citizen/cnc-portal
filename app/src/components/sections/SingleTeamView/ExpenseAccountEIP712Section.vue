@@ -17,7 +17,7 @@
               class="badge badge-sm cursor-pointer"
               data-test="expense-account-address"
               @click="openExplorer(team.expenseAccountAddress)"
-              :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
+              :class="`${team.ownerAddress == currentUserAddress ? 'badge-primary' : 'badge-secondary'}`"
               >{{ team.expenseAccountAddress }}</span
             >
           </ToolTip>
@@ -82,7 +82,7 @@
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
           <button
             class="btn btn-secondary"
-            :disabled="useUserDataStore().address !== contractOwnerAddress"
+            :disabled="currentUserAddress !== contractOwnerAddress"
             v-if="true"
             @click="transferModal = true"
             data-test="transfer-button"
@@ -106,7 +106,7 @@
 
       <!-- Approve User Form -->
       <section
-        v-if="contractOwnerAddress === useUserDataStore().address || isBodAction()"
+        v-if="contractOwnerAddress === currentUserAddress || isBodAction()"
         class="stat flex flex-col justify-center items-center"
       >
         <div class="w-3/4">
@@ -146,6 +146,7 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 //#endregion imports
 
 //#region variable declarations
+const currentUserAddress = useUserDataStore().address
 const props = defineProps<{ team: Partial<Team> }>()
 const team = ref(props.team)
 const transferModal = ref(false)
