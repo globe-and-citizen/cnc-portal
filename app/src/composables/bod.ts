@@ -1,47 +1,71 @@
-import { ref } from 'vue'
-import { BoDService } from '@/services/bodService'
+import { computed, ref, watch } from 'vue'
 import type { Action, Team } from '@/types'
 import { useCustomFetch } from './useCustomFetch'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
 import BoDABI from '@/artifacts/abi/bod.json'
-const bodService = new BoDService()
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 
 export function useAddAction() {
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-  const isSuccess = ref(true)
+  const loadingContract = ref(false)
+  const actionCount = ref<BigInt | null>(null)
+  const team = ref<Partial<Team> | null>(null)
+  const action = ref<Partial<Action> | null>(null)
 
-  async function addAction(team: Partial<Team>, action: Partial<Action>) {
+  const {
+    data: hash,
+    writeContract: executeAddAction,
+    isPending: addActionLoading,
+  } = useWriteContract()
+
+  const {
+    isSuccess,
+    isLoading: isConfirming,
+    error
+  } = useWaitForTransactionReceipt({
+    hash
+  })
+
+  async function addAction(teamData: Partial<Team>, actionData: Partial<Action>) {
     try {
-      isSuccess.value = false
-      loading.value = true
-      const actionCount = await readContract(config, {
-        address: team.boardOfDirectorsAddress as Address,
+      loadingContract.value = true
+      actionCount.value = (await readContract(config, {
+        address: teamData.boardOfDirectorsAddress as Address,
         functionName: 'actionCount',
         abi: BoDABI
-      })
-      // const actionCount = await bodService.getActionCount(team.boardOfDirectorsAddress!)
-      await bodService.addAction(team.boardOfDirectorsAddress!, action)
+      })) as BigInt
+      team.value = teamData
+      action.value = actionData
 
-      useCustomFetch(`actions`, {
-        immediate: true
-      }).post({
-        teamId: team.id?.toString(),
-        actionId: parseInt((actionCount ?? 0).toString()),
-        targetAddress: action.targetAddress,
-        description: action.description,
-        data: action.data
+      executeAddAction({
+        address: teamData.boardOfDirectorsAddress as Address,
+        functionName: 'addAction',
+        abi: BoDABI,
+        args: [actionData.targetAddress, actionData.description, actionData.data]
       })
-      isSuccess.value = true
     } catch (err) {
       console.error(err)
-      error.value = err
     } finally {
-      loading.value = false
+      loadingContract.value = false
     }
   }
+
+  watch(isSuccess, async (success) => {
+    if (success) {
+      await useCustomFetch(`actions`, {
+        immediate: true
+      }).post({
+        teamId: team.value!.id?.toString(),
+        actionId: parseInt((actionCount.value ?? 0).toString()),
+        targetAddress: action.value!.targetAddress,
+        description: action.value!.description,
+        data: action.value!.data
+      })
+    }
+  })
+
+  const loading = computed(() => isConfirming.value || addActionLoading.value)
 
   return { execute: addAction, isLoading: loading, error, isSuccess }
 }
