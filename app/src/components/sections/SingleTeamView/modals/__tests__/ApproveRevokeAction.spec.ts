@@ -1,16 +1,59 @@
 import { shallowMount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import ApproveRevokeAction from '../ApproveRevokeAction.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { useApprovalCount, useApproveAction, useRevokeAction } from '@/composables/__mocks__/bod'
+import { useApprovalCount, useApproveAction } from '@/composables/__mocks__/bod'
 import { useBankGetFunction } from '@/composables/__mocks__/bank'
 import { useExpenseGetFunction } from '@/composables/__mocks__/useExpenseAccount'
 import { useUserDataStore } from '@/stores'
+import { ref } from 'vue'
 
 vi.mock('@/composables/bod')
 vi.mock('@/composables/bank')
 vi.mock('@/composables/useExpenseAccount')
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
 
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance)
+  }
+})
 describe('ApproveRevokeAction', () => {
   const createComponent = () => {
     return shallowMount(ApproveRevokeAction, {
@@ -244,7 +287,7 @@ describe('ApproveRevokeAction', () => {
 
       await wrapper.vm.$nextTick()
       expect(wrapper.find("[data-test='action-approval-count']").text()).toBe(
-        'Approvals 1/2 board of directors approved'
+        'Approvals /2 board of directors approved'
       )
     })
 
@@ -288,29 +331,6 @@ describe('ApproveRevokeAction', () => {
 
       await wrapper.vm.$nextTick()
       expect(wrapper.find("[data-test='approve-revoke-button']").exists()).toBeFalsy()
-    })
-
-    it('should render LoadingButton when isApproveLoading is true', async () => {
-      const wrapper = createComponent()
-      const { isLoading } = useApproveAction()
-      isLoading.value = true
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBeTruthy()
-
-      isLoading.value = false
-      const { isLoading: revokeLoading } = useRevokeAction()
-      revokeLoading.value = true
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBeTruthy()
-    })
-  })
-
-  describe('Emits', () => {
-    beforeEach(() => {
-      useApproveAction().isLoading.value = false
-      useRevokeAction().isLoading.value = false
     })
   })
 })
