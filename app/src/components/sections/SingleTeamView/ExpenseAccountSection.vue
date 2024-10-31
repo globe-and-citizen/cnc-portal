@@ -154,9 +154,7 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError } from '@/utils'
 import { useAddAction } from '@/composables/bod'
-import { ExpenseAccountService } from '@/services/expenseAccountService'
-import type { Address } from 'viem'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { encodeFunctionData, parseEther, type Address } from 'viem'
 import { useBalance, useReadContract } from '@wagmi/vue'
 import BoDABI from '@/artifacts/abi/bod.json'
 import expenseAccountABI from '@/artifacts/abi/expense-account.json'
@@ -178,8 +176,6 @@ const action = ref('')
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
-const expenseAccountService = new ExpenseAccountService()
-const web3Library = new EthersJsAdapter()
 //#endregion variable declarations
 
 //#region expense account composable
@@ -296,11 +292,11 @@ const setExpenseAccountLimit = async (amount: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'set-max-limit'
-      const functionSignature = await expenseAccountService.getFunctionSignature(
-        team.value.expenseAccountAddress,
-        'setMaxLimit',
-        [web3Library.parseEther(amount)]
-      )
+      const functionSignature = encodeFunctionData({
+        functionName: 'setMaxLimit',
+        abi: expenseAccountABI,
+        args: [parseEther(amount)]
+      })
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
@@ -317,11 +313,11 @@ const approveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'approve-users'
-      const functionSignature = await expenseAccountService.getFunctionSignature(
-        team.value.expenseAccountAddress,
-        'approveAddress',
-        [address]
-      )
+      const functionSignature = encodeFunctionData({
+        functionName: 'approveAddress',
+        abi: expenseAccountABI,
+        args: [address]
+      })
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
@@ -354,11 +350,11 @@ const disapproveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'approve-users'
-      const functionSignature = await expenseAccountService.getFunctionSignature(
-        team.value.expenseAccountAddress,
-        'disapproveAddress',
-        [address]
-      )
+      const functionSignature = encodeFunctionData({
+        functionName: 'disapproveAddress',
+        abi: expenseAccountABI,
+        args: [address]
+      })
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
