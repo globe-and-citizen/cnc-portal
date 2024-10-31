@@ -94,12 +94,12 @@
 
         <div class="text-center">
           <LoadingButton
-            v-if="isConfirmingPushTip || pushTipLoading"
+            v-if="isConfirmingPushTip || pushTipLoading || addActionLoading"
             class="w-full sm:w-44"
             color="primary"
           />
           <button
-            v-if="!(isConfirmingPushTip || pushTipLoading)"
+            v-if="!(isConfirmingPushTip || pushTipLoading || addActionLoading)"
             class="btn btn-primary w-full sm:w-44 text-center"
             @click="
               async () => {
@@ -111,8 +111,8 @@
                     address: team.bankAddress as Address,
                     abi: BankABI,
                     functionName: 'pushTip',
-                    args: [members, ethers.parseEther(tipAmount.toString())],
-                    value: ethers.parseEther(tipAmount.toString())
+                    args: [members, parseEther(tipAmount.toString())],
+                    value: parseEther(tipAmount.toString())
                   })
                 }
               }
@@ -141,9 +141,7 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction } from '@/composables/bod'
-import { BankService } from '@/services/bankService'
-import type { Address } from 'viem'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { encodeFunctionData, parseEther, type Address } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
@@ -155,7 +153,6 @@ const pushTipModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
-const ethers = EthersJsAdapter.getInstance()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
@@ -244,33 +241,27 @@ const {
   abi: BankABI
 })
 
-const bankService = new BankService()
-
 const addTransferAction = async (to: string, amount: string, description: string) => {
   await executeAddAction(props.team, {
     targetAddress: props.team.bankAddress! as Address,
-    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'transfer', [
-      to,
-      ethers.parseEther(amount)
-    ])) as Address,
+    data: encodeFunctionData({
+      abi: BankABI,
+      functionName: 'transfer',
+      args: [to, parseEther(amount)]
+    }) as Address,
     description
   })
-  if (errorAddAction.value) return
-  transferModal.value = false
 }
 const addPushTipAction = async (description: string) => {
   await executeAddAction(props.team, {
     targetAddress: props.team.bankAddress! as Address,
-    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'pushTip', [
-      membersAddress.value,
-      ethers.parseEther(tipAmount.value.toString())
-    ])) as Address,
+    data: encodeFunctionData({
+      abi: BankABI,
+      functionName: 'pushTip',
+      args: [membersAddress.value, parseEther(tipAmount.value.toString())]
+    }) as Address,
     description
   })
-  if (errorAddAction.value) return
-
-  pushTipModal.value = false
-  tipAmount.value = 0
 }
 watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
@@ -318,6 +309,9 @@ watch(errorAddAction, () => {
 watch(addActionSuccess, () => {
   if (addActionSuccess.value) {
     addSuccessToast('Action added successfully')
+    transferModal.value = false
+    pushTipModal.value = false
+    tipAmount.value = 0
   }
 })
 
@@ -325,7 +319,7 @@ const depositToBank = async (amount: string) => {
   if (props.team.bankAddress) {
     sendTransaction({
       to: props.team.bankAddress as Address,
-      value: ethers.parseEther(amount)
+      value: parseEther(amount)
     })
   }
 }
@@ -342,7 +336,7 @@ const transferFromBank = async (to: string, amount: string) => {
     address: props.team.bankAddress as Address,
     abi: BankABI,
     functionName: 'transfer',
-    args: [to, ethers.parseEther(amount)]
+    args: [to, parseEther(amount)]
   })
 }
 

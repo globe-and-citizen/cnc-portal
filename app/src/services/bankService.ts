@@ -42,22 +42,6 @@ export class BankService implements IBankService {
     return await contractService.getContract()
   }
 
-  async getFunctionSignature(
-    bankAddress: string,
-    functionName: string,
-    args: unknown[]
-  ): Promise<string> {
-    const bank = await this.getContract(bankAddress)
-    args.map((arg) => {
-      if (typeof arg === 'number') {
-        this.web3Library.parseEther(arg.toString())
-      }
-    })
-    const functionSignature = bank.interface.encodeFunctionData(functionName, args)
-
-    return functionSignature
-  }
-
   private getContractService(bankAddress: string): SmartContract {
     return new SmartContract(bankAddress, BANK_ABI as InterfaceAbi)
   }

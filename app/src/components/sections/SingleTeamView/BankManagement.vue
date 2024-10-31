@@ -145,8 +145,7 @@ import type { Team } from '@/types'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import DescriptionActionForm from './forms/DescriptionActionForm.vue'
 import { useAddAction } from '@/composables/bod'
-import { BankService } from '@/services/bankService'
-import type { Address } from 'viem'
+import { encodeFunctionData, type Address } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentUserAddress } = useUserDataStore()
@@ -236,25 +235,26 @@ const {
 const isOwner = computed(() => props.bankOwner === currentUserAddress)
 const isOwnerBod = computed(() => props.bankOwner === props.team.boardOfDirectorsAddress)
 
-const bankService = new BankService()
-
 const addPauseAction = async () => {
+  const functionSelector = encodeFunctionData({
+    functionName: isPaused.value ? 'unpause' : 'pause',
+    abi: BankABI
+  })
   await executeAddAction(props.team, {
     description: description.value,
-    data: (await bankService.getFunctionSignature(
-      props.team.bankAddress!,
-      isPaused.value ? 'unpause' : 'pause',
-      []
-    )) as Address,
+    data: functionSelector as Address,
     targetAddress: props.team.bankAddress! as Address
   })
 }
 const addTransferOwnershipAction = async (newOwner: string, description: string) => {
+  const functionSelector = encodeFunctionData({
+    functionName: 'transferOwnership',
+    abi: BankABI,
+    args: [newOwner]
+  })
   await executeAddAction(props.team, {
     description,
-    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'transferOwnership', [
-      newOwner
-    ])) as Address,
+    data: functionSelector as Address,
     targetAddress: props.team.bankAddress! as Address
   })
 }

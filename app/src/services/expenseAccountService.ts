@@ -22,22 +22,6 @@ export class ExpenseAccountService implements IExpenseAccountService {
     return await this.deployExpenseAccountContract()
   }
 
-  async getFunctionSignature(
-    expenseAccountAddresss: string,
-    functionName: string,
-    args: unknown[]
-  ): Promise<string> {
-    const expenseAccount = await this.getContract(expenseAccountAddresss)
-    args.map((arg) => {
-      if (typeof arg === 'number') {
-        this.web3Library.parseEther(arg.toString())
-      }
-    })
-    const functionSignature = expenseAccount.interface.encodeFunctionData(functionName, args)
-
-    return functionSignature
-  }
-
   async transferOwnership(
     expenseAccountAddress: string,
     newOwner: string
