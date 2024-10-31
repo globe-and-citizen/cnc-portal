@@ -74,7 +74,7 @@
       data-test="button-flex"
     >
       <LoadingButton
-        v-if="loadingApprove || loadingRevoke"
+        v-if="loadingApprove || loadingRevoke || isConfirmingApprove || isConfirmingRevoke"
         color="primary"
         class="w-48 text-center"
       />
@@ -95,12 +95,11 @@ import type { Address } from 'viem'
 import { useToastStore, useUserDataStore } from '@/stores'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import { useApproveAction, useRevokeAction } from '@/composables/bod'
 import { onMounted, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useBankGetFunction } from '@/composables/bank'
 import { useExpenseGetFunction } from '@/composables/useExpenseAccount'
-import { useReadContract } from '@wagmi/vue'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import BoDABI from '@/artifacts/abi/bod.json'
 
 const props = defineProps<{
@@ -124,17 +123,47 @@ const {
   args: [props.action.actionId, currentAddress]
 })
 const {
-  execute: approve,
+  writeContract: approve,
   error: errorApprove,
-  isLoading: loadingApprove,
-  isSuccess: successApprove
-} = useApproveAction()
+  isPending: loadingApprove,
+  data: approveHash
+} = useWriteContract()
+const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
+  useWaitForTransactionReceipt({
+    hash: approveHash
+  })
+watch(isConfirmingApprove, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedApprove.value) {
+    addSuccessToast('Action approved')
+    await executeIsExecuted()
+    if (isExecuted.value) {
+      await useCustomFetch(`actions/${props.action.id}`, {
+        immediate: true
+      }).patch()
+      emits('onExecuted')
+    }
+
+    emits('closeModal')
+  }
+})
 const {
-  execute: revoke,
+  writeContract: revoke,
   error: errorRevoke,
-  isLoading: loadingRevoke,
-  isSuccess: successRevoke
-} = useRevokeAction()
+  isPending: loadingRevoke,
+  data: revokeHash
+} = useWriteContract()
+const { isLoading: isConfirmingRevoke, isSuccess: isConfirmedRevoke } =
+  useWaitForTransactionReceipt({
+    hash: revokeHash
+  })
+watch(isConfirmingRevoke, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedRevoke.value) {
+    addSuccessToast('Action revoked')
+    await executeIsExecuted()
+
+    emits('closeModal')
+  }
+})
 const {
   data: approvalCount,
   error: errorApprovalCount,
@@ -166,29 +195,21 @@ const {
   execute: getExpenseFunctionName
 } = useExpenseGetFunction(props.team.expenseAccountAddress!)
 const approveAction = async () => {
-  await approve(props.team.boardOfDirectorsAddress!, props.action.actionId)
-  if (errorApprove.value) {
-    return
-  }
-
-  await executeIsExecuted()
-  if (isExecuted.value) {
-    await useCustomFetch(`actions/${props.action.id}`, {
-      immediate: true
-    }).patch()
-    emits('onExecuted')
-  }
-
-  emits('closeModal')
+  approve({
+    abi: BoDABI,
+    functionName: 'approve',
+    address: props.team.boardOfDirectorsAddress as Address,
+    args: [props.action.actionId]
+  })
 }
 
 const revokeAction = async () => {
-  await revoke(props.team.boardOfDirectorsAddress!, props.action.actionId)
-
-  if (errorRevoke.value) {
-    return
-  }
-  emits('closeModal')
+  revoke({
+    abi: BoDABI,
+    functionName: 'revoke',
+    address: props.team.boardOfDirectorsAddress as Address,
+    args: [props.action.actionId]
+  })
 }
 
 watch(errorIsApproved, () => {
@@ -207,16 +228,7 @@ watch(errorRevoke, () => {
     addErrorToast('Failed to revoke action')
   }
 })
-watch(successApprove, () => {
-  if (successApprove.value) {
-    addSuccessToast('Action approved')
-  }
-})
-watch(successRevoke, () => {
-  if (successRevoke.value) {
-    addSuccessToast('Action revoked')
-  }
-})
+
 watch(errorApprovalCount, () => {
   if (errorApprovalCount.value) {
     addErrorToast('Failed to get approval count')

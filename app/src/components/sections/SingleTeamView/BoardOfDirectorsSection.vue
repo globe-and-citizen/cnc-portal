@@ -213,7 +213,7 @@ const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransfer
     hash: hashTransferOwnership
   })
 
-watch(isConfirmedTransferOwnership, (isConfirming, wasConfirming) => {
+watch(isConfirmingTransferOwnership, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
     addSuccessToast('Successfully transfered Bank ownership')
     executeBankOwner()
@@ -233,7 +233,7 @@ const {
 } = useWaitForTransactionReceipt({
   hash: transferExpenseOwnershipHash
 })
-watch(isConfirmedTransferOwnershipExpense, (isConfirming, wasConfirming) => {
+watch(isConfirmingExpenseTransferOwnership, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedTransferOwnershipExpense.value) {
     addSuccessToast('Successfully transfered Expense A/c ownership')
     executeGetExpenseOwner()
