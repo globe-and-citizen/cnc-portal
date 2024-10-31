@@ -7,11 +7,8 @@ import { ref, type Ref } from 'vue'
 import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-// import SetLimitForm from '../forms/SetLimitForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import type { User } from '@/types'
-// import { ExpenseAccountService } from '@/services/expenseAccountService'
-// import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 interface ComponentData {
   transferModal: boolean
@@ -28,17 +25,6 @@ interface ComponentData {
   isBodAction: () => boolean
   init: () => Promise<void>
 }
-
-// vi.mock('@/services/expenseAccountService', async (importOriginal) => {
-//   const actual: Object = await importOriginal()
-
-//   const ExpenseAccountService = vi.fn()
-//   ExpenseAccountService.prototype.getFunctionSignature = vi.fn()
-//   return {
-//     ...actual,
-//     ExpenseAccountService
-//   }
-// })
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
   const actual: Object = await importOriginal()
@@ -298,26 +284,15 @@ describe('ExpenseAccountSection', () => {
     it('should show animation if balance loading', async () => {
       const wrapper = createComponent()
 
-      // mockExpenseAccountGetBalance.isLoading.value = true
-      // await wrapper.vm.$nextTick()
-
       expect(wrapper.find('[data-test="balance-loading"]').exists()).toBeFalsy()
     })
     it('should show animation if balance not present', async () => {
       const wrapper = createComponent()
 
-      // mockExpenseAccountGetBalance.data.value = null
-      // await wrapper.vm.$nextTick()
-
       expect(wrapper.find('[data-test="balance-loading"]').exists()).toBeFalsy()
     })
     it('should show expense account balance', async () => {
       const wrapper = createComponent()
-
-      // const balance = '0.0'
-      // mockExpenseAccountGetBalance.data.value = balance
-      // mockExpenseAccountGetBalance.isLoading.value = false
-      // await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="contract-balance"]').text()).toBe(
         `${'0.0'} ${NETWORK.currencySymbol}`
@@ -327,25 +302,15 @@ describe('ExpenseAccountSection', () => {
     it('should show animation if max limit loading', async () => {
       const wrapper = createComponent()
 
-      // mockExpenseAccountGetBalance.isLoading.value = true
-      // await wrapper.vm.$nextTick()
-
       expect(wrapper.find('[data-test="max-loading"]').exists()).toBeFalsy()
     })
     it('should show animation if max limit not present', async () => {
       const wrapper = createComponent()
 
-      // mockExpenseAccountGetBalance.data.value = null
-      // await wrapper.vm.$nextTick()
-
       expect(wrapper.find('[data-test="max-loading"]').exists()).toBeFalsy()
     })
     it('should show max limit amount', async () => {
       const wrapper = createComponent()
-
-      // const maxLimit = '0.0'
-      // mockExpenseAccountGetMaxLimit.data.value = maxLimit
-      // await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="max-limit"]').text()).toBe(
         `${'0.0'} ${NETWORK.currencySymbol}`
@@ -355,25 +320,15 @@ describe('ExpenseAccountSection', () => {
     it('should show animation if limit balance loading', async () => {
       const wrapper = createComponent()
 
-      // mockExpenseAccountGetBalance.isLoading.value = true
-      // await wrapper.vm.$nextTick()
-
       expect(wrapper.find('[data-test="limit-loading"]').exists()).toBeFalsy()
     })
     it('should show animation if limit balance not present', async () => {
       const wrapper = createComponent()
 
-      // mockExpenseAccountGetBalance.data.value = null
-      // await wrapper.vm.$nextTick()
-
       expect(wrapper.find('[data-test="limit-loading"]').exists()).toBeFalsy()
     })
     it('should show limit balance amount', async () => {
       const wrapper = createComponent()
-
-      // const maxLimit = '0.0'
-      // mockExpenseAccountGetMaxLimit.data.value = maxLimit
-      // await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="limit-balance"]').text()).toBe(
         `${'0.0'} ${NETWORK.currencySymbol}`
@@ -399,9 +354,6 @@ describe('ExpenseAccountSection', () => {
           ]
         }
       })
-
-      // ;(wrapper.vm as unknown as ComponentData).approvedAddresses = new Set(['0xInitialUser'])
-      // await wrapper.vm.$nextTick()
 
       const button = wrapper.find('[data-test="transfer-button"]')
       expect(button.exists()).toBeTruthy()
@@ -462,16 +414,6 @@ describe('ExpenseAccountSection', () => {
           asBod: false
         })
       })
-      // it('should call transferFromExpenseAccount when @transfer is emitted', async () => {
-      //   const transferForm = wrapper.findComponent(TransferFromBankForm)
-      //   const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
-      //   expect(transferFromBankForm.exists()).toBe(true)
-
-      //   const spy = vi.spyOn(wrapper.vm as unknown as ComponentData, 'transferFromExpenseAccount')
-
-      //   transferForm.vm.$emit('transfer', '0xRecipientAddress', '500')
-      //   expect(spy).toHaveBeenCalledWith('0xRecipientAddress', '500')
-      // })
       it('should close the modal when TransferFromBankForm @close-modal is emitted', async () => {
         const transferForm = wrapper.findComponent(TransferFromBankForm)
 
@@ -506,12 +448,7 @@ describe('ExpenseAccountSection', () => {
         }
       })
 
-      // ;(wrapper.vm as unknown as ComponentData).approveUsersModal = true
-
       it('should pass corrent props to ApproveUsersForm', async () => {
-        // await wrapper.vm.$nextTick()
-
-        // expect((wrapper.vm as unknown as ComponentData).approveUsersModal).toBe(true)
         const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
         expect(approveUsersForm.exists()).toBe(true)
         expect(approveUsersForm.props()).toEqual({
@@ -532,27 +469,9 @@ describe('ExpenseAccountSection', () => {
           expiry: new Date()
         }
 
-        console.log(`expiry: `, data.expiry)
-
         approveUsersForm.vm.$emit('approveUser', data)
-
         expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
       })
-      // it('should call disapproveAddress when @disapprove-address is emitted', async () => {
-      //   const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-      //   expect(approveUsersForm.exists()).toBe(true)
-
-      //   approveUsersForm.vm.$emit('disapproveAddress', '0x123')
-
-      //   expect(approveUsersForm.emitted('disapproveAddress')).toStrictEqual([['0x123']])
-      // })
-      // it('should close the modal when ApproveUsersForm @close-modal is emitted', async () => {
-      //   const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-      //   expect(approveUsersForm.exists()).toBe(true)
-
-      //   approveUsersForm.vm.$emit('closeModal')
-      //   expect((wrapper.vm as unknown as ComponentData).approveUsersModal).toBe(false)
-      // })
     })
   })
 })
