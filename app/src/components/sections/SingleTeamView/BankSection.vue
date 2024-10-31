@@ -191,7 +191,7 @@ const { isLoading: isConfirmingPushTip, isSuccess: isConfirmedPushTip } =
     hash: pushTipHash
   })
 
-watch(isConfirmedPushTip, (isConfirming, wasConfirming) => {
+watch(isConfirmingPushTip, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedPushTip.value) {
     addSuccessToast('Tips pushed successfully')
     pushTipModal.value = false
