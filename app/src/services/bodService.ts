@@ -8,8 +8,6 @@ export interface IBoDService {
   web3Library: IWeb3Library
 
   addAction(bodAddress: string, action: Partial<Action>): Promise<void>
-  approve(actionId: number, bodAddress: string): Promise<void>
-  revoke(actionId: number, bodAddress: string): Promise<void>
 }
 export class BoDService implements IBoDService {
   web3Library: IWeb3Library
@@ -23,27 +21,6 @@ export class BoDService implements IBoDService {
     const tx = await bodContract.addAction(action.targetAddress, action.description, action.data)
 
     await tx.wait()
-  }
-
-  async approve(actionId: number, bodAddress: string): Promise<void> {
-    const bodContract = await this.getBoDContract(bodAddress)
-    const tx = await bodContract.approve(actionId)
-
-    await tx.wait()
-  }
-
-  async revoke(actionId: number, bodAddress: string): Promise<void> {
-    const bodContract = await this.getBoDContract(bodAddress)
-    const tx = await bodContract.revoke(actionId)
-
-    await tx.wait()
-  }
-
-  async isApproved(actionId: number, bodAddress: string, address: string): Promise<boolean> {
-    const bodContract = await this.getBoDContract(bodAddress)
-    const approvers = await bodContract.isApproved(actionId, address)
-
-    return approvers
   }
 
   async getContract(bodAddress: string): Promise<Contract> {
