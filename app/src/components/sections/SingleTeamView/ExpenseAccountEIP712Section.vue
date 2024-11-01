@@ -129,7 +129,7 @@
 <script setup lang="ts">
 //#region imports
 import { onMounted, ref, watch } from 'vue'
-import type { Team, User } from '@/types'
+import type { Team, User, BudgetLimit } from '@/types'
 import { useExpenseAccountGetOwner } from '@/composables/useExpenseAccount'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -156,6 +156,7 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
+const expenseAccountData = ref<{}>()
 
 const { addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
@@ -187,6 +188,14 @@ const {
   .get()
   .json()
 
+const {
+  execute: executeAddExpenseData
+} = useCustomFetch(`teams/${team.value.id}/member/add-expense-data`, {
+  immediate: false
+})
+  .post(expenseAccountData)
+  .json()
+
 watch(searchUserResponse, () => {
   if (searchUserResponse.value?.ok && users.value?.users) {
     foundUsers.value = users.value.users
@@ -203,7 +212,7 @@ const getExpenseAccountOwner = async () => {
     await executeExpenseAccountGetOwner(team.value.expenseAccountAddress)
 }
 
-const approveUser = async (data: {}) => {
+const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   const provider = await web3Library.getProvider()
   const signer = await web3Library.getSigner()
@@ -229,6 +238,13 @@ const approveUser = async (data: {}) => {
   try {
     const signature = await signer.signTypedData(domain, types, data)
     console.log(`signature: `, signature)
+    if (typeof data.value === 'bigint')
+      data.value = web3Library.formatEther(data.value)
+    expenseAccountData.value = {
+      expenseAccountData: data,
+      signature
+    }
+    await executeAddExpenseData()
   } catch (err) {
     log.error(parseError(err))
     addErrorToast(parseError(err))
