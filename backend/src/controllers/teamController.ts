@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
 import { addNotification } from "../utils";
+import exp from "constants";
 
 const prisma = new PrismaClient();
 // Create a new team
@@ -180,6 +181,7 @@ const updateTeam = async (req: Request, res: Response) => {
     votingAddress,
     boardOfDirectorsAddress,
     expenseAccountAddress,
+    expenseAccountEip712Address,
     officerAddress,
   } = req.body;
   const callerAddress = (req as any).address;
@@ -205,6 +207,7 @@ const updateTeam = async (req: Request, res: Response) => {
         boardOfDirectorsAddress,
         expenseAccountAddress,
         officerAddress,
+        expenseAccountEip712Address
       },
       include: {
         members: {
@@ -354,6 +357,119 @@ const addMembers = async (req: Request, res: Response) => {
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
 };
+
+/**
+ * 
+ * @param members 
+ * @param callerAddress 
+ * @returns 
+ */
+export const addExpenseAccountData = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const expenseAccountData = req.body
+
+  try {
+    console.log('expenseAccountData: ', JSON.stringify(expenseAccountData))
+    console.log(`_expenseAccountData: `, expenseAccountData.expenseAccountData)
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) }
+    })
+    const ownerAddress = team?.ownerAddress
+    // const userAddress = expenseAccountData.member.address
+    if (callerAddress !== ownerAddress) {
+      return errorResponse(403, `Action not authorized`, res)
+    }
+    //assign roles to user
+    // for (const role of expenseAccountData.member.roles) {
+    //   console.log(`role: `, role)
+    //   if (ownerAddress) {
+    //     let memberTeamsData = await prisma.memberTeamsData.findUnique({
+    //       where:{
+    //         userAddress_teamId: {
+    //           userAddress,
+    //           teamId: Number(id)
+    //         }
+    //       }
+    //     })
+    //     if (!memberTeamsData)
+    //       memberTeamsData = await prisma.memberTeamsData.create({
+    //         data: {
+    //           userAddress,
+    //           teamId: Number(id)
+    //         }
+    //       })
+    //     const userRole = await prisma.userRole.findUnique({
+    //       where: {
+    //         userAddress_roleId: {
+    //           userAddress,
+    //           roleId: Number(role.roleId)
+    //         }
+    //       }
+    //     })
+    //     if (!userRole)
+    //       await prisma.userRole.create({
+    //         data: {
+    //           userAddress,
+    //           roleId: Number(role.roleId),
+    //           assignedBy: ownerAddress,
+    //           memberTeamsDataId: memberTeamsData?.id
+    //         }
+    //       })
+    //   }
+    //   const _role = await prisma.role.findUnique({
+    //     where: { id: Number(role.roleId) }
+    //   })
+    //   const owner = await prisma.user.findUnique({
+    //     where: { address: ownerAddress }
+    //   })
+    //   //send notification
+    //   await addNotification(
+    //     [userAddress],
+    //     {
+    //       message: `You have been assigned a new role: ${_role?.name} by ${owner?.name}`,
+    //       subject: `Role Assignment`,
+    //       author: `${ownerAddress}` || "",
+    //       resource: `role-assignment/${id}`,
+    //     }
+    //   );
+    // }
+
+    //create contract
+    await prisma.memberTeamsData.upsert({
+      where: {
+        userAddress_teamId: {
+          userAddress: expenseAccountData.expenseAccountData.approvedAddress,
+          teamId: Number(id)
+        }
+      },
+      update: {
+        expenseAccountData: JSON.stringify(expenseAccountData.expenseAccountData),
+        expenseAccountSignature: expenseAccountData.signature
+      },
+      create: {
+        userAddress: expenseAccountData.expenseAccountData.approvedAddress,
+        teamId: Number(id),
+        expenseAccountData: JSON.stringify(expenseAccountData.expenseAccountData),
+        expenseAccountSignature: expenseAccountData.signature
+      }
+    })
+    // await prisma.memberTeamsData.create({
+    //   data: {
+    //     contract: JSON.stringify(rolesData.contract),
+    //     ownerSignature: rolesData.signature,
+    //     teamId: Number(id),
+    //     userAddress: rolesData.member.address
+    //   }
+    // })
+    res.status(201)
+      .json({
+        success: true
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  }
+}
 
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
