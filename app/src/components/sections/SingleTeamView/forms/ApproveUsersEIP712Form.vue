@@ -181,6 +181,7 @@ import { helpers, numeric, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
+import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -200,6 +201,7 @@ const budgetLimitTypes = ref([
   { id: 1, name: 'Amount per period' },
   { id: 2, name: 'Amount per transaction' }
 ])
+const web3Library = new EthersJsAdapter()
 
 const rules = {
   formData: {
@@ -222,8 +224,8 @@ const rules = {
     numeric
   },
   budgetLimitType: {
-    required: helpers.withMessage('Budget limit type is required', (value: string) => {
-      return value ? true : false
+    required: helpers.withMessage('Budget limit type is required', (value: number) => {
+      return value >= 0 ? true : false
     })
   },
   description: {
@@ -251,7 +253,9 @@ const submitApprove = () => {
   emit('approveUser', {
     approvedAddress: formData.value[0].address,
     budgetType: budgetLimitType.value,
-    value: limitValue.value,
+    value: budgetLimitType.value === 0?
+      Number(limitValue.value):
+      web3Library.parseEther(limitValue.value),
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }
