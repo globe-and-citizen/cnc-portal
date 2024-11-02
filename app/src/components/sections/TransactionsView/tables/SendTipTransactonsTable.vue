@@ -87,7 +87,9 @@ onMounted(async () => {
       address: TIPS_ADDRESS as Address,
       event: parseAbiItem(
         'event SendTip(address from, address[] teamMembers, uint256 totalAmount, uint256 amountPerAddress)'
-      )
+      ),
+      fromBlock: 'earliest',
+      toBlock: 'latest'
     })
     dates.value = await Promise.all(
       events.value.map(async (event) => {

@@ -91,7 +91,9 @@ onMounted(async () => {
       address: props.bankAddress as Address,
       event: parseAbiItem(
         'event PushTip(address indexed addressWhoPushes, address[] teamMembers, uint256 totalAmount)'
-      )
+      ),
+      fromBlock: 'earliest',
+      toBlock: 'latest'
     })
     dates.value = await Promise.all(
       events.value.map(async (event) => {

@@ -69,7 +69,9 @@ onMounted(async () => {
   try {
     events.value = await getLogs(client, {
       address: TIPS_ADDRESS as Address,
-      event: parseAbiItem('event TipWithdrawal(address to, uint256 amount)')
+      event: parseAbiItem('event TipWithdrawal(address to, uint256 amount)'),
+      fromBlock: 'earliest',
+      toBlock: 'latest'
     })
     dates.value = await Promise.all(
       events.value.map(async (event) => {

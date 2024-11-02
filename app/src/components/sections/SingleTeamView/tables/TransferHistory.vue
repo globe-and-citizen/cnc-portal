@@ -84,7 +84,9 @@ onMounted(async () => {
       address: props.bankAddress as Address,
       event: parseAbiItem(
         'event Transfer(address indexed sender, address indexed to, uint256 amount)'
-      )
+      ),
+      fromBlock: 'earliest',
+      toBlock: 'latest'
     })
     dates.value = await Promise.all(
       events.value.map(async (event) => {
