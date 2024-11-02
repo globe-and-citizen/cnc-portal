@@ -2,9 +2,6 @@ import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapte
 import { TIPS_ADDRESS } from '@/constant'
 import type { ContractTransaction } from 'ethers'
 import ABI from '../artifacts/abi/tips.json'
-import type { TipsEventType } from '@/types'
-import type { EventLog } from 'ethers'
-import type { Log } from 'ethers'
 import { BankService, type IBankService } from './bankService'
 import { SmartContract } from './contractService'
 import type { InterfaceAbi } from 'ethers'
@@ -31,9 +28,5 @@ export class TipsService extends SmartContract {
 
     const tx = await this.contract.withdraw()
     return await tx.wait()
-  }
-
-  async getEvents(type: TipsEventType): Promise<EventLog[] | Log[]> {
-    return await super.getEvents(type)
   }
 }
