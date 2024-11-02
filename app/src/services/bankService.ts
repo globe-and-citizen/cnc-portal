@@ -5,16 +5,11 @@ import type { Contract } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { BANK_IMPL_ADDRESS, BANK_BEACON_ADDRESS, TIPS_ADDRESS } from '@/constant'
 import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
-import { BankEventType } from '@/types'
-import type { EventLog } from 'ethers'
-import type { Log } from 'ethers'
 import { SmartContract } from './contractService'
 import type { InterfaceAbi } from 'ethers'
 export interface IBankService {
   web3Library: IWeb3Library
   createBankContract(id: string): Promise<string>
-
-  getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]>
 }
 
 export class BankService implements IBankService {
@@ -28,12 +23,6 @@ export class BankService implements IBankService {
     const bankAddress = await this.deployBankContract()
     const response = await useCustomFetch<string>(`teams/${teamId}`).put({ bankAddress }).json()
     return response.data.value.bankAddress
-  }
-
-  async getEvents(bankAddress: string, type: BankEventType): Promise<EventLog[] | Log[]> {
-    const contractService = this.getContractService(bankAddress)
-
-    return await contractService.getEvents(type)
   }
 
   async getContract(bankAddress: string): Promise<Contract> {
