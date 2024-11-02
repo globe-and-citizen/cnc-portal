@@ -16,15 +16,15 @@
         <tbody v-if="(events?.length ?? 0) > 0">
           <tr
             v-for="(event, index) in events"
-            v-bind:key="event.txHash"
+            v-bind:key="event.transactionHash"
             class="cursor-pointer hover"
-            @click="showTxDetail(event.txHash)"
+            @click="showTxDetail(event.transactionHash)"
           >
             <td>{{ index + 1 }}</td>
-            <td class="truncate max-w-48">{{ event.data[0] }}</td>
-            <td class="truncate max-w-48">{{ event.data[1] }}</td>
-            <td>{{ web3Library.formatEther(event.data[2]) }} {{ NETWORK.currencySymbol }}</td>
-            <td>{{ event.date }}</td>
+            <td class="truncate max-w-48">{{ event.args.sender }}</td>
+            <td class="truncate max-w-48">{{ event.args.to }}</td>
+            <td>{{ formatEther(event.args.amount!) }} {{ NETWORK.currencySymbol }}</td>
+            <td>{{ dates[index] }}</td>
           </tr>
         </tbody>
         <tbody v-else>
@@ -39,22 +39,64 @@
 
 <script setup lang="ts">
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { BankEventType } from '@/types'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { NETWORK } from '@/constant'
 import { useToastStore } from '@/stores/useToastStore'
-import { useBankEvents } from '@/composables/bank'
 import { onMounted, watch } from 'vue'
+import { ref } from 'vue'
+import { formatEther, parseAbiItem, type Address, type GetLogsReturnType } from 'viem'
+import { getBlock, getLogs } from 'viem/actions'
+import { config } from '@/wagmi.config'
 
-const web3Library = EthersJsAdapter.getInstance()
+const client = config.getClient()
 const { addErrorToast } = useToastStore()
 const props = defineProps<{
   bankAddress: string
 }>()
-const { getEvents, error, events, loading } = useBankEvents(props.bankAddress)
+const loading = ref(false)
+const error = ref<unknown | null>(null)
+const events = ref<
+  GetLogsReturnType<{
+    readonly name: 'Transfer'
+    readonly type: 'event'
+    readonly inputs: readonly [
+      {
+        readonly type: 'address'
+        readonly name: 'sender'
+        readonly indexed: true
+      },
+      {
+        readonly type: 'address'
+        readonly name: 'to'
+        readonly indexed: true
+      },
+      {
+        readonly type: 'uint256'
+        readonly name: 'amount'
+      }
+    ]
+  }>
+>([])
+const dates = ref<string[]>([])
 
 onMounted(async () => {
-  await getEvents(BankEventType.Transfer)
+  try {
+    events.value = await getLogs(client, {
+      address: props.bankAddress as Address,
+      event: parseAbiItem(
+        'event Transfer(address indexed sender, address indexed to, uint256 amount)'
+      )
+    })
+    dates.value = await Promise.all(
+      events.value.map(async (event) => {
+        const block = await getBlock(client, {
+          blockHash: event.blockHash
+        })
+        return new Date(parseInt(block.timestamp.toString()) * 1000).toLocaleString()
+      })
+    )
+  } catch (e) {
+    error.value = e
+  }
 })
 
 const showTxDetail = (txHash: string) => {
