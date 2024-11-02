@@ -1,11 +1,7 @@
 <template>
   <div id="bank-transactions" class="flex flex-col gap-5">
     <AccordionComponent
-      :accordions="[
-        'Deposit History',
-        'Transfer History',
-        'Send To Wallet History'
-      ]"
+      :accordions="['Deposit History', 'Transfer History', 'Send To Wallet History']"
       v-model="activeAccordion"
     >
       <template #accordion-0>

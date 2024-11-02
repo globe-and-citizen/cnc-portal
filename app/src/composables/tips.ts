@@ -47,4 +47,3 @@ export function useWithdrawTips() {
 
   return { execute: withdraw, isLoading: loading, isSuccess, error, transaction }
 }
-
