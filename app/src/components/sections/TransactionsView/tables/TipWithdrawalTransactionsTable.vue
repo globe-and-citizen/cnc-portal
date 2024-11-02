@@ -1,6 +1,6 @@
 <template>
   <h2>TipWithdrawal Transactions</h2>
-  <SkeletonLoading v-if="withdrawalTipLoading" class="w-full h-96 p-5" />
+  <SkeletonLoading v-if="loading" class="w-full h-96 p-5" />
   <div v-else class="overflow-x-auto bg-base-100 p-5" data-test="table-tip-withdrawal-transactions">
     <table class="table table-zebra">
       <!-- head -->
@@ -12,17 +12,17 @@
           <th>Date</th>
         </tr>
       </thead>
-      <tbody v-if="(withdrawalTipEvents?.length ?? 0) > 0">
+      <tbody v-if="(events?.length ?? 0) > 0">
         <tr
-          v-for="(withdrawalTipEvent, index) in withdrawalTipEvents"
-          v-bind:key="withdrawalTipEvent.txHash"
+          v-for="(event, index) in events"
+          v-bind:key="event.transactionHash"
           class="cursor-pointer hover"
-          @click="showTxDetail(withdrawalTipEvent.txHash)"
+          @click="showTxDetail(event.transactionHash)"
         >
           <td>{{ index + 1 }}</td>
-          <td class="truncate max-w-48">{{ withdrawalTipEvent.data[0] }}</td>
-          <td>{{ ethers.formatEther(withdrawalTipEvent.data[1]) }} {{ NETWORK.currencySymbol }}</td>
-          <td>{{ withdrawalTipEvent.date }}</td>
+          <td class="truncate max-w-48">{{ event.args.to }}</td>
+          <td>{{ formatEther(event.args.amount!) }} {{ NETWORK.currencySymbol }}</td>
+          <td>{{ dates[index] }}</td>
         </tr>
       </tbody>
       <tbody v-else>
@@ -35,29 +35,57 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
-import { ethers } from 'ethers'
-import { useTipEvents } from '@/composables/tips'
-import { TipsEventType } from '@/types'
+import { onMounted, ref, watch } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { NETWORK } from '@/constant'
+import { NETWORK, TIPS_ADDRESS } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
+import { formatEther, parseAbiItem, type Address, type GetLogsReturnType } from 'viem'
+import { getBlock, getLogs } from 'viem/actions'
+import { config } from '@/wagmi.config'
 
+const client = config.getClient()
 const { addErrorToast } = useToastStore()
-
-const {
-  events: withdrawalTipEvents,
-  getEvents: getWithdrawalTipEvents,
-  loading: withdrawalTipLoading,
-  error: withdrawalTipError
-} = useTipEvents()
+const events = ref<
+  GetLogsReturnType<{
+    readonly name: 'TipWithdrawal'
+    readonly type: 'event'
+    readonly inputs: readonly [
+      {
+        readonly type: 'address'
+        readonly name: 'to'
+      },
+      {
+        readonly type: 'uint256'
+        readonly name: 'amount'
+      }
+    ]
+  }>
+>([])
+const dates = ref<string[]>([])
+const loading = ref(false)
+const error = ref<unknown | null>(null)
 
 onMounted(async () => {
-  getWithdrawalTipEvents(TipsEventType.TipWithdrawal)
+  try {
+    events.value = await getLogs(client, {
+      address: TIPS_ADDRESS as Address,
+      event: parseAbiItem('event TipWithdrawal(address to, uint256 amount)')
+    })
+    dates.value = await Promise.all(
+      events.value.map(async (event) => {
+        const block = await getBlock(client, {
+          blockHash: event.blockHash
+        })
+        return new Date(parseInt(block.timestamp.toString()) * 1000).toLocaleString()
+      })
+    )
+  } catch (e) {
+    error.value = e
+  }
 })
 
-watch(withdrawalTipError, () => {
-  if (withdrawalTipError.value) {
+watch(error, () => {
+  if (error.value) {
     addErrorToast('Failed to get withdrawal tip events')
   }
 })
