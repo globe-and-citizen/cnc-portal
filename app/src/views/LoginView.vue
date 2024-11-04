@@ -1,8 +1,7 @@
 <template>
   <div class="min-h-screen flex flex-col lg:flex-row">
     <div
-      class="grow flex flex-col items-center justify-center flex-auto p-6 lg:p-10 lg:w-2/3 bg-cover bg-center"
-      style="background-image: url('/src/assets/overlay_2.png')"
+      class="grow flex flex-col items-center justify-center flex-auto p-6 lg:p-10 lg:w-2/3 bg-cover bg-center lg:bg-[url('/src/assets/overlay_2.png')]"
     >
       <transition appear name="fade" mode="out-in">
         <div class="text-center">
@@ -20,9 +19,7 @@
         </div>
       </transition>
     </div>
-    <div
-      class="w-full lg:w-1/3 flex flex-col justify-center p-6 lg:p-10 bg-gradient-to-r from-blue-900 to-green-900"
-    >
+    <div class="w-full lg:w-1/3 flex flex-col justify-center p-6 lg:p-10">
       <transition appear name="fade" mode="out-in">
         <div>
           <h2 class="pb-4 flex justify-center text-xl lg:text-2xl font-semibold text-gray-800">
