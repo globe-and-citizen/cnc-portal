@@ -38,7 +38,7 @@ vi.mock('@/composables/bod', async (importOriginal) => {
 const mockBankTransferOwnership = {
   transaction: ref<TransactionResponse | null>(null),
   isLoading: ref(false),
-  error: <unknown>null,
+  error: ref<unknown>(null),
   isSuccess: false,
   execute: vi.fn()
 }

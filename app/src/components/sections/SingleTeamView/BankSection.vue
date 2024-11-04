@@ -1,30 +1,38 @@
 <template>
-  <div class="flex flex-col gap-y-4 py-6">
-    <span class="text-3xl font-bold">Team Bank Account</span>
+  <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
+    <span class="text-2xl sm:text-3xl font-bold">Team Bank Account</span>
 
     <div class="divider m-0"></div>
-    <div>
-      <div class="flex justify-between">
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <span>Bank Balance</span>
           <div class="font-extrabold text-4xl">
             <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-              <span v-else>{{ teamBalance }} </span></span
-            >
+              <span v-else>{{ teamBalance }} </span>
+            </span>
             <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
-          <span>≈ $ 1.28</span>
+          <span class="text-xs sm:text-sm">≈ $ 1.28</span>
         </div>
-        <div class="flex gap-4">
-          <Button variant="secondary" v-if="team.bankAddress" @click="() => (depositModal = true)">
+        <div class="flex flex-wrap gap-2 sm:gap-4">
+          <Button
+            class="btn btn-sm btn-secondary"
+            v-if="team.bankAddress"
+            @click="() => (depositModal = true)"
+          >
             Deposit
           </Button>
-          <Button variant="secondary" v-if="team.bankAddress" @click="() => (pushTipModal = true)">
-            Tips the Team
+          <Button
+            class="btn btn-sm btn-secondary"
+            v-if="team.bankAddress"
+            @click="() => (pushTipModal = true)"
+          >
+            Tip the Team
           </Button>
           <Button
-            variant="secondary"
+            class="btn btn-sm btn-secondary"
             v-if="team.bankAddress && (team.ownerAddress == useUserDataStore().address || isBod)"
             @click="transferModal = true"
           >
@@ -32,8 +40,12 @@
           </Button>
         </div>
       </div>
-      <div class="flex gap-4 justify-end" data-test="team-bank-address">
-        <span>Bank Address </span><AddressToolTip :address="team.bankAddress ?? ''" />
+      <div
+        class="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start sm:justify-end items-start sm:items-center"
+        data-test="team-bank-address"
+      >
+        <span class="text-sm">Bank Address </span>
+        <AddressToolTip :address="team.bankAddress ?? ''" class="text-xs" />
       </div>
     </div>
 
@@ -68,9 +80,9 @@
     </ModalComponent>
     <ModalComponent v-model="pushTipModal">
       <div class="flex flex-col gap-4 justify-start">
-        <span class="font-bold text-2xl">Tips The Team</span>
-        <span>
-          This Send tips to all team Members {{ tipAmount }} {{ NETWORK.currencySymbol }}
+        <span class="font-bold text-xl sm:text-2xl">Tip The Team</span>
+        <span class="text-sm sm:text-base">
+          Sends a tip to all team Members {{ tipAmount }} {{ NETWORK.currencySymbol }}
         </span>
 
         <input
@@ -82,11 +94,10 @@
         />
 
         <div class="text-center">
-          <LoadingButton v-if="false" class="w-44" color="primary" />
-          <!-- TODO send tips to all team members -->
+          <LoadingButton v-if="false" class="w-full sm:w-44" color="primary" />
           <button
             v-if="!false"
-            class="btn btn-primary w-44 text-center"
+            class="btn btn-primary w-full sm:w-44 text-center"
             @click="
               () => {
                 addPushTipAction('Pushed tips to all team members')

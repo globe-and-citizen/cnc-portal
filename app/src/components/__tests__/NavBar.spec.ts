@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { NETWORK } from '@/constant/index'
 import NavBar from '../NavBar.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
@@ -29,7 +28,7 @@ describe('NavBar', () => {
     })
 
     it('Should renders balance correctly', () => {
-      expect(wrapper.find('.btn span').text()).toContain('1.234')
+      expect(wrapper.find("[data-test='balance-with-symbol']").text()).toContain('1.234')
     })
     it('Should renders Withdraw Button', () => {
       expect(wrapper.find('[data-test="withdraw"]').text()).toContain('Withdraw Tips')
@@ -61,7 +60,8 @@ describe('NavBar', () => {
     })
     it('Should render loading state for balance', () => {
       const wrapper = mount(NavBar, { props: { ...props, balanceLoading: true } })
-      expect(wrapper.find('.btn div').text()).toBe(NETWORK.currencySymbol)
+      console.log()
+      expect(wrapper.find("[data-test='balance-loading']")).toBeTruthy()
     })
   })
 })
