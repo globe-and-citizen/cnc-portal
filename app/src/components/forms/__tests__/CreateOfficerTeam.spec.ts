@@ -10,16 +10,35 @@ vi.mock('@/stores/useToastStore', () => ({
     addSuccessToast: vi.fn()
   })
 }))
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
 
-vi.mock('@/composables/officer', () => ({
-  useCreateTeam: () => ({
-    execute: vi.fn(),
-    isLoading: ref(false),
-    isSuccess: ref(false),
-    error: ref(null)
-  })
-}))
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
 
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+  }
+})
 describe('CreateOfficerTeam.vue', () => {
   let wrapper: VueWrapper
 
