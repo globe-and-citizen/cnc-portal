@@ -252,6 +252,9 @@ const deleteTeam = async (req: Request, res: Response) => {
     await prisma.boardOfDirectorActions.deleteMany({
       where: { teamId: Number(id) }
     })
+    await prisma.memberTeamsData.deleteMany({
+      where: { teamId: Number(id) }
+    })
     const teamD = await prisma.team.delete({
       where: {
         id: Number(id),
@@ -299,6 +302,15 @@ const deleteMember = async (req: Request, res: Response) => {
     // Update the team to disconnect the specified member
     const name = team.name;
     const description = team.description;
+
+    await prisma.memberTeamsData.delete({
+      where: {
+        userAddress_teamId: {
+          userAddress: String(memberAddress),
+          teamId: Number(id)
+        }
+      }
+    })
 
     const updatedTeam = await prisma.team.update({
       where: { id: Number(id) },
