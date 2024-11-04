@@ -50,7 +50,7 @@
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
         <template #tab-6>
-          <ContractManagementSection></ContractManagementSection> 
+          <ContractManagementSection></ContractManagementSection>
         </template>
       </TabNavigation>
     </div>
