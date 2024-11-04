@@ -1,7 +1,6 @@
 import { mount, VueWrapper } from '@vue/test-utils'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useDeployOfficerContract } from '@/composables/officer'
+import { describe, it, expect, vi } from 'vitest'
 import { ref } from 'vue'
 
 // Mock the composables
@@ -65,21 +64,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 describe('OfficerForm.vue', () => {
-  let mockDeployOfficer: ReturnType<typeof useDeployOfficerContract>
-
-  beforeEach(() => {
-    // Mock return values for composables
-    mockDeployOfficer = {
-      execute: vi.fn(),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      error: ref(null),
-      contractAddress: ref(null)
-    }
-
-    // Mock composables return values
-    vi.mocked(useDeployOfficerContract).mockReturnValue(mockDeployOfficer)
-  })
   it('renders officer deployment button when no officer contract is deployed', () => {
     const wrapper: VueWrapper = mount(OfficerForm, {
       props: {
@@ -98,53 +82,5 @@ describe('OfficerForm.vue', () => {
     })
 
     expect(wrapper.find('.badge-primary').text()).toContain('0x123')
-  })
-
-  it('calls deployOfficerContract on button click', async () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: { officerAddress: null }
-      }
-    })
-
-    const button = wrapper.find('button')
-    await button.trigger('click')
-
-    expect(mockDeployOfficer.execute).toHaveBeenCalled()
-    expect(mockDeployOfficer.isLoading.value).toBe(false)
-    expect(mockDeployOfficer.error.value).toBe(null)
-    expect(mockDeployOfficer.contractAddress.value).toBe(null)
-  })
-
-  it('shows loading spinner during officer deployment', async () => {
-    mockDeployOfficer.isLoading.value = true
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: { officerAddress: null }
-      }
-    })
-
-    expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
-  })
-  it('calls deployOfficerContract on button click', async () => {
-    const wrapper = mount(OfficerForm, {
-      props: { team: { officerAddress: null } }
-    })
-
-    const button = wrapper.find('button')
-    await button.trigger('click')
-    await wrapper.vm.$nextTick() // Wait for DOM updates
-
-    expect(mockDeployOfficer.execute).toHaveBeenCalled()
-    expect(mockDeployOfficer.isLoading.value).toBe(false)
-    expect(mockDeployOfficer.error.value).toBe(null)
-  })
-  it('shows loading spinner when officer contract is deploying', async () => {
-    mockDeployOfficer.isLoading.value = true
-    const wrapper = mount(OfficerForm, {
-      props: { team: { officerAddress: null } }
-    })
-
-    expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
   })
 })

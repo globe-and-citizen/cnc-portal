@@ -119,7 +119,6 @@
 <script setup lang="ts">
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { ref, watch, onMounted } from 'vue'
-import { useDeployOfficerContract } from '@/composables/officer'
 import { useToastStore } from '@/stores'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
@@ -127,7 +126,20 @@ import { ethers } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import OfficerABI from '@/artifacts/abi/officer.json'
-import { TIPS_ADDRESS } from '@/constant'
+import { deployContract, getTransactionCount } from '@wagmi/core'
+import { encodeFunctionData, getContractAddress, type Address } from 'viem'
+import { useUserDataStore } from '@/stores/user'
+import BEACON_PROXY_ABI from '@/artifacts/abi/beacon-proxy.json'
+import {
+  BANK_BEACON_ADDRESS,
+  BOD_BEACON_ADDRESS,
+  TIPS_ADDRESS,
+  EXPENSE_ACCOUNT_BEACON_ADDRESS,
+  OFFICER_BEACON,
+  VOTING_BEACON_ADDRESS
+} from '@/constant'
+import { BEACON_PROXY_BYTECODE } from '@/artifacts/bytecode/beacon-proxy'
+import { config } from '@/wagmi.config'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -143,12 +155,7 @@ const founders = ref<string[]>([])
 const members = ref<string[]>([])
 
 // Setup composables
-const {
-  execute: deployOfficer,
-  isLoading: createOfficerLoading,
-  error: deployOfficerError,
-  isSuccess: deployOfficerSuccess
-} = useDeployOfficerContract()
+
 const {
   writeContract: deployBank,
   isPending: isLoadingDeployBank,
@@ -206,12 +213,55 @@ const {
   args: []
 })
 
+const createOfficerLoading = ref(false)
 // Deploy Officer Contract
 const deployOfficerContract = async () => {
   try {
-    await deployOfficer(props.team.id)
-  } catch (e) {
-    addErrorToast('Failed to deploy officer contract')
+    const currentAddress = useUserDataStore().address
+    createOfficerLoading.value = true
+    const encodedFunction = encodeFunctionData({
+      abi: OfficerABI,
+      functionName: 'initialize',
+      args: [
+        currentAddress,
+        BANK_BEACON_ADDRESS,
+        VOTING_BEACON_ADDRESS,
+        BOD_BEACON_ADDRESS,
+        EXPENSE_ACCOUNT_BEACON_ADDRESS
+      ]
+    })
+
+    const result = await deployContract(config, {
+      abi: BEACON_PROXY_ABI,
+      bytecode: BEACON_PROXY_BYTECODE,
+      args: [OFFICER_BEACON, encodedFunction]
+    })
+    let nonce
+    let deployedAddress
+    if (currentAddress) {
+      nonce = await getTransactionCount(config, { address: currentAddress as Address })
+    }
+    if (nonce && currentAddress) {
+      deployedAddress = getContractAddress({
+        from: currentAddress as Address,
+        nonce: BigInt(nonce)
+      })
+      console.log('deployedAddress', deployedAddress)
+      // await storeDeployedAddress()
+      addSuccessToast('Contract deployed successfully')
+      createOfficerLoading.value = false
+      const response = await useCustomFetch<string>(`teams/${props.team.id}`)
+        .put({ officerAddress: deployedAddress })
+        .json()
+      if (response) {
+        emits('getTeam')
+      }
+      console.log('result', result)
+    }
+  } catch (error) {
+    console.error(error)
+    createOfficerLoading.value = false
+    addErrorToast('Error deploying contract')
   }
 }
 
@@ -299,24 +349,6 @@ watch(officerTeam, async (value) => {
 watch(deployExpenseError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy expense account')
-  }
-})
-
-watch(deployOfficerSuccess, (value) => {
-  if (value) {
-    addSuccessToast('Officer contract deployed successfully')
-    emits('getTeam')
-  }
-})
-watch(deployOfficerSuccess, (value) => {
-  if (value) {
-    addSuccessToast('Officer contract deployed successfully')
-    emits('getTeam')
-  }
-})
-watch(deployOfficerError, (value) => {
-  if (value) {
-    addErrorToast('Failed to deploy officer contract')
   }
 })
 
