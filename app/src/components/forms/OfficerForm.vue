@@ -114,7 +114,6 @@ import {
   useDeployOfficerContract,
   useDeployBank,
   useDeployVoting,
-  useGetOfficerTeam,
   useDeployExpenseAccount
 } from '@/composables/officer'
 import { useToastStore } from '@/stores'
@@ -122,6 +121,8 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
 import { ethers } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useReadContract } from '@wagmi/vue'
+import OfficerABI from '@/artifacts/abi/officer.json'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -163,7 +164,16 @@ const {
 } = useDeployExpenseAccount()
 
 // Fetch officer team details using composable
-const { execute: fetchOfficerTeam, isLoading: isLoadingGetTeam, officerTeam } = useGetOfficerTeam()
+const {
+  refetch: fetchOfficerTeam,
+  isLoading: isLoadingGetTeam,
+  data: officerTeam
+} = useReadContract({
+  address: props.team.officerAddress,
+  functionName: 'getTeam',
+  abi: OfficerABI,
+  args: []
+})
 
 // Deploy Officer Contract
 const deployOfficerContract = async () => {
@@ -190,42 +200,51 @@ const deployExpenseAccount = async () => {
 
 // Watch officer team data and update state
 watch(officerTeam, async (value) => {
-  if (value) {
-    if (value.founders.length === 0) {
+  const temp: Array<Object> = value as Array<Object>
+  const team = {
+    founders: temp[0] as string[],
+    members: temp[1] as string[],
+    bankAddress: temp[2] as string,
+    votingAddress: temp[3] as string,
+    bodAddress: temp[4] as string,
+    expenseAccountAddress: temp[5] as string
+  }
+  if (team) {
+    if (team.founders.length === 0) {
       showCreateTeam.value = true
     } else {
       showCreateTeam.value = false
-      founders.value = value.founders
-      members.value = value.members
-      isBankDeployed.value = value.bankAddress != ethers.ZeroAddress
-      isVotingDeployed.value = value.votingAddress != ethers.ZeroAddress
-      isBoDDeployed.value = value.bodAddress != ethers.ZeroAddress
-      isExpenseDeployed.value = value.expenseAccountAddress != ethers.ZeroAddress
-      if (props.team.bankAddress != value.bankAddress && isBankDeployed.value) {
+      founders.value = team.founders
+      members.value = team.members
+      isBankDeployed.value = team.bankAddress != ethers.ZeroAddress
+      isVotingDeployed.value = team.votingAddress != ethers.ZeroAddress
+      isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
+      isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
+      if (props.team.bankAddress != team.bankAddress && isBankDeployed.value) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ bankAddress: value.bankAddress })
+          .put({ bankAddress: team.bankAddress })
           .json()
         emits('getTeam')
       }
-      if (props.team.votingAddress != value.votingAddress && isVotingDeployed.value) {
+      if (props.team.votingAddress != team.votingAddress && isVotingDeployed.value) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ votingAddress: value.votingAddress })
+          .put({ votingAddress: team.votingAddress })
           .json()
         emits('getTeam')
       }
-      if (props.team.boardOfDirectorsAddress != value.bodAddress && isBoDDeployed.value) {
+      if (props.team.boardOfDirectorsAddress != team.bodAddress && isBoDDeployed.value) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ boardOfDirectorsAddress: value.bodAddress })
+          .put({ boardOfDirectorsAddress: team.bodAddress })
           .json()
         emits('getTeam')
       }
       if (
-        props.team.expenseAccountAddress != value.expenseAccountAddress &&
-        value.expenseAccountAddress != ethers.ZeroAddress
+        props.team.expenseAccountAddress != team.expenseAccountAddress &&
+        team.expenseAccountAddress != ethers.ZeroAddress
       ) {
         console.log('updating expense account')
         await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ expenseAccountAddress: value.expenseAccountAddress })
+          .put({ expenseAccountAddress: team.expenseAccountAddress })
           .json()
         emits('getTeam')
       }
@@ -286,7 +305,7 @@ watch(deployVotingError, (value) => {
 // Fetch the officer team when mounted
 onMounted(() => {
   if (props.team.officerAddress) {
-    fetchOfficerTeam(props.team.officerAddress)
+    fetchOfficerTeam()
   }
 })
 </script>
