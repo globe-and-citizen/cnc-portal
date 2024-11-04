@@ -75,12 +75,15 @@
             <div class="flex justify-between mt-4">
               <button
                 class="btn btn-primary btn-sm"
-                v-if="!isBankDeployed && !isLoadingDeployBank"
+                v-if="!isBankDeployed && !isLoadingDeployBank && !isConfirmingDeployBank"
                 @click="deployBankAccount"
               >
                 Deploy Bank
               </button>
-              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployBank" />
+              <LoadingButton
+                :color="'primary min-w-24'"
+                v-if="isLoadingDeployBank || isConfirmingDeployBank"
+              />
               <button
                 class="btn btn-primary btn-sm"
                 v-if="!isExpenseDeployed && !isLoadingDeployExpense"
@@ -112,7 +115,6 @@ import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { ref, watch, onMounted } from 'vue'
 import {
   useDeployOfficerContract,
-  useDeployBank,
   useDeployVoting,
   useDeployExpenseAccount
 } from '@/composables/officer'
@@ -121,8 +123,9 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
 import { ethers } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useReadContract } from '@wagmi/vue'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import OfficerABI from '@/artifacts/abi/officer.json'
+import { TIPS_ADDRESS } from '@/constant'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -145,11 +148,20 @@ const {
   isSuccess: deployOfficerSuccess
 } = useDeployOfficerContract()
 const {
-  execute: deployBank,
-  isLoading: isLoadingDeployBank,
-  isSuccess: deployBankSuccess,
+  writeContract: deployBank,
+  isPending: isLoadingDeployBank,
+  data: deployBankHash,
   error: deployBankError
-} = useDeployBank()
+} = useWriteContract()
+const { isLoading: isConfirmingDeployBank, isSuccess: isConfirmedDeployBank } =
+  useWaitForTransactionReceipt({ hash: deployBankHash })
+
+watch(isConfirmingDeployBank, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployBank.value) {
+    addSuccessToast('Bank deployed successfully')
+    emits('getTeam')
+  }
+})
 const {
   execute: deployVoting,
   isLoading: isLoadingDeployVoting,
@@ -186,7 +198,12 @@ const deployOfficerContract = async () => {
 
 // Deploy Bank
 const deployBankAccount = async () => {
-  await deployBank(props.team.officerAddress)
+  deployBank({
+    address: props.team.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployBankAccount',
+    args: [TIPS_ADDRESS]
+  })
 }
 
 // Deploy Voting
@@ -280,12 +297,7 @@ watch(deployOfficerError, (value) => {
     addErrorToast('Failed to deploy officer contract')
   }
 })
-watch(deployBankSuccess, (value) => {
-  if (value) {
-    addSuccessToast('Bank deployed successfully')
-    emits('getTeam')
-  }
-})
+
 watch(deployBankError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy bank')

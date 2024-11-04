@@ -8,7 +8,6 @@ import {
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   OFFICER_ADDRESS,
   OFFICER_BEACON,
-  TIPS_ADDRESS,
   VOTING_BEACON_ADDRESS
 } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -19,15 +18,7 @@ export interface IOfficerService {
   web3Library: IWeb3Library
 
   createOfficerContract(teamId: string): Promise<string>
-  getOfficerTeam(officerAddress: string): Promise<{
-    founders: string[]
-    members: string[]
-    bankAddress: string
-    votingAddress: string
-    bodAddress: string
-    expenseAccountAddress: string
-  }>
-  deployBank(officerAddress: string): Promise<void>
+
   deployVoting(officerAddress: string): Promise<void>
   createTeam(officerAddress: string, founders: string[], members: string[]): Promise<string>
 }
@@ -44,33 +35,6 @@ export class OfficerService implements IOfficerService {
     const response = await useCustomFetch<string>(`teams/${teamId}`).put({ officerAddress }).json()
 
     return response.data.value.officerAddress
-  }
-
-  async getOfficerTeam(officerAddress: string): Promise<{
-    founders: string[]
-    members: string[]
-    bankAddress: string
-    votingAddress: string
-    bodAddress: string
-    expenseAccountAddress: string
-  }> {
-    const officerContract = await this.getOfficerContract(officerAddress)
-    const team = await officerContract.getTeam()
-    return {
-      founders: team[0] as string[],
-      members: team[1] as string[],
-      bankAddress: team[2] as string,
-      votingAddress: team[3] as string,
-      bodAddress: team[4] as string,
-      expenseAccountAddress: team[5] as string
-    }
-  }
-
-  async deployBank(officerAddress: string): Promise<void> {
-    const officerContract = await this.getOfficerContract(officerAddress)
-    const tx = await officerContract.deployBankAccount(TIPS_ADDRESS)
-
-    await tx.wait()
   }
 
   async deployVoting(officerAddress: string): Promise<void> {
