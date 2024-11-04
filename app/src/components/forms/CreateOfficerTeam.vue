@@ -99,7 +99,7 @@
     <button
       @click="createTeam"
       class="btn btn-primary"
-      v-if="!createTeamLoading || !isConfirmingCreateTeam"
+      v-if="!createTeamLoading && !isConfirmingCreateTeam"
     >
       Create Team
     </button>
@@ -161,7 +161,6 @@ const { isLoading: isConfirmingCreateTeam, isSuccess: isConfirmedCreateTeam } =
 
 watch(isConfirmingCreateTeam, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCreateTeam.value) {
-    addSuccessToast('Proposal created successfully')
     createTeamLoading.value = false
 
     emits('getTeam')

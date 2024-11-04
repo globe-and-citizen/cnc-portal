@@ -236,8 +236,8 @@ const deployOfficerContract = async () => {
       bytecode: BEACON_PROXY_BYTECODE,
       args: [OFFICER_BEACON, encodedFunction]
     })
-    let nonce
-    let deployedAddress
+    let nonce, deployedAddress
+
     if (currentAddress) {
       nonce = await getTransactionCount(config, { address: currentAddress as Address })
     }
@@ -246,14 +246,12 @@ const deployOfficerContract = async () => {
         from: currentAddress as Address,
         nonce: BigInt(nonce)
       })
-      console.log('deployedAddress', deployedAddress)
-      // await storeDeployedAddress()
-      addSuccessToast('Contract deployed successfully')
-      createOfficerLoading.value = false
       const response = await useCustomFetch<string>(`teams/${props.team.id}`)
         .put({ officerAddress: deployedAddress })
         .json()
       if (response) {
+        addSuccessToast('Contract deployed successfully')
+        createOfficerLoading.value = false
         emits('getTeam')
       }
       console.log('result', result)
@@ -295,6 +293,7 @@ const deployExpenseAccount = async () => {
 // Watch officer team data and update state
 watch(officerTeam, async (value) => {
   const temp: Array<Object> = value as Array<Object>
+  console.log(officerTeam)
   const team = {
     founders: temp[0] as string[],
     members: temp[1] as string[],
