@@ -142,6 +142,7 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { useRoute } from 'vue-router'
 
 //#endregion imports
 
@@ -162,6 +163,7 @@ const expenseAccountData = ref<{}>()
 const { addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
+const route = useRoute()
 //#endregion variable declarations
 
 //#region expense account composable
@@ -170,6 +172,26 @@ const {
   execute: executeExpenseAccountGetOwner,
   error: errorGetOwner
 } = useExpenseAccountGetOwner()
+
+// useFetch instance for deleting member
+const {
+  error: fetchExpenseAccountDataError,
+  isFetching: isFetchingExpenseAccountData,
+  execute: fetchExpenseAccountData,
+  data: _expenseAccountData
+} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: currentUserAddress,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
 
 const {
   execute: executeSearchUser,
@@ -206,6 +228,7 @@ watch(searchUserResponse, () => {
 
 const init = async () => {
   await getExpenseAccountOwner()
+  await fetchExpenseAccountData()
 }
 
 const getExpenseAccountOwner = async () => {
@@ -294,6 +317,6 @@ watch(
 
 onMounted(async () => {
   await init()
-  console.log(`team: `, props.team)
+  console.log(`_expenseAccountData: `, _expenseAccountData.value)
 })
 </script>

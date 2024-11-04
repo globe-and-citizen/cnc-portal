@@ -423,6 +423,32 @@ export const addExpenseAccountData = async (req: Request, res: Response) => {
   }
 }
 
+export const getExpenseAccountData = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const memberAddress = req.headers.memberaddress;
+
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: String(memberAddress),
+          teamId: Number(id)
+        }
+      }
+    })
+
+    res.status(201)
+      .json({
+        data: memberTeamsData?.expenseAccountData,
+        signature: memberTeamsData?.expenseAccountSignature
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
   callerAddress: string
