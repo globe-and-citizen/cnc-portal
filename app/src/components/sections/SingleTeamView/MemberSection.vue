@@ -48,6 +48,7 @@
           :member="{ ...member, index: index + 1 }"
           :key="member.address"
           @getTeam="emits('getTeam')"
+          v-memo="[member, team.ownerAddress, team.id]"
         />
       </tbody>
     </table>
