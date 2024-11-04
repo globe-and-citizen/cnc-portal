@@ -44,7 +44,7 @@
           />
         </template>
         <template #tab-4>
-          <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI"/>
+          <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI" />
         </template>
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />

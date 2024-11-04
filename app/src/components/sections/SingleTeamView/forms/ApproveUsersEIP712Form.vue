@@ -253,9 +253,10 @@ const submitApprove = () => {
   emit('approveUser', {
     approvedAddress: formData.value[0].address,
     budgetType: budgetLimitType.value,
-    value: budgetLimitType.value === 0?
-      Number(limitValue.value):
-      web3Library.parseEther(limitValue.value),
+    value:
+      budgetLimitType.value === 0
+        ? Number(limitValue.value)
+        : web3Library.parseEther(limitValue.value),
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }

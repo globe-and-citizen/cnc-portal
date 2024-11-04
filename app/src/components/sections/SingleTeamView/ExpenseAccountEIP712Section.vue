@@ -51,7 +51,10 @@
 
           <div class="pl-3">
             <div class="stat-title pr-3">Max Limit</div>
-            <div v-if="isFetchingExpenseAccountData" class="stat-value mt-1 border-r border-gray-400 pr-3">
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
               <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
             </div>
             <div
@@ -160,9 +163,7 @@ const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
 const maxLimit = computed(() =>
-   _expenseAccountData.value?.data?
-   JSON.parse(_expenseAccountData.value.data).value:
-   "0.0"
+  _expenseAccountData.value?.data ? JSON.parse(_expenseAccountData.value.data).value : '0.0'
 )
 const expiry = computed(() => {
   if (_expenseAccountData.value?.data) {
@@ -171,7 +172,7 @@ const expiry = computed(() => {
     const date = new Date(Number(unixEpoch) * 1000)
     return date.toLocaleString('en-US')
   } else {
-    return "0.0"
+    return '0.0'
   }
 })
 const { addErrorToast } = useToastStore()
@@ -225,11 +226,12 @@ const {
   .get()
   .json()
 
-const {
-  execute: executeAddExpenseData
-} = useCustomFetch(`teams/${team.value.id}/member/add-expense-data`, {
-  immediate: false
-})
+const { execute: executeAddExpenseData } = useCustomFetch(
+  `teams/${team.value.id}/member/add-expense-data`,
+  {
+    immediate: false
+  }
+)
   .post(expenseAccountData)
   .json()
 
@@ -276,8 +278,7 @@ const approveUser = async (data: BudgetLimit) => {
   try {
     const signature = await signer.signTypedData(domain, types, data)
     console.log(`signature: `, signature)
-    if (typeof data.value === 'bigint')
-      data.value = web3Library.formatEther(data.value)
+    if (typeof data.value === 'bigint') data.value = web3Library.formatEther(data.value)
     expenseAccountData.value = {
       expenseAccountData: data,
       signature
@@ -329,7 +330,7 @@ watch(
 )
 
 watch(fetchExpenseAccountDataError, (newVal) => {
-  if(newVal) addErrorToast('Error fetching expense account data')
+  if (newVal) addErrorToast('Error fetching expense account data')
 })
 //#endregion watch success
 
