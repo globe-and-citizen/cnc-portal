@@ -51,7 +51,7 @@
 
           <div class="pl-3">
             <div class="stat-title pr-3">Max Limit</div>
-            <div v-if="false" class="stat-value mt-1 border-r border-gray-400 pr-3">
+            <div v-if="isFetchingExpenseAccountData" class="stat-value mt-1 border-r border-gray-400 pr-3">
               <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
             </div>
             <div
@@ -59,7 +59,7 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="max-limit"
             >
-              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
 
@@ -76,7 +76,7 @@
 
         <div class="stat-title text-center mt-10">
           Approval Expiry:
-          <span class="font-bold text-black">{{ new Date().toLocaleString('en-US') }}</span>
+          <span class="font-bold text-black">{{ expiry }}</span>
         </div>
 
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
@@ -128,7 +128,7 @@
 
 <script setup lang="ts">
 //#region imports
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit } from '@/types'
 import { useExpenseAccountGetOwner } from '@/composables/useExpenseAccount'
 import { NETWORK } from '@/constant'
@@ -159,7 +159,21 @@ const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
-
+const maxLimit = computed(() =>
+   _expenseAccountData.value?.data?
+   JSON.parse(_expenseAccountData.value.data).value:
+   "0.0"
+)
+const expiry = computed(() => {
+  if (_expenseAccountData.value?.data) {
+    const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
+    console.log(`unixEpoch`, Number(unixEpoch) * 1000)
+    const date = new Date(Number(unixEpoch) * 1000)
+    return date.toLocaleString('en-US')
+  } else {
+    return "0.0"
+  }
+})
 const { addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
@@ -313,6 +327,10 @@ watch(
     if (newVal) await init()
   }
 )
+
+watch(fetchExpenseAccountDataError, (newVal) => {
+  if(newVal) addErrorToast('Error fetching expense account data')
+})
 //#endregion watch success
 
 onMounted(async () => {
