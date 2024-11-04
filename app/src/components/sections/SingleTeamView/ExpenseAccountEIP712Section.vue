@@ -148,6 +148,7 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 //#region variable declarations
 const currentUserAddress = useUserDataStore().address
 const props = defineProps<{ team: Partial<Team> }>()
+const emits = defineEmits(['getTeam'])
 const team = ref(props.team)
 const transferModal = ref(false)
 const approveUsersModal = ref(false)
@@ -245,6 +246,7 @@ const approveUser = async (data: BudgetLimit) => {
       signature
     }
     await executeAddExpenseData()
+    emits('getTeam')
   } catch (err) {
     log.error(parseError(err))
     addErrorToast(parseError(err))
@@ -292,5 +294,6 @@ watch(
 
 onMounted(async () => {
   await init()
+  console.log(`team: `, props.team)
 })
 </script>
