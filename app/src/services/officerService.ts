@@ -19,7 +19,6 @@ export interface IOfficerService {
 
   createOfficerContract(teamId: string): Promise<string>
 
-  deployVoting(officerAddress: string): Promise<void>
   createTeam(officerAddress: string, founders: string[], members: string[]): Promise<string>
 }
 
@@ -35,21 +34,6 @@ export class OfficerService implements IOfficerService {
     const response = await useCustomFetch<string>(`teams/${teamId}`).put({ officerAddress }).json()
 
     return response.data.value.officerAddress
-  }
-
-  async deployVoting(officerAddress: string): Promise<void> {
-    const officerContract = await this.getOfficerContract(officerAddress)
-    const tx = await officerContract.deployVotingContract()
-    await tx.wait()
-
-    return tx
-  }
-  async deployExpenseAccount(officerAddress: string): Promise<void> {
-    const officerContract = await this.getOfficerContract(officerAddress)
-    const tx = await officerContract.deployExpenseAccount()
-    await tx.wait()
-
-    return tx
   }
 
   async createTeam(officerAddress: string, founders: string[], members: string[]): Promise<string> {

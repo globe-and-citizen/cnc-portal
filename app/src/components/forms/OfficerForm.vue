@@ -86,20 +86,26 @@
               />
               <button
                 class="btn btn-primary btn-sm"
-                v-if="!isExpenseDeployed && !isLoadingDeployExpense"
+                v-if="!isExpenseDeployed && !isLoadingDeployExpense && !isConfirmingDeployExpense"
                 @click="deployExpenseAccount"
               >
                 Deploy Expense
               </button>
-              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployExpense" />
+              <LoadingButton
+                :color="'primary min-w-24'"
+                v-if="isLoadingDeployExpense || isConfirmingDeployExpense"
+              />
               <button
                 class="btn btn-primary btn-sm"
-                v-if="!isVotingDeployed && !isLoadingDeployVoting"
+                v-if="!isVotingDeployed && !isLoadingDeployVoting && !isConfirmingDeployVoting"
                 @click="deployVotingContract"
               >
                 Deploy Voting
               </button>
-              <LoadingButton :color="'primary min-w-24'" v-if="isLoadingDeployVoting" />
+              <LoadingButton
+                :color="'primary min-w-24'"
+                v-if="isLoadingDeployVoting || isConfirmingDeployVoting"
+              />
             </div>
           </div>
           <div v-if="isLoadingGetTeam">
@@ -113,11 +119,7 @@
 <script setup lang="ts">
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { ref, watch, onMounted } from 'vue'
-import {
-  useDeployOfficerContract,
-  useDeployVoting,
-  useDeployExpenseAccount
-} from '@/composables/officer'
+import { useDeployOfficerContract } from '@/composables/officer'
 import { useToastStore } from '@/stores'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
@@ -163,17 +165,34 @@ watch(isConfirmingDeployBank, (isConfirming, wasConfirming) => {
   }
 })
 const {
-  execute: deployVoting,
-  isLoading: isLoadingDeployVoting,
-  isSuccess: deployVotingSuccess,
+  writeContract: deployVoting,
+  isPending: isLoadingDeployVoting,
+  data: deployVotingHash,
   error: deployVotingError
-} = useDeployVoting()
+} = useWriteContract()
+const { isLoading: isConfirmingDeployVoting, isSuccess: isConfirmedDeployVoting } =
+  useWaitForTransactionReceipt({ hash: deployVotingHash })
+
+watch(isConfirmingDeployVoting, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployVoting.value) {
+    addSuccessToast('Voting deployed successfully')
+    emits('getTeam')
+  }
+})
 const {
-  execute: deployExpense,
-  isLoading: isLoadingDeployExpense,
-  isSuccess: deployExpenseSuccess,
+  writeContract: deployExpense,
+  isPending: isLoadingDeployExpense,
+  data: deployExpenseHash,
   error: deployExpenseError
-} = useDeployExpenseAccount()
+} = useWriteContract()
+const { isLoading: isConfirmingDeployExpense, isSuccess: isConfirmedDeployExpense } =
+  useWaitForTransactionReceipt({ hash: deployExpenseHash })
+watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployExpense.value) {
+    addSuccessToast('Expense account deployed successfully')
+    emits('getTeam')
+  }
+})
 
 // Fetch officer team details using composable
 const {
@@ -208,11 +227,19 @@ const deployBankAccount = async () => {
 
 // Deploy Voting
 const deployVotingContract = async () => {
-  await deployVoting(props.team.officerAddress)
+  deployVoting({
+    address: props.team.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployVotingContract'
+  })
 }
 
 const deployExpenseAccount = async () => {
-  await deployExpense(props.team.officerAddress)
+  deployExpense({
+    address: props.team.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployExpenseAccount'
+  })
 }
 
 // Watch officer team data and update state
@@ -268,12 +295,7 @@ watch(officerTeam, async (value) => {
     }
   }
 })
-watch(deployExpenseSuccess, (value) => {
-  if (value) {
-    addSuccessToast('Expense account deployed successfully')
-    emits('getTeam')
-  }
-})
+
 watch(deployExpenseError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy expense account')
@@ -303,12 +325,7 @@ watch(deployBankError, (value) => {
     addErrorToast('Failed to deploy bank')
   }
 })
-watch(deployVotingSuccess, (value) => {
-  if (value) {
-    addSuccessToast('Voting deployed successfully')
-    emits('getTeam')
-  }
-})
+
 watch(deployVotingError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy voting')
