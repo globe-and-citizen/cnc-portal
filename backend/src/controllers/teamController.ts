@@ -122,6 +122,12 @@ const getTeam = async (req: Request, res: Response) => {
           select: {
             address: true,
             name: true,
+            memberTeamsData: {
+              select: {
+                expenseAccountData: true,
+                expenseAccountSignature: true
+              }
+            }
           },
         },
       },
