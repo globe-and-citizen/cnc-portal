@@ -1,7 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
     <span class="text-2xl sm:text-3xl font-bold">Team Bank Account</span>
-
     <div class="divider m-0"></div>
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -10,7 +9,7 @@
           <div class="font-extrabold text-4xl">
             <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-              <span v-else>{{ teamBalance }} </span>
+              <span v-else>{{ teamBalance?.formatted }} </span>
             </span>
             <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
@@ -54,7 +53,7 @@
         v-if="depositModal"
         @close-modal="() => (depositModal = false)"
         @deposit="async (amount: string) => depositToBank(amount)"
-        :loading="depositLoading"
+        :loading="depositLoading || isConfirmingDeposit"
       />
     </ModalComponent>
     <ModalComponent v-model="transferModal">
@@ -72,8 +71,8 @@
         "
         @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
-        :loading="transferLoading || addActionLoading"
-        :bank-balance="teamBalance || '0'"
+        :loading="transferLoading || addActionLoading || isConfirmingTransfer"
+        :bank-balance="teamBalance?.formatted || '0'"
         service="Bank"
         :asBod="owner == team.boardOfDirectorsAddress"
       />
@@ -94,13 +93,28 @@
         />
 
         <div class="text-center">
-          <LoadingButton v-if="false" class="w-full sm:w-44" color="primary" />
+          <LoadingButton
+            v-if="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            class="w-full sm:w-44"
+            color="primary"
+          />
           <button
-            v-if="!false"
+            v-if="!(isConfirmingPushTip || pushTipLoading || addActionLoading)"
             class="btn btn-primary w-full sm:w-44 text-center"
             @click="
-              () => {
-                addPushTipAction('Pushed tips to all team members')
+              async () => {
+                if (owner == team.boardOfDirectorsAddress) {
+                  addPushTipAction('Pushed tips to all team members')
+                } else {
+                  const members = team.members.map((member) => member.address)
+                  pushTip({
+                    address: team.bankAddress as Address,
+                    abi: BankABI,
+                    functionName: 'pushTip',
+                    args: [members, parseEther(tipAmount.toString())],
+                    value: parseEther(tipAmount.toString())
+                  })
+                }
               }
             "
           >
@@ -110,6 +124,7 @@
       </div>
     </ModalComponent>
   </div>
+  <!-- <BankManagement :isBod="isBod" :team="team" :bankOwner="owner" :loadingOwner="loadingOwner" /> -->
 </template>
 <script setup lang="ts">
 import type { Team, User } from '@/types'
@@ -120,17 +135,17 @@ import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import Button from '@/components/ButtonUI.vue'
-
+import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useBankBalance, useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
+import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
-import { BankService } from '@/services/bankService'
-import type { Address } from 'viem'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { useAddAction } from '@/composables/bod'
+import { encodeFunctionData, parseEther, type Address } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+// import BankManagement from './BankManagement.vue'
+import BankABI from '@/artifacts/abi/bank.json'
+import BoDABI from '@/artifacts/abi/bod.json'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -138,39 +153,59 @@ const pushTipModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
-const ethers = EthersJsAdapter.getInstance()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const depositModal = ref(false)
+const props = defineProps<{
+  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
+}>()
+const {
+  sendTransaction,
+  isPending: depositLoading,
+  error: sendTransactionError,
+  data: depositHash
+} = useSendTransaction()
+
+const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
+  hash: depositHash
+})
 
 const {
-  execute: deposit,
-  isLoading: depositLoading,
-  isSuccess: depositSuccess,
-  error: depositError
-} = useBankDeposit()
-
-const {
-  execute: getBalance,
-  isLoading: balanceLoading,
   data: teamBalance,
-  error: balanceError
-} = useBankBalance()
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: props.team.bankAddress as `${Address}`
+})
+
 const {
-  execute: transfer,
-  isLoading: transferLoading,
-  isSuccess: transferSuccess,
-  error: transferError
-} = useBankTransfer()
-const {
-  // execute: pushTip,
-  // isLoading: pushTipLoading,
-  isSuccess: pushTipSuccess,
+  data: pushTipHash,
+  writeContract: pushTip,
+  isPending: pushTipLoading,
   error: pushTipError
-} = usePushTip()
-const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
-const isBod = computed(() => boardOfDirectors.value?.includes(useUserDataStore().address))
+} = useWriteContract()
+const { isLoading: isConfirmingPushTip, isSuccess: isConfirmedPushTip } =
+  useWaitForTransactionReceipt({
+    hash: pushTipHash
+  })
+
+watch(isConfirmingPushTip, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedPushTip.value) {
+    addSuccessToast('Tips pushed successfully')
+    pushTipModal.value = false
+  }
+})
+const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
+const isBod = computed(() =>
+  (boardOfDirectors.value as Array<Address>)?.includes(useUserDataStore().address as Address)
+)
+
 const {
   execute: executeAddAction,
   error: errorAddAction,
@@ -195,54 +230,54 @@ const {
   .get()
   .json()
 
-const props = defineProps<{
-  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
-}>()
-
 const {
   data: owner,
   error: errorOwner,
   // isLoading: loadingOwner,
-  execute: getOwner
-} = useBankOwner(props.team.bankAddress!)
-
-const bankService = new BankService()
+  refetch: getOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: props.team.bankAddress! as Address,
+  abi: BankABI
+})
 
 const addTransferAction = async (to: string, amount: string, description: string) => {
   await executeAddAction(props.team, {
     targetAddress: props.team.bankAddress! as Address,
-    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'transfer', [
-      to,
-      ethers.parseEther(amount)
-    ])) as Address,
+    data: encodeFunctionData({
+      abi: BankABI,
+      functionName: 'transfer',
+      args: [to, parseEther(amount)]
+    }) as Address,
     description
   })
-  if (errorAddAction.value) return
-  transferModal.value = false
 }
 const addPushTipAction = async (description: string) => {
   await executeAddAction(props.team, {
     targetAddress: props.team.bankAddress! as Address,
-    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'pushTip', [
-      membersAddress.value,
-      ethers.parseEther(tipAmount.value.toString())
-    ])) as Address,
+    data: encodeFunctionData({
+      abi: BankABI,
+      functionName: 'pushTip',
+      args: [membersAddress.value, parseEther(tipAmount.value.toString())]
+    }) as Address,
     description
   })
-  if (errorAddAction.value) return
-
-  pushTipModal.value = false
-  tipAmount.value = 0
 }
-
-watch(depositSuccess, () => {
-  if (depositSuccess.value) {
+watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Deposited successfully')
+    depositModal.value = false
+    fetchBalance()
   }
 })
-watch(depositError, () => {
-  if (depositError.value) {
+watch(sendTransactionError, () => {
+  if (sendTransactionError.value) {
     addErrorToast('Failed to deposit')
+  }
+})
+watch(balanceLoading, () => {
+  if (balanceLoading.value) {
+    addErrorToast('Failed to fetch team balance')
   }
 })
 watch(balanceError, () => {
@@ -256,21 +291,6 @@ watch(pushTipError, async () => {
   }
 })
 
-watch(pushTipSuccess, () => {
-  if (pushTipSuccess.value) {
-    addSuccessToast('Tips pushed successfully')
-  }
-})
-watch(transferSuccess, () => {
-  if (transferSuccess.value) {
-    addSuccessToast('Transferred successfully')
-  }
-})
-watch(transferError, () => {
-  if (transferError.value) {
-    addErrorToast('Failed to transfer')
-  }
-})
 watch(searchUserResponse, () => {
   if (searchUserResponse.value?.ok && users.value?.users) {
     foundUsers.value = users.value.users
@@ -289,26 +309,41 @@ watch(errorAddAction, () => {
 watch(addActionSuccess, () => {
   if (addActionSuccess.value) {
     addSuccessToast('Action added successfully')
+    transferModal.value = false
+    pushTipModal.value = false
+    tipAmount.value = 0
   }
 })
 
 const depositToBank = async (amount: string) => {
   if (props.team.bankAddress) {
-    await deposit(props.team.bankAddress, amount)
-    if (depositSuccess.value) {
-      depositModal.value = false
-      await getBalance(props.team.bankAddress)
-    }
+    sendTransaction({
+      to: props.team.bankAddress as Address,
+      value: parseEther(amount)
+    })
   }
 }
+
+const {
+  data: transferHash,
+  isPending: transferLoading,
+  error: transferError,
+  writeContract: transfer
+} = useWriteContract()
 const transferFromBank = async (to: string, amount: string) => {
   if (!props.team.bankAddress) return
-  await transfer(props.team.bankAddress, to, amount)
-  if (transferSuccess.value) {
-    transferModal.value = false
-    await getBalance(props.team.bankAddress)
-  }
+  transfer({
+    address: props.team.bankAddress as Address,
+    abi: BankABI,
+    functionName: 'transfer',
+    args: [to, parseEther(amount)]
+  })
 }
+
+const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
+  hash: transferHash
+})
+
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
     searchUserName.value = input.name
@@ -321,10 +356,24 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
+watch(transferError, () => {
+  if (transferError.value) {
+    addErrorToast('Failed to transfer from bank')
+  }
+})
+
+watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Transferred successfully')
+    transferModal.value = false
+    fetchBalance()
+  }
+})
+
 onMounted(async () => {
-  if (props.team.bankAddress) getBalance(props.team.bankAddress)
+  if (props.team.bankAddress) fetchBalance()
   await getOwner()
-  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
+  await executeGetBoardOfDirectors()
 })
 const membersAddress = computed(() => {
   return props.team.members?.map((member: { address: string }) => member.address) ?? []
