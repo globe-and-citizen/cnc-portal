@@ -96,7 +96,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import type { User } from '@/types'
@@ -115,20 +115,6 @@ const props = defineProps<{
 const formData = ref(props.formData)
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)
-
-const handleClickOutside = (event: MouseEvent) => {
-  if (formRef.value && !formRef.value.contains(event.target as Node)) {
-    showDropdown.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 
 const rules = {
   formData: {
