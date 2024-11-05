@@ -1,6 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useBankEvents, useBankGetFunction } from '../bank'
-import { BankEventType, type EventResult } from '@/types'
+import { describe, expect, it, vi } from 'vitest'
+import { useBankGetFunction } from '../bank'
 import type { Result } from 'ethers'
 
 // mock web3Util
@@ -101,74 +100,6 @@ vi.mock('@/services/bankService', () => {
 })
 
 describe('Bank', () => {
-  describe('useBankEvents', () => {
-    it('should set initial values correctly', async () => {
-      const { getEvents, loading, error, events } = useBankEvents(bankAddress)
-      expect(getEvents).toBeInstanceOf(Function)
-      expect(loading.value).toBe(false)
-      expect(error.value).toBe(null)
-      expect(events.value).toStrictEqual([] as EventResult[])
-    })
-
-    describe('when success', () => {
-      it('should change state of events correctly', async () => {
-        const { getEvents, events } = useBankEvents(bankAddress)
-        expect(events.value).toStrictEqual([] as EventResult[])
-        await getEvents(BankEventType.Deposit)
-        expect(bankService.getEvents).toHaveBeenCalledWith(bankAddress, BankEventType.Deposit)
-        expect(events.value).toStrictEqual(mockEventResults)
-      })
-
-      it('should change state of loading correctly', async () => {
-        const { getEvents, loading } = useBankEvents(bankAddress)
-        const promise = getEvents(BankEventType.Deposit)
-        expect(loading.value).toBe(true)
-        await promise
-        expect(loading.value).toBe(false)
-      })
-
-      it('should keeps state of error', async () => {
-        const { getEvents, error } = useBankEvents(bankAddress)
-        expect(error.value).toBe(null)
-        await getEvents(BankEventType.Deposit)
-        expect(bankService.getEvents).toHaveBeenCalledWith(bankAddress, BankEventType.Deposit)
-        expect(error.value).toBe(null)
-      })
-    })
-
-    describe('when error', () => {
-      const mockError = new Error('error')
-
-      beforeEach(() => {
-        vi.mocked(bankService.getEvents).mockRejectedValue(mockError)
-      })
-
-      it('should keeps state of events to be empty array', async () => {
-        const { getEvents, events } = useBankEvents(bankAddress)
-        expect(events.value).toStrictEqual([] as EventResult[])
-        await getEvents(BankEventType.Deposit)
-        expect(bankService.getEvents).toHaveBeenCalledWith(bankAddress, BankEventType.Deposit)
-        expect(events.value).toStrictEqual([])
-      })
-
-      it('should change state of loading correctly', async () => {
-        const { getEvents, loading } = useBankEvents(bankAddress)
-        const promise = getEvents(BankEventType.Deposit)
-        expect(loading.value).toBe(true)
-        await promise
-        expect(loading.value).toBe(false)
-      })
-
-      it('should change state of error correctly', async () => {
-        const { getEvents, error } = useBankEvents(bankAddress)
-        expect(error.value).toBe(null)
-        await getEvents(BankEventType.Deposit)
-        expect(bankService.getEvents).toHaveBeenCalledWith(bankAddress, BankEventType.Deposit)
-        expect(error.value).toBe(mockError)
-      })
-    })
-  })
-
   describe('useBankGetFunction', () => {
     it('should set initial values correctly', () => {
       const { execute: getFunction, data, inputs, args } = useBankGetFunction(bankAddress)

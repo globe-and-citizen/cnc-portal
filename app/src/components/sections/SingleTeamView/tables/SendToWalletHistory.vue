@@ -46,15 +46,16 @@
 
 <script setup lang="ts">
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { config } from '@/wagmi.config'
 import { NETWORK } from '@/constant'
 import { useToastStore } from '@/stores/useToastStore'
 import { onMounted, watch } from 'vue'
-import { formatEther, parseAbiItem, type Address, type GetLogsReturnType } from 'viem'
+import { formatEther, parseAbiItem, type Address, type Client, type GetLogsReturnType } from 'viem'
 import { ref } from 'vue'
 import { getBlock, getLogs } from 'viem/actions'
+import { useClient } from '@wagmi/vue'
+import { config } from '@/wagmi.config'
 
-const client = config.getClient()
+const client = useClient({ config })
 const { addErrorToast } = useToastStore()
 const props = defineProps<{
   bankAddress: string
@@ -87,7 +88,7 @@ const dates = ref<string[]>([])
 onMounted(async () => {
   loading.value = true
   try {
-    events.value = await getLogs(client, {
+    events.value = await getLogs(client.value as Client, {
       address: props.bankAddress as Address,
       event: parseAbiItem(
         'event PushTip(address indexed addressWhoPushes, address[] teamMembers, uint256 totalAmount)'
@@ -97,7 +98,7 @@ onMounted(async () => {
     })
     dates.value = await Promise.all(
       events.value.map(async (event) => {
-        const block = await getBlock(client, {
+        const block = await getBlock(client.value as Client, {
           blockHash: event.blockHash
         })
         return new Date(parseInt(block.timestamp.toString()) * 1000).toLocaleString()

@@ -1,15 +1,12 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { VueWrapper, mount } from '@vue/test-utils'
 import DepositHistory from '@/components/sections/SingleTeamView/tables/DepositHistory.vue'
-import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import type { EventResult } from '@/types'
 import type { Result } from 'ethers'
 import { ref } from 'vue'
-import { useBankEvents } from '@/composables/bank'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
 
-const depositEvents: EventResult[] = [
+const depositEvents = [
   {
     txHash: '0x1',
     data: ['0xDepositor1', '1000000000000000000'] as Result, // 1 ETH
@@ -100,97 +97,9 @@ describe('DepositHistory', () => {
       expect(amount).toEqual(`1 ${NETWORK.currencySymbol}`)
       expect(date).toEqual(depositEvents[0].date)
     })
-
-    it('renders empty tbody if events does not exists', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      const wrapper = mount(DepositHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      const tbody = wrapper.find('tbody[data-test="data-not-exists"]')
-      expect(tbody.isVisible()).toBeTruthy()
-    })
-
-    it('renders empty row correctly when no deposit events', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      const wrapper = mount(DepositHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      const emtpyRow = wrapper.find('td[data-test="empty-row"]')
-      expect(emtpyRow.exists()).toBe(true)
-      expect(emtpyRow.text()).toBe('No Deposit transactions')
-      expect(emtpyRow.attributes('colspan')).toBe('4')
-    })
-
-    it('renders skeleton loading if loading', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(true),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      const wrapper = mount(DepositHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
-    })
-
-    it('renders empty table when no deposit events', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      const wrapper = mount(DepositHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      const emtpyRow = wrapper.find('tr td.text-center.font-bold.text-lg')
-      expect(emtpyRow.exists()).toBe(true)
-      expect(emtpyRow.text()).toBe('No Deposit transactions')
-      expect(emtpyRow.attributes('colspan')).toBe('4')
-    })
   })
 
   describe('Actions', () => {
-    it('calls getEvents when mounted', async () => {
-      const getEvents = vi.fn()
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents,
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      mount(DepositHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      expect(getEvents).toHaveBeenCalled()
-    })
-
     it('opens transaction detail in a new window when a row is clicked', async () => {
       const row = wrapper.find('tbody tr')
       await row.trigger('click')

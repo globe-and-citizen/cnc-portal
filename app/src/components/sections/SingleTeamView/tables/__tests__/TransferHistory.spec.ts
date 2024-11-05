@@ -1,15 +1,12 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { VueWrapper, mount } from '@vue/test-utils'
 import TransferHistory from '@/components/sections/SingleTeamView/tables/TransferHistory.vue'
-import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import type { EventResult } from '@/types'
 import type { Result } from 'ethers'
 import { ref } from 'vue'
-import { useBankEvents } from '@/composables/bank'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
 
-const sendToWalletEvents: EventResult[] = [
+const sendToWalletEvents = [
   {
     txHash: '0x1',
     data: ['0xOwner', '0xMember1', '1000000000000000000'] as Result, // 1 ETH
@@ -89,61 +86,9 @@ describe('TransferHistory', () => {
       expect(amount).toEqual(`1 ${NETWORK.currencySymbol}`)
       expect(date).toEqual(sendToWalletEvents[0].date)
     })
-
-    it('renders skeleton loading if loading', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(true),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      const wrapper = mount(TransferHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
-    })
-
-    it('renders empty table when no transfer events', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      const wrapper = mount(TransferHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      const emtpyRow = wrapper.find('tr td.text-center.font-bold.text-lg')
-      expect(emtpyRow.exists()).toBe(true)
-      expect(emtpyRow.text()).toBe('No transfer transactions')
-      expect(emtpyRow.attributes('colspan')).toBe('5')
-    })
   })
 
   describe('Actions', () => {
-    it('calls getEvents when mounted', async () => {
-      const getEvents = vi.fn()
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents,
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      mount(TransferHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      expect(getEvents).toHaveBeenCalled()
-    })
-
     it('opens transaction detail in a new window when a row is clicked', async () => {
       global.open = vi.fn() // Mock window.open
 

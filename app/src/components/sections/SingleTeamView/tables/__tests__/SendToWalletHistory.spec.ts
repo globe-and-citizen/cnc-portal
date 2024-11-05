@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import SendToWalletHistory from '@/components/sections/SingleTeamView/tables/SendToWalletHistory.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { getLogs } from '@/__mocks__/viem/actions'
+import { getBlock, getLogs } from '@/__mocks__/viem/actions'
 
 const sendToWalletEvents = [
   {
@@ -31,6 +31,7 @@ vi.mock('viem/actions')
 describe('SendToWalletHistory', () => {
   beforeEach(() => {
     getLogs.mockResolvedValue(sendToWalletEvents)
+    getBlock.mockResolvedValue({ timestamp: 1620000000 })
   })
 
   const createComponent = () => {
@@ -39,10 +40,7 @@ describe('SendToWalletHistory', () => {
         bankAddress: '0x123'
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
-        mocks: {
-
-        }
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }

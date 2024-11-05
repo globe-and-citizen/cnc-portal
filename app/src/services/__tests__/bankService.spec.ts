@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BankService } from '../bankService'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { reactive } from 'vue'
-import { BankEventType } from '@/types'
 
 // mock Bank
 const tx = {
@@ -94,14 +93,6 @@ describe('Bank Service', () => {
   beforeEach(() => {
     EthersJsAdapter['getInstance'] = vi.fn().mockReturnValue(mockEthersJs)
     bankService = new BankService()
-  })
-
-  describe('getEvents', () => {
-    it('should get events from bank contract', async () => {
-      const result = await bankService.getEvents('0x123', BankEventType.Deposit)
-      expect(contractService.getEvents).toHaveBeenCalledWith(BankEventType.Deposit)
-      expect(result).toMatchObject(events)
-    })
   })
 
   describe('getContract', () => {
