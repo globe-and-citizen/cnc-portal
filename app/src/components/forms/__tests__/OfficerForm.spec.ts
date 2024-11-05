@@ -4,13 +4,6 @@ import { describe, it, expect, vi } from 'vitest'
 import { ref } from 'vue'
 
 // Mock the composables
-vi.mock('@/composables/officer', () => ({
-  useDeployOfficerContract: vi.fn(),
-  useDeployBank: vi.fn(),
-  useDeployVoting: vi.fn(),
-  useGetOfficerTeam: vi.fn(),
-  useDeployExpenseAccount: vi.fn()
-}))
 
 vi.mock('@/stores/useToastStore', () => {
   return {
@@ -27,7 +20,9 @@ const mockUseReadContract = {
   error: ref(null),
   refetch: vi.fn()
 }
-
+const mockUseWatchContractEvent = {
+  onLogs: vi.fn() // Mock function to simulate event callback
+}
 const mockUseWriteContract = {
   writeContract: vi.fn(),
   error: ref(null),
@@ -59,7 +54,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
     useSendTransaction: vi.fn(() => mockUseSendTransaction),
-    useBalance: vi.fn(() => mockUseBalance)
+    useBalance: vi.fn(() => mockUseBalance),
+    useWatchContractEvent: vi.fn(() => mockUseWatchContractEvent) // Include the new mock
   }
 })
 
