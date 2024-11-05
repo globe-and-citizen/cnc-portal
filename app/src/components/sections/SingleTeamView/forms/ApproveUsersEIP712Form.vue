@@ -225,8 +225,7 @@ const rules = {
   },
   budgetLimitType: {
     required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
-      return typeof value === 'number' &&  
-        value >= 0 ? true : false
+      return typeof value === 'number' && value >= 0 ? true : false
     })
   },
   description: {
