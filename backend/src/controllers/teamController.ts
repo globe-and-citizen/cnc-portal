@@ -383,18 +383,15 @@ export const addExpenseAccountData = async (req: Request, res: Response) => {
   const expenseAccountData = req.body
 
   try {
-    console.log('expenseAccountData: ', JSON.stringify(expenseAccountData))
-    console.log(`_expenseAccountData: `, expenseAccountData.expenseAccountData)
     const team = await prisma.team.findUnique({
       where: { id: Number(id) }
     })
     const ownerAddress = team?.ownerAddress
-    // const userAddress = expenseAccountData.member.address
     if (callerAddress !== ownerAddress) {
       return errorResponse(403, `Action not authorized`, res)
     }
   
-    //create contract
+    //create expense account data
     await prisma.memberTeamsData.upsert({
       where: {
         userAddress_teamId: {

@@ -168,7 +168,6 @@ const maxLimit = computed(() =>
 const expiry = computed(() => {
   if (_expenseAccountData.value?.data) {
     const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
-    console.log(`unixEpoch`, Number(unixEpoch) * 1000)
     const date = new Date(Number(unixEpoch) * 1000)
     return date.toLocaleString('en-US')
   } else {
@@ -277,7 +276,6 @@ const approveUser = async (data: BudgetLimit) => {
 
   try {
     const signature = await signer.signTypedData(domain, types, data)
-    console.log(`signature: `, signature)
     if (typeof data.value === 'bigint') data.value = web3Library.formatEther(data.value)
     expenseAccountData.value = {
       expenseAccountData: data,
@@ -336,6 +334,5 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 
 onMounted(async () => {
   await init()
-  console.log(`_expenseAccountData: `, _expenseAccountData.value)
 })
 </script>
