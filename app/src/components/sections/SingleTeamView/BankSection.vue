@@ -6,9 +6,9 @@
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span class="text-sm sm:text-base">Bank Balance</span>
-          <div class="font-extrabold text-3xl sm:text-4xl">
-            <span class="inline-block w-16 h-10">
+          <span>Bank Balance</span>
+          <div class="font-extrabold text-4xl">
+            <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
               <span v-else>{{ teamBalance }} </span>
             </span>

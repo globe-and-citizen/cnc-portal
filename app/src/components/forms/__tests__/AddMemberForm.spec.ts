@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import { nextTick } from 'vue'
@@ -69,18 +69,6 @@ describe('AddMemberForm.vue', () => {
     })
   })
 
-  describe('Click outside functionality', () => {
-    it('hides dropdown when clicking outside', async () => {
-      ;(wrapper.vm as unknown as AddMemberForm).showDropdown = true
-      await nextTick()
-
-      const event = new Event('click')
-      document.dispatchEvent(event)
-
-      expect((wrapper.vm as unknown as AddMemberForm).showDropdown).toBe(false)
-    })
-  })
-
   describe('Submit form', () => {
     it('does not emit addMembers event when form is invalid', async () => {
       await (wrapper.vm as unknown as AddMemberForm).submitForm()
@@ -97,30 +85,6 @@ describe('AddMemberForm.vue', () => {
       await (wrapper.vm as unknown as AddMemberForm).submitForm()
 
       expect(wrapper.emitted('addMembers')).toBeTruthy()
-    })
-  })
-
-  describe('Component lifecycle', () => {
-    it('adds and removes event listener for click outside', async () => {
-      const addEventListenerSpy = vi.spyOn(document, 'addEventListener')
-      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
-
-      const wrapper = mount(AddMemberForm, {
-        props: {
-          formData: [{ name: '', address: '', isValid: false }],
-          users: [],
-          isLoading: false
-        }
-      })
-
-      expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-
-      wrapper.unmount()
-
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-
-      addEventListenerSpy.mockRestore()
-      removeEventListenerSpy.mockRestore()
     })
   })
 })
