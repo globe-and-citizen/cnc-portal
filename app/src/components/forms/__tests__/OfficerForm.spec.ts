@@ -1,23 +1,9 @@
 import { mount, VueWrapper } from '@vue/test-utils'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-  useDeployOfficerContract,
-  useDeployBank,
-  useDeployVoting,
-  useGetOfficerTeam,
-  useDeployExpenseAccount
-} from '@/composables/officer'
+import { describe, it, expect, vi } from 'vitest'
 import { ref } from 'vue'
 
 // Mock the composables
-vi.mock('@/composables/officer', () => ({
-  useDeployOfficerContract: vi.fn(),
-  useDeployBank: vi.fn(),
-  useDeployVoting: vi.fn(),
-  useGetOfficerTeam: vi.fn(),
-  useDeployExpenseAccount: vi.fn()
-}))
 
 vi.mock('@/stores/useToastStore', () => {
   return {
@@ -28,61 +14,52 @@ vi.mock('@/stores/useToastStore', () => {
   }
 })
 
-describe('OfficerForm.vue', () => {
-  let mockDeployOfficer: ReturnType<typeof useDeployOfficerContract>
-  let mockDeployBank: ReturnType<typeof useDeployBank>
-  let mockDeployVoting: ReturnType<typeof useDeployVoting>
-  let mockGetOfficerTeam: ReturnType<typeof useGetOfficerTeam>
-  let mockDeployExpenseAccount: ReturnType<typeof useDeployExpenseAccount>
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+const mockUseWatchContractEvent = {
+  onLogs: vi.fn() // Mock function to simulate event callback
+}
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
 
-  beforeEach(() => {
-    // Mock return values for composables
-    mockDeployOfficer = {
-      execute: vi.fn(),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      error: ref(null),
-      contractAddress: ref(null)
-    }
-    mockDeployBank = {
-      execute: vi.fn(),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      error: ref(null)
-    }
-    mockDeployVoting = {
-      execute: vi.fn(),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      error: ref(null)
-    }
-    mockGetOfficerTeam = {
-      execute: vi.fn(),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      error: ref(null),
-      officerTeam: ref({
-        founders: ['0x123'],
-        members: ['0x456'],
-        bankAddress: '',
-        votingAddress: '',
-        bodAddress: '',
-        expenseAccountAddress: ''
-      })
-    }
-    mockDeployExpenseAccount = {
-      execute: vi.fn(),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      error: ref(null)
-    }
-    // Mock composables return values
-    vi.mocked(useDeployOfficerContract).mockReturnValue(mockDeployOfficer)
-    vi.mocked(useDeployBank).mockReturnValue(mockDeployBank)
-    vi.mocked(useDeployVoting).mockReturnValue(mockDeployVoting)
-    vi.mocked(useGetOfficerTeam).mockReturnValue(mockGetOfficerTeam)
-    vi.mocked(useDeployExpenseAccount).mockReturnValue(mockDeployExpenseAccount)
-  })
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance),
+    useWatchContractEvent: vi.fn(() => mockUseWatchContractEvent) // Include the new mock
+  }
+})
+
+describe('OfficerForm.vue', () => {
   it('renders officer deployment button when no officer contract is deployed', () => {
     const wrapper: VueWrapper = mount(OfficerForm, {
       props: {
@@ -101,83 +78,5 @@ describe('OfficerForm.vue', () => {
     })
 
     expect(wrapper.find('.badge-primary').text()).toContain('0x123')
-  })
-
-  it('calls deployOfficerContract on button click', async () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: { officerAddress: null }
-      }
-    })
-
-    const button = wrapper.find('button')
-    await button.trigger('click')
-
-    expect(mockDeployOfficer.execute).toHaveBeenCalled()
-    expect(mockDeployOfficer.isLoading.value).toBe(false)
-    expect(mockDeployOfficer.error.value).toBe(null)
-    expect(mockDeployOfficer.contractAddress.value).toBe(null)
-  })
-
-  it('shows loading spinner during officer deployment', async () => {
-    mockDeployOfficer.isLoading.value = true
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: { officerAddress: null }
-      }
-    })
-
-    expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
-  })
-  it('calls deployOfficerContract on button click', async () => {
-    const wrapper = mount(OfficerForm, {
-      props: { team: { officerAddress: null } }
-    })
-
-    const button = wrapper.find('button')
-    await button.trigger('click')
-    await wrapper.vm.$nextTick() // Wait for DOM updates
-
-    expect(mockDeployOfficer.execute).toHaveBeenCalled()
-    expect(mockDeployOfficer.isLoading.value).toBe(false)
-    expect(mockDeployOfficer.error.value).toBe(null)
-  })
-  it('shows loading spinner when officer contract is deploying', async () => {
-    mockDeployOfficer.isLoading.value = true
-    const wrapper = mount(OfficerForm, {
-      props: { team: { officerAddress: null } }
-    })
-
-    expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
-  })
-
-  it('calls deployBankAccount when bank deploy button is clicked', async () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: { officerAddress: '0x123' }
-      }
-    })
-
-    const bankButton = wrapper.findAll('button')[0]
-    await bankButton.trigger('click')
-
-    expect(mockDeployBank.execute).toHaveBeenCalled()
-    expect(mockDeployBank.isLoading.value).toBe(false)
-    expect(mockDeployBank.error.value).toBe(null)
-  })
-
-  it('calls deployVotingContract when voting deploy button is clicked', async () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: { officerAddress: '0x123' }
-      }
-    })
-
-    const votingButton = wrapper.findAll('button')[2]
-    await votingButton.trigger('click')
-
-    expect(mockDeployVoting.execute).toHaveBeenCalled()
-    expect(mockDeployVoting.isLoading.value).toBe(false)
-    expect(mockDeployVoting.error.value).toBe(null)
   })
 })

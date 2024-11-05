@@ -8,13 +8,6 @@ export const useGetActionCount = vi.fn().mockReturnValue({
   data: ref(0)
 })
 
-export const useIsActionApproved = vi.fn().mockReturnValue({
-  execute: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null),
-  data: ref(false)
-})
-
 export const useApproveAction = vi.fn().mockReturnValue({
   execute: vi.fn(),
   isLoading: ref(false),

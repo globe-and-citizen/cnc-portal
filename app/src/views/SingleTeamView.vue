@@ -49,6 +49,9 @@
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
+        <template #tab-6>
+          <ContractManagementSection></ContractManagementSection>
+        </template>
       </TabNavigation>
     </div>
   </div>
@@ -74,11 +77,13 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
-import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
+// import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
+import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
@@ -170,7 +175,8 @@ const setTabs = () => {
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses,
-      SingleTeamTabs.BoardOfDirectors
+      SingleTeamTabs.BoardOfDirectors,
+      SingleTeamTabs.Contract
     ]
 }
 </script>

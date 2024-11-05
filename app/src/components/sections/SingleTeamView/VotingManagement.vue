@@ -8,11 +8,30 @@
       <h3 v-if="!loadingPaused" class="font-bold text-md" data-test="status">
         Status: {{ isPaused ? 'Paused' : 'Active' }}
       </h3>
-      <LoadingButton color="primary" v-if="isPaused ? loadingUnpause : loadingPause" />
+      <LoadingButton
+        color="primary"
+        v-if="isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause"
+      />
       <button
-        v-if="isPaused ? !loadingUnpause : !loadingPause"
+        v-if="
+          isPaused ? !(loadingUnpause || isConfirmingUnpause) : !(loadingPause || isConfirmingPause)
+        "
         class="btn btn-primary row-start-2"
-        @click="isPaused ? executeFunction(unpause) : executeFunction(pause)"
+        @click="
+          isPaused
+            ? unpause({
+                functionName: 'unpause',
+                args: [],
+                abi: VotingABI,
+                address: props.team.votingAddress as Address
+              })
+            : pause({
+                functionName: 'pause',
+                args: [],
+                abi: VotingABI,
+                address: props.team.votingAddress as Address
+              })
+        "
       >
         {{ isPaused ? 'Unpause' : 'Pause' }}
       </button>
@@ -38,7 +57,14 @@
           class="btn btn-primary w-44 text-center"
           data-test="transfer-to-board-of-directors"
           v-if="team.boardOfDirectorsAddress && !transferOwnershipLoading"
-          @click="executeFunction(transferOwnership, [team.boardOfDirectorsAddress])"
+          @click="
+            transferOwnership({
+              functionName: 'transferOwnership',
+              args: [team.boardOfDirectorsAddress],
+              abi: VotingABI,
+              address: props.team.votingAddress as Address
+            })
+          "
         >
           Transfer to Board Of Directors Contract
         </button>
@@ -49,32 +75,32 @@
     <TransferOwnershipForm
       v-if="transferOwnershipModal"
       @transferOwnership="
-        async (newOwner: string) => executeFunction(transferOwnership, [newOwner])
+        async (newOwner: string) => {
+          transferOwnership({
+            functionName: 'transferOwnership',
+            args: [newOwner],
+            abi: VotingABI,
+            address: props.team.votingAddress as Address
+          })
+        }
       "
-      :transferOwnershipLoading="transferOwnershipLoading"
+      :transferOwnershipLoading="transferOwnershipLoading || isConfirmingTransferOwnership"
     />
   </ModalComponent>
 </template>
 <script setup lang="ts">
-import {
-  useVotingContractOwner,
-  useVotingContractPause,
-  useVotingContractStatus,
-  useVotingContractTransferOwnership,
-  useVotingContractUnpause
-} from '@/composables/voting'
 import { useToastStore } from '@/stores/useToastStore'
 import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
 import type { Team } from '@/types'
 import { onMounted, ref, watch } from 'vue'
-import { useUserDataStore } from '@/stores/user'
 import LoadingButton from '@/components/LoadingButton.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import VotingABI from '@/artifacts/abi/voting.json'
+import type { Address } from 'viem'
 
 const transferOwnershipModal = ref(false)
-
-const { address: currentUserAddress } = useUserDataStore()
 
 const props = defineProps<{
   team: Partial<Team>
@@ -84,37 +110,75 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const {
   data: isPaused,
   error: errorPaused,
-  execute: getIsPaused,
+  refetch: getIsPaused,
   isLoading: loadingPaused
-} = useVotingContractStatus(props.team.votingAddress!)
+} = useReadContract({
+  address: props.team.votingAddress! as Address,
+  functionName: 'paused',
+  abi: VotingABI
+})
 
 const {
   data: owner,
   error: errorOwner,
   isLoading: loadingOwner,
-  execute: getOwner
-} = useVotingContractOwner(props.team.votingAddress!)
+  refetch: getOwner
+} = useReadContract({
+  address: props.team.votingAddress! as Address,
+  functionName: 'owner',
+  abi: VotingABI
+})
 
 const {
-  isLoading: loadingPause,
-  execute: pause,
+  isPending: loadingPause,
+  writeContract: pause,
   error: errorPause,
-  isSuccess: successPause
-} = useVotingContractPause(props.team.votingAddress!)
+  data: hashPause
+} = useWriteContract()
+const { isLoading: isConfirmingPause, isSuccess: isConfirmedPause } = useWaitForTransactionReceipt({
+  hash: hashPause
+})
+watch(isConfirmingPause, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedPause.value) {
+    addSuccessToast('Voting paused successfully')
+    getIsPaused()
+  }
+})
 
 const {
-  execute: unpause,
+  writeContract: unpause,
   error: unpauseError,
-  isLoading: loadingUnpause,
-  isSuccess: unpauseSuccess
-} = useVotingContractUnpause(props.team.votingAddress!)
+  isPending: loadingUnpause,
+  data: hashUnpause
+} = useWriteContract()
+const { isLoading: isConfirmingUnpause, isSuccess: isConfirmedUnPause } =
+  useWaitForTransactionReceipt({
+    hash: hashUnpause
+  })
+watch(isConfirmingUnpause, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedUnPause.value) {
+    addSuccessToast('Voting unpaused successfully')
+    getIsPaused()
+  }
+})
 
 const {
-  execute: transferOwnership,
+  writeContract: transferOwnership,
   error: transferOwnershipError,
-  isLoading: transferOwnershipLoading,
-  isSuccess: transferOwnershipSuccess
-} = useVotingContractTransferOwnership(props.team.votingAddress!)
+  isPending: transferOwnershipLoading,
+  data: transferOwnershipHash
+} = useWriteContract()
+const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransferOwnership } =
+  useWaitForTransactionReceipt({
+    hash: transferOwnershipHash
+  })
+watch(isConfirmingTransferOwnership, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    addSuccessToast('Ownership transferred successfully')
+    getOwner()
+    transferOwnershipModal.value = false
+  }
+})
 watch(errorPaused, () => {
   if (errorPaused.value) {
     addErrorToast('Failed to get voting contract status')
@@ -133,23 +197,9 @@ watch(errorPause, () => {
   }
 })
 
-watch(successPause, async () => {
-  if (successPause.value) {
-    addSuccessToast('Voting contract paused successfully')
-    await getIsPaused()
-  }
-})
-
 watch(unpauseError, () => {
   if (unpauseError.value) {
     addErrorToast('Failed to unpause voting contract')
-  }
-})
-
-watch(unpauseSuccess, async () => {
-  if (unpauseSuccess.value) {
-    addSuccessToast('Voting contract unpaused successfully')
-    await getIsPaused()
   }
 })
 
@@ -159,24 +209,6 @@ watch(transferOwnershipError, () => {
   }
 })
 
-watch(transferOwnershipSuccess, async () => {
-  if (transferOwnershipSuccess.value) {
-    await getOwner()
-    transferOwnershipModal.value = false
-    addSuccessToast('Voting contract ownership transferred successfully')
-  }
-})
-const executeFunction = async (execute: Function, args: string[] = []) => {
-  if (currentUserAddress !== owner.value) {
-    addErrorToast('You are not the owner of this voting contract')
-    return
-  }
-  if (args.length === 0) {
-    await execute()
-  } else {
-    await execute(...args)
-  }
-}
 onMounted(async () => {
   await getIsPaused()
   await getOwner()

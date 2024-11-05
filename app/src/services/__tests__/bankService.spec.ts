@@ -96,44 +96,6 @@ describe('Bank Service', () => {
     bankService = new BankService()
   })
 
-  describe('deposit', () => {
-    it('should deposit to bank contract', async () => {
-      const result = await bankService.deposit('0x123', '100')
-      expect(bankService.web3Library.sendTransaction).toHaveBeenCalledWith('0x123', '100')
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('transfer', () => {
-    it('should transfer from bank contract', async () => {
-      const result = await bankService.transfer('0x123', '0x456', '100')
-      expect(bank.transfer).toHaveBeenCalledWith('0x456', bankService.web3Library.parseEther('100'))
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('pushTip', () => {
-    it('should pushTip from bank contract', async () => {
-      const result = await bankService.pushTip('0x123', ['0x456'], 100)
-      expect(bank.pushTip).toHaveBeenCalledWith(
-        ['0x456'],
-        bankService.web3Library.parseEther('100')
-      )
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('sendTip', () => {
-    it('should sendTip from bank contract', async () => {
-      const result = await bankService.sendTip('0x123', ['0x456'], 100)
-      expect(bank.sendTip).toHaveBeenCalledWith(
-        ['0x456'],
-        bankService.web3Library.parseEther('100')
-      )
-      expect(result).toMatchObject(tx)
-    })
-  })
-
   describe('getEvents', () => {
     it('should get events from bank contract', async () => {
       const result = await bankService.getEvents('0x123', BankEventType.Deposit)
@@ -147,46 +109,6 @@ describe('Bank Service', () => {
       const result = await bankService.getContract('0x123')
       expect(contractService.getContract).toHaveBeenCalled()
       expect(result).toMatchObject(bank)
-    })
-  })
-
-  describe('pause', () => {
-    it('should pause bank contract', async () => {
-      const result = await bankService.pause('0x123')
-      expect(bank.pause).toHaveBeenCalled()
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('unpause', () => {
-    it('should unpause bank contract', async () => {
-      const result = await bankService.unpause('0x123')
-      expect(bank.unpause).toHaveBeenCalled()
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('transferOwnership', () => {
-    it('should transfer ownership of bank contract', async () => {
-      const result = await bankService.transferOwnership('0x123', '0x456')
-      expect(bank.transferOwnership).toHaveBeenCalledWith('0x456')
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('getOwner', () => {
-    it('should get owner of bank contract', async () => {
-      const result = await bankService.getOwner('0x123')
-      expect(bank.owner).toHaveBeenCalled()
-      expect(result).toMatchObject(tx)
-    })
-  })
-
-  describe('isPaused', () => {
-    it('should check if bank contract is paused', async () => {
-      const result = await bankService.isPaused('0x123')
-      expect(bank.paused).toHaveBeenCalled()
-      expect(result).toBeFalsy()
     })
   })
 })

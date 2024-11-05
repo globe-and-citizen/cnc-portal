@@ -8,11 +8,14 @@
     </div>
     <div class="flex flex-col gap-8 my-4">
       <SkeletonLoading v-if="isLoading" class="w-full h-48" />
-      <div v-if="boardOfDirectors?.length == 0 && !isLoading" class="text-red-600 font-bold">
+      <div
+        v-if="(boardOfDirectors as Array<string>)?.length == 0 && !isLoading"
+        class="text-red-600 font-bold"
+      >
         You must add board of directors by doing election voting from proposal
       </div>
       <div id="list-bod">
-        <div v-if="(boardOfDirectors?.length ?? 0) > 0 && !isLoading">
+        <div v-if="((boardOfDirectors as Array<string>)?.length ?? 0) > 0 && !isLoading">
           <div class="overflow-x-auto">
             <table class="table table-zebra text-center">
               <thead>
@@ -67,7 +70,7 @@
               <td class="flex justify-end">
                 <LoadingButton
                   data-test="loading-bank-transfer"
-                  v-if="loadingTransferOwnership"
+                  v-if="loadingTransferOwnership || isConfirmingTransferOwnership"
                   color="primary"
                   class="w-48"
                 />
@@ -76,10 +79,19 @@
                   v-if="
                     bankOwner == currentAddress &&
                     bankOwner != team.boardOfDirectorsAddress &&
-                    !loadingTransferOwnership
+                    !loadingTransferOwnership &&
+                    !isConfirmingTransferOwnership
                   "
                   class="btn btn-primary"
-                  @click="async () => await executeTransferOwnership(team.boardOfDirectorsAddress!)"
+                  @click="
+                    async () =>
+                      transferBankOwnership({
+                        address: props.team.bankAddress! as Address,
+                        abi: BankABI,
+                        functionName: 'transferOwnership',
+                        args: [team.boardOfDirectorsAddress]
+                      })
+                  "
                 >
                   Transfer bank ownership
                 </button>
@@ -100,7 +112,7 @@
               </td>
               <td class="flex justify-end">
                 <LoadingButton
-                  v-if="loadingTransferExpenseOwnership"
+                  v-if="loadingTransferExpenseOwnership || isConfirmingExpenseTransferOwnership"
                   color="primary"
                   class="w-48"
                 />
@@ -108,10 +120,19 @@
                   v-if="
                     expenseOwner == currentAddress &&
                     expenseOwner != team.boardOfDirectorsAddress &&
-                    !loadingTransferExpenseOwnership
+                    !loadingTransferExpenseOwnership &&
+                    !isConfirmingExpenseTransferOwnership
                   "
                   class="btn btn-primary"
-                  @click="async () => await transferExpenseOwnership(team.boardOfDirectorsAddress!)"
+                  @click="
+                    async () =>
+                      transferExpenseOwnership({
+                        address: props.team.expenseAccountAddress as Address,
+                        abi: expenseAccountABI,
+                        functionName: 'transferOwnership',
+                        args: [team.boardOfDirectorsAddress]
+                      })
+                  "
                 >
                   Transfer expense ownership
                 </button>
@@ -137,13 +158,11 @@ import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 import { onMounted, watch } from 'vue'
 import type { Address } from 'viem'
-import {
-  useExpenseAccountTransferOwnership,
-  useExpenseAccountGetOwner
-} from '@/composables/useExpenseAccount'
 
-import { useBankOwner, useBankTransferOwnership } from '@/composables/bank'
-import { useGetBoardOfDirectors } from '@/composables/bod'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import BankABI from '@/artifacts/abi/bank.json'
+import BoDABI from '@/artifacts/abi/bod.json'
+import expenseAccountABI from '@/artifacts/abi/expense-account.json'
 
 const props = defineProps<{
   team: Partial<Team>
@@ -153,43 +172,76 @@ const {
   data: bankOwner,
   isLoading: isLoadingBankOwner,
   error: errorBankOwner,
-  execute: executeBankOwner
-} = useBankOwner(props.team.bankAddress!)
+  refetch: executeBankOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: props.team.bankAddress! as Address,
+  abi: BankABI
+})
 
 const {
   data: expenseOwner,
   isLoading: isLoadingExpenseOwner,
   error: errorExpenseOwner,
-  execute: executeGetExpenseOwner
-} = useExpenseAccountGetOwner()
+  refetch: executeGetExpenseOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: props.team.expenseAccountAddress as Address,
+  abi: expenseAccountABI
+})
 
 const {
-  boardOfDirectors,
+  data: boardOfDirectors,
   error,
   isLoading,
-  execute: executeGetBoardOfDirectors
-} = useGetBoardOfDirectors()
+  refetch: executeGetBoardOfDirectors
+} = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
 
 const {
+  writeContract: transferBankOwnership,
   error: errorTransferOwnership,
-  execute: transferBankOwnership,
-  isLoading: loadingTransferOwnership
-} = useBankTransferOwnership(props.team.bankAddress!)
+  isPending: loadingTransferOwnership,
+  data: hashTransferOwnership
+} = useWriteContract()
+
+const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransferOwnership } =
+  useWaitForTransactionReceipt({
+    hash: hashTransferOwnership
+  })
+
+watch(isConfirmingTransferOwnership, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    addSuccessToast('Successfully transfered Bank ownership')
+    executeBankOwner()
+  }
+})
 
 const {
   error: errorTransferExpenseOwnership,
-  execute: transferExpenseOwnership,
-  isLoading: loadingTransferExpenseOwnership,
-  isSuccess: successTransferExpenseOwnerShip
-} = useExpenseAccountTransferOwnership(props.team.expenseAccountAddress!)
+  writeContract: transferExpenseOwnership,
+  isPending: loadingTransferExpenseOwnership,
+  data: transferExpenseOwnershipHash
+} = useWriteContract()
+
+const {
+  isLoading: isConfirmingExpenseTransferOwnership,
+  isSuccess: isConfirmedTransferOwnershipExpense
+} = useWaitForTransactionReceipt({
+  hash: transferExpenseOwnershipHash
+})
+watch(isConfirmingExpenseTransferOwnership, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedTransferOwnershipExpense.value) {
+    addSuccessToast('Successfully transfered Expense A/c ownership')
+    executeGetExpenseOwner()
+  }
+})
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const currentAddress = useUserDataStore().address
-
-const executeTransferOwnership = async (newOwner: string) => {
-  await transferBankOwnership(newOwner)
-  await executeBankOwner()
-}
 
 watch(error, () => {
   if (error.value) {
@@ -216,17 +268,10 @@ watch(errorTransferExpenseOwnership, (newVal) => {
     addErrorToast('Failed to transfer expense ownership')
   }
 })
-watch(successTransferExpenseOwnerShip, async (newVal) => {
-  if (newVal) {
-    addSuccessToast('Successfully transfered Expense A/c ownership')
-    await executeGetExpenseOwner(props.team.expenseAccountAddress!)
-  }
-})
 
 onMounted(async () => {
-  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
+  await executeGetBoardOfDirectors()
   await executeBankOwner()
-  if (props.team.expenseAccountAddress)
-    await executeGetExpenseOwner(props.team.expenseAccountAddress)
+  if (props.team.expenseAccountAddress) await executeGetExpenseOwner()
 })
 </script>
