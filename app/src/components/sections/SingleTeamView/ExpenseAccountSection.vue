@@ -417,7 +417,7 @@ const isBodAction = () => {
   )
     return (boardOfDirectors.value as Array<Address>)
       .map((address) => address.toLocaleLowerCase())
-      .includes(useUserDataStore().address.toLocaleLowerCase())
+      .includes(currentUserAddress.toLocaleLowerCase())
 
   return false
 }
