@@ -244,11 +244,8 @@ useWatchContractEvent({
     }
     const deployer = (logs[0] as unknown as ILogs).args.deployer
     const proxyAddress = (logs[0] as unknown as ILogs).args.proxy
-    if (
-      !proxyAddress ||
-      proxyAddress == props.team.officerAddress ||
-      deployer !== useUserDataStore().address
-    )
+    const currentAddress = useUserDataStore().address as Address
+    if (!proxyAddress || proxyAddress == props.team.officerAddress || deployer !== currentAddress)
       loading.value = false
     else {
       try {
@@ -269,8 +266,8 @@ useWatchContractEvent({
 // Deploy Officer Contract
 const deployOfficerContract = async () => {
   try {
-    loading.value = true
     const currentAddress = useUserDataStore().address as Address
+    loading.value = true
     const encodedFunction = encodeFunctionData({
       abi: OfficerABI,
       functionName: 'initialize',

@@ -32,7 +32,7 @@
           </Button>
           <Button
             class="btn btn-sm btn-secondary"
-            v-if="team.bankAddress && (team.ownerAddress == useUserDataStore().address || isBod)"
+            v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
           >
             Transfer
@@ -167,6 +167,7 @@ const {
   data: depositHash
 } = useSendTransaction()
 
+const currentAddress = useUserDataStore().address
 const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
   hash: depositHash
 })
@@ -203,7 +204,7 @@ const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadC
   abi: BoDABI
 })
 const isBod = computed(() =>
-  (boardOfDirectors.value as Array<Address>)?.includes(useUserDataStore().address as Address)
+  (boardOfDirectors.value as Array<Address>)?.includes(currentAddress as Address)
 )
 
 const {
