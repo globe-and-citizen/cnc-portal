@@ -326,7 +326,6 @@ const deployExpenseAccount = async () => {
 // Watch officer team data and update state
 watch(officerTeam, async (value) => {
   const temp: Array<Object> = value as Array<Object>
-  console.log(officerTeam)
   const team = {
     founders: temp[0] as string[],
     members: temp[1] as string[],
