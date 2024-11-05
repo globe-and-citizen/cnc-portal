@@ -2,18 +2,38 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
 import { type Ref } from 'vue'
-import { type Validation, type ValidationRuleWithParams } from '@vuelidate/core'
+import type { 
+  Validation, 
+  ValidationRule, 
+  ValidationRuleWithoutParams, 
+  ValidationRuleWithParams 
+} from '@vuelidate/core'
+import VueDatePicker from '@vuepic/vue-datepicker'
 
 interface ComponentData {
   budgetLimitType: 0 | 1 | 2 | null
+  limitValue: string
+  date: Date | string
+  formData: { name: string, address: string }[]
   addressToApprove: string
   addressToDisapprove: string
   description: string
   action: string
   v$: Ref<
     Validation<{
-      addressToApprove: {
-        required: ValidationRuleWithParams<object, unknown>
+      formData: {
+        $each: {
+          $validator: ValidationRule;
+          $message: () => string;
+        };
+        $valid: ValidationRuleWithParams<object, any>;
+      }
+      budgetLimitType: {
+        required: ValidationRuleWithParams<object, any>;
+      }
+      limitValue: {
+        required: ValidationRuleWithoutParams<unknown>;
+        numeric: ValidationRuleWithoutParams<unknown>;
       }
       description: {
         required: ValidationRuleWithParams<object, unknown>
@@ -25,9 +45,10 @@ interface ComponentData {
 describe('ApproveUsersForm', () => {
   interface ComponentOptions {
     props?: {}
+    global?: Record<string, unknown>
   }
 
-  const createComponent = ({ props = {} }: ComponentOptions = {}) => {
+  const createComponent = ({ props = {}, global = {}}: ComponentOptions = {}) => {
     return mount(ApproveUsersForm, {
       props: {
         formData: [{ name: '', address: '' }],
@@ -35,7 +56,8 @@ describe('ApproveUsersForm', () => {
         isBodAction: false,
         users: [],
         ...props
-      }
+      },
+      global: {...global}
     })
   }
   describe('Render', () => {
@@ -162,6 +184,21 @@ describe('ApproveUsersForm', () => {
       await limitTypeSelect.setValue(1)
       expect((wrapper.vm as unknown as ComponentData).budgetLimitType).toBe(1)
     })
+    it('should update limitValue when limit value is entered', async () => {
+      const wrapper = createComponent()
+      const limitValue = wrapper.find('[data-test="limit-value-input"]')
+      expect(limitValue.exists()).toBeTruthy()
+      await limitValue.setValue('100')
+      expect((wrapper.vm as unknown as ComponentData).limitValue).toBe('100')
+    })
+    it('should update date when expiry date is selected', async () => {
+      const wrapper = createComponent()
+      const datePicker = wrapper.findComponent(VueDatePicker)
+      expect(datePicker.exists()).toBeTruthy()
+      const newDate = new Date()
+      datePicker.vm.$emit('update:model-value', newDate)
+      expect((wrapper.vm as unknown as ComponentData).date).toBe(newDate)
+    })
   })
   describe('Emits', () => {
     it('should emit searchUsers on keyup', async () => {
@@ -191,6 +228,42 @@ describe('ApproveUsersForm', () => {
       //@ts-ignore
       expect(wrapper.vm.v$.$invalid).toBe(true)
       expect(wrapper.emitted('approveUser')).toBeFalsy()
+    })
+    it('should emit approve address with correct arguments', async () => {
+      const wrapper = createComponent()
+
+      const budgetLimitType = 1
+      const limitValue = '100'
+      const date = new Date()
+      const formData = [{name: 'Test User', address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'}]
+
+      ;(wrapper.vm as unknown as ComponentData).budgetLimitType = budgetLimitType
+      ;(wrapper.vm as unknown as ComponentData).limitValue = limitValue
+      ;(wrapper.vm as unknown as ComponentData).date = date
+      ;(wrapper.vm as unknown as ComponentData).formData = formData
+      ;(wrapper.vm as unknown as ComponentData).description = 'description'
+
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('button[data-test="approve-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      
+      //@ts-ignore
+      expect(wrapper.vm.v$.$invalid).toBe(false)
+      expect(wrapper.emitted('approveUser')).toBeTruthy()
+    })
+  })
+  describe('Methods', () => {
+    it('should clear or reset the state variables', async () => {
+      const wrapper = createComponent()
+
+      const cancelButton = wrapper.find('[data-test="cancel-button"]')
+      expect(cancelButton.exists()).toBeTruthy()
+      cancelButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).date).toBe('')
+      expect((wrapper.vm as unknown as ComponentData).limitValue).toBe('')
+      expect((wrapper.vm as unknown as ComponentData).budgetLimitType).toBe(null)
     })
   })
 })
