@@ -219,7 +219,6 @@ watch(errorIsApproved, () => {
 })
 watch(errorApprove, () => {
   if (errorApprove.value) {
-    console.log(errorApprove.value)
     addErrorToast('Failed to approve action')
   }
 })
