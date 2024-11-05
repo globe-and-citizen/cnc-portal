@@ -145,7 +145,7 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { useRoute } from 'vue-router'
+//import { useRoute } from 'vue-router'
 
 //#endregion imports
 
@@ -177,7 +177,7 @@ const expiry = computed(() => {
 const { addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
-const route = useRoute()
+//const route = useRoute()
 //#endregion variable declarations
 
 //#region expense account composable
@@ -193,7 +193,7 @@ const {
   isFetching: isFetchingExpenseAccountData,
   execute: fetchExpenseAccountData,
   data: _expenseAccountData
-} = useCustomFetch(`teams/${String(route.params.id)}/member`, {
+} = useCustomFetch(`teams/${String(team.value.id)}/member`, {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
