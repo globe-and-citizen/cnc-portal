@@ -177,7 +177,6 @@ vi.mock('@/composables/useCustomFetch', () => {
       const execute = vi.fn(() => {
         // Conditionally update `data` based on the URL argument
         if(url === `teams/1/member`) {
-          console.log(`fetching expense account data`)
           data.value = {
             data: JSON.stringify({
                 approvedAddress: `0x123`,
@@ -270,12 +269,7 @@ describe('ExpenseAccountSection', () => {
         const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
         expect(approvalExpiry.exists()).toBe(true)
   
-        //await wrapper.vm.$nextTick()
-  
-        console.log(`_expenseAccountData: `, (wrapper.vm as unknown as ComponentData)._expenseAccountData)
         expect(approvalExpiry.text()).toBe(expiry)
-  
-        //expect((wrapper.vm as unknown as ComponentData).expiry).toBe(expiry)
       })
     })
     

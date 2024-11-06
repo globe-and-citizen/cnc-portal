@@ -145,8 +145,6 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-//import { useRoute } from 'vue-router'
-
 //#endregion imports
 
 //#region variable declarations
@@ -177,7 +175,6 @@ const expiry = computed(() => {
 const { addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
-//const route = useRoute()
 //#endregion variable declarations
 
 //#region expense account composable
@@ -334,6 +331,5 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 
 onMounted(async () => {
   await init()
-  console.log(`_expenseAccountData: `, _expenseAccountData.value)
 })
 </script>
