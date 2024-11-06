@@ -4,6 +4,7 @@ import BankManagement from '../BankManagement.vue'
 import { createTestingPinia } from '@pinia/testing'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { ref } from 'vue'
+import type { Action, Team } from '@/types'
 
 interface ComponentData {
   transferOwnershipModal: boolean
@@ -39,6 +40,24 @@ const mockUseBalance = {
   error: ref(null),
   refetch: vi.fn()
 }
+const mockUseAddAction = {
+  loadingContract: ref(false),
+  actionCount: ref<BigInt | null>(null),
+  team: ref<Partial<Team> | null>(null),
+  action: ref<Partial<Action> | null>(null),
+  executeAddAction: vi.fn(),
+  addAction: vi.fn(),
+  isSuccess: ref(false),
+  isConfirming: ref(false),
+  error: ref(null)
+}
+vi.mock('@/composables/bod', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useAddAction: vi.fn(() => mockUseAddAction)
+  }
+})
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
