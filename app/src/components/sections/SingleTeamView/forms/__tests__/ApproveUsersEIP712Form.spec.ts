@@ -200,9 +200,7 @@ describe('ApproveUsersForm', () => {
       datePicker.vm.$emit('update:model-value', newDate)
       expect((wrapper.vm as unknown as ComponentData).date).toBe(newDate)
     })
-    it('should correctly format expiry', async () => {
-
-    })
+    it('should correctly format expiry', async () => {})
   })
   describe('Emits', () => {
     it('should emit searchUsers on keyup', async () => {

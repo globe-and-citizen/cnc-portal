@@ -9,7 +9,6 @@ import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import type { User } from '@/types'
-import { before } from 'node:test'
 
 interface ComponentData {
   expiry: string
@@ -150,13 +149,13 @@ const mockUseCustomFetch = {
   error: ref<unknown>(null),
   isFetching: ref(false),
   execute: vi.fn((url: string) => {
-    if(url === `teams/1/member`) {
+    if (url === `teams/1/member`) {
       mockUseCustomFetch.data.value = {
         data: JSON.stringify({
-            approvedAddress: `0x123`,
-            budgetType: 1,
-            value: `100.0`,
-            expiry: Math.floor((new Date()).getTime() / 1000)
+          approvedAddress: `0x123`,
+          budgetType: 1,
+          value: `100.0`,
+          expiry: Math.floor(new Date().getTime() / 1000)
         })
       }
     }
@@ -176,13 +175,13 @@ vi.mock('@/composables/useCustomFetch', () => {
 
       const execute = vi.fn(() => {
         // Conditionally update `data` based on the URL argument
-        if(url === `teams/1/member`) {
+        if (url === `teams/1/member`) {
           data.value = {
             data: JSON.stringify({
-                approvedAddress: `0x123`,
-                budgetType: 1,
-                value: `100.0`,
-                expiry: Math.floor((new Date(DATE)).getTime() / 1000)
+              approvedAddress: `0x123`,
+              budgetType: 1,
+              value: `100.0`,
+              expiry: Math.floor(new Date(DATE).getTime() / 1000)
             })
           }
         }
@@ -261,18 +260,18 @@ describe('ExpenseAccountSection', () => {
 
   describe('Render', () => {
     describe('Sub-Context', () => {
-      let wrapper = createComponent()
+      const wrapper = createComponent()
       it('should retrieve, format and display expiry date', async () => {
         const date = new Date(DATE)
         const expiry = date.toLocaleString('en-US')
-  
+
         const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
         expect(approvalExpiry.exists()).toBe(true)
-  
+
         expect(approvalExpiry.text()).toBe(expiry)
       })
     })
-    
+
     it('should show expense account if expense account address exists', () => {
       const team = { expenseAccountAddress: '0x123' }
       const wrapper = createComponent({
