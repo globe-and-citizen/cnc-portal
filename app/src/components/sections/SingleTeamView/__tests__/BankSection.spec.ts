@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
+import type { Action, Team } from '@/types'
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
     address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
@@ -45,6 +46,24 @@ const mockUseBalance = {
   error: ref(null),
   refetch: vi.fn()
 }
+const mockUseAddAction = {
+  loadingContract: ref(false),
+  actionCount: ref<BigInt | null>(null),
+  team: ref<Partial<Team> | null>(null),
+  action: ref<Partial<Action> | null>(null),
+  executeAddAction: vi.fn(),
+  addAction: vi.fn(),
+  isSuccess: ref(false),
+  isConfirming: ref(false),
+  error: ref(null)
+}
+vi.mock('@/composables/bod', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useAddAction: vi.fn(() => mockUseAddAction)
+  }
+})
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
