@@ -15,6 +15,7 @@ interface ComponentData {
   limitValue: string
   date: Date | string
   formData: { name: string; address: string }[]
+  expiry: string
   addressToApprove: string
   addressToDisapprove: string
   description: string
@@ -198,6 +199,9 @@ describe('ApproveUsersForm', () => {
       const newDate = new Date()
       datePicker.vm.$emit('update:model-value', newDate)
       expect((wrapper.vm as unknown as ComponentData).date).toBe(newDate)
+    })
+    it('should correctly format expiry', async () => {
+
     })
   })
   describe('Emits', () => {

@@ -9,8 +9,11 @@ import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import type { User } from '@/types'
+import { before } from 'node:test'
 
 interface ComponentData {
+  expiry: string
+  _expenseAccountData: unknown
   transferModal: boolean
   setLimitModal: boolean
   approveUsersModal: boolean
@@ -143,6 +146,67 @@ const mockAddAction = {
   execute: vi.fn()
 }
 
+const mockUseCustomFetch = {
+  error: ref<unknown>(null),
+  isFetching: ref(false),
+  execute: vi.fn((url: string) => {
+    if(url === `teams/1/member`) {
+      mockUseCustomFetch.data.value = {
+        data: JSON.stringify({
+            approvedAddress: `0x123`,
+            budgetType: 1,
+            value: `100.0`,
+            expiry: Math.floor((new Date()).getTime() / 1000)
+        })
+      }
+    }
+  }),
+  data: ref<unknown>()
+}
+
+const DATE = '2024-02-02T12:00:00Z'
+
+vi.mock('@/composables/useCustomFetch', () => {
+  return {
+    useCustomFetch: vi.fn((url) => {
+      const data = ref<unknown>(null)
+      const error = ref(null)
+      const isFetching = ref(false)
+      const response = ref<Response | null>(null)
+
+      const execute = vi.fn(() => {
+        // Conditionally update `data` based on the URL argument
+        if(url === `teams/1/member`) {
+          console.log(`fetching expense account data`)
+          data.value = {
+            data: JSON.stringify({
+                approvedAddress: `0x123`,
+                budgetType: 1,
+                value: `100.0`,
+                expiry: Math.floor((new Date(DATE)).getTime() / 1000)
+            })
+          }
+        }
+      })
+
+      const get = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
+      const json = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
+      const post = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
+
+      return {
+        post,
+        get,
+        json,
+        error,
+        isFetching,
+        execute,
+        data,
+        response
+      }
+    })
+  }
+})
+
 vi.mock('@/composables/bod', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
@@ -173,6 +237,7 @@ describe('ExpenseAccountSection', () => {
     return mount(ExpenseAccountSection, {
       props: {
         team: {
+          id: `1`,
           expenseAccountAddress: '0xExpenseAccount',
           ownerAddress: '0xOwner',
           boardOfDirectorsAddress: null,
@@ -196,6 +261,24 @@ describe('ExpenseAccountSection', () => {
   }
 
   describe('Render', () => {
+    describe('Sub-Context', () => {
+      let wrapper = createComponent()
+      it('should retrieve, format and display expiry date', async () => {
+        const date = new Date(DATE)
+        const expiry = date.toLocaleString('en-US')
+  
+        const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
+        expect(approvalExpiry.exists()).toBe(true)
+  
+        //await wrapper.vm.$nextTick()
+  
+        console.log(`_expenseAccountData: `, (wrapper.vm as unknown as ComponentData)._expenseAccountData)
+        expect(approvalExpiry.text()).toBe(expiry)
+  
+        //expect((wrapper.vm as unknown as ComponentData).expiry).toBe(expiry)
+      })
+    })
+    
     it('should show expense account if expense account address exists', () => {
       const team = { expenseAccountAddress: '0x123' }
       const wrapper = createComponent({

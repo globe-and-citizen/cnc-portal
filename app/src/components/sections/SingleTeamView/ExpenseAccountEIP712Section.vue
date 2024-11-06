@@ -79,7 +79,7 @@
 
         <div class="stat-title text-center mt-10">
           Approval Expiry:
-          <span class="font-bold text-black">{{ expiry }}</span>
+          <span data-test="approval-expiry" class="font-bold text-black">{{ expiry }}</span>
         </div>
 
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
@@ -334,5 +334,6 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 
 onMounted(async () => {
   await init()
+  console.log(`_expenseAccountData: `, _expenseAccountData.value)
 })
 </script>
