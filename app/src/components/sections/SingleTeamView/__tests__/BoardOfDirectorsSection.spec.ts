@@ -7,10 +7,11 @@ import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { TransactionResponse } from 'ethers'
 import LoadingButton from '@/components/LoadingButton.vue'
+import type { Action, Team } from '@/types'
 
 // Mock implementations
 const mockUseReadContract = {
-  data: ref<string | null>(null),
+  data: ref<Array<string> | null>(['0xOwnerAddress']),
   isLoading: ref(false),
   error: ref(null),
   refetch: vi.fn()
@@ -27,6 +28,24 @@ const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
 }
+const mockUseAddAction = {
+  loadingContract: ref(false),
+  actionCount: ref<BigInt | null>(null),
+  team: ref<Partial<Team> | null>(null),
+  action: ref<Partial<Action> | null>(null),
+  executeAddAction: vi.fn(),
+  addAction: vi.fn(),
+  isSuccess: ref(false),
+  isConfirming: ref(false),
+  error: ref(null)
+}
+vi.mock('@/composables/bod', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useAddAction: vi.fn(() => mockUseAddAction)
+  }
+})
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -68,6 +87,7 @@ const createComponent = ({ props = {}, data = () => ({}), global = {} }: Compone
     props: {
       team: {
         expenseAccountAddress: '0xExpenseAccount',
+        boardOfDirectors: [],
         ownerAddress: '0xOwner',
         ...props?.team
       },
@@ -110,7 +130,7 @@ describe('BoardOfDirectorsSection', () => {
   })
 
   it('should display bank owner name when data is available', async () => {
-    mockUseReadContract.data.value = '0xOwnerAddress'
+    mockUseReadContract.data.value = ['0xOwnerAddress']
     const wrapper = createComponent({
       props: {
         team: { bankAddress: '0xBankAddress' }

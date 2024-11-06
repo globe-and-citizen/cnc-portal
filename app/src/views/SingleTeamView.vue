@@ -8,7 +8,7 @@
       <button
         class="btn btn-primary btn-xs"
         @click="officerModal = true"
-        v-if="team.ownerAddress == useUserDataStore().address"
+        v-if="team.ownerAddress == currentAddress"
         data-test="manageOfficer"
       >
         Manage Deployments
@@ -50,6 +50,9 @@
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
+        <template #tab-6>
+          <ContractManagementSection></ContractManagementSection>
+        </template>
       </TabNavigation>
     </div>
   </div>
@@ -81,6 +84,8 @@ import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardO
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
+import type { Address } from 'viem'
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
@@ -127,10 +132,10 @@ watch(getTeamError, () => {
     addErrorToast(getTeamError.value)
   }
 })
-
+const currentAddress = useUserDataStore().address as Address
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
-  if (team?.value?.ownerAddress == useUserDataStore().address) {
+  if (team?.value?.ownerAddress == currentAddress) {
     isOwner.value = true
   }
   setTabs()
@@ -172,7 +177,8 @@ const setTabs = () => {
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses,
-      SingleTeamTabs.BoardOfDirectors
+      SingleTeamTabs.BoardOfDirectors,
+      SingleTeamTabs.Contract
     ]
 }
 </script>

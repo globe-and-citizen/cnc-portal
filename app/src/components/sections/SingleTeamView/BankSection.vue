@@ -5,9 +5,9 @@
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <span class="text-sm sm:text-base">Bank Balance</span>
-          <div class="font-extrabold text-3xl sm:text-4xl">
-            <span class="inline-block w-16 h-10">
+          <span>Bank Balance</span>
+          <div class="font-extrabold text-4xl">
+            <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
               <span v-else>{{ teamBalance?.formatted }} </span>
             </span>
@@ -32,7 +32,7 @@
           </Button>
           <Button
             class="btn btn-sm btn-secondary"
-            v-if="team.bankAddress && (team.ownerAddress == useUserDataStore().address || isBod)"
+            v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
           >
             Transfer
@@ -167,6 +167,7 @@ const {
   data: depositHash
 } = useSendTransaction()
 
+const currentAddress = useUserDataStore().address
 const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
   hash: depositHash
 })
@@ -203,7 +204,7 @@ const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadC
   abi: BoDABI
 })
 const isBod = computed(() =>
-  (boardOfDirectors.value as Array<Address>)?.includes(useUserDataStore().address as Address)
+  (boardOfDirectors.value as Array<Address>)?.includes(currentAddress as Address)
 )
 
 const {
