@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { mount } from '@vue/test-utils'
 import SendToWalletHistory from '@/components/sections/SingleTeamView/tables/SendToWalletHistory.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { getBlock, getLogs } from '@/__mocks__/viem/actions'
+// import { getBlock, getLogs } from '@/__mocks__/viem/actions'
 
 const sendToWalletEvents = [
   {
@@ -25,14 +26,16 @@ const sendToWalletEvents = [
   }
 ]
 vi.mock('@/stores/useToastStore')
-vi.mock('viem')
-vi.mock('viem/actions')
+vi.mock('viem/actions', async (importOriginal) => {
+  const original: Object = await importOriginal()
+  return {
+    ...original,
+    getLogs: vi.fn(() => sendToWalletEvents),
+    getBlock: vi.fn(() => ({ timestamp: 1620000000 }))
+  }
+})
 
 describe('SendToWalletHistory', () => {
-  beforeEach(() => {
-    getLogs.mockResolvedValue(sendToWalletEvents)
-    getBlock.mockResolvedValue({ timestamp: 1620000000 })
-  })
 
   const createComponent = () => {
     return mount(SendToWalletHistory, {
@@ -46,10 +49,10 @@ describe('SendToWalletHistory', () => {
   }
 
   describe('Render', () => {
-    it('renders correctly', () => {
+    it('renders correctly', async () => {
       // basic render
       const wrapper = createComponent()
-      console.log(wrapper.html())
+      await flushPromises() //  promise is resolved immediately
       expect(wrapper.find('div.overflow-x-auto.bg-base-100.mt-5').exists()).toBe(true)
       expect(wrapper.find('table.table-zebra.text-center').exists()).toBe(true)
       expect(wrapper.find('thead tr').exists()).toBe(true)
