@@ -74,7 +74,7 @@
       data-test="button-flex"
     >
       <LoadingButton
-        v-if="loadingApprove || loadingRevoke"
+        v-if="loadingApprove || loadingRevoke || isConfirmingApprove || isConfirmingRevoke"
         color="primary"
         class="w-48 text-center"
       />
@@ -95,45 +95,12 @@ import type { Address } from 'viem'
 import { useToastStore, useUserDataStore } from '@/stores'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
-import {
-  useApprovalCount,
-  useApproveAction,
-  useIsActionApproved,
-  useRevokeAction,
-  useActionExecuted
-} from '@/composables/bod'
 import { onMounted, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useBankGetFunction } from '@/composables/bank'
 import { useExpenseGetFunction } from '@/composables/useExpenseAccount'
-
-const { addErrorToast, addSuccessToast } = useToastStore()
-const { address: currentAddress } = useUserDataStore()
-const {
-  data: isApproved,
-  error: errorIsApproved,
-  isLoading: isApprovedLoading,
-  execute: executeIsApproved
-} = useIsActionApproved()
-const {
-  execute: approve,
-  error: errorApprove,
-  isLoading: loadingApprove,
-  isSuccess: successApprove
-} = useApproveAction()
-const {
-  execute: revoke,
-  error: errorRevoke,
-  isLoading: loadingRevoke,
-  isSuccess: successRevoke
-} = useRevokeAction()
-const {
-  data: approvalCount,
-  error: errorApprovalCount,
-  isLoading: approvalCountLoading,
-  execute: executeApprovalCount
-} = useApprovalCount()
-const { data: isExecuted, execute: executeIsExecuted } = useActionExecuted()
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import BoDABI from '@/artifacts/abi/bod.json'
 
 const props = defineProps<{
   action: Action
@@ -141,6 +108,79 @@ const props = defineProps<{
   boardOfDirectors: Address[]
 }>()
 const emits = defineEmits(['closeModal', 'onExecuted'])
+
+const { addErrorToast, addSuccessToast } = useToastStore()
+const { address: currentAddress } = useUserDataStore()
+const {
+  data: isApproved,
+  error: errorIsApproved,
+  isLoading: isApprovedLoading,
+  refetch: executeIsApproved
+} = useReadContract({
+  functionName: 'isApproved',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI,
+  args: [props.action.actionId, currentAddress]
+})
+const {
+  writeContract: approve,
+  error: errorApprove,
+  isPending: loadingApprove,
+  data: approveHash
+} = useWriteContract()
+const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
+  useWaitForTransactionReceipt({
+    hash: approveHash
+  })
+watch(isConfirmingApprove, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedApprove.value) {
+    addSuccessToast('Action approved')
+    await executeIsExecuted()
+    if (isExecuted.value) {
+      await useCustomFetch(`actions/${props.action.id}`, {
+        immediate: true
+      }).patch()
+      emits('onExecuted')
+    }
+
+    emits('closeModal')
+  }
+})
+const {
+  writeContract: revoke,
+  error: errorRevoke,
+  isPending: loadingRevoke,
+  data: revokeHash
+} = useWriteContract()
+const { isLoading: isConfirmingRevoke, isSuccess: isConfirmedRevoke } =
+  useWaitForTransactionReceipt({
+    hash: revokeHash
+  })
+watch(isConfirmingRevoke, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedRevoke.value) {
+    addSuccessToast('Action revoked')
+    await executeIsExecuted()
+
+    emits('closeModal')
+  }
+})
+const {
+  data: approvalCount,
+  error: errorApprovalCount,
+  isLoading: approvalCountLoading,
+  refetch: executeApprovalCount
+} = useReadContract({
+  functionName: 'approvalCount',
+  abi: BoDABI,
+  address: props.team.boardOfDirectorsAddress as Address,
+  args: [props.action.actionId]
+})
+const { data: isExecuted, refetch: executeIsExecuted } = useReadContract({
+  functionName: 'isActionExecuted',
+  abi: BoDABI,
+  address: props.team.boardOfDirectorsAddress as Address,
+  args: [props.action.actionId]
+})
 
 const {
   data: bankFunctionName,
@@ -155,29 +195,21 @@ const {
   execute: getExpenseFunctionName
 } = useExpenseGetFunction(props.team.expenseAccountAddress!)
 const approveAction = async () => {
-  await approve(props.team.boardOfDirectorsAddress!, props.action.actionId)
-  if (errorApprove.value) {
-    return
-  }
-
-  await executeIsExecuted(props.team.boardOfDirectorsAddress!, props.action.actionId)
-  if (isExecuted.value) {
-    await useCustomFetch(`actions/${props.action.id}`, {
-      immediate: true
-    }).patch()
-    emits('onExecuted')
-  }
-
-  emits('closeModal')
+  approve({
+    abi: BoDABI,
+    functionName: 'approve',
+    address: props.team.boardOfDirectorsAddress as Address,
+    args: [props.action.actionId]
+  })
 }
 
 const revokeAction = async () => {
-  await revoke(props.team.boardOfDirectorsAddress!, props.action.actionId)
-
-  if (errorRevoke.value) {
-    return
-  }
-  emits('closeModal')
+  revoke({
+    abi: BoDABI,
+    functionName: 'revoke',
+    address: props.team.boardOfDirectorsAddress as Address,
+    args: [props.action.actionId]
+  })
 }
 
 watch(errorIsApproved, () => {
@@ -195,16 +227,7 @@ watch(errorRevoke, () => {
     addErrorToast('Failed to revoke action')
   }
 })
-watch(successApprove, () => {
-  if (successApprove.value) {
-    addSuccessToast('Action approved')
-  }
-})
-watch(successRevoke, () => {
-  if (successRevoke.value) {
-    addSuccessToast('Action revoked')
-  }
-})
+
 watch(errorApprovalCount, () => {
   if (errorApprovalCount.value) {
     addErrorToast('Failed to get approval count')
@@ -212,12 +235,8 @@ watch(errorApprovalCount, () => {
 })
 
 onMounted(async () => {
-  await executeIsApproved(
-    props.team.boardOfDirectorsAddress!,
-    props.action.actionId,
-    currentAddress
-  )
-  await executeApprovalCount(props.team.boardOfDirectorsAddress!, props.action.actionId)
+  await executeIsApproved()
+  await executeApprovalCount()
   if (props.action.targetAddress == props.team.bankAddress) {
     await getBankFunctionName(props.action.data)
   } else if (props.action.targetAddress == props.team.expenseAccountAddress) {

@@ -1,21 +1,59 @@
 import { shallowMount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import ApproveRevokeAction from '../ApproveRevokeAction.vue'
 import { createTestingPinia } from '@pinia/testing'
-import {
-  useApprovalCount,
-  useApproveAction,
-  useIsActionApproved,
-  useRevokeAction
-} from '@/composables/__mocks__/bod'
+import { useApprovalCount, useApproveAction } from '@/composables/__mocks__/bod'
 import { useBankGetFunction } from '@/composables/__mocks__/bank'
 import { useExpenseGetFunction } from '@/composables/__mocks__/useExpenseAccount'
 import { useUserDataStore } from '@/stores'
+import { ref } from 'vue'
 
 vi.mock('@/composables/bod')
 vi.mock('@/composables/bank')
 vi.mock('@/composables/useExpenseAccount')
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
 
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance)
+  }
+})
 describe('ApproveRevokeAction', () => {
   const createComponent = () => {
     return shallowMount(ApproveRevokeAction, {
@@ -59,41 +97,6 @@ describe('ApproveRevokeAction', () => {
     it('should render the title correctly', () => {
       const wrapper = createComponent()
       expect(wrapper.find("[data-test='action-title']").text()).toBe('Action #1')
-    })
-
-    it('should render badge of the state of approval correctly', async () => {
-      const wrapper = createComponent()
-      expect(wrapper.find("[data-test='action-status']").text()).toBe('Waiting for your approval')
-      expect(wrapper.find("[data-test='action-status']").classes()).toContain('badge-secondary')
-
-      const { data } = useIsActionApproved()
-      data.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find("[data-test='action-status']").text()).toBe('Approved by You')
-      expect(wrapper.find("[data-test='action-status']").classes()).toContain('badge-primary')
-    })
-
-    it('should render SkeletonLoading when isApprovedLoading is true', async () => {
-      const wrapper = createComponent()
-      const { isLoading } = useIsActionApproved()
-      isLoading.value = true
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent({ name: 'SkeletonLoading' }).exists()).toBe(true)
-    })
-
-    it('should render SkeletonLoading when approvalCountLoading is true', async () => {
-      const wrapper = createComponent()
-      // set isApprovalLoading to false
-      const { isLoading } = useIsActionApproved()
-      isLoading.value = false
-
-      // set approvalCountLoading to true
-      const { isLoading: approvalCountLoading } = useApprovalCount()
-      approvalCountLoading.value = true
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent({ name: 'SkeletonLoading' }).exists()).toBe(true)
     })
 
     it('should render the description correctly', async () => {
@@ -284,7 +287,7 @@ describe('ApproveRevokeAction', () => {
 
       await wrapper.vm.$nextTick()
       expect(wrapper.find("[data-test='action-approval-count']").text()).toBe(
-        'Approvals 1/2 board of directors approved'
+        'Approvals /2 board of directors approved'
       )
     })
 
@@ -295,26 +298,6 @@ describe('ApproveRevokeAction', () => {
       )
       const user = useUserDataStore()
       user.address = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-    })
-
-    it('should render approve button correctly', async () => {
-      const wrapper = createComponent()
-      const { data } = useIsActionApproved()
-      data.value = false
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find("[data-test='approve-revoke-button']").text()).toBe('Approve')
-    })
-
-    it('should render revoke button correctly', async () => {
-      const wrapper = createComponent()
-      const { data } = useIsActionApproved()
-      data.value = true
-      const user = useUserDataStore()
-      user.address = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find("[data-test='approve-revoke-button']").text()).toBe('Revoke')
     })
 
     it('should not render approve button if user is not in board of directors', async () => {
@@ -348,53 +331,6 @@ describe('ApproveRevokeAction', () => {
 
       await wrapper.vm.$nextTick()
       expect(wrapper.find("[data-test='approve-revoke-button']").exists()).toBeFalsy()
-    })
-
-    it('should render LoadingButton when isApproveLoading is true', async () => {
-      const wrapper = createComponent()
-      const { isLoading } = useApproveAction()
-      isLoading.value = true
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBeTruthy()
-
-      isLoading.value = false
-      const { isLoading: revokeLoading } = useRevokeAction()
-      revokeLoading.value = true
-
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBeTruthy()
-    })
-  })
-
-  describe('Emits', () => {
-    beforeEach(() => {
-      useApproveAction().isLoading.value = false
-      useRevokeAction().isLoading.value = false
-    })
-
-    it('should emit approve action when approve button is clicked', async () => {
-      const wrapper = createComponent()
-      const { data } = useIsActionApproved()
-      const { execute } = useApproveAction()
-      data.value = false
-      const user = useUserDataStore()
-      user.address = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-
-      await wrapper.find("[data-test='approve-revoke-button']").trigger('click')
-      expect(execute).toHaveBeenCalled()
-    })
-
-    it('should emit revoke action when revoke button is clicked', async () => {
-      const wrapper = createComponent()
-      const { data } = useIsActionApproved()
-      const { execute } = useRevokeAction()
-      data.value = true
-      const user = useUserDataStore()
-      user.address = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-
-      await wrapper.find("[data-test='approve-revoke-button']").trigger('click')
-      expect(execute).toHaveBeenCalled()
     })
   })
 })

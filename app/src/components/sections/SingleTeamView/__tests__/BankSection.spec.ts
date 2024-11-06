@@ -2,8 +2,8 @@ import { mount, enableAutoUnmount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
-// import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
-
+import { ref } from 'vue'
+import type { Action, Team } from '@/types'
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
     address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
@@ -16,6 +16,68 @@ const team = {
   boardOfDirectorsAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
   members: []
 }
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+const mockUseAddAction = {
+  loadingContract: ref(false),
+  actionCount: ref<BigInt | null>(null),
+  team: ref<Partial<Team> | null>(null),
+  action: ref<Partial<Action> | null>(null),
+  executeAddAction: vi.fn(),
+  addAction: vi.fn(),
+  isSuccess: ref(false),
+  isConfirming: ref(false),
+  error: ref(null)
+}
+vi.mock('@/composables/bod', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useAddAction: vi.fn(() => mockUseAddAction)
+  }
+})
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance)
+  }
+})
+
 describe('BankSection', () => {
   let wrapper: ReturnType<typeof mount>
   setActivePinia(createPinia())
