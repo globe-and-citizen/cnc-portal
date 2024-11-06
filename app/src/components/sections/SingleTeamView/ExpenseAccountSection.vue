@@ -42,17 +42,22 @@
           class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
           data-test="contract-balance"
         >
-          {{ contractBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          {{ contractBalance.formatted }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
         </div>
       </div>
 
       <div class="pl-3">
         <div class="stat-title">Max Limit</div>
-        <div v-if="isLoadingMaxLimit || !maxLimit" class="stat-value mt-1 pr-3">
+        <div v-if="!maxLimit && maxLimit != 0n" class="stat-value mt-1 pr-3">
           <span class="loading loading-dots loading-xs" data-test="max-limit-loading"></span>
         </div>
-        <div v-else class="stat-value text-3xl mt-2" data-test="max-limit">
-          {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+        <div
+          class="stat-value text-3xl mt-2"
+          data-test="max-limit"
+          v-if="maxLimit || maxLimit == 0n"
+        >
+          {{ formatEther(maxLimit as bigint) }}
+          <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
         </div>
       </div>
     </div>
@@ -94,15 +99,19 @@
         "
         @searchMembers="(input) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
-        :loading="isLoadingTransfer"
-        :bank-balance="`${contractBalance}`"
+        :loading="isLoadingTransfer || isConfirmingTransfer"
+        :bank-balance="`${contractBalance?.formatted}`"
         service="Expense Account"
       />
     </ModalComponent>
     <ModalComponent v-model="setLimitModal">
       <SetLimitForm
         v-if="setLimitModal"
-        :loading="isLoadingSetLimit || (isLoadingAddAction && action === 'set-max-limit')"
+        :loading="
+          isLoadingSetLimit ||
+          (isLoadingAddAction && action === 'set-max-limit') ||
+          isConfirmingSetMaxLimit
+        "
         :is-bod-action="isBodAction()"
         @close-modal="() => (setLimitModal = false)"
         @set-limit="setExpenseAccountLimit"
@@ -112,10 +121,14 @@
       <ApproveUsersForm
         v-if="approveUsersModal"
         :loading-approve="
-          isLoadingApproveAddress || (isLoadingAddAction && action === 'approve-users')
+          isLoadingApproveAddress ||
+          (isLoadingAddAction && action === 'approve-users') ||
+          isConfirmingApproveAddress
         "
         :loading-disapprove="
-          isLoadingDisapproveAddress || (isLoadingAddAction && action === 'approve-users')
+          isLoadingDisapproveAddress ||
+          (isLoadingAddAction && action === 'approve-users') ||
+          isConfirmingDisapproveAddress
         "
         :approved-addresses="approvedAddresses"
         :unapproved-addresses="unapprovedAddresses"
@@ -134,16 +147,6 @@
 //#region imports
 import { onMounted, ref, watch } from 'vue'
 import type { Team, User } from '@/types'
-import {
-  useExpenseAccountGetOwner,
-  useExpenseAccountGetBalance,
-  useExpenseAccountIsApprovedAddress,
-  useExpenseAccountTransfer,
-  useExpenseAccountSetLimit,
-  useExpenseAccountApproveAddress,
-  useExpenseAccountDisapproveAddress,
-  useExpenseAccountGetMaxLimit
-} from '@/composables/useExpenseAccount'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -155,10 +158,19 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError } from '@/utils'
-import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
-import { ExpenseAccountService } from '@/services/expenseAccountService'
-import type { Address } from 'viem'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { useAddAction } from '@/composables/bod'
+import { formatEther } from 'viem'
+import { encodeFunctionData, parseEther, type Address } from 'viem'
+import {
+  useBalance,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWriteContract
+} from '@wagmi/vue'
+import BoDABI from '@/artifacts/abi/bod.json'
+import expenseAccountABI from '@/artifacts/abi/expense-account.json'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 
 //#endregion imports
 
@@ -178,8 +190,6 @@ const action = ref('')
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
-const expenseAccountService = new ExpenseAccountService()
-const web3Library = new EthersJsAdapter()
 //#endregion variable declarations
 
 //#region expense account composable
@@ -189,57 +199,118 @@ const {
   error: errorAddAction,
   isSuccess: isSuccessAddAction
 } = useAddAction()
-const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
+const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: team.value.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
 const {
-  execute: executeExpenseAccountGetMaxLimit,
-  isLoading: isLoadingMaxLimit,
+  refetch: executeExpenseAccountGetMaxLimit,
   data: maxLimit,
   error: errorGetMaxLimit
-} = useExpenseAccountGetMaxLimit()
+} = useReadContract({
+  functionName: 'maxLimit',
+  address: team.value.expenseAccountAddress as Address,
+  abi: expenseAccountABI
+})
+watch(maxLimit, () => {
+  console.log('maxLimit', maxLimit.value)
+})
 
 const {
-  execute: executeExpenseAccountApproveAddress,
-  isLoading: isLoadingApproveAddress,
-  isSuccess: isSuccessApproveAddress,
-  error: errorApproveAddress
-} = useExpenseAccountApproveAddress()
+  writeContract: executeExpenseAccountApproveAddress,
+  isPending: isLoadingApproveAddress,
+  error: errorApproveAddress,
+  data: approveAddressHash
+} = useWriteContract()
+const { isSuccess: isConfirmedApproveAddress, isLoading: isConfirmingApproveAddress } =
+  useWaitForTransactionReceipt({
+    hash: approveAddressHash
+  })
+
+watch(isConfirmingApproveAddress, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedApproveAddress.value) {
+    addSuccessToast('Address Successfully Approved')
+    await checkApprovedAddresses()
+
+    approveUsersModal.value = false
+  }
+})
 
 const {
-  execute: executeExpenseAccountDisapproveAddress,
-  isLoading: isLoadingDisapproveAddress,
-  isSuccess: isSuccessDisapproveAddress,
-  error: errorDisapproveAddress
-} = useExpenseAccountDisapproveAddress()
+  writeContract: executeExpenseAccountDisapproveAddress,
+  isPending: isLoadingDisapproveAddress,
+  error: errorDisapproveAddress,
+  data: disapproveAddressHash
+} = useWriteContract()
+const { isSuccess: isConfirmedDisapproveAddress, isLoading: isConfirmingDisapproveAddress } =
+  useWaitForTransactionReceipt({
+    hash: disapproveAddressHash
+  })
+watch(isConfirmingDisapproveAddress, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedDisapproveAddress.value) {
+    addSuccessToast('Address Successfully Disapproved')
+    await checkApprovedAddresses()
+    approveUsersModal.value = false
+  }
+})
 
 const {
-  execute: executeExpenseAccountSetLimit,
-  isLoading: isLoadingSetLimit,
-  isSuccess: isSuccessMaxLimit,
+  writeContract: executeExpenseAccountSetLimit,
+  isPending: isLoadingSetLimit,
+  data: setMaxLimitHash,
   error: errorSetMaxLimit
-} = useExpenseAccountSetLimit()
+} = useWriteContract()
+const { isSuccess: isConfirmedSetMaxLimit, isLoading: isConfirmingSetMaxLimit } =
+  useWaitForTransactionReceipt({
+    hash: setMaxLimitHash
+  })
+watch(isConfirmingSetMaxLimit, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedSetMaxLimit.value) {
+    addSuccessToast('Max Limit Successfully Set')
+    await getExpenseAccountMaxLimit()
+    setLimitModal.value = false
+  }
+})
 
 const {
-  execute: executeExpenseAccountTransfer,
-  isLoading: isLoadingTransfer,
+  writeContract: executeExpenseAccountTransfer,
+  isPending: isLoadingTransfer,
   error: errorTransfer,
-  isSuccess: isSuccessTransfer
-} = useExpenseAccountTransfer()
+  data: transferHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
+  useWaitForTransactionReceipt({
+    hash: transferHash
+  })
+watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
+    addSuccessToast('Transfer Successful')
+    await getExpenseAccountBalance()
+    transferModal.value = false
+  }
+})
 
 const {
   data: contractOwnerAddress,
-  execute: executeExpenseAccountGetOwner,
+  refetch: executeExpenseAccountGetOwner,
   error: errorGetOwner
-} = useExpenseAccountGetOwner()
+} = useReadContract({
+  functionName: 'owner',
+  address: team.value.expenseAccountAddress as Address,
+  abi: expenseAccountABI
+})
 
 const {
   data: contractBalance,
-  execute: executeExpenseAccountGetBalance,
+  refetch: executeExpenseAccountGetBalance,
   isLoading: isLoadingBalance,
   error: errorGetContractBalance
-} = useExpenseAccountGetBalance()
+} = useBalance({
+  address: team.value.expenseAccountAddress as Address
+})
 
-const { data: isApprovedAddress, execute: executeExpenseAccountIsApprovedAddress } =
-  useExpenseAccountIsApprovedAddress()
 //#endregion expense account composable
 
 const { execute: executeSearchUser } = useCustomFetch('user/search', {
@@ -263,25 +334,25 @@ const init = async () => {
   await getExpenseAccountMaxLimit()
   await getExpenseAccountOwner()
   await checkApprovedAddresses()
-  if (team.value.boardOfDirectorsAddress)
-    await executeGetBoardOfDirectors(team.value.boardOfDirectorsAddress)
+  if (team.value.boardOfDirectorsAddress) await executeGetBoardOfDirectors()
 }
 
 const getExpenseAccountBalance = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
+  if (team.value.expenseAccountAddress) await executeExpenseAccountGetBalance()
 }
 
 const getExpenseAccountOwner = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetOwner(team.value.expenseAccountAddress)
+  if (team.value.expenseAccountAddress) await executeExpenseAccountGetOwner()
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountAddress) {
-    await executeExpenseAccountTransfer(team.value.expenseAccountAddress, to, amount)
-    await executeExpenseAccountGetBalance(team.value.expenseAccountAddress)
-    if (isSuccessTransfer.value) transferModal.value = false
+    executeExpenseAccountTransfer({
+      address: team.value.expenseAccountAddress as Address,
+      args: [to, parseEther(amount)],
+      abi: expenseAccountABI,
+      functionName: 'transfer'
+    })
   }
 }
 
@@ -289,18 +360,23 @@ const setExpenseAccountLimit = async (amount: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'set-max-limit'
-      const functionSignature = await expenseAccountService.getFunctionSignature(
-        team.value.expenseAccountAddress,
-        'setMaxLimit',
-        [web3Library.parseEther(amount)]
-      )
+      const functionSignature = encodeFunctionData({
+        functionName: 'setMaxLimit',
+        abi: expenseAccountABI,
+        args: [parseEther(amount)]
+      })
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
         description
       })
     } else {
-      await executeExpenseAccountSetLimit(team.value.expenseAccountAddress, amount)
+      executeExpenseAccountSetLimit({
+        address: team.value.expenseAccountAddress as Address,
+        args: [parseEther(amount)],
+        abi: expenseAccountABI,
+        functionName: 'setMaxLimit'
+      })
       await getExpenseAccountMaxLimit()
     }
   }
@@ -310,11 +386,11 @@ const approveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'approve-users'
-      const functionSignature = await expenseAccountService.getFunctionSignature(
-        team.value.expenseAccountAddress,
-        'approveAddress',
-        [address]
-      )
+      const functionSignature = encodeFunctionData({
+        functionName: 'approveAddress',
+        abi: expenseAccountABI,
+        args: [address]
+      })
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
@@ -323,22 +399,25 @@ const approveAddress = async (address: string, description: string) => {
       action.value = ''
       if (isSuccessAddAction.value) approveUsersModal.value = false
     } else {
-      await executeExpenseAccountApproveAddress(team.value.expenseAccountAddress, address)
-      await checkApprovedAddresses()
-      if (isSuccessApproveAddress.value) approveUsersModal.value = false
+      executeExpenseAccountApproveAddress({
+        address: team.value.expenseAccountAddress as Address,
+        args: [address],
+        abi: expenseAccountABI,
+        functionName: 'approveAddress'
+      })
     }
   }
 }
 
 const isBodAction = () => {
   if (
-    contractOwnerAddress.value?.toLocaleLowerCase() ===
+    (contractOwnerAddress.value as string)?.toLocaleLowerCase() ===
       team.value.boardOfDirectorsAddress?.toLocaleLowerCase() &&
     boardOfDirectors.value
   )
-    return boardOfDirectors.value
+    return (boardOfDirectors.value as Array<Address>)
       .map((address) => address.toLocaleLowerCase())
-      .includes(useUserDataStore().address.toLocaleLowerCase())
+      .includes(currentUserAddress.toLocaleLowerCase())
 
   return false
 }
@@ -347,11 +426,11 @@ const disapproveAddress = async (address: string, description: string) => {
   if (team.value.expenseAccountAddress) {
     if (isBodAction()) {
       action.value = 'approve-users'
-      const functionSignature = await expenseAccountService.getFunctionSignature(
-        team.value.expenseAccountAddress,
-        'disapproveAddress',
-        [address]
-      )
+      const functionSignature = encodeFunctionData({
+        functionName: 'disapproveAddress',
+        abi: expenseAccountABI,
+        args: [address]
+      })
       await executeAddAction(props.team, {
         targetAddress: props.team.expenseAccountAddress as Address,
         data: functionSignature as Address,
@@ -360,9 +439,12 @@ const disapproveAddress = async (address: string, description: string) => {
       action.value = ''
       if (isSuccessAddAction.value) approveUsersModal.value = false
     } else {
-      await executeExpenseAccountDisapproveAddress(team.value.expenseAccountAddress, address)
-      await checkApprovedAddresses()
-      if (isSuccessDisapproveAddress.value) approveUsersModal.value = false
+      executeExpenseAccountDisapproveAddress({
+        address: team.value.expenseAccountAddress as Address,
+        args: [address],
+        abi: expenseAccountABI,
+        functionName: 'disapproveAddress'
+      })
     }
   }
 }
@@ -370,8 +452,13 @@ const disapproveAddress = async (address: string, description: string) => {
 const checkApprovedAddresses = async () => {
   if (team.value.members && team.value.expenseAccountAddress)
     for (const member of team.value.members) {
-      await executeExpenseAccountIsApprovedAddress(team.value.expenseAccountAddress, member.address)
-      if (isApprovedAddress.value) {
+      const isApprovedAddress = await readContract(config, {
+        functionName: 'approvedAddresses',
+        address: team.value.expenseAccountAddress as Address,
+        abi: expenseAccountABI,
+        args: [member.address]
+      })
+      if (isApprovedAddress) {
         approvedAddresses.value.add(member.address)
         unapprovedAddresses.value.delete(member.address)
       } else {
@@ -382,8 +469,7 @@ const checkApprovedAddresses = async () => {
 }
 
 const getExpenseAccountMaxLimit = async () => {
-  if (team.value.expenseAccountAddress)
-    await executeExpenseAccountGetMaxLimit(team.value.expenseAccountAddress)
+  if (team.value.expenseAccountAddress) await executeExpenseAccountGetMaxLimit()
 }
 
 const openExplorer = (address: string) => {
@@ -443,22 +529,6 @@ watch(errorGetMaxLimit, (newVal) => {
 //#region watch success
 watch(isSuccessAddAction, (newVal) => {
   if (newVal) addSuccessToast('Action Added Successfully')
-})
-
-watch(isSuccessTransfer, (newVal) => {
-  if (newVal) addSuccessToast('Transfer Successful')
-})
-
-watch(isSuccessApproveAddress, (newVal) => {
-  if (newVal) addSuccessToast('Address Successfully Approved')
-})
-
-watch(isSuccessDisapproveAddress, (newVal) => {
-  if (newVal) addSuccessToast('Address Successfully Disapproved')
-})
-
-watch(isSuccessMaxLimit, (newVal) => {
-  if (newVal) addSuccessToast('Max Limit Successfully Set')
 })
 
 watch(

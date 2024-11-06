@@ -3,27 +3,72 @@ import { mount } from '@vue/test-utils'
 import BankManagement from '../BankManagement.vue'
 import { createTestingPinia } from '@pinia/testing'
 import ModalComponent from '@/components/ModalComponent.vue'
+import { ref } from 'vue'
+import type { Action, Team } from '@/types'
 
 interface ComponentData {
   transferOwnershipModal: boolean
 }
 
-vi.mock('@/composables/bank', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/composables/bank')>()
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+const mockUseAddAction = {
+  loadingContract: ref(false),
+  actionCount: ref<BigInt | null>(null),
+  team: ref<Partial<Team> | null>(null),
+  action: ref<Partial<Action> | null>(null),
+  executeAddAction: vi.fn(),
+  addAction: vi.fn(),
+  isSuccess: ref(false),
+  isConfirming: ref(false),
+  error: ref(null)
+}
+vi.mock('@/composables/bod', async (importOriginal) => {
+  const actual: Object = await importOriginal()
   return {
     ...actual,
-    useBankStatus: vi.fn().mockReturnValue({
-      isLoading: false,
-      error: null,
-      data: false,
-      execute: vi.fn()
-    }),
-    useBankOwner: vi.fn().mockReturnValue({
-      isLoading: false,
-      error: null,
-      data: '0x1234567890123456789012345678901234567890',
-      execute: vi.fn()
-    })
+    useAddAction: vi.fn(() => mockUseAddAction)
+  }
+})
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance)
   }
 })
 

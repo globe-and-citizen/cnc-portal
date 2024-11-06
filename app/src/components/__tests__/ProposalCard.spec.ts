@@ -21,29 +21,49 @@ vi.mock('@/stores/useToastStore', () => {
   }
 })
 
-vi.mock('@/composables/voting', () => {
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
   return {
-    useVoteElection: vi.fn(() => ({
-      execute: vi.fn(),
-      isLoading: ref(true),
-      error: vi.fn(),
-      isSuccess: ref(true)
-    })),
-    useVoteDirective: vi.fn(() => ({
-      execute: vi.fn(),
-      isLoading: ref(true),
-      error: vi.fn(),
-      isSuccess: ref(true)
-    })),
-    useConcludeProposal: vi.fn(() => ({
-      execute: vi.fn(),
-      isLoading: ref(true),
-      error: vi.fn(),
-      isSuccess: ref(true)
-    }))
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance)
   }
 })
-
 describe('ProposalCard.vue', () => {
   const proposalDirective = {
     id: 0,
