@@ -13,6 +13,7 @@ import type { User } from '@/types'
 interface ComponentData {
   expiry: string
   _expenseAccountData: unknown
+  isFetchingExpenseAccountData: boolean
   transferModal: boolean
   setLimitModal: boolean
   approveUsersModal: boolean
@@ -298,6 +299,11 @@ describe('ExpenseAccountSection', () => {
         expect(approvalExpiry.exists()).toBe(true)
 
         expect(approvalExpiry.text()).toBe(expiry)
+      })
+      it('should show loading animation if fetching expense account data', async () => {
+        ;(wrapper.vm as unknown as ComponentData).isFetchingExpenseAccountData = true
+        await wrapper.vm.$nextTick()
+        expect(wrapper.find('[data-test="max-loading"]').exists()).toBeTruthy()
       })
     })
 
