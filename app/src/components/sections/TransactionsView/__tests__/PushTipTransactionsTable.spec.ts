@@ -122,7 +122,7 @@ describe('PushTipTransactionsTable', () => {
         expect(fromElements[index].text()).toBe(event.args.from)
         expect(totalAmountElements[index].text()).toBe(`2 ${NETWORK.currencySymbol}`)
         expect(amountPerAddressElements[index].text()).toBe(`1 ${NETWORK.currencySymbol}`)
-        expect(dateElements[index].text()).toBe('1/1/2022, 7:00:00 AM')
+        expect(dateElements[index].text()).toBe('1/1/2022, 12:00:00 AM')
 
         teamMembersElements.forEach((teamMemberElement, teamMemberIndex) => {
           expect(teamMemberElement.text()).toBe(event.args.teamMembers[teamMemberIndex])

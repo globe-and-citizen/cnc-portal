@@ -124,7 +124,7 @@ describe('DepositHistory', () => {
         expect(numberElements[index].text()).toBe((index + 1).toString())
         expect(depositorElements[index].text()).toBe(event.args.depositor)
         expect(amountElements[index].text()).toBe(`1 ${NETWORK.currencySymbol}`)
-        expect(dateElements[index].text()).toBe('5/3/2021, 7:00:00 AM')
+        expect(dateElements[index].text()).toBe('5/3/2021, 12:00:00 AM')
       })
     })
 
@@ -140,7 +140,7 @@ describe('DepositHistory', () => {
       const wrapper = createComponent()
 
       await flushPromises()
-      
+
       console.log(wrapper.html())
       expect(wrapper.find('[data-test="data-exists"]').exists()).toBeFalsy()
       expect(wrapper.find('[data-test="data-empty"]').exists()).toBeTruthy()

@@ -118,7 +118,7 @@ describe('TransferHistory', () => {
         expect(senderElements[index].text()).toBe(event.args.sender)
         expect(toElements[index].text()).toBe(event.args.to)
         expect(amountElements[index].text()).toBe(`1 ${NETWORK.currencySymbol}`)
-        expect(dateElements[index].text()).toBe('5/3/2021, 7:00:00 AM')
+        expect(dateElements[index].text()).toBe('5/3/2021, 12:00:00 AM')
       })
     })
 

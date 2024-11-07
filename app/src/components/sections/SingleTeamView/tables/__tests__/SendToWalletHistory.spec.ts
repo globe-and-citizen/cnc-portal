@@ -113,7 +113,7 @@ describe('SendToWalletHistory', () => {
           sendToWalletEvents[index].args.addressWhoPushes
         )
         expect(totalAmountElements[index].text()).toEqual(`1 ${NETWORK.currencySymbol}`)
-        expect(dateElements[index].text()).toEqual('5/3/2021, 7:00:00 AM')
+        expect(dateElements[index].text()).toEqual('5/3/2021, 12:00:00 AM')
 
         memberAddressesElements.forEach((memberAddressElement, memberIndex) => {
           expect(memberAddressElement.text()).toEqual(

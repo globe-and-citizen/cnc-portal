@@ -103,7 +103,9 @@ describe('TipWithdrawalTransactionsTable', () => {
 
       const dateElements = wrapper.findAll('td[data-test="data-row-date"]')
 
-      expect(wrapper.findAll('tr[data-test="table-body-row"]')).toHaveLength(tipWithdrawalEvents.length)
+      expect(wrapper.findAll('tr[data-test="table-body-row"]')).toHaveLength(
+        tipWithdrawalEvents.length
+      )
       expect(numberElements).toHaveLength(tipWithdrawalEvents.length)
       expect(toElements).toHaveLength(tipWithdrawalEvents.length)
       expect(amountElements).toHaveLength(tipWithdrawalEvents.length)
@@ -113,7 +115,7 @@ describe('TipWithdrawalTransactionsTable', () => {
         expect(numberElements[index].text()).toBe((index + 1).toString())
         expect(toElements[index].text()).toBe(event.args.to)
         expect(amountElements[index].text()).toBe(`2 ${NETWORK.currencySymbol}`)
-        expect(dateElements[index].text()).toBe('1/1/2022, 7:00:00 AM')
+        expect(dateElements[index].text()).toBe('1/1/2022, 12:00:00 AM')
       })
     })
 
