@@ -1,11 +1,11 @@
-import { Prisma, PrismaClient, User } from "@prisma/client";
+import { Prisma, /*PrismaClient,*/ User } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
-import { addNotification } from "../utils";
+import { addNotification, prisma } from "../utils";
 import exp from "constants";
 
-const prisma = new PrismaClient();
+//const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
   /*
