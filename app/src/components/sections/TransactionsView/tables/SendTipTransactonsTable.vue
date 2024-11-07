@@ -18,19 +18,24 @@
         <tr
           v-for="(event, index) in events"
           v-bind:key="event.transactionHash"
+          data-test="table-body-row"
           class="cursor-pointer hover"
           @click="showTxDetail(event.transactionHash)"
         >
-          <td>{{ index + 1 }}</td>
-          <td class="truncate max-w-48">{{ event.args.from }}</td>
+          <td data-test="data-row-number">{{ index + 1 }}</td>
+          <td data-test="data-row-from" class="truncate max-w-48">{{ event.args.from }}</td>
           <td>
             <ul v-for="(address, index) in event.args.teamMembers" :key="index">
-              <li>{{ address }}</li>
+              <li data-test="data-row-member">{{ address }}</li>
             </ul>
           </td>
-          <td>{{ formatEther(event.args.totalAmount!) }} {{ NETWORK.currencySymbol }}</td>
-          <td>{{ formatEther(event.args.amountPerAddress!) }} {{ NETWORK.currencySymbol }}</td>
-          <td>{{ dates[index] }}</td>
+          <td data-test="data-row-total-amount">
+            {{ formatEther(event.args.totalAmount!) }} {{ NETWORK.currencySymbol }}
+          </td>
+          <td data-test="data-row-amount-per-address">
+            {{ formatEther(event.args.amountPerAddress!) }} {{ NETWORK.currencySymbol }}
+          </td>
+          <td data-test="data-row-date">{{ dates[index] }}</td>
         </tr>
       </tbody>
       <tbody v-else>
@@ -82,6 +87,8 @@ const loading = ref(false)
 const error = ref<unknown | null>(null)
 
 onMounted(async () => {
+  loading.value = true
+
   try {
     events.value = await getLogs(client, {
       address: TIPS_ADDRESS as Address,
@@ -102,6 +109,7 @@ onMounted(async () => {
   } catch (e) {
     error.value = e
   }
+  loading.value = false
 })
 
 watch(error, () => {

@@ -1,11 +1,11 @@
 <template>
   <div id="send-to-wallet">
-    <SkeletonLoading v-if="loading" class="w-full h-96 mt-5" />
-    <div v-if="!loading" class="overflow-x-auto bg-base-100 mt-5">
+    <SkeletonLoading data-test="skeleton-loading" v-if="loading" class="w-full h-96 mt-5" />
+    <div v-if="!loading" data-test="table" class="overflow-x-auto bg-base-100 mt-5">
       <table class="table table-zebra text-center">
         <!-- head -->
         <thead>
-          <tr class="font-bold text-lg">
+          <tr data-test="table-head-row" class="font-bold text-lg">
             <th>No</th>
             <th>Owner Address</th>
             <th>Member Addresses</th>
@@ -17,25 +17,28 @@
           <tr
             v-for="(event, index) in events"
             v-bind:key="event.transactionHash"
+            data-test="table-body-row"
             class="cursor-pointer hover"
             @click="showTxDetail(event.transactionHash)"
           >
-            <td>{{ index + 1 }}</td>
-            <td class="truncate max-w-48">{{ event.args.addressWhoPushes }}</td>
-            <td>
-              <ul v-for="(address, index) in event.args.teamMembers" :key="index">
-                <li>{{ address }}</li>
-              </ul>
+            <td data-test="table-data-number">{{ index + 1 }}</td>
+            <td data-test="table-data-owner-address" class="truncate max-w-48">
+              {{ event.args.addressWhoPushes }}
             </td>
             <td>
+              <ul v-for="(address, index) in event.args.teamMembers" :key="index">
+                <li data-test="table-data-member-addresses">{{ address }}</li>
+              </ul>
+            </td>
+            <td data-test="table-data-total-amount">
               {{ formatEther(event.args.totalAmount!) }}
               {{ NETWORK.currencySymbol }}
             </td>
-            <td>{{ dates[index] }}</td>
+            <td data-test="table-data-date">{{ dates[index] }}</td>
           </tr>
         </tbody>
         <tbody v-else>
-          <tr>
+          <tr data-test="empty-row">
             <td class="text-center font-bold text-lg" colspan="5">No send to wallet history</td>
           </tr>
         </tbody>

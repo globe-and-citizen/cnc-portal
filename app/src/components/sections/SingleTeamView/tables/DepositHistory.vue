@@ -1,11 +1,11 @@
 <template>
   <div id="deposit">
     <SkeletonLoading v-if="loading" class="w-full h-96 mt-5" />
-    <div v-if="!loading" class="overflow-x-auto bg-base-100 mt-5">
+    <div v-if="!loading" data-test="table" class="overflow-x-auto bg-base-100 mt-5">
       <table class="table table-zebra text-center">
         <!-- head -->
         <thead>
-          <tr class="font-bold text-lg">
+          <tr data-test="table-head-row" class="font-bold text-lg">
             <th>No</th>
             <th>Depositor</th>
             <th>Amount</th>
@@ -16,16 +16,21 @@
           <tr
             v-for="(event, index) in events"
             v-bind:key="event.transactionHash!"
+            data-test="table-data-row"
             class="cursor-pointer hover"
             @click="showTxDetail(event.transactionHash!)"
           >
-            <td>{{ index + 1 }}</td>
-            <td class="truncate max-w-48">{{ event.args.depositor }}</td>
-            <td>{{ formatEther(event.args.amount!) }} {{ NETWORK.currencySymbol }}</td>
-            <td>{{ dates[index] }}</td>
+            <td data-test="data-row-number">{{ index + 1 }}</td>
+            <td data-test="data-row-depositor" class="truncate max-w-48">
+              {{ event.args.depositor }}
+            </td>
+            <td data-test="data-row-amount">
+              {{ formatEther(event.args.amount!) }} {{ NETWORK.currencySymbol }}
+            </td>
+            <td data-test="data-row-date">{{ dates[index] }}</td>
           </tr>
         </tbody>
-        <tbody data-test="data-not-exists" v-else>
+        <tbody data-test="data-empty" v-else>
           <tr>
             <td class="text-center font-bold text-lg" colspan="4" data-test="empty-row">
               No Deposit transactions

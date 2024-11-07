@@ -1,54 +1,45 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { VueWrapper, mount } from '@vue/test-utils'
+import { describe, it, expect, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import DepositHistory from '@/components/sections/SingleTeamView/tables/DepositHistory.vue'
-import type { Result } from 'ethers'
-import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
 
-const depositEvents = [
+let depositEvents = [
   {
-    txHash: '0x1',
-    data: ['0xDepositor1', '1000000000000000000'] as Result, // 1 ETH
-    date: '2024-06-25'
+    transactionHash: '0x1',
+    args: {
+      depositor: '0xDepositor1',
+      amount: '1000000000000000000' // 1 ETH
+    },
+    blockHash: '0xBlockHash'
   },
   {
-    txHash: '0x2',
-    data: ['0xDepositor2', '2000000000000000000'] as Result, // 2 ETH
-    date: '2024-06-26'
+    transactionHash: '0x2',
+    args: {
+      depositor: '0xDepositor2',
+      amount: '1000000000000000000' // 1 ETH
+    },
+    blockHash: '0xBlockHash'
   }
 ]
-vi.mock('@/adapters/web3LibraryAdapter', () => {
+
+vi.mock('@/stores/useToastStore')
+vi.mock('viem/actions', async (importOriginal) => {
+  const original: Object = await importOriginal()
   return {
-    EthersJsAdapter: {
-      getInstance: () => ({
-        formatEther: vi.fn((value) => (value / 1e18).toString()) // Mock implementation
-      })
-    }
+    ...original,
+    getLogs: vi.fn(() => depositEvents),
+    getBlock: vi.fn(() => ({ timestamp: 1620000000 }))
   }
 })
-
-const addErrorToastMock = vi.fn()
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: vi.fn().mockImplementation(() => ({ addErrorToast: addErrorToastMock }))
-}))
-
-vi.mock('@/composables/bank', () => ({
-  useBankEvents: vi.fn().mockImplementation(() => ({
-    getEvents: vi.fn().mockReturnValue(depositEvents),
-    loading: ref(false),
-    events: ref(depositEvents),
-    error: ref(null)
-  }))
-}))
 
 window.open = vi.fn()
 
 describe('DepositHistory', () => {
-  let wrapper: VueWrapper
-
-  beforeEach(() => {
-    wrapper = mount(DepositHistory, {
+  const createComponent = () => {
+    return mount(DepositHistory, {
       props: {
         bankAddress: '0x123'
       },
@@ -56,55 +47,17 @@ describe('DepositHistory', () => {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
-  })
-
-  describe('Render', () => {
-    it('renders correctly', () => {
-      // basic render
-      expect(wrapper.find('div.overflow-x-auto.bg-base-100.mt-5').exists()).toBe(true)
-      expect(wrapper.find('table.table-zebra.text-center').exists()).toBe(true)
-      expect(wrapper.find('thead tr').exists()).toBe(true)
-      expect(wrapper.find('tbody tr').exists()).toBe(true)
-
-      // table header
-      const header = ['No', 'Depositor', 'Amount', 'Date']
-      expect(wrapper.findAll('th').length).toBe(4)
-      expect(wrapper.findAll('th').forEach((th, index) => expect(th.text()).toBe(header[index])))
-
-      // table body
-      expect(wrapper.findAll('td').length).toBe(depositEvents.length * header.length)
-    })
-
-    it('renders tbody with data if events exists', () => {
-      const tbody = wrapper.find('tbody[data-test="data-exists"]')
-      expect(tbody.isVisible()).toBeTruthy()
-    })
-
-    it('renders data with correct length', () => {
-      const tbody = wrapper.findAll('tbody tr')
-      expect(tbody.length).toBe(depositEvents.length)
-    })
-
-    it('renders table body correctly', () => {
-      const tableData = wrapper.findAll('td')
-      const no = tableData[0].text()
-      const depositor = tableData[1].text()
-      const amount = tableData[2].text()
-      const date = tableData[3].text()
-
-      expect(no).toEqual('1')
-      expect(depositor).toEqual(depositEvents[0].data[0])
-      expect(amount).toEqual(`1 ${NETWORK.currencySymbol}`)
-      expect(date).toEqual(depositEvents[0].date)
-    })
-  })
+  }
 
   describe('Actions', () => {
     it('opens transaction detail in a new window when a row is clicked', async () => {
-      const row = wrapper.find('tbody tr')
+      const wrapper = createComponent()
+
+      await flushPromises()
+      const row = wrapper.find('tr[data-test="table-data-row"]')
       await row.trigger('click')
       expect(window.open).toHaveBeenCalledWith(
-        `${NETWORK.blockExplorerUrl}/tx/${depositEvents[0].txHash}`,
+        `${NETWORK.blockExplorerUrl}/tx/${depositEvents[0].transactionHash}`,
         '_blank'
       )
     })
@@ -121,7 +74,76 @@ describe('DepositHistory', () => {
           }
         }
       })
-      expect(addErrorToastMock).toHaveBeenCalled()
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalled()
+    })
+  })
+
+  describe('Render', () => {
+    it('renders correctly', async () => {
+      // basic render
+      const wrapper = createComponent()
+
+      await flushPromises()
+      expect(wrapper.find('div[data-test="table"]').exists()).toBeTruthy()
+      expect(wrapper.find('tr[data-test="table-head-row"]').exists()).toBeTruthy()
+      expect(wrapper.find('tr[data-test="table-data-row"]').exists()).toBe(true)
+
+      // table header
+      const header = ['No', 'Depositor', 'Amount', 'Date']
+      expect(wrapper.findAll('th').length).toBe(4)
+      expect(wrapper.findAll('th').forEach((th, index) => expect(th.text()).toBe(header[index])))
+
+      // table body
+      expect(wrapper.findAll('td').length).toBe(depositEvents.length * header.length)
+    })
+
+    it('renders tbody with data if events exists', async () => {
+      const wrapper = createComponent()
+
+      await flushPromises()
+      const tbody = wrapper.find('tbody[data-test="data-exists"]')
+      expect(tbody.isVisible()).toBeTruthy()
+    })
+
+    it('renders table body correctly', async () => {
+      const wrapper = createComponent()
+      await flushPromises()
+
+      const numberElements = wrapper.findAll('td[data-test="data-row-number"]')
+      const depositorElements = wrapper.findAll('td[data-test="data-row-depositor"]')
+      const amountElements = wrapper.findAll('td[data-test="data-row-amount"]')
+      const dateElements = wrapper.findAll('td[data-test="data-row-date"]')
+
+      expect(numberElements.length).toBe(depositEvents.length)
+      expect(depositorElements.length).toBe(depositEvents.length)
+      expect(amountElements.length).toBe(depositEvents.length)
+      expect(dateElements.length).toBe(depositEvents.length)
+
+      depositEvents.forEach((event, index) => {
+        expect(numberElements[index].text()).toBe((index + 1).toString())
+        expect(depositorElements[index].text()).toBe(event.args.depositor)
+        expect(amountElements[index].text()).toBe(`1 ${NETWORK.currencySymbol}`)
+        expect(dateElements[index].text()).toBe('5/3/2021, 7:00:00 AM')
+      })
+    })
+
+    it('renders loading state when fetching data', async () => {
+      const wrapper = createComponent()
+      await wrapper.setValue({ loading: true })
+
+      expect(wrapper.findComponent(SkeletonLoading).exists()).toBeTruthy()
+    })
+
+    it('renders empty state when there is no data', async () => {
+      depositEvents = []
+      const wrapper = createComponent()
+
+      await flushPromises()
+      
+      console.log(wrapper.html())
+      expect(wrapper.find('[data-test="data-exists"]').exists()).toBeFalsy()
+      expect(wrapper.find('[data-test="data-empty"]').exists()).toBeTruthy()
     })
   })
 })

@@ -16,13 +16,16 @@
         <tr
           v-for="(event, index) in events"
           v-bind:key="event.transactionHash"
+          data-test="table-body-row"
           class="cursor-pointer hover"
           @click="showTxDetail(event.transactionHash)"
         >
-          <td>{{ index + 1 }}</td>
-          <td class="truncate max-w-48">{{ event.args.to }}</td>
-          <td>{{ formatEther(event.args.amount!) }} {{ NETWORK.currencySymbol }}</td>
-          <td>{{ dates[index] }}</td>
+          <td data-test="data-row-number">{{ index + 1 }}</td>
+          <td data-test="data-row-to" class="truncate max-w-48">{{ event.args.to }}</td>
+          <td data-test="data-row-amount">
+            {{ formatEther(event.args.amount!) }} {{ NETWORK.currencySymbol }}
+          </td>
+          <td data-test="data-row-date">{{ dates[index] }}</td>
         </tr>
       </tbody>
       <tbody v-else>
@@ -66,6 +69,7 @@ const loading = ref(false)
 const error = ref<unknown | null>(null)
 
 onMounted(async () => {
+  loading.value = true
   try {
     events.value = await getLogs(client, {
       address: TIPS_ADDRESS as Address,
@@ -84,6 +88,7 @@ onMounted(async () => {
   } catch (e) {
     error.value = e
   }
+  loading.value = false
 })
 
 watch(error, () => {
