@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
@@ -77,7 +77,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
     ...actual,
-    useReadContract: vi.fn(() => mockUseReadContract),
+    useReadContract: vi.fn(() => {
+      return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
+    }),
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
   }
@@ -534,56 +536,58 @@ describe('ExpenseAccountSection', () => {
       })
     })
 
-    // describe('ApproveUsersForm', async () => {
-    //   beforeAll(() => {
-    //     //@ts-ignore
-    //     ;(global as Object).window.ethereum = {
-    //       request: vi.fn()
-    //       // Mock other methods as needed
-    //     }
-    //   })
+    //describe('Methods', )
 
-    //   afterAll(() => {
-    //     //@ts-ignore
-    //     delete (global as Object).window.ethereum
-    //   })
-    //   const wrapper = createComponent({
-    //     global: {
-    //       plugins: [
-    //         createTestingPinia({
-    //           createSpy: vi.fn,
-    //           initialState: {
-    //             user: { address: '0xContractOwner' }
-    //           }
-    //         })
-    //       ]
-    //     }
-    //   })
+    describe('ApproveUsersForm', async () => {
+      beforeAll(() => {
+        //@ts-ignore
+        ;(global as Object).window.ethereum = {
+          request: vi.fn()
+          // Mock other methods as needed
+        }
+      })
 
-    //   it('should pass corrent props to ApproveUsersForm', async () => {
-    //     const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-    //     // expect(approveUsersForm.exists()).toBe(true)
-    //     expect(approveUsersForm.props()).toEqual({
-    //       formData: [{ name: '', address: '', isValid: false }],
-    //       isBodAction: false,
-    //       loadingApprove: false,
-    //       users: []
-    //     })
-    //   })
-    //   it('should call approveUser when @approve-user is emitted', async () => {
-    //     const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-    //     expect(approveUsersForm.exists()).toBe(true)
+      afterAll(() => {
+        //@ts-ignore
+        delete (global as Object).window.ethereum
+      })
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xContractOwner' }
+              }
+            })
+          ]
+        }
+      })
 
-    //     const data = {
-    //       approvedUser: '0x123',
-    //       budgetType: 1,
-    //       value: 100,
-    //       expiry: new Date()
-    //     }
+      it('should pass corrent props to ApproveUsersForm', async () => {
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        // expect(approveUsersForm.exists()).toBe(true)
+        expect(approveUsersForm.props()).toEqual({
+          formData: [{ name: '', address: '', isValid: false }],
+          isBodAction: false,
+          loadingApprove: false,
+          users: []
+        })
+      })
+      it('should call approveUser when @approve-user is emitted', async () => {
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
 
-    //     approveUsersForm.vm.$emit('approveUser', data)
-    //     expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
-    //   })
-    // })
+        const data = {
+          approvedUser: '0x123',
+          budgetType: 1,
+          value: 100,
+          expiry: new Date()
+        }
+
+        approveUsersForm.vm.$emit('approveUser', data)
+        expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
+      })
+    })
   })
 })
