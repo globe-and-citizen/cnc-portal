@@ -46,6 +46,14 @@ const mockUseBalance = {
   error: ref(null),
   refetch: vi.fn()
 }
+const mockOfficerTeamData = ref(null)
+
+vi.mock('@wagmi/vue', () => ({
+  useReadContract: vi.fn(() => ({
+    data: mockOfficerTeamData,
+    isLoading: ref(false)
+  }))
+}))
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
@@ -78,5 +86,22 @@ describe('OfficerForm.vue', () => {
     })
 
     expect(wrapper.find('.badge-primary').text()).toContain('0x123')
+  })
+  it('renders members and founders correctly', () => {
+    const wrapper: VueWrapper = mount(OfficerForm, {
+      props: {
+        team: {
+          officerAddress: '0x123',
+          members: [
+            { address: '0x1', name: 'Member 1' },
+            { address: '0x2', name: 'Member 2' }
+          ],
+          founders: ['0x1', '0x2']
+        }
+      }
+    })
+
+    expect(wrapper.findAll('.badge-primary').length).toBe(1)
+    expect(wrapper.findAll('.badge-primary')[0].text()).toContain('0x1')
   })
 })
