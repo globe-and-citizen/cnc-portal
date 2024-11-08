@@ -388,7 +388,7 @@ export const addExpenseAccountData = async (req: Request, res: Response) => {
     })
     const ownerAddress = team?.ownerAddress
     if (callerAddress !== ownerAddress) {
-      return errorResponse(403, `Action not authorized`, res)
+      return errorResponse(403, `Forbidden`, res)
     }
   
     //create expense account data
