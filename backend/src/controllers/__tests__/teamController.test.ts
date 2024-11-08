@@ -63,7 +63,7 @@ describe('POST /expenseAccount/:id', () => {
     expect(response.status).toBe(403)
     expect(response.body).toEqual({
       success: false,
-      message: 'Action not authorized'
+      message: 'Forbidden'
     })
   })
 
