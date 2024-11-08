@@ -396,5 +396,29 @@ onMounted(() => {
   if (props.team.officerAddress) {
     fetchOfficerTeam()
   }
+  if (officerTeam.value) {
+    const temp: Array<Object> = officerTeam.value as unknown as Array<Object>
+    const team = {
+      founders: temp[0] as string[],
+      members: temp[1] as string[],
+      bankAddress: temp[2] as string,
+      votingAddress: temp[3] as string,
+      bodAddress: temp[4] as string,
+      expenseAccountAddress: temp[5] as string
+    }
+    if (team) {
+      if (team.founders?.length === 0) {
+        showCreateTeam.value = true
+      } else {
+        showCreateTeam.value = false
+        founders.value = team.founders
+        members.value = team.members
+        isBankDeployed.value = team.bankAddress != ethers.ZeroAddress
+        isVotingDeployed.value = team.votingAddress != ethers.ZeroAddress
+        isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
+        isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
+      }
+    }
+  }
 })
 </script>
