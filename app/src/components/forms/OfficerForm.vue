@@ -352,14 +352,14 @@ watch(officerTeam, async (value) => {
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ votingAddress: team.votingAddress })
           .json()
+        if (props.team.boardOfDirectorsAddress != team.bodAddress && isBoDDeployed.value) {
+          await useCustomFetch<string>(`teams/${props.team.id}`)
+            .put({ boardOfDirectorsAddress: team.bodAddress })
+            .json()
+        }
         emits('getTeam')
       }
-      if (props.team.boardOfDirectorsAddress != team.bodAddress && isBoDDeployed.value) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ boardOfDirectorsAddress: team.bodAddress })
-          .json()
-        emits('getTeam')
-      }
+
       if (
         props.team.expenseAccountAddress != team.expenseAccountAddress &&
         team.expenseAccountAddress != ethers.ZeroAddress
@@ -406,6 +406,7 @@ onMounted(() => {
       bodAddress: temp[4] as string,
       expenseAccountAddress: temp[5] as string
     }
+    console.log(team)
     if (team) {
       if (team.founders?.length === 0) {
         showCreateTeam.value = true
