@@ -1,7 +1,8 @@
 import { mount, VueWrapper } from '@vue/test-utils'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
+import { ethers } from 'ethers'
 
 // Mock the composables
 
@@ -103,5 +104,49 @@ describe('OfficerForm.vue', () => {
 
     expect(wrapper.findAll('.badge-primary').length).toBe(1)
     expect(wrapper.findAll('.badge-primary')[0].text()).toContain('0x1')
+  })
+  describe('OfficerForm.vue - Additional Tests', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('renders loading spinner when data is being fetched', () => {
+      mockUseReadContract.isLoading.value = true
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: { officerAddress: '0x123' }
+        }
+      })
+
+      expect(wrapper.find('.loading-spinner').exists()).toBe(true)
+    })
+
+    it('hides Deploy Bank button when bank is deployed', () => {
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: {
+            officerAddress: '0x123',
+            bankAddress: '0xBank'
+          }
+        }
+      })
+
+      const deployBankButton = wrapper.find('[data-test="deployBankButton"]')
+      expect(deployBankButton.exists()).toBe(false)
+    })
+
+    it('hides Deploy Expense button when expense is deployed', () => {
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: {
+            officerAddress: '0x123',
+            expenseAccountAddress: '0xExpense'
+          }
+        }
+      })
+
+      const deployExpenseButton = wrapper.find('[data-test="deployExpenseButton"]')
+      expect(deployExpenseButton.exists()).toBe(false)
+    })
   })
 })

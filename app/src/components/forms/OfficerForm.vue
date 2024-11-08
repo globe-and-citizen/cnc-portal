@@ -77,6 +77,7 @@
                 class="btn btn-primary btn-sm"
                 v-if="!isBankDeployed && !isLoadingDeployBank && !isConfirmingDeployBank"
                 @click="deployBankAccount"
+                data-test="deployBankButton"
               >
                 Deploy Bank
               </button>
@@ -88,6 +89,7 @@
                 class="btn btn-primary btn-sm"
                 v-if="!isExpenseDeployed && !isLoadingDeployExpense && !isConfirmingDeployExpense"
                 @click="deployExpenseAccount"
+                data-test="deployExpenseButton"
               >
                 Deploy Expense
               </button>
@@ -99,6 +101,7 @@
                 class="btn btn-primary btn-sm"
                 v-if="!isVotingDeployed && !isLoadingDeployVoting && !isConfirmingDeployVoting"
                 @click="deployVotingContract"
+                data-test="deployVotingButton"
               >
                 Deploy Voting
               </button>
