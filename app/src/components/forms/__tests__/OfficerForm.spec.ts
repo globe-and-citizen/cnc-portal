@@ -2,7 +2,6 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
-import { ethers } from 'ethers'
 
 // Mock the composables
 
