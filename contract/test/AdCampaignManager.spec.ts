@@ -54,7 +54,7 @@ describe('AdCampaignManager', () => {
       if (!eventLog) {
         throw new Error('AdCampaignCreated event log not found')
       }
-      
+
       const parsedLog: LogDescription = adCampaignManager.interface.parseLog({
         topics: eventLog.topics,
         data: eventLog.data
@@ -207,41 +207,39 @@ describe('AdCampaignManager', () => {
     })
 
     it('Should mark the campaign as completed when the entire budget is claimed', async () => {
-     
-      const campaignId = await adCampaignManager.campaignCodesToId(campaignCode);
-      const campaign = await adCampaignManager.adCampaigns(campaignId);
-    
-      expect(campaign.status).to.equal(1); // 1 = Completed
-    });
+      const campaignId = await adCampaignManager.campaignCodesToId(campaignCode)
+      const campaign = await adCampaignManager.adCampaigns(campaignId)
+
+      expect(campaign.status).to.equal(1) // 1 = Completed
+    })
 
     it('Should mark the campaign as completed when the amount spent equals or exceeds the budget', async () => {
       // Create a new campaign with a fixed budget
       const tx = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5') // Budget is 5 ETH
       })
-    
+
       const receipt = (await tx.wait()) as ContractTransactionReceipt
-      const adCampaignManagerAddress = await adCampaignManager.getAddress();
+      const adCampaignManagerAddress = await adCampaignManager.getAddress()
       const eventLog = receipt.logs.find((log) => log.address === adCampaignManagerAddress)
-    
+
       const parsedLog: LogDescription = adCampaignManager.interface.parseLog({
         topics: eventLog!.topics,
         data: eventLog!.data
       }) as LogDescription
       const newCampaignCode = parsedLog.args.campaignCode
       const campaignId = await adCampaignManager.campaignCodesToId(newCampaignCode)
-    
+
       // Now simulate spending that equals the budget
       const amountSpent = ethers.parseEther('5')
       await adCampaignManager.connect(owner).claimPayment(newCampaignCode, amountSpent)
-    
+
       // Fetch the updated campaign data
       const updatedCampaign = await adCampaignManager.adCampaigns(campaignId)
-    
+
       // Check that the campaign status is now marked as 'Completed'
       expect(updatedCampaign.status).to.equal(1) // 1 = Completed
     })
-    
 
     it('Should generate a unique campaign code for each ad campaign', async () => {
       // Create the first ad campaign
@@ -324,8 +322,8 @@ describe('AdCampaignManager', () => {
     it('Should not allow unauthorized users to set the cost per impression', async () => {
       await expect(
         adCampaignManager.connect(unauthorizedUser).setCostPerImpression(ethers.parseEther('0.02'))
-      ).to.be.revertedWith('Caller is not an admin or the owner');
-    });
+      ).to.be.revertedWith('Caller is not an admin or the owner')
+    })
 
     it('Should allow only admins or the owner to set the cost per click', async () => {
       await adCampaignManager.connect(owner).setCostPerClick(ethers.parseEther('0.02'))
@@ -374,41 +372,41 @@ describe('AdCampaignManager', () => {
     it('Should generate a unique campaign code', async () => {
       const tx1 = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5')
-      });
+      })
       const tx2 = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5')
-      });
+      })
 
-      const receipt1 = await tx1.wait();
-      const receipt2 = await tx2.wait();
+      const receipt1 = await tx1.wait()
+      const receipt2 = await tx2.wait()
 
       if (!receipt1) {
-        throw new Error('Transaction receipt for the first ad campaign not found');
+        throw new Error('Transaction receipt for the first ad campaign not found')
       }
-      const log1 = receipt1.logs[0];
+      const log1 = receipt1.logs[0]
       if (!log1) {
-        throw new Error('Log not found in receipt1');
+        throw new Error('Log not found in receipt1')
       }
-      const parsedLog1 = adCampaignManager.interface.parseLog(log1);
+      const parsedLog1 = adCampaignManager.interface.parseLog(log1)
       if (!parsedLog1) {
-        throw new Error('Parsed log is null');
+        throw new Error('Parsed log is null')
       }
-      const campaignCode1 = parsedLog1.args.campaignCode;
+      const campaignCode1 = parsedLog1.args.campaignCode
       if (!receipt2) {
-        throw new Error('Transaction receipt for the second ad campaign not found');
+        throw new Error('Transaction receipt for the second ad campaign not found')
       }
-      const log2 = receipt2.logs[0];
+      const log2 = receipt2.logs[0]
       if (!log2) {
-        throw new Error('Log not found in receipt2');
+        throw new Error('Log not found in receipt2')
       }
-      const parsedLog2 = adCampaignManager.interface.parseLog(log2);
+      const parsedLog2 = adCampaignManager.interface.parseLog(log2)
       if (!parsedLog2) {
-        throw new Error('Parsed log is null');
+        throw new Error('Parsed log is null')
       }
-      const campaignCode2 = parsedLog2.args.campaignCode;
+      const campaignCode2 = parsedLog2.args.campaignCode
 
-      expect(campaignCode1).to.not.equal(campaignCode2);
-    });
+      expect(campaignCode1).to.not.equal(campaignCode2)
+    })
 
     it('Should revert when trying to claim payment for a non-existent campaign code', async () => {
       // Try to claim payment for an invalid campaign code
@@ -417,32 +415,31 @@ describe('AdCampaignManager', () => {
         adCampaignManager.connect(owner).claimPayment(invalidCampaignCode, ethers.parseEther('1'))
       ).to.be.revertedWith('Invalid campaign code')
     })
-    
+
     it('Should return the correct ad campaign for a valid campaign code', async () => {
       // Create a new campaign
       const tx = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5') // Budget of 5 ETH
       })
-    
+
       const receipt = (await tx.wait()) as ContractTransactionReceipt
-      const adCampaignManagerAddress = await adCampaignManager.getAddress();
+      const adCampaignManagerAddress = await adCampaignManager.getAddress()
       const eventLog = receipt.logs.find((log) => log.address === adCampaignManagerAddress)
-    
+
       if (!eventLog) {
-        throw new Error('Event log not found');
+        throw new Error('Event log not found')
       }
-      const parsedLog: LogDescription = adCampaignManager.interface.parseLog(eventLog) as LogDescription
+      const parsedLog: LogDescription = adCampaignManager.interface.parseLog(
+        eventLog
+      ) as LogDescription
       const newCampaignCode = parsedLog.args.campaignCode
-    
+
       // Fetch the campaign using the campaign code
       const fetchedCampaign = await adCampaignManager.getAdCampaignByCode(newCampaignCode)
-    
+
       // Check that the fetched campaign data matches the expected values
       expect(fetchedCampaign.advertiser).to.equal(advertiser.address)
       expect(fetchedCampaign.budget).to.equal(ethers.parseEther('5'))
     })
-
   })
-
-
 })
