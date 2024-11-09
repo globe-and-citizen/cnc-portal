@@ -2,20 +2,17 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
+import CreateOfficerTeam from '../CreateOfficerTeam.vue'
+import LoadingButton from '@/components/LoadingButton.vue'
+import type { Team } from '@/types'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
 // Mock the composables
 
-vi.mock('@/stores/useToastStore', () => {
-  return {
-    useToastStore: vi.fn(() => ({
-      addSuccessToast: vi.fn(),
-      addErrorToast: vi.fn()
-    }))
-  }
-})
+vi.mock('@/stores/useToastStore')
 
 const mockUseReadContract = {
-  data: ref<string | null>(null),
+  data: ref<unknown | null>(null),
   isLoading: ref(false),
   error: ref(null),
   refetch: vi.fn()
@@ -25,7 +22,7 @@ const mockUseWatchContractEvent = {
 }
 const mockUseWriteContract = {
   writeContract: vi.fn(),
-  error: ref(null),
+  error: ref<unknown>(null),
   isPending: ref(false),
   data: ref(null)
 }
@@ -67,6 +64,10 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
+interface Props {
+  team: Partial<Team>
+}
+
 describe('OfficerForm.vue', () => {
   it('renders officer deployment button when no officer contract is deployed', () => {
     const wrapper: VueWrapper = mount(OfficerForm, {
@@ -87,6 +88,22 @@ describe('OfficerForm.vue', () => {
 
     expect(wrapper.find('.badge-primary').text()).toContain('0x123')
   })
+
+  it('renders CreateOfficerTeam', async () => {
+    const wrapper: VueWrapper = mount(OfficerForm, {
+      props: {
+        team: { officerAddress: '0x123' }
+      }
+    })
+    mockUseReadContract.data.value = [[]]
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent(CreateOfficerTeam).exists()).toBeTruthy()
+    wrapper.findComponent(CreateOfficerTeam).vm.$emit('getTeam')
+
+    expect(wrapper.emitted('getTeam')).toBeTruthy()
+  })
+
   it('renders members and founders correctly', () => {
     const wrapper: VueWrapper = mount(OfficerForm, {
       props: {
@@ -104,6 +121,102 @@ describe('OfficerForm.vue', () => {
     expect(wrapper.findAll('.badge-primary').length).toBe(1)
     expect(wrapper.findAll('.badge-primary')[0].text()).toContain('0x1')
   })
+
+  it('renders all founders', async () => {
+    const wrapper: VueWrapper = mount(OfficerForm, {
+      props: {
+        team: {
+          officerAddress: '0x123',
+          members: [
+            { address: '0x1', name: 'Member 1' },
+            { address: '0x2', name: 'Member 2' }
+          ]
+        }
+      }
+    })
+    mockUseReadContract.data.value = [['0x1', '0x2', '0x3']]
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('div[data-test="founder-div"]').length).toBe(3)
+
+    const founders = wrapper.findAll('span[data-test="founder"]')
+    founders.forEach((founder, index) => {
+      if ((wrapper.vm.$props as Props)?.team?.members?.[index]) {
+        expect(founder.text()).toEqual(
+          `${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.name ?? 'Unknown'} | ${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.address ?? 'Unknown'}`
+        )
+      } else {
+        expect(founder.text()).toEqual('Unknown Member | 0x3')
+      }
+    })
+  })
+
+  it('renders all members', async () => {
+    const wrapper: VueWrapper = mount(OfficerForm, {
+      props: {
+        team: {
+          officerAddress: '0x123',
+          members: [
+            { address: '0x1', name: 'Member 1' },
+            { address: '0x2', name: 'Member 2' }
+          ]
+        }
+      }
+    })
+    mockUseReadContract.data.value = [['0xfounder'], ['0x1', '0x2', '0x3']]
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('div[data-test="member-div"]').length).toBe(3)
+
+    const members = wrapper.findAll('span[data-test="member"]')
+    members.forEach((member, index) => {
+      if ((wrapper.vm.$props as Props)?.team?.members?.[index]) {
+        expect(member.text()).toEqual(
+          `${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.name ?? 'Unknown'} | ${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.address ?? 'Unknown'}`
+        )
+      } else {
+        expect(member.text()).toEqual('Unknown Member | 0x3')
+      }
+    })
+  })
+
+  it('renders all deployed contract addresses', async () => {
+    const wrapper: VueWrapper = mount(OfficerForm, {
+      props: {
+        team: {
+          officerAddress: '0x123'
+        }
+      }
+    })
+
+    await wrapper.setValue({
+      isBankDeployed: true,
+      isVotingDeployed: true,
+      isBoDDeployed: true,
+      isExpenseDeployed: true
+    })
+
+    expect(wrapper.find('span[data-test="bank-address"').text()).toContain('Bank deployed at')
+    expect(wrapper.find('span[data-test="voting-address"').text()).toContain('Voting deployed at')
+    expect(wrapper.find('span[data-test="bod-address"').text()).toContain('BoD deployed at')
+    expect(wrapper.find('span[data-test="expense-address"').text()).toContain('Expense deployed at')
+  })
+
+  it('renders LoadingButton if createOfficerLoading is true', async () => {
+    const wrapper: VueWrapper = mount(OfficerForm, {
+      props: {
+        team: { officerAddress: '0x123' }
+      }
+    })
+
+    mockUseWriteContract.isPending.value = true
+    mockUseWaitForTransactionReceipt.isLoading.value = true
+    await wrapper.setValue({ loading: true })
+
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findComponent(LoadingButton).exists()).toBeTruthy()
+  })
+
   describe('OfficerForm.vue - Additional Tests', () => {
     beforeEach(() => {
       vi.clearAllMocks()
@@ -146,6 +259,46 @@ describe('OfficerForm.vue', () => {
 
       const deployExpenseButton = wrapper.find('[data-test="deployExpenseButton"]')
       expect(deployExpenseButton.exists()).toBe(false)
+    })
+
+    it('calls addSuccessToast and emits getTeam when contract is deployed successfully', async () => {
+      const { addSuccessToast } = useToastStore()
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: {
+            officerAddress: '0x123'
+          }
+        }
+      })
+
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      expect(addSuccessToast).toHaveBeenCalledWith('Bank deployed successfully')
+      expect(addSuccessToast).toHaveBeenCalledWith('Voting deployed successfully')
+      expect(addSuccessToast).toHaveBeenCalledWith('Expense account deployed successfully')
+
+      expect(wrapper.emitted('getTeam')).toBeTruthy()
+    })
+
+    it('calls addErrorToast when contract deployment fails', async () => {
+      const { addErrorToast } = useToastStore()
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: {
+            officerAddress: '0x123'
+          }
+        }
+      })
+
+      mockUseWriteContract.error.value = new Error('Bank deployment failed')
+      await wrapper.vm.$nextTick()
+
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy officer contract')
     })
   })
 })
