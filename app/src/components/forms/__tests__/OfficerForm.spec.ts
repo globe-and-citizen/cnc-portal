@@ -298,6 +298,9 @@ describe('OfficerForm.vue', () => {
       mockUseWriteContract.error.value = new Error('Bank deployment failed')
       await wrapper.vm.$nextTick()
 
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy bank')
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy voting')
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy expense account')
       expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy officer contract')
     })
   })
