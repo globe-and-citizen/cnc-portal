@@ -11,10 +11,16 @@
             showModal = true
           }
         "
-        @withdraw="withdraw()"
-        :withdrawLoading="withdrawLoading"
-        @getBalance="getBalance()"
-        :balance="balance ? balance : '0'"
+        @withdraw="
+          withdraw({
+            abi: TIPS_ABI,
+            address: TIPS_ADDRESS as Address,
+            functionName: 'withdraw'
+          })
+        "
+        :withdrawLoading="withdrawLoading && isConfirmingWithdraw"
+        @getBalance="refetchBalance()"
+        :balance="balance ? formatEther(balance as bigint).toString() : '0'"
         :balanceLoading="balanceLoading"
       />
 
@@ -83,8 +89,11 @@ import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { useCustomFetch } from './composables/useCustomFetch'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import TIPS_ABI from '@/artifacts/abi/tips.json'
+import { TIPS_ADDRESS } from './constant'
+import { formatEther, type Address } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const toggleSide = ref(true)
@@ -95,20 +104,31 @@ function handleChange() {
 }
 
 const {
+  isPending: withdrawLoading,
   isSuccess: withdrawSuccess,
-  isLoading: withdrawLoading,
   error: withdrawError,
-  execute: withdraw
-} = useWithdrawTips()
+  writeContract: withdraw,
+  data: withdrawHash
+} = useWriteContract()
+
+const { isPending: isConfirmingWithdraw } = useWaitForTransactionReceipt({
+  hash: withdrawHash
+})
+
+const userStore = useUserDataStore()
+const { name, address } = storeToRefs(userStore)
+
 const {
   data: balance,
   isLoading: balanceLoading,
   error: balanceError,
-  execute: getBalance
-} = useTipsBalance()
-
-const userStore = useUserDataStore()
-const { name, address } = storeToRefs(userStore)
+  refetch: refetchBalance
+} = useReadContract({
+  abi: TIPS_ABI,
+  address: TIPS_ADDRESS as Address,
+  functionName: 'getBalance',
+  args: [address.value as Address]
+})
 
 const updateUserInput = ref({
   name: name.value,
@@ -148,16 +168,6 @@ watch([() => userIsUpdating.value, () => userUpdateError.value], () => {
     showModal.value = false
   }
 })
-
-watch(
-  () => userStore.isAuth,
-  (isAuth) => {
-    if (isAuth === true) {
-      getBalance()
-    }
-  },
-  { immediate: true }
-)
 
 watch(balanceError, () => {
   if (balanceError.value) {
