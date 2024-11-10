@@ -6,7 +6,7 @@ import viteConfig from './vite.config'
 import dotenv from 'dotenv'
 
 dotenv.config()
-
+process.env.TZ = 'UTC'
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {

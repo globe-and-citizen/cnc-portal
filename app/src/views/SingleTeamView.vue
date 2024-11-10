@@ -38,6 +38,7 @@
         </template>
         <template #tab-3>
           <ProposalSection
+            v-if="activeTab == 3"
             :team="team"
             @getTeam="getTeamAPI"
             @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
