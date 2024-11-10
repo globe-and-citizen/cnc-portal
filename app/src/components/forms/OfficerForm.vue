@@ -6,6 +6,7 @@
     <div class="flex items-center justify-center mt-4">
       <button
         class="btn btn-primary btn-sm"
+        data-test="deploy-officer-button"
         v-if="!team?.officerAddress && !createOfficerLoading"
         @click="deployOfficerContract"
       >
@@ -27,8 +28,12 @@
           <div v-if="!showCreateTeam && !isLoadingGetTeam">
             <div class="flex flex-col">
               <h5 class="text-md font-bold">Founders</h5>
-              <div v-for="(founderAddress, index) in founders" :key="index">
-                <span v-if="team && team.members" class="badge badge-primary badge-sm">
+              <div v-for="(founderAddress, index) in founders" data-test="founder-div" :key="index">
+                <span
+                  v-if="team && team.members"
+                  data-test="founder"
+                  class="badge badge-primary badge-sm"
+                >
                   {{
                     team.members.find((member: Member) => member.address == founderAddress)?.name ||
                     'Unknown Member'
@@ -39,8 +44,12 @@
             </div>
             <div class="flex flex-col">
               <h5 class="text-md font-bold">Members</h5>
-              <div v-for="(memberAddress, index) in members" :key="index">
-                <span v-if="team && team.members" class="badge badge-secondary badge-sm">
+              <div v-for="(memberAddress, index) in members" data-test="member-div" :key="index">
+                <span
+                  v-if="team && team.members"
+                  data-test="member"
+                  class="badge badge-secondary badge-sm"
+                >
                   {{
                     team.members.find((member: Member) => member.address == memberAddress)?.name ||
                     'Unknown Member'
@@ -52,22 +61,38 @@
             <div class="flex flex-col">
               <h5 class="text-md font-bold">Deployments</h5>
               <div>
-                <span v-if="isBankDeployed" class="badge badge-primary badge-sm">
+                <span
+                  data-test="bank-address"
+                  v-if="isBankDeployed"
+                  class="badge badge-primary badge-sm"
+                >
                   Bank deployed at: {{ team?.bankAddress }}
                 </span>
               </div>
               <div>
-                <span v-if="isVotingDeployed" class="badge badge-primary badge-sm">
+                <span
+                  data-test="voting-address"
+                  v-if="isVotingDeployed"
+                  class="badge badge-primary badge-sm"
+                >
                   Voting deployed at: {{ team?.votingAddress }}
                 </span>
               </div>
               <div>
-                <span v-if="isBoDDeployed" class="badge badge-primary badge-sm">
+                <span
+                  data-test="bod-address"
+                  v-if="isBoDDeployed"
+                  class="badge badge-primary badge-sm"
+                >
                   BoD deployed at: {{ team?.boardOfDirectorsAddress }}
                 </span>
               </div>
               <div>
-                <span v-if="isExpenseDeployed" class="badge badge-primary badge-sm">
+                <span
+                  data-test="expense-address"
+                  v-if="isExpenseDeployed"
+                  class="badge badge-primary badge-sm"
+                >
                   Expense deployed at: {{ team?.expenseAccountAddress }}
                 </span>
               </div>
@@ -77,33 +102,39 @@
                 class="btn btn-primary btn-sm"
                 v-if="!isBankDeployed && !isLoadingDeployBank && !isConfirmingDeployBank"
                 @click="deployBankAccount"
+                data-test="deployBankButton"
               >
                 Deploy Bank
               </button>
               <LoadingButton
                 :color="'primary min-w-24'"
+                data-test="loading-deploy-bank"
                 v-if="isLoadingDeployBank || isConfirmingDeployBank"
               />
               <button
                 class="btn btn-primary btn-sm"
                 v-if="!isExpenseDeployed && !isLoadingDeployExpense && !isConfirmingDeployExpense"
                 @click="deployExpenseAccount"
+                data-test="deployExpenseButton"
               >
                 Deploy Expense
               </button>
               <LoadingButton
                 :color="'primary min-w-24'"
+                data-test="loading-deploy-expense"
                 v-if="isLoadingDeployExpense || isConfirmingDeployExpense"
               />
               <button
                 class="btn btn-primary btn-sm"
                 v-if="!isVotingDeployed && !isLoadingDeployVoting && !isConfirmingDeployVoting"
                 @click="deployVotingContract"
+                data-test="deployVotingButton"
               >
                 Deploy Voting
               </button>
               <LoadingButton
                 :color="'primary min-w-24'"
+                data-test="loading-deploy-voting"
                 v-if="isLoadingDeployVoting || isConfirmingDeployVoting"
               />
             </div>
@@ -226,7 +257,6 @@ const createOfficerLoading = computed(
 
 watch(createOfficerError, (value) => {
   if (value) {
-    console.error(value)
     loading.value = false
     addErrorToast('Failed to deploy officer contract')
   }
@@ -256,7 +286,6 @@ useWatchContractEvent({
         emits('getTeam')
         loading.value = false
       } catch (error) {
-        console.error(error)
         addErrorToast('Error updating officer address')
         loading.value = false
       }
@@ -287,7 +316,6 @@ const deployOfficerContract = async () => {
       args: [encodedFunction]
     })
   } catch (error) {
-    console.error(error)
     loading.value = false
     addErrorToast('Error deploying contract')
   }
@@ -352,19 +380,18 @@ watch(officerTeam, async (value) => {
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ votingAddress: team.votingAddress })
           .json()
+        if (props.team.boardOfDirectorsAddress != team.bodAddress && isBoDDeployed.value) {
+          await useCustomFetch<string>(`teams/${props.team.id}`)
+            .put({ boardOfDirectorsAddress: team.bodAddress })
+            .json()
+        }
         emits('getTeam')
       }
-      if (props.team.boardOfDirectorsAddress != team.bodAddress && isBoDDeployed.value) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ boardOfDirectorsAddress: team.bodAddress })
-          .json()
-        emits('getTeam')
-      }
+
       if (
         props.team.expenseAccountAddress != team.expenseAccountAddress &&
         team.expenseAccountAddress != ethers.ZeroAddress
       ) {
-        console.log('updating expense account')
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ expenseAccountAddress: team.expenseAccountAddress })
           .json()
@@ -395,6 +422,30 @@ watch(deployVotingError, (value) => {
 onMounted(() => {
   if (props.team.officerAddress) {
     fetchOfficerTeam()
+  }
+  if (officerTeam.value) {
+    const temp: Array<Object> = officerTeam.value as unknown as Array<Object>
+    const team = {
+      founders: temp[0] as string[],
+      members: temp[1] as string[],
+      bankAddress: temp[2] as string,
+      votingAddress: temp[3] as string,
+      bodAddress: temp[4] as string,
+      expenseAccountAddress: temp[5] as string
+    }
+    if (team) {
+      if (team.founders?.length === 0) {
+        showCreateTeam.value = true
+      } else {
+        showCreateTeam.value = false
+        founders.value = team.founders
+        members.value = team.members
+        isBankDeployed.value = team.bankAddress != ethers.ZeroAddress
+        isVotingDeployed.value = team.votingAddress != ethers.ZeroAddress
+        isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
+        isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
+      }
+    }
   }
 })
 </script>
