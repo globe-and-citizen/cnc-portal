@@ -10,16 +10,35 @@ vi.mock('@/stores/useToastStore', () => ({
     addSuccessToast: vi.fn()
   })
 }))
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
 
-vi.mock('@/composables/officer', () => ({
-  useCreateTeam: () => ({
-    execute: vi.fn(),
-    isLoading: ref(false),
-    isSuccess: ref(false),
-    error: ref(null)
-  })
-}))
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
 
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+  }
+})
 describe('CreateOfficerTeam.vue', () => {
   let wrapper: VueWrapper
 
@@ -38,7 +57,24 @@ describe('CreateOfficerTeam.vue', () => {
     expect(wrapper.exists()).toBe(true)
     expect(wrapper.find('h4').text()).toBe('Create Team')
   })
-
+  it('selects a member', async () => {
+    interface mock {
+      selectMember: (user: { name: string; address: string }) => void
+      selectedMembers: Array<{ name: string; address: string }>
+    }
+    const user = { name: 'Bob Smith', address: '0xghi' }
+    await (wrapper.vm as unknown as mock).selectMember(user)
+    expect((wrapper.vm as unknown as mock).selectedMembers[0]).toEqual(user)
+  })
+  it('prevents selecting duplicate addresses', async () => {
+    interface mock {
+      selectFounder: (user: { name: string; address: string }) => void
+      selectedFounders: Array<{ name: string; address: string }>
+    }
+    const user = { name: 'Jane Doe', address: '0xdef' }
+    await (wrapper.vm as unknown as mock).selectFounder(user)
+    expect((wrapper.vm as unknown as mock).selectedFounders.length).toBe(1)
+  })
   it('adds a new founder', async () => {
     interface mock {
       selectedFounders: Array<{ name: string; address: string }>
@@ -90,5 +126,23 @@ describe('CreateOfficerTeam.vue', () => {
     }
     await (wrapper.vm as unknown as mock).searchUsers({ name: 'John', address: '' }, 'founder')
     expect((wrapper.vm as unknown as mock).showFounderDropdown).toBe(true)
+  })
+  describe('Component Lifecycle', () => {
+    it('adds and removes event listener', () => {
+      const addSpy = vi.spyOn(document, 'addEventListener')
+      const removeSpy = vi.spyOn(document, 'removeEventListener')
+
+      const wrapper = mount(CreateOfficerTeam, {
+        props: {
+          team: {}
+        }
+      })
+
+      expect(addSpy).toHaveBeenCalledWith('click', expect.any(Function))
+
+      wrapper.unmount()
+
+      expect(removeSpy).toHaveBeenCalledWith('click', expect.any(Function))
+    })
   })
 })

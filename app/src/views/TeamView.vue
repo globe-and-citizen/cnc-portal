@@ -12,17 +12,17 @@
           v-for="team in teams"
           :key="team.id"
           :team="team"
-          class="cursor-pointer"
+          class="cursor-pointer transition duration-300 hover:scale-105"
           @click="navigateToTeam(team.id)"
         />
         <div class="flex justify-center">
           <AddTeamCard
             @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
-            class="w-80 text-xl"
+            class="w-80 text-xl hover:scale-105 transform transition"
           />
         </div>
       </div>
-      <div class="flex flex-col items-center" v-if="teams.length == 0">
+      <div class="flex flex-col items-center animate-fade-in" v-if="teams.length == 0">
         <img src="../assets/login-illustration.png" alt="Login illustration" width="300" />
 
         <span class="font-bold text-sm text-gray-500 my-4"
@@ -33,7 +33,7 @@
         <div class="flex justify-center">
           <AddTeamCard
             @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
-            class="w-72 h-16 text-sm"
+            class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
           />
         </div>
       </div>
@@ -75,12 +75,6 @@ const router = useRouter()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-/**
- * @returns {isFetching: Ref<boolean>, error: Ref<Error>, data: Ref<Team[]>, execute: () => Promise<void>}
- * isFetching - Can be used to show loading spinner
- * execute - Can be used to fetch data again later: ex: when a new team is added
- */
-
 const {
   isFetching: teamsAreFetching,
   error: teamError,
@@ -90,7 +84,6 @@ const {
 
 watch(teamError, () => {
   if (teamError.value) {
-    // TODO refactor this to use toast or someting better
     addErrorToast(teamError.value)
   }
 })
@@ -124,6 +117,7 @@ watch(createTeamError, () => {
     addErrorToast(createTeamError.value)
   }
 })
+
 watch(
   [() => createTeamFetching.value, () => createTeamError.value, () => createTeamResponse.value],
   () => {
@@ -142,6 +136,7 @@ watch(
 
 const searchUserName = ref('')
 const searchUserAddress = ref('')
+const lastUpdatedInput = ref<'name' | 'address'>('name')
 const {
   execute: executeSearchUser,
   response: searchUserResponse,
@@ -150,9 +145,11 @@ const {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    if (lastUpdatedInput.value === 'name' && searchUserName.value) {
+      params.append('name', searchUserName.value)
+    } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
+      params.append('address', searchUserAddress.value)
+    }
     url += '?' + params.toString()
     return { options, url, cancel }
   }
@@ -166,10 +163,22 @@ watch(searchUserResponse, () => {
   }
 })
 const searchUsers = async (input: { name: string; address: string }) => {
-  searchUserName.value = input.name
-  searchUserAddress.value = input.address
-  if (searchUserName.value || searchUserAddress.value) {
+  try {
+    if (input.name !== searchUserName.value) {
+      searchUserName.value = input.name
+      lastUpdatedInput.value = 'name'
+    }
+    if (input.address !== searchUserAddress.value) {
+      searchUserAddress.value = input.address
+      lastUpdatedInput.value = 'address'
+    }
     await executeSearchUser()
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      addErrorToast(error.message)
+    } else {
+      addErrorToast('An unknown error occurred')
+    }
   }
 }
 
@@ -177,5 +186,3 @@ function navigateToTeam(id: string) {
   router.push('/teams/' + id)
 }
 </script>
-
-<style scoped></style>

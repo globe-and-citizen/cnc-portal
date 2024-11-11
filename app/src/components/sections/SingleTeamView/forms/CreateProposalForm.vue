@@ -46,7 +46,7 @@
             v-model="newProposalInput.winnerCount"
           />
         </div>
-        <div class="input-group">
+        <div class="input-group" ref="formRef">
           <label class="input input-primary flex items-center gap-2 input-md">
             <input
               type="text"
@@ -54,8 +54,8 @@
               v-model="searchUserName"
               @keyup.stop="
                 () => {
-                  searchUsers()
-                  dropdown = true
+                  searchUsers('name')
+                  showDropdown = true
                 }
               "
               placeholder="Candidate Name"
@@ -67,8 +67,8 @@
               v-model="searchUserAddress"
               @keyup.stop="
                 () => {
-                  searchUsers()
-                  dropdown = true
+                  searchUsers('address')
+                  showDropdown = true
                 }
               "
               placeholder="Address"
@@ -78,7 +78,7 @@
 
         <div
           class="dropdown"
-          v-if="dropdown"
+          v-if="showDropdown"
           :class="{ 'dropdown-open': users && users.users && users.users.length > 0 }"
         >
           <ul
@@ -95,7 +95,7 @@
                     })
                     searchUserName = ''
                     searchUserAddress = ''
-                    dropdown = false
+                    showDropdown = false
                   }
                 "
               >
@@ -147,9 +147,9 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Proposal, Team } from '@/types/index'
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
-import { required, minLength } from '@vuelidate/validators'
+import { required, minLength, requiredIf } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 
 const emits = defineEmits(['createProposal'])
@@ -157,7 +157,6 @@ const props = defineProps<{
   isLoading: boolean
   team: Partial<Team>
 }>()
-const dropdown = ref<boolean>(true)
 
 const searchUserName = ref('')
 const searchUserAddress = ref('')
@@ -202,12 +201,11 @@ const rules = {
       minLength: minLength(10)
     },
     candidates: {
-      required,
+      requiredIf: requiredIf(() => newProposalInput.value?.isElection ?? false),
       uniqueCandidates: uniqueCandidates()
     }
   }
 }
-
 const $v = useVuelidate(rules, { proposal: newProposalInput })
 
 interface User {
@@ -216,20 +214,19 @@ interface User {
 }
 
 const users = ref<{ users: User[] }>({ users: [] })
-const searchUsers = async () => {
+
+const lastUpdatedInput = ref<'name' | 'address'>('name')
+
+const searchUsers = async (field: 'name' | 'address') => {
+  lastUpdatedInput.value = field
   const members = props.team.members
   if (!members) return
 
   users.value = {
     users: members.filter((member) => {
-      if (searchUserName.value && searchUserAddress.value) {
-        return (
-          member.name.toLowerCase().includes(searchUserName.value.toLowerCase()) &&
-          member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
-        )
-      } else if (searchUserName.value) {
+      if (lastUpdatedInput.value === 'name' && searchUserName.value) {
         return member.name.toLowerCase().includes(searchUserName.value.toLowerCase())
-      } else if (searchUserAddress.value) {
+      } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
         return member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
       }
       return false
@@ -239,7 +236,22 @@ const searchUsers = async () => {
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-
   emits('createProposal')
 }
+const formRef = ref<HTMLElement | null>(null)
+const showDropdown = ref<boolean>(false)
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (formRef.value && !formRef.value.contains(event.target as Node)) {
+    showDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>

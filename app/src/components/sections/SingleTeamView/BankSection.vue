@@ -1,135 +1,130 @@
 <template>
-  <div class="flex flex-col gap-y-4">
-    <div class="stats bg-green-100 flex text-primary-content border-outline">
-      <div class="stat flex flex-col justify-center items-center">
-        <div class="stat-title">Team balance</div>
-        <span v-if="team.bankAddress" class="flex gap-2 items-center">
-          <ToolTip
-            data-test="bank-address-tooltip"
-            content="Click to see address in block explorer"
-          >
-            <span
-              class="badge badge-sm cursor-pointer"
-              data-test="team-bank-address"
-              @click="openExplorer(team.bankAddress)"
-              :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
-              >{{ team.bankAddress }}</span
-            >
-          </ToolTip>
-          <ToolTip
-            data-test="copy-address-tooltip"
-            :content="copied ? 'Copied!' : 'Click to copy address'"
-          >
-            <ClipboardDocumentListIcon
-              v-if="isSupported && !copied"
-              class="size-5 cursor-pointer"
-              @click="copy(team.bankAddress)"
-            />
-            <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
-          </ToolTip>
-        </span>
-        <span
-          class="loading loading-dots loading-xs"
-          data-test="balance-loading"
-          v-if="balanceLoading"
-        ></span>
-        <div class="stat-value text-3xl mt-2" v-else>
-          {{ teamBalance }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+  <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
+    <span class="text-2xl sm:text-3xl font-bold">Team Bank Account</span>
+    <div class="divider m-0"></div>
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <span>Bank Balance</span>
+          <div class="font-extrabold text-4xl">
+            <span class="inline-block min-w-16 h-10">
+              <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
+              <span v-else>{{ teamBalance?.formatted }} </span>
+            </span>
+            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          </div>
+          <span class="text-xs sm:text-sm">≈ $ 1.28</span>
         </div>
-        <div class="stat-actions flex justify-center gap-2 items-center">
-          <button
-            class="btn btn-xs btn-secondary"
+        <div class="flex flex-wrap gap-2 sm:gap-4">
+          <Button
+            class="btn btn-sm btn-secondary"
             v-if="team.bankAddress"
             @click="() => (depositModal = true)"
           >
             Deposit
-          </button>
-          <button
-            class="btn btn-xs btn-secondary"
-            v-if="team.bankAddress && (team.ownerAddress == useUserDataStore().address || isBod)"
+          </Button>
+          <Button
+            class="btn btn-sm btn-secondary"
+            v-if="team.bankAddress"
+            @click="() => (pushTipModal = true)"
+          >
+            Tip the Team
+          </Button>
+          <Button
+            class="btn btn-sm btn-secondary"
+            v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
           >
             Transfer
-          </button>
+          </Button>
         </div>
       </div>
-      <div class="stat flex flex-col justify-center items-center">
-        <div class="stat-title">Send to Members</div>
-        <div class="stat-value text-sm mt-2">
-          <input
-            type="text"
-            size="5"
-            class="h-10 outline-neutral-content rounded-md border-neutral-content text-center"
-            placeholder="Tip"
-            v-model="tipAmount"
+      <div
+        class="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start sm:justify-end items-start sm:items-center"
+        data-test="team-bank-address"
+      >
+        <span class="text-sm">Bank Address </span>
+        <AddressToolTip :address="team.bankAddress ?? ''" class="text-xs" />
+      </div>
+    </div>
+
+    <ModalComponent v-model="depositModal">
+      <DepositBankForm
+        v-if="depositModal"
+        @close-modal="() => (depositModal = false)"
+        @deposit="async (amount: string) => depositToBank(amount)"
+        :loading="depositLoading || isConfirmingDeposit"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="transferModal">
+      <TransferFromBankForm
+        v-if="transferModal"
+        @close-modal="() => (transferModal = false)"
+        @transfer="
+          async (to: string, amount: string, description: string) => {
+            if (owner == team.boardOfDirectorsAddress) {
+              await addTransferAction(to, amount, description)
+            } else {
+              await transferFromBank(to, amount)
+            }
+          }
+        "
+        @searchMembers="(input) => searchUsers({ name: '', address: input })"
+        :filteredMembers="foundUsers"
+        :loading="transferLoading || addActionLoading || isConfirmingTransfer"
+        :bank-balance="teamBalance?.formatted || '0'"
+        service="Bank"
+        :asBod="owner == team.boardOfDirectorsAddress"
+      />
+    </ModalComponent>
+    <ModalComponent v-model="pushTipModal">
+      <div class="flex flex-col gap-4 justify-start">
+        <span class="font-bold text-xl sm:text-2xl">Tip The Team</span>
+        <span class="text-sm sm:text-base">
+          Sends a tip to all team Members {{ tipAmount }} {{ NETWORK.currencySymbol }}
+        </span>
+
+        <input
+          type="text"
+          size="5"
+          class="input input-bordered w-full"
+          placeholder="Tip"
+          v-model="tipAmount"
+        />
+
+        <div class="text-center">
+          <LoadingButton
+            v-if="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            class="w-full sm:w-44"
+            color="primary"
           />
-          <span class="text-xs ml-2">{{ NETWORK.currencySymbol }}</span>
-        </div>
-        <div class="stat-actions justify-center flex">
-          <LoadingButton v-if="pushTipLoading" color="primary btn-xs" />
           <button
-            v-else
-            className="btn btn-primary btn-xs text-white"
-            :disabled="tipAmount <= 0"
+            v-if="!(isConfirmingPushTip || pushTipLoading || addActionLoading)"
+            class="btn btn-primary w-full sm:w-44 text-center"
             @click="
-              () => {
+              async () => {
                 if (owner == team.boardOfDirectorsAddress) {
-                  pushTipModal = true
+                  addPushTipAction('Pushed tips to all team members')
                 } else {
-                  pushTip(membersAddress, tipAmount, team.bankAddress!)
+                  const members = team.members.map((member) => member.address)
+                  pushTip({
+                    address: team.bankAddress as Address,
+                    abi: BankABI,
+                    functionName: 'pushTip',
+                    args: [members, parseEther(tipAmount.toString())],
+                    value: parseEther(tipAmount.toString())
+                  })
                 }
               }
             "
           >
-            Send
+            Send Tips
           </button>
         </div>
       </div>
-      <ModalComponent v-model="depositModal">
-        <DepositBankForm
-          v-if="depositModal"
-          @close-modal="() => (depositModal = false)"
-          @deposit="async (amount: string) => depositToBank(amount)"
-          :loading="depositLoading"
-        />
-      </ModalComponent>
-      <ModalComponent v-model="transferModal">
-        <TransferFromBankForm
-          v-if="transferModal"
-          @close-modal="() => (transferModal = false)"
-          @transfer="
-            async (to: string, amount: string, description: string) => {
-              if (owner == team.boardOfDirectorsAddress) {
-                await addTransferAction(to, amount, description)
-              } else {
-                await transferFromBank(to, amount)
-              }
-            }
-          "
-          @searchMembers="(input) => searchUsers({ name: '', address: input })"
-          :filteredMembers="foundUsers"
-          :loading="transferLoading || addActionLoading"
-          :bank-balance="teamBalance || '0'"
-          service="Bank"
-          :asBod="owner == team.boardOfDirectorsAddress"
-        />
-      </ModalComponent>
-      <ModalComponent v-model="pushTipModal">
-        <DescriptionActionForm
-          v-if="pushTipModal"
-          @submit="async (description: string) => addPushTipAction(description)"
-          :loading="addActionLoading"
-          actionName="Send Tip"
-        />
-      </ModalComponent>
-    </div>
-    <BankManagement
-      :team="team"
-      :bank-owner="owner ?? ''"
-      :loading-owner="loadingOwner"
-      :isBod="isBod ?? false"
-    />
+    </ModalComponent>
   </div>
+  <!-- <BankManagement :isBod="isBod" :team="team" :bankOwner="owner" :loadingOwner="loadingOwner" /> -->
 </template>
 <script setup lang="ts">
 import type { Team, User } from '@/types'
@@ -137,23 +132,20 @@ import { NETWORK } from '@/constant'
 import { onMounted, ref, watch, computed } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import BankManagement from '@/components/sections/SingleTeamView/BankManagement.vue'
-
+import Button from '@/components/ButtonUI.vue'
+import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { usePushTip } from '@/composables/tips'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useClipboard } from '@vueuse/core'
-import ToolTip from '@/components/ToolTip.vue'
-import { useBankBalance, useBankDeposit, useBankOwner, useBankTransfer } from '@/composables/bank'
+import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useAddAction, useGetBoardOfDirectors } from '@/composables/bod'
-import { BankService } from '@/services/bankService'
-import type { Address } from 'viem'
-import DescriptionActionForm from './forms/DescriptionActionForm.vue'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import { useAddAction } from '@/composables/bod'
+import { encodeFunctionData, parseEther, type Address } from 'viem'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+// import BankManagement from './BankManagement.vue'
+import BankABI from '@/artifacts/abi/bank.json'
+import BoDABI from '@/artifacts/abi/bod.json'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -161,41 +153,60 @@ const pushTipModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
-const ethers = EthersJsAdapter.getInstance()
-
-const { copy, copied, isSupported } = useClipboard()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const depositModal = ref(false)
+const props = defineProps<{
+  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
+}>()
+const {
+  sendTransaction,
+  isPending: depositLoading,
+  error: sendTransactionError,
+  data: depositHash
+} = useSendTransaction()
+
+const currentAddress = useUserDataStore().address
+const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
+  hash: depositHash
+})
 
 const {
-  execute: deposit,
-  isLoading: depositLoading,
-  isSuccess: depositSuccess,
-  error: depositError
-} = useBankDeposit()
-
-const {
-  execute: getBalance,
-  isLoading: balanceLoading,
   data: teamBalance,
-  error: balanceError
-} = useBankBalance()
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: props.team.bankAddress as `${Address}`
+})
+
 const {
-  execute: transfer,
-  isLoading: transferLoading,
-  isSuccess: transferSuccess,
-  error: transferError
-} = useBankTransfer()
-const {
-  execute: pushTip,
-  isLoading: pushTipLoading,
-  isSuccess: pushTipSuccess,
+  data: pushTipHash,
+  writeContract: pushTip,
+  isPending: pushTipLoading,
   error: pushTipError
-} = usePushTip()
-const { boardOfDirectors, execute: executeGetBoardOfDirectors } = useGetBoardOfDirectors()
-const isBod = computed(() => boardOfDirectors.value?.includes(useUserDataStore().address))
+} = useWriteContract()
+const { isLoading: isConfirmingPushTip, isSuccess: isConfirmedPushTip } =
+  useWaitForTransactionReceipt({
+    hash: pushTipHash
+  })
+
+watch(isConfirmingPushTip, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedPushTip.value) {
+    addSuccessToast('Tips pushed successfully')
+    pushTipModal.value = false
+  }
+})
+const { data: boardOfDirectors, refetch: executeGetBoardOfDirectors } = useReadContract({
+  functionName: 'getBoardOfDirectors',
+  address: props.team.boardOfDirectorsAddress as Address,
+  abi: BoDABI
+})
+const isBod = computed(() =>
+  (boardOfDirectors.value as Array<Address>)?.includes(currentAddress as Address)
+)
+
 const {
   execute: executeAddAction,
   error: errorAddAction,
@@ -220,54 +231,54 @@ const {
   .get()
   .json()
 
-const props = defineProps<{
-  team: Partial<Team>
-}>()
-
 const {
   data: owner,
   error: errorOwner,
-  isLoading: loadingOwner,
-  execute: getOwner
-} = useBankOwner(props.team.bankAddress!)
-
-const bankService = new BankService()
+  // isLoading: loadingOwner,
+  refetch: getOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: props.team.bankAddress! as Address,
+  abi: BankABI
+})
 
 const addTransferAction = async (to: string, amount: string, description: string) => {
   await executeAddAction(props.team, {
     targetAddress: props.team.bankAddress! as Address,
-    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'transfer', [
-      to,
-      ethers.parseEther(amount)
-    ])) as Address,
+    data: encodeFunctionData({
+      abi: BankABI,
+      functionName: 'transfer',
+      args: [to, parseEther(amount)]
+    }) as Address,
     description
   })
-  if (errorAddAction.value) return
-  transferModal.value = false
 }
 const addPushTipAction = async (description: string) => {
   await executeAddAction(props.team, {
     targetAddress: props.team.bankAddress! as Address,
-    data: (await bankService.getFunctionSignature(props.team.bankAddress!, 'pushTip', [
-      membersAddress.value,
-      ethers.parseEther(tipAmount.value.toString())
-    ])) as Address,
+    data: encodeFunctionData({
+      abi: BankABI,
+      functionName: 'pushTip',
+      args: [membersAddress.value, parseEther(tipAmount.value.toString())]
+    }) as Address,
     description
   })
-  if (errorAddAction.value) return
-
-  pushTipModal.value = false
-  tipAmount.value = 0
 }
-
-watch(depositSuccess, () => {
-  if (depositSuccess.value) {
+watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Deposited successfully')
+    depositModal.value = false
+    fetchBalance()
   }
 })
-watch(depositError, () => {
-  if (depositError.value) {
+watch(sendTransactionError, () => {
+  if (sendTransactionError.value) {
     addErrorToast('Failed to deposit')
+  }
+})
+watch(balanceLoading, () => {
+  if (balanceLoading.value) {
+    addErrorToast('Failed to fetch team balance')
   }
 })
 watch(balanceError, () => {
@@ -281,21 +292,6 @@ watch(pushTipError, async () => {
   }
 })
 
-watch(pushTipSuccess, () => {
-  if (pushTipSuccess.value) {
-    addSuccessToast('Tips pushed successfully')
-  }
-})
-watch(transferSuccess, () => {
-  if (transferSuccess.value) {
-    addSuccessToast('Transferred successfully')
-  }
-})
-watch(transferError, () => {
-  if (transferError.value) {
-    addErrorToast('Failed to transfer')
-  }
-})
 watch(searchUserResponse, () => {
   if (searchUserResponse.value?.ok && users.value?.users) {
     foundUsers.value = users.value.users
@@ -314,29 +310,41 @@ watch(errorAddAction, () => {
 watch(addActionSuccess, () => {
   if (addActionSuccess.value) {
     addSuccessToast('Action added successfully')
+    transferModal.value = false
+    pushTipModal.value = false
+    tipAmount.value = 0
   }
 })
 
-const openExplorer = (address: string) => {
-  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
-}
 const depositToBank = async (amount: string) => {
   if (props.team.bankAddress) {
-    await deposit(props.team.bankAddress, amount)
-    if (depositSuccess.value) {
-      depositModal.value = false
-      await getBalance(props.team.bankAddress)
-    }
+    sendTransaction({
+      to: props.team.bankAddress as Address,
+      value: parseEther(amount)
+    })
   }
 }
+
+const {
+  data: transferHash,
+  isPending: transferLoading,
+  error: transferError,
+  writeContract: transfer
+} = useWriteContract()
 const transferFromBank = async (to: string, amount: string) => {
   if (!props.team.bankAddress) return
-  await transfer(props.team.bankAddress, to, amount)
-  if (transferSuccess.value) {
-    transferModal.value = false
-    await getBalance(props.team.bankAddress)
-  }
+  transfer({
+    address: props.team.bankAddress as Address,
+    abi: BankABI,
+    functionName: 'transfer',
+    args: [to, parseEther(amount)]
+  })
 }
+
+const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
+  hash: transferHash
+})
+
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
     searchUserName.value = input.name
@@ -349,10 +357,24 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
+watch(transferError, () => {
+  if (transferError.value) {
+    addErrorToast('Failed to transfer from bank')
+  }
+})
+
+watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Transferred successfully')
+    transferModal.value = false
+    fetchBalance()
+  }
+})
+
 onMounted(async () => {
-  if (props.team.bankAddress) getBalance(props.team.bankAddress)
+  if (props.team.bankAddress) fetchBalance()
   await getOwner()
-  await executeGetBoardOfDirectors(props.team.boardOfDirectorsAddress!)
+  await executeGetBoardOfDirectors()
 })
 const membersAddress = computed(() => {
   return props.team.members?.map((member: { address: string }) => member.address) ?? []

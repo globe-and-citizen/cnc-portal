@@ -23,23 +23,16 @@ const chartData = computed(() => {
   const votes = props.proposal.votes || {}
   if (props.proposal.isElection) {
     interface Candidate {
-      votes: string
+      votes?: number
       name: string
-      address: string
+      candidateAddress: string
     }
-    return (props.proposal as Partial<Proposal>)?.candidates?.map((candidate: unknown) => {
-      let candidateObj: Candidate = {
-        votes: '',
-        name: '',
-        address: ''
-      }
-      candidateObj.address = String((candidate as Array<Candidate>)[0])
-      candidateObj.votes = String((candidate as Array<Candidate>)[1])
+    return (props.proposal as Partial<Proposal>)?.candidates?.map((candidate: Candidate) => {
       const member = props.team.members.find(
-        (member: Member) => member.address === candidateObj.address
+        (member: Member) => member.address === candidate.candidateAddress
       )
       return {
-        value: Number(candidateObj.votes) || 0,
+        value: Number(candidate.votes) || 0,
         name: member ? member.name : 'Unknown'
       }
     })

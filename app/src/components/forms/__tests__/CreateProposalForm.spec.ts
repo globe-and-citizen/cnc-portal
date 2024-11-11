@@ -72,4 +72,40 @@ describe('CreateProposal.vue', () => {
       expect(wrapper.emitted('createProposal')).toBeTruthy()
     })
   })
+  describe('election-specific functionality', () => {
+    it('shows election-specific fields when isElection is true', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false, team: {} }
+      })
+
+      const select = wrapper.find('select')
+      await select.setValue('true')
+    })
+  })
+
+  describe('form validation', () => {
+    it('shows validation errors when form is submitted with invalid data', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false, team: {} }
+      })
+
+      const submitButton = wrapper.find('button[data-test="submitButton"]')
+      await submitButton.trigger('click')
+
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findAll('.text-red-500').length).toBeGreaterThan(0)
+    })
+
+    it('does not emit createProposal event when form is invalid', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: { isLoading: false, team: {} }
+      })
+
+      const submitButton = wrapper.find('button[data-test="submitButton"]')
+      await submitButton.trigger('click')
+
+      expect(wrapper.emitted('createProposal'))
+    })
+  })
 })

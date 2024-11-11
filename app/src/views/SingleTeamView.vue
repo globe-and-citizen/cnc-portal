@@ -8,7 +8,7 @@
       <button
         class="btn btn-primary btn-xs"
         @click="officerModal = true"
-        v-if="team.ownerAddress == useUserDataStore().address"
+        v-if="team.ownerAddress == currentAddress"
         data-test="manageOfficer"
       >
         Manage Deployments
@@ -38,16 +38,20 @@
         </template>
         <template #tab-3>
           <ProposalSection
+            v-if="activeTab == 3"
             :team="team"
             @getTeam="getTeamAPI"
             @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
           />
         </template>
         <template #tab-4>
-          <ExpenseAccountSection v-if="activeTab == 4" :team="team" />
+          <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI" />
         </template>
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
+        </template>
+        <template #tab-6>
+          <ContractManagementSection></ContractManagementSection>
         </template>
       </TabNavigation>
     </div>
@@ -74,11 +78,14 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
-import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
+// import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
+import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
+import type { Address } from 'viem'
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
@@ -125,10 +132,10 @@ watch(getTeamError, () => {
     addErrorToast(getTeamError.value)
   }
 })
-
+const currentAddress = useUserDataStore().address as Address
 onMounted(async () => {
   await getTeamAPI() //Call the execute function to get team details on mount
-  if (team?.value?.ownerAddress == useUserDataStore().address) {
+  if (team?.value?.ownerAddress == currentAddress) {
     isOwner.value = true
   }
   setTabs()
@@ -170,7 +177,8 @@ const setTabs = () => {
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses,
-      SingleTeamTabs.BoardOfDirectors
+      SingleTeamTabs.BoardOfDirectors,
+      SingleTeamTabs.Contract
     ]
 }
 </script>

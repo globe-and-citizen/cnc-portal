@@ -1,3 +1,76 @@
+<template>
+  <div class="min-h-screen bg-base-200">
+    <RouterView name="login" />
+    <div v-if="userStore.isAuth">
+      <!-- Responsive Navbar -->
+      <NavBar
+        @toggleSideButton="handleChange"
+        @toggleEditUserModal="
+          () => {
+            updateUserInput = { name, address }
+            showModal = true
+          }
+        "
+        @withdraw="withdraw()"
+        :withdrawLoading="withdrawLoading"
+        @getBalance="getBalance()"
+        :balance="balance ? balance : '0'"
+        :balanceLoading="balanceLoading"
+      />
+
+      <!-- Responsive Drawer and Content -->
+      <div class="lg:flex">
+        <!-- Drawer -->
+        <div
+          v-if="toggleSide"
+          class="fixed lg:relative inset-y-0 left-0 z-20 bg-base-100 shadow-xl transition-transform duration-300 ease-in-out"
+          :class="{ '-translate-x-full': !toggleSide }"
+        >
+          <Drawer
+            :user="{ name, address }"
+            @openEditUserModal="
+              () => {
+                showModal = true
+                updateUserInput = { name, address }
+              }
+            "
+          />
+        </div>
+
+        <!-- Overlay -->
+        <div
+          v-if="toggleSide"
+          class="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+          @click="toggleSide = false"
+        ></div>
+
+        <!-- Content Wrapper -->
+        <div
+          class="flex-grow transition-all duration-300 ease-in-out"
+          :class="{ 'lg:ml-72': toggleSide }"
+        >
+          <div class="p-5 mt-10 md:p-10">
+            <RouterView />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for User Update -->
+    <ModalComponent v-model="showModal">
+      <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
+      <EditUserForm
+        v-model="updateUserInput"
+        @submitEditUser="handleUserUpdate"
+        :isLoading="userIsUpdating"
+      />
+    </ModalComponent>
+
+    <!-- Toast Notifications -->
+    <ToastContainer position="bottom-right" />
+  </div>
+</template>
+
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { ref, watch } from 'vue'
@@ -10,12 +83,10 @@ import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-
-// import { useDark, useToggle } from '@vueuse/core'
 import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { useCustomFetch } from './composables/useCustomFetch'
-const { addErrorToast, addSuccessToast } = useToastStore()
 
+const { addErrorToast, addSuccessToast } = useToastStore()
 const toggleSide = ref(true)
 const showModal = ref(false)
 
@@ -72,24 +143,12 @@ const handleUserUpdate = async () => {
   await executeUpdateUser()
 }
 
-/**
- * Watch and set showModal to false when
- *   userIsUpdating is false
- *   userUpdateError is null
- *   userUpdateResponse is ok
- */
-
 watch([() => userIsUpdating.value, () => userUpdateError.value], () => {
-  /**
-   * Toggle it the update is successful and with no errors
-   */
   if (!userIsUpdating.value && !userUpdateError.value) {
     showModal.value = false
   }
 })
 
-// Handle authentication change (optional)
-// Chek if user is authenticated and get balance
 watch(
   () => userStore.isAuth,
   (isAuth) => {
@@ -99,78 +158,21 @@ watch(
   },
   { immediate: true }
 )
-// Handle Balance error
+
 watch(balanceError, () => {
   if (balanceError.value) {
     addErrorToast('Failed to Get balance')
   }
 })
-// Handle withdraw error
 watch(withdrawError, () => {
   addErrorToast('Failed to withdraw tips')
 })
 
-// Handle withdraw success
 watch(withdrawSuccess, () => {
   if (withdrawSuccess.value) {
     addSuccessToast('Tips withdrawn successfully')
   }
 })
 </script>
-
-<template>
-  <div class="min-h-screen m-0 bg-base-200">
-    <RouterView name="login" />
-    <div v-if="userStore.isAuth">
-      <NavBar
-        @toggleSideButton="handleChange"
-        @toggleEditUserModal="
-          () => {
-            updateUserInput = { name, address }
-            showModal = true
-          }
-        "
-        @withdraw="withdraw()"
-        :withdrawLoading="withdrawLoading"
-        @getBalance="getBalance()"
-        :balance="balance ? balance : '0'"
-        :balanceLoading="balanceLoading"
-      />
-      <div class="content-wrapper">
-        <div class="drawer lg:drawer-open">
-          <div
-            class="drawer-content flex flex-col"
-            :style="{ marginLeft: toggleSide ? '300px' : '0' }"
-          >
-            <div class="m-20">
-              <RouterView />
-            </div>
-          </div>
-          <div v-if="toggleSide" @toggleSideButton="handleChange">
-            <Drawer
-              :user="{ name, address }"
-              @openEditUserModal="
-                () => {
-                  showModal = true
-                  updateUserInput = { name, address }
-                }
-              "
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <ModalComponent v-model="showModal">
-      <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
-      <EditUserForm
-        v-model="updateUserInput"
-        @submitEditUser="handleUserUpdate"
-        :isLoading="userIsUpdating"
-      />
-    </ModalComponent>
-    <ToastContainer position="bottom-right" />
-  </div>
-</template>
 
 <style scoped></style>

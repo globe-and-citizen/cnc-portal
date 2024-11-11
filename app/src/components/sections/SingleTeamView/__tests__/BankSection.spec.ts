@@ -1,144 +1,112 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { mount, enableAutoUnmount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
-// import type { T } from 'vitest/dist/reporters-B7ebVMkT.js'
-
+import type { Action, Team } from '@/types'
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
     address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
   }))
 }))
 
-const mockCopy = vi.fn()
-const mockClipboard = {
-  copy: mockCopy,
-  copied: ref(false),
-  isSupported: ref(true)
+const team = {
+  bankAddress: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6',
+  ownerAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
+  boardOfDirectorsAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
+  members: []
+}
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
 }
 
-vi.mock('@vueuse/core', async (importOriginal) => {
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+const mockUseAddAction = {
+  loadingContract: ref(false),
+  actionCount: ref<BigInt | null>(null),
+  team: ref<Partial<Team> | null>(null),
+  action: ref<Partial<Action> | null>(null),
+  executeAddAction: vi.fn(),
+  addAction: vi.fn(),
+  isSuccess: ref(false),
+  isConfirming: ref(false),
+  error: ref(null)
+}
+vi.mock('@/composables/bod', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
     ...actual,
-    useClipboard: vi.fn(() => mockClipboard)
+    useAddAction: vi.fn(() => mockUseAddAction)
+  }
+})
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance)
   }
 })
 
 describe('BankSection', () => {
+  let wrapper: ReturnType<typeof mount>
   setActivePinia(createPinia())
 
-  const createComponent = (props?: { team?: {}; pushTipLoading?: boolean }) => {
-    return mount(BankSection, {
+  enableAutoUnmount(afterEach)
+  beforeEach(() => {
+    // interface mockReturn {
+    //   mockReturnValue: (address: Object) => {}
+    // }
+
+    wrapper = mount(BankSection, {
       props: {
-        team: {
-          bankAddress: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6',
-          ownerAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
-          ...props?.team
-        },
-        ...props
+        team
       }
     })
-  }
+  })
+
   describe('Render', () => {
-    it('should show team bank address with tooltip if bank address exists', () => {
-      const team = { bankAddress: '0x123' }
-      const wrapper = createComponent({
-        team: {
-          ...team
-        }
-      })
-
+    it('should show team bank address', () => {
       expect(wrapper.find('[data-test="team-bank-address"]').exists()).toBeTruthy()
-      expect(wrapper.find('[data-test="team-bank-address"]').text()).toBe(team.bankAddress)
-
-      // ToolTip
-      const bankAddressTooltip = wrapper
-        .find('[data-test="bank-address-tooltip"]')
-        .findComponent({ name: 'ToolTip' })
-      expect(bankAddressTooltip.exists()).toBeTruthy()
-      expect(bankAddressTooltip.props().content).toBe('Click to see address in block explorer')
+      expect(wrapper.find('[data-test="team-bank-address"]').text()).toContain(team.bankAddress)
     })
 
-    it('should show copy to clipboard icon with tooltip if bank address exists', () => {
-      const team = { bankAddress: '0x123' }
-      const wrapper = createComponent({
-        team: {
-          ...team
-        }
-      })
-
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(true)
-
-      // ToolTip
-      const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
-        name: 'ToolTip'
-      })
-      expect(copyAddressTooltip.exists()).toBeTruthy()
-      expect(copyAddressTooltip.props().content).toBe('Click to copy address')
-    })
-
-    it('should not show copy to clipboard icon if copy not supported', async () => {
-      const wrapper = createComponent()
-
-      // mock clipboard
-      mockClipboard.isSupported.value = false
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(false)
-    })
-
-    it('should change the copy icon when copied', async () => {
-      const wrapper = createComponent()
-
-      // mock clipboard
-      mockClipboard.isSupported.value = false
-      mockClipboard.copied.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(ClipboardDocumentCheckIcon).exists()).toBe(true)
-    })
-
-    it('should change tooltip text to be "Copied!" when copied', async () => {
-      const wrapper = createComponent()
-
-      // mock clipboard
-      mockClipboard.isSupported.value = false
-      mockClipboard.copied.value = true
-      await wrapper.vm.$nextTick()
-
-      const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
-        name: 'ToolTip'
-      })
-      expect(copyAddressTooltip.props().content).toBe('Copied!')
-    })
-
-    it('should show the send button when pushTipLoading is false', () => {
-      const wrapper = createComponent({ pushTipLoading: false })
-      const sendButton = wrapper.find('button.btn-primary')
-      expect(sendButton.exists()).toBe(true)
-      expect(sendButton.text()).toBe('Send')
-    })
-    it('should show the transfer button for the team owner', () => {
-      const wrapper = createComponent()
-      const transferButton = wrapper.findAll('button.btn-secondary').at(1)
-      if (transferButton) {
-        expect(transferButton.exists()).toBe(true)
-        expect(transferButton.text()).toBe('Transfer')
-      }
-    })
-
-    it('should show the deposit button when bank address exists', () => {
-      const wrapper = createComponent()
-      expect(wrapper.find('button').text()).toContain('Deposit')
-    })
+    // TODO Show loading stat on Deposit, Tips, or transfer
   })
 
   describe('Methods', () => {
     it('should bind the tip amount input correctly', async () => {
-      const wrapper = createComponent()
+      // const wrapper = createComponent()
       const input = wrapper.find('input')
       await input.setValue('10')
       expect(input.element.value).toBe('10')
