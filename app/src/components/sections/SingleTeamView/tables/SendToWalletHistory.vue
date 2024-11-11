@@ -1,11 +1,11 @@
 <template>
   <div id="send-to-wallet">
-    <SkeletonLoading v-if="loading" class="w-full h-96 mt-5" />
-    <div v-if="!loading" class="overflow-x-auto bg-base-100 mt-5">
+    <SkeletonLoading data-test="skeleton-loading" v-if="loading" class="w-full h-96 mt-5" />
+    <div v-if="!loading" data-test="table" class="overflow-x-auto bg-base-100 mt-5">
       <table class="table table-zebra text-center">
         <!-- head -->
         <thead>
-          <tr class="font-bold text-lg">
+          <tr data-test="table-head-row" class="font-bold text-lg">
             <th>No</th>
             <th>Owner Address</th>
             <th>Member Addresses</th>
@@ -16,26 +16,29 @@
         <tbody v-if="(events?.length ?? 0) > 0">
           <tr
             v-for="(event, index) in events"
-            v-bind:key="event.txHash"
+            v-bind:key="event.transactionHash"
+            data-test="table-body-row"
             class="cursor-pointer hover"
-            @click="showTxDetail(event.txHash)"
+            @click="showTxDetail(event.transactionHash)"
           >
-            <td>{{ index + 1 }}</td>
-            <td class="truncate max-w-48">{{ event.data[0] }}</td>
+            <td data-test="table-data-number">{{ index + 1 }}</td>
+            <td data-test="table-data-owner-address" class="truncate max-w-48">
+              {{ event.args.addressWhoPushes }}
+            </td>
             <td>
-              <ul v-for="(address, index) in event.data[1]" :key="index">
-                <li>{{ address }}</li>
+              <ul v-for="(address, index) in event.args.teamMembers" :key="index">
+                <li data-test="table-data-member-addresses">{{ address }}</li>
               </ul>
             </td>
-            <td>
-              {{ web3Library.formatEther(event.data[2]) }}
+            <td data-test="table-data-total-amount">
+              {{ formatEther(event.args.totalAmount!) }}
               {{ NETWORK.currencySymbol }}
             </td>
-            <td>{{ event.date }}</td>
+            <td data-test="table-data-date">{{ dates[index] }}</td>
           </tr>
         </tbody>
         <tbody v-else>
-          <tr>
+          <tr data-test="empty-row">
             <td class="text-center font-bold text-lg" colspan="5">No send to wallet history</td>
           </tr>
         </tbody>
@@ -46,22 +49,68 @@
 
 <script setup lang="ts">
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { NETWORK } from '@/constant'
 import { useToastStore } from '@/stores/useToastStore'
-import { useBankEvents } from '@/composables/bank'
 import { onMounted, watch } from 'vue'
-import { BankEventType } from '@/types'
+import { formatEther, parseAbiItem, type Address, type Client, type GetLogsReturnType } from 'viem'
+import { ref } from 'vue'
+import { getBlock, getLogs } from 'viem/actions'
+import { useClient } from '@wagmi/vue'
+import { config } from '@/wagmi.config'
 
-const web3Library = EthersJsAdapter.getInstance()
+const client = useClient({ config })
 const { addErrorToast } = useToastStore()
 const props = defineProps<{
   bankAddress: string
 }>()
-const { getEvents, error, events, loading } = useBankEvents(props.bankAddress)
+const loading = ref(false)
+const error = ref<unknown | null>(null)
+const events = ref<
+  GetLogsReturnType<{
+    readonly name: 'PushTip'
+    readonly type: 'event'
+    readonly inputs: readonly [
+      {
+        readonly type: 'address'
+        readonly name: 'addressWhoPushes'
+        readonly indexed: true
+      },
+      {
+        readonly type: 'address[]'
+        readonly name: 'teamMembers'
+      },
+      {
+        readonly type: 'uint256'
+        readonly name: 'totalAmount'
+      }
+    ]
+  }>
+>([])
+const dates = ref<string[]>([])
 
 onMounted(async () => {
-  await getEvents(BankEventType.PushTip)
+  loading.value = true
+  try {
+    events.value = await getLogs(client.value as Client, {
+      address: props.bankAddress as Address,
+      event: parseAbiItem(
+        'event PushTip(address indexed addressWhoPushes, address[] teamMembers, uint256 totalAmount)'
+      ),
+      fromBlock: 'earliest',
+      toBlock: 'latest'
+    })
+    dates.value = await Promise.all(
+      events.value.map(async (event) => {
+        const block = await getBlock(client.value as Client, {
+          blockHash: event.blockHash
+        })
+        return new Date(parseInt(block.timestamp.toString()) * 1000).toLocaleString()
+      })
+    )
+  } catch (e) {
+    error.value = e
+  }
+  loading.value = false
 })
 
 const showTxDetail = (txHash: string) => {
