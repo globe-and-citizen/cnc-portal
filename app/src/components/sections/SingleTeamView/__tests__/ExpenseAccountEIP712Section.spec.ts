@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
@@ -11,6 +11,9 @@ import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import type { User } from '@/types'
 
 interface ComponentData {
+  expiry: string
+  _expenseAccountData: unknown
+  isFetchingExpenseAccountData: boolean
   transferModal: boolean
   setLimitModal: boolean
   approveUsersModal: boolean
@@ -74,7 +77,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
     ...actual,
-    useReadContract: vi.fn(() => mockUseReadContract),
+    useReadContract: vi.fn(() => {
+      return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
+    }),
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
   }
@@ -172,6 +177,66 @@ const mockAddAction = {
   execute: vi.fn()
 }
 
+const mockUseCustomFetch = {
+  error: ref<unknown>(null),
+  isFetching: ref(false),
+  execute: vi.fn((url: string) => {
+    if (url === `teams/1/member`) {
+      mockUseCustomFetch.data.value = {
+        data: JSON.stringify({
+          approvedAddress: `0x123`,
+          budgetType: 1,
+          value: `100.0`,
+          expiry: Math.floor(new Date().getTime() / 1000)
+        })
+      }
+    }
+  }),
+  data: ref<unknown>()
+}
+
+const DATE = '2024-02-02T12:00:00Z'
+
+vi.mock('@/composables/useCustomFetch', () => {
+  return {
+    useCustomFetch: vi.fn((url) => {
+      const data = ref<unknown>(null)
+      const error = ref(null)
+      const isFetching = ref(false)
+      const response = ref<Response | null>(null)
+
+      const execute = vi.fn(() => {
+        // Conditionally update `data` based on the URL argument
+        if (url === `teams/1/expense-data`) {
+          data.value = {
+            data: JSON.stringify({
+              approvedAddress: `0x123`,
+              budgetType: 1,
+              value: `100.0`,
+              expiry: Math.floor(new Date(DATE).getTime() / 1000)
+            })
+          }
+        }
+      })
+
+      const get = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
+      const json = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
+      const post = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
+
+      return {
+        post,
+        get,
+        json,
+        error,
+        isFetching,
+        execute,
+        data,
+        response
+      }
+    })
+  }
+})
+
 vi.mock('@/composables/bod', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
@@ -202,6 +267,7 @@ describe('ExpenseAccountSection', () => {
     return mount(ExpenseAccountSection, {
       props: {
         team: {
+          id: `1`,
           expenseAccountAddress: '0xExpenseAccount',
           ownerAddress: '0xOwner',
           boardOfDirectorsAddress: null,
@@ -225,6 +291,24 @@ describe('ExpenseAccountSection', () => {
   }
 
   describe('Render', () => {
+    describe('Sub-Context', () => {
+      const wrapper = createComponent()
+      it('should retrieve, format and display expiry date', async () => {
+        const date = new Date(DATE)
+        const expiry = date.toLocaleString('en-US')
+
+        const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
+        expect(approvalExpiry.exists()).toBe(true)
+
+        expect(approvalExpiry.text()).toBe(expiry)
+      })
+      it('should show loading animation if fetching expense account data', async () => {
+        ;(wrapper.vm as unknown as ComponentData).isFetchingExpenseAccountData = true
+        await wrapper.vm.$nextTick()
+        expect(wrapper.find('[data-test="max-loading"]').exists()).toBeTruthy()
+      })
+    })
+
     it('should show expense account if expense account address exists', () => {
       const team = { expenseAccountAddress: '0x123' }
       const wrapper = createComponent({
@@ -452,56 +536,58 @@ describe('ExpenseAccountSection', () => {
       })
     })
 
-    // describe('ApproveUsersForm', async () => {
-    //   beforeAll(() => {
-    //     //@ts-ignore
-    //     ;(global as Object).window.ethereum = {
-    //       request: vi.fn()
-    //       // Mock other methods as needed
-    //     }
-    //   })
+    //describe('Methods', )
 
-    //   afterAll(() => {
-    //     //@ts-ignore
-    //     delete (global as Object).window.ethereum
-    //   })
-    //   const wrapper = createComponent({
-    //     global: {
-    //       plugins: [
-    //         createTestingPinia({
-    //           createSpy: vi.fn,
-    //           initialState: {
-    //             user: { address: '0xContractOwner' }
-    //           }
-    //         })
-    //       ]
-    //     }
-    //   })
+    describe('ApproveUsersForm', async () => {
+      beforeAll(() => {
+        //@ts-ignore
+        ;(global as Object).window.ethereum = {
+          request: vi.fn()
+          // Mock other methods as needed
+        }
+      })
 
-    //   it('should pass corrent props to ApproveUsersForm', async () => {
-    //     const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-    //     // expect(approveUsersForm.exists()).toBe(true)
-    //     expect(approveUsersForm.props()).toEqual({
-    //       formData: [{ name: '', address: '', isValid: false }],
-    //       isBodAction: false,
-    //       loadingApprove: false,
-    //       users: []
-    //     })
-    //   })
-    //   it('should call approveUser when @approve-user is emitted', async () => {
-    //     const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-    //     expect(approveUsersForm.exists()).toBe(true)
+      afterAll(() => {
+        //@ts-ignore
+        delete (global as Object).window.ethereum
+      })
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xContractOwner' }
+              }
+            })
+          ]
+        }
+      })
 
-    //     const data = {
-    //       approvedUser: '0x123',
-    //       budgetType: 1,
-    //       value: 100,
-    //       expiry: new Date()
-    //     }
+      it('should pass corrent props to ApproveUsersForm', async () => {
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        // expect(approveUsersForm.exists()).toBe(true)
+        expect(approveUsersForm.props()).toEqual({
+          formData: [{ name: '', address: '', isValid: false }],
+          isBodAction: false,
+          loadingApprove: false,
+          users: []
+        })
+      })
+      it('should call approveUser when @approve-user is emitted', async () => {
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
 
-    //     approveUsersForm.vm.$emit('approveUser', data)
-    //     expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
-    //   })
-    // })
+        const data = {
+          approvedUser: '0x123',
+          budgetType: 1,
+          value: 100,
+          expiry: new Date()
+        }
+
+        approveUsersForm.vm.$emit('approveUser', data)
+        expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
+      })
+    })
   })
 })
