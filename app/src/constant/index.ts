@@ -16,6 +16,8 @@ interface AddressMapping {
   'ExpenseAccountModule#FactoryBeacon'?: string
   'Officer#Officer'?: string
   'Officer#FactoryBeacon'?: string
+  'ExpenseAccountEIP712Module#ExpenseAccountEIP712'?: string
+  'ExpenseAccountEIP712Module#FactoryBeacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -36,6 +38,8 @@ export const BOD_BEACON_ADDRESS = addresses['BoardOfDirectorsModule#Beacon'] || 
 export const BOD_IMPL_ADDRESS = addresses['BoardOfDirectorsModule#BoardOfDirectors'] || ''
 export const EXPENSE_ACCOUNT_BEACON_ADDRESS = addresses['ExpenseAccountModule#FactoryBeacon'] || ''
 export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = addresses['ExpenseAccountModule#ExpenseAccount'] || ''
+export const EXPENSE_ACCOUNT_EIP712_IMPL_ADDRESS = addresses['ExpenseAccountEIP712Module#ExpenseAccountEIP712'] || ''
+export const EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS = addresses['ExpenseAccountEIP712Module#FactoryBeacon'] || ''
 export const OFFICER_ADDRESS = addresses['Officer#Officer'] || ''
 export const OFFICER_BEACON = addresses['Officer#FactoryBeacon'] || ''
 
