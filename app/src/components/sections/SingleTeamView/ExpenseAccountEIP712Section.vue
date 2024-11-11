@@ -197,7 +197,7 @@ const {
   isFetching: isFetchingExpenseAccountData,
   execute: fetchExpenseAccountData,
   data: _expenseAccountData
-} = useCustomFetch(`teams/${String(team.value.id)}/get-expense-data`, {
+} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
@@ -229,12 +229,9 @@ const {
   .get()
   .json()
 
-const { execute: executeAddExpenseData } = useCustomFetch(
-  `teams/${team.value.id}/add-expense-data`,
-  {
-    immediate: false
-  }
-)
+const { execute: executeAddExpenseData } = useCustomFetch(`teams/${team.value.id}/expense-data`, {
+  immediate: false
+})
   .post(expenseAccountData)
   .json()
 

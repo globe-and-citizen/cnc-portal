@@ -207,7 +207,7 @@ vi.mock('@/composables/useCustomFetch', () => {
 
       const execute = vi.fn(() => {
         // Conditionally update `data` based on the URL argument
-        if (url === `teams/1/get-expense-data`) {
+        if (url === `teams/1/expense-data`) {
           data.value = {
             data: JSON.stringify({
               approvedAddress: `0x123`,
