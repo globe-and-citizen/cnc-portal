@@ -34,16 +34,25 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address votingContract;
     address bodContract;
     address expenseAccountContract;
+    address expenseAccountEip712Contract;
 
     address public bankAccountBeacon;
     address public votingContractBeacon;
     address public bodContractBeacon;
     address public expenseAccountBeacon;
+    address public expenseAccountEip712Beacon;
 
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
 
-  function initialize(address owner, address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon, address _expenseAccountBeacon) public initializer {
+  function initialize(
+    address owner, 
+    address _bankAccountBeacon, 
+    address _votingContractBeacon, 
+    address _bodContractBeacon, 
+    address _expenseAccountBeacon,
+    address _expenseAccountEip712Beacon
+    ) public initializer {
         __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
@@ -51,6 +60,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         votingContractBeacon = _votingContractBeacon;
         bodContractBeacon = _bodContractBeacon;
         expenseAccountBeacon = _expenseAccountBeacon;
+        expenseAccountEip712Beacon = _expenseAccountEip712Beacon;
     }
 
    function createTeam(
@@ -113,6 +123,15 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
          expenseAccountContract = address(proxy);
 
         emit ContractDeployed("ExpenseAccount", expenseAccountContract);
+    }
+    function deployExpenseAccountEip712() external onlyOwners whenNotPaused  {
+        BeaconProxy proxy = new BeaconProxy(
+            expenseAccountEip712Beacon,
+            abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
+        );
+        expenseAccountEip712Contract = address(proxy);
+
+        emit ContractDeployed("ExpenseAccountEIP712", expenseAccountEip712Contract);
     }
   
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
