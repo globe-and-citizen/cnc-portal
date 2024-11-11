@@ -124,6 +124,56 @@ describe('Investor Contract', () => {
     })
   })
 
+  context('Individual Minting', () => {
+    it('should mint token for individual stock grant', async () => {
+      await investorProxy.connect(owner).mint(shareholder1.address, initialStockGrants[1].amount)
+      expect(await investorProxy.balanceOf(shareholder1.address)).to.eq(
+        initialStockGrants[1].amount
+      )
+    })
+
+    it('should emit Minted event', async () => {
+      const tx = await investorProxy
+        .connect(owner)
+        .mint(shareholder1.address, initialStockGrants[1].amount)
+      await expect(tx)
+        .to.emit(investorProxy, 'Minted')
+        .withArgs(shareholder1.address, initialStockGrants[1].amount)
+    })
+
+    it('should change lastMinted and totalMinted after minting', async () => {
+      const tx = await investorProxy
+        .connect(owner)
+        .mint(shareholder1.address, initialStockGrants[1].amount)
+      await tx.wait()
+      const time = (await ethers.provider.getBlock(tx.blockHash!))?.timestamp
+      const stockGrant = await investorProxy.getStockGrant(shareholder1.address)
+      expect(stockGrant.lastMinted).to.eq(time)
+      expect(stockGrant.totalMinted).to.eq(initialStockGrants[1].amount)
+    })
+
+    it('should not mint token if not owner', async () => {
+      await expect(
+        investorProxy.connect(shareholder1).mint(shareholder1.address, initialStockGrants[1].amount)
+      ).to.be.reverted
+    })
+
+    it('should not mint token if shareholder not exist', async () => {
+      await expect(
+        investorProxy.connect(owner).mint(ethers.ZeroAddress, initialStockGrants[1].amount)
+      ).to.be.reverted
+    })
+
+    it('should not mint token if stock grant is inactive', async () => {
+      await investorProxy
+        .connect(owner)
+        .updateStockGrant(shareholder1.address, initialStockGrants[1].amount, false)
+      await expect(
+        investorProxy.connect(owner).mint(shareholder1.address, initialStockGrants[1].amount)
+      ).to.be.reverted
+    })
+  })
+
   context('Distribute Dividend', () => {
     it('should distribute dividend to all shareholders', async () => {
       // mint token first
