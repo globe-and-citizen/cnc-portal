@@ -172,7 +172,7 @@ const expiry = computed(() => {
     const date = new Date(Number(unixEpoch) * 1000)
     return date.toLocaleString('en-US')
   } else {
-    return '0.0'
+    return '00/00/0000, --:--:--'
   }
 })
 const { addErrorToast } = useToastStore()
@@ -197,7 +197,7 @@ const {
   isFetching: isFetchingExpenseAccountData,
   execute: fetchExpenseAccountData,
   data: _expenseAccountData
-} = useCustomFetch(`teams/${String(team.value.id)}/member`, {
+} = useCustomFetch(`teams/${String(team.value.id)}/get-expense-data`, {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     options.headers = {
@@ -230,7 +230,7 @@ const {
   .json()
 
 const { execute: executeAddExpenseData } = useCustomFetch(
-  `teams/${team.value.id}/member/add-expense-data`,
+  `teams/${team.value.id}/add-expense-data`,
   {
     immediate: false
   }
