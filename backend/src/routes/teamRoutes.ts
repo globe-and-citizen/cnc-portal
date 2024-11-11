@@ -19,7 +19,7 @@ teamRoutes.put("/:id", updateTeam);
 teamRoutes.delete("/:id", deleteTeam);
 teamRoutes.delete("/:id/member", deleteMember);
 teamRoutes.post("/:id/member", addMembers);
-teamRoutes.post("/:id/member/add-expense-data", addExpenseAccountData);
-teamRoutes.get("/:id/member", getExpenseAccountData)
+teamRoutes.post("/:id/add-expense-data", addExpenseAccountData);
+teamRoutes.get("/:id/get-expense-data", getExpenseAccountData)
 
 export default teamRoutes;
