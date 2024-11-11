@@ -46,6 +46,7 @@
         <!-- Overlay -->
         <div
           v-if="toggleSide"
+          data-test="drawer"
           class="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
           @click="toggleSide = false"
         ></div>
@@ -105,15 +106,15 @@ function handleChange() {
 
 const {
   isPending: withdrawLoading,
-  isSuccess: withdrawSuccess,
   error: withdrawError,
   writeContract: withdraw,
   data: withdrawHash
 } = useWriteContract()
 
-const { isPending: isConfirmingWithdraw } = useWaitForTransactionReceipt({
-  hash: withdrawHash
-})
+const { isPending: isConfirmingWithdraw, isSuccess: isSuccessConfirmed } =
+  useWaitForTransactionReceipt({
+    hash: withdrawHash
+  })
 
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
@@ -178,8 +179,8 @@ watch(withdrawError, () => {
   addErrorToast('Failed to withdraw tips')
 })
 
-watch(withdrawSuccess, () => {
-  if (withdrawSuccess.value) {
+watch(isConfirmingWithdraw, (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isSuccessConfirmed.value) {
     addSuccessToast('Tips withdrawn successfully')
   }
 })
