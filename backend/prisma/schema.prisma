@@ -37,6 +37,7 @@ model Team {
   expenseAccountAddress     String?
   officerAddress            String?
   BoardOfDirectorActions    BoardOfDirectorActions[]
+  teamContracts TeamContract[]
 }
 
 model Notification {
@@ -50,6 +51,18 @@ model Notification {
   author                    String?
   resource                  String?
 }
+
+model TeamContract {
+  id           Int       @id @default(autoincrement())
+  address      String    @unique
+  type         String
+  deployer     String
+  admins       String[]
+  teamId       Int
+  team         Team      @relation(fields: [teamId], references: [id])
+  @@index([address])
+  }
+
 
 model BoardOfDirectorActions {
   id                        Int      @id @default(autoincrement())
