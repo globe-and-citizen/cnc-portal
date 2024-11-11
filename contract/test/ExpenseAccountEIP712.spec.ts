@@ -6,11 +6,13 @@ import { ExpenseAccountEIP712 } from '../typechain-types'
 describe('ExpenseAccount (EIP712)', () => {
   let expenseAccountProxy: ExpenseAccountEIP712
 
-  const deployContract = async () => {
+  const deployContract = async (owner: SignerWithAddress) => {
     const ExpenseAccountImplementation = await ethers.getContractFactory('ExpenseAccountEIP712')
-    expenseAccountProxy = (await upgrades.deployProxy(ExpenseAccountImplementation, [], {
-      initializer: 'initialize'
-    })) as unknown as ExpenseAccountEIP712
+    expenseAccountProxy = (await upgrades.deployProxy(
+      ExpenseAccountImplementation, 
+      [owner.address], 
+      {initializer: 'initialize'}
+    )) as unknown as ExpenseAccountEIP712
   }
 
   describe('As CNC Company Founder', () => {
@@ -34,7 +36,7 @@ describe('ExpenseAccount (EIP712)', () => {
     context('I want to deploy my Expense Account Smart Contract', () => {
       before(async () => {
         ;[owner, withdrawer, imposter] = await ethers.getSigners()
-        await deployContract()
+        await deployContract(owner)
         chainId = (await ethers.provider.getNetwork()).chainId
         verifyingContract = await expenseAccountProxy.getAddress()
 
