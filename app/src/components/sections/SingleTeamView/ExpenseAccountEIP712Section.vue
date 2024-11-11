@@ -337,6 +337,5 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 
 onMounted(async () => {
   await init()
-  console.log(`currentUser: `, currentUserAddress, `contractOwner: `, contractOwnerAddress.value)
 })
 </script>
