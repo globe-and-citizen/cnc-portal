@@ -149,7 +149,7 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import type { Proposal, Team } from '@/types/index'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
-import { required, minLength } from '@vuelidate/validators'
+import { required, minLength, requiredIf } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 
 const emits = defineEmits(['createProposal'])
@@ -201,12 +201,11 @@ const rules = {
       minLength: minLength(10)
     },
     candidates: {
-      required,
+      requiredIf: requiredIf(() => newProposalInput.value?.isElection ?? false),
       uniqueCandidates: uniqueCandidates()
     }
   }
 }
-
 const $v = useVuelidate(rules, { proposal: newProposalInput })
 
 interface User {
@@ -237,7 +236,6 @@ const searchUsers = async (field: 'name' | 'address') => {
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-
   emits('createProposal')
 }
 const formRef = ref<HTMLElement | null>(null)

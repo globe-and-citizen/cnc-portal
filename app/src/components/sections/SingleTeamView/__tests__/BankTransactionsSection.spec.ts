@@ -4,19 +4,8 @@ import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTr
 import AccordionComponent from '@/components/AccordionComponent.vue'
 import DepositHistory from '@/components/sections/SingleTeamView/tables/DepositHistory.vue'
 import TransferHistory from '@/components/sections/SingleTeamView/tables/TransferHistory.vue'
-import TipsAddressChangedHistory from '@/components/sections/SingleTeamView/tables/TipsAddressChangedHistory.vue'
 import SendToWalletHistory from '@/components/sections/SingleTeamView/tables/SendToWalletHistory.vue'
 import { createTestingPinia } from '@pinia/testing'
-
-vi.mock('@/adapters/web3LibraryAdapter', () => {
-  return {
-    EthersJsAdapter: {
-      getInstance: () => ({
-        formatEther: vi.fn((value) => (value / 1e18).toString()) // Mock implementation
-      })
-    }
-  }
-})
 
 describe('BankTransactionsSection', () => {
   describe('Render', () => {
@@ -34,7 +23,6 @@ describe('BankTransactionsSection', () => {
       expect(wrapper.findComponent(AccordionComponent).exists()).toBe(true)
       expect(wrapper.findComponent(DepositHistory).exists()).toBe(true)
       expect(wrapper.findComponent(TransferHistory).exists()).toBe(true)
-      expect(wrapper.findComponent(TipsAddressChangedHistory).exists()).toBe(true)
       expect(wrapper.findComponent(SendToWalletHistory).exists()).toBe(true)
     })
   })

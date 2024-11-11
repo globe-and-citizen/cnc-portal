@@ -11,8 +11,9 @@
         <label class="m-2 label cursor-pointer border rounded-lg">
           <span class="label-text"
             >{{
-              props.team.members.find((member: Member) => member.address === (candidate as any)[0])
-                ?.name
+              props.team.members.find(
+                (member: Member) => member.address === (candidate as any).candidateAddress
+              )?.name
             }}
             | {{ candidate.candidateAddress }}</span
           >

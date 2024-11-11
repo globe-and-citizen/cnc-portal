@@ -1,54 +1,45 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
-import { VueWrapper, mount } from '@vue/test-utils'
+import { describe, it, expect, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import TransferHistory from '@/components/sections/SingleTeamView/tables/TransferHistory.vue'
-import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import type { EventResult } from '@/types'
-import type { Result } from 'ethers'
-import { ref } from 'vue'
-import { useBankEvents } from '@/composables/bank'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
 
-const sendToWalletEvents: EventResult[] = [
+let transferEvents = [
   {
-    txHash: '0x1',
-    data: ['0xOwner', '0xMember1', '1000000000000000000'] as Result, // 1 ETH
-    date: '2024-06-25'
+    transactionHash: '0x1',
+    args: {
+      sender: '0xSender1',
+      to: '0xTo1',
+      amount: '1000000000000000000' // 1 ETH
+    },
+    blockHash: '0xBlockHash'
   },
   {
-    txHash: '0x2',
-    data: ['0xOwner', '0xMember2', '2000000000000000000'] as Result, // 2 ETH
-    date: '2024-06-26'
+    transactionHash: '0x2',
+    args: {
+      sender: '0xSender2',
+      to: '0xTo2',
+      amount: '1000000000000000000' // 1 ETH
+    },
+    blockHash: '0xBlockHash'
   }
 ]
-vi.mock('@/adapters/web3LibraryAdapter', () => {
+
+vi.mock('@/stores/useToastStore')
+vi.mock('viem/actions', async (importOriginal) => {
+  const original: Object = await importOriginal()
   return {
-    EthersJsAdapter: {
-      getInstance: () => ({
-        formatEther: vi.fn((value) => (value / 1e18).toString()) // Mock implementation
-      })
-    }
+    ...original,
+    getLogs: vi.fn(() => transferEvents),
+    getBlock: vi.fn(() => ({ timestamp: 1620000000 }))
   }
 })
 
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: vi.fn().mockImplementation(() => ({ addErrorToast: vi.fn() }))
-}))
-
-vi.mock('@/composables/bank', () => ({
-  useBankEvents: vi.fn().mockImplementation(() => ({
-    getEvents: vi.fn().mockReturnValue(sendToWalletEvents),
-    loading: ref(false),
-    events: ref(sendToWalletEvents),
-    error: ref(null)
-  }))
-}))
-
 describe('TransferHistory', () => {
-  let wrapper: VueWrapper
-
-  beforeEach(() => {
-    wrapper = mount(TransferHistory, {
+  const createComponent = () => {
+    return mount(TransferHistory, {
       props: {
         bankAddress: '0x123'
       },
@@ -56,15 +47,46 @@ describe('TransferHistory', () => {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
+  }
+
+  describe('Actions', () => {
+    it('opens transaction detail in a new window when a row is clicked', async () => {
+      global.open = vi.fn() // Mock window.open
+
+      const wrapper = createComponent()
+
+      await flushPromises()
+      const row = wrapper.findAll('tbody tr')[0]
+      await row.trigger('click')
+      expect(global.open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
+    })
+
+    it('calls addErrorToast when there is an error fetching data', async () => {
+      mount(TransferHistory, {
+        props: {
+          bankAddress: '0x123'
+        },
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })],
+          mocks: {
+            error: new Error('Failed to get transfer events')
+          }
+        }
+      })
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to get transfer events')
+    })
   })
 
   describe('Render', () => {
-    it('renders correctly', () => {
+    it('renders correctly', async () => {
       // basic render
-      expect(wrapper.find('div.overflow-x-auto.bg-base-100.mt-5').exists()).toBe(true)
-      expect(wrapper.find('table.table-zebra.text-center').exists()).toBe(true)
-      expect(wrapper.find('thead tr').exists()).toBe(true)
-      expect(wrapper.find('tbody tr').exists()).toBe(true)
+      const wrapper = createComponent()
+
+      await flushPromises()
+      expect(wrapper.find('div[data-test="table"]').exists()).toBeTruthy()
+      expect(wrapper.find('tr[data-test="table-head-row"]').exists()).toBeTruthy()
+      expect(wrapper.find('tr[data-test="table-body-row"]').exists()).toBeTruthy()
 
       // table header
       const header = ['No', 'Sender', 'To', 'Amount', 'Date']
@@ -72,84 +94,47 @@ describe('TransferHistory', () => {
       expect(wrapper.findAll('th').forEach((th, index) => expect(th.text()).toBe(header[index])))
 
       // table body
-      expect(wrapper.findAll('td').length).toBe(sendToWalletEvents.length * header.length)
+      expect(wrapper.findAll('td').length).toBe(transferEvents.length * header.length)
     })
 
-    it('renders table body correctly', () => {
-      const tableData = wrapper.findAll('td')
-      const no = tableData[0].text()
-      const sender = tableData[1].text()
-      const to = tableData[2].text()
-      const amount = tableData[3].text()
-      const date = tableData[4].text()
+    it('renders table body correctly', async () => {
+      const wrapper = createComponent()
 
-      expect(no).toEqual('1')
-      expect(sender).toEqual(sendToWalletEvents[0].data[0])
-      expect(to).toEqual(sendToWalletEvents[0].data[1])
-      expect(amount).toEqual(`1 ${NETWORK.currencySymbol}`)
-      expect(date).toEqual(sendToWalletEvents[0].date)
-    })
+      await flushPromises()
+      const numberElements = wrapper.findAll('td[data-test="data-row-number"]')
+      const senderElements = wrapper.findAll('td[data-test="data-row-sender"]')
+      const toElements = wrapper.findAll('td[data-test="data-row-to"]')
+      const amountElements = wrapper.findAll('td[data-test="data-row-amount"]')
+      const dateElements = wrapper.findAll('td[data-test="data-row-date"]')
 
-    it('renders skeleton loading if loading', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(true),
-        events: ref([]),
-        error: ref(null)
-      }))
+      expect(numberElements.length).toBe(transferEvents.length)
+      expect(senderElements.length).toBe(transferEvents.length)
+      expect(toElements.length).toBe(transferEvents.length)
+      expect(amountElements.length).toBe(transferEvents.length)
+      expect(dateElements.length).toBe(transferEvents.length)
 
-      const wrapper = mount(TransferHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
+      transferEvents.forEach((event, index) => {
+        expect(numberElements[index].text()).toBe((index + 1).toString())
+        expect(senderElements[index].text()).toBe(event.args.sender)
+        expect(toElements[index].text()).toBe(event.args.to)
+        expect(amountElements[index].text()).toBe(`1 ${NETWORK.currencySymbol}`)
+        expect(dateElements[index].text()).toBe('5/3/2021, 12:00:00 AM')
       })
-      expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
     })
 
-    it('renders empty table when no transfer events', () => {
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents: vi.fn().mockReturnValue([]),
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
+    it('renders loading state when fetching data', async () => {
+      const wrapper = createComponent()
 
-      const wrapper = mount(TransferHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      const emtpyRow = wrapper.find('tr td.text-center.font-bold.text-lg')
-      expect(emtpyRow.exists()).toBe(true)
-      expect(emtpyRow.text()).toBe('No transfer transactions')
-      expect(emtpyRow.attributes('colspan')).toBe('5')
-    })
-  })
-
-  describe('Actions', () => {
-    it('calls getEvents when mounted', async () => {
-      const getEvents = vi.fn()
-      ;(useBankEvents as Mock).mockImplementationOnce(() => ({
-        getEvents,
-        loading: ref(false),
-        events: ref([]),
-        error: ref(null)
-      }))
-
-      mount(TransferHistory, {
-        props: {
-          bankAddress: '0x123'
-        }
-      })
-      expect(getEvents).toHaveBeenCalled()
+      await wrapper.setValue({ loading: true })
+      expect(wrapper.findComponent(SkeletonLoading).exists()).toBeTruthy()
     })
 
-    it('opens transaction detail in a new window when a row is clicked', async () => {
-      global.open = vi.fn() // Mock window.open
+    it('renders empty state when there is no data', async () => {
+      transferEvents = []
+      const wrapper = createComponent()
 
-      const row = wrapper.findAll('tbody tr')[0]
-      await row.trigger('click')
-      expect(global.open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
+      await flushPromises()
+      expect(wrapper.find('tbody[data-test="data-empty"]').exists()).toBeTruthy()
     })
   })
 })

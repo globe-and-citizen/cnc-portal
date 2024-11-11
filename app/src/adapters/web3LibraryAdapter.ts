@@ -159,4 +159,11 @@ export class EthersJsAdapter implements IWeb3Library {
     }
     return this.provider
   }
+
+  async getSigner() {
+    if (!this.signer) {
+      await this.connectWallet()
+    }
+    return this.signer
+  }
 }

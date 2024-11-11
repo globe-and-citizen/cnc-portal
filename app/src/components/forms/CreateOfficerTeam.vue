@@ -96,10 +96,14 @@
     </div>
   </div>
   <div class="flex justify-center">
-    <button @click="createTeam" class="btn btn-primary" v-if="!createTeamLoading">
+    <button
+      @click="createTeam"
+      class="btn btn-primary"
+      v-if="!createTeamLoading && !isConfirmingCreateTeam"
+    >
       Create Team
     </button>
-    <LoadingButton :color="'primary min-w-24'" v-else />
+    <LoadingButton :color="'primary min-w-24'" v-if="createTeamLoading || isConfirmingCreateTeam" />
   </div>
 </template>
 
@@ -111,7 +115,8 @@ import { useToastStore } from '@/stores'
 import type { Team, User } from '@/types'
 import type { Address } from 'viem'
 import LoadingButton from '../LoadingButton.vue'
-import { useCreateTeam } from '@/composables/officer'
+import OfficerABI from '@/artifacts/abi/officer.json'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 
 const props = defineProps<{
   team: Partial<Team>
@@ -146,31 +151,41 @@ onUnmounted(() => {
 })
 
 const {
-  execute: createTeamCall,
-  isLoading: createTeamLoading,
+  writeContract: createTeamCall,
+  isPending: createTeamLoading,
   error: createTeamError,
-  isSuccess: isSuccessCreateTeam
-} = useCreateTeam()
+  data: createTeamHash
+} = useWriteContract()
+const { isLoading: isConfirmingCreateTeam, isSuccess: isConfirmedCreateTeam } =
+  useWaitForTransactionReceipt({ hash: createTeamHash })
 
+watch(isConfirmingCreateTeam, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedCreateTeam.value) {
+    createTeamLoading.value = false
+
+    emits('getTeam')
+    addSuccessToast('Team created successfully')
+  }
+})
 watch(createTeamError, (error) => {
   if (error) {
     createTeamLoading.value = false
     addErrorToast('Failed to create team')
   }
 })
-watch(isSuccessCreateTeam, () => {
-  createTeamLoading.value = false
 
-  emits('getTeam')
-  addSuccessToast('Team created successfully')
-})
 const emits = defineEmits(['getTeam'])
 const createTeam = async () => {
   createTeamLoading.value = true
   const founders: Address[] = selectedFounders.value.map((founder) => founder.address as Address)
   const members: Address[] = selectedMembers.value.map((member) => member.address as Address)
   if (!props.team.officerAddress) return
-  createTeamCall(props.team.officerAddress, founders, members)
+  createTeamCall({
+    address: props.team.officerAddress as Address,
+    abi: OfficerABI,
+    functionName: 'createTeam',
+    args: [founders, members]
+  })
 }
 
 const selectFounder = (user: { name: string; address: string }) => {
