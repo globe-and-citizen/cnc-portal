@@ -51,7 +51,10 @@
 
           <div class="pl-3">
             <div class="stat-title pr-3">Max Limit</div>
-            <div v-if="false" class="stat-value mt-1 border-r border-gray-400 pr-3">
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
               <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
             </div>
             <div
@@ -59,7 +62,7 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="max-limit"
             >
-              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
 
@@ -76,7 +79,7 @@
 
         <div class="stat-title text-center mt-10">
           Approval Expiry:
-          <span class="font-bold text-black">{{ new Date().toLocaleString('en-US') }}</span>
+          <span data-test="approval-expiry" class="font-bold text-black">{{ expiry }}</span>
         </div>
 
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
@@ -128,8 +131,8 @@
 
 <script setup lang="ts">
 //#region imports
-import { onMounted, ref, watch } from 'vue'
-import type { Team, User } from '@/types'
+import { computed, onMounted, ref, watch } from 'vue'
+import type { Team, User, BudgetLimit } from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -150,6 +153,7 @@ import type { Address } from 'viem'
 //#region variable declarations
 const currentUserAddress = useUserDataStore().address
 const props = defineProps<{ team: Partial<Team> }>()
+const emits = defineEmits(['getTeam'])
 const team = ref(props.team)
 const transferModal = ref(false)
 const approveUsersModal = ref(false)
@@ -158,7 +162,19 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
-
+const expenseAccountData = ref<{}>()
+const maxLimit = computed(() =>
+  _expenseAccountData.value?.data ? JSON.parse(_expenseAccountData.value.data).value : '0.0'
+)
+const expiry = computed(() => {
+  if (_expenseAccountData.value?.data) {
+    const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
+    const date = new Date(Number(unixEpoch) * 1000)
+    return date.toLocaleString('en-US')
+  } else {
+    return '00/00/0000, --:--:--'
+  }
+})
 const { addErrorToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
@@ -174,6 +190,26 @@ const {
   address: team.value.expenseAccountAddress as Address,
   abi: expenseAccountABI
 })
+
+// useFetch instance for deleting member
+const {
+  error: fetchExpenseAccountDataError,
+  isFetching: isFetchingExpenseAccountData,
+  execute: fetchExpenseAccountData,
+  data: _expenseAccountData
+} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: currentUserAddress,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
 
 const {
   execute: executeSearchUser,
@@ -193,6 +229,12 @@ const {
   .get()
   .json()
 
+const { execute: executeAddExpenseData } = useCustomFetch(`teams/${team.value.id}/expense-data`, {
+  immediate: false
+})
+  .post(expenseAccountData)
+  .json()
+
 watch(searchUserResponse, () => {
   if (searchUserResponse.value?.ok && users.value?.users) {
     foundUsers.value = users.value.users
@@ -202,13 +244,14 @@ watch(searchUserResponse, () => {
 
 const init = async () => {
   await getExpenseAccountOwner()
+  await fetchExpenseAccountData()
 }
 
 const getExpenseAccountOwner = async () => {
   if (team.value.expenseAccountAddress) await executeExpenseAccountGetOwner()
 }
 
-const approveUser = async (data: {}) => {
+const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   const provider = await web3Library.getProvider()
   const signer = await web3Library.getSigner()
@@ -233,7 +276,13 @@ const approveUser = async (data: {}) => {
 
   try {
     const signature = await signer.signTypedData(domain, types, data)
-    console.log(`signature: `, signature)
+    if (typeof data.value === 'bigint') data.value = web3Library.formatEther(data.value)
+    expenseAccountData.value = {
+      expenseAccountData: data,
+      signature
+    }
+    await executeAddExpenseData()
+    emits('getTeam')
   } catch (err) {
     log.error(parseError(err))
     addErrorToast(parseError(err))
@@ -277,6 +326,10 @@ watch(
     if (newVal) await init()
   }
 )
+
+watch(fetchExpenseAccountDataError, (newVal) => {
+  if (newVal) addErrorToast('Error fetching expense account data')
+})
 //#endregion watch success
 
 onMounted(async () => {

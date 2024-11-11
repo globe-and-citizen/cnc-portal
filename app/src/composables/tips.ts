@@ -1,9 +1,5 @@
 import { TipsService } from '@/services/tipsService'
-import type { EventResult, TipsEventType } from '@/types'
-import dayjs from 'dayjs'
-import type { Log } from 'ethers'
 import type { ContractTransaction } from 'ethers'
-import type { EventLog } from 'ethers'
 import { ref } from 'vue'
 
 const tipsService = new TipsService()
@@ -50,38 +46,4 @@ export function useWithdrawTips() {
   }
 
   return { execute: withdraw, isLoading: loading, isSuccess, error, transaction }
-}
-
-export function useTipEvents() {
-  const events = ref<EventResult[]>([])
-  const loading = ref(false)
-  const error = ref<unknown>(null)
-
-  async function getEvents(type: TipsEventType): Promise<void> {
-    try {
-      loading.value = true
-      const response = await tipsService.getEvents(type)
-      events.value = await Promise.all(
-        response.map(async (eventData: EventLog | Log) => {
-          const date = dayjs((await eventData.getBlock()).date).format('DD/MM/YYYY HH:mm')
-
-          return {
-            txHash: eventData.transactionHash,
-            date: date,
-            data: (await tipsService.getContract()).interface.decodeEventLog(
-              type,
-              eventData.data,
-              eventData.topics
-            )
-          }
-        })
-      )
-    } catch (err) {
-      error.value = err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  return { events, getEvents, loading, error }
 }
