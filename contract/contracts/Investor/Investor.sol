@@ -52,6 +52,20 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
         }
     }
 
+    function mint(address _shareholder, uint256 _amount) external onlyOwner whenNotPaused nonReentrant {
+        require(_shareholder != address(0), "Invalid shareholder address");
+        require(_amount > 0, "Invalid amount");
+
+        StockGrant storage stockGrant = stockGrants[_shareholder];
+        require(stockGrant.isActive, "Stock grant is not active");
+
+        stockGrant.totalMinted += _amount;
+        stockGrant.lastMinted = block.timestamp;
+        _mint(_shareholder, _amount);
+
+        emit Minted(_shareholder, _amount);
+    }
+
     function distributeDividends() external payable nonReentrant {
         uint256 totalSupply = totalSupply();
         require(totalSupply > 0, "No tokens minted");
