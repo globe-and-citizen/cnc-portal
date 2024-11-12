@@ -186,6 +186,8 @@ const dynamicDisplayData = computed(() => {
       //@ts-ignore
       return {value: formatEther(amountWithdrawn.value[1]), heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol}
     }
+  } else {
+    return { value: `0.0`, heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
   }
 })
 // const limitBalanceHeading = computed(() => {
