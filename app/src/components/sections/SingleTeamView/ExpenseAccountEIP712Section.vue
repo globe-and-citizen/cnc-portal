@@ -62,17 +62,17 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="max-limit"
             >
-              {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ maxLimit }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
             </div>
           </div>
 
           <div class="pl-3">
-            <div class="stat-title pr-3">Total Withdrawn</div>
+            <div class="stat-title pr-3">{{ dynamicDisplayData?.heading }}</div>
             <div v-if="false" class="stat-value mt-1 pr-3">
               <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
             </div>
             <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
-              {{ totalWithdrawn }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ dynamicDisplayData?.value }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
             </div>
           </div>
         </div>
@@ -176,18 +176,21 @@ const expiry = computed(() => {
     return '--/--/--, --:--:--'
   }
 })
-const totalWithdrawn = computed(() => {
+const dynamicDisplayData = computed(() => {
   if (_expenseAccountData.value?.data) {
     const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
     if (budgetType === 0) {
       //@ts-ignore
-      return Number(amountWithdrawn.value[0])
+      return {value: Number(amountWithdrawn.value[0]), heading: 'Total Transactions', symbol: 'TXs'}
     } else {
       //@ts-ignore
-      return formatEther(amountWithdrawn.value[1])
+      return {value: formatEther(amountWithdrawn.value[1]), heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol}
     }
   }
 })
+// const limitBalanceHeading = computed(() => {
+//   if ()
+// })
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
