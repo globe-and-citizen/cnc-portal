@@ -139,8 +139,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit OwnershipTransferred(owner(), newOwner);
     }
 
-    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
-        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract);
+    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address, address ) {
+        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract, expenseAccountEip712Contract);
     }
     modifier onlyOwners{
         if (msg.sender == owner()) {
