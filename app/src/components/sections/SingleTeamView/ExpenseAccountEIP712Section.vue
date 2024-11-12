@@ -67,12 +67,12 @@
           </div>
 
           <div class="pl-3">
-            <div class="stat-title pr-3">Limit Balance</div>
+            <div class="stat-title pr-3">Total Withdrawn</div>
             <div v-if="false" class="stat-value mt-1 pr-3">
               <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
             </div>
             <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
-              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ totalWithdrawn }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
         </div>
@@ -176,11 +176,23 @@ const expiry = computed(() => {
     return '--/--/--, --:--:--'
   }
 })
+const totalWithdrawn = computed(() => {
+  if (_expenseAccountData.value?.data) {
+    const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
+    if (budgetType === 0) {
+      //@ts-ignore
+      return Number(amountWithdrawn.value[0])
+    } else {
+      //@ts-ignore
+      return formatEther(amountWithdrawn.value[1])
+    }
+  }
+})
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
 const expenseBalanceFormated = ref<string | number>(`0`)
-const digest = ref('0x')
+const digest = ref<string | null>(null)
 //#endregion variable declarations
 
 //#region expense account composable
@@ -214,7 +226,21 @@ const {
   functionName: 'balances',
   address: team.value.expenseAccountEip712Address as Address,
   abi: expenseAccountABI,
-  args: [digest.value] 
+  args: [digest] 
+})
+
+watch(errorGetAmountWithdrawn, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to fetch amount withdrawn')
+  }
+})
+
+watch(digest, async (newVal) => {
+  if (newVal) {
+    await executeGetAmountWithdrawn()
+    console.log(`amountWithdrawn`, amountWithdrawn)
+  }
 })
 
 const {
@@ -239,6 +265,7 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
     await getExpenseAccountBalance()
+    await getAmountWithdrawnBalance()
     transferModal.value = false
   }
 })
@@ -298,22 +325,26 @@ const getDigest = async () => {
   const domain = await getDomain()
   const types = await getTypes()
   if (!_expenseAccountData?.value.data)
-    return `0x`
+    return
   let message =  JSON.parse(_expenseAccountData.value.data)
   if (typeof message.value === 'string')
-    message.value = parseEther(message.value)
-  const digest = hashTypedData({
+    message.value = Number(parseEther(message.value))
+  const _digest = hashTypedData({
     domain: {...domain, chainId: Number(domain.chainId)} , 
     types, 
     primaryType: 'BudgetLimit',
     message
   })
-  return digest
+  //const __digest = ethers.TypedDataEncoder.encode(domain, types, message)
+  console.log(`_digest`, _digest)
+  //console.log(`__digest`, ethers.keccak256(__digest))
+  digest.value = _digest
 }
 const init = async () => {
+  await fetchExpenseAccountData()
   await getExpenseAccountOwner()
   await getExpenseAccountBalance()
-  await fetchExpenseAccountData()
+  await getAmountWithdrawnBalance()
 }
 
 const getExpenseAccountOwner = async () => {
@@ -325,6 +356,15 @@ const getExpenseAccountBalance = async () => {
     await executeGetExpenseBalance()
     expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
     //console.log(`expense balance`, formatEther(expenseBalance.value as bigint))
+  }
+}
+
+const getAmountWithdrawnBalance = async () => {
+  if (team.value.expenseAccountEip712Address) {
+    await getDigest()
+    console.log(`digest`, digest.value)
+    await executeGetAmountWithdrawn()
+    console.log(`amount withdrawn`, amountWithdrawn.value)
   }
 }
 
@@ -347,6 +387,7 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
       abi: expenseAccountABI,
       functionName: 'transfer'
     })
+
     console.log(`getting here...`)
   }
 }
