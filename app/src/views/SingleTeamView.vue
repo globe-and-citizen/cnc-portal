@@ -38,13 +38,14 @@
         </template>
         <template #tab-3>
           <ProposalSection
+            v-if="activeTab == 3"
             :team="team"
             @getTeam="getTeamAPI"
             @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
           />
         </template>
         <template #tab-4>
-          <ExpenseAccountSection v-if="activeTab == 4" :team="team" />
+          <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI" />
         </template>
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />

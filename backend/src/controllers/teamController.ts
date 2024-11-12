@@ -1,10 +1,11 @@
-import { Prisma, PrismaClient, User } from "@prisma/client";
+import { Prisma, /*PrismaClient,*/ User } from "@prisma/client";
 import { Request, Response } from "express";
 import { isAddress } from "ethers";
 import { errorResponse } from "../utils/utils";
-import { addNotification } from "../utils";
+import { addNotification, prisma } from "../utils";
+import exp from "constants";
 
-const prisma = new PrismaClient();
+//const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
   /*
@@ -121,6 +122,12 @@ const getTeam = async (req: Request, res: Response) => {
           select: {
             address: true,
             name: true,
+            memberTeamsData: {
+              select: {
+                expenseAccountData: true,
+                expenseAccountSignature: true
+              }
+            }
           },
         },
       },
@@ -180,6 +187,7 @@ const updateTeam = async (req: Request, res: Response) => {
     votingAddress,
     boardOfDirectorsAddress,
     expenseAccountAddress,
+    expenseAccountEip712Address,
     officerAddress,
     teamContract,
   } = req.body;
@@ -242,6 +250,7 @@ const updateTeam = async (req: Request, res: Response) => {
         boardOfDirectorsAddress,
         expenseAccountAddress,
         officerAddress,
+        expenseAccountEip712Address
       },
       include: {
         members: {
@@ -279,6 +288,9 @@ const deleteTeam = async (req: Request, res: Response) => {
       return errorResponse(403, "Unauthorized", res);
     }
     await prisma.boardOfDirectorActions.deleteMany({
+      where: { teamId: Number(id) }
+    })
+    await prisma.memberTeamsData.deleteMany({
       where: { teamId: Number(id) }
     })
     const teamD = await prisma.team.delete({
@@ -328,6 +340,15 @@ const deleteMember = async (req: Request, res: Response) => {
     // Update the team to disconnect the specified member
     const name = team.name;
     const description = team.description;
+
+    await prisma.memberTeamsData.delete({
+      where: {
+        userAddress_teamId: {
+          userAddress: String(memberAddress),
+          teamId: Number(id)
+        }
+      }
+    })
 
     const updatedTeam = await prisma.team.update({
       where: { id: Number(id) },
@@ -392,6 +413,76 @@ const addMembers = async (req: Request, res: Response) => {
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
 };
+
+//Add Expense Account Data
+export const addExpenseAccountData = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const expenseAccountData = req.body
+
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) }
+    })
+    const ownerAddress = team?.ownerAddress
+    if (callerAddress !== ownerAddress) {
+      return errorResponse(403, `Forbidden`, res)
+    }
+  
+    //create expense account data
+    await prisma.memberTeamsData.upsert({
+      where: {
+        userAddress_teamId: {
+          userAddress: expenseAccountData.expenseAccountData.approvedAddress,
+          teamId: Number(id)
+        }
+      },
+      update: {
+        expenseAccountData: JSON.stringify(expenseAccountData.expenseAccountData),
+        expenseAccountSignature: expenseAccountData.signature
+      },
+      create: {
+        userAddress: expenseAccountData.expenseAccountData.approvedAddress,
+        teamId: Number(id),
+        expenseAccountData: JSON.stringify(expenseAccountData.expenseAccountData),
+        expenseAccountSignature: expenseAccountData.signature
+      }
+    })
+
+    res.status(201)
+      .json({
+        success: true
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  }
+}
+
+export const getExpenseAccountData = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const memberAddress = req.headers.memberaddress;
+
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: String(memberAddress),
+          teamId: Number(id)
+        }
+      }
+    })
+
+    res.status(201)
+      .json({
+        data: memberTeamsData?.expenseAccountData,
+        signature: memberTeamsData?.expenseAccountSignature
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
 
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],

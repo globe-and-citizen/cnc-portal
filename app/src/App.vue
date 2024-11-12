@@ -11,10 +11,16 @@
             showModal = true
           }
         "
-        @withdraw="withdraw()"
-        :withdrawLoading="withdrawLoading"
-        @getBalance="getBalance()"
-        :balance="balance ? balance : '0'"
+        @withdraw="
+          withdraw({
+            abi: TIPS_ABI,
+            address: TIPS_ADDRESS as Address,
+            functionName: 'withdraw'
+          })
+        "
+        :withdrawLoading="withdrawLoading && isConfirmingWithdraw"
+        @getBalance="refetchBalance()"
+        :balance="balance ? formatEther(balance as bigint).toString() : '0'"
         :balanceLoading="balanceLoading"
       />
 
@@ -40,6 +46,7 @@
         <!-- Overlay -->
         <div
           v-if="toggleSide"
+          data-test="drawer"
           class="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
           @click="toggleSide = false"
         ></div>
@@ -83,8 +90,11 @@ import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import { useTipsBalance, useWithdrawTips } from './composables/tips'
 import { useCustomFetch } from './composables/useCustomFetch'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import TIPS_ABI from '@/artifacts/abi/tips.json'
+import { TIPS_ADDRESS } from './constant'
+import { formatEther, type Address } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const toggleSide = ref(true)
@@ -95,20 +105,31 @@ function handleChange() {
 }
 
 const {
-  isSuccess: withdrawSuccess,
-  isLoading: withdrawLoading,
+  isPending: withdrawLoading,
   error: withdrawError,
-  execute: withdraw
-} = useWithdrawTips()
+  writeContract: withdraw,
+  data: withdrawHash
+} = useWriteContract()
+
+const { isPending: isConfirmingWithdraw, isSuccess: isSuccessConfirmed } =
+  useWaitForTransactionReceipt({
+    hash: withdrawHash
+  })
+
+const userStore = useUserDataStore()
+const { name, address } = storeToRefs(userStore)
+
 const {
   data: balance,
   isLoading: balanceLoading,
   error: balanceError,
-  execute: getBalance
-} = useTipsBalance()
-
-const userStore = useUserDataStore()
-const { name, address } = storeToRefs(userStore)
+  refetch: refetchBalance
+} = useReadContract({
+  abi: TIPS_ABI,
+  address: TIPS_ADDRESS as Address,
+  functionName: 'getBalance',
+  args: [address.value as Address]
+})
 
 const updateUserInput = ref({
   name: name.value,
@@ -149,16 +170,6 @@ watch([() => userIsUpdating.value, () => userUpdateError.value], () => {
   }
 })
 
-watch(
-  () => userStore.isAuth,
-  (isAuth) => {
-    if (isAuth === true) {
-      getBalance()
-    }
-  },
-  { immediate: true }
-)
-
 watch(balanceError, () => {
   if (balanceError.value) {
     addErrorToast('Failed to Get balance')
@@ -168,8 +179,8 @@ watch(withdrawError, () => {
   addErrorToast('Failed to withdraw tips')
 })
 
-watch(withdrawSuccess, () => {
-  if (withdrawSuccess.value) {
+watch(isConfirmingWithdraw, (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isSuccessConfirmed.value) {
     addSuccessToast('Tips withdrawn successfully')
   }
 })

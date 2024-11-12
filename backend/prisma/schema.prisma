@@ -22,6 +22,7 @@ model User {
   ownedTeams                Team[]  @relation("OwnedTeams")
   notifications             Notification[]
   BoardOfDirectorActions    BoardOfDirectorActions[]
+  memberTeamsData           MemberTeamsData[]
 }
 
 model Team {
@@ -36,8 +37,22 @@ model Team {
   boardOfDirectorsAddress   String?
   expenseAccountAddress     String?
   officerAddress            String?
+  expenseAccountEip712Address     String?
   BoardOfDirectorActions    BoardOfDirectorActions[]
   teamContracts TeamContract[]
+  memberTeamsData           MemberTeamsData[]
+}
+
+model MemberTeamsData {
+  id                        Int      @id @default(autoincrement())  // Add an ID for easy referencing
+  user                      User     @relation(fields: [userAddress], references: [address])
+  team                      Team     @relation(fields: [teamId], references: [id])
+  userAddress               String
+  teamId                    Int
+  expenseAccountData        String?
+  expenseAccountSignature   String?
+
+  @@unique([userAddress, teamId]) 
 }
 
 model Notification {
