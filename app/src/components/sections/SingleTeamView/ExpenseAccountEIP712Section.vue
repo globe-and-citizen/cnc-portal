@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-y-4">
     <div
-      v-if="team.expenseAccountAddress"
+      v-if="team.expenseAccountEip712Address"
       class="stats bg-green-100 flex text-primary-content border-outline justify-center items-center p-5 overflow-visible"
     >
       <!-- Expense A/c Info Section -->
@@ -16,9 +16,9 @@
             <span
               class="badge badge-sm cursor-pointer"
               data-test="expense-account-address"
-              @click="openExplorer(team.expenseAccountAddress)"
+              @click="openExplorer(team.expenseAccountEip712Address)"
               :class="`${team.ownerAddress == currentUserAddress ? 'badge-primary' : 'badge-secondary'}`"
-              >{{ team.expenseAccountAddress }}</span
+              >{{ team.expenseAccountEip712Address }}</span
             >
           </ToolTip>
           <ToolTip
@@ -28,7 +28,7 @@
             <ClipboardDocumentListIcon
               v-if="isSupported && !copied"
               class="size-5 cursor-pointer"
-              @click="copy(team.expenseAccountAddress)"
+              @click="copy(team.expenseAccountEip712Address)"
             />
             <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
           </ToolTip>
@@ -177,7 +177,7 @@ const expiry = computed(() => {
   }
 })
 const dynamicDisplayData = computed(() => {
-  if (_expenseAccountData.value?.data) {
+  if (_expenseAccountData.value?.data && amountWithdrawn.value) {
     const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
     if (budgetType === 0) {
       //@ts-ignore
