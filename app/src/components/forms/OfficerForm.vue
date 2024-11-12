@@ -367,7 +367,6 @@ const deployOfficerContract = async () => {
 
 // Deploy Bank
 const deployBankAccount = async () => {
-  console.log(`TIPS_ADDRES`, TIPS_ADDRESS)
   deployBank({
     address: props.team.officerAddress,
     abi: OfficerABI,
