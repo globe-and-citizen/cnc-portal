@@ -375,8 +375,8 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data ) {
 
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-    //const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
-    const { v, r, s } = ethers.Signature.from(_expenseAccountData.value.signature)
+    const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
+    //const { v, r, s } = ethers.Signature.from(_expenseAccountData.value.signature)
 
     if (typeof budgetLimit.value === "string") budgetLimit.value = parseEther(budgetLimit.value) 
 

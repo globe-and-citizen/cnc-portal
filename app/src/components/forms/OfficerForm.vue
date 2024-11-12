@@ -497,7 +497,7 @@ onMounted(() => {
       votingAddress: temp[3] as string,
       bodAddress: temp[4] as string,
       expenseAccountAddress: temp[5] as string,
-      expenseAccountEip712Address: temp[5] as string
+      expenseAccountEip712Address: temp[6] as string
     }
     if (team) {
       if (team.founders?.length === 0) {
