@@ -11,12 +11,12 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
 
   function initialize(string calldata _name, string calldata _symbol) external initializer {
     __ERC20_init(_name, _symbol);
-    __Ownable_init();
+    __Ownable_init(msg.sender);
     __ReentrancyGuard_init();
     __Pausable_init();
   }
 
-  function distributeMint(address[] shareholders, uint256 amount) external onlyOwner whenNotPaused nonReentrant {
+  function distributeMint(address[] memory shareholders, uint256 amount) external onlyOwner whenNotPaused nonReentrant {
     for (uint256 i = 0; i < shareholders.length; i++) {
       address shareholder = shareholders[i];
       _mint(shareholder, amount);
