@@ -124,10 +124,10 @@ export class AddCampaignService implements IAddCampaignService {
       deployer: deployerAddress,
       admins: [deployerAddress]
     }
-    const result = await useCustomFetch<string>(`teams/${teamId}`)
+    await useCustomFetch<string>(`teams/${teamId}`)
       .put({ teamContract: contractPayload })
       .json()
-    console.log('the result is ===========', result)
+    
     return adCamapaignAddress
   }
 
