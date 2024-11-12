@@ -37,7 +37,7 @@
         <div class="flex items-center pt-3 mt-10" style="border-width: 0">
           <div>
             <div class="stat-title pr-3">Balance</div>
-            <div v-if="false" class="stat-value mt-1 border-r border-gray-400 pr-3">
+            <div v-if="isLoadingGetExpenseBalance" class="stat-value mt-1 border-r border-gray-400 pr-3">
               <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
             </div>
             <div
@@ -45,7 +45,7 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="contract-balance"
             >
-              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
 
@@ -85,7 +85,7 @@
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
           <button
             class="btn btn-secondary"
-            :disabled="currentUserAddress !== contractOwnerAddress"
+            :disabled="!_expenseAccountData?.data"
             v-if="true"
             @click="transferModal = true"
             data-test="transfer-button"
@@ -97,10 +97,10 @@
           <TransferFromBankForm
             v-if="transferModal"
             @close-modal="() => (transferModal = false)"
-            @transfer="async (to: string, amount: string) => {}"
+            @transfer="async (to: string, amount: string) => {await transferFromExpenseAccount(to, amount)}"
             @searchMembers="(input) => searchUsers({ name: '', address: input })"
             :filteredMembers="foundUsers"
-            :loading="false"
+            :loading="isLoadingTransfer || isConfirmingTransfer"
             :bank-balance="`${'0.0'}`"
             service="Expense Account"
           />
@@ -144,9 +144,10 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { useReadContract } from '@wagmi/vue'
-import expenseAccountABI from '@/artifacts/abi/expense-account.json'
-import type { Address } from 'viem'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
+import { type Address, formatEther, parseEther, parseSignature, hashTypedData} from 'viem'
+import { ethers } from 'ethers'
 
 //#endregion imports
 
@@ -172,12 +173,14 @@ const expiry = computed(() => {
     const date = new Date(Number(unixEpoch) * 1000)
     return date.toLocaleString('en-US')
   } else {
-    return '00/00/0000, --:--:--'
+    return '--/--/--, --:--:--'
   }
 })
-const { addErrorToast } = useToastStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
+const expenseBalanceFormated = ref<string | number>(`0`)
+const digest = ref('0x')
 //#endregion variable declarations
 
 //#region expense account composable
@@ -187,8 +190,57 @@ const {
   error: errorGetOwner
 } = useReadContract({
   functionName: 'owner',
-  address: team.value.expenseAccountAddress as Address,
+  address: team.value.expenseAccountEip712Address as Address,
   abi: expenseAccountABI
+})
+
+const {
+  data: expenseBalance,
+  refetch: executeGetExpenseBalance,
+  error: errorGetExpenseBalance,
+  isLoading: isLoadingGetExpenseBalance
+} = useReadContract({
+  functionName: 'getBalance',
+  address: team.value.expenseAccountEip712Address as Address,
+  abi: expenseAccountABI
+})
+
+const {
+  data: amountWithdrawn,
+  refetch: executeGetAmountWithdrawn,
+  error: errorGetAmountWithdrawn,
+  isLoading: isLoadingGetAmountWithdrawn
+} = useReadContract({
+  functionName: 'balances',
+  address: team.value.expenseAccountEip712Address as Address,
+  abi: expenseAccountABI,
+  args: [digest.value] 
+})
+
+const {
+  writeContract: executeExpenseAccountTransfer,
+  isPending: isLoadingTransfer,
+  error: errorTransfer,
+  data: transferHash
+} = useWriteContract()
+
+watch(errorTransfer, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to transfer')
+  }
+})
+
+const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
+  useWaitForTransactionReceipt({
+    hash: transferHash
+  })
+watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
+    addSuccessToast('Transfer Successful')
+    await getExpenseAccountBalance()
+    transferModal.value = false
+  }
 })
 
 // useFetch instance for deleting member
@@ -240,15 +292,87 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-//#region helper functions
 
+//#region helper functions
+const getDigest = async () => {
+  const domain = await getDomain()
+  const types = await getTypes()
+  if (!_expenseAccountData?.value.data)
+    return `0x`
+  let message =  JSON.parse(_expenseAccountData.value.data)
+  if (typeof message.value === 'string')
+    message.value = parseEther(message.value)
+  const digest = hashTypedData({
+    domain: {...domain, chainId: Number(domain.chainId)} , 
+    types, 
+    primaryType: 'BudgetLimit',
+    message
+  })
+  return digest
+}
 const init = async () => {
   await getExpenseAccountOwner()
+  await getExpenseAccountBalance()
   await fetchExpenseAccountData()
 }
 
 const getExpenseAccountOwner = async () => {
-  if (team.value.expenseAccountAddress) await executeExpenseAccountGetOwner()
+  if (team.value.expenseAccountEip712Address) await executeExpenseAccountGetOwner()
+}
+
+const getExpenseAccountBalance = async () => {
+  if (team.value.expenseAccountEip712Address) {
+    await executeGetExpenseBalance()
+    expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
+    //console.log(`expense balance`, formatEther(expenseBalance.value as bigint))
+  }
+}
+
+const transferFromExpenseAccount = async (to: string, amount: string) => {
+  if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data ) {
+
+    const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+    //const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
+    const { v, r, s } = ethers.Signature.from(_expenseAccountData.value.signature)
+
+    if (typeof budgetLimit.value === "string") budgetLimit.value = parseEther(budgetLimit.value) 
+
+    console.log(`v`, v, `r`, r, `s`, s)
+    console.log(`budgetLimit`, budgetLimit)
+    console.log(`signature`, _expenseAccountData.value.signature)
+
+    executeExpenseAccountTransfer({
+      address: team.value.expenseAccountEip712Address as Address,
+      args: [to, parseEther(amount), budgetLimit, v, r, s],
+      abi: expenseAccountABI,
+      functionName: 'transfer'
+    })
+    console.log(`getting here...`)
+  }
+}
+
+const getDomain = async () => {
+  const provider = await web3Library.getProvider()
+  const chainId = (await provider.getNetwork()).chainId
+  const verifyingContract = team.value.expenseAccountEip712Address as Address
+
+  return {
+    name: 'CNCExpenseAccount',
+    version: '1',
+    chainId,//: 31337n,
+    verifyingContract//: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+  }
+}
+
+const getTypes = async () => {
+  return {
+    BudgetLimit: [
+      { name: 'approvedAddress', type: 'address' },
+      { name: 'budgetType', type: 'uint8' },
+      { name: 'value', type: 'uint256' },
+      { name: 'expiry', type: 'uint256' }
+    ]
+  }
 }
 
 const approveUser = async (data: BudgetLimit) => {
@@ -256,13 +380,13 @@ const approveUser = async (data: BudgetLimit) => {
   const provider = await web3Library.getProvider()
   const signer = await web3Library.getSigner()
   const chainId = (await provider.getNetwork()).chainId
-  const verifyingContract = team.value.expenseAccountAddress
+  const verifyingContract = team.value.expenseAccountEip712Address
 
   const domain = {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId,
-    verifyingContract
+    chainId,//: 31337n,
+    verifyingContract//: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
   }
 
   const types = {
@@ -334,5 +458,6 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 
 onMounted(async () => {
   await init()
+  // console.log(`expense account data`, _expenseAccountData.value)
 })
 </script>
