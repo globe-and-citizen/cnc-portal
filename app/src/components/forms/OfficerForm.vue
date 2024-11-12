@@ -124,6 +124,21 @@
                 data-test="loading-deploy-expense"
                 v-if="isLoadingDeployExpense || isConfirmingDeployExpense"
               />
+
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="!isExpenseEip712Deployed && !isLoadingDeployExpenseEip712 && !isConfirmingDeployExpenseEip712"
+                @click="deployExpenseAccountEip712"
+                data-test="deployExpenseButtonEip712"
+              >
+                Deploy Expense EIP712
+              </button>
+              <LoadingButton
+                :color="'primary min-w-24'"
+                data-test="loading-deploy-expense-eip712"
+                v-if="isLoadingDeployExpenseEip712 || isConfirmingDeployExpenseEip712"
+              />
+
               <button
                 class="btn btn-primary btn-sm"
                 v-if="!isVotingDeployed && !isLoadingDeployVoting && !isConfirmingDeployVoting"
@@ -166,7 +181,8 @@ import {
   TIPS_ADDRESS,
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   OFFICER_BEACON,
-  VOTING_BEACON_ADDRESS
+  VOTING_BEACON_ADDRESS,
+  EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
 } from '@/constant'
 import { useWatchContractEvent } from '@wagmi/vue'
 
@@ -180,6 +196,7 @@ const isBankDeployed = ref(false)
 const isVotingDeployed = ref(false)
 const isBoDDeployed = ref(false)
 const isExpenseDeployed = ref(false)
+const isExpenseEip712Deployed = ref(false)
 const founders = ref<string[]>([])
 const members = ref<string[]>([])
 
@@ -226,6 +243,21 @@ const { isLoading: isConfirmingDeployExpense, isSuccess: isConfirmedDeployExpens
 watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployExpense.value) {
     addSuccessToast('Expense account deployed successfully')
+    emits('getTeam')
+  }
+})
+
+const {
+  writeContract: deployExpenseEip712,
+  isPending: isLoadingDeployExpenseEip712,
+  data: deployExpenseEip712Hash,
+  error: deployExpenseEip712Error
+} = useWriteContract()
+const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeployExpenseEip712 } =
+  useWaitForTransactionReceipt({ hash: deployExpenseEip712Hash })
+watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployExpenseEip712.value) {
+    addSuccessToast('Expense EIP712 account deployed successfully')
     emits('getTeam')
   }
 })
@@ -305,7 +337,8 @@ const deployOfficerContract = async () => {
         BANK_BEACON_ADDRESS,
         VOTING_BEACON_ADDRESS,
         BOD_BEACON_ADDRESS,
-        EXPENSE_ACCOUNT_BEACON_ADDRESS
+        EXPENSE_ACCOUNT_BEACON_ADDRESS,
+        EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
       ]
     })
 
@@ -348,6 +381,13 @@ const deployExpenseAccount = async () => {
   })
 }
 
+const deployExpenseAccountEip712 = async () => {
+  deployExpenseEip712({
+    address: props.team.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployExpenseAccountEip712'
+  })
+}
 // Watch officer team data and update state
 watch(officerTeam, async (value) => {
   const temp: Array<Object> = value as Array<Object>
