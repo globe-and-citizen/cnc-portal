@@ -124,10 +124,8 @@ export class AddCampaignService implements IAddCampaignService {
       deployer: deployerAddress,
       admins: [deployerAddress]
     }
-    await useCustomFetch<string>(`teams/${teamId}`)
-      .put({ teamContract: contractPayload })
-      .json()
-    
+    await useCustomFetch<string>(`teams/${teamId}`).put({ teamContract: contractPayload }).json()
+
     return adCamapaignAddress
   }
 
