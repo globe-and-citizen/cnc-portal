@@ -6,10 +6,17 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {StockGrant} from "./types/StockGrant.sol";
 
 contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    struct StockGrant {
+        address shareholder;
+        uint256 amount;
+        uint256 lastMinted;
+        uint256 totalMinted;
+        bool isActive;
+    }
 
     EnumerableSet.AddressSet private shareholders;
     mapping(address => StockGrant) private stockGrants;
