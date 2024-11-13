@@ -89,7 +89,7 @@ vi.mock('viem', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
     ...actual,
-    parseSignature: vi.fn(), 
+    parseSignature: vi.fn(),
     hashTypedData: vi.fn()
   }
 })
@@ -305,7 +305,7 @@ describe('ExpenseAccountSection', () => {
       it('should retrieve, format and display expiry date', async () => {
         const date = new Date(DATE)
         const expiry = date.toLocaleString('en-US')
-        console.log(`wrapper`, wrapper.vm)
+
         const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
         expect(approvalExpiry.exists()).toBe(true)
 

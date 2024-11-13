@@ -353,9 +353,7 @@ const getDigest = async () => {
     primaryType: 'BudgetLimit',
     message
   })
-  //const __digest = ethers.TypedDataEncoder.encode(domain, types, message)
-  console.log(`_digest`, _digest)
-  //console.log(`__digest`, ethers.keccak256(__digest))
+
   digest.value = _digest
 }
 const init = async () => {
@@ -373,16 +371,13 @@ const getExpenseAccountBalance = async () => {
   if (team.value.expenseAccountEip712Address) {
     await executeGetExpenseBalance()
     expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
-    //console.log(`expense balance`, formatEther(expenseBalance.value as bigint))
   }
 }
 
 const getAmountWithdrawnBalance = async () => {
   if (team.value.expenseAccountEip712Address) {
     await getDigest()
-    console.log(`digest`, digest.value)
     await executeGetAmountWithdrawn()
-    console.log(`amount withdrawn`, amountWithdrawn.value)
   }
 }
 
@@ -390,13 +385,8 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
     const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
-    //const { v, r, s } = ethers.Signature.from(_expenseAccountData.value.signature)
 
     if (typeof budgetLimit.value === 'string') budgetLimit.value = parseEther(budgetLimit.value)
-
-    console.log(`v`, v, `r`, r, `s`, s)
-    console.log(`budgetLimit`, budgetLimit)
-    console.log(`signature`, _expenseAccountData.value.signature)
 
     executeExpenseAccountTransfer({
       address: team.value.expenseAccountEip712Address as Address,
@@ -404,8 +394,6 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
       abi: expenseAccountABI,
       functionName: 'transfer'
     })
-
-    console.log(`getting here...`)
   }
 }
 
