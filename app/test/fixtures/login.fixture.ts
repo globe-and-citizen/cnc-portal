@@ -24,7 +24,6 @@ export const test = metaMaskFixtures(basicSetup).extend<{
         window.localStorage.setItem('authToken', '1234567890')
       })
       await page.reload()
-      await metamask.connectToDapp()
     })
   }
 })
