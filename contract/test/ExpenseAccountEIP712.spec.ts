@@ -9,9 +9,9 @@ describe('ExpenseAccount (EIP712)', () => {
   const deployContract = async (owner: SignerWithAddress) => {
     const ExpenseAccountImplementation = await ethers.getContractFactory('ExpenseAccountEIP712')
     expenseAccountProxy = (await upgrades.deployProxy(
-      ExpenseAccountImplementation, 
-      [owner.address], 
-      {initializer: 'initialize'}
+      ExpenseAccountImplementation,
+      [owner.address],
+      { initializer: 'initialize' }
     )) as unknown as ExpenseAccountEIP712
   }
 
