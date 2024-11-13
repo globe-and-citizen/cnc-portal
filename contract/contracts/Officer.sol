@@ -123,7 +123,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
         return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract);
     }
-
     modifier onlyOwners{
         if (msg.sender == owner()) {
              _;
