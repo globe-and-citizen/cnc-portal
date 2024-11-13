@@ -48,6 +48,10 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
     emit Minted(shareholder, amount);
   }
 
+  function getShareHolders() external view returns (address[] memory) {
+    return shareholders.values();
+  }
+
   function pause() external onlyOwner {
     _pause();
   }
