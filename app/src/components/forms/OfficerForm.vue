@@ -136,7 +136,11 @@
 
               <button
                 class="btn btn-primary btn-sm"
-                v-if="!isExpenseEip712Deployed && !isLoadingDeployExpenseEip712 && !isConfirmingDeployExpenseEip712"
+                v-if="
+                  !isExpenseEip712Deployed &&
+                  !isLoadingDeployExpenseEip712 &&
+                  !isConfirmingDeployExpenseEip712
+                "
                 @click="deployExpenseAccountEip712"
                 data-test="deployExpenseButtonEip712"
               >
@@ -260,8 +264,8 @@ watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
 const {
   writeContract: deployExpenseEip712,
   isPending: isLoadingDeployExpenseEip712,
-  data: deployExpenseEip712Hash,
-  error: deployExpenseEip712Error
+  data: deployExpenseEip712Hash
+  //error: deployExpenseEip712Error
 } = useWriteContract()
 const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeployExpenseEip712 } =
   useWaitForTransactionReceipt({ hash: deployExpenseEip712Hash })

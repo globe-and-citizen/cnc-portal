@@ -37,7 +37,10 @@
         <div class="flex items-center pt-3 mt-10" style="border-width: 0">
           <div>
             <div class="stat-title pr-3">Balance</div>
-            <div v-if="isLoadingGetExpenseBalance" class="stat-value mt-1 border-r border-gray-400 pr-3">
+            <div
+              v-if="isLoadingGetExpenseBalance"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
               <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
             </div>
             <div
@@ -72,7 +75,8 @@
               <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
             </div>
             <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
-              {{ dynamicDisplayData?.value }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
+              {{ dynamicDisplayData?.value }}
+              <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
             </div>
           </div>
         </div>
@@ -97,7 +101,11 @@
           <TransferFromBankForm
             v-if="transferModal"
             @close-modal="() => (transferModal = false)"
-            @transfer="async (to: string, amount: string) => {await transferFromExpenseAccount(to, amount)}"
+            @transfer="
+              async (to: string, amount: string) => {
+                await transferFromExpenseAccount(to, amount)
+              }
+            "
             @searchMembers="(input) => searchUsers({ name: '', address: input })"
             :filteredMembers="foundUsers"
             :loading="isLoadingTransfer || isConfirmingTransfer"
@@ -146,8 +154,7 @@ import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, parseSignature, hashTypedData} from 'viem'
-import { ethers } from 'ethers'
+import { type Address, formatEther, parseEther, parseSignature, hashTypedData } from 'viem'
 
 //#endregion imports
 
@@ -181,10 +188,18 @@ const dynamicDisplayData = computed(() => {
     const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
     if (budgetType === 0) {
       //@ts-ignore
-      return {value: Number(amountWithdrawn.value[0]), heading: 'Total Transactions', symbol: 'TXs'}
+      return {
+        value: Number(amountWithdrawn.value[0]),
+        heading: 'Total Transactions',
+        symbol: 'TXs'
+      }
     } else {
       //@ts-ignore
-      return {value: formatEther(amountWithdrawn.value[1]), heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol}
+      return {
+        value: formatEther(amountWithdrawn.value[1]),
+        heading: 'Total Withdrawn',
+        symbol: NETWORK.currencySymbol
+      }
     }
   } else {
     return { value: `0.0`, heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
@@ -214,7 +229,7 @@ const {
 const {
   data: expenseBalance,
   refetch: executeGetExpenseBalance,
-  error: errorGetExpenseBalance,
+  //error: errorGetExpenseBalance,
   isLoading: isLoadingGetExpenseBalance
 } = useReadContract({
   functionName: 'getBalance',
@@ -225,13 +240,13 @@ const {
 const {
   data: amountWithdrawn,
   refetch: executeGetAmountWithdrawn,
-  error: errorGetAmountWithdrawn,
-  isLoading: isLoadingGetAmountWithdrawn
+  error: errorGetAmountWithdrawn
+  //isLoading: isLoadingGetAmountWithdrawn
 } = useReadContract({
   functionName: 'balances',
   address: team.value.expenseAccountEip712Address as Address,
   abi: expenseAccountABI,
-  args: [digest] 
+  args: [digest]
 })
 
 watch(errorGetAmountWithdrawn, (newVal) => {
@@ -329,14 +344,12 @@ watch(searchUserResponse, () => {
 const getDigest = async () => {
   const domain = await getDomain()
   const types = await getTypes()
-  if (!_expenseAccountData?.value.data)
-    return
-  let message =  JSON.parse(_expenseAccountData.value.data)
-  if (typeof message.value === 'string')
-    message.value = Number(parseEther(message.value))
+  if (!_expenseAccountData?.value.data) return
+  let message = JSON.parse(_expenseAccountData.value.data)
+  if (typeof message.value === 'string') message.value = Number(parseEther(message.value))
   const _digest = hashTypedData({
-    domain: {...domain, chainId: Number(domain.chainId)} , 
-    types, 
+    domain: { ...domain, chainId: Number(domain.chainId) },
+    types,
     primaryType: 'BudgetLimit',
     message
   })
@@ -374,13 +387,12 @@ const getAmountWithdrawnBalance = async () => {
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
-  if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data ) {
-
+  if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
     const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
     //const { v, r, s } = ethers.Signature.from(_expenseAccountData.value.signature)
 
-    if (typeof budgetLimit.value === "string") budgetLimit.value = parseEther(budgetLimit.value) 
+    if (typeof budgetLimit.value === 'string') budgetLimit.value = parseEther(budgetLimit.value)
 
     console.log(`v`, v, `r`, r, `s`, s)
     console.log(`budgetLimit`, budgetLimit)
@@ -405,8 +417,8 @@ const getDomain = async () => {
   return {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId,//: 31337n,
-    verifyingContract//: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+    chainId, //: 31337n,
+    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
   }
 }
 
@@ -431,8 +443,8 @@ const approveUser = async (data: BudgetLimit) => {
   const domain = {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId,//: 31337n,
-    verifyingContract//: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+    chainId, //: 31337n,
+    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
   }
 
   const types = {
