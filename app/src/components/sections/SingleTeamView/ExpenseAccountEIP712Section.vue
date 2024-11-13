@@ -187,15 +187,15 @@ const dynamicDisplayData = computed(() => {
   if (_expenseAccountData.value?.data && amountWithdrawn.value) {
     const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
     if (budgetType === 0) {
-      //@ts-ignore
       return {
+        //@ts-ignore
         value: Number(amountWithdrawn.value[0]),
         heading: 'Total Transactions',
         symbol: 'TXs'
       }
     } else {
-      //@ts-ignore
       return {
+        //@ts-ignore
         value: formatEther(amountWithdrawn.value[1]),
         heading: 'Total Withdrawn',
         symbol: NETWORK.currencySymbol
