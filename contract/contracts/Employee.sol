@@ -9,12 +9,17 @@ import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  struct Salary {
+    uint256 amount;
+    bytes8 symbol;
+  }
+
   // Struct for employee offers with better packing
   struct EmployeeOffer {
     bool isActive;
     uint256 startDate;
     uint256 endDate;
-    uint256 salary;
+    Salary salary;
     string contractUrl;
   }
 
@@ -54,13 +59,13 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
   // Create a new offer for an employee with added checks and status management
   function createOffer(
     address _employee,
-    string memory _contractUrl,
-    uint256 _salary,
+    string calldata _contractUrl,
+    Salary calldata _salary,
     uint256 _endDate
   ) external onlyOwner nonReentrant whenNotPaused {
     require(_employee != address(0), 'Invalid employee address');
     require(bytes(_contractUrl).length > 0, 'Invalid contract URL');
-    require(_salary > 0, 'Invalid salary');
+    require(_salary.amount > 0, 'Invalid salary');
     require(_endDate > block.timestamp, 'End date must be in the future');
 
     // If this is a new employee, add to the employees set
@@ -76,7 +81,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
       endDate: _endDate
     });
 
-    emit EmployeeOffered(_employee, _salary, _contractUrl);
+    emit EmployeeOffered(_employee, _salary.amount, _contractUrl);
   }
 
   // Employee resigns from an active offer
@@ -89,7 +94,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
 
     emit EmployeeResigned(
       msg.sender,
-      activeOffer.salary,
+      activeOffer.salary.amount,
       activeOffer.contractUrl
     );
   }
@@ -102,7 +107,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     activeOffer.isActive = false;
     activeOffer.endDate = block.timestamp;
 
-    emit EmployeeFired(_employee, activeOffer.salary, activeOffer.contractUrl);
+    emit EmployeeFired(_employee, activeOffer.salary.amount, activeOffer.contractUrl);
   }
 
   // List all employees
