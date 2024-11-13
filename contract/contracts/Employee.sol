@@ -23,11 +23,6 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     string contractUrl;
   }
 
-  struct EmployeeOffers {
-    EmployeeOffer activeOffer;
-    EmployeeOffer pendingOffer;
-  }
-
   // Using EnumerableSet for more efficient storage of employee addresses
   EnumerableSet.AddressSet private employees;
   mapping(address => EmployeeOffer) private employeeOffers;
