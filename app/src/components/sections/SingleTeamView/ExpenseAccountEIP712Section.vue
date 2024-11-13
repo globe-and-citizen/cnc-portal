@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-y-4">
     <div
-      v-if="team.expenseAccountAddress"
+      v-if="team.expenseAccountEip712Address"
       class="stats bg-green-100 flex text-primary-content border-outline justify-center items-center p-5 overflow-visible"
     >
       <!-- Expense A/c Info Section -->
@@ -16,9 +16,9 @@
             <span
               class="badge badge-sm cursor-pointer"
               data-test="expense-account-address"
-              @click="openExplorer(team.expenseAccountAddress)"
+              @click="openExplorer(team.expenseAccountEip712Address)"
               :class="`${team.ownerAddress == currentUserAddress ? 'badge-primary' : 'badge-secondary'}`"
-              >{{ team.expenseAccountAddress }}</span
+              >{{ team.expenseAccountEip712Address }}</span
             >
           </ToolTip>
           <ToolTip
@@ -28,7 +28,7 @@
             <ClipboardDocumentListIcon
               v-if="isSupported && !copied"
               class="size-5 cursor-pointer"
-              @click="copy(team.expenseAccountAddress)"
+              @click="copy(team.expenseAccountEip712Address)"
             />
             <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
           </ToolTip>
@@ -37,7 +37,10 @@
         <div class="flex items-center pt-3 mt-10" style="border-width: 0">
           <div>
             <div class="stat-title pr-3">Balance</div>
-            <div v-if="false" class="stat-value mt-1 border-r border-gray-400 pr-3">
+            <div
+              v-if="isLoadingGetExpenseBalance"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
               <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
             </div>
             <div
@@ -45,7 +48,7 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="contract-balance"
             >
-              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
 
@@ -62,17 +65,18 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="max-limit"
             >
-              {{ maxLimit }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ maxLimit }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
             </div>
           </div>
 
           <div class="pl-3">
-            <div class="stat-title pr-3">Limit Balance</div>
+            <div class="stat-title pr-3">{{ dynamicDisplayData?.heading }}</div>
             <div v-if="false" class="stat-value mt-1 pr-3">
               <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
             </div>
             <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
-              {{ `0.0` }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ dynamicDisplayData?.value }}
+              <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
             </div>
           </div>
         </div>
@@ -85,7 +89,7 @@
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
           <button
             class="btn btn-secondary"
-            :disabled="currentUserAddress !== contractOwnerAddress"
+            :disabled="!_expenseAccountData?.data"
             v-if="true"
             @click="transferModal = true"
             data-test="transfer-button"
@@ -97,10 +101,14 @@
           <TransferFromBankForm
             v-if="transferModal"
             @close-modal="() => (transferModal = false)"
-            @transfer="async (to: string, amount: string) => {}"
+            @transfer="
+              async (to: string, amount: string) => {
+                await transferFromExpenseAccount(to, amount)
+              }
+            "
             @searchMembers="(input) => searchUsers({ name: '', address: input })"
             :filteredMembers="foundUsers"
-            :loading="false"
+            :loading="isLoadingTransfer || isConfirmingTransfer"
             :bank-balance="`${'0.0'}`"
             service="Expense Account"
           />
@@ -144,9 +152,9 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { useReadContract } from '@wagmi/vue'
-import expenseAccountABI from '@/artifacts/abi/expense-account.json'
-import type { Address } from 'viem'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
+import { type Address, formatEther, parseEther, parseSignature, hashTypedData } from 'viem'
 
 //#endregion imports
 
@@ -172,12 +180,39 @@ const expiry = computed(() => {
     const date = new Date(Number(unixEpoch) * 1000)
     return date.toLocaleString('en-US')
   } else {
-    return '00/00/0000, --:--:--'
+    return '--/--/--, --:--:--'
   }
 })
-const { addErrorToast } = useToastStore()
+const dynamicDisplayData = computed(() => {
+  if (_expenseAccountData.value?.data && amountWithdrawn.value) {
+    const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
+    if (budgetType === 0) {
+      return {
+        //@ts-ignore
+        value: Number(amountWithdrawn.value[0]),
+        heading: 'Total Transactions',
+        symbol: 'TXs'
+      }
+    } else {
+      return {
+        //@ts-ignore
+        value: formatEther(amountWithdrawn.value[1]),
+        heading: 'Total Withdrawn',
+        symbol: NETWORK.currencySymbol
+      }
+    }
+  } else {
+    return { value: `0.0`, heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
+  }
+})
+// const limitBalanceHeading = computed(() => {
+//   if ()
+// })
+const { addErrorToast, addSuccessToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
+const expenseBalanceFormated = ref<string | number>(`0`)
+const digest = ref<string | null>(null)
 //#endregion variable declarations
 
 //#region expense account composable
@@ -187,8 +222,72 @@ const {
   error: errorGetOwner
 } = useReadContract({
   functionName: 'owner',
-  address: team.value.expenseAccountAddress as Address,
+  address: team.value.expenseAccountEip712Address as Address,
   abi: expenseAccountABI
+})
+
+const {
+  data: expenseBalance,
+  refetch: executeGetExpenseBalance,
+  //error: errorGetExpenseBalance,
+  isLoading: isLoadingGetExpenseBalance
+} = useReadContract({
+  functionName: 'getBalance',
+  address: team.value.expenseAccountEip712Address as Address,
+  abi: expenseAccountABI
+})
+
+const {
+  data: amountWithdrawn,
+  refetch: executeGetAmountWithdrawn,
+  error: errorGetAmountWithdrawn
+  //isLoading: isLoadingGetAmountWithdrawn
+} = useReadContract({
+  functionName: 'balances',
+  address: team.value.expenseAccountEip712Address as Address,
+  abi: expenseAccountABI,
+  args: [digest]
+})
+
+watch(errorGetAmountWithdrawn, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to fetch amount withdrawn')
+  }
+})
+
+watch(digest, async (newVal) => {
+  if (newVal) {
+    await executeGetAmountWithdrawn()
+    console.log(`amountWithdrawn`, amountWithdrawn)
+  }
+})
+
+const {
+  writeContract: executeExpenseAccountTransfer,
+  isPending: isLoadingTransfer,
+  error: errorTransfer,
+  data: transferHash
+} = useWriteContract()
+
+watch(errorTransfer, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to transfer')
+  }
+})
+
+const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
+  useWaitForTransactionReceipt({
+    hash: transferHash
+  })
+watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
+    addSuccessToast('Transfer Successful')
+    await getExpenseAccountBalance()
+    await getAmountWithdrawnBalance()
+    transferModal.value = false
+  }
 })
 
 // useFetch instance for deleting member
@@ -240,15 +339,86 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-//#region helper functions
 
+//#region helper functions
+const getDigest = async () => {
+  const domain = await getDomain()
+  const types = await getTypes()
+  if (!_expenseAccountData?.value?.data) return
+  let message = JSON.parse(_expenseAccountData.value.data)
+  if (typeof message.value === 'string') message.value = Number(parseEther(message.value))
+  const _digest = hashTypedData({
+    domain: { ...domain, chainId: Number(domain.chainId) },
+    types,
+    primaryType: 'BudgetLimit',
+    message
+  })
+
+  digest.value = _digest
+}
 const init = async () => {
-  await getExpenseAccountOwner()
   await fetchExpenseAccountData()
+  await getExpenseAccountOwner()
+  await getExpenseAccountBalance()
+  await getAmountWithdrawnBalance()
 }
 
 const getExpenseAccountOwner = async () => {
-  if (team.value.expenseAccountAddress) await executeExpenseAccountGetOwner()
+  if (team.value.expenseAccountEip712Address) await executeExpenseAccountGetOwner()
+}
+
+const getExpenseAccountBalance = async () => {
+  if (team.value.expenseAccountEip712Address) {
+    await executeGetExpenseBalance()
+    expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
+  }
+}
+
+const getAmountWithdrawnBalance = async () => {
+  if (team.value.expenseAccountEip712Address) {
+    await getDigest()
+    await executeGetAmountWithdrawn()
+  }
+}
+
+const transferFromExpenseAccount = async (to: string, amount: string) => {
+  if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
+    const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+    const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
+
+    if (typeof budgetLimit.value === 'string') budgetLimit.value = parseEther(budgetLimit.value)
+
+    executeExpenseAccountTransfer({
+      address: team.value.expenseAccountEip712Address as Address,
+      args: [to, parseEther(amount), budgetLimit, v, r, s],
+      abi: expenseAccountABI,
+      functionName: 'transfer'
+    })
+  }
+}
+
+const getDomain = async () => {
+  const provider = await web3Library.getProvider()
+  const chainId = (await provider.getNetwork()).chainId
+  const verifyingContract = team.value.expenseAccountEip712Address as Address
+
+  return {
+    name: 'CNCExpenseAccount',
+    version: '1',
+    chainId, //: 31337n,
+    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+  }
+}
+
+const getTypes = async () => {
+  return {
+    BudgetLimit: [
+      { name: 'approvedAddress', type: 'address' },
+      { name: 'budgetType', type: 'uint8' },
+      { name: 'value', type: 'uint256' },
+      { name: 'expiry', type: 'uint256' }
+    ]
+  }
 }
 
 const approveUser = async (data: BudgetLimit) => {
@@ -256,13 +426,13 @@ const approveUser = async (data: BudgetLimit) => {
   const provider = await web3Library.getProvider()
   const signer = await web3Library.getSigner()
   const chainId = (await provider.getNetwork()).chainId
-  const verifyingContract = team.value.expenseAccountAddress
+  const verifyingContract = team.value.expenseAccountEip712Address
 
   const domain = {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId,
-    verifyingContract
+    chainId, //: 31337n,
+    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
   }
 
   const types = {
@@ -334,5 +504,6 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 
 onMounted(async () => {
   await init()
+  // console.log(`expense account data`, _expenseAccountData.value)
 })
 </script>
