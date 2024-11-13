@@ -40,7 +40,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address public bodContractBeacon;
     address public expenseAccountBeacon;
 
-
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
 
@@ -115,21 +114,14 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
         emit ContractDeployed("ExpenseAccount", expenseAccountContract);
     }
-
+  
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
 
     function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
-        return (
-            founders,
-            members,
-            bankAccountContract,
-            votingContract,
-            bodContract,
-            expenseAccountContract
-        );
+        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract);
     }
 
     modifier onlyOwners{
