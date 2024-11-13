@@ -85,6 +85,15 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
+vi.mock('viem', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    parseSignature: vi.fn(),
+    hashTypedData: vi.fn()
+  }
+})
+
 vi.mock('@vueuse/core', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
@@ -268,7 +277,7 @@ describe('ExpenseAccountSection', () => {
       props: {
         team: {
           id: `1`,
-          expenseAccountAddress: '0xExpenseAccount',
+          expenseAccountEip712Address: '0xExpenseAccount',
           ownerAddress: '0xOwner',
           boardOfDirectorsAddress: null,
           ...props?.team
@@ -310,7 +319,7 @@ describe('ExpenseAccountSection', () => {
     })
 
     it('should show expense account if expense account address exists', () => {
-      const team = { expenseAccountAddress: '0x123' }
+      const team = { expenseAccountEip712Address: '0x123' }
       const wrapper = createComponent({
         props: {
           team: {
@@ -321,7 +330,7 @@ describe('ExpenseAccountSection', () => {
 
       expect(wrapper.find('[data-test="expense-account-address"]').exists()).toBeTruthy()
       expect(wrapper.find('[data-test="expense-account-address"]').text()).toBe(
-        team.expenseAccountAddress
+        team.expenseAccountEip712Address
       )
 
       // ToolTip
@@ -408,7 +417,7 @@ describe('ExpenseAccountSection', () => {
       const wrapper = createComponent()
 
       expect(wrapper.find('[data-test="contract-balance"]').text()).toBe(
-        `${'0.0'} ${NETWORK.currencySymbol}`
+        `${'0'} ${NETWORK.currencySymbol}`
       )
     })
 
