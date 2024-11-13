@@ -148,6 +148,32 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
         emit ContractDeployed("ExpenseAccountEIP712", expenseAccountEip712Contract);
     }
+
+    function deployInvestorContractV1(string memory _name, string memory _symbol)  external onlyOwners whenNotPaused {
+        require(investorContract == address(0), "Investor contract already deployed");
+        require(investorBeacon != address(0), "Investor beacon not set");
+
+        BeaconProxy proxy = new BeaconProxy(
+            investorBeacon,
+            abi.encodeWithSelector(IInvestorV1.initialize.selector, _name, _symbol)
+        );
+        investorContract = address(proxy);
+
+        emit ContractDeployed("InvestorContract", investorContract);
+    }
+
+    function deployInvestorContract(string memory _name, string memory _symbol, StockGrant[] memory _stockGrants) external onlyOwners whenNotPaused  {
+        require(investorContract == address(0), "Investor contract already deployed");
+        require(investorBeacon != address(0), "Investor beacon not set");
+
+        BeaconProxy proxy = new BeaconProxy(
+            investorBeacon,
+            abi.encodeWithSelector(IInvestor.initialize.selector, _name, _symbol, _stockGrants)
+        );
+        investorContract = address(proxy);
+
+        emit ContractDeployed("InvestorContract", investorContract);
+    }
   
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
