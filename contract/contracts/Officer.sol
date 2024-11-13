@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {StockGrant} from "./Investor/types/StockGrant.sol";
 
 import 'hardhat/console.sol';
 
@@ -27,14 +26,6 @@ interface IExpenseAccount {
     function initialize(address _sender) external;
 }
 
-interface IInvestor {
-    function initialize(string memory _name, string memory _symbol, StockGrant[] memory _stockGrants) external;
-}
-
-interface IInvestorV1 {
-    function initialize(string memory _name, string memory _symbol) external;
-}
-
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
     
     address[] founders;
@@ -49,20 +40,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address public bodContractBeacon;
     address public expenseAccountBeacon;
 
-    address public investorContract;
-    address public investorBeacon;
 
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
 
-    function initialize(
-        address owner,
-        address _bankAccountBeacon,
-        address _votingContractBeacon,
-        address _bodContractBeacon,
-        address _expenseAccountBeacon,
-        address _investorBeacon
-    ) public initializer {
+    function initialize(address owner, address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon, address _expenseAccountBeacon) public initializer {
         __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
@@ -70,7 +52,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         votingContractBeacon = _votingContractBeacon;
         bodContractBeacon = _bodContractBeacon;
         expenseAccountBeacon = _expenseAccountBeacon;
-        investorBeacon = _investorBeacon;
     }
 
    function createTeam(
@@ -135,54 +116,19 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit ContractDeployed("ExpenseAccount", expenseAccountContract);
     }
 
-    function deployInvestorContractV1(string memory _name, string memory _symbol)  external onlyOwners whenNotPaused {
-        require(investorContract == address(0), "Investor contract already deployed");
-        require(investorBeacon != address(0), "Investor beacon not set");
-
-        BeaconProxy proxy = new BeaconProxy(
-            investorBeacon,
-            abi.encodeWithSelector(IInvestorV1.initialize.selector, _name, _symbol)
-        );
-        investorContract = address(proxy);
-
-        emit ContractDeployed("InvestorContract", investorContract);
-    }
-
-    function deployInvestorContract(string memory _name, string memory _symbol, StockGrant[] memory _stockGrants) external onlyOwners whenNotPaused  {
-        require(investorContract == address(0), "Investor contract already deployed");
-        require(investorBeacon != address(0), "Investor beacon not set");
-
-        BeaconProxy proxy = new BeaconProxy(
-            investorBeacon,
-            abi.encodeWithSelector(IInvestor.initialize.selector, _name, _symbol, _stockGrants)
-        );
-        investorContract = address(proxy);
-
-        emit ContractDeployed("InvestorContract", investorContract);
-    }
-
-    function setInvestorBeacon(address _investorBeacon) external onlyOwners whenNotPaused {
-        investorBeacon = _investorBeacon;
-    }
-
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
 
-    function getTeam()
-        external
-        view
-        returns (address[] memory, address[] memory, address, address, address, address, address)
-    {
+    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
         return (
             founders,
             members,
             bankAccountContract,
             votingContract,
             bodContract,
-            expenseAccountContract,
-            investorContract
+            expenseAccountContract
         );
     }
 

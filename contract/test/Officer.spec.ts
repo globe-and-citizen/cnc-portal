@@ -1,14 +1,12 @@
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { Officer, Officer__factory } from '../typechain-types'
-import { Contract, ZeroAddress } from 'ethers'
+import { Officer } from '../typechain-types'
 
 describe('Officer Contract', function () {
-  let Officer: Officer__factory
-  let officer: Officer
-  let BankAccount, VotingContract, ExpenseAccount, InvestorContract
-  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon, investorBeacon: Contract
+  let Officer, officer: unknown
+  let BankAccount, VotingContract, ExpenseAccount
+  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon
   let BoD, bodBeacon
   let owner: SignerWithAddress,
     addr1: SignerWithAddress,
@@ -27,12 +25,10 @@ describe('Officer Contract', function () {
 
     ExpenseAccount = await ethers.getContractFactory('ExpenseAccount')
     expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
-    InvestorContract = await ethers.getContractFactory('Investor')
-    investorBeacon = await upgrades.deployBeacon(InvestorContract)
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
     Officer = await ethers.getContractFactory('Officer')
-    officer = (await upgrades.deployProxy(
+    officer = await upgrades.deployProxy(
       Officer,
       [
         await owner.getAddress(),
@@ -42,7 +38,7 @@ describe('Officer Contract', function () {
         await expenseAccountBeacon.getAddress()
       ],
       { initializer: 'initialize' }
-    )) as unknown as Officer
+    )
   })
 
   it('Should create a new team', async function () {
@@ -78,20 +74,6 @@ describe('Officer Contract', function () {
 
     const team = await (officer as Officer).getTeam()
     expect(team[5]).to.be.not.equal('0x0000000000000000000000000000000000000000')
-  })
-  it('Should deploy investor contract', async function () {
-    await officer.setInvestorBeacon(await investorBeacon.getAddress())
-    await officer.deployInvestorContract('Investor', 'INV', [
-      {
-        amount: ethers.parseEther('1000'),
-        shareholder: addr1.address,
-        isActive: true,
-        lastMinted: 0,
-        totalMinted: 0
-      }
-    ])
-    const team = await officer.getTeam()
-    expect(team[6]).to.be.not.equal(ZeroAddress)
   })
   it('should pause the contract', async function () {
     await (officer as Officer).connect(owner).pause()
@@ -135,7 +117,7 @@ describe('Officer Contract', function () {
     expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
 
     Officer = await ethers.getContractFactory('Officer')
-    officer = (await upgrades.deployProxy(
+    officer = await upgrades.deployProxy(
       Officer,
       [
         await addr1.getAddress(),
@@ -145,7 +127,7 @@ describe('Officer Contract', function () {
         await expenseAccountBeacon.getAddress()
       ],
       { initializer: 'initialize' }
-    )) as unknown as Officer
+    )
 
     await expect(
       (officer as Officer).connect(addr3).deployBankAccount(ethers.Wallet.createRandom().address)
