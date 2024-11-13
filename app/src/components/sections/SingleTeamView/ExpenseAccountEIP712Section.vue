@@ -344,7 +344,7 @@ watch(searchUserResponse, () => {
 const getDigest = async () => {
   const domain = await getDomain()
   const types = await getTypes()
-  if (!_expenseAccountData?.value.data) return
+  if (!_expenseAccountData?.value?.data) return
   let message = JSON.parse(_expenseAccountData.value.data)
   if (typeof message.value === 'string') message.value = Number(parseEther(message.value))
   const _digest = hashTypedData({
