@@ -105,7 +105,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     employeeOffers[_employee].pendingOffer = EmployeeOffer({
       contractUrl: _contractUrl,
       salary: _salary,
-      status: OfferStatus.Offered,
+      status: OfferStatus.Accepted,
       startDate: 0,
       endDate: _endDate
     });
