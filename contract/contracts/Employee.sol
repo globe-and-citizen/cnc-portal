@@ -103,15 +103,17 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
       employees.add(_employee);
     }
 
-    employeeOffers[_employee].pendingOffer = EmployeeOffer({
-      contractUrl: _contractUrl,
-      salary: _salary,
-      status: OfferStatus.Accepted,
-      startDate: nextMonday,
-      endDate: _endDate
-    });
+    EmployeeOffers storage offer = employeeOffers[_employee];
+    offer.pendingOffer.contractUrl = _contractUrl;
+    offer.pendingOffer.startDate = nextMonday;
+    offer.pendingOffer.endDate = _endDate;
+    offer.pendingOffer.status = OfferStatus.Accepted;
 
-    emit EmployeeOffered(_employee, _contractUrl, OfferStatus.Offered);
+    for (uint8 i; i < _salary.length; i++) {
+      offer.pendingOffer.salary.push(_salary[i]);
+    }
+
+    emit EmployeeOffered(_employee, _contractUrl, OfferStatus.Accepted);
   }
 
   // Employee accepts an offer
