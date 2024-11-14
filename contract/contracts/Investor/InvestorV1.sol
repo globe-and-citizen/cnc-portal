@@ -47,10 +47,25 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
     emit Minted(shareholder, amount);
   }
 
-  // TODO: Overide the update method to update the shareholders list
+  function _update(address from, address to, uint256 value) override internal {
+    super._update(from, to, value);
 
-  function getShareHolders() external view returns (address[] memory) {
-    return shareholders.values();
+    if (balanceOf(from) == 0) {
+      shareholders.remove(from);
+    }
+
+    if (balanceOf(to) > 0 && !shareholders.contains(to)) {
+      shareholders.add(to);
+    }
+  }
+
+  function getShareholders() external view returns (Shareholder[] memory) {
+    Shareholder[] memory _shareholders = new Shareholder[](shareholders.length());
+    for (uint256 i = 0; i < shareholders.length(); i++) {
+      address shareholder = shareholders.at(i);
+      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+    }
+    return _shareholders;
   }
 
   function pause() external onlyOwner {
