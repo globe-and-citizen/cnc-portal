@@ -32,7 +32,7 @@ interface IInvestor {
 }
 
 interface IInvestorV1 {
-    function initialize(string memory _name, string memory _symbol) external;
+    function initialize(string memory _name, string memory _symbol, address _owner) external;
 }
 
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
@@ -155,7 +155,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
         BeaconProxy proxy = new BeaconProxy(
             investorBeacon,
-            abi.encodeWithSelector(IInvestorV1.initialize.selector, _name, _symbol)
+            abi.encodeWithSelector(IInvestorV1.initialize.selector, _name, _symbol, msg.sender)
         );
         investorContract = address(proxy);
 
