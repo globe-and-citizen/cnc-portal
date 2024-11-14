@@ -95,7 +95,8 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     for (uint8 i; i < _salary.length; i++) {
       require(_salary[i].hourlyRate > 0, 'Invalid salary');
     }
-    require(_endDate > block.timestamp, 'End date must be in the future');
+    uint256 nextMonday = getNextMonday();
+    require(_endDate > nextMonday, 'End date must be greater than start date');
 
     // If this is a new employee, add to the employees set
     if (!employees.contains(_employee)) {
@@ -106,7 +107,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
       contractUrl: _contractUrl,
       salary: _salary,
       status: OfferStatus.Offered,
-      startDate: 0,
+      startDate: nextMonday,
       endDate: _endDate
     });
 
@@ -200,6 +201,28 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
       'Offer has not expired yet'
     );
     delete employeeOffers[_employee].pendingOffer;
+  }
+
+  function getNextMonday() public view returns (uint256) {
+    uint256 SECONDS_PER_DAY = 86400;
+    uint256 currentTimestamp = block.timestamp;
+
+    // Calculate the day of the week (0 = Thursday, since epoch was on a Thursday)
+    uint256 daysSinceEpoch = currentTimestamp / SECONDS_PER_DAY;
+    uint256 dayOfWeek = (daysSinceEpoch + 4) % 7; // Adjust by 4 because epoch was Thursday
+
+    // Check if it's currently Monday at 00:00
+    if (dayOfWeek == 1 && (currentTimestamp % SECONDS_PER_DAY) == 0) {
+        return currentTimestamp;
+    }
+
+    // Calculate days until next Monday
+    uint256 daysUntilNextMonday = (8 - dayOfWeek) % 7;
+
+    // Calculate next Monday at 00:00
+    uint256 nextMondayTimestamp = (daysSinceEpoch + daysUntilNextMonday) * SECONDS_PER_DAY;
+
+    return nextMondayTimestamp;
   }
 
   // Function to check if an address is an employee
