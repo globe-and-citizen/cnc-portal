@@ -18,12 +18,20 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     Fired
   }
 
+  // Struct for salary
+  struct Salary {
+    uint256 hourlyRate;
+    uint256 hoursPerWeek;
+    uint256 signInBonus;
+    bytes8 symbol;
+  }
+
   // Struct for employee offers with better packing
   struct EmployeeOffer {
     OfferStatus status;
     uint256 startDate;
     uint256 endDate;
-    uint256 salary;
+    Salary[] salary;
     string contractUrl;
   }
 
@@ -39,37 +47,31 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
   // Events with indexed parameters for better searchability
   event EmployeeOffered(
     address indexed employee,
-    uint256 salary,
     string contractUrl,
     OfferStatus status
   );
   event EmployeeAccepted(
     address indexed employee,
-    uint256 salary,
     string contractUrl,
     OfferStatus status
   );
   event EmployeeRejected(
     address indexed employee,
-    uint256 salary,
     string contractUrl,
     OfferStatus status
   );
   event EmployeeResigned(
     address indexed employee,
-    uint256 salary,
     string contractUrl,
     OfferStatus status
   );
   event EmployeeFired(
     address indexed employee,
-    uint256 salary,
     string contractUrl,
     OfferStatus status
   );
   event EmployeeOfferApproved(
     address indexed employee,
-    uint256 salary,
     string contractUrl,
     OfferStatus status
   );
@@ -84,13 +86,15 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
   // Create a new offer for an employee with added checks and status management
   function createOffer(
     address _employee,
-    string memory _contractUrl,
-    uint256 _salary,
+    string calldata _contractUrl,
+    Salary[] calldata _salary,
     uint256 _endDate
   ) external onlyOwner nonReentrant whenNotPaused {
     require(_employee != address(0), 'Invalid employee address');
     require(bytes(_contractUrl).length > 0, 'Invalid contract URL');
-    require(_salary > 0, 'Invalid salary');
+    for (uint8 i; i < _salary.length; i++) {
+      require(_salary[i].hourlyRate > 0, 'Invalid salary');
+    }
     require(_endDate > block.timestamp, 'End date must be in the future');
 
     // If this is a new employee, add to the employees set
@@ -106,7 +110,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
       endDate: _endDate
     });
 
-    emit EmployeeOffered(_employee, _salary, _contractUrl, OfferStatus.Offered);
+    emit EmployeeOffered(_employee, _contractUrl, OfferStatus.Offered);
   }
 
   // Employee accepts an offer
@@ -119,7 +123,6 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
 
     emit EmployeeAccepted(
       msg.sender,
-      pendingOffer.salary,
       pendingOffer.contractUrl,
       OfferStatus.Accepted
     );
@@ -135,7 +138,6 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
 
     emit EmployeeOfferApproved(
       _employee,
-      employeeOffers[_employee].activeOffer.salary,
       employeeOffers[_employee].activeOffer.contractUrl,
       OfferStatus.Accepted
     );
@@ -150,7 +152,6 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
 
     emit EmployeeRejected(
       msg.sender,
-      pendingOffer.salary,
       pendingOffer.contractUrl,
       OfferStatus.Rejected
     );
@@ -166,7 +167,6 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
 
     emit EmployeeResigned(
       msg.sender,
-      activeOffer.salary,
       activeOffer.contractUrl,
       OfferStatus.Resigned
     );
@@ -180,7 +180,7 @@ contract Employee is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     activeOffer.status = OfferStatus.Fired;
     activeOffer.endDate = block.timestamp;
 
-    emit EmployeeFired(_employee, activeOffer.salary, activeOffer.contractUrl, OfferStatus.Fired);
+    emit EmployeeFired(_employee, activeOffer.contractUrl, OfferStatus.Fired);
   }
 
   // List all employees
