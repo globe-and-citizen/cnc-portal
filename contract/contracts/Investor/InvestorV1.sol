@@ -19,9 +19,9 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
   event Minted(address indexed shareholder, uint256 amount);
   event DividendDistributed(address indexed shareholder, uint256 amount);
 
-  function initialize(string calldata _name, string calldata _symbol) external initializer {
+  function initialize(string calldata _name, string calldata _symbol, address _owner) external initializer {
     __ERC20_init(_name, _symbol);
-    __Ownable_init(msg.sender);
+    __Ownable_init(_owner);
     __ReentrancyGuard_init();
     __Pausable_init();
   }
