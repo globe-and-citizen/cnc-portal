@@ -555,7 +555,7 @@ watch(deployVotingError, (value) => {
 })
 watch(deployInvestorsError, (value) => {
   if (value) {
-    console.log(value)
+    log.error(parseError(value))
     addErrorToast('Failed to deploy investors')
   }
 })
