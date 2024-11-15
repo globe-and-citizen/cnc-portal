@@ -30,6 +30,7 @@
             <td>
               <button
                 class="btn btn-primary"
+                :disabled="currentAddress != team.ownerAddress"
                 @click="
                   () => {
                     selectedShareholder = shareholder.shareholder
@@ -64,7 +65,7 @@ import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { watch } from 'vue'
 import { log } from '@/utils'
-import { useToastStore } from '@/stores'
+import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
 import ModalComponent from '@/components/ModalComponent.vue'
 
@@ -72,6 +73,7 @@ const mintIndividualModal = ref(false)
 const selectedShareholder = ref<Address | null>(null)
 const emits = defineEmits(['refetchShareholders'])
 const { addErrorToast, addSuccessToast } = useToastStore()
+const { address: currentAddress } = useUserDataStore()
 
 const props = defineProps<{
   team: Team

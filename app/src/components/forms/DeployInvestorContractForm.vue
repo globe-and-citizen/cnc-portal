@@ -1,0 +1,70 @@
+<template>
+  <div class="flex flex-col gap-4">
+    <h3 class="text-xl font-bold">Deploy Investor Contract</h3>
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+      <p>Name of the shares</p>
+      |
+      <input type="text" class="grow" data-test="address-input" v-model="name" />
+    </label>
+    <div
+      class="pl-4 text-red-500 text-sm w-full text-left"
+      v-for="error of $v.name.$errors"
+      :key="error.$uid"
+    >
+      {{ error.$message }}
+    </div>
+
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+      <p>Ticker or Symbol of the shares</p>
+      |
+      <input type="text" class="grow" data-test="address-input" v-model="symbol" />
+    </label>
+    <div
+      class="pl-4 text-red-500 text-sm w-full text-left"
+      v-for="error of $v.symbol.$errors"
+      :key="error.$uid"
+    >
+      {{ error.$message }}
+    </div>
+
+    <div class="text-center">
+      <LoadingButton v-if="loading" class="w-44" color="primary" />
+      <button v-if="!loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
+        Deploy
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import useVuelidate from '@vuelidate/core'
+import { required } from '@vuelidate/validators'
+import LoadingButton from '@/components/LoadingButton.vue'
+
+const name = defineModel('name')
+const symbol = defineModel('symbol')
+
+const emit = defineEmits(['submit'])
+
+const rules = {
+  name: {
+    required
+  },
+  symbol: {
+    required
+  }
+}
+
+defineProps<{
+  loading: boolean
+}>()
+
+const onSubmit = () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
+
+  emit('submit', name.value, symbol.value)
+}
+
+const $v = useVuelidate(rules, { name, symbol })
+</script>

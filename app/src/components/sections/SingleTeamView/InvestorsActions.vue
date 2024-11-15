@@ -4,13 +4,23 @@
     <div class="flex justify-end gap-2 w-full">
       <button
         class="btn btn-primary gap-1"
-        :disabled="!tokenSymbol"
+        :disabled="!tokenSymbol || currentAddress != team.ownerAddress || shareholders?.length == 0"
         @click="distributeMintModal = true"
       >
         Distribute Mint {{ tokenSymbol }}
       </button>
-      <button class="btn btn-primary" @click="payDividendsModal = true">Pay Dividends</button>
-      <button class="btn btn-primary gap-1" :disabled="!tokenSymbol" @click="mintModal = true">
+      <button
+        class="btn btn-primary"
+        @click="payDividendsModal = true"
+        :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
+      >
+        Pay Dividends
+      </button>
+      <button
+        class="btn btn-primary gap-1"
+        :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
+        @click="mintModal = true"
+      >
         Mint {{ tokenSymbol }}
       </button>
     </div>
@@ -24,9 +34,9 @@
     </ModalComponent>
     <ModalComponent v-model="distributeMintModal">
       <DistributeMintForm
-        v-if="distributeMintModal"
+        v-if="distributeMintModal && (shareholders?.length ?? 0) > 0"
         :loading="distributeMintLoading || isConfirmingDistributeMint"
-        :shareholders="shareholders"
+        :shareholders="shareholders!"
         :token-symbol="tokenSymbol!"
         @submit="
           (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) =>
@@ -47,7 +57,7 @@
 <script setup lang="ts">
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useToastStore } from '@/stores'
+import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
 import { log } from '@/utils'
 import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
@@ -62,6 +72,7 @@ const mintModal = ref(false)
 const distributeMintModal = ref(false)
 const payDividendsModal = ref(false)
 const emits = defineEmits(['refetchShareholders'])
+const { address: currentAddress } = useUserDataStore()
 
 const props = defineProps<{
   team: Team

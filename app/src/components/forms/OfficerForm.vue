@@ -181,20 +181,12 @@
 
               <button
                 class="btn btn-primary btn-sm"
-                v-if="
-                  !isInvestorsDeployed && !isLoadingDeployInvestors && !isConfirmingDeployInvestors
-                "
-                @click="deployInvestorsContract"
+                v-if="!isInvestorsDeployed"
+                @click="$emit('openInvestorContractModal')"
                 data-test="deployExpenseButton"
               >
                 Deploy Investors
               </button>
-              <LoadingButton
-                :color="'primary'"
-                class="btn-sm"
-                data-test="loading-deploy-expense"
-                v-if="isLoadingDeployInvestors || isConfirmingDeployInvestors"
-              />
             </div>
           </div>
           <div v-if="isLoadingGetTeam">
@@ -234,7 +226,7 @@ import { log, parseError } from '@/utils'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const props = defineProps(['team'])
-const emits = defineEmits(['getTeam'])
+const emits = defineEmits(['getTeam', 'openInvestorContractModal'])
 
 const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
@@ -304,21 +296,6 @@ const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeploy
 watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployExpenseEip712.value) {
     addSuccessToast('Expense EIP712 account deployed successfully')
-    emits('getTeam')
-  }
-})
-
-const {
-  writeContract: deployInvestors,
-  isPending: isLoadingDeployInvestors,
-  data: deployInvestorsHash,
-  error: deployInvestorsError
-} = useWriteContract()
-const { isLoading: isConfirmingDeployInvestors, isSuccess: isConfirmedDeployInvestors } =
-  useWaitForTransactionReceipt({ hash: deployInvestorsHash })
-watch(isConfirmingDeployInvestors, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployInvestors.value) {
-    addSuccessToast('Investors deployed successfully')
     emits('getTeam')
   }
 })
@@ -452,15 +429,6 @@ const deployExpenseAccountEip712 = async () => {
   })
 }
 
-const deployInvestorsContract = async () => {
-  deployInvestors({
-    address: props.team.officerAddress,
-    abi: OfficerABI,
-    functionName: 'deployInvestorContractV1',
-    args: ['Testing', 'TST']
-  })
-}
-
 // Watch officer team data and update state
 watch(officerTeam, async (value) => {
   const temp: Array<Object> = value as Array<Object>
@@ -551,12 +519,6 @@ watch(deployBankError, (value) => {
 watch(deployVotingError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy voting')
-  }
-})
-watch(deployInvestorsError, (value) => {
-  if (value) {
-    log.error(parseError(value))
-    addErrorToast('Failed to deploy investors')
   }
 })
 

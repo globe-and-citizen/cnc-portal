@@ -18,6 +18,7 @@
         () => {
           refetchTokenBalance()
           refetchShareholders()
+          refetchTotalSupply()
         }
       "
       :shareholders="shareholders"
@@ -33,6 +34,7 @@
         () => {
           refetchTokenBalance()
           refetchShareholders()
+          refetchTotalSupply()
         }
       "
     />
@@ -61,7 +63,8 @@ const props = defineProps<{
 const {
   data: totalSupply,
   isLoading: totalSupplyLoading,
-  error: totalSupplyError
+  error: totalSupplyError,
+  refetch: refetchTotalSupply
 } = useReadContract({
   abi: INVESTOR_ABI,
   address: props.team.investorsAddress as Address,

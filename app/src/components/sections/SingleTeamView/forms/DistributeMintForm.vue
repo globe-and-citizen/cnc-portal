@@ -58,8 +58,8 @@ import { reactive } from 'vue'
 
 const emits = defineEmits(['submit'])
 const props = defineProps<{
-  shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }> | undefined
-  tokenSymbol: string | undefined
+  shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>
+  tokenSymbol: string
   loading: boolean
 }>()
 const shareholderWithAmounts = reactive<

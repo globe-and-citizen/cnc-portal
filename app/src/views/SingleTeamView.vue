@@ -22,8 +22,23 @@
               getTeamAPI()
             }
           "
+          @openInvestorContractModal="
+            () => {
+              officerModal = false
+              investorModal = true
+            }
+          "
         />
       </ModalComponent>
+
+      <ModalComponent v-model="investorModal">
+        <DeployInvestorContractForm
+          :team="team"
+          :loading="isLoadingDeployInvestors || isConfirmingDeployInvestors"
+          @submit="(name: string, symbol: string) => deployInvestorsContract(name, symbol)"
+        />
+      </ModalComponent>
+
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -88,11 +103,17 @@ import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import type { Address } from 'viem'
 import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
+import DeployInvestorContractForm from '@/components/forms/DeployInvestorContractForm.vue'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import OfficerABI from '@/artifacts/abi/officer.json'
+import { log } from '@/utils'
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
 const isOwner = ref(false)
 const officerModal = ref(false)
+const investorModal = ref(false)
+const { addSuccessToast } = useToastStore()
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
@@ -118,6 +139,39 @@ const {
 })
   .get()
   .json()
+
+const {
+  writeContract: deployInvestors,
+  isPending: isLoadingDeployInvestors,
+  data: deployInvestorsHash,
+  error: deployInvestorsError
+} = useWriteContract()
+const { isLoading: isConfirmingDeployInvestors, isSuccess: isConfirmedDeployInvestors } =
+  useWaitForTransactionReceipt({ hash: deployInvestorsHash })
+
+const deployInvestorsContract = async (name: string, symbol: string) => {
+  deployInvestors({
+    address: team.value.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployInvestorContractV1',
+    args: [name, symbol]
+  })
+}
+
+watch(isConfirmingDeployInvestors, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployInvestors.value) {
+    addSuccessToast('Investors deployed successfully')
+    getTeamAPI()
+    investorModal.value = false
+  }
+})
+
+watch(deployInvestorsError, (value) => {
+  if (value) {
+    log.error('Failed to deploy investors', value)
+    addErrorToast('Failed to deploy investors')
+  }
+})
 
 // Watchers for getting team details
 watch(team, () => {
