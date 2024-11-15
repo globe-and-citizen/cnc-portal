@@ -32,8 +32,9 @@ import { NETWORK } from '@/constant'
 import useVuelidate from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
 import { parseEther } from 'viem'
+import { ref } from 'vue'
 
-const amount = defineModel<number>('amount')
+const amount = ref<number | null>(null)
 
 defineProps<{
   tokenSymbol: string | undefined

@@ -10,7 +10,7 @@
         type="text"
         class="grow"
         data-test="address-input"
-        v-model="inputAddress"
+        v-model="to"
         :disabled="Boolean(address)"
       />
     </label>
@@ -49,10 +49,10 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, type Address } from 'viem'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
-const inputAddress = defineModel('description')
-const amount = defineModel('amount')
+const to = ref<string | null>(null)
+const amount = ref<number | null>(null)
 
 const props = defineProps<{
   address?: Address
@@ -76,14 +76,14 @@ const onSubmit = () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
 
-  emits('submit', inputAddress.value, amount.value!.toString())
+  emits('submit', to.value, amount.value!.toString())
 }
 
-const $v = useVuelidate(rules, { address: inputAddress, amount })
+const $v = useVuelidate(rules, { address: to, amount })
 
 onMounted(() => {
   if (props.address) {
-    inputAddress.value = props.address
+    to.value = props.address
   }
 })
 </script>
