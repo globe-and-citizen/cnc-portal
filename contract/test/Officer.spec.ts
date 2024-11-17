@@ -5,8 +5,8 @@ import { Officer } from '../typechain-types'
 
 describe('Officer Contract', function () {
   let Officer, officer: unknown
-  let BankAccount, VotingContract, ExpenseAccount
-  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon
+  let BankAccount, VotingContract, ExpenseAccount, ExpenseAccountEIP712
+  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon, expenseAccountEip712Beacon
   let BoD, bodBeacon
   let owner: SignerWithAddress,
     addr1: SignerWithAddress,
@@ -25,6 +25,9 @@ describe('Officer Contract', function () {
 
     ExpenseAccount = await ethers.getContractFactory('ExpenseAccount')
     expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
+
+    ExpenseAccountEIP712 = await ethers.getContractFactory('ExpenseAccountEIP712')
+    expenseAccountEip712Beacon = await upgrades.deployBeacon(ExpenseAccountEIP712)
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
     Officer = await ethers.getContractFactory('Officer')
@@ -35,7 +38,8 @@ describe('Officer Contract', function () {
         await bankAccountBeacon.getAddress(),
         await votingContractBeacon.getAddress(),
         await bodBeacon.getAddress(),
-        await expenseAccountBeacon.getAddress()
+        await expenseAccountBeacon.getAddress(),
+        await expenseAccountEip712Beacon.getAddress()
       ],
       { initializer: 'initialize' }
     )
@@ -116,6 +120,9 @@ describe('Officer Contract', function () {
     ExpenseAccount = await ethers.getContractFactory('ExpenseAccount')
     expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
 
+    ExpenseAccountEIP712 = await ethers.getContractFactory('ExpenseAccountEIP712')
+    expenseAccountEip712Beacon = await upgrades.deployBeacon(ExpenseAccountEIP712)
+
     Officer = await ethers.getContractFactory('Officer')
     officer = await upgrades.deployProxy(
       Officer,
@@ -124,6 +131,7 @@ describe('Officer Contract', function () {
         await bankAccountBeacon.getAddress(),
         await votingContractBeacon.getAddress(),
         await bodBeacon.getAddress(),
+        await expenseAccountBeacon.getAddress(),
         await expenseAccountBeacon.getAddress()
       ],
       { initializer: 'initialize' }

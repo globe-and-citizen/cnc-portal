@@ -11,6 +11,7 @@ export interface Team {
   votingAddress: string | null
   boardOfDirectorsAddress: string | null
   expenseAccountAddress?: string | null
+  expenseAccountEip712Address?: string | null
   officerAddress?: string | null
   teamContracts: TeamContract[]
 }
