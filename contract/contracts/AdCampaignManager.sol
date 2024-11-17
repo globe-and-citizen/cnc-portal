@@ -92,7 +92,8 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
         }
         
         // Transfer funds to the bank contract address
-        payable(bankContractAddress).transfer(paymentAmount);
+        (bool success, ) = payable(bankContractAddress).call{ value: paymentAmount }("");
+        require(success, "Transfer to bank contract failed");
 
         emit PaymentReleased(campaignCode, paymentAmount);
     }
@@ -112,12 +113,15 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
         // Transfer the remaining budget to the advertiser if any
         if (remainingBudget > 0) {
-            payable(campaign.advertiser).transfer(remainingBudget);
+            (bool success, ) = payable(bankContractAddress).call{ value: remainingBudget }("");
+            require(success, "Transfer to bank contract failed");
         }
         uint256 possibleClaimedAmount=currentAmountSpent-campaign.amountSpent;
         // Transfer the spent amount to the banckContract address
         if (possibleClaimedAmount > 0) {
-            payable(bankContractAddress).transfer(possibleClaimedAmount);
+            
+            (bool success, ) = payable(bankContractAddress).call{ value: possibleClaimedAmount }("");
+            require(success, "Transfer to bank contract failed");
         }
 
         emit BudgetWithdrawn(campaignCode, campaign.advertiser, remainingBudget);
