@@ -36,6 +36,7 @@ const addCampaign = {
   getEvents: vi.fn().mockResolvedValue(events),
   getContractData: vi.fn().mockResolvedValue(contractData),
   addAdmin: vi.fn().mockReturnValue(_tx),
+  removeAdmin: vi.fn().mockReturnValue(_tx),
   getAdminList: vi.fn().mockResolvedValue(adminList),
   testFunction: vi.fn().mockResolvedValue('0xResult'),
   queryFilter: vi.fn(),
@@ -201,6 +202,16 @@ describe('AddCampaignService', () => {
       expect(addCampaign.queryFilter).toHaveBeenCalledWith(addCampaign.filters.CampaignCreated())
       // Verify the correct event log was returned
       expect(result).toEqual(events)
+    })
+  })
+
+  describe('removeAdmin', () => {
+    it('should remove an admin from the contract', async () => {
+      const result = await addCampaignService.removeAdmin('0xCampaignAddress', '0xAdminAddress')
+      // Verify the removeAdmin method was called on the contract
+      expect(addCampaign.removeAdmin).toHaveBeenCalledWith('0xAdminAddress')
+      // Verify that the transaction was awaited
+      expect(result).toMatchObject(await _tx.wait())
     })
   })
 })

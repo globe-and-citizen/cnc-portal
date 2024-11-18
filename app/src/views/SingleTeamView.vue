@@ -74,13 +74,17 @@
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
-        
+
         <template #tab-6>
           <ContractManagementSection v-if="activeTab == 6"></ContractManagementSection>
         </template>
 
         <template #tab-7>
-          <TeamContracts  :team-id=String(team.id) :contracts="team.teamContracts" @update-contract="handleUpdateContract" />
+          <TeamContracts
+            :team-id="String(team.id)"
+            :contracts="team.teamContracts"
+            @update-contract="handleUpdateContract"
+          />
         </template>
       </TabNavigation>
     </div>
@@ -145,7 +149,6 @@ const activeTab = ref(0)
 
 const route = useRoute()
 
-
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 // Banking composables
@@ -165,7 +168,6 @@ const {
 // Watchers for getting team details
 watch(team, () => {
   if (team.value) {
-    
     if (team.value.ownerAddress == useUserDataStore().address) {
       isOwner.value = true
     }
@@ -216,9 +218,15 @@ watch(searchUserResponse, () => {
   }
 })
 
-const handleUpdateContract = ({ index, updatedContractPayload }: { index: number, updatedContractPayload: TeamContract }) => {
+const handleUpdateContract = ({
+  index,
+  updatedContractPayload
+}: {
+  index: number
+  updatedContractPayload: TeamContract
+}) => {
   team.value.teamContracts[index] = updatedContractPayload
-  addSuccessToast("Contract updated successfully")
+  addSuccessToast('Contract updated successfully')
 }
 
 const setTabs = () => {
