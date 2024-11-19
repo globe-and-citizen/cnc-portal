@@ -255,4 +255,91 @@ describe('Officer Contract', function () {
       expect(await officerContract.contractBeacons('TestBeacon2')).to.equal(addr2.address)
     })
   })
+
+  describe('Batch Contract Deployment', () => {
+    it('Should deploy multiple contracts in a single transaction', async function () {
+      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+      const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
+        owner.address,
+        owner.address
+      ])
+
+      const deployments = [
+        {
+          contractType: 'Voting',
+          initializerData: votingInitData
+        },
+        {
+          contractType: 'Bank',
+          initializerData: bankInitData
+        }
+      ]
+      console.log(await owner.getAddress())
+
+      const tx = await officer.connect(owner).deployAllContracts(deployments)
+      await tx.wait()
+      const deployedAddresses = await officer.getDeployedContracts()
+
+      expect(deployedAddresses.length).to.equal(2)
+      expect(deployedAddresses[0]).to.not.equal(ethers.ZeroAddress)
+      expect(deployedAddresses[1]).to.not.equal(ethers.ZeroAddress)
+    })
+
+    it('Should fail when deploying with empty contract type', async function () {
+      const deployments = [
+        {
+          contractType: '',
+          initializerData: '0x12345678'
+        }
+      ]
+
+      await expect(officer.connect(owner).deployAllContracts(deployments)).to.be.revertedWith(
+        'Contract type cannot be empty'
+      )
+    })
+
+    it('Should fail when deploying with empty initializer data', async function () {
+      const deployments = [
+        {
+          contractType: 'Bank',
+          initializerData: '0x'
+        }
+      ]
+
+      await expect(officer.connect(owner).deployAllContracts(deployments)).to.be.revertedWith(
+        'Missing initializer data for Bank'
+      )
+    })
+
+    it('Should fail when deploying unconfigured contract type', async function () {
+      const deployments = [
+        {
+          contractType: 'NonExistentContract',
+          initializerData: '0x12345678'
+        }
+      ]
+
+      await expect(officer.connect(owner).deployAllContracts(deployments)).to.be.revertedWith(
+        'Beacon not configured for NonExistentContract'
+      )
+    })
+
+    it('Should restrict batch deployment to owners and founders', async function () {
+      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+      const deployments = [
+        {
+          contractType: 'Voting',
+          initializerData: votingInitData
+        }
+      ]
+
+      await expect(officer.connect(addr3).deployAllContracts(deployments)).to.be.revertedWith(
+        'You are not authorized to perform this action'
+      )
+    })
+  })
 })

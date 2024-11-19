@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "hardhat/console.sol";
 
 /**
  * @title Officer Contract
@@ -32,6 +33,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         string beaconType;
         address beaconAddress;
     }
+
+    /// @notice Array to store configured contract types
+    string[] public contractTypes;
+
+    /// @notice Array to store deployed contract addresses
+    address[] private deployedContracts;
 
     /**
      * @notice Initializes the contract with owner and optional beacon configurations
@@ -70,6 +77,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      * @param beaconAddress Address of the beacon contract
      */
     function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwners {
+        if (contractBeacons[contractType] == address(0)) {
+            contractTypes.push(contractType);
+        }
         contractBeacons[contractType] = beaconAddress;
         emit BeaconConfigured(contractType, beaconAddress);
     }
@@ -102,7 +112,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     function deployBeaconProxy(
         string calldata contractType,
         bytes calldata initializerData
-    ) external whenNotPaused onlyOwners returns (address) {
+    ) public whenNotPaused onlyOwners returns (address) {
         // Ensure beacon exists for this contract type
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
 
@@ -113,6 +123,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         );
         
         address proxyAddress = address(proxy);
+        deployedContracts.push(proxyAddress);
         emit ContractDeployed(contractType, proxyAddress);
         
         return proxyAddress;
@@ -155,5 +166,51 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function unpause() external onlyOwners {
         _unpause();
+    }
+
+    /**
+     * @notice Returns the deployed contracts
+     * @return Array of deployed contract addresses
+     */
+    function getDeployedContracts() external view returns (address[] memory) {
+        return deployedContracts;
+    }
+    /**
+     * @notice Struct for contract deployment data
+     * @param contractType Type of contract to deploy
+     * @param initializerData Initialization data for the contract
+     */
+    struct DeploymentData {
+        string contractType;
+        bytes initializerData;
+    }
+
+    /**
+     * @notice Deploys all configured contract types via beacon proxies
+     * @param deployments Array of deployment data containing contract types and initializer data
+     * @return deployedAddresses Array of deployed proxy addresses
+     */
+    function deployAllContracts(
+        DeploymentData[] calldata deployments
+    ) external whenNotPaused onlyOwners returns (address[] memory) {
+        address[] memory deployedAddresses = new address[](deployments.length);
+        
+        for (uint256 i = 0; i < deployments.length; i++) {
+            require(bytes(deployments[i].contractType).length > 0, "Contract type cannot be empty");
+            require(deployments[i].initializerData.length > 0, string.concat("Missing initializer data for ", deployments[i].contractType));
+            require(contractBeacons[deployments[i].contractType] != address(0), string.concat("Beacon not configured for ", deployments[i].contractType));
+            
+            deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
+        }
+        
+        return deployedAddresses;
+    }
+
+    /**
+     * @notice Returns all configured contract types
+     * @return Array of configured contract types
+     */
+    function getConfiguredContractTypes() external view returns (string[] memory) {
+        return contractTypes;
     }
 }
