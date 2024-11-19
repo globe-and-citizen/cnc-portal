@@ -45,8 +45,10 @@ contract ExpenseAccountEIP712 is
 
     error AuthorizedAmountExceeded(uint256 amount);
     
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
+    function initialize(address owner) public initializer {
+        __Ownable_init(owner);
+        __ReentrancyGuard_init();
+        __Pausable_init();
         __EIP712_init("CNCExpenseAccount", "1");
     }
 

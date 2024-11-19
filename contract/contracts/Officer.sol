@@ -10,22 +10,27 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
     address[] founders;
     address[] members;
-    mapping(string => address) public contractBeacons;
+    address bankAccountContract;
+    address votingContract;
+    address bodContract;
+    address expenseAccountContract;
 
-    event ContractDeployed(string contractType, address deployedAddress);
-    event BeaconConfigured(string contractType, address beaconAddress);
-    event TeamCreated(address[] founders, address[] members);
+    address public bankAccountBeacon;
+    address public votingContractBeacon;
+    address public bodContractBeacon;
+    address public expenseAccountBeacon;
 
+    event TeamCreated( address[] founders, address[] members);
+    event ContractDeployed( string contractType, address contractAddress);
 
-    function initialize(address _owner) public initializer {
-        __Ownable_init(_owner);
+  function initialize(address owner, address _bankAccountBeacon, address _votingContractBeacon, address _bodContractBeacon, address _expenseAccountBeacon) public initializer {
+        __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
-    }
-
-    function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwner {
-        contractBeacons[contractType] = beaconAddress;
-        emit BeaconConfigured(contractType, beaconAddress);
+        bankAccountBeacon = _bankAccountBeacon;
+        votingContractBeacon = _votingContractBeacon;
+        bodContractBeacon = _bodContractBeacon;
+        expenseAccountBeacon = _expenseAccountBeacon;
     }
 
     function createTeam(address[] memory _founders, address[] memory _members) external  whenNotPaused {
@@ -50,14 +55,20 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             beaconAddress,
             initializerData
         );
-        address proxyAddress = address(proxy);
+         expenseAccountContract = address(proxy);
 
-        emit ContractDeployed(contractType, proxyAddress);
+        emit ContractDeployed("ExpenseAccount", expenseAccountContract);
     }
-    function getTeam() external view returns (address[] memory, address[] memory  ) {
-        return (founders, members);
-        }
-     modifier onlyOwners{
+  
+    function transferOwnershipToBOD(address newOwner) external whenNotPaused {
+        transferOwnership(newOwner);
+        emit OwnershipTransferred(owner(), newOwner);
+    }
+
+    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address ) {
+        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract);
+    }
+    modifier onlyOwners{
         if (msg.sender == owner()) {
              _;
             return;

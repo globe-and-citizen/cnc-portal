@@ -5,8 +5,8 @@ import { Officer } from '../typechain-types'
 
 describe('Officer Contract', function () {
   let Officer, officer: Officer
-  let BankAccount, VotingContract, ExpenseAccount
-  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon
+  let BankAccount, VotingContract, ExpenseAccount, ExpenseAccountEIP712
+  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon, expenseAccountEip712Beacon
   let BoD, bodBeacon
   let owner: SignerWithAddress,
     addr1: SignerWithAddress,
@@ -26,6 +26,9 @@ describe('Officer Contract', function () {
 
     ExpenseAccount = await ethers.getContractFactory('ExpenseAccount')
     expenseAccountBeacon = await upgrades.deployBeacon(ExpenseAccount)
+
+    ExpenseAccountEIP712 = await ethers.getContractFactory('ExpenseAccountEIP712')
+    expenseAccountEip712Beacon = await upgrades.deployBeacon(ExpenseAccountEIP712)
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
     // Deploy Officer contract
@@ -40,7 +43,11 @@ describe('Officer Contract', function () {
     await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
     await officer
       .connect(owner)
-      .configureBeacon('ExpenseAccount', await expenseAccountBeacon.getAddress())
+      .configureBeacon(
+        'ExpenseAccount',
+        await expenseAccountBeacon.getAddress(),
+        await expenseAccountEip712Beacon.getAddress()
+      )
   })
 
   it('Should create a new team', async function () {
@@ -126,7 +133,33 @@ describe('Officer Contract', function () {
 
   it('Should restrict deployment to owners and founders', async function () {
     // Re-deploy Officer contract with addr1 as owner
+    ExpenseAccountEIP712 = await ethers.getContractFactory('ExpenseAccountEIP712')
+    expenseAccountEip712Beacon = await upgrades.deployBeacon(ExpenseAccountEIP712)
+
     Officer = await ethers.getContractFactory('Officer')
+    officer = await upgrades.deployProxy(
+      Officer,
+      [
+        await addr1.getAddress(),
+        await bankAccountBeacon.getAddress(),
+        await votingContractBeacon.getAddress(),
+        await bodBeacon.getAddress(),
+        await expenseAccountBeacon.getAddress(),
+        await expenseAccountBeacon.getAddress()
+      ],
+      { initializer: 'initialize' }
+    )
+
+    await expect(
+      (officer as Officer).connect(addr3).deployBankAccount(ethers.Wallet.createRandom().address)
+    ).to.be.revertedWith('You are not authorized to perform this action')
+    await (officer as Officer)
+      .connect(owner)
+      .createTeam([addr1.address, addr2.address], ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'])
+
+    await expect(
+      (officer as Officer).connect(addr2).deployBankAccount(ethers.Wallet.createRandom().address)
+    ).to.emit(officer as Officer, 'ContractDeployed')
     officer = (await upgrades.deployProxy(Officer, [addr1.address], {
       initializer: 'initialize'
     })) as Officer
