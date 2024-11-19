@@ -6,11 +6,11 @@ import { CashRemunerationEIP712 } from '../typechain-types'
 describe('CashRemuneration (EIP712)', () => {
   let cashRemunerationProxy: CashRemunerationEIP712
 
-  const deployContract = async (owner: SignerWithAddress) => {
+  const deployContract = async (employer: SignerWithAddress) => {
     const CashRemunerationImplementation = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationProxy = (await upgrades.deployProxy(
       CashRemunerationImplementation,
-      [owner.address],
+      [employer.address],
       { initializer: 'initialize' }
     )) as unknown as CashRemunerationEIP712
   }
@@ -51,12 +51,13 @@ describe('CashRemuneration (EIP712)', () => {
           WageClaim: [
             { name: 'employeeAddress', type: 'address' },
             { name: 'hoursWorked', type: 'uint8' },
-            { name: 'hourlyRate', type: 'uint256' }
+            { name: 'hourlyRate', type: 'uint256' },
+            { name: 'date', type: 'uint256' }
           ]
         }
       })
 
-      it('Then I become the owner of the contract', async () => {
+      it('Then I become the employer of the contract', async () => {
         expect(await cashRemunerationProxy.owner()).to.eq(await employer.getAddress())
       })
 
@@ -82,11 +83,12 @@ describe('CashRemuneration (EIP712)', () => {
         const wageClaim = {
           employeeAddress: employee.address,
           hoursWorked: 5, // TransactionsPerPeriod
-          hourlyRate: 20
+          hourlyRate: 20,
+          date: Math.floor(Date.now() / 1000)
         }
         // const digest = ethers.TypedDataEncoder.hash(domain, types, wageClaim)
 
-        // const beforeTxCount = (await expenseAccountProxy.balances(digest)).transactionCount
+        // const beforeTxCount = (await cashRemunerationProxy.balances(digest)).transactionCount
         const signature = await employer.signTypedData(domain, types, wageClaim)
         const { v, r, s } = ethers.Signature.from(signature)
 
@@ -94,7 +96,7 @@ describe('CashRemuneration (EIP712)', () => {
         // const amount = ethers.parseEther('5')
         const tx = await cashRemunerationProxy
           .connect(employee)
-          .transfer(/*withdrawer.address, amount, */ wageClaim, v, r, s)
+          .transfer(/*employee.address, amount, */ wageClaim, v, r, s)
 
         const receipt = await tx.wait()
 
@@ -111,259 +113,117 @@ describe('CashRemuneration (EIP712)', () => {
         expect(paidWageClaim).to.be.equal(true)
       })
 
-      // describe('Then I can authorize an user to transfer from the expense account by;', async () => {
-      //   // beforeEach(async () => {
-      //   //   domain = {
-      //   //     name: DOMAIN_NAME,
-      //   //     version: DOMAIN_VERSION,
-      //   //     chainId,
-      //   //     verifyingContract
-      //   //   }
+      describe("Then a user can't transfer if;", () => {
+        it('the signer is not the contract employer', async () => {
+          const wageClaim = {
+            employeeAddress: employee.address,
+            hoursWorked: 5,
+            hourlyRate: 10,
+            date: Math.floor(Date.now() / 1000)
+          }
 
-      //   //   types = {
-      //   //     BudgetLimit: [
-      //   //       { name: 'approvedAddress', type: 'address' },
-      //   //       { name: 'budgetType', type: 'uint8' },
-      //   //       { name: 'value', type: 'uint256' },
-      //   //       { name: 'expiry', type: 'uint256' }
-      //   //     ]
-      //   //   }
-      //   // })
+          const signature = await imposter.signTypedData(domain, types, wageClaim)
+          const { v, r, s } = ethers.Signature.from(signature)
 
-      //   it('Can withdraw', async () => {
-      //     const wageClaim = {
-      //       employeeAddress: withdrawer.address,
-      //       hoursWorked: 5, // TransactionsPerPeriod
-      //       hourlyRate: 20
-      //     }
-      //     const digest = ethers.TypedDataEncoder.hash(domain, types, wageClaim)
+          await expect(
+            cashRemunerationProxy
+              .connect(employee)
+              .transfer( wageClaim, v, r, s)
+          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'UnauthorizedAccess')
+        })
+        it('the withdrawer is not the approved user', async () => {
+          const wageClaim = {
+            employeeAddress: employee.address,
+            hoursWorked: 5,
+            hourlyRate: 10,
+            date: Math.floor(Date.now() / 1000)
+          }
 
-      //     // const beforeTxCount = (await expenseAccountProxy.balances(digest)).transactionCount
-      //     const signature = await owner.signTypedData(domain, types, wageClaim)
-      //     const { v, r, s } = ethers.Signature.from(signature)
+          const signature = await employer.signTypedData(domain, types, wageClaim)
+          const { v, r, s } = ethers.Signature.from(signature)
 
-      //     const sigHash = ethers.solidityPackedKeccak256(
-      //       ["uint8", "bytes32", "bytes32"],
-      //       [v, r, s]
-      //     )
-      //     // const amount = ethers.parseEther('5')
-      //     const tx = await cashRemunerationProxy
-      //       .connect(withdrawer)
-      //       .transfer(/*withdrawer.address, amount, */wageClaim, v, r, s)
+          await expect(
+            cashRemunerationProxy
+              .connect(imposter)
+              .transfer( wageClaim, v, r, s)
+          ).to.be.revertedWith("Withdrawer not approved")
+        })
+        it('the wage has already been paid', async () => {
+          const wageClaim = {
+            employeeAddress: employee.address,
+            hoursWorked: 5,
+            hourlyRate: 20,
+            date: Math.floor(Date.now() / 1000) + 1
+          }
+          
+          const signature = await employer.signTypedData(domain, types, wageClaim)
+          const { v, r, s } = ethers.Signature.from(signature)
+  
+          const sigHash = ethers.solidityPackedKeccak256(['uint8', 'bytes32', 'bytes32'], [v, r, s])
+          
+          const tx = await cashRemunerationProxy
+            .connect(employee)
+            .transfer(wageClaim, v, r, s)
+  
+          const amount = BigInt(wageClaim.hourlyRate) * ethers.parseEther(`${wageClaim.hoursWorked}`)
+  
+          await expect(tx).to.changeEtherBalance(employee, amount)
+          await expect(tx)
+            .to.emit(cashRemunerationProxy, 'Transfer')
+            .withArgs(employee.address, employee.address, amount)
+          const paidWageClaim = await cashRemunerationProxy.paidWageClaims(sigHash)
+          expect(paidWageClaim).to.be.equal(true) 
+          
+          expect(
+            cashRemunerationProxy
+              .connect(employee)
+              .transfer(wageClaim, v, r, s)
+          ).to.be.revertedWith("Wage already paid")
+        })
+        it('the wage amount exceeds the contract balance', async () => {
+          const wageClaim = {
+            employeeAddress: employee.address,
+            hoursWorked: 5,
+            hourlyRate: 1000,
+            date: Math.floor(Date.now() / 1000) + 2
+          }
 
-      //     const receipt = await tx.wait()
+          const signature = await employer.signTypedData(domain, types, wageClaim)
+          const { v, r, s } = ethers.Signature.from(signature)
+          const amount = ethers.parseEther('15')
+          await expect(
+            cashRemunerationProxy
+              .connect(employee)
+              .transfer(wageClaim, v, r, s)
+          ).to.be.revertedWith('Insufficient funds in the contract')
+        })
+        it('the contract is paused', async () => {
+          await expect(cashRemunerationProxy.pause())
+            .to.emit(cashRemunerationProxy, 'Paused')
+            .withArgs(employer.address)
 
-      //     console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
+            const wageClaim = {
+              employeeAddress: employee.address,
+              hoursWorked: 5, // TransactionsPerPeriod
+              hourlyRate: 1000,
+              date: Math.floor(Date.now() / 1000) + 3
+            }
 
-      //     const amount = BigInt(wageClaim.hourlyRate) * ethers.parseEther(`${wageClaim.hoursWorked}`)
-
-      //     // Try to exceed the transaction limit
-      //     await expect(tx).to.changeEtherBalance(withdrawer, amount)
-      //     await expect(tx)
-      //       .to.emit(cashRemunerationProxy, 'Transfer')
-      //       .withArgs(withdrawer.address, withdrawer.address, amount)
-      //     const paidWageClaim = (await cashRemunerationProxy.paidWageClaims(digest))
-      //     expect(paidWageClaim).to.be.equal(true)
-      //   })
-
-      //   // it('amount per period', async () => {
-      //   //   const budgetLimit = {
-      //   //     approvedAddress: withdrawer.address,
-      //   //     budgetType: 1, // AmountPerPeriod
-      //   //     value: ethers.parseEther('10'),
-      //   //     expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //   //   }
-
-      //   //   const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
-
-      //   //   const beforeAmountWithdrawn = (await expenseAccountProxy.balances(digest)).amountWithdrawn
-
-      //   //   const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //   //   const { v, r, s } = ethers.Signature.from(signature)
-      //   //   const amount = ethers.parseEther('5')
-      //   //   const tx = await expenseAccountProxy
-      //   //     .connect(withdrawer)
-      //   //     .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-
-      //   //   const receipt = await tx.wait()
-
-      //   //   console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
-
-      //   //   await expect(tx).to.changeEtherBalance(withdrawer, amount)
-      //   //   await expect(tx)
-      //   //     .to.emit(expenseAccountProxy, 'Transfer')
-      //   //     .withArgs(withdrawer.address, withdrawer.address, amount)
-      //   //   const afterAmountWithdrawn = (await expenseAccountProxy.balances(digest)).amountWithdrawn
-      //   //   expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
-      //   // })
-
-      //   // it('amount per transaction', async () => {
-      //   //   const budgetLimit = {
-      //   //     approvedAddress: withdrawer.address,
-      //   //     budgetType: 2, // AmountPerTransaction
-      //   //     value: ethers.parseEther('10'),
-      //   //     expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //   //   }
-
-      //   //   const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //   //   const { v, r, s } = ethers.Signature.from(signature)
-      //   //   const amount = ethers.parseEther('5')
-      //   //   const tx = await expenseAccountProxy
-      //   //     .connect(withdrawer)
-      //   //     .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-
-      //   //   const receipt = await tx.wait()
-
-      //   //   console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
-
-      //   //   // Try to exceed the transaction limit
-      //   //   await expect(tx).to.changeEtherBalance(withdrawer, amount)
-      //   //   await expect(tx)
-      //   //     .to.emit(expenseAccountProxy, 'Transfer')
-      //   //     .withArgs(withdrawer.address, withdrawer.address, amount)
-      //   // })
-      // })
-
-      //   describe("Then a user can't transfer if;", () => {
-      //     it('the signer is not the contract owner', async () => {
-      //       const budgetLimit = {
-      //         approvedAddress: withdrawer.address,
-      //         budgetType: 2, // AmountPerTransaction
-      //         value: ethers.parseEther('10'),
-      //         expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //       }
-
-      //       const signature = await imposter.signTypedData(domain, types, budgetLimit)
-      //       const { v, r, s } = ethers.Signature.from(signature)
-      //       const amount = ethers.parseEther('5')
-      //       await expect(
-      //         expenseAccountProxy
-      //           .connect(withdrawer)
-      //           .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-      //       ).to.be.revertedWithCustomError(expenseAccountProxy, 'UnauthorizedAccess')
-      //     })
-      //     it('the total amount transferred exceeds the budget limit', async () => {
-      //       const budgetLimit = {
-      //         approvedAddress: withdrawer.address,
-      //         budgetType: 1, // AmountPerPeriod
-      //         value: ethers.parseEther('10'),
-      //         expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //       }
-
-      //       const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //       const { v, r, s } = ethers.Signature.from(signature)
-      //       const amount = ethers.parseEther('15')
-      //       await expect(
-      //         expenseAccountProxy
-      //           .connect(withdrawer)
-      //           .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-      //       ).to.be.revertedWithCustomError(expenseAccountProxy, 'AuthorizedAmountExceeded')
-      //     })
-      //     it('the amount per transaction exceeds the budget limit', async () => {
-      //       const budgetLimit = {
-      //         approvedAddress: withdrawer.address,
-      //         budgetType: 2, // AmountPerPeriod
-      //         value: ethers.parseEther('10'),
-      //         expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //       }
-
-      //       const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //       const { v, r, s } = ethers.Signature.from(signature)
-      //       const amount = ethers.parseEther('15')
-      //       await expect(
-      //         expenseAccountProxy
-      //           .connect(withdrawer)
-      //           .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-      //       ).to.be.revertedWith('Authorized amount exceeded')
-      //     })
-      //     it('the number of transactions exceed the transaction limit', async () => {
-      //       const budgetLimit = {
-      //         approvedAddress: withdrawer.address,
-      //         budgetType: 0, // TransactionsPerPeriod
-      //         value: 0,
-      //         expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //       }
-
-      //       const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //       const { v, r, s } = ethers.Signature.from(signature)
-      //       const amount = ethers.parseEther('5')
-      //       const N = budgetLimit.value + 1
-      //       for (let i = 0; i <= N; i++) {
-      //         if (i < N) {
-      //           await expenseAccountProxy
-      //             .connect(withdrawer)
-      //             .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-      //           continue
-      //         }
-      //         await expect(
-      //           expenseAccountProxy
-      //             .connect(withdrawer)
-      //             .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-      //         ).to.be.revertedWith('Transaction limit reached')
-      //       }
-      //     })
-      //     it('the to address is a zero address', async () => {
-      //       const budgetLimit = {
-      //         approvedAddress: withdrawer.address,
-      //         budgetType: 0, // TransactionsPerPeriod
-      //         value: 0,
-      //         expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //       }
-
-      //       const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //       const { v, r, s } = ethers.Signature.from(signature)
-      //       const amount = ethers.parseEther('5')
-      //       await expect(
-      //         expenseAccountProxy
-      //           .connect(withdrawer)
-      //           .transfer('0x0000000000000000000000000000000000000000', amount, budgetLimit, v, r, s)
-      //       ).to.be.revertedWith('Address required')
-      //     })
-      //     it('the amount is zero or negative', async () => {
-      //       const budgetLimit = {
-      //         approvedAddress: withdrawer.address,
-      //         budgetType: 0, // TransactionsPerPeriod
-      //         value: 0,
-      //         expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-      //       }
-
-      //       const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //       const { v, r, s } = ethers.Signature.from(signature)
-      //       const amount = ethers.parseEther('0')
-      //       await expect(
-      //         expenseAccountProxy
-      //           .connect(withdrawer)
-      //           .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-      //       ).to.be.revertedWith('Amount must be greater than zero')
-      //     })
-      //     it('the approval has expired', async () => {
-      //       const budgetLimit = {
-      //         approvedAddress: withdrawer.address,
-      //         budgetType: 0, // TransactionsPerPeriod
-      //         value: 0,
-      //         expiry: Math.floor(Date.now() / 1000) - 60 * 60 // 1 hour before now
-      //       }
-
-      //       const signature = await owner.signTypedData(domain, types, budgetLimit)
-      //       const { v, r, s } = ethers.Signature.from(signature)
-      //       const amount = ethers.parseEther('5')
-      //       await expect(
-      //         expenseAccountProxy
-      //           .connect(withdrawer)
-      //           .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
-      //       ).to.be.revertedWith('Authorization expired')
-      //     })
-      //   })
-      //   it('Then I can pause the account', async () => {
-      //     await expect(expenseAccountProxy.pause())
-      //       .to.emit(expenseAccountProxy, 'Paused')
-      //       .withArgs(owner.address)
-      //   })
-      //   it('Then I can unpause the account', async () => {
-      //     await expect(expenseAccountProxy.unpause())
-      //       .to.emit(expenseAccountProxy, 'Unpaused')
-      //       .withArgs(owner.address)
-      //   })
+            const signature = await employer.signTypedData(domain, types, wageClaim)
+            const { v, r, s } = ethers.Signature.from(signature)
+      
+            await expect(
+              cashRemunerationProxy
+                .connect(employee)
+                .transfer(wageClaim, v, r, s)
+            ).to.be.revertedWithCustomError(cashRemunerationProxy, 'EnforcedPause')
+        })
+        it('Then I can unpause the account', async () => {
+          await expect(cashRemunerationProxy.unpause())
+            .to.emit(cashRemunerationProxy, 'Unpaused')
+            .withArgs(employer.address)
+        })
+      })
     })
   })
 })
