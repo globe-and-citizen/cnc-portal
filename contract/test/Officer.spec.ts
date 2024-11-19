@@ -147,6 +147,32 @@ describe('Officer Contract', function () {
           .deployBeaconProxy('Bank', await bankAccountBeacon.getAddress(), initData)
       ).to.emit(officer, 'ContractDeployed')
     })
+
+    it('Should create new beacon when deploying proxy for unknown contract type', async function () {
+      const bankImpl = await bankAccount.deploy()
+      const initData = bankAccount.interface.encodeFunctionData('initialize', [
+        owner.address,
+        owner.address
+      ])
+
+      // Using a new contract type that hasn't been configured
+      const newContractType = 'NewBankType'
+
+      // Verify beacon doesn't exist yet
+      expect(await officer.contractBeacons(newContractType)).to.equal(ethers.ZeroAddress)
+
+      // Deploy proxy with new contract type
+      await expect(
+        officer
+          .connect(owner)
+          .deployBeaconProxy(newContractType, await bankImpl.getAddress(), initData)
+      )
+        .to.emit(officer, 'BeaconConfigured')
+        .and.to.emit(officer, 'ContractDeployed')
+
+      // Verify beacon was created
+      expect(await officer.contractBeacons(newContractType)).to.not.equal(ethers.ZeroAddress)
+    })
   })
 
   describe('Access Control', () => {
@@ -174,6 +200,81 @@ describe('Officer Contract', function () {
       await expect(officer.connect(addr3).unpause()).to.be.revertedWith(
         'You are not authorized to perform this action'
       )
+    })
+  })
+
+  describe('Initialization and Beacon Configuration', () => {
+    it('Should reject beacon configs with zero address', async function () {
+      const Officer = await ethers.getContractFactory('Officer')
+      const invalidConfig = [
+        {
+          beaconType: 'TestBeacon',
+          beaconAddress: ethers.ZeroAddress
+        }
+      ]
+
+      await expect(
+        upgrades.deployProxy(Officer, [owner.address, invalidConfig], {
+          initializer: 'initialize'
+        })
+      ).to.be.revertedWith('Invalid beacon address')
+    })
+
+    it('Should reject beacon configs with empty type', async function () {
+      const Officer = await ethers.getContractFactory('Officer')
+      const invalidConfig = [
+        {
+          beaconType: '',
+          beaconAddress: addr1.address
+        }
+      ]
+
+      await expect(
+        upgrades.deployProxy(Officer, [owner.address, invalidConfig], {
+          initializer: 'initialize'
+        })
+      ).to.be.revertedWith('Empty beacon type')
+    })
+
+    it('Should reject duplicate beacon types in config', async function () {
+      const Officer = await ethers.getContractFactory('Officer')
+      const duplicateConfigs = [
+        {
+          beaconType: 'TestBeacon',
+          beaconAddress: addr1.address
+        },
+        {
+          beaconType: 'TestBeacon', // Duplicate type
+          beaconAddress: addr2.address
+        }
+      ]
+
+      await expect(
+        upgrades.deployProxy(Officer, [owner.address, duplicateConfigs], {
+          initializer: 'initialize'
+        })
+      ).to.be.revertedWith('Duplicate beacon type')
+    })
+
+    it('Should successfully initialize with valid beacon configs', async function () {
+      const Officer = await ethers.getContractFactory('Officer')
+      const validConfigs = [
+        {
+          beaconType: 'TestBeacon1',
+          beaconAddress: addr1.address
+        },
+        {
+          beaconType: 'TestBeacon2',
+          beaconAddress: addr2.address
+        }
+      ]
+
+      const officerContract = (await upgrades.deployProxy(Officer, [owner.address, validConfigs], {
+        initializer: 'initialize'
+      })) as unknown as Officer
+
+      expect(await officerContract.contractBeacons('TestBeacon1')).to.equal(addr1.address)
+      expect(await officerContract.contractBeacons('TestBeacon2')).to.equal(addr2.address)
     })
   })
 })
