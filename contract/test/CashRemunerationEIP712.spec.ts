@@ -183,7 +183,7 @@ describe('CashRemuneration (EIP712)', () => {
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
           const { v, r, s } = ethers.Signature.from(signature)
-          
+
           await expect(
             cashRemunerationProxy.connect(employee).transfer(wageClaim, v, r, s)
           ).to.be.revertedWith('Insufficient funds in the contract')
