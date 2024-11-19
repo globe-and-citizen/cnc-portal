@@ -69,7 +69,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      * @param contractType Type identifier for the contract
      * @param beaconAddress Address of the beacon contract
      */
-    function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwner {
+    function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwners {
         contractBeacons[contractType] = beaconAddress;
         emit BeaconConfigured(contractType, beaconAddress);
     }
@@ -96,21 +96,15 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     /**
      * @notice Deploys a new beacon proxy for a contract type
      * @param contractType Type identifier for the contract
-     * @param implementation Address of the implementation contract
      * @param initializerData Initialization data for the proxy
      * @return Address of the deployed proxy
      */
     function deployBeaconProxy(
         string calldata contractType,
-        address implementation,
         bytes calldata initializerData
-    ) external onlyOwners whenNotPaused returns (address) {
-        // Create a new beacon if one doesn't exist for this contract type
-        if (contractBeacons[contractType] == address(0)) {
-            UpgradeableBeacon beacon = new UpgradeableBeacon(implementation, msg.sender);
-            contractBeacons[contractType] = address(beacon);
-            emit BeaconConfigured(contractType, address(beacon));
-        }
+    ) external whenNotPaused onlyOwners returns (address) {
+        // Ensure beacon exists for this contract type
+        require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
 
         // Deploy beacon proxy
         BeaconProxy proxy = new BeaconProxy(

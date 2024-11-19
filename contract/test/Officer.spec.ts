@@ -95,61 +95,46 @@ describe('Officer Contract', function () {
         owner.address
       ])
 
-      await expect(
-        officer
-          .connect(owner)
-          .deployBeaconProxy('Voting', await votingContractBeacon.getAddress(), votingInitData)
-      ).to.emit(officer, 'ContractDeployed')
+      await expect(officer.connect(owner).deployBeaconProxy('Voting', votingInitData)).to.emit(
+        officer,
+        'ContractDeployed'
+      )
 
       await expect(
-        officer
-          .connect(owner)
-          .deployBeaconProxy('BoardOfDirectors', await bodBeacon.getAddress(), bodInitData)
+        officer.connect(owner).deployBeaconProxy('BoardOfDirectors', bodInitData)
       ).to.emit(officer, 'ContractDeployed')
 
-      await expect(
-        officer
-          .connect(owner)
-          .deployBeaconProxy('Bank', await bankAccountBeacon.getAddress(), bankInitData)
-      ).to.emit(officer, 'ContractDeployed')
+      await expect(officer.connect(owner).deployBeaconProxy('Bank', bankInitData)).to.emit(
+        officer,
+        'ContractDeployed'
+      )
 
       await expect(
-        officer
-          .connect(owner)
-          .deployBeaconProxy(
-            'ExpenseAccount',
-            await expenseAccountBeacon.getAddress(),
-            expenseInitData
-          )
+        officer.connect(owner).deployBeaconProxy('ExpenseAccount', expenseInitData)
       ).to.emit(officer, 'ContractDeployed')
     })
 
     it('Should restrict deployment to owners and founders', async function () {
       await officer.connect(owner).createTeam([addr1.address], [])
 
-      // Update the initialization data to use a valid owner address
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
         addr1.address,
         owner.address
       ])
 
       // Test unauthorized access
-      await expect(
-        officer
-          .connect(addr3)
-          .deployBeaconProxy('Bank', await bankAccountBeacon.getAddress(), initData)
-      ).to.be.revertedWith('You are not authorized to perform this action')
+      await expect(officer.connect(addr3).deployBeaconProxy('Bank', initData)).to.be.revertedWith(
+        'You are not authorized to perform this action'
+      )
 
       // Test authorized access (founder)
-      await expect(
-        officer
-          .connect(addr1)
-          .deployBeaconProxy('Bank', await bankAccountBeacon.getAddress(), initData)
-      ).to.emit(officer, 'ContractDeployed')
+      await expect(officer.connect(addr1).deployBeaconProxy('Bank', initData)).to.emit(
+        officer,
+        'ContractDeployed'
+      )
     })
 
-    it('Should create new beacon when deploying proxy for unknown contract type', async function () {
-      const bankImpl = await bankAccount.deploy()
+    it('Should fail when deploying proxy for unknown contract type', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
         owner.address,
         owner.address
@@ -161,17 +146,10 @@ describe('Officer Contract', function () {
       // Verify beacon doesn't exist yet
       expect(await officer.contractBeacons(newContractType)).to.equal(ethers.ZeroAddress)
 
-      // Deploy proxy with new contract type
+      // Attempt to deploy proxy with new contract type should fail
       await expect(
-        officer
-          .connect(owner)
-          .deployBeaconProxy(newContractType, await bankImpl.getAddress(), initData)
-      )
-        .to.emit(officer, 'BeaconConfigured')
-        .and.to.emit(officer, 'ContractDeployed')
-
-      // Verify beacon was created
-      expect(await officer.contractBeacons(newContractType)).to.not.equal(ethers.ZeroAddress)
+        officer.connect(owner).deployBeaconProxy(newContractType, initData)
+      ).to.be.revertedWith('Beacon not configured for this contract type')
     })
   })
 
