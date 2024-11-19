@@ -16,11 +16,12 @@ contract CashRemunerationEIP712 is
         address employeeAddress;
         uint8 hoursWorked;
         uint256 hourlyRate;
+        uint256 date;
     }
 
     bytes32 constant WAGE_CLAIM_TYPEHASH = 
         keccak256(
-            "WageClaim(address employeeAddress,uint8 hoursWorked,uint256 hourlyRate)"
+            "WageClaim(address employeeAddress,uint8 hoursWorked,uint256 hourlyRate,uint256 date)"
         );
 
     mapping(bytes32 => bool) public paidWageClaims;
@@ -45,7 +46,8 @@ contract CashRemunerationEIP712 is
             WAGE_CLAIM_TYPEHASH,
             wageClaim.employeeAddress,
             wageClaim.hoursWorked,
-            wageClaim.hourlyRate
+            wageClaim.hourlyRate,
+            wageClaim.date
         ));
     }
 
