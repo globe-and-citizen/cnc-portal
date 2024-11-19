@@ -342,4 +342,31 @@ describe('Officer Contract', function () {
       )
     })
   })
+
+  describe('Contract Type Management', () => {
+    it('Should track configured contract types', async function () {
+      const types = await officer.getConfiguredContractTypes()
+      expect(types).to.have.lengthOf(4)
+      expect(types).to.include('Bank')
+      expect(types).to.include('Voting')
+      expect(types).to.include('BoardOfDirectors')
+      expect(types).to.include('ExpenseAccount')
+    })
+
+    it('Should add new contract type only when configuring new beacon', async function () {
+      const initialTypes = await officer.getConfiguredContractTypes()
+      const initialLength = initialTypes.length
+
+      // Reconfigure existing beacon
+      await officer.connect(owner).configureBeacon('Bank', addr1.address)
+      let types = await officer.getConfiguredContractTypes()
+      expect(types.length).to.equal(initialLength)
+
+      // Configure new beacon
+      await officer.connect(owner).configureBeacon('NewContractType', addr2.address)
+      types = await officer.getConfiguredContractTypes()
+      expect(types.length).to.equal(initialLength + 1)
+      expect(types).to.include('NewContractType')
+    })
+  })
 })
