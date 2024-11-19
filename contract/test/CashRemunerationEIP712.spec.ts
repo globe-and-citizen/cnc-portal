@@ -126,9 +126,7 @@ describe('CashRemuneration (EIP712)', () => {
           const { v, r, s } = ethers.Signature.from(signature)
 
           await expect(
-            cashRemunerationProxy
-              .connect(employee)
-              .transfer( wageClaim, v, r, s)
+            cashRemunerationProxy.connect(employee).transfer(wageClaim, v, r, s)
           ).to.be.revertedWithCustomError(cashRemunerationProxy, 'UnauthorizedAccess')
         })
         it('the withdrawer is not the approved user', async () => {
@@ -143,10 +141,8 @@ describe('CashRemuneration (EIP712)', () => {
           const { v, r, s } = ethers.Signature.from(signature)
 
           await expect(
-            cashRemunerationProxy
-              .connect(imposter)
-              .transfer( wageClaim, v, r, s)
-          ).to.be.revertedWith("Withdrawer not approved")
+            cashRemunerationProxy.connect(imposter).transfer(wageClaim, v, r, s)
+          ).to.be.revertedWith('Withdrawer not approved')
         })
         it('the wage has already been paid', async () => {
           const wageClaim = {
@@ -155,30 +151,27 @@ describe('CashRemuneration (EIP712)', () => {
             hourlyRate: 20,
             date: Math.floor(Date.now() / 1000) + 1
           }
-          
+
           const signature = await employer.signTypedData(domain, types, wageClaim)
           const { v, r, s } = ethers.Signature.from(signature)
-  
+
           const sigHash = ethers.solidityPackedKeccak256(['uint8', 'bytes32', 'bytes32'], [v, r, s])
-          
-          const tx = await cashRemunerationProxy
-            .connect(employee)
-            .transfer(wageClaim, v, r, s)
-  
-          const amount = BigInt(wageClaim.hourlyRate) * ethers.parseEther(`${wageClaim.hoursWorked}`)
-  
+
+          const tx = await cashRemunerationProxy.connect(employee).transfer(wageClaim, v, r, s)
+
+          const amount =
+            BigInt(wageClaim.hourlyRate) * ethers.parseEther(`${wageClaim.hoursWorked}`)
+
           await expect(tx).to.changeEtherBalance(employee, amount)
           await expect(tx)
             .to.emit(cashRemunerationProxy, 'Transfer')
             .withArgs(employee.address, employee.address, amount)
           const paidWageClaim = await cashRemunerationProxy.paidWageClaims(sigHash)
-          expect(paidWageClaim).to.be.equal(true) 
-          
+          expect(paidWageClaim).to.be.equal(true)
+
           expect(
-            cashRemunerationProxy
-              .connect(employee)
-              .transfer(wageClaim, v, r, s)
-          ).to.be.revertedWith("Wage already paid")
+            cashRemunerationProxy.connect(employee).transfer(wageClaim, v, r, s)
+          ).to.be.revertedWith('Wage already paid')
         })
         it('the wage amount exceeds the contract balance', async () => {
           const wageClaim = {
@@ -192,9 +185,7 @@ describe('CashRemuneration (EIP712)', () => {
           const { v, r, s } = ethers.Signature.from(signature)
           const amount = ethers.parseEther('15')
           await expect(
-            cashRemunerationProxy
-              .connect(employee)
-              .transfer(wageClaim, v, r, s)
+            cashRemunerationProxy.connect(employee).transfer(wageClaim, v, r, s)
           ).to.be.revertedWith('Insufficient funds in the contract')
         })
         it('the contract is paused', async () => {
@@ -202,21 +193,19 @@ describe('CashRemuneration (EIP712)', () => {
             .to.emit(cashRemunerationProxy, 'Paused')
             .withArgs(employer.address)
 
-            const wageClaim = {
-              employeeAddress: employee.address,
-              hoursWorked: 5, // TransactionsPerPeriod
-              hourlyRate: 1000,
-              date: Math.floor(Date.now() / 1000) + 3
-            }
+          const wageClaim = {
+            employeeAddress: employee.address,
+            hoursWorked: 5, // TransactionsPerPeriod
+            hourlyRate: 1000,
+            date: Math.floor(Date.now() / 1000) + 3
+          }
 
-            const signature = await employer.signTypedData(domain, types, wageClaim)
-            const { v, r, s } = ethers.Signature.from(signature)
-      
-            await expect(
-              cashRemunerationProxy
-                .connect(employee)
-                .transfer(wageClaim, v, r, s)
-            ).to.be.revertedWithCustomError(cashRemunerationProxy, 'EnforcedPause')
+          const signature = await employer.signTypedData(domain, types, wageClaim)
+          const { v, r, s } = ethers.Signature.from(signature)
+
+          await expect(
+            cashRemunerationProxy.connect(employee).transfer(wageClaim, v, r, s)
+          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'EnforcedPause')
         })
         it('Then I can unpause the account', async () => {
           await expect(cashRemunerationProxy.unpause())
