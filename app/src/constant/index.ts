@@ -30,7 +30,7 @@ const addressesMap: Record<number, AddressMapping> = {
 const chainId = parseInt(NETWORK.chainId, 16)
 const addresses = addressesMap[chainId] || ({} as AddressMapping)
 
-function resolveAddress(key: keyof AddressMapping) {
+export function resolveAddress(key: keyof AddressMapping) {
   const address = addresses[key]
   if (!address) {
     log.error(`Address for ${key} is not defined in the current network configuration.`)
