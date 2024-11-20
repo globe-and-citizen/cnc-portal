@@ -40,9 +40,6 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
   }
 
   function individualMint(address shareholder, uint256 amount) external onlyOwner whenNotPaused nonReentrant {
-    if (!shareholders.contains(shareholder)) {
-      shareholders.add(shareholder);
-    }
     _mint(shareholder, amount);
     emit Minted(shareholder, amount);
   }
@@ -86,7 +83,7 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
         uint256 dividend = (msg.value * balance) / totalSupply();
         payable(shareholder).transfer(dividend);
 
-        emit DividendDistributed(shareholder, balance);
+        emit DividendDistributed(shareholder, dividend);
       }
     }
   }
