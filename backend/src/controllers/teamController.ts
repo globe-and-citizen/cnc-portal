@@ -484,6 +484,57 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
   }
 }
 
+export const addEmployeeWage = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const memberAddress = req.headers.memberaddress;
+  const wageData = req.body
+
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) }
+    })
+    const ownerAddress = team?.ownerAddress
+    if (callerAddress !== ownerAddress) {
+      return errorResponse(403, `Forbidden`, res)
+    }
+
+    if (typeof memberAddress !== 'string') {
+      return errorResponse(404, 'Bad Request', res)
+    }
+
+    //create or update wage data
+    await prisma.memberTeamsData.upsert({
+      where: {
+        userAddress_teamId: {
+          userAddress: memberAddress,
+          teamId: Number(id)
+        }
+      },
+      update: {
+        hourlyRate: wageData.hourlyRate,
+        maxHoursPerWeek: wageData.maxHoursPerHour
+      },
+      create: {
+        userAddress: memberAddress,
+        teamId: Number(id),
+        hourlyRate: wageData.hourlyRate,
+        maxHoursPerWeek: wageData.maxHoursPerHour
+      }
+    })
+
+    res.status(201)
+      .json({
+        success: true
+      })
+
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
   callerAddress: string

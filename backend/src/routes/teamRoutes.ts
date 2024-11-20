@@ -8,7 +8,8 @@ import {
   deleteMember,
   addMembers,
   addExpenseAccountData,
-  getExpenseAccountData
+  getExpenseAccountData,
+  addEmployeeWage
 } from "../controllers/teamController";
 const teamRoutes = express.Router();
 
@@ -20,6 +21,7 @@ teamRoutes.delete("/:id", deleteTeam);
 teamRoutes.delete("/:id/member", deleteMember);
 teamRoutes.post("/:id/member", addMembers);
 teamRoutes.post("/:id/expense-data", addExpenseAccountData);
-teamRoutes.get("/:id/expense-data", getExpenseAccountData)
+teamRoutes.get("/:id/expense-data", getExpenseAccountData);
+teamRoutes.post("/:id/cash-remuneration/wage", addEmployeeWage)
 
 export default teamRoutes;
