@@ -52,7 +52,7 @@ model MemberTeamsData {
   expenseAccountData        String?
   expenseAccountSignature   String?
   hourlyRate                Int?
-  maxHoursPerHour           Int?
+  maxHoursPerWeek           Int?
   claims                    Claim[]
 
   @@unique([userAddress, teamId]) 
