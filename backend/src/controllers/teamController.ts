@@ -535,6 +535,41 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
   }
 }
 
+export const makeClaim = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const hoursWorked = req.body
+
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: callerAddress,
+          teamId: Number(id)
+        }
+      }
+    })
+    if (!memberTeamsData) {
+      return errorResponse(404, 'Record Not Found', res)
+    }
+    await prisma.claim.create({
+      data: {
+        hoursWorked,
+        status: 'pending',
+        memberTeamsDataId: memberTeamsData?.id
+      }
+    })
+    res.status(201)
+      .json({
+        success: true
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
   callerAddress: string
