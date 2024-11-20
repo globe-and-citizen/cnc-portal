@@ -33,7 +33,7 @@ describe('CashRemuneration (EIP712)', () => {
       [key: string]: Array<{ name: string; type: string }>
     }
 
-    context('I want to deploy my Expense Account Smart Contract', () => {
+    context('I want to deploy my Cash Remuneration Smart Contract', () => {
       before(async () => {
         ;[employer, employee, imposter] = await ethers.getSigners()
         await deployContract(employer)
