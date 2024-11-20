@@ -535,7 +535,7 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
   }
 }
 
-export const makeClaim = async (req: Request, res: Response) => {
+export const addClaim = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
   const hoursWorked = req.body

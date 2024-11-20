@@ -10,7 +10,7 @@ import {
   addExpenseAccountData,
   getExpenseAccountData,
   addEmployeeWage,
-  makeClaim
+  addClaim
 } from "../controllers/teamController";
 const teamRoutes = express.Router();
 
@@ -24,6 +24,6 @@ teamRoutes.post("/:id/member", addMembers);
 teamRoutes.post("/:id/expense-data", addExpenseAccountData);
 teamRoutes.get("/:id/expense-data", getExpenseAccountData);
 teamRoutes.post("/:id/cash-remuneration/wage", addEmployeeWage)
-teamRoutes.post("/:id/cash-remuneration/claim", makeClaim)
+teamRoutes.post("/:id/cash-remuneration/claim", addClaim)
 
 export default teamRoutes;
