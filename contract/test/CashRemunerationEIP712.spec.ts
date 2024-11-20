@@ -94,9 +94,7 @@ describe('CashRemuneration (EIP712)', () => {
 
         const sigHash = ethers.solidityPackedKeccak256(['uint8', 'bytes32', 'bytes32'], [v, r, s])
         // const amount = ethers.parseEther('5')
-        const tx = await cashRemunerationProxy
-          .connect(employee)
-          .withdraw(wageClaim, v, r, s)
+        const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, v, r, s)
 
         const receipt = await tx.wait()
 
