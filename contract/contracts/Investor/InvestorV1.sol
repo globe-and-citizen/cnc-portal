@@ -83,7 +83,7 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
         uint256 dividend = (msg.value * balance) / totalSupply();
         payable(shareholder).transfer(dividend);
 
-        emit DividendDistributed(shareholder, balance);
+        emit DividendDistributed(shareholder, dividend);
       }
     }
   }
