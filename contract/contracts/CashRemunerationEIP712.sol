@@ -28,7 +28,7 @@ contract CashRemunerationEIP712 is
 
     event Deposited(address indexed depositor, uint256 amount);
 
-    event Transfer(address indexed withdrawer, address indexed to, uint256 amount);
+    event Withdraw(address indexed withdrawer, uint256 amount);
 
     error UnauthorizedAccess(address expected, address received);
 
@@ -51,9 +51,7 @@ contract CashRemunerationEIP712 is
         ));
     }
 
-    function transfer(
-        // address payable to,
-        // uint256 amount, 
+    function withdraw( 
         WageClaim calldata wageClaim, 
         uint8 v, 
         bytes32 r, 
@@ -87,7 +85,7 @@ contract CashRemunerationEIP712 is
 
         require(sent, "Failed to send Ether");
 
-        emit Transfer(wageClaim.employeeAddress, wageClaim.employeeAddress, amountToPay);
+        emit Withdraw(wageClaim.employeeAddress, amountToPay);
     }
 
     function pause() external onlyOwner {
