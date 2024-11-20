@@ -25,5 +25,6 @@ teamRoutes.post("/:id/expense-data", addExpenseAccountData);
 teamRoutes.get("/:id/expense-data", getExpenseAccountData);
 teamRoutes.post("/:id/cash-remuneration/wage", addEmployeeWage)
 teamRoutes.post("/:id/cash-remuneration/claim", addClaim)
+teamRoutes.put("/:id/cash-remuneration/claim", addClaim)
 
 export default teamRoutes;

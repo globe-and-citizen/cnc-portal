@@ -570,6 +570,43 @@ export const addClaim = async (req: Request, res: Response) => {
   }
 }
 
+export const updateClaim = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const claimId = req.headers.claimid
+  const hoursWorked = req.body
+  
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: callerAddress,
+          teamId: Number(id)
+        }
+      }
+    })
+
+    const claim = await prisma.claim.findUnique({
+      where: { id: Number(claimId) }
+    })
+
+    if (claim?.memberTeamsDataId !== memberTeamsData?.id) {
+      return errorResponse(403, `Forbidden`, res)
+    }
+
+    await prisma.claim.update({
+      where: { id: Number(id) },
+      data: { hoursWorked }
+    })
+
+    res.status(201)
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
   callerAddress: string
