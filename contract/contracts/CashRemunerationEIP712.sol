@@ -31,8 +31,6 @@ contract CashRemunerationEIP712 is
     event Withdraw(address indexed withdrawer, uint256 amount);
 
     error UnauthorizedAccess(address expected, address received);
-
-    error AuthorizedAmountExceeded(uint256 amount);
     
     function initialize(address owner) public initializer {
         __Ownable_init(owner);
