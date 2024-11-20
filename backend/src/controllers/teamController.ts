@@ -607,6 +607,43 @@ export const updateClaim = async (req: Request, res: Response) => {
   }
 }
 
+export const deleteClaim = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const claimId = req.headers.claimid
+  
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: callerAddress,
+          teamId: Number(id)
+        }
+      }
+    })
+
+    const claim = await prisma.claim.findUnique({
+      where: { id: Number(claimId) }
+    })
+
+    if (claim?.memberTeamsDataId !== memberTeamsData?.id)
+      return errorResponse(403, `Forbidden`, res)
+
+    if (claim?.status !== `pending`) 
+      return errorResponse(403, `Forbidden`, res)
+
+    await prisma.claim.delete({
+      where: { id: Number(id) }
+    })
+
+    res.status(201)
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 export const approveClaim = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
@@ -630,7 +667,7 @@ export const approveClaim = async (req: Request, res: Response) => {
 
     await prisma.claim.update({
       where: { id: claim?.id },
-      data: { cashRemunerationSignature }
+      data: { cashRemunerationSignature, status: 'approved' }
     })
 
     res.status(201)
