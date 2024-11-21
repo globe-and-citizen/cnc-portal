@@ -498,11 +498,11 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
     if (callerAddress !== ownerAddress) {
       return errorResponse(403, `Forbidden`, res)
     }
-
+    console.log(`memberAddress`, memberAddress)
     if (typeof memberAddress !== 'string') {
       return errorResponse(400, 'Bad Request', res)
     }
-
+    console.log(`wageData`, wageData)
     //create or update wage data
     await prisma.memberTeamsData.upsert({
       where: {
@@ -513,13 +513,13 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
       },
       update: {
         hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: wageData.maxHoursPerHour
+        maxHoursPerWeek: wageData.maxHoursPerWeek
       },
       create: {
         userAddress: memberAddress,
         teamId: Number(id),
         hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: wageData.maxHoursPerHour
+        maxHoursPerWeek: wageData.maxHoursPerWeek
       }
     })
 
