@@ -129,6 +129,27 @@ describe('Cash Remuneration', () => {
         success: true
       })
     })
+
+    it('should return 500 if there is a server error', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.put('/:id/cash-remuneration/claim', updateClaim)
+  
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockRejectedValue(new Error('Server error'))
+  
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim')
+        .set('address', '0xOwnerAddress')
+        .set('hoursWorked', `${hoursWorked}`)
+  
+      expect(response.status).toBe(500)
+      expect(response.body).toEqual({
+        error: "Server error",
+        message: "Internal server error has occured",
+        success: false,
+      })
+    })
   })
 
   describe('POST /:id/cash-remuneration/claim', () => {
