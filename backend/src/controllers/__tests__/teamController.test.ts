@@ -3,7 +3,8 @@ import express, { Request, Response, NextFunction } from 'express'
 import { 
   addExpenseAccountData, 
   getExpenseAccountData, 
-  addEmployeeWage
+  addEmployeeWage,
+  addClaim
 } from '../teamController'
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from 'vitest'
@@ -18,6 +19,101 @@ function setAddressMiddleware(address: string) {
 }
 
 describe('Cash Remuneration', () => {
+  describe('POST /:id/cash-remuneration/claim', () => {
+    const mockTeamData = { 
+      id: 1, 
+      ownerAddress: '0xOwnerAddress', 
+      description: null, 
+      name: '', 
+      bankAddress: '0xBankAddress',
+      votingAddress: '0xVotingAddress', 
+      boardOfDirectorsAddress: '0xBoardOfDirectorsAddress', 
+      expenseAccountAddress: '0xExpenseAccountAddress', 
+      officerAddress: '0xOfficerAddress',
+      expenseAccountEip712Address: '0xExpenseAccountEIP712Address'
+    }
+    const hoursWorked = 20
+    const mockMemberTeamsData = { 
+      id: 1, 
+      userAddress: '0xMemberAddress', 
+      teamId: 1, 
+      expenseAccountData: null, 
+      expenseAccountSignature: null,
+      hourlyRate: 10,
+      maxHoursPerWeek: 20
+    }
+  
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should return 404 if member teams record does not exist', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.post('/:id/cash-remuneration/claim', addClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(null)
+
+      const response = await request(app)
+        .post('/1/cash-remuneration/claim')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('hoursworked', `${hoursWorked}`)
+
+      expect(response.status).toBe(404)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Record Not Found'
+      })      
+    })
+
+    it('should return 201 if user has allowed and hours worked are added', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.post('/:id/cash-remuneration/claim', addClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'create')
+
+      const response = await request(app)
+        .post('/1/cash-remuneration/claim')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('hoursworked', `${hoursWorked}`)
+        // .send(hoursWorked)
+
+      expect(prisma.claim.create).toHaveBeenCalledWith({
+        data: {
+          hoursWorked: hoursWorked,
+          status: 'pending',
+          memberTeamsDataId: mockMemberTeamsData.id
+        }
+      })
+      expect(response.status).toBe(201)
+      expect(response.body).toEqual({
+        success: true
+      })      
+    })
+
+    it('should return 500 if there is a server error', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.post('/:id/cash-remuneration/claim', addClaim)
+  
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockRejectedValue(new Error('Server error'))
+  
+      const response = await request(app)
+        .post('/1/cash-remuneration/claim')
+        .set('address', '0xOwnerAddress')
+        .set('hoursWorked', `${hoursWorked}`)
+  
+      expect(response.status).toBe(500)
+      expect(response.body).toEqual({
+        error: "Server error",
+        message: "Internal server error has occured",
+        success: false,
+      })
+    })
+  })
   describe('POST /:id/cash-remuneration/wage', () => {
     const mockTeamData = { 
       id: 1, 

@@ -538,7 +538,7 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
 export const addClaim = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
-  const hoursWorked = req.body
+  const hoursWorked = req.headers.hoursworked
 
   try {
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
@@ -552,6 +552,7 @@ export const addClaim = async (req: Request, res: Response) => {
     if (!memberTeamsData) {
       return errorResponse(404, 'Record Not Found', res)
     }
+    console.log(`hoursWorked`, hoursWorked)
     await prisma.claim.create({
       data: {
         hoursWorked: Number(hoursWorked),
