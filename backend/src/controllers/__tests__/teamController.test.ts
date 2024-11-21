@@ -38,7 +38,9 @@ describe('POST /expenseAccount/:id', () => {
     userAddress: '0xMemberAddress', 
     teamId: 1, 
     expenseAccountData: JSON.stringify(mockExpenseAccountData.expenseAccountData), 
-    expenseAccountSignature: mockExpenseAccountData.signature 
+    expenseAccountSignature: mockExpenseAccountData.signature,
+    hourlyRate: null,
+    maxHoursPerWeek: null 
   }
 
   beforeEach(() => {
@@ -141,7 +143,9 @@ describe('GET /expenseAccount/:id', () => {
     userAddress: '0xMemberAddress',
     teamId: 1,
     expenseAccountData: JSON.stringify({ approvedAddress: '0xApprovedAddress', someOtherField: 'someData' }),
-    expenseAccountSignature: '0xSignature'
+    expenseAccountSignature: '0xSignature',
+    maxHoursPerWeek: null,
+    hourlyRate: null
   }
 
   beforeEach(() => {
