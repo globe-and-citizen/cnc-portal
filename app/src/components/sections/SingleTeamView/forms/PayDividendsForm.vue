@@ -2,7 +2,16 @@
   <div class="flex flex-col gap-4">
     <h2>Pay Dividends to the shareholders</h2>
 
-    <h3>Please input amount of {{ NETWORK.currencySymbol }} to divide to the shareholders</h3>
+    <h3>
+      Please input amount of {{ NETWORK.currencySymbol }} to divide to the shareholders. This will
+      move funds from bank contract to the shareholders
+    </h3>
+
+    <h6>
+      Current Bank contract balance <span v-if="balanceLoading">...</span>
+      <span v-else> {{ formatEther(bankBalance?.value!) }}</span>
+      {{ NETWORK.currencySymbol }}
+    </h6>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Amount</p>
       |
@@ -29,17 +38,33 @@
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
 import { NETWORK } from '@/constant'
+import { useToastStore } from '@/stores'
+import type { Team } from '@/types'
 import useVuelidate from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
-import { parseEther } from 'viem'
+import { useBalance } from '@wagmi/vue'
+import { formatEther, parseEther, type Address } from 'viem'
+import { onMounted, watch } from 'vue'
 import { ref } from 'vue'
 
 const amount = ref<number | null>(null)
+const { addErrorToast } = useToastStore()
 
-defineProps<{
+const props = defineProps<{
   tokenSymbol: string | undefined
   loading: boolean
+  team: Team
 }>()
+
+const {
+  data: bankBalance,
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: props.team.bankAddress as Address
+})
+
 const emits = defineEmits(['submit'])
 
 const rules = {
@@ -57,4 +82,13 @@ const onSubmit = () => {
 }
 
 const $v = useVuelidate(rules, { amount })
+
+watch(balanceError, () => {
+  if (balanceError.value) {
+    addErrorToast('Failed to fetch team balance')
+  }
+})
+onMounted(() => {
+  fetchBalance()
+})
 </script>

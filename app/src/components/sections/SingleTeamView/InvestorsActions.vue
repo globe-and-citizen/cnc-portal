@@ -50,6 +50,7 @@
         v-if="payDividendsModal"
         :loading="payDividendsLoading || isConfirmingPayDividends"
         :token-symbol="tokenSymbol!"
+        :team="team"
         @submit="executePayDividends"
       ></PayDividendsForm>
     </ModalComponent>
@@ -61,12 +62,13 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
 import { log } from '@/utils'
-import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { parseEther, type Address } from 'viem'
 import { ref, watch } from 'vue'
 import MintForm from '@/components/sections/SingleTeamView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SingleTeamView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SingleTeamView/forms/PayDividendsForm.vue'
+import BANK_ABI from '@/artifacts/abi/bank.json'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const mintModal = ref(false)
@@ -106,10 +108,10 @@ const { isLoading: isConfirmingDistributeMint, isSuccess: isSuccessDistributingM
 
 const {
   data: payDividendsHash,
-  sendTransaction: payDividends,
+  writeContract: payDividends,
   isPending: payDividendsLoading,
   error: payDividendsError
-} = useSendTransaction()
+} = useWriteContract()
 
 const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } =
   useWaitForTransactionReceipt({
@@ -118,8 +120,10 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
 
 const executePayDividends = (value: bigint) => {
   payDividends({
-    value,
-    to: props.team.investorsAddress as Address
+    abi: BANK_ABI,
+    address: props.team.bankAddress as Address,
+    functionName: 'transfer',
+    args: [props.team.investorsAddress, value]
   })
 }
 const executeDistributeMint = (
