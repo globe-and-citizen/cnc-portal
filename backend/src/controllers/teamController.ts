@@ -500,7 +500,7 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
     }
 
     if (typeof memberAddress !== 'string') {
-      return errorResponse(404, 'Bad Request', res)
+      return errorResponse(400, 'Bad Request', res)
     }
 
     //create or update wage data
