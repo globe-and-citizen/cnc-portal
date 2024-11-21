@@ -30,6 +30,8 @@
       :token-symbol-loading="tokenSymbolLoading"
       :shareholders="shareholders"
       :loading="shareholderLoading"
+      :total-supply="totalSupply"
+      :total-supply-loading="totalSupplyLoading"
       @refetchShareholders="
         () => {
           refetchTokenBalance()

@@ -4,29 +4,38 @@
     <div class="overflow-x-auto">
       <table class="table">
         <thead class="text-sm font-bold">
-          <tr>
+          <tr class="text-center">
             <th>Address</th>
             <th>Balance</th>
+            <th>Percentage</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody v-if="(shareholders?.length || 0) == 0 && !loading">
           <tr>
-            <td colspan="3" class="text-center font-bold">No shareholders</td>
+            <td colspan="4" class="text-center font-bold">No shareholders</td>
           </tr>
         </tbody>
         <tbody v-if="loading">
           <tr>
-            <td colspan="3" class="loading loading-spinner loading-lg"></td>
+            <td colspan="4" class="loading loading-spinner loading-lg"></td>
           </tr>
         </tbody>
 
         <tbody v-if="!loading && (shareholders?.length || 0) > 0">
-          <tr v-for="shareholder in shareholders" :key="shareholder.shareholder">
+          <tr
+            class="text-center"
+            v-for="shareholder in shareholders"
+            :key="shareholder.shareholder"
+          >
             <td>
               <AddressToolTip :address="shareholder.shareholder" />
             </td>
             <td>{{ formatEther(shareholder.amount) }} {{ tokenSymbol }}</td>
+            <td class="text-center" v-if="!totalSupplyLoading">
+              {{ ((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupply!)).toString() }}%
+            </td>
+            <td v-else class="text-center">...%</td>
             <td>
               <button
                 class="btn btn-primary"
@@ -79,6 +88,8 @@ const props = defineProps<{
   team: Team
   tokenSymbol: string | undefined
   tokenSymbolLoading: boolean
+  totalSupply: bigint | undefined
+  totalSupplyLoading: boolean
   shareholders:
     | readonly {
         shareholder: Address
