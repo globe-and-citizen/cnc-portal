@@ -594,13 +594,14 @@ export const updateClaim = async (req: Request, res: Response) => {
     if (claim?.memberTeamsDataId !== memberTeamsData?.id) {
       return errorResponse(403, `Forbidden`, res)
     }
-
+    
     await prisma.claim.update({
       where: { id: Number(id) },
       data: { hoursWorked }
     })
-
+    
     res.status(201)
+      .json({ success: true })
   } catch (error) {
     return errorResponse(500, error, res)
   } finally {
