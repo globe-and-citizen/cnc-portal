@@ -5,11 +5,11 @@ import {
   getExpenseAccountData, 
   addEmployeeWage,
   addClaim,
-  updateClaim
+  updateClaim,
+  approveClaim
 } from '../teamController'
 import { prisma } from "../../utils";
-import { describe, it, beforeEach, expect, vi, should } from 'vitest'
-import exp from 'constants';
+import { describe, it, beforeEach, expect, vi } from 'vitest'
 
 vi.mock('../../utils') 
 
@@ -21,7 +21,7 @@ function setAddressMiddleware(address: string) {
 }
 
 describe('Cash Remuneration', () => {
-  describe('PUT /:id/cash-remuneration/claim', () => {
+  describe('PUT /:id/cash-remuneration/claim/approve', () => {
     const mockTeamData = { 
       id: 1, 
       ownerAddress: '0xOwnerAddress', 
@@ -34,6 +34,143 @@ describe('Cash Remuneration', () => {
       officerAddress: '0xOfficerAddress',
       expenseAccountEip712Address: '0xExpenseAccountEIP712Address'
     }
+    const cashRemunerationSignature = '0xCashRemunerationSignature'
+    const claimId = 1
+    const mockMemberTeamsData = { 
+      id: 1, 
+      userAddress: '0xMemberAddress', 
+      teamId: 1, 
+      expenseAccountData: null, 
+      expenseAccountSignature: null,
+      hourlyRate: 10,
+      maxHoursPerWeek: 20
+    }
+    const mockClaimData = {
+      id: 1,
+      createdAt: new Date(),
+      status: 'pending',
+      hoursWorked: 20,
+      cashRemunerationSignature: null,
+      memberTeamsDataId: 1
+    }
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should return 403 if caller not team owner', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xDifferentAddress'))
+      app.put('/:id/cash-remuneration/claim/approve', approveClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.claim, 'update')//.mockResolvedValue(mockClaimData)
+
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim/approve')
+        .set('address', '0xDifferentAddress') // Simulate unauthorized caller
+        .set('signature', cashRemunerationSignature)
+        .set('claimid', `${claimId}`)
+
+      expect(response.status).toBe(403)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Forbidden'
+      })       
+    })
+    it('should return 403 if status not pending', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.put('/:id/cash-remuneration/claim/approve', approveClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue({ ...mockClaimData, status: 'approved' })
+      vi.spyOn(prisma.claim, 'update')//.mockResolvedValue(mockClaimData)
+
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim/approve')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('signature', cashRemunerationSignature)
+        .set('claimid', `${claimId}`)
+
+      expect(response.status).toBe(403)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Forbidden'
+      })       
+    })
+    it('should return 400 if request bad format', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.put('/:id/cash-remuneration/claim/approve', approveClaim)
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeamData)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.claim, 'update')//.mockResolvedValue(mockClaimData)
+
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim/approve')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('claimid', `${claimId}`)
+
+      expect(response.status).toBe(400)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Bad Request'
+      })       
+    })
+    it('should return 201 if claim successfully approved', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.put('/:id/cash-remuneration/claim/approve', approveClaim)
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeamData)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.claim, 'update')//.mockResolvedValue(mockClaimData)
+
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim/approve')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('signature', cashRemunerationSignature)
+        .set('claimid', `${claimId}`)
+
+      expect(prisma.claim.update).toBeCalledWith({
+        where: { id: claimId },
+        data: { cashRemunerationSignature, status: 'approved' }
+      })
+      expect(response.status).toBe(201)
+      expect(response.body).toEqual({
+        success: true
+      })       
+    })
+    it('should return 500 if there is a server error', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.put('/:id/cash-remuneration/claim/approve', approveClaim)
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeamData)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockRejectedValue(new Error('Server error'))
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.claim, 'update')//.mockResolvedValue(mockClaimData)
+    
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim/approve')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('signature', cashRemunerationSignature)
+        .set('claimid', `${claimId}`)
+  
+      expect(response.status).toBe(500)
+      expect(response.body).toEqual({
+        error: "Server error",
+        message: "Internal server error has occured",
+        success: false,
+      })
+    })
+  })
+  describe('PUT /:id/cash-remuneration/claim', () => {
     const hoursWorked = 15
     const claimId = 1
     const mockMemberTeamsData = { 
@@ -153,18 +290,6 @@ describe('Cash Remuneration', () => {
   })
 
   describe('POST /:id/cash-remuneration/claim', () => {
-    const mockTeamData = { 
-      id: 1, 
-      ownerAddress: '0xOwnerAddress', 
-      description: null, 
-      name: '', 
-      bankAddress: '0xBankAddress',
-      votingAddress: '0xVotingAddress', 
-      boardOfDirectorsAddress: '0xBoardOfDirectorsAddress', 
-      expenseAccountAddress: '0xExpenseAccountAddress', 
-      officerAddress: '0xOfficerAddress',
-      expenseAccountEip712Address: '0xExpenseAccountEIP712Address'
-    }
     const hoursWorked = 20
     const mockMemberTeamsData = { 
       id: 1, 
