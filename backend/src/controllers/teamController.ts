@@ -554,7 +554,7 @@ export const addClaim = async (req: Request, res: Response) => {
     }
     await prisma.claim.create({
       data: {
-        hoursWorked,
+        hoursWorked: Number(hoursWorked),
         status: 'pending',
         memberTeamsDataId: memberTeamsData?.id
       }
