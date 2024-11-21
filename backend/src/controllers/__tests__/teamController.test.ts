@@ -4,10 +4,12 @@ import {
   addExpenseAccountData, 
   getExpenseAccountData, 
   addEmployeeWage,
-  addClaim
+  addClaim,
+  updateClaim
 } from '../teamController'
 import { prisma } from "../../utils";
-import { describe, it, beforeEach, expect, vi } from 'vitest'
+import { describe, it, beforeEach, expect, vi, should } from 'vitest'
+import exp from 'constants';
 
 vi.mock('../../utils') 
 
@@ -19,6 +21,94 @@ function setAddressMiddleware(address: string) {
 }
 
 describe('Cash Remuneration', () => {
+  describe('PUT /:id/cash-remuneration/claim', () => {
+    const mockTeamData = { 
+      id: 1, 
+      ownerAddress: '0xOwnerAddress', 
+      description: null, 
+      name: '', 
+      bankAddress: '0xBankAddress',
+      votingAddress: '0xVotingAddress', 
+      boardOfDirectorsAddress: '0xBoardOfDirectorsAddress', 
+      expenseAccountAddress: '0xExpenseAccountAddress', 
+      officerAddress: '0xOfficerAddress',
+      expenseAccountEip712Address: '0xExpenseAccountEIP712Address'
+    }
+    const hoursWorked = 15
+    const claimId = 1
+    const mockMemberTeamsData = { 
+      id: 1, 
+      userAddress: '0xMemberAddress', 
+      teamId: 1, 
+      expenseAccountData: null, 
+      expenseAccountSignature: null,
+      hourlyRate: 10,
+      maxHoursPerWeek: 20
+    }
+    const mockClaimData = {
+      id: 1,
+      createdAt: new Date(),
+      status: 'pending',
+      hoursWorked: 20,
+      cashRemunerationSignature: null,
+      memberTeamsDataId: 1
+    }
+  
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+    
+    it('should return 403 if the caller is not the team member', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.put('/:id/cash-remuneration/claim', updateClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue({...mockClaimData, memberTeamsDataId: 2})
+      vi.spyOn(prisma.claim, 'update')//.mockResolvedValue(mockClaimData)
+
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('hoursworked', `${hoursWorked}`)
+        .set('claimid', `${claimId}`)
+
+      expect(response.status).toBe(403)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Forbidden'
+      })
+    })
+
+    it('should return 201 if update successful', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xOwnerAddress'))
+      app.put('/:id/cash-remuneration/claim', updateClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.claim, 'update').mockResolvedValue({ 
+        ...mockClaimData,  
+        hoursWorked: hoursWorked
+      })
+
+      const response = await request(app)
+        .put('/1/cash-remuneration/claim')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+        .set('hoursworked', `${hoursWorked}`)
+        .set('claimid', `${claimId}`)
+
+      expect(prisma.claim.update).toBeCalledWith({
+        where: { id: claimId },
+        data: { hoursWorked: hoursWorked }
+      })
+      expect(response.status).toBe(201)
+      expect(response.body).toEqual({
+        success: true
+      })
+    })
+  })
+
   describe('POST /:id/cash-remuneration/claim', () => {
     const mockTeamData = { 
       id: 1, 

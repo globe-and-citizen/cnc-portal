@@ -574,8 +574,11 @@ export const addClaim = async (req: Request, res: Response) => {
 export const updateClaim = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
-  const claimId = req.headers.claimid
-  const hoursWorked = req.body
+  const { 
+    claimid: claimId, 
+    hoursworked: hoursWorked 
+  } = req.headers//.claimid
+  // const hoursWorked = req.body
   
   try {
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
@@ -597,7 +600,7 @@ export const updateClaim = async (req: Request, res: Response) => {
     
     await prisma.claim.update({
       where: { id: Number(id) },
-      data: { hoursWorked }
+      data: { hoursWorked: Number(hoursWorked) }
     })
     
     res.status(201)
