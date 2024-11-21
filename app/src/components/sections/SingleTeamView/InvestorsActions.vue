@@ -4,7 +4,7 @@
     <div class="flex justify-end gap-2 w-full">
       <button
         class="btn btn-primary gap-1"
-        :disabled="!tokenSymbol || currentAddress != team.ownerAddress || shareholders?.length == 0"
+        :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
         @click="distributeMintModal = true"
       >
         Distribute Mint {{ tokenSymbol }}
@@ -12,7 +12,9 @@
       <button
         class="btn btn-primary"
         @click="payDividendsModal = true"
-        :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
+        :disabled="
+          !tokenSymbol || currentAddress != team.ownerAddress || (shareholders?.length ?? 0) == 0
+        "
       >
         Pay Dividends
       </button>
@@ -34,9 +36,8 @@
     </ModalComponent>
     <ModalComponent v-model="distributeMintModal">
       <DistributeMintForm
-        v-if="distributeMintModal && (shareholders?.length ?? 0) > 0"
+        v-if="distributeMintModal"
         :loading="distributeMintLoading || isConfirmingDistributeMint"
-        :shareholders="shareholders!"
         :token-symbol="tokenSymbol!"
         @submit="
           (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) =>

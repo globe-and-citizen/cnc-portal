@@ -4,7 +4,7 @@
 
     <h3>Please input the amounts to mint to the shareholders</h3>
     <div class="flex flex-col gap-6">
-      <div v-for="(shareholder, index) in shareholderWithAmounts" :key="shareholder.shareholder">
+      <div v-for="(shareholder, index) in shareholderWithAmounts" :key="index">
         <h4 class="badge badge-primary">Shareholder {{ index + 1 }}</h4>
         <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
           <p>Address</p>
@@ -14,7 +14,6 @@
             class="grow"
             data-test="address-input"
             v-model="shareholder.shareholder"
-            disabled="true"
           />
         </label>
         <div
@@ -40,6 +39,23 @@
       </div>
     </div>
 
+    <div class="flex justify-end pt-3">
+      <div
+        class="w-6 h-6 cursor-pointer"
+        @click="() => shareholderWithAmounts.push({ shareholder: '', amount: 0 })"
+        data-test="plus-icon"
+      >
+        <PlusCircleIcon class="size-6 text-green-700" />
+      </div>
+      <div
+        class="w-6 h-6 cursor-pointer"
+        @click="() => shareholderWithAmounts.length > 1 && shareholderWithAmounts.pop()"
+        data-test="minus-icon"
+      >
+        <MinusCircleIcon class="size-6 text-red-700" />
+      </div>
+    </div>
+
     <div class="text-center">
       <LoadingButton v-if="loading" class="w-44" color="primary" />
       <button v-if="!loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
@@ -51,34 +67,26 @@
 
 <script setup lang="ts">
 import LoadingButton from '@/components/LoadingButton.vue'
+import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/vue/24/outline'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
-import { parseEther, type Address } from 'viem'
+import { parseEther, isAddress } from 'viem'
 import { reactive } from 'vue'
 
 const emits = defineEmits(['submit'])
-const props = defineProps<{
-  shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>
+defineProps<{
   tokenSymbol: string
   loading: boolean
 }>()
-const shareholderWithAmounts = reactive<
-  {
-    shareholder: Address
-    amount: bigint | null
-  }[]
->(
-  props.shareholders?.map((shareholder) => ({
-    shareholder: shareholder.shareholder,
-    amount: BigInt(0)
-  })) ?? []
-)
-
+const shareholderWithAmounts = reactive<{ shareholder: string; amount: number }[]>([
+  { shareholder: '', amount: 0 }
+])
 const rules = {
   shareholderWithAmounts: {
     $each: helpers.forEach({
       shareholder: {
-        required
+        required,
+        isAddress: helpers.withMessage('Invalid address', (value: string) => isAddress(value))
       },
       amount: {
         required,
@@ -91,6 +99,7 @@ const $v = useVuelidate(rules, { shareholderWithAmounts })
 const onSubmit = () => {
   $v.value.$touch()
 
+  if ($v.value.$invalid) return
   emits(
     'submit',
     shareholderWithAmounts.map((shareholder) => {
