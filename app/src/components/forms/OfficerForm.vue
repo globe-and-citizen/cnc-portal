@@ -195,6 +195,7 @@
   </div>
 </template>
 <script setup lang="ts">
+// External imports
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { ref, watch, onMounted, computed } from 'vue'
 import { useToastStore } from '@/stores'
@@ -206,6 +207,8 @@ import OfficerABI from '@/artifacts/abi/officer.json'
 import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
 import { encodeFunctionData, type Address } from 'viem'
 import { useUserDataStore } from '@/stores/user'
+
+// Contract-related constants
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
@@ -215,6 +218,8 @@ import {
   VOTING_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
 } from '@/constant'
+
+// Contract ABIs
 import { useWatchContractEvent } from '@wagmi/vue'
 import { log, parseError } from '@/utils'
 import BankABI from '@/artifacts/abi/Bank.json'
@@ -223,11 +228,14 @@ import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import BoardOfDirectorsABI from '@/artifacts/abi/bod.json'
 
+// Store initialization
 const { addErrorToast, addSuccessToast } = useToastStore()
 
+// Component props and emits
 const props = defineProps(['team'])
 const emits = defineEmits(['getTeam'])
 
+// UI state refs
 const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
 const isVotingDeployed = ref(false)
@@ -239,6 +247,7 @@ const members = ref<string[]>([])
 
 // Setup composables
 
+// Bank deployment contract hooks
 const {
   writeContract: deployBank,
   isPending: isLoadingDeployBank,
@@ -248,12 +257,15 @@ const {
 const { isLoading: isConfirmingDeployBank, isSuccess: isConfirmedDeployBank } =
   useWaitForTransactionReceipt({ hash: deployBankHash })
 
+// Watch bank deployment confirmation
 watch(isConfirmingDeployBank, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployBank.value) {
     addSuccessToast('Bank deployed successfully')
     emits('getTeam')
   }
 })
+
+// Voting deployment contract hooks
 const {
   writeContract: deployVoting,
   isPending: isLoadingDeployVoting,
@@ -263,12 +275,15 @@ const {
 const { isLoading: isConfirmingDeployVoting, isSuccess: isConfirmedDeployVoting } =
   useWaitForTransactionReceipt({ hash: deployVotingHash })
 
+// Watch voting deployment confirmation
 watch(isConfirmingDeployVoting, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployVoting.value) {
     addSuccessToast('Voting deployed successfully')
     emits('getTeam')
   }
 })
+
+// Expense account deployment contract hooks
 const {
   writeContract: deployExpense,
   isPending: isLoadingDeployExpense,
@@ -277,6 +292,8 @@ const {
 } = useWriteContract()
 const { isLoading: isConfirmingDeployExpense, isSuccess: isConfirmedDeployExpense } =
   useWaitForTransactionReceipt({ hash: deployExpenseHash })
+
+// Watch expense account deployment confirmation
 watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployExpense.value) {
     addSuccessToast('Expense account deployed successfully')
@@ -284,14 +301,16 @@ watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
   }
 })
 
+// Expense EIP712 deployment contract hooks
 const {
   writeContract: deployExpenseEip712,
   isPending: isLoadingDeployExpenseEip712,
   data: deployExpenseEip712Hash
-  //error: deployExpenseEip712Error
 } = useWriteContract()
 const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeployExpenseEip712 } =
   useWaitForTransactionReceipt({ hash: deployExpenseEip712Hash })
+
+// Watch expense EIP712 deployment confirmation
 watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployExpenseEip712.value) {
     addSuccessToast('Expense EIP712 account deployed successfully')
@@ -299,16 +318,17 @@ watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
   }
 })
 
+// Board of Directors deployment contract hooks
 const {
   writeContract: deployBoD,
   isPending: isLoadingDeployBoD,
   data: deployBoDHash,
   error: deployBoDError
 } = useWriteContract()
-
 const { isLoading: isConfirmingDeployBoD, isSuccess: isConfirmedDeployBoD } =
   useWaitForTransactionReceipt({ hash: deployBoDHash })
 
+// Watch BoD deployment confirmation
 watch(isConfirmingDeployBoD, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployBoD.value) {
     addSuccessToast('Board of Directors deployed successfully')
@@ -316,7 +336,7 @@ watch(isConfirmingDeployBoD, (isConfirming, wasConfirming) => {
   }
 })
 
-// Fetch officer team details using composable
+// Officer team data fetching hooks
 const {
   refetch: fetchOfficerTeam,
   isLoading: isLoadingGetTeam,
@@ -327,6 +347,8 @@ const {
   abi: OfficerABI,
   args: []
 })
+
+// Deployed contracts fetching hooks
 const {
   refetch: fetchDeployedContracts,
   data: deployedContracts,
@@ -337,10 +359,14 @@ const {
   abi: OfficerABI,
   args: []
 })
+
+// Contract interface definition
 interface IContract {
   contractType: string
   contractAddress: string
 }
+
+// Watch for deployed contracts and update UI state
 watch(deployedContracts, async (value) => {
   if (!value) return
 
@@ -349,6 +375,7 @@ watch(deployedContracts, async (value) => {
     contractAddress: contract.contractAddress
   }))
 
+  // Check each contract type and update state accordingly
   for (const contract of contracts) {
     let shouldUpdate = false
     let updateData = {}
@@ -405,6 +432,7 @@ watch(deployedContracts, async (value) => {
         break
     }
 
+    // Update contract address in database if needed
     if (shouldUpdate) {
       try {
         await useCustomFetch<string>(`teams/${props.team.id}`).put(updateData).json()
@@ -415,15 +443,20 @@ watch(deployedContracts, async (value) => {
     }
   }
 })
+
+// Officer contract creation hooks
 const {
   isPending: officerContractCreating,
   data: createOfficerHash,
   error: createOfficerError,
   writeContract: createOfficer
 } = useWriteContract()
+
 const { isLoading: isConfirmingCreateOfficer } = useWaitForTransactionReceipt({
   hash: createOfficerHash
 })
+
+// Loading state computations
 const loading = ref(false)
 const createOfficerLoading = computed(
   () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
@@ -635,7 +668,6 @@ const deployBoardOfDirectors = async () => {
 }
 
 // Watch officer team data and update state
-
 watch(officerTeam, async (value) => {
   const temp: Array<Object> = value as Array<Object>
   const team = {
@@ -653,6 +685,7 @@ watch(officerTeam, async (value) => {
   }
 })
 
+// Watch for deployment errors
 watch(deployExpenseError, (value) => {
   if (value) {
     console.log(`Failed to deploy officer contract`, value)
@@ -679,12 +712,15 @@ watch(deployBoDError, (value) => {
   }
 })
 
-// Fetch the officer team when mounted
+// Component lifecycle hook
 onMounted(() => {
+  // Fetch officer team data if address exists
   if (props.team.officerAddress) {
     fetchOfficerTeam()
     fetchDeployedContracts()
   }
+
+  // Initialize team data if available
   if (officerTeam.value) {
     const temp: Array<Object> = officerTeam.value as unknown as Array<Object>
     const team = {
@@ -701,6 +737,8 @@ onMounted(() => {
       }
     }
   }
+
+  // Check deployed contracts status
   if (deployedContracts.value) {
     const contracts = deployedContracts.value as Array<IContract>
     const bankContract = contracts.find((contract) => contract.contractType === 'Bank')
