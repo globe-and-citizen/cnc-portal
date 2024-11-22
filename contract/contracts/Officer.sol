@@ -36,8 +36,14 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     /// @notice Array to store configured contract types
     string[] public contractTypes;
 
-    /// @notice Array to store deployed contract addresses
-    address[] private deployedContracts;
+    /// @notice Struct for deployed contract information
+    struct DeployedContract {
+        string contractType;
+        address contractAddress;
+    }
+
+    /// @notice Array to store deployed contract information
+    DeployedContract[] private deployedContracts;
 
     /**
      * @notice Initializes the contract with owner and optional beacon configurations
@@ -112,17 +118,15 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         string calldata contractType,
         bytes calldata initializerData
     ) public whenNotPaused onlyOwners returns (address) {
-        // Ensure beacon exists for this contract type
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
 
-        // Deploy beacon proxy
         BeaconProxy proxy = new BeaconProxy(
             contractBeacons[contractType],
             initializerData
         );
         
         address proxyAddress = address(proxy);
-        deployedContracts.push(proxyAddress);
+        deployedContracts.push(DeployedContract(contractType, proxyAddress));
         emit ContractDeployed(contractType, proxyAddress);
         
         return proxyAddress;
@@ -132,8 +136,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      * @notice Returns the current team's founders and members
      * @return Array of founder addresses and array of member addresses
      */
-    function getTeam() external view returns (address[] memory, address[] memory) {
-        return (founders, members);
+    function getTeam() external view returns (address[] memory, address[] memory, DeployedContract[] memory) {
+        return (founders, members, deployedContracts);
     }
 
     /**
@@ -169,9 +173,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     /**
      * @notice Returns the deployed contracts
-     * @return Array of deployed contract addresses
+     * @return Array of deployed contract information (type and address)
      */
-    function getDeployedContracts() external view returns (address[] memory) {
+    function getDeployedContracts() external view returns (DeployedContract[] memory) {
         return deployedContracts;
     }
     /**
