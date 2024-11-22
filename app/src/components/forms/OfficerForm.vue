@@ -701,5 +701,30 @@ onMounted(() => {
       }
     }
   }
+  if (deployedContracts.value) {
+    const contracts = deployedContracts.value as Array<IContract>
+    const bankContract = contracts.find((contract) => contract.contractType === 'Bank')
+    if (bankContract) {
+      isBankDeployed.value = true
+    }
+    const votingContract = contracts.find((contract) => contract.contractType === 'Voting')
+    if (votingContract) {
+      isVotingDeployed.value = true
+    }
+    const bodContract = contracts.find((contract) => contract.contractType === 'BoardOfDirectors')
+    if (bodContract) {
+      isBoDDeployed.value = true
+    }
+    const expenseContract = contracts.find((contract) => contract.contractType === 'ExpenseAccount')
+    if (expenseContract) {
+      isExpenseDeployed.value = true
+    }
+    const expenseEip712Contract = contracts.find(
+      (contract) => contract.contractType === 'ExpenseAccountEIP712'
+    )
+    if (expenseEip712Contract) {
+      isExpenseEip712Deployed.value = true
+    }
+  }
 })
 </script>
