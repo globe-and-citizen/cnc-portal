@@ -69,9 +69,10 @@ describe('Officer Contract', function () {
         .to.emit(officer, 'TeamCreated')
         .withArgs(founders, members)
 
-      const [actualFounders, actualMembers] = await officer.getTeam()
+      const [actualFounders, actualMembers, deployedContracts] = await officer.getTeam()
       expect(actualFounders).to.deep.equal(founders)
       expect(actualMembers).to.deep.equal(members)
+      expect(deployedContracts).to.be.empty
     })
 
     it('Should fail to create team without founders', async () => {
@@ -99,6 +100,11 @@ describe('Officer Contract', function () {
         officer,
         'ContractDeployed'
       )
+
+      const [, , deployedContracts] = await officer.getTeam()
+      expect(deployedContracts.length).to.equal(1)
+      expect(deployedContracts[0].contractType).to.equal('Voting')
+      expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       await expect(
         officer.connect(owner).deployBeaconProxy('BoardOfDirectors', bodInitData)
@@ -276,15 +282,16 @@ describe('Officer Contract', function () {
           initializerData: bankInitData
         }
       ]
-      console.log(await owner.getAddress())
 
       const tx = await officer.connect(owner).deployAllContracts(deployments)
       await tx.wait()
-      const deployedAddresses = await officer.getDeployedContracts()
+      const [, , deployedContracts] = await officer.getTeam()
 
-      expect(deployedAddresses.length).to.equal(2)
-      expect(deployedAddresses[0]).to.not.equal(ethers.ZeroAddress)
-      expect(deployedAddresses[1]).to.not.equal(ethers.ZeroAddress)
+      expect(deployedContracts.length).to.equal(2)
+      expect(deployedContracts[0].contractType).to.equal('Voting')
+      expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
+      expect(deployedContracts[1].contractType).to.equal('Bank')
+      expect(deployedContracts[1].contractAddress).to.not.equal(ethers.ZeroAddress)
     })
 
     it('Should fail when deploying with empty contract type', async function () {
@@ -367,6 +374,96 @@ describe('Officer Contract', function () {
       types = await officer.getConfiguredContractTypes()
       expect(types.length).to.equal(initialLength + 1)
       expect(types).to.include('NewContractType')
+    })
+  })
+
+  describe('Deployed Contracts Management', () => {
+    it('Should return empty array when no contracts are deployed', async function () {
+      const deployedContracts = await officer.getDeployedContracts()
+      expect(deployedContracts).to.be.empty
+    })
+
+    it('Should return all deployed contracts with their types', async function () {
+      // Deploy multiple contracts
+      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+      const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
+        owner.address,
+        owner.address
+      ])
+
+      // Deploy Voting contract
+      await officer.connect(owner).deployBeaconProxy('Voting', votingInitData)
+
+      // Deploy Bank contract
+      await officer.connect(owner).deployBeaconProxy('Bank', bankInitData)
+
+      // Get deployed contracts
+      const deployedContracts = await officer.getDeployedContracts()
+
+      // Verify the results
+      expect(deployedContracts.length).to.equal(2)
+
+      // Check first contract (Voting)
+      expect(deployedContracts[0].contractType).to.equal('Voting')
+      expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      // Check second contract (Bank)
+      expect(deployedContracts[1].contractType).to.equal('Bank')
+      expect(deployedContracts[1].contractAddress).to.not.equal(ethers.ZeroAddress)
+    })
+
+    it('Should maintain contract order as they are deployed', async function () {
+      // Deploy contracts in specific order
+      const initData = bankAccount.interface.encodeFunctionData('initialize', [
+        owner.address,
+        owner.address
+      ])
+
+      // Deploy three Bank contracts
+      await officer.connect(owner).deployBeaconProxy('Bank', initData)
+      await officer.connect(owner).deployBeaconProxy('Bank', initData)
+      await officer.connect(owner).deployBeaconProxy('Bank', initData)
+
+      const deployedContracts = await officer.getDeployedContracts()
+
+      // Verify order and length
+      expect(deployedContracts.length).to.equal(3)
+      deployedContracts.forEach((contract) => {
+        expect(contract.contractType).to.equal('Bank')
+        expect(contract.contractAddress).to.not.equal(ethers.ZeroAddress)
+      })
+
+      // Verify addresses are different
+      expect(deployedContracts[0].contractAddress).to.not.equal(
+        deployedContracts[1].contractAddress
+      )
+      expect(deployedContracts[1].contractAddress).to.not.equal(
+        deployedContracts[2].contractAddress
+      )
+      expect(deployedContracts[0].contractAddress).to.not.equal(
+        deployedContracts[2].contractAddress
+      )
+    })
+
+    it('Should return same data as getTeam for deployed contracts', async function () {
+      // Deploy a contract
+      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+      await officer.connect(owner).deployBeaconProxy('Voting', votingInitData)
+
+      // Get data from both functions
+      const deployedContracts = await officer.getDeployedContracts()
+      const [, , teamDeployedContracts] = await officer.getTeam()
+
+      // Compare results
+      expect(deployedContracts.length).to.equal(teamDeployedContracts.length)
+      expect(deployedContracts[0].contractType).to.equal(teamDeployedContracts[0].contractType)
+      expect(deployedContracts[0].contractAddress).to.equal(
+        teamDeployedContracts[0].contractAddress
+      )
     })
   })
 })
