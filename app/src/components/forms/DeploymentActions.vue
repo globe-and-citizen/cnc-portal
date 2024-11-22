@@ -52,18 +52,6 @@
         :color="'primary min-w-24'"
         v-if="isLoadingDeployExpenseEip712 || isConfirmingDeployExpenseEip712"
       />
-
-      <button
-        class="btn btn-primary btn-sm"
-        v-if="!isBoDDeployed && !isLoadingDeployBoD && !isConfirmingDeployBoD"
-        @click="deployBoardOfDirectors"
-      >
-        Deploy Board of Directors
-      </button>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployBoD || isConfirmingDeployBoD"
-      />
     </div>
 
     <div class="flex justify-center">
@@ -97,7 +85,6 @@ import BankABI from '@/artifacts/abi/Bank.json'
 import VotingABI from '@/artifacts/abi/Voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
-import BoardOfDirectorsABI from '@/artifacts/abi/bod.json'
 import { TIPS_ADDRESS } from '@/constant'
 import type { Team } from '@/types'
 
@@ -186,22 +173,6 @@ watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
 })
 
 // BoD deployment
-const {
-  writeContract: deployBoD,
-  isPending: isLoadingDeployBoD,
-  data: deployBoDHash,
-  error: deployBoDError
-} = useWriteContract()
-
-const { isLoading: isConfirmingDeployBoD, isSuccess: isConfirmedDeployBoD } =
-  useWaitForTransactionReceipt({ hash: deployBoDHash })
-
-watch(isConfirmingDeployBoD, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployBoD.value) {
-    addSuccessToast('Board of Directors deployed successfully')
-    emits('getTeam')
-  }
-})
 
 // Deploy All Contracts
 const {
@@ -288,23 +259,6 @@ const deployExpenseAccountEip712 = async () => {
   })
 }
 
-const deployBoardOfDirectors = async () => {
-  const currentAddress = useUserDataStore().address as Address
-  const owners = [...props.founders, currentAddress]
-  const initData = encodeFunctionData({
-    abi: BoardOfDirectorsABI,
-    functionName: 'initialize',
-    args: [owners]
-  })
-
-  deployBoD({
-    address: props.team.officerAddress as Address,
-    abi: OfficerABI,
-    functionName: 'deployBeaconProxy',
-    args: ['BoardOfDirectors', initData]
-  })
-}
-
 const areAllContractsDeployed = computed(() => {
   return (
     props.isBankDeployed &&
@@ -363,17 +317,6 @@ const deployAllContracts = async () => {
     })
   }
 
-  if (!props.isBoDDeployed && props.founders.length > 0) {
-    deployments.push({
-      contractType: 'BoardOfDirectors',
-      initializerData: encodeFunctionData({
-        abi: BoardOfDirectorsABI,
-        functionName: 'initialize',
-        args: [[...props.founders, currentAddress]]
-      })
-    })
-  }
-
   if (deployments.length > 0) {
     try {
       deployAll({
@@ -406,12 +349,6 @@ watch(deployVotingError, (value) => {
 watch(deployExpenseError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy expense account')
-  }
-})
-
-watch(deployBoDError, (value) => {
-  if (value) {
-    addErrorToast('Failed to deploy Board of Directors')
   }
 })
 
