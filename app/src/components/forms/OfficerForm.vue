@@ -184,6 +184,20 @@
                 data-test="loading-deploy-bod"
                 v-if="isLoadingDeployBoD || isConfirmingDeployBoD"
               />
+
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="!isLoadingDeployAll && !areAllContractsDeployed"
+                @click="deployAllContracts"
+                data-test="deployAllContractsButton"
+              >
+                Deploy All Contracts
+              </button>
+              <LoadingButton
+                :color="'primary min-w-24'"
+                data-test="loading-deploy-all"
+                v-if="isLoadingDeployAll"
+              />
             </div>
           </div>
           <div v-if="isLoadingGetTeam || isLoadingFetchDeployedContracts">
@@ -665,6 +679,115 @@ const deployBoardOfDirectors = async () => {
     functionName: 'deployBeaconProxy',
     args: ['BoardOfDirectors', initData]
   })
+}
+
+// Deploy All Contracts
+const areAllContractsDeployed = computed(() => {
+  return (
+    isBankDeployed.value &&
+    isVotingDeployed.value &&
+    isExpenseDeployed.value &&
+    isExpenseEip712Deployed.value &&
+    isBoDDeployed.value
+  )
+})
+const {
+  writeContract: deployAll,
+  isPending: isLoadingDeployAll,
+  error: deployAllError,
+  data: deployAllData
+} = useWriteContract()
+
+watch(deployAllError, (value) => {
+  if (value) {
+    addErrorToast('Error deploying all contracts')
+  }
+})
+const { isLoading: isConfirmingDeployAll, isSuccess: isConfirmedDeployAll } =
+  useWaitForTransactionReceipt({
+    hash: deployAllData
+  })
+
+watch(isConfirmingDeployAll, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployAll.value) {
+    addSuccessToast('All contracts deployed successfully')
+    emits('getTeam')
+  }
+})
+const deployAllContracts = async () => {
+  const currentAddress = useUserDataStore().address as Address
+  const deployments = []
+
+  // Check which contracts need to be deployed
+  if (!isBankDeployed.value) {
+    deployments.push({
+      contractType: 'Bank',
+      initializerData: encodeFunctionData({
+        abi: BankABI,
+        functionName: 'initialize',
+        args: [TIPS_ADDRESS, currentAddress]
+      })
+    })
+  }
+
+  if (!isVotingDeployed.value) {
+    deployments.push({
+      contractType: 'Voting',
+      initializerData: encodeFunctionData({
+        abi: VotingABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+  }
+
+  if (!isExpenseDeployed.value) {
+    deployments.push({
+      contractType: 'ExpenseAccount',
+      initializerData: encodeFunctionData({
+        abi: ExpenseAccountABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+  }
+
+  if (!isExpenseEip712Deployed.value) {
+    deployments.push({
+      contractType: 'ExpenseAccountEIP712',
+      initializerData: encodeFunctionData({
+        abi: ExpenseAccountEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+  }
+
+  if (!isBoDDeployed.value && founders.value.length > 0) {
+    deployments.push({
+      contractType: 'BoardOfDirectors',
+      initializerData: encodeFunctionData({
+        abi: BoardOfDirectorsABI,
+        functionName: 'initialize',
+        args: [[...founders.value, currentAddress]]
+      })
+    })
+  }
+
+  // Only deploy if there are contracts that need deployment
+  if (deployments.length > 0) {
+    try {
+      deployAll({
+        address: props.team.officerAddress,
+        abi: OfficerABI,
+        functionName: 'deployAllContracts',
+        args: [deployments]
+      })
+    } catch (error) {
+      log.error(parseError(error))
+      addErrorToast('Error deploying contracts')
+    }
+  }
 }
 
 // Watch officer team data and update state
