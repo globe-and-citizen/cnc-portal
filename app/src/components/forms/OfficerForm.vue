@@ -22,10 +22,10 @@
               {{ team?.officerAddress }}
             </span>
           </div>
-          <div v-if="showCreateTeam && !isLoadingGetTeam">
+          <div v-if="showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
             <CreateOfficerTeam :team="team" @getTeam="emits('getTeam')" />
           </div>
-          <div v-if="!showCreateTeam && !isLoadingGetTeam">
+          <div v-if="!showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
             <div class="flex flex-col">
               <h5 class="text-md font-bold">Founders</h5>
               <div v-for="(founderAddress, index) in founders" data-test="founder-div" :key="index">
@@ -165,9 +165,28 @@
                 data-test="loading-deploy-voting"
                 v-if="isLoadingDeployVoting || isConfirmingDeployVoting"
               />
+
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="
+                  !isBoDDeployed &&
+                  !isLoadingDeployBoD &&
+                  !isConfirmingDeployBoD &&
+                  isVotingDeployed
+                "
+                @click="deployBoardOfDirectors"
+                data-test="deployBoDButton"
+              >
+                Deploy Board of Directors
+              </button>
+              <LoadingButton
+                :color="'primary min-w-24'"
+                data-test="loading-deploy-bod"
+                v-if="isLoadingDeployBoD || isConfirmingDeployBoD"
+              />
             </div>
           </div>
-          <div v-if="isLoadingGetTeam">
+          <div v-if="isLoadingGetTeam || isLoadingFetchDeployedContracts">
             <span class="loading loading-spinner loading-lg"></span>
           </div>
         </div>
@@ -181,7 +200,6 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { useToastStore } from '@/stores'
 import LoadingButton from '@/components/LoadingButton.vue'
 import type { Member } from '@/types'
-import { ethers } from 'ethers'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import OfficerABI from '@/artifacts/abi/officer.json'
@@ -203,6 +221,7 @@ import BankABI from '@/artifacts/abi/Bank.json'
 import VotingABI from '@/artifacts/abi/Voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
+import BoardOfDirectorsABI from '@/artifacts/abi/bod.json'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -280,6 +299,23 @@ watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
   }
 })
 
+const {
+  writeContract: deployBoD,
+  isPending: isLoadingDeployBoD,
+  data: deployBoDHash,
+  error: deployBoDError
+} = useWriteContract()
+
+const { isLoading: isConfirmingDeployBoD, isSuccess: isConfirmedDeployBoD } =
+  useWaitForTransactionReceipt({ hash: deployBoDHash })
+
+watch(isConfirmingDeployBoD, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployBoD.value) {
+    addSuccessToast('Board of Directors deployed successfully')
+    emits('getTeam')
+  }
+})
+
 // Fetch officer team details using composable
 const {
   refetch: fetchOfficerTeam,
@@ -290,6 +326,94 @@ const {
   functionName: 'getTeam',
   abi: OfficerABI,
   args: []
+})
+const {
+  refetch: fetchDeployedContracts,
+  data: deployedContracts,
+  isLoading: isLoadingFetchDeployedContracts
+} = useReadContract({
+  address: props.team.officerAddress,
+  functionName: 'getDeployedContracts',
+  abi: OfficerABI,
+  args: []
+})
+interface IContract {
+  contractType: string
+  contractAddress: string
+}
+watch(deployedContracts, async (value) => {
+  if (!value) return
+
+  const contracts = (value as Array<IContract>).map((contract) => ({
+    contractType: contract.contractType,
+    contractAddress: contract.contractAddress
+  }))
+
+  for (const contract of contracts) {
+    let shouldUpdate = false
+    let updateData = {}
+    switch (contract.contractType) {
+      case 'Bank':
+        if (props.team.bankAddress) {
+          isBankDeployed.value = true
+        }
+        if (props.team.bankAddress != contract.contractAddress) {
+          shouldUpdate = true
+          isBankDeployed.value = true
+          updateData = { bankAddress: contract.contractAddress }
+        }
+        break
+      case 'Voting':
+        if (props.team.votingAddress) {
+          isVotingDeployed.value = true
+        }
+        if (props.team.votingAddress !== contract.contractAddress) {
+          shouldUpdate = true
+          isVotingDeployed.value = true
+          updateData = { votingAddress: contract.contractAddress }
+        }
+        break
+      case 'BoardOfDirectors':
+        if (props.team.boardOfDirectorsAddress) {
+          isBoDDeployed.value = true
+        }
+        if (props.team.boardOfDirectorsAddress !== contract.contractAddress) {
+          shouldUpdate = true
+          isBoDDeployed.value = true
+          updateData = { boardOfDirectorsAddress: contract.contractAddress }
+        }
+        break
+      case 'ExpenseAccount':
+        if (props.team.expenseAccountAddress) {
+          isExpenseDeployed.value = true
+        }
+        if (props.team.expenseAccountAddress !== contract.contractAddress) {
+          shouldUpdate = true
+          isExpenseDeployed.value = true
+          updateData = { expenseAccountAddress: contract.contractAddress }
+        }
+        break
+      case 'ExpenseAccountEIP712':
+        if (props.team.expenseAccountEip712Address) {
+          isExpenseEip712Deployed.value = true
+        }
+        if (props.team.expenseAccountEip712Address !== contract.contractAddress) {
+          shouldUpdate = true
+          isExpenseEip712Deployed.value = true
+          updateData = { expenseAccountEip712Address: contract.contractAddress }
+        }
+        break
+    }
+
+    if (shouldUpdate) {
+      try {
+        await useCustomFetch<string>(`teams/${props.team.id}`).put(updateData).json()
+        emits('getTeam')
+      } catch (error) {
+        console.error(`Failed to update ${contract.contractType} address:`, error)
+      }
+    }
+  }
 })
 const {
   isPending: officerContractCreating,
@@ -398,7 +522,13 @@ const deployBankAccount = async () => {
     functionName: 'initialize',
     args: [TIPS_ADDRESS, props.team.officerAddress]
   })
-
+  if (deployedContracts.value) {
+    const contracts = deployedContracts.value as Array<IContract>
+    const bankContract = contracts.find((contract) => contract.contractType === 'Bank')
+    if (bankContract) {
+      return
+    }
+  }
   deployBank({
     address: props.team.officerAddress,
     abi: OfficerABI,
@@ -414,7 +544,13 @@ const deployVotingContract = async () => {
     functionName: 'initialize',
     args: [props.team.officerAddress]
   })
-
+  if (deployedContracts.value) {
+    const contracts = deployedContracts.value as Array<IContract>
+    const votingContract = contracts.find((contract) => contract.contractType === 'Voting')
+    if (votingContract) {
+      return
+    }
+  }
   deployVoting({
     address: props.team.officerAddress,
     abi: OfficerABI,
@@ -429,7 +565,13 @@ const deployExpenseAccount = async () => {
     functionName: 'initialize',
     args: [props.team.officerAddress]
   })
-
+  if (deployedContracts.value) {
+    const contracts = deployedContracts.value as Array<IContract>
+    const expenseContract = contracts.find((contract) => contract.contractType === 'ExpenseAccount')
+    if (expenseContract) {
+      return
+    }
+  }
   deployExpense({
     address: props.team.officerAddress,
     abi: OfficerABI,
@@ -444,7 +586,15 @@ const deployExpenseAccountEip712 = async () => {
     functionName: 'initialize',
     args: [props.team.officerAddress]
   })
-
+  if (deployedContracts.value) {
+    const contracts = deployedContracts.value as Array<IContract>
+    const expenseContract = contracts.find(
+      (contract) => contract.contractType === 'ExpenseAccountEIP712'
+    )
+    if (expenseContract) {
+      return
+    }
+  }
   deployExpenseEip712({
     address: props.team.officerAddress,
     abi: OfficerABI,
@@ -452,17 +602,37 @@ const deployExpenseAccountEip712 = async () => {
     args: ['ExpenseAccountEIP712', initData]
   })
 }
+
+const deployBoardOfDirectors = async () => {
+  const initData = encodeFunctionData({
+    abi: BoardOfDirectorsABI,
+    functionName: 'initialize',
+    args: [founders.value]
+  })
+
+  if (deployedContracts.value) {
+    const contracts = deployedContracts.value as Array<IContract>
+    const bodContract = contracts.find((contract) => contract.contractType === 'BoardOfDirectors')
+    if (bodContract) {
+      return
+    }
+  }
+
+  deployBoD({
+    address: props.team.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployBeaconProxy',
+    args: ['BoardOfDirectors', initData]
+  })
+}
+
 // Watch officer team data and update state
+
 watch(officerTeam, async (value) => {
   const temp: Array<Object> = value as Array<Object>
   const team = {
     founders: temp[0] as string[],
-    members: temp[1] as string[],
-    bankAddress: temp[2] as string,
-    votingAddress: temp[3] as string,
-    bodAddress: temp[4] as string,
-    expenseAccountAddress: temp[5] as string,
-    expenseAccountEip712Address: temp[6] as string
+    members: temp[1] as string[]
   }
   if (team) {
     if (team.founders.length === 0) {
@@ -471,48 +641,6 @@ watch(officerTeam, async (value) => {
       showCreateTeam.value = false
       founders.value = team.founders
       members.value = team.members
-      isBankDeployed.value = team.bankAddress != ethers.ZeroAddress
-      isVotingDeployed.value = team.votingAddress != ethers.ZeroAddress
-      isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
-      isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
-      isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
-      if (props.team.bankAddress != team.bankAddress && isBankDeployed.value) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ bankAddress: team.bankAddress })
-          .json()
-        emits('getTeam')
-      }
-      if (props.team.votingAddress != team.votingAddress && isVotingDeployed.value) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ votingAddress: team.votingAddress })
-          .json()
-        if (props.team.boardOfDirectorsAddress != team.bodAddress && isBoDDeployed.value) {
-          await useCustomFetch<string>(`teams/${props.team.id}`)
-            .put({ boardOfDirectorsAddress: team.bodAddress })
-            .json()
-        }
-        emits('getTeam')
-      }
-
-      if (
-        props.team.expenseAccountAddress != team.expenseAccountAddress &&
-        team.expenseAccountAddress != ethers.ZeroAddress
-      ) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ expenseAccountAddress: team.expenseAccountAddress })
-          .json()
-        emits('getTeam')
-      }
-      //expense account eip 712
-      if (
-        props.team.expenseAccountEip712Address != team.expenseAccountEip712Address &&
-        team.expenseAccountEip712Address != ethers.ZeroAddress
-      ) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ expenseAccountEip712Address: team.expenseAccountEip712Address })
-          .json()
-        emits('getTeam')
-      }
     }
   }
 })
@@ -536,21 +664,24 @@ watch(deployVotingError, (value) => {
     addErrorToast('Failed to deploy voting')
   }
 })
+
+watch(deployBoDError, (value) => {
+  if (value) {
+    addErrorToast('Failed to deploy Board of Directors')
+  }
+})
+
 // Fetch the officer team when mounted
 onMounted(() => {
   if (props.team.officerAddress) {
     fetchOfficerTeam()
+    fetchDeployedContracts()
   }
   if (officerTeam.value) {
     const temp: Array<Object> = officerTeam.value as unknown as Array<Object>
     const team = {
       founders: temp[0] as string[],
-      members: temp[1] as string[],
-      bankAddress: temp[2] as string,
-      votingAddress: temp[3] as string,
-      bodAddress: temp[4] as string,
-      expenseAccountAddress: temp[5] as string,
-      expenseAccountEip712Address: temp[6] as string
+      members: temp[1] as string[]
     }
     if (team) {
       if (team.founders?.length === 0) {
@@ -559,11 +690,6 @@ onMounted(() => {
         showCreateTeam.value = false
         founders.value = team.founders
         members.value = team.members
-        isBankDeployed.value = team.bankAddress != ethers.ZeroAddress
-        isVotingDeployed.value = team.votingAddress != ethers.ZeroAddress
-        isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
-        isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
-        isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
       }
     }
   }
