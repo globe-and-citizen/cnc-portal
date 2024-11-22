@@ -88,12 +88,9 @@ describe('CashRemuneration (EIP712)', () => {
         }
 
         const signature = await employer.signTypedData(domain, types, wageClaim)
-        const { v, r, s } = ethers.Signature.from(signature)
 
-        //const sigHash = ethers.solidityPackedKeccak256(['uint8', 'bytes32', 'bytes32'], [v, r, s])
         const sigHash = ethers.keccak256(signature)
 
-        //const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, v, r, s)
         const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
 
         const receipt = await tx.wait()
@@ -120,10 +117,8 @@ describe('CashRemuneration (EIP712)', () => {
           }
 
           const signature = await imposter.signTypedData(domain, types, wageClaim)
-          // const { v, r, s } = ethers.Signature.from(signature)
 
           await expect(
-            //cashRemunerationProxy.connect(employee).withdraw(wageClaim, v, r, s)
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
           ).to.be.revertedWithCustomError(cashRemunerationProxy, 'UnauthorizedAccess')
         })
@@ -136,10 +131,8 @@ describe('CashRemuneration (EIP712)', () => {
           }
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
-          // const { v, r, s } = ethers.Signature.from(signature)
 
           await expect(
-            // cashRemunerationProxy.connect(imposter).withdraw(wageClaim, v, r, s)
             cashRemunerationProxy.connect(imposter).withdraw(wageClaim, signature)
           ).to.be.revertedWith('Withdrawer not approved')
         })
@@ -152,9 +145,7 @@ describe('CashRemuneration (EIP712)', () => {
           }
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
-          // const { v, r, s } = ethers.Signature.from(signature)
 
-          // const sigHash = ethers.solidityPackedKeccak256(['uint8', 'bytes32', 'bytes32'], [v, r, s])
           const sigHash = ethers.keccak256(signature)
 
           const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
@@ -182,7 +173,6 @@ describe('CashRemuneration (EIP712)', () => {
           }
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
-          // const { v, r, s } = ethers.Signature.from(signature)
 
           await expect(
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
@@ -201,7 +191,6 @@ describe('CashRemuneration (EIP712)', () => {
           }
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
-          // const { v, r, s } = ethers.Signature.from(signature)
 
           await expect(
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
