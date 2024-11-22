@@ -7,6 +7,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+interface IBodContract {    
+    function initialize(address[] memory votingAddress) external;
+}
+interface IVoting {
+    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external;
+}
 /**
  * @title Officer Contract
  * @dev Manages team creation, beacon proxy deployment, and contract upgrades
@@ -119,6 +125,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         bytes calldata initializerData
     ) public whenNotPaused onlyOwners returns (address) {
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
+        require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");
 
         BeaconProxy proxy = new BeaconProxy(
             contractBeacons[contractType],
@@ -128,6 +135,15 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         address proxyAddress = address(proxy);
         deployedContracts.push(DeployedContract(contractType, proxyAddress));
         emit ContractDeployed(contractType, proxyAddress);
+        if(keccak256(bytes(contractType)) == keccak256(bytes("Voting"))){
+            address bodContractBeacon = contractBeacons["BoardOfDirectors"];
+            address[] memory args = new address[](1);
+            args[0] = proxyAddress;
+            address bodContract = address(new BeaconProxy(bodContractBeacon, abi.encodeWithSelector(IBodContract.initialize.selector, args)));
+            deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
+            IVoting(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
+            emit ContractDeployed("BoardOfDirectors", bodContract);
+        }
         
         return proxyAddress;
     }
@@ -202,7 +218,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             require(bytes(deployments[i].contractType).length > 0, "Contract type cannot be empty");
             require(deployments[i].initializerData.length > 0, string.concat("Missing initializer data for ", deployments[i].contractType));
             require(contractBeacons[deployments[i].contractType] != address(0), string.concat("Beacon not configured for ", deployments[i].contractType));
-            
+            require(keccak256(bytes(deployments[i].contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");      
             deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
         }
         
