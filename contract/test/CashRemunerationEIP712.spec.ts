@@ -61,7 +61,7 @@ describe('CashRemuneration (EIP712)', () => {
         expect(await cashRemunerationProxy.owner()).to.eq(await employer.getAddress())
       })
 
-      it('Then I can deposit into the expense account contract', async () => {
+      it('Then I can deposit into the cash remuneration contract', async () => {
         const amount = ethers.parseEther('5000')
         const tx = await employer.sendTransaction({
           to: await cashRemunerationProxy.getAddress(),
@@ -82,18 +82,16 @@ describe('CashRemuneration (EIP712)', () => {
       it('Then I can authorise an employee to withdraw their wage', async () => {
         const wageClaim = {
           employeeAddress: employee.address,
-          hoursWorked: 5, // TransactionsPerPeriod
+          hoursWorked: 5,
           hourlyRate: 20,
           date: Math.floor(Date.now() / 1000)
         }
-        // const digest = ethers.TypedDataEncoder.hash(domain, types, wageClaim)
-
-        // const beforeTxCount = (await cashRemunerationProxy.balances(digest)).transactionCount
+        
         const signature = await employer.signTypedData(domain, types, wageClaim)
         const { v, r, s } = ethers.Signature.from(signature)
 
         const sigHash = ethers.solidityPackedKeccak256(['uint8', 'bytes32', 'bytes32'], [v, r, s])
-        // const amount = ethers.parseEther('5')
+
         const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, v, r, s)
 
         const receipt = await tx.wait()
@@ -102,7 +100,6 @@ describe('CashRemuneration (EIP712)', () => {
 
         const amount = BigInt(wageClaim.hourlyRate) * ethers.parseEther(`${wageClaim.hoursWorked}`)
 
-        // Try to exceed the transaction limit
         await expect(tx).to.changeEtherBalance(employee, amount)
         await expect(tx)
           .to.emit(cashRemunerationProxy, 'Withdraw')
@@ -193,7 +190,7 @@ describe('CashRemuneration (EIP712)', () => {
 
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 5, // TransactionsPerPeriod
+            hoursWorked: 5,
             hourlyRate: 1000,
             date: Math.floor(Date.now() / 1000) + 3
           }
