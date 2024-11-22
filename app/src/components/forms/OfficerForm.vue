@@ -517,10 +517,11 @@ const deployOfficerContract = async () => {
 
 // Deploy Bank
 const deployBankAccount = async () => {
+  const currentAddress = useUserDataStore().address as Address
   const initData = encodeFunctionData({
     abi: BankABI,
     functionName: 'initialize',
-    args: [TIPS_ADDRESS, props.team.officerAddress]
+    args: [TIPS_ADDRESS, currentAddress]
   })
   if (deployedContracts.value) {
     const contracts = deployedContracts.value as Array<IContract>
@@ -539,10 +540,12 @@ const deployBankAccount = async () => {
 
 // Deploy Voting
 const deployVotingContract = async () => {
+  const currentAddress = useUserDataStore().address as Address
+
   const initData = encodeFunctionData({
     abi: VotingABI,
     functionName: 'initialize',
-    args: [props.team.officerAddress]
+    args: [currentAddress]
   })
   if (deployedContracts.value) {
     const contracts = deployedContracts.value as Array<IContract>
@@ -560,10 +563,11 @@ const deployVotingContract = async () => {
 }
 
 const deployExpenseAccount = async () => {
+  const currentAddress = useUserDataStore().address as Address
   const initData = encodeFunctionData({
     abi: ExpenseAccountABI,
     functionName: 'initialize',
-    args: [props.team.officerAddress]
+    args: [currentAddress]
   })
   if (deployedContracts.value) {
     const contracts = deployedContracts.value as Array<IContract>
@@ -581,10 +585,11 @@ const deployExpenseAccount = async () => {
 }
 
 const deployExpenseAccountEip712 = async () => {
+  const currentAddress = useUserDataStore().address as Address
   const initData = encodeFunctionData({
     abi: ExpenseAccountEIP712ABI,
     functionName: 'initialize',
-    args: [props.team.officerAddress]
+    args: [currentAddress]
   })
   if (deployedContracts.value) {
     const contracts = deployedContracts.value as Array<IContract>
@@ -604,10 +609,13 @@ const deployExpenseAccountEip712 = async () => {
 }
 
 const deployBoardOfDirectors = async () => {
+  let owners = founders.value
+  const currentAddress = useUserDataStore().address as Address
+  owners.push(currentAddress)
   const initData = encodeFunctionData({
     abi: BoardOfDirectorsABI,
     functionName: 'initialize',
-    args: [founders.value]
+    args: [owners]
   })
 
   if (deployedContracts.value) {
