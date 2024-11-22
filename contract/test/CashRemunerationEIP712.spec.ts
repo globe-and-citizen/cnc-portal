@@ -86,7 +86,7 @@ describe('CashRemuneration (EIP712)', () => {
           hourlyRate: 20,
           date: Math.floor(Date.now() / 1000)
         }
-        
+
         const signature = await employer.signTypedData(domain, types, wageClaim)
         const { v, r, s } = ethers.Signature.from(signature)
 
