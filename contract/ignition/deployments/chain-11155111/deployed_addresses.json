@@ -10,5 +10,9 @@
   "ExpenseAccountEIP712Module#FactoryBeacon": "0x91873448621921b8483AEaDB59d28CaF83E7F67f",
   "ExpenseAccountModule#FactoryBeacon": "0x032711B624E71323eBCB724c2c30B442c42502D1",
   "Officer#FactoryBeacon": "0x35149088A6D8d238910fCD9602DD0045503a2eB1",
-  "VotingBeaconModule#Beacon": "0x928Fa7EDb66E5cB2edbE883D4b265880F86924E4"
+  "VotingBeaconModule#Beacon": "0x928Fa7EDb66E5cB2edbE883D4b265880F86924E4",
+  "ProxyModule#TransparentUpgradeableProxy": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
+  "ProxyModule#ProxyAdmin": "0x9B545652208f7889fe9Bd7B1Cc0BB240e8745690",
+  "TipsModule#Tips": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
+  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb"
 }
