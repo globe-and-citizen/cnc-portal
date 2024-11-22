@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /**
  * @title CashRemunerationEIP712
@@ -19,6 +20,7 @@ contract CashRemunerationEIP712 is
     PausableUpgradeable {
 
     using Address for address payable;
+    using ECDSA for bytes32;
 
     /**
      * @dev Represents a wage claim by an employee.
@@ -98,9 +100,7 @@ contract CashRemunerationEIP712 is
      * @dev Hourly rate is in ether so it needs to be multiplied
      * by 10 ** 18
      * @param wageClaim The details of the wage being claimed.
-     * @param v The recovery byte of the signature.
-     * @param r Half of the ECDSA signature pair.
-     * @param s Half of the ECDSA signature pair.
+     * @param signature The ECDSA signature.
      *
      * Requirements:
      * - The caller must be the employee specified in the wage claim.
@@ -113,9 +113,10 @@ contract CashRemunerationEIP712 is
      */
     function withdraw(
         WageClaim calldata wageClaim, 
-        uint8 v, 
-        bytes32 r, 
-        bytes32 s
+        // uint8 v, 
+        // bytes32 r, 
+        // bytes32 s
+        bytes calldata signature
     ) external whenNotPaused nonReentrant {
         require(msg.sender == wageClaim.employeeAddress, "Withdrawer not approved");
 
@@ -125,13 +126,13 @@ contract CashRemunerationEIP712 is
             wageClaimHash(wageClaim)
         ));
 
-        address signer = ecrecover(digest, v, r, s);
+        address signer = digest.recover(signature);//ecrecover(digest, v, r, s);
 
         if (signer != owner()) {
             revert UnauthorizedAccess(owner(), signer);
         }
 
-        bytes32 sigHash = keccak256(abi.encodePacked(v, r, s));
+        bytes32 sigHash = keccak256(signature);
 
         require(!paidWageClaims[sigHash], "Wage already paid");
 
