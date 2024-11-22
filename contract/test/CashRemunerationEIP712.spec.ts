@@ -181,7 +181,7 @@ describe('CashRemuneration (EIP712)', () => {
 
           await expect(
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, v, r, s)
-          ).to.be.revertedWith('Insufficient funds in the contract')
+          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'AddressInsufficientBalance')
         })
         it('the contract is paused', async () => {
           await expect(cashRemunerationProxy.pause())

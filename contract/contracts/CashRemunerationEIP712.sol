@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * @title CashRemunerationEIP712
@@ -16,6 +17,8 @@ contract CashRemunerationEIP712 is
     ReentrancyGuardUpgradeable, 
     EIP712Upgradeable, 
     PausableUpgradeable {
+
+    using Address for address payable;
 
     /**
      * @dev Represents a wage claim by an employee.
@@ -136,11 +139,13 @@ contract CashRemunerationEIP712 is
 
         uint256 amountToPay = wageClaim.hoursWorked * (wageClaim.hourlyRate * 10 ** 18);
 
-        require(address(this).balance >= amountToPay, "Insufficient funds in the contract");
+        // require(address(this).balance >= amountToPay, "Insufficient funds in the contract");
 
-        (bool sent, ) = wageClaim.employeeAddress.call{value: amountToPay}("");
+        // (bool sent, ) = wageClaim.employeeAddress.call{value: amountToPay}("");
 
-        require(sent, "Failed to send Ether");
+        // require(sent, "Failed to send Ether");
+
+        payable(wageClaim.employeeAddress).sendValue(amountToPay);
 
         emit Withdraw(wageClaim.employeeAddress, amountToPay);
     }
