@@ -644,6 +644,7 @@ export const deleteClaim = async (req: Request, res: Response) => {
     })
 
     res.status(201)
+      .json({ success: true })
   } catch (error) {
     return errorResponse(500, error, res)
   } finally {
