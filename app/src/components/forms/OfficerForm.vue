@@ -199,6 +199,10 @@ import {
 } from '@/constant'
 import { useWatchContractEvent } from '@wagmi/vue'
 import { log, parseError } from '@/utils'
+import BankABI from '@/artifacts/abi/Bank.json'
+import VotingABI from '@/artifacts/abi/Voting.json'
+import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
+import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -343,17 +347,35 @@ const deployOfficerContract = async () => {
   try {
     const currentAddress = useUserDataStore().address as Address
     loading.value = true
+
+    // Create BeaconConfig array matching the contract structure
+    const beaconConfigs = [
+      {
+        beaconType: 'Bank',
+        beaconAddress: BANK_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'Voting',
+        beaconAddress: VOTING_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'BoardOfDirectors',
+        beaconAddress: BOD_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccount',
+        beaconAddress: EXPENSE_ACCOUNT_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccountEIP712',
+        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+      }
+    ]
+
     const encodedFunction = encodeFunctionData({
       abi: OfficerABI,
       functionName: 'initialize',
-      args: [
-        currentAddress,
-        BANK_BEACON_ADDRESS,
-        VOTING_BEACON_ADDRESS,
-        BOD_BEACON_ADDRESS,
-        EXPENSE_ACCOUNT_BEACON_ADDRESS,
-        EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
-      ]
+      args: [currentAddress, beaconConfigs]
     })
 
     createOfficer({
@@ -371,36 +393,63 @@ const deployOfficerContract = async () => {
 
 // Deploy Bank
 const deployBankAccount = async () => {
+  const initData = encodeFunctionData({
+    abi: BankABI,
+    functionName: 'initialize',
+    args: [TIPS_ADDRESS, props.team.officerAddress]
+  })
+
   deployBank({
     address: props.team.officerAddress,
     abi: OfficerABI,
-    functionName: 'deployBankAccount',
-    args: [TIPS_ADDRESS]
+    functionName: 'deployBeaconProxy',
+    args: ['Bank', initData]
   })
 }
 
 // Deploy Voting
 const deployVotingContract = async () => {
+  const initData = encodeFunctionData({
+    abi: VotingABI,
+    functionName: 'initialize',
+    args: [props.team.officerAddress]
+  })
+
   deployVoting({
     address: props.team.officerAddress,
     abi: OfficerABI,
-    functionName: 'deployVotingContract'
+    functionName: 'deployBeaconProxy',
+    args: ['Voting', initData]
   })
 }
 
 const deployExpenseAccount = async () => {
+  const initData = encodeFunctionData({
+    abi: ExpenseAccountABI,
+    functionName: 'initialize',
+    args: [props.team.officerAddress]
+  })
+
   deployExpense({
     address: props.team.officerAddress,
     abi: OfficerABI,
-    functionName: 'deployExpenseAccount'
+    functionName: 'deployBeaconProxy',
+    args: ['ExpenseAccount', initData]
   })
 }
 
 const deployExpenseAccountEip712 = async () => {
+  const initData = encodeFunctionData({
+    abi: ExpenseAccountEIP712ABI,
+    functionName: 'initialize',
+    args: [props.team.officerAddress]
+  })
+
   deployExpenseEip712({
     address: props.team.officerAddress,
     abi: OfficerABI,
-    functionName: 'deployExpenseAccountEip712'
+    functionName: 'deployBeaconProxy',
+    args: ['ExpenseAccountEIP712', initData]
   })
 }
 // Watch officer team data and update state
