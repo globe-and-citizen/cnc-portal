@@ -308,9 +308,21 @@
     "name": "getDeployedContracts",
     "outputs": [
       {
-        "internalType": "address[]",
+        "components": [
+          {
+            "internalType": "string",
+            "name": "contractType",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "contractAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct Officer.DeployedContract[]",
         "name": "",
-        "type": "address[]"
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -329,6 +341,23 @@
         "internalType": "address[]",
         "name": "",
         "type": "address[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "contractType",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "contractAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct Officer.DeployedContract[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
