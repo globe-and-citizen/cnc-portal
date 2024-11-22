@@ -139,12 +139,6 @@ contract CashRemunerationEIP712 is
 
         uint256 amountToPay = wageClaim.hoursWorked * (wageClaim.hourlyRate * 10 ** 18);
 
-        // require(address(this).balance >= amountToPay, "Insufficient funds in the contract");
-
-        // (bool sent, ) = wageClaim.employeeAddress.call{value: amountToPay}("");
-
-        // require(sent, "Failed to send Ether");
-
         payable(wageClaim.employeeAddress).sendValue(amountToPay);
 
         emit Withdraw(wageClaim.employeeAddress, amountToPay);
