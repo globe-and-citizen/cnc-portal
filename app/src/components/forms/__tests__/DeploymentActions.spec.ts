@@ -200,4 +200,30 @@ describe('DeploymentActions', () => {
 
     expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
   })
+
+  it('displays 5 buttons when no contracts are deployed', () => {
+    mockUseWriteContract.isPending.value = true
+
+    const wrapper = mount(DeploymentActions, {
+      props: {
+        ...defaultProps,
+        team: {
+          id: '1',
+          name: 'Test Team',
+          description: 'Test Description',
+          bankAddress: '0x0',
+          votingAddress: '0x0',
+          expenseAccountAddress: '0x0',
+          expenseAccountEip712Address: '0x0',
+          officerAddress: '0x456',
+          members: [],
+          ownerAddress: '0x789',
+          boardOfDirectorsAddress: '0x0'
+        }
+      }
+    })
+
+    const buttons = wrapper.findAll('button')
+    expect(buttons.length).toBe(5)
+  })
 })

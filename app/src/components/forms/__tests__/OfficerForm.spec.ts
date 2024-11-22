@@ -254,5 +254,21 @@ describe('OfficerForm.vue', () => {
 
       expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy officer contract')
     })
+
+    it('handles transaction waiting errors', async () => {
+      const { addErrorToast } = useToastStore()
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: { officerAddress: null }
+        }
+      })
+
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWriteContract.error.value = new Error('Transaction failed')
+      await wrapper.vm.$nextTick()
+
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy officer contract')
+    })
   })
 })
