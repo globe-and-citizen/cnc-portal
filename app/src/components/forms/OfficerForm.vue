@@ -198,70 +198,44 @@ watch(createOfficerError, (value) => {
 watch(deployedContracts, async (value) => {
   if (!value) return
 
-  const contracts = (value as Array<IContract>).map((contract) => ({
-    contractType: contract.contractType,
-    contractAddress: contract.contractAddress
-  }))
+  const contractTypeToProps = {
+    Bank: {
+      address: 'bankAddress',
+      flag: isBankDeployed
+    },
+    Voting: {
+      address: 'votingAddress',
+      flag: isVotingDeployed
+    },
+    BoardOfDirectors: {
+      address: 'boardOfDirectorsAddress',
+      flag: isBoDDeployed
+    },
+    ExpenseAccount: {
+      address: 'expenseAccountAddress',
+      flag: isExpenseDeployed
+    },
+    ExpenseAccountEIP712: {
+      address: 'expenseAccountEip712Address',
+      flag: isExpenseEip712Deployed
+    }
+  }
+  for (const contract of value as Array<IContract>) {
+    const config = contractTypeToProps[contract.contractType as keyof typeof contractTypeToProps]
+    if (!config) continue
 
-  for (const contract of contracts) {
-    let shouldUpdate = false
-    let updateData = {}
-    switch (contract.contractType) {
-      case 'Bank':
-        if (props.team.bankAddress) {
-          isBankDeployed.value = true
-        }
-        if (props.team.bankAddress != contract.contractAddress) {
-          shouldUpdate = true
-          isBankDeployed.value = true
-          updateData = { bankAddress: contract.contractAddress }
-        }
-        break
-      case 'Voting':
-        if (props.team.votingAddress) {
-          isVotingDeployed.value = true
-        }
-        if (props.team.votingAddress !== contract.contractAddress) {
-          shouldUpdate = true
-          isVotingDeployed.value = true
-          updateData = { votingAddress: contract.contractAddress }
-        }
-        break
-      case 'BoardOfDirectors':
-        if (props.team.boardOfDirectorsAddress) {
-          isBoDDeployed.value = true
-        }
-        if (props.team.boardOfDirectorsAddress !== contract.contractAddress) {
-          shouldUpdate = true
-          isBoDDeployed.value = true
-          updateData = { boardOfDirectorsAddress: contract.contractAddress }
-        }
-        break
-      case 'ExpenseAccount':
-        if (props.team.expenseAccountAddress) {
-          isExpenseDeployed.value = true
-        }
-        if (props.team.expenseAccountAddress !== contract.contractAddress) {
-          shouldUpdate = true
-          isExpenseDeployed.value = true
-          updateData = { expenseAccountAddress: contract.contractAddress }
-        }
-        break
-      case 'ExpenseAccountEIP712':
-        if (props.team.expenseAccountEip712Address) {
-          isExpenseEip712Deployed.value = true
-        }
-        if (props.team.expenseAccountEip712Address !== contract.contractAddress) {
-          shouldUpdate = true
-          isExpenseEip712Deployed.value = true
-          updateData = { expenseAccountEip712Address: contract.contractAddress }
-        }
-        break
+    // Set flag if address exists in props
+    if (props.team[config.address]) {
+      config.flag.value = true
     }
 
-    if (shouldUpdate) {
+    // Update if addresses don't match
+    if (props.team[config.address] !== contract.contractAddress) {
       try {
-        await useCustomFetch<string>(`teams/${props.team.id}`).put(updateData).json()
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ [config.address]: contract.contractAddress })
+          .json()
+        config.flag.value = true
         emits('getTeam')
       } catch (error) {
         console.error(`Failed to update ${contract.contractType} address:`, error)
@@ -370,52 +344,33 @@ const deployOfficerContract = async () => {
 
 // Component lifecycle
 onMounted(() => {
-  if (props.team.officerAddress) {
-    fetchOfficerTeam()
-    fetchDeployedContracts()
-  }
-
+  if (!props.team.officerAddress) return
+  // Fetch initial data
+  fetchOfficerTeam()
+  fetchDeployedContracts()
+  // Process officer team data if available
   if (officerTeam.value) {
-    const temp: Array<Object> = officerTeam.value as unknown as Array<Object>
-    const team = {
-      founders: temp[0] as string[],
-      members: temp[1] as string[]
-    }
-    if (team) {
-      if (team.founders?.length === 0) {
-        showCreateTeam.value = true
-      } else {
-        showCreateTeam.value = false
-        founders.value = team.founders
-        members.value = team.members
-      }
+    const [foundersData, membersData] = officerTeam.value as [string[], string[]]
+    showCreateTeam.value = foundersData.length === 0
+    if (!showCreateTeam.value) {
+      founders.value = foundersData
+      members.value = membersData
     }
   }
-
+  // Update deployment flags if contracts exist
   if (deployedContracts.value) {
-    const contracts = deployedContracts.value as Array<IContract>
-    const bankContract = contracts.find((contract) => contract.contractType === 'Bank')
-    if (bankContract) {
-      isBankDeployed.value = true
+    const contractTypes = {
+      Bank: isBankDeployed,
+      Voting: isVotingDeployed,
+      BoardOfDirectors: isBoDDeployed,
+      ExpenseAccount: isExpenseDeployed,
+      ExpenseAccountEIP712: isExpenseEip712Deployed
     }
-    const votingContract = contracts.find((contract) => contract.contractType === 'Voting')
-    if (votingContract) {
-      isVotingDeployed.value = true
-    }
-    const bodContract = contracts.find((contract) => contract.contractType === 'BoardOfDirectors')
-    if (bodContract) {
-      isBoDDeployed.value = true
-    }
-    const expenseContract = contracts.find((contract) => contract.contractType === 'ExpenseAccount')
-    if (expenseContract) {
-      isExpenseDeployed.value = true
-    }
-    const expenseEip712Contract = contracts.find(
-      (contract) => contract.contractType === 'ExpenseAccountEIP712'
-    )
-    if (expenseEip712Contract) {
-      isExpenseEip712Deployed.value = true
-    }
+
+    ;(deployedContracts.value as Array<IContract>).forEach((contract) => {
+      const flag = contractTypes[contract.contractType as keyof typeof contractTypes]
+      if (flag) flag.value = true
+    })
   }
 })
 </script>
