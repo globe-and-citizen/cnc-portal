@@ -112,10 +112,7 @@ contract CashRemunerationEIP712 is
      * Emits a {Withdraw} event.
      */
     function withdraw(
-        WageClaim calldata wageClaim, 
-        // uint8 v, 
-        // bytes32 r, 
-        // bytes32 s
+        WageClaim calldata wageClaim,
         bytes calldata signature
     ) external whenNotPaused nonReentrant {
         require(msg.sender == wageClaim.employeeAddress, "Withdrawer not approved");
