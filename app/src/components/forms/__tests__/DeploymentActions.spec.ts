@@ -19,25 +19,58 @@ vi.mock('@/stores/user', () => ({
   }))
 }))
 
+const mockUseReadContract = {
+  data: ref<unknown | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+const mockUseWatchContractEvent = {
+  onLogs: vi.fn()
+}
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref<unknown>(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(false),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+const mockOfficerTeamData = ref(null)
+
 vi.mock('@wagmi/vue', () => ({
-  useWriteContract: vi.fn(() => ({
-    writeContract: vi.fn(),
-    isPending: ref(false),
-    data: ref('0x0'),
-    error: ref(null),
-    reset: vi.fn(),
-    variables: ref({}),
-    isError: false,
-    isIdle: true,
-    isLoading: false,
-    isSuccess: false
-  })),
-  useWaitForTransactionReceipt: vi.fn(() => ({
-    isLoading: false,
-    isSuccess: false
+  useReadContract: vi.fn(() => ({
+    data: mockOfficerTeamData,
+    isLoading: ref(false)
   }))
 }))
-
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction),
+    useBalance: vi.fn(() => mockUseBalance),
+    useWatchContractEvent: vi.fn(() => mockUseWatchContractEvent)
+  }
+})
 describe('DeploymentActions', () => {
   const defaultProps = {
     team: {
