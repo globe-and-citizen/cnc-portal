@@ -6,7 +6,8 @@ import {
   addEmployeeWage,
   addClaim,
   updateClaim,
-  approveClaim
+  approveClaim,
+  deleteClaim
 } from '../teamController'
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from 'vitest'
@@ -21,6 +22,112 @@ function setAddressMiddleware(address: string) {
 }
 
 describe('Cash Remuneration', () => {
+  describe('DELETE /:id/cash-remuneration/claim', () => {
+    const claimId = 1
+    const mockMemberTeamsData = { 
+      id: 1, 
+      userAddress: '0xMemberAddress', 
+      teamId: 1, 
+      expenseAccountData: null, 
+      expenseAccountSignature: null,
+      hourlyRate: 10,
+      maxHoursPerWeek: 20
+    }
+    const mockClaimData = {
+      id: 1,
+      createdAt: new Date(),
+      status: 'pending',
+      hoursWorked: 20,
+      cashRemunerationSignature: null,
+      memberTeamsDataId: 1
+    }
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should return 403 if caller is not the team member', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xSomeAddress'))
+      app.delete('/:id/cash-remuneration/claim', deleteClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ ...mockMemberTeamsData, id: 2 })
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+
+      const response = await request(app)
+        .delete('/1/cash-remuneration/claim')
+        .set('address', '0xSomeAddress') // Simulate unauthorized caller
+        .set('claimid', `${claimId}`)
+
+      expect(response.status).toBe(403)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Forbidden'
+      })
+    })
+    it('should return 403 if status is not pending', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xMemberAddress'))
+      app.delete('/:id/cash-remuneration/claim', deleteClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue({ ...mockClaimData, status: 'approved' })
+
+      const response = await request(app)
+        .delete('/1/cash-remuneration/claim')
+        .set('address', '0xMemberAddress') // Simulate unauthorized caller
+        .set('claimid', `${claimId}`)
+
+      expect(response.status).toBe(403)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Forbidden'
+      })
+    })
+    it('should return 201 if claim is successfully deleted', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xMemberAddress'))
+      app.delete('/:id/cash-remuneration/claim', deleteClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.claim, 'delete')
+
+      const response = await request(app)
+        .delete('/1/cash-remuneration/claim')
+        .set('address', '0xMemberAddress') // Simulate unauthorized caller
+        .set('claimid', `${claimId}`)
+
+      expect(prisma.claim.delete).toBeCalledWith({
+        where: { id: 1 }
+      })
+      expect(response.status).toBe(201)
+      expect(response.body).toEqual({
+        success: true
+      })
+    })
+    it('should return 500 if there is a server error', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xMemberAddress'))
+      app.delete('/:id/cash-remuneration/claim', deleteClaim)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockRejectedValue(new Error('Server error'))
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.claim, 'delete')
+
+      const response = await request(app)
+        .delete('/1/cash-remuneration/claim')
+        .set('address', '0xMemberAddress') // Simulate unauthorized caller
+        .set('claimid', `${claimId}`)
+  
+      expect(response.status).toBe(500)
+      expect(response.body).toEqual({
+        error: "Server error",
+        message: "Internal server error has occured",
+        success: false,
+      })
+    })
+  })
   describe('PUT /:id/cash-remuneration/claim/approve', () => {
     const mockTeamData = { 
       id: 1, 
