@@ -21,34 +21,34 @@ describe('TeamContractEventList.vue', () => {
       {
         eventName: 'AdCampaignCreated',
         campaignCode: '0xCampaign1',
-        budget: '1000',
+        budget: '1000'
       },
       {
         eventName: 'PaymentReleased',
         campaignCode: '0xCampaign1',
-        paymentAmount: '500',
-      },
+        paymentAmount: '500'
+      }
     ],
     '0xCampaign2': [
       {
         eventName: 'AdCampaignCreated',
         campaignCode: '0xCampaign2',
-        budget: '2000',
+        budget: '2000'
       },
       {
         eventName: 'BudgetWithdrawn',
         campaignCode: '0xCampaign2',
         amount: '300',
-        advertiser: '0xAdvertiser1',
-      },
-    ],
+        advertiser: '0xAdvertiser1'
+      }
+    ]
   }
 
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
     wrapper = mount(TeamContractEventList, {
-      props: { eventsByCampaignCode: eventsByCampaignCode as EventsByCampaignCode },
+      props: { eventsByCampaignCode: eventsByCampaignCode as EventsByCampaignCode }
     })
   })
 
@@ -109,7 +109,7 @@ describe('TeamContractEventList.vue', () => {
   it('handles empty events gracefully', async () => {
     // Mount the component with no events
     const emptyWrapper = mount(TeamContractEventList, {
-      props: { eventsByCampaignCode: {} as EventsByCampaignCode },
+      props: { eventsByCampaignCode: {} as EventsByCampaignCode }
     })
 
     // Verify no rows are rendered
