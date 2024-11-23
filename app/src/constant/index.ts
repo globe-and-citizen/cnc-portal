@@ -1,7 +1,6 @@
 import { getNetwork } from './network'
 import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
-import { log } from '@/utils'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 
 export const NETWORK = getNetwork()
@@ -30,10 +29,17 @@ const addressesMap: Record<number, AddressMapping> = {
 const chainId = parseInt(NETWORK.chainId, 16)
 const addresses = addressesMap[chainId] || ({} as AddressMapping)
 
-export function resolveAddress(key: keyof AddressMapping) {
+interface AddressValidationError extends Error {
+  missingAddresses: string[]
+}
+
+const missingAddresses = new Set<string>()
+
+export function resolveAddress(key: keyof AddressMapping): string {
   const address = addresses[key]
   if (!address) {
-    log.error(`Address for ${key} is not defined in the current network configuration.`)
+    missingAddresses.add(key)
+    return ''
   }
   return address
 }
@@ -55,13 +61,22 @@ export function validateAddresses() {
     'ExpenseAccountEIP712Module#FactoryBeacon'
   ]
 
-  for (const key of requiredKeys) {
-    if (!addresses[key]) {
-      throw new Error(`Address for ${key} is not defined in the current network configuration.`)
-    }
+  requiredKeys.forEach(resolveAddress)
+
+  if (missingAddresses.size > 0) {
+    const error = new Error(
+      `The following addresses are not defined in the current network configuration (chainId: ${chainId}):\n${Array.from(missingAddresses).join('\n')}`
+    ) as AddressValidationError
+    error.missingAddresses = Array.from(missingAddresses)
+    missingAddresses.clear()
+    throw error
   }
 }
-
+try {
+  validateAddresses()
+} catch (error) {
+  console.error(error)
+}
 export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
 export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
