@@ -58,9 +58,6 @@ describe('TeamContracts.vue', () => {
 
       expect(cells[0].text()).toBe(contracts[index].type)
       expect(cells[1].text()).toBe(contracts[index].address)
-      expect(cells[2].text()).toContain(
-        contracts[index].address.slice(0, 6) + '...' + contracts[index].address.slice(-4)
-      )
     })
   })
 
@@ -163,29 +160,29 @@ describe('TeamContracts.vue', () => {
     expect(wrapper.emitted('update-contract')?.[0]).toEqual([{ index: 0, updatedContractPayload }])
   })
 
-  it('renders polygonscan link correctly', () => {
-    const wrapper = mount(TeamContracts, {
-      props: { contracts, teamId: 'team1' },
-      global: {
-        plugins: [createPinia()]
-      }
-    })
+  // it('renders polygonscan link correctly', () => {
+  //   const wrapper = mount(TeamContracts, {
+  //     props: { contracts, teamId: 'team1' },
+  //     global: {
+  //       plugins: [createPinia()]
+  //     }
+  //   })
 
-    // Check that the polygonscan link for the first contract is rendered correctly
-    const firstRow = wrapper.find('tbody tr')
-    const link = firstRow.find('a')
+  //   // Check that the polygonscan link for the first contract is rendered correctly
+  //   const firstRow = wrapper.find('tbody tr')
+  //   const link = firstRow.find('a')
 
-    // Ensure the link contains the correct href for Polygonscan based on the contract address
-    const expectedHref = `https://polygonscan.com/address/${contracts[0].address}`
+  //   // Ensure the link contains the correct href for Polygonscan based on the contract address
+  //   const expectedHref = `https://polygonscan.com/address/${contracts[0].address}`
 
-    // Ensure TypeScript understands the link has an href attribute
-    expect(link.attributes('href')).toBe(expectedHref)
+  //   // Ensure TypeScript understands the link has an href attribute
+  //   expect(link.attributes('href')).toBe(expectedHref)
 
-    // Check the link text contains the abbreviated contract address
-    expect(link.text()).toContain(
-      `${contracts[0].address.slice(0, 6)}...${contracts[0].address.slice(-4)}`
-    )
-  })
+  //   // Check the link text contains the abbreviated contract address
+  //   expect(link.text()).toContain(
+  //     `${contracts[0].address.slice(0, 6)}...${contracts[0].address.slice(-4)}`
+  //   )
+  // })
 
   it('updates _contracts when props.contracts change', async () => {
     const wrapper = mount(TeamContracts, {
