@@ -77,13 +77,3 @@ const getBudget = (events: Array<ExtendedEvent>): string => {
   return adCampaignCreatedEvent ? String(adCampaignCreatedEvent.budget) : 'N/A'
 }
 </script>
-
-<style scoped>
-.campaign-list {
-  padding: 10px;
-}
-
-.campaign-item {
-  margin-bottom: 10px;
-}
-</style>

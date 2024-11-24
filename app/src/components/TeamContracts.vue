@@ -20,7 +20,11 @@
           <td>{{ contract.type }}</td>
           <td><AddressToolTip :address="contract.address" class="text-xs" /></td>
           <td>
-            <button @click="openAdminsModal(contract)" class="btn btn-ghost btn-xs">
+            <button
+              @click="openAdminsModal(contract)"
+              class="btn btn-ghost btn-xs"
+              data-test="open-admin-modal-btn"
+            >
               <UsersIcon class="size-6" />
             </button>
           </td>

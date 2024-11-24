@@ -189,11 +189,11 @@ describe('TeamContractAdmins', () => {
     // Ensure input value is set correctly
     expect(input.element.value).toBe(newAdminAddress)
 
-    // Simulate form submission (this should trigger _addAdmin)
+    // Simulate form submission (this should trigger addAdmin)
     const addButton = wrapper.find('form')
     await addButton.trigger('submit.prevent') // Use form trigger instead of button
 
-    // Wait for the async _addAdmin function to complete
+    // Wait for the async addAdmin function to complete
     await wrapper.vm.$nextTick() // Ensure all promises are resolved
     // Check if addAdmin method was called with correct arguments
     expect(addAdminMock).toHaveBeenCalledWith(contract.address, newAdminAddress)
@@ -226,11 +226,11 @@ describe('TeamContractAdmins', () => {
     const input = wrapper.find('input')
     await input.setValue('')
 
-    // Simulate form submission (this should trigger _addAdmin)
+    // Simulate form submission (this should trigger addAdmin)
     const addButton = wrapper.find('form')
     await addButton.trigger('submit.prevent') // Use form trigger instead of button
 
-    // Wait for the async _addAdmin function to complete
+    // Wait for the async addAdmin function to complete
     await wrapper.vm.$nextTick() // Ensure all promises are resolved
 
     // Check if addAdmin method was not called

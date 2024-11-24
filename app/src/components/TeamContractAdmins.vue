@@ -2,7 +2,7 @@
   <h3 class="text-lg font-bold mb-4">Contract Admin List</h3>
 
   <!-- Inline form to add new admin -->
-  <form @submit.prevent="_addAdmin()" class="flex items-center space-x-2 mb-4">
+  <form @submit.prevent="addAdmin()" class="flex items-center space-x-2 mb-4">
     <input
       v-model="newAdminAddress"
       type="text"
@@ -104,7 +104,7 @@ async function removeAdmin(adminAddress: string) {
 }
 
 // Add admin directly without confirmation
-async function _addAdmin() {
+async function addAdmin() {
   if (!isAddress(newAdminAddress.value)) {
     addErrorToast('please provide valid address')
   } else {
