@@ -7,7 +7,6 @@
           <th></th>
           <th>Type</th>
           <th>Contract Address</th>
-          <th>Link</th>
           <th>Admins</th>
           <th>Details</th>
           <th>Events</th>
@@ -19,16 +18,8 @@
         <tr v-for="(contract, index) in _contracts" :key="index" class="bg-base-200">
           <th>{{ index + 1 }}</th>
           <td>{{ contract.type }}</td>
-          <td>{{ contract.address }}</td>
           <td>
-            <a
-              :href="'https://polygonscan.com/address/' + contract.address"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {{ contract.address.slice(0, 6) + '...' + contract.address.slice(-4) }}
-            </a>
-          </td>
+            <AddressToolTip :address="contract.address" class="text-xs" /></td>
           <td>
             <button @click="openAdminsModal(contract)" class="btn btn-ghost btn-xs">
               <UsersIcon class="size-6" />
@@ -96,6 +87,7 @@ import { useToastStore } from '@/stores/useToastStore'
 const { addErrorToast } = useToastStore()
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
+import AddressToolTip from './AddressToolTip.vue'
 // Define props
 const props = defineProps<{ contracts: TeamContract[]; teamId: string }>()
 const emit = defineEmits(['update-contract'])
