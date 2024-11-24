@@ -304,4 +304,55 @@ describe('OfficerForm.vue', () => {
       expect(addErrorToast).toHaveBeenCalledWith('Failed to deploy officer contract')
     })
   })
+
+  describe('OfficerForm.vue - Contract Deployments', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('hides deployment buttons when contracts are deployed', async () => {
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: {
+            officerAddress: '0x123',
+            bankAddress: '0xBank',
+            votingAddress: '0xVoting',
+            expenseAccountAddress: '0xExpense',
+            expenseAccountEip712Address: '0xExpenseEip712'
+          }
+        }
+      })
+
+      mockUseReadContract.data.value = [
+        [], // founders
+        [], // members
+        '0xBank',
+        '0xVoting',
+        '0xBoD',
+        '0xExpense',
+        '0xExpenseEip712'
+      ]
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="deployBankButton"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="deployVotingButton"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="deployExpenseButton"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="deployExpenseButtonEip712"]').exists()).toBe(false)
+    })
+
+    it('handles contract deployment errors correctly', async () => {
+      const { addErrorToast } = useToastStore()
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: { officerAddress: '0x123' }
+        }
+      })
+
+      // Simulate deployment error
+      mockUseWriteContract.error.value = new Error('Deployment failed')
+      await wrapper.vm.$nextTick()
+
+      expect(addErrorToast).toHaveBeenCalled()
+    })
+  })
 })
