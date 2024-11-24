@@ -20,6 +20,9 @@ export interface IAddCampaignService {
   addAdmin(addCampaignContractAddress: string, adminAddress: string): Promise<TransactionReceipt>
   removeAdmin(addCampaignContractAddress: string, adminAddress: string): Promise<TransactionReceipt>
   getAdminList(addCampaignContractAddress: string): Promise<string[]>
+  getEventsGroupedByCampaignCode(
+    addCampaignContractAddress: string
+  ): Promise<GetEventsGroupedByCampaignCodeResult>
 }
 
 export interface PaymentReleasedEvent {
@@ -230,6 +233,7 @@ export class AddCampaignService implements IAddCampaignService {
       const paymentReleasedOnWithdrawApprovalLogs = await contractService.getEvents(
         'PaymentReleasedOnWithdrawApproval'
       )
+
       const budgetWithdrawnLogs = await contractService.getEvents('BudgetWithdrawn')
 
       // Group events by campaignCode
