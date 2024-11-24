@@ -30,7 +30,7 @@
         <!-- Admin Rows -->
         <tr v-for="(admin, index) in admins" :key="index" class="hover:bg-base-200">
           <th>{{ index + 1 }}</th>
-          <td>{{ admin }}</td>
+          <td><AddressToolTip :address="admin" class="text-xs" /></td>
           <td>
             <button @click="removeAdmin(admin)" class="btn btn-error btn-xs">Remove</button>
           </td>
@@ -53,6 +53,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import LoadingButton from '@/components/LoadingButton.vue'
+import AddressToolTip from './AddressToolTip.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCamapaignService = new AddCampaignService()

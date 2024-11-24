@@ -18,8 +18,7 @@
         <tr v-for="(contract, index) in _contracts" :key="index" class="bg-base-200">
           <th>{{ index + 1 }}</th>
           <td>{{ contract.type }}</td>
-          <td>
-            <AddressToolTip :address="contract.address" class="text-xs" /></td>
+          <td><AddressToolTip :address="contract.address" class="text-xs" /></td>
           <td>
             <button @click="openAdminsModal(contract)" class="btn btn-ghost btn-xs">
               <UsersIcon class="size-6" />
