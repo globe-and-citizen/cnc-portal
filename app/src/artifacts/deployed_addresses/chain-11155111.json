@@ -14,5 +14,7 @@
   "ProxyModule#TransparentUpgradeableProxy": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
   "ProxyModule#ProxyAdmin": "0x9B545652208f7889fe9Bd7B1Cc0BB240e8745690",
   "TipsModule#Tips": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
-  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb"
+  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb",
+  "CashRemunerationEIP712Module#CashRemunerationEIP712": "0xE1d896547162674291233A45DC846ED8aA6C7F78",
+  "CashRemunerationEIP712Module#FactoryBeacon": "0x035988C098474683aC1B9BB18ff0f36Cf1d6D760"
 }
