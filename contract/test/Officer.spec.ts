@@ -5,15 +5,11 @@ import { Officer } from '../typechain-types'
 
 describe('Officer Contract', function () {
   let Officer, officer: unknown
-  let BankAccount, 
-    VotingContract, 
-    ExpenseAccount, 
-    ExpenseAccountEIP712, 
-    CashRemunerationEip712
-  let bankAccountBeacon, 
-    votingContractBeacon, 
-    expenseAccountBeacon, 
-    expenseAccountEip712Beacon, 
+  let BankAccount, VotingContract, ExpenseAccount, ExpenseAccountEIP712, CashRemunerationEip712
+  let bankAccountBeacon,
+    votingContractBeacon,
+    expenseAccountBeacon,
+    expenseAccountEip712Beacon,
     cashRemunerationEip712Beacon
   let BoD, bodBeacon
   let owner: SignerWithAddress,
@@ -39,7 +35,6 @@ describe('Officer Contract', function () {
 
     CashRemunerationEip712 = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationEip712Beacon = await upgrades.deployBeacon(CashRemunerationEip712)
-
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
     Officer = await ethers.getContractFactory('Officer')
