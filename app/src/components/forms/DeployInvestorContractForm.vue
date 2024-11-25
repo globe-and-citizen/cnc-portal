@@ -4,11 +4,12 @@
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Name of the shares</p>
       |
-      <input type="text" class="grow" data-test="address-input" v-model="name" />
+      <input type="text" class="grow" data-test="name-input" v-model="name" />
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
       v-for="error of $v.name.$errors"
+      data-test="name-error"
       :key="error.$uid"
     >
       {{ error.$message }}
@@ -17,11 +18,12 @@
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Ticker or Symbol of the shares</p>
       |
-      <input type="text" class="grow" data-test="address-input" v-model="symbol" />
+      <input type="text" class="grow" data-test="symbol-input" v-model="symbol" />
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
       v-for="error of $v.symbol.$errors"
+      data-test="symbol-error"
       :key="error.$uid"
     >
       {{ error.$message }}
@@ -29,7 +31,12 @@
 
     <div class="text-center">
       <LoadingButton v-if="loading" class="w-44" color="primary" />
-      <button v-if="!loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
+      <button
+        v-if="!loading"
+        class="btn btn-primary w-44 text-center"
+        data-test="deploy-button"
+        @click="onSubmit()"
+      >
         Deploy
       </button>
     </div>
@@ -61,6 +68,8 @@ defineProps<{
 
 const onSubmit = () => {
   $v.value.$touch()
+  console.log($v.value.name.$errors)
+  console.log($v.value.symbol.$errors)
   if ($v.value.$invalid) return
 
   emit('submit', name.value, symbol.value)
