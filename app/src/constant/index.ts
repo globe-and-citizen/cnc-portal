@@ -18,6 +18,8 @@ interface AddressMapping {
   'Officer#FactoryBeacon'?: string
   'ExpenseAccountEIP712Module#ExpenseAccountEIP712'?: string
   'ExpenseAccountEIP712Module#FactoryBeacon'?: string
+  'CashRemunerationEIP712Module#FactoryBeacon': string
+  'CashRemunerationEIP712Module#CashRemunerationEIP712': string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -58,7 +60,9 @@ export function validateAddresses() {
     'ExpenseAccountModule#FactoryBeacon',
     'ExpenseAccountModule#ExpenseAccount',
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
-    'ExpenseAccountEIP712Module#FactoryBeacon'
+    'ExpenseAccountEIP712Module#FactoryBeacon',
+    'CashRemunerationEIP712Module#FactoryBeacon',
+    'CashRemunerationEIP712Module#CashRemunerationEIP712'
   ]
 
   requiredKeys.forEach(resolveAddress)
@@ -90,6 +94,12 @@ export const EXPENSE_ACCOUNT_EIP712_IMPL_ADDRESS = resolveAddress(
   'ExpenseAccountEIP712Module#ExpenseAccountEIP712'
 )
 export const EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS = resolveAddress(
+  'ExpenseAccountEIP712Module#FactoryBeacon'
+)
+export const CASH_REMUNERATION_EIP712_IMPL_ADDRESS = resolveAddress(
+  'ExpenseAccountEIP712Module#ExpenseAccountEIP712'
+)
+export const CASH_REMUNERATION_EIP712_BEACON_ADDRESS = resolveAddress(
   'ExpenseAccountEIP712Module#FactoryBeacon'
 )
 export const OFFICER_ADDRESS = resolveAddress('Officer#Officer')
