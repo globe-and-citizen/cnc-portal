@@ -87,6 +87,18 @@ describe('Officer Contract', function () {
     const team = await (officer as Officer).getTeam()
     expect(team[5]).to.be.not.equal('0x0000000000000000000000000000000000000000')
   })
+  it('Should deploy the ExpenseAccountEIP712 contract via BeaconProxy', async function () {
+    await (officer as Officer).connect(owner).deployExpenseAccountEip712()
+
+    const team = await (officer as Officer).getTeam()
+    expect(team[6]).to.be.not.equal('0x0000000000000000000000000000000000000000')
+  })
+  it('Should deploy the CashRemunerationEIP712 contract via BeaconProxy', async function () {
+    await (officer as Officer).connect(owner).deployCashRemunerationEip712()
+
+    const team = await (officer as Officer).getTeam()
+    expect(team[7]).to.be.not.equal('0x0000000000000000000000000000000000000000')
+  })
   it('should pause the contract', async function () {
     await (officer as Officer).connect(owner).pause()
 
