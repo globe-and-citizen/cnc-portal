@@ -11,7 +11,7 @@ import {
   getExpenseAccountData,
   addEmployeeWage,
   addClaim,
-  approveClaim,
+  // approveClaim,
   deleteClaim,
   updateClaim
 } from "../controllers/teamController";
@@ -28,8 +28,8 @@ teamRoutes.post("/:id/expense-data", addExpenseAccountData);
 teamRoutes.get("/:id/expense-data", getExpenseAccountData);
 teamRoutes.post("/:id/cash-remuneration/wage", addEmployeeWage)
 teamRoutes.post("/:id/cash-remuneration/claim", addClaim)
-teamRoutes.put("/:id/cash-remuneration/claim", updateClaim)
-teamRoutes.put("/:id/cash-remuneration/claim/approve", approveClaim)
+teamRoutes.put("/:id/cash-remuneration/claim/:callerRole", updateClaim)
+// teamRoutes.put("/:id/cash-remuneration/claim/approve", approveClaim)
 teamRoutes.delete("/:id/cash-remuneration/claim", deleteClaim)
 
 export default teamRoutes;

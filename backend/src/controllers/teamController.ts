@@ -572,6 +572,19 @@ export const addClaim = async (req: Request, res: Response) => {
 }
 
 export const updateClaim = async (req: Request, res: Response) => {
+  const { callerRole } = req.params
+
+  if (callerRole === "employee") {
+    await updateClaimEmployee(req, res)
+  } else if (callerRole === "employer") {
+    await updateClaimEmployer(req, res)
+  } else {
+    return errorResponse(404, 'Resource Not Found', res)
+    // console.log(`Silence is golden`)
+  }
+}
+
+export const updateClaimEmployee = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
   const { 
@@ -652,7 +665,7 @@ export const deleteClaim = async (req: Request, res: Response) => {
   }
 }
 
-export const approveClaim = async (req: Request, res: Response) => {
+export const updateClaimEmployer = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
   const {
