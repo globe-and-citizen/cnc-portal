@@ -197,6 +197,7 @@ import {
   VOTING_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
 } from '@/constant'
+import { validateAddresses } from '@/constant/index'
 import { useWatchContractEvent } from '@wagmi/vue'
 import { log, parseError } from '@/utils'
 
@@ -343,6 +344,9 @@ const deployOfficerContract = async () => {
   try {
     const currentAddress = useUserDataStore().address as Address
     loading.value = true
+    console.log('Validating addresses')
+    validateAddresses()
+
     const encodedFunction = encodeFunctionData({
       abi: OfficerABI,
       functionName: 'initialize',
