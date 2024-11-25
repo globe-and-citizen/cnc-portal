@@ -484,6 +484,229 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
   }
 }
 
+export const addEmployeeWage = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const memberAddress = req.headers.memberaddress;
+  const wageData = req.body
+
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) }
+    })
+    const ownerAddress = team?.ownerAddress
+    if (callerAddress !== ownerAddress) {
+      return errorResponse(403, `Forbidden`, res)
+    }
+    console.log(`memberAddress`, memberAddress)
+    if (typeof memberAddress !== 'string') {
+      return errorResponse(400, 'Bad Request', res)
+    }
+    console.log(`wageData`, wageData)
+    //create or update wage data
+    await prisma.memberTeamsData.upsert({
+      where: {
+        userAddress_teamId: {
+          userAddress: memberAddress,
+          teamId: Number(id)
+        }
+      },
+      update: {
+        hourlyRate: wageData.hourlyRate,
+        maxHoursPerWeek: wageData.maxHoursPerWeek
+      },
+      create: {
+        userAddress: memberAddress,
+        teamId: Number(id),
+        hourlyRate: wageData.hourlyRate,
+        maxHoursPerWeek: wageData.maxHoursPerWeek
+      }
+    })
+
+    res.status(201)
+      .json({
+        success: true
+      })
+
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+export const addClaim = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const hoursWorked = req.headers.hoursworked
+
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: callerAddress,
+          teamId: Number(id)
+        }
+      }
+    })
+    if (!memberTeamsData) {
+      return errorResponse(404, 'Record Not Found', res)
+    }
+    console.log(`hoursWorked`, hoursWorked)
+    await prisma.claim.create({
+      data: {
+        hoursWorked: Number(hoursWorked),
+        status: 'pending',
+        memberTeamsDataId: memberTeamsData?.id
+      }
+    })
+    res.status(201)
+      .json({
+        success: true
+      })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+export const updateClaim = async (req: Request, res: Response) => {
+  const { callerRole } = req.params
+
+  if (callerRole === "employee") {
+    await updateClaimEmployee(req, res)
+  } else if (callerRole === "employer") {
+    await updateClaimEmployer(req, res)
+  } else {
+    return errorResponse(404, 'Resource Not Found', res)
+    // console.log(`Silence is golden`)
+  }
+}
+
+export const updateClaimEmployee = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const { 
+    claimid: claimId, 
+    hoursworked: hoursWorked 
+  } = req.headers//.claimid
+  // const hoursWorked = req.body
+  
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: callerAddress,
+          teamId: Number(id)
+        }
+      }
+    })
+
+    const claim = await prisma.claim.findUnique({
+      where: { id: Number(claimId) }
+    })
+
+    if (claim?.status !== `pending`) 
+      return errorResponse(403, `Forbidden`, res)
+
+    if (claim?.memberTeamsDataId !== memberTeamsData?.id)
+      return errorResponse(403, `Forbidden`, res)
+    
+    await prisma.claim.update({
+      where: { id: Number(id) },
+      data: { hoursWorked: Number(hoursWorked) }
+    })
+    
+    res.status(201)
+      .json({ success: true })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+export const deleteClaim = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const claimId = req.headers.claimid
+  
+  try {
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: {
+        userAddress_teamId: {
+          userAddress: callerAddress,
+          teamId: Number(id)
+        }
+      }
+    })
+
+    const claim = await prisma.claim.findUnique({
+      where: { id: Number(claimId) }
+    })
+
+    if (claim?.memberTeamsDataId !== memberTeamsData?.id)
+      return errorResponse(403, `Forbidden`, res)
+
+    if (claim?.status !== `pending`) 
+      return errorResponse(403, `Forbidden`, res)
+
+    await prisma.claim.delete({
+      where: { id: Number(id) }
+    })
+
+    res.status(201)
+      .json({ success: true })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+export const updateClaimEmployer = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const callerAddress = (req as any).address
+  const {
+    claimid: claimId,
+    signature: cashRemunerationSignature
+  } = req.headers
+  // const cashRemunerationSignature = req.body
+
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) }
+    })
+    if (team?.ownerAddress !== callerAddress) 
+      return errorResponse(403, `Forbidden`, res)
+    const claim = await prisma.claim.findUnique({
+      where: { id: Number(claimId) }
+    })
+    if (claim?.status !== 'pending')
+      return errorResponse(403, 'Forbidden', res)
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: { id: claim?.memberTeamsDataId }
+    })
+    if (memberTeamsData?.teamId !== team?.id) 
+      return errorResponse(403, `Forbidden`, res)
+    if (typeof cashRemunerationSignature !== 'string')
+      return errorResponse(400, 'Bad Request', res)
+
+    await prisma.claim.update({
+      where: { id: claim?.id },
+      data: { cashRemunerationSignature, status: 'approved' }
+    })
+
+    res.status(201)
+      .json({ success: true })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
   callerAddress: string
