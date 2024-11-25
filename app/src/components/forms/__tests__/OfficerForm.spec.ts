@@ -193,13 +193,17 @@ describe('OfficerForm.vue', () => {
       isBankDeployed: true,
       isVotingDeployed: true,
       isBoDDeployed: true,
-      isExpenseDeployed: true
+      isExpenseDeployed: true,
+      isExpenseEip712Deployed: true,
+      isCashRemunerationEip712Deployed: true
     })
 
     expect(wrapper.find('span[data-test="bank-address"').text()).toContain('Bank deployed at')
     expect(wrapper.find('span[data-test="voting-address"').text()).toContain('Voting deployed at')
     expect(wrapper.find('span[data-test="bod-address"').text()).toContain('BoD deployed at')
     expect(wrapper.find('span[data-test="expense-address"').text()).toContain('Expense deployed at')
+    expect(wrapper.find('span[data-test="expense-eip712-address"').text()).toContain('Expense EIP712 deployed at')
+    expect(wrapper.find('span[data-test="cash-remuneration-address"').text()).toContain('Cash remuneration deployed at')
   })
 
   it('renders LoadingButton if createOfficerLoading is true', async () => {
@@ -259,6 +263,20 @@ describe('OfficerForm.vue', () => {
 
       const deployExpenseButton = wrapper.find('[data-test="deployExpenseButton"]')
       expect(deployExpenseButton.exists()).toBe(false)
+    })
+
+    it('hides Deploy Cash Remuneration button when cash remuneration is deployed', () => {
+      const wrapper: VueWrapper = mount(OfficerForm, {
+        props: {
+          team: {
+            officerAddress: '0x123',
+            cashRemunerationEip712Address: '0xCashRemuneration'
+          }
+        }
+      })
+
+      const deployCashRemuneration = wrapper.find('[data-test="deployCashRemuneration"]')
+      expect(deployCashRemuneration.exists()).toBe(false)
     })
 
     it('calls addSuccessToast and emits getTeam when contract is deployed successfully', async () => {

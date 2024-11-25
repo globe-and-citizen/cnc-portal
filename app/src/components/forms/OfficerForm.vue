@@ -105,6 +105,15 @@
                   Expense EIP712 deployed at: {{ team?.expenseAccountEip712Address }}
                 </span>
               </div>
+              <div>
+                <span
+                  data-test="cash-remuneration-address"
+                  v-if="isCashRemunerationEip712Deployed"
+                  class="badge badge-primary badge-sm"
+                >
+                  Cash remuneration deployed at: {{ team?.cashRemunerationEip712Address }}
+                </span>
+              </div>
             </div>
             <div class="flex justify-between mt-4">
               <button
