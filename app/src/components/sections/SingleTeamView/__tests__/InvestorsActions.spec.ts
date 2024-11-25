@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect , it, vi} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import InvestorsActions from '@/components/sections/SingleTeamView/InvestorsActions.vue'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
@@ -83,12 +83,28 @@ describe('InvestorsActions.vue', () => {
   })
 
   describe('Render', () => {
-
     it('render the investors actions', async () => {
       await wrapper.vm.$nextTick()
-      console.log('wrapper', wrapper.html())
       expect(wrapper.find('[data-test="investors-actions"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="investors-actions"]').text()).toContain('Owner Interaction')
+    })
+  })
+
+  describe('methods', () => {
+    it('should distribute mint', async () => {
+
+      // Get the button
+      // Click the button
+      // Get the modal open
+      // Fill the form
+      // Click the submit button
+      
+      const distributeMintButton = wrapper.find('[data-test="distribute-mint-button"]')
+      await distributeMintButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      // const distributeMintModal = wrapper.find('[data-test="distribute-mint-modal"]')
+      // expect(wrapper.vm.distributeModal).toBe(true)
+      // const mintAmountInput = distributeMintModal.find('[data-test="mint-amount-input"]')
     })
   })
 })
