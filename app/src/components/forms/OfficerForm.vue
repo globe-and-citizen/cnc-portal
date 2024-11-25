@@ -151,6 +151,27 @@
                 data-test="loading-deploy-expense-eip712"
                 v-if="isLoadingDeployExpenseEip712 || isConfirmingDeployExpenseEip712"
               />
+              <!-- Cash Remuneration -->
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="
+                  !isCashRemunerationEip712Deployed &&
+                  !isLoadingDeployCashRemunerationEip712 &&
+                  !isConfirmingDeployCashRemunerationEip712
+                "
+                @click="deployCashRemunerationEip712Contract"
+                data-test="deployCashRemuneration"
+              >
+                Deploy Cash Remuneration
+              </button>
+              <LoadingButton
+                :color="'primary min-w-24'"
+                data-test="loading-deploy-cash-remuneration"
+                v-if="
+                  isLoadingDeployCashRemunerationEip712 || 
+                  isConfirmingDeployCashRemunerationEip712
+                "
+              />
 
               <button
                 class="btn btn-primary btn-sm"
@@ -195,7 +216,8 @@ import {
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   OFFICER_BEACON,
   VOTING_BEACON_ADDRESS,
-  EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+  EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
+  CASH_REMUNERATION_EIP712_BEACON_ADDRESS //new
 } from '@/constant'
 import { validateAddresses } from '@/constant/index'
 import { useWatchContractEvent } from '@wagmi/vue'
@@ -212,6 +234,7 @@ const isVotingDeployed = ref(false)
 const isBoDDeployed = ref(false)
 const isExpenseDeployed = ref(false)
 const isExpenseEip712Deployed = ref(false)
+const isCashRemunerationEip712Deployed = ref(false) //new
 const founders = ref<string[]>([])
 const members = ref<string[]>([])
 
@@ -273,6 +296,23 @@ const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeploy
 watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployExpenseEip712.value) {
     addSuccessToast('Expense EIP712 account deployed successfully')
+    emits('getTeam')
+  }
+})
+
+const {
+  writeContract: deployCashRemunerationEip712,
+  isPending: isLoadingDeployCashRemunerationEip712,
+  data: deployCashRemunerationEip712Hash
+  //error: deployCashRemunerationError
+} = useWriteContract()
+const { 
+  isLoading: isConfirmingDeployCashRemunerationEip712, 
+  isSuccess: isConfirmedDeployCashRemunerationEip712 
+} = useWaitForTransactionReceipt({ hash: deployCashRemunerationEip712Hash })
+watch(isConfirmingDeployCashRemunerationEip712, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployCashRemunerationEip712.value) {
+    addSuccessToast('Cash remuneration deployed successfully')
     emits('getTeam')
   }
 })
@@ -356,7 +396,8 @@ const deployOfficerContract = async () => {
         VOTING_BEACON_ADDRESS,
         BOD_BEACON_ADDRESS,
         EXPENSE_ACCOUNT_BEACON_ADDRESS,
-        EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+        EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
+        CASH_REMUNERATION_EIP712_BEACON_ADDRESS
       ]
     })
 
@@ -407,6 +448,14 @@ const deployExpenseAccountEip712 = async () => {
     functionName: 'deployExpenseAccountEip712'
   })
 }
+
+const deployCashRemunerationEip712Contract = async () => {
+  deployCashRemunerationEip712({
+    address: props.team.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployCashRemunerationEip712'
+  })
+}
 // Watch officer team data and update state
 watch(officerTeam, async (value) => {
   const temp: Array<Object> = value as Array<Object>
@@ -417,7 +466,8 @@ watch(officerTeam, async (value) => {
     votingAddress: temp[3] as string,
     bodAddress: temp[4] as string,
     expenseAccountAddress: temp[5] as string,
-    expenseAccountEip712Address: temp[6] as string
+    expenseAccountEip712Address: temp[6] as string,
+    cashRemunerationEip712Address: temp[7] as string
   }
   if (team) {
     if (team.founders.length === 0) {
@@ -431,6 +481,7 @@ watch(officerTeam, async (value) => {
       isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
       isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
       isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
+      isCashRemunerationEip712Deployed.value = team.cashRemunerationEip712Address != ethers.ZeroAddress
       if (props.team.bankAddress != team.bankAddress && isBankDeployed.value) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ bankAddress: team.bankAddress })
@@ -465,6 +516,16 @@ watch(officerTeam, async (value) => {
       ) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ expenseAccountEip712Address: team.expenseAccountEip712Address })
+          .json()
+        emits('getTeam')
+      }
+
+      if (
+        props.team.cashRemunerationEip712Address != team.cashRemunerationEip712Address &&
+        team.cashRemunerationEip712Address != ethers.ZeroAddress
+      ) {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ cashRemunerationEip712Address: team.cashRemunerationEip712Address })
           .json()
         emits('getTeam')
       }
@@ -505,7 +566,8 @@ onMounted(() => {
       votingAddress: temp[3] as string,
       bodAddress: temp[4] as string,
       expenseAccountAddress: temp[5] as string,
-      expenseAccountEip712Address: temp[6] as string
+      expenseAccountEip712Address: temp[6] as string,
+      cashRemunerationEip712Address: temp[7] as string
     }
     if (team) {
       if (team.founders?.length === 0) {
@@ -519,6 +581,7 @@ onMounted(() => {
         isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
         isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
         isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
+        isCashRemunerationEip712Deployed.value = team.cashRemunerationEip712Address != ethers.ZeroAddress
       }
     }
   }
