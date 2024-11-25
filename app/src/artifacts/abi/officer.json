@@ -169,6 +169,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "cashRemunerationEip712Beacon",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address[]",
@@ -195,6 +208,13 @@
       }
     ],
     "name": "deployBankAccount",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "deployCashRemunerationEip712",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -284,6 +304,11 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -319,6 +344,11 @@
       {
         "internalType": "address",
         "name": "_expenseAccountEip712Beacon",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_cashRemunerationEip712Beacon",
         "type": "address"
       }
     ],
