@@ -202,8 +202,12 @@ describe('OfficerForm.vue', () => {
     expect(wrapper.find('span[data-test="voting-address"').text()).toContain('Voting deployed at')
     expect(wrapper.find('span[data-test="bod-address"').text()).toContain('BoD deployed at')
     expect(wrapper.find('span[data-test="expense-address"').text()).toContain('Expense deployed at')
-    expect(wrapper.find('span[data-test="expense-eip712-address"').text()).toContain('Expense EIP712 deployed at')
-    expect(wrapper.find('span[data-test="cash-remuneration-address"').text()).toContain('Cash remuneration deployed at')
+    expect(wrapper.find('span[data-test="expense-eip712-address"').text()).toContain(
+      'Expense EIP712 deployed at'
+    )
+    expect(wrapper.find('span[data-test="cash-remuneration-address"').text()).toContain(
+      'Cash remuneration deployed at'
+    )
   })
 
   it('renders LoadingButton if createOfficerLoading is true', async () => {

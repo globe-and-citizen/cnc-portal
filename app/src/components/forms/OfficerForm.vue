@@ -177,8 +177,7 @@
                 :color="'primary min-w-24'"
                 data-test="loading-deploy-cash-remuneration"
                 v-if="
-                  isLoadingDeployCashRemunerationEip712 || 
-                  isConfirmingDeployCashRemunerationEip712
+                  isLoadingDeployCashRemunerationEip712 || isConfirmingDeployCashRemunerationEip712
                 "
               />
 
@@ -315,9 +314,9 @@ const {
   data: deployCashRemunerationEip712Hash
   //error: deployCashRemunerationError
 } = useWriteContract()
-const { 
-  isLoading: isConfirmingDeployCashRemunerationEip712, 
-  isSuccess: isConfirmedDeployCashRemunerationEip712 
+const {
+  isLoading: isConfirmingDeployCashRemunerationEip712,
+  isSuccess: isConfirmedDeployCashRemunerationEip712
 } = useWaitForTransactionReceipt({ hash: deployCashRemunerationEip712Hash })
 watch(isConfirmingDeployCashRemunerationEip712, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedDeployCashRemunerationEip712.value) {
@@ -490,7 +489,8 @@ watch(officerTeam, async (value) => {
       isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
       isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
       isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
-      isCashRemunerationEip712Deployed.value = team.cashRemunerationEip712Address != ethers.ZeroAddress
+      isCashRemunerationEip712Deployed.value =
+        team.cashRemunerationEip712Address != ethers.ZeroAddress
       if (props.team.bankAddress != team.bankAddress && isBankDeployed.value) {
         await useCustomFetch<string>(`teams/${props.team.id}`)
           .put({ bankAddress: team.bankAddress })
@@ -590,7 +590,8 @@ onMounted(() => {
         isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
         isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
         isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
-        isCashRemunerationEip712Deployed.value = team.cashRemunerationEip712Address != ethers.ZeroAddress
+        isCashRemunerationEip712Deployed.value =
+          team.cashRemunerationEip712Address != ethers.ZeroAddress
       }
     }
   }
