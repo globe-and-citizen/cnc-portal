@@ -142,7 +142,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             cashRemunerationEip712Beacon,
             abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
         );
-        expenseAccountEip712Contract = address(proxy);
+        cashRemunerationEip712Contract = address(proxy);
 
         emit ContractDeployed("CashRemunerationEIP712", cashRemunerationEip712Contract);
     }
