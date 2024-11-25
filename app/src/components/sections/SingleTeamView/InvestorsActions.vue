@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col justify-around gap-2 w-full">
+  <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
     <h2>Owner Interaction</h2>
     <div class="flex justify-end gap-2 w-full">
       <button
