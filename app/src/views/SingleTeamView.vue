@@ -48,9 +48,12 @@
           <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI" />
         </template>
         <template #tab-5>
-          <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
+          <CashRemunerationSection v-if="activeTab == 5"/>
         </template>
         <template #tab-6>
+          <BoardOfDirectorsSection v-if="activeTab == 6" :team="team" />
+        </template>
+        <template #tab-7>
           <ContractManagementSection></ContractManagementSection>
         </template>
       </TabNavigation>
@@ -81,6 +84,7 @@ import ProposalSection from '@/components/sections/SingleTeamView/ProposalSectio
 // import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
+import CashRemunerationSection from '@/components/sections/SingleTeamView/CashRemunerationSection.vue'
 
 import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
@@ -177,6 +181,7 @@ const setTabs = () => {
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses,
+      SingleTeamTabs.CashRemuneration,
       SingleTeamTabs.BoardOfDirectors,
       SingleTeamTabs.Contract
     ]
