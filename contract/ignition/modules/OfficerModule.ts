@@ -4,6 +4,7 @@ import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 import bankBeaconModule from './BankBeaconModule'
 import ExpenseAccountModule from './ExpenseAccountModule'
 import ExpenseAccountEIP712Module from './ExpenseAccountEIP712Module'
+import CashRemunerationEIP712Module from './CashRemunerationEIP712Module'
 
 export default buildModule('Officer', (m) => {
   const beaconAdmin = m.getAccount(0)
@@ -13,13 +14,15 @@ export default buildModule('Officer', (m) => {
   const { beacon: votingBeacon } = m.useModule(VotingBeaconModule)
   const { expenseAccountFactoryBeacon } = m.useModule(ExpenseAccountModule)
   const { expenseAccountEip712FactoryBeacon } = m.useModule(ExpenseAccountEIP712Module)
+  const { cashRemunerationEip712FactoryBeacon } = m.useModule(CashRemunerationEIP712Module)
   m.call(officer, 'initialize', [
     beaconAdmin,
     bankBeacon,
     votingBeacon,
     BoDBeacon,
     expenseAccountFactoryBeacon,
-    expenseAccountEip712FactoryBeacon
+    expenseAccountEip712FactoryBeacon,
+    cashRemunerationEip712FactoryBeacon
   ])
   const beacon = m.contract('FactoryBeacon', [officer], {
     from: beaconAdmin

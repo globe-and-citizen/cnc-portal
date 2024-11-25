@@ -35,12 +35,14 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address bodContract;
     address expenseAccountContract;
     address expenseAccountEip712Contract;
+    address cashRemunerationEip712Contract;
 
     address public bankAccountBeacon;
     address public votingContractBeacon;
     address public bodContractBeacon;
     address public expenseAccountBeacon;
     address public expenseAccountEip712Beacon;
+    address public cashRemunerationEip712Beacon;
 
     event TeamCreated( address[] founders, address[] members);
     event ContractDeployed( string contractType, address contractAddress);
@@ -51,7 +53,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address _votingContractBeacon, 
     address _bodContractBeacon, 
     address _expenseAccountBeacon,
-    address _expenseAccountEip712Beacon
+    address _expenseAccountEip712Beacon,
+    address _cashRemunerationEip712Beacon
     ) public initializer {
         __Ownable_init(owner);
         __ReentrancyGuard_init();
@@ -61,6 +64,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         bodContractBeacon = _bodContractBeacon;
         expenseAccountBeacon = _expenseAccountBeacon;
         expenseAccountEip712Beacon = _expenseAccountEip712Beacon;
+        cashRemunerationEip712Beacon = _cashRemunerationEip712Beacon;
     }
 
    function createTeam(
@@ -133,14 +137,41 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
         emit ContractDeployed("ExpenseAccountEIP712", expenseAccountEip712Contract);
     }
+    function deployCashRemunerationEip712() external onlyOwners whenNotPaused  {
+        BeaconProxy proxy = new BeaconProxy(
+            cashRemunerationEip712Beacon,
+            abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
+        );
+        expenseAccountEip712Contract = address(proxy);
+
+        emit ContractDeployed("CashRemunerationEIP712", cashRemunerationEip712Contract);
+    }
   
     function transferOwnershipToBOD(address newOwner) external whenNotPaused {
         transferOwnership(newOwner);
         emit OwnershipTransferred(owner(), newOwner);
     }
 
-    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address, address ) {
-        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract, expenseAccountEip712Contract);
+    function getTeam() external view returns (
+        address[] memory, 
+        address[] memory , 
+        address , 
+        address, 
+        address, 
+        address, 
+        address, 
+        address 
+    ) {
+        return (
+            founders, 
+            members, 
+            bankAccountContract, 
+            votingContract, 
+            bodContract, 
+            expenseAccountContract, 
+            expenseAccountEip712Contract,
+            cashRemunerationEip712Contract
+        );
     }
     modifier onlyOwners{
         if (msg.sender == owner()) {
