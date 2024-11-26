@@ -6,7 +6,7 @@
       <AddressToolTip :address="member.address ?? ''" />
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
-      <div 
+      <div
         v-if="member.address != ownerAddress && ownerAddress == userDataStore.address"
         class="flex flex-wrap gap-2 sm:gap-4"
       >
@@ -17,7 +17,7 @@
         >
           <TrashIcon class="size-4" />
         </button>
-        <button 
+        <button
           class="btn btn-sm btn-success"
           @click="() => (showSetMemberWageModal = true)"
           data-test="set-wage-button"
@@ -70,13 +70,8 @@
         <label class="input input-bordered flex items-center gap-2 input-md">
           <span class="w-32">Hourly Rate</span>
           |
-          <input
-            type="text"
-            class="grow"
-            v-model="hourlyRate"
-            placeholder="Enter hourly rate..."
-          />
-          | {{ `${NETWORK.currencySymbol} `}}
+          <input type="text" class="grow" v-model="hourlyRate" placeholder="Enter hourly rate..." />
+          | {{ `${NETWORK.currencySymbol} ` }}
         </label>
       </div>
       <div class="modal-action justify-center">
@@ -88,9 +83,7 @@
           data-test="delete-member-confirm-button"
           >Save</ButtonUI
         >
-        <ButtonUI variant="error" @click="showSetMemberWageModal = false">
-          Cancel
-        </ButtonUI>
+        <ButtonUI variant="error" @click="showSetMemberWageModal = false"> Cancel </ButtonUI>
       </div>
     </ModalComponent>
   </div>

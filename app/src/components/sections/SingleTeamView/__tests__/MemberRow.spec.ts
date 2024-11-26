@@ -139,5 +139,4 @@ describe('MemberRow.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).maxWeeklyHours).toBe('20')
     })
   })
-
 })
