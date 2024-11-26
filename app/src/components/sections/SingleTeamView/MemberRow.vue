@@ -67,7 +67,7 @@
             data-test="max-hours-input"
           />
         </label>
-        <label class="input input-bordered flex items-center gap-2 input-md">
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2">
           <span class="w-32">Hourly Rate</span>
           |
           <input type="text" class="grow" v-model="hourlyRate" placeholder="Enter hourly rate..." />
