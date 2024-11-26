@@ -19,6 +19,7 @@ CREATE TABLE "Team" (
     "expenseAccountAddress" TEXT,
     "officerAddress" TEXT,
     "expenseAccountEip712Address" TEXT,
+    "investorsAddress" TEXT,
 
     CONSTRAINT "Team_pkey" PRIMARY KEY ("id")
 );
