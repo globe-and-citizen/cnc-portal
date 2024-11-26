@@ -124,6 +124,7 @@ import {
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
 } from '@/constant'
+import { validateAddresses } from '@/constant/index'
 import type { Member } from '@/types'
 
 const props = defineProps(['team'])
@@ -299,6 +300,8 @@ const deployOfficerContract = async () => {
   try {
     const currentAddress = useUserDataStore().address as Address
     loading.value = true
+    console.log('Validating addresses')
+    validateAddresses()
 
     const beaconConfigs = [
       {
