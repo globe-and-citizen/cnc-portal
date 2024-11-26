@@ -40,6 +40,7 @@ model Team {
   investorsAddress          String?
   expenseAccountEip712Address     String?
   BoardOfDirectorActions    BoardOfDirectorActions[]
+  teamContracts TeamContract[]
   memberTeamsData           MemberTeamsData[]
 }
 
@@ -51,8 +52,21 @@ model MemberTeamsData {
   teamId                    Int
   expenseAccountData        String?
   expenseAccountSignature   String?
+  hourlyRate                Int?
+  maxHoursPerWeek           Int?
+  claims                    Claim[]
 
   @@unique([userAddress, teamId]) 
+}
+
+model Claim {
+  id                        Int      @id @default(autoincrement())  // Add an ID for easy referencing
+  createdAt                 DateTime @default(now())
+  status                    String
+  hoursWorked               Int?
+  cashRemunerationSignature String?
+  memberTeamsDataId         Int
+  memberTeamsData           MemberTeamsData @relation(fields: [memberTeamsDataId], references: [id])
 }
 
 model Notification {
@@ -66,6 +80,18 @@ model Notification {
   author                    String?
   resource                  String?
 }
+
+model TeamContract {
+  id           Int       @id @default(autoincrement())
+  address      String    @unique
+  type         String
+  deployer     String
+  admins       String[]
+  teamId       Int
+  team         Team      @relation(fields: [teamId], references: [id])
+  @@index([address])
+  }
+
 
 model BoardOfDirectorActions {
   id                        Int      @id @default(autoincrement())
