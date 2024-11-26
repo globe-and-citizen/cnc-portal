@@ -14,7 +14,7 @@
           />
         </label>
         <!--<button class="btn btn-success">Submit Hours</button>-->
-        <ButtonUI v-if="isSubmittingHours" loading variant="success" />
+        <ButtonUI v-if="isSubmittingHours" loading variant="success" data-test="submitting-hours-button"/>
         <ButtonUI v-else variant="success" data-test="submit-hours-button">Submit Hours</ButtonUI>
       </div>
     </div>
@@ -29,7 +29,7 @@
             <th>Address</th>
             <th>Hours</th>
             <th>Rate</th>
-            <th v-if="team.ownerAddress === currentUserAddress">Action</th>
+            <th v-if="team.ownerAddress === currentUserAddress" data-test="action-th">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -39,7 +39,11 @@
             <td>{{ data.address }}</td>
             <td>{{ data.hoursWorked }}</td>
             <td>{{ data.hourlyRate }}</td>
-            <td class="flex justify-end">
+            <td 
+              v-if="team.ownerAddress === currentUserAddress"
+              class="flex justify-end"
+              data-test="action-td"
+            >
               <button class="btn btn-success">Approve</button>
             </td>
           </tr>
