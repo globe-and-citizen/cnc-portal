@@ -48,7 +48,7 @@
           <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI" />
         </template>
         <template #tab-5>
-          <CashRemunerationSection v-if="activeTab == 5" :team="team"/>
+          <CashRemunerationSection v-if="activeTab == 5" :team="team" />
         </template>
         <template #tab-6>
           <BoardOfDirectorsSection v-if="activeTab == 6" :team="team" />
