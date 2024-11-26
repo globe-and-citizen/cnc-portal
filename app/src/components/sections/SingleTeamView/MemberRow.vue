@@ -6,14 +6,25 @@
       <AddressToolTip :address="member.address ?? ''" />
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
-      <button
+      <div 
         v-if="member.address != ownerAddress && ownerAddress == userDataStore.address"
-        class="btn btn-error btn-sm flex gap-4"
-        @click="() => (showDeleteMemberConfirmModal = true)"
-        data-test="delete-member-button"
+        class="flex flex-wrap gap-2 sm:gap-4"
       >
-        <TrashIcon class="size-4" />
-      </button>
+        <button
+          class="btn btn-error btn-sm"
+          @click="() => (showDeleteMemberConfirmModal = true)"
+          data-test="delete-member-button"
+        >
+          <TrashIcon class="size-4" />
+        </button>
+        <button 
+          class="btn btn-sm btn-success"
+          @click="() => (showSetMemberWageModal = true)"
+          data-test="set-wage-button"
+        >
+          Set Wage
+        </button>
+      </div>
     </td>
   </tr>
   <div>
@@ -40,6 +51,48 @@
         </ButtonUI>
       </div>
     </ModalComponent>
+
+    <ModalComponent v-model="showSetMemberWageModal">
+      <p class="font-bold text-lg">Set Member Wage</p>
+      <hr class="" />
+      <div class="input-group mt-3">
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-32">Max Weekly Hours</span>
+          |
+          <input
+            type="text"
+            class="grow"
+            v-model="maxWeeklyHours"
+            placeholder="Enter max hours per week..."
+            data-test="max-hours-input"
+          />
+        </label>
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-32">Hourly Rate</span>
+          |
+          <input
+            type="text"
+            class="grow"
+            v-model="hourlyRate"
+            placeholder="Enter hourly rate..."
+          />
+          | {{ `${NETWORK.currencySymbol} `}}
+        </label>
+      </div>
+      <div class="modal-action justify-center">
+        <ButtonUI v-if="memberIsDeleting" loading variant="success" />
+        <ButtonUI
+          v-else
+          variant="success"
+          @click="deleteMemberAPI()"
+          data-test="delete-member-confirm-button"
+          >Save</ButtonUI
+        >
+        <ButtonUI variant="error" @click="showSetMemberWageModal = false">
+          Cancel
+        </ButtonUI>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -53,6 +106,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { NETWORK } from '@/constant'
 
 interface Member extends MemberInput {
   index: number
@@ -70,6 +124,9 @@ const emits = defineEmits(['getTeam'])
 
 const member = ref(props.member)
 const showDeleteMemberConfirmModal = ref(false)
+const showSetMemberWageModal = ref(false)
+const maxWeeklyHours = ref('0')
+const hourlyRate = ref('0')
 
 // useFetch instance for deleting member
 const {
