@@ -18,6 +18,11 @@ vi.mock('vue-router', () => ({
     }
   }))
 }))
+interface ComponentData {
+  showDeleteMemberConfirmModal: boolean
+  showSetMemberWageModal: boolean
+  maxWeeklyHours: 'string'
+}
 
 describe('MemberRow.vue', () => {
   let wrapper: ReturnType<typeof mount>
@@ -61,12 +66,33 @@ describe('MemberRow.vue', () => {
       expect(wrapper.text()).toContain(props.member.name)
       expect(wrapper.text()).toContain(props.member.address)
     })
+    it('renders delete and set wage if member', async () => {
+      const deleteButton = wrapper.find('[data-test="delete-member-button"]')
+      expect(deleteButton.exists()).toBeTruthy()
+      const setWageButton = wrapper.find('[data-test="set-wage-button"]')
+      expect(setWageButton.exists()).toBeTruthy()
+    })
+    it('does not render delete and set wage if not owner', () => {
+      interface mockReturn {
+        mockReturnValue: (address: Object) => {}
+      }
+
+      ;(useUserDataStore as unknown as mockReturn).mockReturnValue({
+        address: '1234'
+      })
+
+      wrapper = mount(MemberRow, {
+        props: { ...props }
+      })
+
+      const deleteButton = wrapper.find('[data-test="delete-member-button"]')
+      expect(deleteButton.exists()).toBeFalsy()
+      const setWageButton = wrapper.find('[data-test="set-wage-button"]')
+      expect(setWageButton.exists()).toBeFalsy()
+    })
   })
 
   describe('methods', () => {
-    interface ComponentData {
-      showDeleteMemberConfirmModal: boolean
-    }
     it('should show the modal when delete button is clicked', async () => {
       await wrapper.find('[data-test="delete-member-button"]').trigger('click')
       await wrapper.vm.$nextTick()
@@ -94,5 +120,24 @@ describe('MemberRow.vue', () => {
       // expect(mockToastStore.addSuccessToast).toHaveBeenCalled()
     })
     // TODO: test when delete is validated
+    it('should show the set wage modal when set wage button is clicked', async () => {
+      await wrapper.find('[data-test="set-wage-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).showSetMemberWageModal).toBe(true)
+    })
   })
+
+  describe('state', () => {
+    it('should set maxHoursPerWeek', async () => {
+      await wrapper.find('[data-test="set-wage-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).showSetMemberWageModal).toBe(true)
+      const maxWeeklyHoursInput = wrapper.find('[data-test="max-hours-input"]')
+      expect(maxWeeklyHoursInput.exists()).toBeTruthy()
+      maxWeeklyHoursInput.setValue('20')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).maxWeeklyHours).toBe('20')
+    })
+  })
+
 })
