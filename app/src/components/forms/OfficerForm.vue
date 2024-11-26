@@ -22,10 +22,40 @@
               {{ team?.officerAddress }}
             </span>
           </div>
-          <div v-if="showCreateTeam && !isLoadingGetTeam">
+          <div v-if="showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
             <CreateOfficerTeam :team="team" @getTeam="emits('getTeam')" />
           </div>
-          <div v-if="!showCreateTeam && !isLoadingGetTeam">
+          <div v-if="!showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
+            <div class="flex flex-col">
+              <h5 class="text-md font-bold">Deployed Contracts</h5>
+              <div v-if="deployedContracts && (deployedContracts as Array<IContract>)?.length != 0">
+                <div
+                  v-for="contract in deployedContracts"
+                  :key="(contract as IContract).contractAddress"
+                >
+                  <span class="badge badge-primary badge-sm">
+                    {{ (contract as IContract).contractType }}:
+                    {{ (contract as IContract).contractAddress }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <DeploymentActions
+              :team="team"
+              :founders="founders"
+              :is-bank-deployed="isBankDeployed"
+              :is-voting-deployed="isVotingDeployed"
+              :isBoDDeployed="isBoDDeployed"
+              :is-expense-deployed="isExpenseDeployed"
+              :is-expense-eip712-deployed="isExpenseEip712Deployed"
+              @get-team="emits('getTeam')"
+            />
+          </div>
+          <div v-if="isLoadingGetTeam || isLoadingFetchDeployedContracts">
+            <span class="loading loading-spinner loading-lg"></span>
+          </div>
+          <div v-if="!showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
             <div class="flex flex-col">
               <h5 class="text-md font-bold">Founders</h5>
               <div v-for="(founderAddress, index) in founders" data-test="founder-div" :key="index">
@@ -58,154 +88,50 @@
                 </span>
               </div>
             </div>
-            <div class="flex flex-col">
-              <h5 class="text-md font-bold">Deployments</h5>
-              <div>
-                <span
-                  data-test="bank-address"
-                  v-if="isBankDeployed"
-                  class="badge badge-primary badge-sm"
-                >
-                  Bank deployed at: {{ team?.bankAddress }}
-                </span>
-              </div>
-              <div>
-                <span
-                  data-test="voting-address"
-                  v-if="isVotingDeployed"
-                  class="badge badge-primary badge-sm"
-                >
-                  Voting deployed at: {{ team?.votingAddress }}
-                </span>
-              </div>
-              <div>
-                <span
-                  data-test="bod-address"
-                  v-if="isBoDDeployed"
-                  class="badge badge-primary badge-sm"
-                >
-                  BoD deployed at: {{ team?.boardOfDirectorsAddress }}
-                </span>
-              </div>
-              <div>
-                <span
-                  data-test="expense-address"
-                  v-if="isExpenseDeployed"
-                  class="badge badge-primary badge-sm"
-                >
-                  Expense deployed at: {{ team?.expenseAccountAddress }}
-                </span>
-              </div>
-              <div>
-                <span
-                  data-test="expense-eip712-address"
-                  v-if="isExpenseEip712Deployed"
-                  class="badge badge-primary badge-sm"
-                >
-                  Expense EIP712 deployed at: {{ team?.expenseAccountEip712Address }}
-                </span>
-              </div>
-            </div>
-            <div class="flex justify-between mt-4">
-              <button
-                class="btn btn-primary btn-sm"
-                v-if="!isBankDeployed && !isLoadingDeployBank && !isConfirmingDeployBank"
-                @click="deployBankAccount"
-                data-test="deployBankButton"
-              >
-                Deploy Bank
-              </button>
-              <LoadingButton
-                :color="'primary min-w-24'"
-                data-test="loading-deploy-bank"
-                v-if="isLoadingDeployBank || isConfirmingDeployBank"
-              />
-              <button
-                class="btn btn-primary btn-sm"
-                v-if="!isExpenseDeployed && !isLoadingDeployExpense && !isConfirmingDeployExpense"
-                @click="deployExpenseAccount"
-                data-test="deployExpenseButton"
-              >
-                Deploy Expense
-              </button>
-              <LoadingButton
-                :color="'primary min-w-24'"
-                data-test="loading-deploy-expense"
-                v-if="isLoadingDeployExpense || isConfirmingDeployExpense"
-              />
-
-              <button
-                class="btn btn-primary btn-sm"
-                v-if="
-                  !isExpenseEip712Deployed &&
-                  !isLoadingDeployExpenseEip712 &&
-                  !isConfirmingDeployExpenseEip712
-                "
-                @click="deployExpenseAccountEip712"
-                data-test="deployExpenseButtonEip712"
-              >
-                Deploy Expense EIP712
-              </button>
-              <LoadingButton
-                :color="'primary min-w-24'"
-                data-test="loading-deploy-expense-eip712"
-                v-if="isLoadingDeployExpenseEip712 || isConfirmingDeployExpenseEip712"
-              />
-
-              <button
-                class="btn btn-primary btn-sm"
-                v-if="!isVotingDeployed && !isLoadingDeployVoting && !isConfirmingDeployVoting"
-                @click="deployVotingContract"
-                data-test="deployVotingButton"
-              >
-                Deploy Voting
-              </button>
-              <LoadingButton
-                :color="'primary min-w-24'"
-                data-test="loading-deploy-voting"
-                v-if="isLoadingDeployVoting || isConfirmingDeployVoting"
-              />
-            </div>
-          </div>
-          <div v-if="isLoadingGetTeam">
-            <span class="loading loading-spinner loading-lg"></span>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
-import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import { ref, watch, onMounted, computed } from 'vue'
 import { useToastStore } from '@/stores'
+import { useUserDataStore } from '@/stores/user'
 import LoadingButton from '@/components/LoadingButton.vue'
-import type { Member } from '@/types'
-import { ethers } from 'ethers'
+import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
+import DeploymentActions from './DeploymentActions.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import {
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+  useWatchContractEvent
+} from '@wagmi/vue'
+import { encodeFunctionData, type Address } from 'viem'
+
+import { log, parseError } from '@/utils'
+
+// Contract-related imports
 import OfficerABI from '@/artifacts/abi/officer.json'
 import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
-import { encodeFunctionData, type Address } from 'viem'
-import { useUserDataStore } from '@/stores/user'
 import {
-  BANK_BEACON_ADDRESS,
-  BOD_BEACON_ADDRESS,
-  TIPS_ADDRESS,
-  EXPENSE_ACCOUNT_BEACON_ADDRESS,
   OFFICER_BEACON,
+  BANK_BEACON_ADDRESS,
   VOTING_BEACON_ADDRESS,
+  BOD_BEACON_ADDRESS,
+  EXPENSE_ACCOUNT_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
 } from '@/constant'
 import { validateAddresses } from '@/constant/index'
-import { useWatchContractEvent } from '@wagmi/vue'
-import { log, parseError } from '@/utils'
-
-const { addErrorToast, addSuccessToast } = useToastStore()
+import type { Member } from '@/types'
 
 const props = defineProps(['team'])
 const emits = defineEmits(['getTeam'])
+const { addErrorToast, addSuccessToast } = useToastStore()
 
+// UI state
 const showCreateTeam = ref(false)
 const isBankDeployed = ref(false)
 const isVotingDeployed = ref(false)
@@ -215,69 +141,24 @@ const isExpenseEip712Deployed = ref(false)
 const founders = ref<string[]>([])
 const members = ref<string[]>([])
 
-// Setup composables
-
+// Officer contract creation
 const {
-  writeContract: deployBank,
-  isPending: isLoadingDeployBank,
-  data: deployBankHash,
-  error: deployBankError
+  isPending: officerContractCreating,
+  data: createOfficerHash,
+  error: createOfficerError,
+  writeContract: createOfficer
 } = useWriteContract()
-const { isLoading: isConfirmingDeployBank, isSuccess: isConfirmedDeployBank } =
-  useWaitForTransactionReceipt({ hash: deployBankHash })
 
-watch(isConfirmingDeployBank, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployBank.value) {
-    addSuccessToast('Bank deployed successfully')
-    emits('getTeam')
-  }
-})
-const {
-  writeContract: deployVoting,
-  isPending: isLoadingDeployVoting,
-  data: deployVotingHash,
-  error: deployVotingError
-} = useWriteContract()
-const { isLoading: isConfirmingDeployVoting, isSuccess: isConfirmedDeployVoting } =
-  useWaitForTransactionReceipt({ hash: deployVotingHash })
-
-watch(isConfirmingDeployVoting, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployVoting.value) {
-    addSuccessToast('Voting deployed successfully')
-    emits('getTeam')
-  }
-})
-const {
-  writeContract: deployExpense,
-  isPending: isLoadingDeployExpense,
-  data: deployExpenseHash,
-  error: deployExpenseError
-} = useWriteContract()
-const { isLoading: isConfirmingDeployExpense, isSuccess: isConfirmedDeployExpense } =
-  useWaitForTransactionReceipt({ hash: deployExpenseHash })
-watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployExpense.value) {
-    addSuccessToast('Expense account deployed successfully')
-    emits('getTeam')
-  }
+const { isLoading: isConfirmingCreateOfficer } = useWaitForTransactionReceipt({
+  hash: createOfficerHash
 })
 
-const {
-  writeContract: deployExpenseEip712,
-  isPending: isLoadingDeployExpenseEip712,
-  data: deployExpenseEip712Hash
-  //error: deployExpenseEip712Error
-} = useWriteContract()
-const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeployExpenseEip712 } =
-  useWaitForTransactionReceipt({ hash: deployExpenseEip712Hash })
-watch(isConfirmingDeployExpenseEip712, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployExpenseEip712.value) {
-    addSuccessToast('Expense EIP712 account deployed successfully')
-    emits('getTeam')
-  }
-})
+const loading = ref(false)
+const createOfficerLoading = computed(
+  () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
+)
 
-// Fetch officer team details using composable
+// Officer team data fetching
 const {
   refetch: fetchOfficerTeam,
   isLoading: isLoadingGetTeam,
@@ -288,26 +169,100 @@ const {
   abi: OfficerABI,
   args: []
 })
-const {
-  isPending: officerContractCreating,
-  data: createOfficerHash,
-  error: createOfficerError,
-  writeContract: createOfficer
-} = useWriteContract()
-const { isLoading: isConfirmingCreateOfficer } = useWaitForTransactionReceipt({
-  hash: createOfficerHash
-})
-const loading = ref(false)
-const createOfficerLoading = computed(
-  () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
-)
 
+// Deployed contracts fetching
+const {
+  refetch: fetchDeployedContracts,
+  data: deployedContracts,
+  isLoading: isLoadingFetchDeployedContracts
+} = useReadContract({
+  address: props.team.officerAddress,
+  functionName: 'getDeployedContracts',
+  abi: OfficerABI,
+  args: []
+})
+
+// Contract interface
+interface IContract {
+  contractType: string
+  contractAddress: string
+}
+
+// Watch handlers
 watch(createOfficerError, (value) => {
   if (value) {
     loading.value = false
     addErrorToast('Failed to deploy officer contract')
   }
 })
+
+watch(deployedContracts, async (value) => {
+  if (!value) return
+
+  const contractTypeToProps = {
+    Bank: {
+      address: 'bankAddress',
+      flag: isBankDeployed
+    },
+    Voting: {
+      address: 'votingAddress',
+      flag: isVotingDeployed
+    },
+    BoardOfDirectors: {
+      address: 'boardOfDirectorsAddress',
+      flag: isBoDDeployed
+    },
+    ExpenseAccount: {
+      address: 'expenseAccountAddress',
+      flag: isExpenseDeployed
+    },
+    ExpenseAccountEIP712: {
+      address: 'expenseAccountEip712Address',
+      flag: isExpenseEip712Deployed
+    }
+  }
+  for (const contract of value as Array<IContract>) {
+    const config = contractTypeToProps[contract.contractType as keyof typeof contractTypeToProps]
+    if (!config) continue
+
+    // Set flag if address exists in props
+    if (props.team[config.address]) {
+      config.flag.value = true
+    }
+
+    // Update if addresses don't match
+    if (props.team[config.address] !== contract.contractAddress) {
+      try {
+        await useCustomFetch<string>(`teams/${props.team.id}`)
+          .put({ [config.address]: contract.contractAddress })
+          .json()
+        config.flag.value = true
+        emits('getTeam')
+      } catch (error) {
+        console.error(`Failed to update ${contract.contractType} address:`, error)
+      }
+    }
+  }
+})
+
+watch(officerTeam, async (value) => {
+  const temp: Array<Object> = value as Array<Object>
+  const team = {
+    founders: temp[0] as string[],
+    members: temp[1] as string[]
+  }
+  if (team) {
+    if (team.founders.length === 0) {
+      showCreateTeam.value = true
+    } else {
+      showCreateTeam.value = false
+      founders.value = team.founders
+      members.value = team.members
+    }
+  }
+})
+
+// Contract event watching
 useWatchContractEvent({
   address: OFFICER_BEACON as Address,
   abi: FACTORY_BEACON_ABI,
@@ -339,6 +294,7 @@ useWatchContractEvent({
     }
   }
 })
+
 // Deploy Officer Contract
 const deployOfficerContract = async () => {
   try {
@@ -347,17 +303,33 @@ const deployOfficerContract = async () => {
     console.log('Validating addresses')
     validateAddresses()
 
+    const beaconConfigs = [
+      {
+        beaconType: 'Bank',
+        beaconAddress: BANK_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'Voting',
+        beaconAddress: VOTING_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'BoardOfDirectors',
+        beaconAddress: BOD_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccount',
+        beaconAddress: EXPENSE_ACCOUNT_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccountEIP712',
+        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+      }
+    ]
+
     const encodedFunction = encodeFunctionData({
       abi: OfficerABI,
       functionName: 'initialize',
-      args: [
-        currentAddress,
-        BANK_BEACON_ADDRESS,
-        VOTING_BEACON_ADDRESS,
-        BOD_BEACON_ADDRESS,
-        EXPENSE_ACCOUNT_BEACON_ADDRESS,
-        EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
-      ]
+      args: [currentAddress, beaconConfigs]
     })
 
     createOfficer({
@@ -373,154 +345,35 @@ const deployOfficerContract = async () => {
   }
 }
 
-// Deploy Bank
-const deployBankAccount = async () => {
-  deployBank({
-    address: props.team.officerAddress,
-    abi: OfficerABI,
-    functionName: 'deployBankAccount',
-    args: [TIPS_ADDRESS]
-  })
-}
-
-// Deploy Voting
-const deployVotingContract = async () => {
-  deployVoting({
-    address: props.team.officerAddress,
-    abi: OfficerABI,
-    functionName: 'deployVotingContract'
-  })
-}
-
-const deployExpenseAccount = async () => {
-  deployExpense({
-    address: props.team.officerAddress,
-    abi: OfficerABI,
-    functionName: 'deployExpenseAccount'
-  })
-}
-
-const deployExpenseAccountEip712 = async () => {
-  deployExpenseEip712({
-    address: props.team.officerAddress,
-    abi: OfficerABI,
-    functionName: 'deployExpenseAccountEip712'
-  })
-}
-// Watch officer team data and update state
-watch(officerTeam, async (value) => {
-  const temp: Array<Object> = value as Array<Object>
-  const team = {
-    founders: temp[0] as string[],
-    members: temp[1] as string[],
-    bankAddress: temp[2] as string,
-    votingAddress: temp[3] as string,
-    bodAddress: temp[4] as string,
-    expenseAccountAddress: temp[5] as string,
-    expenseAccountEip712Address: temp[6] as string
-  }
-  if (team) {
-    if (team.founders.length === 0) {
-      showCreateTeam.value = true
-    } else {
-      showCreateTeam.value = false
-      founders.value = team.founders
-      members.value = team.members
-      isBankDeployed.value = team.bankAddress != ethers.ZeroAddress
-      isVotingDeployed.value = team.votingAddress != ethers.ZeroAddress
-      isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
-      isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
-      isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
-      if (props.team.bankAddress != team.bankAddress && isBankDeployed.value) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ bankAddress: team.bankAddress })
-          .json()
-        emits('getTeam')
-      }
-      if (props.team.votingAddress != team.votingAddress && isVotingDeployed.value) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ votingAddress: team.votingAddress })
-          .json()
-        if (props.team.boardOfDirectorsAddress != team.bodAddress && isBoDDeployed.value) {
-          await useCustomFetch<string>(`teams/${props.team.id}`)
-            .put({ boardOfDirectorsAddress: team.bodAddress })
-            .json()
-        }
-        emits('getTeam')
-      }
-
-      if (
-        props.team.expenseAccountAddress != team.expenseAccountAddress &&
-        team.expenseAccountAddress != ethers.ZeroAddress
-      ) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ expenseAccountAddress: team.expenseAccountAddress })
-          .json()
-        emits('getTeam')
-      }
-      //expense account eip 712
-      if (
-        props.team.expenseAccountEip712Address != team.expenseAccountEip712Address &&
-        team.expenseAccountEip712Address != ethers.ZeroAddress
-      ) {
-        await useCustomFetch<string>(`teams/${props.team.id}`)
-          .put({ expenseAccountEip712Address: team.expenseAccountEip712Address })
-          .json()
-        emits('getTeam')
-      }
-    }
-  }
-})
-
-watch(deployExpenseError, (value) => {
-  if (value) {
-    console.log(`Failed to deploy officer contract`, value)
-    addErrorToast('Failed to deploy expense account')
-  }
-})
-
-watch(deployBankError, (value) => {
-  if (value) {
-    log.error(parseError(value))
-    addErrorToast('Failed to deploy bank')
-  }
-})
-
-watch(deployVotingError, (value) => {
-  if (value) {
-    addErrorToast('Failed to deploy voting')
-  }
-})
-// Fetch the officer team when mounted
+// Component lifecycle
 onMounted(() => {
-  if (props.team.officerAddress) {
-    fetchOfficerTeam()
-  }
+  if (!props.team.officerAddress) return
+  // Fetch initial data
+  fetchOfficerTeam()
+  fetchDeployedContracts()
+  // Process officer team data if available
   if (officerTeam.value) {
-    const temp: Array<Object> = officerTeam.value as unknown as Array<Object>
-    const team = {
-      founders: temp[0] as string[],
-      members: temp[1] as string[],
-      bankAddress: temp[2] as string,
-      votingAddress: temp[3] as string,
-      bodAddress: temp[4] as string,
-      expenseAccountAddress: temp[5] as string,
-      expenseAccountEip712Address: temp[6] as string
+    const [foundersData, membersData] = officerTeam.value as [string[], string[]]
+    showCreateTeam.value = foundersData.length === 0
+    if (!showCreateTeam.value) {
+      founders.value = foundersData
+      members.value = membersData
     }
-    if (team) {
-      if (team.founders?.length === 0) {
-        showCreateTeam.value = true
-      } else {
-        showCreateTeam.value = false
-        founders.value = team.founders
-        members.value = team.members
-        isBankDeployed.value = team.bankAddress != ethers.ZeroAddress
-        isVotingDeployed.value = team.votingAddress != ethers.ZeroAddress
-        isBoDDeployed.value = team.bodAddress != ethers.ZeroAddress
-        isExpenseDeployed.value = team.expenseAccountAddress != ethers.ZeroAddress
-        isExpenseEip712Deployed.value = team.expenseAccountEip712Address != ethers.ZeroAddress
-      }
+  }
+  // Update deployment flags if contracts exist
+  if (deployedContracts.value) {
+    const contractTypes = {
+      Bank: isBankDeployed,
+      Voting: isVotingDeployed,
+      BoardOfDirectors: isBoDDeployed,
+      ExpenseAccount: isExpenseDeployed,
+      ExpenseAccountEIP712: isExpenseEip712Deployed
     }
+
+    ;(deployedContracts.value as Array<IContract>).forEach((contract) => {
+      const flag = contractTypes[contract.contractType as keyof typeof contractTypes]
+      if (flag) flag.value = true
+    })
   }
 })
 </script>

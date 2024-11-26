@@ -1,18 +1,20 @@
 {
-  "BankBeaconModule#Bank": "0x49d955ce051E08e55230F6691F154b9edBec503f",
-  "BoardOfDirectorsModule#BoardOfDirectors": "0xc90CCe28BA07124Ae18D7E738a1E3eedeF649538",
-  "ExpenseAccountEIP712Module#ExpenseAccountEIP712": "0x068d9B8d8094D32eaFfb5817c105cab390eDbEf9",
-  "ExpenseAccountModule#ExpenseAccount": "0xd0c2b5e6205ac51bC0A83FC90FA8cA4A0Ce9777B",
-  "Officer#Officer": "0xBDaAe7E02Ee405ce6Ba6dbf87E292A3936dac999",
-  "VotingBeaconModule#Voting": "0x2b5120468F66d114F79c882D406D4F1a2b4156C2",
-  "BankBeaconModule#Beacon": "0x1E2A8C9770385422615c0f0F8Cba45AA78507B8D",
-  "BoardOfDirectorsModule#Beacon": "0x058754C3305E9313aC82307e487b65dAe33ce7B0",
-  "ExpenseAccountEIP712Module#FactoryBeacon": "0x91873448621921b8483AEaDB59d28CaF83E7F67f",
-  "ExpenseAccountModule#FactoryBeacon": "0x032711B624E71323eBCB724c2c30B442c42502D1",
-  "Officer#FactoryBeacon": "0x35149088A6D8d238910fCD9602DD0045503a2eB1",
-  "VotingBeaconModule#Beacon": "0x928Fa7EDb66E5cB2edbE883D4b265880F86924E4",
+  "BankBeaconModule#Bank": "0xb0309A8FF473f53a36aE49B6C12241364FE19bC6",
+  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb",
+  "BankBeaconModule#Beacon": "0x64Cc412C4F7Ef4B65283f56B0f36FbAA3285378D",
   "ProxyModule#TransparentUpgradeableProxy": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
   "ProxyModule#ProxyAdmin": "0x9B545652208f7889fe9Bd7B1Cc0BB240e8745690",
   "TipsModule#Tips": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
-  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb"
+  "BoardOfDirectorsModule#BoardOfDirectors": "0x411c9047906Ade5Fd590B41702e36ee02857f495",
+  "BoardOfDirectorsModule#Beacon": "0xED47B20c6118B32FC7BF603ea77ab96102f2BB6b",
+  "ExpenseAccountModule#ExpenseAccount": "0xf325637068B77ca2174014d72c2276003b2FF8Fb",
+  "ExpenseAccountModule#FactoryBeacon": "0x39D854FC017688758314c9F48A0084ceCDBaE4B8",
+  "Officer#Officer": "0xeDeB8826B99B094EA93c0a9B52188A2d39633e38",
+  "Officer#Beacon": "0x294Df6010f239f8F6Cc3DD4f76baC9283C84e7A0",
+  "VotingBeaconModule#Voting": "0xCcEf793d92cf7714Df7a0F406340E06F69c5d36a",
+  "VotingBeaconModule#Beacon": "0xAA96dddF0927036901FD76E993B657d12804b470",
+  "Officer#FactoryBeacon": "0x86667Cb2497275BF201Eb509b79a751A384b1591",
+  "ExpenseAccountEIP712Module#ExpenseAccountEIP712": "0x9A59fe7ff8F9c6c5c6852593038B13b0325F79CE",
+  "ExpenseAccountEIP712Module#FactoryBeacon": "0x34A5c1C07ec26910D2523A5d7dCA73b2DcEcE43f"
+
 }
