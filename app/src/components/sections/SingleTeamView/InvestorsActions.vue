@@ -1,9 +1,10 @@
 <template>
-  <div class="flex flex-col justify-around gap-2 w-full">
+  <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
     <h2>Owner Interaction</h2>
     <div class="flex justify-end gap-2 w-full">
       <button
         class="btn btn-primary gap-1"
+        data-test="distribute-mint-button"
         :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
         @click="distributeMintModal = true"
       >
@@ -34,7 +35,7 @@
         @submit="(address: Address, amount: string) => mintToken(address, amount)"
       ></MintForm>
     </ModalComponent>
-    <ModalComponent v-model="distributeMintModal">
+    <ModalComponent v-model="distributeMintModal" data-test="distribute-mint-modal">
       <DistributeMintForm
         v-if="distributeMintModal"
         :loading="distributeMintLoading || isConfirmingDistributeMint"
