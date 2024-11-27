@@ -1,6 +1,8 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h3 class="text-xl font-bold">Deploy Investor Contract</h3>
+    <h3 class="text-xl font-bold">
+      Deploy Investor Contract {{ isDeployAll ? '(Deploy all)' : '' }}
+    </h3>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Name of the shares</p>
       |
@@ -64,6 +66,7 @@ const rules = {
 
 defineProps<{
   loading: boolean
+  isDeployAll: boolean
 }>()
 
 const onSubmit = () => {
