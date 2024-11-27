@@ -540,9 +540,13 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
 export const addClaim = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
-  const hoursWorked = req.headers.hoursworked
+  //const hoursWorked = req.headers.hoursworked
+  const { hoursWorked } = req.body
 
   try {
+    console.log('hoursWorked', hoursWorked)
+    if (isNaN(Number(hoursWorked)) || !hoursWorked) 
+      return errorResponse(400, 'Bad Request', res)
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
       where: {
         userAddress_teamId: {
