@@ -11,11 +11,12 @@
             class="grow"
             placeholder="Enter hours worked..."
             data-test="max-hours-input"
+            :disabled="team.ownerAddress === currentUserAddress"
           />
         </label>
         <!--<button class="btn btn-success">Submit Hours</button>-->
         <ButtonUI v-if="isSubmittingHours" loading variant="success" data-test="submitting-hours-button"/>
-        <ButtonUI v-else variant="success" data-test="submit-hours-button">Submit Hours</ButtonUI>
+        <ButtonUI v-else variant="success" data-test="submit-hours-button" :disabled="team.ownerAddress === currentUserAddress">Submit Hours</ButtonUI>
       </div>
     </div>
     <div class="divider m-0"></div>

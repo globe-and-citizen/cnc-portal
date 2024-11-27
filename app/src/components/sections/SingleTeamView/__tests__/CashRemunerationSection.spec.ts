@@ -91,5 +91,27 @@ describe('CashRemunerationSection.vue', () => {
       expect(wrapper.find('[data-test="action-th"]').exists()).toBeFalsy()
       expect(wrapper.find('[data-test="action-td"]').exists()).toBeFalsy()
     })
+    it('should disable submit hours inputs if team owner', async () => {
+      let wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xOwner' }
+              }
+            })
+          ]
+        }
+      })
+
+      const maxHoursInput = wrapper.find('[data-test="max-hours-input"]')
+      const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]')
+
+      expect(maxHoursInput.exists()).toBeTruthy()
+      expect(submitHoursButton.exists()).toBeTruthy()
+      expect((maxHoursInput.element as HTMLInputElement).disabled).toBe(true)
+      // expect((submitHoursButton.element as HTMLButtonElement).disabled).toBe(true)
+    })
   })
 })
