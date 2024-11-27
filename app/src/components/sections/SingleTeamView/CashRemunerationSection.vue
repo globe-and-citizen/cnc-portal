@@ -9,14 +9,20 @@
           <input
             type="text"
             class="grow"
+            v-model="hoursWorked.hoursWorked"
             placeholder="Enter hours worked..."
-            data-test="max-hours-input"
+            data-test="hours-worked-input"
             :disabled="team.ownerAddress === currentUserAddress"
           />
         </label>
         <!--<button class="btn btn-success">Submit Hours</button>-->
         <ButtonUI v-if="isSubmittingHours" loading variant="success" data-test="submitting-hours-button"/>
-        <ButtonUI v-else variant="success" data-test="submit-hours-button" :disabled="team.ownerAddress === currentUserAddress">Submit Hours</ButtonUI>
+        <ButtonUI 
+          v-else variant="success" 
+          data-test="submit-hours-button" 
+          :disabled="team.ownerAddress === currentUserAddress"
+          @click="addWageClaim"
+        >Submit Hours</ButtonUI>
       </div>
     </div>
     <div class="divider m-0"></div>
@@ -58,11 +64,43 @@
 import { useUserDataStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { Team } from '@/types'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useToastStore } from '@/stores'
 
+
+const route = useRoute()
+
+const { addErrorToast, addSuccessToast } = useToastStore()
 const currentUserAddress = useUserDataStore().address
 const isSubmittingHours = ref(false)
+const hoursWorked = ref<{hoursWorked: string | undefined}>({hoursWorked: undefined})
 const dummyData = ref([{ name: 'Member', address: '0x123', hoursWorked: 20, hourlyRate: 50 }])
 
+const {
+  error: addWageClaimError,
+  isFetching: isWageClaimAdding,
+  execute: addWageClaimAPI
+} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim`, {
+  immediate: false
+})
+  .post(hoursWorked)
+  .json()
+//watchers for add wage claim
+watch([() => isWageClaimAdding.value, () => addWageClaimError.value], async () => {
+  if (!isWageClaimAdding.value && !addWageClaimError.value) {
+    addSuccessToast('Wage claim added successfully')
+  }
+})
+watch(addWageClaimError, (newVal) => {
+  if (newVal) {
+    addErrorToast(addWageClaimError.value)
+  }
+})
+
+const addWageClaim = async () => {
+  await addWageClaimAPI()
+}
 const props = defineProps<{ team: Partial<Team> }>()
 </script>

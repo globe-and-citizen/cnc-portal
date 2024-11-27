@@ -8,8 +8,17 @@ import { createTestingPinia } from '@pinia/testing'
 //   useUserDataStore: vi.fn()
 // }))
 
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  }))
+}))
+
 interface ComponentData {
   isSubmittingHours: boolean
+  hoursWorked: {hoursWorked: string | undefined}
 }
 
 describe('CashRemunerationSection.vue', () => {
@@ -105,13 +114,27 @@ describe('CashRemunerationSection.vue', () => {
         }
       })
 
-      const maxHoursInput = wrapper.find('[data-test="max-hours-input"]')
+      const maxHoursInput = wrapper.find('[data-test="hours-worked-input"]')
       const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]')
 
       expect(maxHoursInput.exists()).toBeTruthy()
       expect(submitHoursButton.exists()).toBeTruthy()
       expect((maxHoursInput.element as HTMLInputElement).disabled).toBe(true)
       // expect((submitHoursButton.element as HTMLButtonElement).disabled).toBe(true)
+    })
+  })
+
+  describe('State', () => {
+    it('should update hoursWorked', async () => {
+      const wrapper = createComponent()
+
+      const hoursWorkedInput = wrapper.find('[data-test="hours-worked-input"]')
+      expect(hoursWorkedInput.exists()).toBeTruthy()
+
+      hoursWorkedInput.setValue('20')
+      await wrapper.vm.$nextTick()
+
+      expect((wrapper.vm as unknown as ComponentData).hoursWorked.hoursWorked).toBe('20')
     })
   })
 })
