@@ -713,6 +713,116 @@ export const updateClaimEmployer = async (req: Request, res: Response) => {
   }
 }
 
+export const getClaims = async (req: Request, res: Response) => {
+  const { id, status } = req.params
+  const callerAddress = (req as any).address
+
+  try {
+    console.log(`status`, status)
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) }
+    })
+
+    if (!team)
+      return errorResponse(404, 'Resource Not Found', res)
+
+    if (team.ownerAddress === callerAddress) {
+      const claims = await prisma.memberTeamsData.findMany({
+        where: {
+          teamId: team.id,
+          claims: {
+            some: {
+              status,
+            },
+          },
+        },
+        select: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+          userAddress: true,
+          claims: {
+            where: {
+              status,
+            },
+            select: {
+              id: true,
+              hoursWorked: true,
+              createdAt: true,
+            },
+          },
+          hourlyRate: true,
+        },
+      })
+
+      const flattenedClaims = claims.flatMap(item =>
+        item.claims.map((claim) => ({
+          id: claim.id,
+          name: item.user.name,
+          address: item.userAddress,
+          hourlyRate: item.hourlyRate,
+          hoursWorked: claim.hoursWorked,
+          createdAt: claim.createdAt,
+        }))
+      )
+
+      res.status(201)
+        .json(flattenedClaims)
+    } else {
+      const claims = await prisma.memberTeamsData.findMany({
+        where: {
+          teamId: team.id,
+          userAddress: callerAddress,
+          claims: {
+            some: {
+              status,
+            },
+          },
+        },
+        select: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+          userAddress: true,
+          claims: {
+            where: {
+              status,
+            },
+            select: {
+              id: true,
+              hoursWorked: true,
+              createdAt: true,
+            },
+          },
+          hourlyRate: true,
+        },
+      })
+
+      const flattenedClaims = claims.flatMap(item =>
+        item.claims.map((claim) => ({
+          id: claim.id,
+          name: item.user.name,
+          address: item.userAddress,
+          hourlyRate: item.hourlyRate,
+          hoursWorked: claim.hoursWorked,
+          createdAt: claim.createdAt,
+        }))
+      )
+
+      res.status(201)
+        .json(flattenedClaims)
+    }
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
   callerAddress: string
