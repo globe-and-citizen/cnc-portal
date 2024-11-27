@@ -40,6 +40,7 @@
               <button
                 class="btn btn-primary"
                 :disabled="currentAddress != team.ownerAddress"
+                data-test="mint-individual"
                 @click="
                   () => {
                     selectedShareholder = shareholder.shareholder

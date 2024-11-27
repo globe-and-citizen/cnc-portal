@@ -92,13 +92,12 @@ describe('InvestorsActions.vue', () => {
 
   describe('methods', () => {
     it('should distribute mint', async () => {
-
       // Get the button
       // Click the button
       // Get the modal open
       // Fill the form
       // Click the submit button
-      
+
       const distributeMintButton = wrapper.find('[data-test="distribute-mint-button"]')
       await distributeMintButton.trigger('click')
       await wrapper.vm.$nextTick()

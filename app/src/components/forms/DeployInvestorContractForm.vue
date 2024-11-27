@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h3 class="text-xl font-bold">
+    <h3 class="text-xl font-bold" data-test="title">
       Deploy Investor Contract {{ isDeployAll ? '(Deploy all)' : '' }}
     </h3>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
@@ -71,8 +71,6 @@ defineProps<{
 
 const onSubmit = () => {
   $v.value.$touch()
-  console.log($v.value.name.$errors)
-  console.log($v.value.symbol.$errors)
   if ($v.value.$invalid) return
 
   emit('submit', name.value, symbol.value)

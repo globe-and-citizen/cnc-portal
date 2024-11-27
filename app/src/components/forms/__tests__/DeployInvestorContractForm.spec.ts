@@ -4,10 +4,23 @@ import DeployInvestorContractForm from '../DeployInvestorContractForm.vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 
 describe('DeployInvestorContractForm.vue', () => {
+  it('adds the title (Deploy all) if isDeployAll is true', () => {
+    const wrapper = shallowMount(DeployInvestorContractForm, {
+      props: {
+        loading: false,
+        isDeployAll: true
+      }
+    })
+    expect(wrapper.find('h3[data-test="title"]').text()).toEqual(
+      'Deploy Investor Contract (Deploy all)'
+    )
+  })
+
   it('should render name input', async () => {
     const wrapper = shallowMount(DeployInvestorContractForm, {
       props: {
-        loading: false
+        loading: false,
+        isDeployAll: false
       }
     })
     const input = wrapper.find('input[data-test="name-input"]')
@@ -20,7 +33,8 @@ describe('DeployInvestorContractForm.vue', () => {
   it('should render symbol input', () => {
     const wrapper = shallowMount(DeployInvestorContractForm, {
       props: {
-        loading: false
+        loading: false,
+        isDeployAll: false
       }
     })
     const input = wrapper.find('input[data-test="symbol-input"]')
@@ -33,7 +47,8 @@ describe('DeployInvestorContractForm.vue', () => {
   it('should render loading button if loading is true', () => {
     const wrapper = shallowMount(DeployInvestorContractForm, {
       props: {
-        loading: true
+        loading: true,
+        isDeployAll: false
       }
     })
     expect(wrapper.findComponent(LoadingButton).exists()).toBeTruthy()
@@ -42,7 +57,8 @@ describe('DeployInvestorContractForm.vue', () => {
   it('should show error message if name is empty', async () => {
     const wrapper = shallowMount(DeployInvestorContractForm, {
       props: {
-        loading: false
+        loading: false,
+        isDeployAll: false
       }
     })
     const button = wrapper.find('button[data-test="deploy-button"]')
@@ -55,7 +71,8 @@ describe('DeployInvestorContractForm.vue', () => {
   it('should show error message if symbol is empty', async () => {
     const wrapper = shallowMount(DeployInvestorContractForm, {
       props: {
-        loading: false
+        loading: false,
+        isDeployAll: false
       }
     })
     const button = wrapper.find('button[data-test="deploy-button"]')
@@ -68,7 +85,8 @@ describe('DeployInvestorContractForm.vue', () => {
   it('should emit submit event when button is clicked', async () => {
     const wrapper = shallowMount(DeployInvestorContractForm, {
       props: {
-        loading: false
+        loading: false,
+        isDeployAll: false
       }
     })
     const nameInput = wrapper.find('input[data-test="name-input"]')

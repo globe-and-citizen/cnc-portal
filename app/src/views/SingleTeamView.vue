@@ -38,6 +38,7 @@
 
       <ModalComponent v-model="investorModal">
         <DeployInvestorContractForm
+          v-if="investorModal"
           :team="team"
           :isDeployAll="isDeployAll"
           :loading="

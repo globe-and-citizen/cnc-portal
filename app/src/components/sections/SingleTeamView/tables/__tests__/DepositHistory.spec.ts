@@ -141,7 +141,6 @@ describe('DepositHistory', () => {
 
       await flushPromises()
 
-      console.log(wrapper.html())
       expect(wrapper.find('[data-test="data-exists"]').exists()).toBeFalsy()
       expect(wrapper.find('[data-test="data-empty"]').exists()).toBeTruthy()
     })
