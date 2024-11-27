@@ -26,7 +26,7 @@
       </div>
     </div>
     <div class="divider m-0"></div>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" v-if="wageClaims">
       <table class="table table-zebra">
         <!-- head -->
         <thead class="text-sm font-bold">
@@ -40,8 +40,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(data, index) in dummyData">
-            <td>{{ new Date().toLocaleDateString() }}</td>
+          <tr v-for="(data, index) in wageClaims">
+            <td>{{ new Date(data.createdAt).toLocaleDateString() }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.address }}</td>
             <td>{{ data.hoursWorked }}</td>
@@ -64,7 +64,7 @@
 import { useUserDataStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { Team } from '@/types'
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
@@ -102,5 +102,29 @@ watch(addWageClaimError, (newVal) => {
 const addWageClaim = async () => {
   await addWageClaimAPI()
 }
+
+const {
+  error: getWageClaimsError,
+  isFetching: isWageClaimsFetching,
+  execute: getWageClaimsAPI,
+  data: wageClaims
+} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/pending`)
+  .get()
+  .json()
+watch(wageClaims, async (newVal) => {
+  if (newVal) {
+    addSuccessToast('Wage claims fetched successfully')
+  }
+})
+watch(getWageClaimsError, (newVal) => {
+  if (newVal) {
+    addErrorToast(getWageClaimsError.value)
+  }
+})
 const props = defineProps<{ team: Partial<Team> }>()
+
+onMounted(async () => {
+  await getWageClaimsAPI()
+  console.log(`wageClaims`, wageClaims.value)
+})
 </script>
