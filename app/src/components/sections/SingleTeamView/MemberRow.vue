@@ -75,11 +75,11 @@
         </label>
       </div>
       <div class="modal-action justify-center">
-        <ButtonUI v-if="memberIsDeleting" loading variant="success" />
+        <ButtonUI v-if="isMemberWageSaving" loading variant="success" />
         <ButtonUI
           v-else
           variant="success"
-          @click="deleteMemberAPI()"
+          @click="addMemberWageData"
           data-test="delete-member-confirm-button"
           >Save</ButtonUI
         >
@@ -120,6 +120,7 @@ const showDeleteMemberConfirmModal = ref(false)
 const showSetMemberWageModal = ref(false)
 const maxWeeklyHours = ref('0')
 const hourlyRate = ref('0')
+const wageData = ref<{maxHoursPerWeek: number, hourlyRate: number} | {}>({})
 
 // useFetch instance for deleting member
 const {
@@ -147,11 +148,43 @@ watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () =>
     emits('getTeam')
   }
 })
-
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     addErrorToast(deleteMemberError.value)
     showDeleteMemberConfirmModal.value = false
   }
 })
+
+const {
+  error: addMemberWageDataError,
+  isFetching: isMemberWageSaving,
+  execute: addMemberWageDataAPI
+} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/wage`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: member.value.address ? member.value.address : '',
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .post(wageData)
+  .json()
+watch(addMemberWageDataError, (newVal) => {
+  if (newVal) {
+    addErrorToast(addMemberWageDataError.value)
+    showSetMemberWageModal.value = false
+  }
+})
+
+const addMemberWageData = async () => {
+  wageData.value = {
+    maxHoursPerWeek: Number(maxWeeklyHours.value), 
+    hourlyRate: Number(hourlyRate.value)
+  }
+  console.log(`wageData`, wageData.value)
+  await addMemberWageDataAPI()
+}
 </script>
