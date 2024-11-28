@@ -233,6 +233,6 @@ describe('DeploymentActions', () => {
     })
 
     const buttons = wrapper.findAll('button')
-    expect(buttons.length).toBe(6)
+    expect(buttons.length).toBe(7)
   })
 })
