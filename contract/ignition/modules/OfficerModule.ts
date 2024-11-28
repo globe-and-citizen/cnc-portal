@@ -4,6 +4,7 @@ import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 import bankBeaconModule from './BankBeaconModule'
 import ExpenseAccountModule from './ExpenseAccountModule'
 import ExpenseAccountEIP712Module from './ExpenseAccountEIP712Module'
+import investorsV1BeaconModule from './InvestorsV1BeaconModule'
 
 export default buildModule('Officer', (m) => {
   const beaconAdmin = m.getAccount(0)
@@ -11,6 +12,7 @@ export default buildModule('Officer', (m) => {
   const { beacon: bankBeacon } = m.useModule(bankBeaconModule)
   const { beacon: BoDBeacon } = m.useModule(boardOfDirectorsBeaconModule)
   const { beacon: votingBeacon } = m.useModule(VotingBeaconModule)
+  const { beacon: investorsV1Beacon } = m.useModule(investorsV1BeaconModule)
   const { expenseAccountFactoryBeacon } = m.useModule(ExpenseAccountModule)
   const { expenseAccountEip712FactoryBeacon } = m.useModule(ExpenseAccountEIP712Module)
 
@@ -19,7 +21,8 @@ export default buildModule('Officer', (m) => {
     { beaconType: 'Voting', beaconAddress: votingBeacon },
     { beaconType: 'BoardOfDirectors', beaconAddress: BoDBeacon },
     { beaconType: 'ExpenseAccount', beaconAddress: expenseAccountFactoryBeacon },
-    { beaconType: 'ExpenseAccountEIP712', beaconAddress: expenseAccountEip712FactoryBeacon }
+    { beaconType: 'ExpenseAccountEIP712', beaconAddress: expenseAccountEip712FactoryBeacon },
+    { beaconType: 'InvestorsV1', beaconAddress: investorsV1Beacon }
   ]
 
   m.call(officer, 'initialize', [beaconAdmin, beaconConfigs])

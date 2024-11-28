@@ -22,8 +22,42 @@
               getTeamAPI()
             }
           "
+          @openInvestorContractModal="
+            (deploymentsData?: Deployment[]) => {
+              officerModal = false
+              investorModal = true
+
+              if ((deploymentsData ?? []).length > 0) {
+                deployments = deploymentsData!
+                isDeployAll = true
+              }
+            }
+          "
         />
       </ModalComponent>
+
+      <ModalComponent v-model="investorModal">
+        <DeployInvestorContractForm
+          v-if="investorModal"
+          :team="team"
+          :isDeployAll="isDeployAll"
+          :loading="
+            isDeployAll
+              ? isLoadingDeployAll || isConfirmingDeployAll
+              : isLoadingDeployInvestors || isConfirmingDeployInvestors
+          "
+          @submit="
+            (name: string, symbol: string) => {
+              if (isDeployAll) {
+                deployAllContracts(name, symbol)
+              } else {
+                deployInvestorsContract(name, symbol)
+              }
+            }
+          "
+        />
+      </ModalComponent>
+
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -50,7 +84,8 @@
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
-        <template #tab-6>
+        <template #tab-6><InvestorsSection v-if="activeTab == 6" :team="team" /> </template>
+        <template #tab-7>
           <ContractManagementSection></ContractManagementSection>
         </template>
       </TabNavigation>
@@ -82,15 +117,25 @@ import ProposalSection from '@/components/sections/SingleTeamView/ProposalSectio
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
-import { type User, SingleTeamTabs } from '@/types'
+import { type Deployment, type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
-import type { Address } from 'viem'
+import { encodeFunctionData, type Address } from 'viem'
+import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
+import DeployInvestorContractForm from '@/components/forms/DeployInvestorContractForm.vue'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import OfficerABI from '@/artifacts/abi/officer.json'
+import { log } from '@/utils'
+import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
 const isOwner = ref(false)
 const officerModal = ref(false)
+const investorModal = ref(false)
+const { addSuccessToast } = useToastStore()
+const deployments = ref<Deployment[]>([])
+const isDeployAll = ref(false)
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
@@ -116,6 +161,95 @@ const {
 })
   .get()
   .json()
+
+const {
+  writeContract: deployInvestors,
+  isPending: isLoadingDeployInvestors,
+  data: deployInvestorsHash,
+  error: deployInvestorsError
+} = useWriteContract()
+const { isLoading: isConfirmingDeployInvestors, isSuccess: isConfirmedDeployInvestors } =
+  useWaitForTransactionReceipt({ hash: deployInvestorsHash })
+
+const deployInvestorsContract = async (name: string, symbol: string) => {
+  const currentAddress = useUserDataStore().address as Address
+  const initData = encodeFunctionData({
+    abi: INVESTOR_ABI,
+    functionName: 'initialize',
+    args: [name, symbol, currentAddress]
+  })
+
+  deployInvestors({
+    address: team.value.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployBeaconProxy',
+    args: ['InvestorsV1', initData]
+  })
+}
+
+watch(isConfirmingDeployInvestors, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployInvestors.value) {
+    addSuccessToast('Investors deployed successfully')
+    getTeamAPI()
+    investorModal.value = false
+  }
+})
+
+watch(deployInvestorsError, (value) => {
+  if (value) {
+    log.error('Failed to deploy investors', value)
+    addErrorToast('Failed to deploy investors')
+  }
+})
+
+// Deploy All Contracts
+const {
+  writeContract: deployAll,
+  isPending: isLoadingDeployAll,
+  error: deployAllError,
+  data: deployAllData
+} = useWriteContract()
+
+const { isLoading: isConfirmingDeployAll, isSuccess: isConfirmedDeployAll } =
+  useWaitForTransactionReceipt({
+    hash: deployAllData
+  })
+
+watch(isConfirmingDeployAll, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployAll.value) {
+    addSuccessToast('All contracts deployed successfully')
+    investorModal.value = false
+    await getTeamAPI()
+    setTabs()
+  }
+})
+
+const deployAllContracts = async (name: string, symbol: string) => {
+  const { address } = useUserDataStore()
+
+  deployments.value.push({
+    contractType: 'InvestorsV1',
+    initializerData: encodeFunctionData({
+      abi: INVESTOR_ABI,
+      functionName: 'initialize',
+      args: [name, symbol, address as Address]
+    })
+  })
+
+  deployAll({
+    address: team.value.officerAddress,
+    abi: OfficerABI,
+    functionName: 'deployAllContracts',
+    args: [deployments.value]
+  })
+}
+
+watch(deployAllError, (value) => {
+  if (value) {
+    log.error('Failed to deploy all contracts', value)
+    addErrorToast('Failed to deploy all contracts')
+  }
+})
 
 // Watchers for getting team details
 watch(team, () => {
@@ -169,7 +303,8 @@ const setTabs = () => {
     team.value.bankAddress &&
     team.value.votingAddress &&
     team.value.boardOfDirectorsAddress &&
-    team.value.expenseAccountAddress
+    team.value.expenseAccountAddress &&
+    team.value.investorsAddress
   )
     tabs.value = [
       SingleTeamTabs.Members,
@@ -178,6 +313,7 @@ const setTabs = () => {
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses,
       SingleTeamTabs.BoardOfDirectors,
+      SingleTeamTabs.Investors,
       SingleTeamTabs.Contract
     ]
 }
