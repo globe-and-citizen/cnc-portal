@@ -1,4 +1,5 @@
 import type { Member } from './member'
+import type { TeamContract } from './teamContract'
 
 export interface Team {
   id: string
@@ -12,6 +13,7 @@ export interface Team {
   expenseAccountAddress?: string | null
   expenseAccountEip712Address?: string | null
   officerAddress?: string | null
+  teamContracts?: TeamContract[]
 }
 export interface TeamsResponse {
   teams: Team[]

@@ -31,11 +31,32 @@ const events = [
 const contractData = [{ key: 'exampleKey', value: 'exampleValue' }]
 const adminList = ['0xAdminAddress1', '0xAdminAddress2']
 
+const mockGetEvents = vi.fn().mockImplementation((eventType: string) => {
+  switch (eventType) {
+    case 'AdCampaignCreated':
+      return [
+        { args: ['0xCampaign1', '1000'], eventName: 'AdCampaignCreated' },
+        { args: ['0xCampaign2', '2000'], eventName: 'AdCampaignCreated' }
+      ]
+    case 'PaymentReleased':
+      return [
+        { args: ['0xCampaign1', '500'], eventName: 'PaymentReleased' },
+        { args: ['0xCampaign2', '300'], eventName: 'PaymentReleased' }
+      ]
+    case 'PaymentReleasedOnWithdrawApproval':
+      return [{ args: ['0xCampaign2', '200'], eventName: 'PaymentReleasedOnWithdrawApproval' }]
+    case 'BudgetWithdrawn':
+      return [{ args: ['0xCampaign2', '0xAdvertiser1', '300'], eventName: 'BudgetWithdrawn' }]
+    default:
+      return []
+  }
+})
 const addCampaign = {
   createAdCampaignManager: vi.fn().mockResolvedValue('0xCampaignManagerAddress'),
   getEvents: vi.fn().mockResolvedValue(events),
   getContractData: vi.fn().mockResolvedValue(contractData),
   addAdmin: vi.fn().mockReturnValue(_tx),
+  removeAdmin: vi.fn().mockReturnValue(_tx),
   getAdminList: vi.fn().mockResolvedValue(adminList),
   testFunction: vi.fn().mockResolvedValue('0xResult'),
   queryFilter: vi.fn(),
@@ -55,7 +76,7 @@ const addCampaign = {
 // mock SmartContract
 const contractService = {
   getContract: vi.fn().mockReturnValue(addCampaign),
-  getEvents: vi.fn().mockReturnValueOnce(events)
+  getEvents: mockGetEvents
 }
 vi.mock('@/services/contractService', () => {
   return {
@@ -194,13 +215,50 @@ describe('AddCampaignService', () => {
     })
   })
 
-  describe('getEvents', () => {
-    it('should retrieve campaign events', async () => {
-      const result = await addCampaignService.getEvents('0xCampaignAddress', 'CampaignCreated')
-      // Verify the event fetching was called
-      expect(addCampaign.queryFilter).toHaveBeenCalledWith(addCampaign.filters.CampaignCreated())
-      // Verify the correct event log was returned
-      expect(result).toEqual(events)
+  describe('removeAdmin', () => {
+    it('should remove an admin from the contract', async () => {
+      const result = await addCampaignService.removeAdmin('0xCampaignAddress', '0xAdminAddress')
+      // Verify the removeAdmin method was called on the contract
+      expect(addCampaign.removeAdmin).toHaveBeenCalledWith('0xAdminAddress')
+      // Verify that the transaction was awaited
+      expect(result).toMatchObject(await _tx.wait())
+    })
+  })
+
+  describe('getEventsGroupedByCampaignCode', () => {
+    it('should group events by campaign code', async () => {
+      const result = await addCampaignService.getEventsGroupedByCampaignCode('0xContractAddress')
+
+      expect(result.status).toBe('success')
+      expect(result.events).toEqual({
+        '0xCampaign1': [
+          { campaignCode: '0xCampaign1', eventName: 'AdCampaignCreated', budget: '1000' },
+          { campaignCode: '0xCampaign1', eventName: 'PaymentReleased', paymentAmount: '500' }
+        ],
+        '0xCampaign2': [
+          {
+            campaignCode: '0xCampaign2',
+            eventName: 'AdCampaignCreated',
+            budget: '2000'
+          },
+          {
+            campaignCode: '0xCampaign2',
+            eventName: 'PaymentReleased',
+            paymentAmount: '300'
+          },
+          {
+            campaignCode: '0xCampaign2',
+            eventName: 'PaymentReleasedOnWithdrawApproval',
+            paymentAmount: '200'
+          },
+          {
+            campaignCode: '0xCampaign2',
+            eventName: 'BudgetWithdrawn',
+            amount: '300',
+            advertiser: '0xAdvertiser1'
+          }
+        ]
+      })
     })
   })
 })
