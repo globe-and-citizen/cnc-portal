@@ -18,6 +18,8 @@ interface AddressMapping {
   'Officer#FactoryBeacon'?: string
   'ExpenseAccountEIP712Module#ExpenseAccountEIP712'?: string
   'ExpenseAccountEIP712Module#FactoryBeacon'?: string
+  'InvestorsV1BeaconModule#Beacon'?: string
+  'InvestorsV1BeaconModule#InvestorV1'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -58,7 +60,9 @@ export function validateAddresses() {
     'ExpenseAccountModule#FactoryBeacon',
     'ExpenseAccountModule#ExpenseAccount',
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
-    'ExpenseAccountEIP712Module#FactoryBeacon'
+    'ExpenseAccountEIP712Module#FactoryBeacon',
+    'InvestorsV1BeaconModule#Beacon',
+    'InvestorsV1BeaconModule#InvestorV1'
   ]
 
   requiredKeys.forEach(resolveAddress)
@@ -94,5 +98,7 @@ export const EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS = resolveAddress(
 )
 export const OFFICER_ADDRESS = resolveAddress('Officer#Officer')
 export const OFFICER_BEACON = resolveAddress('Officer#FactoryBeacon')
+export const INVESTOR_V1_BEACON_ADDRESS = resolveAddress('InvestorsV1BeaconModule#Beacon')
+export const INVESTOR_V1_IMPL_ADDRESS = resolveAddress('InvestorsV1BeaconModule#InvestorV1')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
