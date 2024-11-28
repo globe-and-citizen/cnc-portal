@@ -699,11 +699,7 @@ export const deleteClaim = async (req: Request, res: Response) => {
 export const updateClaimEmployer = async (req: Request, res: Response) => {
   const { id } = req.params
   const callerAddress = (req as any).address
-  const {
-    claimid: claimId,
-    signature: cashRemunerationSignature
-  } = req.headers
-  // const cashRemunerationSignature = req.body
+  const approvalData = req.body
 
   try {
     const team = await prisma.team.findUnique({
@@ -712,7 +708,7 @@ export const updateClaimEmployer = async (req: Request, res: Response) => {
     if (team?.ownerAddress !== callerAddress) 
       return errorResponse(403, `Forbidden`, res)
     const claim = await prisma.claim.findUnique({
-      where: { id: Number(claimId) }
+      where: { id: Number(approvalData.id) }
     })
     if (claim?.status !== 'pending')
       return errorResponse(403, 'Forbidden', res)
@@ -721,13 +717,23 @@ export const updateClaimEmployer = async (req: Request, res: Response) => {
     })
     if (memberTeamsData?.teamId !== team?.id) 
       return errorResponse(403, `Forbidden`, res)
-    if (typeof cashRemunerationSignature !== 'string')
+    if (typeof approvalData.signature !== 'string')
       return errorResponse(400, 'Bad Request', res)
 
     await prisma.claim.update({
       where: { id: claim?.id },
-      data: { cashRemunerationSignature, status: 'approved' }
+      data: { cashRemunerationSignature: approvalData.signature, status: 'approved' }
     })
+    if (memberTeamsData?.userAddress)
+      addNotification(
+        [memberTeamsData?.userAddress],
+        {
+          message: `Your wage claim for ${ (new Date(claim.createdAt)).toLocaleString() } has been approved.`,
+          subject: "Wage Claim Approval",
+          author: team?.ownerAddress || "",
+          resource: `wage-claim/${claim.id}`,
+        }
+      );
 
     res.status(201)
       .json({ success: true })
