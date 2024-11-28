@@ -3,7 +3,7 @@
     <div class="flex flex-col text-right">
       <h2>Balance</h2>
       <p v-if="!loadingTokenBalance && !tokenSymbolLoading" data-test="token-balance">
-        <span class="text-3xl">{{ formatEther(tokenBalance) }}</span>
+        <span class="text-3xl">{{ formatEther(tokenBalance!) }}</span>
         {{ tokenSymbol }}
       </p>
       <span
@@ -15,7 +15,7 @@
     <div class="flex flex-col text-right gap-y-4">
       <h3>Total Supply</h3>
       <p v-if="!tokenSymbolLoading && !totalSupplyLoading" data-test="total-supply">
-        <span class="text-3xl">{{ formatEther(totalSupply) }}</span>
+        <span class="text-3xl">{{ formatEther(totalSupply!) }}</span>
         {{ tokenSymbol }}
       </p>
       <span
@@ -25,7 +25,7 @@
       ></span>
       <div class="flex gap-x-1">
         <h4>Contract Address :</h4>
-        <AddressToolTip :address="team.investorsAddress" />
+        <AddressToolTip :address="team.investorsAddress!" />
       </div>
     </div>
   </div>
