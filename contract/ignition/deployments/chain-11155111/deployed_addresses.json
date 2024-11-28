@@ -5,5 +5,17 @@
   "ProxyModule#TransparentUpgradeableProxy": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
   "ProxyModule#ProxyAdmin": "0x9B545652208f7889fe9Bd7B1Cc0BB240e8745690",
   "TipsModule#Tips": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
-  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb"
+  "BoardOfDirectorsModule#BoardOfDirectors": "0x411c9047906Ade5Fd590B41702e36ee02857f495",
+  "BoardOfDirectorsModule#Beacon": "0xED47B20c6118B32FC7BF603ea77ab96102f2BB6b",
+  "ExpenseAccountModule#ExpenseAccount": "0xf325637068B77ca2174014d72c2276003b2FF8Fb",
+  "ExpenseAccountModule#FactoryBeacon": "0x39D854FC017688758314c9F48A0084ceCDBaE4B8",
+  "Officer#Officer": "0xeDeB8826B99B094EA93c0a9B52188A2d39633e38",
+  "Officer#Beacon": "0x294Df6010f239f8F6Cc3DD4f76baC9283C84e7A0",
+  "VotingBeaconModule#Voting": "0xCcEf793d92cf7714Df7a0F406340E06F69c5d36a",
+  "VotingBeaconModule#Beacon": "0xAA96dddF0927036901FD76E993B657d12804b470",
+  "Officer#FactoryBeacon": "0x86667Cb2497275BF201Eb509b79a751A384b1591",
+  "ExpenseAccountEIP712Module#ExpenseAccountEIP712": "0x9A59fe7ff8F9c6c5c6852593038B13b0325F79CE",
+  "ExpenseAccountEIP712Module#FactoryBeacon": "0x34A5c1C07ec26910D2523A5d7dCA73b2DcEcE43f",
+  "CashRemunerationEIP712Module#CashRemunerationEIP712": "0xE1d896547162674291233A45DC846ED8aA6C7F78",
+  "CashRemunerationEIP712Module#FactoryBeacon": "0x035988C098474683aC1B9BB18ff0f36Cf1d6D760"
 }

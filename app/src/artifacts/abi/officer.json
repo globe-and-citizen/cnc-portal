@@ -218,19 +218,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "cashRemunerationEip712Beacon",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address[]",
@@ -251,20 +238,31 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "tipsAddress",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "contractType",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes",
+            "name": "initializerData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct Officer.DeploymentData[]",
+        "name": "deployments",
+        "type": "tuple[]"
       }
     ],
-    "name": "deployBankAccount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "deployExpenseAccount",
-    "outputs": [],
+    "name": "deployAllContracts",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -345,11 +343,6 @@
         "type": "address[]"
       },
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
         "components": [
           {
             "internalType": "string",
@@ -378,29 +371,21 @@
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "_bankAccountBeacon",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_votingContractBeacon",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_bodContractBeacon",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_expenseAccountBeacon",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_expenseAccountEip712Beacon",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "beaconType",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "beaconAddress",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct Officer.BeaconConfig[]",
+        "name": "beaconConfigs",
+        "type": "tuple[]"
       }
     ],
     "name": "initialize",

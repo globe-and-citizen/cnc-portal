@@ -23,37 +23,76 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address[] founders;
     /// @notice Array of member addresses
     address[] members;
-    address bankAccountContract;
-    address votingContract;
-    address bodContract;
-    address expenseAccountContract;
-    address expenseAccountEip712Contract;
+    /// @notice Mapping of contract type to beacon address
+    mapping(string => address) public contractBeacons;
 
-    address public bankAccountBeacon;
-    address public votingContractBeacon;
-    address public bodContractBeacon;
-    address public expenseAccountBeacon;
-    address public expenseAccountEip712Beacon;
+    /// @notice Emitted when a new contract is deployed via beacon proxy
+    event ContractDeployed(string contractType, address deployedAddress);
+    /// @notice Emitted when a new beacon is configured
+    event BeaconConfigured(string contractType, address beaconAddress);
+    /// @notice Emitted when a new team is created
+    event TeamCreated(address[] founders, address[] members);
 
-    event TeamCreated( address[] founders, address[] members);
-    event ContractDeployed( string contractType, address contractAddress);
+    /// @notice Configuration struct for beacon initialization
+    struct BeaconConfig {
+        string beaconType;
+        address beaconAddress;
+    }
 
-  function initialize(
-    address owner, 
-    address _bankAccountBeacon, 
-    address _votingContractBeacon, 
-    address _bodContractBeacon, 
-    address _expenseAccountBeacon,
-    address _expenseAccountEip712Beacon
+    /// @notice Array to store configured contract types
+    string[] public contractTypes;
+
+    /// @notice Struct for deployed contract information
+    struct DeployedContract {
+        string contractType;
+        address contractAddress;
+    }
+
+    /// @notice Array to store deployed contract information
+    DeployedContract[] private deployedContracts;
+
+    /**
+     * @notice Initializes the contract with owner and optional beacon configurations
+     * @param _owner Address of the contract owner
+     * @param beaconConfigs Array of beacon configurations to initialize
+     */
+    function initialize(
+        address _owner,
+        BeaconConfig[] memory beaconConfigs
     ) public initializer {
         __Ownable_init(_owner);
         __ReentrancyGuard_init();
         __Pausable_init();
-        bankAccountBeacon = _bankAccountBeacon;
-        votingContractBeacon = _votingContractBeacon;
-        bodContractBeacon = _bodContractBeacon;
-        expenseAccountBeacon = _expenseAccountBeacon;
-        expenseAccountEip712Beacon = _expenseAccountEip712Beacon;
+
+        // Configure initial beacons if provided
+        for (uint256 i = 0; i < beaconConfigs.length; i++) {
+            require(beaconConfigs[i].beaconAddress != address(0), "Invalid beacon address");
+            require(bytes(beaconConfigs[i].beaconType).length > 0, "Empty beacon type");
+            
+            // Check for duplicate beacon types
+            for (uint256 j = 0; j < i; j++) {
+                require(
+                    keccak256(bytes(beaconConfigs[i].beaconType)) != keccak256(bytes(beaconConfigs[j].beaconType)),
+                    "Duplicate beacon type"
+                );
+            }
+
+            contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
+            emit BeaconConfigured(beaconConfigs[i].beaconType, beaconConfigs[i].beaconAddress);
+        }
+    }
+
+    /**
+     * @notice Configures a new beacon for a contract type
+     * @param contractType Type identifier for the contract
+     * @param beaconAddress Address of the beacon contract
+     */
+    function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwners {
+        if (contractBeacons[contractType] == address(0)) {
+            contractTypes.push(contractType);
+        }
+        contractBeacons[contractType] = beaconAddress;
+        emit BeaconConfigured(contractType, beaconAddress);
     }
 
     /**
@@ -89,56 +128,38 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");
 
         BeaconProxy proxy = new BeaconProxy(
-            votingContractBeacon,
-            abi.encodeWithSelector(IVotingContract.initialize.selector, msg.sender) 
+            contractBeacons[contractType],
+            initializerData
         );
         
-        votingContract = address(proxy);
-
-
-        emit ContractDeployed("VotingContract", votingContract);
+        address proxyAddress = address(proxy);
+        deployedContracts.push(DeployedContract(contractType, proxyAddress));
+        emit ContractDeployed(contractType, proxyAddress);
+        if(keccak256(bytes(contractType)) == keccak256(bytes("Voting"))){
+            address bodContractBeacon = contractBeacons["BoardOfDirectors"];
+            address[] memory args = new address[](1);
+            args[0] = proxyAddress;
+            address bodContract = address(new BeaconProxy(bodContractBeacon, abi.encodeWithSelector(IBodContract.initialize.selector, args)));
+            deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
+            IVoting(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
+            emit ContractDeployed("BoardOfDirectors", bodContract);
+        }
         
-        address[] memory args = new address[](1);
-        args[0] = votingContract;
-
-         BeaconProxy proxyBod = new BeaconProxy(
-            bodContractBeacon,
-            abi.encodeWithSelector(IBodContract.initialize.selector, args) 
-        );
-        bodContract = address(proxyBod);
-
-        IVotingContract(votingContract).setBoardOfDirectorsContractAddress(bodContract);
-
-        emit ContractDeployed("BoDContract", bodContract);
-    }
-    function deployExpenseAccount() external onlyOwners whenNotPaused  {
-        BeaconProxy proxy = new BeaconProxy(
-            expenseAccountBeacon,
-            abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
-        );
-         expenseAccountContract = address(proxy);
-
-        emit ContractDeployed("ExpenseAccount", expenseAccountContract);
-    }
-    function deployExpenseAccountEip712() external onlyOwners whenNotPaused  {
-        BeaconProxy proxy = new BeaconProxy(
-            expenseAccountEip712Beacon,
-            abi.encodeWithSelector(IExpenseAccount.initialize.selector, msg.sender) 
-        );
-        expenseAccountEip712Contract = address(proxy);
-
-        emit ContractDeployed("ExpenseAccountEIP712", expenseAccountEip712Contract);
-    }
-  
-    function transferOwnershipToBOD(address newOwner) external whenNotPaused {
-        transferOwnership(newOwner);
-        emit OwnershipTransferred(owner(), newOwner);
+        return proxyAddress;
     }
 
-    function getTeam() external view returns (address[] memory, address[] memory , address , address, address, address, address ) {
-        return (founders, members, bankAccountContract, votingContract, bodContract, expenseAccountContract, expenseAccountEip712Contract);
+    /**
+     * @notice Returns the current team's founders and members
+     * @return Array of founder addresses and array of member addresses
+     */
+    function getTeam() external view returns (address[] memory, address[] memory, DeployedContract[] memory) {
+        return (founders, members, deployedContracts);
     }
-    modifier onlyOwners{
+
+    /**
+     * @notice Modifier that allows only owners or founders to execute a function
+     */
+    modifier onlyOwners {
         if (msg.sender == owner()) {
             _;
             return;
