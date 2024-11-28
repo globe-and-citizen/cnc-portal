@@ -12,6 +12,7 @@ export interface Team {
   expenseAccountAddress?: string | null
   expenseAccountEip712Address?: string | null
   officerAddress?: string | null
+  cashRemunerationEip712Address?: string | null
 }
 export interface TeamsResponse {
   teams: Team[]
