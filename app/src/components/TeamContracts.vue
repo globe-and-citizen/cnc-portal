@@ -129,7 +129,6 @@ const groupEventsByCampaignCode = (events: ExtendedEvent[]) => {
   )
 }
 
-
 // Open Admins Modal
 const openAdminsModal = (contract: TeamContract) => {
   contractAdminDialog.value.contract = contract
