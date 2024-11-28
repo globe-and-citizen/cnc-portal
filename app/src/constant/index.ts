@@ -97,10 +97,10 @@ export const EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS = resolveAddress(
   'ExpenseAccountEIP712Module#FactoryBeacon'
 )
 export const CASH_REMUNERATION_EIP712_IMPL_ADDRESS = resolveAddress(
-  'ExpenseAccountEIP712Module#ExpenseAccountEIP712'
+  'CashRemunerationEIP712Module#CashRemunerationEIP712'
 )
 export const CASH_REMUNERATION_EIP712_BEACON_ADDRESS = resolveAddress(
-  'ExpenseAccountEIP712Module#FactoryBeacon'
+  'CashRemunerationEIP712Module#FactoryBeacon'
 )
 export const OFFICER_ADDRESS = resolveAddress('Officer#Officer')
 export const OFFICER_BEACON = resolveAddress('Officer#FactoryBeacon')
