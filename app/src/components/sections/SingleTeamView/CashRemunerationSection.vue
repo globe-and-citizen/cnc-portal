@@ -33,7 +33,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(data, index) in dummyData">
+          <tr v-for="data in dummyData" :key="data.address">
             <td>{{ new Date().toLocaleDateString() }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.address }}</td>
@@ -59,5 +59,5 @@ const currentUserAddress = useUserDataStore().address
 const isSubmittingHours = ref(false)
 const dummyData = ref([{ name: 'Member', address: '0x123', hoursWorked: 20, hourlyRate: 50 }])
 
-const props = defineProps<{ team: Partial<Team> }>()
+defineProps<{ team: Partial<Team> }>()
 </script>
