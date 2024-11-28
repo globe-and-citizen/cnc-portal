@@ -14,7 +14,8 @@ import {
   // approveClaim,
   deleteClaim,
   updateClaim,
-  getClaims
+  getClaims, 
+  getClaim
 } from "../controllers/teamController";
 const teamRoutes = express.Router();
 
@@ -33,5 +34,6 @@ teamRoutes.put("/:id/cash-remuneration/claim/:callerRole", updateClaim)
 // teamRoutes.put("/:id/cash-remuneration/claim/approve", approveClaim)
 teamRoutes.delete("/:id/cash-remuneration/claim", deleteClaim)
 teamRoutes.get("/:id/cash-remuneration/claim/:status", getClaims)
+teamRoutes.get("/:id/cash-remuneration/claim", getClaim)
 
 export default teamRoutes;

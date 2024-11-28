@@ -744,6 +744,30 @@ export const updateClaimEmployer = async (req: Request, res: Response) => {
   }
 }
 
+export const getClaim = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const claim = await prisma.claim.findUnique({
+      where: { id: Number(id) }
+    })
+
+    if (!claim)
+      return errorResponse(404, 'Resource Not Found', res)
+
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
+      where: { id: claim.memberTeamsDataId }
+    })
+
+    res.status(201)
+      .json({ ...claim, hourlyRate: memberTeamsData?.hourlyRate })
+  } catch (error) {
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
 export const getClaims = async (req: Request, res: Response) => {
   const { id, status } = req.params
   const callerAddress = (req as any).address
