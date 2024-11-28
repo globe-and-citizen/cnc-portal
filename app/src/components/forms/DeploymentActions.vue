@@ -369,6 +369,17 @@ const deployAllContracts = async () => {
     })
   }
 
+  if (!props.isCashRemunerationEip712Deployed) {
+    deployments.push({
+      contractType: 'CashRemunerationEIP712',
+      initializerData: encodeFunctionData({
+        abi: CashRemunerationEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+  }
+
   if (deployments.length > 0) {
     try {
       deployAll({
