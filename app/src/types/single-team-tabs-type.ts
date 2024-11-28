@@ -5,5 +5,6 @@ export enum SingleTeamTabs {
   Proposals = 'Proposals',
   Expenses = 'Expense A/c',
   BoardOfDirectors = 'Board Of Directors',
-  Contract = 'Contract Management'
+  Contract = 'Contract Management',
+  Investors = 'Investors'
 }

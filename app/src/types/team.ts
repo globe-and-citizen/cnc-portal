@@ -11,6 +11,7 @@ export interface Team {
   boardOfDirectorsAddress: string | null
   expenseAccountAddress?: string | null
   expenseAccountEip712Address?: string | null
+  investorsAddress?: string | null
   officerAddress?: string | null
 }
 export interface TeamsResponse {
