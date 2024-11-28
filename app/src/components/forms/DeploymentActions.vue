@@ -52,6 +52,22 @@
         :color="'primary min-w-24'"
         v-if="isLoadingDeployExpenseEip712 || isConfirmingDeployExpenseEip712"
       />
+
+      <button
+        class="btn btn-primary btn-sm"
+        v-if="
+          !isCashRemunerationEip712Deployed &&
+          !isLoadingDeployCashRemunerationEip712 &&
+          !isConfirmingDeployCashRemunerationEip712
+        "
+        @click="deployCashRemunerationEip712"
+      >
+        Deploy Cash Remuneration EIP712
+      </button>
+      <LoadingButton
+        :color="'primary min-w-24'"
+        v-if="isLoadingDeployCashRemunerationEip712 || isConfirmingDeployCashRemunerationEip712"
+      />
     </div>
 
     <div class="flex justify-center">
@@ -85,6 +101,7 @@ import BankABI from '@/artifacts/abi/bank.json'
 import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
+import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { TIPS_ADDRESS } from '@/constant'
 import type { Team } from '@/types'
 
@@ -96,10 +113,30 @@ const props = defineProps<{
   isBoDDeployed: boolean
   isExpenseDeployed: boolean
   isExpenseEip712Deployed: boolean
+  isCashRemunerationEip712Deployed: boolean
 }>()
 
 const emits = defineEmits(['getTeam'])
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+// remuneration deployment
+const {
+  writeContract: deployCashRemuneration,
+  isPending: isLoadingDeployCashRemunerationEip712,
+  data: deployCashRemunerationEip712Hash
+} = useWriteContract()
+
+const {
+  isLoading: isConfirmingDeployCashRemunerationEip712,
+  isSuccess: isConfirmedDeployCashRemunerationEip712
+} = useWaitForTransactionReceipt({ hash: deployCashRemunerationEip712Hash })
+
+watch(isConfirmingDeployCashRemunerationEip712, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployCashRemunerationEip712.value) {
+    addSuccessToast('Cash Remuneration EIP712 deployed successfully')
+    emits('getTeam')
+  }
+})
 
 // Bank deployment
 const {
@@ -240,6 +277,21 @@ const deployExpenseAccount = async () => {
     abi: OfficerABI,
     functionName: 'deployBeaconProxy',
     args: ['ExpenseAccount', initData]
+  })
+}
+const deployCashRemunerationEip712 = async () => {
+  const currentAddress = useUserDataStore().address as Address
+  const initData = encodeFunctionData({
+    abi: CashRemunerationEIP712ABI,
+    functionName: 'initialize',
+    args: [currentAddress]
+  })
+
+  deployCashRemuneration({
+    address: props.team.officerAddress as Address,
+    abi: OfficerABI,
+    functionName: 'deployBeaconProxy',
+    args: ['CashRemunerationEIP712', initData]
   })
 }
 
