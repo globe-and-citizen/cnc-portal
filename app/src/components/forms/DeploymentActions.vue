@@ -123,7 +123,8 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const {
   writeContract: deployCashRemuneration,
   isPending: isLoadingDeployCashRemunerationEip712,
-  data: deployCashRemunerationEip712Hash
+  data: deployCashRemunerationEip712Hash,
+  error: deployCashRemunerationEip712Error
 } = useWriteContract()
 
 const {
@@ -196,7 +197,8 @@ watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
 const {
   writeContract: deployExpenseEip712,
   isPending: isLoadingDeployExpenseEip712,
-  data: deployExpenseEip712Hash
+  data: deployExpenseEip712Hash,
+  error: deployExpenseEip712Error
 } = useWriteContract()
 
 const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeployExpenseEip712 } =
@@ -317,7 +319,8 @@ const areAllContractsDeployed = computed(() => {
     props.isVotingDeployed &&
     props.isExpenseDeployed &&
     props.isExpenseEip712Deployed &&
-    props.isBoDDeployed
+    props.isBoDDeployed &&
+    props.isCashRemunerationEip712Deployed
   )
 })
 
@@ -369,6 +372,17 @@ const deployAllContracts = async () => {
     })
   }
 
+  if (!props.isCashRemunerationEip712Deployed) {
+    deployments.push({
+      contractType: 'CashRemunerationEIP712',
+      initializerData: encodeFunctionData({
+        abi: CashRemunerationEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+  }
+
   if (deployments.length > 0) {
     try {
       deployAll({
@@ -402,6 +416,16 @@ watch(deployExpenseError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy expense account')
   }
+})
+
+watch(deployCashRemunerationEip712Error, (value) => {
+  if(value)
+    addErrorToast('Failed to deploy cash remuneration')
+})
+
+watch(deployExpenseEip712Error, (value) => {
+  if(value)
+    addErrorToast('Failed to deploy expense account eip712')
 })
 
 watch(deployAllError, (value) => {
