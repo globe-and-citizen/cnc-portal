@@ -40,7 +40,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(data, index) in wageClaims">
+          <tr v-for="data in wageClaims" :key="data.id">
             <td>{{ new Date(data.createdAt).toLocaleDateString() }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.address }}</td>
