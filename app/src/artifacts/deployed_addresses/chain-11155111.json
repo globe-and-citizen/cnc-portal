@@ -17,5 +17,7 @@
   "ExpenseAccountEIP712Module#ExpenseAccountEIP712": "0x9A59fe7ff8F9c6c5c6852593038B13b0325F79CE",
   "ExpenseAccountEIP712Module#FactoryBeacon": "0x34A5c1C07ec26910D2523A5d7dCA73b2DcEcE43f",
   "CashRemunerationEIP712Module#CashRemunerationEIP712": "0xE1d896547162674291233A45DC846ED8aA6C7F78",
-  "CashRemunerationEIP712Module#FactoryBeacon": "0x035988C098474683aC1B9BB18ff0f36Cf1d6D760"
+  "CashRemunerationEIP712Module#FactoryBeacon": "0x035988C098474683aC1B9BB18ff0f36Cf1d6D760",
+  "InvestorsV1BeaconModule#Beacon": "0xB02C7C28fB79f7783E8adb1eE3cBF1c9f2F61857",
+  "InvestorsV1BeaconModule#InvestorV1": "0xE75C306A62eAe38Ac58312Fb1e7Eb1c1331E3522"
 }

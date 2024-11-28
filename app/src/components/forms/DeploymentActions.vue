@@ -68,6 +68,14 @@
         :color="'primary min-w-24'"
         v-if="isLoadingDeployCashRemunerationEip712 || isConfirmingDeployCashRemunerationEip712"
       />
+
+      <button
+        class="btn btn-primary btn-sm"
+        v-if="!isInvestorV1Deployed"
+        @click="() => emits('openInvestorContractModal')"
+      >
+        Deploy Investor V1
+      </button>
     </div>
 
     <div class="flex justify-center">
@@ -114,9 +122,10 @@ const props = defineProps<{
   isExpenseDeployed: boolean
   isExpenseEip712Deployed: boolean
   isCashRemunerationEip712Deployed: boolean
+  isInvestorV1Deployed: boolean
 }>()
 
-const emits = defineEmits(['getTeam'])
+const emits = defineEmits(['getTeam', 'openInvestorContractModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 // remuneration deployment
@@ -320,7 +329,8 @@ const areAllContractsDeployed = computed(() => {
     props.isExpenseDeployed &&
     props.isExpenseEip712Deployed &&
     props.isBoDDeployed &&
-    props.isCashRemunerationEip712Deployed
+    props.isCashRemunerationEip712Deployed &&
+    props.isInvestorV1Deployed
   )
 })
 
@@ -384,16 +394,21 @@ const deployAllContracts = async () => {
   }
 
   if (deployments.length > 0) {
-    try {
-      deployAll({
-        address: props.team.officerAddress as Address,
-        abi: OfficerABI,
-        functionName: 'deployAllContracts',
-        args: [deployments]
-      })
-    } catch (error) {
-      log.error(parseError(error))
-      addErrorToast('Error deploying contracts')
+    if (!props.isInvestorV1Deployed) {
+      // Deploy on SingleTeamView
+      emits('openInvestorContractModal', deployments)
+    } else {
+      try {
+        deployAll({
+          address: props.team.officerAddress as Address,
+          abi: OfficerABI,
+          functionName: 'deployAllContracts',
+          args: [deployments]
+        })
+      } catch (error) {
+        log.error(parseError(error))
+        addErrorToast('Error deploying contracts')
+      }
     }
   }
 }

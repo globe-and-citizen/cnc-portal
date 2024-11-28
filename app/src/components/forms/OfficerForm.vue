@@ -50,7 +50,11 @@
               :is-expense-deployed="isExpenseDeployed"
               :is-expense-eip712-deployed="isExpenseEip712Deployed"
               :is-cash-remuneration-eip712-deployed="isCashRemunerationEip712Deployed"
+              :is-investor-v1-deployed="isInvestorsV1Deployed"
               @get-team="emits('getTeam')"
+              @openInvestorContractModal="
+                (deployments: Deployment[]) => emits('openInvestorContractModal', deployments)
+              "
             />
           </div>
           <div v-if="isLoadingGetTeam || isLoadingFetchDeployedContracts">
@@ -124,13 +128,14 @@ import {
   BOD_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
-  CASH_REMUNERATION_EIP712_BEACON_ADDRESS
+  CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
+  INVESTOR_V1_BEACON_ADDRESS
 } from '@/constant'
 import { validateAddresses } from '@/constant/index'
-import type { Member } from '@/types'
+import type { Deployment, Member } from '@/types'
 
 const props = defineProps(['team'])
-const emits = defineEmits(['getTeam'])
+const emits = defineEmits(['getTeam', 'openInvestorContractModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 // UI state
@@ -141,6 +146,7 @@ const isBoDDeployed = ref(false)
 const isExpenseDeployed = ref(false)
 const isExpenseEip712Deployed = ref(false)
 const isCashRemunerationEip712Deployed = ref(false)
+const isInvestorsV1Deployed = ref(false)
 const founders = ref<string[]>([])
 const members = ref<string[]>([])
 
@@ -226,6 +232,10 @@ watch(deployedContracts, async (value) => {
     CashRemunerationEIP712: {
       address: 'cashRemunerationEip712Address',
       flag: isCashRemunerationEip712Deployed
+    },
+    InvestorsV1: {
+      address: 'investorsAddress',
+      flag: isInvestorsV1Deployed
     }
   }
   for (const contract of value as Array<IContract>) {
@@ -244,12 +254,12 @@ watch(deployedContracts, async (value) => {
           .put({ [config.address]: contract.contractAddress })
           .json()
         config.flag.value = true
-        emits('getTeam')
       } catch (error) {
         console.error(`Failed to update ${contract.contractType} address:`, error)
       }
     }
   }
+  emits('getTeam')
 })
 
 watch(officerTeam, async (value) => {
@@ -334,6 +344,10 @@ const deployOfficerContract = async () => {
       {
         beaconType: 'CashRemunerationEIP712',
         beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'InvestorsV1',
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
       }
     ]
 
@@ -379,7 +393,8 @@ onMounted(() => {
       BoardOfDirectors: isBoDDeployed,
       ExpenseAccount: isExpenseDeployed,
       ExpenseAccountEIP712: isExpenseEip712Deployed,
-      CashRemunerationEIP712: isCashRemunerationEip712Deployed
+      CashRemunerationEIP712: isCashRemunerationEip712Deployed,
+      InvestorsV1: isInvestorsV1Deployed
     }
 
     ;(deployedContracts.value as Array<IContract>).forEach((contract) => {

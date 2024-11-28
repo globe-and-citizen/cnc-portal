@@ -95,6 +95,7 @@ const getTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
+        teamContracts: true,
       },
     });
 
@@ -130,6 +131,7 @@ const getTeam = async (req: Request, res: Response) => {
             }
           },
         },
+        teamContracts: true,
       },
     });
     res.status(200).json(team);
@@ -190,7 +192,8 @@ const updateTeam = async (req: Request, res: Response) => {
     expenseAccountEip712Address,
     officerAddress,
     teamContract,
-    cashRemunerationEip712Address
+    cashRemunerationEip712Address,
+    investorsAddress
   } = req.body;
   const callerAddress = (req as any).address;
   try {
@@ -252,7 +255,8 @@ const updateTeam = async (req: Request, res: Response) => {
         expenseAccountAddress,
         officerAddress,
         expenseAccountEip712Address,
-        cashRemunerationEip712Address
+        cashRemunerationEip712Address,
+        investorsAddress
       },
       include: {
         members: {
