@@ -15,7 +15,7 @@
       </thead>
       <tbody>
         <!-- row 1 -->
-        <tr v-for="(contract, index) in _contracts" :key="index" class="bg-base-200">
+        <tr v-for="(contract, index) in contracts" :key="index" class="bg-base-200">
           <th>{{ index + 1 }}</th>
           <td>{{ contract.type }}</td>
           <td><AddressToolTip :address="contract.address" class="text-xs" /></td>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { UsersIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
@@ -94,15 +94,6 @@ import AddressToolTip from './AddressToolTip.vue'
 // Define props
 const props = defineProps<{ contracts: TeamContract[]; teamId: string }>()
 const emit = defineEmits(['update-contract'])
-const _contracts = ref(props.contracts)
-
-watch(
-  () => props.contracts,
-  (newContracts: TeamContract[]) => {
-    // Handle changes in the contracts prop
-    _contracts.value = newContracts
-  }
-)
 
 // Initialize AddCampaignService instance
 const addCamapaignService = new AddCampaignService()
@@ -138,11 +129,6 @@ const groupEventsByCampaignCode = (events: ExtendedEvent[]) => {
   )
 }
 
-// Function to fetch contract data
-const _getContractDatas = async (contractAddress: string) => {
-  const _datas = await addCamapaignService.getContractData(contractAddress)
-  return _datas
-}
 
 // Open Admins Modal
 const openAdminsModal = (contract: TeamContract) => {
@@ -166,7 +152,7 @@ const openEventsModal = async (contractAddress: string) => {
 
 // Open Contract Data Modal
 const openContractDataModal = async (contractAddress: string) => {
-  contractDataDialog.value.datas = await _getContractDatas(contractAddress)
+  contractDataDialog.value.datas = await addCamapaignService.getContractData(contractAddress)
   contractDataDialog.value.show = true
 }
 

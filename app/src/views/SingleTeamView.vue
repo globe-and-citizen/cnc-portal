@@ -40,10 +40,7 @@
       </ModalComponent>
       <ModalComponent v-model="addCampaignModal">
         <CreateAddCamapaign
-          @create-add-campaign="
-            async (_costPerClick: number, _costPerImpression: number) =>
-              deployAddCampaignContract(_costPerClick, _costPerImpression)
-          "
+          @create-add-campaign="deployAddCampaignContract"
           :loading="createAddCampaignLoading"
           :bankAddress="_teamBankContractAddress"
         />
