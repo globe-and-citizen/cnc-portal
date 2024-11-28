@@ -106,12 +106,12 @@
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
         <template #tab-6>
-          <InvestorsSection v-if="activeTab == 6" :team="team" /> 
+          <InvestorsSection v-if="activeTab == 6" :team="team" />
         </template>
         <template #tab-7>
           <ContractManagementSection></ContractManagementSection>
         </template>
-        
+
         <template #tab-8>
           <ContractManagementSection v-if="activeTab == 8"></ContractManagementSection>
         </template>
