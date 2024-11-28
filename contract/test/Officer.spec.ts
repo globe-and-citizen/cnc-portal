@@ -1,16 +1,19 @@
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { Officer } from '../typechain-types'
+import {
+  Bank__factory,
+  BoardOfDirectors__factory,
+  ExpenseAccount__factory,
+  Officer,
+  Voting__factory,
+  UpgradeableBeacon
+} from '../typechain-types'
 
 describe('Officer Contract', function () {
   let Officer, officer: unknown
-  let BankAccount, VotingContract, ExpenseAccount, ExpenseAccountEIP712, CashRemunerationEip712
-  let bankAccountBeacon,
-    votingContractBeacon,
-    expenseAccountBeacon,
-    expenseAccountEip712Beacon,
-    cashRemunerationEip712Beacon
+  let BankAccount, VotingContract, ExpenseAccount, ExpenseAccountEIP712
+  let bankAccountBeacon, votingContractBeacon, expenseAccountBeacon, expenseAccountEip712Beacon
   let BoD, bodBeacon
   let owner: SignerWithAddress,
     addr1: SignerWithAddress,
@@ -32,9 +35,6 @@ describe('Officer Contract', function () {
 
     ExpenseAccountEIP712 = await ethers.getContractFactory('ExpenseAccountEIP712')
     expenseAccountEip712Beacon = await upgrades.deployBeacon(ExpenseAccountEIP712)
-
-    CashRemunerationEip712 = await ethers.getContractFactory('CashRemunerationEIP712')
-    cashRemunerationEip712Beacon = await upgrades.deployBeacon(CashRemunerationEip712)
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
     Officer = await ethers.getContractFactory('Officer')
@@ -46,27 +46,59 @@ describe('Officer Contract', function () {
         await votingContractBeacon.getAddress(),
         await bodBeacon.getAddress(),
         await expenseAccountBeacon.getAddress(),
-        await expenseAccountEip712Beacon.getAddress(),
-        await cashRemunerationEip712Beacon.getAddress()
+        await expenseAccountEip712Beacon.getAddress()
       ],
       { initializer: 'initialize' }
     )
   })
 
+  // Configure beacons
+  await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
+  await officer.connect(owner).configureBeacon('Voting', await votingContractBeacon.getAddress())
+  await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
+  await officer
+    .connect(owner)
+    .configureBeacon('ExpenseAccount', await expenseAccountBeacon.getAddress())
+})
+
+describe('Team Management', () => {
   it('Should create a new team', async function () {
-    const founders = [addr1.address, addr2.address]
-    const tx = await (officer as Officer)
-      .connect(owner)
-      .createTeam(founders, ['0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'])
+    const founders = [await addr1.getAddress(), await addr2.getAddress()]
+    const members = [ethers.Wallet.createRandom().address]
 
-    await tx.wait()
-    const team = await (officer as Officer).getTeam()
+    await expect(officer.connect(owner).createTeam(founders, members))
+      .to.emit(officer, 'TeamCreated')
+      .withArgs(founders, members)
 
-    expect(team[0][0]).to.equal(addr1.address)
-    expect(team[0][1]).to.equal(addr2.address)
+    const [actualFounders, actualMembers, deployedContracts] = await officer.getTeam()
+    expect(actualFounders).to.deep.equal(founders)
+    expect(actualMembers).to.deep.equal(members)
+    expect(deployedContracts).to.be.empty
   })
-  it('Should deploy the Voting and BoD contract via BeaconProxy', async function () {
-    await (officer as Officer).connect(owner).deployVotingContract()
+
+  it('Should fail to create team without founders', async () => {
+    await expect(officer.createTeam([], [])).to.be.revertedWith('Must have at least one founder')
+  })
+})
+
+describe('Contract Deployment', () => {
+  it('Should deploy contracts via BeaconProxy', async function () {
+    const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      owner.address
+    ])
+
+    const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
+      owner.address,
+      owner.address
+    ])
+    const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
+      owner.address
+    ])
+
+    await expect(officer.connect(owner).deployBeaconProxy('Voting', votingInitData)).to.emit(
+      officer,
+      'ContractDeployed'
+    )
 
     const team = await (officer as Officer).getTeam()
     expect(team[3]).to.be.not.equal('0x0000000000000000000000000000000000000000')
@@ -86,18 +118,6 @@ describe('Officer Contract', function () {
 
     const team = await (officer as Officer).getTeam()
     expect(team[5]).to.be.not.equal('0x0000000000000000000000000000000000000000')
-  })
-  it('Should deploy the ExpenseAccountEIP712 contract via BeaconProxy', async function () {
-    await (officer as Officer).connect(owner).deployExpenseAccountEip712()
-
-    const team = await (officer as Officer).getTeam()
-    expect(team[6]).to.be.not.equal('0x0000000000000000000000000000000000000000')
-  })
-  it('Should deploy the CashRemunerationEIP712 contract via BeaconProxy', async function () {
-    await (officer as Officer).connect(owner).deployCashRemunerationEip712()
-
-    const team = await (officer as Officer).getTeam()
-    expect(team[7]).to.be.not.equal('0x0000000000000000000000000000000000000000')
   })
   it('should pause the contract', async function () {
     await (officer as Officer).connect(owner).pause()
@@ -143,9 +163,6 @@ describe('Officer Contract', function () {
     ExpenseAccountEIP712 = await ethers.getContractFactory('ExpenseAccountEIP712')
     expenseAccountEip712Beacon = await upgrades.deployBeacon(ExpenseAccountEIP712)
 
-    CashRemunerationEip712 = await ethers.getContractFactory('CashRemunerationEIP712')
-    cashRemunerationEip712Beacon = await upgrades.deployBeacon(CashRemunerationEip712)
-
     Officer = await ethers.getContractFactory('Officer')
     officer = await upgrades.deployProxy(
       Officer,
@@ -155,8 +172,7 @@ describe('Officer Contract', function () {
         await votingContractBeacon.getAddress(),
         await bodBeacon.getAddress(),
         await expenseAccountBeacon.getAddress(),
-        await expenseAccountBeacon.getAddress(),
-        await cashRemunerationEip712Beacon.getAddress()
+        await expenseAccountBeacon.getAddress()
       ],
       { initializer: 'initialize' }
     )

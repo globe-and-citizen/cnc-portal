@@ -1,20 +1,9 @@
 {
-  "BankBeaconModule#Bank": "0x49d955ce051E08e55230F6691F154b9edBec503f",
-  "BoardOfDirectorsModule#BoardOfDirectors": "0xc90CCe28BA07124Ae18D7E738a1E3eedeF649538",
-  "ExpenseAccountEIP712Module#ExpenseAccountEIP712": "0x068d9B8d8094D32eaFfb5817c105cab390eDbEf9",
-  "ExpenseAccountModule#ExpenseAccount": "0xd0c2b5e6205ac51bC0A83FC90FA8cA4A0Ce9777B",
-  "Officer#Officer": "0xBDaAe7E02Ee405ce6Ba6dbf87E292A3936dac999",
-  "VotingBeaconModule#Voting": "0x2b5120468F66d114F79c882D406D4F1a2b4156C2",
-  "BankBeaconModule#Beacon": "0x1E2A8C9770385422615c0f0F8Cba45AA78507B8D",
-  "BoardOfDirectorsModule#Beacon": "0x058754C3305E9313aC82307e487b65dAe33ce7B0",
-  "ExpenseAccountEIP712Module#FactoryBeacon": "0x91873448621921b8483AEaDB59d28CaF83E7F67f",
-  "ExpenseAccountModule#FactoryBeacon": "0x032711B624E71323eBCB724c2c30B442c42502D1",
-  "Officer#FactoryBeacon": "0x35149088A6D8d238910fCD9602DD0045503a2eB1",
-  "VotingBeaconModule#Beacon": "0x928Fa7EDb66E5cB2edbE883D4b265880F86924E4",
+  "BankBeaconModule#Bank": "0xb0309A8FF473f53a36aE49B6C12241364FE19bC6",
+  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb",
+  "BankBeaconModule#Beacon": "0x64Cc412C4F7Ef4B65283f56B0f36FbAA3285378D",
   "ProxyModule#TransparentUpgradeableProxy": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
   "ProxyModule#ProxyAdmin": "0x9B545652208f7889fe9Bd7B1Cc0BB240e8745690",
   "TipsModule#Tips": "0x6099DBEaEf64DEa6456695898ce1f105e89b34C5",
-  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb",
-  "CashRemunerationEIP712Module#CashRemunerationEIP712": "0xE1d896547162674291233A45DC846ED8aA6C7F78",
-  "CashRemunerationEIP712Module#FactoryBeacon": "0x035988C098474683aC1B9BB18ff0f36Cf1d6D760"
+  "ProxyModule#Tips": "0xcb67736EE12f2FFfCDA1732c1A7D7d717E5A01bb"
 }
