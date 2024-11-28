@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useUserDataStore } from '@/stores/user'
-
 describe('TeamCard', () => {
   const props = {
     team: {

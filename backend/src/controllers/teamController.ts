@@ -95,6 +95,7 @@ const getTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
+        teamContracts: true,
       },
     });
 
@@ -130,6 +131,7 @@ const getTeam = async (req: Request, res: Response) => {
             }
           },
         },
+        teamContracts: true,
       },
     });
     res.status(200).json(team);

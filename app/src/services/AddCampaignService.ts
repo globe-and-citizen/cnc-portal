@@ -18,7 +18,11 @@ export interface IAddCampaignService {
   getEvents(bankAddress: string, type: string): Promise<EventLog[] | Log[]>
   getContractData(addCampaignContractAddress: string): Promise<{ key: string; value: string }[]> // Updated type for the return value
   addAdmin(addCampaignContractAddress: string, adminAddress: string): Promise<TransactionReceipt>
+  removeAdmin(addCampaignContractAddress: string, adminAddress: string): Promise<TransactionReceipt>
   getAdminList(addCampaignContractAddress: string): Promise<string[]>
+  getEventsGroupedByCampaignCode(
+    addCampaignContractAddress: string
+  ): Promise<GetEventsGroupedByCampaignCodeResult>
 }
 
 export interface PaymentReleasedEvent {
@@ -139,6 +143,16 @@ export class AddCampaignService implements IAddCampaignService {
     return receipt
   }
 
+  async removeAdmin(addCampaignContractAddress: string, adminAddress: string) {
+    const contractService = this.getContractService(addCampaignContractAddress)
+    const contract = await contractService.getContract() // Retrieve contract instance
+    const tx = await contract.removeAdmin(adminAddress)
+
+    const receipt = await tx.wait()
+
+    return receipt
+  }
+
   async getAdminList(addCampaignContractAddress: string): Promise<string[]> {
     const contractService = this.getContractService(addCampaignContractAddress)
     const contract = await contractService.getContract() // Retrieve contract instance
@@ -202,6 +216,100 @@ export class AddCampaignService implements IAddCampaignService {
       }
     }
     return datas
+  }
+
+  async getEventsGroupedByCampaignCode(
+    addCampaignContractAddress: string
+  ): Promise<GetEventsGroupedByCampaignCodeResult> {
+    try {
+      const contractService = new SmartContract(
+        addCampaignContractAddress,
+        ADD_CAMPAIGN_ARTIFACT.abi
+      )
+
+      // Get all logs for the relevant events
+      const adCampaignCreatedLogs = await contractService.getEvents('AdCampaignCreated')
+      const paymentReleasedLogs = await contractService.getEvents('PaymentReleased')
+      const paymentReleasedOnWithdrawApprovalLogs = await contractService.getEvents(
+        'PaymentReleasedOnWithdrawApproval'
+      )
+
+      const budgetWithdrawnLogs = await contractService.getEvents('BudgetWithdrawn')
+
+      // Group events by campaignCode
+      const eventsByCampaignCode: EventsByCampaignCode = {}
+
+      const processLogs = (logs: (EventLog | Log)[], eventName: string) => {
+        logs.forEach((log) => {
+          const currentLog = log as EventLog
+
+          const args = currentLog.args as unknown
+          let code: string
+          let eventArgs: ExtendedEvent
+
+          switch (eventName) {
+            case 'AdCampaignCreated': {
+              const eventArgsTuple = args as [string, ethers.BigNumberish] // Tuple: [campaignCode, budget]
+              eventArgs = {
+                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
+                budget: eventArgsTuple[1] as ethers.BigNumberish, // Index 1 corresponds to budget
+                eventName: 'AdCampaignCreated'
+              }
+
+              code = eventArgs.campaignCode
+              break
+            }
+            case 'PaymentReleased': {
+              const eventArgsTuple = args as [string, ethers.BigNumberish] // Tuple: [campaignCode, paymentAmount]
+              eventArgs = {
+                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
+                paymentAmount: eventArgsTuple[1] as ethers.BigNumberish, // Index 1 corresponds to paymentAmount
+                eventName: 'PaymentReleased'
+              }
+              code = eventArgs.campaignCode
+              break
+            }
+            case 'BudgetWithdrawn': {
+              const eventArgsTuple = args as [string, string, ethers.BigNumberish] // Tuple: [campaignCode, advertiser, amount]
+              eventArgs = {
+                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
+                advertiser: eventArgsTuple[1] as string, // Index 1 corresponds to advertiser
+                amount: eventArgsTuple[2] as ethers.BigNumberish, // Index 2 corresponds to amount
+                eventName: 'BudgetWithdrawn'
+              }
+              code = eventArgs.campaignCode
+              break
+            }
+            case 'PaymentReleasedOnWithdrawApproval': {
+              const eventArgsTuple = args as [string, ethers.BigNumberish] // Tuple: [campaignCode, paymentAmount]
+              eventArgs = {
+                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
+                paymentAmount: eventArgsTuple[1] as ethers.BigNumberish, // Index 1 corresponds to paymentAmount
+                eventName: 'PaymentReleasedOnWithdrawApproval'
+              }
+              code = eventArgs.campaignCode
+              break
+            }
+            default:
+              return
+          }
+
+          if (!eventsByCampaignCode[code]) {
+            eventsByCampaignCode[code] = []
+          }
+          eventsByCampaignCode[code].push(eventArgs)
+        })
+      }
+
+      processLogs(adCampaignCreatedLogs, 'AdCampaignCreated')
+      processLogs(paymentReleasedLogs, 'PaymentReleased')
+      processLogs(paymentReleasedOnWithdrawApprovalLogs, 'PaymentReleasedOnWithdrawApproval')
+      processLogs(budgetWithdrawnLogs, 'BudgetWithdrawn')
+
+      return { status: 'success', events: eventsByCampaignCode }
+    } catch (error) {
+      return { status: 'error', error: error as { message: string } }
+    }
   }
 
   async getEvents(addCampaignAddress: string, type: string): Promise<EventLog[] | Log[]> {

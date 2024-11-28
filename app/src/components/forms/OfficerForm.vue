@@ -247,12 +247,12 @@ watch(deployedContracts, async (value) => {
           .put({ [config.address]: contract.contractAddress })
           .json()
         config.flag.value = true
-        emits('getTeam')
       } catch (error) {
         console.error(`Failed to update ${contract.contractType} address:`, error)
       }
     }
   }
+  emits('getTeam')
 })
 
 watch(officerTeam, async (value) => {

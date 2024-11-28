@@ -4,15 +4,29 @@
 
     <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-full items-center">
       <TeamMeta :team="team" @getTeam="getTeamAPI" />
+      <div class="grid grid-cols-4 gap-2">
+        <div>
+          <button
+            class="btn btn-primary btn-xs"
+            @click="officerModal = true"
+            v-if="team.ownerAddress == currentAddress"
+            data-test="manageOfficer"
+          >
+            Manage Deployments
+          </button>
+        </div>
+        <div>
+          <button
+            class="btn btn-primary btn-xs"
+            @click="addCampaignModal = true"
+            v-if="!team.addCampaignAddress && team.ownerAddress == useUserDataStore().address"
+            data-test="createAddCampaign"
+          >
+            Deploy advertise contract
+          </button>
+        </div>
+      </div>
 
-      <button
-        class="btn btn-primary btn-xs"
-        @click="officerModal = true"
-        v-if="team.ownerAddress == currentAddress"
-        data-test="manageOfficer"
-      >
-        Manage Deployments
-      </button>
       <ModalComponent v-model="officerModal">
         <OfficerForm
           :team="team"
@@ -58,6 +72,13 @@
         />
       </ModalComponent>
 
+      <ModalComponent v-model="addCampaignModal">
+        <CreateAddCamapaign
+          @create-add-campaign="deployAddCampaignContract"
+          :loading="createAddCampaignLoading"
+          :bankAddress="_teamBankContractAddress"
+        />
+      </ModalComponent>
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
         <template #tab-0>
           <div id="members" v-if="activeTab == 0">
@@ -84,9 +105,23 @@
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
-        <template #tab-6><InvestorsSection v-if="activeTab == 6" :team="team" /> </template>
+        <template #tab-6>
+          <InvestorsSection v-if="activeTab == 6" :team="team" /> 
+        </template>
         <template #tab-7>
           <ContractManagementSection></ContractManagementSection>
+        </template>
+        
+        <template #tab-8>
+          <ContractManagementSection v-if="activeTab == 8"></ContractManagementSection>
+        </template>
+
+        <template #tab-9>
+          <TeamContracts
+            :team-id="String(team.id)"
+            :contracts="team.teamContracts"
+            @update-contract="handleUpdateContract"
+          />
         </template>
       </TabNavigation>
     </div>
@@ -117,7 +152,7 @@ import ProposalSection from '@/components/sections/SingleTeamView/ProposalSectio
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
-import { type Deployment, type User, SingleTeamTabs } from '@/types'
+import { type TeamContract, type Deployment, type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import { encodeFunctionData, type Address } from 'viem'
@@ -128,14 +163,32 @@ import OfficerABI from '@/artifacts/abi/officer.json'
 import { log } from '@/utils'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 
+//imports for add campaign creation.
+import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
+import { useDeployAddCampaignContract } from '@/composables/addCampaign'
+import TeamContracts from '@/components/TeamContracts.vue'
+
 // Modal control states
-const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
+const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members, SingleTeamTabs.TeamContract])
 const isOwner = ref(false)
 const officerModal = ref(false)
+
 const investorModal = ref(false)
 const { addSuccessToast } = useToastStore()
 const deployments = ref<Deployment[]>([])
 const isDeployAll = ref(false)
+
+const _teamBankContractAddress = ref('')
+
+//addCampaign
+const addCampaignModal = ref(false)
+const {
+  contractAddress: addCampaignContractAddress,
+  execute: createAddCampaign,
+  isLoading: createAddCampaignLoading
+  //isSuccess: CreateAddCamapaignSuccess,
+  //error: CreateAddCamapaignError
+} = useDeployAddCampaignContract()
 
 // CRUD input refs
 const foundUsers = ref<User[]>([])
@@ -146,7 +199,7 @@ const activeTab = ref(0)
 
 const route = useRoute()
 
-const { addErrorToast } = useToastStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
 
 // Banking composables
 
@@ -272,6 +325,11 @@ onMounted(async () => {
   if (team?.value?.ownerAddress == currentAddress) {
     isOwner.value = true
   }
+  _teamBankContractAddress.value = team.value?.bankAddress
+    ? team.value.bankAddress
+    : team.value?.ownerAddress
+      ? team.value.ownerAddress
+      : ''
   setTabs()
 })
 
@@ -298,6 +356,18 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
+
+const handleUpdateContract = ({
+  index,
+  updatedContractPayload
+}: {
+  index: number
+  updatedContractPayload: TeamContract
+}) => {
+  team.value.teamContracts[index] = updatedContractPayload
+  addSuccessToast('Contract updated successfully')
+}
+
 const setTabs = () => {
   if (
     team.value.bankAddress &&
@@ -314,7 +384,28 @@ const setTabs = () => {
       SingleTeamTabs.Expenses,
       SingleTeamTabs.BoardOfDirectors,
       SingleTeamTabs.Investors,
-      SingleTeamTabs.Contract
+      SingleTeamTabs.Contract,
+      SingleTeamTabs.TeamContract
     ]
+}
+
+// Add Campaign functions.
+const deployAddCampaignContract = async (_costPerClick: number, _costPerImpression: number) => {
+  const id = route.params.id
+  // Update the ref values with new data
+  await createAddCampaign(
+    _teamBankContractAddress.value.toString(),
+    _costPerClick,
+    _costPerImpression,
+    useUserDataStore().address,
+    String(id)
+  )
+
+  //addCampaignContractAddress.value="0x503b62DA4e895f2659eF342fB39bB1545aBbDe3F"
+  //optional default value for contract address
+  if (addCampaignContractAddress.value) {
+    addCampaignModal.value = false
+    await getTeamAPI()
+  }
 }
 </script>
