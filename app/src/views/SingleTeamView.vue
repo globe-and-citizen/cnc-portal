@@ -174,7 +174,6 @@ const isOwner = ref(false)
 const officerModal = ref(false)
 
 const investorModal = ref(false)
-const { addSuccessToast } = useToastStore()
 const deployments = ref<Deployment[]>([])
 const isDeployAll = ref(false)
 
