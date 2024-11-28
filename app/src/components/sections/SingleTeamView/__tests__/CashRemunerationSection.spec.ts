@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import CashRemunerationSection from '../CashRemunerationSection.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
@@ -78,7 +78,7 @@ describe('CashRemunerationSection.vue', () => {
       expect(submitHoursButton.exists()).toBeFalsy()
     })
     it('should show action column if owner', async () => {
-      let wrapper = createComponent({
+      const wrapper = createComponent({
         global: {
           plugins: [
             createTestingPinia({
@@ -101,7 +101,7 @@ describe('CashRemunerationSection.vue', () => {
       expect(wrapper.find('[data-test="action-td"]').exists()).toBeFalsy()
     })
     it('should disable submit hours inputs if team owner', async () => {
-      let wrapper = createComponent({
+      const wrapper = createComponent({
         global: {
           plugins: [
             createTestingPinia({

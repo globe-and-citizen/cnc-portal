@@ -2,6 +2,47 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { ref } from 'vue'
+
+vi.mock('@/stores', () => ({
+  useUserDataStore: vi.fn(),
+  useToastStore: vi.fn(() => (
+    {
+      addErrorToast: vi.fn(),
+      addSuccessToast: vi.fn()
+    }
+  ))
+}))
+
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+  }
+})
+
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  }))
+}))
+
 // Mock data
 const mockNotifications = [
   {
@@ -32,11 +73,18 @@ describe('NotificationDropdown.vue', () => {
       useCustomFetch: () => ({
         json: () => ({
           data: ref({ data: mockNotifications }),
-          execute: vi.fn()
+          execute: vi.fn(),
+          error: ref(null)
         }),
         put: () => ({
           json: () => ({
             execute: vi.fn()
+          })
+        }),
+        get: () => ({
+          json: () => ({
+            execute: vi.fn(),
+            error: ref(null)
           })
         })
       })

@@ -56,7 +56,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { log, parseError } from "@/utils";
-import { type Address, parseSignature } from 'viem'
+import { type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
@@ -119,7 +119,7 @@ const getResource = (notification: Notification) => {
 const {
   error: getTeamError,
   data: team,
-  isFetching: teamIsFetching,
+  // isFetching: teamIsFetching,
   execute: getTeamAPI
 } = useCustomFetch(updateEndPoint, {
   immediate: false
@@ -137,8 +137,8 @@ watch(getTeamError, () => {
 
 //#region get claim
 const {
-  error: getClaimError,
-  isFetching: isClaimFetching,
+  // error: getClaimError,
+  // isFetching: isClaimFetching,
   data: wageClaim,
   execute: getWageClamAPI
 } = useCustomFetch(updateEndPoint, {
@@ -151,7 +151,7 @@ const {
 //#region expense account composable
 const {
   writeContract: executeCashRemunerationWithdraw,
-  isPending: isLoadingWithdraw,
+  // isPending: isLoadingWithdraw,
   error: errorWithdraw,
   data: withdrawHash
 } = useWriteContract()

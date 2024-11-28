@@ -85,7 +85,6 @@ const approvalData = ref<{
   id: number
 }>({signature: undefined, id: 0})
 const loadingApprove = ref(false)
-const dummyData = ref([{ name: 'Member', address: '0x123', hoursWorked: 20, hourlyRate: 50 }])
 
 //#region add wage claim
 const {
@@ -117,7 +116,7 @@ const addWageClaim = async () => {
 //#region get wage claims
 const {
   error: getWageClaimsError,
-  isFetching: isWageClaimsFetching,
+  // isFetching: isWageClaimsFetching,
   execute: getWageClaimsAPI,
   data: wageClaims
 } = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/pending`)
