@@ -434,13 +434,11 @@ watch(deployExpenseError, (value) => {
 })
 
 watch(deployCashRemunerationEip712Error, (value) => {
-  if(value)
-    addErrorToast('Failed to deploy cash remuneration')
+  if (value) addErrorToast('Failed to deploy cash remuneration')
 })
 
 watch(deployExpenseEip712Error, (value) => {
-  if(value)
-    addErrorToast('Failed to deploy expense account eip712')
+  if (value) addErrorToast('Failed to deploy expense account eip712')
 })
 
 watch(deployAllError, (value) => {

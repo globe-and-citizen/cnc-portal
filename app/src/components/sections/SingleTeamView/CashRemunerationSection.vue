@@ -16,13 +16,20 @@
           />
         </label>
         <!--<button class="btn btn-success">Submit Hours</button>-->
-        <ButtonUI v-if="isSubmittingHours" loading variant="success" data-test="submitting-hours-button"/>
-        <ButtonUI 
-          v-else variant="success" 
-          data-test="submit-hours-button" 
+        <ButtonUI
+          v-if="isSubmittingHours"
+          loading
+          variant="success"
+          data-test="submitting-hours-button"
+        />
+        <ButtonUI
+          v-else
+          variant="success"
+          data-test="submit-hours-button"
           :disabled="team.ownerAddress === currentUserAddress"
           @click="addWageClaim"
-        >Submit Hours</ButtonUI>
+          >Submit Hours</ButtonUI
+        >
       </div>
     </div>
     <div class="divider m-0"></div>
@@ -40,13 +47,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="data in (wageClaims as ClaimResponse[])" :key="data.id">
+          <tr v-for="data in wageClaims as ClaimResponse[]" :key="data.id">
             <td>{{ new Date(data.createdAt).toLocaleDateString() }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.address }}</td>
             <td>{{ data.hoursWorked }}</td>
             <td>{{ data.hourlyRate }}</td>
-            <td 
+            <td
               v-if="team.ownerAddress === currentUserAddress"
               class="flex justify-end"
               data-test="action-td"
@@ -69,7 +76,7 @@ import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { log, parseError } from "@/utils";
+import { log, parseError } from '@/utils'
 
 const route = useRoute()
 const web3Library = new EthersJsAdapter()
@@ -79,11 +86,11 @@ const props = defineProps<{ team: Partial<Team> }>()
 const team = ref(props.team)
 const currentUserAddress = useUserDataStore().address
 const isSubmittingHours = ref(false)
-const hoursWorked = ref<{hoursWorked: string | undefined}>({hoursWorked: undefined})
+const hoursWorked = ref<{ hoursWorked: string | undefined }>({ hoursWorked: undefined })
 const approvalData = ref<{
-  signature: string | undefined;
+  signature: string | undefined
   id: number
-}>({signature: undefined, id: 0})
+}>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
 
 //#region add wage claim
@@ -182,7 +189,7 @@ const approveClaim = async (claim: ClaimResponse) => {
     hourlyRate: claim.hourlyRate,
     hoursWorked: claim.hoursWorked,
     employeeAddress: claim.address,
-    date: Math.floor((new Date(claim.createdAt)).getTime() / 1000)
+    date: Math.floor(new Date(claim.createdAt).getTime() / 1000)
   }
 
   try {

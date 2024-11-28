@@ -18,7 +18,7 @@ vi.mock('vue-router', () => ({
 
 interface ComponentData {
   isSubmittingHours: boolean
-  hoursWorked: {hoursWorked: string | undefined}
+  hoursWorked: { hoursWorked: string | undefined }
 }
 
 describe('CashRemunerationSection.vue', () => {

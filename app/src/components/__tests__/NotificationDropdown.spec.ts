@@ -5,12 +5,10 @@ import { ref } from 'vue'
 
 vi.mock('@/stores', () => ({
   useUserDataStore: vi.fn(),
-  useToastStore: vi.fn(() => (
-    {
-      addErrorToast: vi.fn(),
-      addSuccessToast: vi.fn()
-    }
-  ))
+  useToastStore: vi.fn(() => ({
+    addErrorToast: vi.fn(),
+    addSuccessToast: vi.fn()
+  }))
 }))
 
 const mockUseWriteContract = {

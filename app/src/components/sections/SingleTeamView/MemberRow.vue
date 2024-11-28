@@ -120,7 +120,7 @@ const showDeleteMemberConfirmModal = ref(false)
 const showSetMemberWageModal = ref(false)
 const maxWeeklyHours = ref('0')
 const hourlyRate = ref('0')
-const wageData = ref<{maxHoursPerWeek: number, hourlyRate: number} | {}>({})
+const wageData = ref<{ maxHoursPerWeek: number; hourlyRate: number } | {}>({})
 
 // useFetch instance for deleting member
 const {
@@ -181,7 +181,7 @@ watch(addMemberWageDataError, (newVal) => {
 
 const addMemberWageData = async () => {
   wageData.value = {
-    maxHoursPerWeek: Number(maxWeeklyHours.value), 
+    maxHoursPerWeek: Number(maxWeeklyHours.value),
     hourlyRate: Number(hourlyRate.value)
   }
   console.log(`wageData`, wageData.value)

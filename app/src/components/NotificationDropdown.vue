@@ -55,7 +55,7 @@ import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useToastStore, useUserDataStore } from '@/stores'
-import { log, parseError } from "@/utils";
+import { log, parseError } from '@/utils'
 import { type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
