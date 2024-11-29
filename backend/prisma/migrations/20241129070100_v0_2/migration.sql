@@ -18,8 +18,9 @@ CREATE TABLE "Team" (
     "boardOfDirectorsAddress" TEXT,
     "expenseAccountAddress" TEXT,
     "officerAddress" TEXT,
-    "expenseAccountEip712Address" TEXT,
     "investorsAddress" TEXT,
+    "expenseAccountEip712Address" TEXT,
+    "cashRemunerationEip712Address" TEXT,
 
     CONSTRAINT "Team_pkey" PRIMARY KEY ("id")
 );
