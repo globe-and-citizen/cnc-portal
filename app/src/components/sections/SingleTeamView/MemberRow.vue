@@ -7,7 +7,7 @@
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
       <div
-        v-if="member.address != ownerAddress && ownerAddress == userDataStore.address"
+        v-if="ownerAddress == userDataStore.address"
         class="flex flex-wrap gap-2"
       >
         <button
