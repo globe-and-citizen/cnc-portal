@@ -116,10 +116,6 @@
         </template>
 
         <template #tab-9>
-          <ContractManagementSection v-if="activeTab == 9"></ContractManagementSection>
-        </template>
-
-        <template #tab-10>
           <TeamContracts
             :team-id="String(team.id)"
             :contracts="team.teamContracts"
