@@ -172,6 +172,13 @@ const {
 })
   .post(wageData)
   .json()
+watch([() => isMemberWageSaving.value, () => addMemberWageDataError.value], async () => {
+  if (!isMemberWageSaving.value && !addMemberWageDataError.value) {
+    addSuccessToast('Wage added successfully')
+    showDeleteMemberConfirmModal.value = false
+    emits('getTeam')
+  }
+})
 watch(addMemberWageDataError, (newVal) => {
   if (newVal) {
     addErrorToast(addMemberWageDataError.value)
@@ -186,5 +193,6 @@ const addMemberWageData = async () => {
   }
   console.log(`wageData`, wageData.value)
   await addMemberWageDataAPI()
+  showSetMemberWageModal.value = false
 }
 </script>
