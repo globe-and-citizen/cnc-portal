@@ -52,6 +52,30 @@
         :color="'primary min-w-24'"
         v-if="isLoadingDeployExpenseEip712 || isConfirmingDeployExpenseEip712"
       />
+
+      <button
+        class="btn btn-primary btn-sm"
+        v-if="
+          !isCashRemunerationEip712Deployed &&
+          !isLoadingDeployCashRemunerationEip712 &&
+          !isConfirmingDeployCashRemunerationEip712
+        "
+        @click="deployCashRemunerationEip712"
+      >
+        Deploy Cash Remuneration EIP712
+      </button>
+      <LoadingButton
+        :color="'primary min-w-24'"
+        v-if="isLoadingDeployCashRemunerationEip712 || isConfirmingDeployCashRemunerationEip712"
+      />
+
+      <button
+        class="btn btn-primary btn-sm"
+        v-if="!isInvestorV1Deployed"
+        @click="() => emits('openInvestorContractModal')"
+      >
+        Deploy Investor V1
+      </button>
     </div>
 
     <div class="flex justify-center">
@@ -85,6 +109,7 @@ import BankABI from '@/artifacts/abi/bank.json'
 import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
+import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { TIPS_ADDRESS } from '@/constant'
 import type { Team } from '@/types'
 
@@ -96,10 +121,32 @@ const props = defineProps<{
   isBoDDeployed: boolean
   isExpenseDeployed: boolean
   isExpenseEip712Deployed: boolean
+  isCashRemunerationEip712Deployed: boolean
+  isInvestorV1Deployed: boolean
 }>()
 
-const emits = defineEmits(['getTeam'])
+const emits = defineEmits(['getTeam', 'openInvestorContractModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+// remuneration deployment
+const {
+  writeContract: deployCashRemuneration,
+  isPending: isLoadingDeployCashRemunerationEip712,
+  data: deployCashRemunerationEip712Hash,
+  error: deployCashRemunerationEip712Error
+} = useWriteContract()
+
+const {
+  isLoading: isConfirmingDeployCashRemunerationEip712,
+  isSuccess: isConfirmedDeployCashRemunerationEip712
+} = useWaitForTransactionReceipt({ hash: deployCashRemunerationEip712Hash })
+
+watch(isConfirmingDeployCashRemunerationEip712, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedDeployCashRemunerationEip712.value) {
+    addSuccessToast('Cash Remuneration EIP712 deployed successfully')
+    emits('getTeam')
+  }
+})
 
 // Bank deployment
 const {
@@ -159,7 +206,8 @@ watch(isConfirmingDeployExpense, (isConfirming, wasConfirming) => {
 const {
   writeContract: deployExpenseEip712,
   isPending: isLoadingDeployExpenseEip712,
-  data: deployExpenseEip712Hash
+  data: deployExpenseEip712Hash,
+  error: deployExpenseEip712Error
 } = useWriteContract()
 
 const { isLoading: isConfirmingDeployExpenseEip712, isSuccess: isConfirmedDeployExpenseEip712 } =
@@ -242,6 +290,21 @@ const deployExpenseAccount = async () => {
     args: ['ExpenseAccount', initData]
   })
 }
+const deployCashRemunerationEip712 = async () => {
+  const currentAddress = useUserDataStore().address as Address
+  const initData = encodeFunctionData({
+    abi: CashRemunerationEIP712ABI,
+    functionName: 'initialize',
+    args: [currentAddress]
+  })
+
+  deployCashRemuneration({
+    address: props.team.officerAddress as Address,
+    abi: OfficerABI,
+    functionName: 'deployBeaconProxy',
+    args: ['CashRemunerationEIP712', initData]
+  })
+}
 
 const deployExpenseAccountEip712 = async () => {
   const currentAddress = useUserDataStore().address as Address
@@ -265,7 +328,9 @@ const areAllContractsDeployed = computed(() => {
     props.isVotingDeployed &&
     props.isExpenseDeployed &&
     props.isExpenseEip712Deployed &&
-    props.isBoDDeployed
+    props.isBoDDeployed &&
+    props.isCashRemunerationEip712Deployed &&
+    props.isInvestorV1Deployed
   )
 })
 
@@ -317,17 +382,33 @@ const deployAllContracts = async () => {
     })
   }
 
-  if (deployments.length > 0) {
-    try {
-      deployAll({
-        address: props.team.officerAddress as Address,
-        abi: OfficerABI,
-        functionName: 'deployAllContracts',
-        args: [deployments]
+  if (!props.isCashRemunerationEip712Deployed) {
+    deployments.push({
+      contractType: 'CashRemunerationEIP712',
+      initializerData: encodeFunctionData({
+        abi: CashRemunerationEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
       })
-    } catch (error) {
-      log.error(parseError(error))
-      addErrorToast('Error deploying contracts')
+    })
+  }
+
+  if (deployments.length > 0) {
+    if (!props.isInvestorV1Deployed) {
+      // Deploy on SingleTeamView
+      emits('openInvestorContractModal', deployments)
+    } else {
+      try {
+        deployAll({
+          address: props.team.officerAddress as Address,
+          abi: OfficerABI,
+          functionName: 'deployAllContracts',
+          args: [deployments]
+        })
+      } catch (error) {
+        log.error(parseError(error))
+        addErrorToast('Error deploying contracts')
+      }
     }
   }
 }
@@ -350,6 +431,14 @@ watch(deployExpenseError, (value) => {
   if (value) {
     addErrorToast('Failed to deploy expense account')
   }
+})
+
+watch(deployCashRemunerationEip712Error, (value) => {
+  if (value) addErrorToast('Failed to deploy cash remuneration')
+})
+
+watch(deployExpenseEip712Error, (value) => {
+  if (value) addErrorToast('Failed to deploy expense account eip712')
 })
 
 watch(deployAllError, (value) => {

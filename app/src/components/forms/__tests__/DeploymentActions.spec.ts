@@ -81,7 +81,8 @@ describe('DeploymentActions', () => {
     isVotingDeployed: false,
     isBoDDeployed: false,
     isExpenseDeployed: false,
-    isExpenseEip712Deployed: false
+    isExpenseEip712Deployed: false,
+    isInvestorV1Deployed: false
   }
 
   beforeEach(() => {
@@ -92,6 +93,7 @@ describe('DeploymentActions', () => {
     const wrapper = mount(DeploymentActions, {
       props: {
         ...defaultProps,
+        isCashRemunerationEip712Deployed: false,
         team: {
           id: '1',
           name: 'Test Team',
@@ -112,6 +114,8 @@ describe('DeploymentActions', () => {
     expect(wrapper.text()).toContain('Deploy Voting')
     expect(wrapper.text()).toContain('Deploy Expense')
     expect(wrapper.text()).toContain('Deploy Expense EIP712')
+    expect(wrapper.text()).toContain('Deploy Cash Remuneration EIP712')
+    expect(wrapper.text()).toContain('Deploy Investor V1')
     expect(wrapper.text()).toContain('Deploy All Contracts')
   })
 
@@ -121,6 +125,7 @@ describe('DeploymentActions', () => {
         ...defaultProps,
         isBankDeployed: true,
         isVotingDeployed: true,
+        isCashRemunerationEip712Deployed: true,
         team: {
           id: '1',
           name: 'Test Team',
@@ -150,8 +155,10 @@ describe('DeploymentActions', () => {
         isBankDeployed: true,
         isVotingDeployed: true,
         isBoDDeployed: true,
+        isCashRemunerationEip712Deployed: true,
         isExpenseDeployed: true,
         isExpenseEip712Deployed: true,
+        isInvestorV1Deployed: true,
         team: {
           id: '1',
           name: 'Test Team',
@@ -182,6 +189,7 @@ describe('DeploymentActions', () => {
     const wrapper = mount(DeploymentActions, {
       props: {
         ...defaultProps,
+        isCashRemunerationEip712Deployed: false,
         team: {
           id: '1',
           name: 'Test Team',
@@ -207,6 +215,7 @@ describe('DeploymentActions', () => {
     const wrapper = mount(DeploymentActions, {
       props: {
         ...defaultProps,
+        isCashRemunerationEip712Deployed: false,
         team: {
           id: '1',
           name: 'Test Team',
@@ -224,6 +233,6 @@ describe('DeploymentActions', () => {
     })
 
     const buttons = wrapper.findAll('button')
-    expect(buttons.length).toBe(5)
+    expect(buttons.length).toBe(7)
   })
 })

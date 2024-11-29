@@ -6,14 +6,25 @@
       <AddressToolTip :address="member.address ?? ''" />
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
-      <button
+      <div
         v-if="member.address != ownerAddress && ownerAddress == userDataStore.address"
-        class="btn btn-error btn-sm flex gap-4"
-        @click="() => (showDeleteMemberConfirmModal = true)"
-        data-test="delete-member-button"
+        class="flex flex-wrap gap-2"
       >
-        <TrashIcon class="size-4" />
-      </button>
+        <button
+          class="btn btn-error btn-sm"
+          @click="() => (showDeleteMemberConfirmModal = true)"
+          data-test="delete-member-button"
+        >
+          <TrashIcon class="size-4" />
+        </button>
+        <button
+          class="btn btn-sm btn-success"
+          @click="() => (showSetMemberWageModal = true)"
+          data-test="set-wage-button"
+        >
+          Set Wage
+        </button>
+      </div>
     </td>
   </tr>
   <div>
@@ -40,6 +51,41 @@
         </ButtonUI>
       </div>
     </ModalComponent>
+
+    <ModalComponent v-model="showSetMemberWageModal">
+      <p class="font-bold text-lg">Set Member Wage</p>
+      <hr class="" />
+      <div class="input-group mt-3">
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-32">Max Weekly Hours</span>
+          |
+          <input
+            type="text"
+            class="grow"
+            v-model="maxWeeklyHours"
+            placeholder="Enter max hours per week..."
+            data-test="max-hours-input"
+          />
+        </label>
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+          <span class="w-32">Hourly Rate</span>
+          |
+          <input type="text" class="grow" v-model="hourlyRate" placeholder="Enter hourly rate..." />
+          | {{ `${NETWORK.currencySymbol} ` }}
+        </label>
+      </div>
+      <div class="modal-action justify-center">
+        <ButtonUI v-if="isMemberWageSaving" loading variant="success" />
+        <ButtonUI
+          v-else
+          variant="success"
+          @click="addMemberWageData"
+          data-test="delete-member-confirm-button"
+          >Save</ButtonUI
+        >
+        <ButtonUI variant="error" @click="showSetMemberWageModal = false"> Cancel </ButtonUI>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
@@ -53,6 +99,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { NETWORK } from '@/constant'
 
 interface Member extends MemberInput {
   index: number
@@ -70,6 +117,10 @@ const emits = defineEmits(['getTeam'])
 
 const member = ref(props.member)
 const showDeleteMemberConfirmModal = ref(false)
+const showSetMemberWageModal = ref(false)
+const maxWeeklyHours = ref('0')
+const hourlyRate = ref('0')
+const wageData = ref<{ maxHoursPerWeek: number; hourlyRate: number } | {}>({})
 
 // useFetch instance for deleting member
 const {
@@ -97,11 +148,43 @@ watch([() => memberIsDeleting.value, () => deleteMemberError.value], async () =>
     emits('getTeam')
   }
 })
-
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     addErrorToast(deleteMemberError.value)
     showDeleteMemberConfirmModal.value = false
   }
 })
+
+const {
+  error: addMemberWageDataError,
+  isFetching: isMemberWageSaving,
+  execute: addMemberWageDataAPI
+} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/wage`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: member.value.address ? member.value.address : '',
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .post(wageData)
+  .json()
+watch(addMemberWageDataError, (newVal) => {
+  if (newVal) {
+    addErrorToast(addMemberWageDataError.value)
+    showSetMemberWageModal.value = false
+  }
+})
+
+const addMemberWageData = async () => {
+  wageData.value = {
+    maxHoursPerWeek: Number(maxWeeklyHours.value),
+    hourlyRate: Number(hourlyRate.value)
+  }
+  console.log(`wageData`, wageData.value)
+  await addMemberWageDataAPI()
+}
 </script>

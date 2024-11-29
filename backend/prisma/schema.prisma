@@ -37,7 +37,9 @@ model Team {
   boardOfDirectorsAddress   String?
   expenseAccountAddress     String?
   officerAddress            String?
+  investorsAddress          String?
   expenseAccountEip712Address     String?
+  cashRemunerationEip712Address   String?
   BoardOfDirectorActions    BoardOfDirectorActions[]
   teamContracts TeamContract[]
   memberTeamsData           MemberTeamsData[]
