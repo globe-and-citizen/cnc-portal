@@ -6,10 +6,7 @@
       <AddressToolTip :address="member.address ?? ''" />
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
-      <div
-        v-if="ownerAddress == userDataStore.address"
-        class="flex flex-wrap gap-2"
-      >
+      <div v-if="ownerAddress == userDataStore.address" class="flex flex-wrap gap-2">
         <button
           class="btn btn-error btn-sm"
           @click="() => (showDeleteMemberConfirmModal = true)"

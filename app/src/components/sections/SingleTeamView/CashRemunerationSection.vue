@@ -21,11 +21,7 @@
           variant="success"
           data-test="submitting-hours-button"
         />
-        <ButtonUI
-          v-else
-          variant="success"
-          data-test="submit-hours-button"
-          @click="addWageClaim"
+        <ButtonUI v-else variant="success" data-test="submit-hours-button" @click="addWageClaim"
           >Submit Hours</ButtonUI
         >
       </div>
