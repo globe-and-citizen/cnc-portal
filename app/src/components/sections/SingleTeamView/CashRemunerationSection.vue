@@ -117,6 +117,7 @@ watch(addWageClaimError, (newVal) => {
 
 const addWageClaim = async () => {
   await addWageClaimAPI()
+  await getWageClaimsAPI()
 }
 //#endregion add wage claim
 
@@ -199,6 +200,7 @@ const approveClaim = async (claim: ClaimResponse) => {
       signature
     }
     await addApprovalAPI()
+    await getWageClaimsAPI()
     // emits('getTeam')
   } catch (err) {
     log.error(parseError(err))
