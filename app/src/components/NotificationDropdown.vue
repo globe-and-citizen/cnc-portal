@@ -30,21 +30,25 @@
         class="join flex justify-between items-center p-2"
         v-if="paginatedNotifications.length > 0"
       >
-        <button
-          class="join-item btn-primary btn btn-xs"
+        <ButtonUI
+          variant="primary"
+          size="xs"
+          class="join-item"
           :class="currentPage === 1 ? 'btn-disabled' : ''"
           @click="currentPage > 1 ? currentPage-- : currentPage"
         >
           <ChevronLeftIcon class="size-6" />
-        </button>
+        </ButtonUI>
         <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
-        <button
-          class="join-item btn btn-primary btn-xs"
+        <ButtonUI
+          variant="primary"
+          size="xs"
+          class="join-item btn"
           :class="currentPage == totalPages ? 'btn-disabled' : ''"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
         >
           <ChevronRightIcon class="size-6" />
-        </button>
+        </ButtonUI>
       </div>
     </ul>
   </div>
@@ -57,6 +61,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
+import ButtonUI from './ButtonUI.vue'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)

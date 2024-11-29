@@ -5,14 +5,15 @@
     <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-full items-center">
       <TeamMeta :team="team" @getTeam="getTeamAPI" />
 
-      <button
-        class="btn btn-primary btn-xs"
+      <ButtonUI
+        size="xs"
+        variant="primary"
         @click="officerModal = true"
         v-if="team.ownerAddress == currentAddress"
         data-test="manageOfficer"
       >
         Manage Deployments
-      </button>
+      </ButtonUI>
       <ModalComponent v-model="officerModal">
         <OfficerForm
           :team="team"
@@ -86,6 +87,7 @@ import { type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import type { Address } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members])
