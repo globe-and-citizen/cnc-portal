@@ -12,7 +12,6 @@
             v-model="hoursWorked.hoursWorked"
             placeholder="Enter hours worked..."
             data-test="hours-worked-input"
-            :disabled="team.ownerAddress === currentUserAddress"
           />
         </label>
         <!--<button class="btn btn-success">Submit Hours</button>-->
@@ -22,12 +21,7 @@
           variant="success"
           data-test="submitting-hours-button"
         />
-        <ButtonUI
-          v-else
-          variant="success"
-          data-test="submit-hours-button"
-          :disabled="team.ownerAddress === currentUserAddress"
-          @click="addWageClaim"
+        <ButtonUI v-else variant="success" data-test="submit-hours-button" @click="addWageClaim"
           >Submit Hours</ButtonUI
         >
       </div>
@@ -117,6 +111,7 @@ watch(addWageClaimError, (newVal) => {
 
 const addWageClaim = async () => {
   await addWageClaimAPI()
+  await getWageClaimsAPI()
 }
 //#endregion add wage claim
 
@@ -199,6 +194,7 @@ const approveClaim = async (claim: ClaimResponse) => {
       signature
     }
     await addApprovalAPI()
+    await getWageClaimsAPI()
     // emits('getTeam')
   } catch (err) {
     log.error(parseError(err))
