@@ -12,7 +12,6 @@
             v-model="hoursWorked.hoursWorked"
             placeholder="Enter hours worked..."
             data-test="hours-worked-input"
-            :disabled="team.ownerAddress === currentUserAddress"
           />
         </label>
         <!--<button class="btn btn-success">Submit Hours</button>-->
@@ -26,7 +25,6 @@
           v-else
           variant="success"
           data-test="submit-hours-button"
-          :disabled="team.ownerAddress === currentUserAddress"
           @click="addWageClaim"
           >Submit Hours</ButtonUI
         >
