@@ -49,6 +49,7 @@
               :isBoDDeployed="isBoDDeployed"
               :is-expense-deployed="isExpenseDeployed"
               :is-expense-eip712-deployed="isExpenseEip712Deployed"
+              :is-cash-remuneration-eip712-deployed="isCashRemunerationEip712Deployed"
               :is-investor-v1-deployed="isInvestorsV1Deployed"
               @get-team="emits('getTeam')"
               @openInvestorContractModal="
@@ -127,6 +128,7 @@ import {
   BOD_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
+  CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
   INVESTOR_V1_BEACON_ADDRESS
 } from '@/constant'
 import { validateAddresses } from '@/constant/index'
@@ -143,6 +145,7 @@ const isVotingDeployed = ref(false)
 const isBoDDeployed = ref(false)
 const isExpenseDeployed = ref(false)
 const isExpenseEip712Deployed = ref(false)
+const isCashRemunerationEip712Deployed = ref(false)
 const isInvestorsV1Deployed = ref(false)
 const founders = ref<string[]>([])
 const members = ref<string[]>([])
@@ -225,6 +228,10 @@ watch(deployedContracts, async (value) => {
     ExpenseAccountEIP712: {
       address: 'expenseAccountEip712Address',
       flag: isExpenseEip712Deployed
+    },
+    CashRemunerationEIP712: {
+      address: 'cashRemunerationEip712Address',
+      flag: isCashRemunerationEip712Deployed
     },
     InvestorsV1: {
       address: 'investorsAddress',
@@ -335,6 +342,10 @@ const deployOfficerContract = async () => {
         beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
       },
       {
+        beaconType: 'CashRemunerationEIP712',
+        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
+      },
+      {
         beaconType: 'InvestorsV1',
         beaconAddress: INVESTOR_V1_BEACON_ADDRESS
       }
@@ -382,6 +393,7 @@ onMounted(() => {
       BoardOfDirectors: isBoDDeployed,
       ExpenseAccount: isExpenseDeployed,
       ExpenseAccountEIP712: isExpenseEip712Deployed,
+      CashRemunerationEIP712: isCashRemunerationEip712Deployed,
       InvestorsV1: isInvestorsV1Deployed
     }
 

@@ -103,20 +103,23 @@
           <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI" />
         </template>
         <template #tab-5>
-          <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
+          <CashRemunerationSection v-if="activeTab == 5" :team="team" />
         </template>
         <template #tab-6>
-          <InvestorsSection v-if="activeTab == 6" :team="team" />
+          <BoardOfDirectorsSection v-if="activeTab == 6" :team="team" />
         </template>
         <template #tab-7>
+          <InvestorsSection v-if="activeTab == 7" :team="team" />
+        </template>
+        <template #tab-8>
           <ContractManagementSection></ContractManagementSection>
         </template>
 
-        <template #tab-8>
-          <ContractManagementSection v-if="activeTab == 8"></ContractManagementSection>
+        <template #tab-9>
+          <ContractManagementSection v-if="activeTab == 9"></ContractManagementSection>
         </template>
 
-        <template #tab-9>
+        <template #tab-10>
           <TeamContracts
             :team-id="String(team.id)"
             :contracts="team.teamContracts"
@@ -151,6 +154,7 @@ import ProposalSection from '@/components/sections/SingleTeamView/ProposalSectio
 // import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
+import CashRemunerationSection from '@/components/sections/SingleTeamView/CashRemunerationSection.vue'
 
 import { type TeamContract, type Deployment, type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
@@ -381,6 +385,7 @@ const setTabs = () => {
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.Expenses,
+      SingleTeamTabs.CashRemuneration,
       SingleTeamTabs.BoardOfDirectors,
       SingleTeamTabs.Investors,
       SingleTeamTabs.Contract,

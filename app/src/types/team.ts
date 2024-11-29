@@ -14,6 +14,7 @@ export interface Team {
   expenseAccountEip712Address?: string | null
   investorsAddress?: string | null
   officerAddress?: string | null
+  cashRemunerationEip712Address?: string | null
   teamContracts?: TeamContract[]
 }
 export interface TeamsResponse {

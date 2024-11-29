@@ -19,7 +19,9 @@ vi.mock('@/artifacts/deployed_addresses/chain-11155111.json', () => ({
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712': '0xc345',
     'ExpenseAccountEIP712Module#FactoryBeacon': '0xd456',
     'InvestorsV1BeaconModule#Beacon': '0xe567',
-    'InvestorsV1BeaconModule#InvestorV1': '0xf678'
+    'InvestorsV1BeaconModule#InvestorV1': '0xf678',
+    'CashRemunerationEIP712Module#FactoryBeacon': '0xe567',
+    'CashRemunerationEIP712Module#CashRemunerationEIP712': '0xf678'
   }
 }))
 

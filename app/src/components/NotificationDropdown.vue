@@ -14,7 +14,7 @@
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
         <a
-          @click="updateNotification(notification)"
+          @click="handleNotification(notification)"
           :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
         >
           <div class="notification__body">
@@ -53,6 +53,12 @@
 import { ref, computed, watch } from 'vue'
 import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useRoute } from 'vue-router'
+import { useToastStore, useUserDataStore } from '@/stores'
+import { log, parseError } from '@/utils'
+import { type Address } from 'viem'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
@@ -63,6 +69,8 @@ const itemsPerPage = ref(4)
 const totalPages = ref(0)
 
 const updateEndPoint = ref('')
+const route = useRoute()
+const { addErrorToast, addSuccessToast } = useToastStore()
 const {
   //isFetching: isNotificationsFetching,
   //error: notificationError,
@@ -98,6 +106,108 @@ const isInvitation = (notification: Notification) => {
   }
 
   return false
+}
+
+const getResource = (notification: Notification) => {
+  if (notification.resource) {
+    const resourceArr = notification.resource.split('/')
+    return resourceArr
+  } else return []
+}
+
+// useFetch instance for getting team details
+const {
+  error: getTeamError,
+  data: team,
+  // isFetching: teamIsFetching,
+  execute: getTeamAPI
+} = useCustomFetch(updateEndPoint, {
+  immediate: false
+})
+  .get()
+  .json()
+
+// Watchers for getting team details
+watch(getTeamError, () => {
+  if (getTeamError.value) {
+    log.error(parseError(getTeamError.value))
+    addErrorToast(getTeamError.value)
+  }
+})
+
+//#region get claim
+const {
+  // error: getClaimError,
+  // isFetching: isClaimFetching,
+  data: wageClaim,
+  execute: getWageClamAPI
+} = useCustomFetch(updateEndPoint, {
+  immediate: false
+})
+  .get()
+  .json()
+//#endregion get claim
+
+//#region expense account composable
+const {
+  writeContract: executeCashRemunerationWithdraw,
+  // isPending: isLoadingWithdraw,
+  error: errorWithdraw,
+  data: withdrawHash
+} = useWriteContract()
+
+watch(errorWithdraw, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to withdraw')
+  }
+})
+
+const { isLoading: isConfirmingWithdraw, isSuccess: isConfirmedWithdraw } =
+  useWaitForTransactionReceipt({
+    hash: withdrawHash
+  })
+watch(isConfirmingWithdraw, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedWithdraw.value) {
+    addSuccessToast('Withdraw Successful')
+  }
+})
+
+const handleNotification = async (notification: Notification) => {
+  await handleWage(notification)
+  await updateNotification(notification)
+}
+
+const handleWage = async (notification: Notification) => {
+  const resourceArr = getResource(notification)
+
+  if (!resourceArr || resourceArr[0] !== 'wage-claim') return
+
+  updateEndPoint.value = `teams/${Number(resourceArr[1])}/cash-remuneration/claim`
+  await getWageClamAPI()
+  console.log(`wageClaim: `, wageClaim.value)
+  updateEndPoint.value = `teams/${String(route.params.id)}`
+  console.log(`endpoint`, updateEndPoint.value)
+  await getTeamAPI()
+  console.log(`cashRemunerationEip712Address: `, team.value.cashRemunerationEip712Address)
+
+  if (team.value.cashRemunerationEip712Address && wageClaim.value) {
+    const claim = {
+      employeeAddress: useUserDataStore().address,
+      hoursWorked: wageClaim.value.hoursWorked,
+      hourlyRate: wageClaim.value.hourlyRate,
+      date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
+    }
+
+    console.log(`executing contract...`)
+
+    executeCashRemunerationWithdraw({
+      address: team.value.cashRemunerationEip712Address as Address,
+      args: [claim, wageClaim.value.cashRemunerationSignature],
+      abi: cashRemunerationEip712ABI,
+      functionName: 'withdraw'
+    })
+  }
 }
 
 const updateNotification = async (notification: Notification) => {
