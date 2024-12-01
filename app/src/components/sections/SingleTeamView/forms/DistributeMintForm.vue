@@ -16,7 +16,7 @@
             v-model="shareholder.shareholder"
             @keyup.stop="
               () => {
-                searchUsers({ name: shareholder.shareholder })
+                searchUsers(shareholder.shareholder ?? '')
                 showDropdown[index] = true
               }
             "
@@ -46,7 +46,8 @@
         </div>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.shareholderWithAmounts.$each.$response.$errors[index].shareholder"
+          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index]
+            .shareholder"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -59,7 +60,7 @@
         </label>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.shareholderWithAmounts.$each.$response.$errors[index].amount"
+          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index].amount"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -128,12 +129,12 @@ const rules = {
   shareholderWithAmounts: {
     $each: helpers.forEach({
       shareholder: {
-        required,
+        required: helpers.withMessage('Address is required', required),
         isAddress: helpers.withMessage('Invalid address', (value: string) => isAddress(value))
       },
       amount: {
-        required,
-        numeric,
+        required: helpers.withMessage('Amount is required', required),
+        numeric: helpers.withMessage('Amount must be a number', numeric),
         minValue: helpers.withMessage('Amount must be greater than 0', (value: number) => value > 0)
       }
     })
@@ -141,6 +142,7 @@ const rules = {
 }
 const $v = useVuelidate(rules, { shareholderWithAmounts })
 const onSubmit = () => {
+  console.log($v.value.shareholderWithAmounts)
   $v.value.$touch()
 
   if ($v.value.$invalid) return
@@ -155,7 +157,7 @@ const onSubmit = () => {
   )
 }
 
-const searchUserName = ref('')
+const search = ref('')
 const foundUsers = ref<User[]>([])
 const showDropdown = reactive<boolean[]>([false])
 
@@ -167,7 +169,8 @@ const {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     const params = new URLSearchParams()
-    params.append('name', searchUserName.value)
+    params.append('name', search.value)
+    params.append('address', search.value)
 
     url += '?' + params.toString()
     return { options, url, cancel }
@@ -181,10 +184,10 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-const searchUsers = async (input: { name: string }) => {
+const searchUsers = async (input: string) => {
   try {
-    if (input.name !== searchUserName.value && input.name.length > 0) {
-      searchUserName.value = input.name
+    if (input !== search.value && input.length > 0) {
+      search.value = input
     }
     await executeSearchUser()
   } catch (error: unknown) {

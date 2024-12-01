@@ -14,7 +14,7 @@
         :disabled="Boolean(address)"
         @keyup.stop="
           () => {
-            searchUsers({ name: to ?? '' })
+            searchUsers(to ?? '')
             showDropdown = true
           }
         "
@@ -113,7 +113,7 @@ const onSubmit = () => {
 
 const $v = useVuelidate(rules, { address: to, amount })
 
-const searchUserName = ref('')
+const search = ref('')
 const foundUsers = ref<User[]>([])
 const showDropdown = ref(false)
 
@@ -125,7 +125,8 @@ const {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
     const params = new URLSearchParams()
-    params.append('name', searchUserName.value)
+    params.append('name', search.value)
+    params.append('address', search.value)
 
     url += '?' + params.toString()
     return { options, url, cancel }
@@ -139,10 +140,10 @@ watch(searchUserResponse, () => {
     foundUsers.value = users.value.users
   }
 })
-const searchUsers = async (input: { name: string }) => {
+const searchUsers = async (input: string) => {
   try {
-    if (input.name !== searchUserName.value && input.name.length > 0) {
-      searchUserName.value = input.name
+    if (input !== search.value && input.length > 0) {
+      search.value = input
     }
     await executeSearchUser()
   } catch (error: unknown) {

@@ -5,6 +5,8 @@
       <table class="table">
         <thead class="text-sm font-bold">
           <tr class="text-center">
+            <th>No</th>
+            <th>Name</th>
             <th>Address</th>
             <th>Balance</th>
             <th>Percentage</th>
@@ -25,10 +27,17 @@
         <tbody v-if="!loading && (shareholders?.length || 0) > 0">
           <tr
             class="text-center"
-            v-for="shareholder in shareholders"
+            v-for="(shareholder, index) in shareholders"
             :key="shareholder.shareholder"
           >
+            <td>{{ index + 1 }}</td>
             <td>
+              {{
+                team.members.filter((member) => member.address == shareholder.shareholder)?.[0]
+                  .name ?? 'Unknown'
+              }}
+            </td>
+            <td class="flex justify-center">
               <AddressToolTip :address="shareholder.shareholder" />
             </td>
             <td>{{ formatEther(shareholder.amount) }} {{ tokenSymbol }}</td>
