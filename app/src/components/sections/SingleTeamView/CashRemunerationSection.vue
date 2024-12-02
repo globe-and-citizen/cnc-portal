@@ -58,6 +58,23 @@
         </tbody>
       </table>
     </div>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <span>Cash Remuneration Balance</span>
+          <div class="font-extrabold text-4xl">
+            <span class="inline-block min-w-16 h-10">
+              <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
+              <span v-else>{{ cashRemunerationBalance?.formatted }} </span>
+            </span>
+            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          </div>
+          <span class="text-xs sm:text-sm">≈ $ 1.28</span>
+        </div>
+        <div class="flex flex-wrap gap-2 sm:gap-4">
+          <span class="text-sm">Cash Remuneration Address </span>
+          <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
+        </div>
+      </div>
   </div>
 </template>
 
@@ -71,7 +88,10 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { log, parseError } from '@/utils'
-import { parseEther } from 'viem'
+import { parseEther, type Address } from 'viem'
+import { useBalance } from '@wagmi/vue'
+import { NETWORK } from '@/constant'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 
 const route = useRoute()
 const web3Library = new EthersJsAdapter()
@@ -87,6 +107,15 @@ const approvalData = ref<{
   id: number
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
+
+const {
+  data: cashRemunerationBalance,
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: props.team.cashRemunerationEip712Address as `${Address}`
+})
 
 //#region add wage claim
 const {
@@ -207,6 +236,7 @@ const approveClaim = async (claim: ClaimResponse) => {
 
 onMounted(async () => {
   await getWageClaimsAPI()
+  await fetchBalance()
   console.log(`wageClaims`, wageClaims.value)
 })
 </script>
