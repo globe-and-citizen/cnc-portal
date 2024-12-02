@@ -65,7 +65,7 @@ const updateNotification = async (req: Request, res: Response) => {
     ) {
       notification = await prisma.notification.update({
         where: {id: _id},
-        data: { isRead: notification?.isRead? false: true }
+        data: { isRead: true }
       })
 
       res.status(201).json({
