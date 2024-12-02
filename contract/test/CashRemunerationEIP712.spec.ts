@@ -150,8 +150,7 @@ describe('CashRemuneration (EIP712)', () => {
 
           const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
 
-          const amount =
-            BigInt(wageClaim.hoursWorked) * wageClaim.hourlyRate
+          const amount = BigInt(wageClaim.hoursWorked) * wageClaim.hourlyRate
 
           await expect(tx).to.changeEtherBalance(employee, amount)
           await expect(tx)
