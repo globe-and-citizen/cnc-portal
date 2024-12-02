@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import CashRemunerationSection from '../CashRemunerationSection.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
 
 // vi.mock('@/stores', () => ({
 //   useUserDataStore: vi.fn()
@@ -15,6 +16,22 @@ vi.mock('vue-router', () => ({
     }
   }))
 }))
+
+const mockUseBalance = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    useBalance: vi.fn(() => mockUseBalance)
+  }
+})
 
 interface ComponentData {
   isSubmittingHours: boolean

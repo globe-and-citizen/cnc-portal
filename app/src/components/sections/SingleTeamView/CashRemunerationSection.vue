@@ -197,8 +197,8 @@ const approveClaim = async (claim: ClaimResponse) => {
   const domain = {
     name: 'CashRemuneration',
     version: '1',
-    chainId, //: 31337n,
-    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+    chainId,
+    verifyingContract
   }
 
   const types = {
@@ -225,7 +225,6 @@ const approveClaim = async (claim: ClaimResponse) => {
     }
     await addApprovalAPI()
     await getWageClaimsAPI()
-    // emits('getTeam')
   } catch (err) {
     log.error(parseError(err))
     addErrorToast(parseError(err))
@@ -237,6 +236,5 @@ const approveClaim = async (claim: ClaimResponse) => {
 onMounted(async () => {
   await getWageClaimsAPI()
   await fetchBalance()
-  console.log(`wageClaims`, wageClaims.value)
 })
 </script>
