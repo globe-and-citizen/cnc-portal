@@ -59,22 +59,22 @@
       </table>
     </div>
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <span>Cash Remuneration Balance</span>
-          <div class="font-extrabold text-4xl">
-            <span class="inline-block min-w-16 h-10">
-              <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-              <span v-else>{{ cashRemunerationBalance?.formatted }} </span>
-            </span>
-            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
-          <span class="text-xs sm:text-sm">≈ $ 1.28</span>
+      <div>
+        <span>Cash Remuneration Balance</span>
+        <div class="font-extrabold text-4xl">
+          <span class="inline-block min-w-16 h-10">
+            <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
+            <span v-else>{{ cashRemunerationBalance?.formatted }} </span>
+          </span>
+          <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
         </div>
-        <div class="flex flex-wrap gap-2 sm:gap-4">
-          <span class="text-sm">Cash Remuneration Address </span>
-          <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
-        </div>
+        <span class="text-xs sm:text-sm">≈ $ 1.28</span>
       </div>
+      <div class="flex flex-wrap gap-2 sm:gap-4">
+        <span class="text-sm">Cash Remuneration Address </span>
+        <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
+      </div>
+    </div>
   </div>
 </template>
 
