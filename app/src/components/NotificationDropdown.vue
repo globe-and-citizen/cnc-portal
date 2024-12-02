@@ -69,7 +69,6 @@ const itemsPerPage = ref(4)
 const totalPages = ref(0)
 
 const updateEndPoint = ref('')
-const route = useRoute()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const {
   //isFetching: isNotificationsFetching,
