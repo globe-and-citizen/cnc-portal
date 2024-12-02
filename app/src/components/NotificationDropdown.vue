@@ -56,7 +56,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { log, parseError } from '@/utils'
-import { type Address } from 'viem'
+import { type Address, parseEther } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
@@ -195,7 +195,7 @@ const handleWage = async (notification: Notification) => {
     const claim = {
       employeeAddress: useUserDataStore().address,
       hoursWorked: wageClaim.value.hoursWorked,
-      hourlyRate: wageClaim.value.hourlyRate,
+      hourlyRate: parseEther(wageClaim.value.hourlyRate),
       date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
     }
 

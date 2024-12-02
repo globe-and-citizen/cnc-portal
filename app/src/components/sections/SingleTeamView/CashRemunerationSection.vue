@@ -71,6 +71,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { log, parseError } from '@/utils'
+import { parseEther } from 'viem'
 
 const route = useRoute()
 const web3Library = new EthersJsAdapter()
@@ -181,7 +182,7 @@ const approveClaim = async (claim: ClaimResponse) => {
   }
 
   const data: WageClaim = {
-    hourlyRate: claim.hourlyRate,
+    hourlyRate: parseEther(claim.hourlyRate),
     hoursWorked: claim.hoursWorked,
     employeeAddress: claim.address,
     date: Math.floor(new Date(claim.createdAt).getTime() / 1000)
