@@ -26,7 +26,7 @@ contract CashRemunerationEIP712 is
      * @dev Represents a wage claim by an employee.
      * @param employeeAddress The address of the employee claiming the wage.
      * @param hoursWorked The number of hours worked by the employee.
-     * @param hourlyRate The hourly wage rate for the employee (in ether). 
+     * @param hourlyRate The hourly wage rate for the employee (in wei). 
      * In ether so the employer is presented with a user friendly intuitive 
      * value when they sign or approve the claim.
      * @param date The timestamp when the claim was made. Used to ensure unique 
@@ -97,8 +97,6 @@ contract CashRemunerationEIP712 is
 
     /**
      * @notice Allows an employee to withdraw their wages.
-     * @dev Hourly rate is in ether so it needs to be multiplied
-     * by 10 ** 18
      * @param wageClaim The details of the wage being claimed.
      * @param signature The ECDSA signature.
      *
@@ -135,7 +133,7 @@ contract CashRemunerationEIP712 is
 
         paidWageClaims[sigHash] = true;
 
-        uint256 amountToPay = wageClaim.hoursWorked * (wageClaim.hourlyRate * 10 ** 18);
+        uint256 amountToPay = wageClaim.hoursWorked * wageClaim.hourlyRate;
 
         payable(wageClaim.employeeAddress).sendValue(amountToPay);
 
