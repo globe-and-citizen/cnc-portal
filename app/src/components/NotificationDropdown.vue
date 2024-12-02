@@ -182,31 +182,35 @@ const handleWage = async (notification: Notification) => {
   const resourceArr = getResource(notification)
 
   if (!resourceArr || resourceArr[0] !== 'wage-claim') return
+  try {
+    updateEndPoint.value = `teams/${Number(resourceArr[1])}/cash-remuneration/claim`
+    await getWageClamAPI()
+    console.log(`wageClaim: `, wageClaim.value)
+    updateEndPoint.value = `teams/${wageClaim.value.teamId}`
+    console.log(`endpoint`, updateEndPoint.value)
+    await getTeamAPI()
+    console.log(`cashRemunerationEip712Address: `, team.value.cashRemunerationEip712Address)
 
-  updateEndPoint.value = `teams/${Number(resourceArr[1])}/cash-remuneration/claim`
-  await getWageClamAPI()
-  console.log(`wageClaim: `, wageClaim.value)
-  updateEndPoint.value = `teams/${String(route.params.id)}`
-  console.log(`endpoint`, updateEndPoint.value)
-  await getTeamAPI()
-  console.log(`cashRemunerationEip712Address: `, team.value.cashRemunerationEip712Address)
+    if (team.value.cashRemunerationEip712Address && wageClaim.value) {
+      const claim = {
+        employeeAddress: useUserDataStore().address,
+        hoursWorked: wageClaim.value.hoursWorked,
+        hourlyRate: parseEther(wageClaim.value.hourlyRate),
+        date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
+      }
 
-  if (team.value.cashRemunerationEip712Address && wageClaim.value) {
-    const claim = {
-      employeeAddress: useUserDataStore().address,
-      hoursWorked: wageClaim.value.hoursWorked,
-      hourlyRate: parseEther(wageClaim.value.hourlyRate),
-      date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
+      console.log(`executing contract...`)
+
+      executeCashRemunerationWithdraw({
+        address: team.value.cashRemunerationEip712Address as Address,
+        args: [claim, wageClaim.value.cashRemunerationSignature],
+        abi: cashRemunerationEip712ABI,
+        functionName: 'withdraw'
+      })
     }
-
-    console.log(`executing contract...`)
-
-    executeCashRemunerationWithdraw({
-      address: team.value.cashRemunerationEip712Address as Address,
-      args: [claim, wageClaim.value.cashRemunerationSignature],
-      abi: cashRemunerationEip712ABI,
-      functionName: 'withdraw'
-    })
+  } catch (error) {
+    addErrorToast(parseError(error))
+    log.error(parseError(error))
   }
 }
 

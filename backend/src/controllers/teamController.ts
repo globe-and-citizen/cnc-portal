@@ -767,7 +767,11 @@ export const getClaim = async (req: Request, res: Response) => {
     })
 
     res.status(201)
-      .json({ ...claim, hourlyRate: memberTeamsData?.hourlyRate })
+      .json({ 
+        ...claim, 
+        hourlyRate: memberTeamsData?.hourlyRate, 
+        teamId: memberTeamsData?.teamId 
+      })
   } catch (error) {
     return errorResponse(500, error, res)
   } finally {
