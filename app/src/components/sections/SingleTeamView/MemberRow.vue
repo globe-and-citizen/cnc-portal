@@ -186,7 +186,7 @@ watch(addMemberWageDataError, (newVal) => {
 const addMemberWageData = async () => {
   wageData.value = {
     maxHoursPerWeek: Number(maxWeeklyHours.value),
-    hourlyRate: Number(hourlyRate.value)
+    hourlyRate: hourlyRate.value
   }
   console.log(`wageData`, wageData.value)
   await addMemberWageDataAPI()
