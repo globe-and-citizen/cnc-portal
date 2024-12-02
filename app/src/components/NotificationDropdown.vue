@@ -53,7 +53,6 @@
 import { ref, computed, watch } from 'vue'
 import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useRoute } from 'vue-router'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { type Address, parseEther } from 'viem'
