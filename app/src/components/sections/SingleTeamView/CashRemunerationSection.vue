@@ -116,6 +116,12 @@ const {
 } = useBalance({
   address: props.team.cashRemunerationEip712Address as `${Address}`
 })
+watch(balanceError, (newVal) => {
+  if (newVal) {
+    addErrorToast(parseError(newVal))
+    log.error(parseError(newVal))
+  }
+})
 
 //#region add wage claim
 const {
