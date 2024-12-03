@@ -4,7 +4,7 @@ import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { ref, type Ref } from 'vue'
 
 vi.mock('@/stores', () => ({
-  useUserDataStore: vi.fn(),
+  useUserDataStore: vi.fn(() => ({ address: '0xUserAddress' })),
   useToastStore: vi.fn(() => ({
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn()
@@ -71,26 +71,44 @@ const mockNotifications = [
 ]
 
 vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: (url: Ref<string>) => ({
-    json: () => ({
-      data: ref({ data: mockNotifications }),
-      execute: vi.fn(),
-      error: ref(null)
-    }),
-    put: () => ({
+  useCustomFetch: (url: Ref<string>) => {
+    const data = ref<unknown>(null)
+    return {
       json: () => ({
-        execute: vi.fn()
-      })
-    }),
-    get: () => ({
-      json: () => ({
-        execute: /*vi.fn()*/ vi.fn(() => {
-          console.log(`url: `, url)
-        }),
+        data: ref({ data: mockNotifications }),
+        execute: vi.fn(/*() => data.value = { data: mockNotifications }*/),
         error: ref(null)
+      }),
+      put: () => ({
+        json: () => ({
+          execute: vi.fn()
+        })
+      }),
+      get: () => ({
+        json: () => ({
+          data, //: ref<unknown>(null),
+          execute: /*vi.fn()*/ vi.fn(() => {
+            console.log(`url: `, url.value)
+            if (url.value === 'teams/1/cash-remuneration/claim') {
+              data.value = {
+                id: 1,
+                createdAt: '2024-02-02T12:00:00Z',
+                address: '0xUserToApprove',
+                hoursWorked: 20,
+                hourlyRate: '17.5',
+                name: 'Local 1',
+                teamId: 1,
+                cashRemunerationSignature: '0xSignature'
+              }
+            } else if (url.value === 'teams/1') {
+              data.value = { cashRemunerationEip712Address: '0xCashRemunerationEip712Address' }
+            }
+          }),
+          error: ref(null)
+        })
       })
-    })
-  })
+    }
+  }
 }))
 
 describe('NotificationDropdown.vue', () => {
@@ -131,6 +149,9 @@ describe('NotificationDropdown.vue', () => {
     expect(notification.exists()).toBeTruthy()
     notification.trigger('click')
     await wrapper.vm.$nextTick()
+
+    await wrapper.vm.$nextTick()
+    expect(mockUseWriteContract.writeContract).toBeCalled
     //expect(getExecute).toHaveBeenCalledWith(`teams/1/cash-remuneration/claim`)
   })
 })

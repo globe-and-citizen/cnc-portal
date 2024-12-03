@@ -190,7 +190,11 @@ const handleWage = async (notification: Notification) => {
     await getTeamAPI()
     console.log(`cashRemunerationEip712Address: `, team.value.cashRemunerationEip712Address)
 
+    console.log(`condition: `, team.value.cashRemunerationEip712Address && wageClaim.value)
+
     if (team.value.cashRemunerationEip712Address && wageClaim.value) {
+      console.log(`executing contract (1)...`)
+
       const claim = {
         employeeAddress: useUserDataStore().address,
         hoursWorked: wageClaim.value.hoursWorked,
@@ -198,7 +202,7 @@ const handleWage = async (notification: Notification) => {
         date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
       }
 
-      console.log(`executing contract...`)
+      console.log(`executing contract (2)...`)
 
       executeCashRemunerationWithdraw({
         address: team.value.cashRemunerationEip712Address as Address,
@@ -208,6 +212,7 @@ const handleWage = async (notification: Notification) => {
       })
     }
   } catch (error) {
+    console.log(`error: `, parseError(error))
     addErrorToast(parseError(error))
     log.error(parseError(error))
   }
