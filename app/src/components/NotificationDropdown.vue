@@ -16,6 +16,7 @@
         <a
           @click="handleNotification(notification)"
           :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
+          :data-test="`notification-${notification.id}`"
         >
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">

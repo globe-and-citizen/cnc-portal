@@ -1,7 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
+import { useCustomFetch } from '@/composables/useCustomFetch';
 
 vi.mock('@/stores', () => ({
   useUserDataStore: vi.fn(),
@@ -58,35 +59,51 @@ const mockNotifications = [
     resource: 'teams/2',
     author: 'Author 2',
     createdAt: '2024-07-02'
+  },
+  {
+    id: '3',
+    message: 'Notification 3',
+    isRead: true,
+    resource: 'wage-claim/1',
+    author: 'Author 2',
+    createdAt: '2024-07-02'
   }
   // Add more mock notifications as needed
 ]
+
+vi.mock('@/composables/useCustomFetch', () => ({
+  useCustomFetch: (url: Ref<string>) => ({
+    json: () => ({
+      data: ref({ data: mockNotifications }),
+      execute: vi.fn(),
+      error: ref(null)
+    }),
+    put: () => ({
+      json: () => ({
+        execute: vi.fn()
+      })
+    }),
+    get: () => ({
+      json: () => ({
+        execute: /*vi.fn()*/vi.fn(() => {
+          console.log(`url: `, url)
+        }),
+        error: ref(null)
+      })
+    })
+  })
+}))
 
 describe('NotificationDropdown.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
     // Mock the fetch function to return the mock notifications
-    vi.mock('@/composables/useCustomFetch', () => ({
-      useCustomFetch: () => ({
-        json: () => ({
-          data: ref({ data: mockNotifications }),
-          execute: vi.fn(),
-          error: ref(null)
-        }),
-        put: () => ({
-          json: () => ({
-            execute: vi.fn()
-          })
-        }),
-        get: () => ({
-          json: () => ({
-            execute: vi.fn(),
-            error: ref(null)
-          })
-        })
-      })
-    }))
+    // vi.mock('@/composables/useCustomFetch', () => ({
+    //   useCustomFetch: mockUseCustomFetch
+    // }))
+
+    
 
     wrapper = mount(NotificationDropdown, {
       props: {}
@@ -109,5 +126,14 @@ describe('NotificationDropdown.vue', () => {
     await wrapper.vm.$nextTick()
     const badge = wrapper.find('.badge')
     expect(badge.exists()).toBe(true)
+  })
+
+  it('calls handle wage correctly', async () => {
+    await wrapper.vm.$nextTick()
+    const notification = wrapper.find('[data-test="notification-3"]')
+    expect(notification.exists()).toBeTruthy()
+    notification.trigger('click')
+    await wrapper.vm.$nextTick()
+    //expect(getExecute).toHaveBeenCalledWith(`teams/1/cash-remuneration/claim`)
   })
 })
