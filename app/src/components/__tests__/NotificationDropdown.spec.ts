@@ -76,7 +76,7 @@ vi.mock('@/composables/useCustomFetch', () => ({
     return {
       json: () => ({
         data: ref({ data: mockNotifications }),
-        execute: vi.fn(/*() => data.value = { data: mockNotifications }*/),
+        execute: vi.fn(),
         error: ref(null)
       }),
       put: () => ({
@@ -86,9 +86,8 @@ vi.mock('@/composables/useCustomFetch', () => ({
       }),
       get: () => ({
         json: () => ({
-          data, //: ref<unknown>(null),
-          execute: /*vi.fn()*/ vi.fn(() => {
-            console.log(`url: `, url.value)
+          data,
+          execute: vi.fn(() => {
             if (url.value === 'teams/1/cash-remuneration/claim') {
               data.value = {
                 id: 1,
@@ -115,11 +114,6 @@ describe('NotificationDropdown.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
-    // Mock the fetch function to return the mock notifications
-    // vi.mock('@/composables/useCustomFetch', () => ({
-    //   useCustomFetch: mockUseCustomFetch
-    // }))
-
     wrapper = mount(NotificationDropdown, {
       props: {}
     })
@@ -152,6 +146,5 @@ describe('NotificationDropdown.vue', () => {
 
     await wrapper.vm.$nextTick()
     expect(mockUseWriteContract.writeContract).toBeCalled
-    //expect(getExecute).toHaveBeenCalledWith(`teams/1/cash-remuneration/claim`)
   })
 })

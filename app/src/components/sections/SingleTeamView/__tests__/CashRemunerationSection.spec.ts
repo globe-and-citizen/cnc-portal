@@ -152,9 +152,6 @@ describe('CashRemunerationSection.vue', () => {
 
       await wrapper.vm.$nextTick()
 
-      console.log(`claims-table exists: `, wrapper.find('[data-test="claims-table"]').exists())
-      //@ts-ignore
-      console.log(`wageClaims`, wrapper.vm.wageClaims)
       expect(wrapper.find('[data-test="action-th"]').exists()).toBeTruthy()
       expect(wrapper.find('[data-test="action-td"]').exists()).toBeTruthy()
     })
@@ -180,12 +177,6 @@ describe('CashRemunerationSection.vue', () => {
 
       const maxHoursInput = wrapper.find('[data-test="hours-worked-input"]')
       const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]')
-
-      console.log(
-        `currentUserAddres: `,
-        (wrapper.vm as unknown as ComponentData).currentUserAddress
-      )
-      console.log(`ownerAddress: `, (wrapper.vm as unknown as ComponentData).team.ownerAddress)
 
       expect(maxHoursInput.exists()).toBeTruthy()
       expect(submitHoursButton.exists()).toBeTruthy()
