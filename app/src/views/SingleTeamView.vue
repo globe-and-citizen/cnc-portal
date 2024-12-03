@@ -6,29 +6,31 @@
       <TeamMeta :team="team" @getTeam="getTeamAPI" />
       <div class="grid grid-cols-4 gap-2">
         <div>
-          <button
-            class="btn btn-primary btn-xs"
+          <ButtonUI
+            size="sm"
+            variant="primary"
             @click="officerModal = true"
             v-if="team.ownerAddress == currentAddress"
             data-test="manageOfficer"
           >
             Manage Deployments
-          </button>
+          </ButtonUI>
         </div>
         <div>
-          <button
-            class="btn btn-primary btn-xs"
+          <ButtonUI
+            size="sm"
+            variant="primary"
             @click="addCampaignModal = true"
             v-if="!team.addCampaignAddress && team.ownerAddress == useUserDataStore().address"
             data-test="createAddCampaign"
           >
             Deploy advertise contract
-          </button>
+          </ButtonUI>
         </div>
       </div>
 
       <ButtonUI
-        size="xs"
+        size="sm"
         variant="primary"
         @click="officerModal = true"
         v-if="team.ownerAddress == currentAddress"

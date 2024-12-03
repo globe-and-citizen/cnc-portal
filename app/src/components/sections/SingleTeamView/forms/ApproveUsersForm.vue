@@ -84,17 +84,21 @@
         class="w-24"
         v-if="loadingApprove"
       />
-      <button
-        class="btn btn-primary"
+      <ButtonUI
+        variant="primary"
         @click="submitApprove"
         v-if="!loadingApprove"
         data-test="approve-button"
       >
         Approve
-      </button>
-      <button data-test="cancel-button" class="btn btn-error" @click="$emit('closeModal')">
+      </ButtonUI>
+      <ButtonUI
+        data-test="cancel-button" 
+        variant="error" 
+        @click="$emit('closeModal')"
+      >
         Cancel
-      </button>
+      </ButtonUI>
     </div>
   </div>
 </template>
@@ -104,6 +108,7 @@ import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers } from '@vuelidate/validators'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const addressToApprove = ref<string>('')
 const addressToDisapprove = ref<string>('')
