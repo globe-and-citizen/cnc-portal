@@ -2,7 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { ref, type Ref } from 'vue'
-import { useCustomFetch } from '@/composables/useCustomFetch';
 
 vi.mock('@/stores', () => ({
   useUserDataStore: vi.fn(),
@@ -85,7 +84,7 @@ vi.mock('@/composables/useCustomFetch', () => ({
     }),
     get: () => ({
       json: () => ({
-        execute: /*vi.fn()*/vi.fn(() => {
+        execute: /*vi.fn()*/ vi.fn(() => {
           console.log(`url: `, url)
         }),
         error: ref(null)
@@ -102,8 +101,6 @@ describe('NotificationDropdown.vue', () => {
     // vi.mock('@/composables/useCustomFetch', () => ({
     //   useCustomFetch: mockUseCustomFetch
     // }))
-
-    
 
     wrapper = mount(NotificationDropdown, {
       props: {}

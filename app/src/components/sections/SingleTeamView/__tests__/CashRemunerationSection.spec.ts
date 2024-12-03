@@ -104,22 +104,24 @@ describe('CashRemunerationSection.vue', () => {
             const data = ref<unknown>(null)
             const error = ref(null)
             const isFetching = ref(false)
-            
+
             const execute = vi.fn(() => {
-              data.value = [{
-                id: 1,
-                createdAt: '2024-02-02T12:00:00Z',
-                address: '0xUserToApprove',
-                hoursWorked: 20,
-                hourlyRate: '17.5',
-                name: 'Local 1'
-              }]
+              data.value = [
+                {
+                  id: 1,
+                  createdAt: '2024-02-02T12:00:00Z',
+                  address: '0xUserToApprove',
+                  hoursWorked: 20,
+                  hourlyRate: '17.5',
+                  name: 'Local 1'
+                }
+              ]
             })
-      
-            const get = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
-            const json = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
-            const post = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
-            const put = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
+
+            const get = vi.fn(() => ({ get, json, execute, data, error, isFetching /*response*/ }))
+            const json = vi.fn(() => ({ get, json, execute, data, error, isFetching /*response*/ }))
+            const post = vi.fn(() => ({ get, json, execute, data, error, isFetching /*response*/ }))
+            const put = vi.fn(() => ({ get, json, execute, data, error, isFetching /*response*/ }))
 
             return {
               post,
@@ -129,7 +131,7 @@ describe('CashRemunerationSection.vue', () => {
               error,
               isFetching,
               execute,
-              data/*,
+              data /*,
               response*/
             }
           })
@@ -179,7 +181,10 @@ describe('CashRemunerationSection.vue', () => {
       const maxHoursInput = wrapper.find('[data-test="hours-worked-input"]')
       const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]')
 
-      console.log(`currentUserAddres: `, (wrapper.vm as unknown as ComponentData).currentUserAddress)
+      console.log(
+        `currentUserAddres: `,
+        (wrapper.vm as unknown as ComponentData).currentUserAddress
+      )
       console.log(`ownerAddress: `, (wrapper.vm as unknown as ComponentData).team.ownerAddress)
 
       expect(maxHoursInput.exists()).toBeTruthy()

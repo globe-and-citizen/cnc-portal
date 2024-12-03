@@ -157,7 +157,9 @@ const {
   // isFetching: isWageClaimsFetching,
   execute: getWageClaimsAPI,
   data: wageClaims
-} = useCustomFetch<ClaimResponse[]>(`teams/${String(route.params.id)}/cash-remuneration/claim/pending`)
+} = useCustomFetch<ClaimResponse[]>(
+  `teams/${String(route.params.id)}/cash-remuneration/claim/pending`
+)
   .get()
   .json()
 // watch(wageClaims, async (newVal) => {
