@@ -4,6 +4,7 @@ import CashRemunerationSection from '../CashRemunerationSection.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import type { Team } from '@/types'
 
 // vi.mock('@/stores', () => ({
 //   useUserDataStore: vi.fn()
@@ -36,6 +37,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 interface ComponentData {
   isSubmittingHours: boolean
   hoursWorked: { hoursWorked: string | undefined }
+  currentUserAddress: string
+  team: Partial<Team>
 }
 
 describe('CashRemunerationSection.vue', () => {
@@ -94,23 +97,65 @@ describe('CashRemunerationSection.vue', () => {
       expect(submittingHoursButton.exists()).toBeTruthy()
       expect(submitHoursButton.exists()).toBeFalsy()
     })
-    // it('should show action column if owner', async () => {
-    //   const wrapper = createComponent({
-    //     global: {
-    //       plugins: [
-    //         createTestingPinia({
-    //           createSpy: vi.fn,
-    //           initialState: {
-    //             user: { address: '0xOwner' }
-    //           }
-    //         })
-    //       ]
-    //     }
-    //   })
+    it('should show action column if owner', async () => {
+      vi.mock('@/composables/useCustomFetch', () => {
+        return {
+          useCustomFetch: vi.fn(() => {
+            const data = ref<unknown>(null)
+            const error = ref(null)
+            const isFetching = ref(false)
+            
+            const execute = vi.fn(() => {
+              data.value = [{
+                id: 1,
+                createdAt: '2024-02-02T12:00:00Z',
+                address: '0xUserToApprove',
+                hoursWorked: 20,
+                hourlyRate: '17.5',
+                name: 'Local 1'
+              }]
+            })
+      
+            const get = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
+            const json = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
+            const post = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
+            const put = vi.fn(() => ({ get, json, execute, data, error, isFetching, /*response*/ }))
 
-    //   expect(wrapper.find('[data-test="action-th"]').exists()).toBeTruthy()
-    //   expect(wrapper.find('[data-test="action-td"]').exists()).toBeTruthy()
-    // })
+            return {
+              post,
+              get,
+              put,
+              json,
+              error,
+              isFetching,
+              execute,
+              data/*,
+              response*/
+            }
+          })
+        }
+      })
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xOwner' }
+              }
+            })
+          ]
+        }
+      })
+
+      await wrapper.vm.$nextTick()
+
+      console.log(`claims-table exists: `, wrapper.find('[data-test="claims-table"]').exists())
+      //@ts-ignore
+      console.log(`wageClaims`, wrapper.vm.wageClaims)
+      expect(wrapper.find('[data-test="action-th"]').exists()).toBeTruthy()
+      expect(wrapper.find('[data-test="action-td"]').exists()).toBeTruthy()
+    })
     it('should hide action column if not owner', async () => {
       const wrapper = createComponent()
 
@@ -133,6 +178,9 @@ describe('CashRemunerationSection.vue', () => {
 
       const maxHoursInput = wrapper.find('[data-test="hours-worked-input"]')
       const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]')
+
+      console.log(`currentUserAddres: `, (wrapper.vm as unknown as ComponentData).currentUserAddress)
+      console.log(`ownerAddress: `, (wrapper.vm as unknown as ComponentData).team.ownerAddress)
 
       expect(maxHoursInput.exists()).toBeTruthy()
       expect(submitHoursButton.exists()).toBeTruthy()

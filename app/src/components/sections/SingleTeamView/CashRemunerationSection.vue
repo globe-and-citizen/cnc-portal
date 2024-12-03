@@ -27,7 +27,7 @@
       </div>
     </div>
     <div class="divider m-0"></div>
-    <div class="overflow-x-auto" v-if="wageClaims">
+    <div class="overflow-x-auto" v-if="wageClaims" data-test="claims-table">
       <table class="table table-zebra">
         <!-- head -->
         <thead class="text-sm font-bold">
@@ -41,7 +41,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="data in wageClaims as ClaimResponse[]" :key="data.id">
+          <tr v-for="data in wageClaims" :key="data.id">
             <td>{{ new Date(data.createdAt).toLocaleDateString() }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.address }}</td>
@@ -157,7 +157,7 @@ const {
   // isFetching: isWageClaimsFetching,
   execute: getWageClaimsAPI,
   data: wageClaims
-} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/pending`)
+} = useCustomFetch<ClaimResponse[]>(`teams/${String(route.params.id)}/cash-remuneration/claim/pending`)
   .get()
   .json()
 // watch(wageClaims, async (newVal) => {
