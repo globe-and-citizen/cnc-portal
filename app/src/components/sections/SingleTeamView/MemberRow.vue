@@ -87,6 +87,7 @@
         >
         <ButtonUI 
           variant="error" 
+          outline
           @click="showSetMemberWageModal = false "
           >Cancel</ButtonUI>
       </div>

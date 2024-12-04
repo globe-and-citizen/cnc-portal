@@ -29,15 +29,6 @@
         </div>
       </div>
 
-      <ButtonUI
-        size="sm"
-        variant="primary"
-        @click="officerModal = true"
-        v-if="team.ownerAddress == currentAddress"
-        data-test="manageOfficer"
-      >
-        Manage Deployments
-      </ButtonUI>
       <ModalComponent v-model="officerModal">
         <OfficerForm
           :team="team"
