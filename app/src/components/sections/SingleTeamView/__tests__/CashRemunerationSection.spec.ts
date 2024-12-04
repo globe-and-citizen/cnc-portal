@@ -183,6 +183,20 @@ describe('CashRemunerationSection.vue', () => {
       // expect((maxHoursInput.element as HTMLInputElement).disabled).toBe(true)
       // expect((submitHoursButton.element as HTMLButtonElement).disabled).toBe(true)
     })
+    it('should display hours worked error if input is invalid', async () => {
+      const wrapper = createComponent()
+
+      const hoursWorkedInput = wrapper.find('[data-test="hours-worked-input"]')
+      const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]')
+
+      expect(hoursWorkedInput.exists()).toBeTruthy()
+      expect(submitHoursButton.exists()).toBeTruthy()
+
+      await submitHoursButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="hours-worked-error"]').exists()).toBeTruthy()
+    })
   })
 
   describe('State', () => {
