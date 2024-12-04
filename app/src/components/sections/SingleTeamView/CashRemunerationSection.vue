@@ -3,17 +3,28 @@
     <div class="flex justify-between">
       <span class="text-2xl sm:text-3xl font-bold">Pending Claims</span>
       <div class="flex gap-2">
-        <label class="input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Hours Worked</span>
-          |
-          <input
-            type="text"
-            class="grow"
-            v-model="hoursWorked.hoursWorked"
-            placeholder="Enter hours worked..."
-            data-test="hours-worked-input"
-          />
-        </label>
+        <div>
+          <label class="input input-bordered flex items-center gap-2 input-md">
+            <span class="w-24">Hours Worked</span>
+            |
+            <input
+              type="text"
+              class="grow"
+              v-model="hoursWorked.hoursWorked"
+              placeholder="Enter hours worked..."
+              data-test="hours-worked-input"
+            />
+          </label>
+
+          <div
+            data-test="hours-worked-error"
+            class="pl-4 text-red-500 text-sm w-full text-left"
+            v-for="error of v$.hoursWorked.$errors"
+            :key="error.$uid"
+          >
+            {{ error.$message }}
+          </div>
+        </div>
         <!--<button class="btn btn-success">Submit Hours</button>-->
         <ButtonUI
           v-if="isSubmittingHours"
@@ -92,6 +103,8 @@ import { parseEther, type Address } from 'viem'
 import { useBalance } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import { useVuelidate } from '@vuelidate/core'
+import { numeric, required } from '@vuelidate/validators'
 
 const route = useRoute()
 const web3Library = new EthersJsAdapter()
@@ -107,6 +120,16 @@ const approvalData = ref<{
   id: number
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
+
+const rules = {
+  hoursWorked: {
+    hoursWorked: {
+      required,
+      numeric
+    }
+  }
+}
+const v$ = useVuelidate(rules, { hoursWorked })
 
 const {
   data: cashRemunerationBalance,
@@ -146,6 +169,10 @@ watch(addWageClaimError, (newVal) => {
 })
 
 const addWageClaim = async () => {
+  v$.value.$touch()
+  if (v$.value.$invalid) {
+    return
+  }
   await addWageClaimAPI()
   await getWageClaimsAPI()
 }
