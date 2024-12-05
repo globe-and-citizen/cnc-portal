@@ -153,20 +153,21 @@
   </div>
 
   <div class="modal-action justify-center">
-    <LoadingButton data-test="loading-approve" color="primary" class="w-24" v-if="loadingApprove" />
     <ButtonUI
+      :loading="loadingApprove"
+      :disabled="loadingApprove"
       variant="primary"
       @click="submitApprove"
-      v-if="!loadingApprove"
       data-test="approve-button"
     >
       Approve
     </ButtonUI>
     <ButtonUI
+      outline
       data-test="cancel-button"
       variant="error"
       @click="clear"
-      :disabled="loadingApprove"
+      
     >
       Cancel
     </ButtonUI>
@@ -174,7 +175,6 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'

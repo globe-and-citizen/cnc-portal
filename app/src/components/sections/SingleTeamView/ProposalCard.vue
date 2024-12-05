@@ -50,12 +50,10 @@
       <hr />
       <span class="mt-4">Are you sure you want to conclude this proposal?</span>
       <div class="flex justify-center">
-        <LoadingButton
-          v-if="concludingProposal || isConfirmingConcludeProposal"
-          color="error mt-4 min-w-16 btn-sm"
-        />
+      
         <ButtonUI
-          v-else
+          :loading="concludingProposal || isConfirmingConcludeProposal"
+          :disabled="concludingProposal || isConfirmingConcludeProposal"
           variant="error" size="sm"
           class="mt-4"
           @click="
@@ -114,7 +112,6 @@ import VotingABI from '@/artifacts/abi/voting.json'
 import VoteForm from '@/components/sections/SingleTeamView/forms/VoteForm.vue'
 import ProposalDetails from '@/components/sections/SingleTeamView/ProposalDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import PieChart from '@/components/PieChart.vue'
 import type { Member, Proposal } from '@/types'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'

@@ -90,8 +90,7 @@
       </div>
     </div>
     <div class="flex justify-center">
-      <LoadingButton color="primary w-24" v-if="isLoading" class="btn btn-primary justify-center" />
-      <ButtonUI variant="primary" class="justify-center" v-else @click="submitForm">Add</ButtonUI>
+      <ButtonUI variant="primary" class="justify-center" :loading="isLoading" :disabled="isLoading" @click="submitForm">Add</ButtonUI>
     </div>
   </div>
 </template>
@@ -101,7 +100,6 @@ import { useVuelidate } from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import type { User } from '@/types'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/solid'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import ButtonUI from '@/components/ButtonUI.vue'
 

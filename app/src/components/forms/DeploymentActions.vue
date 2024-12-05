@@ -85,15 +85,13 @@
       <ButtonUI
         size="sm"
         variant="primary"
-        v-if="!isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
+        :loading="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
+        :disabled="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"        
         @click="deployAllContracts"
       >
         Deploy All Contracts
       </ButtonUI>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployAll || isConfirmingDeployAll"
-      />
+    
     </div>
   </div>
 </template>
@@ -105,7 +103,6 @@ import { useUserDataStore } from '@/stores/user'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
 import { log, parseError } from '@/utils'
-import LoadingButton from '@/components/LoadingButton.vue'
 
 // Contract ABIs and constants
 import OfficerABI from '@/artifacts/abi/officer.json'

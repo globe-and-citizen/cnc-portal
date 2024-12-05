@@ -46,21 +46,20 @@
     </label>
   </div>
   <div class="modal-action justify-center">
-    <LoadingButton v-if="isLoading" color="primary min-w-24" />
-    <button v-else class="btn btn-primary" data-test="submit-edit-user" @click="submitForm">
+    <ButtonUI variant="primary" :loading="isLoading" :disabled="isLoading" data-test="submit-edit-user" @click="submitForm">
       Save
-    </button>
+    </ButtonUI>
   </div>
 </template>
 
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
-import LoadingButton from '../LoadingButton.vue'
 import ToolTip from '@/components/ToolTip.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { useClipboard } from '@vueuse/core'
+import ButtonUI from '../ButtonUI.vue'
 
 // Define the user model and validation rules
 const user = defineModel({

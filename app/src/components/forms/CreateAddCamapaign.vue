@@ -38,7 +38,7 @@
   <h3 class="pt-8">
     By clicking "Deploy Advertisement Contract" you agree to deploy an advertisment campaign
     contract and this may take some time and pay for gas fee.
-    <button class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</button>
+    <ButtonUI class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</ButtonUI>
   </h3>
 
   <div class="modal-action justify-right">

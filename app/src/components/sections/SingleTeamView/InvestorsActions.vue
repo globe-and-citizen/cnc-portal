@@ -2,30 +2,30 @@
   <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
     <h2>Owner Interaction</h2>
     <div class="flex justify-end gap-2 w-full">
-      <button
-        class="btn btn-primary gap-1"
+      <ButtonUI
+        variant="primary"
         data-test="distribute-mint-button"
         :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
         @click="distributeMintModal = true"
       >
         Distribute Mint {{ tokenSymbol }}
-      </button>
-      <button
-        class="btn btn-primary"
+      </ButtonUI>
+      <ButtonUI
+        variant="primary"
         @click="payDividendsModal = true"
         :disabled="
           !tokenSymbol || currentAddress != team.ownerAddress || (shareholders?.length ?? 0) == 0
         "
       >
         Pay Dividends
-      </button>
-      <button
-        class="btn btn-primary gap-1"
+      </ButtonUI>
+      <ButtonUI
+        variant="primary"
         :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
         @click="mintModal = true"
       >
         Mint {{ tokenSymbol }}
-      </button>
+      </ButtonUI>
     </div>
     <ModalComponent v-model="mintModal">
       <MintForm
@@ -70,6 +70,7 @@ import MintForm from '@/components/sections/SingleTeamView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SingleTeamView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SingleTeamView/forms/PayDividendsForm.vue'
 import BANK_ABI from '@/artifacts/abi/bank.json'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const mintModal = ref(false)

@@ -122,18 +122,17 @@
   </div>
 
   <div class="modal-action justify-center mt-6">
-    <LoadingButton v-if="isLoading" color="primary min-w-24" />
-    <button class="btn btn-primary" data-test="submit" @click="submitForm" v-else>Submit</button>
+    <ButtonUI  variant="primary" data-test="submit" :loading="isLoading" :disabled="isLoading" @click="submitForm" >Submit</ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
 import type { User } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { helpers, required } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)

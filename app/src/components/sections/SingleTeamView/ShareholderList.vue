@@ -37,8 +37,8 @@
             </td>
             <td v-else class="text-center">...%</td>
             <td>
-              <button
-                class="btn btn-primary"
+              <ButtonUI
+                variant="primary"
                 :disabled="currentAddress != team.ownerAddress"
                 data-test="mint-individual"
                 @click="
@@ -49,7 +49,7 @@
                 "
               >
                 Mint Individual
-              </button>
+              </ButtonUI>
             </td>
           </tr>
         </tbody>
@@ -78,6 +78,7 @@ import { log } from '@/utils'
 import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
 import ModalComponent from '@/components/ModalComponent.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const mintIndividualModal = ref(false)
 const selectedShareholder = ref<Address | null>(null)

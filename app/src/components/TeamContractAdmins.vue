@@ -41,7 +41,7 @@
       v-if="isLoading"
       class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
     >
-      <LoadingButton color="primary min-w-24" />
+      
     </div>
   </div>
 </template>
@@ -52,7 +52,6 @@ import { isAddress } from 'ethers'
 import { useToastStore } from '@/stores/useToastStore'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
-import LoadingButton from '@/components/LoadingButton.vue'
 import AddressToolTip from './AddressToolTip.vue'
 import ButtonUI from './ButtonUI.vue'
 
