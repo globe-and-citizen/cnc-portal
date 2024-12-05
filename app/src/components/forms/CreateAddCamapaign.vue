@@ -42,15 +42,14 @@
   </h3>
 
   <div class="modal-action justify-right">
-    <LoadingButton color="primary" class="w-44" v-if="loading" />
-    <ButtonUI variant="primary" size="sm" @click="emitCreateAddCampaign" v-if="!loading">
+   
+    <ButtonUI variant="primary" size="sm" @click="emitCreateAddCampaign" :loading="loading" :disabled="loading">
       confirm
     </ButtonUI>
   </div>
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
 
 import { ref, watch } from 'vue'
 import ButtonUI from '../ButtonUI.vue';
