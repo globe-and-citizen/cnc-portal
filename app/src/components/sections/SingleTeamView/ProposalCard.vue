@@ -4,7 +4,7 @@
       <div class="w-1/2">
         <h2 class="card-title">{{ proposal.title }}</h2>
         <span class="text-xs">
-          <span class="badge badge-primary badge-xs">
+          <span class="badge badge-primary badge-md">
             {{
               team.members.find((member: Member) => member.address === proposal.draftedBy)?.name ||
               'Unknown'
@@ -34,16 +34,16 @@
       </div>
     </div>
     <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
-      <button class="btn btn-primary btn-sm" @click="showVoteModal = true">Vote</button>
-      <button class="btn btn-secondary btn-sm" @click="showProposalDetailsModal = true">
+      <ButtonUI variant="primary" size="sm" @click="showVoteModal = true">Vote</ButtonUI>
+      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true">
         View
-      </button>
-      <button class="btn btn-error btn-sm" @click="showConcludeConfirmModal = true">Stop</button>
+      </ButtonUI>
+      <ButtonUI variant="error" size="sm" @click="showConcludeConfirmModal = true">Stop</ButtonUI>
     </div>
     <div class="flex justify-center gap-4 mb-2" v-else>
-      <button class="btn btn-secondary btn-sm" @click="showProposalDetailsModal = true">
+      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true">
         View
-      </button>
+      </ButtonUI>
     </div>
     <ModalComponent v-model="showConcludeConfirmModal">
       <h2>Conclude</h2>
@@ -54,9 +54,10 @@
           v-if="concludingProposal || isConfirmingConcludeProposal"
           color="error mt-4 min-w-16 btn-sm"
         />
-        <button
+        <ButtonUI
           v-else
-          class="btn btn-sm btn-error mt-4"
+          variant="error" size="sm"
+          class="mt-4"
           @click="
             concludeProposal({
               address: props.team.votingAddress as Address,
@@ -67,7 +68,7 @@
           "
         >
           Yes
-        </button>
+        </ButtonUI>
       </div>
     </ModalComponent>
     <ModalComponent v-model="showVoteModal">
@@ -118,6 +119,7 @@ import PieChart from '@/components/PieChart.vue'
 import type { Member, Proposal } from '@/types'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Address } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const chartData = computed(() => {

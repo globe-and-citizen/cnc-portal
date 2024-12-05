@@ -69,8 +69,8 @@
       </div>
     </div>
     <div class="flex justify-center mt-4">
-      <LoadingButton v-if="isLoading" color="primary min-w-24" />
-      <button v-else class="btn btn-primary" @click="castVote">Cast Vote</button>
+     
+      <ButtonUI :loading="isLoading" :disabled="isLoading" variant="primary" @click="castVote">Cast Vote</ButtonUI>
     </div>
   </div>
 </template>
@@ -79,7 +79,7 @@
 import type { Member, Proposal, Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '@/components/ButtonUI.vue';
 const selectedCandidate = ref<string>()
 const selectedOption = ref<string | null>(null)
 

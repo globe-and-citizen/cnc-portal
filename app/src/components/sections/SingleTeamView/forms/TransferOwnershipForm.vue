@@ -42,23 +42,23 @@
   </div>
 
   <div class="modal-action justify-center">
-    <LoadingButton color="primary min-w-24" v-if="transferOwnershipLoading" />
-    <button
-      v-else
-      class="btn btn-primary"
+    <ButtonUI
+      variant="primary"
+      :loading="transferOwnershipLoading"
+      :disabled="transferOwnershipLoading"
       data-test="submit-button"
       @click="submitForm(newOwner, description)"
     >
       Submit
-    </button>
+    </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
 import { required, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { ref } from 'vue'
 import { isAddress } from 'ethers'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const newOwner = ref('')
 const description = ref('')
