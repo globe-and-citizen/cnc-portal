@@ -5,6 +5,7 @@ import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import { useStorage } from '@vueuse/core'
+import NewSingleTeamView from '../views/NewSingleTeamView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,11 @@ const router = createRouter({
       path: '/transactions',
       name: 'transactions',
       component: TransactionsView
+    },
+    {
+      path: '/new-team',
+      name: 'new-team',
+      component: NewSingleTeamView
     }
   ]
 })
