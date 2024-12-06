@@ -43,7 +43,7 @@ ARG VITE_APP_NETWORK_ALIAS
 ENV VITE_APP_BACKEND_URL=$VITE_APP_BACKEND_URL
 ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
 
-RUN npm run build
+RUN npm run build-only
 
 # Use nginx base image for serving Vue app
 FROM nginx:latest AS production
