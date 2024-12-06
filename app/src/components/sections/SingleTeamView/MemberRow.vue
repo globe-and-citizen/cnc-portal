@@ -6,10 +6,7 @@
       <AddressToolTip :address="member.address ?? ''" />
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
-      <div
-        v-if="member.address != ownerAddress && ownerAddress == userDataStore.address"
-        class="flex flex-wrap gap-2"
-      >
+      <div v-if="ownerAddress == userDataStore.address" class="flex flex-wrap gap-2">
         <button
           class="btn btn-error btn-sm"
           @click="() => (showDeleteMemberConfirmModal = true)"
@@ -172,6 +169,13 @@ const {
 })
   .post(wageData)
   .json()
+watch([() => isMemberWageSaving.value, () => addMemberWageDataError.value], async () => {
+  if (!isMemberWageSaving.value && !addMemberWageDataError.value) {
+    addSuccessToast('Wage added successfully')
+    showDeleteMemberConfirmModal.value = false
+    emits('getTeam')
+  }
+})
 watch(addMemberWageDataError, (newVal) => {
   if (newVal) {
     addErrorToast(addMemberWageDataError.value)
@@ -186,5 +190,6 @@ const addMemberWageData = async () => {
   }
   console.log(`wageData`, wageData.value)
   await addMemberWageDataAPI()
+  showSetMemberWageModal.value = false
 }
 </script>
