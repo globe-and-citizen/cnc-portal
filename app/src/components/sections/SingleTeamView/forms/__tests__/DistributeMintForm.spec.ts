@@ -59,4 +59,17 @@ describe('DistributeMintForm', () => {
 
     expect(wrapper.findComponent(LoadingButton).exists()).toBeTruthy()
   })
+
+  it('should emit submit event when button submit clicked', async () => {
+    const wrapper = createComponent()
+
+    const input = wrapper.find('input[data-test="address-input"]')
+    await input.setValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
+
+    const amountInput = wrapper.find('input[data-test="amount-input"]')
+    await amountInput.setValue('1')
+
+    await wrapper.find('button[data-test="submit-button"]').trigger('click')
+    expect(wrapper.emitted('submit')).toBeTruthy()
+  })
 })

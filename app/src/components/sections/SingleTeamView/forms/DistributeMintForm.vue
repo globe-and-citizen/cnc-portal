@@ -97,7 +97,12 @@
 
     <div class="text-center">
       <LoadingButton v-if="loading" class="w-44" color="primary" />
-      <button v-if="!loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
+      <button
+        v-if="!loading"
+        class="btn btn-primary w-44 text-center"
+        data-test="submit-button"
+        @click="onSubmit()"
+      >
         Distribute Mint
       </button>
     </div>
