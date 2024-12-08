@@ -31,9 +31,9 @@
             :key="shareholder.shareholder"
           >
             <td>{{ index + 1 }}</td>
-            <td>
+            <td data-test="shareholder-name">
               {{
-                team.members.filter((member) => member.address == shareholder.shareholder)?.[0]
+                team.members!.filter((member) => member.address == shareholder.shareholder)?.[0]
                   .name ?? 'Unknown'
               }}
             </td>
@@ -47,6 +47,7 @@
             <td v-else class="text-center">...%</td>
             <td>
               <button
+                v-if="currentAddress == team.ownerAddress"
                 class="btn btn-primary"
                 :disabled="currentAddress != team.ownerAddress"
                 data-test="mint-individual"
@@ -95,7 +96,7 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
 
 const props = defineProps<{
-  team: Team
+  team: Partial<Team>
   tokenSymbol: string | undefined
   tokenSymbolLoading: boolean
   totalSupply: bigint | undefined
