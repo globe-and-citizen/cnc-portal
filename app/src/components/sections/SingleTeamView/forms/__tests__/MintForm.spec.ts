@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import MintForm from '../MintForm.vue'
 import type { Address } from 'viem'
@@ -13,6 +13,8 @@ interface Props {
 interface ComponentData {
   to: string
   amount: number
+  showDropdown: boolean
+  foundUsers: { address: string; name: string }[]
 }
 
 describe('MintForm', () => {
@@ -62,5 +64,69 @@ describe('MintForm', () => {
     const wrapper = createComponent({ address: '0x123' })
 
     expect((wrapper.vm as unknown as ComponentData).to).toBe('0x123')
+  })
+
+  it('should render list of user suggestions', async () => {
+    const wrapper = createComponent()
+
+    ;(wrapper.vm as unknown as ComponentData).foundUsers = [
+      { address: '0x123', name: 'John Doe' },
+      { address: '0x456', name: 'Jane Doe' }
+    ]
+    ;(wrapper.vm as unknown as ComponentData).showDropdown = true
+    await wrapper.vm.$nextTick()
+
+    const foundUsers = wrapper.findAll('a[data-test="found-user"]')
+    expect(foundUsers.length).toBe(2)
+  })
+
+  it('should set address and name when click suggestion user', async () => {
+    const wrapper = createComponent()
+
+    ;(wrapper.vm as unknown as ComponentData).foundUsers = [
+      { address: '0x123', name: 'John Doe' },
+      { address: '0x456', name: 'Jane Doe' }
+    ]
+    ;(wrapper.vm as unknown as ComponentData).showDropdown = true
+    await wrapper.vm.$nextTick()
+
+    const foundUser = wrapper.find('a[data-test="found-user"]')
+    await foundUser.trigger('click')
+
+    expect((wrapper.vm as unknown as ComponentData).to).toBe('0x123')
+  })
+
+  it('should render error message when address is invalid', async () => {
+    const wrapper = createComponent()
+
+    const input = wrapper.find('input[data-test="address-input"]')
+    await input.setValue('0x123')
+
+    const amountInput = wrapper.find('input[data-test="amount-input"]')
+    await amountInput.setValue('1')
+
+    await wrapper.find('button[data-test="submit-button"]').trigger('click')
+    await flushPromises()
+
+    const errorMessage = wrapper.find('div[data-test="error-message-to"]')
+    expect(errorMessage.exists()).toBeTruthy()
+    expect(errorMessage.text()).toBe('Invalid address')
+  })
+
+  it('should render error message when amount is invalid', async () => {
+    const wrapper = createComponent()
+
+    const input = wrapper.find('input[data-test="address-input"]')
+    await input.setValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
+
+    const amountInput = wrapper.find('input[data-test="amount-input"]')
+    await amountInput.setValue(null)
+
+    await wrapper.find('button[data-test="submit-button"]').trigger('click')
+    await flushPromises()
+
+    const errorMessage = wrapper.find('div[data-test="error-message-amount"]')
+    expect(errorMessage.exists()).toBeTruthy()
+    expect(errorMessage.text()).toBe('Value is required')
   })
 })

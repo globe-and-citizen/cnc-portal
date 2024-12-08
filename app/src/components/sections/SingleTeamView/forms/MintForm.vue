@@ -28,6 +28,7 @@
       <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
         <li v-for="user in foundUsers" :key="user.address">
           <a
+            data-test="found-user"
             @click="
               () => {
                 to = user.address ?? ''
@@ -42,6 +43,7 @@
     </div>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
+      data-test="error-message-to"
       v-for="error of $v.address.$errors"
       :key="error.$uid"
     >
@@ -55,6 +57,7 @@
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
+      data-test="error-message-amount"
       v-for="error of $v.amount.$errors"
       :key="error.$uid"
     >

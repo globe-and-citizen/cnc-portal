@@ -32,6 +32,7 @@
           <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
             <li v-for="user in foundUsers" :key="user.address">
               <a
+                data-test="found-user"
                 @click="
                   () => {
                     shareholderWithAmounts[index].shareholder = user.address ?? ''
@@ -48,6 +49,7 @@
           class="pl-4 text-red-500 text-sm w-full text-left"
           v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index]
             .shareholder"
+          data-test="error-message-shareholder"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -60,6 +62,7 @@
         </label>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
+          data-test="error-message-amount"
           v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index].amount"
           :key="error.$uid"
         >
@@ -149,6 +152,7 @@ const $v = useVuelidate(rules, { shareholderWithAmounts })
 const onSubmit = () => {
   $v.value.$touch()
 
+  console.log($v.value.shareholderWithAmounts.$errors[0]?.$response.$errors[0].shareholder)
   if ($v.value.$invalid) return
   emits(
     'submit',
@@ -163,7 +167,7 @@ const onSubmit = () => {
 
 const search = ref('')
 const foundUsers = ref<User[]>([])
-const showDropdown = reactive<boolean[]>([false])
+const showDropdown = ref<boolean[]>([false])
 
 const {
   execute: executeSearchUser,
