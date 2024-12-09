@@ -47,7 +47,6 @@
             <td v-else class="text-center">...%</td>
             <td>
               <button
-                v-if="currentAddress == team.ownerAddress"
                 class="btn btn-primary"
                 :disabled="currentAddress != team.ownerAddress"
                 data-test="mint-individual"

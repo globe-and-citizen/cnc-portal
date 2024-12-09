@@ -25,12 +25,15 @@
 
         <div
           class="dropdown"
-          :class="{ 'dropdown-open': !!foundUsers && foundUsers.length > 0 && showDropdown[index] }"
+          :class="{
+            'dropdown-open':
+              !!usersData?.users && usersData?.users.length > 0 && showDropdown[index]
+          }"
           :key="index"
           v-if="showDropdown[index]"
         >
           <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
-            <li v-for="user in foundUsers" :key="user.address">
+            <li v-for="user in usersData?.users" :key="user.address">
               <a
                 data-test="found-user"
                 @click="
@@ -116,7 +119,7 @@
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
-import type { User } from '@/types'
+import { log } from '@/utils'
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/vue/24/outline'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
@@ -166,13 +169,12 @@ const onSubmit = () => {
 }
 
 const search = ref('')
-const foundUsers = ref<User[]>([])
 const showDropdown = ref<boolean[]>([false])
 
 const {
   execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
+  data: usersData,
+  error: errorSearchUser
 } = useCustomFetch('user/search', {
   immediate: false,
   beforeFetch: async ({ options, url, cancel }) => {
@@ -187,23 +189,16 @@ const {
   .get()
   .json()
 
-watch(searchUserResponse, () => {
-  if (searchUserResponse.value?.ok && users.value?.users) {
-    foundUsers.value = users.value.users
+watch(errorSearchUser, (value) => {
+  if (value) {
+    log.error('Failed to search users', value)
+    addErrorToast('Failed to search users')
   }
 })
 const searchUsers = async (input: string) => {
-  try {
-    if (input !== search.value && input.length > 0) {
-      search.value = input
-    }
-    await executeSearchUser()
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      addErrorToast(error.message)
-    } else {
-      addErrorToast('An unknown error occurred')
-    }
+  if (input !== search.value && input.length > 0) {
+    search.value = input
   }
+  await executeSearchUser()
 }
 </script>
