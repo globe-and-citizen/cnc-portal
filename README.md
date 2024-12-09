@@ -75,7 +75,7 @@ In the `./backend` folder, create a `.env` file with the following variables:
   ***PS** : If you are using the docker container we setup in the top section, the URL should be: `DATABASE_URL=postgres://root:root@localhost:5432/cnc-db`*
 
 - **SECRET_KEY**: An HS256 compatible key for securing the application. Example:
-  `SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`²
+  `SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`
 
 - **FRONTEND_URL**: The URL for the frontend application. Example:
   `FRONTEND_URL=http://localhost:5173`
