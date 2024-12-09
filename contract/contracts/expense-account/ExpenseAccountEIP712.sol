@@ -5,6 +5,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract ExpenseAccountEIP712 is 
     OwnableUpgradeable, 
@@ -12,10 +14,17 @@ contract ExpenseAccountEIP712 is
     EIP712Upgradeable, 
     PausableUpgradeable {
 
-    struct BudgetLimit {
-        address approvedAddress;
+    using Address for address payable;
+    using ECDSA for bytes32;
+
+    struct BudgetData {
         BudgetType budgetType;
         uint256 value;
+    }
+
+    struct BudgetLimit {
+        address approvedAddress;
+        BudgetData[] budgetData;
         uint256 expiry;
     }
 
@@ -27,7 +36,7 @@ contract ExpenseAccountEIP712 is
 
     bytes32 constant BUDGETLIMIT_TYPEHASH = 
         keccak256(
-            "BudgetLimit(address approvedAddress,uint8 budgetType,uint256 value,uint256 expiry)"
+            "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry)"
         );
 
     struct Balance {
@@ -56,8 +65,7 @@ contract ExpenseAccountEIP712 is
         return keccak256(abi.encode(
             BUDGETLIMIT_TYPEHASH,
             limit.approvedAddress,
-            limit.budgetType,
-            limit.value,
+            limit.budgetData,
             limit.expiry
         ));
     }
@@ -66,9 +74,7 @@ contract ExpenseAccountEIP712 is
         address to,
         uint256 amount, 
         BudgetLimit calldata limit, 
-        uint8 v, 
-        bytes32 r, 
-        bytes32 s
+        bytes calldata signature
     ) external whenNotPaused {        
         require(msg.sender == limit.approvedAddress, "Withdrawer not approved");
 
@@ -82,7 +88,9 @@ contract ExpenseAccountEIP712 is
             budgetLimitHash(limit)
         ));
 
-        address signer = ecrecover(digest, v, r, s);
+        address signer = digest.recover(signature);//address signer = ecrecover(digest, v, r, s);
+
+        bytes32 sigHash = keccak256(signature);
 
         //require(signer == owner(), signer);
 
@@ -92,20 +100,29 @@ contract ExpenseAccountEIP712 is
 
         require((block.timestamp <= limit.expiry), "Authorization expired");
 
-        if (limit.budgetType == BudgetType.TransactionsPerPeriod) {
-            require(balances[digest].transactionCount <= limit.value, "Transaction limit reached");
-            balances[digest].transactionCount++;
-            payable(to).transfer(amount);
-        } else if (limit.budgetType == BudgetType.AmountPerPeriod) {
-            if (balances[digest].amountWithdrawn+amount > limit.value) {
-                revert AuthorizedAmountExceeded(balances[digest].amountWithdrawn+amount);
+        for (uint8 i = 0; i < limit.budgetData.length; i++) {
+            if (limit.budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
+                require(balances[sigHash].transactionCount <= limit.budgetData[i].value, "Transaction limit reached");
+                balances[sigHash].transactionCount++;
+            } 
+            
+            if (limit.budgetData[i].budgetType == BudgetType.AmountPerPeriod) {
+                if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value) {
+                    revert AuthorizedAmountExceeded(balances[sigHash].amountWithdrawn+amount);
+                }
+                balances[digest].amountWithdrawn+=amount;
             }
-            balances[digest].amountWithdrawn+=amount;
-            payable(to).transfer(amount);
-        } else {
-            require(amount <= limit.value, "Authorized amount exceeded");
-            payable(to).transfer(amount);
+
+            if (limit.budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
+                if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value) {
+                    revert AuthorizedAmountExceeded(balances[sigHash].amountWithdrawn+amount);
+                }
+                require(amount <= limit.budgetData[i].value, "Authorized amount exceeded");
+                balances[sigHash].amountWithdrawn+=amount;
+            }
         }
+
+        payable(to).sendValue(amount);
 
         emit Transfer(limit.approvedAddress, to, amount);
     }
