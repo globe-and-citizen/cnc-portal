@@ -134,23 +134,25 @@ describe('ExpenseAccount (EIP712)', () => {
         })
 
         it('amount per period', async () => {
+          const budgetData = [
+            { budgetType: 1, value: ethers.parseEther('10') }
+          ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
-            budgetType: 1, // AmountPerPeriod
-            value: ethers.parseEther('10'),
+            budgetData,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
-          const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
-
-          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(digest)).amountWithdrawn
-
+          //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
           const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const { v, r, s } = ethers.Signature.from(signature)
+          const signatureHash = ethers.keccak256(signature)
+          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
+
+          //const { v, r, s } = ethers.Signature.from(signature)
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+            .transfer(withdrawer.address, amount, budgetLimit, signature)
 
           const receipt = await tx.wait()
 
@@ -160,7 +162,7 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterAmountWithdrawn = (await expenseAccountProxy.balances(digest)).amountWithdrawn
+          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
           expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
         })
 
