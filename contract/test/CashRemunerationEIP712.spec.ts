@@ -83,7 +83,7 @@ describe('CashRemuneration (EIP712)', () => {
         const wageClaim = {
           employeeAddress: employee.address,
           hoursWorked: 5,
-          hourlyRate: 20,
+          hourlyRate: ethers.parseEther('20'),
           date: Math.floor(Date.now() / 1000)
         }
 
@@ -97,7 +97,7 @@ describe('CashRemuneration (EIP712)', () => {
 
         console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
-        const amount = BigInt(wageClaim.hourlyRate) * ethers.parseEther(`${wageClaim.hoursWorked}`)
+        const amount = BigInt(wageClaim.hoursWorked) * wageClaim.hourlyRate
 
         await expect(tx).to.changeEtherBalance(employee, amount)
         await expect(tx)
@@ -140,7 +140,7 @@ describe('CashRemuneration (EIP712)', () => {
           const wageClaim = {
             employeeAddress: employee.address,
             hoursWorked: 5,
-            hourlyRate: 20,
+            hourlyRate: ethers.parseEther('20'),
             date: Math.floor(Date.now() / 1000) + 1
           }
 
@@ -150,8 +150,7 @@ describe('CashRemuneration (EIP712)', () => {
 
           const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
 
-          const amount =
-            BigInt(wageClaim.hourlyRate) * ethers.parseEther(`${wageClaim.hoursWorked}`)
+          const amount = BigInt(wageClaim.hoursWorked) * wageClaim.hourlyRate
 
           await expect(tx).to.changeEtherBalance(employee, amount)
           await expect(tx)
@@ -168,7 +167,7 @@ describe('CashRemuneration (EIP712)', () => {
           const wageClaim = {
             employeeAddress: employee.address,
             hoursWorked: 5,
-            hourlyRate: 1000,
+            hourlyRate: ethers.parseEther(`1000`),
             date: Math.floor(Date.now() / 1000) + 2
           }
 
