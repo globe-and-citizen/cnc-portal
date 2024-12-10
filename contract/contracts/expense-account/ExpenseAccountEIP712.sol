@@ -128,6 +128,8 @@ contract ExpenseAccountEIP712 is
 
         bytes32 sigHash = keccak256(signature);
 
+        bool isAmountWithdrawn;
+
         for (uint8 i = 0; i < limit.budgetData.length; i++) {
             if (limit.budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
                 require(balances[sigHash].transactionCount <= limit.budgetData[i].value, "Transaction limit reached");
@@ -138,7 +140,10 @@ contract ExpenseAccountEIP712 is
                 if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value) {
                     revert AuthorizedAmountExceeded(balances[sigHash].amountWithdrawn+amount);
                 }
-                balances[sigHash].amountWithdrawn+=amount;
+                if (!isAmountWithdrawn) {
+                    balances[sigHash].amountWithdrawn+=amount;
+                    isAmountWithdrawn = true;
+                }
             }
 
             if (limit.budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
@@ -146,7 +151,10 @@ contract ExpenseAccountEIP712 is
                     revert AuthorizedAmountExceeded(balances[sigHash].amountWithdrawn+amount);
                 }
                 require(amount <= limit.budgetData[i].value, "Authorized amount exceeded");
-                balances[sigHash].amountWithdrawn+=amount;
+                if (!isAmountWithdrawn) {
+                    balances[sigHash].amountWithdrawn+=amount;
+                    isAmountWithdrawn = true;
+                }
             }
         }
 
