@@ -70,6 +70,7 @@ const totalPages = ref(0)
 
 const updateEndPoint = ref('')
 const { addErrorToast, addSuccessToast } = useToastStore()
+const useUserStore = useUserDataStore()
 const {
   //isFetching: isNotificationsFetching,
   //error: notificationError,
@@ -195,7 +196,7 @@ const handleWage = async (notification: Notification) => {
 
   if (team.value.cashRemunerationEip712Address && wageClaim.value) {
     const claim = {
-      employeeAddress: useUserDataStore().address,
+      employeeAddress: useUserStore.address,
       hoursWorked: wageClaim.value.hoursWorked,
       hourlyRate: parseEther(wageClaim.value.hourlyRate),
       date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
