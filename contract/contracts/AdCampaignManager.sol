@@ -98,6 +98,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
         emit PaymentReleased(campaignCode, paymentAmount);
     }
 
+    
     // Advertiser requests to withdraw the remaining budget
     function requestAndApproveWithdrawal(string memory campaignCode,uint256 currentAmountSpent) external nonReentrant {
         uint256 campaignId = campaignCodesToId[campaignCode];
@@ -113,8 +114,8 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
         // Transfer the remaining budget to the advertiser if any
         if (remainingBudget > 0) {
-            (bool success, ) = payable(bankContractAddress).call{ value: remainingBudget }("");
-            require(success, "Transfer to bank contract failed");
+            (bool success, ) = payable(campaign.advertiser).call{ value: remainingBudget }("");
+            require(success, "Transfer to advertiser failed");
         }
         uint256 possibleClaimedAmount=currentAmountSpent-campaign.amountSpent;
         // Transfer the spent amount to the banckContract address
