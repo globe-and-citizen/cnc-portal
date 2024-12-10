@@ -116,6 +116,8 @@ contract ExpenseAccountEIP712 is
     error AmountPerPeriodExceeded(uint256 amount);
 
     error AmountPerTransactionExceeded(uint256 amount);
+
+    //error InvalidBudgetType();
     
     function initialize(address owner) public initializer {
         __Ownable_init(owner);
@@ -180,6 +182,8 @@ contract ExpenseAccountEIP712 is
      * - The number of transactions must not exceed the specified amount.
      * - The total amount withdrawn must not exceed the allowed amount per period.
      * - The amount being transferred must not exceed the allowed amount per transaction.
+     * - The budgetData must not be an empty array.
+     * - The budgetData must be a valid budget type.
      * - The contract must not be paused.
      *
      * Emits a {Withdraw} event.
@@ -196,15 +200,15 @@ contract ExpenseAccountEIP712 is
 
         require(amount > 0, "Amount must be greater than zero");
 
+        require(limit.budgetData.length > 0, "Empty budget data");
+
         bytes32 digest = keccak256(abi.encodePacked(
             "\x19\x01",
             _domainSeparatorV4(),
             budgetLimitHash(limit)
         ));
 
-        address signer = digest.recover(signature);//address signer = ecrecover(digest, v, r, s);
-
-        //require(signer == owner(), signer);
+        address signer = digest.recover(signature);
 
         if (signer != owner()) {
             revert UnauthorizedAccess(owner(), signer);
@@ -220,18 +224,14 @@ contract ExpenseAccountEIP712 is
             if (limit.budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
                 require(balances[sigHash].transactionCount < limit.budgetData[i].value, "Transaction limit reached");
                 balances[sigHash].transactionCount++;
-            } 
-            
-            if (limit.budgetData[i].budgetType == BudgetType.AmountPerPeriod) {
+            } else if (limit.budgetData[i].budgetType == BudgetType.AmountPerPeriod) {
                 if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value)
                     revert AmountPerPeriodExceeded(balances[sigHash].amountWithdrawn+amount);
                 if (!isAmountWithdrawn) {
                     balances[sigHash].amountWithdrawn+=amount;
                     isAmountWithdrawn = true;
                 }
-            }
-
-            if (limit.budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
+            } else if (limit.budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
                 if (amount > limit.budgetData[i].value)
                     revert AmountPerTransactionExceeded(amount);
                 if (!isAmountWithdrawn) {
