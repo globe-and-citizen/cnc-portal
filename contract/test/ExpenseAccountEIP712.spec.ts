@@ -328,6 +328,40 @@ describe('ExpenseAccount (EIP712)', () => {
               .transfer(withdrawer.address, amount, budgetLimit, signature)
           ).to.be.revertedWith('Transaction limit reached')
         })
+        it('the budget data is an empty array', async () => {
+          //@ts-expect-error test empty array passed to contract
+          const budgetData = []
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            //@ts-expect-error test empty array passed to contract
+            budgetData,
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const amount = ethers.parseEther('20')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, signature)
+          ).to.be.revertedWith('Empty budget data')
+        })
+        it('the budget data contains an invalid type', async () => {
+          const budgetData = [{ budgetType: 4, value: ethers.parseEther('20') }]
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetData,
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const amount = ethers.parseEther('20')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, signature)
+          ).to.be.reverted
+        })
         it('the to address is a zero address', async () => {
           const budgetData = [
             { budgetType: 0, value: 1 },
