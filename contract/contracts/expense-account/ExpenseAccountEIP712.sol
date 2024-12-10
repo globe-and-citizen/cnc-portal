@@ -64,7 +64,9 @@ contract ExpenseAccountEIP712 is
 
     error UnauthorizedAccess(address expected, address received);
 
-    error AuthorizedAmountExceeded(uint256 amount);
+    error AmountPerPeriodExceeded(uint256 amount);
+
+    error AmountPerTransactionExceeded(uint256 amount);
     
     function initialize(address owner) public initializer {
         __Ownable_init(owner);
@@ -137,9 +139,8 @@ contract ExpenseAccountEIP712 is
             } 
             
             if (limit.budgetData[i].budgetType == BudgetType.AmountPerPeriod) {
-                if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value) {
-                    revert AuthorizedAmountExceeded(balances[sigHash].amountWithdrawn+amount);
-                }
+                if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value)
+                    revert AmountPerPeriodExceeded(balances[sigHash].amountWithdrawn+amount);
                 if (!isAmountWithdrawn) {
                     balances[sigHash].amountWithdrawn+=amount;
                     isAmountWithdrawn = true;
@@ -147,10 +148,8 @@ contract ExpenseAccountEIP712 is
             }
 
             if (limit.budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
-                if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value) {
-                    revert AuthorizedAmountExceeded(balances[sigHash].amountWithdrawn+amount);
-                }
-                require(amount <= limit.budgetData[i].value, "Authorized amount exceeded");
+                if (amount > limit.budgetData[i].value)
+                    revert AmountPerTransactionExceeded(amount);
                 if (!isAmountWithdrawn) {
                     balances[sigHash].amountWithdrawn+=amount;
                     isAmountWithdrawn = true;
