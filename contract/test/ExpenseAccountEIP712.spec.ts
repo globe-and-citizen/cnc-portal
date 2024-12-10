@@ -48,10 +48,13 @@ describe('ExpenseAccount (EIP712)', () => {
         }
 
         types = {
+          BudgetData: [
+            { name: 'budgetType', type: 'uint8' },
+            { name: 'value', type: 'uint256' }
+          ],
           BudgetLimit: [
             { name: 'approvedAddress', type: 'address' },
-            { name: 'budgetType', type: 'uint8' },
-            { name: 'value', type: 'uint256' },
+            { name: 'budgetData', type: 'BudgetData[]' },
             { name: 'expiry', type: 'uint256' }
           ]
         }
@@ -97,21 +100,25 @@ describe('ExpenseAccount (EIP712)', () => {
         // })
 
         it('transactions per period', async () => {
+
+          const budgetData = [
+            { budgetType: 0, value: 10 }
+          ]
+
           const budgetLimit = {
             approvedAddress: withdrawer.address,
-            budgetType: 0, // TransactionsPerPeriod
-            value: 10,
+            budgetData,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
-          const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
 
-          const beforeTxCount = (await expenseAccountProxy.balances(digest)).transactionCount
           const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const { v, r, s } = ethers.Signature.from(signature)
+          const signatureHash = ethers.keccak256(signature)
+          const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
+          
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
-            .transfer(withdrawer.address, amount, budgetLimit, v, r, s)
+            .transfer(withdrawer.address, amount, budgetLimit, signature)
 
           const receipt = await tx.wait()
 
@@ -122,7 +129,7 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterTxCount = (await expenseAccountProxy.balances(digest)).transactionCount
+          const afterTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
           expect(afterTxCount).to.be.equal(beforeTxCount + BigInt(1))
         })
 
