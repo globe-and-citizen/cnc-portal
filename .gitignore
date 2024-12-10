@@ -36,3 +36,6 @@ coverage
 # Synpress
 .cache-synpress
 test-results
+
+# Local scripts
+deploy.sh
