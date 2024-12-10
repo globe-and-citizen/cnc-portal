@@ -138,7 +138,7 @@ contract ExpenseAccountEIP712 is
                 if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value) {
                     revert AuthorizedAmountExceeded(balances[sigHash].amountWithdrawn+amount);
                 }
-                balances[digest].amountWithdrawn+=amount;
+                balances[sigHash].amountWithdrawn+=amount;
             }
 
             if (limit.budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
