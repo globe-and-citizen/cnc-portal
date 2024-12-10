@@ -136,15 +136,22 @@ watch(getTeamError, () => {
 
 //#region get claim
 const {
-  // error: getClaimError,
+  error: getClaimError,
   // isFetching: isClaimFetching,
   data: wageClaim,
-  execute: getWageClamAPI
+  execute: getWageClaimAPI
 } = useCustomFetch(updateEndPoint, {
   immediate: false
 })
   .get()
   .json()
+
+watch(getClaimError, (newVal) => {
+  if (newVal) {
+    log.error(parseError(getTeamError.value))
+    addErrorToast(getTeamError.value)
+  }
+})
 //#endregion get claim
 
 //#region expense account composable
@@ -181,30 +188,25 @@ const handleWage = async (notification: Notification) => {
   const resourceArr = getResource(notification)
 
   if (!resourceArr || resourceArr[0] !== 'wage-claim') return
-  try {
-    updateEndPoint.value = `teams/${Number(resourceArr[1])}/cash-remuneration/claim`
-    await getWageClamAPI()
-    updateEndPoint.value = `teams/${wageClaim.value.teamId}`
-    await getTeamAPI()
+  updateEndPoint.value = `teams/${Number(resourceArr[1])}/cash-remuneration/claim`
+  await getWageClaimAPI()
+  updateEndPoint.value = `teams/${wageClaim.value.teamId}`
+  await getTeamAPI()
 
-    if (team.value.cashRemunerationEip712Address && wageClaim.value) {
-      const claim = {
-        employeeAddress: useUserDataStore().address,
-        hoursWorked: wageClaim.value.hoursWorked,
-        hourlyRate: parseEther(wageClaim.value.hourlyRate),
-        date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
-      }
-
-      executeCashRemunerationWithdraw({
-        address: team.value.cashRemunerationEip712Address as Address,
-        args: [claim, wageClaim.value.cashRemunerationSignature],
-        abi: cashRemunerationEip712ABI,
-        functionName: 'withdraw'
-      })
+  if (team.value.cashRemunerationEip712Address && wageClaim.value) {
+    const claim = {
+      employeeAddress: useUserDataStore().address,
+      hoursWorked: wageClaim.value.hoursWorked,
+      hourlyRate: parseEther(wageClaim.value.hourlyRate),
+      date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
     }
-  } catch (error) {
-    addErrorToast(parseError(error))
-    log.error(parseError(error))
+
+    executeCashRemunerationWithdraw({
+      address: team.value.cashRemunerationEip712Address as Address,
+      args: [claim, wageClaim.value.cashRemunerationSignature],
+      abi: cashRemunerationEip712ABI,
+      functionName: 'withdraw'
+    })
   }
 }
 
