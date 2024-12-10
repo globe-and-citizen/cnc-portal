@@ -155,7 +155,6 @@ const $v = useVuelidate(rules, { shareholderWithAmounts })
 const onSubmit = () => {
   $v.value.$touch()
 
-  console.log($v.value.shareholderWithAmounts.$errors[0]?.$response.$errors[0].shareholder)
   if ($v.value.$invalid) return
   emits(
     'submit',

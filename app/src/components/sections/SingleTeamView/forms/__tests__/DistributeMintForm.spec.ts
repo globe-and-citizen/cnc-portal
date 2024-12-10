@@ -3,12 +3,34 @@ import { describe, expect, it, vi } from 'vitest'
 import DistributeMintForm from '../DistributeMintForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import LoadingButton from '@/components/LoadingButton.vue'
+import { ref } from 'vue'
 
 vi.mock('@/stores/useToastStore')
+vi.mock('@/composables/useCustomFetch', () => {
+  return {
+    useCustomFetch: vi.fn(() => ({
+      get: () => ({
+        json: () => ({
+          execute: vi.fn(),
+          data: {
+            users: [
+              { address: '0x123', name: 'John Doe' },
+              { address: '0x456', name: 'Jane Doe' }
+            ]
+          },
+          loading: ref(false),
+          error: ref(null)
+        })
+      })
+    }))
+  }
+})
 
 interface ComponentData {
   shareholderWithAmounts: { shareholder: string; amount: string }[]
-  foundUsers: { address: string; name: string }[]
+  usersData: {
+    users: { address: string; name: string }[]
+  }
   showDropdown: boolean[]
 }
 
@@ -78,11 +100,8 @@ describe('DistributeMintForm', () => {
   it('should render list of user suggestions', async () => {
     const wrapper = createComponent()
 
-    ;(wrapper.vm as unknown as ComponentData).foundUsers = [
-      { address: '0x123', name: 'John Doe' },
-      { address: '0x456', name: 'Jane Doe' }
-    ]
-    ;(wrapper.vm as unknown as ComponentData).showDropdown = [true]
+    await wrapper.find('input[data-test="address-input"]').setValue('John')
+    await wrapper.find('input[data-test="address-input"]').trigger('keyup')
     await wrapper.vm.$nextTick()
     const foundUsers = wrapper.findAll('a[data-test="found-user"]')
 
@@ -92,11 +111,8 @@ describe('DistributeMintForm', () => {
   it('should set address and name when click suggestion user', async () => {
     const wrapper = createComponent()
 
-    ;(wrapper.vm as unknown as ComponentData).foundUsers = [
-      { address: '0x123', name: 'John Doe' },
-      { address: '0x456', name: 'Jane Doe' }
-    ]
-    ;(wrapper.vm as unknown as ComponentData).showDropdown = [true]
+    await wrapper.find('input[data-test="address-input"]').setValue('John')
+    await wrapper.find('input[data-test="address-input"]').trigger('keyup')
     await wrapper.vm.$nextTick()
 
     const foundUser = wrapper.find('a[data-test="found-user"]')
