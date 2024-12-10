@@ -362,7 +362,6 @@ describe('ExpenseAccount (EIP712)', () => {
           }
 
           const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const { v, r, s } = ethers.Signature.from(signature)
           const amount = ethers.parseEther('0')
           await expect(
             expenseAccountProxy
