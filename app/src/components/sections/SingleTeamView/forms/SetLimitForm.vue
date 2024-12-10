@@ -39,24 +39,29 @@
     </div>
 
     <div class="modal-action justify-center">
-      <LoadingButton color="primary" class="w-24" v-if="loading" />
-      <button
-        class="btn btn-primary"
+      <ButtonUI
+        variant="primary"
         @click="submitForm"
-        v-if="!loading"
+        :loading="loading"
+        :disabled="loading"
         data-test="transferButton"
       >
         Set Limit
-      </button>
-      <button class="btn btn-error" @click="$emit('closeModal')">Cancel</button>
+      </ButtonUI>
+      <ButtonUI 
+        variant="error"
+        @click="$emit('closeModal')"
+      >
+        Cancel
+      </ButtonUI>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import ButtonUI from '@/components/ButtonUI.vue';
 
 const emit = defineEmits(['setLimit', 'closeModal'])
 const props = defineProps<{ loading: boolean; isBodAction: boolean }>()

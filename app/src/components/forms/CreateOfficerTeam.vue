@@ -96,14 +96,15 @@
     </div>
   </div>
   <div class="flex justify-center">
-    <button
+    <ButtonUI
       @click="createTeam"
-      class="btn btn-primary"
-      v-if="!createTeamLoading && !isConfirmingCreateTeam"
+      variant="primary"
+      :disabled="createTeamLoading || isConfirmingCreateTeam"
+      :loading="createTeamLoading || isConfirmingCreateTeam"
     >
       Create Team
-    </button>
-    <LoadingButton :color="'primary min-w-24'" v-if="createTeamLoading || isConfirmingCreateTeam" />
+    </ButtonUI>
+    
   </div>
 </template>
 
@@ -114,9 +115,9 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useToastStore } from '@/stores'
 import type { Team, User } from '@/types'
 import type { Address } from 'viem'
-import LoadingButton from '../LoadingButton.vue'
 import OfficerABI from '@/artifacts/abi/officer.json'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import ButtonUI from '../ButtonUI.vue'
 
 const props = defineProps<{
   team: Partial<Team>

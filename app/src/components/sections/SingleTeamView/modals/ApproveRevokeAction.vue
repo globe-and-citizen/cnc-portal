@@ -73,19 +73,16 @@
       class="flex justify-center"
       data-test="button-flex"
     >
-      <LoadingButton
-        v-if="loadingApprove || loadingRevoke || isConfirmingApprove || isConfirmingRevoke"
-        color="primary"
-        class="w-48 text-center"
-      />
-      <button
-        v-else
-        class="btn btn-primary w-48"
+     
+      <ButtonUI
+        :loading="loadingApprove || loadingRevoke || isConfirmingApprove || isConfirmingRevoke"
+        :disabled="loadingApprove || loadingRevoke || isConfirmingApprove || isConfirmingRevoke"
+        variant="primary"
         data-test="approve-revoke-button"
         @click="async () => (isApproved ? await revokeAction() : await approveAction())"
       >
         {{ isApproved ? 'Revoke' : 'Approve' }}
-      </button>
+      </ButtonUI>
     </div>
   </div>
 </template>
@@ -94,13 +91,13 @@ import type { Action, Team } from '@/types'
 import type { Address } from 'viem'
 import { useToastStore, useUserDataStore } from '@/stores'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { onMounted, watch } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useBankGetFunction } from '@/composables/bank'
 import { useExpenseGetFunction } from '@/composables/useExpenseAccount'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import BoDABI from '@/artifacts/abi/bod.json'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
   action: Action

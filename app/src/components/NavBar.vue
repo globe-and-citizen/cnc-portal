@@ -12,13 +12,15 @@
           />
         </div>
         <div class="">
-          <button
-            class="btn btn-square btn-ghost drawer-overlay"
+          <ButtonUI
+            shape="square"
+            variant="ghost"
+            class="drawer-overlay"
             @click="emits('toggleSideButton')"
             data-test="toggleSideButton"
           >
             <Bars3Icon class="size-6" />
-          </button>
+          </ButtonUI>
         </div>
       </div>
 
@@ -117,6 +119,7 @@ import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
 import { Bars3Icon } from '@heroicons/vue/24/solid'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 const { logout } = useAuth()

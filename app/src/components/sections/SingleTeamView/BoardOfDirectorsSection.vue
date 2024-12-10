@@ -68,21 +68,22 @@
                 </h4>
               </td>
               <td class="flex justify-end">
-                <LoadingButton
-                  data-test="loading-bank-transfer"
-                  v-if="loadingTransferOwnership || isConfirmingTransferOwnership"
-                  color="primary"
-                  class="w-48"
-                />
-                <button
+                
+                <ButtonUI
                   data-test="transfer-expense-ownership-button"
-                  v-if="
+                  :loading="
                     bankOwner == currentAddress &&
                     bankOwner != team.boardOfDirectorsAddress &&
-                    !loadingTransferOwnership &&
+                    loadingTransferOwnership &&
                     !isConfirmingTransferOwnership
                   "
-                  class="btn btn-primary"
+                  :disabled="
+                   bankOwner == currentAddress &&
+                    bankOwner != team.boardOfDirectorsAddress &&
+                    loadingTransferOwnership &&
+                    !isConfirmingTransferOwnership
+                  "
+                  variant="primary"
                   @click="
                     async () =>
                       transferBankOwnership({
@@ -94,7 +95,7 @@
                   "
                 >
                   Transfer bank ownership
-                </button>
+                </ButtonUI>
               </td>
             </tr>
             <tr v-if="team.expenseAccountAddress">
@@ -111,16 +112,18 @@
                 </h4>
               </td>
               <td class="flex justify-end">
-                <LoadingButton
-                  v-if="loadingTransferExpenseOwnership || isConfirmingExpenseTransferOwnership"
-                  color="primary"
-                  class="w-48"
-                />
-                <button
-                  v-if="
+                
+                <ButtonUI
+                  :loading="
                     expenseOwner == currentAddress &&
                     expenseOwner != team.boardOfDirectorsAddress &&
-                    !loadingTransferExpenseOwnership &&
+                    loadingTransferExpenseOwnership &&
+                    !isConfirmingExpenseTransferOwnership
+                  "
+                   :disabled="
+                    expenseOwner == currentAddress &&
+                    expenseOwner != team.boardOfDirectorsAddress &&
+                    loadingTransferExpenseOwnership &&
                     !isConfirmingExpenseTransferOwnership
                   "
                   class="btn btn-primary"
@@ -135,7 +138,7 @@
                   "
                 >
                   Transfer expense ownership
-                </button>
+                </ButtonUI>
               </td>
             </tr>
           </tbody>
@@ -149,7 +152,6 @@
 
 <script setup lang="ts">
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import ToolTip from '@/components/ToolTip.vue'
 import BoDAction from '@/components/sections/SingleTeamView/BoDActions.vue'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
@@ -163,6 +165,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
 import expenseAccountABI from '@/artifacts/abi/expense-account.json'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
   team: Partial<Team>

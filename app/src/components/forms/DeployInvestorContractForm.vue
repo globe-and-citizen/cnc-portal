@@ -32,15 +32,17 @@
     </div>
 
     <div class="text-center">
-      <LoadingButton v-if="loading" class="w-44" color="primary" />
-      <button
-        v-if="!loading"
-        class="btn btn-primary w-44 text-center"
+     
+      <ButtonUI
+        :loading="loading"
+        :disabled="loading"
+        variant="primary"
+        class="w-44 text-center"
         data-test="deploy-button"
         @click="onSubmit()"
       >
         Deploy
-      </button>
+      </ButtonUI>
     </div>
   </div>
 </template>
@@ -48,7 +50,7 @@
 <script setup lang="ts">
 import useVuelidate from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '../ButtonUI.vue';
 
 const name = defineModel('name')
 const symbol = defineModel('symbol')

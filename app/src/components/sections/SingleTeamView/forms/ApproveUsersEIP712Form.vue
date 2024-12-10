@@ -153,28 +153,28 @@
   </div>
 
   <div class="modal-action justify-center">
-    <LoadingButton data-test="loading-approve" color="primary" class="w-24" v-if="loadingApprove" />
-    <button
-      class="btn btn-primary"
+    <ButtonUI
+      :loading="loadingApprove"
+      :disabled="loadingApprove"
+      variant="primary"
       @click="submitApprove"
-      v-if="!loadingApprove"
       data-test="approve-button"
     >
       Approve
-    </button>
-    <button
+    </ButtonUI>
+    <ButtonUI
+      outline
       data-test="cancel-button"
-      class="btn btn-error"
+      variant="error"
       @click="clear"
-      :disabled="loadingApprove"
+      
     >
       Cancel
-    </button>
+    </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
@@ -182,6 +182,7 @@ import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
   loadingApprove: boolean

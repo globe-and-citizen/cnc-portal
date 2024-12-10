@@ -35,21 +35,16 @@
             <th>{{ index + 1 }}</th>
             <td>{{ `${address.slice(0, 10)}...${address.slice(-10)}` }}</td>
             <td class="flex justify-end">
-              <LoadingButton
-                data-test="loading-disapprove"
-                color="error"
-                class="w-28"
-                v-if="loadingDisapprove && address === addressToDisapprove"
-              />
-              <button
+             
+              <ButtonUI
                 data-test="disapprove-button"
-                v-if="!loadingDisapprove || address !== addressToDisapprove"
+                :loading="loadingDisapprove || address !== addressToDisapprove"
                 :disabled="loadingDisapprove"
-                class="btn btn-error"
+                variant="error"
                 @click="submitDisapprove(address)"
               >
                 Disapprove
-              </button>
+              </ButtonUI>
             </td>
           </tr>
         </tbody>
@@ -78,32 +73,33 @@
     </div>
 
     <div class="modal-action justify-center">
-      <LoadingButton
-        data-test="loading-approve"
-        color="primary"
-        class="w-24"
-        v-if="loadingApprove"
-      />
-      <button
-        class="btn btn-primary"
+     
+      <ButtonUI
+        :loading="loadingApprove"
+        :disabled="loadingApprove"
+        variant="primary"
         @click="submitApprove"
         v-if="!loadingApprove"
         data-test="approve-button"
       >
         Approve
-      </button>
-      <button data-test="cancel-button" class="btn btn-error" @click="$emit('closeModal')">
+      </ButtonUI>
+      <ButtonUI
+        data-test="cancel-button" 
+        variant="error" 
+        @click="$emit('closeModal')"
+      >
         Cancel
-      </button>
+      </ButtonUI>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers } from '@vuelidate/validators'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const addressToApprove = ref<string>('')
 const addressToDisapprove = ref<string>('')

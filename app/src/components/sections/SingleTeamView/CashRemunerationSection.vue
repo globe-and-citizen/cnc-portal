@@ -52,7 +52,7 @@
               class="flex justify-end"
               data-test="action-td"
             >
-              <button class="btn btn-success" @click="approveClaim(data)">Approve</button>
+              <ButtonUI variant="success" @click="approveClaim(data)">Approve</ButtonUI>
             </td>
           </tr>
         </tbody>

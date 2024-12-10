@@ -4,7 +4,7 @@
       <div class="w-1/2">
         <h2 class="card-title">{{ proposal.title }}</h2>
         <span class="text-xs">
-          <span class="badge badge-primary badge-xs">
+          <span class="badge badge-primary badge-md">
             {{
               team.members.find((member: Member) => member.address === proposal.draftedBy)?.name ||
               'Unknown'
@@ -34,29 +34,28 @@
       </div>
     </div>
     <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
-      <button class="btn btn-primary btn-sm" @click="showVoteModal = true">Vote</button>
-      <button class="btn btn-secondary btn-sm" @click="showProposalDetailsModal = true">
+      <ButtonUI variant="primary" size="sm" @click="showVoteModal = true">Vote</ButtonUI>
+      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true">
         View
-      </button>
-      <button class="btn btn-error btn-sm" @click="showConcludeConfirmModal = true">Stop</button>
+      </ButtonUI>
+      <ButtonUI variant="error" size="sm" @click="showConcludeConfirmModal = true">Stop</ButtonUI>
     </div>
     <div class="flex justify-center gap-4 mb-2" v-else>
-      <button class="btn btn-secondary btn-sm" @click="showProposalDetailsModal = true">
+      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true">
         View
-      </button>
+      </ButtonUI>
     </div>
     <ModalComponent v-model="showConcludeConfirmModal">
       <h2>Conclude</h2>
       <hr />
       <span class="mt-4">Are you sure you want to conclude this proposal?</span>
       <div class="flex justify-center">
-        <LoadingButton
-          v-if="concludingProposal || isConfirmingConcludeProposal"
-          color="error mt-4 min-w-16 btn-sm"
-        />
-        <button
-          v-else
-          class="btn btn-sm btn-error mt-4"
+      
+        <ButtonUI
+          :loading="concludingProposal || isConfirmingConcludeProposal"
+          :disabled="concludingProposal || isConfirmingConcludeProposal"
+          variant="error" size="sm"
+          class="mt-4"
           @click="
             concludeProposal({
               address: props.team.votingAddress as Address,
@@ -67,7 +66,7 @@
           "
         >
           Yes
-        </button>
+        </ButtonUI>
       </div>
     </ModalComponent>
     <ModalComponent v-model="showVoteModal">
@@ -113,11 +112,11 @@ import VotingABI from '@/artifacts/abi/voting.json'
 import VoteForm from '@/components/sections/SingleTeamView/forms/VoteForm.vue'
 import ProposalDetails from '@/components/sections/SingleTeamView/ProposalDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import PieChart from '@/components/PieChart.vue'
 import type { Member, Proposal } from '@/types'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Address } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const chartData = computed(() => {

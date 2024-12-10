@@ -6,24 +6,26 @@
       <TeamMeta :team="team" @getTeam="getTeamAPI" />
       <div class="grid grid-cols-4 gap-2">
         <div>
-          <button
-            class="btn btn-primary btn-xs"
+          <ButtonUI
+            size="sm"
+            variant="primary"
             @click="officerModal = true"
             v-if="team.ownerAddress == currentAddress"
             data-test="manageOfficer"
           >
             Manage Deployments
-          </button>
+          </ButtonUI>
         </div>
         <div>
-          <button
-            class="btn btn-primary btn-xs"
+          <ButtonUI
+            size="sm"
+            variant="primary"
             @click="addCampaignModal = true"
             v-if="!team.addCampaignAddress && team.ownerAddress == useUserDataStore().address"
             data-test="createAddCampaign"
           >
             Deploy advertise contract
-          </button>
+          </ButtonUI>
         </div>
       </div>
 
@@ -155,6 +157,7 @@ import CashRemunerationSection from '@/components/sections/SingleTeamView/CashRe
 import { type TeamContract, type Deployment, type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Address } from 'viem'
 import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
 import DeployInvestorContractForm from '@/components/forms/DeployInvestorContractForm.vue'
@@ -167,6 +170,7 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
 import { useDeployAddCampaignContract } from '@/composables/addCampaign'
 import TeamContracts from '@/components/TeamContracts.vue'
+
 
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members, SingleTeamTabs.TeamContract])

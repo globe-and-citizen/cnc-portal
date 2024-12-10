@@ -71,22 +71,21 @@
   </div>
 
   <div class="modal-action justify-center">
-    <LoadingButton color="primary" class="w-24" v-if="loading" />
-    <button class="btn btn-primary" @click="submitForm" v-if="!loading" data-test="transferButton">
+    <ButtonUI variant="primary" @click="submitForm" :loading="loading" :disabled="loading" data-test="transferButton">
       Transfer
-    </button>
-    <button class="btn btn-error" @click="$emit('closeModal')">Cancel</button>
+    </ButtonUI>
+    <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
   </div>
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
 import { NETWORK } from '@/constant'
 import type { User } from '@/types'
 import { ref, watch } from 'vue'
 import { isAddress } from 'ethers'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import ButtonUI from '../ButtonUI.vue'
 
 const amount = ref<string>('0')
 const to = ref<string | null>(null)

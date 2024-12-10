@@ -87,15 +87,15 @@
         </div>
 
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
-          <button
-            class="btn btn-secondary"
+          <ButtonUI
+            variant="secondary"
             :disabled="!_expenseAccountData?.data"
             v-if="true"
             @click="transferModal = true"
             data-test="transfer-button"
           >
             Transfer
-          </button>
+          </ButtonUI>
         </div>
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
@@ -155,6 +155,7 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, parseSignature, hashTypedData } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 //#endregion imports
 
