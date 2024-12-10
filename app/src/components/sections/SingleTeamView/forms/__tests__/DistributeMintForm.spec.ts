@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import DistributeMintForm from '../DistributeMintForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import LoadingButton from '@/components/LoadingButton.vue'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
 
 vi.mock('@/stores/useToastStore')
@@ -19,7 +20,7 @@ vi.mock('@/composables/useCustomFetch', () => {
             ]
           },
           loading: ref(false),
-          error: ref(null)
+          error: ref<unknown>(null)
         })
       })
     }))
@@ -32,6 +33,7 @@ interface ComponentData {
     users: { address: string; name: string }[]
   }
   showDropdown: boolean[]
+  errorSearchUser: unknown
 }
 
 describe('DistributeMintForm', () => {
@@ -155,5 +157,15 @@ describe('DistributeMintForm', () => {
     const errorMessage = wrapper.find('div[data-test="error-message-amount"]')
     expect(errorMessage.exists()).toBeTruthy()
     expect(errorMessage.text()).toBe('Amount is required')
+  })
+
+  it('should add error toast if there is an error when searching users', async () => {
+    const { addErrorToast } = useToastStore()
+    const wrapper = createComponent()
+
+    ;(wrapper.vm as unknown as ComponentData).errorSearchUser = 'error'
+    await wrapper.vm.$nextTick()
+
+    expect(addErrorToast).toHaveBeenCalled()
   })
 })
