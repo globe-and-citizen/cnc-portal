@@ -100,10 +100,7 @@ describe('ExpenseAccount (EIP712)', () => {
         // })
 
         it('transactions per period', async () => {
-
-          const budgetData = [
-            { budgetType: 0, value: 10 }
-          ]
+          const budgetData = [{ budgetType: 0, value: 10 }]
 
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -114,7 +111,7 @@ describe('ExpenseAccount (EIP712)', () => {
           const signature = await owner.signTypedData(domain, types, budgetLimit)
           const signatureHash = ethers.keccak256(signature)
           const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-          
+
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
@@ -134,9 +131,7 @@ describe('ExpenseAccount (EIP712)', () => {
         })
 
         it('amount per period', async () => {
-          const budgetData = [
-            { budgetType: 1, value: ethers.parseEther('10') }
-          ]
+          const budgetData = [{ budgetType: 1, value: ethers.parseEther('10') }]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
@@ -146,7 +141,8 @@ describe('ExpenseAccount (EIP712)', () => {
           //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
           const signature = await owner.signTypedData(domain, types, budgetLimit)
           const signatureHash = ethers.keccak256(signature)
-          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
+          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
+            .amountWithdrawn
 
           //const { v, r, s } = ethers.Signature.from(signature)
           const amount = ethers.parseEther('5')
@@ -162,14 +158,13 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
+          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
+            .amountWithdrawn
           expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
         })
 
         it('amount per transaction', async () => {
-          const budgetData = [
-            { budgetType: 2, value: ethers.parseEther('10') }
-          ]
+          const budgetData = [{ budgetType: 2, value: ethers.parseEther('10') }]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
@@ -179,8 +174,9 @@ describe('ExpenseAccount (EIP712)', () => {
           const signature = await owner.signTypedData(domain, types, budgetLimit)
           const signatureHash = ethers.keccak256(signature)
 
-          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
-          
+          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
+            .amountWithdrawn
+
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
@@ -195,14 +191,15 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
+          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
+            .amountWithdrawn
           expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
         })
 
         it('all limits', async () => {
           const budgetData = [
             { budgetType: 0, value: 10 },
-            { budgetType: 1, value: ethers.parseEther('10') },    
+            { budgetType: 1, value: ethers.parseEther('10') },
             { budgetType: 2, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
@@ -214,9 +211,10 @@ describe('ExpenseAccount (EIP712)', () => {
           const signature = await owner.signTypedData(domain, types, budgetLimit)
           const signatureHash = ethers.keccak256(signature)
 
-          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
+          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
+            .amountWithdrawn
           const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-          
+
           const amount = ethers.parseEther('5')
           const tx = await expenseAccountProxy
             .connect(withdrawer)
@@ -231,7 +229,8 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(tx)
             .to.emit(expenseAccountProxy, 'Transfer')
             .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash)).amountWithdrawn
+          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
+            .amountWithdrawn
           const afterTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
           expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
           expect(afterTxCount).to.be.equal(beforeTxCount + BigInt(1))
@@ -242,7 +241,7 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the signer is not the contract owner', async () => {
           const budgetData = [
             { budgetType: 0, value: 10 },
-            { budgetType: 1, value: ethers.parseEther('10') },    
+            { budgetType: 1, value: ethers.parseEther('10') },
             { budgetType: 2, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
@@ -252,7 +251,7 @@ describe('ExpenseAccount (EIP712)', () => {
           }
 
           const signature = await imposter.signTypedData(domain, types, budgetLimit)
-          
+
           const amount = ethers.parseEther('5')
           await expect(
             expenseAccountProxy
@@ -264,7 +263,7 @@ describe('ExpenseAccount (EIP712)', () => {
           const budgetData = [
             { budgetType: 0, value: 10 },
             { budgetType: 2, value: ethers.parseEther('20') },
-            { budgetType: 1, value: ethers.parseEther('10') },    
+            { budgetType: 1, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -283,7 +282,7 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the amount per transaction exceeds the budget limit', async () => {
           const budgetData = [
             { budgetType: 0, value: 10 },
-            { budgetType: 1, value: ethers.parseEther('50') },    
+            { budgetType: 1, value: ethers.parseEther('50') },
             { budgetType: 2, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
@@ -303,7 +302,7 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the number of transactions exceed the transaction limit', async () => {
           const budgetData = [
             { budgetType: 0, value: 1 },
-            { budgetType: 1, value: ethers.parseEther('50') },    
+            { budgetType: 1, value: ethers.parseEther('50') },
             { budgetType: 2, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
@@ -324,15 +323,15 @@ describe('ExpenseAccount (EIP712)', () => {
             }
           }
           await expect(
-              expenseAccountProxy
-                .connect(withdrawer)
-                .transfer(withdrawer.address, amount, budgetLimit, signature)
-            ).to.be.revertedWith('Transaction limit reached')
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, signature)
+          ).to.be.revertedWith('Transaction limit reached')
         })
         it('the to address is a zero address', async () => {
           const budgetData = [
             { budgetType: 0, value: 1 },
-            { budgetType: 1, value: ethers.parseEther('50') },    
+            { budgetType: 1, value: ethers.parseEther('50') },
             { budgetType: 2, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
@@ -346,13 +345,18 @@ describe('ExpenseAccount (EIP712)', () => {
           await expect(
             expenseAccountProxy
               .connect(withdrawer)
-              .transfer('0x0000000000000000000000000000000000000000', amount, budgetLimit, signature)
+              .transfer(
+                '0x0000000000000000000000000000000000000000',
+                amount,
+                budgetLimit,
+                signature
+              )
           ).to.be.revertedWith('Address required')
         })
         it('the amount is zero or negative', async () => {
           const budgetData = [
             { budgetType: 0, value: 1 },
-            { budgetType: 1, value: ethers.parseEther('50') },    
+            { budgetType: 1, value: ethers.parseEther('50') },
             { budgetType: 2, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
@@ -372,7 +376,7 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the approval has expired', async () => {
           const budgetData = [
             { budgetType: 0, value: 1 },
-            { budgetType: 1, value: ethers.parseEther('50') },    
+            { budgetType: 1, value: ethers.parseEther('50') },
             { budgetType: 2, value: ethers.parseEther('10') }
           ]
           const budgetLimit = {
