@@ -34,9 +34,21 @@ contract ExpenseAccountEIP712 is
         AmountPerTransaction
     }
 
+    // string private constant BUDGETDATA_TYPE = "BudgetData(budgetType uint8,value uint256)";
+
+    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value)";
+
+    string private constant BUDGETLIMIT_TYPE = 
+        "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry)";
+
+    bytes32 constant BUDGETDATA_TYPEHASH = 
+        keccak256(
+            abi.encodePacked(BUDGETDATA_TYPE)
+        );
+
     bytes32 constant BUDGETLIMIT_TYPEHASH = 
         keccak256(
-            "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry)"
+            abi.encodePacked(BUDGETLIMIT_TYPE, BUDGETDATA_TYPE)
         );
 
     struct Balance {
@@ -61,11 +73,27 @@ contract ExpenseAccountEIP712 is
         __EIP712_init("CNCExpenseAccount", "1");
     }
 
+    function singleBudgetDataHash (BudgetData calldata budgetData) private pure returns( bytes32 ) {
+        return keccak256(abi.encode(
+            BUDGETDATA_TYPEHASH,
+            budgetData.budgetType,
+            budgetData.value
+        ));
+    }
+
+    function budgetDataHash (BudgetData[] calldata budgetData) private pure returns( bytes32 ) {
+        bytes32[] memory hashes = new bytes32[](budgetData.length);
+        for (uint8 i = 0; i < budgetData.length; i++) {
+            hashes[i] = singleBudgetDataHash(budgetData[i]);
+        }
+        return keccak256(abi.encodePacked(hashes)); // Hash the array of hashes
+    }
+
     function budgetLimitHash (BudgetLimit calldata limit) private pure returns( bytes32 ) {
         return keccak256(abi.encode(
             BUDGETLIMIT_TYPEHASH,
             limit.approvedAddress,
-            limit.budgetData,
+            budgetDataHash(limit.budgetData),
             limit.expiry
         ));
     }
@@ -90,8 +118,6 @@ contract ExpenseAccountEIP712 is
 
         address signer = digest.recover(signature);//address signer = ecrecover(digest, v, r, s);
 
-        bytes32 sigHash = keccak256(signature);
-
         //require(signer == owner(), signer);
 
         if (signer != owner()) {
@@ -99,6 +125,8 @@ contract ExpenseAccountEIP712 is
         }
 
         require((block.timestamp <= limit.expiry), "Authorization expired");
+
+        bytes32 sigHash = keccak256(signature);
 
         for (uint8 i = 0; i < limit.budgetData.length; i++) {
             if (limit.budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
