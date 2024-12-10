@@ -134,7 +134,7 @@ contract ExpenseAccountEIP712 is
 
         for (uint8 i = 0; i < limit.budgetData.length; i++) {
             if (limit.budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
-                require(balances[sigHash].transactionCount <= limit.budgetData[i].value, "Transaction limit reached");
+                require(balances[sigHash].transactionCount < limit.budgetData[i].value, "Transaction limit reached");
                 balances[sigHash].transactionCount++;
             } 
             
