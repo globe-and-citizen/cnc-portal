@@ -9,14 +9,13 @@ import type {
   ValidationRuleWithParams
 } from '@vuelidate/core'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import { wrap } from 'module'
 
 interface ComponentData {
-  selectedOptions: {[key in 0 | 1 | 2]: boolean}
-  values: {[key in 0 | 1 | 2 ]: null | string | number}
+  selectedOptions: { [key in 0 | 1 | 2]: boolean }
+  values: { [key in 0 | 1 | 2]: null | string | number }
   resultArray: {
-    budgetType: number;
-    value: string | number;
+    budgetType: number
+    value: string | number
   }[]
   budgetLimitType: 0 | 1 | 2 | null
   limitValue: string
@@ -201,9 +200,12 @@ describe('ApproveUsersForm', () => {
         1: null,
         2: null
       })
-      expect((wrapper.vm as unknown as ComponentData).resultArray).toStrictEqual([{
-        budgetType: 0, value: 1000
-      }])
+      expect((wrapper.vm as unknown as ComponentData).resultArray).toStrictEqual([
+        {
+          budgetType: 0,
+          value: 1000
+        }
+      ])
     })
     it('should update description when description is entered in description input', async () => {
       const wrapper = createComponent({ props: { isBodAction: true } })
