@@ -224,11 +224,10 @@ import { computed, reactive, ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
-import { helpers, numeric, required } from '@vuelidate/validators'
+import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -243,7 +242,6 @@ const description = ref<string>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
-const web3Library = new EthersJsAdapter()
 
 //#region multi limit
 // Labels for budget types

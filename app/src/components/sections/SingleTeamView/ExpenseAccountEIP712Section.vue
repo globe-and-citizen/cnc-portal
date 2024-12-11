@@ -154,7 +154,7 @@ import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, parseSignature, hashTypedData, keccak256 } from 'viem'
+import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 
 //#endregion imports
 
@@ -212,7 +212,6 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
 const expenseBalanceFormated = ref<string | number>(`0`)
-const digest = ref<string | null>(null)
 const signatureHash = ref<string | null>(null)
 //#endregion variable declarations
 
@@ -342,11 +341,6 @@ watch(searchUserResponse, () => {
 })
 
 //#region helper functions
-const getDigest = async () => {
-  if (!_expenseAccountData?.value?.data) return
-  let signature = _expenseAccountData.value.signature
-  signatureHash.value = keccak256(signature)
-}
 const init = async () => {
   await fetchExpenseAccountData()
   await getExpenseAccountOwner()
@@ -396,30 +390,6 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
       abi: expenseAccountABI,
       functionName: 'transfer'
     })
-  }
-}
-
-const getDomain = async () => {
-  const provider = await web3Library.getProvider()
-  const chainId = (await provider.getNetwork()).chainId
-  const verifyingContract = team.value.expenseAccountEip712Address as Address
-
-  return {
-    name: 'CNCExpenseAccount',
-    version: '1',
-    chainId, //: 31337n,
-    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
-  }
-}
-
-const getTypes = async () => {
-  return {
-    BudgetLimit: [
-      { name: 'approvedAddress', type: 'address' },
-      { name: 'budgetType', type: 'uint8' },
-      { name: 'value', type: 'uint256' },
-      { name: 'expiry', type: 'uint256' }
-    ]
   }
 }
 
