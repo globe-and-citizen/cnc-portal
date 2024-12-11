@@ -13,6 +13,7 @@ import {
 } from '../teamController'
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from 'vitest'
+import { Claim } from '@prisma/client';
 
 vi.mock('../../utils') 
 
@@ -25,6 +26,23 @@ function setAddressMiddleware(address: string) {
 
 describe('Cash Remuneration', () => {
   describe('GET /:id/cash-remuneration/claim', () => {
+    const mockClaimData = {
+      id: 1,
+      createdAt: new Date('2024-02-02T12:00:00Z'),
+      status: 'approved',
+      hoursWorked: 20,
+      cashRemunerationSignature: '0xSignature',
+      memberTeamsDataId: 1
+    }
+    const mockMemberTeamsData = { 
+      id: 1, 
+      userAddress: '0xMemberAddress', 
+      teamId: 1, 
+      expenseAccountData: null, 
+      expenseAccountSignature: null,
+      hourlyRate: 10,
+      maxHoursPerWeek: 20
+    }
     beforeEach(() => {
       vi.clearAllMocks()
     })
@@ -43,14 +61,32 @@ describe('Cash Remuneration', () => {
         message: 'Resource Not Found'
       })
     })
+    it('should return 201 if claim retrieved successfully', async () => {
+      const app = express()
+      app.use(express.json())
+      app.get('/:id/cash-remuneration/claim', getClaim)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(mockClaimData)
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockMemberTeamsData)
+
+      const response = await request(app)
+        .get('/1/cash-remuneration/claim')
+
+      expect(response.status).toBe(201)
+      expect(response.body).toEqual({
+        ...mockClaimData,
+        createdAt: '2024-02-02T12:00:00.000Z',
+        hourlyRate: mockMemberTeamsData.hourlyRate,
+        teamId: mockMemberTeamsData.teamId
+      })
+    })
     it('should return 500 if there is a server error', async () => {
       const app = express()
       app.use(express.json())
-      app.get('/:id/cash-remuneration/claim/:status', getClaim)
+      app.get('/:id/cash-remuneration/claim', getClaim)
       vi.spyOn(prisma.claim, 'findUnique').mockRejectedValue(new Error("Server error"))
 
       const response = await request(app)
-        .get('/1/cash-remuneration/claim/pending')
+        .get('/1/cash-remuneration/claim')
 
       expect(response.status).toBe(500)
       expect(response.body).toEqual({
