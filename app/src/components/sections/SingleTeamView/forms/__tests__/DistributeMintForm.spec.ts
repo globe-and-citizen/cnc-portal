@@ -102,7 +102,7 @@ describe('DistributeMintForm', () => {
   it('should render list of user suggestions', async () => {
     const wrapper = createComponent()
 
-    await wrapper.find('input[data-test="address-input"]').setValue('John')
+    await wrapper.find('input[data-test="address-input"]').setValue('Doe')
     await wrapper.find('input[data-test="address-input"]').trigger('keyup')
     await wrapper.vm.$nextTick()
     const foundUsers = wrapper.findAll('a[data-test="found-user"]')

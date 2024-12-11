@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import MintForm from '../MintForm.vue'
 import type { Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
 interface Props {
   address: Address | undefined
@@ -15,9 +17,31 @@ interface ComponentData {
   amount: number
   showDropdown: boolean
   foundUsers: { address: string; name: string }[]
+  searchError: unknown
 }
 
-describe('MintForm', () => {
+vi.mock('@/composables/useCustomFetch', () => {
+  return {
+    useCustomFetch: vi.fn(() => ({
+      get: () => ({
+        json: () => ({
+          execute: vi.fn(),
+          data: {
+            users: [
+              { address: '0x123', name: 'John Doe' },
+              { address: '0x456', name: 'Jane Doe' }
+            ]
+          },
+          loading: ref(false),
+          error: ref<unknown>(null)
+        })
+      })
+    }))
+  }
+})
+vi.mock('@/stores/useToastStore')
+
+describe.only('MintForm', () => {
   const createComponent = (props?: Partial<Props>) => {
     return shallowMount(MintForm, {
       props: {
@@ -69,11 +93,8 @@ describe('MintForm', () => {
   it('should render list of user suggestions', async () => {
     const wrapper = createComponent()
 
-    ;(wrapper.vm as unknown as ComponentData).foundUsers = [
-      { address: '0x123', name: 'John Doe' },
-      { address: '0x456', name: 'Jane Doe' }
-    ]
-    ;(wrapper.vm as unknown as ComponentData).showDropdown = true
+    await wrapper.find('input[data-test="address-input"]').setValue('John')
+    await wrapper.find('input[data-test="address-input"]').trigger('keyup')
     await wrapper.vm.$nextTick()
 
     const foundUsers = wrapper.findAll('a[data-test="found-user"]')
@@ -83,11 +104,8 @@ describe('MintForm', () => {
   it('should set address and name when click suggestion user', async () => {
     const wrapper = createComponent()
 
-    ;(wrapper.vm as unknown as ComponentData).foundUsers = [
-      { address: '0x123', name: 'John Doe' },
-      { address: '0x456', name: 'Jane Doe' }
-    ]
-    ;(wrapper.vm as unknown as ComponentData).showDropdown = true
+    await wrapper.find('input[data-test="address-input"]').setValue('Doe')
+    await wrapper.find('input[data-test="address-input"]').trigger('keyup')
     await wrapper.vm.$nextTick()
 
     const foundUser = wrapper.find('a[data-test="found-user"]')
@@ -128,5 +146,15 @@ describe('MintForm', () => {
     const errorMessage = wrapper.find('div[data-test="error-message-amount"]')
     expect(errorMessage.exists()).toBeTruthy()
     expect(errorMessage.text()).toBe('Value is required')
+  })
+
+  it('should add error toast if there is an error when searching users', async () => {
+    const { addErrorToast } = useToastStore()
+    const wrapper = createComponent()
+
+    ;(wrapper.vm as unknown as ComponentData).searchError = 'error'
+    await wrapper.vm.$nextTick()
+
+    expect(addErrorToast).toHaveBeenCalled()
   })
 })

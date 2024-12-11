@@ -169,21 +169,15 @@ const onSubmit = () => {
 
 const search = ref('')
 const showDropdown = ref<boolean[]>([false])
+const url = ref('user/search')
 
 const {
   execute: executeSearchUser,
   data: usersData,
   error: errorSearchUser
-} = useCustomFetch('user/search', {
+} = useCustomFetch(url, {
   immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    params.append('name', search.value)
-    params.append('address', search.value)
-
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
+  refetch: true
 })
   .get()
   .json()
@@ -198,6 +192,12 @@ const searchUsers = async (input: string) => {
   if (input !== search.value && input.length > 0) {
     search.value = input
   }
+
+  const params = new URLSearchParams()
+  params.append('name', search.value)
+  params.append('address', search.value)
+  url.value += '?' + params.toString()
+
   await executeSearchUser()
 }
 </script>
