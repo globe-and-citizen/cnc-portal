@@ -143,6 +143,45 @@
     {{ error.$message }}
   </div>
 
+  <!-- #region Multi Limit Inputs-->
+  <div class="space-y-4">
+    <div
+      v-for="(label, budgetType) in budgetTypes"
+      :key="budgetType"
+      class="flex items-center gap-4 p-4 border border-gray-300 rounded-lg shadow-md"
+    >
+      <!-- Checkbox -->
+      
+      <!-- Numeric Input -->
+      <label :for="'checkbox-' + budgetType" class="input input-bordered flex items-center gap-2 input-md mt-2">
+        <input
+          type="checkbox"
+          class="checkbox checkbox-primary"
+          v-model="selectedOptions[budgetType]"
+          :id="'checkbox-' + budgetType"
+          @change="toggleOption(budgetType)"
+        />
+        
+        <span class="w-48">{{ label }}</span>|
+        <input
+          :disabled="!selectedOptions[budgetType]"
+          type="number"
+          class="grow pl-4"
+          v-model.number="values[budgetType]"
+          placeholder="Enter value"
+          @input="updateValue(budgetType)"
+        />
+      </label>
+    </div>
+
+    <!-- Display Selected Options -->
+    <div class="p-4 mt-6 border-t">
+      <h3 class="text-lg font-semibold">Selected Options:</h3>
+      <pre class="bg-gray-100 p-4 rounded-lg">{{ resultArray }}</pre>
+    </div>
+  </div>
+  <!-- #endregion Multi Limit Inputs -->
+
   <div class="mt-2">
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Expiry</span>
@@ -173,7 +212,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
@@ -202,6 +241,42 @@ const budgetLimitTypes = ref([
   { id: 2, name: 'Amount per transaction' }
 ])
 const web3Library = new EthersJsAdapter()
+
+//#region multi limit
+// Labels for budget types
+const budgetTypes = {
+  0: "Transactions Per Period",
+  1: "Amount Per Period",
+  2: "Amount Per Transaction",
+};
+
+// Reactive states
+const selectedOptions = reactive<{[key in 0 | 1 | 2]: boolean}>({ 0: false, 1: false, 2: false });
+const values = reactive<{[key in 0 | 1 | 2 ]: null | string | number}>({ 0: null, 1: null, 2: null });
+
+// Result array
+const resultArray = computed(() =>
+  Object.entries(selectedOptions)
+    .filter(([, isSelected]) => isSelected)
+    .map(([budgetType,]) => ({
+      budgetType: Number(budgetType),
+      value: values[budgetType as unknown as 0 | 1 | 2] || 0,
+    }))
+);
+
+// Handlers
+const toggleOption = (budgetType: 0 | 1 | 2) => {
+  if (!selectedOptions[budgetType]) {
+    values[budgetType] = null; // Reset value if deselected
+  }
+};
+
+const updateValue = (budgetType: 0 | 1 | 2) => {
+  if (values[budgetType] === null || isNaN(Number(values[budgetType]))) {
+    values[budgetType] = 0; // Default value if input is empty
+  }
+};
+//#endregion multi limit
 
 const rules = {
   formData: {
