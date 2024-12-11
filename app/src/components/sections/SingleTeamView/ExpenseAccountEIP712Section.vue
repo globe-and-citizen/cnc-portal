@@ -154,7 +154,7 @@ import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, parseSignature, hashTypedData } from 'viem'
+import { type Address, formatEther, parseEther, parseSignature, hashTypedData, keccak256 } from 'viem'
 
 //#endregion imports
 
@@ -213,6 +213,7 @@ const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
 const expenseBalanceFormated = ref<string | number>(`0`)
 const digest = ref<string | null>(null)
+const signatureHash = ref<string | null>(null)
 //#endregion variable declarations
 
 //#region expense account composable
@@ -246,7 +247,7 @@ const {
   functionName: 'balances',
   address: team.value.expenseAccountEip712Address as Address,
   abi: expenseAccountABI,
-  args: [digest]
+  args: [signatureHash]
 })
 
 watch(errorGetAmountWithdrawn, (newVal) => {
@@ -256,7 +257,7 @@ watch(errorGetAmountWithdrawn, (newVal) => {
   }
 })
 
-watch(digest, async (newVal) => {
+watch(signatureHash, async (newVal) => {
   if (newVal) {
     await executeGetAmountWithdrawn()
     console.log(`amountWithdrawn`, amountWithdrawn)
@@ -342,19 +343,9 @@ watch(searchUserResponse, () => {
 
 //#region helper functions
 const getDigest = async () => {
-  const domain = await getDomain()
-  const types = await getTypes()
   if (!_expenseAccountData?.value?.data) return
-  let message = JSON.parse(_expenseAccountData.value.data)
-  if (typeof message.value === 'string') message.value = Number(parseEther(message.value))
-  const _digest = hashTypedData({
-    domain: { ...domain, chainId: Number(domain.chainId) },
-    types,
-    primaryType: 'BudgetLimit',
-    message
-  })
-
-  digest.value = _digest
+  let signature = _expenseAccountData.value.signature
+  signatureHash.value = keccak256(signature)
 }
 const init = async () => {
   await fetchExpenseAccountData()
@@ -376,7 +367,8 @@ const getExpenseAccountBalance = async () => {
 
 const getAmountWithdrawnBalance = async () => {
   if (team.value.expenseAccountEip712Address) {
-    await getDigest()
+    if (!_expenseAccountData?.value?.data) return
+    signatureHash.value = keccak256(_expenseAccountData.value.signature)
     await executeGetAmountWithdrawn()
   }
 }
