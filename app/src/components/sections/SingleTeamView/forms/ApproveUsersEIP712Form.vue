@@ -144,16 +144,14 @@
   </div>
 
   <!-- #region Multi Limit Inputs-->
-  <div class="space-y-4">
+  <div class="space-y-4 mt-3 pt-3 border-t">
     <div
       v-for="(label, budgetType) in budgetTypes"
       :key="budgetType"
-      class="flex items-center gap-4 p-4 border border-gray-300 rounded-lg shadow-md"
-    >
-      <!-- Checkbox -->
-      
-      <!-- Numeric Input -->
+      class="shadow-md"
+    > 
       <label :for="'checkbox-' + budgetType" class="input input-bordered flex items-center gap-2 input-md mt-2">
+        <!-- Checkbox -->
         <input
           type="checkbox"
           class="checkbox checkbox-primary"
@@ -161,7 +159,7 @@
           :id="'checkbox-' + budgetType"
           @change="toggleOption(budgetType)"
         />
-        
+        <!-- Numeric Input -->
         <span class="w-48">{{ label }}</span>|
         <input
           :disabled="!selectedOptions[budgetType]"
@@ -175,10 +173,10 @@
     </div>
 
     <!-- Display Selected Options -->
-    <div class="p-4 mt-6 border-t">
+    <!--<div class="p-4 mt-6 border-t">
       <h3 class="text-lg font-semibold">Selected Options:</h3>
       <pre class="bg-gray-100 p-4 rounded-lg">{{ resultArray }}</pre>
-    </div>
+    </div>-->
   </div>
   <!-- #endregion Multi Limit Inputs -->
 
@@ -321,6 +319,11 @@ const clear = () => {
 }
 
 const submitApprove = () => {
+  console.log(`New Object`, {
+    approvedAddress: formData.value[0].address,
+    budgetData: resultArray.value,
+    expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
+  })
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
