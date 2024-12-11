@@ -301,15 +301,15 @@ const rules = {
       }
     )
   },
-  limitValue: {
-    required,
-    numeric
-  },
-  budgetLimitType: {
-    required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
-      return typeof value === 'number' && value >= 0 ? true : false
-    })
-  },
+  // limitValue: {
+  //   required,
+  //   numeric
+  // },
+  // budgetLimitType: {
+  //   required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
+  //     return typeof value === 'number' && value >= 0 ? true : false
+  //   })
+  // },
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
@@ -317,7 +317,7 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { budgetLimitType, description, limitValue, formData })
+const v$ = useVuelidate(rules, { /*budgetLimitType, */description, /*limitValue, */formData })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -339,11 +339,12 @@ const submitApprove = () => {
   }
   emit('approveUser', {
     approvedAddress: formData.value[0].address,
-    budgetType: budgetLimitType.value,
-    value:
-      budgetLimitType.value === 0
-        ? Number(limitValue.value)
-        : web3Library.parseEther(limitValue.value),
+    budgetData: resultArray.value,
+    // budgetType: budgetLimitType.value,
+    // value:
+    //   budgetLimitType.value === 0
+    //     ? Number(limitValue.value)
+    //     : web3Library.parseEther(limitValue.value),
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }
