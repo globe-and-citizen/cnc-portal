@@ -16,6 +16,7 @@
         <a
           @click="handleNotification(notification)"
           :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
+          :data-test="`notification-${notification.id}`"
         >
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">
@@ -53,10 +54,9 @@
 import { ref, computed, watch } from 'vue'
 import { type NotificationResponse, type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useRoute } from 'vue-router'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { log, parseError } from '@/utils'
-import { type Address } from 'viem'
+import { type Address, parseEther } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
@@ -69,8 +69,8 @@ const itemsPerPage = ref(4)
 const totalPages = ref(0)
 
 const updateEndPoint = ref('')
-const route = useRoute()
 const { addErrorToast, addSuccessToast } = useToastStore()
+const useUserStore = useUserDataStore()
 const {
   //isFetching: isNotificationsFetching,
   //error: notificationError,
@@ -137,15 +137,22 @@ watch(getTeamError, () => {
 
 //#region get claim
 const {
-  // error: getClaimError,
+  error: getClaimError,
   // isFetching: isClaimFetching,
   data: wageClaim,
-  execute: getWageClamAPI
+  execute: getWageClaimAPI
 } = useCustomFetch(updateEndPoint, {
   immediate: false
 })
   .get()
   .json()
+
+watch(getClaimError, (newVal) => {
+  if (newVal) {
+    log.error(parseError(getTeamError.value))
+    addErrorToast(getTeamError.value)
+  }
+})
 //#endregion get claim
 
 //#region expense account composable
@@ -182,24 +189,18 @@ const handleWage = async (notification: Notification) => {
   const resourceArr = getResource(notification)
 
   if (!resourceArr || resourceArr[0] !== 'wage-claim') return
-
   updateEndPoint.value = `teams/${Number(resourceArr[1])}/cash-remuneration/claim`
-  await getWageClamAPI()
-  console.log(`wageClaim: `, wageClaim.value)
-  updateEndPoint.value = `teams/${String(route.params.id)}`
-  console.log(`endpoint`, updateEndPoint.value)
+  await getWageClaimAPI()
+  updateEndPoint.value = `teams/${wageClaim.value.teamId}`
   await getTeamAPI()
-  console.log(`cashRemunerationEip712Address: `, team.value.cashRemunerationEip712Address)
 
   if (team.value.cashRemunerationEip712Address && wageClaim.value) {
     const claim = {
-      employeeAddress: useUserDataStore().address,
+      employeeAddress: useUserStore.address,
       hoursWorked: wageClaim.value.hoursWorked,
-      hourlyRate: wageClaim.value.hourlyRate,
+      hourlyRate: parseEther(wageClaim.value.hourlyRate),
       date: Math.floor(new Date(wageClaim.value.createdAt).getTime() / 1000)
     }
-
-    console.log(`executing contract...`)
 
     executeCashRemunerationWithdraw({
       address: team.value.cashRemunerationEip712Address as Address,

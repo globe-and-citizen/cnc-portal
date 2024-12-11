@@ -1,10 +1,10 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 
 vi.mock('@/stores', () => ({
-  useUserDataStore: vi.fn(),
+  useUserDataStore: vi.fn(() => ({ address: '0xUserAddress' })),
   useToastStore: vi.fn(() => ({
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn()
@@ -58,36 +58,62 @@ const mockNotifications = [
     resource: 'teams/2',
     author: 'Author 2',
     createdAt: '2024-07-02'
+  },
+  {
+    id: '3',
+    message: 'Notification 3',
+    isRead: true,
+    resource: 'wage-claim/1',
+    author: 'Author 2',
+    createdAt: '2024-07-02'
   }
   // Add more mock notifications as needed
 ]
+
+vi.mock('@/composables/useCustomFetch', () => ({
+  useCustomFetch: (url: Ref<string>) => {
+    const data = ref<unknown>(null)
+    return {
+      json: () => ({
+        data: ref({ data: mockNotifications }),
+        execute: vi.fn(),
+        error: ref(null)
+      }),
+      put: () => ({
+        json: () => ({
+          execute: vi.fn()
+        })
+      }),
+      get: () => ({
+        json: () => ({
+          data,
+          execute: vi.fn(() => {
+            if (url.value === 'teams/1/cash-remuneration/claim') {
+              data.value = {
+                id: 1,
+                createdAt: '2024-02-02T12:00:00Z',
+                address: '0xUserToApprove',
+                hoursWorked: 20,
+                hourlyRate: '17.5',
+                name: 'Local 1',
+                teamId: 1,
+                cashRemunerationSignature: '0xSignature'
+              }
+            } else if (url.value === 'teams/1') {
+              data.value = { cashRemunerationEip712Address: '0xCashRemunerationEip712Address' }
+            }
+          }),
+          error: ref(null)
+        })
+      })
+    }
+  }
+}))
 
 describe('NotificationDropdown.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
-    // Mock the fetch function to return the mock notifications
-    vi.mock('@/composables/useCustomFetch', () => ({
-      useCustomFetch: () => ({
-        json: () => ({
-          data: ref({ data: mockNotifications }),
-          execute: vi.fn(),
-          error: ref(null)
-        }),
-        put: () => ({
-          json: () => ({
-            execute: vi.fn()
-          })
-        }),
-        get: () => ({
-          json: () => ({
-            execute: vi.fn(),
-            error: ref(null)
-          })
-        })
-      })
-    }))
-
     wrapper = mount(NotificationDropdown, {
       props: {}
     })
@@ -109,5 +135,16 @@ describe('NotificationDropdown.vue', () => {
     await wrapper.vm.$nextTick()
     const badge = wrapper.find('.badge')
     expect(badge.exists()).toBe(true)
+  })
+
+  it('calls handle wage correctly', async () => {
+    await wrapper.vm.$nextTick()
+    const notification = wrapper.find('[data-test="notification-3"]')
+    expect(notification.exists()).toBeTruthy()
+    notification.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    await wrapper.vm.$nextTick()
+    expect(mockUseWriteContract.writeContract).toBeCalled
   })
 })
