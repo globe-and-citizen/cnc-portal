@@ -8,7 +8,8 @@ import {
   updateClaim,
   // approveClaim,
   deleteClaim,
-  getClaims
+  getClaims,
+  getClaim
 } from '../teamController'
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from 'vitest'
@@ -23,7 +24,43 @@ function setAddressMiddleware(address: string) {
 }
 
 describe('Cash Remuneration', () => {
-  describe('GET "/:id/cash-remuneration/claim/:status', () => {
+  describe('GET /:id/cash-remuneration/claim', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+    it('should return 404 if claim not found', async () => {
+      const app = express()
+      app.use(express.json())
+      app.get('/:id/cash-remuneration/claim', getClaim)
+      vi.spyOn(prisma.claim, 'findUnique').mockResolvedValue(null)
+
+      const response = await request(app)
+        .get('/1/cash-remuneration/claim')
+
+      expect(response.status).toBe(404)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Resource Not Found'
+      })
+    })
+    it('should return 500 if there is a server error', async () => {
+      const app = express()
+      app.use(express.json())
+      app.get('/:id/cash-remuneration/claim/:status', getClaim)
+      vi.spyOn(prisma.claim, 'findUnique').mockRejectedValue(new Error("Server error"))
+
+      const response = await request(app)
+        .get('/1/cash-remuneration/claim/pending')
+
+      expect(response.status).toBe(500)
+      expect(response.body).toEqual({
+        error: 'Server error',
+        success: false,
+        message: 'Internal server error has occured'
+      })
+    })
+  })
+  describe('GET /:id/cash-remuneration/claim/:status', () => {
     const mockTeamData = { 
       id: 1, 
       ownerAddress: '0xOwnerAddress', 
