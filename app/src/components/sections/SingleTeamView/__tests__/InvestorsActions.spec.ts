@@ -246,6 +246,8 @@ describe('InvestorsActions.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(addSuccessToast).toHaveBeenCalled()
+    expect(wrapper.emitted('refetchShareholders')).toBeTruthy()
+    expect((wrapper.vm as unknown as ComponentData).mintModal).toBeFalsy()
   })
 
   it('should add success toast when distributeMint success', async () => {
@@ -259,6 +261,8 @@ describe('InvestorsActions.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(addSuccessToast).toHaveBeenCalled()
+    expect(wrapper.emitted('refetchShareholders')).toBeTruthy()
+    expect((wrapper.vm as unknown as ComponentData).distributeMintModal).toBeFalsy()
   })
 
   it('should add success toast when payDividends success', async () => {
@@ -272,5 +276,6 @@ describe('InvestorsActions.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(addSuccessToast).toHaveBeenCalled()
+    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toBeFalsy()
   })
 })
