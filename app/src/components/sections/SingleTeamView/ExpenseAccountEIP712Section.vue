@@ -384,13 +384,23 @@ const getAmountWithdrawnBalance = async () => {
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-    const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
+    //const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
 
-    if (typeof budgetLimit.value === 'string') budgetLimit.value = parseEther(budgetLimit.value)
+    //if (typeof budgetLimit.value === 'string') budgetLimit.value = parseEther(budgetLimit.value)
 
     executeExpenseAccountTransfer({
       address: team.value.expenseAccountEip712Address as Address,
-      args: [to, parseEther(amount), budgetLimit, v, r, s],
+      args: [
+        to, 
+        parseEther(amount), {
+        ...budgetLimit,
+        budgetData: budgetLimit.budgetData.map(item => ({
+          ...item,
+          value: item.budgetType === 0?
+            item.value:
+            parseEther(`${item.value}`)
+        }))},
+        _expenseAccountData.value.signature],
       abi: expenseAccountABI,
       functionName: 'transfer'
     })
@@ -435,18 +445,40 @@ const approveUser = async (data: BudgetLimit) => {
     verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
   }
 
+  // const types = {
+  //   BudgetLimit: [
+  //     { name: 'approvedAddress', type: 'address' },
+  //     { name: 'budgetType', type: 'uint8' },
+  //     { name: 'value', type: 'uint256' },
+  //     { name: 'expiry', type: 'uint256' }
+  //   ]
+  // }
+
   const types = {
+    BudgetData: [
+      { name: 'budgetType', type: 'uint8' },
+      { name: 'value', type: 'uint256' }
+    ],
     BudgetLimit: [
       { name: 'approvedAddress', type: 'address' },
-      { name: 'budgetType', type: 'uint8' },
-      { name: 'value', type: 'uint256' },
+      { name: 'budgetData', type: 'BudgetData[]' },
       { name: 'expiry', type: 'uint256' }
     ]
   }
 
   try {
-    const signature = await signer.signTypedData(domain, types, data)
-    if (typeof data.value === 'bigint') data.value = web3Library.formatEther(data.value)
+    const signature = await signer.signTypedData(
+      domain, 
+      types, {
+        ...data,
+        budgetData: data.budgetData.map(item => ({
+          ...item,
+          value: item.budgetType === 0?
+            item.value:
+            parseEther(`${item.value}`)
+        }))
+      })
+    
     expenseAccountData.value = {
       expenseAccountData: data,
       signature
