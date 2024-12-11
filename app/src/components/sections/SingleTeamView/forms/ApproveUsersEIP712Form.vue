@@ -144,7 +144,8 @@
   </div>-->
 
   <!-- #region Multi Limit Inputs-->
-  <div class="space-y-4 mt-3 pt-3 border-t">
+  <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
+    <h3 class="text-lg font-semibold">Budget Limits:</h3>
     <div
       v-for="(label, budgetType) in budgetTypes"
       :key="budgetType"
@@ -183,7 +184,9 @@
   </div>
   <!-- #endregion Multi Limit Inputs -->
 
-  <div class="mt-2">
+  <hr />
+
+  <div class="mt-3">
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
