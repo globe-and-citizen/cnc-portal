@@ -1,6 +1,10 @@
 export interface BudgetLimit {
   approvedAddress: string
-  budgetType: 0 | 1 | 2 | null
-  value: string | number | bigint
+  budgetData: BudgetData[]
   expiry: number
+}
+
+interface BudgetData {
+  budgetType: number
+  value: number
 }
