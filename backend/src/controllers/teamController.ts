@@ -324,6 +324,9 @@ const deleteTeam = async (req: Request, res: Response) => {
     await prisma.memberTeamsData.deleteMany({
       where: { teamId: Number(id) }
     })
+    await prisma.teamContract.deleteMany({
+      where: { teamId: Number(id) }
+    })
     const teamD = await prisma.team.delete({
       where: {
         id: Number(id),
@@ -764,7 +767,11 @@ export const getClaim = async (req: Request, res: Response) => {
     })
 
     res.status(201)
-      .json({ ...claim, hourlyRate: memberTeamsData?.hourlyRate })
+      .json({ 
+        ...claim, 
+        hourlyRate: memberTeamsData?.hourlyRate, 
+        teamId: memberTeamsData?.teamId 
+      })
   } catch (error) {
     return errorResponse(500, error, res)
   } finally {
