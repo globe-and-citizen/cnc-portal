@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!--Select budget limit type-->
+  <!--Select budget limit type
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md">
       <select v-model="budgetLimitType" class="bg-white grow">
@@ -118,9 +118,9 @@
     :key="error.$uid"
   >
     {{ error.$message }}
-  </div>
+  </div>-->
 
-  <!-- Budget limit value -->
+  <!-- Budget limit value 
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Limit</span>
@@ -141,7 +141,7 @@
     :key="error.$uid"
   >
     {{ error.$message }}
-  </div>
+  </div>-->
 
   <!-- #region Multi Limit Inputs-->
   <div class="space-y-4 mt-3 pt-3 border-t">
@@ -149,6 +149,7 @@
       v-for="(label, budgetType) in budgetTypes"
       :key="budgetType"
       class="shadow-md"
+      data-test="budget-limit-input"
     > 
       <label :for="'checkbox-' + budgetType" class="input input-bordered flex items-center gap-2 input-md mt-2">
         <!-- Checkbox -->
@@ -157,6 +158,7 @@
           class="checkbox checkbox-primary"
           v-model="selectedOptions[budgetType]"
           :id="'checkbox-' + budgetType"
+          :data-test="`limit-checkbox-${budgetType}`"
           @change="toggleOption(budgetType)"
         />
         <!-- Numeric Input -->
@@ -167,6 +169,7 @@
           class="grow pl-4"
           v-model.number="values[budgetType]"
           placeholder="Enter value"
+          :data-test="`limit-input-${budgetType}`"
           @input="updateValue(budgetType)"
         />
       </label>
