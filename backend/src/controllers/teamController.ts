@@ -532,11 +532,9 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
     if (callerAddress !== ownerAddress) {
       return errorResponse(403, `Forbidden`, res)
     }
-    console.log(`memberAddress`, memberAddress)
     if (typeof memberAddress !== 'string') {
       return errorResponse(400, 'Bad Request', res)
     }
-    console.log(`wageData`, wageData)
     //create or update wage data
     await prisma.memberTeamsData.upsert({
       where: {
@@ -576,7 +574,6 @@ export const addClaim = async (req: Request, res: Response) => {
   const { hoursWorked } = req.body
 
   try {
-    console.log('hoursWorked', hoursWorked)
     if (isNaN(Number(hoursWorked)) || !hoursWorked) 
       return errorResponse(400, 'Bad Request', res)
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
@@ -590,7 +587,6 @@ export const addClaim = async (req: Request, res: Response) => {
     if (!memberTeamsData) {
       return errorResponse(404, 'Record Not Found', res)
     }
-    console.log(`hoursWorked`, hoursWorked)
     await prisma.claim.create({
       data: {
         hoursWorked: Number(hoursWorked),
@@ -618,7 +614,6 @@ export const updateClaim = async (req: Request, res: Response) => {
     await updateClaimEmployer(req, res)
   } else {
     return errorResponse(404, 'Resource Not Found', res)
-    // console.log(`Silence is golden`)
   }
 }
 
@@ -628,8 +623,7 @@ export const updateClaimEmployee = async (req: Request, res: Response) => {
   const { 
     claimid: claimId, 
     hoursworked: hoursWorked 
-  } = req.headers//.claimid
-  // const hoursWorked = req.body
+  } = req.headers
   
   try {
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
@@ -784,7 +778,6 @@ export const getClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address
 
   try {
-    console.log(`status`, status)
     const team = await prisma.team.findUnique({
       where: { id: Number(id) }
     })

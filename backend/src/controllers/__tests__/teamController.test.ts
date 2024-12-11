@@ -7,7 +7,8 @@ import {
   addClaim,
   updateClaim,
   // approveClaim,
-  deleteClaim
+  deleteClaim,
+  getClaims
 } from '../teamController'
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from 'vitest'
@@ -22,6 +23,61 @@ function setAddressMiddleware(address: string) {
 }
 
 describe('Cash Remuneration', () => {
+  describe('GET "/:id/cash-remuneration/claim/:status', () => {
+    const mockTeamData = { 
+      id: 1, 
+      ownerAddress: '0xOwnerAddress', 
+      description: null, 
+      name: '', 
+      bankAddress: '0xBankAddress',
+      votingAddress: '0xVotingAddress', 
+      boardOfDirectorsAddress: '0xBoardOfDirectorsAddress', 
+      expenseAccountAddress: '0xExpenseAccountAddress', 
+      officerAddress: '0xOfficerAddress',
+      expenseAccountEip712Address: '0xExpenseAccountEIP712Address',
+      cashRemunerationEip712Address: null,
+      investorsAddress: '0xInvestorsAddress'
+    }
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+    it('should return 404 if team not found', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xDifferentAddress'))
+      app.get('/:id/cash-remuneration/claim/:status', getClaims)
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null)
+
+      const response = await request(app)
+        .get('/1/cash-remuneration/claim/pending')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+
+      expect(response.status).toBe(404)
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Resource Not Found'
+      })
+    })
+    it('should return 500 if there is a server error', async () => {
+      const app = express()
+      app.use(express.json())
+      app.use(setAddressMiddleware('0xDifferentAddress'))
+      app.get('/:id/cash-remuneration/claim/:status', getClaims)
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeamData)
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockRejectedValue(new Error("Server error"))
+
+      const response = await request(app)
+        .get('/1/cash-remuneration/claim/pending')
+        .set('address', '0xOwnerAddress') // Simulate unauthorized caller
+
+      expect(response.status).toBe(500)
+      expect(response.body).toEqual({
+        error: 'Server error',
+        success: false,
+        message: 'Internal server error has occured'
+      })
+    })
+  })
   describe('PUT /:id/cash-remuneration/claim/:callerRole', () => {
     // employer
     describe('employer', () => {
@@ -36,7 +92,8 @@ describe('Cash Remuneration', () => {
         expenseAccountAddress: '0xExpenseAccountAddress', 
         officerAddress: '0xOfficerAddress',
         expenseAccountEip712Address: '0xExpenseAccountEIP712Address',
-        cashRemunerationEip712Address: null
+        cashRemunerationEip712Address: null,
+        investorsAddress: '0xInvestorsAddress'
       }
       const cashRemunerationSignature = '0xCashRemunerationSignature'
       const claimId = 1
@@ -536,6 +593,7 @@ describe('Cash Remuneration', () => {
       expenseAccountAddress: '0xExpenseAccountAddress', 
       officerAddress: '0xOfficerAddress',
       expenseAccountEip712Address: '0xExpenseAccountEIP712Address',
+      investorsAddress: '0xInvestorsAddress',
       cashRemunerationEip712Address: null
     }
     const mockWageData = {
@@ -678,6 +736,7 @@ describe('POST /expenseAccount/:id', () => {
     expenseAccountAddress: '0xExpenseAccountAddress', 
     officerAddress: '0xOfficerAddress',
     expenseAccountEip712Address: '0xExpenseAccountEIP712Address',
+    investorsAddress: '0xInvestorsAddress',
     cashRemunerationEip712Address: null
   }
   const mockExpenseAccountData = {
