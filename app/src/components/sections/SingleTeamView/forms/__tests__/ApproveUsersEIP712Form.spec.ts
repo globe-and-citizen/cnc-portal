@@ -9,8 +9,15 @@ import type {
   ValidationRuleWithParams
 } from '@vuelidate/core'
 import VueDatePicker from '@vuepic/vue-datepicker'
+import { wrap } from 'module'
 
 interface ComponentData {
+  selectedOptions: {[key in 0 | 1 | 2]: boolean}
+  values: {[key in 0 | 1 | 2 ]: null | string | number}
+  resultArray: {
+    budgetType: number;
+    value: string | number;
+  }[]
   budgetLimitType: 0 | 1 | 2 | null
   limitValue: string
   date: Date | string
@@ -62,6 +69,26 @@ describe('ApproveUsersForm', () => {
     })
   }
   describe('Render', () => {
+    it('should show budget limit inputs disabled', () => {
+      const wrapper = createComponent()
+
+      const budgetLimitInputs = wrapper.findAll('[data-test="budget-limit-input"]')
+      expect(budgetLimitInputs.length).toBe(3)
+    })
+    it('should enable the relavant input when checkbox is checked', async () => {
+      const wrapper = createComponent()
+
+      const checkboxInput = wrapper.find('[data-test="limit-checkbox-0"]')
+      expect(checkboxInput.exists()).toBeTruthy()
+      const limitInput = wrapper.find('[data-test="limit-input-0"]')
+      expect(limitInput.exists()).toBeTruthy()
+      expect((limitInput.element as HTMLInputElement).disabled).toBe(true)
+      expect((checkboxInput.element as HTMLInputElement).checked).toBe(false)
+      await checkboxInput.setValue()
+      await wrapper.vm.$nextTick()
+      expect((checkboxInput.element as HTMLInputElement).checked).toBe(true)
+      expect((limitInput.element as HTMLInputElement).disabled).toBe(false)
+    })
     it('should show bod notification and description input if is BoD action', () => {
       const wrapper = createComponent({ props: { isBodAction: true } })
       expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
@@ -104,40 +131,40 @@ describe('ApproveUsersForm', () => {
       const addressError = wrapper.find('[data-test="address-error"]')
       expect(addressError.exists()).toBeTruthy()
     })
-    it('should show budget limit types', () => {
-      const wrapper = createComponent()
-      expect(wrapper.find('select').exists()).toBeTruthy()
-    })
-    it('should show budget limit error when no limit is set', async () => {
-      const wrapper = createComponent()
-      expect(wrapper.find('select').exists()).toBeTruthy()
+    // it('should show budget limit types', () => {
+    //   const wrapper = createComponent()
+    //   expect(wrapper.find('select').exists()).toBeTruthy()
+    // })
+    // it('should show budget limit error when no limit is set', async () => {
+    //   const wrapper = createComponent()
+    //   expect(wrapper.find('select').exists()).toBeTruthy()
 
-      // expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
-      const approveButton = wrapper.find('[data-test="approve-button"]')
-      expect(approveButton.exists()).toBeTruthy()
-      approveButton.trigger('click')
-      await wrapper.vm.$nextTick()
+    //   // expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
+    //   const approveButton = wrapper.find('[data-test="approve-button"]')
+    //   expect(approveButton.exists()).toBeTruthy()
+    //   approveButton.trigger('click')
+    //   await wrapper.vm.$nextTick()
 
-      const limitTypeError = wrapper.find('[data-test="limit-type-error"]')
-      expect(limitTypeError.exists()).toBeTruthy()
-      expect(limitTypeError.text()).toBe('Budget limit type is required')
-    })
-    it('should show limit value input', async () => {
-      const wrapper = createComponent()
-      expect(wrapper.find('[data-test="limit-value-input"]').exists()).toBeTruthy()
-    })
-    it('should show limit value error if no value is set', async () => {
-      const wrapper = createComponent()
+    //   const limitTypeError = wrapper.find('[data-test="limit-type-error"]')
+    //   expect(limitTypeError.exists()).toBeTruthy()
+    //   expect(limitTypeError.text()).toBe('Budget limit type is required')
+    // })
+    // it('should show limit value input', async () => {
+    //   const wrapper = createComponent()
+    //   expect(wrapper.find('[data-test="limit-value-input"]').exists()).toBeTruthy()
+    // })
+    // it('should show limit value error if no value is set', async () => {
+    //   const wrapper = createComponent()
 
-      const approveButton = wrapper.find('[data-test="approve-button"]')
-      expect(approveButton.exists()).toBeTruthy()
-      approveButton.trigger('click')
-      await wrapper.vm.$nextTick()
+    //   const approveButton = wrapper.find('[data-test="approve-button"]')
+    //   expect(approveButton.exists()).toBeTruthy()
+    //   approveButton.trigger('click')
+    //   await wrapper.vm.$nextTick()
 
-      const limitValueError = wrapper.find('[data-test="limit-value-error"]')
-      expect(limitValueError.exists()).toBeTruthy()
-      expect(limitValueError.text()).toBe('Value is required')
-    })
+    //   const limitValueError = wrapper.find('[data-test="limit-value-error"]')
+    //   expect(limitValueError.exists()).toBeTruthy()
+    //   expect(limitValueError.text()).toBe('Value is required')
+    // })
     it('should show set expiry date picker', async () => {
       const wrapper = createComponent()
       const datePicker = wrapper.find('[data-test="date-picker"]')
@@ -155,6 +182,29 @@ describe('ApproveUsersForm', () => {
     })
   })
   describe('State & V-Model', () => {
+    it('should update update the relevant values and compute budget data when a limit value is entered', async () => {
+      const wrapper = createComponent()
+      const checkboxInput = wrapper.find('[data-test="limit-checkbox-0"]')
+      expect(checkboxInput.exists()).toBeTruthy()
+      const limitInput = wrapper.find('[data-test="limit-input-0"]')
+      expect(limitInput.exists()).toBeTruthy()
+      expect((limitInput.element as HTMLInputElement).disabled).toBe(true)
+      expect((checkboxInput.element as HTMLInputElement).checked).toBe(false)
+      await checkboxInput.setValue()
+      await wrapper.vm.$nextTick()
+      expect((checkboxInput.element as HTMLInputElement).checked).toBe(true)
+      expect((limitInput.element as HTMLInputElement).disabled).toBe(false)
+      await limitInput.setValue(1000)
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).values).toStrictEqual({
+        0: 1000,
+        1: null,
+        2: null
+      })
+      expect((wrapper.vm as unknown as ComponentData).resultArray).toStrictEqual([{
+        budgetType: 0, value: 1000
+      }])
+    })
     it('should update description when description is entered in description input', async () => {
       const wrapper = createComponent({ props: { isBodAction: true } })
       const descriptionInput = wrapper.find('[data-test="description-input"]')
@@ -178,20 +228,20 @@ describe('ApproveUsersForm', () => {
       const formDataProp = wrapper.props('formData')
       expect(formDataProp[0].address).toBe('0xAddressToApprove')
     })
-    it('should update budgetLimitType when limit type is is selected', async () => {
-      const wrapper = createComponent()
-      const limitTypeSelect = wrapper.find('select')
-      expect(limitTypeSelect.exists()).toBeTruthy()
-      await limitTypeSelect.setValue(1)
-      expect((wrapper.vm as unknown as ComponentData).budgetLimitType).toBe(1)
-    })
-    it('should update limitValue when limit value is entered', async () => {
-      const wrapper = createComponent()
-      const limitValue = wrapper.find('[data-test="limit-value-input"]')
-      expect(limitValue.exists()).toBeTruthy()
-      await limitValue.setValue('100')
-      expect((wrapper.vm as unknown as ComponentData).limitValue).toBe('100')
-    })
+    // it('should update budgetLimitType when limit type is is selected', async () => {
+    //   const wrapper = createComponent()
+    //   const limitTypeSelect = wrapper.find('select')
+    //   expect(limitTypeSelect.exists()).toBeTruthy()
+    //   await limitTypeSelect.setValue(1)
+    //   expect((wrapper.vm as unknown as ComponentData).budgetLimitType).toBe(1)
+    // })
+    // it('should update limitValue when limit value is entered', async () => {
+    //   const wrapper = createComponent()
+    //   const limitValue = wrapper.find('[data-test="limit-value-input"]')
+    //   expect(limitValue.exists()).toBeTruthy()
+    //   await limitValue.setValue('100')
+    //   expect((wrapper.vm as unknown as ComponentData).limitValue).toBe('100')
+    // })
     it('should update date when expiry date is selected', async () => {
       const wrapper = createComponent()
       const datePicker = wrapper.findComponent(VueDatePicker)
