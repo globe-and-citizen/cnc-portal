@@ -90,7 +90,8 @@ vi.mock('viem', async (importOriginal) => {
   return {
     ...actual,
     parseSignature: vi.fn(),
-    hashTypedData: vi.fn()
+    hashTypedData: vi.fn(),
+    keccak256: vi.fn()
   }
 })
 
