@@ -41,7 +41,7 @@ vi.mock('@/composables/useCustomFetch', () => {
 })
 vi.mock('@/stores/useToastStore')
 
-describe.only('MintForm', () => {
+describe('MintForm', () => {
   const createComponent = (props?: Partial<Props>) => {
     return shallowMount(MintForm, {
       props: {
