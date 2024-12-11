@@ -377,16 +377,17 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     executeExpenseAccountTransfer({
       address: team.value.expenseAccountEip712Address as Address,
       args: [
-        to, 
-        parseEther(amount), {
-        ...budgetLimit,
-        budgetData: budgetLimit.budgetData.map(item => ({
-          ...item,
-          value: item.budgetType === 0?
-            item.value:
-            parseEther(`${item.value}`)
-        }))},
-        _expenseAccountData.value.signature],
+        to,
+        parseEther(amount),
+        {
+          ...budgetLimit,
+          budgetData: budgetLimit.budgetData.map((item) => ({
+            ...item,
+            value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+          }))
+        },
+        _expenseAccountData.value.signature
+      ],
       abi: expenseAccountABI,
       functionName: 'transfer'
     })
@@ -429,18 +430,14 @@ const approveUser = async (data: BudgetLimit) => {
   }
 
   try {
-    const signature = await signer.signTypedData(
-      domain, 
-      types, {
-        ...data,
-        budgetData: data.budgetData.map(item => ({
-          ...item,
-          value: item.budgetType === 0?
-            item.value:
-            parseEther(`${item.value}`)
-        }))
-      })
-    
+    const signature = await signer.signTypedData(domain, types, {
+      ...data,
+      budgetData: data.budgetData.map((item) => ({
+        ...item,
+        value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+      }))
+    })
+
     expenseAccountData.value = {
       expenseAccountData: data,
       signature

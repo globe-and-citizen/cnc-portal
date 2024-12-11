@@ -315,7 +315,7 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { /*budgetLimitType, */description, /*limitValue, */formData })
+const v$ = useVuelidate(rules, { /*budgetLimitType, */ description, /*limitValue, */ formData })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
