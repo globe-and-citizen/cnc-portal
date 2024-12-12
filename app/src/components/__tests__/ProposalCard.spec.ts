@@ -283,7 +283,7 @@ describe('ProposalCard.vue', () => {
     })
 
     it('handles details modal concluded proposal correctly', async () => {
-      const wrapper = createComponent({ isDone: true})
+      const wrapper = createComponent({ isDone: true })
 
       // Check initial state
       expect(wrapper.find('[data-test="details-modal"]').exists()).toBe(true)
