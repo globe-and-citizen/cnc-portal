@@ -31,6 +31,11 @@ interface ComponentData {
   directiveError: unknown
   electionError: unknown
 }
+interface ModalComponentData {
+  vm: {
+    $emit: (event: string, ...args: unknown[]) => void
+  }
+}
 vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
 
 vi.mock('@/stores/useToastStore')
@@ -291,8 +296,8 @@ describe('ProposalCard.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
 
       // Simulate modal close through v-model
-      const voteModal = wrapper.findComponent({ ref: 'vote-modal' })
-      await voteModal.vm.$emit('update:modelValue', false)
+      const voteModal = wrapper.findComponent('[data-test="vote-modal"]')
+      await (voteModal as unknown as ModalComponentData).vm.$emit('update:modelValue', false)
 
       expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(false)
     })
@@ -305,8 +310,8 @@ describe('ProposalCard.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
 
       // Simulate modal close through v-model
-      const detailsModal = wrapper.findComponent({ ref: 'details-modal' })
-      await detailsModal.vm.$emit('update:modelValue', false)
+      const detailsModal = wrapper.findComponent('[data-test="details-modal"]')
+      await (detailsModal as unknown as ModalComponentData).vm.$emit('update:modelValue', false)
 
       expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(false)
     })
@@ -319,8 +324,8 @@ describe('ProposalCard.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
 
       // Simulate modal close through v-model
-      const concludeModal = wrapper.findComponent({ ref: 'conclude-modal' })
-      await concludeModal.vm.$emit('update:modelValue', false)
+      const concludeModal = wrapper.findComponent('[data-test="conclude-modal"]')
+      await (concludeModal as unknown as ModalComponentData).vm.$emit('update:modelValue', false)
 
       expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(false)
     })
