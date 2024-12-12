@@ -33,14 +33,7 @@ interface ComponentData {
 }
 vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
 
-vi.mock('@/stores/useToastStore', () => {
-  return {
-    useToastStore: vi.fn(() => ({
-      addSuccessToast: vi.fn(),
-      addErrorToast: vi.fn()
-    }))
-  }
-})
+vi.mock('@/stores/useToastStore')
 
 const mockUseReadContract = {
   data: ref<string | null>(null),
