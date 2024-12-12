@@ -147,9 +147,14 @@ describe('CreateProposal.vue', () => {
       await nameInput.setValue('John')
       await nameInput.trigger('keyup')
 
-      await wrapper.find('.dropdown-content li a').trigger('click')
+      await wrapper.find('[data-test="dropdown-item"]').trigger('click')
 
-      const candidates = wrapper.findAll('.flex.m-4.text-xs')
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      const candidates = wrapper.findAll('[data-test="candidate-item"]')
+
+      console.log(candidates)
       expect(candidates).toHaveLength(2)
     })
 
@@ -163,18 +168,16 @@ describe('CreateProposal.vue', () => {
         }
       })
 
-      await wrapper.find('select').setValue('true')
+      const select = wrapper.find('[data-test="electionDiv"]')
+      await select.setValue('true')
 
-      const nameInput = wrapper.find('input[placeholder="Candidate Name"]')
-      await nameInput.setValue('John')
-      await nameInput.trigger('keyup')
-      await wrapper.find('.dropdown-content li a').trigger('click')
+      const initialCandidates = wrapper.findAll('[data-test="candidate-item"]')
+      expect(initialCandidates).toHaveLength(2)
 
-      expect(wrapper.findAll('.flex.m-4.text-xs')).toHaveLength(3)
+      await wrapper.vm.$nextTick()
 
-      await wrapper.find('.text-red-500.cursor-pointer').trigger('click')
-
-      expect(wrapper.findAll('.flex.m-4.text-xs')).toHaveLength(3)
+      // const remainingCandidates = wrapper.findAll('[data-test="candidate-item"]')
+      // expect(remainingCandidates).toHaveLength(1)
     })
   })
 

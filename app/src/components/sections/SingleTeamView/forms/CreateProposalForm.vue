@@ -93,6 +93,7 @@
           >
             <li v-for="user in users.users" :key="user.address">
               <a
+                data-test="dropdown-item"
                 @click="
                   () => {
                     newProposalInput.candidates?.push({
@@ -114,6 +115,7 @@
           class="flex m-4 text-xs gap-4 justify-between"
           v-for="(candidate, index) in newProposalInput.candidates"
           :key="index"
+          data-test="candidate-item"
         >
           <span>
             {{ candidate.name }}
@@ -123,6 +125,7 @@
           </span>
           <MinusCircleIcon
             class="w-4 text-red-500 cursor-pointer"
+            data-test="remove-candidate"
             @click="() => newProposalInput.candidates?.splice(index, 1)"
           />
         </div>
