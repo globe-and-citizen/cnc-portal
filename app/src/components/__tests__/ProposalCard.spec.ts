@@ -399,4 +399,111 @@ describe('ProposalCard.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(false)
     })
   })
+
+  describe('voting interactions', () => {
+    it('handles election vote submission correctly', async () => {
+      const wrapper = createComponent({ proposal: proposalElection })
+
+      // Open vote modal
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+
+      // Simulate vote submission from VoteForm
+      const voteForm = wrapper.findComponent({ name: 'VoteForm' })
+      await voteForm.vm.$emit('voteElection', {
+        proposalId: 1,
+        candidateAddress: '0x2'
+      })
+
+      // Verify contract interaction
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        address: '0x1',
+        abi: VotingABI,
+        functionName: 'voteElection',
+        args: [1, '0x2']
+      })
+    })
+
+    it('handles directive vote submission correctly', async () => {
+      const wrapper = createComponent({ proposal: proposalDirective })
+
+      // Open vote modal
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+
+      // Simulate vote submission from VoteForm
+      const voteForm = wrapper.findComponent({ name: 'VoteForm' })
+      await voteForm.vm.$emit('voteDirective', {
+        proposalId: 0,
+        option: 1 // Yes vote
+      })
+
+      // Verify contract interaction
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        address: '0x1',
+        abi: VotingABI,
+        functionName: 'voteDirective',
+        args: [0, 1]
+      })
+    })
+
+    it('shows loading state during vote submission', async () => {
+      const wrapper = createComponent()
+
+      // Open vote modal
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+
+      // Simulate loading state
+      mockUseWriteContract.isPending.value = true
+      await wrapper.vm.$nextTick()
+
+      // Verify VoteForm receives correct loading prop
+      const voteForm = wrapper.findComponent({ name: 'VoteForm' })
+      expect(voteForm.props('isLoading')).toBe(true)
+    })
+
+    it('handles vote confirmation states correctly', async () => {
+      const wrapper = createComponent()
+
+      // Open vote modal
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+
+      // Simulate transaction confirmation flow
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+
+      // Verify loading state is passed to VoteForm
+      const voteForm = wrapper.findComponent({ name: 'VoteForm' })
+      expect(voteForm.props('isLoading')).toBe(true)
+
+      // Simulate successful confirmation
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      // Verify modal closes and success toast is shown
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(false)
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalled()
+    })
+
+    it('maintains vote input state through v-model', async () => {
+      const wrapper = createComponent()
+
+      // Open vote modal
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+
+      // Simulate v-model update from VoteForm
+      const testVoteInput = {
+        title: 'Test Vote',
+        description: 'Test Description',
+        candidates: [{ name: 'Test Candidate', candidateAddress: '0x3' }],
+        isElection: true
+      }
+
+      const voteForm = wrapper.findComponent({ name: 'VoteForm' })
+      await voteForm.vm.$emit('update:modelValue', testVoteInput)
+
+      // Verify the component's voteInput is updated
+      expect((wrapper.vm as unknown as ComponentData).voteInput).toEqual(testVoteInput)
+    })
+  })
 })
