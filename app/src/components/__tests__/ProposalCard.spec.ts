@@ -178,20 +178,6 @@ describe('ProposalCard.vue', () => {
     })
   })
 
-  describe('interactions', () => {
-    it('opens vote modal when Vote button is clicked', async () => {
-      const wrapper = createComponent()
-      await wrapper.find('[data-test="vote-button"]').trigger('click')
-      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
-    })
-
-    it('opens conclude confirmation modal when Stop button is clicked', async () => {
-      const wrapper = createComponent()
-      await wrapper.find('[data-test="stop-button"]').trigger('click')
-      expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
-    })
-  })
-
   describe('watch handlers', () => {
     it('handles successful directive vote', async () => {
       const wrapper = createComponent()
@@ -229,13 +215,17 @@ describe('ProposalCard.vue', () => {
   })
 
   describe('modal interactions', () => {
-    it('handles vote modal and vote input correctly', async () => {
+    it('opens vote modal when Vote button is clicked', async () => {
       const wrapper = createComponent()
-
-      expect(wrapper.find('[data-test="vote-modal"]').exists()).toBe(true)
-
       await wrapper.find('[data-test="vote-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
+      expect(wrapper.find('[data-test="vote-modal"]').exists()).toBe(true)
+    })
+
+    it('opens conclude confirmation modal when Stop button is clicked', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('[data-test="stop-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
     })
 
     it('handles conclude modal correctly', async () => {
@@ -291,6 +281,48 @@ describe('ProposalCard.vue', () => {
       // Trigger details modal
       await wrapper.find('button[data-test="view-concluded-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
+    })
+
+    it('handles vote modal v-model binding', async () => {
+      const wrapper = createComponent()
+
+      // Open modal
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
+
+      // Simulate modal close through v-model
+      const voteModal = wrapper.findComponent({ ref: 'vote-modal' })
+      await voteModal.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(false)
+    })
+
+    it('handles proposal details modal v-model binding', async () => {
+      const wrapper = createComponent()
+
+      // Open modal
+      await wrapper.find('[data-test="view-active-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
+
+      // Simulate modal close through v-model
+      const detailsModal = wrapper.findComponent({ ref: 'details-modal' })
+      await detailsModal.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(false)
+    })
+
+    it('handles conclude modal v-model binding', async () => {
+      const wrapper = createComponent()
+
+      // Open modal
+      await wrapper.find('[data-test="stop-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
+
+      // Simulate modal close through v-model
+      const concludeModal = wrapper.findComponent({ ref: 'conclude-modal' })
+      await concludeModal.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(false)
     })
   })
 
