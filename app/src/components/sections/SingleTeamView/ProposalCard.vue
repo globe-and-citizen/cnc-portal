@@ -60,11 +60,7 @@
         View
       </button>
     </div>
-    <ModalComponent
-      v-model="showConcludeConfirmModal"
-      data-test="conclude-modal"
-      ref="conclude-modal"
-    >
+    <ModalComponent v-model="showConcludeConfirmModal" data-test="conclude-modal">
       <h2>Conclude</h2>
       <hr />
       <span class="mt-4">Are you sure you want to conclude this proposal?</span>
@@ -91,7 +87,7 @@
         </button>
       </div>
     </ModalComponent>
-    <ModalComponent v-model="showVoteModal" data-test="vote-modal" ref="vote-modal">
+    <ModalComponent v-model="showVoteModal" data-test="vote-modal">
       <VoteForm
         :team="team"
         :isLoading="
@@ -122,11 +118,7 @@
         "
       />
     </ModalComponent>
-    <ModalComponent
-      v-model="showProposalDetailsModal"
-      data-test="details-modal"
-      ref="details-modal"
-    >
+    <ModalComponent v-model="showProposalDetailsModal" data-test="details-modal">
       <ProposalDetails :proposal="proposal" :team="team" />
     </ModalComponent>
   </div>
