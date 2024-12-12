@@ -11,7 +11,15 @@ import ModalComponent from '@/components/ModalComponent.vue'
 
 // Mock the composables
 vi.mock('@/stores/useToastStore')
-vi.mock('@/stores/user')
+vi.mock('@/stores/user', () => ({
+  useUserDataStore: vi.fn(() => {
+    return {
+      address: ref('0xOwner'),
+      name: ref('Owner'),
+      isAuth: ref(true),
+    }
+  })
+}))
 
 const mockUseReadContract = {
   data: ref<string | null>(null),
