@@ -196,6 +196,15 @@ describe('ProposalCard.vue', () => {
       await wrapper.find('[data-test="stop-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
     })
+
+    it('sets the showProposalDetailsModal to be true when the view button is clicked', async () => {
+      const wrapper = createComponent()
+
+      await wrapper.find('button[data-test="view-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
+    })
   })
 
   describe('watch handlers', () => {
