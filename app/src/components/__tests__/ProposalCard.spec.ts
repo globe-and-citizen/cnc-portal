@@ -4,7 +4,7 @@ import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
 import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import VotingABI from '@/artifacts/abi/voting.json'
-
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
 // Create a router instance
 const router = createRouter({
   history: createWebHistory(),
@@ -28,6 +28,8 @@ interface ComponentData {
     ]
     isElection: boolean
   }
+  directiveError: unknown
+  electionError: unknown
 }
 vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
 
@@ -83,61 +85,73 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useBalance: vi.fn(() => mockUseBalance)
   }
 })
-describe('ProposalCard.vue', () => {
-  const proposalDirective = {
-    id: 0,
-    title: 'Directive',
-    draftedBy: '0x1',
-    description:
-      'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
-    isElection: false,
-    votes: {
-      yes: 10,
-      no: 5,
-      abstain: 3
+
+const proposalDirective = {
+  id: 0,
+  title: 'Directive',
+  draftedBy: '0x1',
+  description:
+    'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
+  isElection: false,
+  votes: {
+    yes: 10,
+    no: 5,
+    abstain: 3
+  },
+  candidates: []
+}
+
+const proposalElection = {
+  id: 1,
+  title: 'Election',
+  draftedBy: '0x1',
+  description:
+    'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
+
+  isElection: true,
+  candidates: [
+    { name: 'Ravioli', candidateAddress: '0x1', votes: 0 },
+    { name: 'Herm', candidateAddress: '0x2', votes: 1 }
+  ]
+}
+
+const createComponent = (props = {}) => {
+  const defaultProps = {
+    proposal: proposalDirective,
+    team: {
+      id: '1',
+      name: 'team1',
+      description: 'team1',
+      bankAddress: '0x1',
+      members: [
+        {
+          id: '1',
+          name: 'member1',
+          address: '0x1'
+        }
+      ],
+      ownerAddress: '0x1',
+      votingAddress: '0x1',
+      boardOfDirectorsAddress: '0x1'
     },
-    candidates: []
+    isDone: false
   }
 
-  const proposalElection = {
-    id: 1,
-    title: 'Election',
-    draftedBy: '0x1',
-    description:
-      'The Crypto Native Portal, an app that creates a mechanism to financially acknowledge the micro contributions of Open Source collaborators along with tools that promote effective governance.',
+  return mount(ProposalCard, {
+    global: {
+      plugins: [router]
+    },
+    props: {
+      ...defaultProps,
+      ...props
+    }
+  })
+}
 
-    isElection: true,
-    candidates: [
-      { name: 'Ravioli', candidateAddress: '0x1', votes: 0 },
-      { name: 'Herm', candidateAddress: '0x2', votes: 1 }
-    ]
-  }
+describe('ProposalCard.vue', () => {
   describe('render', () => {
     it('renders correctly for directive proposal', () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router] // Provide the router instance
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [
-              {
-                id: '1',
-                name: 'member1',
-                address: '0x1'
-              }
-            ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
       expect(wrapper.find('[data-test="proposal-title"]').text()).toBe(proposalDirective.title)
       expect(wrapper.find('[data-test="proposal-drafter"]').text()).toContain('member1')
       const expectedDescription =
@@ -151,30 +165,7 @@ describe('ProposalCard.vue', () => {
     })
 
     it('renders correctly for election proposal', () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router] // Provide the router instance
-        },
-        props: {
-          proposal: proposalElection,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [
-              {
-                id: '1',
-                name: 'member1',
-                address: '0x1'
-              }
-            ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent({ proposal: proposalElection })
       expect(wrapper.find('[data-test="proposal-title"]').text()).toBe(proposalElection.title)
       const expectedDescription =
         proposalDirective.description.length > 120
@@ -187,30 +178,7 @@ describe('ProposalCard.vue', () => {
       expect(wrapper.classes()).toContain('bg-green-100') // green background for election
     })
     it('has Vote and View buttons', () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router] // Provide the router instance
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [
-              {
-                id: '1',
-                name: 'member1',
-                address: '0x1'
-              }
-            ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
       const buttons = wrapper.findAll('button')
       expect(buttons[0].text()).toBe('Vote')
       expect(buttons[1].text()).toBe('View')
@@ -219,73 +187,19 @@ describe('ProposalCard.vue', () => {
 
   describe('interactions', () => {
     it('opens vote modal when Vote button is clicked', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
-
+      const wrapper = createComponent()
       await wrapper.find('[data-test="vote-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
     })
 
     it('opens details modal when View button is clicked', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
-
+      const wrapper = createComponent()
       await wrapper.find('[data-test="view-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
     })
 
     it('opens conclude confirmation modal when Stop button is clicked', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
-
+      const wrapper = createComponent()
       await wrapper.find('[data-test="stop-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
     })
@@ -293,24 +207,7 @@ describe('ProposalCard.vue', () => {
 
   describe('watch handlers', () => {
     it('handles successful directive vote', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
 
       // Simulate successful vote confirmation
       mockUseWaitForTransactionReceipt.isLoading.value = false
@@ -323,24 +220,7 @@ describe('ProposalCard.vue', () => {
 
   describe('computed properties', () => {
     it('correctly formats chart data for directive proposals', () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
 
       const chartData = (wrapper.vm as unknown as ComponentData).chartData
       expect(chartData).toEqual([
@@ -351,24 +231,7 @@ describe('ProposalCard.vue', () => {
     })
 
     it('correctly formats chart data for election proposals', () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalElection,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent({ proposal: proposalElection })
 
       const chartData = (wrapper.vm as unknown as ComponentData).chartData
       expect(chartData).toEqual([
@@ -380,24 +243,7 @@ describe('ProposalCard.vue', () => {
 
   describe('modal interactions', () => {
     it('handles vote modal and vote input correctly', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
 
       expect(wrapper.find('[data-test="vote-modal"]').exists()).toBe(true)
 
@@ -406,24 +252,7 @@ describe('ProposalCard.vue', () => {
     })
 
     it('handles conclude modal correctly', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
 
       // Check initial state
       expect(wrapper.find('[data-test="conclude-modal"]').exists()).toBe(true)
@@ -445,24 +274,7 @@ describe('ProposalCard.vue', () => {
     })
 
     it('shows loading button during conclude confirmation', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
 
       // Simulate loading state
       mockUseWriteContract.isPending.value = true
@@ -473,24 +285,7 @@ describe('ProposalCard.vue', () => {
     })
 
     it('handles details modal correctly', async () => {
-      const wrapper = mount(ProposalCard, {
-        global: {
-          plugins: [router]
-        },
-        props: {
-          proposal: proposalDirective,
-          team: {
-            id: '1',
-            name: 'team1',
-            description: 'team1',
-            bankAddress: '0x1',
-            members: [{ id: '1', name: 'member1', address: '0x1' }],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
-          }
-        }
-      })
+      const wrapper = createComponent()
 
       // Check initial state
       expect(wrapper.find('[data-test="details-modal"]').exists()).toBe(true)
@@ -498,6 +293,80 @@ describe('ProposalCard.vue', () => {
       // Trigger details modal
       await wrapper.find('[data-test="view-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
+    })
+  })
+
+  describe('error handling', () => {
+    it('should add error toast when election vote fails', async () => {
+      const wrapper = createComponent({ proposal: proposalElection })
+      ;(wrapper.vm as unknown as ComponentData).electionError = new Error('Election vote failed')
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+
+      expect(addErrorToast).toHaveBeenCalled()
+    })
+
+    it('should add error toast when directive vote fails', async () => {
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as ComponentData).directiveError = new Error('Directive vote failed')
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+
+      expect(addErrorToast).toHaveBeenCalled()
+    })
+
+    it('should add error toast when conclude fails', async () => {
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as ComponentData).directiveError = new Error('Conclude failed')
+      await wrapper.vm.$nextTick()
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalled()
+    })
+  })
+
+  describe('success handling', () => {
+    it('should add success toast and emit getTeam when election vote succeeds', async () => {
+      const wrapper = createComponent({ proposal: proposalElection })
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalled()
+      expect(wrapper.emitted('getTeam')).toBeTruthy()
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(false)
+    })
+
+    it('should add success toast and emit getTeam when directive vote succeeds', async () => {
+      const wrapper = createComponent()
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalled()
+      expect(wrapper.emitted('getTeam')).toBeTruthy()
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(false)
+    })
+
+    it('should add success toast and emit getTeam when conclude succeeds', async () => {
+      const wrapper = createComponent()
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalled()
+      expect(wrapper.emitted('getTeam')).toBeTruthy()
+      expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(false)
     })
   })
 })
