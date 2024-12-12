@@ -16,7 +16,7 @@ vi.mock('@/stores/user', () => ({
     return {
       address: ref('0xOwner'),
       name: ref('Owner'),
-      isAuth: ref(true),
+      isAuth: ref(true)
     }
   })
 }))
