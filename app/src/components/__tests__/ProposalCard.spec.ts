@@ -10,6 +10,12 @@ const router = createRouter({
     { path: '/', component: { template: '<div>Home</div>' } } // Basic route
   ] // Define your routes here if needed
 })
+interface ComponentData {
+  showVoteModal: boolean
+  showProposalDetailsModal: boolean
+  showConcludeConfirmModal: boolean
+  chartData: { value: number; name: string }[]
+}
 vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
 
 vi.mock('@/stores/useToastStore', () => {
@@ -119,13 +125,15 @@ describe('ProposalCard.vue', () => {
           }
         }
       })
-      expect(wrapper.find('.card-title').text()).toBe(proposalDirective.title)
-      expect(wrapper.find('.badge-primary').text()).toContain('member1')
+      expect(wrapper.find('[data-test="proposal-title"]').text()).toBe(proposalDirective.title)
+      expect(wrapper.find('[data-test="proposal-drafter"]').text()).toContain('member1')
       const expectedDescription =
         proposalDirective.description.length > 120
           ? proposalDirective.description.substring(0, 120) + '...'
           : proposalDirective.description
-      expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
+      expect(wrapper.find('[data-test="proposal-description"]').text()).toContain(
+        expectedDescription
+      )
       expect(wrapper.classes()).toContain('bg-blue-100') // blue background for directive
     })
 
@@ -154,12 +162,14 @@ describe('ProposalCard.vue', () => {
           }
         }
       })
-      expect(wrapper.find('.card-title').text()).toBe(proposalElection.title)
+      expect(wrapper.find('[data-test="proposal-title"]').text()).toBe(proposalElection.title)
       const expectedDescription =
         proposalDirective.description.length > 120
           ? proposalDirective.description.substring(0, 120) + '...'
           : proposalDirective.description
-      expect(wrapper.find('.text-sm').text()).toContain(expectedDescription)
+      expect(wrapper.find('[data-test="proposal-description"]').text()).toContain(
+        expectedDescription
+      )
 
       expect(wrapper.classes()).toContain('bg-green-100') // green background for election
     })
@@ -191,6 +201,167 @@ describe('ProposalCard.vue', () => {
       const buttons = wrapper.findAll('button')
       expect(buttons[0].text()).toBe('Vote')
       expect(buttons[1].text()).toBe('View')
+    })
+  })
+
+  describe('interactions', () => {
+    it('opens vote modal when Vote button is clicked', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
+    })
+
+    it('opens details modal when View button is clicked', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      await wrapper.find('[data-test="view-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
+    })
+
+    it('opens conclude confirmation modal when Stop button is clicked', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      await wrapper.find('[data-test="stop-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
+    })
+  })
+
+  describe('watch handlers', () => {
+    it('handles successful directive vote', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      // Simulate successful vote confirmation
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+
+      await wrapper.vm.$nextTick()
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(false)
+    })
+  })
+
+  describe('computed properties', () => {
+    it('correctly formats chart data for directive proposals', () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      const chartData = (wrapper.vm as unknown as ComponentData).chartData
+      expect(chartData).toEqual([
+        { value: 10, name: 'Yes' },
+        { value: 5, name: 'No' },
+        { value: 3, name: 'Abstain' }
+      ])
+    })
+
+    it('correctly formats chart data for election proposals', () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalElection,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      const chartData = (wrapper.vm as unknown as ComponentData).chartData
+      expect(chartData).toEqual([
+        { value: 0, name: 'member1' },
+        { value: 1, name: 'Unknown' }
+      ])
     })
   })
 })
