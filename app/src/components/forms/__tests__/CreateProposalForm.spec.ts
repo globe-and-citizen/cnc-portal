@@ -154,7 +154,6 @@ describe('CreateProposal.vue', () => {
 
       const candidates = wrapper.findAll('[data-test="candidate-item"]')
 
-      console.log(candidates)
       expect(candidates).toHaveLength(2)
     })
 

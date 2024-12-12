@@ -3,6 +3,8 @@ import { mount } from '@vue/test-utils'
 import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
 import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import VotingABI from '@/artifacts/abi/voting.json'
+
 // Create a router instance
 const router = createRouter({
   history: createWebHistory(),
@@ -15,6 +17,17 @@ interface ComponentData {
   showProposalDetailsModal: boolean
   showConcludeConfirmModal: boolean
   chartData: { value: number; name: string }[]
+  voteInput: {
+    title: string
+    description: string
+    candidates: [
+      {
+        name: string
+        candidateAddress: string
+      }
+    ]
+    isElection: boolean
+  }
 }
 vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
 
@@ -362,6 +375,129 @@ describe('ProposalCard.vue', () => {
         { value: 0, name: 'member1' },
         { value: 1, name: 'Unknown' }
       ])
+    })
+  })
+
+  describe('modal interactions', () => {
+    it('handles vote modal and vote input correctly', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      expect(wrapper.find('[data-test="vote-modal"]').exists()).toBe(true)
+
+      await wrapper.find('[data-test="vote-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
+    })
+
+    it('handles conclude modal correctly', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      // Check initial state
+      expect(wrapper.find('[data-test="conclude-modal"]').exists()).toBe(true)
+
+      // Trigger conclude modal
+      await wrapper.find('[data-test="stop-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
+
+      // Test conclude confirmation
+      const concludeButton = wrapper.find('[data-test="conclude-confirm-button"]')
+      expect(concludeButton.exists()).toBe(true)
+      await concludeButton.trigger('click')
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        address: '0x1',
+        abi: VotingABI,
+        functionName: 'concludeProposal',
+        args: [0]
+      })
+    })
+
+    it('shows loading button during conclude confirmation', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      // Simulate loading state
+      mockUseWriteContract.isPending.value = true
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="conclude-loading-button"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="conclude-confirm-button"]').exists()).toBe(false)
+    })
+
+    it('handles details modal correctly', async () => {
+      const wrapper = mount(ProposalCard, {
+        global: {
+          plugins: [router]
+        },
+        props: {
+          proposal: proposalDirective,
+          team: {
+            id: '1',
+            name: 'team1',
+            description: 'team1',
+            bankAddress: '0x1',
+            members: [{ id: '1', name: 'member1', address: '0x1' }],
+            ownerAddress: '0x1',
+            votingAddress: '0x1',
+            boardOfDirectorsAddress: '0x1'
+          }
+        }
+      })
+
+      // Check initial state
+      expect(wrapper.find('[data-test="details-modal"]').exists()).toBe(true)
+
+      // Trigger details modal
+      await wrapper.find('[data-test="view-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
     })
   })
 })
