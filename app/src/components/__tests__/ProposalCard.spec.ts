@@ -185,25 +185,10 @@ describe('ProposalCard.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).showVoteModal).toBe(true)
     })
 
-    it('opens details modal when View button is clicked', async () => {
-      const wrapper = createComponent()
-      await wrapper.find('[data-test="view-button"]').trigger('click')
-      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
-    })
-
     it('opens conclude confirmation modal when Stop button is clicked', async () => {
       const wrapper = createComponent()
       await wrapper.find('[data-test="stop-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showConcludeConfirmModal).toBe(true)
-    })
-
-    it('sets the showProposalDetailsModal to be true when the view button is clicked', async () => {
-      const wrapper = createComponent()
-
-      await wrapper.find('button[data-test="view-button"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
     })
   })
 
@@ -286,14 +271,25 @@ describe('ProposalCard.vue', () => {
       expect(wrapper.find('[data-test="conclude-confirm-button"]').exists()).toBe(false)
     })
 
-    it('handles details modal correctly', async () => {
+    it('handles details modal active proposal correctly', async () => {
       const wrapper = createComponent()
 
       // Check initial state
       expect(wrapper.find('[data-test="details-modal"]').exists()).toBe(true)
 
       // Trigger details modal
-      await wrapper.find('[data-test="view-button"]').trigger('click')
+      await wrapper.find('[data-test="view-active-button"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
+    })
+
+    it('handles details modal concluded proposal correctly', async () => {
+      const wrapper = createComponent({ isDone: true})
+
+      // Check initial state
+      expect(wrapper.find('[data-test="details-modal"]').exists()).toBe(true)
+
+      // Trigger details modal
+      await wrapper.find('button[data-test="view-concluded-button"]').trigger('click')
       expect((wrapper.vm as unknown as ComponentData).showProposalDetailsModal).toBe(true)
     })
   })

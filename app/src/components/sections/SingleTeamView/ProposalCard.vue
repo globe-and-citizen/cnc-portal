@@ -39,7 +39,7 @@
       <button
         class="btn btn-secondary btn-sm"
         @click="showProposalDetailsModal = true"
-        data-test="view-button"
+        data-test="view-active-button"
       >
         View
       </button>
@@ -55,7 +55,7 @@
       <button
         class="btn btn-secondary btn-sm"
         @click="showProposalDetailsModal = true"
-        data-test="view-button"
+        data-test="view-concluded-button"
       >
         View
       </button>
