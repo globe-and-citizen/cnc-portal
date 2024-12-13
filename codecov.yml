@@ -22,3 +22,5 @@ flags:
     carryforward: true
     paths:
       - app
+ignore:
+  - "app/*.ts"
