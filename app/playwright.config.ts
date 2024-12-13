@@ -10,8 +10,17 @@ export default defineConfig({
   // Run all tests in parallel.
   fullyParallel: true,
 
+  // Fail the build on CI if you accidentally left test.only in the source code.
+  forbidOnly: !!process.env.CI,
+
+  // Retry on CI only.
+  retries: process.env.CI ? 2 : 0,
+
   // Use half of the number of logical CPU cores for running tests in parallel.
   workers: undefined,
+
+  // Reporter to use
+  reporter: 'html',
 
   // Disable timeout
   timeout: 0,
