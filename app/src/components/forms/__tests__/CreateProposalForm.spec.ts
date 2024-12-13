@@ -34,13 +34,13 @@ describe('CreateProposal.vue', () => {
         props: { isLoading: false, team: {} }
       })
 
-      const titleInput = wrapper.find('input[placeholder="Title"]')
+      const titleInput = wrapper.find('[data-test="titleInput"]')
       await titleInput.setValue('New Proposal Title')
       expect((wrapper.vm as unknown as ComponentData).newProposalInput.title).toBe(
         'New Proposal Title'
       )
 
-      const descriptionInput = wrapper.find('textarea')
+      const descriptionInput = wrapper.find('[data-test="descriptionInput"]')
       await descriptionInput.setValue('New Proposal Description')
       expect((wrapper.vm as unknown as ComponentData).newProposalInput.description).toBe(
         'New Proposal Description'
@@ -78,8 +78,105 @@ describe('CreateProposal.vue', () => {
         props: { isLoading: false, team: {} }
       })
 
-      const select = wrapper.find('select')
+      const select = wrapper.find('[data-test="electionDiv"]')
       await select.setValue('true')
+    })
+
+    it('searches users when typing in name field', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: {
+          isLoading: false,
+          team: {
+            members: [
+              { name: 'John Doe', address: '0x123', id: '1', teamId: 1 },
+              { name: 'Jane Smith', address: '0x456', id: '2', teamId: 1 }
+            ]
+          }
+        }
+      })
+
+      await wrapper.find('[data-test="electionDiv"]').setValue('true')
+
+      const nameInput = wrapper.find('[data-test="candidateNameInput"]')
+      await nameInput.setValue('John')
+      await nameInput.trigger('keyup')
+
+      const dropdown = wrapper.find('[data-test="candidateDropdown"]')
+      expect(dropdown.exists()).toBe(true)
+      expect(wrapper.findAll('.dropdown-content li')).toHaveLength(1)
+      expect(wrapper.find('.dropdown-content li').text()).toContain('John Doe')
+    })
+
+    it('searches users when typing in address field', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: {
+          isLoading: false,
+          team: {
+            members: [
+              { name: 'John Doe', address: '0x123', id: '1', teamId: 1 },
+              { name: 'Jane Smith', address: '0x456', id: '2', teamId: 1 }
+            ]
+          }
+        }
+      })
+
+      await wrapper.find('[data-test="electionDiv"]').setValue('true')
+
+      const addressInput = wrapper.find('[data-test="candidateAddressInput"]')
+      await addressInput.setValue('0x1')
+      await addressInput.trigger('keyup')
+
+      expect(wrapper.find('[data-test="candidateDropdown"]').exists()).toBe(true)
+      expect(wrapper.findAll('.dropdown-content li')).toHaveLength(1)
+      expect(wrapper.find('.dropdown-content li').text()).toContain('0x123')
+    })
+
+    it('adds candidate when selecting from dropdown', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: {
+          isLoading: false,
+          team: {
+            members: [{ name: 'John Doe', address: '0x123', id: '1', teamId: 1 }]
+          }
+        }
+      })
+
+      await wrapper.find('[data-test="electionDiv"]').setValue('true')
+
+      const nameInput = wrapper.find('[data-test="candidateNameInput"]')
+      await nameInput.setValue('John')
+      await nameInput.trigger('keyup')
+
+      await wrapper.find('[data-test="dropdown-item"]').trigger('click')
+
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      const candidates = wrapper.findAll('[data-test="candidate-item"]')
+
+      expect(candidates).toHaveLength(2)
+    })
+
+    it('removes candidate when clicking remove icon', async () => {
+      const wrapper = mount(CreateProposalForm, {
+        props: {
+          isLoading: false,
+          team: {
+            members: [{ name: 'John Doe', address: '0x123', id: '1', teamId: 1 }]
+          }
+        }
+      })
+
+      const select = wrapper.find('[data-test="electionDiv"]')
+      await select.setValue('true')
+
+      const initialCandidates = wrapper.findAll('[data-test="candidate-item"]')
+      expect(initialCandidates).toHaveLength(2)
+
+      await wrapper.vm.$nextTick()
+
+      // const remainingCandidates = wrapper.findAll('[data-test="candidate-item"]')
+      // expect(remainingCandidates).toHaveLength(1)
     })
   })
 

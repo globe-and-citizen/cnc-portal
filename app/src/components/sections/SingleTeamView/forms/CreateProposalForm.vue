@@ -16,6 +16,7 @@
         placeholder="Title"
         class="input input-primary w-full"
         v-model="newProposalInput.title"
+        data-test="titleInput"
       />
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
@@ -29,6 +30,7 @@
         class="textarea textarea-primary h-24"
         placeholder="Description"
         v-model="newProposalInput.description"
+        data-test="descriptionInput"
       ></textarea>
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
@@ -44,6 +46,7 @@
             class="input input-primary w-full"
             placeholder="Number of Directors"
             v-model="newProposalInput.winnerCount"
+            data-test="winnerCountInput"
           />
         </div>
         <div class="input-group" ref="formRef">
@@ -59,6 +62,7 @@
                 }
               "
               placeholder="Candidate Name"
+              data-test="candidateNameInput"
             />
             |
             <input
@@ -72,6 +76,7 @@
                 }
               "
               placeholder="Address"
+              data-test="candidateAddressInput"
             />
           </label>
         </div>
@@ -84,9 +89,11 @@
           <ul
             v-if="users && users.users && users.users.length > 0"
             class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96"
+            data-test="candidateDropdown"
           >
             <li v-for="user in users.users" :key="user.address">
               <a
+                data-test="dropdown-item"
                 @click="
                   () => {
                     newProposalInput.candidates?.push({
@@ -108,6 +115,7 @@
           class="flex m-4 text-xs gap-4 justify-between"
           v-for="(candidate, index) in newProposalInput.candidates"
           :key="index"
+          data-test="candidate-item"
         >
           <span>
             {{ candidate.name }}
@@ -117,6 +125,7 @@
           </span>
           <MinusCircleIcon
             class="w-4 text-red-500 cursor-pointer"
+            data-test="remove-candidate"
             @click="() => newProposalInput.candidates?.splice(index, 1)"
           />
         </div>
