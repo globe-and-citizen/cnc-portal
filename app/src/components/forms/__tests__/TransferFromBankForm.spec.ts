@@ -7,6 +7,7 @@ import LoadingButton from '@/components/LoadingButton.vue'
 interface ComponentData {
   to: string
   amount: string
+  description: string
 }
 describe('TransferFromBankForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
@@ -73,6 +74,14 @@ describe('TransferFromBankForm.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).to).toBe(
         '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E'
       )
+    })
+
+    it('updates "description" value when input text', async () => {
+      await wrapper.setProps({ asBod: true })
+      const descriptionInput = wrapper.find('input[data-test="description-input"]')
+      await descriptionInput.setValue('Test description')
+
+      expect((wrapper.vm as unknown as ComponentData).description).toBe('Test description')
     })
 
     it('emits closeModal event when Cancel button is clicked', async () => {
