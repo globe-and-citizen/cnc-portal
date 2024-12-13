@@ -12,6 +12,7 @@
       </button>
       <button
         class="btn btn-primary"
+        data-test="pay-dividends-button"
         @click="payDividendsModal = true"
         :disabled="
           !tokenSymbol || currentAddress != team.ownerAddress || (shareholders?.length ?? 0) == 0
@@ -21,6 +22,7 @@
       </button>
       <button
         class="btn btn-primary gap-1"
+        data-test="mint-button"
         :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
         @click="mintModal = true"
       >
@@ -35,7 +37,7 @@
         @submit="(address: Address, amount: string) => mintToken(address, amount)"
       ></MintForm>
     </ModalComponent>
-    <ModalComponent v-model="distributeMintModal" data-test="distribute-mint-modal">
+    <ModalComponent v-model="distributeMintModal">
       <DistributeMintForm
         v-if="distributeMintModal"
         :loading="distributeMintLoading || isConfirmingDistributeMint"
