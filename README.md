@@ -112,6 +112,13 @@ In the `./app` folder, create a `.env` file with the following variable:
 - **VITE_APP_BLOCK_EXPLORER_URL**: The URL for viewing transactions on the network the app uses. Example: `VITE_APP_BLOCK_EXPLORER_URL=https://optimistic.etherscan.io/`. This variable is optional.
 - **VITE_VOTING_IMPL_ADDRESS**: The address to which the voting contract is deployed to. This is essential for drafting/interacting with proposals.
 
+#### App end to end testing
+
+1. Go to `/app` folder by doing `cd app`
+2. Run `npm run test:build:cache` to build cache. This allows you to skip the wallet installation and setup steps, which can be quite time-consuming.
+3. Run `npm run test` to run the tests
+4. Or run `npm run test:headless` to run tests in headless mode
+
 ## Running the application
 
 ### 1- Run docker containers
@@ -160,6 +167,7 @@ Make sur you run the following commands before submitting your PR:
 
 ```bash
 npm run build
+npm run test
 npm run test:unit
 npm run type-check
 npm run lint
