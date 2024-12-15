@@ -3,26 +3,38 @@
     <div>
       <h2 class="pt-10">Teams</h2>
     </div>
-    <div v-if="teamsAreFetching" class="loading loading-spinner loading-lg"></div>
+    <div
+      v-if="teamsAreFetching"
+      class="loading loading-spinner loading-lg"
+      data-test="loading-state"
+    ></div>
 
     <div class="pt-10" v-if="!teamsAreFetching && teams">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20" v-if="teams.length != 0">
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
+        v-if="(teams?.length ?? 0) != 0"
+      >
         <TeamCard
-          data-test="teamcard"
           v-for="team in teams"
           :key="team.id"
           :team="team"
+          :data-test="`team-card-${team.id}`"
           class="cursor-pointer transition duration-300 hover:scale-105"
           @click="navigateToTeam(team.id)"
         />
         <div class="flex justify-center">
           <AddTeamCard
+            data-test="add-team-card"
             @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
             class="w-80 text-xl hover:scale-105 transform transition"
           />
         </div>
       </div>
-      <div class="flex flex-col items-center animate-fade-in" v-if="teams.length == 0">
+      <div
+        class="flex flex-col items-center animate-fade-in"
+        v-if="teams.length == 0"
+        data-test="empty-state"
+      >
         <img src="../assets/login-illustration.png" alt="Login illustration" width="300" />
 
         <span class="font-bold text-sm text-gray-500 my-4"
@@ -30,15 +42,16 @@
           team now!</span
         >
 
-        <div class="flex justify-center">
+        <div class="flex justify-center" data-test="testing">
           <AddTeamCard
+            data-test="add-team-card"
             @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
             class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
           />
         </div>
       </div>
     </div>
-    <div class="flex flex-col items-center pt-10" v-if="teamError">
+    <div class="flex flex-col items-center pt-10" data-test="error-state" v-if="teamError">
       <img src="../assets/login-illustration.png" alt="Login illustration" width="300" />
 
       <div class="alert alert-warning">
