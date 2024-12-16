@@ -432,11 +432,25 @@ describe('ExpenseAccountSection', () => {
 
       expect(wrapper.find('[data-test="max-loading"]').exists()).toBeFalsy()
     })
-    it('should show max limit amount', async () => {
+    it('should show max transactions per period limit amount', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="max-limit"]').text()).toBe(
-        `${'0.0'} ${NETWORK.currencySymbol}`
+      expect(wrapper.find('[data-test="txs-per-period-limit"]').text()).toBe(
+        `-- TXs`
+      )
+    })
+    it('should show amount per period limit amount', async () => {
+      const wrapper = createComponent()
+
+      expect(wrapper.find('[data-test="amount-per-period-limit"]').text()).toBe(
+        `-- ${NETWORK.currencySymbol}`
+      )
+    })
+    it('should show amount per transaction limit amount', async () => {
+      const wrapper = createComponent()
+
+      expect(wrapper.find('[data-test="amount-per-tx-limit"]').text()).toBe(
+        `-- ${NETWORK.currencySymbol}`
       )
     })
 
@@ -450,11 +464,18 @@ describe('ExpenseAccountSection', () => {
 
       expect(wrapper.find('[data-test="limit-loading"]').exists()).toBeFalsy()
     })
-    it('should show limit balance amount', async () => {
+    it('should show total number of transactions', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="limit-balance"]').text()).toBe(
-        `${'0.0'} ${NETWORK.currencySymbol}`
+      expect(wrapper.find('[data-test="total-transactions"]').text()).toBe(
+        `-- TXs`
+      )
+    })
+    it('should show total amount withdrawn', async () => {
+      const wrapper = createComponent()
+
+      expect(wrapper.find('[data-test="total-withdrawn"]').text()).toBe(
+        `-- ${NETWORK.currencySymbol}`
       )
     })
     it('should disable the transfer button if user not approved', async () => {
