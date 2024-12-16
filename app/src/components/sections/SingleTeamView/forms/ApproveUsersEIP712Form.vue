@@ -326,11 +326,6 @@ const clear = () => {
 }
 
 const submitApprove = () => {
-  console.log(`New Object`, {
-    approvedAddress: formData.value[0].address,
-    budgetData: resultArray.value,
-    expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
-  })
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
@@ -338,11 +333,6 @@ const submitApprove = () => {
   emit('approveUser', {
     approvedAddress: formData.value[0].address,
     budgetData: resultArray.value,
-    // budgetType: budgetLimitType.value,
-    // value:
-    //   budgetLimitType.value === 0
-    //     ? Number(limitValue.value)
-    //     : web3Library.parseEther(limitValue.value),
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }
