@@ -34,7 +34,123 @@
           </ToolTip>
         </span>
 
-        <div class="flex items-center pt-3 mt-10" style="border-width: 0">
+        <!-- Limits -->
+        <div class="flex pt-3 mt-10" style="border-width: 0">
+          <div>
+            <div class="stat-title pr-3">Expense Balance</div>
+            <div
+              v-if="isLoadingGetExpenseBalance"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
+              <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
+            </div>
+            <div
+              v-else
+              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+              data-test="contract-balance"
+            >
+              {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+            </div>
+          </div>
+
+          <div class="pl-3">
+            <div class="stat-title pr-3">Txns Per Period</div>
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
+              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+            </div>
+            <div
+              v-else
+              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+              data-test="txs-per-period-limit"
+            >
+              {{ maxLimitTxsPerPeriod }} <span class="text-xs">TXs</span>
+            </div>
+          </div>
+
+          <div class="pl-3">
+            <div class="stat-title pr-3">Amount Per Period</div>
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
+              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+            </div>
+            <div
+              v-else
+              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+              data-test="amount-per-period-limit"
+            >
+              {{ maxLimitAmountPerPeriod }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+            </div>
+          </div>
+
+          <div class="pl-3">
+            <div class="stat-title pr-3">Amount Per Txn</div>
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
+              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+            </div>
+            <div
+              v-else
+              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+              data-test="amount-per-tx-limit"
+            >
+              {{ maxLimitAmountPerTx }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+            </div>
+          </div>
+
+          <!--<div class="pl-3">
+            <div class="stat-title pr-3">{{ dynamicDisplayData?.heading }}</div>
+            <div v-if="false" class="stat-value mt-1 pr-3">
+              <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
+            </div>
+            <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
+              {{ dynamicDisplayData?.value }}
+              <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
+            </div>
+          </div>-->
+          <div class="pl-3">
+            <div class="stat-title pr-3">Total Transactions</div>
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 border-r border-gray-400 pr-3"
+            >
+              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+            </div>
+            <div
+              v-else
+              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+              data-test="total-transactions"
+            >
+              {{ dynamicDisplayDataTx?.value }} <span class="text-xs">{{ dynamicDisplayDataTx?.symbol }}</span>
+            </div>
+          </div>
+
+          <div class="pl-3">
+            <div class="stat-title pr-3">Total Withdrawn</div>
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 pr-3"
+            >
+              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+            </div>
+            <div
+              v-else
+              class="stat-value text-3xl mt-2 border-r pr-3"
+              data-test="total-withdrawn"
+            >
+              {{ dynamicDisplayDataAmount?.value }} <span class="text-xs">{{ dynamicDisplayDataAmount?.symbol }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Balances
+        <div class="flex">
           <div>
             <div class="stat-title pr-3">Balance</div>
             <div
@@ -53,7 +169,7 @@
           </div>
 
           <div class="pl-3">
-            <div class="stat-title pr-3">Max Limit</div>
+            <div class="stat-title pr-3">Total Transactions</div>
             <div
               v-if="isFetchingExpenseAccountData"
               class="stat-value mt-1 border-r border-gray-400 pr-3"
@@ -70,16 +186,22 @@
           </div>
 
           <div class="pl-3">
-            <div class="stat-title pr-3">{{ dynamicDisplayData?.heading }}</div>
-            <div v-if="false" class="stat-value mt-1 pr-3">
-              <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
+            <div class="stat-title pr-3">Total Withdrawn</div>
+            <div
+              v-if="isFetchingExpenseAccountData"
+              class="stat-value mt-1 pr-3"
+            >
+              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
             </div>
-            <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
-              {{ dynamicDisplayData?.value }}
-              <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
+            <div
+              v-else
+              class="stat-value text-3xl mt-2 border-r pr-3"
+              data-test="max-limit"
+            >
+              {{ maxLimit }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
             </div>
           </div>
-        </div>
+        </div>-->
 
         <div class="stat-title text-center mt-10">
           Approval Expiry:
@@ -140,7 +262,7 @@
 <script setup lang="ts">
 //#region imports
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit } from '@/types'
+import type { Team, User, BudgetLimit, ExpenseData, BudgetData } from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -171,9 +293,74 @@ const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
-const maxLimit = computed(() =>
-  _expenseAccountData.value?.data ? JSON.parse(_expenseAccountData.value.data).value : '0.0'
-)
+// const maxLimit = computed(() =>
+//   _expenseAccountData.value?.data ? JSON.parse(_expenseAccountData.value.data).value : '0.0'
+// )
+const maxLimit = (budgetType: number) => computed(() => {
+    const budgetData = _expenseAccountData.value?.data &&
+      Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)?
+      JSON.parse(_expenseAccountData.value?.data).
+        budgetData
+        .find((item: BudgetData) => item.budgetType === budgetType):
+      undefined
+    if (
+      _expenseAccountData.value?.data && 
+      budgetData &&
+      budgetData.budgetType === budgetType
+    )
+      return budgetData.value
+    else return '--'
+    }
+  )
+const maxLimitTxsPerPeriod = maxLimit(0)
+const maxLimitAmountPerPeriod = maxLimit(1)
+const maxLimitAmountPerTx = maxLimit(2)
+// const maxLimitTxsPerPeriod = computed(() => {
+//   const budgetData = _expenseAccountData.value?.data &&
+//     JSON.parse(_expenseAccountData.value?.data).budgetData?
+//     JSON.parse(_expenseAccountData.value?.data).
+//       budgetData
+//       .find((item: BudgetData) => item.budgetType === 0):
+//     undefined
+//   if (
+//     _expenseAccountData.value?.data && 
+//     budgetData &&
+//     budgetData.budgetType === 0
+//   )
+//     return budgetData.value
+//   else return '--'
+//   }
+// )
+// const maxLimitAmountPerPeriod = computed(() => {
+//   const budgetData = _expenseAccountData.value?.data?
+//     JSON.parse(_expenseAccountData.value?.data).
+//       budgetData
+//       .find((item: BudgetData) => item.budgetType === 1):
+//     undefined
+//   if (
+//     _expenseAccountData.value?.data && 
+//     budgetData &&
+//     budgetData.budgetType === 1
+//   )
+//     return budgetData.value
+//   else return '--'
+//   }
+// )
+// const maxLimitAmountPerTx = computed(() => {
+//   const budgetData = _expenseAccountData.value?.data?
+//     JSON.parse(_expenseAccountData.value?.data).
+//       budgetData
+//       .find((item: BudgetData) => item.budgetType === 2):
+//     undefined
+//   if (
+//     _expenseAccountData.value?.data && 
+//     budgetData &&
+//     budgetData.budgetType === 2
+//   )
+//     return budgetData.value
+//   else return '--'
+//   }
+// )
 const expiry = computed(() => {
   if (_expenseAccountData.value?.data) {
     const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
@@ -183,28 +370,37 @@ const expiry = computed(() => {
     return '--/--/--, --:--:--'
   }
 })
-const dynamicDisplayData = computed(() => {
-  if (_expenseAccountData.value?.data && amountWithdrawn.value) {
-    const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
-    if (budgetType === 0) {
-      return {
-        //@ts-ignore
-        value: Number(amountWithdrawn.value[0]),
-        heading: 'Total Transactions',
-        symbol: 'TXs'
+const dynamicDisplayData = (budgetType: number) =>
+  computed(() => {
+    const data = budgetType === 0?
+      { heading: 'Total Transactions', symbol: 'TXs' }:
+      { heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
+    if (_expenseAccountData.value?.data && amountWithdrawn.value) {
+      if (budgetType === 0 ) {
+        return {
+          ...data,
+          //@ts-ignore
+          value: Number(amountWithdrawn.value[0]),
+          // heading: 'Total Transactions',
+          // symbol: 'TXs'
+        }
+      } else {
+        return {
+          ...data,
+          //@ts-ignore
+          value: formatEther(amountWithdrawn.value[1]),
+          // heading: 'Total Withdrawn',
+          // symbol: NETWORK.currencySymbol
+        }
       }
     } else {
       return {
-        //@ts-ignore
-        value: formatEther(amountWithdrawn.value[1]),
-        heading: 'Total Withdrawn',
-        symbol: NETWORK.currencySymbol
-      }
+        ...data,
+        value: `--`
     }
-  } else {
-    return { value: `0.0`, heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
-  }
-})
+  }})
+const dynamicDisplayDataTx = dynamicDisplayData(0)
+const dynamicDisplayDataAmount = dynamicDisplayData(1)
 // const limitBalanceHeading = computed(() => {
 //   if ()
 // })
