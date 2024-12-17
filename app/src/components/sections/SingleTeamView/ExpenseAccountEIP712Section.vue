@@ -262,7 +262,7 @@
 <script setup lang="ts">
 //#region imports
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit, ExpenseData, BudgetData } from '@/types'
+import type { Team, User, BudgetLimit, BudgetData } from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -293,9 +293,6 @@ const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
-// const maxLimit = computed(() =>
-//   _expenseAccountData.value?.data ? JSON.parse(_expenseAccountData.value.data).value : '0.0'
-// )
 const maxLimit = (budgetType: number) => computed(() => {
     const budgetData = _expenseAccountData.value?.data &&
       Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)?
@@ -315,52 +312,7 @@ const maxLimit = (budgetType: number) => computed(() => {
 const maxLimitTxsPerPeriod = maxLimit(0)
 const maxLimitAmountPerPeriod = maxLimit(1)
 const maxLimitAmountPerTx = maxLimit(2)
-// const maxLimitTxsPerPeriod = computed(() => {
-//   const budgetData = _expenseAccountData.value?.data &&
-//     JSON.parse(_expenseAccountData.value?.data).budgetData?
-//     JSON.parse(_expenseAccountData.value?.data).
-//       budgetData
-//       .find((item: BudgetData) => item.budgetType === 0):
-//     undefined
-//   if (
-//     _expenseAccountData.value?.data && 
-//     budgetData &&
-//     budgetData.budgetType === 0
-//   )
-//     return budgetData.value
-//   else return '--'
-//   }
-// )
-// const maxLimitAmountPerPeriod = computed(() => {
-//   const budgetData = _expenseAccountData.value?.data?
-//     JSON.parse(_expenseAccountData.value?.data).
-//       budgetData
-//       .find((item: BudgetData) => item.budgetType === 1):
-//     undefined
-//   if (
-//     _expenseAccountData.value?.data && 
-//     budgetData &&
-//     budgetData.budgetType === 1
-//   )
-//     return budgetData.value
-//   else return '--'
-//   }
-// )
-// const maxLimitAmountPerTx = computed(() => {
-//   const budgetData = _expenseAccountData.value?.data?
-//     JSON.parse(_expenseAccountData.value?.data).
-//       budgetData
-//       .find((item: BudgetData) => item.budgetType === 2):
-//     undefined
-//   if (
-//     _expenseAccountData.value?.data && 
-//     budgetData &&
-//     budgetData.budgetType === 2
-//   )
-//     return budgetData.value
-//   else return '--'
-//   }
-// )
+
 const expiry = computed(() => {
   if (_expenseAccountData.value?.data) {
     const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
@@ -380,17 +332,13 @@ const dynamicDisplayData = (budgetType: number) =>
         return {
           ...data,
           //@ts-ignore
-          value: Number(amountWithdrawn.value[0]),
-          // heading: 'Total Transactions',
-          // symbol: 'TXs'
+          value: Number(amountWithdrawn.value[0])
         }
       } else {
         return {
           ...data,
           //@ts-ignore
-          value: formatEther(amountWithdrawn.value[1]),
-          // heading: 'Total Withdrawn',
-          // symbol: NETWORK.currencySymbol
+          value: formatEther(amountWithdrawn.value[1])
         }
       }
     } else {
@@ -401,9 +349,6 @@ const dynamicDisplayData = (budgetType: number) =>
   }})
 const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
-// const limitBalanceHeading = computed(() => {
-//   if ()
-// })
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
