@@ -83,7 +83,8 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="amount-per-period-limit"
             >
-              {{ maxLimitAmountPerPeriod }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              {{ maxLimitAmountPerPeriod }}
+              <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
           </div>
 
@@ -127,24 +128,19 @@
               class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
               data-test="total-transactions"
             >
-              {{ dynamicDisplayDataTx?.value }} <span class="text-xs">{{ dynamicDisplayDataTx?.symbol }}</span>
+              {{ dynamicDisplayDataTx?.value }}
+              <span class="text-xs">{{ dynamicDisplayDataTx?.symbol }}</span>
             </div>
           </div>
 
           <div class="pl-3">
             <div class="stat-title pr-3">Total Withdrawn</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 pr-3"
-            >
+            <div v-if="isFetchingExpenseAccountData" class="stat-value mt-1 pr-3">
               <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
             </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r pr-3"
-              data-test="total-withdrawn"
-            >
-              {{ dynamicDisplayDataAmount?.value }} <span class="text-xs">{{ dynamicDisplayDataAmount?.symbol }}</span>
+            <div v-else class="stat-value text-3xl mt-2 border-r pr-3" data-test="total-withdrawn">
+              {{ dynamicDisplayDataAmount?.value }}
+              <span class="text-xs">{{ dynamicDisplayDataAmount?.symbol }}</span>
             </div>
           </div>
         </div>
@@ -293,22 +289,19 @@ const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
-const maxLimit = (budgetType: number) => computed(() => {
-    const budgetData = _expenseAccountData.value?.data &&
-      Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)?
-      JSON.parse(_expenseAccountData.value?.data).
-        budgetData
-        .find((item: BudgetData) => item.budgetType === budgetType):
-      undefined
-    if (
-      _expenseAccountData.value?.data && 
-      budgetData &&
-      budgetData.budgetType === budgetType
-    )
+const maxLimit = (budgetType: number) =>
+  computed(() => {
+    const budgetData =
+      _expenseAccountData.value?.data &&
+      Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)
+        ? JSON.parse(_expenseAccountData.value?.data).budgetData.find(
+            (item: BudgetData) => item.budgetType === budgetType
+          )
+        : undefined
+    if (_expenseAccountData.value?.data && budgetData && budgetData.budgetType === budgetType)
       return budgetData.value
     else return '--'
-    }
-  )
+  })
 const maxLimitTxsPerPeriod = maxLimit(0)
 const maxLimitAmountPerPeriod = maxLimit(1)
 const maxLimitAmountPerTx = maxLimit(2)
@@ -324,11 +317,12 @@ const expiry = computed(() => {
 })
 const dynamicDisplayData = (budgetType: number) =>
   computed(() => {
-    const data = budgetType === 0?
-      { heading: 'Total Transactions', symbol: 'TXs' }:
-      { heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
+    const data =
+      budgetType === 0
+        ? { heading: 'Total Transactions', symbol: 'TXs' }
+        : { heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
     if (_expenseAccountData.value?.data && amountWithdrawn.value) {
-      if (budgetType === 0 ) {
+      if (budgetType === 0) {
         return {
           ...data,
           //@ts-ignore
@@ -345,8 +339,9 @@ const dynamicDisplayData = (budgetType: number) =>
       return {
         ...data,
         value: `--`
+      }
     }
-  }})
+  })
 const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
 const { addErrorToast, addSuccessToast } = useToastStore()

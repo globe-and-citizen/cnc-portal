@@ -1,4 +1,4 @@
-import type { BytesLike } from "ethers"
+import type { BytesLike } from 'ethers'
 
 export interface BudgetLimit {
   approvedAddress: string

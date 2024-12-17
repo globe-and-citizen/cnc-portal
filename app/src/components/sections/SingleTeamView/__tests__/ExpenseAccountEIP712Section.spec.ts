@@ -210,7 +210,7 @@ const budgetData = {
   txsPerPeriod: 1,
   amountPerPeriod: 100,
   amountPerTransaction: 20
-} 
+}
 
 vi.mock('@/composables/useCustomFetch', () => {
   return {
@@ -446,21 +446,15 @@ describe('ExpenseAccountSection', () => {
       const wrapper = createComponent()
 
       const txsPerPeriodDiv = wrapper.find('[data-test="txs-per-period-limit"]')
-      expect(txsPerPeriodDiv.text()).toBe(
-        `-- TXs`
-      )
+      expect(txsPerPeriodDiv.text()).toBe(`-- TXs`)
       await wrapper.vm.$nextTick()
-      expect(txsPerPeriodDiv.text()).toBe(
-        `${budgetData.txsPerPeriod} TXs`
-      )
+      expect(txsPerPeriodDiv.text()).toBe(`${budgetData.txsPerPeriod} TXs`)
     })
     it('should show amount per period limit amount', async () => {
       const wrapper = createComponent()
 
       const amountPerPeriodDiv = wrapper.find('[data-test="amount-per-period-limit"]')
-      expect(amountPerPeriodDiv.text()).toBe(
-        `-- ${NETWORK.currencySymbol}`
-      )
+      expect(amountPerPeriodDiv.text()).toBe(`-- ${NETWORK.currencySymbol}`)
       await wrapper.vm.$nextTick()
       expect(amountPerPeriodDiv.text()).toBe(
         `${budgetData.amountPerPeriod} ${NETWORK.currencySymbol}`
@@ -470,9 +464,7 @@ describe('ExpenseAccountSection', () => {
       const wrapper = createComponent()
 
       const amountPerTxDiv = wrapper.find('[data-test="amount-per-tx-limit"]')
-      expect(amountPerTxDiv.text()).toBe(
-        `-- ${NETWORK.currencySymbol}`
-      )
+      expect(amountPerTxDiv.text()).toBe(`-- ${NETWORK.currencySymbol}`)
       await wrapper.vm.$nextTick()
       expect(amountPerTxDiv.text()).toBe(
         `${budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
@@ -492,9 +484,7 @@ describe('ExpenseAccountSection', () => {
     it('should show total number of transactions', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="total-transactions"]').text()).toBe(
-        `-- TXs`
-      )
+      expect(wrapper.find('[data-test="total-transactions"]').text()).toBe(`-- TXs`)
     })
     it('should show total amount withdrawn', async () => {
       const wrapper = createComponent()
