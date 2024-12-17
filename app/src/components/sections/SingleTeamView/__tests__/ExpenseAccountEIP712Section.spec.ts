@@ -341,16 +341,16 @@ describe('ExpenseAccountSection', () => {
 
       expect(wrapper.find('[data-test="expense-account-address"]').exists()).toBeTruthy()
       expect(wrapper.find('[data-test="expense-account-address"]').text()).toBe(
-        team.expenseAccountEip712Address
+        `Expense Address ${team.expenseAccountEip712Address}`
       )
 
       // ToolTip
       const expenseAccountAddressTooltip = wrapper
-        .find('[data-test="expense-account-address-tooltip"]')
-        .findComponent({ name: 'ToolTip' })
+        .find('[data-test="expense-account-address"]')
+        .findComponent({ name: 'AddressToolTip' })
       expect(expenseAccountAddressTooltip.exists()).toBeTruthy()
-      expect(expenseAccountAddressTooltip.props().content).toBe(
-        'Click to see address in block explorer'
+      expect(expenseAccountAddressTooltip.props().address).toBe(
+        team.expenseAccountEip712Address
       )
     })
 
@@ -389,30 +389,6 @@ describe('ExpenseAccountSection', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(false)
-    })
-
-    it('should change the copy icon when copied', async () => {
-      const wrapper = createComponent()
-
-      // mock clipboard
-      mockClipboard.isSupported.value = false
-      mockClipboard.copied.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(ClipboardDocumentCheckIcon).exists()).toBe(true)
-    })
-    it('should change tooltip text to be "Copied!" when copied', async () => {
-      const wrapper = createComponent()
-
-      // mock clipboard
-      mockClipboard.isSupported.value = false
-      mockClipboard.copied.value = true
-      await wrapper.vm.$nextTick()
-
-      const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
-        name: 'ToolTip'
-      })
-      expect(copyAddressTooltip.props().content).toBe('Copied!')
     })
     it('should show animation if balance loading', async () => {
       const wrapper = createComponent()
@@ -603,7 +579,7 @@ describe('ExpenseAccountSection', () => {
             createTestingPinia({
               createSpy: vi.fn,
               initialState: {
-                user: { address: '0xContractOwner' }
+                user: { address: '0xOwner' }
               }
             })
           ]
@@ -611,8 +587,13 @@ describe('ExpenseAccountSection', () => {
       })
 
       it('should pass corrent props to ApproveUsersForm', async () => {
+        const approveUsersButton = wrapper.find('[data-test="approve-users-button"]')
+        expect(approveUsersButton.exists()).toBe(true)
+        expect((approveUsersButton.element as HTMLInputElement).disabled).toBe(false)
+        approveUsersButton.trigger('click')
+        await wrapper.vm.$nextTick()
         const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-        // expect(approveUsersForm.exists()).toBe(true)
+        expect(approveUsersForm.exists()).toBe(true)
         expect(approveUsersForm.props()).toEqual({
           formData: [{ name: '', address: '', isValid: false }],
           isBodAction: false,

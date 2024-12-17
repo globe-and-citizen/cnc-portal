@@ -161,7 +161,7 @@
             class="btn btn-secondary"
             :disabled="!(currentUserAddress === team.ownerAddress)"
             @click="approveUsersModal = true"
-            data-test="transfer-button"
+            data-test="approve-users-button"
           >
             Approve User
           </button>
@@ -172,7 +172,7 @@
             Approval Expiry:
             <span data-test="approval-expiry" class="font-bold text-black text-sm">{{ expiry }}</span>
           </div>
-          <div class="flex flex-wrap gap-2 sm:gap-4">
+          <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
             <span class="text-sm">Expense Address </span>
             <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
           </div>
@@ -195,6 +195,7 @@
         </ModalComponent>
         <ModalComponent v-model="approveUsersModal">
           <ApproveUsersForm
+            v-if="approveUsersModal"
             :form-data="teamMembers"
             :users="foundUsers"
             :loading-approve="loadingApprove"
