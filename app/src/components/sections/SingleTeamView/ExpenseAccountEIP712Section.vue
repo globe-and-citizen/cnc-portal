@@ -2,11 +2,11 @@
   <div class="flex flex-col gap-y-4">
     <div
       v-if="team.expenseAccountEip712Address"
-      class="stats bg-green-100 flex text-primary-content border-outline justify-center items-center p-5 overflow-visible"
+      class="stats bg-green-100 flex text-primary-content border-outline p-5 overflow-visible"
     >
       <!-- Expense A/c Info Section -->
-      <section class="stat flex flex-col justify-center items-center">
-        <div class="stat-title text-center">Expense Account Address</div>
+      <section class="stat flex flex-col justify-start">
+        <!--<div class="stat-title text-center">Expense Account Address</div>
 
         <span class="flex gap-2 items-center">
           <ToolTip
@@ -32,10 +32,10 @@
             />
             <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
           </ToolTip>
-        </span>
+        </span>-->
 
         
-        <div class="flex pt-3 mt-10" style="border-width: 0">
+        <div class="flex pt-3" style="border-width: 0">
           <!-- Balances -->
           <div class="flex flex-col border-r border-gray-400">
             <p>Balances</p>
@@ -147,7 +147,7 @@
           </div>
         </div>
 
-        <div class="stat-actions flex justify-center gap-2 items-center mt-8">
+        <div class="stat-actions flex justify-start gap-2 mt-8">
           <button
             class="btn btn-secondary"
             :disabled="!_expenseAccountData?.data"
@@ -167,9 +167,15 @@
           </button>
         </div>
 
-        <div class="stat-title text-center mt-5">
-          Approval Expiry:
-          <span data-test="approval-expiry" class="font-bold text-black">{{ expiry }}</span>
+        <div class="flex justify-between items-start pt-5">
+          <div class="stat-title text-sm">
+            Approval Expiry:
+            <span data-test="approval-expiry" class="font-bold text-black text-sm">{{ expiry }}</span>
+          </div>
+          <div class="flex flex-wrap gap-2 sm:gap-4">
+            <span class="text-sm">Expense Address </span>
+            <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
+          </div>
         </div>
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
@@ -230,6 +236,7 @@ import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from './forms/ApproveUsersEIP712Form.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useClipboard } from '@vueuse/core'
 import ToolTip from '@/components/ToolTip.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
