@@ -349,9 +349,7 @@ describe('ExpenseAccountSection', () => {
         .find('[data-test="expense-account-address"]')
         .findComponent({ name: 'AddressToolTip' })
       expect(expenseAccountAddressTooltip.exists()).toBeTruthy()
-      expect(expenseAccountAddressTooltip.props().address).toBe(
-        team.expenseAccountEip712Address
-      )
+      expect(expenseAccountAddressTooltip.props().address).toBe(team.expenseAccountEip712Address)
     })
 
     it('should hide create button if contract is being deployed', async () => {

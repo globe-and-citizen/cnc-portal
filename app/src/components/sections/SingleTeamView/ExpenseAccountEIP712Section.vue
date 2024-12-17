@@ -6,35 +6,6 @@
     >
       <!-- Expense A/c Info Section -->
       <section class="stat flex flex-col justify-start">
-        <!--<div class="stat-title text-center">Expense Account Address</div>
-
-        <span class="flex gap-2 items-center">
-          <ToolTip
-            data-test="expense-account-address-tooltip"
-            content="Click to see address in block explorer"
-          >
-            <span
-              class="badge badge-sm cursor-pointer"
-              data-test="expense-account-address"
-              @click="openExplorer(team.expenseAccountEip712Address)"
-              :class="`${team.ownerAddress == currentUserAddress ? 'badge-primary' : 'badge-secondary'}`"
-              >{{ team.expenseAccountEip712Address }}</span
-            >
-          </ToolTip>
-          <ToolTip
-            data-test="copy-address-tooltip"
-            :content="copied ? 'Copied!' : 'Click to copy address'"
-          >
-            <ClipboardDocumentListIcon
-              v-if="isSupported && !copied"
-              class="size-5 cursor-pointer"
-              @click="copy(team.expenseAccountEip712Address)"
-            />
-            <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
-          </ToolTip>
-        </span>-->
-
-        
         <div class="flex pt-3" style="border-width: 0">
           <!-- Balances -->
           <div class="flex flex-col border-r border-gray-400">
@@ -53,7 +24,8 @@
                   class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
                   data-test="contract-balance"
                 >
-                  {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+                  {{ expenseBalanceFormated }}
+                  <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
                 </div>
               </div>
 
@@ -80,7 +52,11 @@
                 <div v-if="isFetchingExpenseAccountData" class="stat-value mt-1 pr-3">
                   <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
                 </div>
-                <div v-else class="stat-value text-3xl mt-2 border-r pr-3" data-test="total-withdrawn">
+                <div
+                  v-else
+                  class="stat-value text-3xl mt-2 border-r pr-3"
+                  data-test="total-withdrawn"
+                >
                   {{ dynamicDisplayDataAmount?.value }}
                   <span class="text-xs">{{ dynamicDisplayDataAmount?.symbol }}</span>
                 </div>
@@ -135,12 +111,9 @@
                 >
                   <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
                 </div>
-                <div
-                  v-else
-                  class="stat-value text-3xl mt-2 pr-3"
-                  data-test="amount-per-tx-limit"
-                >
-                  {{ maxLimitAmountPerTx }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+                <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="amount-per-tx-limit">
+                  {{ maxLimitAmountPerTx }}
+                  <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
                 </div>
               </div>
             </div>
@@ -170,7 +143,9 @@
         <div class="flex justify-between items-start pt-5">
           <div class="stat-title text-sm">
             Approval Expiry:
-            <span data-test="approval-expiry" class="font-bold text-black text-sm">{{ expiry }}</span>
+            <span data-test="approval-expiry" class="font-bold text-black text-sm">{{
+              expiry
+            }}</span>
           </div>
           <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
             <span class="text-sm">Expense Address </span>
@@ -206,24 +181,6 @@
           />
         </ModalComponent>
       </section>
-
-      <!-- Approve User Form -->
-      <!--<section
-        v-if="contractOwnerAddress === currentUserAddress || isBodAction()"
-        class="stat flex flex-col justify-center items-center"
-      >
-        <div class="w-3/4">
-          <ApproveUsersForm
-            :form-data="teamMembers"
-            :users="foundUsers"
-            :loading-approve="loadingApprove"
-            :is-bod-action="isBodAction()"
-            @approve-user="approveUser"
-            @close-modal="approveUsersModal = false"
-            @search-users="(input) => searchUsers(input)"
-          />
-        </div>
-      </section>-->
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
