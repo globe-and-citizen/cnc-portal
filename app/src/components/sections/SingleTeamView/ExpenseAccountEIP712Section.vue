@@ -147,11 +147,6 @@
           </div>
         </div>
 
-        <div class="stat-title text-center mt-10">
-          Approval Expiry:
-          <span data-test="approval-expiry" class="font-bold text-black">{{ expiry }}</span>
-        </div>
-
         <div class="stat-actions flex justify-center gap-2 items-center mt-8">
           <button
             class="btn btn-secondary"
@@ -162,6 +157,19 @@
           >
             Transfer
           </button>
+          <button
+            class="btn btn-secondary"
+            :disabled="!(currentUserAddress === team.ownerAddress)"
+            @click="approveUsersModal = true"
+            data-test="transfer-button"
+          >
+            Approve User
+          </button>
+        </div>
+
+        <div class="stat-title text-center mt-5">
+          Approval Expiry:
+          <span data-test="approval-expiry" class="font-bold text-black">{{ expiry }}</span>
         </div>
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
@@ -179,10 +187,21 @@
             service="Expense Account"
           />
         </ModalComponent>
+        <ModalComponent v-model="approveUsersModal">
+          <ApproveUsersForm
+            :form-data="teamMembers"
+            :users="foundUsers"
+            :loading-approve="loadingApprove"
+            :is-bod-action="isBodAction()"
+            @approve-user="approveUser"
+            @close-modal="approveUsersModal = false"
+            @search-users="(input) => searchUsers(input)"
+          />
+        </ModalComponent>
       </section>
 
       <!-- Approve User Form -->
-      <section
+      <!--<section
         v-if="contractOwnerAddress === currentUserAddress || isBodAction()"
         class="stat flex flex-col justify-center items-center"
       >
@@ -197,7 +216,7 @@
             @search-users="(input) => searchUsers(input)"
           />
         </div>
-      </section>
+      </section>-->
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -221,7 +240,6 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
-
 //#endregion imports
 
 //#region variable declarations

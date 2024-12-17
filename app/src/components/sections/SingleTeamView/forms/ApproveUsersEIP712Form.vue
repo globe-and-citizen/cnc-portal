@@ -323,6 +323,7 @@ const clear = () => {
   limitValue.value = ''
   budgetLimitType.value = null
   date.value = ''
+  emit('closeModal')
 }
 
 const submitApprove = () => {
