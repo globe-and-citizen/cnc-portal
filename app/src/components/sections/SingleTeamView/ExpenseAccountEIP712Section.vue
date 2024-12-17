@@ -34,170 +34,118 @@
           </ToolTip>
         </span>
 
-        <!-- Limits -->
+        
         <div class="flex pt-3 mt-10" style="border-width: 0">
-          <div>
-            <div class="stat-title pr-3">Expense Balance</div>
-            <div
-              v-if="isLoadingGetExpenseBalance"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="contract-balance"
-            >
-              {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          <!-- Balances -->
+          <div class="flex flex-col border-r border-gray-400">
+            <p>Balances</p>
+            <div class="flex">
+              <div>
+                <div class="stat-title pr-3">Expense Balance</div>
+                <div
+                  v-if="isLoadingGetExpenseBalance"
+                  class="stat-value mt-1 border-r border-gray-400 pr-3"
+                >
+                  <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
+                </div>
+                <div
+                  v-else
+                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+                  data-test="contract-balance"
+                >
+                  {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+                </div>
+              </div>
+
+              <div class="pl-3">
+                <div class="stat-title pr-3">Total Transactions</div>
+                <div
+                  v-if="isFetchingExpenseAccountData"
+                  class="stat-value mt-1 border-r border-gray-400 pr-3"
+                >
+                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+                </div>
+                <div
+                  v-else
+                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+                  data-test="total-transactions"
+                >
+                  {{ dynamicDisplayDataTx?.value }}
+                  <span class="text-xs">{{ dynamicDisplayDataTx?.symbol }}</span>
+                </div>
+              </div>
+
+              <div class="pl-3">
+                <div class="stat-title pr-3">Total Withdrawn</div>
+                <div v-if="isFetchingExpenseAccountData" class="stat-value mt-1 pr-3">
+                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+                </div>
+                <div v-else class="stat-value text-3xl mt-2 border-r pr-3" data-test="total-withdrawn">
+                  {{ dynamicDisplayDataAmount?.value }}
+                  <span class="text-xs">{{ dynamicDisplayDataAmount?.symbol }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="pl-3">
-            <div class="stat-title pr-3">Txns Per Period</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="txs-per-period-limit"
-            >
-              {{ maxLimitTxsPerPeriod }} <span class="text-xs">TXs</span>
-            </div>
-          </div>
+          <!-- Limits -->
+          <div class="flex flex-col pl-3">
+            <p>Limits</p>
+            <div class="flex">
+              <div>
+                <div class="stat-title pr-3">Txns Per Period</div>
+                <div
+                  v-if="isFetchingExpenseAccountData"
+                  class="stat-value mt-1 border-r border-gray-400 pr-3"
+                >
+                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+                </div>
+                <div
+                  v-else
+                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+                  data-test="txs-per-period-limit"
+                >
+                  {{ maxLimitTxsPerPeriod }} <span class="text-xs">TXs</span>
+                </div>
+              </div>
 
-          <div class="pl-3">
-            <div class="stat-title pr-3">Amount Per Period</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="amount-per-period-limit"
-            >
-              {{ maxLimitAmountPerPeriod }}
-              <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-            </div>
-          </div>
+              <div class="pl-3">
+                <div class="stat-title pr-3">Amount Per Period</div>
+                <div
+                  v-if="isFetchingExpenseAccountData"
+                  class="stat-value mt-1 border-r border-gray-400 pr-3"
+                >
+                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+                </div>
+                <div
+                  v-else
+                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
+                  data-test="amount-per-period-limit"
+                >
+                  {{ maxLimitAmountPerPeriod }}
+                  <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+                </div>
+              </div>
 
-          <div class="pl-3">
-            <div class="stat-title pr-3">Amount Per Txn</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="amount-per-tx-limit"
-            >
-              {{ maxLimitAmountPerTx }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-            </div>
-          </div>
-
-          <!--<div class="pl-3">
-            <div class="stat-title pr-3">{{ dynamicDisplayData?.heading }}</div>
-            <div v-if="false" class="stat-value mt-1 pr-3">
-              <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
-            </div>
-            <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
-              {{ dynamicDisplayData?.value }}
-              <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
-            </div>
-          </div>-->
-          <div class="pl-3">
-            <div class="stat-title pr-3">Total Transactions</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="total-transactions"
-            >
-              {{ dynamicDisplayDataTx?.value }}
-              <span class="text-xs">{{ dynamicDisplayDataTx?.symbol }}</span>
-            </div>
-          </div>
-
-          <div class="pl-3">
-            <div class="stat-title pr-3">Total Withdrawn</div>
-            <div v-if="isFetchingExpenseAccountData" class="stat-value mt-1 pr-3">
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div v-else class="stat-value text-3xl mt-2 border-r pr-3" data-test="total-withdrawn">
-              {{ dynamicDisplayDataAmount?.value }}
-              <span class="text-xs">{{ dynamicDisplayDataAmount?.symbol }}</span>
+              <div class="pl-3">
+                <div class="stat-title pr-3">Amount Per Txn</div>
+                <div
+                  v-if="isFetchingExpenseAccountData"
+                  class="stat-value mt-1 border-r border-gray-400 pr-3"
+                >
+                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
+                </div>
+                <div
+                  v-else
+                  class="stat-value text-3xl mt-2 pr-3"
+                  data-test="amount-per-tx-limit"
+                >
+                  {{ maxLimitAmountPerTx }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- Balances
-        <div class="flex">
-          <div>
-            <div class="stat-title pr-3">Balance</div>
-            <div
-              v-if="isLoadingGetExpenseBalance"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="contract-balance"
-            >
-              {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-            </div>
-          </div>
-
-          <div class="pl-3">
-            <div class="stat-title pr-3">Total Transactions</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="max-limit"
-            >
-              {{ maxLimit }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
-            </div>
-          </div>
-
-          <div class="pl-3">
-            <div class="stat-title pr-3">Total Withdrawn</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r pr-3"
-              data-test="max-limit"
-            >
-              {{ maxLimit }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
-            </div>
-          </div>
-        </div>-->
 
         <div class="stat-title text-center mt-10">
           Approval Expiry:
