@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { NETWORK } from '@/constant'

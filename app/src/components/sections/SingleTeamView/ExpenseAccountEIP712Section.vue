@@ -159,7 +159,7 @@
           </button>
           <button
             class="btn btn-secondary"
-            :disabled="!(currentUserAddress === team.ownerAddress)"
+            :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
             @click="approveUsersModal = true"
             data-test="approve-users-button"
           >
@@ -238,9 +238,6 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from './forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useClipboard } from '@vueuse/core'
-import ToolTip from '@/components/ToolTip.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
@@ -319,7 +316,6 @@ const dynamicDisplayData = (budgetType: number) =>
 const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
 const { addErrorToast, addSuccessToast } = useToastStore()
-const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
 const expenseBalanceFormated = ref<string | number>(`0`)
 const signatureHash = ref<string | null>(null)
@@ -564,10 +560,6 @@ const approveUser = async (data: BudgetLimit) => {
 
 const isBodAction = () => {
   return false
-}
-
-const openExplorer = (address: string) => {
-  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 
 const searchUsers = async (input: { name: string; address: string }) => {
