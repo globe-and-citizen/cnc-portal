@@ -206,6 +206,11 @@ const mockUseCustomFetch = {
 }
 
 const DATE = '2024-02-02T12:00:00Z'
+const budgetData = {
+  txsPerPeriod: 1,
+  amountPerPeriod: 100,
+  amountPerTransaction: 20
+} 
 
 vi.mock('@/composables/useCustomFetch', () => {
   return {
@@ -221,8 +226,13 @@ vi.mock('@/composables/useCustomFetch', () => {
           data.value = {
             data: JSON.stringify({
               approvedAddress: `0x123`,
-              budgetType: 1,
-              value: `100.0`,
+              // budgetType: 1,
+              // value: `100.0`,
+              budgetData: [
+                { budgetType: 0, value: budgetData.txsPerPeriod },
+                { budgetType: 1, value: budgetData.amountPerPeriod },
+                { budgetType: 2, value: budgetData.amountPerTransaction }
+              ],
               expiry: Math.floor(new Date(DATE).getTime() / 1000)
             })
           }
@@ -435,22 +445,37 @@ describe('ExpenseAccountSection', () => {
     it('should show max transactions per period limit amount', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="txs-per-period-limit"]').text()).toBe(
+      const txsPerPeriodDiv = wrapper.find('[data-test="txs-per-period-limit"]')
+      expect(txsPerPeriodDiv.text()).toBe(
         `-- TXs`
+      )
+      await wrapper.vm.$nextTick()
+      expect(txsPerPeriodDiv.text()).toBe(
+        `${budgetData.txsPerPeriod} TXs`
       )
     })
     it('should show amount per period limit amount', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="amount-per-period-limit"]').text()).toBe(
+      const amountPerPeriodDiv = wrapper.find('[data-test="amount-per-period-limit"]')
+      expect(amountPerPeriodDiv.text()).toBe(
         `-- ${NETWORK.currencySymbol}`
+      )
+      await wrapper.vm.$nextTick()
+      expect(amountPerPeriodDiv.text()).toBe(
+        `${budgetData.amountPerPeriod} ${NETWORK.currencySymbol}`
       )
     })
     it('should show amount per transaction limit amount', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="amount-per-tx-limit"]').text()).toBe(
+      const amountPerTxDiv = wrapper.find('[data-test="amount-per-tx-limit"]')
+      expect(amountPerTxDiv.text()).toBe(
         `-- ${NETWORK.currencySymbol}`
+      )
+      await wrapper.vm.$nextTick()
+      expect(amountPerTxDiv.text()).toBe(
+        `${budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
       )
     })
 
