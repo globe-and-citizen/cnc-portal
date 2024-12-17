@@ -579,7 +579,7 @@ describe('ExpenseAccountSection', () => {
             createTestingPinia({
               createSpy: vi.fn,
               initialState: {
-                user: { address: '0xOwner' }
+                user: { address: '0xContractOwner' }
               }
             })
           ]
