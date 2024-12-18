@@ -6,14 +6,12 @@ import {
   addEmployeeWage,
   addClaim,
   updateClaim,
-  // approveClaim,
   deleteClaim,
   getClaims,
   getClaim
 } from '../teamController'
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from 'vitest'
-import { Claim } from '@prisma/client';
 
 vi.mock('../../utils') 
 
