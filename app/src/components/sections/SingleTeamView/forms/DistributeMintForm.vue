@@ -16,7 +16,7 @@
             v-model="shareholder.shareholder"
             @keyup.stop="
               () => {
-                searchUsers({ name: shareholder.shareholder })
+                searchUsers(shareholder.shareholder ?? '')
                 showDropdown[index] = true
               }
             "
@@ -25,13 +25,17 @@
 
         <div
           class="dropdown"
-          :class="{ 'dropdown-open': !!foundUsers && foundUsers.length > 0 && showDropdown[index] }"
+          :class="{
+            'dropdown-open':
+              !!usersData?.users && usersData?.users.length > 0 && showDropdown[index]
+          }"
           :key="index"
           v-if="showDropdown[index]"
         >
           <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
-            <li v-for="user in foundUsers" :key="user.address">
+            <li v-for="user in usersData?.users" :key="user.address">
               <a
+                data-test="found-user"
                 @click="
                   () => {
                     shareholderWithAmounts[index].shareholder = user.address ?? ''
@@ -46,7 +50,9 @@
         </div>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.shareholderWithAmounts.$each.$response.$errors[index].shareholder"
+          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index]
+            .shareholder"
+          data-test="error-message-shareholder"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -59,7 +65,8 @@
         </label>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.shareholderWithAmounts.$each.$response.$errors[index].amount"
+          data-test="error-message-amount"
+          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index].amount"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -96,7 +103,12 @@
 
     <div class="text-center">
       <LoadingButton v-if="loading" class="w-44" color="primary" />
-      <button v-if="!loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
+      <button
+        v-if="!loading"
+        class="btn btn-primary w-44 text-center"
+        data-test="submit-button"
+        @click="onSubmit()"
+      >
         Distribute Mint
       </button>
     </div>
@@ -107,7 +119,7 @@
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
-import type { User } from '@/types'
+import { log } from '@/utils'
 import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/vue/24/outline'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
@@ -128,12 +140,12 @@ const rules = {
   shareholderWithAmounts: {
     $each: helpers.forEach({
       shareholder: {
-        required,
+        required: helpers.withMessage('Address is required', required),
         isAddress: helpers.withMessage('Invalid address', (value: string) => isAddress(value))
       },
       amount: {
-        required,
-        numeric,
+        required: helpers.withMessage('Amount is required', required),
+        numeric: helpers.withMessage('Amount must be a number', numeric),
         minValue: helpers.withMessage('Amount must be greater than 0', (value: number) => value > 0)
       }
     })
@@ -155,44 +167,37 @@ const onSubmit = () => {
   )
 }
 
-const searchUserName = ref('')
-const foundUsers = ref<User[]>([])
-const showDropdown = reactive<boolean[]>([false])
+const search = ref('')
+const showDropdown = ref<boolean[]>([false])
+const url = ref('user/search')
 
 const {
   execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
-} = useCustomFetch('user/search', {
+  data: usersData,
+  error: errorSearchUser
+} = useCustomFetch(url, {
   immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    params.append('name', searchUserName.value)
-
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
+  refetch: true
 })
   .get()
   .json()
 
-watch(searchUserResponse, () => {
-  if (searchUserResponse.value?.ok && users.value?.users) {
-    foundUsers.value = users.value.users
+watch(errorSearchUser, (value) => {
+  if (value) {
+    log.error('Failed to search users', value)
+    addErrorToast('Failed to search users')
   }
 })
-const searchUsers = async (input: { name: string }) => {
-  try {
-    if (input.name !== searchUserName.value && input.name.length > 0) {
-      searchUserName.value = input.name
-    }
-    await executeSearchUser()
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      addErrorToast(error.message)
-    } else {
-      addErrorToast('An unknown error occurred')
-    }
+const searchUsers = async (input: string) => {
+  if (input !== search.value && input.length > 0) {
+    search.value = input
   }
+
+  const params = new URLSearchParams()
+  params.append('name', search.value)
+  params.append('address', search.value)
+  url.value += '?' + params.toString()
+
+  await executeSearchUser()
 }
 </script>

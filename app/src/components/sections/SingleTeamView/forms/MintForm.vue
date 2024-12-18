@@ -14,7 +14,7 @@
         :disabled="Boolean(address)"
         @keyup.stop="
           () => {
-            searchUsers({ name: to ?? '' })
+            searchUsers(to ?? '')
             showDropdown = true
           }
         "
@@ -22,12 +22,15 @@
     </label>
     <div
       class="dropdown"
-      :class="{ 'dropdown-open': !!foundUsers && foundUsers.length > 0 && showDropdown }"
+      :class="{
+        'dropdown-open': !!usersData?.users && usersData?.users.length > 0 && showDropdown
+      }"
       v-if="showDropdown"
     >
       <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
-        <li v-for="user in foundUsers" :key="user.address">
+        <li v-for="user in usersData?.users" :key="user.address">
           <a
+            data-test="found-user"
             @click="
               () => {
                 to = user.address ?? ''
@@ -42,6 +45,7 @@
     </div>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
+      data-test="error-message-to"
       v-for="error of $v.address.$errors"
       :key="error.$uid"
     >
@@ -55,6 +59,7 @@
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
+      data-test="error-message-amount"
       v-for="error of $v.amount.$errors"
       :key="error.$uid"
     >
@@ -63,7 +68,12 @@
 
     <div class="text-center">
       <LoadingButton v-if="loading" class="w-44" color="primary" />
-      <button v-if="!loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
+      <button
+        v-if="!loading"
+        class="btn btn-primary w-44 text-center"
+        data-test="submit-button"
+        @click="onSubmit()"
+      >
         Mint
       </button>
     </div>
@@ -74,7 +84,7 @@
 import LoadingButton from '@/components/LoadingButton.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
-import type { User } from '@/types'
+import { log } from '@/utils'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, type Address } from 'viem'
@@ -113,47 +123,40 @@ const onSubmit = () => {
 
 const $v = useVuelidate(rules, { address: to, amount })
 
-const searchUserName = ref('')
-const foundUsers = ref<User[]>([])
+const search = ref('')
 const showDropdown = ref(false)
+const url = ref('user/search')
 
 const {
   execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
+  data: usersData,
+  error: searchError
 } = useCustomFetch('user/search', {
   immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    params.append('name', searchUserName.value)
-
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
+  refetch: true
 })
   .get()
   .json()
 
-watch(searchUserResponse, () => {
-  if (searchUserResponse.value?.ok && users.value?.users) {
-    foundUsers.value = users.value.users
+const searchUsers = async (input: string) => {
+  if (input !== search.value && input.length > 0) {
+    search.value = input
   }
-})
-const searchUsers = async (input: { name: string }) => {
-  try {
-    if (input.name !== searchUserName.value && input.name.length > 0) {
-      searchUserName.value = input.name
-    }
-    await executeSearchUser()
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      addErrorToast(error.message)
-    } else {
-      addErrorToast('An unknown error occurred')
-    }
-  }
+
+  const params = new URLSearchParams()
+  params.append('name', search.value)
+  params.append('address', search.value)
+  url.value += '?' + params.toString()
+
+  await executeSearchUser()
 }
 
+watch(searchError, (value) => {
+  if (value) {
+    log.error('Failed to search users', value)
+    addErrorToast('Failed to search users')
+  }
+})
 onMounted(() => {
   if (props.address) {
     to.value = props.address
