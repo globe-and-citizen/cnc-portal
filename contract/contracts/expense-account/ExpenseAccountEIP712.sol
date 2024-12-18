@@ -167,8 +167,6 @@ contract ExpenseAccountEIP712 is
 
     /**
      * @notice Allows an employee to withdraw their wages.
-     * @dev Hourly rate is in ether so it needs to be multiplied
-     * by 10 ** 18
      * @param to The address to transfer to.
      * @param amount The amount to transfer.
      * @param limit The BudgetLimit struct that was signed by the contract owner
@@ -177,11 +175,7 @@ contract ExpenseAccountEIP712 is
      * Requirements:
      * - The caller must be the member specified in the budget limit.
      * - The budget limit must be signed by the contract owner.
-     * - The number of transactions must not exceed the specified amount.
-     * - The total amount withdrawn must not exceed the allowed amount per period.
-     * - The amount being transferred must not exceed the allowed amount per transaction.
      * - The budgetData must not be an empty array.
-     * - The budgetData must be a valid budget type.
      * - The contract must not be paused.
      *
      * Emits a {Withdraw} event.
@@ -217,6 +211,19 @@ contract ExpenseAccountEIP712 is
         emit Transfer(limit.approvedAddress, to, amount);
     }
 
+    /**
+     * @dev Checks each budget data item to ensure the transfer is valid and
+     * updates the relevant balances to reflect the current transfer.
+     * @param budgetData The budget data representing the set limits.
+     * @param amount The amount to transfer.
+     * @param signature The ECDSA signature.
+     *
+     * Requirements:
+     * - The number of transactions must not exceed the specified amount.
+     * - The total amount withdrawn must not exceed the allowed amount per period.
+     * - The amount being transferred must not exceed the allowed amount per transaction.
+     *
+     */
     function _checkAndUpdateBudgetData(
         BudgetData[] calldata budgetData, 
         uint256 amount, 
