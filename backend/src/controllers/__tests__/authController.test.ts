@@ -174,12 +174,6 @@ describe('authController', () => {
       })
     })
     it('should return 200 if authorization successful', async () => {
-      // Use fake timers
-      vi.useFakeTimers();
-
-      // Set the system clock to a fixed date/time
-      const fixedDate = new Date('2024-12-18T16:00:00Z');
-      vi.setSystemTime(fixedDate);
       const app = express()
       app.use(express.json())
       const limiter = rateLimit({
@@ -187,9 +181,11 @@ describe('authController', () => {
         max: 100, // limit each IP to 100 requests per windowMs
       })
       app.use(limiter)
-      const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZGRyZXNzIjoiMHhmMzlGZDZlNTFhYWQ4OEY2RjRjZTZhQjg4MjcyNzljZmZGYjkyMjY2IiwiaWF0IjoxNzM0NjE5NDEwLCJleHAiOjE3MzQ2MTk0MTF9.vyJb18bkxyMYw1E_ebQO5c5yPgFyUazgs4U_-guCX1U'
+      const token = 'token'
       app.use(setAuthorizationMiddleware(token))
       app.get('/token', authorizeUser, authenticateToken)
+
+      vi.spyOn(jwt, 'verify').mockImplementation(() => ({address: '0x123'}))
 
       const response = await request(app)
         .get('/token')
@@ -199,9 +195,6 @@ describe('authController', () => {
       expect(response.body).toEqual({
         success: true
       })
-
-      // Restore the real timers
-      vi.useRealTimers();
     })
   })
 })
