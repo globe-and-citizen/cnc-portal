@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
+import TestWidget from '../views/TestWidget.vue'
 import { useStorage } from '@vueuse/core'
 
 const router = createRouter({
@@ -40,6 +41,11 @@ const router = createRouter({
       path: '/transactions',
       name: 'transactions',
       component: TransactionsView
+    },
+    {
+      path: '/test',
+      name: 'test',
+      component: TestWidget
     }
   ]
 })
