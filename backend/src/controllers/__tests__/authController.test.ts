@@ -1,18 +1,19 @@
 import request from 'supertest'
-import express, { Request, Response, NextFunction } from 'express'
+import express, { Request, Response, NextFunction, response } from 'express'
 import rateLimit from 'express-rate-limit'
 import { 
   authenticateSiwe,
   authenticateToken
 } from '../authController'
+import { authorizeUser } from '../../middleware/authMiddleware'
 import { prisma } from "../../utils";
 import { errorResponse, extractAddressAndNonce } from "../../utils/utils";
 import jwt from "jsonwebtoken";
 import { describe, it, beforeEach, expect, vi } from 'vitest'
 
-function setAddressMiddleware(address: string) {
+function setAuthorizationMiddleware(token: string) {
   return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address
+    req.headers.authorization = `Bearer ${token}`
     next()
   }
 }
@@ -96,6 +97,7 @@ describe('authController', () => {
         message: 'Signature does not match address of the message.',
         success: false
       })      
+      vi.restoreAllMocks()
     })
     it('should return 200 if authentication successful', async () => {
       const app = express()
@@ -123,6 +125,7 @@ describe('authController', () => {
         accessToken: 'jsonWebToken',
         success: true
       })
+      vi.restoreAllMocks()
     })
     it('It should return 500 if internal server error occurs', async () => {
       const app = express()
@@ -147,6 +150,58 @@ describe('authController', () => {
         message: "Internal server error has occured",
         success: false
       })
+    })
+  })
+  describe('GET: /token', () => {
+    beforeEach(() => { vi.clearAllMocks() })
+    it('should return 401 if user not authorised', async () => {
+      const app = express()
+      app.use(express.json())
+      const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+      })
+      app.use(limiter)
+      app.get('/token', authenticateToken)
+
+      const response = await request(app)
+        .get('/token')
+
+      expect(response.status).toBe(401)
+      expect(response.body).toEqual({
+        message: "Unauthorized: Missing jwt payload",
+        success: false
+      })
+    })
+    it('should return 200 if authorization successful', async () => {
+      // Use fake timers
+      vi.useFakeTimers();
+
+      // Set the system clock to a fixed date/time
+      const fixedDate = new Date('2024-12-18T16:00:00Z');
+      vi.setSystemTime(fixedDate);
+      const app = express()
+      app.use(express.json())
+      const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+      })
+      app.use(limiter)
+      const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZGRyZXNzIjoiMHhmMzlGZDZlNTFhYWQ4OEY2RjRjZTZhQjg4MjcyNzljZmZGYjkyMjY2IiwiaWF0IjoxNzM0NjE5NDEwLCJleHAiOjE3MzQ2MTk0MTF9.vyJb18bkxyMYw1E_ebQO5c5yPgFyUazgs4U_-guCX1U'
+      app.use(setAuthorizationMiddleware(token))
+      app.get('/token', authorizeUser, authenticateToken)
+
+      const response = await request(app)
+        .get('/token')
+        .set('Authorization', `Bearer ${token}`)
+
+      expect(response.status).toBe(200)
+      expect(response.body).toEqual({
+        success: true
+      })
+
+      // Restore the real timers
+      vi.useRealTimers();
     })
   })
 })
