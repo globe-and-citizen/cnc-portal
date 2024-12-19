@@ -73,6 +73,11 @@ describe('authController', () => {
     it('should return 401 if SIWE verification fails', async () => {
       const app = express()
       app.use(express.json())
+      const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+      })
+      app.use(limiter)
       app.post('/siwe', authenticateSiwe)
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(null)
       vi.spyOn(prisma.user, 'update').mockResolvedValue({...mockUser, nonce: '123abc'})
