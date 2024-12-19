@@ -1,5 +1,6 @@
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
+import rateLimit from 'express-rate-limit'
 import { 
   authenticateSiwe,
   authenticateToken
@@ -29,6 +30,11 @@ describe('authController', () => {
     it('should return 401 if message not set', async () => {
       const app = express()
       app.use(express.json())
+      const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+      })
+      app.use(limiter)
       app.post('/siwe', authenticateSiwe)
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(null)
 
@@ -44,6 +50,11 @@ describe('authController', () => {
     it('should return 401 if signature not set', async () => {
       const app = express()
       app.use(express.json())
+      const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+      })
+      app.use(limiter)
       app.post('/siwe', authenticateSiwe)
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(null)
 
