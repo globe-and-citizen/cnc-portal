@@ -1,13 +1,11 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
-import { ref, type Ref } from 'vue'
-import * as fetch from '@/composables/useCustomFetch'
-import { error } from 'console'
+import { ref } from 'vue'
 import type { Team, Notification } from '@/types'
 
 interface ComponentData {
-  getWageClaimAPI: (throwOnFailed?: boolean) => Promise<any>
+  getWageClaimAPI: (throwOnFailed?: boolean) => Promise<unknown>
   updateEndPoint: string
   team: Partial<Team>
   wageClaim: unknown
@@ -87,14 +85,9 @@ const mockNotifications = [
 ]
 
 const executeMock = vi.fn()
-// const mockUseFetch = {
-//   data: ref<unknown>(null),
-//   error: ref(null),
-//   execute: vi.fn()
-// }
 
 vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: (url: Ref<string>) => {
+  useCustomFetch: () => {
     const data = ref<unknown>(null)
     return {
       json: () => ({
@@ -109,50 +102,13 @@ vi.mock('@/composables/useCustomFetch', () => ({
       }),
       get: () => ({
         json: () => ({
-          data,//: mockUseFetch.data,
-          execute: executeMock,// mockUseFetch.execute, 
+          data,
+          execute: executeMock,
           error: ref(null)
         })
       })
     }
   }
-  // (url: Ref<string>) => {
-  //   const data = ref<unknown>(null)
-  //   return {
-  //     json: () => ({
-  //       data: ref({ data: mockNotifications }),
-  //       execute: vi.fn(),
-  //       error: ref(null)
-  //     }),
-  //     put: () => ({
-  //       json: () => ({
-  //         execute: vi.fn()
-  //       })
-  //     }),
-  //     get: () => ({
-  //       json: () => ({
-  //         data,
-  //         execute: vi.fn(() => {
-  //           if (url.value === 'teams/1/cash-remuneration/claim') {
-  //             data.value = {
-  //               id: 1,
-  //               createdAt: '2024-02-02T12:00:00Z',
-  //               address: '0xUserToApprove',
-  //               hoursWorked: 20,
-  //               hourlyRate: '17.5',
-  //               name: 'Local 1',
-  //               teamId: 1,
-  //               cashRemunerationSignature: '0xSignature'
-  //             }
-  //           } else if (url.value === 'teams/1') {
-  //             data.value = { cashRemunerationEip712Address: '0xCashRemunerationEip712Address' }
-  //           }
-  //         }),
-  //         error: ref(null)
-  //       })
-  //     })
-  //   }
-  // }
 }))
 
 describe('NotificationDropdown.vue', () => {
@@ -185,10 +141,8 @@ describe('NotificationDropdown.vue', () => {
   it('calls handle wage correctly', async () => {
     const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
     executeMock.mockImplementation(() => {
-      console.log(`updateEndPoint`, (/*wrapper.vm as unknown as ComponentData*/wrapperVm).updateEndPoint)
-      if (/*(wrapper.vm as unknown as ComponentData)*/wrapperVm.updateEndPoint === 'teams/1/cash-remuneration/claim') {
-        console.log(`executing claim...`)
-        /*mockUseFetch.data.value*/ ;/*(wrapper.vm as unknown as ComponentData)*/wrapperVm.wageClaim = {
+      if (wrapperVm.updateEndPoint === 'teams/1/cash-remuneration/claim') {
+        wrapperVm.wageClaim = {
           id: 1,
           createdAt: '2024-02-02T12:00:00Z',
           address: '0xUserToApprove',
@@ -198,9 +152,8 @@ describe('NotificationDropdown.vue', () => {
           teamId: 1,
           cashRemunerationSignature: '0xSignature'
         }
-      } else if (/*(wrapper.vm as unknown as ComponentData)*/wrapperVm.updateEndPoint === 'teams/1') {
-        console.log(`executing cash remuneration...`)
-        /*mockUseFetch.data.value*/ ;/*(wrapper.vm as unknown as ComponentData)*/wrapperVm.team = { cashRemunerationEip712Address: '0xCashRemunerationEip712Address' }
+      } else if (wrapperVm.updateEndPoint === 'teams/1') {
+        wrapperVm.team = { cashRemunerationEip712Address: '0xCashRemunerationEip712Address' }
       }
     })
   
@@ -211,7 +164,6 @@ describe('NotificationDropdown.vue', () => {
     await wrapper.vm.$nextTick()
 
     await wrapper.vm.$nextTick()
-    console.log(`updateEndPoint`, /*(wrapper.vm as unknown as ComponentData)*/wrapperVm.updateEndPoint)
     expect(executeMock).toHaveBeenCalled()
     expect(mockUseWriteContract.writeContract).toBeCalled()
   })
