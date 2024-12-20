@@ -156,7 +156,7 @@ describe('NotificationDropdown.vue', () => {
         wrapperVm.team = { cashRemunerationEip712Address: '0xCashRemunerationEip712Address' }
       }
     })
-  
+
     await wrapper.vm.$nextTick()
     const notification = wrapper.find('[data-test="notification-3"]')
     expect(notification.exists()).toBeTruthy()
