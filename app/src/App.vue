@@ -54,7 +54,7 @@
         <!-- Content Wrapper -->
         <div
           class="flex-grow transition-all duration-300 ease-in-out"
-          :class="{ 'lg:ml-72': toggleSide }"
+          :class="[!toggleSide ? 'ml-[72px]' : 'ml-[280px]']"
         >
           <div class="p-5 mt-10 md:p-10">
             <RouterView />

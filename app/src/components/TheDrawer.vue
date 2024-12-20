@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col fixed h-full bg-white shadow-lg"
+    class="flex flex-col fixed h-[70vh] bg-white shadow-lg top-0 left-0 z-50"
     :class="[isCollapsed ? 'w-[72px]' : 'w-[280px]']"
   >
     <div class="p-4 flex items-center justify-between relative">
@@ -8,34 +8,28 @@
       <div class="flex items-center gap-3" :class="{ 'justify-center w-full': isCollapsed }">
         <div class="relative group">
           <div class="absolute inset-0"></div>
-          <img
-            v-if="!isCollapsed"
-            src="../assets/Logo.png"
-            alt="CNC Portal"
-            class="relative transition-all duration-300"
-          />
+          <img v-if="!isCollapsed" src="../assets/Logo.png" alt="CNC Portal" class="relative" />
           <img
             v-else
             src="../assets/LogoWithoutText.png"
             @click="toggleCollapse"
             alt="CNC Portal"
-            class="w-10 h-10 relative transition-all duration-300 hover:scale-110"
+            class="w-10 h-10 relative hover:scale-110"
           />
         </div>
       </div>
       <button
         v-if="!isCollapsed"
         @click="toggleCollapse"
-        class="p-2 rounded-lg transition-all duration-200 hover:shadow-sm"
+        class="p-2 rounded-lg hover:shadow-sm"
         :class="{ 'opacity-0': isCollapsed }"
       >
         <ArrowLeftIcon class="w-4 h-4 text-gray-600" />
       </button>
     </div>
 
-    <!-- Team Selector with enhanced styling -->
     <div
-      class="mx-4 mb-6 p-2 flex justify-between items-center gap-3 rounded-xl cursor-pointer"
+      class="mx-4 mb-6 p-2 flex justify-between items-center gap-3 rounded-xl cursor-pointer bg-white/95"
       :class="{ 'justify-center': isCollapsed }"
     >
       <div class="w-3 h-3 rounded-lg flex items-center justify-center">
@@ -43,15 +37,15 @@
       </div>
       <div class="flex flex-row justify-center items-center gap-2" v-if="!isCollapsed">
         <span class="text-sm font-medium text-gray-700">CNC Team</span>
-        <ArrowDownIcon class="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
       </div>
+      <ArrowDownIcon class="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
     </div>
 
     <div class="flex-1 px-2">
       <div class="mb-2 px-4">
         <span
-          class="text-xs font-medium text-gray-400 uppercase tracking-wider transition-opacity duration-200"
-          :class="{ 'opacity-0': isCollapsed }"
+          v-if="!isCollapsed"
+          class="text-xs font-medium text-gray-400 uppercase tracking-wider"
         >
           General
         </span>
@@ -72,32 +66,24 @@
           <div class="relative">
             <component
               :is="item.icon"
-              class="w-5 h-5 transition-all duration-200 group-hover:scale-110"
+              class="w-5 h-5 group-hover:scale-110"
               :class="{ 'text-blue-500': item.active }"
             />
-            <div
-              v-if="item.active"
-              class="absolute inset-0 bg-blue-400/20 blur-xl transition-all duration-500 group-hover:blur-2xl"
-            ></div>
           </div>
-          <span v-if="!isCollapsed" class="text-sm font-medium transition-all duration-200">
+          <span v-if="!isCollapsed" class="text-sm font-medium">
             {{ item.label }}
           </span>
         </RouterLink>
       </nav>
     </div>
 
-    <!-- Enhanced User Profile -->
     <div
-      class="w-full flex flex-row justify-start gap-4 bg-opacity-10 backdrop-blur-lg rounded-xl px-5 py-4 cursor-pointer hover:bg-opacity-20 transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg"
+      class="w-full flex flex-row justify-start gap-4 bg-opacity-10 backdrop-blur-lg rounded-xl px-5 py-4 cursor-pointer shadow-lg"
       data-test="edit-user-card"
       :class="{ 'justify-center': isCollapsed }"
       @click="emits('openEditUserModal')"
     >
       <div tabindex="0" role="button" class="relative group">
-        <div
-          class="absolute rounded-full opacity-75 group-hover:opacity-100 transition duration-300 ease-in-out animate-tilt"
-        ></div>
         <div class="relative rounded-full overflow-hidden w-[44px] h-[44px]">
           <img
             alt="User Avatar"
@@ -105,7 +91,7 @@
               user.avatarUrl ||
               'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
             "
-            class="w-full h-full object-cover transform transition duration-300 ease-in-out group-hover:scale-110"
+            class="w-full h-full"
           />
         </div>
       </div>
@@ -206,11 +192,5 @@ const menuItems = [
 .backdrop-blur-sm {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-}
-
-/* Enhanced transitions */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

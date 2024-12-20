@@ -1,7 +1,9 @@
 <template>
   <nav
-    class="flex justify-end top-0 fixed z-50 shadow-lg transition-all duration-300 ease-in-out bg-white w-10/12"
-    :class="[!isCollapsed ? 'left-[72px]' : 'left-[280px]']"
+    class="flex justify-end top-0 fixed z-50 shadow-lg transition-all duration-300 ease-in-out bg-white"
+    :class="[
+      !isCollapsed ? 'left-[72px] w-[calc(100%-72px)]' : 'left-[280px] w-[calc(100%-280px)]'
+    ]"
   >
     <div class="flex justify-between py-3 px-3">
       <div class="flex items-center space-x-2 sm:space-x-4">
