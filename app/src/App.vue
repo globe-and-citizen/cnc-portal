@@ -4,7 +4,7 @@
     <div v-if="userStore.isAuth">
       <!-- Responsive Navbar -->
       <NavBar
-        @toggleSideButton="handleChange"
+        :isCollapsed="toggleSide"
         @toggleEditUserModal="
           () => {
             updateUserInput = { name, address }
@@ -28,12 +28,12 @@
       <div class="lg:flex">
         <!-- Drawer -->
         <div
-          v-if="toggleSide"
           class="fixed lg:relative inset-y-0 left-0 z-20 bg-base-100 shadow-xl transition-transform duration-300 ease-in-out"
           :class="{ '-translate-x-full': !toggleSide }"
         >
           <Drawer
             :user="{ name, address }"
+            @toggleSideButton="toggleSide = !toggleSide"
             @openEditUserModal="
               () => {
                 showModal = true
@@ -99,10 +99,6 @@ import { formatEther, type Address } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const toggleSide = ref(true)
 const showModal = ref(false)
-
-function handleChange() {
-  toggleSide.value = !toggleSide.value
-}
 
 const {
   isPending: withdrawLoading,
