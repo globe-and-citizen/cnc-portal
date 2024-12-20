@@ -116,8 +116,6 @@ contract ExpenseAccountEIP712 is
     error AmountPerPeriodExceeded(uint256 amount);
 
     error AmountPerTransactionExceeded(uint256 amount);
-
-    //error InvalidBudgetType();
     
     function initialize(address owner) public initializer {
         __Ownable_init(owner);
@@ -169,8 +167,6 @@ contract ExpenseAccountEIP712 is
 
     /**
      * @notice Allows an employee to withdraw their wages.
-     * @dev Hourly rate is in ether so it needs to be multiplied
-     * by 10 ** 18
      * @param to The address to transfer to.
      * @param amount The amount to transfer.
      * @param limit The BudgetLimit struct that was signed by the contract owner
@@ -179,11 +175,7 @@ contract ExpenseAccountEIP712 is
      * Requirements:
      * - The caller must be the member specified in the budget limit.
      * - The budget limit must be signed by the contract owner.
-     * - The number of transactions must not exceed the specified amount.
-     * - The total amount withdrawn must not exceed the allowed amount per period.
-     * - The amount being transferred must not exceed the allowed amount per transaction.
      * - The budgetData must not be an empty array.
-     * - The budgetData must be a valid budget type.
      * - The contract must not be paused.
      *
      * Emits a {Withdraw} event.
@@ -202,11 +194,7 @@ contract ExpenseAccountEIP712 is
 
         require(limit.budgetData.length > 0, "Empty budget data");
 
-        bytes32 digest = keccak256(abi.encodePacked(
-            "\x19\x01",
-            _domainSeparatorV4(),
-            budgetLimitHash(limit)
-        ));
+        bytes32 digest = _hashTypedDataV4(budgetLimitHash(limit));
 
         address signer = digest.recover(signature);
 
@@ -216,23 +204,48 @@ contract ExpenseAccountEIP712 is
 
         require((block.timestamp <= limit.expiry), "Authorization expired");
 
+        _checkAndUpdateBudgetData(limit.budgetData, amount, signature);
+
+        payable(to).sendValue(amount);
+
+        emit Transfer(limit.approvedAddress, to, amount);
+    }
+
+    /**
+     * @dev Checks each budget data item to ensure the transfer is valid and
+     * updates the relevant balances to reflect the current transfer.
+     * @param budgetData The budget data representing the set limits.
+     * @param amount The amount to transfer.
+     * @param signature The ECDSA signature.
+     *
+     * Requirements:
+     * - The number of transactions must not exceed the specified amount.
+     * - The total amount withdrawn must not exceed the allowed amount per period.
+     * - The amount being transferred must not exceed the allowed amount per transaction.
+     *
+     */
+    function _checkAndUpdateBudgetData(
+        BudgetData[] calldata budgetData, 
+        uint256 amount, 
+        bytes calldata signature
+    ) private {
         bytes32 sigHash = keccak256(signature);
 
         bool isAmountWithdrawn;
 
-        for (uint8 i = 0; i < limit.budgetData.length; i++) {
-            if (limit.budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
-                require(balances[sigHash].transactionCount < limit.budgetData[i].value, "Transaction limit reached");
+        for (uint8 i = 0; i < budgetData.length; i++) {
+            if (budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
+                require(balances[sigHash].transactionCount < budgetData[i].value, "Transaction limit reached");
                 balances[sigHash].transactionCount++;
-            } else if (limit.budgetData[i].budgetType == BudgetType.AmountPerPeriod) {
-                if (balances[sigHash].amountWithdrawn+amount > limit.budgetData[i].value)
+            } else if (budgetData[i].budgetType == BudgetType.AmountPerPeriod) {
+                if (balances[sigHash].amountWithdrawn+amount > budgetData[i].value)
                     revert AmountPerPeriodExceeded(balances[sigHash].amountWithdrawn+amount);
                 if (!isAmountWithdrawn) {
                     balances[sigHash].amountWithdrawn+=amount;
                     isAmountWithdrawn = true;
                 }
-            } else if (limit.budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
-                if (amount > limit.budgetData[i].value)
+            } else if (budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
+                if (amount > budgetData[i].value)
                     revert AmountPerTransactionExceeded(amount);
                 if (!isAmountWithdrawn) {
                     balances[sigHash].amountWithdrawn+=amount;
@@ -240,10 +253,6 @@ contract ExpenseAccountEIP712 is
                 }
             }
         }
-
-        payable(to).sendValue(amount);
-
-        emit Transfer(limit.approvedAddress, to, amount);
     }
 
     function pause() external onlyOwner {

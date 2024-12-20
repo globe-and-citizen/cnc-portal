@@ -20,7 +20,7 @@
     <label v-if="asBod" class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Description</p>
       |
-      <input type="text" class="grow" data-test="amount-input" v-model="description" />
+      <input type="text" class="grow" data-test="description-input" v-model="description" />
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
@@ -31,16 +31,14 @@
     </div>
     <div
       v-if="dropdown"
-      class="dropdown w-full max-h-20"
+      class="dropdown w-full"
       :class="{ 'dropdown-open': filteredMembers.length > 0 }"
     >
       <ul
-        v-for="contractor in filteredMembers"
-        :key="contractor.id"
         tabindex="0"
         class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-full"
       >
-        <li>
+        <li v-for="contractor in filteredMembers" :key="contractor.id">
           <a
             @click="
               () => {
