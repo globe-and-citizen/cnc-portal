@@ -1,10 +1,9 @@
 <template>
   <div
-    class="flex flex-col fixed h-[70vh] bg-white shadow-lg top-0 left-0 z-50"
+    class="flex flex-col fixed h-[100vh] bg-white shadow-lg top-0 bottom-0 left-0 z-50"
     :class="[isCollapsed ? 'w-[72px]' : 'w-[280px]']"
   >
     <div class="p-4 flex items-center justify-between relative">
-      <div class="absolute bottom-0 left-0 right-0 h-[1px]"></div>
       <div class="flex items-center gap-3" :class="{ 'justify-center w-full': isCollapsed }">
         <div class="relative group">
           <div class="absolute inset-0"></div>
@@ -14,16 +13,11 @@
             src="../assets/LogoWithoutText.png"
             @click="toggleCollapse"
             alt="CNC Portal"
-            class="w-10 h-10 relative hover:scale-110"
+            class="w-10 h-10 relative"
           />
         </div>
       </div>
-      <button
-        v-if="!isCollapsed"
-        @click="toggleCollapse"
-        class="p-2 rounded-lg hover:shadow-sm"
-        :class="{ 'opacity-0': isCollapsed }"
-      >
+      <button v-if="!isCollapsed" @click="toggleCollapse" class="p-2 rounded-lg hover:shadow-sm">
         <ArrowLeftIcon class="w-4 h-4 text-gray-600" />
       </button>
     </div>
@@ -78,7 +72,7 @@
     </div>
 
     <div
-      class="w-full flex flex-row justify-start gap-4 bg-opacity-10 backdrop-blur-lg rounded-xl px-5 py-4 cursor-pointer shadow-lg"
+      class="w-full flex flex-row justify-start gap-4 rounded-xl px-5 py-4 cursor-pointer shadow-lg"
       data-test="edit-user-card"
       :class="{ 'justify-center': isCollapsed }"
       @click="emits('openEditUserModal')"

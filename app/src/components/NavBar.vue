@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="flex justify-end top-0 fixed z-50 shadow-lg transition-all duration-300 ease-in-out bg-white"
+    class="flex justify-end top-0 fixed z-40 shadow-lg bg-white"
     :class="[
       !isCollapsed ? 'left-[72px] w-[calc(100%-72px)]' : 'left-[280px] w-[calc(100%-280px)]'
     ]"
