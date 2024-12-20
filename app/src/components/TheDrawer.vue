@@ -23,16 +23,19 @@
     </div>
 
     <div
-      class="mx-4 mb-6 p-2 flex justify-between items-center gap-3 rounded-xl cursor-pointer bg-white/95"
-      :class="{ 'justify-center': isCollapsed }"
+      class="mx-4 mb-6 flex justify-between items-center rounded-xl cursor-pointer bg-white/95"
+      :class="{ 'justify-center ml-5': isCollapsed }"
     >
-      <div class="w-3 h-3 rounded-lg flex items-center justify-center">
-        <span class="text-sm font-medium text-pink-700">C</span>
+      <div
+        class="w-8 h-8 rounded-xl flex items-center justify-center bg-pink-800"
+        :class="{ 'w-8 h-8': isCollapsed }"
+      >
+        <span class="text-sm font-medium text-white">C</span>
       </div>
       <div class="flex flex-row justify-center items-center gap-2" v-if="!isCollapsed">
         <span class="text-sm font-medium text-gray-700">CNC Team</span>
       </div>
-      <ArrowDownIcon class="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
+      <ArrowDownIcon class="w-4 h-4 text-gray-400 group-hover:text-gray-600" v-if="!isCollapsed" />
     </div>
 
     <div class="flex-1 px-2">
