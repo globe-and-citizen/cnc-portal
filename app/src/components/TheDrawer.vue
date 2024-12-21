@@ -67,7 +67,7 @@
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group relative transition-all duration-200"
           :class="{
             'justify-center': isCollapsed,
-            'bg-blue-500/10 shadow-md': item.active,
+            'bg-emerald-500/10 shadow-md': item.active,
             'hover:bg-gray-100': !item.active
           }"
         >
@@ -76,15 +76,15 @@
               :is="item.icon"
               class="w-6 h-6 transition-all duration-300 ease-in-out"
               :class="{
-                'text-blue-500 scale-110': item.active,
-                'group-hover:scale-110 group-hover:text-blue-500': !item.active
+                'text-emerald-500 scale-110': item.active,
+                'group-hover:scale-110 group-hover:text-emerald-500': !item.active
               }"
             />
           </div>
           <span
             v-if="!isCollapsed"
             class="text-sm font-medium transition-colors duration-200"
-            :class="{ 'text-blue-600': item.active }"
+            :class="{ 'text-emerald-600': item.active }"
           >
             {{ item.label }}
           </span>
