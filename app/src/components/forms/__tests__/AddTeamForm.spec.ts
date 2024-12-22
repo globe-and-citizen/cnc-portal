@@ -8,6 +8,10 @@ interface AddTeamForm {
   users: User[]
   isLoading: boolean
   dropdown: boolean
+  activeInputIndex: number
+  showDropdown: boolean
+  formRef: HTMLElement
+  handleClickOutside: (event: { target: HTMLElement }) => void
 }
 describe('AddTeamForm.vue', () => {
   const team: TeamInput = {
@@ -96,6 +100,23 @@ describe('AddTeamForm.vue', () => {
       await wrapper.find('[data-test="remove-member"]').trigger('click')
 
       expect(wrapper.findAll('.input-group').length).toBe(1)
+    })
+
+    it('should set index on focus member name input', async () => {
+      await wrapper.find('input[data-test="member-name-input"]').trigger('focus')
+      expect((wrapper.vm as unknown as AddTeamForm).activeInputIndex).toBe(0)
+    })
+
+    it('should set index on focus member address input', async () => {
+      await wrapper.find('input[data-test="member-address-input"]').trigger('focus')
+      expect((wrapper.vm as unknown as AddTeamForm).activeInputIndex).toBe(0)
+    })
+
+    it('should hide the dropdown when clicking outside the formRef element', () => {
+      ;(wrapper.vm as unknown as AddTeamForm).handleClickOutside({
+        target: document.createElement('div')
+      })
+      expect((wrapper.vm as unknown as AddTeamForm).showDropdown).toBe(false)
     })
 
     it('Should update the users in the dropdow when the userName is updated', async () => {
