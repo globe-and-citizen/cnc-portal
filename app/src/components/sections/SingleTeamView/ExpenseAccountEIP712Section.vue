@@ -374,6 +374,17 @@ const {
   .json()
 
 const {
+  error: fetchManyExpenseAccountDataError,
+  isFetching: isFetchingManyExpenseAccountData,
+  execute: fetchManyExpenseAccountData,
+  data: manyExpenseAccountData
+} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
+  immediate: false
+})
+  .get()
+  .json()
+
+const {
   execute: executeSearchUser,
   response: searchUserResponse,
   data: users
@@ -409,6 +420,8 @@ const init = async () => {
   await getExpenseAccountOwner()
   await getExpenseAccountBalance()
   await getAmountWithdrawnBalance()
+  await fetchManyExpenseAccountData()
+  console.log('manyExpenseAccountData', manyExpenseAccountData.value)
 }
 
 const getExpenseAccountOwner = async () => {
