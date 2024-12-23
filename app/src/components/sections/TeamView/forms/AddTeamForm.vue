@@ -5,11 +5,19 @@
     <div>
       <label class="input input-bordered flex items-center gap-2 input-md mt-4">
         <span class="w-24">Team Name</span>
-        <input type="text" class="grow" placeholder="Daisy" v-model="team.name" name="name" />
+        <input
+          type="text"
+          class="grow"
+          placeholder="Daisy"
+          data-test="team-name-input"
+          v-model="team.name"
+          name="name"
+        />
       </label>
       <div
         class="pl-4 text-red-500 text-sm"
         v-for="error of $v.team.name.$errors"
+        data-test="name-error"
         :key="error.$uid"
       >
         {{ error.$message }}
@@ -21,6 +29,7 @@
         type="text"
         class="grow"
         placeholder="Enter a short description"
+        data-test="team-description-input"
         v-model="team.description"
         name="description"
       />
@@ -42,6 +51,7 @@
               showDropdown = true
             }
           "
+          data-test="member-name-input"
           :placeholder="'Member Name ' + (index + 1)"
         />
         |
@@ -56,6 +66,7 @@
               showDropdown = true
             }
           "
+          data-test="member-address-input"
           :placeholder="'Wallet Address ' + (index + 1)"
         />
       </label>
@@ -63,6 +74,7 @@
         <div
           class="pl-4 text-sm text-red-500"
           v-for="(error, errorIndex) of getMessages(index)"
+          data-test="address-error"
           :key="errorIndex"
         >
           {{ error.$message }}
@@ -78,6 +90,7 @@
     <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
       <li v-for="user in users" :key="user.address">
         <a
+          :data-test="`user-dropdown-${user.address}`"
           @click="
             () => {
               const l = team.members.length - 1
