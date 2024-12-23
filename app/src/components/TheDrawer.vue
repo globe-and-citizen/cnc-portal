@@ -40,11 +40,12 @@
       <ArrowRightStartOnRectangleIcon class="w-5 h-5 text-gray-600" />
     </button>
     <div
-      class="mx-4 mb-8 flex items-center rounded-2xl cursor-pointer p-3 transition-all duration-300 shadow-lg"
-      :class="[isCollapsed ? 'justify-center' : 'justify-between']"
+      class="mt-4 mx-4 mb-8 flex items-center rounded-2xl cursor-pointer p-3 transition-all duration-300 shadow-lg"
+      :class="[isCollapsed ? 'justify-center bg-emerald-100' : 'justify-between']"
     >
       <div
         class="w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100"
+        :class="[isCollapsed ? 'w-6 h-6' : 'w-10 h-10']"
       >
         <span class="text-sm font-bold text-emerald-700">
           {{ selectedTeam.charAt(0) }}
