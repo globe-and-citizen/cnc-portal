@@ -184,6 +184,7 @@ contract ExpenseAccountEIP712 is
      * @param signature The ECDSA signature.
      *
      * Requirements:
+     * - The approval must not be inactive
      * - The caller must be the member specified in the budget limit.
      * - The budget limit must be signed by the contract owner.
      * - The budgetData must not be an empty array.
@@ -271,11 +272,21 @@ contract ExpenseAccountEIP712 is
             balances[sigHash].state = ApprovalState.Active;
     }
 
+    /**
+     * @notice Deactivates an approval so it's no longer usable
+     * @param signatureHash - keccak256 hash of the signature of the approval
+     * Emits {ApprovalDeactivated} event
+     */
     function deactivateApproval(bytes32 signatureHash) external onlyOwner {
         balances[signatureHash].state = ApprovalState.Inactive;
         emit ApprovalDeactivated(signatureHash);
     }
 
+    /**
+     * @notice Activates an approval so it's usable
+     * @param signatureHash - keccak256 hash of the signature of the approval
+     * Emits {ApprovalActivated} event
+     */
     function activateApproval(bytes32 signatureHash) external onlyOwner {
         balances[signatureHash].state = ApprovalState.Active;
         emit ApprovalActivated(signatureHash);
