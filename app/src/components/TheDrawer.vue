@@ -51,11 +51,14 @@
           {{ selectedTeam.charAt(0) }}
         </span>
       </div>
-      <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
+      <div
+        class="flex flex-row justify-center items-center gap-8"
+        v-if="!isCollapsed"
+        @click="toggleDropdown"
+      >
         <span class="text-sm font-medium text-gray-700">{{ selectedTeam }}</span>
         <div class="relative">
           <button
-            @click="toggleDropdown"
             class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
           >
             <ChevronUpDownIcon class="w-4 h-4 text-gray-600" />
@@ -70,7 +73,7 @@
           >
             <ul
               v-if="isDropdownOpen"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10"
+              class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg py-1 z-50"
             >
               <li v-if="teamsAreFetching" class="px-4 py-2 text-sm text-gray-700">
                 <div class="flex items-center justify-center">
