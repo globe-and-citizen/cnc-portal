@@ -497,7 +497,7 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
   const memberAddress = req.headers.memberaddress;
 
   try {
-    if (memberAddress) { 
+    if (memberAddress) {
       const memberTeamsData = await prisma.memberTeamsData.findUnique({
         where: {
           userAddress_teamId: {
