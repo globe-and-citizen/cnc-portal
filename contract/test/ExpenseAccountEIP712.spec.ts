@@ -429,26 +429,26 @@ describe('ExpenseAccount (EIP712)', () => {
         })
         it('The approval is deactivated', async () => {
           const budgetData = [{ budgetType: 1, value: ethers.parseEther('10') }]
-            const budgetLimit = {
-              approvedAddress: withdrawer.address,
-              budgetData,
-              expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-            }
-  
-            //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
-            const signature = await owner.signTypedData(domain, types, budgetLimit)
-            const signatureHash = ethers.keccak256(signature)
-  
-            await expect(expenseAccountProxy.deactivateApproval(signatureHash))
+          const budgetLimit = {
+            approvedAddress: withdrawer.address,
+            budgetData,
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+          }
+
+          //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
+          const signature = await owner.signTypedData(domain, types, budgetLimit)
+          const signatureHash = ethers.keccak256(signature)
+
+          await expect(expenseAccountProxy.deactivateApproval(signatureHash))
             .to.emit(expenseAccountProxy, 'ApprovalDeactivated')
             .withArgs(signatureHash)
 
-            const amount = ethers.parseEther('5')
-            await expect(
-              expenseAccountProxy
-                .connect(withdrawer)
-                .transfer(withdrawer.address, amount, budgetLimit, signature)
-            ).to.be.revertedWith('Approval inactive')
+          const amount = ethers.parseEther('5')
+          await expect(
+            expenseAccountProxy
+              .connect(withdrawer)
+              .transfer(withdrawer.address, amount, budgetLimit, signature)
+          ).to.be.revertedWith('Approval inactive')
         })
       })
       it('Then I can pause the account', async () => {
@@ -474,8 +474,8 @@ describe('ExpenseAccount (EIP712)', () => {
         const signatureHash = ethers.keccak256(signature)
 
         await expect(expenseAccountProxy.deactivateApproval(signatureHash))
-        .to.emit(expenseAccountProxy, 'ApprovalDeactivated')
-        .withArgs(signatureHash)
+          .to.emit(expenseAccountProxy, 'ApprovalDeactivated')
+          .withArgs(signatureHash)
 
         const amount = ethers.parseEther('5')
         await expect(
@@ -491,13 +491,13 @@ describe('ExpenseAccount (EIP712)', () => {
           budgetData,
           expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
         }
-        
+
         const signature = await owner.signTypedData(domain, types, budgetLimit)
         const signatureHash = ethers.keccak256(signature)
 
         await expect(expenseAccountProxy.activateApproval(signatureHash))
-        .to.emit(expenseAccountProxy, 'ApprovalActivated')
-        .withArgs(signatureHash)
+          .to.emit(expenseAccountProxy, 'ApprovalActivated')
+          .withArgs(signatureHash)
 
         const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
 
