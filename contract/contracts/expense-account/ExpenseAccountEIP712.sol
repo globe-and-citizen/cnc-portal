@@ -90,6 +90,12 @@ contract ExpenseAccountEIP712 is
             abi.encodePacked(BUDGETLIMIT_TYPE, BUDGETDATA_TYPE)
         );
 
+    enum ApprovalState {
+        Uninitialized,
+        Active,
+        Inactive
+    }
+
     /**
      * @title Balance
      * @notice Represents a set of variables used for tracking expense transfer balances.
@@ -102,6 +108,7 @@ contract ExpenseAccountEIP712 is
     struct Balance {
         uint256 transactionCount;
         uint256 amountWithdrawn;
+        ApprovalState state;
     }
 
     /// @dev Mapping to track transfer balances.
@@ -110,6 +117,10 @@ contract ExpenseAccountEIP712 is
     event Deposited(address indexed depositor, uint256 amount);
 
     event Transfer(address indexed withdrawer, address indexed to, uint256 amount);
+
+    event ApprovalDeactivated(bytes32 indexed signatureHash);
+
+    event ApprovalActivated(bytes32 indexed signatureHash);
 
     error UnauthorizedAccess(address expected, address received);
 
@@ -185,7 +196,9 @@ contract ExpenseAccountEIP712 is
         uint256 amount, 
         BudgetLimit calldata limit, 
         bytes calldata signature
-    ) external whenNotPaused nonReentrant{        
+    ) external whenNotPaused nonReentrant{
+        require(balances[keccak256(signature)].state != ApprovalState.Inactive, "Approval inactive");
+
         require(msg.sender == limit.approvedAddress, "Withdrawer not approved");
 
         require(to != address(0), "Address required");
@@ -253,6 +266,19 @@ contract ExpenseAccountEIP712 is
                 }
             }
         }
+
+        if (balances[sigHash].state == ApprovalState.Uninitialized)
+            balances[sigHash].state = ApprovalState.Active;
+    }
+
+    function deactivateApproval(bytes32 signatureHash) external onlyOwner {
+        balances[signatureHash].state = ApprovalState.Inactive;
+        emit ApprovalDeactivated(signatureHash);
+    }
+
+    function activateApproval(bytes32 signatureHash) external onlyOwner {
+        balances[signatureHash].state = ApprovalState.Active;
+        emit ApprovalActivated(signatureHash);
     }
 
     function pause() external onlyOwner {
