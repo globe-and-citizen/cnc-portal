@@ -1,0 +1,310 @@
+import { test as login } from '../fixtures/login.fixture'
+import { testWithSynpress } from '@synthetixio/synpress'
+
+const test = testWithSynpress(login)
+
+const { expect, describe, beforeEach } = test
+
+describe('Teams', () => {
+  const users = [
+    {
+      address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      name: 'Local 1',
+      nonce: 'tHBSeHXuveVFzEirM'
+    }
+  ]
+
+  beforeEach(async ({ login, page }) => {
+    await login()
+    await page.route('**/api/notification', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: []
+        })
+      })
+    })
+  })
+
+  describe('Team List', () => {
+    test('should render loading state and then render teams', async ({ page }) => {
+      // Mock api to return teams
+      const teams = [
+        {
+          id: '1',
+          name: 'Team 1',
+          description: 'Description of Team 1',
+          bankAddress: null,
+          members: [],
+          ownerAddress: 'Owner Address',
+          votingAddress: null,
+          boardOfDirectorsAddress: null
+        },
+        {
+          id: '2',
+          name: 'Team 2',
+          description: 'Description of Team 2',
+          bankAddress: null,
+          members: [],
+          ownerAddress: 'Owner Address',
+          votingAddress: null,
+          boardOfDirectorsAddress: null
+        }
+      ]
+
+      await page.route(`**/api/teams`, async (route) => {
+        // Delay the response to simulate loading state
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(teams)
+        })
+      })
+
+      await page.goto('http://localhost:5173/teams')
+      // Loading state assertion
+      expect(await page.isVisible('[data-test="loading-state"]')).toBeTruthy()
+
+      // Wait for teams to be rendered
+      await page.waitForSelector(`[data-test="loading-state"]`, { state: 'hidden' })
+
+      // Check if teams are rendered
+      for (const team of teams) {
+        expect(await page.isVisible(`[data-test="team-card-${team.id}"]`)).toBeTruthy()
+        expect(await page.textContent(`[data-test="team-card-${team.id}"]`)).toContain(team.name)
+        expect(await page.textContent(`[data-test="team-card-${team.id}"]`)).toContain(
+          team.description
+        )
+      }
+
+      expect(await page.isHidden('[data-test="loading-state"]')).toBeTruthy()
+      expect(await page.isVisible('[data-test="add-team-card"]')).toBeTruthy()
+
+      await page.click('div[data-test="team-card-1"]')
+      await page.waitForURL('http://localhost:5173/teams/1')
+
+      expect(page.url()).toBe('http://localhost:5173/teams/1')
+    })
+
+    test('should render empty state if no teams are available', async ({ page }) => {
+      // Mock api to return empty teams
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([])
+        })
+      })
+
+      await page.goto('http://localhost:5173/teams')
+      // Wait for empty state to appear
+      await page.waitForSelector('[data-test="empty-state"]')
+
+      expect(await page.isVisible('[data-test="empty-state"]')).toBeTruthy()
+      expect(await page.isVisible('[data-test="add-team-card"]')).toBeTruthy()
+    })
+
+    test('should render error state and toast if unable to fetch teams', async ({ page }) => {
+      // Mock api to return 500 error
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false
+          })
+        })
+      })
+
+      await page.goto('http://localhost:5173/teams')
+      // Wait for error message to appear
+      await page.waitForSelector('[data-test="toast-container"]')
+
+      expect(await page.isVisible('[data-test="toast-container"]')).toBeTruthy()
+      expect(await page.isVisible('[data-test="error-state"]')).toBeTruthy()
+    })
+  })
+
+  describe('Add Team', () => {
+    test('should be able to add a new team', async ({ page }) => {
+      // Mock api
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify([])
+        })
+      })
+
+      await page.route(`**/api/user/search?address=*`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            users: users
+          })
+        })
+      })
+
+      await page.goto('http://localhost:5173/teams')
+      await page.click('div[data-test="add-team"]')
+
+      // Fill form
+      await page.fill('[data-test="team-name-input"]', 'Team 1')
+      await page.fill('[data-test="team-description-input"]', 'Description of Team 1')
+      await page.click('[data-test="member-address-input"]')
+      await page.keyboard.type('0x7')
+      await page.keyboard.up('Enter')
+
+      // Wait for user search to load
+      await page.waitForSelector(`[data-test="user-dropdown-${users[0].address}"]`)
+      expect(await page.isVisible(`[data-test="user-dropdown-${users[0].address}"]`)).toBeTruthy()
+
+      // Select user
+      await page.click(`[data-test="user-dropdown-${users[0].address}"]`)
+      expect(page.locator(`input[data-test="member-name-input"]`)).toHaveValue(users[0].name)
+      await expect(page.locator(`input[data-test="member-address-input"]`)).toHaveValue(
+        users[0].address
+      )
+
+      // Add member
+      await page.click('[data-test="add-member"]')
+      await expect(page.locator('[data-test="member-name-input"]')).toHaveCount(2)
+
+      // Remove member
+      await page.click('[data-test="remove-member"]')
+      await expect(page.locator('[data-test="member-name-input"]')).toHaveCount(1)
+
+      // Submit form
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true
+          })
+        })
+      })
+      await page.click('[data-test="submit"]')
+
+      // Wait for success toast
+      await page.waitForSelector('[data-test="toast-container"]')
+      expect(await page.isVisible('[data-test="toast-container"]')).toBeTruthy()
+      expect(await page.textContent('[data-test="toast-container"]')).toContain(
+        'Team created successfully'
+      )
+
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            {
+              id: '1',
+              name: 'Team 1',
+              description: 'Description of Team 1',
+              bankAddress: null,
+              members: [
+                {
+                  address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+                  name: 'Local 1'
+                }
+              ],
+              ownerAddress: 'Owner Address',
+              votingAddress: null,
+              boardOfDirectorsAddress: null
+            }
+          ])
+        })
+      })
+      await page.reload()
+      // Wait for team card to appear
+      expect(await page.isVisible('[data-test="team-card-1"]')).toBeTruthy()
+    })
+
+    test('should show error validation if form is not filled correctly', async ({ page }) => {
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify([])
+        })
+      })
+
+      await page.goto('http://localhost:5173/teams')
+      await page.click('div[data-test="add-team"]')
+
+      // Submit form
+      await page.click('[data-test="submit"]')
+
+      // Wait for error message to appear
+      await page.waitForSelector('[data-test="address-error"]')
+      expect(await page.textContent('[data-test="address-error"]')).toContain('Value is required')
+
+      await page.waitForSelector('[data-test="name-error"]')
+      expect(await page.textContent('[data-test="name-error"]')).toContain('Value is required')
+
+      // Invalid address error
+      await page.fill('[data-test="member-address-input"]', '0x7')
+      await page.click('[data-test="submit"]')
+
+      await page.waitForSelector('[data-test="address-error"]')
+      expect(await page.textContent('[data-test="address-error"]')).toContain('Invalid address')
+    })
+
+    test('should show error toast if unable to add team', async ({ page }) => {
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify([])
+        })
+      })
+
+      await page.route(`**/api/user/search?address=*`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            users: users
+          })
+        })
+      })
+
+      await page.goto('http://localhost:5173/teams')
+      await page.click('div[data-test="add-team"]')
+
+      // Fill form
+      await page.fill('[data-test="team-name-input"]', 'Team 1')
+      await page.fill('[data-test="team-description-input"]', 'Description of Team 1')
+      await page.click('[data-test="member-address-input"]')
+      await page.keyboard.type('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')
+      await page.keyboard.up('Enter')
+
+      // Submit form
+      await page.route(`**/api/teams`, async (route) => {
+        await route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false
+          })
+        })
+      })
+      await page.click('[data-test="submit"]')
+
+      // Wait for error toast
+      await page.waitForSelector('[data-test="toast-container"]')
+      expect(await page.isVisible('[data-test="toast-container"]')).toBeTruthy()
+      expect(await page.textContent('[data-test="toast-container"]')).toContain(
+        'Error: Internal Server Error'
+      )
+    })
+  })
+})

@@ -3,7 +3,7 @@
     <div class="card-body flex justify-center items-center">
       <span class="font-bold">Add Team</span>
 
-      <div class="w-5 h-5 cursor-pointer" @click="emits('openAddTeamModal')">
+      <div class="w-5 h-5 cursor-pointer" data-test="add-team" @click="emits('openAddTeamModal')">
         <PlusCircleIcon class="size-6" />
       </div>
     </div>
