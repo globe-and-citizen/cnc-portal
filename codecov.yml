@@ -18,3 +18,9 @@ flags:
     carryforward: true
     paths:
       - contract
+  app-e2e-tests:
+    carryforward: true
+    paths:
+      - app
+ignore:
+  - "app/*.ts"
