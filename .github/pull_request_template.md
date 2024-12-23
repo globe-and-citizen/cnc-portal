@@ -17,9 +17,13 @@ Please delete options that are not relevant.
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] This change requires a documentation update
 
-## Checklist
+- **Please check if the PR fulfills these requirements**
 
-Make sur you run the following commands before submitting your PR:
+- [ ] The commit message follows our guidelines
+- [ ] Tests for the changes have been added (for bug fixes/features)
+- [ ] Docs have been added / updated (for bug fixes / features)
+
+## Checklist
 
 - /app
 
@@ -47,9 +51,3 @@ npm run test
 npm run lint
 npm run format
 ```
-
-- **Please check if the PR fulfills these requirements**
-
-- [ ] The commit message follows our guidelines
-- [ ] Tests for the changes have been added (for bug fixes/features)
-- [ ] Docs have been added / updated (for bug fixes / features)
