@@ -427,6 +427,29 @@ describe('ExpenseAccount (EIP712)', () => {
               .transfer(withdrawer.address, amount, budgetLimit, signature)
           ).to.be.revertedWith('Authorization expired')
         })
+        it('The approval is deactivated', async () => {
+          const budgetData = [{ budgetType: 1, value: ethers.parseEther('10') }]
+            const budgetLimit = {
+              approvedAddress: withdrawer.address,
+              budgetData,
+              expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+            }
+  
+            //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
+            const signature = await owner.signTypedData(domain, types, budgetLimit)
+            const signatureHash = ethers.keccak256(signature)
+  
+            await expect(expenseAccountProxy.deactivateApproval(signatureHash))
+            .to.emit(expenseAccountProxy, 'ApprovalDeactivated')
+            .withArgs(signatureHash)
+
+            const amount = ethers.parseEther('5')
+            await expect(
+              expenseAccountProxy
+                .connect(withdrawer)
+                .transfer(withdrawer.address, amount, budgetLimit, signature)
+            ).to.be.revertedWith('Approval inactive')
+        })
       })
       it('Then I can pause the account', async () => {
         await expect(expenseAccountProxy.pause())
@@ -437,6 +460,62 @@ describe('ExpenseAccount (EIP712)', () => {
         await expect(expenseAccountProxy.unpause())
           .to.emit(expenseAccountProxy, 'Unpaused')
           .withArgs(owner.address)
+      })
+      it('Then I can deactivate the approval', async () => {
+        const budgetData = [{ budgetType: 0, value: ethers.parseEther('10') }]
+        const budgetLimit = {
+          approvedAddress: withdrawer.address,
+          budgetData,
+          expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+        }
+
+        //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
+        const signature = await owner.signTypedData(domain, types, budgetLimit)
+        const signatureHash = ethers.keccak256(signature)
+
+        await expect(expenseAccountProxy.deactivateApproval(signatureHash))
+        .to.emit(expenseAccountProxy, 'ApprovalDeactivated')
+        .withArgs(signatureHash)
+
+        const amount = ethers.parseEther('5')
+        await expect(
+          expenseAccountProxy
+            .connect(withdrawer)
+            .transfer(withdrawer.address, amount, budgetLimit, signature)
+        ).to.be.revertedWith('Approval inactive')
+      })
+      it('Then I can activate the approval', async () => {
+        const budgetData = [{ budgetType: 0, value: ethers.parseEther('10') }]
+        const budgetLimit = {
+          approvedAddress: withdrawer.address,
+          budgetData,
+          expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+        }
+        
+        const signature = await owner.signTypedData(domain, types, budgetLimit)
+        const signatureHash = ethers.keccak256(signature)
+
+        await expect(expenseAccountProxy.activateApproval(signatureHash))
+        .to.emit(expenseAccountProxy, 'ApprovalActivated')
+        .withArgs(signatureHash)
+
+        const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
+
+        const amount = ethers.parseEther('5')
+        const tx = await expenseAccountProxy
+          .connect(withdrawer)
+          .transfer(withdrawer.address, amount, budgetLimit, signature)
+
+        const receipt = await tx.wait()
+
+        console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
+
+        await expect(tx).to.changeEtherBalance(withdrawer, amount)
+        await expect(tx)
+          .to.emit(expenseAccountProxy, 'Transfer')
+          .withArgs(withdrawer.address, withdrawer.address, amount)
+        const afterTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
+        expect(afterTxCount).to.be.equal(beforeTxCount + BigInt(1))
       })
     })
   })
