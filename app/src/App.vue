@@ -2,34 +2,11 @@
   <div class="min-h-screen bg-base-200">
     <RouterView name="login" />
     <div v-if="userStore.isAuth">
-      <!-- Responsive Navbar -->
-      <NavBar
-        :isCollapsed="toggleSide"
-        @toggleEditUserModal="
-          () => {
-            updateUserInput = { name, address }
-            showModal = true
-          }
-        "
-        @withdraw="
-          withdraw({
-            abi: TIPS_ABI,
-            address: TIPS_ADDRESS as Address,
-            functionName: 'withdraw'
-          })
-        "
-        :withdrawLoading="withdrawLoading && isConfirmingWithdraw"
-        @getBalance="refetchBalance()"
-        :balance="balance ? formatEther(balance as bigint).toString() : '0'"
-        :balanceLoading="balanceLoading"
-      />
-
       <!-- Responsive Drawer and Content -->
-      <div class="lg:flex">
+      <div class="h-screen flex">
         <!-- Drawer -->
         <div
-          class="fixed lg:relative inset-y-0 left-0 z-20 bg-base-100 shadow-xl transition-transform duration-300 ease-in-out"
-          :class="{ '-translate-x-full': !toggleSide }"
+          class="bg-base-100  transition-transform duration-300 ease-in-out"
         >
           <Drawer
             :user="{ name, address }"
@@ -43,22 +20,41 @@
           />
         </div>
 
+
+        <!-- Content Wrapper -->
+        <div class="relative flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll">
+          <!-- Responsive Navbar -->
+          <NavBar
+            :isCollapsed="toggleSide"
+            @toggleEditUserModal="
+              () => {
+                updateUserInput = { name, address }
+                showModal = true
+              }
+            "
+            @withdraw="
+              withdraw({
+                abi: TIPS_ABI,
+                address: TIPS_ADDRESS as Address,
+                functionName: 'withdraw'
+              })
+            "
+            :withdrawLoading="withdrawLoading && isConfirmingWithdraw"
+            @getBalance="refetchBalance()"
+            :balance="balance ? formatEther(balance as bigint).toString() : '0'"
+            :balanceLoading="balanceLoading"
+          />
+          <div class="w-full p-5 mt-10 md:p-10">
+            <RouterView />
+          </div>
+          
         <!-- Overlay -->
         <div
           v-if="toggleSide"
           data-test="drawer"
-          class="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+          class="absolute inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
           @click="toggleSide = false"
         ></div>
-
-        <!-- Content Wrapper -->
-        <div
-          class="flex-grow transition-all duration-300 ease-in-out"
-          :class="[!toggleSide ? 'ml-[72px]' : 'ml-[280px]']"
-        >
-          <div class="p-5 mt-10 md:p-10">
-            <RouterView />
-          </div>
         </div>
       </div>
     </div>
@@ -182,4 +178,8 @@ watch(isConfirmingWithdraw, (isConfirming, wasConfirming) => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+* {
+  /* border: 1px solid red; */
+}
+</style>
