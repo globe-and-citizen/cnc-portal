@@ -10,7 +10,7 @@
         >
           <Drawer
             :user="{ name, address }"
-            @toggleSideButton="toggleSide = !toggleSide"
+            v-model="toggleSide"
             @openEditUserModal="
               () => {
                 showModal = true
@@ -50,10 +50,10 @@
           
         <!-- Overlay -->
         <div
-          v-if="toggleSide"
+          v-if="!toggleSide"
           data-test="drawer"
           class="absolute inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
-          @click="toggleSide = false"
+          @click="toggleSide = true"
         ></div>
         </div>
       </div>
@@ -93,7 +93,7 @@ import { TIPS_ADDRESS } from './constant'
 import { formatEther, type Address } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
-const toggleSide = ref(true)
+const toggleSide = ref(false)
 const showModal = ref(false)
 
 const {

@@ -189,16 +189,17 @@ interface User {
   avatarUrl?: string
 }
 
+const isCollapsed = defineModel({
+  type: Boolean
+})
 const props = defineProps<{
   user: User
 }>()
 
-const emits = defineEmits(['openEditUserModal', 'toggleSideButton'])
-const isCollapsed = ref(false)
+const emits = defineEmits(['openEditUserModal'])
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
-  emits('toggleSideButton')
 }
 
 const formatedUserAddress = computed(() => {
