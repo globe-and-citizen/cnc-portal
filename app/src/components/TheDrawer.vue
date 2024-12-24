@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col fixed h-screen bg-white backdrop-blur-md shadow-2xl top-0 bottom-0 left-0 transition-all duration-300 ease-in-out"
+    class="flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
     :class="[isCollapsed ? 'w-[72px]' : 'w-[280px]']"
   >
     <div class="p-6 flex items-center justify-between relative">
