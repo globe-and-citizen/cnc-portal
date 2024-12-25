@@ -5,8 +5,7 @@ import { ref } from 'vue'
 import App from '@/App.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
-import TheDrawer from '@/components/TheDrawer.vue'
-import { useUserDataStore } from '@/stores/__mocks__/user'
+
 import ModalComponent from '@/components/ModalComponent.vue'
 
 // Mock the composables

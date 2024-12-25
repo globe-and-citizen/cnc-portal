@@ -5,9 +5,7 @@
       <!-- Responsive Drawer and Content -->
       <div class="h-screen flex">
         <!-- Drawer -->
-        <div
-          class="bg-base-100  transition-transform duration-300 ease-in-out"
-        >
+        <div class="bg-base-100 transition-transform duration-300 ease-in-out">
           <Drawer
             :user="{ name, address }"
             v-model="toggleSide"
@@ -20,9 +18,10 @@
           />
         </div>
 
-
         <!-- Content Wrapper -->
-        <div class="relative flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll">
+        <div
+          class="relative flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll"
+        >
           <!-- Responsive Navbar -->
           <NavBar
             :isCollapsed="toggleSide"
@@ -47,14 +46,14 @@
           <div class="w-full p-5 mt-10 md:p-10">
             <RouterView />
           </div>
-          
-        <!-- Overlay -->
-        <div
-          v-if="!toggleSide"
-          data-test="drawer"
-          class="absolute inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
-          @click="toggleSide = true"
-        ></div>
+
+          <!-- Overlay -->
+          <div
+            v-if="!toggleSide"
+            data-test="drawer"
+            class="absolute inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+            @click="toggleSide = true"
+          ></div>
         </div>
       </div>
     </div>

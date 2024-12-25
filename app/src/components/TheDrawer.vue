@@ -3,8 +3,11 @@
     class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
     :class="[isCollapsed ? 'w-20' : 'w-[280px]']"
   >
-  <!-- Logo Group -->
-    <div class="flex items-center justify-between relative transition-transform duration-300 " :class="{ 'flex-col gap-3': isCollapsed }">
+    <!-- Logo Group -->
+    <div
+      class="flex items-center justify-between relative transition-transform duration-300"
+      :class="{ 'flex-col gap-3': isCollapsed }"
+    >
       <div class="flex items-center gap-4" :class="{ 'justify-center w-full': isCollapsed }">
         <div class="relative group cursor-pointer p-3">
           <img
@@ -30,19 +33,16 @@
     <div
       class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
-        @click="toggleDropdown"
+      @click="toggleDropdown"
     >
-      <div
-        class=" rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100"
-      >
-        <span class="text-xl font-black text-emerald-700 w-11 h-11  flex items-center justify-center">
+      <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
+        <span
+          class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
+        >
           {{ selectedTeam.charAt(0) }}
         </span>
       </div>
-      <div
-        class="flex flex-row justify-center items-center gap-8"
-        v-if="!isCollapsed"
-      >
+      <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
         <span class="text-sm font-medium text-gray-700">{{ selectedTeam }}</span>
         <div class="relative">
           <button
@@ -83,14 +83,12 @@
       </div>
     </div>
 
-    <div class="flex-1  overflow-y-auto custom-scrollbar">
+    <div class="flex-1 overflow-y-auto custom-scrollbar">
       <div class="mb-4">
-        <span class="text-xs font-bold text-gray-400 tracking-tight">
-          General
-        </span>
+        <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
 
-      <nav class="space-y-4  z-10">
+      <nav class="space-y-4 z-10">
         <RouterLink
           v-for="item in menuItems"
           :key="item.label"
@@ -254,8 +252,7 @@ const toggleDropdown = () => {
 </script>
 
 <style scoped>
-
-*{
+* {
   /* border: 1px solid; */
 }
 .custom-scrollbar {
