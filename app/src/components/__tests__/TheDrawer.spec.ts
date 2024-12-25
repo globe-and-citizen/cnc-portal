@@ -83,4 +83,109 @@ describe('TheDrawer', () => {
     expect(linkTexts).toContain('Transactions')
     expect(linkTexts).toContain('Contract Management')
   })
+
+  describe('Collapse Functionality', () => {
+    it('should toggle collapse state when button is clicked', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address },
+          modelValue: false
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const collapseButton = wrapper.find('button')
+      await collapseButton.trigger('click')
+      const updateModelValue = wrapper.emitted('update:modelValue')
+      expect(updateModelValue).toBeTruthy()
+      if (updateModelValue) {
+        expect(updateModelValue[0]).toEqual([true])
+      }
+    })
+
+    it('should adjust width based on collapse state', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address },
+          modelValue: false
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // When expanded
+      expect(wrapper.classes()).toContain('w-[280px]')
+
+      // When collapsed
+      await wrapper.setProps({ modelValue: true })
+      expect(wrapper.classes()).toContain('w-20')
+    })
+  })
+
+  describe('Team Selection', () => {
+    it('should toggle team dropdown when clicked', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const teamSelector = wrapper.find('.flex.items-center.cursor-pointer')
+      await teamSelector.trigger('click')
+      // Check if dropdown is visible
+      expect(wrapper.find('.absolute.right-0.mt-2').exists()).toBe(true)
+
+      await teamSelector.trigger('click')
+      // Check if dropdown is hidden
+      expect(wrapper.find('.absolute.right-0.mt-2').exists()).toBe(false)
+    })
+
+    it('should display team name after selection', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // Open dropdown
+      await wrapper.find('.flex.items-center.cursor-pointer').trigger('click')
+
+      // Find and click a team option
+      const teamOption = wrapper.find('.block.px-4.py-2.text-sm')
+      if (teamOption.exists()) {
+        await teamOption.trigger('click')
+        // Check if the team name is displayed
+        expect(wrapper.find('.text-sm.font-medium.text-gray-700').exists()).toBe(true)
+      }
+    })
+  })
+
+  describe('Menu Items', () => {
+    it('should highlight active menu item', () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+          stubs: {
+            RouterLink: RouterLinkStub
+          }
+        }
+      })
+
+      const activeLink = wrapper.find('.bg-emerald-500\\/10')
+      expect(activeLink.exists()).toBe(true)
+      expect(activeLink.text()).toContain('Dashboard')
+    })
+  })
 })
