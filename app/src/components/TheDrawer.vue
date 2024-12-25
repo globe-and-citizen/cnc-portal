@@ -124,16 +124,13 @@
     </div>
 
     <div
-      class="w-full flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-xl rounded-xl p-2"
+      class="w-full bg-base-200 flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-sm rounded-xl p-4"
       data-test="edit-user-card"
       :class="{ 'justify-center': isCollapsed }"
       @click="emits('openEditUserModal')"
     >
-      <div tabindex="0" role="button" class="relative group">
-        <div
-          class="absolute inset-0 rounded-full filter blur-md opacity-50 group-hover:opacity-75 transition-opacity duration-300"
-        ></div>
-        <div class="relative rounded-full overflow-hidden w-12 h-12 ring-2 ring-white/50">
+      <div role="button" class="relative group">
+        <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
           <img
             alt="User Avatar"
             :src="
@@ -145,10 +142,10 @@
         </div>
       </div>
       <div class="flex flex-col text-gray-600" v-if="!isCollapsed">
-        <p class="font-bold text-lg" data-test="user-name">
+        <p class="font-bold text-sm line-clamp-1" data-test="user-name">
           {{ user.name || 'User' }}
         </p>
-        <p class="text-xs" data-test="formatted-address">
+        <p class="text-sm" data-test="formatted-address">
           {{ formatedUserAddress }}
         </p>
       </div>
