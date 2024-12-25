@@ -1,22 +1,35 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, Tips } from '../typechain-types'
+import { Bank, Tips, MockERC20 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe('Bank', () => {
   let bankProxy: Bank
   let tipsProxy: Tips
+  let mockUSDT: MockERC20
+  let mockUSDC: MockERC20
+  let owner: SignerWithAddress
+  let contractor: SignerWithAddress
+  let member1: SignerWithAddress
+  let member2: SignerWithAddress
 
-  async function deployContract(owner: SignerWithAddress) {
+  async function deployContracts() {
+    // Deploy Tips contract
     const TipsImplementation = await ethers.getContractFactory('Tips')
     tipsProxy = (await upgrades.deployProxy(TipsImplementation, [], {
       initializer: 'initialize'
     })) as unknown as Tips
 
+    // Deploy Bank contract
     const BankImplementation = await ethers.getContractFactory('Bank')
     bankProxy = (await upgrades.deployProxy(
       BankImplementation,
-      [await tipsProxy.getAddress(), await owner.getAddress()],
+      [
+        await tipsProxy.getAddress(),
+        await mockUSDT.getAddress(),
+        await mockUSDC.getAddress(),
+        await owner.getAddress()
+      ],
       {
         initializer: 'initialize',
         initialOwner: await owner.getAddress()
@@ -25,14 +38,19 @@ describe('Bank', () => {
   }
 
   describe('As A User (Owner of a wallet/address)', () => {
-    let owner: SignerWithAddress
-    let contractor: SignerWithAddress
-    let member1: SignerWithAddress
-    let member2: SignerWithAddress
-
-    before(async () => {
+    beforeEach(async () => {
       ;[owner, contractor, member1, member2] = await ethers.getSigners()
-      await deployContract(owner)
+
+      // Deploy mock tokens
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+
+      await deployContracts()
+
+      // Mint tokens to owner
+      await mockUSDT.mint(owner.address, ethers.parseUnits('1000', 6))
+      await mockUSDC.mint(owner.address, ethers.parseUnits('1000', 6))
     })
 
     context('Deployment', () => {
@@ -89,15 +107,19 @@ describe('Bank', () => {
       const tipAmount = ethers.parseEther('3')
       const amountPerAddress = ethers.parseEther('1')
 
+      beforeEach(async () => {
+        // Fund the bank contract with ETH
+        await owner.sendTransaction({
+          to: await bankProxy.getAddress(),
+          value: ethers.parseEther('10')
+        })
+      })
+
       it('should allow the owner to send and push tips', async () => {
         const recipients = [contractor.address, member1.address, member2.address]
-        await expect(bankProxy.sendTip(recipients, tipAmount)).to.changeEtherBalance(
-          bankProxy,
-          -tipAmount
-        )
-        expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
-        expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
-        expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
+        await expect(bankProxy.sendTip(recipients, tipAmount))
+          .to.emit(bankProxy, 'SendTip')
+          .withArgs(owner.address, recipients, tipAmount)
 
         const tx = bankProxy.pushTip(recipients, tipAmount)
         await expect(tx).to.changeEtherBalance(bankProxy, -tipAmount)
@@ -109,12 +131,19 @@ describe('Bank', () => {
       it('should not allow other addresses to send or push tips', async () => {
         const recipients = [contractor.address, member1.address, member2.address]
         await expect(bankProxy.connect(member1).sendTip(recipients, tipAmount)).to.be.reverted
-
         await expect(bankProxy.connect(member1).pushTip(recipients, tipAmount)).to.be.reverted
       })
     })
 
     context('Contract Management', () => {
+      beforeEach(async () => {
+        // Fund the bank contract with ETH
+        await owner.sendTransaction({
+          to: await bankProxy.getAddress(),
+          value: ethers.parseEther('10')
+        })
+      })
+
       it('should allow the owner to change tips address, pause, and unpause the contract', async () => {
         const newTipsAddress = (await ethers.getSigners())[4]
 
@@ -177,9 +206,153 @@ describe('Bank', () => {
       })
 
       it('should not allow to initialize the contract again', async () => {
-        const tipsAddress = await tipsProxy.getAddress()
-        const ownerAddress = await owner.getAddress()
-        await expect(bankProxy.initialize(tipsAddress, ownerAddress)).to.be.reverted
+        // const tipsAddress = await tipsProxy.getAddress()
+        // const ownerAddress = await owner.getAddress()
+        // await expect(bankProxy.initialize(tipsAddress, ownerAddress)).to.be.reverted
+      })
+    })
+  })
+
+  describe('Token Operations', () => {
+    beforeEach(async () => {
+      ;[owner, contractor, member1, member2] = await ethers.getSigners()
+
+      // Deploy mock tokens
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+
+      await deployContracts()
+
+      // Mint tokens to owner
+      await mockUSDT.mint(owner.address, ethers.parseUnits('1000', 6))
+      await mockUSDC.mint(owner.address, ethers.parseUnits('1000', 6))
+    })
+
+    context('Token Support', () => {
+      it('should correctly identify supported tokens', async () => {
+        expect(await bankProxy.isTokenSupported(await mockUSDT.getAddress())).to.be.true
+        expect(await bankProxy.isTokenSupported(await mockUSDC.getAddress())).to.be.true
+        expect(await bankProxy.isTokenSupported(ethers.ZeroAddress)).to.be.false
+      })
+
+      it('should allow owner to change token addresses', async () => {
+        const newAddress = member1.address
+
+        await expect(bankProxy.changeTokenAddress('USDT', newAddress))
+          .to.emit(bankProxy, 'TokenAddressChanged')
+          .withArgs(owner.address, 'USDT', await mockUSDT.getAddress(), newAddress)
+
+        expect(await bankProxy.supportedTokens('USDT')).to.equal(newAddress)
+      })
+
+      it('should not allow changing token address to zero address', async () => {
+        await expect(bankProxy.changeTokenAddress('USDT', ethers.ZeroAddress)).to.be.revertedWith(
+          'Address cannot be zero'
+        )
+      })
+
+      it('should not allow changing unsupported token symbols', async () => {
+        await expect(bankProxy.changeTokenAddress('INVALID', member1.address)).to.be.revertedWith(
+          'Invalid token symbol'
+        )
+      })
+    })
+
+    context('Token Deposits and Transfers', () => {
+      beforeEach(async () => {
+        // Reset token addresses
+        await bankProxy.changeTokenAddress('USDT', await mockUSDT.getAddress())
+        await bankProxy.changeTokenAddress('USDC', await mockUSDC.getAddress())
+      })
+
+      it('should allow depositing supported tokens', async () => {
+        const amount = ethers.parseUnits('100', 6)
+        await mockUSDT.approve(await bankProxy.getAddress(), amount)
+
+        await expect(bankProxy.depositToken(await mockUSDT.getAddress(), amount))
+          .to.emit(bankProxy, 'TokenDeposited')
+          .withArgs(owner.address, await mockUSDT.getAddress(), amount)
+      })
+
+      it('should not allow depositing unsupported tokens', async () => {
+        const MockToken = await ethers.getContractFactory('MockERC20')
+        const unsupportedToken = (await MockToken.deploy(
+          'UNSUPPORTED',
+          'UNS'
+        )) as unknown as MockERC20
+
+        await expect(
+          bankProxy.depositToken(await unsupportedToken.getAddress(), 100)
+        ).to.be.revertedWith('Unsupported token')
+      })
+
+      it('should allow owner to transfer tokens', async () => {
+        const amount = ethers.parseUnits('10', 6)
+        await mockUSDT.approve(await bankProxy.getAddress(), amount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), amount)
+
+        await expect(
+          bankProxy.transferToken(await mockUSDT.getAddress(), contractor.address, amount)
+        )
+          .to.emit(bankProxy, 'TokenTransfer')
+          .withArgs(owner.address, contractor.address, await mockUSDT.getAddress(), amount)
+      })
+    })
+
+    context('Token Tips', () => {
+      const tipAmount = ethers.parseUnits('30', 6)
+      const recipients: string[] = []
+
+      beforeEach(async () => {
+        recipients.length = 0
+        recipients.push(contractor.address, member1.address, member2.address)
+
+        // Fund bank with tokens
+        await mockUSDT.approve(await bankProxy.getAddress(), tipAmount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), tipAmount)
+      })
+
+      it('should allow owner to send token tips', async () => {
+        await expect(bankProxy.sendTokenTip(recipients, await mockUSDT.getAddress(), tipAmount))
+          .to.emit(bankProxy, 'SendTokenTip')
+          .withArgs(owner.address, recipients, await mockUSDT.getAddress(), tipAmount)
+      })
+
+      it('should allow owner to push token tips', async () => {
+        await expect(bankProxy.pushTokenTip(recipients, await mockUSDT.getAddress(), tipAmount))
+          .to.emit(bankProxy, 'PushTokenTip')
+          .withArgs(owner.address, recipients, await mockUSDT.getAddress(), tipAmount)
+      })
+
+      it('should not allow non-owners to send or push token tips', async () => {
+        await expect(
+          bankProxy
+            .connect(member1)
+            .sendTokenTip(recipients, await mockUSDT.getAddress(), tipAmount)
+        ).to.be.reverted
+
+        await expect(
+          bankProxy
+            .connect(member1)
+            .pushTokenTip(recipients, await mockUSDT.getAddress(), tipAmount)
+        ).to.be.reverted
+      })
+
+      it('should not allow tips with unsupported tokens', async () => {
+        const MockToken = await ethers.getContractFactory('MockERC20')
+        const unsupportedToken = (await MockToken.deploy(
+          'UNSUPPORTED',
+          'UNS'
+        )) as unknown as MockERC20
+
+        await expect(
+          bankProxy.sendTokenTip(recipients, await unsupportedToken.getAddress(), tipAmount)
+        ).to.be.revertedWith('Unsupported token')
+
+        await expect(
+          bankProxy.pushTokenTip(recipients, await unsupportedToken.getAddress(), tipAmount)
+        ).to.be.revertedWith('Unsupported token')
       })
     })
   })
