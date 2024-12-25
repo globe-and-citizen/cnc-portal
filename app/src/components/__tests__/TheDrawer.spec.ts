@@ -1,9 +1,16 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import TheDrawer from '@/components/TheDrawer.vue'
-import { HomeIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import {
+  HomeIcon,
+  UsersIcon,
+  ChartBarIcon,
+  BanknotesIcon,
+  DocumentTextIcon
+} from '@heroicons/vue/24/outline'
 import { RouterLinkStub } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
+import { createTestingPinia } from '@pinia/testing'
 
 // Create a router instance with a basic route
 const router = createRouter({
@@ -22,12 +29,12 @@ describe('TheDrawer', () => {
   it('should render user information correctly', () => {
     const wrapper = mount(TheDrawer, {
       global: {
-        plugins: [router] // Provide the router instance
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })] // Provide the router instance
       },
       props: { user: { name, address } }
     })
     expect(wrapper.find("[data-test='user-name'").text()).toContain(name)
-    expect(wrapper.find("[data-test='formatted-address'").text()).toBe('0xc0ffee25...4979')
+    expect(wrapper.find("[data-test='formatted-address'").text()).toBe('0xc0ff...4979')
   })
 
   it('should render default user name when no name is provided', () => {
@@ -57,15 +64,23 @@ describe('TheDrawer', () => {
     const wrapper = mount(TheDrawer, {
       props: { user: { name, address } },
       global: {
-        plugins: [router], // Provide the router instance
-        stubs: { RouterLink: RouterLinkStub, HomeIcon, UsersIcon, ClipboardDocumentListIcon }
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          RouterLink: RouterLinkStub,
+          HomeIcon,
+          UsersIcon,
+          ChartBarIcon,
+          BanknotesIcon,
+          DocumentTextIcon
+        }
       }
     })
 
     const links = wrapper.findAllComponents(RouterLinkStub)
     const linkTexts = links.map((link) => link.text())
     expect(linkTexts).toContain('Dashboard')
-    expect(linkTexts).toContain('Teams')
+    expect(linkTexts).toContain('Bank')
     expect(linkTexts).toContain('Transactions')
+    expect(linkTexts).toContain('Contract Management')
   })
 })
