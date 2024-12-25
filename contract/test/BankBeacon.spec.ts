@@ -20,21 +20,29 @@ describe('BankBeacon', () => {
 
     const encodedInitializeAdmin = bankImplementation.interface.encodeFunctionData('initialize', [
       tipsProxyAddress,
+      ethers.ZeroAddress,
+      ethers.ZeroAddress,
       await superAdmin.getAddress()
     ])
 
     const encodedInitializeUser1 = bankImplementation.interface.encodeFunctionData('initialize', [
       tipsProxyAddress,
+      ethers.ZeroAddress,
+      ethers.ZeroAddress,
       await user1.getAddress()
     ])
 
     const encodedInitializeUser2 = bankImplementation.interface.encodeFunctionData('initialize', [
       tipsProxyAddress,
+      ethers.ZeroAddress,
+      ethers.ZeroAddress,
       await user2.getAddress()
     ])
 
     const encodedInitializeUser3 = bankImplementation.interface.encodeFunctionData('initialize', [
       tipsProxyAddress,
+      ethers.ZeroAddress,
+      ethers.ZeroAddress,
       await user3.getAddress()
     ])
 
