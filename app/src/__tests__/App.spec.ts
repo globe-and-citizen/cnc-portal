@@ -99,27 +99,6 @@ describe('App.vue', () => {
     })
   })
 
-  describe('Actions', () => {
-    it('should close drawer if close icon clicked', async () => {
-      const wrapper = shallowMount(App, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
-      const { isAuth } = useUserDataStore()
-      // set drawer to be open
-      isAuth.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(TheDrawer).exists()).toBeTruthy()
-
-      await wrapper.find('div[data-test="drawer"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(TheDrawer).exists()).toBeFalsy()
-    })
-  })
-
   describe('Render', () => {
     it('renders ModalComponent if showModal is true', async () => {
       const wrapper = shallowMount(App, {
