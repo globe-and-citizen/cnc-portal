@@ -88,6 +88,8 @@ describe('Officer Contract', function () {
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
         owner.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         owner.address
       ])
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
@@ -119,6 +121,8 @@ describe('Officer Contract', function () {
 
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
         addr1.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         owner.address
       ])
 
@@ -137,6 +141,8 @@ describe('Officer Contract', function () {
     it('Should fail when deploying proxy for unknown contract type', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
         owner.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         owner.address
       ])
 
@@ -267,6 +273,8 @@ describe('Officer Contract', function () {
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
         owner.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         owner.address
       ])
 
@@ -407,6 +415,8 @@ describe('Officer Contract', function () {
       ])
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
         owner.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         owner.address
       ])
 
@@ -439,6 +449,8 @@ describe('Officer Contract', function () {
       // Deploy contracts in specific order
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
         owner.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         owner.address
       ])
 
