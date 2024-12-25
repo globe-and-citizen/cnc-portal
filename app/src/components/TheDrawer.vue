@@ -1,65 +1,52 @@
-<template>
+<template class="">
   <div
-    class="flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
-    :class="[isCollapsed ? 'w-[72px]' : 'w-[280px]']"
+    class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
+    :class="[isCollapsed ? 'w-20' : 'w-[280px]']"
   >
-    <div class="p-6 flex items-center justify-between relative">
-      <div class="flex items-center gap-3" :class="{ 'justify-center w-full': isCollapsed }">
-        <div class="relative group cursor-pointer">
-          <div
-            class="absolute inset-0 rounded-full filter blur-md group-hover:blur-lg transition-all duration-300"
-          ></div>
+  <!-- Logo Group -->
+    <div class="flex items-center justify-between relative transition-transform duration-300 " :class="{ 'flex-col gap-3': isCollapsed }">
+      <div class="flex items-center gap-4" :class="{ 'justify-center w-full': isCollapsed }">
+        <div class="relative group cursor-pointer p-3">
           <img
             v-if="!isCollapsed"
             src="../assets/Logo.png"
             alt="CNC Portal"
-            class="relative z-10 w-[128px]"
+            class="relative w-[128px]"
           />
           <img
             v-else
             src="../assets/LogoWithoutText.png"
             @click="toggleCollapse"
             alt="CNC Portal"
-            class="w-8 h-8 relative z-10 transition-transform duration-300 hover:scale-110"
+            class="w-11 relative transition-transform duration-300 hover:scale-110"
           />
         </div>
       </div>
-      <button
-        v-if="!isCollapsed"
-        @click="toggleCollapse"
-        class="justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
-      >
-        <ArrowLeftStartOnRectangleIcon class="w-5 h-5 text-gray-600" />
-      </button>
+      <ButtonUI variant="glass" @click="toggleCollapse" class="shadow-sm">
+        <ArrowLeftStartOnRectangleIcon class="w-5 h-5 text-gray-600" v-if="isCollapsed" />
+        <ArrowRightStartOnRectangleIcon class="w-5 h-5 text-gray-600" v-else />
+      </ButtonUI>
     </div>
-    <button
-      v-if="isCollapsed"
-      @click="toggleCollapse"
-      class="flex flex-col items-center p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-    >
-      <ArrowRightStartOnRectangleIcon class="w-5 h-5 text-gray-600" />
-    </button>
     <div
-      class="mt-4 mx-4 mb-8 flex items-center rounded-2xl cursor-pointer p-3 transition-all duration-300 shadow-lg"
-      :class="[isCollapsed ? 'justify-center bg-emerald-100' : 'justify-between']"
+      class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
+      :class="[isCollapsed ? 'justify-center' : 'justify-between']"
+        @click="toggleDropdown"
     >
       <div
-        class="w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100"
-        :class="[isCollapsed ? 'w-6 h-6' : 'w-10 h-10']"
+        class=" rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100"
       >
-        <span class="text-sm font-bold text-emerald-700">
+        <span class="text-xl font-black text-emerald-700 w-11 h-11  flex items-center justify-center">
           {{ selectedTeam.charAt(0) }}
         </span>
       </div>
       <div
         class="flex flex-row justify-center items-center gap-8"
         v-if="!isCollapsed"
-        @click="toggleDropdown"
       >
         <span class="text-sm font-medium text-gray-700">{{ selectedTeam }}</span>
         <div class="relative">
           <button
-            class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
+            class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
           >
             <ChevronUpDownIcon class="w-4 h-4 text-gray-600" />
           </button>
@@ -96,22 +83,22 @@
       </div>
     </div>
 
-    <div class="flex-1 px-2 overflow-y-auto custom-scrollbar">
-      <div class="mb-4 px-4">
-        <span v-if="!isCollapsed" class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+    <div class="flex-1  overflow-y-auto custom-scrollbar">
+      <div class="mb-4">
+        <span class="text-xs font-bold text-gray-400 tracking-tight">
           General
         </span>
       </div>
 
-      <nav class="space-y-2">
+      <nav class="space-y-4  z-10">
         <RouterLink
           v-for="item in menuItems"
           :key="item.label"
           :to="item.route"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group relative transition-all duration-200"
+          class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group relative transition-all duration-200 z-10"
           :class="{
             'justify-center': isCollapsed,
-            'bg-emerald-500/10 shadow-md': item.active,
+            'bg-emerald-500/10 shadow-sm': item.active,
             'hover:bg-gray-100': !item.active
           }"
         >
@@ -182,6 +169,7 @@ import {
   ChevronUpDownIcon
 } from '@heroicons/vue/24/outline'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import ButtonUI from './ButtonUI.vue'
 
 interface User {
   name: string
@@ -269,6 +257,10 @@ const toggleDropdown = () => {
 </script>
 
 <style scoped>
+
+*{
+  /* border: 1px solid; */
+}
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
