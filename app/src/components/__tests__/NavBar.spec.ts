@@ -39,7 +39,8 @@ describe('NavBar', () => {
   const props = {
     withdrawLoading: false,
     balanceLoading: false,
-    balance: '1.23456789'
+    balance: '1.23456789',
+    isCollapsed: false
   }
   const wrapper = mount(NavBar, {
     props,
@@ -54,8 +55,8 @@ describe('NavBar', () => {
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('renders the logo', () => {
-      expect(wrapper.find('img').attributes('src')).toBe('/src/assets/Logo.png')
+    it('renders the Ethereum Logo', () => {
+      expect(wrapper.find('img').attributes('src')).toBe('/src/assets/Ethereum.png')
     })
 
     it('Should renders balance correctly', () => {
@@ -68,11 +69,6 @@ describe('NavBar', () => {
 
   // Check if the component emits the right events
   describe('Emits', () => {
-    it('Should emits toggleSideButton when hamburger button is clicked', async () => {
-      await wrapper.find('[data-test="toggleSideButton"]').trigger('click')
-      expect(wrapper.emitted('toggleSideButton')).toBeTruthy()
-    })
-
     it('Should emits withdraw event when withdraw is clicked', async () => {
       await wrapper.find('[data-test="withdraw"]').trigger('click')
       expect(wrapper.emitted('withdraw')).toBeTruthy()
@@ -91,7 +87,6 @@ describe('NavBar', () => {
     })
     it('Should render loading state for balance', () => {
       const wrapper = mount(NavBar, { props: { ...props, balanceLoading: true } })
-      console.log()
       expect(wrapper.find("[data-test='balance-loading']")).toBeTruthy()
     })
   })
