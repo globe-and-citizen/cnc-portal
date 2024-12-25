@@ -1,8 +1,5 @@
 <template>
-  <nav
-    class="flex justify-end border-0 border-b-2 border-slate-100 bg-white"
-   
-  >
+  <nav class="flex justify-end border-0 border-b-2 border-slate-100 bg-white">
     <div class="flex justify-between py-3 px-3">
       <div class="flex items-center space-x-2 sm:space-x-4">
         <div class="dropdown dropdown-end">
