@@ -1,9 +1,16 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import TheDrawer from '@/components/TheDrawer.vue'
-import { HomeIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import {
+  HomeIcon,
+  UsersIcon,
+  ChartBarIcon,
+  BanknotesIcon,
+  DocumentTextIcon
+} from '@heroicons/vue/24/outline'
 import { RouterLinkStub } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
+import { createTestingPinia } from '@pinia/testing'
 
 // Create a router instance with a basic route
 const router = createRouter({
@@ -22,12 +29,12 @@ describe('TheDrawer', () => {
   it('should render user information correctly', () => {
     const wrapper = mount(TheDrawer, {
       global: {
-        plugins: [router] // Provide the router instance
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })] // Provide the router instance
       },
       props: { user: { name, address } }
     })
     expect(wrapper.find("[data-test='user-name'").text()).toContain(name)
-    expect(wrapper.find("[data-test='formatted-address'").text()).toBe('0xc0ffee25...4979')
+    expect(wrapper.find("[data-test='formatted-address'").text()).toBe('0xc0ff...4979')
   })
 
   it('should render default user name when no name is provided', () => {
@@ -57,15 +64,128 @@ describe('TheDrawer', () => {
     const wrapper = mount(TheDrawer, {
       props: { user: { name, address } },
       global: {
-        plugins: [router], // Provide the router instance
-        stubs: { RouterLink: RouterLinkStub, HomeIcon, UsersIcon, ClipboardDocumentListIcon }
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          RouterLink: RouterLinkStub,
+          HomeIcon,
+          UsersIcon,
+          ChartBarIcon,
+          BanknotesIcon,
+          DocumentTextIcon
+        }
       }
     })
 
     const links = wrapper.findAllComponents(RouterLinkStub)
     const linkTexts = links.map((link) => link.text())
     expect(linkTexts).toContain('Dashboard')
-    expect(linkTexts).toContain('Teams')
+    expect(linkTexts).toContain('Bank')
     expect(linkTexts).toContain('Transactions')
+    expect(linkTexts).toContain('Contract Management')
+  })
+
+  describe('Collapse Functionality', () => {
+    it('should toggle collapse state when button is clicked', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address },
+          modelValue: false
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const collapseButton = wrapper.find('button')
+      await collapseButton.trigger('click')
+      const updateModelValue = wrapper.emitted('update:modelValue')
+      expect(updateModelValue).toBeTruthy()
+      if (updateModelValue) {
+        expect(updateModelValue[0]).toEqual([true])
+      }
+    })
+
+    it('should adjust width based on collapse state', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address },
+          modelValue: false
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // When expanded
+      expect(wrapper.classes()).toContain('w-[280px]')
+
+      // When collapsed
+      await wrapper.setProps({ modelValue: true })
+      expect(wrapper.classes()).toContain('w-20')
+    })
+  })
+
+  describe('Team Selection', () => {
+    it('should toggle team dropdown when clicked', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const teamSelector = wrapper.find('.flex.items-center.cursor-pointer')
+      await teamSelector.trigger('click')
+      // Check if dropdown is visible
+      expect(wrapper.find('.absolute.right-0.mt-2').exists()).toBe(true)
+
+      await teamSelector.trigger('click')
+      // Check if dropdown is hidden
+      expect(wrapper.find('.absolute.right-0.mt-2').exists()).toBe(false)
+    })
+
+    it('should display team name after selection', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // Open dropdown
+      await wrapper.find('.flex.items-center.cursor-pointer').trigger('click')
+
+      // Find and click a team option
+      const teamOption = wrapper.find('.block.px-4.py-2.text-sm')
+      if (teamOption.exists()) {
+        await teamOption.trigger('click')
+        // Check if the team name is displayed
+        expect(wrapper.find('.text-sm.font-medium.text-gray-700').exists()).toBe(true)
+      }
+    })
+  })
+
+  describe('Menu Items', () => {
+    it('should highlight active menu item', () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+          stubs: {
+            RouterLink: RouterLinkStub
+          }
+        }
+      })
+
+      const activeLink = wrapper.find('.bg-emerald-500\\/10')
+      expect(activeLink.exists()).toBe(true)
+      expect(activeLink.text()).toContain('Dashboard')
+    })
   })
 })

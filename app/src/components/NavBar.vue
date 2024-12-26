@@ -1,27 +1,6 @@
 <template>
-  <nav
-    class="fixed top-0 left-0 right-0 z-50 shadow-lg transition-all duration-300 ease-in-out bg-white"
-  >
+  <nav class="flex justify-end border-0 border-b-2 border-slate-100 bg-white">
     <div class="flex justify-between py-3 px-3">
-      <div class="flex items-center justify-between lg:w-80">
-        <div class="relative group">
-          <img
-            src="../assets/Logo.png"
-            alt="Logo"
-            class="h-6 sm:h-8 md:h-10 w-auto relative z-10 transform transition duration-300 ease-in-out group-hover:scale-105"
-          />
-        </div>
-        <div class="">
-          <button
-            class="btn btn-square btn-ghost drawer-overlay"
-            @click="emits('toggleSideButton')"
-            data-test="toggleSideButton"
-          >
-            <Bars3Icon class="size-6" />
-          </button>
-        </div>
-      </div>
-
       <div class="flex items-center space-x-2 sm:space-x-4">
         <div class="dropdown dropdown-end">
           <div
@@ -115,7 +94,6 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
-import { Bars3Icon } from '@heroicons/vue/24/solid'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
@@ -125,6 +103,7 @@ defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
   balance: string
+  isCollapsed: boolean
 }>()
 </script>
 

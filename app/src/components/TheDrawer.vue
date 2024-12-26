@@ -1,65 +1,170 @@
-<template>
+<template class="">
   <div
-    class="flex flex-col items-center pt-28 w-80 min-h-full bg-white fixed px-6 gap-6 shadow-2xl transition-all duration-300 ease-in-out transform"
+    class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
+    :class="[isCollapsed ? 'w-20' : 'w-[280px]']"
   >
+    <!-- Logo Group -->
     <div
-      class="w-full flex flex-row justify-start gap-4 bg-opacity-10 backdrop-blur-lg rounded-xl px-5 py-4 cursor-pointer hover:bg-opacity-20 transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg"
+      class="flex items-center justify-between relative transition-transform duration-300"
+      :class="{ 'flex-col gap-3': isCollapsed }"
+    >
+      <div class="flex items-center gap-4" :class="{ 'justify-center w-full': isCollapsed }">
+        <div class="relative group cursor-pointer p-3">
+          <img
+            v-if="!isCollapsed"
+            src="../assets/Logo.png"
+            alt="CNC Portal"
+            class="relative w-[128px]"
+          />
+          <img
+            v-else
+            src="../assets/LogoWithoutText.png"
+            @click="toggleCollapse"
+            alt="CNC Portal"
+            class="w-11 relative transition-transform duration-300 hover:scale-110"
+          />
+        </div>
+      </div>
+      <ButtonUI variant="glass" @click="toggleCollapse" class="shadow-sm">
+        <ArrowLeftStartOnRectangleIcon class="w-5 h-5 text-gray-600" v-if="isCollapsed" />
+        <ArrowRightStartOnRectangleIcon class="w-5 h-5 text-gray-600" v-else />
+      </ButtonUI>
+    </div>
+    <div
+      class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
+      :class="[isCollapsed ? 'justify-center' : 'justify-between']"
+      @click="toggleDropdown"
+    >
+      <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
+        <span
+          class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
+        >
+          {{ selectedTeam.charAt(0) }}
+        </span>
+      </div>
+      <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
+        <span class="text-sm font-medium text-gray-700">{{ selectedTeam }}</span>
+        <div class="relative">
+          <button
+            class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
+          >
+            <ChevronUpDownIcon class="w-4 h-4 text-gray-600" />
+          </button>
+          <transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <ul
+              v-if="isDropdownOpen"
+              class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg py-1 z-50"
+            >
+              <li v-if="teamsAreFetching" class="px-4 py-2 text-sm text-gray-700">
+                <div class="flex items-center justify-center">
+                  <div
+                    class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"
+                  ></div>
+                </div>
+              </li>
+              <li v-else v-for="team in teams" :key="team.id">
+                <a
+                  @click="navigateToTeam(team.id, team.name)"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200"
+                >
+                  {{ team.name }}
+                </a>
+              </li>
+            </ul>
+          </transition>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto custom-scrollbar">
+      <div class="mb-4">
+        <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
+      </div>
+
+      <nav class="space-y-4 z-10">
+        <RouterLink
+          v-for="item in menuItems"
+          :key="item.label"
+          :to="item.route"
+          class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group relative transition-all duration-200 z-10"
+          :class="{
+            'justify-center': isCollapsed,
+            'bg-emerald-500/10 shadow-sm': item.active,
+            'hover:bg-gray-100': !item.active
+          }"
+        >
+          <div class="relative">
+            <component
+              :is="item.icon"
+              class="w-6 h-6 transition-all duration-300 ease-in-out"
+              :class="{
+                'text-emerald-500 scale-110': item.active,
+                'group-hover:scale-110 group-hover:text-emerald-500': !item.active
+              }"
+            />
+          </div>
+          <span
+            v-if="!isCollapsed"
+            class="text-sm font-medium transition-colors duration-200"
+            :class="{ 'text-emerald-600': item.active }"
+          >
+            {{ item.label }}
+          </span>
+        </RouterLink>
+      </nav>
+    </div>
+
+    <div
+      class="w-full bg-base-200 flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-sm rounded-xl p-4"
       data-test="edit-user-card"
+      :class="{ 'justify-center': isCollapsed }"
       @click="emits('openEditUserModal')"
     >
-      <div tabindex="0" role="button" class="relative group">
-        <div
-          class="absolute rounded-full opacity-75 group-hover:opacity-100 transition duration-300 ease-in-out animate-tilt"
-        ></div>
-        <div class="relative rounded-full overflow-hidden w-[44px] h-[44px]">
+      <div role="button" class="relative group">
+        <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
           <img
             alt="User Avatar"
             :src="
               user.avatarUrl ||
               'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
             "
-            class="w-full h-full object-cover transform transition duration-300 ease-in-out group-hover:scale-110"
+            class="w-full h-full object-cover"
           />
         </div>
       </div>
-      <div class="flex flex-col">
-        <p
-          class="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500"
-          data-test="user-name"
-        >
+      <div class="flex flex-col text-gray-600" v-if="!isCollapsed">
+        <p class="font-bold text-sm line-clamp-1" data-test="user-name">
           {{ user.name || 'User' }}
         </p>
-        <p class="text-xs text-slate-500" data-test="formatted-address">
+        <p class="text-sm" data-test="formatted-address">
           {{ formatedUserAddress }}
         </p>
       </div>
     </div>
-    <ul class="menu w-full rounded-box gap-3 shadow-lg bg-opacity-5 backdrop-blur-sm p-4">
-      <li class="menu-title opacity-75 uppercase tracking-wider text-xs font-bold mb-2">
-        Navigation
-      </li>
-      <li v-for="(item, index) in menuItems" :key="index" class="relative group">
-        <RouterLink
-          :to="item.route"
-          class="flex items-center py-3 px-4 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:bg-opacity-10 group-hover:text-green-400"
-        >
-          <component
-            :is="item.icon"
-            class="w-6 h-6 mr-3 transition-transform duration-300 ease-in-out group-hover:rotate-12"
-          />
-          <span class="font-medium">{{ item.label }}</span>
-          <div
-            class="absolute right-2 top-1/2 transform -translate-y-1/2 w-1 h-1 bg-green-500 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out"
-          ></div>
-        </RouterLink>
-      </li>
-    </ul>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { HomeIcon, UsersIcon, ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import { ref, computed, watch } from 'vue'
+import {
+  HomeIcon,
+  BanknotesIcon,
+  ChartBarIcon,
+  UsersIcon,
+  DocumentTextIcon,
+  ArrowLeftStartOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
+  ChevronUpDownIcon
+} from '@heroicons/vue/24/outline'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import ButtonUI from './ButtonUI.vue'
 
 interface User {
   name: string
@@ -67,40 +172,117 @@ interface User {
   avatarUrl?: string
 }
 
-const emits = defineEmits(['openEditUserModal', 'logout'])
+const isCollapsed = defineModel({
+  type: Boolean
+})
 const props = defineProps<{
   user: User
 }>()
 
+const emits = defineEmits(['openEditUserModal'])
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+
 const formatedUserAddress = computed(() => {
   return props.user.address
-    ? props.user.address.substring(0, 10) +
+    ? props.user.address.substring(0, 6) +
         '...' +
         props.user.address.substring(props.user.address.length - 4)
     : ''
 })
 
 const menuItems = [
-  { label: 'Dashboard', icon: HomeIcon, route: '/' },
-  { label: 'Teams', icon: UsersIcon, route: '/teams' },
-  { label: 'Transactions', icon: ClipboardDocumentListIcon, route: '/transactions' }
+  {
+    label: 'Dashboard',
+    icon: HomeIcon,
+    route: '/',
+    active: true
+  },
+  {
+    label: 'Bank',
+    icon: BanknotesIcon,
+    route: '/bank'
+  },
+  {
+    label: 'Transactions',
+    icon: ChartBarIcon,
+    route: '/transactions'
+  },
+  {
+    label: 'Administration',
+    icon: UsersIcon,
+    route: '/admin'
+  },
+  {
+    label: 'Contract Management',
+    icon: DocumentTextIcon,
+    route: '/contracts'
+  }
 ]
+
+const {
+  isFetching: teamsAreFetching,
+  error: teamError,
+  data: teams,
+  execute: executeFetchTeams
+} = useCustomFetch('teams').json()
+
+watch(teamError, () => {
+  if (teamError.value) {
+    console.error('Error fetching teams:', teamError.value)
+  }
+})
+
+executeFetchTeams()
+
+const selectedTeam = ref('CNC Team')
+
+const navigateToTeam = (teamId: string, teamName: string) => {
+  selectedTeam.value = teamName
+  isCollapsed.value = false
+}
+
+const isDropdownOpen = ref(false)
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
 </script>
 
-<style>
-@keyframes tilt {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(1deg);
-  }
-  75% {
-    transform: rotate(-1deg);
-  }
+<style scoped>
+* {
+  /* border: 1px solid; */
 }
-.animate-tilt {
-  animation: tilt 5s infinite ease-in-out;
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(16, 185, 129, 0.5);
+  border-radius: 20px;
+  border: transparent;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>
