@@ -208,14 +208,13 @@
               <td>{{ data.budgetData[2].value }}</td>
               <td>{{ `${getLimitBalance(data.signature, 0)}/${data.budgetData[0].value}` }}</td>
               <td>{{ `${getLimitBalance(data.signature, 1)}/${data.budgetData[1].value}` }}</td>
-              <td
-                class="flex justify-end"
-                data-test="action-td"
-              >
-                <button 
-                  :disabled="contractOwnerAddress !== currentUserAddress" 
+              <td class="flex justify-end" data-test="action-td">
+                <button
+                  :disabled="contractOwnerAddress !== currentUserAddress"
                   class="btn btn-success"
-                >Deactivate</button>
+                >
+                  Deactivate
+                </button>
               </td>
             </tr>
           </tbody>
@@ -353,46 +352,43 @@ const {
 })
 
 watch(amountWithdrawn, async (newVal) => {
-  if (newVal)
-    await initializeBalances()
+  if (newVal) await initializeBalances()
 })
 
 // Reactive storage for balances
-const balances = reactive<Record<string, { [key: number]: string }>>({});
+const balances = reactive<Record<string, { [key: number]: string }>>({})
 
 // Async initialization function
 const initializeBalances = async () => {
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
-      const signatureHash = keccak256(data.signature);
+      const signatureHash = keccak256(data.signature)
 
       // Simulate fetching data asynchronously
-      await executeGetAmountWithdrawn();
+      await executeGetAmountWithdrawn()
 
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
         balances[signatureHash] = {
           0: amountWithdrawn.value[0],
-          1: formatEther(amountWithdrawn.value[1]),
-        };
+          1: formatEther(amountWithdrawn.value[1])
+        }
       } else {
         balances[signatureHash] = {
           0: '--',
-          1: '--',
-        };
+          1: '--'
+        }
       }
     }
-};
+}
 
 // Computed property for getting balances
 const getLimitBalance = computed(() => {
   return (signature: `0x{string}`, index: number): string => {
-    const signatureHash = keccak256(signature);
-    return balances[signatureHash]? 
-      balances[signatureHash][`${index}`]: 
-      '--';
-  };
-});
+    const signatureHash = keccak256(signature)
+    return balances[signatureHash] ? balances[signatureHash][`${index}`] : '--'
+  }
+})
 
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
@@ -565,7 +561,7 @@ const approveUser = async (data: BudgetLimit) => {
   const domain = {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId, 
+    chainId,
     verifyingContract
   }
   const types = {

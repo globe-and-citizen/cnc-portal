@@ -61,7 +61,7 @@ const mockUseReadContract = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   error: ref(null),
-  refetch: mockUseReadContractRefetch//vi.fn()
+  refetch: mockUseReadContractRefetch //vi.fn()
 }
 
 const mockUseWriteContract = {
@@ -226,7 +226,8 @@ const mockExpenseData = [
     ],
     expiry: Math.floor(new Date(DATE).getTime() / 1000),
     signature: '0xSignature'
-  }, {
+  },
+  {
     approvedAddress: `0x456`,
     budgetData: [
       { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
@@ -253,8 +254,7 @@ vi.mock('@/composables/useCustomFetch', () => {
             data.value = {
               data: JSON.stringify(mockExpenseData[0])
             }
-          else
-            data.value = mockExpenseData
+          else data.value = mockExpenseData
         }
       })
 
@@ -350,73 +350,62 @@ describe('ExpenseAccountSection', () => {
 
     it('should show aprroval list table cells with correct data', async () => {
       const wrapper = createComponent()
-      const wrapperVm: ComponentData = (wrapper.vm as unknown as ComponentData)
-      
-      ;wrapperVm.manyExpenseAccountData = mockExpenseData
-      ;wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
-      vi.spyOn(viem, 'keccak256').mockImplementation(args => {
+      wrapperVm.manyExpenseAccountData = mockExpenseData
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+
+      vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
         return `${args as `0x${string}`}Hash`
       })
-      
+
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
 
       // Locate the table using the data-test attribute
-      const table = wrapper.find('[data-test="approvals-list-table"]');
+      const table = wrapper.find('[data-test="approvals-list-table"]')
       expect(table.exists()).toBe(true)
 
       // Check table headers within the approvals-list-table
       const headers = table // wrapper
         //.find('[data-test="approvals-list-table"]')
-        .findAll('thead th');
+        .findAll('thead th')
       const expectedHeaders = [
         'User',
         'Expiry Date',
         'Max Amount Per Tx',
         'Total Transactions',
         'Total Transfers',
-        'Action',
-      ];
+        'Action'
+      ]
       headers.forEach((header, i) => {
-        expect(header.text()).toBe(expectedHeaders[i]);
-      });
+        expect(header.text()).toBe(expectedHeaders[i])
+      })
 
       // Check table row data within the approvals-list-table
-      const rows = table
-        .findAll('tbody tr');
-      expect(rows).toHaveLength(mockExpenseData.length);
+      const rows = table.findAll('tbody tr')
+      expect(rows).toHaveLength(mockExpenseData.length)
 
-      const firstRowCells = rows[0].findAll('td');
-      expect(firstRowCells[0].text()).toBe(mockExpenseData[0].approvedAddress);
-      expect(firstRowCells[1].text()).toBe(
-        new Date(mockExpenseData[0].expiry).toLocaleDateString()
-      );
-      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString());
-      expect(firstRowCells[3].text()).toBe(
-        `0/${mockExpenseData[0].budgetData[0].value}`
-      );
-      expect(firstRowCells[4].text()).toBe(
-        `1/${mockExpenseData[0].budgetData[1].value}`
-      );
-      expect(firstRowCells[5].find('button').exists()).toBe(true);
-      expect(firstRowCells[5].find('button').text()).toBe('Deactivate');
+      const firstRowCells = rows[0].findAll('td')
+      expect(firstRowCells[0].text()).toBe(mockExpenseData[0].approvedAddress)
+      expect(firstRowCells[1].text()).toBe(new Date(mockExpenseData[0].expiry).toLocaleDateString())
+      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
+      expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
+      expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
+      expect(firstRowCells[5].find('button').exists()).toBe(true)
+      expect(firstRowCells[5].find('button').text()).toBe('Deactivate')
 
-      const secondRowCells = rows[1].findAll('td');
-      expect(secondRowCells[0].text()).toBe(mockExpenseData[1].approvedAddress);
+      const secondRowCells = rows[1].findAll('td')
+      expect(secondRowCells[0].text()).toBe(mockExpenseData[1].approvedAddress)
       expect(secondRowCells[1].text()).toBe(
         new Date(mockExpenseData[1].expiry).toLocaleDateString()
-      );
-      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString());
-      expect(secondRowCells[3].text()).toBe(
-        `0/${mockExpenseData[1].budgetData[0].value}`
-      );
-      expect(secondRowCells[4].text()).toBe(
-        `1/${mockExpenseData[1].budgetData[1].value}`
-      );
-      expect(secondRowCells[5].find('button').exists()).toBe(true);
-      expect(secondRowCells[5].find('button').text()).toBe('Deactivate');
+      )
+      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
+      expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
+      expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
+      expect(secondRowCells[5].find('button').exists()).toBe(true)
+      expect(secondRowCells[5].find('button').text()).toBe('Deactivate')
     })
 
     it('should show expense account if expense account address exists', () => {
