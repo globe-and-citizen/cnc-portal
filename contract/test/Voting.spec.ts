@@ -306,6 +306,42 @@ describe('Voting Contract', () => {
         expect(await voting.paused()).to.be.false
       })
     })
+    describe('Board of Directors Management', () => {
+      it('should set board of directors contract address', async () => {
+        const { voting } = await deployFixture()
+        const newAddress = ethers.Wallet.createRandom().address
+
+        await voting.setBoardOfDirectorsContractAddress(newAddress)
+        expect(await voting.boardOfDirectorsContractAddress()).to.equal(newAddress)
+      })
+
+      it('should allow owner to set board of directors', async () => {
+        const { voting, boardOfDirectorsProxy } = await deployFixture()
+        const newBoard = [
+          ethers.Wallet.createRandom().address,
+          ethers.Wallet.createRandom().address
+        ]
+
+        await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
+        await expect(voting.setBoardOfDirectors(newBoard))
+          .to.emit(boardOfDirectorsProxy, 'BoardOfDirectorsChanged')
+          .withArgs(newBoard)
+      })
+
+      it('should not allow non-owner to set board of directors', async () => {
+        const { voting, boardOfDirectorsProxy } = await deployFixture()
+        const newBoard = [
+          ethers.Wallet.createRandom().address,
+          ethers.Wallet.createRandom().address
+        ]
+
+        await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
+        const votingAsMember = voting.connect(member1)
+        await expect(votingAsMember.setBoardOfDirectors(newBoard))
+          .to.be.revertedWithCustomError(voting, 'OwnableUnauthorizedAccount')
+          .withArgs(await member1.getAddress())
+      })
+    })
     describe('Tie Breaking Functionality', () => {
       it('should detect a tie and emit TieDetected event', async () => {
         const { voting, proposalElection } = await deployFixture()
