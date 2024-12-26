@@ -143,7 +143,6 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         require(msg.sender == proposalsById[proposalId].draftedBy, "Only the founder can conclude the proposal");
 
         Types.Proposal storage proposal = proposalsById[proposalId];
-        proposal.isActive = !proposal.isActive;
 
         if(proposal.isElection){
             uint256 winnerCount = proposal.winnerCount;
@@ -198,6 +197,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
             emit BoardOfDirectorsSet(winnerList);
         }
+        proposal.isActive = !proposal.isActive;
+
         emit ProposalConcluded(proposalId, proposal.isActive);
     }
 
