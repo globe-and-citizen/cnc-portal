@@ -353,23 +353,31 @@ const {
   args: [signatureHash]
 })
 
+watch(amountWithdrawn, async (newVal) => {
+  if (newVal)
+    await initializeBalances()
+})
+
 // Reactive storage for balances
 const balances = reactive<Record<string, { [key: number]: string }>>({});
 
 // Async initialization function
 const initializeBalances = async () => {
-  if (Array.isArray(manyExpenseAccountData))
-    for (const data of manyExpenseAccountData) {
+  if (Array.isArray(manyExpenseAccountData.value))
+    for (const data of manyExpenseAccountData.value) {
       const signatureHash = keccak256(data.signature);
 
       // Simulate fetching data asynchronously
-      const fetchedData = await executeGetAmountWithdrawn();
+      await executeGetAmountWithdrawn();
 
+      console.log(`amountWithdrawn`, amountWithdrawn.value)
+      console.log(`signature`, data.signature)
+      console.log(`signatureHash`, signatureHash)
       // Populate the reactive balances object
-      if (Array.isArray(fetchedData)) {
+      if (Array.isArray(amountWithdrawn.value)) {
         balances[signatureHash] = {
-          0: fetchedData[0],
-          1: formatEther(fetchedData[1]),
+          0: amountWithdrawn.value[0],
+          1: formatEther(amountWithdrawn.value[1]),
         };
       } else {
         balances[signatureHash] = {
@@ -378,13 +386,18 @@ const initializeBalances = async () => {
         };
       }
     }
+
+  console.log(`balances: `, balances)
 };
 
 // Computed property for getting balances
 const getLimitBalance = computed(() => {
   return (signature: `0x{string}`, index: number): string => {
     const signatureHash = keccak256(signature);
-    return balances[signatureHash]?.[index] || '--';
+    console.log(`balances[signatureHash]?[${index}]: `, balances[signatureHash]? balances[signatureHash][`${index}`]: '--')
+    return balances[signatureHash]? 
+      balances[signatureHash][`${index}`]: 
+      '--';
   };
 });
 
@@ -412,7 +425,6 @@ watch(errorGetAmountWithdrawn, (newVal) => {
 watch(signatureHash, async (newVal) => {
   if (newVal) {
     await executeGetAmountWithdrawn()
-    console.log(`amountWithdrawn`, amountWithdrawn)
   }
 })
 
@@ -512,7 +524,6 @@ const init = async () => {
   await getAmountWithdrawnBalance()
   await fetchManyExpenseAccountData()
   await initializeBalances()
-  console.log('balances', balances.value)
 }
 
 const getExpenseAccountOwner = async () => {
