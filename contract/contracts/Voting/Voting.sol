@@ -5,12 +5,13 @@ import "./Types.sol";
 import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
 import "hardhat/console.sol";
 
-
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
-
+/// @title Voting Contract for Decentralized Governance
+/// @notice This contract manages proposals, elections, and voting processes
+/// @dev Implements upgradeable patterns with OpenZeppelin contracts
 contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
     mapping(uint256=>Types.Proposal) public proposalsById; 
 
@@ -27,12 +28,23 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     event TieBreakOptionSelected(uint256 indexed proposalId, Types.TieBreakOption option);
     event RunoffElectionStarted(uint256 indexed proposalId, address[] candidates);
 
+    /// @notice Initializes the contract
+    /// @param _sender Address that will be set as the owner
+    /// @dev This is the initialization function for the upgradeable contract pattern
     function initialize(address _sender) public initializer {
         __Ownable_init(_sender);
         __ReentrancyGuard_init();
         __Pausable_init();
   }
 
+    /// @notice Creates a new proposal
+    /// @param _title Title of the proposal
+    /// @param _description Detailed description of the proposal
+    /// @param _isElection Whether this is an election proposal
+    /// @param _winnerCount Number of winners to be selected (for elections)
+    /// @param _voters Array of addresses eligible to vote
+    /// @param _candidates Array of candidate addresses (for elections)
+    /// @dev For elections, _candidates must not be empty
     function addProposal(
             string memory _title,
             string memory _description,
@@ -73,6 +85,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
 
 
 
+    /// @notice Allows a voter to vote on a directive proposal
+    /// @param proposalId ID of the proposal
+    /// @param vote 0 for No, 1 for Yes, 2 for Abstain
+    /// @dev Requires voter to be eligible and not to have voted already
     function voteDirective(uint256 proposalId, uint256 vote) public {
         require(proposalId < proposalCount, "Proposal does not exist");
 
@@ -90,6 +106,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         emit DirectiveVoted(msg.sender, proposalId, vote);
     }
 
+    /// @notice Allows a voter to vote in an election
+    /// @param proposalId ID of the election proposal
+    /// @param candidateAddress Address of the candidate being voted for
+    /// @dev Requires voter to be eligible and not to have voted already
     function voteElection( uint256 proposalId, address candidateAddress) public {
         require(proposalId < proposalCount, "Proposal does not exist");
 
@@ -115,6 +135,9 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         emit ElectionVoted(msg.sender, proposalId, candidateAddress);
     }
 
+    /// @notice Concludes a proposal and processes the results
+    /// @param proposalId ID of the proposal to conclude
+    /// @dev Only the proposal creator can conclude it. Handles tie detection for elections
     function concludeProposal(uint256 proposalId) public {
         require(proposalId < proposalCount, "Proposal does not exist");
         require(msg.sender == proposalsById[proposalId].draftedBy, "Only the founder can conclude the proposal");
@@ -178,6 +201,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         emit ProposalConcluded(proposalId, proposal.isActive);
     }
 
+    /// @notice Resolves a tie in an election using the specified method
+    /// @param proposalId ID of the proposal with the tie
+    /// @param option The chosen method to break the tie
+    /// @dev Only the proposal creator can resolve ties
     function resolveTie(uint256 proposalId, Types.TieBreakOption option) public {
         require(proposalId < proposalCount, "Proposal does not exist");
         Types.Proposal storage proposal = proposalsById[proposalId];
@@ -234,6 +261,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         }
     }
 
+    /// @notice Allows the founder to select a winner in case of a tie
+    /// @param proposalId ID of the proposal
+    /// @param winner Address of the chosen winner
+    /// @dev Only usable when FOUNDER_CHOICE was selected as tie break option
     function selectWinner(uint256 proposalId, address winner) public {
         require(proposalId < proposalCount, "Proposal does not exist");
         Types.Proposal storage proposal = proposalsById[proposalId];
@@ -261,6 +292,9 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         proposal.hasTie = false;
     }
 
+    /// @notice Internal function to get all voter addresses from a proposal
+    /// @param proposal The proposal to extract voters from
+    /// @return Array of voter addresses
     function _getVoterAddresses(Types.Proposal storage proposal) internal view returns (address[] memory) {
         address[] memory voterAddresses = new address[](proposal.voters.length);
         for (uint256 i = 0; i < proposal.voters.length; i++) {
@@ -269,6 +303,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         return voterAddresses;
     }
 
+    /// @notice Finds a voter in a proposal's voter list
+    /// @param proposal The proposal to search in
+    /// @param voterAddress The address of the voter to find
+    /// @return The found voter's data
+    /// @dev Reverts if voter is not found
     function findVoter(Types.Proposal storage proposal, address voterAddress) internal view returns (Types.Member storage) {
         for (uint256 i = 0; i < proposal.voters.length; i++) {
             if (proposal.voters[i].memberAddress == voterAddress) {
@@ -277,11 +316,19 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         }
         revert("You are not registered to vote in this proposal");
     }
+
+    /// @notice Retrieves a proposal by its ID
+    /// @param proposalId The ID of the proposal to retrieve
+    /// @return The complete proposal data
     function getProposalById(uint256 proposalId) public view returns (Types.Proposal memory) {
     require(proposalId < proposalCount, "Proposal does not exist");
     return proposalsById[proposalId];
 }
 
+    /// @notice Records a vote for a directive proposal
+    /// @param proposal The proposal to record the vote for
+    /// @param vote The vote value (0=No, 1=Yes, 2=Abstain)
+    /// @dev Internal function to update vote counts
     function recordDirectiveVote(Types.Proposal storage proposal, uint256 vote) internal {
         if (vote == 0) {
             proposal.votes.no++;
@@ -294,16 +341,27 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         }
     }
 
+    /// @notice Sets the address of the Board of Directors contract
+    /// @param _boardOfDirectorsContractAddress The address of the BoD contract
     function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) public  {
         boardOfDirectorsContractAddress = _boardOfDirectorsContractAddress;
     }
+
+    /// @notice Sets the Board of Directors members
+    /// @param _boardOfDirectors Array of addresses for the new board members
+    /// @dev Only callable by contract owner
     function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
         IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(_boardOfDirectors);
     }
-     function pause() external onlyOwner {
+    
+    /// @notice Pauses the contract
+    /// @dev Only callable by contract owner
+    function pause() external onlyOwner {
         _pause();
     }
 
+  /// @notice Unpauses the contract
+  /// @dev Only callable by contract owner
   function unpause() external onlyOwner {
         _unpause();
     }
