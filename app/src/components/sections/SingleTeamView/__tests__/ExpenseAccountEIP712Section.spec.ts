@@ -8,7 +8,7 @@ import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
-import type { User } from '@/types'
+import type { BudgetLimit, User } from '@/types'
 
 interface ComponentData {
   expiry: string
@@ -21,6 +21,7 @@ interface ComponentData {
   unapprovedAddresses: Set<string>
   foundUsers: User[]
   action: string
+  manyExpenseAccountData: BudgetLimit[]
   transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
   setExpenseAccountLimit: (amount: Ref) => Promise<void>
   approveAddress: (address: string) => Promise<void>
@@ -212,9 +213,35 @@ const budgetData = {
   amountPerTransaction: 20
 }
 
+const mockExpenseData = [
+  {
+    approvedAddress: `0x123`,
+    // budgetType: 1,
+    // value: `100.0`,
+    budgetData: [
+      { budgetType: 0, value: budgetData.txsPerPeriod },
+      { budgetType: 1, value: budgetData.amountPerPeriod },
+      { budgetType: 2, value: budgetData.amountPerTransaction }
+    ],
+    expiry: Math.floor(new Date(DATE).getTime() / 1000),
+    signature: '0xSignature'
+  }, {
+    approvedAddress: `0x456`,
+    // budgetType: 1,
+    // value: `100.0`,
+    budgetData: [
+      { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
+      { budgetType: 1, value: budgetData.amountPerPeriod * 2 },
+      { budgetType: 2, value: budgetData.amountPerTransaction * 2 }
+    ],
+    expiry: Math.floor(new Date(DATE).getTime() / 1000),
+    signature: '0xAnotherSignature'
+  }
+]
+
 vi.mock('@/composables/useCustomFetch', () => {
   return {
-    useCustomFetch: vi.fn((url) => {
+    useCustomFetch: vi.fn((url, options) => {
       const data = ref<unknown>(null)
       const error = ref(null)
       const isFetching = ref(false)
@@ -223,19 +250,12 @@ vi.mock('@/composables/useCustomFetch', () => {
       const execute = vi.fn(() => {
         // Conditionally update `data` based on the URL argument
         if (url === `teams/1/expense-data`) {
-          data.value = {
-            data: JSON.stringify({
-              approvedAddress: `0x123`,
-              // budgetType: 1,
-              // value: `100.0`,
-              budgetData: [
-                { budgetType: 0, value: budgetData.txsPerPeriod },
-                { budgetType: 1, value: budgetData.amountPerPeriod },
-                { budgetType: 2, value: budgetData.amountPerTransaction }
-              ],
-              expiry: Math.floor(new Date(DATE).getTime() / 1000)
-            })
-          }
+          if (options.beforeFetch)
+            data.value = {
+              data: JSON.stringify(mockExpenseData[0])
+            }
+          else
+            data.value = mockExpenseData
         }
       })
 
@@ -327,6 +347,53 @@ describe('ExpenseAccountSection', () => {
         await wrapper.vm.$nextTick()
         expect(wrapper.find('[data-test="max-loading"]').exists()).toBeTruthy()
       })
+    })
+
+    it('should show aprroval list table cells with correct data', async () => {
+      const wrapper = createComponent()
+      
+      ;(wrapper.vm as unknown as ComponentData).manyExpenseAccountData = mockExpenseData
+      await wrapper.vm.$nextTick()
+
+      // Locate the table using the data-test attribute
+      const table = wrapper.find('[data-test="approvals-list-table"]');
+      expect(table.exists()).toBe(true)
+
+      // Check table headers within the approvals-list-table
+      const headers = table // wrapper
+        //.find('[data-test="approvals-list-table"]')
+        .findAll('thead th');
+      const expectedHeaders = [
+        'User',
+        'Expiry Date',
+        'Max Amount Per Tx',
+        'Total Transactions',
+        'Total Transfers',
+        'Action',
+      ];
+      headers.forEach((header, i) => {
+        expect(header.text()).toBe(expectedHeaders[i]);
+      });
+
+      // Check table row data within the approvals-list-table
+      const rows = table
+        .findAll('tbody tr');
+      expect(rows).toHaveLength(mockExpenseData.length);
+
+      const firstRowCells = rows[0].findAll('td');
+      expect(firstRowCells[0].text()).toBe(mockExpenseData[0].approvedAddress);
+      expect(firstRowCells[1].text()).toBe(
+        new Date(mockExpenseData[0].expiry).toLocaleDateString()
+      );
+      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[0].value.toString());
+      expect(firstRowCells[3].text()).toBe(
+        `--/${mockExpenseData[0].budgetData[0].value}`
+      );
+      expect(firstRowCells[4].text()).toBe(
+        `--/${mockExpenseData[0].budgetData[1].value}`
+      );
+      expect(firstRowCells[5].find('button').exists()).toBe(true);
+      expect(firstRowCells[5].find('button').text()).toBe('Deactivate');
     })
 
     it('should show expense account if expense account address exists', () => {
