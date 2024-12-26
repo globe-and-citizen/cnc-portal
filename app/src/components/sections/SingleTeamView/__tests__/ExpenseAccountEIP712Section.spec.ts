@@ -358,14 +358,13 @@ describe('ExpenseAccountSection', () => {
       ;wrapperVm.manyExpenseAccountData = mockExpenseData
       ;wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
 
-      const spyKeccak256 = vi.spyOn(viem, 'keccak256').mockImplementation(args => {
-        console.log(`args`, args)
+      vi.spyOn(viem, 'keccak256').mockImplementation(args => {
         return `${args as `0x${string}`}Hash`
       })
       
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
-
+      await wrapper.vm.$nextTick()
 
       // Locate the table using the data-test attribute
       const table = wrapper.find('[data-test="approvals-list-table"]');
@@ -399,10 +398,10 @@ describe('ExpenseAccountSection', () => {
       );
       expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[0].value.toString());
       expect(firstRowCells[3].text()).toBe(
-        `--/${mockExpenseData[0].budgetData[0].value}`
+        `0/${mockExpenseData[0].budgetData[0].value}`
       );
       expect(firstRowCells[4].text()).toBe(
-        `--/${mockExpenseData[0].budgetData[1].value}`
+        `1/${mockExpenseData[0].budgetData[1].value}`
       );
       expect(firstRowCells[5].find('button').exists()).toBe(true);
       expect(firstRowCells[5].find('button').text()).toBe('Deactivate');
@@ -414,15 +413,13 @@ describe('ExpenseAccountSection', () => {
       );
       expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[0].value.toString());
       expect(secondRowCells[3].text()).toBe(
-        `--/${mockExpenseData[1].budgetData[0].value}`
+        `0/${mockExpenseData[1].budgetData[0].value}`
       );
       expect(secondRowCells[4].text()).toBe(
-        `--/${mockExpenseData[1].budgetData[1].value}`
+        `1/${mockExpenseData[1].budgetData[1].value}`
       );
       expect(secondRowCells[5].find('button').exists()).toBe(true);
       expect(secondRowCells[5].find('button').text()).toBe('Deactivate');
-      
-      console.log(`balances[test]`, wrapper.vm.balances)
     })
 
     it('should show expense account if expense account address exists', () => {
