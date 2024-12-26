@@ -9,8 +9,6 @@ import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
-import type { QueryObserverResult, RefetchOptions } from '@tanstack/vue-query'
-import type { ReadContractErrorType } from 'viem'
 import type { User } from '@/types'
 
 interface ComponentData {
@@ -32,7 +30,6 @@ interface ComponentData {
   disapproveAddress: (address: string) => Promise<void>
   isBodAction: () => boolean
   init: () => Promise<void>
-  executeGetAmountWithdrawn: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>
 }
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {

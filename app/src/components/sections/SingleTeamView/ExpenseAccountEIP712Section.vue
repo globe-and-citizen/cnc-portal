@@ -214,8 +214,7 @@
               >
                 <button 
                   :disabled="contractOwnerAddress !== currentUserAddress" 
-                  class="btn btn-success" 
-                  @click=""
+                  class="btn btn-success"
                 >Deactivate</button>
               </td>
             </tr>
@@ -457,7 +456,7 @@ const {
 
 const {
   error: fetchManyExpenseAccountDataError,
-  isFetching: isFetchingManyExpenseAccountData,
+  //isFetching: isFetchingManyExpenseAccountData,
   execute: fetchManyExpenseAccountData,
   data: manyExpenseAccountData
 } = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
@@ -465,6 +464,13 @@ const {
 })
   .get()
   .json()
+
+watch(fetchManyExpenseAccountDataError, (newVal) => {
+  if (newVal) {
+    addErrorToast('Error fetching many expense account data')
+    log.error(parseError(newVal))
+  }
+})
 
 const {
   execute: executeSearchUser,
