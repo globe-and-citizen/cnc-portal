@@ -8,7 +8,10 @@ import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
-import type { BudgetLimit, User } from '@/types'
+import * as viem from 'viem'
+import type { QueryObserverResult, RefetchOptions } from '@tanstack/vue-query'
+import type { ReadContractErrorType } from 'viem'
+import type { User } from '@/types'
 
 interface ComponentData {
   expiry: string
@@ -21,13 +24,15 @@ interface ComponentData {
   unapprovedAddresses: Set<string>
   foundUsers: User[]
   action: string
-  manyExpenseAccountData: BudgetLimit[]
+  manyExpenseAccountData: unknown
+  amountWithdrawn: [number, number]
   transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
   setExpenseAccountLimit: (amount: Ref) => Promise<void>
   approveAddress: (address: string) => Promise<void>
   disapproveAddress: (address: string) => Promise<void>
   isBodAction: () => boolean
   init: () => Promise<void>
+  executeGetAmountWithdrawn: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>
 }
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
@@ -54,11 +59,12 @@ const mockClipboard = {
   copied: ref(false),
   isSupported: ref(true)
 }
+const mockUseReadContractRefetch = vi.fn()
 const mockUseReadContract = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   error: ref(null),
-  refetch: vi.fn()
+  refetch: mockUseReadContractRefetch//vi.fn()
 }
 
 const mockUseWriteContract = {
@@ -216,8 +222,6 @@ const budgetData = {
 const mockExpenseData = [
   {
     approvedAddress: `0x123`,
-    // budgetType: 1,
-    // value: `100.0`,
     budgetData: [
       { budgetType: 0, value: budgetData.txsPerPeriod },
       { budgetType: 1, value: budgetData.amountPerPeriod },
@@ -227,8 +231,6 @@ const mockExpenseData = [
     signature: '0xSignature'
   }, {
     approvedAddress: `0x456`,
-    // budgetType: 1,
-    // value: `100.0`,
     budgetData: [
       { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
       { budgetType: 1, value: budgetData.amountPerPeriod * 2 },
@@ -351,9 +353,19 @@ describe('ExpenseAccountSection', () => {
 
     it('should show aprroval list table cells with correct data', async () => {
       const wrapper = createComponent()
+      const wrapperVm: ComponentData = (wrapper.vm as unknown as ComponentData)
       
-      ;(wrapper.vm as unknown as ComponentData).manyExpenseAccountData = mockExpenseData
+      ;wrapperVm.manyExpenseAccountData = mockExpenseData
+      ;wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+
+      const spyKeccak256 = vi.spyOn(viem, 'keccak256').mockImplementation(args => {
+        console.log(`args`, args)
+        return `${args as `0x${string}`}Hash`
+      })
+      
       await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
 
       // Locate the table using the data-test attribute
       const table = wrapper.find('[data-test="approvals-list-table"]');
@@ -394,6 +406,23 @@ describe('ExpenseAccountSection', () => {
       );
       expect(firstRowCells[5].find('button').exists()).toBe(true);
       expect(firstRowCells[5].find('button').text()).toBe('Deactivate');
+
+      const secondRowCells = rows[1].findAll('td');
+      expect(secondRowCells[0].text()).toBe(mockExpenseData[1].approvedAddress);
+      expect(secondRowCells[1].text()).toBe(
+        new Date(mockExpenseData[1].expiry).toLocaleDateString()
+      );
+      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[0].value.toString());
+      expect(secondRowCells[3].text()).toBe(
+        `--/${mockExpenseData[1].budgetData[0].value}`
+      );
+      expect(secondRowCells[4].text()).toBe(
+        `--/${mockExpenseData[1].budgetData[1].value}`
+      );
+      expect(secondRowCells[5].find('button').exists()).toBe(true);
+      expect(secondRowCells[5].find('button').text()).toBe('Deactivate');
+      
+      console.log(`balances[test]`, wrapper.vm.balances)
     })
 
     it('should show expense account if expense account address exists', () => {
