@@ -205,7 +205,7 @@
             <tr v-for="(data, index) in manyExpenseAccountData" :key="index">
               <td>{{ data.approvedAddress }}</td>
               <td>{{ new Date(data.expiry).toLocaleDateString() }}</td>
-              <td>{{ data.budgetData[0].value }}</td>
+              <td>{{ data.budgetData[2].value }}</td>
               <td>{{ `${getLimitBalance(data.signature, 0)}/${data.budgetData[0].value}` }}</td>
               <td>{{ `${getLimitBalance(data.signature, 1)}/${data.budgetData[1].value}` }}</td>
               <td

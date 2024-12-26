@@ -396,7 +396,7 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[1].text()).toBe(
         new Date(mockExpenseData[0].expiry).toLocaleDateString()
       );
-      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[0].value.toString());
+      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString());
       expect(firstRowCells[3].text()).toBe(
         `0/${mockExpenseData[0].budgetData[0].value}`
       );
@@ -411,7 +411,7 @@ describe('ExpenseAccountSection', () => {
       expect(secondRowCells[1].text()).toBe(
         new Date(mockExpenseData[1].expiry).toLocaleDateString()
       );
-      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[0].value.toString());
+      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString());
       expect(secondRowCells[3].text()).toBe(
         `0/${mockExpenseData[1].budgetData[0].value}`
       );
