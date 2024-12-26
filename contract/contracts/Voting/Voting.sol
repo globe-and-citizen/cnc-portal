@@ -23,6 +23,9 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     event ElectionVoted(address indexed voter, uint256 indexed proposalId, address indexed candidateAddress);
     event ProposalConcluded(uint256 indexed proposalId, bool isActive);
     event BoardOfDirectorsSet(address[] boardOfDirectors);
+    event TieDetected(uint256 indexed proposalId, address[] tiedCandidates);
+    event TieBreakOptionSelected(uint256 indexed proposalId, Types.TieBreakOption option);
+    event RunoffElectionStarted(uint256 indexed proposalId, address[] candidates);
 
     function initialize(address _sender) public initializer {
         __Ownable_init(_sender);
@@ -114,6 +117,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
 
     function concludeProposal(uint256 proposalId) public {
         require(proposalId < proposalCount, "Proposal does not exist");
+        require(msg.sender == proposalsById[proposalId].draftedBy, "Only the founder can conclude the proposal");
 
         Types.Proposal storage proposal = proposalsById[proposalId];
         proposal.isActive = !proposal.isActive;
@@ -122,29 +126,147 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             uint256 winnerCount = proposal.winnerCount;
             Types.Candidate[] memory candidates = proposal.candidates;
 
+            // Sort candidates by votes in descending order
             for (uint256 i = 0; i < candidates.length; i++) {
-                    for (uint256 j = i + 1; j < candidates.length; j++) {
-                        if (candidates[i].votes < candidates[j].votes) {
-                            Types.Candidate memory temp = candidates[i];
-                            candidates[i] = candidates[j];
-                            candidates[j] = temp;
+                for (uint256 j = i + 1; j < candidates.length; j++) {
+                    if (candidates[i].votes < candidates[j].votes) {
+                        Types.Candidate memory temp = candidates[i];
+                        candidates[i] = candidates[j];
+                        candidates[j] = temp;
+                    }
+                }
+            }  
+
+            // Check for ties at the winnerCount position
+            if (winnerCount < candidates.length) {
+                uint256 votesAtCutoff = candidates[winnerCount - 1].votes;
+                uint256 tiedCount = 0;
+                
+                // Count how many candidates are tied at the cutoff
+                for (uint256 i = 0; i < candidates.length; i++) {
+                    if (candidates[i].votes == votesAtCutoff) {
+                        tiedCount++;
+                    }
+                }
+
+                if (tiedCount > 1) {
+                    // Store tied candidates
+                    address[] memory tiedCandidates = new address[](tiedCount);
+                    uint256 tiedIndex = 0;
+                    for (uint256 i = 0; i < candidates.length; i++) {
+                        if (candidates[i].votes == votesAtCutoff) {
+                            tiedCandidates[tiedIndex] = candidates[i].candidateAddress;
+                            tiedIndex++;
                         }
                     }
-                }  
 
+                    proposal.hasTie = true;
+                    proposal.tiedCandidates = tiedCandidates;
+                    emit TieDetected(proposalId, tiedCandidates);
+                    return;
+                }
+            }
+
+            // If no tie or after tie is resolved, set the winners
             address[] memory winnerList = new address[](winnerCount);
-
             for (uint256 i = 0; i < winnerCount; i++) {
                 winnerList[i] = candidates[i].candidateAddress;
-                console.log("Winner: ", winnerList[i]);
             }
-            console.log(boardOfDirectorsContractAddress);
             IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
             emit BoardOfDirectorsSet(winnerList);
-            emit ProposalConcluded(proposalId, proposal.isActive);
-            return;
         }
         emit ProposalConcluded(proposalId, proposal.isActive);
+    }
+
+    function resolveTie(uint256 proposalId, Types.TieBreakOption option) public {
+        require(proposalId < proposalCount, "Proposal does not exist");
+        Types.Proposal storage proposal = proposalsById[proposalId];
+        require(msg.sender == proposal.draftedBy, "Only the founder can resolve ties");
+        require(proposal.hasTie, "No tie to resolve");
+
+        proposal.selectedTieBreakOption = option;
+        emit TieBreakOptionSelected(proposalId, option);
+
+        if (option == Types.TieBreakOption.RANDOM_SELECTION) {
+            // Use block hash for randomness
+            uint256 randomIndex = uint256(blockhash(block.number - 1)) % proposal.tiedCandidates.length;
+            address selectedWinner = proposal.tiedCandidates[randomIndex];
+            
+            // Replace the last winner with the randomly selected one
+            address[] memory winnerList = new address[](proposal.winnerCount);
+            for (uint256 i = 0; i < proposal.winnerCount - 1; i++) {
+                winnerList[i] = proposal.candidates[i].candidateAddress;
+            }
+            winnerList[proposal.winnerCount - 1] = selectedWinner;
+            
+            IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+            emit BoardOfDirectorsSet(winnerList);
+            proposal.hasTie = false;
+        }
+        else if (option == Types.TieBreakOption.INCREASE_WINNER_COUNT) {
+            proposal.winnerCount += 1;
+            address[] memory winnerList = new address[](proposal.winnerCount);
+            for (uint256 i = 0; i < proposal.winnerCount; i++) {
+                winnerList[i] = proposal.candidates[i].candidateAddress;
+            }
+            
+            IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+            emit BoardOfDirectorsSet(winnerList);
+            proposal.hasTie = false;
+        }
+        else if (option == Types.TieBreakOption.FOUNDER_CHOICE) {
+            // The founder will need to call selectWinner to choose the winner
+            return;
+        }
+        else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
+            // Create a new election with only the tied candidates
+            string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
+            addProposal(
+                newTitle,
+                proposal.description,
+                true,
+                proposal.winnerCount,
+                _getVoterAddresses(proposal),
+                proposal.tiedCandidates
+            );
+            emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
+            proposal.hasTie = false;
+        }
+    }
+
+    function selectWinner(uint256 proposalId, address winner) public {
+        require(proposalId < proposalCount, "Proposal does not exist");
+        Types.Proposal storage proposal = proposalsById[proposalId];
+        require(msg.sender == proposal.draftedBy, "Only the founder can select winner");
+        require(proposal.hasTie, "No tie to resolve");
+        require(proposal.selectedTieBreakOption == Types.TieBreakOption.FOUNDER_CHOICE, "Tie break option must be FOUNDER_CHOICE");
+        
+        bool isValidChoice = false;
+        for (uint256 i = 0; i < proposal.tiedCandidates.length; i++) {
+            if (proposal.tiedCandidates[i] == winner) {
+                isValidChoice = true;
+                break;
+            }
+        }
+        require(isValidChoice, "Selected winner must be one of the tied candidates");
+
+        address[] memory winnerList = new address[](proposal.winnerCount);
+        for (uint256 i = 0; i < proposal.winnerCount - 1; i++) {
+            winnerList[i] = proposal.candidates[i].candidateAddress;
+        }
+        winnerList[proposal.winnerCount - 1] = winner;
+        
+        IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+        emit BoardOfDirectorsSet(winnerList);
+        proposal.hasTie = false;
+    }
+
+    function _getVoterAddresses(Types.Proposal storage proposal) internal view returns (address[] memory) {
+        address[] memory voterAddresses = new address[](proposal.voters.length);
+        for (uint256 i = 0; i < proposal.voters.length; i++) {
+            voterAddresses[i] = proposal.voters[i].memberAddress;
+        }
+        return voterAddresses;
     }
 
     function findVoter(Types.Proposal storage proposal, address voterAddress) internal view returns (Types.Member storage) {
