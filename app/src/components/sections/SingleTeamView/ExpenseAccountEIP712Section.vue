@@ -370,9 +370,6 @@ const initializeBalances = async () => {
       // Simulate fetching data asynchronously
       await executeGetAmountWithdrawn();
 
-      console.log(`amountWithdrawn`, amountWithdrawn.value)
-      console.log(`signature`, data.signature)
-      console.log(`signatureHash`, signatureHash)
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
         balances[signatureHash] = {
@@ -386,34 +383,17 @@ const initializeBalances = async () => {
         };
       }
     }
-
-  console.log(`balances: `, balances)
 };
 
 // Computed property for getting balances
 const getLimitBalance = computed(() => {
   return (signature: `0x{string}`, index: number): string => {
     const signatureHash = keccak256(signature);
-    console.log(`balances[signatureHash]?[${index}]: `, balances[signatureHash]? balances[signatureHash][`${index}`]: '--')
     return balances[signatureHash]? 
       balances[signatureHash][`${index}`]: 
       '--';
   };
 });
-
-
-// const getLimitBalance = async (signature: `0x{string}`, index: number) => {
-//   signatureHash.value = keccak256(signature)
-//   await executeGetAmountWithdrawn()
-//   if (
-//     amountWithdrawn.value &&
-//     Array.isArray(amountWithdrawn.value)
-//   )
-//     return index === 0?
-//       amountWithdrawn.value[index]:
-//       formatEther(amountWithdrawn.value[index])
-//   else return `--`
-// }
 
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
@@ -548,9 +528,6 @@ const getAmountWithdrawnBalance = async () => {
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-    //const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
-
-    //if (typeof budgetLimit.value === 'string') budgetLimit.value = parseEther(budgetLimit.value)
 
     executeExpenseAccountTransfer({
       address: team.value.expenseAccountEip712Address as Address,
@@ -582,19 +559,9 @@ const approveUser = async (data: BudgetLimit) => {
   const domain = {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId, //: 31337n,
-    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+    chainId, 
+    verifyingContract
   }
-
-  // const types = {
-  //   BudgetLimit: [
-  //     { name: 'approvedAddress', type: 'address' },
-  //     { name: 'budgetType', type: 'uint8' },
-  //     { name: 'value', type: 'uint256' },
-  //     { name: 'expiry', type: 'uint256' }
-  //   ]
-  // }
-
   const types = {
     BudgetData: [
       { name: 'budgetType', type: 'uint8' },
@@ -669,6 +636,5 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 
 onMounted(async () => {
   await init()
-  // console.log(`expense account data`, _expenseAccountData.value)
 })
 </script>
