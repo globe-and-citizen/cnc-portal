@@ -182,13 +182,54 @@
         </ModalComponent>
       </section>
     </div>
+
+    <div
+      v-if="manyExpenseAccountData"
+      class="stats bg-green-100 flex text-primary-content border-outline p-5 overflow-visible"
+    >
+      <p>Approved Addresses</p>
+      <div class="overflow-x-auto" data-test="approvals-list-table">
+        <table class="table table-zebra">
+          <!-- head -->
+          <thead class="text-sm font-bold">
+            <tr>
+              <th>User</th>
+              <th>Expiry Date</th>
+              <th>Max Amount Per Tx</th>
+              <th>Total Transactions</th>
+              <th>Total Transfers</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(data, index) in manyExpenseAccountData" :key="index">
+              <td>{{ data.approvedAddress }}</td>
+              <td>{{ new Date(data.expiry).toLocaleDateString() }}</td>
+              <td>{{ data.budgetData[0].value }}</td>
+              <td>{{ `${getLimitBalance(data.signature, 0)}/${data.budgetData[0].value}` }}</td>
+              <td>{{ `${getLimitBalance(data.signature, 1)}/${data.budgetData[1].value}` }}</td>
+              <td
+                class="flex justify-end"
+                data-test="action-td"
+              >
+                <button 
+                  :disabled="contractOwnerAddress !== currentUserAddress" 
+                  class="btn btn-success" 
+                  @click=""
+                >Deactivate</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   <!-- Expense Account Not Yet Created -->
 </template>
 
 <script setup lang="ts">
 //#region imports
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit, BudgetData } from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -312,6 +353,55 @@ const {
   args: [signatureHash]
 })
 
+// Reactive storage for balances
+const balances = reactive<Record<string, { [key: number]: string }>>({});
+
+// Async initialization function
+const initializeBalances = async () => {
+  if (Array.isArray(manyExpenseAccountData))
+    for (const data of manyExpenseAccountData) {
+      const signatureHash = keccak256(data.signature);
+
+      // Simulate fetching data asynchronously
+      const fetchedData = await executeGetAmountWithdrawn();
+
+      // Populate the reactive balances object
+      if (Array.isArray(fetchedData)) {
+        balances[signatureHash] = {
+          0: fetchedData[0],
+          1: formatEther(fetchedData[1]),
+        };
+      } else {
+        balances[signatureHash] = {
+          0: '--',
+          1: '--',
+        };
+      }
+    }
+};
+
+// Computed property for getting balances
+const getLimitBalance = computed(() => {
+  return (signature: `0x{string}`, index: number): string => {
+    const signatureHash = keccak256(signature);
+    return balances[signatureHash]?.[index] || '--';
+  };
+});
+
+
+// const getLimitBalance = async (signature: `0x{string}`, index: number) => {
+//   signatureHash.value = keccak256(signature)
+//   await executeGetAmountWithdrawn()
+//   if (
+//     amountWithdrawn.value &&
+//     Array.isArray(amountWithdrawn.value)
+//   )
+//     return index === 0?
+//       amountWithdrawn.value[index]:
+//       formatEther(amountWithdrawn.value[index])
+//   else return `--`
+// }
+
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
@@ -421,7 +511,8 @@ const init = async () => {
   await getExpenseAccountBalance()
   await getAmountWithdrawnBalance()
   await fetchManyExpenseAccountData()
-  console.log('manyExpenseAccountData', manyExpenseAccountData.value)
+  await initializeBalances()
+  console.log('balances', balances.value)
 }
 
 const getExpenseAccountOwner = async () => {
