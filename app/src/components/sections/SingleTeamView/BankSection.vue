@@ -19,7 +19,7 @@
           <div>
             <span>Token Balance</span>
             <div class="text-lg">
-              <div>USDC: {{ usdcBalance ? Number(usdcBalance) : '0' }}</div>
+              <div>USDC: {{ usdcBalance ? Number(usdcBalance) / 1e6 : '0' }}</div>
             </div>
           </div>
         </div>
