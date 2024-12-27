@@ -59,6 +59,13 @@
           >
             Transfer USDC
           </Button>
+          <Button
+            v-if="team.bankAddress"
+            @click="() => (tokenTipModal = true)"
+            class="btn btn-sm btn-secondary"
+          >
+            Tip USDC
+          </Button>
         </div>
       </div>
       <div
@@ -142,6 +149,32 @@
           >
             Send Tips
           </button>
+        </div>
+      </div>
+    </ModalComponent>
+    <ModalComponent v-model="tokenTipModal">
+      <div class="flex flex-col gap-4 justify-start">
+        <span class="font-bold text-xl sm:text-2xl">Tip USDC</span>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Amount</span>
+          </label>
+          <input
+            type="number"
+            class="input input-bordered w-full"
+            placeholder="Enter amount"
+            v-model="tokenAmountUSDC"
+          />
+        </div>
+        <div class="text-center">
+          <button class="btn btn-primary w-full sm:w-44 text-center" @click="pushTokenTip">
+            Tip USDC to Team
+          </button>
+          <LoadingButton
+            v-if="isConfirmingTokenTip || tokenTipLoading"
+            class="w-full sm:w-44"
+            color="primary"
+          />
         </div>
       </div>
     </ModalComponent>
@@ -270,6 +303,29 @@ const {
   refetch: fetchBalance
 } = useBalance({
   address: props.team.bankAddress as `${Address}`
+})
+const {
+  data: pushTipTokenHash,
+  writeContract: pushTipToken,
+  isPending: pushTipTokenLoading,
+  error: pushTipTokenError
+} = useWriteContract()
+const { isLoading: isConfirmingPushTipToken } = useWaitForTransactionReceipt({
+  hash: pushTipTokenHash
+})
+
+watch(isConfirmingPushTipToken, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Tips pushed successfully')
+    tokenTipModal.value = false
+  }
+})
+
+watch(pushTipTokenError, () => {
+  if (pushTipTokenError.value) {
+    addErrorToast('Failed to push tips')
+    console.error(pushTipTokenError.value)
+  }
 })
 
 const {
@@ -464,7 +520,9 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
 
 const tokenDepositModal = ref(false)
 const tokenTransferModal = ref(false)
+const tokenTipModal = ref(false)
 const tokenAmount = ref('')
+const tokenAmountUSDC = ref('')
 const tokenRecipient = ref('')
 
 const {
@@ -502,6 +560,41 @@ watch(approveError, () => {
     addErrorToast('Failed to approve token spending')
   }
 })
+
+const pushTokenTip = async () => {
+  if (!props.team.bankAddress || !tokenAmountUSDC.value) return
+  const amount = BigInt(Number(tokenAmountUSDC.value) * 1e6)
+  console.log(amount)
+
+  try {
+    const allowance = await readContract(config, {
+      address: USDC_ADDRESS as Address,
+      abi: ERC20ABI,
+      functionName: 'allowance',
+      args: [currentAddress as Address, props.team.bankAddress as Address]
+    })
+    console.log('allowance', allowance)
+    // If allowance is insufficient, request approval
+    const currentAllowance = allowance ? allowance.toString() : 0
+    if (currentAllowance < amount) {
+      approve({
+        address: USDC_ADDRESS as Address,
+        abi: ERC20ABI,
+        functionName: 'approve',
+        args: [props.team.bankAddress as Address, amount]
+      })
+    }
+    pushTipToken({
+      address: props.team.bankAddress as Address,
+      abi: BankABI,
+      functionName: 'pushTokenTip',
+      args: [membersAddress.value, USDC_ADDRESS, amount]
+    })
+  } catch (error) {
+    addErrorToast('Failed to push token tips')
+    console.error(error)
+  }
+}
 
 const depositToken = async () => {
   if (!props.team.bankAddress || !tokenAmount.value) return
