@@ -1,7 +1,7 @@
 <template>
   <div class="dropdown dropdown-end">
     <div tabindex="0" role="button" class="">
-      <div class="btn btn-ghost btn-circle m-1">
+      <div class="btn btn-ghost btn-circle m-1" data-test="notifications">
         <div class="indicator">
           <BellIcon class="size-6" />
           <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
@@ -11,6 +11,7 @@
     <ul
       tabindex="0"
       class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
+      data-test="notification-dropdown"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
         <a
