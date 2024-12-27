@@ -167,11 +167,11 @@
           />
         </div>
         <div class="text-center">
-          <button class="btn btn-primary w-full sm:w-44 text-center" @click="pushTokenTip">
+          <button class="btn btn-primary w-full sm:w-44 text-center" @click="pushUSDC">
             Tip USDC to Team
           </button>
           <LoadingButton
-            v-if="isConfirmingTokenTip || tokenTipLoading"
+            v-if="isConfirmingPushTokenTip || pushTokenTipLoading || isConfirmingPushTokenTip"
             class="w-full sm:w-44"
             color="primary"
           />
@@ -195,7 +195,7 @@
         </div>
         <div class="text-center">
           <LoadingButton
-            v-if="isConfirmingTokenDeposit || tokenDepositLoading"
+            v-if="isConfirmingTokenDeposit || tokenDepositLoading || isConfirmingTokenDeposit"
             class="w-full sm:w-44"
             color="primary"
           />
@@ -233,7 +233,7 @@
         </div>
         <div class="text-center">
           <LoadingButton
-            v-if="isConfirmingTokenTransfer || tokenTransferLoading"
+            v-if="isConfirmingTokenTransfer || tokenTransferLoading || isConfirmingTokenTransfer"
             class="w-full sm:w-44"
             color="primary"
           />
@@ -305,26 +305,26 @@ const {
   address: props.team.bankAddress as `${Address}`
 })
 const {
-  data: pushTipTokenHash,
-  writeContract: pushTipToken,
-  isPending: pushTipTokenLoading,
-  error: pushTipTokenError
+  data: pushTokenTipHash,
+  writeContract: pushTokenTip,
+  isPending: pushTokenTipLoading,
+  error: pushTokenTipError
 } = useWriteContract()
-const { isLoading: isConfirmingPushTipToken } = useWaitForTransactionReceipt({
-  hash: pushTipTokenHash
+const { isLoading: isConfirmingPushTokenTip } = useWaitForTransactionReceipt({
+  hash: pushTokenTipHash
 })
 
-watch(isConfirmingPushTipToken, (newIsConfirming, oldIsConfirming) => {
+watch(isConfirmingPushTokenTip, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Tips pushed successfully')
     tokenTipModal.value = false
   }
 })
 
-watch(pushTipTokenError, () => {
-  if (pushTipTokenError.value) {
+watch(pushTokenTipError, () => {
+  if (pushTokenTipError.value) {
     addErrorToast('Failed to push tips')
-    console.error(pushTipTokenError.value)
+    console.error(pushTokenTipError.value)
   }
 })
 
@@ -561,7 +561,7 @@ watch(approveError, () => {
   }
 })
 
-const pushTokenTip = async () => {
+const pushUSDC = async () => {
   if (!props.team.bankAddress || !tokenAmountUSDC.value) return
   const amount = BigInt(Number(tokenAmountUSDC.value) * 1e6)
   console.log(amount)
@@ -584,7 +584,7 @@ const pushTokenTip = async () => {
         args: [props.team.bankAddress as Address, amount]
       })
     }
-    pushTipToken({
+    pushTokenTip({
       address: props.team.bankAddress as Address,
       abi: BankABI,
       functionName: 'pushTokenTip',
@@ -637,7 +637,7 @@ const depositToken = async () => {
 
 const transferToken = async () => {
   if (!props.team.bankAddress || !tokenAmount.value || !tokenRecipient.value) return
-  const amount = tokenAmount.value // USDC has 6 decimals
+  const amount = BigInt(Number(tokenAmount.value) * 1e6) // USDC has 6 decimals
 
   try {
     // Check current allowance
@@ -661,7 +661,7 @@ const transferToken = async () => {
       address: props.team.bankAddress as Address,
       abi: BankABI,
       functionName: 'transferToken',
-      args: [USDC_ADDRESS, tokenRecipient.value as Address, tokenAmount.value.toString()]
+      args: [USDC_ADDRESS, tokenRecipient.value as Address, amount]
     })
   } catch (error) {
     addErrorToast('Failed to transfer token')
