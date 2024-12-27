@@ -600,7 +600,7 @@ const depositToken = async () => {
   if (!props.team.bankAddress || !tokenAmount.value) return
 
   // First approve the bank to spend tokens
-  const amount = tokenAmount.value // USDC has 6 decimals
+  const amount = BigInt(Number(tokenAmount.value) * 1e6) // USDC has 6 decimals
 
   try {
     // Check current allowance
