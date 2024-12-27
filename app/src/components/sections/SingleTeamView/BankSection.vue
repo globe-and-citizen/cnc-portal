@@ -15,27 +15,41 @@
           </div>
           <span class="text-xs sm:text-sm">≈ $ 1.28</span>
         </div>
-        <div class="flex flex-wrap gap-2 sm:gap-4">
+        <div class="grid grid-cols-3 gap-2">
           <Button
-            class="btn btn-sm btn-secondary"
             v-if="team.bankAddress"
             @click="() => (depositModal = true)"
+            class="btn btn-sm btn-secondary"
           >
             Deposit
           </Button>
           <Button
-            class="btn btn-sm btn-secondary"
             v-if="team.bankAddress"
             @click="() => (pushTipModal = true)"
+            class="btn btn-sm btn-secondary"
           >
             Tip the Team
           </Button>
           <Button
-            class="btn btn-sm btn-secondary"
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
+            class="btn btn-sm btn-secondary"
           >
             Transfer
+          </Button>
+          <Button
+            v-if="team.bankAddress"
+            @click="() => (tokenDepositModal = true)"
+            class="btn btn-sm btn-secondary"
+          >
+            Deposit Token
+          </Button>
+          <Button
+            v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
+            @click="tokenTransferModal = true"
+            class="btn btn-sm btn-secondary"
+          >
+            Transfer Token
           </Button>
         </div>
       </div>
@@ -69,7 +83,7 @@
             }
           }
         "
-        @searchMembers="(input) => searchUsers({ name: '', address: input })"
+        @searchMembers="(input: string) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
         :loading="transferLoading || addActionLoading || isConfirmingTransfer"
         :bank-balance="teamBalance?.formatted || '0'"
@@ -106,7 +120,7 @@
                 if (owner == team.boardOfDirectorsAddress) {
                   addPushTipAction('Pushed tips to all team members')
                 } else {
-                  const members = team.members.map((member) => member.address)
+                  const members = team.members.map((member: TeamMember) => member.address)
                   pushTip({
                     address: team.bankAddress as Address,
                     abi: BankABI,
@@ -119,6 +133,89 @@
             "
           >
             Send Tips
+          </button>
+        </div>
+      </div>
+    </ModalComponent>
+
+    <ModalComponent v-model="tokenDepositModal">
+      <div class="flex flex-col gap-4 justify-start">
+        <span class="font-bold text-xl sm:text-2xl">Deposit Token</span>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Select Token</span>
+          </label>
+          <select class="select select-bordered" v-model="selectedToken">
+            <option value="USDT">USDT</option>
+            <option value="USDC">USDC</option>
+          </select>
+        </div>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Amount</span>
+          </label>
+          <input
+            type="number"
+            class="input input-bordered w-full"
+            placeholder="Enter amount"
+            v-model="tokenAmount"
+          />
+        </div>
+        <div class="text-center">
+          <LoadingButton
+            v-if="isConfirmingTokenDeposit || tokenDepositLoading"
+            class="w-full sm:w-44"
+            color="primary"
+          />
+          <button v-else class="btn btn-primary w-full sm:w-44 text-center" @click="depositToken">
+            Deposit Token
+          </button>
+        </div>
+      </div>
+    </ModalComponent>
+
+    <ModalComponent v-model="tokenTransferModal">
+      <div class="flex flex-col gap-4 justify-start">
+        <span class="font-bold text-xl sm:text-2xl">Transfer Token</span>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Select Token</span>
+          </label>
+          <select class="select select-bordered" v-model="selectedToken">
+            <option value="USDT">USDT</option>
+            <option value="USDC">USDC</option>
+          </select>
+        </div>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">To Address</span>
+          </label>
+          <input
+            type="text"
+            class="input input-bordered w-full"
+            placeholder="Enter recipient address"
+            v-model="tokenRecipient"
+          />
+        </div>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Amount</span>
+          </label>
+          <input
+            type="number"
+            class="input input-bordered w-full"
+            placeholder="Enter amount"
+            v-model="tokenAmount"
+          />
+        </div>
+        <div class="text-center">
+          <LoadingButton
+            v-if="isConfirmingTokenTransfer || tokenTransferLoading"
+            class="w-full sm:w-44"
+            color="primary"
+          />
+          <button v-else class="btn btn-primary w-full sm:w-44 text-center" @click="transferToken">
+            Transfer Token
           </button>
         </div>
       </div>
@@ -141,7 +238,7 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction } from '@/composables/bod'
-import { encodeFunctionData, parseEther, type Address } from 'viem'
+import { encodeFunctionData, parseEther, type Address, parseUnits } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
@@ -371,6 +468,69 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   }
 })
 
+const tokenDepositModal = ref(false)
+const tokenTransferModal = ref(false)
+const selectedToken = ref('USDT')
+const tokenAmount = ref('')
+const tokenRecipient = ref('')
+
+const {
+  writeContract: writeTokenDeposit,
+  isPending: tokenDepositLoading,
+  data: tokenDepositHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
+  hash: tokenDepositHash
+})
+
+const {
+  writeContract: writeTokenTransfer,
+  isPending: tokenTransferLoading,
+  data: tokenTransferHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingTokenTransfer } = useWaitForTransactionReceipt({
+  hash: tokenTransferHash
+})
+
+const depositToken = async () => {
+  if (!props.team.bankAddress || !tokenAmount.value) return
+  writeTokenDeposit({
+    address: props.team.bankAddress as Address,
+    abi: BankABI,
+    functionName: 'depositToken',
+    args: [selectedToken.value, parseUnits(tokenAmount.value, 18)]
+  })
+}
+
+const transferToken = async () => {
+  if (!props.team.bankAddress || !tokenAmount.value || !tokenRecipient.value) return
+  writeTokenTransfer({
+    address: props.team.bankAddress as Address,
+    abi: BankABI,
+    functionName: 'transferToken',
+    args: [selectedToken.value, tokenRecipient.value as Address, parseUnits(tokenAmount.value, 18)]
+  })
+}
+
+watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Token deposited successfully')
+    tokenDepositModal.value = false
+    tokenAmount.value = ''
+  }
+})
+
+watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Token transferred successfully')
+    tokenTransferModal.value = false
+    tokenAmount.value = ''
+    tokenRecipient.value = ''
+  }
+})
+
 onMounted(async () => {
   if (props.team.bankAddress) fetchBalance()
   await getOwner()
@@ -379,4 +539,8 @@ onMounted(async () => {
 const membersAddress = computed(() => {
   return props.team.members?.map((member: { address: string }) => member.address) ?? []
 })
+
+interface TeamMember {
+  address: string
+}
 </script>
