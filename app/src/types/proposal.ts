@@ -24,4 +24,14 @@ export interface Proposal {
     name: string
     votes?: number
   }[]
+  hasTie?: boolean
+  tiedCandidates?: string[]
+  selectedTieBreakOption?: TieBreakOption
+}
+
+export enum TieBreakOption {
+  RANDOM_SELECTION = 0,
+  RUNOFF_ELECTION = 1,
+  FOUNDER_CHOICE = 2,
+  INCREASE_WINNER_COUNT = 3
 }
