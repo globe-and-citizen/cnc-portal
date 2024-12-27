@@ -110,7 +110,7 @@ import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-import { TIPS_ADDRESS } from '@/constant'
+import { TIPS_ADDRESS, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import type { Team } from '@/types'
 
 const props = defineProps<{
@@ -344,7 +344,7 @@ const deployAllContracts = async () => {
       initializerData: encodeFunctionData({
         abi: BankABI,
         functionName: 'initialize',
-        args: [TIPS_ADDRESS, currentAddress]
+        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
       })
     })
   }

@@ -19,7 +19,7 @@
           <div>
             <span>Token Balance</span>
             <div class="text-lg">
-              <div>USDC: {{ usdcBalance ? Number(usdcBalance) / 1e18 : '0' }}</div>
+              <div>USDC: {{ usdcBalance ? Number(usdcBalance) : '0' }}</div>
             </div>
           </div>
         </div>
@@ -228,13 +228,15 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction } from '@/composables/bod'
-import { encodeFunctionData, parseEther, type Address, parseUnits } from 'viem'
+import { encodeFunctionData, parseEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -486,25 +488,92 @@ const {
 const { isLoading: isConfirmingTokenTransfer } = useWaitForTransactionReceipt({
   hash: tokenTransferHash
 })
+const { writeContract: approve, error: approveError, data: approveHash } = useWriteContract()
+const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
+  hash: approveHash
+})
+watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Approval granted successfully')
+  }
+})
+watch(approveError, () => {
+  if (approveError.value) {
+    addErrorToast('Failed to approve token spending')
+  }
+})
 
 const depositToken = async () => {
   if (!props.team.bankAddress || !tokenAmount.value) return
-  writeTokenDeposit({
-    address: props.team.bankAddress as Address,
-    abi: BankABI,
-    functionName: 'depositToken',
-    args: [USDC_ADDRESS, parseEther(tokenAmount.value.toString())]
-  })
+
+  // First approve the bank to spend tokens
+  const amount = tokenAmount.value // USDC has 6 decimals
+
+  try {
+    // Check current allowance
+    const allowance = await readContract(config, {
+      address: USDC_ADDRESS as Address,
+      abi: ERC20ABI,
+      functionName: 'allowance',
+      args: [currentAddress as Address, props.team.bankAddress as Address]
+    })
+    console.log('allowance', allowance)
+    // If allowance is insufficient, request approval
+    const currentAllowance = allowance ? allowance.toString() : 0
+    if (currentAllowance < amount) {
+      approve({
+        address: USDC_ADDRESS as Address,
+        abi: ERC20ABI,
+        functionName: 'approve',
+        args: [props.team.bankAddress as Address, amount]
+      })
+    }
+
+    // Now deposit the tokens
+    writeTokenDeposit({
+      address: props.team.bankAddress as Address,
+      abi: BankABI,
+      functionName: 'depositToken',
+      args: [USDC_ADDRESS, amount]
+    })
+  } catch (error) {
+    addErrorToast('Failed to approve token spending')
+    console.error(error)
+  }
 }
 
 const transferToken = async () => {
   if (!props.team.bankAddress || !tokenAmount.value || !tokenRecipient.value) return
-  writeTokenTransfer({
-    address: props.team.bankAddress as Address,
-    abi: BankABI,
-    functionName: 'transferToken',
-    args: [USDC_ADDRESS, tokenRecipient.value as Address, parseEther(tokenAmount.value.toString())]
-  })
+  const amount = tokenAmount.value // USDC has 6 decimals
+
+  try {
+    // Check current allowance
+    const allowance = await readContract(config, {
+      address: USDC_ADDRESS as Address,
+      abi: ERC20ABI,
+      functionName: 'allowance',
+      args: [currentAddress as Address, props.team.bankAddress as Address]
+    })
+    console.log('allowance', allowance)
+    const currentAllowance = allowance ? allowance.toString() : 0n
+    if (currentAllowance < amount) {
+      approve({
+        address: USDC_ADDRESS as Address,
+        abi: ERC20ABI,
+        functionName: 'approve',
+        args: [props.team.bankAddress as Address, amount]
+      })
+    }
+    writeTokenTransfer({
+      address: props.team.bankAddress as Address,
+      abi: BankABI,
+      functionName: 'transferToken',
+      args: [USDC_ADDRESS, tokenRecipient.value as Address, tokenAmount.value.toString()]
+    })
+  } catch (error) {
+    addErrorToast('Failed to transfer token')
+    console.error(error)
+  }
 }
 watch(tokenDepositError, () => {
   if (tokenDepositError.value) {
@@ -515,11 +584,13 @@ watch(tokenDepositError, () => {
 watch(tokenTransferError, () => {
   if (tokenTransferError.value) {
     addErrorToast('Failed to transfer token')
+    console.log(tokenTransferError.value)
   }
 })
 watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Token deposited successfully')
+    fetchUsdcBalance()
     tokenDepositModal.value = false
     tokenAmount.value = ''
   }
@@ -528,17 +599,32 @@ watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
 watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Token transferred successfully')
+    fetchUsdcBalance()
     tokenTransferModal.value = false
     tokenAmount.value = ''
     tokenRecipient.value = ''
   }
 })
 
-const { data: usdcBalance, refetch: fetchUsdcBalance } = useReadContract({
+const {
+  data: usdcBalance,
+  refetch: fetchUsdcBalance,
+  error: usdcBalanceError
+} = useReadContract({
   address: USDC_ADDRESS as Address,
   abi: ERC20ABI,
   functionName: 'balanceOf',
   args: [props.team.bankAddress as Address]
+})
+watch(usdcBalance, () => {
+  if (usdcBalance.value) {
+    console.log(usdcBalance.value)
+  }
+})
+watch(usdcBalanceError, () => {
+  if (usdcBalanceError.value) {
+    addErrorToast('Failed to fetch USDC balance')
+  }
 })
 
 onMounted(async () => {
