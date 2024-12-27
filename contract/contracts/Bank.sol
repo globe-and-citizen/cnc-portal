@@ -10,8 +10,6 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 interface ITips {
   function pushTip(address[] calldata _teamMembersAddresses) external payable;
   function sendTip(address[] calldata _teamMembersAddresses) external payable;
-  function pushTokenTip(address[] calldata _teamMembersAddresses, address _token, uint256 _amount) external;
-  function sendTokenTip(address[] calldata _teamMembersAddresses, address _token, uint256 _amount) external;
 }
 
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
@@ -128,10 +126,18 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 _amount
   ) external onlyOwner whenNotPaused {
     require(isTokenSupported(_token), "Unsupported token");
-    IERC20(_token).approve(tipsAddress, _amount);
-    ITips(tipsAddress).pushTokenTip(_addresses, _token, _amount);
+    uint256 amountPerAddress = _amount / _addresses.length;
+        
+    require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "Token transfer failed");
+        
+    for (uint256 i = 0; i < _addresses.length; i++) {
+       require(_addresses[i] != address(0), "Invalid address");
+       require(IERC20(_token).transfer(_addresses[i], amountPerAddress), "Token transfer failed");
+    }
+
     emit PushTokenTip(msg.sender, _addresses, _token, _amount);
   }
+  
 
   function sendTip(
     address[] calldata _addresses,
@@ -147,8 +153,10 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 _amount
   ) external onlyOwner whenNotPaused {
     require(isTokenSupported(_token), "Unsupported token");
-    IERC20(_token).approve(tipsAddress, _amount);
-    ITips(tipsAddress).sendTokenTip(_addresses, _token, _amount);
+    for (uint256 i = 0; i < _addresses.length; i++) {
+      require(_addresses[i] != address(0), "Invalid address");
+      require(IERC20(_token).transfer(_addresses[i], _amount), "Token transfer failed");
+    }
     emit SendTokenTip(msg.sender, _addresses, _token, _amount);
   }
 

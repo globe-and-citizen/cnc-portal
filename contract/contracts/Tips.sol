@@ -23,20 +23,6 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
         uint256 totalAmount,
         uint256 amountPerAddress
     );
-    event SendTokenTip(
-        address from,
-        address[] teamMembers,
-        address token,
-        uint256 totalAmount,
-        uint256 amountPerAddress
-    );
-    event PushTokenTip(
-        address from,
-        address[] teamMembers,
-        address token,
-        uint256 totalAmount,
-        uint256 amountPerAddress
-    );
 
     event TipWithdrawal(address to, uint256 amount);
     event TokenTipWithdrawal(address to, address token, uint256 amount);
@@ -75,25 +61,6 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
         emit PushTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
 
-    function pushTokenTip(address[] calldata _teamMembersAddresses, address _token, uint256 _amount) external whenNotPaused {
-        require(_teamMembersAddresses.length > 0, "Must have at least one team member");
-        require(
-            pushLimit >= _teamMembersAddresses.length,
-            "You have too much team members"
-        );
-        uint256 amountPerAddress = _amount / _teamMembersAddresses.length;
-        
-        // Transfer tokens from sender to contract
-        require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "Token transfer failed");
-        
-        // Distribute tokens immediately
-        for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
-            require(_teamMembersAddresses[i] != address(0), "Invalid address");
-            require(IERC20(_token).transfer(_teamMembersAddresses[i], amountPerAddress), "Token transfer failed");
-        }
-
-        emit PushTokenTip(msg.sender, _teamMembersAddresses, _token, _amount, amountPerAddress);
-    }
 
     function sendTip(address [] calldata _teamMembersAddresses) positiveAmountRequired whenNotPaused external payable {
         require(_teamMembersAddresses.length > 0, "Must have at least one team member");
@@ -112,18 +79,6 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
         emit SendTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
 
-    function sendTokenTip(address[] calldata _teamMembersAddresses, address _token, uint256 _amount) external whenNotPaused {
-        require(_teamMembersAddresses.length > 0, "Must have at least one team member");
-        uint256 amountPerAddress = _amount / _teamMembersAddresses.length;
-        
-        // Transfer tokens from sender to team members directly
-        for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
-            require(_teamMembersAddresses[i] != address(0), "Invalid address");
-            require(IERC20(_token).transferFrom(msg.sender, _teamMembersAddresses[i], amountPerAddress), "Token transfer failed");
-        }
-
-        emit SendTokenTip(msg.sender, _teamMembersAddresses, _token, _amount, amountPerAddress);
-    }
 
     // TODO: Protection for reentrancy attack
     function withdraw() external nonReentrant whenNotPaused{
