@@ -1,4 +1,4 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers } from 'hardhat'
 import { expect } from 'chai'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
@@ -6,35 +6,24 @@ describe('BankBeacon', () => {
   async function deployFixture() {
     const [superAdmin, user1, user2, user3] = await ethers.getSigners()
 
-    // deploy tips as superadmin
-    const TipsFactory = await ethers.getContractFactory('Tips')
-    const tipsProxy = await upgrades.deployProxy(TipsFactory)
-    await tipsProxy.waitForDeployment()
-
     // deploy bank impl
     const BankImplementationFactory = await ethers.getContractFactory('Bank')
     const bankImplementation = await BankImplementationFactory.connect(superAdmin).deploy()
     await bankImplementation.waitForDeployment()
 
-    const tipsProxyAddress = await tipsProxy.getAddress()
-
     const encodedInitializeAdmin = bankImplementation.interface.encodeFunctionData('initialize', [
-      tipsProxyAddress,
       await superAdmin.getAddress()
     ])
 
     const encodedInitializeUser1 = bankImplementation.interface.encodeFunctionData('initialize', [
-      tipsProxyAddress,
       await user1.getAddress()
     ])
 
     const encodedInitializeUser2 = bankImplementation.interface.encodeFunctionData('initialize', [
-      tipsProxyAddress,
       await user2.getAddress()
     ])
 
     const encodedInitializeUser3 = bankImplementation.interface.encodeFunctionData('initialize', [
-      tipsProxyAddress,
       await user3.getAddress()
     ])
 
@@ -65,7 +54,6 @@ describe('BankBeacon', () => {
       user1,
       user2,
       user3,
-      tipsProxy,
       bankBeaconProxy1,
       bankBeaconProxy2,
       beacon,

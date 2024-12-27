@@ -4,7 +4,7 @@ import { expect } from 'chai'
 describe('BoardOfDirectors', async () => {
   async function deployFixture() {
     // Get users
-    const [founder, boD1, boD2, boD3, mockTipsAddress] = await ethers.getSigners()
+    const [founder, boD1, boD2, boD3] = await ethers.getSigners()
 
     // deploy voting contract and initialize
     const VotingFactory = await ethers.getContractFactory('Voting')
@@ -16,15 +16,12 @@ describe('BoardOfDirectors', async () => {
     const boardOfDirectorsImpl = await BoardOfDirectorsImplFactory.deploy()
 
     // deploy boardOfDirectors beacon
-    // TODO: Syntaxt of factory is not the same for the implementation and the beacon
     const BoardOfDirectorsBeacon = await ethers.getContractFactory('Beacon')
     const boardOfDirectorsBeacon = await BoardOfDirectorsBeacon.connect(founder).deploy(
       await boardOfDirectorsImpl.getAddress()
     )
 
     // deploy boardOfDirectors proxy
-    // TODO: I have question here I don't get how the Proxy factory is working and then we get a ProxyDeployement
-    // Problem with naming syntax
     const ProxyFactory = await ethers.getContractFactory('UserBeaconProxy')
     const initialize = boardOfDirectorsImpl.interface.encodeFunctionData('initialize', [
       [founder.address, await voting.getAddress()]
@@ -42,7 +39,7 @@ describe('BoardOfDirectors', async () => {
 
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
-    await bank.initialize(mockTipsAddress, await founder.getAddress())
+    await bank.initialize(await founder.getAddress())
 
     // transfer ownership of bank to boardOfDirectors
     // so that only boardOfDirectors can call bank functions

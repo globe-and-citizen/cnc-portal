@@ -86,10 +86,7 @@ describe('Officer Contract', function () {
         owner.address
       ])
 
-      const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        owner.address
-      ])
+      const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [owner.address])
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -117,10 +114,7 @@ describe('Officer Contract', function () {
     it('Should restrict deployment to owners and founders', async function () {
       await officer.connect(owner).createTeam([addr1.address], [])
 
-      const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        addr1.address,
-        owner.address
-      ])
+      const initData = bankAccount.interface.encodeFunctionData('initialize', [addr1.address])
 
       // Test unauthorized access
       await expect(officer.connect(addr3).deployBeaconProxy('Bank', initData)).to.be.revertedWith(
@@ -135,10 +129,7 @@ describe('Officer Contract', function () {
     })
 
     it('Should fail when deploying proxy for unknown contract type', async function () {
-      const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        owner.address
-      ])
+      const initData = bankAccount.interface.encodeFunctionData('initialize', [owner.address])
 
       // Using a new contract type that hasn't been configured
       const newContractType = 'NewBankType'
@@ -266,8 +257,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        owner.address
+        await owner.getAddress()
       ])
 
       const deployments = [
@@ -403,11 +393,10 @@ describe('Officer Contract', function () {
     it('Should return all deployed contracts with their types', async function () {
       // Deploy multiple contracts
       const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
-        owner.address
+        await owner.getAddress()
       ])
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        owner.address
+        await owner.getAddress()
       ])
 
       // Deploy Voting contract (this will also auto-deploy BoardOfDirectors)
@@ -438,8 +427,7 @@ describe('Officer Contract', function () {
     it('Should maintain contract order as they are deployed', async function () {
       // Deploy contracts in specific order
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        owner.address
+        await owner.getAddress()
       ])
 
       // Deploy three Bank contracts
