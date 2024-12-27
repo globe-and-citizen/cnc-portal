@@ -1,185 +1,275 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, Tips } from '../typechain-types'
+import { Bank } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe('Bank', () => {
   let bankProxy: Bank
-  let tipsProxy: Tips
+  let owner: SignerWithAddress
+  let sender: SignerWithAddress
+  let member1: SignerWithAddress
+  let member2: SignerWithAddress
+  let recipientAddresses: Array<string>
+  const TIP_AMOUNT = ethers.parseEther('20')
 
-  async function deployContract(owner: SignerWithAddress) {
-    const TipsImplementation = await ethers.getContractFactory('Tips')
-    tipsProxy = (await upgrades.deployProxy(TipsImplementation, [], {
-      initializer: 'initialize'
-    })) as unknown as Tips
+  beforeEach(async () => {
+    ;[owner, sender, member1, member2] = await ethers.getSigners()
+    recipientAddresses = [member1.address, member2.address]
 
     const BankImplementation = await ethers.getContractFactory('Bank')
-    bankProxy = (await upgrades.deployProxy(
-      BankImplementation,
-      [await tipsProxy.getAddress(), await owner.getAddress()],
-      {
-        initializer: 'initialize',
-        initialOwner: await owner.getAddress()
-      }
-    )) as unknown as Bank
-  }
+    bankProxy = (await upgrades.deployProxy(BankImplementation, [owner.address], {
+      initializer: 'initialize'
+    })) as unknown as Bank
+  })
 
-  describe('As A User (Owner of a wallet/address)', () => {
-    let owner: SignerWithAddress
-    let contractor: SignerWithAddress
-    let member1: SignerWithAddress
-    let member2: SignerWithAddress
-
-    before(async () => {
-      ;[owner, contractor, member1, member2] = await ethers.getSigners()
-      await deployContract(owner)
+  describe('Deployment', () => {
+    it('should set the correct owner', async () => {
+      expect(await bankProxy.owner()).to.eq(owner.address)
     })
 
-    context('Deployment', () => {
-      it('should set the correct owner and tips address', async () => {
-        expect(await bankProxy.owner()).to.eq(await owner.getAddress())
-        expect(await bankProxy.tipsAddress()).to.eq(await tipsProxy.getAddress())
-      })
+    it('should not allow to initialize the contract again', async () => {
+      await expect(bankProxy.initialize(owner.address)).to.be.reverted
+    })
+  })
+
+  describe('Deposits', () => {
+    it('should allow any address to deposit funds', async () => {
+      const depositAmount = ethers.parseEther('10')
+
+      await expect(async () =>
+        sender.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
+      ).to.changeEtherBalance(bankProxy, depositAmount)
+
+      await expect(async () =>
+        member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
+      ).to.changeEtherBalance(bankProxy, depositAmount)
     })
 
-    context('Deposits and Transfers', () => {
-      it('should allow the owner to deposit and transfer funds', async () => {
-        const depositAmount = ethers.parseEther('10')
-        const transferAmount = ethers.parseEther('1')
+    it('should emit Deposited event', async () => {
+      const depositAmount = ethers.parseEther('10')
 
-        await expect(async () =>
-          owner.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
-        ).to.changeEtherBalance(bankProxy, depositAmount)
+      await expect(
+        sender.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
+      )
+        .to.emit(bankProxy, 'Deposited')
+        .withArgs(sender.address, depositAmount)
+    })
+  })
 
-        const tx = bankProxy.transfer(contractor.address, transferAmount)
-        await expect(tx).to.changeEtherBalance(bankProxy, -transferAmount)
-        await expect(tx).to.changeEtherBalance(contractor, transferAmount)
-      })
-
-      it("should fail when the to adddress is null, the ammount is 0 or the sender doesn't have enough funds", async () => {
-        const transferAmount = ethers.parseEther('1')
-
-        // Transfer to null address
-        const tx = bankProxy.transfer(ethers.ZeroAddress, transferAmount)
-        await expect(tx).to.be.revertedWith('Address cannot be zero')
-
-        // Transfer 0 amount
-        const tx2 = bankProxy.transfer(contractor.address, 0)
-        await expect(tx2).to.be.revertedWith('Amount must be greater than zero')
-
-        // Transfer more than the sender has
-        const tx3 = bankProxy.transfer(contractor.address, ethers.parseEther('100'))
-        await expect(tx3).to.be.revertedWith('Failed to transfer')
-      })
-
-      it('should allow any address to deposit but not transfer funds', async () => {
-        const depositAmount = ethers.parseEther('5')
-        const transferAmount = ethers.parseEther('1')
-
-        await expect(async () =>
-          member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
-        ).to.changeEtherBalance(bankProxy, depositAmount)
-
-        await expect(bankProxy.connect(member1).transfer(contractor.address, transferAmount)).to.be
-          .reverted
+  describe('Transfers', () => {
+    beforeEach(async () => {
+      // Fund the bank contract
+      await owner.sendTransaction({
+        to: await bankProxy.getAddress(),
+        value: ethers.parseEther('50')
       })
     })
 
-    context('Bank Tips', () => {
-      const tipAmount = ethers.parseEther('3')
-      const amountPerAddress = ethers.parseEther('1')
+    it('should allow owner to transfer funds', async () => {
+      const transferAmount = ethers.parseEther('1')
 
-      it('should allow the owner to send and push tips', async () => {
-        const recipients = [contractor.address, member1.address, member2.address]
-        await expect(bankProxy.sendTip(recipients, tipAmount)).to.changeEtherBalance(
-          bankProxy,
-          -tipAmount
-        )
-        expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
-        expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
-        expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
+      const tx = bankProxy.transfer(member1.address, transferAmount)
+      await expect(tx).to.changeEtherBalance(bankProxy, -transferAmount)
+      await expect(tx).to.changeEtherBalance(member1, transferAmount)
+    })
 
-        const tx = bankProxy.pushTip(recipients, tipAmount)
-        await expect(tx).to.changeEtherBalance(bankProxy, -tipAmount)
-        await expect(tx).to.changeEtherBalance(contractor, amountPerAddress)
+    it('should emit Transfer event', async () => {
+      const transferAmount = ethers.parseEther('1')
+
+      await expect(bankProxy.transfer(member1.address, transferAmount))
+        .to.emit(bankProxy, 'Transfer')
+        .withArgs(owner.address, member1.address, transferAmount)
+    })
+
+    it('should fail when the to address is zero', async () => {
+      await expect(
+        bankProxy.transfer(ethers.ZeroAddress, ethers.parseEther('1'))
+      ).to.be.revertedWith('Address cannot be zero')
+    })
+
+    it('should fail when amount is zero', async () => {
+      await expect(bankProxy.transfer(member1.address, 0)).to.be.revertedWith(
+        'Amount must be greater than zero'
+      )
+    })
+
+    it('should fail when non-owner tries to transfer', async () => {
+      await expect(bankProxy.connect(member1).transfer(member2.address, ethers.parseEther('1'))).to
+        .be.reverted
+    })
+  })
+
+  describe('Tips Management', () => {
+    beforeEach(async () => {
+      // Fund the bank contract
+      await owner.sendTransaction({
+        to: await bankProxy.getAddress(),
+        value: ethers.parseEther('50')
+      })
+    })
+
+    describe('pushTip', () => {
+      it('should allow owner to push tips directly to recipients', async () => {
+        const amountPerAddress = ethers.parseEther('10')
+
+        const tx = bankProxy.pushTip(recipientAddresses, TIP_AMOUNT)
+        await expect(tx).to.changeEtherBalance(bankProxy, -TIP_AMOUNT)
         await expect(tx).to.changeEtherBalance(member1, amountPerAddress)
         await expect(tx).to.changeEtherBalance(member2, amountPerAddress)
       })
 
-      it('should not allow other addresses to send or push tips', async () => {
-        const recipients = [contractor.address, member1.address, member2.address]
-        await expect(bankProxy.connect(member1).sendTip(recipients, tipAmount)).to.be.reverted
+      it('should emit PushTip event', async () => {
+        const amountPerAddress = ethers.parseEther('10')
 
-        await expect(bankProxy.connect(member1).pushTip(recipients, tipAmount)).to.be.reverted
+        await expect(bankProxy.pushTip(recipientAddresses, TIP_AMOUNT))
+          .to.emit(bankProxy, 'PushTip')
+          .withArgs(owner.address, recipientAddresses, TIP_AMOUNT, amountPerAddress)
+      })
+
+      it('should fail when team members exceed push limit', async () => {
+        const manyAddresses = Array(11).fill(member1.address)
+        await expect(bankProxy.pushTip(manyAddresses, TIP_AMOUNT)).to.be.revertedWith(
+          'You have too much team members'
+        )
+      })
+
+      it('should fail when non-owner tries to push tips', async () => {
+        await expect(bankProxy.connect(member1).pushTip(recipientAddresses, TIP_AMOUNT)).to.be
+          .reverted
       })
     })
 
-    context('Contract Management', () => {
-      it('should allow the owner to change tips address, pause, and unpause the contract', async () => {
-        const newTipsAddress = (await ethers.getSigners())[4]
+    describe('sendTip', () => {
+      it('should allow owner to send tips to balance', async () => {
+        const amountPerAddress = ethers.parseEther('10')
 
-        await expect(bankProxy.changeTipsAddress(newTipsAddress.address))
-          .to.emit(bankProxy, 'TipsAddressChanged')
-          .withArgs(await owner.getAddress(), await tipsProxy.getAddress(), newTipsAddress.address)
+        await bankProxy.sendTip(recipientAddresses, TIP_AMOUNT)
 
+        expect(await bankProxy.getBalance(member1.address)).to.equal(amountPerAddress)
+        expect(await bankProxy.getBalance(member2.address)).to.equal(amountPerAddress)
+      })
+
+      it('should emit SendTip event', async () => {
+        const amountPerAddress = ethers.parseEther('10')
+
+        await expect(bankProxy.sendTip(recipientAddresses, TIP_AMOUNT))
+          .to.emit(bankProxy, 'SendTip')
+          .withArgs(owner.address, recipientAddresses, TIP_AMOUNT, amountPerAddress)
+      })
+
+      it('should accumulate tips in balance', async () => {
+        const amountPerAddress = ethers.parseEther('10')
+
+        await bankProxy.sendTip(recipientAddresses, TIP_AMOUNT)
+        await bankProxy.sendTip(recipientAddresses, TIP_AMOUNT)
+
+        expect(await bankProxy.getBalance(member1.address)).to.equal(amountPerAddress * 2n)
+      })
+
+      it('should fail when non-owner tries to send tips', async () => {
+        await expect(bankProxy.connect(member1).sendTip(recipientAddresses, TIP_AMOUNT)).to.be
+          .reverted
+      })
+    })
+
+    describe('withdraw', () => {
+      beforeEach(async () => {
+        await bankProxy.sendTip(recipientAddresses, TIP_AMOUNT)
+      })
+
+      it('should allow withdrawal of accumulated tips', async () => {
+        const initialBalance = await bankProxy.getBalance(member1.address)
+
+        await expect(() => bankProxy.connect(member1).withdraw()).to.changeEtherBalance(
+          member1,
+          initialBalance
+        )
+
+        expect(await bankProxy.getBalance(member1.address)).to.equal(0)
+      })
+
+      it('should emit TipWithdrawal event', async () => {
+        const withdrawAmount = await bankProxy.getBalance(member1.address)
+
+        await expect(bankProxy.connect(member1).withdraw())
+          .to.emit(bankProxy, 'TipWithdrawal')
+          .withArgs(member1.address, withdrawAmount)
+      })
+
+      it('should fail when no tips to withdraw', async () => {
+        await bankProxy.connect(member1).withdraw()
+
+        await expect(bankProxy.connect(member1).withdraw()).to.be.revertedWith(
+          'No tips to withdraw.'
+        )
+      })
+    })
+  })
+
+  describe('Push Limit Management', () => {
+    it('should allow owner to update push limit', async () => {
+      await bankProxy.updatePushLimit(50)
+      expect(await bankProxy.pushLimit()).to.equal(50)
+    })
+
+    it('should fail when new limit exceeds maximum', async () => {
+      await expect(bankProxy.updatePushLimit(101)).to.be.revertedWith(
+        'Push limit is too high, must be less or equal to 100'
+      )
+    })
+
+    it('should fail when new limit is same as current', async () => {
+      await expect(bankProxy.updatePushLimit(10)).to.be.revertedWith(
+        'New limit is the same as the old one'
+      )
+    })
+
+    it('should fail when non-owner tries to update limit', async () => {
+      await expect(bankProxy.connect(member1).updatePushLimit(50)).to.be.reverted
+    })
+  })
+
+  describe('Contract Management', () => {
+    describe('pause/unpause', () => {
+      it('should allow owner to pause and unpause', async () => {
         await bankProxy.pause()
         expect(await bankProxy.paused()).to.be.true
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
 
         await bankProxy.unpause()
         expect(await bankProxy.paused()).to.be.false
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be
-          .reverted
       })
 
-      it('should not allow other addresses to change tips address, pause, or unpause the contract', async () => {
-        const newTipsAddress = (await ethers.getSigners())[5]
-
-        await expect(bankProxy.connect(member1).changeTipsAddress(newTipsAddress.address)).to.be
-          .reverted
-
+      it('should prevent non-owner from pausing/unpausing', async () => {
         await expect(bankProxy.connect(member1).pause()).to.be.reverted
-        // Pause the contract
+
         await bankProxy.pause()
-        // Ensure unauthorized user cannot unpause
         await expect(bankProxy.connect(member1).unpause()).to.be.reverted
-        // Unpause the contract by an authorized user
-        await bankProxy.unpause()
       })
 
-      it('should only allow function execution when not paused', async () => {
-        // Pause the contract
+      it('should prevent operations when paused', async () => {
         await bankProxy.pause()
-        expect(await bankProxy.paused()).to.be.true
 
-        // Attempt to call a function protected by whenNotPaused and expect it to revert
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
+        await expect(bankProxy.transfer(member1.address, ethers.parseEther('1'))).to.be.reverted
 
-        // Attempt to call sendTip function protected by whenNotPaused and expect it to revert
-        const recipients = [contractor.address, member1.address, member2.address]
-        const tipAmount = ethers.parseEther('3')
-        await expect(bankProxy.sendTip(recipients, tipAmount)).to.be.reverted
+        await expect(bankProxy.pushTip(recipientAddresses, TIP_AMOUNT)).to.be.reverted
 
-        // Attempt to call pushTip function protected by whenNotPaused and expect it to revert
-        await expect(bankProxy.pushTip(recipients, tipAmount)).to.be.reverted
+        await expect(bankProxy.sendTip(recipientAddresses, TIP_AMOUNT)).to.be.reverted
+      })
+    })
 
-        // Attempt to call changeTipsAddress function protected by whenNotPaused and expect it to revert
-        const newTipsAddress = (await ethers.getSigners())[4]
-        await expect(bankProxy.changeTipsAddress(newTipsAddress.address)).to.be.reverted
+    describe('getContractBalance', () => {
+      it('should return correct contract balance', async () => {
+        const amount = ethers.parseEther('10')
+        await owner.sendTransaction({
+          to: await bankProxy.getAddress(),
+          value: amount
+        })
 
-        // Unpause the contract
-        await bankProxy.unpause()
-        expect(await bankProxy.paused()).to.be.false
-
-        // Call the same function again and expect it to succeed
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be
-          .reverted
+        expect(await bankProxy.getContractBalance()).to.equal(amount)
       })
 
-      it('should not allow to initialize the contract again', async () => {
-        const tipsAddress = await tipsProxy.getAddress()
-        const ownerAddress = await owner.getAddress()
-        await expect(bankProxy.initialize(tipsAddress, ownerAddress)).to.be.reverted
+      it('should fail when non-owner tries to get balance', async () => {
+        await expect(bankProxy.connect(member1).getContractBalance()).to.be.reverted
       })
     })
   })
