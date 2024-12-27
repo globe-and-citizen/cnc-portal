@@ -167,14 +167,20 @@
           />
         </div>
         <div class="text-center">
-          <button class="btn btn-primary w-full sm:w-44 text-center" @click="pushUSDC">
-            Tip USDC to Team
-          </button>
           <LoadingButton
-            v-if="isConfirmingPushTokenTip || pushTokenTipLoading || isConfirmingPushTokenTip"
+            v-if="
+              isConfirmingPushTokenTip ||
+              pushTokenTipLoading ||
+              isConfirmingPushTokenTip ||
+              isPendingApprove ||
+              isConfirmingApprove
+            "
             class="w-full sm:w-44"
             color="primary"
           />
+          <button class="btn btn-primary w-full sm:w-44 text-center" @click="pushUSDC" v-else>
+            Tip USDC to Team
+          </button>
         </div>
       </div>
     </ModalComponent>
@@ -195,7 +201,13 @@
         </div>
         <div class="text-center">
           <LoadingButton
-            v-if="isConfirmingTokenDeposit || tokenDepositLoading || isConfirmingTokenDeposit"
+            v-if="
+              isConfirmingTokenDeposit ||
+              tokenDepositLoading ||
+              isConfirmingTokenDeposit ||
+              isConfirmingApprove ||
+              isPendingApprove
+            "
             class="w-full sm:w-44"
             color="primary"
           />
@@ -233,7 +245,13 @@
         </div>
         <div class="text-center">
           <LoadingButton
-            v-if="isConfirmingTokenTransfer || tokenTransferLoading || isConfirmingTokenTransfer"
+            v-if="
+              isConfirmingTokenTransfer ||
+              tokenTransferLoading ||
+              isConfirmingTokenTransfer ||
+              isPendingApprove ||
+              isConfirmingApprove
+            "
             class="w-full sm:w-44"
             color="primary"
           />
@@ -323,7 +341,6 @@ watch(isConfirmingPushTokenTip, (newIsConfirming, oldIsConfirming) => {
 
 watch(pushTokenTipError, () => {
   if (pushTokenTipError.value) {
-    addErrorToast('Failed to push tips')
     console.error(pushTokenTipError.value)
   }
 })
@@ -546,13 +563,26 @@ const {
 const { isLoading: isConfirmingTokenTransfer } = useWaitForTransactionReceipt({
   hash: tokenTransferHash
 })
-const { writeContract: approve, error: approveError, data: approveHash } = useWriteContract()
+const {
+  writeContract: approve,
+  error: approveError,
+  data: approveHash,
+  isPending: isPendingApprove
+} = useWriteContract()
 const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
   hash: approveHash
 })
+const currentAction = ref('')
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Approval granted successfully')
+    if (currentAction.value === 'depositToken') {
+      depositToken()
+    } else if (currentAction.value === 'transferToken') {
+      transferToken()
+    } else if (currentAction.value === 'pushTokenTip') {
+      pushUSDC()
+    }
   }
 })
 watch(approveError, () => {
@@ -562,9 +592,9 @@ watch(approveError, () => {
 })
 
 const pushUSDC = async () => {
+  currentAction.value = 'pushTokenTip'
   if (!props.team.bankAddress || !tokenAmountUSDC.value) return
   const amount = BigInt(Number(tokenAmountUSDC.value) * 1e6)
-  console.log(amount)
 
   try {
     const allowance = await readContract(config, {
@@ -574,8 +604,7 @@ const pushUSDC = async () => {
       args: [currentAddress as Address, props.team.bankAddress as Address]
     })
     console.log('allowance', allowance)
-    // If allowance is insufficient, request approval
-    const currentAllowance = allowance ? allowance.toString() : 0
+    const currentAllowance = allowance ? allowance.toString() : 0n
     if (currentAllowance < amount) {
       approve({
         address: USDC_ADDRESS as Address,
@@ -591,28 +620,23 @@ const pushUSDC = async () => {
       args: [membersAddress.value, USDC_ADDRESS, amount]
     })
   } catch (error) {
-    addErrorToast('Failed to push token tips')
     console.error(error)
   }
 }
 
 const depositToken = async () => {
+  currentAction.value = 'depositToken'
   if (!props.team.bankAddress || !tokenAmount.value) return
-
-  // First approve the bank to spend tokens
-  const amount = BigInt(Number(tokenAmount.value) * 1e6) // USDC has 6 decimals
+  const amount = BigInt(Number(tokenAmount.value) * 1e6)
 
   try {
-    // Check current allowance
     const allowance = await readContract(config, {
       address: USDC_ADDRESS as Address,
       abi: ERC20ABI,
       functionName: 'allowance',
       args: [currentAddress as Address, props.team.bankAddress as Address]
     })
-    console.log('allowance', allowance)
-    // If allowance is insufficient, request approval
-    const currentAllowance = allowance ? allowance.toString() : 0
+    const currentAllowance = allowance ? allowance.toString() : 0n
     if (currentAllowance < amount) {
       approve({
         address: USDC_ADDRESS as Address,
@@ -621,21 +645,19 @@ const depositToken = async () => {
         args: [props.team.bankAddress as Address, amount]
       })
     }
-
-    // Now deposit the tokens
     writeTokenDeposit({
       address: props.team.bankAddress as Address,
       abi: BankABI,
       functionName: 'depositToken',
-      args: [USDC_ADDRESS, amount]
+      args: [USDC_ADDRESS as Address, amount]
     })
   } catch (error) {
-    addErrorToast('Failed to approve token spending')
     console.error(error)
   }
 }
 
 const transferToken = async () => {
+  currentAction.value = 'transferToken'
   if (!props.team.bankAddress || !tokenAmount.value || !tokenRecipient.value) return
   const amount = BigInt(Number(tokenAmount.value) * 1e6) // USDC has 6 decimals
 
@@ -656,27 +678,25 @@ const transferToken = async () => {
         functionName: 'approve',
         args: [props.team.bankAddress as Address, amount]
       })
+    } else {
+      writeTokenTransfer({
+        address: props.team.bankAddress as Address,
+        abi: BankABI,
+        functionName: 'transferToken',
+        args: [USDC_ADDRESS, tokenRecipient.value as Address, amount]
+      })
     }
-    writeTokenTransfer({
-      address: props.team.bankAddress as Address,
-      abi: BankABI,
-      functionName: 'transferToken',
-      args: [USDC_ADDRESS, tokenRecipient.value as Address, amount]
-    })
   } catch (error) {
-    addErrorToast('Failed to transfer token')
     console.error(error)
   }
 }
 watch(tokenDepositError, () => {
   if (tokenDepositError.value) {
-    addErrorToast('Failed to deposit token')
     console.log(tokenDepositError.value)
   }
 })
 watch(tokenTransferError, () => {
   if (tokenTransferError.value) {
-    addErrorToast('Failed to transfer token')
     console.log(tokenTransferError.value)
   }
 })
