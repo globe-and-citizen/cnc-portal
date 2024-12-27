@@ -1,6 +1,6 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, MockERC20 } from '../typechain-types'
+import { Bank, MockERC20, Tips } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe('Bank', () => {
@@ -11,14 +11,19 @@ describe('Bank', () => {
   let contractor: SignerWithAddress
   let member1: SignerWithAddress
   let member2: SignerWithAddress
+  let tipsProxy: Tips
 
   async function deployContracts() {
     // Deploy Bank contract
+    const TipsImplementation = await ethers.getContractFactory('Tips')
+    tipsProxy = (await upgrades.deployProxy(TipsImplementation, [], {
+      initializer: 'initialize'
+    })) as unknown as Tips
     const BankImplementation = await ethers.getContractFactory('Bank')
     bankProxy = (await upgrades.deployProxy(
       BankImplementation,
       [
-        ethers.ZeroAddress, // tips address
+        await tipsProxy.getAddress(), // tips address
         await mockUSDT.getAddress(),
         await mockUSDC.getAddress(),
         await owner.getAddress()
@@ -48,7 +53,7 @@ describe('Bank', () => {
     context('Deployment', () => {
       it('should set the correct owner and initial values', async () => {
         expect(await bankProxy.owner()).to.eq(await owner.getAddress())
-        expect(await bankProxy.tipsAddress()).to.eq(ethers.ZeroAddress)
+        expect(await bankProxy.tipsAddress()).to.eq(await tipsProxy.getAddress())
         expect(await bankProxy.supportedTokens('USDT')).to.eq(await mockUSDT.getAddress())
         expect(await bankProxy.supportedTokens('USDC')).to.eq(await mockUSDC.getAddress())
       })
@@ -111,7 +116,7 @@ describe('Bank', () => {
 
         await expect(bankProxy.changeTipsAddress(newTipsAddress.address))
           .to.emit(bankProxy, 'TipsAddressChanged')
-          .withArgs(owner.address, ethers.ZeroAddress, newTipsAddress.address)
+          .withArgs(owner.address, await tipsProxy.getAddress(), newTipsAddress.address)
 
         await bankProxy.pause()
         expect(await bankProxy.paused()).to.be.true
@@ -246,7 +251,47 @@ describe('Bank', () => {
           .withArgs(owner.address, contractor.address, await mockUSDT.getAddress(), amount)
       })
     })
+    context('Bank Tips', () => {
+      const tipAmount = ethers.parseEther('3')
+      const amountPerAddress = ethers.parseEther('1')
+      const recipients: string[] = []
 
+      beforeEach(async () => {
+        recipients.length = 0
+        recipients.push(contractor.address, member1.address, member2.address)
+
+        // Fund the bank contract with ETH
+        await owner.sendTransaction({
+          to: await bankProxy.getAddress(),
+          value: ethers.parseEther('10')
+        })
+
+        // Set the tips address
+        await bankProxy.changeTipsAddress(await tipsProxy.getAddress())
+      })
+
+      it('should allow the owner to send and push tips', async () => {
+        // Send tips
+        await expect(bankProxy.sendTip(recipients, tipAmount))
+          .to.emit(bankProxy, 'SendTip')
+          .withArgs(owner.address, recipients, tipAmount)
+
+        // Verify balances after send
+        expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
+        expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
+        expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
+
+        // Push tips
+        await expect(bankProxy.pushTip(recipients, tipAmount))
+          .to.emit(bankProxy, 'PushTip')
+          .withArgs(owner.address, recipients, tipAmount)
+      })
+
+      it('should not allow other addresses to send or push tips', async () => {
+        await expect(bankProxy.connect(member1).sendTip(recipients, tipAmount)).to.be.reverted
+        await expect(bankProxy.connect(member1).pushTip(recipients, tipAmount)).to.be.reverted
+      })
+    })
     context('Token Tips', () => {
       const tipAmount = ethers.parseUnits('30', 6)
       const amountPerAddress = ethers.parseUnits('10', 6) // 30 / 3 recipients
