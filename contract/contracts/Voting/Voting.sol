@@ -230,6 +230,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
             emit BoardOfDirectorsSet(winnerList);
             proposal.hasTie = false;
+            proposal.isActive = !proposal.isActive;
         }
         else if (option == Types.TieBreakOption.INCREASE_WINNER_COUNT) {
             proposal.winnerCount += 1;
@@ -241,6 +242,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
             emit BoardOfDirectorsSet(winnerList);
             proposal.hasTie = false;
+            proposal.isActive = !proposal.isActive;
         }
         else if (option == Types.TieBreakOption.FOUNDER_CHOICE) {
             // The founder will need to call selectWinner to choose the winner
@@ -259,6 +261,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             );
             emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
             proposal.hasTie = false;
+            proposal.isActive = !proposal.isActive;
         }
     }
 
@@ -291,6 +294,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
         emit BoardOfDirectorsSet(winnerList);
         proposal.hasTie = false;
+        proposal.isActive = !proposal.isActive;
     }
 
     /// @notice Internal function to get all voter addresses from a proposal
