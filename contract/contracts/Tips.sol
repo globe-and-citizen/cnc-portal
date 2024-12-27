@@ -4,12 +4,12 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
     mapping(address => uint256) private balance;
     uint8 public pushLimit;
     uint8 public constant  MAX_PUSH_LIMIT = 100;
-    uint256 public remainder;
+    uint256 remainder;
 
     event PushTip(
         address from,
@@ -23,9 +23,7 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
         uint256 totalAmount,
         uint256 amountPerAddress
     );
-
     event TipWithdrawal(address to, uint256 amount);
-    event TokenTipWithdrawal(address to, address token, uint256 amount);
 
     function initialize() public initializer {
         __Ownable_init(msg.sender);
@@ -61,7 +59,6 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
         emit PushTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
 
-
     function sendTip(address [] calldata _teamMembersAddresses) positiveAmountRequired whenNotPaused external payable {
         require(_teamMembersAddresses.length > 0, "Must have at least one team member");
         uint totalAmount = msg.value + remainder;
@@ -78,7 +75,6 @@ contract Tips  is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrad
 
         emit SendTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
     }
-
 
     // TODO: Protection for reentrancy attack
     function withdraw() external nonReentrant whenNotPaused{
