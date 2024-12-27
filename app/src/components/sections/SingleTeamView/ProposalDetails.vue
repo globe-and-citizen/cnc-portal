@@ -112,6 +112,7 @@ import VotingABI from '@/artifacts/abi/voting.json'
 import type { Address } from 'viem'
 
 const props = defineProps(['proposal', 'team'])
+const emits = defineEmits(['getTeam'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 const userAddress = useUserDataStore().address
 
@@ -197,12 +198,14 @@ const selectWinner = (winner: string) => {
 watch(isConfirmingResolveTie, (isConfirming: boolean, wasConfirming: boolean) => {
   if (wasConfirming && !isConfirming && isConfirmedResolveTie.value) {
     addSuccessToast('Tie break option selected successfully')
+    emits('getTeam')
   }
 })
 
 watch(isConfirmingSelectWinner, (isConfirming: boolean, wasConfirming: boolean) => {
   if (wasConfirming && !isConfirming && isConfirmedSelectWinner.value) {
     addSuccessToast('Winner selected successfully')
+    emits('getTeam')
   }
 })
 
