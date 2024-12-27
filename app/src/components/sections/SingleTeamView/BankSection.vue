@@ -4,16 +4,24 @@
     <div class="divider m-0"></div>
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <span>Bank Balance</span>
-          <div class="font-extrabold text-4xl">
-            <span class="inline-block min-w-16 h-10">
-              <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-              <span v-else>{{ teamBalance?.formatted }} </span>
-            </span>
-            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+        <div class="space-y-2">
+          <div>
+            <span>Bank Balance</span>
+            <div class="font-extrabold text-4xl">
+              <span class="inline-block min-w-16 h-10">
+                <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
+                <span v-else>{{ teamBalance?.formatted }} </span>
+              </span>
+              <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+            </div>
+            <span class="text-xs sm:text-sm">≈ $ 1.28</span>
           </div>
-          <span class="text-xs sm:text-sm">≈ $ 1.28</span>
+          <div>
+            <span>Token Balance</span>
+            <div class="text-lg">
+              <div>USDC: {{ usdcBalance ? Number(usdcBalance) / 1e18 : '0' }}</div>
+            </div>
+          </div>
         </div>
         <div class="grid grid-cols-3 gap-2">
           <Button
@@ -42,14 +50,14 @@
             @click="() => (tokenDepositModal = true)"
             class="btn btn-sm btn-secondary"
           >
-            Deposit Token
+            Deposit USDC
           </Button>
           <Button
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenTransferModal = true"
             class="btn btn-sm btn-secondary"
           >
-            Transfer Token
+            Transfer USDC
           </Button>
         </div>
       </div>
@@ -140,16 +148,7 @@
 
     <ModalComponent v-model="tokenDepositModal">
       <div class="flex flex-col gap-4 justify-start">
-        <span class="font-bold text-xl sm:text-2xl">Deposit Token</span>
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Select Token</span>
-          </label>
-          <select class="select select-bordered" v-model="selectedToken">
-            <option value="USDT">USDT</option>
-            <option value="USDC">USDC</option>
-          </select>
-        </div>
+        <span class="font-bold text-xl sm:text-2xl">Deposit USDC</span>
         <div class="form-control w-full">
           <label class="label">
             <span class="label-text">Amount</span>
@@ -168,7 +167,7 @@
             color="primary"
           />
           <button v-else class="btn btn-primary w-full sm:w-44 text-center" @click="depositToken">
-            Deposit Token
+            Deposit USDC
           </button>
         </div>
       </div>
@@ -176,16 +175,7 @@
 
     <ModalComponent v-model="tokenTransferModal">
       <div class="flex flex-col gap-4 justify-start">
-        <span class="font-bold text-xl sm:text-2xl">Transfer Token</span>
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Select Token</span>
-          </label>
-          <select class="select select-bordered" v-model="selectedToken">
-            <option value="USDT">USDT</option>
-            <option value="USDC">USDC</option>
-          </select>
-        </div>
+        <span class="font-bold text-xl sm:text-2xl">Transfer USDC</span>
         <div class="form-control w-full">
           <label class="label">
             <span class="label-text">To Address</span>
@@ -215,7 +205,7 @@
             color="primary"
           />
           <button v-else class="btn btn-primary w-full sm:w-44 text-center" @click="transferToken">
-            Transfer Token
+            Transfer USDC
           </button>
         </div>
       </div>
@@ -239,10 +229,12 @@ import { useBalance, useReadContract } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction } from '@/composables/bod'
 import { encodeFunctionData, parseEther, type Address, parseUnits } from 'viem'
+import { USDC_ADDRESS } from '@/constant'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -470,14 +462,14 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
 
 const tokenDepositModal = ref(false)
 const tokenTransferModal = ref(false)
-const selectedToken = ref('USDT')
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
 
 const {
   writeContract: writeTokenDeposit,
   isPending: tokenDepositLoading,
-  data: tokenDepositHash
+  data: tokenDepositHash,
+  error: tokenDepositError
 } = useWriteContract()
 
 const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
@@ -487,7 +479,8 @@ const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
 const {
   writeContract: writeTokenTransfer,
   isPending: tokenTransferLoading,
-  data: tokenTransferHash
+  data: tokenTransferHash,
+  error: tokenTransferError
 } = useWriteContract()
 
 const { isLoading: isConfirmingTokenTransfer } = useWaitForTransactionReceipt({
@@ -500,7 +493,7 @@ const depositToken = async () => {
     address: props.team.bankAddress as Address,
     abi: BankABI,
     functionName: 'depositToken',
-    args: [selectedToken.value, parseUnits(tokenAmount.value, 18)]
+    args: [USDC_ADDRESS, parseEther(tokenAmount.value.toString())]
   })
 }
 
@@ -510,10 +503,20 @@ const transferToken = async () => {
     address: props.team.bankAddress as Address,
     abi: BankABI,
     functionName: 'transferToken',
-    args: [selectedToken.value, tokenRecipient.value as Address, parseUnits(tokenAmount.value, 18)]
+    args: [USDC_ADDRESS, tokenRecipient.value as Address, parseEther(tokenAmount.value.toString())]
   })
 }
-
+watch(tokenDepositError, () => {
+  if (tokenDepositError.value) {
+    addErrorToast('Failed to deposit token')
+    console.log(tokenDepositError.value)
+  }
+})
+watch(tokenTransferError, () => {
+  if (tokenTransferError.value) {
+    addErrorToast('Failed to transfer token')
+  }
+})
 watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Token deposited successfully')
@@ -531,8 +534,18 @@ watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
   }
 })
 
+const { data: usdcBalance, refetch: fetchUsdcBalance } = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [props.team.bankAddress as Address]
+})
+
 onMounted(async () => {
-  if (props.team.bankAddress) fetchBalance()
+  if (props.team.bankAddress) {
+    fetchBalance()
+    fetchUsdcBalance()
+  }
   await getOwner()
   await executeGetBoardOfDirectors()
 })
