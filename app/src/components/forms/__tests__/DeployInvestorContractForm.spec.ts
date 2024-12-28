@@ -1,7 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import DeployInvestorContractForm from '../DeployInvestorContractForm.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 describe('DeployInvestorContractForm.vue', () => {
   it('adds the title (Deploy all) if isDeployAll is true', () => {
@@ -51,7 +51,7 @@ describe('DeployInvestorContractForm.vue', () => {
         isDeployAll: false
       }
     })
-    expect(wrapper.findComponent(LoadingButton).exists()).toBeTruthy()
+    expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
   })
 
   it('should show error message if name is empty', async () => {
