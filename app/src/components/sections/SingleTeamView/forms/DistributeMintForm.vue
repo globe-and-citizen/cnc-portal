@@ -104,7 +104,6 @@
     <div class="text-center">
       <ButtonUI :loading="loading" :disabled="loading" variant="primary" class="w-44 text-center" @click="onSubmit()" 
       data-test="submit-button">
-      <LoadingButton v-if="loading" class="w-44" color="primary" />
         Distribute Mint
       </ButtonUI>
     </div>
