@@ -516,13 +516,21 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
       let memberTeamsData = await prisma.memberTeamsData.findMany({
         where: {
           teamId: Number(id)
+        },
+        include: {
+          user: {
+            select: {
+              name: true
+            }
+          }
         }
       })
       let expenseAccountData = memberTeamsData.map(item => {
         if (item.expenseAccountData)
           return {
             ...JSON.parse(item.expenseAccountData), 
-            signature: item.expenseAccountSignature
+            signature: item.expenseAccountSignature,
+            name: item.user.name
           }
       })
 
