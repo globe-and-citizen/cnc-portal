@@ -74,14 +74,54 @@
       </table>
 
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex justify-center gap-2 mt-4 pb-4">
-        <button class="btn btn-sm" :disabled="currentPage === 1" @click="currentPage--">
-          Previous
-        </button>
-        <span class="flex items-center">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button class="btn btn-sm" :disabled="currentPage === totalPages" @click="currentPage++">
-          Next
-        </button>
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 pb-4 px-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm">Items per page:</span>
+          <select v-model="itemsPerPage" class="select select-bordered select-sm">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            class="btn btn-sm btn-outline"
+            :disabled="currentPage === 1"
+            @click="currentPage = 1"
+          >
+            First
+          </button>
+          <button class="btn btn-sm" :disabled="currentPage === 1" @click="currentPage--">
+            Previous
+          </button>
+          <div class="join">
+            <button
+              v-for="page in displayedPages"
+              :key="page"
+              class="join-item btn btn-sm"
+              :class="{ 'btn-active': page === currentPage }"
+              @click="currentPage = Number(page)"
+            >
+              {{ page }}
+            </button>
+          </div>
+          <button class="btn btn-sm" :disabled="currentPage === totalPages" @click="currentPage++">
+            Next
+          </button>
+          <button
+            class="btn btn-sm btn-outline"
+            :disabled="currentPage === totalPages"
+            @click="currentPage = totalPages"
+          >
+            Last
+          </button>
+        </div>
+
+        <div class="text-sm">
+          Page {{ currentPage }} of {{ totalPages }} ({{ filteredTransactions.length }} items)
+        </div>
       </div>
     </div>
   </div>
@@ -96,6 +136,7 @@ import { formatEther, type Address } from 'viem'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import type { Team } from '@/types'
 
 interface Transaction {
   type: 'Deposit' | 'Deposit Token' | 'Transfer' | 'Transfer Token'
@@ -134,11 +175,7 @@ interface TokenTx {
 }
 
 const props = defineProps<{
-  team: {
-    bankAddress?: string | null
-    expenseAccountAddress?: string | null
-    cashRemunerationEip712Address?: string | null
-  }
+  team: Partial<Team>
 }>()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -172,6 +209,37 @@ const paginatedTransactions = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
   return filteredTransactions.value.slice(start, end)
+})
+
+const displayedPages = computed(() => {
+  const delta = 2
+  const range = []
+  const rangeWithDots: (number | string)[] = []
+  let l: number | undefined
+
+  for (let i = 1; i <= totalPages.value; i++) {
+    if (
+      i === 1 ||
+      i === totalPages.value ||
+      (i >= currentPage.value - delta && i <= currentPage.value + delta)
+    ) {
+      range.push(i)
+    }
+  }
+
+  range.forEach((i) => {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1)
+      } else if (i - l !== 1) {
+        rangeWithDots.push('...')
+      }
+    }
+    rangeWithDots.push(i)
+    l = i
+  })
+
+  return rangeWithDots
 })
 
 // Methods
@@ -430,6 +498,10 @@ const formatAddress = (address: string, truncate = true) => {
 
 // Watchers
 watch([fromDate, toDate], () => {
+  currentPage.value = 1
+})
+
+watch(itemsPerPage, () => {
   currentPage.value = 1
 })
 
