@@ -5,10 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Team } from '@/types'
-
-// vi.mock('@/stores', () => ({
-//   useUserDataStore: vi.fn()
-// }))
+import ButtonUI from '@/components/ButtonUI.vue'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({
@@ -86,16 +83,14 @@ describe('CashRemunerationSection.vue', () => {
   }
 
   describe('Render', () => {
-    it('should hide submit button when submitting hours', async () => {
+    it('should load when submitting hours', async () => {
       const wrapper = createComponent()
 
       ;(wrapper.vm as unknown as ComponentData).isSubmittingHours = true
       await wrapper.vm.$nextTick()
 
-      const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]')
-      const submittingHoursButton = wrapper.find('[data-test="submitting-hours-button"]')
-      expect(submittingHoursButton.exists()).toBeTruthy()
-      expect(submitHoursButton.exists()).toBeFalsy()
+      const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]').findComponent(ButtonUI)
+      expect(submitHoursButton.props().loading).toBe(true)
     })
     it('should show action column if owner', async () => {
       vi.mock('@/composables/useCustomFetch', () => {
@@ -180,8 +175,6 @@ describe('CashRemunerationSection.vue', () => {
 
       expect(maxHoursInput.exists()).toBeTruthy()
       expect(submitHoursButton.exists()).toBeTruthy()
-      // expect((maxHoursInput.element as HTMLInputElement).disabled).toBe(true)
-      // expect((submitHoursButton.element as HTMLButtonElement).disabled).toBe(true)
     })
     it('should display hours worked error if input is invalid', async () => {
       const wrapper = createComponent()
