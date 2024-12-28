@@ -124,6 +124,7 @@
       </div>
     </ModalComponent>
   </div>
+  <InvoiceSection :team="team" />
   <!-- <BankManagement :isBod="isBod" :team="team" :bankOwner="owner" :loadingOwner="loadingOwner" /> -->
 </template>
 <script setup lang="ts">
@@ -146,6 +147,7 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
+import InvoiceSection from './InvoiceSection.vue'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)
@@ -158,7 +160,15 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 
 const depositModal = ref(false)
 const props = defineProps<{
-  team: Pick<Team, 'bankAddress' | 'boardOfDirectorsAddress' | 'ownerAddress' | 'members'>
+  team: Pick<
+    Team,
+    | 'bankAddress'
+    | 'boardOfDirectorsAddress'
+    | 'ownerAddress'
+    | 'members'
+    | 'expenseAccountAddress'
+    | 'cashRemunerationEip712Address'
+  >
 }>()
 const {
   sendTransaction,
