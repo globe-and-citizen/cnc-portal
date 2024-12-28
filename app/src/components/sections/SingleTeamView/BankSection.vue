@@ -27,6 +27,7 @@
           <Button
             v-if="team.bankAddress"
             @click="() => (depositModal = true)"
+            data-test="deposit-button"
             class="btn btn-sm btn-secondary"
           >
             Deposit
@@ -178,7 +179,12 @@
             class="w-full sm:w-44"
             color="primary"
           />
-          <button class="btn btn-primary w-full sm:w-44 text-center" @click="pushUSDC" v-else>
+          <button
+            class="btn btn-primary w-full sm:w-44 text-center"
+            @click="pushUSDC"
+            data-test="tip-usdc-button"
+            v-else
+          >
             Tip USDC to Team
           </button>
         </div>
@@ -255,7 +261,12 @@
             class="w-full sm:w-44"
             color="primary"
           />
-          <button v-else class="btn btn-primary w-full sm:w-44 text-center" @click="transferToken">
+          <button
+            v-else
+            class="btn btn-primary w-full sm:w-44 text-center"
+            @click="transferToken"
+            data-test="transfer-usdc-button"
+          >
             Transfer USDC
           </button>
         </div>

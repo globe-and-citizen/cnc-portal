@@ -5,6 +5,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import type { Action, Team } from '@/types'
 import type { ComponentPublicInstance } from 'vue'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
 interface BankSectionVM extends ComponentPublicInstance {
   tokenDepositModal: boolean
@@ -14,6 +15,9 @@ interface BankSectionVM extends ComponentPublicInstance {
   tokenAmountUSDC: string
   tokenRecipient: string
   usdcBalance: bigint | null
+  depositError: unknown
+  transferError: unknown
+  tipError: unknown
 }
 
 vi.mock('@/stores/user', () => ({
@@ -22,12 +26,15 @@ vi.mock('@/stores/user', () => ({
   }))
 }))
 
+vi.mock('@/stores/useToastStore')
+
 const team = {
   bankAddress: '0xd6307a4B12661a5254CEbB67eFA869E37d0421E6',
   ownerAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
   boardOfDirectorsAddress: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E',
   members: []
 }
+
 const mockUseReadContract = {
   data: ref<string | null>(null),
   isLoading: ref(false),
@@ -37,27 +44,30 @@ const mockUseReadContract = {
 
 const mockUseWriteContract = {
   writeContract: vi.fn(),
-  error: ref(null),
+  error: ref<Error | null>(null),
   isPending: ref(false),
-  data: ref(null)
+  data: ref<`0x${string}` | null>(null)
 }
 
 const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
 }
+
 const mockUseSendTransaction = {
   isPending: ref(false),
-  error: ref(false),
-  data: ref<string>(''),
+  error: ref<Error | null>(null),
+  data: ref<`0x${string}` | null>(null),
   sendTransaction: vi.fn()
 }
+
 const mockUseBalance = {
   data: ref<string | null>(null),
   isLoading: ref(false),
   error: ref(null),
   refetch: vi.fn()
 }
+
 const mockUseAddAction = {
   loadingContract: ref(false),
   actionCount: ref<BigInt | null>(null),
@@ -69,6 +79,15 @@ const mockUseAddAction = {
   isConfirming: ref(false),
   error: ref(null)
 }
+
+const createComponent = () => {
+  return mount(BankSection, {
+    props: {
+      team
+    }
+  })
+}
+
 vi.mock('@/composables/bod', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
@@ -102,7 +121,6 @@ describe('BankSection', () => {
       }
     })
   })
-
   describe('Render', () => {
     it('should show team bank address', () => {
       expect(wrapper.find('[data-test="team-bank-address"]').exists()).toBeTruthy()
@@ -166,6 +184,28 @@ describe('BankSection', () => {
       mockUseReadContract.data.value = '1000000' // 1 USDC (6 decimals)
       await wrapper.vm.$nextTick()
       expect(wrapper.text()).toContain('USDC: 1')
+    })
+  })
+
+  describe('Contract Interactions', () => {
+    describe('error handling', () => {
+      it('should handle transfer errors', async () => {
+        const wrapper = createComponent()
+        ;(wrapper.vm as unknown as BankSectionVM).transferError = new Error('Transfer failed')
+        await wrapper.vm.$nextTick()
+
+        const { addErrorToast } = useToastStore()
+        expect(addErrorToast).toHaveBeenCalledWith('Failed to approve token spending')
+      })
+
+      it('should handle tip errors', async () => {
+        const wrapper = createComponent()
+        ;(wrapper.vm as unknown as BankSectionVM).tipError = new Error('Tip failed')
+        await wrapper.vm.$nextTick()
+
+        const { addErrorToast } = useToastStore()
+        expect(addErrorToast).toHaveBeenCalledWith('Failed to approve token spending')
+      })
     })
   })
 })
