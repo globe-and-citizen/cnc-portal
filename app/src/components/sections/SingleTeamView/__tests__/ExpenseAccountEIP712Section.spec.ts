@@ -218,7 +218,8 @@ const budgetData = {
 
 const mockExpenseData = [
   {
-    approvedAddress: `0x123`,
+    approvedAddress: `0x0123456789012345678901234567890123456789`,
+    name: 'John Doe',
     budgetData: [
       { budgetType: 0, value: budgetData.txsPerPeriod },
       { budgetType: 1, value: budgetData.amountPerPeriod },
@@ -228,7 +229,7 @@ const mockExpenseData = [
     signature: '0xSignature'
   },
   {
-    approvedAddress: `0x456`,
+    approvedAddress: `0xabcdef1234abcdef1234abcdef1234abcdef1234`,
     budgetData: [
       { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
       { budgetType: 1, value: budgetData.amountPerPeriod * 2 },
@@ -388,8 +389,8 @@ describe('ExpenseAccountSection', () => {
       expect(rows).toHaveLength(mockExpenseData.length)
 
       const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(mockExpenseData[0].approvedAddress)
-      expect(firstRowCells[1].text()).toBe(new Date(mockExpenseData[0].expiry).toLocaleDateString())
+      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...56789`)
+      expect(firstRowCells[1].text()).toBe(new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US'))
       expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
       expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
@@ -397,9 +398,9 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[5].find('button').text()).toBe('Deactivate')
 
       const secondRowCells = rows[1].findAll('td')
-      expect(secondRowCells[0].text()).toBe(mockExpenseData[1].approvedAddress)
+      expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
       expect(secondRowCells[1].text()).toBe(
-        new Date(mockExpenseData[1].expiry).toLocaleDateString()
+        new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
       )
       expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
       expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
