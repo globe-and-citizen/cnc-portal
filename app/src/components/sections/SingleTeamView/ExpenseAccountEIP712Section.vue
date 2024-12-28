@@ -185,11 +185,11 @@
 
     <div
       v-if="manyExpenseAccountData"
-      class="stats bg-green-100 flex text-primary-content border-outline p-5 overflow-visible"
+      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
-      <p>Approved Addresses</p>
+      <span class="text-2xl font-bold pl-4">Approved Addresses</span>
       <div class="overflow-x-auto" data-test="approvals-list-table">
-        <table class="table table-zebra">
+        <table class="table">
           <!-- head -->
           <thead class="text-sm font-bold">
             <tr>
@@ -203,8 +203,29 @@
           </thead>
           <tbody>
             <tr v-for="(data, index) in manyExpenseAccountData" :key="index">
-              <td>{{ data.approvedAddress }}</td>
-              <td>{{ new Date(data.expiry).toLocaleDateString() }}</td>
+              <td class="flex flex-row justify-start gap-4">
+                <div role="button" class="relative group">
+                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
+                    <img
+                      alt="User Avatar"
+                      :src="
+                        data.avatarUrl ||
+                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+                      "
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col text-gray-600">
+                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
+                    {{ data.name || 'User' }}
+                  </p>
+                  <p class="text-sm" data-test="formatted-address">
+                    {{ `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}` }}
+                  </p>
+                </div>
+              </td>
+              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
               <td>{{ data.budgetData[2].value }}</td>
               <td>{{ `${getLimitBalance(data.signature, 0)}/${data.budgetData[0].value}` }}</td>
               <td>{{ `${getLimitBalance(data.signature, 1)}/${data.budgetData[1].value}` }}</td>
