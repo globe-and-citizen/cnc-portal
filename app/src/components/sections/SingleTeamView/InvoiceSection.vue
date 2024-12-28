@@ -128,6 +128,7 @@ interface TokenTx {
   to: string
   value: string
   contractAddress: string
+  functionName: string
   tokenName: string
   tokenSymbol: string
 }
@@ -186,9 +187,9 @@ const fetchTransactions = async () => {
   loading.value = true
   try {
     const addresses = [
-      props.team.bankAddress,
-      props.team.expenseAccountAddress,
-      props.team.cashRemunerationEip712Address
+      props.team.bankAddress?.toLowerCase(),
+      props.team.expenseAccountAddress?.toLowerCase(),
+      props.team.cashRemunerationEip712Address?.toLowerCase()
     ].filter(Boolean) as Address[]
 
     if (addresses.length === 0) return
@@ -245,6 +246,7 @@ const fetchTransactions = async () => {
 
                 // Extract just the function name without parameters
                 const baseFnName = fnName.split('(')[0]
+                console.log('baseFnName', baseFnName)
 
                 if (baseFnName === 'deposit') {
                   return {
@@ -293,20 +295,21 @@ const fetchTransactions = async () => {
       // Process token transactions (these are always token transfers)
       const tokenTxs =
         tokenData.status === '1' && tokenData.result
-          ? (tokenData.result as TokenTx[]).map(
-              (tx) =>
-                ({
-                  type: addresses.includes(tx.to.toLowerCase() as Address)
-                    ? ('Deposit Token' as const)
-                    : ('Transfer Token' as const),
-                  from: tx.from,
-                  to: tx.to,
-                  amount: BigInt(tx.value),
-                  hash: tx.hash,
-                  date: Number(tx.timeStamp) * 1000,
-                  isToken: true
-                }) satisfies Transaction
-            )
+          ? (tokenData.result as TokenTx[]).map((tx: TokenTx) => {
+              console.log('Token tx:', tx.functionName)
+
+              return {
+                type: addresses.includes(tx.to.toLowerCase() as Address)
+                  ? ('Deposit Token' as const)
+                  : ('Transfer Token' as const),
+                from: tx.from,
+                to: tx.to,
+                amount: BigInt(tx.value),
+                hash: tx.hash,
+                date: Number(tx.timeStamp) * 1000,
+                isToken: true
+              } satisfies Transaction
+            })
           : []
 
       return [...normalTxs, ...tokenTxs] as Transaction[]
