@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-5 mt-4">
+  <div class="flex flex-col gap-5 mt-4" data-test="edit-user-modal">
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24" data-test="name-label">Name</span>
       <input

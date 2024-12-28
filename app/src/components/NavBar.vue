@@ -1,7 +1,5 @@
 <template>
-  <nav
-    class="fixed top-0 left-0 right-0 z-50 shadow-lg transition-all duration-300 ease-in-out bg-white"
-  >
+  <nav class="flex justify-end border-0 border-b-2 border-slate-100 bg-white">
     <div class="flex justify-between py-3 px-3">
       <div class="flex items-center justify-between lg:w-80">
         <div class="relative group">
@@ -23,7 +21,6 @@
           </ButtonUI>
         </div>
       </div>
-
       <div class="flex items-center space-x-2 sm:space-x-4">
         <div class="dropdown dropdown-end">
           <div
@@ -70,7 +67,7 @@
 
         <NotificationDropdown />
 
-        <div class="dropdown dropdown-end">
+        <div class="dropdown dropdown-end" data-test="profile">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
             <div class="w-8 sm:w-10 rounded-full ring ring-white ring-opacity-30 ring-offset-2">
               <img
@@ -101,6 +98,7 @@
             </li>
             <li>
               <a
+                data-test="logout"
                 @click="logout()"
                 class="hover:bg-opacity-10 transition-all duration-300 text-sm sm:text-base"
               >
@@ -117,7 +115,6 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
-import { Bars3Icon } from '@heroicons/vue/24/solid'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
@@ -128,6 +125,7 @@ defineProps<{
   withdrawLoading: boolean
   balanceLoading: boolean
   balance: string
+  isCollapsed: boolean
 }>()
 </script>
 

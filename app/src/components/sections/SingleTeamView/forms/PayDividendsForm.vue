@@ -9,7 +9,7 @@
 
     <h6>
       Current Bank contract balance <span v-if="balanceLoading">...</span>
-      <span v-else> {{ formatEther(bankBalance?.value!) }}</span>
+      <span v-else> {{ formatEther(bankBalance?.value ?? 0n) }}</span>
       {{ NETWORK.currencySymbol }}
     </h6>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">

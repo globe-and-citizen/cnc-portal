@@ -67,20 +67,38 @@
             data-test="max-hours-input"
           />
         </label>
+        <div
+          data-test="max-weekly-hours-error"
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-for="error of v$.maxWeeklyHours.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
         <label class="input input-bordered flex items-center gap-2 input-md mt-2">
           <span class="w-32">Hourly Rate</span>
           |
-          <input type="text" class="grow" v-model="hourlyRate" placeholder="Enter hourly rate..." />
+          <input
+            type="text"
+            class="grow"
+            v-model="hourlyRate"
+            placeholder="Enter hourly rate..."
+            data-test="hourly-rate-input"
+          />
           | {{ `${NETWORK.currencySymbol} ` }}
         </label>
+        <div
+          data-test="hourly-rate-error"
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-for="error of v$.hourlyRate.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
       </div>
       <div class="modal-action justify-center">
         <ButtonUI v-if="isMemberWageSaving" loading variant="success" />
-        <ButtonUI
-          v-else
-          variant="success"
-          @click="addMemberWageData"
-          data-test="delete-member-confirm-button"
+        <ButtonUI v-else variant="success" @click="addMemberWageData" data-test="add-wage-button"
           >Save</ButtonUI
         >
         <ButtonUI 
@@ -104,6 +122,8 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
+import { useVuelidate } from '@vuelidate/core'
+import { numeric, required, helpers } from '@vuelidate/validators'
 
 interface Member extends MemberInput {
   index: number
@@ -125,6 +145,23 @@ const showSetMemberWageModal = ref(false)
 const maxWeeklyHours = ref('0')
 const hourlyRate = ref('0')
 const wageData = ref<{ maxHoursPerWeek: number; hourlyRate: number } | {}>({})
+
+const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
+  return parseFloat(value) > 0
+})
+const rules = {
+  maxWeeklyHours: {
+    required,
+    numeric,
+    notZero
+  },
+  hourlyRate: {
+    required,
+    numeric,
+    notZero
+  }
+}
+const v$ = useVuelidate(rules, { maxWeeklyHours, hourlyRate })
 
 // useFetch instance for deleting member
 const {
@@ -191,9 +228,13 @@ watch(addMemberWageDataError, (newVal) => {
 })
 
 const addMemberWageData = async () => {
+  v$.value.$touch()
+  if (v$.value.$invalid) {
+    return
+  }
   wageData.value = {
     maxHoursPerWeek: Number(maxWeeklyHours.value),
-    hourlyRate: Number(hourlyRate.value)
+    hourlyRate: hourlyRate.value
   }
   console.log(`wageData`, wageData.value)
   await addMemberWageDataAPI()

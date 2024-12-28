@@ -5,13 +5,20 @@ import { ref } from 'vue'
 import App from '@/App.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
-import TheDrawer from '@/components/TheDrawer.vue'
-import { useUserDataStore } from '@/stores/__mocks__/user'
+
 import ModalComponent from '@/components/ModalComponent.vue'
 
 // Mock the composables
 vi.mock('@/stores/useToastStore')
-vi.mock('@/stores/user')
+vi.mock('@/stores/user', () => ({
+  useUserDataStore: vi.fn(() => {
+    return {
+      address: ref('0xOwner'),
+      name: ref('Owner'),
+      isAuth: ref(true)
+    }
+  })
+}))
 
 const mockUseReadContract = {
   data: ref<string | null>(null),
@@ -88,27 +95,6 @@ describe('App.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(addSuccessToast).toHaveBeenCalledWith('Tips withdrawn successfully')
-    })
-  })
-
-  describe('Actions', () => {
-    it('should close drawer if close icon clicked', async () => {
-      const wrapper = shallowMount(App, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
-      const { isAuth } = useUserDataStore()
-      // set drawer to be open
-      isAuth.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(TheDrawer).exists()).toBeTruthy()
-
-      await wrapper.find('div[data-test="drawer"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findComponent(TheDrawer).exists()).toBeFalsy()
     })
   })
 

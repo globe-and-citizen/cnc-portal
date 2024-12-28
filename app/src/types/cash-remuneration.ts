@@ -1,6 +1,6 @@
 export interface WageClaim {
   hoursWorked: number
-  hourlyRate: number
+  hourlyRate: number | bigint
   date: number
   employeeAddress: string
 }
@@ -10,6 +10,6 @@ export interface ClaimResponse {
   address: string
   id: number
   hoursWorked: number
-  hourlyRate: number
+  hourlyRate: string
   name: string
 }

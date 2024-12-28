@@ -1,22 +1,21 @@
 <template>
-  <div class="card shadow-xl" :class="`${proposal.isElection ? 'bg-green-100' : 'bg-blue-100'}`">
+  <div
+    class="card shadow-xl"
+    :class="`${proposal.isElection ? 'bg-green-100' : 'bg-blue-100'}`"
+    data-test="proposal-card"
+  >
     <div class="card-body flex flex-row justify-between">
       <div class="w-1/2">
-        <h2 class="card-title">{{ proposal.title }}</h2>
+        <h2 class="card-title" data-test="proposal-title">{{ proposal.title }}</h2>
         <span class="text-xs">
-          <span class="badge badge-primary badge-md">
+          <span class="badge badge-primary badge-md" data-test="proposal-drafter">
             {{
               team.members.find((member: Member) => member.address === proposal.draftedBy)?.name ||
               'Unknown'
             }}</span
           >
-
-          <!-- on
-          <span class="badge badge-secondary badge-xs">
-            {{ new Date().toLocaleDateString() }}</span
-          > -->
         </span>
-        <p class="text-sm">
+        <p class="text-sm" data-test="proposal-description">
           {{
             proposal.description
               ? proposal.description.length > 120
@@ -26,34 +25,35 @@
           }}
         </p>
       </div>
-      <div class="w-1/2 h-24" v-if="!proposal.isElection">
+      <div class="w-1/2 h-24" v-if="!proposal.isElection" data-test="directive-chart">
         <PieChart :data="chartData" title="Directive" />
       </div>
-      <div class="w-1/2 h-24" v-else>
+      <div class="w-1/2 h-24" v-else data-test="election-chart">
         <PieChart :data="chartData" title="Election" />
       </div>
     </div>
-    <div class="flex justify-center gap-4 mb-2" v-if="!isDone">
-      <ButtonUI variant="primary" size="sm" @click="showVoteModal = true">Vote</ButtonUI>
-      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true">
+    <div class="flex justify-center gap-4 mb-2" v-if="!isDone"  data-test="active-proposal-actions">
+      <ButtonUI variant="primary" size="sm" @click="showVoteModal = true"  data-test="vote-button">Vote</ButtonUI>
+      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true" data-test="view-active-button">
         View
       </ButtonUI>
-      <ButtonUI variant="error" size="sm" @click="showConcludeConfirmModal = true">Stop</ButtonUI>
+      <ButtonUI variant="error" size="sm" @click="showConcludeConfirmModal = true"  data-test="stop-button">Stop</ButtonUI>
     </div>
-    <div class="flex justify-center gap-4 mb-2" v-else>
-      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true">
+    <div class="flex justify-center gap-4 mb-2" data-test="concluded-proposal-actions" v-else >
+      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true" data-test="view-concluded-button">
+
         View
       </ButtonUI>
     </div>
-    <ModalComponent v-model="showConcludeConfirmModal">
+    <ModalComponent v-model="showConcludeConfirmModal" data-test="conclude-modal">
       <h2>Conclude</h2>
       <hr />
       <span class="mt-4">Are you sure you want to conclude this proposal?</span>
       <div class="flex justify-center">
-      
         <ButtonUI
           :loading="concludingProposal || isConfirmingConcludeProposal"
           :disabled="concludingProposal || isConfirmingConcludeProposal"
+          :data-test="(concludingProposal || isConfirmingConcludeProposal ) ? 'conclude-loading-button': 'conclude-confirm-button'"
           variant="error" size="sm"
           class="mt-4"
           @click="
@@ -69,7 +69,7 @@
         </ButtonUI>
       </div>
     </ModalComponent>
-    <ModalComponent v-model="showVoteModal">
+    <ModalComponent v-model="showVoteModal" data-test="vote-modal">
       <VoteForm
         :team="team"
         :isLoading="
@@ -100,7 +100,7 @@
         "
       />
     </ModalComponent>
-    <ModalComponent v-model="showProposalDetailsModal">
+    <ModalComponent v-model="showProposalDetailsModal" data-test="details-modal">
       <ProposalDetails :proposal="proposal" :team="team" />
     </ModalComponent>
   </div>

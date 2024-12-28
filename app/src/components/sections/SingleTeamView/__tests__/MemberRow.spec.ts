@@ -90,6 +90,25 @@ describe('MemberRow.vue', () => {
       const setWageButton = wrapper.find('[data-test="set-wage-button"]')
       expect(setWageButton.exists()).toBeFalsy()
     })
+    it('should show errors if wage inputs invalid', async () => {
+      const setWageButton = wrapper.find('[data-test="set-wage-button"]')
+      expect(setWageButton.exists()).toBeTruthy()
+      await setWageButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const maxWeeklyHoursInput = wrapper.find('[data-test="max-hours-input"]')
+      const hourlyRateInput = wrapper.find('[data-test="hourly-rate-input"]')
+      expect(maxWeeklyHoursInput.exists()).toBeTruthy()
+      expect(hourlyRateInput.exists()).toBeTruthy()
+
+      const addWageButton = wrapper.find('[data-test="add-wage-button"]')
+      expect(addWageButton.exists()).toBeTruthy()
+      await addWageButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="max-weekly-hours-error"]').exists()).toBeTruthy()
+      expect(wrapper.find('[data-test="hourly-rate-error"]').exists()).toBeTruthy()
+    })
   })
 
   describe('methods', () => {

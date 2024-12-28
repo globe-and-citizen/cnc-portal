@@ -3,17 +3,28 @@
     <div class="flex justify-between">
       <span class="text-2xl sm:text-3xl font-bold">Pending Claims</span>
       <div class="flex gap-2">
-        <label class="input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Hours Worked</span>
-          |
-          <input
-            type="text"
-            class="grow"
-            v-model="hoursWorked.hoursWorked"
-            placeholder="Enter hours worked..."
-            data-test="hours-worked-input"
-          />
-        </label>
+        <div>
+          <label class="input input-bordered flex items-center gap-2 input-md">
+            <span class="w-24">Hours Worked</span>
+            |
+            <input
+              type="text"
+              class="grow"
+              v-model="hoursWorked.hoursWorked"
+              placeholder="Enter hours worked..."
+              data-test="hours-worked-input"
+            />
+          </label>
+
+          <div
+            data-test="hours-worked-error"
+            class="pl-4 text-red-500 text-sm w-full text-left"
+            v-for="error of v$.hoursWorked.$errors"
+            :key="error.$uid"
+          >
+            {{ error.$message }}
+          </div>
+        </div>
         <!--<button class="btn btn-success">Submit Hours</button>-->
         <ButtonUI
           v-if="isSubmittingHours"
@@ -27,7 +38,7 @@
       </div>
     </div>
     <div class="divider m-0"></div>
-    <div class="overflow-x-auto" v-if="wageClaims">
+    <div class="overflow-x-auto" v-if="wageClaims" data-test="claims-table">
       <table class="table table-zebra">
         <!-- head -->
         <thead class="text-sm font-bold">
@@ -41,7 +52,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="data in wageClaims as ClaimResponse[]" :key="data.id">
+          <tr v-for="data in wageClaims" :key="data.id">
             <td>{{ new Date(data.createdAt).toLocaleDateString() }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.address }}</td>
@@ -58,6 +69,23 @@
         </tbody>
       </table>
     </div>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <span>Cash Remuneration Balance</span>
+        <div class="font-extrabold text-4xl">
+          <span class="inline-block min-w-16 h-10">
+            <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
+            <span v-else>{{ cashRemunerationBalance?.formatted }} </span>
+          </span>
+          <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+        </div>
+        <span class="text-xs sm:text-sm">≈ $ 1.28</span>
+      </div>
+      <div class="flex flex-wrap gap-2 sm:gap-4">
+        <span class="text-sm">Cash Remuneration Address </span>
+        <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -71,6 +99,12 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { log, parseError } from '@/utils'
+import { parseEther, type Address } from 'viem'
+import { useBalance } from '@wagmi/vue'
+import { NETWORK } from '@/constant'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+import { useVuelidate } from '@vuelidate/core'
+import { numeric, required } from '@vuelidate/validators'
 
 const route = useRoute()
 const web3Library = new EthersJsAdapter()
@@ -86,6 +120,31 @@ const approvalData = ref<{
   id: number
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
+
+const rules = {
+  hoursWorked: {
+    hoursWorked: {
+      required,
+      numeric
+    }
+  }
+}
+const v$ = useVuelidate(rules, { hoursWorked })
+
+const {
+  data: cashRemunerationBalance,
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: props.team.cashRemunerationEip712Address as `${Address}`
+})
+watch(balanceError, (newVal) => {
+  if (newVal) {
+    addErrorToast(parseError(newVal))
+    log.error(parseError(newVal))
+  }
+})
 
 //#region add wage claim
 const {
@@ -110,6 +169,10 @@ watch(addWageClaimError, (newVal) => {
 })
 
 const addWageClaim = async () => {
+  v$.value.$touch()
+  if (v$.value.$invalid) {
+    return
+  }
   await addWageClaimAPI()
   await getWageClaimsAPI()
 }
@@ -121,7 +184,9 @@ const {
   // isFetching: isWageClaimsFetching,
   execute: getWageClaimsAPI,
   data: wageClaims
-} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/pending`)
+} = useCustomFetch<ClaimResponse[]>(
+  `teams/${String(route.params.id)}/cash-remuneration/claim/pending`
+)
   .get()
   .json()
 // watch(wageClaims, async (newVal) => {
@@ -167,8 +232,8 @@ const approveClaim = async (claim: ClaimResponse) => {
   const domain = {
     name: 'CashRemuneration',
     version: '1',
-    chainId, //: 31337n,
-    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+    chainId,
+    verifyingContract
   }
 
   const types = {
@@ -181,7 +246,7 @@ const approveClaim = async (claim: ClaimResponse) => {
   }
 
   const data: WageClaim = {
-    hourlyRate: claim.hourlyRate,
+    hourlyRate: parseEther(claim.hourlyRate),
     hoursWorked: claim.hoursWorked,
     employeeAddress: claim.address,
     date: Math.floor(new Date(claim.createdAt).getTime() / 1000)
@@ -195,7 +260,6 @@ const approveClaim = async (claim: ClaimResponse) => {
     }
     await addApprovalAPI()
     await getWageClaimsAPI()
-    // emits('getTeam')
   } catch (err) {
     log.error(parseError(err))
     addErrorToast(parseError(err))
@@ -206,6 +270,6 @@ const approveClaim = async (claim: ClaimResponse) => {
 
 onMounted(async () => {
   await getWageClaimsAPI()
-  console.log(`wageClaims`, wageClaims.value)
+  await fetchBalance()
 })
 </script>
