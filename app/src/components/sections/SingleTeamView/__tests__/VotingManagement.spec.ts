@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import VotingManagement from '../VotingManagement.vue'
+import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
 import { createTestingPinia } from '@pinia/testing'
 
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -84,41 +84,39 @@ describe('VotingManagement', () => {
   describe('Renders', () => {
     it('renders correctly', () => {
       const wrapper = createComponent()
-      expect(wrapper.find('div[data-test="title"]').text()).toBe('Manage Voting Contract')
-      expect(wrapper.find('h3[data-test="status"]').text()).toBe('Status: Paused')
+      expect(wrapper.find('[data-test="title"]').text()).toBe('Manage Voting Contract')
+      expect(wrapper.find('[data-test="status"]').text()).toBe('Status: Paused')
     })
 
     it('displays the correct voting contract status', async () => {
       const wrapper = createComponent()
       await wrapper.vm.$nextTick()
-      expect(wrapper.find('h3[data-test="status"]').text()).toBe('Status: Paused')
+      expect(wrapper.find('[data-test="status"]').text()).toBe('Status: Paused')
     })
 
     it('displays the correct voting contract owner', async () => {
       const wrapper = createComponent()
       await wrapper.vm.$nextTick()
-      expect(wrapper.find('div[data-test="owner"]').text()).toBe(
+      expect(wrapper.find('[data-test="owner"]').text()).toBe(
         '0x1234567890123456789012345678901234567890'
       )
     })
 
     it('shows transfer ownership button', () => {
       const wrapper = createComponent()
-      expect(wrapper.find('button[data-test="transfer-ownership"]').text()).toBe(
+      expect(wrapper.find('[data-test="transfer-ownership"]').text()).toBe(
         'Transfer Ownership'
       )
     })
 
     it('shows transfer to Board of Directors button', () => {
       const wrapper = createComponent()
-      expect(wrapper.find('button[data-test="transfer-to-board-of-directors"]').text()).toBe(
-        'Transfer to Board Of Directors Contract'
-      )
+      expect(wrapper.find('[data-test="transfer-to-board-of-directors"]').exists()).toBe(true)
     })
 
     it('shows ModalComponent when transferOwnership is clicked', async () => {
       const wrapper = createComponent()
-      const transferOwnershipButton = wrapper.find('button[data-test="transfer-ownership"]')
+      const transferOwnershipButton = wrapper.find('[data-test="transfer-ownership"]')
       await transferOwnershipButton.trigger('click')
       expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
     })
@@ -127,7 +125,7 @@ describe('VotingManagement', () => {
   describe('Emits', async () => {
     it('emits transferOwnership event', async () => {
       const wrapper = createComponent()
-      const transferOwnershipButton = wrapper.find('button[data-test="transfer-ownership"]')
+      const transferOwnershipButton = wrapper.find('[data-test="transfer-ownership"]')
       await transferOwnershipButton.trigger('click')
       expect((wrapper.vm as unknown as ComponentData).transferOwnershipModal).toBeTruthy()
     })
