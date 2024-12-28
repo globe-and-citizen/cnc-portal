@@ -148,19 +148,6 @@ interface Transaction {
   isToken?: boolean
 }
 
-interface EtherscanTx {
-  blockNumber: string
-  timeStamp: string
-  hash: string
-  from: string
-  to: string
-  value: string
-  isError: string
-  txreceipt_status: string
-  functionName: string
-  input: string
-}
-
 interface TokenTx {
   blockNumber: string
   timeStamp: string
@@ -267,19 +254,6 @@ const fetchTransactions = async () => {
 
     // Fetch both normal and token transactions
     const allTxPromises = addresses.map(async (address) => {
-      const normalParams = new URLSearchParams({
-        module: 'account',
-        chainId: chainId.toString(),
-        action: 'txlist',
-        address,
-        startblock: '0',
-        endblock: '99999999',
-        page: '1',
-        offset: '1000',
-        sort: 'desc',
-        apikey: import.meta.env.VITE_ETHERSCAN_API_KEY
-      })
-
       const tokenParams = new URLSearchParams({
         module: 'account',
         chainId: chainId.toString(),
@@ -293,72 +267,12 @@ const fetchTransactions = async () => {
         apikey: import.meta.env.VITE_ETHERSCAN_API_KEY
       })
 
-      const [normalResponse, tokenResponse] = await Promise.all([
-        fetch(`https://api.etherscan.io/v2/api?${normalParams}`),
+      const [tokenResponse] = await Promise.all([
         fetch(`https://api.etherscan.io/v2/api?${tokenParams}`)
       ])
 
-      const [normalData, tokenData] = await Promise.all([
-        normalResponse.json(),
-        tokenResponse.json()
-      ])
-
+      const [tokenData] = await Promise.all([tokenResponse.json()])
       // Process normal transactions
-      const normalTxs =
-        normalData.status === '1' && normalData.result
-          ? (normalData.result as EtherscanTx[])
-              .filter((tx) => tx.isError === '0' && tx.txreceipt_status === '1')
-              .map((tx) => {
-                console.log('Normal tx:', tx.functionName)
-                const fnName = tx.functionName.toLowerCase()
-
-                // Extract just the function name without parameters
-                const baseFnName = fnName.split('(')[0]
-                console.log('baseFnName', baseFnName)
-
-                if (baseFnName === 'deposit') {
-                  return {
-                    type: 'Deposit' as const,
-                    from: tx.from,
-                    to: tx.to,
-                    amount: BigInt(tx.value),
-                    hash: tx.hash,
-                    date: Number(tx.timeStamp) * 1000
-                  } satisfies Transaction
-                } else if (baseFnName === 'deposittoken') {
-                  return {
-                    type: 'Deposit Token' as const,
-                    from: tx.from,
-                    to: tx.to,
-                    amount: BigInt(tx.value),
-                    hash: tx.hash,
-                    date: Number(tx.timeStamp) * 1000,
-                    isToken: true
-                  } satisfies Transaction
-                } else if (baseFnName === 'transfer') {
-                  return {
-                    type: 'Transfer' as const,
-                    from: tx.from,
-                    to: tx.to,
-                    amount: BigInt(tx.value),
-                    hash: tx.hash,
-                    date: Number(tx.timeStamp) * 1000
-                  } satisfies Transaction
-                } else if (baseFnName === 'transfertoken') {
-                  return {
-                    type: 'Transfer Token' as const,
-                    from: tx.from,
-                    to: tx.to,
-                    amount: BigInt(tx.value),
-                    hash: tx.hash,
-                    date: Number(tx.timeStamp) * 1000,
-                    isToken: true
-                  } satisfies Transaction
-                }
-                return null
-              })
-              .filter((tx): tx is NonNullable<typeof tx> => tx !== null)
-          : []
 
       // Process token transactions (these are always token transfers)
       const tokenTxs =
@@ -380,7 +294,7 @@ const fetchTransactions = async () => {
             })
           : []
 
-      return [...normalTxs, ...tokenTxs] as Transaction[]
+      return [...tokenTxs] as Transaction[]
     })
 
     const transactions = await Promise.all(allTxPromises)
