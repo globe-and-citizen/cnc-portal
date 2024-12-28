@@ -605,7 +605,7 @@ const pushUSDC = async () => {
     })
     console.log('allowance', allowance)
     const currentAllowance = allowance ? allowance.toString() : 0n
-    if (currentAllowance < amount) {
+    if (Number(currentAllowance) < Number(amount)) {
       approve({
         address: USDC_ADDRESS as Address,
         abi: ERC20ABI,
@@ -637,7 +637,7 @@ const depositToken = async () => {
       args: [currentAddress as Address, props.team.bankAddress as Address]
     })
     const currentAllowance = allowance ? allowance.toString() : 0n
-    if (currentAllowance < amount) {
+    if (Number(currentAllowance) < Number(amount)) {
       approve({
         address: USDC_ADDRESS as Address,
         abi: ERC20ABI,
@@ -671,7 +671,7 @@ const transferToken = async () => {
     })
     console.log('allowance', allowance)
     const currentAllowance = allowance ? allowance.toString() : 0n
-    if (currentAllowance < amount) {
+    if (Number(currentAllowance) < Number(amount)) {
       approve({
         address: USDC_ADDRESS as Address,
         abi: ERC20ABI,
