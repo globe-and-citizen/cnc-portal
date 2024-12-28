@@ -19,7 +19,7 @@
           v-if="isSupported"
           @click="copy(member.address ?? '')"
           variant="info"
-          size="xs"         
+          size="xs"
           data-test="copy-address-button"
         >
           {{ copied ? 'Copied!' : 'Copy address' }}
@@ -27,7 +27,7 @@
         <ButtonUI
           v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
           variant="error"
-          size="xs"   
+          size="xs"
           data-test="delete-member-button"
           @click="() => (showDeleteMemberConfirmModal = true)"
         >

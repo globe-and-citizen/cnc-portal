@@ -46,7 +46,13 @@
     </label>
   </div>
   <div class="modal-action justify-center">
-    <ButtonUI variant="primary" :loading="isLoading" :disabled="isLoading" data-test="submit-edit-user" @click="submitForm">
+    <ButtonUI
+      variant="primary"
+      :loading="isLoading"
+      :disabled="isLoading"
+      data-test="submit-edit-user"
+      @click="submitForm"
+    >
       Save
     </ButtonUI>
   </div>

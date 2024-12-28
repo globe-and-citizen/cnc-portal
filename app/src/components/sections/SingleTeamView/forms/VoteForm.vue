@@ -69,8 +69,9 @@
       </div>
     </div>
     <div class="flex justify-center mt-4">
-     
-      <ButtonUI :loading="isLoading" :disabled="isLoading" variant="primary" @click="castVote">Cast Vote</ButtonUI>
+      <ButtonUI :loading="isLoading" :disabled="isLoading" variant="primary" @click="castVote"
+        >Cast Vote</ButtonUI
+      >
     </div>
   </div>
 </template>
@@ -79,7 +80,7 @@
 import type { Member, Proposal, Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue';
+import ButtonUI from '@/components/ButtonUI.vue'
 const selectedCandidate = ref<string>()
 const selectedOption = ref<string | null>(null)
 

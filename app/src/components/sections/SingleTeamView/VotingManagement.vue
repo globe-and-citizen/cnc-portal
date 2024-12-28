@@ -8,13 +8,13 @@
       <h3 v-if="!loadingPaused" class="font-bold text-md" data-test="status">
         Status: {{ isPaused ? 'Paused' : 'Active' }}
       </h3>
-      
+
       <ButtonUI
         :loading="
-          isPaused ? (loadingUnpause || isConfirmingUnpause) : (loadingPause || isConfirmingPause)
+          isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
         "
         :disabled="
-          isPaused ? (loadingUnpause || isConfirmingUnpause) : (loadingPause || isConfirmingPause)
+          isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
         "
         class="btn btn-primary row-start-2"
         @click="
@@ -67,7 +67,8 @@
             })
           "
         >
-          Transfer to Board Of <br> Directors Contract
+          Transfer to Board Of <br />
+          Directors Contract
         </ButtonUI>
       </div>
     </div>

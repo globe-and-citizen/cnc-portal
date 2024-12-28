@@ -16,8 +16,9 @@
   </div>
 
   <div class="modal-action justify-center">
-   
-    <ButtonUI variant="primary" @click="submitForm" :loading="loading" :disabled="loading" >Deposit</ButtonUI>
+    <ButtonUI variant="primary" @click="submitForm" :loading="loading" :disabled="loading"
+      >Deposit</ButtonUI
+    >
     <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
   </div>
 </template>

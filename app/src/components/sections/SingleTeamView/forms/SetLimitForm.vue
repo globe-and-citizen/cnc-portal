@@ -48,12 +48,7 @@
       >
         Set Limit
       </ButtonUI>
-      <ButtonUI 
-        variant="error"
-        @click="$emit('closeModal')"
-      >
-        Cancel
-      </ButtonUI>
+      <ButtonUI variant="error" @click="$emit('closeModal')"> Cancel </ButtonUI>
     </div>
   </div>
 </template>
@@ -61,7 +56,7 @@
 import { ref, watch } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import ButtonUI from '@/components/ButtonUI.vue';
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const emit = defineEmits(['setLimit', 'closeModal'])
 const props = defineProps<{ loading: boolean; isBodAction: boolean }>()

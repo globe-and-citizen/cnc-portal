@@ -171,7 +171,6 @@ import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
 import { useDeployAddCampaignContract } from '@/composables/addCampaign'
 import TeamContracts from '@/components/TeamContracts.vue'
 
-
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members, SingleTeamTabs.TeamContract])
 const isOwner = ref(false)

@@ -16,7 +16,8 @@
               Create Proposal
             </ButtonUI>
             <ButtonUI
-              variant="secondary" size="md" 
+              variant="secondary"
+              size="md"
               v-if="team.boardOfDirectorsAddress"
               @click="
                 () => {
@@ -27,7 +28,7 @@
             >
               View BoD
             </ButtonUI>
-            <ButtonUI  variant="secondary" size="md" @click="showVotingControlModal = true">
+            <ButtonUI variant="secondary" size="md" @click="showVotingControlModal = true">
               Manage
             </ButtonUI>
           </div>

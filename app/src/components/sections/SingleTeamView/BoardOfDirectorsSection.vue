@@ -68,7 +68,6 @@
                 </h4>
               </td>
               <td class="flex justify-end">
-                
                 <ButtonUI
                   data-test="transfer-expense-ownership-button"
                   :loading="
@@ -78,7 +77,7 @@
                     !isConfirmingTransferOwnership
                   "
                   :disabled="
-                   bankOwner == currentAddress &&
+                    bankOwner == currentAddress &&
                     bankOwner != team.boardOfDirectorsAddress &&
                     loadingTransferOwnership &&
                     !isConfirmingTransferOwnership
@@ -112,7 +111,6 @@
                 </h4>
               </td>
               <td class="flex justify-end">
-                
                 <ButtonUI
                   :loading="
                     expenseOwner == currentAddress &&
@@ -120,7 +118,7 @@
                     loadingTransferExpenseOwnership &&
                     !isConfirmingExpenseTransferOwnership
                   "
-                   :disabled="
+                  :disabled="
                     expenseOwner == currentAddress &&
                     expenseOwner != team.boardOfDirectorsAddress &&
                     loadingTransferExpenseOwnership &&

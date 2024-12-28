@@ -9,15 +9,23 @@
             Status: {{ isPaused ? 'Paused' : 'Active' }}
           </h3>
 
-          <ButtonUI :loading="isPaused
-            ? loadingUnpause || !isConfirmingUnpause
-            : !loadingPause || !isConfirmingPause
-            " :disabled="isPaused
-              ? loadingUnpause || !isConfirmingUnpause
-              : !loadingPause || !isConfirmingPause
-              " class="btn btn-primary row-start-2" :class="{
-                'btn-disabled': !isOwner && !isOwnerBod && !isBod
-              }" @click="() => {
+          <ButtonUI
+            :loading="
+              isPaused
+                ? loadingUnpause || !isConfirmingUnpause
+                : !loadingPause || !isConfirmingPause
+            "
+            :disabled="
+              isPaused
+                ? loadingUnpause || !isConfirmingUnpause
+                : !loadingPause || !isConfirmingPause
+            "
+            class="btn btn-primary row-start-2"
+            :class="{
+              'btn-disabled': !isOwner && !isOwnerBod && !isBod
+            }"
+            @click="
+              () => {
                 if (isOwnerBod && isBod) {
                   descriptionModal.show = true
                   descriptionModal.actionName = isPaused ? 'Unpause Bank' : 'Pause Bank'
@@ -25,18 +33,19 @@
                 } else {
                   isPaused
                     ? unpause({
-                      address: props.team.bankAddress! as Address,
-                      abi: BankABI,
-                      functionName: 'unpause'
-                    })
+                        address: props.team.bankAddress! as Address,
+                        abi: BankABI,
+                        functionName: 'unpause'
+                      })
                     : pause({
-                      address: props.team.bankAddress! as Address,
-                      abi: BankABI,
-                      functionName: 'pause'
-                    })
+                        address: props.team.bankAddress! as Address,
+                        abi: BankABI,
+                        functionName: 'pause'
+                      })
                 }
               }
-                ">
+            "
+          >
             {{ isPaused ? 'Unpause' : 'Pause' }}
           </ButtonUI>
         </div>
@@ -52,20 +61,30 @@
           <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
 
           <div class="flex flex-row gap-x-4 justify-around w-full">
-            <ButtonUI variant="primary" class="w-40 text-center" data-test="transfer-ownership"
-              @click="transferOwnershipModal = true">
+            <ButtonUI
+              variant="primary"
+              class="w-40 text-center"
+              data-test="transfer-ownership"
+              @click="transferOwnershipModal = true"
+            >
               Transfer Ownership
             </ButtonUI>
             <!-- <LoadingButton v-if="transferOwnershipLoading" class="w-44" color="primary" /> -->
-            <ButtonUI :disabled="transferToBODIsLoadin" :loading="transferToBODIsLoadin" variant="primary"
-              class=" w-44 text-center" data-test="transfer-to-board-of-directors" @click="
+            <ButtonUI
+              :disabled="transferToBODIsLoadin"
+              :loading="transferToBODIsLoadin"
+              variant="primary"
+              class="w-44 text-center"
+              data-test="transfer-to-board-of-directors"
+              @click="
                 transferOwnership({
                   address: props.team.bankAddress! as Address,
                   abi: BankABI,
                   functionName: 'transferOwnership',
                   args: [team.boardOfDirectorsAddress]
                 })
-                ">
+              "
+            >
               Transfer to Board Of Directors Contract
             </ButtonUI>
           </div>
@@ -74,27 +93,41 @@
     </div>
   </div>
   <ModalComponent v-model="transferOwnershipModal">
-    <TransferOwnershipForm v-if="transferOwnershipModal" @transferOwnership="async (newOwner: string, description: string) => {
-      if (bankOwner == team.boardOfDirectorsAddress) {
-        addTransferOwnershipAction(newOwner, description)
-      } else {
-        transferOwnership({
-          address: props.team.bankAddress! as Address,
-          abi: BankABI,
-          functionName: 'transferOwnership',
-          args: [newOwner]
-        })
-      }
-    }
-      " :transferOwnershipLoading="transferOwnershipLoading || addActionLoading || isConfirmingTransferOwnership
-        " :asBod="isOwnerBod && isBod!" />
+    <TransferOwnershipForm
+      v-if="transferOwnershipModal"
+      @transferOwnership="
+        async (newOwner: string, description: string) => {
+          if (bankOwner == team.boardOfDirectorsAddress) {
+            addTransferOwnershipAction(newOwner, description)
+          } else {
+            transferOwnership({
+              address: props.team.bankAddress! as Address,
+              abi: BankABI,
+              functionName: 'transferOwnership',
+              args: [newOwner]
+            })
+          }
+        }
+      "
+      :transferOwnershipLoading="
+        transferOwnershipLoading || addActionLoading || isConfirmingTransferOwnership
+      "
+      :asBod="isOwnerBod && isBod!"
+    />
   </ModalComponent>
   <ModalComponent v-if="descriptionModal.show" v-model="descriptionModal.show">
-    <DescriptionActionForm v-if="descriptionModal.show" @submit="async () => {
-      await descriptionModal.onSubmit()
-      descriptionModal.show = false
-    }
-      " v-model:description="description" :actionName="descriptionModal.actionName" :loading="addActionLoading" />
+    <DescriptionActionForm
+      v-if="descriptionModal.show"
+      @submit="
+        async () => {
+          await descriptionModal.onSubmit()
+          descriptionModal.show = false
+        }
+      "
+      v-model:description="description"
+      :actionName="descriptionModal.actionName"
+      :loading="addActionLoading"
+    />
   </ModalComponent>
 </template>
 
@@ -120,7 +153,7 @@ const description = ref('')
 const descriptionModal = reactive({
   show: false,
   actionName: '',
-  onSubmit: async () => { }
+  onSubmit: async () => {}
 })
 
 const props = defineProps<{
@@ -131,7 +164,11 @@ const props = defineProps<{
 }>()
 
 const transferToBODIsLoadin = computed<boolean>(() => {
-  return !!props.team.boardOfDirectorsAddress && (props.team.boardOfDirectorsAddress != props.bankOwner) && !transferOwnershipLoading
+  return (
+    !!props.team.boardOfDirectorsAddress &&
+    props.team.boardOfDirectorsAddress != props.bankOwner &&
+    !transferOwnershipLoading
+  )
 })
 const emits = defineEmits(['getOwner'])
 

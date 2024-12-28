@@ -10,7 +10,6 @@
       >
         Deploy Bank
       </ButtonUI>
-  
 
       <ButtonUI
         size="sm"
@@ -21,7 +20,6 @@
       >
         Deploy Voting
       </ButtonUI>
-      
 
       <ButtonUI
         size="sm"
@@ -32,7 +30,6 @@
       >
         Deploy Expense
       </ButtonUI>
-      
 
       <ButtonUI
         size="sm"
@@ -51,7 +48,7 @@
       >
         Deploy Expense EIP712
       </ButtonUI>
-      
+
       <ButtonUI
         size="sm"
         variant="primary"
@@ -69,7 +66,6 @@
       >
         Deploy Cash Remuneration EIP712
       </ButtonUI>
-     
 
       <ButtonUI
         size="sm"
@@ -86,12 +82,11 @@
         size="sm"
         variant="primary"
         :loading="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
-        :disabled="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"        
+        :disabled="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
         @click="deployAllContracts"
       >
         Deploy All Contracts
       </ButtonUI>
-    
     </div>
   </div>
 </template>

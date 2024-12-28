@@ -135,7 +135,14 @@
   </div>
 
   <div class="modal-action justify-center mt-6">
-    <ButtonUI  variant="primary" data-test="submit" :loading="isLoading" :disabled="isLoading" @click="submitForm" >Submit</ButtonUI>
+    <ButtonUI
+      variant="primary"
+      data-test="submit"
+      :loading="isLoading"
+      :disabled="isLoading"
+      @click="submitForm"
+      >Submit</ButtonUI
+    >
   </div>
 </template>
 <script setup lang="ts">

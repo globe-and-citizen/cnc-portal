@@ -40,9 +40,7 @@
     <div
       v-if="isLoading"
       class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
-    >
-      
-    </div>
+    ></div>
   </div>
 </template>
 

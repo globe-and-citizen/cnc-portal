@@ -19,7 +19,12 @@
     </div>
 
     <div class="text-center">
-      <ButtonUI :loading="loading" :disabled="loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
+      <ButtonUI
+        :loading="loading"
+        :disabled="loading"
+        class="btn btn-primary w-44 text-center"
+        @click="onSubmit()"
+      >
         {{ actionName }}
       </ButtonUI>
     </div>
@@ -27,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue';
+import ButtonUI from '@/components/ButtonUI.vue'
 import useVuelidate from '@vuelidate/core'
 import { minLength, required } from '@vuelidate/validators'
 

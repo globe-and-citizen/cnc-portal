@@ -42,17 +42,21 @@
   </h3>
 
   <div class="modal-action justify-right">
-   
-    <ButtonUI variant="primary" size="sm" @click="emitCreateAddCampaign" :loading="loading" :disabled="loading">
+    <ButtonUI
+      variant="primary"
+      size="sm"
+      @click="emitCreateAddCampaign"
+      :loading="loading"
+      :disabled="loading"
+    >
       confirm
     </ButtonUI>
   </div>
 </template>
 
 <script setup lang="ts">
-
 import { ref, watch } from 'vue'
-import ButtonUI from '../ButtonUI.vue';
+import ButtonUI from '../ButtonUI.vue'
 const emit = defineEmits(['createAddCampaign'])
 const props = defineProps<{
   loading: boolean

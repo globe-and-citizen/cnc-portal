@@ -162,15 +162,7 @@
     >
       Approve
     </ButtonUI>
-    <ButtonUI
-      outline
-      data-test="cancel-button"
-      variant="error"
-      @click="clear"
-      
-    >
-      Cancel
-    </ButtonUI>
+    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">

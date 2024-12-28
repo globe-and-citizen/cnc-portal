@@ -104,7 +104,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { useToastStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
-import ButtonUI from "@/components/ButtonUI.vue";
+import ButtonUI from '@/components/ButtonUI.vue'
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import DeploymentActions from './DeploymentActions.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'

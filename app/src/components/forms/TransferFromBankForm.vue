@@ -69,7 +69,13 @@
   </div>
 
   <div class="modal-action justify-center">
-    <ButtonUI variant="primary" @click="submitForm" :loading="loading" :disabled="loading" data-test="transferButton">
+    <ButtonUI
+      variant="primary"
+      @click="submitForm"
+      :loading="loading"
+      :disabled="loading"
+      data-test="transferButton"
+    >
       Transfer
     </ButtonUI>
     <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>

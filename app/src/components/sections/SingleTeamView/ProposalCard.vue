@@ -32,16 +32,33 @@
         <PieChart :data="chartData" title="Election" />
       </div>
     </div>
-    <div class="flex justify-center gap-4 mb-2" v-if="!isDone"  data-test="active-proposal-actions">
-      <ButtonUI variant="primary" size="sm" @click="showVoteModal = true"  data-test="vote-button">Vote</ButtonUI>
-      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true" data-test="view-active-button">
+    <div class="flex justify-center gap-4 mb-2" v-if="!isDone" data-test="active-proposal-actions">
+      <ButtonUI variant="primary" size="sm" @click="showVoteModal = true" data-test="vote-button"
+        >Vote</ButtonUI
+      >
+      <ButtonUI
+        variant="secondary"
+        size="sm"
+        @click="showProposalDetailsModal = true"
+        data-test="view-active-button"
+      >
         View
       </ButtonUI>
-      <ButtonUI variant="error" size="sm" @click="showConcludeConfirmModal = true"  data-test="stop-button">Stop</ButtonUI>
+      <ButtonUI
+        variant="error"
+        size="sm"
+        @click="showConcludeConfirmModal = true"
+        data-test="stop-button"
+        >Stop</ButtonUI
+      >
     </div>
-    <div class="flex justify-center gap-4 mb-2" data-test="concluded-proposal-actions" v-else >
-      <ButtonUI variant="secondary" size="sm" @click="showProposalDetailsModal = true" data-test="view-concluded-button">
-
+    <div class="flex justify-center gap-4 mb-2" data-test="concluded-proposal-actions" v-else>
+      <ButtonUI
+        variant="secondary"
+        size="sm"
+        @click="showProposalDetailsModal = true"
+        data-test="view-concluded-button"
+      >
         View
       </ButtonUI>
     </div>
@@ -53,8 +70,13 @@
         <ButtonUI
           :loading="concludingProposal || isConfirmingConcludeProposal"
           :disabled="concludingProposal || isConfirmingConcludeProposal"
-          :data-test="(concludingProposal || isConfirmingConcludeProposal ) ? 'conclude-loading-button': 'conclude-confirm-button'"
-          variant="error" size="sm"
+          :data-test="
+            concludingProposal || isConfirmingConcludeProposal
+              ? 'conclude-loading-button'
+              : 'conclude-confirm-button'
+          "
+          variant="error"
+          size="sm"
           class="mt-4"
           @click="
             concludeProposal({

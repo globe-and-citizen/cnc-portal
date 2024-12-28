@@ -32,7 +32,6 @@
     </div>
 
     <div class="text-center">
-     
       <ButtonUI
         :loading="loading"
         :disabled="loading"
@@ -50,7 +49,7 @@
 <script setup lang="ts">
 import useVuelidate from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
-import ButtonUI from '../ButtonUI.vue';
+import ButtonUI from '../ButtonUI.vue'
 
 const name = defineModel('name')
 const symbol = defineModel('symbol')

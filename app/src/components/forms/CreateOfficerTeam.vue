@@ -104,7 +104,6 @@
     >
       Create Team
     </ButtonUI>
-    
   </div>
 </template>
 

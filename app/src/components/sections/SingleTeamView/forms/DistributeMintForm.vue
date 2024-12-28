@@ -102,8 +102,14 @@
     </div>
 
     <div class="text-center">
-      <ButtonUI :loading="loading" :disabled="loading" variant="primary" class="w-44 text-center" @click="onSubmit()" 
-      data-test="submit-button">
+      <ButtonUI
+        :loading="loading"
+        :disabled="loading"
+        variant="primary"
+        class="w-44 text-center"
+        @click="onSubmit()"
+        data-test="submit-button"
+      >
         Distribute Mint
       </ButtonUI>
     </div>

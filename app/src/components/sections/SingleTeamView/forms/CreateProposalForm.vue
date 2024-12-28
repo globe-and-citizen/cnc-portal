@@ -138,12 +138,9 @@
       </div>
 
       <div class="flex justify-center">
-       
-
         <ButtonUI
           :loading="isLoading"
           :disabled="isLoading"
-          
           class="btn btn-primary btn-md justify-center"
           data-test="submitButton"
           @click="submitForm"

@@ -90,7 +90,14 @@
       </div>
     </div>
     <div class="flex justify-center">
-      <ButtonUI variant="primary" class="justify-center" :loading="isLoading" :disabled="isLoading" @click="submitForm">Add</ButtonUI>
+      <ButtonUI
+        variant="primary"
+        class="justify-center"
+        :loading="isLoading"
+        :disabled="isLoading"
+        @click="submitForm"
+        >Add</ButtonUI
+      >
     </div>
   </div>
 </template>

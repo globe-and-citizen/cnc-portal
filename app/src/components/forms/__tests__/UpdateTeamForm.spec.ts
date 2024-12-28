@@ -41,7 +41,7 @@ describe('UpdateTeamForm.vue', () => {
     it('displays the submit button when teamIsUpdating is false', async () => {
       await wrapper.setProps({ teamIsUpdating: false })
       expect(wrapper.findComponent(ButtonUI).props().loading).toBe(false)
-      expect(wrapper.findComponent(ButtonUI).props().variant).toBe("primary")
+      expect(wrapper.findComponent(ButtonUI).props().variant).toBe('primary')
     })
   })
   describe('Actions', () => {

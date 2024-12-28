@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue';
+import ButtonUI from '@/components/ButtonUI.vue'
 </script>
 
 <template>
@@ -11,7 +11,6 @@ import ButtonUI from '@/components/ButtonUI.vue';
     </p>
 
     <ButtonUI class="mt-6" variant="secondary">
-
       <RouterLink to="/teams" data-test="tip-button">Tip your Team</RouterLink>
     </ButtonUI>
   </div>

@@ -35,7 +35,6 @@
             <th>{{ index + 1 }}</th>
             <td>{{ `${address.slice(0, 10)}...${address.slice(-10)}` }}</td>
             <td class="flex justify-end">
-             
               <ButtonUI
                 data-test="disapprove-button"
                 :loading="loadingDisapprove || address !== addressToDisapprove"
@@ -73,7 +72,6 @@
     </div>
 
     <div class="modal-action justify-center">
-     
       <ButtonUI
         :loading="loadingApprove"
         :disabled="loadingApprove"
@@ -84,11 +82,7 @@
       >
         Approve
       </ButtonUI>
-      <ButtonUI
-        data-test="cancel-button" 
-        variant="error" 
-        @click="$emit('closeModal')"
-      >
+      <ButtonUI data-test="cancel-button" variant="error" @click="$emit('closeModal')">
         Cancel
       </ButtonUI>
     </div>

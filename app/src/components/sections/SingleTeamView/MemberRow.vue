@@ -7,7 +7,6 @@
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
       <div v-if="ownerAddress == userDataStore.address" class="flex flex-wrap gap-2">
-        
         <ButtonUI
           variant="error"
           size="sm"
@@ -101,11 +100,7 @@
         <ButtonUI v-else variant="success" @click="addMemberWageData" data-test="add-wage-button"
           >Save</ButtonUI
         >
-        <ButtonUI 
-          variant="error" 
-          outline
-          @click="showSetMemberWageModal = false "
-          >Cancel</ButtonUI>
+        <ButtonUI variant="error" outline @click="showSetMemberWageModal = false">Cancel</ButtonUI>
       </div>
     </ModalComponent>
   </div>

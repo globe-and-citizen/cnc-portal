@@ -73,7 +73,6 @@
       class="flex justify-center"
       data-test="button-flex"
     >
-     
       <ButtonUI
         :loading="loadingApprove || loadingRevoke || isConfirmingApprove || isConfirmingRevoke"
         :disabled="loadingApprove || loadingRevoke || isConfirmingApprove || isConfirmingRevoke"

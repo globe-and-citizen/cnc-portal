@@ -41,7 +41,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue';
+import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 

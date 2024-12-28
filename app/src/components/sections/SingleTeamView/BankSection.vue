@@ -96,10 +96,9 @@
         />
 
         <div class="text-center">
-          
           <ButtonUI
-            :loading="(isConfirmingPushTip || pushTipLoading || addActionLoading)"
-            :disabled="(isConfirmingPushTip || pushTipLoading || addActionLoading)"
+            :loading="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            :disabled="isConfirmingPushTip || pushTipLoading || addActionLoading"
             variant="primary"
             class="w-full sm:w-44 text-center"
             @click="

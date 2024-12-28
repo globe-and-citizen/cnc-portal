@@ -23,7 +23,7 @@
       </TabNavigation>
       <div class="flex justify-center join">
         <ButtonUI
-          class="join-item "
+          class="join-item"
           :class="{
             'btn-disabled': currentCount == 0 || page == 1
           }"
@@ -31,9 +31,9 @@
         >
           «
         </ButtonUI>
-        <ButtonUI class="join-item ">Page {{ page }}</ButtonUI>
+        <ButtonUI class="join-item">Page {{ page }}</ButtonUI>
         <ButtonUI
-          class="join-item "
+          class="join-item"
           :class="{
             'btn-disabled': currentCount <= page * limit || currentCount == 0
           }"
