@@ -27,8 +27,7 @@
   </div>
 
   <div class="modal-action justify-center">
-   
-    <ButtonUI class="btn btn-primary" :loading="teamIsUpdating" :disabled="teamIsUpdating" @click="submitForm">Submit</ButtonUI>
+    <ButtonUI variant="primary" :loading="teamIsUpdating" :disabled="teamIsUpdating" @click="submitForm">Submit</ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
