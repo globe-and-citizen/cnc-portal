@@ -96,7 +96,6 @@
 import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 const { logout } = useAuth()
