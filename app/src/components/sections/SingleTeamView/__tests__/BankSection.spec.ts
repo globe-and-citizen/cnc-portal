@@ -6,10 +6,16 @@ import { ref } from 'vue'
 import type { Action, Team } from '@/types'
 import type { ComponentPublicInstance } from 'vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
 
 interface BankSectionVM extends ComponentPublicInstance {
   tokenDepositModal: boolean
   tokenTransferModal: boolean
+  depositModal: boolean
+  pushTipModal: boolean
+  transferModal: boolean
   tokenTipModal: boolean
   tokenAmount: string
   tokenAmountUSDC: string
@@ -136,6 +142,113 @@ describe('BankSection', () => {
       expect(buttons.some((button) => button.text().includes('Deposit USDC'))).toBeTruthy()
       expect(buttons.some((button) => button.text().includes('Transfer USDC'))).toBeTruthy()
       expect(buttons.some((button) => button.text().includes('Tip USDC'))).toBeTruthy()
+    })
+
+    it('should render deposit modal', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeTruthy()
+      expect(wrapper.findComponent(DepositBankForm).exists()).toBeTruthy()
+    })
+
+    it('should render push tip modal', async () => {
+      const pushTipButton = wrapper.find('button[data-test="push-tip-button"]')
+      await pushTipButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeTruthy()
+    })
+
+    it('should render transfer modal', async () => {
+      const transferButton = wrapper.find('button[data-test="transfer-button"]')
+      await transferButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeTruthy()
+      expect(wrapper.findComponent(TransferFromBankForm).exists()).toBeTruthy()
+    })
+
+    it('should emit modal component v-model DepositModal', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeTruthy()
+
+      const modalComponent = wrapper.findComponent(ModalComponent)
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeFalsy()
+    })
+
+    it('should close deposit modal when DepositBankForm emit @close-modal', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeTruthy()
+
+      const depositBankForm = wrapper.findComponent(DepositBankForm)
+      depositBankForm.vm.$emit('close-modal')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeFalsy()
+    })
+
+    it('should call sendTransaction when DepositBankForm emit @deposit', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      const depositBankForm = wrapper.findComponent(DepositBankForm)
+      depositBankForm.vm.$emit('deposit', '100')
+
+      expect(mockUseSendTransaction.sendTransaction).toHaveBeenCalled()
+    })
+
+    it('should emit modal component v-model transfer modal', async () => {
+      const transferButton = wrapper.find('button[data-test="transfer-button"]')
+      await transferButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeTruthy()
+
+      const modalComponent = wrapper.findAllComponents(ModalComponent)[1]
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeFalsy()
+    })
+
+    it('should close transfer modal when TransferFromBankForm emit @close-modal', async () => {
+      const transferButton = wrapper.find('button[data-test="transfer-button"]')
+      await transferButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeTruthy()
+
+      const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
+      transferFromBankForm.vm.$emit('close-modal')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeFalsy()
+    })
+
+    it('should emit modal component v-model push tip modal', async () => {
+      const pushTipButton = wrapper.find('button[data-test="push-tip-button"]')
+      await pushTipButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeTruthy()
+
+      const modalComponent = wrapper.findAllComponents(ModalComponent)[2]
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeFalsy()
+    })
+
+    it('should emit modal component v-model token tip modal', async () => {
+      const tipButton = wrapper
+        .findAll('button')
+        .find((button) => button.text().includes('Tip USDC'))
+      await tipButton?.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTipModal).toBeTruthy()
+
+      const modalComponent = wrapper.findAllComponents(ModalComponent)[3]
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTipModal).toBeFalsy()
     })
   })
 

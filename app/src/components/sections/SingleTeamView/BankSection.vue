@@ -35,6 +35,7 @@
           <Button
             v-if="team.bankAddress"
             @click="() => (pushTipModal = true)"
+            data-test="push-tip-button"
             class="btn btn-sm btn-secondary"
           >
             Tip the Team
@@ -42,6 +43,7 @@
           <Button
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
+            data-test="transfer-button"
             class="btn btn-sm btn-secondary"
           >
             Transfer
