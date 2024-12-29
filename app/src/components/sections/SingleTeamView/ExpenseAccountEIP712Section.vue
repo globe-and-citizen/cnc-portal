@@ -220,7 +220,7 @@
                   <p class="font-bold text-sm line-clamp-1" data-test="user-name">
                     {{ data.name || 'User' }}
                   </p>
-                  <p class="text-sm" data-test="formatted-address">
+                  <p class="text-sm">
                     {{ `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}` }}
                   </p>
                 </div>
