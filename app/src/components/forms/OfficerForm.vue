@@ -4,16 +4,16 @@
     <hr />
 
     <div class="flex items-center justify-center mt-4">
-      <button
-        class="btn btn-primary btn-sm"
+      <ButtonUI
+        variant="primary"
+        :loading="!!createOfficerLoading"
         data-test="deploy-officer-button"
-        v-if="!team?.officerAddress && !createOfficerLoading"
+        v-if="!team?.officerAddress"
         @click="deployOfficerContract"
+        :disabled="!!createOfficerLoading"
       >
         Create Officer Contract
-      </button>
-      <LoadingButton :color="'primary min-w-24'" v-if="createOfficerLoading" />
-
+      </ButtonUI>
       <div v-if="team?.officerAddress && !createOfficerLoading">
         <div class="flex flex-col justify-center">
           <div>
@@ -104,7 +104,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { useToastStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import DeploymentActions from './DeploymentActions.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'

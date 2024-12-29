@@ -27,14 +27,19 @@
   </div>
 
   <div class="modal-action justify-center">
-    <LoadingButton color="primary min-w-24" v-if="teamIsUpdating" />
-    <button v-else class="btn btn-primary" @click="submitForm">Submit</button>
+    <ButtonUI
+      variant="primary"
+      :loading="teamIsUpdating"
+      :disabled="teamIsUpdating"
+      @click="submitForm"
+      >Submit</ButtonUI
+    >
   </div>
 </template>
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import ButtonUI from '@/components/ButtonUI.vue'
 const team = defineModel({
   default: {
     name: '',

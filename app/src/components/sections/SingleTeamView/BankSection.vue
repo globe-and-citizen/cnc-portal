@@ -16,27 +16,30 @@
           <span class="text-xs sm:text-sm">≈ $ 1.28</span>
         </div>
         <div class="flex flex-wrap gap-2 sm:gap-4">
-          <Button
-            class="btn btn-sm btn-secondary"
+          <ButtonUI
+            variant="secondary"
+            size="sm"
             v-if="team.bankAddress"
             @click="() => (depositModal = true)"
           >
             Deposit
-          </Button>
-          <Button
-            class="btn btn-sm btn-secondary"
+          </ButtonUI>
+          <ButtonUI
+            variant="secondary"
+            size="sm"
             v-if="team.bankAddress"
             @click="() => (pushTipModal = true)"
           >
             Tip the Team
-          </Button>
-          <Button
-            class="btn btn-sm btn-secondary"
+          </ButtonUI>
+          <ButtonUI
+            variant="secondary"
+            size="sm"
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
           >
             Transfer
-          </Button>
+          </ButtonUI>
         </div>
       </div>
       <div
@@ -93,14 +96,11 @@
         />
 
         <div class="text-center">
-          <LoadingButton
-            v-if="isConfirmingPushTip || pushTipLoading || addActionLoading"
-            class="w-full sm:w-44"
-            color="primary"
-          />
-          <button
-            v-if="!(isConfirmingPushTip || pushTipLoading || addActionLoading)"
-            class="btn btn-primary w-full sm:w-44 text-center"
+          <ButtonUI
+            :loading="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            :disabled="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            variant="primary"
+            class="w-full sm:w-44 text-center"
             @click="
               async () => {
                 if (owner == team.boardOfDirectorsAddress) {
@@ -119,7 +119,7 @@
             "
           >
             Send Tips
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
@@ -130,11 +130,9 @@
 import type { Team, User } from '@/types'
 import { NETWORK } from '@/constant'
 import { onMounted, ref, watch, computed } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import Button from '@/components/ButtonUI.vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -146,6 +144,7 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)

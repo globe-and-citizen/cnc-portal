@@ -81,7 +81,7 @@ describe('ShareholderList', () => {
   it('should open mint individual modal if mint individual button is clicked', async () => {
     const wrapper = createComponent()
 
-    await wrapper.find('button[data-test="mint-individual"]').trigger('click')
+    await wrapper.find('[data-test="mint-individual"]').trigger('click')
     await wrapper.vm.$nextTick()
 
     expect((wrapper.vm as unknown as ComponentData).mintIndividualModal).toBeTruthy()
@@ -92,7 +92,7 @@ describe('ShareholderList', () => {
   it('should emit modal component v-model', async () => {
     const wrapper = createComponent()
 
-    await wrapper.find('button[data-test="mint-individual"]').trigger('click')
+    await wrapper.find('[data-test="mint-individual"]').trigger('click')
     await wrapper.vm.$nextTick()
 
     expect((wrapper.vm as unknown as ComponentData).mintIndividualModal).toBeTruthy()
@@ -106,7 +106,7 @@ describe('ShareholderList', () => {
   it('should call mint when MintForm emit submit event', async () => {
     const wrapper = createComponent()
 
-    await wrapper.find('button[data-test="mint-individual"]').trigger('click')
+    await wrapper.find('[data-test="mint-individual"]').trigger('click')
     await wrapper.vm.$nextTick()
 
     const mintForm = wrapper.findComponent({ name: 'MintForm' })

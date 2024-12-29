@@ -12,11 +12,12 @@
         > -->
           </div>
           <div class="flex justify-between gap-4">
-            <button class="btn btn-primary btn-md" @click="showModal = !showModal">
+            <ButtonUI variant="primary" size="md" @click="showModal = !showModal">
               Create Proposal
-            </button>
-            <button
-              class="btn btn-secondary"
+            </ButtonUI>
+            <ButtonUI
+              variant="secondary"
+              size="md"
               v-if="team.boardOfDirectorsAddress"
               @click="
                 () => {
@@ -26,10 +27,10 @@
               "
             >
               View BoD
-            </button>
-            <button class="btn btn-md btn-secondary" @click="showVotingControlModal = true">
+            </ButtonUI>
+            <ButtonUI variant="secondary" size="md" @click="showVotingControlModal = true">
               Manage
-            </button>
+            </ButtonUI>
           </div>
           <ModalComponent v-model="showVotingControlModal">
             <VotingManagement :team="team" />
@@ -110,6 +111,7 @@ import BoDABI from '@/artifacts/abi/bod.json'
 import VotingABI from '@/artifacts/abi/voting.json'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{ team: Partial<Team> }>()
 const showVotingControlModal = ref(false)

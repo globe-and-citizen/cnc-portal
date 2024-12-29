@@ -67,21 +67,21 @@
     </div>
 
     <div class="text-center">
-      <LoadingButton v-if="loading" class="w-44" color="primary" />
-      <button
-        v-if="!loading"
-        class="btn btn-primary w-44 text-center"
-        data-test="submit-button"
+      <ButtonUI
+        :loading="loading || $v.value?.$invalid"
+        :disabled="loading"
+        variant="primary"
+        class="w-44 text-center"
         @click="onSubmit()"
-      >
-        Mint
-      </button>
+        data-test="submit-button"
+        >Mint
+      </ButtonUI>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import { log } from '@/utils'
@@ -116,7 +116,7 @@ const rules = {
 
 const onSubmit = () => {
   $v.value.$touch()
-  if ($v.value.$invalid) return
+  if ($v.value?.$invalid) return
 
   emits('submit', to.value, amount.value!.toString())
 }

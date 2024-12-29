@@ -1,6 +1,26 @@
 <template>
   <nav class="flex justify-end border-0 border-b-2 border-slate-100 bg-white">
     <div class="flex justify-between py-3 px-3">
+      <div class="flex items-center justify-between lg:w-80">
+        <div class="relative group">
+          <img
+            src="../assets/Logo.png"
+            alt="Logo"
+            class="h-6 sm:h-8 md:h-10 w-auto relative z-10 transform transition duration-300 ease-in-out group-hover:scale-105"
+          />
+        </div>
+        <div class="">
+          <ButtonUI
+            shape="square"
+            variant="ghost"
+            class="drawer-overlay"
+            @click="emits('toggleSideButton')"
+            data-test="toggleSideButton"
+          >
+            <Bars3Icon class="size-6" />
+          </ButtonUI>
+        </div>
+      </div>
       <div class="flex items-center space-x-2 sm:space-x-4">
         <div class="dropdown dropdown-end">
           <div
@@ -96,6 +116,7 @@
 import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal', 'withdraw'])
 const { logout } = useAuth()

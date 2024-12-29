@@ -8,13 +8,13 @@
       <h3 v-if="!loadingPaused" class="font-bold text-md" data-test="status">
         Status: {{ isPaused ? 'Paused' : 'Active' }}
       </h3>
-      <LoadingButton
-        color="primary"
-        v-if="isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause"
-      />
-      <button
-        v-if="
-          isPaused ? !(loadingUnpause || isConfirmingUnpause) : !(loadingPause || isConfirmingPause)
+
+      <ButtonUI
+        :loading="
+          isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
+        "
+        :disabled="
+          isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
         "
         class="btn btn-primary row-start-2"
         @click="
@@ -34,7 +34,7 @@
         "
       >
         {{ isPaused ? 'Unpause' : 'Pause' }}
-      </button>
+      </ButtonUI>
     </div>
 
     <div class="text-center flex flex-col gap-y-4 items-center">
@@ -45,18 +45,19 @@
       <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
 
       <div class="flex flex-row gap-x-4 justify-around w-full">
-        <button
+        <ButtonUI
           class="btn btn-primary w-40 text-center"
           data-test="transfer-ownership"
           @click="transferOwnershipModal = true"
         >
           Transfer Ownership
-        </button>
-        <LoadingButton v-if="transferOwnershipLoading" class="w-44" color="primary" />
-        <button
-          class="btn btn-primary w-44 text-center"
+        </ButtonUI>
+        <ButtonUI
+          variant="primary"
+          class="w-1/2"
+          :loading="transferOwnershipLoading"
+          :disabled="transferOwnershipLoading"
           data-test="transfer-to-board-of-directors"
-          v-if="team.boardOfDirectorsAddress && !transferOwnershipLoading"
           @click="
             transferOwnership({
               functionName: 'transferOwnership',
@@ -66,8 +67,9 @@
             })
           "
         >
-          Transfer to Board Of Directors Contract
-        </button>
+          Transfer to Board Of <br />
+          Directors Contract
+        </ButtonUI>
       </div>
     </div>
   </div>
@@ -93,12 +95,12 @@ import { useToastStore } from '@/stores/useToastStore'
 import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
 import type { Team } from '@/types'
 import { onMounted, ref, watch } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import VotingABI from '@/artifacts/abi/voting.json'
 import type { Address } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const transferOwnershipModal = ref(false)
 
