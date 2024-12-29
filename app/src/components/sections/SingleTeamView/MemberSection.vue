@@ -1,7 +1,5 @@
 <template>
   <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
-  <!-- <LoadingButton color="primary"></LoadingButton> -->
-
   <div class="flex justify-between py-6" v-if="!teamIsFetching && team">
     <span class="text-3xl font-bold">Team Members List</span>
 

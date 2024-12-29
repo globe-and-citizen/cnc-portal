@@ -69,7 +69,6 @@
             >
               Transfer Ownership
             </ButtonUI>
-            <!-- <LoadingButton v-if="transferOwnershipLoading" class="w-44" color="primary" /> -->
             <ButtonUI
               :disabled="transferToBODIsLoadin"
               :loading="transferToBODIsLoadin"
