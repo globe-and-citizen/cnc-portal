@@ -50,6 +50,13 @@
           </Button>
           <Button
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
+            @click="tokenDepositModal = true"
+            class="btn btn-sm btn-secondary"
+          >
+            Deposit USDC
+          </Button>
+          <Button
+            v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenTransferModal = true"
             class="btn btn-sm btn-secondary"
           >
@@ -250,8 +257,8 @@
               isPendingApprove ||
               isConfirmingApprove
             "
-            class="w-full sm:w-44"
-            color="primary"
+            class=""
+            color="primary w-full sm:w-44"
           />
           <button
             v-else
@@ -283,6 +290,7 @@ import { useAddAction } from '@/composables/bod'
 import { encodeFunctionData, parseEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
@@ -742,6 +750,13 @@ watch(usdcBalanceError, () => {
 })
 
 onMounted(async () => {
+  console.log(
+    isConfirmingTokenDeposit.value ||
+      tokenDepositLoading.value ||
+      isConfirmingTokenDeposit.value ||
+      isConfirmingApprove.value ||
+      isPendingApprove.value
+  )
   if (props.team.bankAddress) {
     fetchBalance()
     fetchUsdcBalance()
