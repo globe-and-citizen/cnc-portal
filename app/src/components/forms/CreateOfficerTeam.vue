@@ -116,7 +116,7 @@ import type { Team, User } from '@/types'
 import type { Address } from 'viem'
 import OfficerABI from '@/artifacts/abi/officer.json'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import ButtonUI from '../ButtonUI.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
   team: Partial<Team>
