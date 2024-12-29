@@ -6,11 +6,26 @@
       @deleteTeam="showDeleteTeamConfirmModal = true"
     />
     <ModalComponent v-model="showDeleteTeamConfirmModal">
-      <DeleteConfirmForm :isLoading="teamIsDeleting" @deleteItem="async () => deleteTeamAPI()">
+      <h3 class="font-bold text-lg">Confirmation</h3>
+      <hr class="" />
+      <p class="py-4">
+        
         Are you sure you want to delete the team
         <span class="font-bold">{{ team.name }}</span
         >?
-      </DeleteConfirmForm>
+      </p>
+      <div class="modal-action justify-center">
+        <ButtonUI
+          variant="error"
+          @click="deleteTeamAPI()"
+          :loading="teamIsDeleting"
+          :disabled="teamIsDeleting"
+          >Delete
+          </ButtonUI>
+        <ButtonUI variant="primary" outline @click="() => (showDeleteTeamConfirmModal = false)"
+          >Cancel</ButtonUI
+        >
+      </div>
     </ModalComponent>
     <ModalComponent v-model="showModal">
       <UpdateTeamForm
@@ -24,7 +39,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import UpdateTeamForm from '@/components/sections/SingleTeamView/forms/UpdateTeamForm.vue'
-import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import TeamDetails from '@/components/sections/SingleTeamView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'

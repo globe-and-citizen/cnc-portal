@@ -36,18 +36,31 @@
       </div>
     </div>
     <ModalComponent v-model="showDeleteMemberConfirmModal">
-      <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+      <h3 class="font-bold text-lg">Confirmation</h3>
+      <hr class="" />
+      <p class="py-4">
         Are you sure you want to delete
         <span class="font-bold">{{ memberToBeDeleted.name }}</span>
         with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
         from the team?
-      </DeleteConfirmForm>
+      </p>
+      <div class="modal-action justify-center">
+        <ButtonUI
+          variant="error"
+          @click="deleteMemberAPI()"
+          :loading="memberIsDeleting"
+          :disabled="memberIsDeleting"
+          >Delete</ButtonUI
+        >
+        <ButtonUI variant="primary" outline @click="() => (showDeleteMemberConfirmModal = false)"
+          >Cancel</ButtonUI
+        >
+      </div>
     </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
-import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useRoute } from 'vue-router'
 import type { MemberInput } from '@/types'
