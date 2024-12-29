@@ -5,7 +5,7 @@
         size="sm"
         variant="primary"
         :loading="!isBankDeployed && isLoadingDeployBank && !isConfirmingDeployBank"
-        :disabled="!isBankDeployed && isLoadingDeployBank && !isConfirmingDeployBank"
+        :disabled="isBankDeployed || (isLoadingDeployBank && !isConfirmingDeployBank)"
         @click="deployBankAccount"
       >
         Deploy Bank
@@ -15,7 +15,7 @@
         size="sm"
         variant="primary"
         :loading="!isVotingDeployed && isLoadingDeployVoting && !isConfirmingDeployVoting"
-        :disabled="!isVotingDeployed && isLoadingDeployVoting && !isConfirmingDeployVoting"
+        :disabled="isVotingDeployed || (isLoadingDeployVoting && !isConfirmingDeployVoting)"
         @click="deployVotingContract"
       >
         Deploy Voting
@@ -25,7 +25,7 @@
         size="sm"
         variant="primary"
         :loading="!isExpenseDeployed && isLoadingDeployExpense && !isConfirmingDeployExpense"
-        :disabled="!isExpenseDeployed && isLoadingDeployExpense && !isConfirmingDeployExpense"
+        :disabled="isExpenseDeployed || (isLoadingDeployExpense && !isConfirmingDeployExpense)"
         @click="deployExpenseAccount"
       >
         Deploy Expense
@@ -40,9 +40,8 @@
           !isConfirmingDeployExpenseEip712
         "
         :disabled="
-          !isExpenseEip712Deployed &&
-          isLoadingDeployExpenseEip712 &&
-          !isConfirmingDeployExpenseEip712
+          isExpenseEip712Deployed ||
+          (isLoadingDeployExpenseEip712 && !isConfirmingDeployExpenseEip712)
         "
         @click="deployExpenseAccountEip712"
       >
@@ -58,9 +57,8 @@
           !isConfirmingDeployCashRemunerationEip712
         "
         :disabled="
-          !isCashRemunerationEip712Deployed &&
-          isLoadingDeployCashRemunerationEip712 &&
-          !isConfirmingDeployCashRemunerationEip712
+          isCashRemunerationEip712Deployed ||
+          (isLoadingDeployCashRemunerationEip712 && !isConfirmingDeployCashRemunerationEip712)
         "
         @click="deployCashRemunerationEip712"
       >
@@ -82,8 +80,7 @@
         size="sm"
         variant="primary"
         :loading="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
-        :disabled="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
-        @click="deployAllContracts"
+        :disabled="areAllContractsDeployed || (isLoadingDeployAll && !isConfirmingDeployAll)"
         data-test="deploy-all-contracts"
       >
         Deploy All Contracts
