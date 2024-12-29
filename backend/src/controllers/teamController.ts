@@ -530,7 +530,7 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
           return {
             ...JSON.parse(item.expenseAccountData), 
             signature: item.expenseAccountSignature,
-            name: item.user.name
+            name: item?.user?.name
           }
       })
 
