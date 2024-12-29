@@ -89,7 +89,9 @@ describe('CashRemunerationSection.vue', () => {
       ;(wrapper.vm as unknown as ComponentData).isSubmittingHours = true
       await wrapper.vm.$nextTick()
 
-      const submitHoursButton = wrapper.find('[data-test="submit-hours-button"]').findComponent(ButtonUI)
+      const submitHoursButton = wrapper
+        .find('[data-test="submit-hours-button"]')
+        .findComponent(ButtonUI)
       expect(submitHoursButton.props().loading).toBe(true)
     })
     it('should show action column if owner', async () => {

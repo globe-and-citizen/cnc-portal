@@ -104,9 +104,7 @@ describe('VotingManagement', () => {
 
     it('shows transfer ownership button', () => {
       const wrapper = createComponent()
-      expect(wrapper.find('[data-test="transfer-ownership"]').text()).toBe(
-        'Transfer Ownership'
-      )
+      expect(wrapper.find('[data-test="transfer-ownership"]').text()).toBe('Transfer Ownership')
     })
 
     it('shows transfer to Board of Directors button', () => {

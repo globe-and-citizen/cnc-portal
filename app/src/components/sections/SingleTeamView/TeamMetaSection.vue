@@ -9,7 +9,6 @@
       <h3 class="font-bold text-lg">Confirmation</h3>
       <hr class="" />
       <p class="py-4">
-        
         Are you sure you want to delete the team
         <span class="font-bold">{{ team.name }}</span
         >?
@@ -21,7 +20,7 @@
           :loading="teamIsDeleting"
           :disabled="teamIsDeleting"
           >Delete
-          </ButtonUI>
+        </ButtonUI>
         <ButtonUI variant="primary" outline @click="() => (showDeleteTeamConfirmModal = false)"
           >Cancel</ButtonUI
         >

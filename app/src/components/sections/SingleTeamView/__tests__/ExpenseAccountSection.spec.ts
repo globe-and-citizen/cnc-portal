@@ -382,7 +382,9 @@ describe('ExpenseAccountSection', () => {
     // })
     it('should disable the transfer button if user not approved', async () => {
       const wrapper = createComponent()
-      const transferButtonComponent = wrapper.find('[data-test="transfer-button"]').findComponent(ButtonUI)
+      const transferButtonComponent = wrapper
+        .find('[data-test="transfer-button"]')
+        .findComponent(ButtonUI)
       expect(transferButtonComponent.exists()).toBeTruthy()
       expect(transferButtonComponent.props().disabled).toBe(true) // Button should be disabled
     })

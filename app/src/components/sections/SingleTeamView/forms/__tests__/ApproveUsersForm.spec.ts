@@ -60,7 +60,9 @@ describe('ApproveUsersForm', () => {
       })
       ;(wrapper.vm as unknown as ComponentData).addressToDisapprove = '0xAddressToDisapprove'
       await wrapper.vm.$nextTick()
-      const disapproveButtonComponent = wrapper.find('[data-test="disapprove-button"]').findComponent(ButtonUI)
+      const disapproveButtonComponent = wrapper
+        .find('[data-test="disapprove-button"]')
+        .findComponent(ButtonUI)
       expect(disapproveButtonComponent.exists()).toBeTruthy()
       expect(disapproveButtonComponent.props().loading).toBe(true)
     })
@@ -79,7 +81,9 @@ describe('ApproveUsersForm', () => {
       })
       ;(wrapper.vm as unknown as ComponentData).addressToDisapprove = '0xAddressToApprove'
       await wrapper.vm.$nextTick()
-      const approveButtonComponent = wrapper.find('[data-test="approve-button"]').findComponent(ButtonUI)
+      const approveButtonComponent = wrapper
+        .find('[data-test="approve-button"]')
+        .findComponent(ButtonUI)
       expect(approveButtonComponent.exists()).toBeTruthy()
       expect(approveButtonComponent.props().loading).toBe(true)
     })

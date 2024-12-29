@@ -39,7 +39,7 @@ describe('TransferFromBankForm.vue', () => {
           ]
         }
       })
-          expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
+      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
     })
     it('renders initial UI correctly', () => {
       expect(wrapper.find('h1').text()).toBe('Transfer from Test Service Contract')
