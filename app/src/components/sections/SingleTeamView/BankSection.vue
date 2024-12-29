@@ -49,13 +49,6 @@
             Transfer
           </Button>
           <Button
-            v-if="team.bankAddress"
-            @click="() => (tokenDepositModal = true)"
-            class="btn btn-sm btn-secondary"
-          >
-            Deposit USDC
-          </Button>
-          <Button
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenTransferModal = true"
             class="btn btn-sm btn-secondary"
@@ -125,14 +118,11 @@
         />
 
         <div class="text-center">
-          <LoadingButton
-            v-if="isConfirmingPushTip || pushTipLoading || addActionLoading"
-            class="w-full sm:w-44"
-            color="primary"
-          />
-          <button
-            v-if="!(isConfirmingPushTip || pushTipLoading || addActionLoading)"
-            class="btn btn-primary w-full sm:w-44 text-center"
+          <ButtonUI
+            :loading="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            :disabled="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            variant="primary"
+            class="w-full sm:w-44 text-center"
             @click="
               async () => {
                 if (owner == team.boardOfDirectorsAddress) {
@@ -151,7 +141,7 @@
             "
           >
             Send Tips
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
@@ -281,11 +271,9 @@
 import type { Team, User } from '@/types'
 import { NETWORK } from '@/constant'
 import { onMounted, ref, watch, computed } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import Button from '@/components/ButtonUI.vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'

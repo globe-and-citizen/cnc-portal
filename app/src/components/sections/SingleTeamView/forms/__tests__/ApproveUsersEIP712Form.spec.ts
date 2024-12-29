@@ -9,6 +9,7 @@ import type {
   ValidationRuleWithParams
 } from '@vuelidate/core'
 import VueDatePicker from '@vuepic/vue-datepicker'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {
   budgetLimitType: 0 | 1 | 2 | null
@@ -151,7 +152,11 @@ describe('ApproveUsersForm', () => {
       })
       ;(wrapper.vm as unknown as ComponentData).addressToDisapprove = '0xAddressToApprove'
       await wrapper.vm.$nextTick()
-      expect(wrapper.find('[data-test="loading-approve"]').exists()).toBeTruthy()
+      const loadingApproveButton = wrapper
+        .find('[data-test="approve-button"]')
+        .findComponent(ButtonUI)
+      expect(loadingApproveButton.exists()).toBeTruthy()
+      expect(loadingApproveButton.props().loading).toBe(true)
     })
   })
   describe('State & V-Model', () => {

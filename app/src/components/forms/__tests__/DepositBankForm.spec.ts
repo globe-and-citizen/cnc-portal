@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 
 describe('DepositBankModal.vue', () => {
@@ -19,8 +20,8 @@ describe('DepositBankModal.vue', () => {
       const wrapper = mount(DepositBankForm, {
         props: { loading: true }
       })
-
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
+      const allButtonComponentsWrapper = wrapper.findAllComponents(ButtonUI)
+      expect(allButtonComponentsWrapper[0].props().loading).toBe(true)
     })
 
     it('shows deposit button when loading is false', () => {

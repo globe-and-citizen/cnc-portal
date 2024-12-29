@@ -22,25 +22,25 @@
         /></template>
       </TabNavigation>
       <div class="flex justify-center join">
-        <button
-          class="join-item btn"
+        <ButtonUI
+          class="join-item"
           :class="{
             'btn-disabled': currentCount == 0 || page == 1
           }"
           @click="() => (page -= 1)"
         >
           «
-        </button>
-        <button class="join-item btn">Page {{ page }}</button>
-        <button
-          class="join-item btn"
+        </ButtonUI>
+        <ButtonUI class="join-item">Page {{ page }}</ButtonUI>
+        <ButtonUI
+          class="join-item"
           :class="{
             'btn-disabled': currentCount <= page * limit || currentCount == 0
           }"
           @click="() => (page += 1)"
         >
           »
-        </button>
+        </ButtonUI>
       </div>
     </div>
   </div>
@@ -55,6 +55,7 @@ import { ref, watch, computed, onMounted } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useAddAction } from '@/composables/bod'
 import { useToastStore } from '@/stores/useToastStore'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const activeTab = ref(0)
 const tabs = ['Pending', 'Executed']

@@ -8,16 +8,16 @@
           <h3 v-if="!loadingPaused" class="font-bold text-xl" data-test="status">
             Status: {{ isPaused ? 'Paused' : 'Active' }}
           </h3>
-          <LoadingButton
-            color="primary"
-            v-if="
-              isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
-            "
-          />
-          <button
-            v-if="
+
+          <ButtonUI
+            :loading="
               isPaused
-                ? !loadingUnpause || !isConfirmingUnpause
+                ? loadingUnpause || !isConfirmingUnpause
+                : !loadingPause || !isConfirmingPause
+            "
+            :disabled="
+              isPaused
+                ? loadingUnpause || !isConfirmingUnpause
                 : !loadingPause || !isConfirmingPause
             "
             class="btn btn-primary row-start-2"
@@ -47,7 +47,7 @@
             "
           >
             {{ isPaused ? 'Unpause' : 'Pause' }}
-          </button>
+          </ButtonUI>
         </div>
 
         <div class="text-center flex flex-col gap-y-4 items-center">
@@ -61,22 +61,20 @@
           <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
 
           <div class="flex flex-row gap-x-4 justify-around w-full">
-            <button
-              class="btn btn-primary w-40 text-center"
+            <ButtonUI
+              variant="primary"
+              class="w-40 text-center"
               data-test="transfer-ownership"
               @click="transferOwnershipModal = true"
             >
               Transfer Ownership
-            </button>
-            <LoadingButton v-if="transferOwnershipLoading" class="w-44" color="primary" />
-            <button
-              class="btn btn-primary w-44 text-center"
+            </ButtonUI>
+            <ButtonUI
+              :disabled="transferToBODIsLoadin"
+              :loading="transferToBODIsLoadin"
+              variant="primary"
+              class="w-44 text-center"
               data-test="transfer-to-board-of-directors"
-              v-if="
-                team.boardOfDirectorsAddress &&
-                team.boardOfDirectorsAddress != bankOwner &&
-                !transferOwnershipLoading
-              "
               @click="
                 transferOwnership({
                   address: props.team.bankAddress! as Address,
@@ -87,7 +85,7 @@
               "
             >
               Transfer to Board Of Directors Contract
-            </button>
+            </ButtonUI>
           </div>
         </div>
       </div>
@@ -133,7 +131,6 @@
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
@@ -146,6 +143,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import DescriptionActionForm from './forms/DescriptionActionForm.vue'
 import { useAddAction } from '@/composables/bod'
 import { encodeFunctionData, type Address } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentUserAddress } = useUserDataStore()
@@ -163,6 +161,14 @@ const props = defineProps<{
   loadingOwner: boolean
   isBod: boolean
 }>()
+
+const transferToBODIsLoadin = computed<boolean>(() => {
+  return (
+    !!props.team.boardOfDirectorsAddress &&
+    props.team.boardOfDirectorsAddress != props.bankOwner &&
+    !transferOwnershipLoading
+  )
+})
 const emits = defineEmits(['getOwner'])
 
 const {

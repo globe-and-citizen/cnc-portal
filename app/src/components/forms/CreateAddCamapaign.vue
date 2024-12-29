@@ -38,21 +38,25 @@
   <h3 class="pt-8">
     By clicking "Deploy Advertisement Contract" you agree to deploy an advertisment campaign
     contract and this may take some time and pay for gas fee.
-    <button class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</button>
+    <ButtonUI class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</ButtonUI>
   </h3>
 
   <div class="modal-action justify-right">
-    <LoadingButton color="primary" class="w-44" v-if="loading" />
-    <button class="btn btn-primary btn-sm" @click="emitCreateAddCampaign" v-if="!loading">
+    <ButtonUI
+      variant="primary"
+      size="sm"
+      @click="emitCreateAddCampaign"
+      :loading="loading"
+      :disabled="loading"
+    >
       confirm
-    </button>
+    </ButtonUI>
   </div>
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
-
 import { ref, watch } from 'vue'
+import ButtonUI from '../ButtonUI.vue'
 const emit = defineEmits(['createAddCampaign'])
 const props = defineProps<{
   loading: boolean
