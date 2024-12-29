@@ -232,12 +232,14 @@
               <td>{{ `${getLimitBalance(data.signature, 0)}/${data.budgetData[0].value}` }}</td>
               <td>{{ `${getLimitBalance(data.signature, 1)}/${data.budgetData[1].value}` }}</td>
               <td class="flex justify-end" data-test="action-td">
-                <button
+                <ButtonUI
                   :disabled="contractOwnerAddress !== currentUserAddress"
                   class="btn btn-success"
+                  :loading="isLoadingDeactivateApproval"
+                  @click="deactivateApproval(data.signature)"
                 >
                   Deactivate
-                </button>
+                </ButtonUI>
               </td>
             </tr>
           </tbody>
@@ -427,6 +429,7 @@ watch(signatureHash, async (newVal) => {
   }
 })
 
+//expense account transfer
 const {
   writeContract: executeExpenseAccountTransfer,
   isPending: isLoadingTransfer,
@@ -453,6 +456,46 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
     transferModal.value = false
   }
 })
+
+//deactivate approval
+const {
+  writeContract: executeDeactivateApproval,
+  isPending: isLoadingDeactivateApproval,
+  error: errorDeactivateApproval,
+  data: deactivateHash
+} = useWriteContract()
+
+watch(errorDeactivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to deactivate approval')
+  }
+})
+
+const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
+  useWaitForTransactionReceipt({
+    hash: deactivateHash
+  })
+watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
+    addSuccessToast('Deactivate Successful')
+    // await getExpenseAccountBalance()
+    // await getAmountWithdrawnBalance()
+    // transferModal.value = false
+  }
+})
+
+const deactivateApproval = async (signature: `0x{string}`) => {
+  const signatureHash = keccak256(signature)
+
+  executeDeactivateApproval({
+    address: team.value.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'deactivateApproval'
+  })
+}
+
 
 // useFetch instance for deleting member
 const {
