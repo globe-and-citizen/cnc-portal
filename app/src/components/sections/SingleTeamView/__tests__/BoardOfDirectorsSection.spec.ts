@@ -6,7 +6,7 @@ import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { TransactionResponse } from 'ethers'
-import ButtonUI from '@/components/ButtonUI.vue'
+// import ButtonUI from '@/components/ButtonUI.vue'
 import type { Action, Team } from '@/types'
 
 // Mock implementations
