@@ -29,7 +29,7 @@
   <div v-if="approvedAddresses.size > 0" class="mt-5">
     <div class="text-lg font-medium">Approved Addresses</div>
     <div class="overflow-x-auto border border-gray-300 rounded-lg">
-      <table class="table table-zebra">
+      <table class="table table-zebra" data-test="approved-addresses-table">
         <tbody>
           <tr v-for="(address, index) of approvedAddresses" :key="index">
             <th>{{ index + 1 }}</th>
@@ -77,7 +77,6 @@
         :disabled="loadingApprove"
         variant="primary"
         @click="submitApprove"
-        v-if="!loadingApprove"
         data-test="approve-button"
       >
         Approve
