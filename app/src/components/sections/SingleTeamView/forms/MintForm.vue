@@ -74,7 +74,7 @@
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
-      >Mint
+        >Mint
       </ButtonUI>
     </div>
   </div>

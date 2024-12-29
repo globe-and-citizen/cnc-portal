@@ -183,7 +183,7 @@ describe('OfficerForm.vue', () => {
   it('renders Loading state if createOfficerLoading is true', async () => {
     const wrapper: VueWrapper = mount(OfficerForm, {
       props: {
-        team: {  }
+        team: {}
       }
     })
 
@@ -193,7 +193,7 @@ describe('OfficerForm.vue', () => {
 
     await wrapper.vm.$nextTick()
     await wrapper.vm.$nextTick()
-    console.log("wrapper",wrapper.html())
+    console.log('wrapper', wrapper.html())
     expect(wrapper.findComponent(ButtonUI).exists()).toBeTruthy()
     expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
   })
