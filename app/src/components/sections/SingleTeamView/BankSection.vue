@@ -167,8 +167,15 @@
           />
         </div>
         <div class="text-center">
-          <LoadingButton
-            v-if="
+          <ButtonUI
+            :loading="
+              isConfirmingPushTokenTip ||
+              pushTokenTipLoading ||
+              isConfirmingPushTokenTip ||
+              isPendingApprove ||
+              isConfirmingApprove
+            "
+            :disabled="
               isConfirmingPushTokenTip ||
               pushTokenTipLoading ||
               isConfirmingPushTokenTip ||
@@ -176,16 +183,12 @@
               isConfirmingApprove
             "
             class="w-full sm:w-44"
-            color="primary"
-          />
-          <button
-            class="btn btn-primary w-full sm:w-44 text-center"
+            variant="primary"
             @click="pushUSDC"
             data-test="tip-usdc-button"
-            v-else
           >
             Tip USDC to Team
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
@@ -205,8 +208,15 @@
           />
         </div>
         <div class="text-center">
-          <LoadingButton
-            v-if="
+          <ButtonUI
+            :loading="
+              isConfirmingTokenDeposit ||
+              tokenDepositLoading ||
+              isConfirmingTokenDeposit ||
+              isConfirmingApprove ||
+              isPendingApprove
+            "
+            :disabled="
               isConfirmingTokenDeposit ||
               tokenDepositLoading ||
               isConfirmingTokenDeposit ||
@@ -214,11 +224,11 @@
               isPendingApprove
             "
             class="w-full sm:w-44"
-            color="primary"
-          />
-          <button v-else class="btn btn-primary w-full sm:w-44 text-center" @click="depositToken">
+            @click="depositToken"
+            variant="primary"
+          >
             Deposit USDC
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
@@ -249,25 +259,28 @@
           />
         </div>
         <div class="text-center">
-          <LoadingButton
-            v-if="
+          <ButtonUI
+            :loading="
               isConfirmingTokenTransfer ||
               tokenTransferLoading ||
               isConfirmingTokenTransfer ||
               isPendingApprove ||
               isConfirmingApprove
             "
-            class=""
-            color="primary w-full sm:w-44"
-          />
-          <button
-            v-else
-            class="btn btn-primary w-full sm:w-44 text-center"
+            :disabled="
+              isConfirmingTokenTransfer ||
+              tokenTransferLoading ||
+              isConfirmingTokenTransfer ||
+              isPendingApprove ||
+              isConfirmingApprove
+            "
+            class="w-full sm:w-44"
+            variant="primary"
             @click="transferToken"
             data-test="transfer-usdc-button"
           >
             Transfer USDC
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
