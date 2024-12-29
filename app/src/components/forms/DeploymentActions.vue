@@ -82,6 +82,7 @@
         :loading="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
         :disabled="areAllContractsDeployed || (isLoadingDeployAll && !isConfirmingDeployAll)"
         data-test="deploy-all-contracts"
+        @click="deployAllContracts"
       >
         Deploy All Contracts
       </ButtonUI>
