@@ -27,14 +27,13 @@
         </div>
         <!--<button class="btn btn-success">Submit Hours</button>-->
         <ButtonUI
-          v-if="isSubmittingHours"
-          loading
+          :loading="isSubmittingHours"
           variant="success"
-          data-test="submitting-hours-button"
-        />
-        <ButtonUI v-else variant="success" data-test="submit-hours-button" @click="addWageClaim"
-          >Submit Hours</ButtonUI
+          data-test="submit-hours-button"
+          @click="addWageClaim"
         >
+          Submit Hours
+        </ButtonUI>
       </div>
     </div>
     <div class="divider m-0"></div>
@@ -63,7 +62,7 @@
               class="flex justify-end"
               data-test="action-td"
             >
-              <button class="btn btn-success" @click="approveClaim(data)">Approve</button>
+              <ButtonUI variant="success" @click="approveClaim(data)">Approve</ButtonUI>
             </td>
           </tr>
         </tbody>

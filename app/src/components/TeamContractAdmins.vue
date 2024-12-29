@@ -11,7 +11,7 @@
       required
     />
     <div>
-      <button type="submit" class="btn btn-primary btn-sm" v-if="!isLoading">Add Admin</button>
+      <ButtonUI type="submit" variant="primary" size="sm" v-if="!isLoading">Add Admin</ButtonUI>
     </div>
   </form>
 
@@ -32,7 +32,7 @@
           <th>{{ index + 1 }}</th>
           <td><AddressToolTip :address="admin" class="text-xs" /></td>
           <td>
-            <button @click="removeAdmin(admin)" class="btn btn-error btn-xs">Remove</button>
+            <ButtonUI @click="removeAdmin(admin)" size="xs" variant="error">Remove</ButtonUI>
           </td>
         </tr>
       </tbody>
@@ -40,9 +40,7 @@
     <div
       v-if="isLoading"
       class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
-    >
-      <LoadingButton color="primary min-w-24" />
-    </div>
+    ></div>
   </div>
 </template>
 
@@ -52,8 +50,8 @@ import { isAddress } from 'ethers'
 import { useToastStore } from '@/stores/useToastStore'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
-import LoadingButton from '@/components/LoadingButton.vue'
 import AddressToolTip from './AddressToolTip.vue'
+import ButtonUI from './ButtonUI.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCamapaignService = new AddCampaignService()

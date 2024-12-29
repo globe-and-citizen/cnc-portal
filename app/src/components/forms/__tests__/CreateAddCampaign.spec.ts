@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import CreateAddCampaign from '@/components/forms/CreateAddCamapaign.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 describe('CreateAddCampaign.vue', () => {
   describe('render', () => {
@@ -28,16 +29,8 @@ describe('CreateAddCampaign.vue', () => {
         props: { loading: true, bankAddress: '0x123456' }
       })
 
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
-    })
-
-    it('shows deploy button when loading is false', () => {
-      const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
-      })
-
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(false)
-      expect(wrapper.find('.btn-primary').exists()).toBe(true)
+      const allButtonComponentsWrapper = wrapper.findAllComponents(ButtonUI)
+      expect(allButtonComponentsWrapper[1].props().loading).toBe(true)
     })
   })
 

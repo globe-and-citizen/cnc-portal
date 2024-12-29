@@ -121,15 +121,15 @@
         </div>
 
         <div class="stat-actions flex justify-start gap-2 mt-8">
-          <button
-            class="btn btn-secondary"
+          <ButtonUI
+            variant="secondary"
             :disabled="!_expenseAccountData?.data"
             v-if="true"
             @click="transferModal = true"
             data-test="transfer-button"
           >
             Transfer
-          </button>
+          </ButtonUI>
           <button
             class="btn btn-secondary"
             :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
@@ -264,6 +264,7 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 //#endregion imports
 
 //#region variable declarations

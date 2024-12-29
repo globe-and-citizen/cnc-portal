@@ -19,16 +19,20 @@
     </div>
 
     <div class="text-center">
-      <LoadingButton v-if="loading" class="w-44" color="primary" />
-      <button v-if="!loading" class="btn btn-primary w-44 text-center" @click="onSubmit()">
+      <ButtonUI
+        :loading="loading"
+        :disabled="loading"
+        class="btn btn-primary w-44 text-center"
+        @click="onSubmit()"
+      >
         {{ actionName }}
-      </button>
+      </ButtonUI>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import useVuelidate from '@vuelidate/core'
 import { minLength, required } from '@vuelidate/validators'
 

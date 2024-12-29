@@ -10,6 +10,7 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { User } from '@/types'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {
   expiry: string
@@ -552,9 +553,11 @@ describe('ExpenseAccountSection', () => {
     it('should disable the transfer button if user not approved', async () => {
       const wrapper = createComponent()
 
-      const button = wrapper.find('[data-test="transfer-button"]')
-      expect(button.exists()).toBeTruthy()
-      expect((button.element as HTMLButtonElement).disabled).toBe(true) // Button should be disabled
+      const transferButtonComponent = wrapper
+        .find('[data-test="transfer-button"]')
+        .findComponent(ButtonUI)
+      expect(transferButtonComponent.exists()).toBeTruthy()
+      expect(transferButtonComponent.props().disabled).toBe(true) // Button should be disabled
     })
     it('should enable the transfer button if user approved', async () => {
       const wrapper = createComponent({

@@ -1,7 +1,7 @@
 <template>
   <div class="dropdown dropdown-end">
     <div tabindex="0" role="button" class="">
-      <div class="btn btn-ghost btn-circle m-1">
+      <div class="btn btn-ghost btn-circle m-1" data-test="notifications">
         <div class="indicator">
           <BellIcon class="size-6" />
           <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
@@ -11,6 +11,7 @@
     <ul
       tabindex="0"
       class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
+      data-test="notification-dropdown"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
         <a
@@ -31,21 +32,25 @@
         class="join flex justify-between items-center p-2"
         v-if="paginatedNotifications.length > 0"
       >
-        <button
-          class="join-item btn-primary btn btn-xs"
+        <ButtonUI
+          variant="primary"
+          size="xs"
+          class="join-item"
           :class="currentPage === 1 ? 'btn-disabled' : ''"
           @click="currentPage > 1 ? currentPage-- : currentPage"
         >
           <ChevronLeftIcon class="size-6" />
-        </button>
+        </ButtonUI>
         <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
-        <button
-          class="join-item btn btn-primary btn-xs"
+        <ButtonUI
+          variant="primary"
+          size="xs"
+          class="join-item btn"
           :class="currentPage == totalPages ? 'btn-disabled' : ''"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
         >
           <ChevronRightIcon class="size-6" />
-        </button>
+        </ButtonUI>
       </div>
     </ul>
   </div>
@@ -63,6 +68,7 @@ import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.js
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
+import ButtonUI from './ButtonUI.vue'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)

@@ -200,34 +200,27 @@
   </div>
 
   <div class="modal-action justify-center">
-    <LoadingButton data-test="loading-approve" color="primary" class="w-24" v-if="loadingApprove" />
-    <button
-      class="btn btn-primary"
+    <ButtonUI
+      :loading="loadingApprove"
+      :disabled="loadingApprove"
+      variant="primary"
       @click="submitApprove"
-      v-if="!loadingApprove"
       data-test="approve-button"
     >
       Approve
-    </button>
-    <button
-      data-test="cancel-button"
-      class="btn btn-error"
-      @click="clear"
-      :disabled="loadingApprove"
-    >
-      Cancel
-    </button>
+    </ButtonUI>
+    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
   loadingApprove: boolean

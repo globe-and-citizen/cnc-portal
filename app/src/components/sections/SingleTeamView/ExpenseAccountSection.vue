@@ -62,31 +62,34 @@
       </div>
     </div>
     <div class="stat-actions flex justify-center gap-2 items-center mt-8">
-      <button
-        class="btn btn-xs btn-secondary"
+      <ButtonUI
+        size="xs"
+        variant="secondary"
         :disabled="!approvedAddresses.has(currentUserAddress)"
         v-if="approvedAddresses"
         @click="transferModal = true"
         data-test="transfer-button"
       >
         Transfer
-      </button>
-      <button
-        class="btn btn-xs btn-secondary"
+      </ButtonUI>
+      <ButtonUI
+        size="xs"
+        variant="secondary"
         v-if="contractOwnerAddress == currentUserAddress || isBodAction()"
         @click="setLimitModal = true"
         data-test="set-limit-button"
       >
         Set Limit
-      </button>
-      <button
-        class="btn btn-xs btn-secondary"
+      </ButtonUI>
+      <ButtonUI
+        size="xs"
+        variant="secondary"
         v-if="contractOwnerAddress == currentUserAddress || isBodAction()"
         @click="approveUsersModal = true"
         data-test="approve-users-button"
       >
         Approve Users
-      </button>
+      </ButtonUI>
     </div>
     <ModalComponent v-model="transferModal">
       <TransferFromBankForm
@@ -171,6 +174,7 @@ import BoDABI from '@/artifacts/abi/bod.json'
 import expenseAccountABI from '@/artifacts/abi/expense-account.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 //#endregion imports
 
