@@ -68,14 +68,13 @@
 
     <div class="text-center">
       <ButtonUI
-        :loading="loading || $v.value.$invalid"
+        :loading="loading || $v.value?.$invalid"
         :disabled="loading"
         variant="primary"
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
-      >
-        develop Mint
+      >Mint
       </ButtonUI>
     </div>
   </div>
@@ -117,7 +116,7 @@ const rules = {
 
 const onSubmit = () => {
   $v.value.$touch()
-  if ($v.value.$invalid) return
+  if ($v.value?.$invalid) return
 
   emits('submit', to.value, amount.value!.toString())
 }
