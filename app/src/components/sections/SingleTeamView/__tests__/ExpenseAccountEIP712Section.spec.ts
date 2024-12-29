@@ -390,7 +390,9 @@ describe('ExpenseAccountSection', () => {
 
       const firstRowCells = rows[0].findAll('td')
       expect(firstRowCells[0].text()).toBe(`John Doe0x0123...56789`)
-      expect(firstRowCells[1].text()).toBe(new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US'))
+      expect(firstRowCells[1].text()).toBe(
+        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
+      )
       expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
       expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)

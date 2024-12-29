@@ -221,7 +221,9 @@
                     {{ data.name || 'User' }}
                   </p>
                   <p class="text-sm">
-                    {{ `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}` }}
+                    {{
+                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
+                    }}
                   </p>
                 </div>
               </td>
