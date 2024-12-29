@@ -496,7 +496,6 @@ const deactivateApproval = async (signature: `0x{string}`) => {
   })
 }
 
-
 // useFetch instance for deleting member
 const {
   error: fetchExpenseAccountDataError,
