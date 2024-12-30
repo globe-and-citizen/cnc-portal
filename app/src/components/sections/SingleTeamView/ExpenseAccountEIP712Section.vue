@@ -164,20 +164,6 @@
           </tbody>
         </table>
       </div>
-
-      <!--Pagination Controls-->
-      <div class="flex flex-row justify-end">
-        <div>1</div>
-        <div>2</div>
-        <div class="flex flex-row">
-          <button class="flex items-center justify-center w12 h12 rounded-ful">
-            <ChevronLeftIcon class="w6 h6"/>
-          </button>
-          <button class="flex items-center justify-center w12 h12 rounded-ful">
-            <ChevronRightIcon class="w6 h6"/>
-          </button>
-        </div>
-      </div>
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -280,17 +266,6 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const web3Library = new EthersJsAdapter()
 const expenseBalanceFormated = ref<string | number>(`0`)
 const signatureHash = ref<string | null>(null)
-
-const currentPage = ref(1)
-const itemsPerPage = ref(5)
-
-const totalPages = computed(() => Math.ceil(manyExpenseAccountData.value.length / itemsPerPage.value))
-
-const paginatedExpenseData = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  return manyExpenseAccountData.value.slice(start, end);
-})
 //#endregion variable declarations
 
 //#region expense account composable
