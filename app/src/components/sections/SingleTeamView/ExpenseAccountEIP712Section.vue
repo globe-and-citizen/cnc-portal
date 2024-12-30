@@ -186,12 +186,6 @@ import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { 
-  ChevronUpIcon, 
-  ChevronDownIcon, 
-  ChevronLeftIcon, 
-  ChevronRightIcon 
-} from '@heroicons/vue/24/outline'
 //#endregion imports
 
 //#region variable declarations
