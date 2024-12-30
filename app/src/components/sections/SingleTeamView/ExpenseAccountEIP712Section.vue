@@ -9,16 +9,16 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 mb-10">
           <div>
             <span>Expense Account Balance</span>
-            <div class="font-extrabold text-4xl">
+            <div class="font-extrabold text-4xl" data-test="expense-account-balance">
               <span class="inline-block min-w-16 h-10">
                 <span class="loading loading-spinner loading-lg" v-if="isLoadingGetExpenseBalance"></span>
                 <span v-else>{{ expenseBalanceFormated }} </span>
               </span>
-              <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+              <span class="text-xs">{{ ' ' + NETWORK.currencySymbol }}</span>
             </div>
             <span class="text-xs sm:text-sm">≈ $ 1.28</span>
           </div>
-          <div class="flex flex-wrap gap-2 sm:gap-4">
+          <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
             <span class="text-sm">Expense Account Address </span>
             <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
           </div>
@@ -26,7 +26,7 @@
 
         <!-- New Header -->
         <div>
-          <div class="overflow-x-auto" data-test="approvals-list-table">
+          <div class="overflow-x-auto" data-test="approval-table">
             <table class="table">
               <!-- head -->
               <thead class="text-sm font-bold">
@@ -41,7 +41,7 @@
               <tbody>
                 <tr>
                   <td>{{ expiry }}</td>
-                  <td>{{ `${maxLimitAmountPerTx} POL` }}</td>
+                  <td>{{ `${maxLimitAmountPerTx} ${NETWORK.currencySymbol}` }}</td>
                   <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
                   <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
                   <td class="flex justify-end" data-test="action-td">

@@ -11,6 +11,7 @@ import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { table } from 'console'
 
 interface ComponentData {
   expiry: string
@@ -332,22 +333,60 @@ describe('ExpenseAccountSection', () => {
   }
 
   describe('Render', () => {
-    describe('Sub-Context', () => {
+    // describe('Sub-Context', () => {
+    //   const wrapper = createComponent()
+    //   it('should retrieve, format and display expiry date', async () => {
+    //     const date = new Date(DATE)
+    //     const expiry = date.toLocaleString('en-US')
+
+    //     const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
+    //     expect(approvalExpiry.exists()).toBe(true)
+
+    //     expect(approvalExpiry.text()).toBe(expiry)
+    //   })
+    //   it('should show loading animation if fetching expense account data', async () => {
+    //     ;(wrapper.vm as unknown as ComponentData).isFetchingExpenseAccountData = true
+    //     await wrapper.vm.$nextTick()
+    //     expect(wrapper.find('[data-test="max-loading"]').exists()).toBeTruthy()
+    //   })
+    // })
+
+    it('should show the user\'s approval data in the approval table', async () => {
       const wrapper = createComponent()
-      it('should retrieve, format and display expiry date', async () => {
-        const date = new Date(DATE)
-        const expiry = date.toLocaleString('en-US')
 
-        const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
-        expect(approvalExpiry.exists()).toBe(true)
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
-        expect(approvalExpiry.text()).toBe(expiry)
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      const approvalTable = wrapper.find('[data-test="approval-table"]')
+      expect(approvalTable.exists()).toBeTruthy()
+
+      const headers = approvalTable.findAll('thead th')
+
+      const expectedHeaders = [
+        'Expiry Date',
+        'Max Amount Per Tx',
+        'Total Transactions',
+        'Total Transfers',
+        'Action'
+      ]
+      headers.forEach((header, i) => {
+        expect(header.text()).toBe(expectedHeaders[i])
       })
-      it('should show loading animation if fetching expense account data', async () => {
-        ;(wrapper.vm as unknown as ComponentData).isFetchingExpenseAccountData = true
-        await wrapper.vm.$nextTick()
-        expect(wrapper.find('[data-test="max-loading"]').exists()).toBeTruthy()
-      })
+
+      const rows = approvalTable.findAll('tbody tr')
+      expect(rows).toHaveLength(1)
+
+      const firstRowCells = rows[0].findAll('td')
+      expect(firstRowCells[0].text()).toBe(
+        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
+      )
+      expect(firstRowCells[1].text()).toBe(`${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`)
+      expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
+      expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
     })
 
     it('should show aprroval list table cells with correct data', async () => {
@@ -424,7 +463,7 @@ describe('ExpenseAccountSection', () => {
 
       expect(wrapper.find('[data-test="expense-account-address"]').exists()).toBeTruthy()
       expect(wrapper.find('[data-test="expense-account-address"]').text()).toBe(
-        `Expense Address ${team.expenseAccountEip712Address}`
+        `Expense Account Address ${team.expenseAccountEip712Address}`
       )
 
       // ToolTip
@@ -484,7 +523,7 @@ describe('ExpenseAccountSection', () => {
     it('should show expense account balance', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="contract-balance"]').text()).toBe(
+      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
         `${'0'} ${NETWORK.currencySymbol}`
       )
     })
@@ -499,35 +538,6 @@ describe('ExpenseAccountSection', () => {
 
       expect(wrapper.find('[data-test="max-loading"]').exists()).toBeFalsy()
     })
-    it('should show max transactions per period limit amount', async () => {
-      const wrapper = createComponent()
-
-      const txsPerPeriodDiv = wrapper.find('[data-test="txs-per-period-limit"]')
-      expect(txsPerPeriodDiv.text()).toBe(`-- TXs`)
-      await wrapper.vm.$nextTick()
-      expect(txsPerPeriodDiv.text()).toBe(`${budgetData.txsPerPeriod} TXs`)
-    })
-    it('should show amount per period limit amount', async () => {
-      const wrapper = createComponent()
-
-      const amountPerPeriodDiv = wrapper.find('[data-test="amount-per-period-limit"]')
-      expect(amountPerPeriodDiv.text()).toBe(`-- ${NETWORK.currencySymbol}`)
-      await wrapper.vm.$nextTick()
-      expect(amountPerPeriodDiv.text()).toBe(
-        `${budgetData.amountPerPeriod} ${NETWORK.currencySymbol}`
-      )
-    })
-    it('should show amount per transaction limit amount', async () => {
-      const wrapper = createComponent()
-
-      const amountPerTxDiv = wrapper.find('[data-test="amount-per-tx-limit"]')
-      expect(amountPerTxDiv.text()).toBe(`-- ${NETWORK.currencySymbol}`)
-      await wrapper.vm.$nextTick()
-      expect(amountPerTxDiv.text()).toBe(
-        `${budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
-      )
-    })
-
     it('should show animation if limit balance loading', async () => {
       const wrapper = createComponent()
 
@@ -537,18 +547,6 @@ describe('ExpenseAccountSection', () => {
       const wrapper = createComponent()
 
       expect(wrapper.find('[data-test="limit-loading"]').exists()).toBeFalsy()
-    })
-    it('should show total number of transactions', async () => {
-      const wrapper = createComponent()
-
-      expect(wrapper.find('[data-test="total-transactions"]').text()).toBe(`-- TXs`)
-    })
-    it('should show total amount withdrawn', async () => {
-      const wrapper = createComponent()
-
-      expect(wrapper.find('[data-test="total-withdrawn"]').text()).toBe(
-        `-- ${NETWORK.currencySymbol}`
-      )
     })
     it('should disable the transfer button if user not approved', async () => {
       const wrapper = createComponent()
