@@ -11,7 +11,6 @@ import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { table } from 'console'
 
 interface ComponentData {
   expiry: string
@@ -351,7 +350,7 @@ describe('ExpenseAccountSection', () => {
     //   })
     // })
 
-    it('should show the user\'s approval data in the approval table', async () => {
+    it("should show the user's approval data in the approval table", async () => {
       const wrapper = createComponent()
 
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
@@ -384,7 +383,9 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[0].text()).toBe(
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
-      expect(firstRowCells[1].text()).toBe(`${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`)
+      expect(firstRowCells[1].text()).toBe(
+        `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
+      )
       expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
     })

@@ -6,12 +6,17 @@
     >
       <!-- Expense A/c Info Section -->
       <section class="stat flex flex-col justify-start">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 mb-10">
+        <div
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 mb-10"
+        >
           <div>
             <span>Expense Account Balance</span>
             <div class="font-extrabold text-4xl" data-test="expense-account-balance">
               <span class="inline-block min-w-16 h-10">
-                <span class="loading loading-spinner loading-lg" v-if="isLoadingGetExpenseBalance"></span>
+                <span
+                  class="loading loading-spinner loading-lg"
+                  v-if="isLoadingGetExpenseBalance"
+                ></span>
                 <span v-else>{{ expenseBalanceFormated }} </span>
               </span>
               <span class="text-xs">{{ ' ' + NETWORK.currencySymbol }}</span>
@@ -418,7 +423,7 @@ const deactivateApproval = async (signature: `0x{string}`) => {
 // useFetch instance for deleting member
 const {
   error: fetchExpenseAccountDataError,
-  isFetching: isFetchingExpenseAccountData,
+  // isFetching: isFetchingExpenseAccountData,
   execute: fetchExpenseAccountData,
   data: _expenseAccountData
 } = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
