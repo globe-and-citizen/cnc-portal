@@ -6,121 +6,64 @@
     >
       <!-- Expense A/c Info Section -->
       <section class="stat flex flex-col justify-start">
-        <div class="flex pt-3" style="border-width: 0">
-          <!-- Balances -->
-          <div class="flex flex-col border-r border-gray-400">
-            <p>Balances</p>
-            <div class="flex">
-              <div>
-                <div class="stat-title pr-3">Expense Balance</div>
-                <div
-                  v-if="isLoadingGetExpenseBalance"
-                  class="stat-value mt-1 border-r border-gray-400 pr-3"
-                >
-                  <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
-                </div>
-                <div
-                  v-else
-                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-                  data-test="contract-balance"
-                >
-                  {{ expenseBalanceFormated }}
-                  <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-                </div>
-              </div>
-
-              <div class="pl-3">
-                <div class="stat-title pr-3">Total Transactions</div>
-                <div
-                  v-if="isFetchingExpenseAccountData"
-                  class="stat-value mt-1 border-r border-gray-400 pr-3"
-                >
-                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-                </div>
-                <div
-                  v-else
-                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-                  data-test="total-transactions"
-                >
-                  {{ dynamicDisplayDataTx?.value }}
-                  <span class="text-xs">{{ dynamicDisplayDataTx?.symbol }}</span>
-                </div>
-              </div>
-
-              <div class="pl-3">
-                <div class="stat-title pr-3">Total Withdrawn</div>
-                <div v-if="isFetchingExpenseAccountData" class="stat-value mt-1 pr-3">
-                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-                </div>
-                <div
-                  v-else
-                  class="stat-value text-3xl mt-2 border-r pr-3"
-                  data-test="total-withdrawn"
-                >
-                  {{ dynamicDisplayDataAmount?.value }}
-                  <span class="text-xs">{{ dynamicDisplayDataAmount?.symbol }}</span>
-                </div>
-              </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+          <div>
+            <span>Expense Account Balance</span>
+            <div class="font-extrabold text-4xl">
+              <span class="inline-block min-w-16 h-10">
+                <span class="loading loading-spinner loading-lg" v-if="isLoadingGetExpenseBalance"></span>
+                <span v-else>{{ expenseBalanceFormated }} </span>
+              </span>
+              <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
             </div>
+            <span class="text-xs sm:text-sm">≈ $ 1.28</span>
           </div>
-
-          <!-- Limits -->
-          <div class="flex flex-col pl-3">
-            <p>Limits</p>
-            <div class="flex">
-              <div>
-                <div class="stat-title pr-3">Txns Per Period</div>
-                <div
-                  v-if="isFetchingExpenseAccountData"
-                  class="stat-value mt-1 border-r border-gray-400 pr-3"
-                >
-                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-                </div>
-                <div
-                  v-else
-                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-                  data-test="txs-per-period-limit"
-                >
-                  {{ maxLimitTxsPerPeriod }} <span class="text-xs">TXs</span>
-                </div>
-              </div>
-
-              <div class="pl-3">
-                <div class="stat-title pr-3">Amount Per Period</div>
-                <div
-                  v-if="isFetchingExpenseAccountData"
-                  class="stat-value mt-1 border-r border-gray-400 pr-3"
-                >
-                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-                </div>
-                <div
-                  v-else
-                  class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-                  data-test="amount-per-period-limit"
-                >
-                  {{ maxLimitAmountPerPeriod }}
-                  <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-                </div>
-              </div>
-
-              <div class="pl-3">
-                <div class="stat-title pr-3">Amount Per Txn</div>
-                <div
-                  v-if="isFetchingExpenseAccountData"
-                  class="stat-value mt-1 border-r border-gray-400 pr-3"
-                >
-                  <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-                </div>
-                <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="amount-per-tx-limit">
-                  {{ maxLimitAmountPerTx }}
-                  <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-                </div>
-              </div>
-            </div>
+          <div class="flex flex-wrap gap-2 sm:gap-4">
+            <span class="text-sm">Expense Account Address </span>
+            <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
           </div>
         </div>
 
-        <div class="stat-actions flex justify-start gap-2 mt-8">
+        <!-- New Header -->
+        <div>
+          <div class="overflow-x-auto" data-test="approvals-list-table">
+            <table class="table">
+              <!-- head -->
+              <thead class="text-sm font-bold">
+                <tr>
+                  <th>Expiry Date</th>
+                  <th>Max Amount Per Tx</th>
+                  <th>Total Transactions</th>
+                  <th>Total Transfers</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ expiry }}</td>
+                  <td>{{ `${maxLimitAmountPerTx} POL` }}</td>
+                  <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
+                  <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
+                  <td class="flex justify-end" data-test="action-td">
+                    <ButtonUI
+                      variant="success"
+                      :disabled="!_expenseAccountData?.data"
+                      v-if="true"
+                      @click="transferModal = true"
+                      data-test="transfer-button"
+                    >
+                      Transfer
+                    </ButtonUI>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Old Header -->
+
+        <!--<div class="stat-actions flex justify-start gap-2 mt-8">
           <ButtonUI
             variant="secondary"
             :disabled="!_expenseAccountData?.data"
@@ -138,20 +81,8 @@
           >
             Approve User
           </button>
-        </div>
+        </div>-->
 
-        <div class="flex justify-between items-start pt-5">
-          <div class="stat-title text-sm">
-            Approval Expiry:
-            <span data-test="approval-expiry" class="font-bold text-black text-sm">{{
-              expiry
-            }}</span>
-          </div>
-          <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
-            <span class="text-sm">Expense Address </span>
-            <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
-          </div>
-        </div>
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
             v-if="transferModal"
@@ -187,7 +118,17 @@
       v-if="manyExpenseAccountData"
       class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
-      <span class="text-2xl font-bold pl-4">Approved Addresses</span>
+      <div class="flex flex-row justify-between">
+        <span class="text-2xl font-bold pl-4">Approved Addresses</span>
+        <ButtonUI
+          variant="secondary"
+          :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
+          @click="approveUsersModal = true"
+          data-test="approve-users-button"
+        >
+          Approve User
+        </ButtonUI>
+      </div>
       <div class="overflow-x-auto" data-test="approvals-list-table">
         <table class="table">
           <!-- head -->
@@ -245,6 +186,20 @@
           </tbody>
         </table>
       </div>
+
+      <!--Pagination Controls-->
+      <div class="flex flex-row justify-end">
+        <div>1</div>
+        <div>2</div>
+        <div class="flex flex-row">
+          <button class="flex items-center justify-center w12 h12 rounded-ful">
+            <ChevronLeftIcon class="w6 h6"/>
+          </button>
+          <button class="flex items-center justify-center w12 h12 rounded-ful">
+            <ChevronRightIcon class="w6 h6"/>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -267,6 +222,12 @@ import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { 
+  ChevronUpIcon, 
+  ChevronDownIcon, 
+  ChevronLeftIcon, 
+  ChevronRightIcon 
+} from '@heroicons/vue/24/outline'
 //#endregion imports
 
 //#region variable declarations
@@ -341,6 +302,17 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const web3Library = new EthersJsAdapter()
 const expenseBalanceFormated = ref<string | number>(`0`)
 const signatureHash = ref<string | null>(null)
+
+const currentPage = ref(1)
+const itemsPerPage = ref(5)
+
+const totalPages = computed(() => Math.ceil(manyExpenseAccountData.value.length / itemsPerPage.value))
+
+const paginatedExpenseData = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return manyExpenseAccountData.value.slice(start, end);
+})
 //#endregion variable declarations
 
 //#region expense account composable
