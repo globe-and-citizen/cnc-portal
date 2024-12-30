@@ -6,7 +6,7 @@
     >
       <!-- Expense A/c Info Section -->
       <section class="stat flex flex-col justify-start">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 mb-10">
           <div>
             <span>Expense Account Balance</span>
             <div class="font-extrabold text-4xl">
