@@ -61,28 +61,6 @@
           </div>
         </div>
 
-        <!-- Old Header -->
-
-        <!--<div class="stat-actions flex justify-start gap-2 mt-8">
-          <ButtonUI
-            variant="secondary"
-            :disabled="!_expenseAccountData?.data"
-            v-if="true"
-            @click="transferModal = true"
-            data-test="transfer-button"
-          >
-            Transfer
-          </ButtonUI>
-          <button
-            class="btn btn-secondary"
-            :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
-            @click="approveUsersModal = true"
-            data-test="approve-users-button"
-          >
-            Approve User
-          </button>
-        </div>-->
-
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
             v-if="transferModal"
@@ -118,8 +96,8 @@
       v-if="manyExpenseAccountData"
       class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
-      <div class="flex flex-row justify-between">
-        <span class="text-2xl font-bold pl-4">Approved Addresses</span>
+      <div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Approved Addresses</span>
         <ButtonUI
           variant="secondary"
           :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
