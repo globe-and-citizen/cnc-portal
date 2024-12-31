@@ -446,8 +446,6 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[5].find('button').exists()).toBe(true)
       expect(firstRowCells[5].find('button').text()).toBe('Deactivate')
 
-      const deactivateButton = firstRowCells[5].find('button')
-
       const secondRowCells = rows[1].findAll('td')
       expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
       expect(secondRowCells[1].text()).toBe(
@@ -478,13 +476,13 @@ describe('ExpenseAccountSection', () => {
       const table = wrapper.find('[data-test="approvals-list-table"]')
       expect(table.exists()).toBe(true)
 
-       // Check table row data within the approvals-list-table
+      // Check table row data within the approvals-list-table
       const rows = table.findAll('tbody tr')
       expect(rows).toHaveLength(mockExpenseData.length)
- 
+
       const firstRowCells = rows[0].findAll('td')
       const secondRowCells = rows[1].findAll('td')
-      
+
       const firstDeactivateButton = firstRowCells[5].find('button')
       const secondDeactivateButton = secondRowCells[5].find('button')
 
