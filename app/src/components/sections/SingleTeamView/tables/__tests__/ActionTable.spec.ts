@@ -112,13 +112,19 @@ describe('ActionTable', () => {
     it('should open approve modal when an action row is clicked', async () => {
       const wrapper = mount(ActionTable, {
         props: {
-          ...defaultProps
+          ...defaultProps,
+          actions: defaultProps.actions.map((action) => ({
+            ...action,
+            actionId: action.id,
+            userAddress: '0x123' as `0x${string}`,
+            teamId: 1
+          }))
         }
       })
 
       await wrapper.find('tbody tr').trigger('click')
       expect(wrapper.findComponent({ name: 'ModalComponent' }).exists()).toBe(true)
-      expect(wrapper.vm.approveModal).toBe(true)
+      expect((wrapper.vm as unknown as { approveModal: boolean }).approveModal).toBe(true)
     })
   })
 })
