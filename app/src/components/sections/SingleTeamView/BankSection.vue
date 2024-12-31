@@ -24,51 +24,51 @@
           </div>
         </div>
         <div class="grid grid-cols-3 gap-2">
-          <Button
+          <ButtonUI
             v-if="team.bankAddress"
             @click="() => (depositModal = true)"
             data-test="deposit-button"
             class="btn btn-sm btn-secondary"
           >
             Deposit
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress"
             @click="() => (pushTipModal = true)"
             data-test="push-tip-button"
             class="btn btn-sm btn-secondary"
           >
             Tip the Team
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
             data-test="transfer-button"
             class="btn btn-sm btn-secondary"
           >
             Transfer
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenDepositModal = true"
             class="btn btn-sm btn-secondary"
           >
             Deposit USDC
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenTransferModal = true"
             class="btn btn-sm btn-secondary"
           >
             Transfer USDC
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress"
             @click="() => (tokenTipModal = true)"
             class="btn btn-sm btn-secondary"
           >
             Tip USDC
-          </Button>
+          </ButtonUI>
         </div>
       </div>
       <div
