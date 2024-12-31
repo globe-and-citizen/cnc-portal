@@ -412,15 +412,15 @@ const downloadPDF = () => {
         columnStyles: { [key: number]: { cellWidth: number } }
       }) => void
     }
-    const doc: jsPDFInt = new jsPDF()
+    const doc: Partial<jsPDFInt> = new jsPDF()
 
     // Add title
-    doc.setFontSize(16)
-    doc.text('Transaction Invoice', 14, 15)
+    doc?.setFontSize?.(16)
+    doc?.text?.('Transaction Invoice', 14, 15)
 
     // Add date range
-    doc.setFontSize(10)
-    doc.text(`Period: ${fromDate.value || 'All'} to ${toDate.value || 'All'}`, 14, 25)
+    doc?.setFontSize?.(10)
+    doc?.text?.(`Period: ${fromDate.value || 'All'} to ${toDate.value || 'All'}`, 14, 25)
 
     // Add table
     const tableData = filteredTransactions.value.map((tx) => [
@@ -433,7 +433,7 @@ const downloadPDF = () => {
       tx.hash
     ])
 
-    doc.autoTable({
+    doc?.autoTable?.({
       head: [
         [
           'Date',
@@ -458,7 +458,7 @@ const downloadPDF = () => {
       }
     })
 
-    doc.save('transaction-invoice.pdf')
+    doc?.save?.('transaction-invoice.pdf')
     addSuccessToast('PDF downloaded successfully')
   } catch (error) {
     console.error('Error generating PDF:', error)
