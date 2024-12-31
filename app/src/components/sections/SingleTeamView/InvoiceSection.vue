@@ -449,12 +449,13 @@ const downloadPDF = () => {
       startY: 30,
       styles: { fontSize: 8 },
       columnStyles: {
-        0: { cellWidth: 30 },
+        0: { cellWidth: 20 },
         1: { cellWidth: 20 },
-        2: { cellWidth: 35 },
-        3: { cellWidth: 35 },
-        4: { cellWidth: 25 },
-        5: { cellWidth: 45 }
+        2: { cellWidth: 40 },
+        3: { cellWidth: 40 },
+        4: { cellWidth: 15 },
+        5: { cellWidth: 15 },
+        6: { cellWidth: 45 }
       }
     })
 
