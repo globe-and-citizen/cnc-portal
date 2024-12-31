@@ -344,4 +344,103 @@ describe('BankSection', () => {
       })
     })
   })
+
+  describe('Watch Functions', () => {
+    it('should handle deposit confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).depositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Deposited successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeFalsy()
+    })
+
+    it('should handle transfer confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).transferModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Transferred successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeFalsy()
+    })
+
+    it('should handle push tip confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).pushTipModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Tips pushed successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeFalsy()
+    })
+
+    it('should handle token deposit confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).tokenDepositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Token deposited successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenDepositModal).toBeFalsy()
+    })
+
+    it('should handle token transfer confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).tokenTransferModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Token transferred successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTransferModal).toBeFalsy()
+    })
+
+    it('should handle deposit error', async () => {
+      mockUseSendTransaction.error.value = new Error('Deposit failed')
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to deposit')
+    })
+
+    it('should handle transfer error', async () => {
+      mockUseWriteContract.error.value = new Error('Transfer failed')
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to transfer from bank')
+    })
+
+    it('should handle push tip error', async () => {
+      mockUseWriteContract.error.value = new Error('Push tip failed')
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to push tip')
+    })
+  })
 })
