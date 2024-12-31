@@ -1,7 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import DeployInvestorContractForm from '../DeployInvestorContractForm.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 describe('DeployInvestorContractForm.vue', () => {
   it('adds the title (Deploy all) if isDeployAll is true', () => {
@@ -51,7 +51,7 @@ describe('DeployInvestorContractForm.vue', () => {
         isDeployAll: false
       }
     })
-    expect(wrapper.findComponent(LoadingButton).exists()).toBeTruthy()
+    expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
   })
 
   it('should show error message if name is empty', async () => {
@@ -61,7 +61,7 @@ describe('DeployInvestorContractForm.vue', () => {
         isDeployAll: false
       }
     })
-    const button = wrapper.find('button[data-test="deploy-button"]')
+    const button = wrapper.findComponent(ButtonUI)
     await button.trigger('click')
 
     const nameError = wrapper.find('div[data-test="name-error"]')
@@ -75,7 +75,7 @@ describe('DeployInvestorContractForm.vue', () => {
         isDeployAll: false
       }
     })
-    const button = wrapper.find('button[data-test="deploy-button"]')
+    const button = wrapper.findComponent(ButtonUI)
     await button.trigger('click')
 
     const symbolError = wrapper.find('div[data-test="symbol-error"]')
@@ -94,7 +94,7 @@ describe('DeployInvestorContractForm.vue', () => {
     const symbolInput = wrapper.find('input[data-test="symbol-input"]')
     await symbolInput.setValue('BTC')
 
-    const button = wrapper.find('button[data-test="deploy-button"]')
+    const button = wrapper.findComponent(ButtonUI)
     await button.trigger('click')
     expect(wrapper.emitted('submit')).toBeTruthy()
   })

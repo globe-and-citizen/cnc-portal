@@ -24,49 +24,54 @@
           </div>
         </div>
         <div class="grid grid-cols-3 gap-2">
-          <Button
+          <ButtonUI
             v-if="team.bankAddress"
             @click="() => (depositModal = true)"
             data-test="deposit-button"
             class="btn btn-sm btn-secondary"
           >
             Deposit
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress"
             @click="() => (pushTipModal = true)"
+            data-test="push-tip-button"
             class="btn btn-sm btn-secondary"
           >
             Tip the Team
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="transferModal = true"
+            data-test="transfer-button"
             class="btn btn-sm btn-secondary"
           >
             Transfer
-          </Button>
-          <Button
-            v-if="team.bankAddress"
-            @click="() => (tokenDepositModal = true)"
+          </ButtonUI>
+          <ButtonUI
+            v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
+            @click="tokenDepositModal = true"
             class="btn btn-sm btn-secondary"
+            data-test="deposit-usdc-button-bank-section"
           >
             Deposit USDC
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenTransferModal = true"
             class="btn btn-sm btn-secondary"
+            data-test="transfer-usdc-button-bank-section"
           >
             Transfer USDC
-          </Button>
-          <Button
+          </ButtonUI>
+          <ButtonUI
             v-if="team.bankAddress"
             @click="() => (tokenTipModal = true)"
             class="btn btn-sm btn-secondary"
+            data-test="tip-usdc-button-bank-section"
           >
             Tip USDC
-          </Button>
+          </ButtonUI>
         </div>
       </div>
       <div
@@ -123,14 +128,11 @@
         />
 
         <div class="text-center">
-          <LoadingButton
-            v-if="isConfirmingPushTip || pushTipLoading || addActionLoading"
-            class="w-full sm:w-44"
-            color="primary"
-          />
-          <button
-            v-if="!(isConfirmingPushTip || pushTipLoading || addActionLoading)"
-            class="btn btn-primary w-full sm:w-44 text-center"
+          <ButtonUI
+            :loading="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            :disabled="isConfirmingPushTip || pushTipLoading || addActionLoading"
+            variant="primary"
+            class="w-full sm:w-44 text-center"
             @click="
               async () => {
                 if (owner == team.boardOfDirectorsAddress) {
@@ -149,11 +151,11 @@
             "
           >
             Send Tips
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
-    <ModalComponent v-model="tokenTipModal">
+    <ModalComponent v-model="tokenTipModal" data-test="token-tip-modal">
       <div class="flex flex-col gap-4 justify-start">
         <span class="font-bold text-xl sm:text-2xl">Tip USDC</span>
         <div class="form-control w-full">
@@ -168,8 +170,15 @@
           />
         </div>
         <div class="text-center">
-          <LoadingButton
-            v-if="
+          <ButtonUI
+            :loading="
+              isConfirmingPushTokenTip ||
+              pushTokenTipLoading ||
+              isConfirmingPushTokenTip ||
+              isPendingApprove ||
+              isConfirmingApprove
+            "
+            :disabled="
               isConfirmingPushTokenTip ||
               pushTokenTipLoading ||
               isConfirmingPushTokenTip ||
@@ -177,21 +186,17 @@
               isConfirmingApprove
             "
             class="w-full sm:w-44"
-            color="primary"
-          />
-          <button
-            class="btn btn-primary w-full sm:w-44 text-center"
+            variant="primary"
             @click="pushUSDC"
             data-test="tip-usdc-button"
-            v-else
           >
             Tip USDC to Team
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
 
-    <ModalComponent v-model="tokenDepositModal">
+    <ModalComponent v-model="tokenDepositModal" data-test="token-deposit-modal">
       <div class="flex flex-col gap-4 justify-start">
         <span class="font-bold text-xl sm:text-2xl">Deposit USDC</span>
         <div class="form-control w-full">
@@ -206,8 +211,15 @@
           />
         </div>
         <div class="text-center">
-          <LoadingButton
-            v-if="
+          <ButtonUI
+            :loading="
+              isConfirmingTokenDeposit ||
+              tokenDepositLoading ||
+              isConfirmingTokenDeposit ||
+              isConfirmingApprove ||
+              isPendingApprove
+            "
+            :disabled="
               isConfirmingTokenDeposit ||
               tokenDepositLoading ||
               isConfirmingTokenDeposit ||
@@ -215,16 +227,16 @@
               isPendingApprove
             "
             class="w-full sm:w-44"
-            color="primary"
-          />
-          <button v-else class="btn btn-primary w-full sm:w-44 text-center" @click="depositToken">
+            @click="depositToken"
+            variant="primary"
+          >
             Deposit USDC
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
 
-    <ModalComponent v-model="tokenTransferModal">
+    <ModalComponent v-model="tokenTransferModal" data-test="token-transfer-modal">
       <div class="flex flex-col gap-4 justify-start">
         <span class="font-bold text-xl sm:text-2xl">Transfer USDC</span>
         <div class="form-control w-full">
@@ -250,8 +262,15 @@
           />
         </div>
         <div class="text-center">
-          <LoadingButton
-            v-if="
+          <ButtonUI
+            :loading="
+              isConfirmingTokenTransfer ||
+              tokenTransferLoading ||
+              isConfirmingTokenTransfer ||
+              isPendingApprove ||
+              isConfirmingApprove
+            "
+            :disabled="
               isConfirmingTokenTransfer ||
               tokenTransferLoading ||
               isConfirmingTokenTransfer ||
@@ -259,16 +278,12 @@
               isConfirmingApprove
             "
             class="w-full sm:w-44"
-            color="primary"
-          />
-          <button
-            v-else
-            class="btn btn-primary w-full sm:w-44 text-center"
+            variant="primary"
             @click="transferToken"
             data-test="transfer-usdc-button"
           >
             Transfer USDC
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </ModalComponent>
@@ -280,11 +295,9 @@
 import type { Team, User } from '@/types'
 import { NETWORK } from '@/constant'
 import { onMounted, ref, watch, computed } from 'vue'
-import LoadingButton from '@/components/LoadingButton.vue'
 import { useUserDataStore } from '@/stores/user'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import Button from '@/components/ButtonUI.vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -294,6 +307,7 @@ import { useAddAction } from '@/composables/bod'
 import { encodeFunctionData, parseEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 // import BankManagement from './BankManagement.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
@@ -754,6 +768,13 @@ watch(usdcBalanceError, () => {
 })
 
 onMounted(async () => {
+  console.log(
+    isConfirmingTokenDeposit.value ||
+      tokenDepositLoading.value ||
+      isConfirmingTokenDeposit.value ||
+      isConfirmingApprove.value ||
+      isPendingApprove.value
+  )
   if (props.team.bankAddress) {
     fetchBalance()
     fetchUsdcBalance()

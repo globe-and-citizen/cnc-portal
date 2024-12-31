@@ -6,10 +6,16 @@ import { ref } from 'vue'
 import type { Action, Team } from '@/types'
 import type { ComponentPublicInstance } from 'vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
 
 interface BankSectionVM extends ComponentPublicInstance {
   tokenDepositModal: boolean
   tokenTransferModal: boolean
+  depositModal: boolean
+  pushTipModal: boolean
+  transferModal: boolean
   tokenTipModal: boolean
   tokenAmount: string
   tokenAmountUSDC: string
@@ -18,6 +24,8 @@ interface BankSectionVM extends ComponentPublicInstance {
   depositError: unknown
   transferError: unknown
   tipError: unknown
+  transferToken: () => Promise<void>
+  pushUSDC: () => Promise<void>
 }
 
 vi.mock('@/stores/user', () => ({
@@ -137,6 +145,136 @@ describe('BankSection', () => {
       expect(buttons.some((button) => button.text().includes('Transfer USDC'))).toBeTruthy()
       expect(buttons.some((button) => button.text().includes('Tip USDC'))).toBeTruthy()
     })
+
+    it('should render deposit modal', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeTruthy()
+      expect(wrapper.findComponent(DepositBankForm).exists()).toBeTruthy()
+    })
+
+    it('should render push tip modal', async () => {
+      const pushTipButton = wrapper.find('button[data-test="push-tip-button"]')
+      await pushTipButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeTruthy()
+    })
+
+    it('should render transfer modal', async () => {
+      const transferButton = wrapper.find('button[data-test="transfer-button"]')
+      await transferButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeTruthy()
+      expect(wrapper.findComponent(TransferFromBankForm).exists()).toBeTruthy()
+    })
+
+    it('should emit modal component v-model DepositModal', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeTruthy()
+
+      const modalComponent = wrapper.findComponent(ModalComponent)
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeFalsy()
+    })
+
+    it('should render token deposit modal', async () => {
+      const tokenDepositButton = wrapper.find(
+        'button[data-test="deposit-usdc-button-bank-section"]'
+      )
+      await tokenDepositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).tokenDepositModal).toBeTruthy()
+    })
+
+    it('should render token transfer modal', async () => {
+      const tokenTransferButton = wrapper.find(
+        'button[data-test="transfer-usdc-button-bank-section"]'
+      )
+      await tokenTransferButton.trigger('click')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTransferModal).toBeTruthy()
+    })
+
+    it('should render token tip modal', async () => {
+      const tokenTipButton = wrapper.find('button[data-test="tip-usdc-button-bank-section"]')
+      await tokenTipButton.trigger('click')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTipModal).toBeTruthy()
+    })
+
+    it('should close deposit modal when DepositBankForm emit @close-modal', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeTruthy()
+
+      const depositBankForm = wrapper.findComponent(DepositBankForm)
+      depositBankForm.vm.$emit('close-modal')
+
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeFalsy()
+    })
+
+    it('should call sendTransaction when DepositBankForm emit @deposit', async () => {
+      const depositButton = wrapper.find('button[data-test="deposit-button"]')
+      await depositButton.trigger('click')
+
+      const depositBankForm = wrapper.findComponent(DepositBankForm)
+      depositBankForm.vm.$emit('deposit', '100')
+
+      expect(mockUseSendTransaction.sendTransaction).toHaveBeenCalled()
+    })
+
+    it('should emit modal component v-model transfer modal', async () => {
+      const transferButton = wrapper.find('button[data-test="transfer-button"]')
+      await transferButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeTruthy()
+
+      const modalComponent = wrapper.findAllComponents(ModalComponent)[1]
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeFalsy()
+    })
+
+    it('should close transfer modal when TransferFromBankForm emit @close-modal', async () => {
+      const transferButton = wrapper.find('button[data-test="transfer-button"]')
+      await transferButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeTruthy()
+
+      const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
+      transferFromBankForm.vm.$emit('close-modal')
+
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeFalsy()
+    })
+
+    it('should emit modal component v-model push tip modal', async () => {
+      const pushTipButton = wrapper.find('button[data-test="push-tip-button"]')
+      await pushTipButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeTruthy()
+
+      const modalComponent = wrapper.findAllComponents(ModalComponent)[2]
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeFalsy()
+    })
+
+    it('should emit modal component v-model token tip modal', async () => {
+      const tipButton = wrapper
+        .findAll('button')
+        .find((button) => button.text().includes('Tip USDC'))
+      await tipButton?.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTipModal).toBeTruthy()
+
+      const modalComponent = wrapper.findAllComponents(ModalComponent)[3]
+      modalComponent.vm.$emit('update:modelValue', false)
+
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTipModal).toBeFalsy()
+    })
   })
 
   describe('Methods', () => {
@@ -206,6 +344,130 @@ describe('BankSection', () => {
         const { addErrorToast } = useToastStore()
         expect(addErrorToast).toHaveBeenCalledWith('Failed to approve token spending')
       })
+    })
+  })
+
+  describe('Watch Functions', () => {
+    it('should handle deposit confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).depositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Deposited successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeFalsy()
+    })
+
+    it('should handle transfer confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).transferModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Transferred successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeFalsy()
+      expect(wrapper.findComponent('div[data-test="token-transfer-modal"]').exists()).toBeFalsy()
+    })
+
+    it('should handle push tip confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).pushTipModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Tips pushed successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeFalsy()
+      expect(mockUseBalance.refetch).toHaveBeenCalled()
+      expect(wrapper.findComponent('div[data-test="token-tip-modal"]').exists()).toBeFalsy()
+    })
+
+    it('should handle token deposit confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).tokenDepositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Token deposited successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenDepositModal).toBeFalsy()
+      expect(wrapper.findComponent('div[data-test="token-deposit-modal"]').exists()).toBeFalsy()
+    })
+
+    it('should handle token transfer confirmation', async () => {
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      mockUseWaitForTransactionReceipt.isSuccess.value = false
+      const wrapper = createComponent()
+      ;(wrapper.vm as unknown as BankSectionVM).tokenTransferModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      const { addSuccessToast } = useToastStore()
+      expect(addSuccessToast).toHaveBeenCalledWith('Token transferred successfully')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTransferModal).toBeFalsy()
+      expect(wrapper.findComponent('div[data-test="token-transfer-modal"]').exists()).toBeFalsy()
+    })
+
+    it('should handle deposit error', async () => {
+      mockUseSendTransaction.error.value = new Error('Deposit failed')
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to deposit')
+    })
+
+    it('should handle transfer error', async () => {
+      mockUseWriteContract.error.value = new Error('Transfer failed')
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to transfer from bank')
+    })
+
+    it('should handle push tip error', async () => {
+      mockUseWriteContract.error.value = new Error('Push tip failed')
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to push tip')
+    })
+  })
+
+  describe('Function Tests', () => {
+    it('should handle errors in transferToken', async () => {
+      mockUseWriteContract.error.value = new Error('Transfer token failed')
+      const wrapper = createComponent()
+      await (wrapper.vm as unknown as BankSectionVM).transferToken()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to transfer from bank')
+    })
+
+    it('should handle errors in pushUSDC', async () => {
+      mockUseWriteContract.error.value = new Error('Push USDC failed')
+      const wrapper = createComponent()
+      await (wrapper.vm as unknown as BankSectionVM).pushUSDC()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to push tip')
     })
   })
 })

@@ -8,7 +8,7 @@
       <div class="flex items-center justify-center">
         <h2 class="pl-5">{{ team.name }}</h2>
         <div
-          class="badge badge-sm badge-primary flex items-center justify-center ml-2"
+          class="badge badge-lg badge-primary flex items-center justify-center ml-2"
           v-if="team.ownerAddress == address"
         >
           Owner
@@ -20,25 +20,28 @@
       <p class="pl-5">{{ team.description }}</p>
 
       <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
-        <button
-          class="btn btn-secondary btn-sm"
+        <ButtonUI
+          size="sm"
+          variant="secondary"
           v-if="team.ownerAddress == address"
           @click="emits('updateTeamModalOpen')"
         >
           Update
-        </button>
-        <button
-          class="btn btn-error btn-sm"
+        </ButtonUI>
+        <ButtonUI
+          size="sm"
+          variant="error"
           v-if="team.ownerAddress == address"
           @click="emits('deleteTeam')"
         >
           Delete
-        </button>
+        </ButtonUI>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 

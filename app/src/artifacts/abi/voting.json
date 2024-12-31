@@ -202,6 +202,63 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address[]",
+        "name": "candidates",
+        "type": "address[]"
+      }
+    ],
+    "name": "RunoffElectionStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum Types.TieBreakOption",
+        "name": "option",
+        "type": "uint8"
+      }
+    ],
+    "name": "TieBreakOptionSelected",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address[]",
+        "name": "tiedCandidates",
+        "type": "address[]"
+      }
+    ],
+    "name": "TieDetected",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -382,6 +439,21 @@
             "internalType": "struct Types.Member[]",
             "name": "voters",
             "type": "tuple[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasTie",
+            "type": "bool"
+          },
+          {
+            "internalType": "address[]",
+            "name": "tiedCandidates",
+            "type": "address[]"
+          },
+          {
+            "internalType": "enum Types.TieBreakOption",
+            "name": "selectedTieBreakOption",
+            "type": "uint8"
           }
         ],
         "internalType": "struct Types.Proposal",
@@ -517,6 +589,16 @@
         "internalType": "struct Types.DirectiveVotes",
         "name": "votes",
         "type": "tuple"
+      },
+      {
+        "internalType": "bool",
+        "name": "hasTie",
+        "type": "bool"
+      },
+      {
+        "internalType": "enum Types.TieBreakOption",
+        "name": "selectedTieBreakOption",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -525,6 +607,42 @@
   {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum Types.TieBreakOption",
+        "name": "option",
+        "type": "uint8"
+      }
+    ],
+    "name": "resolveTie",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "winner",
+        "type": "address"
+      }
+    ],
+    "name": "selectWinner",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

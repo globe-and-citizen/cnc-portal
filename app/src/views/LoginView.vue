@@ -26,15 +26,16 @@
             Sign in to CNC portal
           </h2>
           <div class="flex flex-col gap-5">
-            <button
+            <ButtonUI
               data-testid="sign-in"
-              class="btn btn-primary w-full"
+              variant="primary"
+              class="w-full"
               @click="siwe"
               :disabled="isProcessing"
             >
               <span v-if="isProcessing">Processing...</span>
               <span v-else>Sign In With Ethereum</span>
-            </button>
+            </ButtonUI>
             <div class="flex items-center">
               <div class="flex-grow h-px bg-gray-300"></div>
               <div class="px-4 text-gray-500 text-sm">OR</div>
@@ -68,6 +69,7 @@ import IconGoogle from '@/components/icons/IconGoogle.vue'
 import IconFacebook from '@/components/icons/IconFacebook.vue'
 import IconTwitter from '@/components/icons/IconTwitter.vue'
 import { useSiwe } from '@/composables/useSiwe'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const { isProcessing, siwe } = useSiwe()
 </script>

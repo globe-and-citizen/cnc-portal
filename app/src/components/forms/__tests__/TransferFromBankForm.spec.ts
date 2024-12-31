@@ -2,7 +2,7 @@
 import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TransferFromBankForm from '../TransferFromBankForm.vue'
-import LoadingButton from '@/components/LoadingButton.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {
   to: string
@@ -39,7 +39,7 @@ describe('TransferFromBankForm.vue', () => {
           ]
         }
       })
-      expect(wrapper.findComponent(LoadingButton).exists()).toBe(true)
+      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
     })
     it('renders initial UI correctly', () => {
       expect(wrapper.find('h1').text()).toBe('Transfer from Test Service Contract')
@@ -59,7 +59,7 @@ describe('TransferFromBankForm.vue', () => {
     })
 
     it('renders input transfer amount correctly', async () => {
-      const amountInput = wrapper.find('input[data-test="amount-input"]')
+      const amountInput = wrapper.find('[data-test="amount-input"]')
       expect(amountInput.element).toBeDefined()
       await amountInput.setValue('10')
 

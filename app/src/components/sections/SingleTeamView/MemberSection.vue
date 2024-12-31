@@ -1,11 +1,9 @@
 <template>
   <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
-  <!-- <LoadingButton color="primary"></LoadingButton> -->
-
   <div class="flex justify-between py-6" v-if="!teamIsFetching && team">
     <span class="text-3xl font-bold">Team Members List</span>
 
-    <button
+    <ButtonUI
       v-if="team.ownerAddress == userDataStore.address"
       @click="
         () => {
@@ -13,10 +11,11 @@
         }
       "
       data-test="add-member-button"
-      class="btn btn-primary w-max"
+      variant="primary"
+      class="w-max"
     >
       <PlusCircleIcon class="size-6" /> Add a new Member
-    </button>
+    </ButtonUI>
 
     <ModalComponent v-model="showAddMemberForm">
       <AddMemberForm
@@ -66,6 +65,7 @@ import type { User } from '@/types'
 import { useUserDataStore } from '@/stores/user'
 
 import { useToastStore } from '@/stores/useToastStore'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)

@@ -7,20 +7,22 @@
     </td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
       <div v-if="ownerAddress == userDataStore.address" class="flex flex-wrap gap-2">
-        <button
-          class="btn btn-error btn-sm"
+        <ButtonUI
+          variant="error"
+          size="sm"
           @click="() => (showDeleteMemberConfirmModal = true)"
           data-test="delete-member-button"
         >
           <TrashIcon class="size-4" />
-        </button>
-        <button
-          class="btn btn-sm btn-success"
+        </ButtonUI>
+        <ButtonUI
+          size="sm"
+          variant="success"
           @click="() => (showSetMemberWageModal = true)"
           data-test="set-wage-button"
         >
           Set Wage
-        </button>
+        </ButtonUI>
       </div>
     </td>
   </tr>
@@ -43,7 +45,7 @@
           data-test="delete-member-confirm-button"
           >Delete</ButtonUI
         >
-        <ButtonUI variant="primary" @click="showDeleteMemberConfirmModal = false">
+        <ButtonUI variant="primary" outline @click="showDeleteMemberConfirmModal = false">
           Cancel
         </ButtonUI>
       </div>
@@ -98,7 +100,7 @@
         <ButtonUI v-else variant="success" @click="addMemberWageData" data-test="add-wage-button"
           >Save</ButtonUI
         >
-        <ButtonUI variant="error" @click="showSetMemberWageModal = false"> Cancel </ButtonUI>
+        <ButtonUI variant="error" outline @click="showSetMemberWageModal = false">Cancel</ButtonUI>
       </div>
     </ModalComponent>
   </div>
