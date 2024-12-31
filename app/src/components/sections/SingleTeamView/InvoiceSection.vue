@@ -400,7 +400,19 @@ const fetchTransactions = async () => {
 
 const downloadPDF = () => {
   try {
-    const doc = new jsPDF()
+    interface jsPDFInt {
+      setFontSize: (size: number) => void
+      text: (text: string, x: number, y: number) => void
+      save: (filename: string) => void
+      autoTable: (options: {
+        head: string[][]
+        body: string[][]
+        startY: number
+        styles: { fontSize: number }
+        columnStyles: { [key: number]: { cellWidth: number } }
+      }) => void
+    }
+    const doc: jsPDFInt = new jsPDF()
 
     // Add title
     doc.setFontSize(16)
