@@ -24,6 +24,8 @@ interface BankSectionVM extends ComponentPublicInstance {
   depositError: unknown
   transferError: unknown
   tipError: unknown
+  transferToken: () => Promise<void>
+  pushUSDC: () => Promise<void>
 }
 
 vi.mock('@/stores/user', () => ({
@@ -443,6 +445,26 @@ describe('BankSection', () => {
       mockUseWriteContract.error.value = new Error('Push tip failed')
       const wrapper = createComponent()
       await wrapper.vm.$nextTick()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to push tip')
+    })
+  })
+
+  describe('Function Tests', () => {
+    it('should handle errors in transferToken', async () => {
+      mockUseWriteContract.error.value = new Error('Transfer token failed')
+      const wrapper = createComponent()
+      await (wrapper.vm as unknown as BankSectionVM).transferToken()
+
+      const { addErrorToast } = useToastStore()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to transfer from bank')
+    })
+
+    it('should handle errors in pushUSDC', async () => {
+      mockUseWriteContract.error.value = new Error('Push USDC failed')
+      const wrapper = createComponent()
+      await (wrapper.vm as unknown as BankSectionVM).pushUSDC()
 
       const { addErrorToast } = useToastStore()
       expect(addErrorToast).toHaveBeenCalledWith('Failed to push tip')
