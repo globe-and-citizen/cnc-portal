@@ -372,6 +372,7 @@ describe('BankSection', () => {
       const { addSuccessToast } = useToastStore()
       expect(addSuccessToast).toHaveBeenCalledWith('Transferred successfully')
       expect((wrapper.vm as unknown as BankSectionVM).transferModal).toBeFalsy()
+      expect(wrapper.findComponent('div[data-test="token-transfer-modal"]').exists()).toBeFalsy()
     })
 
     it('should handle push tip confirmation', async () => {
@@ -386,6 +387,8 @@ describe('BankSection', () => {
       const { addSuccessToast } = useToastStore()
       expect(addSuccessToast).toHaveBeenCalledWith('Tips pushed successfully')
       expect((wrapper.vm as unknown as BankSectionVM).pushTipModal).toBeFalsy()
+      expect(mockUseBalance.refetch).toHaveBeenCalled()
+      expect(wrapper.findComponent('div[data-test="token-tip-modal"]').exists()).toBeFalsy()
     })
 
     it('should handle token deposit confirmation', async () => {
@@ -400,6 +403,7 @@ describe('BankSection', () => {
       const { addSuccessToast } = useToastStore()
       expect(addSuccessToast).toHaveBeenCalledWith('Token deposited successfully')
       expect((wrapper.vm as unknown as BankSectionVM).tokenDepositModal).toBeFalsy()
+      expect(wrapper.findComponent('div[data-test="token-deposit-modal"]').exists()).toBeFalsy()
     })
 
     it('should handle token transfer confirmation', async () => {
@@ -414,6 +418,7 @@ describe('BankSection', () => {
       const { addSuccessToast } = useToastStore()
       expect(addSuccessToast).toHaveBeenCalledWith('Token transferred successfully')
       expect((wrapper.vm as unknown as BankSectionVM).tokenTransferModal).toBeFalsy()
+      expect(wrapper.findComponent('div[data-test="token-transfer-modal"]').exists()).toBeFalsy()
     })
 
     it('should handle deposit error', async () => {
