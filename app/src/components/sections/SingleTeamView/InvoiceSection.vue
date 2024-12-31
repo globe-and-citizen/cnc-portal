@@ -18,6 +18,16 @@
           </label>
           <input type="date" v-model="toDate" class="input input-bordered" :min="fromDate" />
         </div>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Currency</span>
+          </label>
+          <select v-model="selectedCurrency" class="select select-bordered">
+            <option value="USD">USD</option>
+            <option value="INR">INR</option>
+            <option value="CAD">CAD</option>
+          </select>
+        </div>
       </div>
       <div class="flex gap-2">
         <button
@@ -48,6 +58,7 @@
             <th>From</th>
             <th>To</th>
             <th>Amount</th>
+            <th>Price ({{ selectedCurrency }})</th>
             <th>Transaction Hash</th>
           </tr>
         </thead>
@@ -62,7 +73,8 @@
             <td>{{ tx.type }}</td>
             <td class="truncate max-w-32">{{ formatAddress(tx.from, true) }}</td>
             <td class="truncate max-w-32">{{ formatAddress(tx.to, true) }}</td>
-            <td>{{ formatAmount(tx) }}</td>
+            <td>{{ formatAmount(tx).original }}</td>
+            <td>{{ formatAmount(tx).convertedUSDC }}</td>
             <td class="truncate max-w-32">{{ tx.hash }}</td>
           </tr>
         </tbody>
@@ -161,6 +173,12 @@ interface TokenTx {
   tokenSymbol: string
 }
 
+interface ExchangeRates {
+  [key: string]: {
+    [date: string]: number
+  }
+}
+
 const props = defineProps<{
   team: Partial<Team>
 }>()
@@ -174,6 +192,12 @@ const itemsPerPage = ref(10)
 const fromDate = ref('')
 const toDate = ref(new Date().toISOString().split('T')[0])
 const allTransactions = ref<Transaction[]>([])
+const selectedCurrency = ref('USD')
+const exchangeRates = ref<ExchangeRates>({
+  USD: {},
+  INR: {},
+  CAD: {}
+})
 
 // Computed
 const filteredTransactions = computed(() => {
@@ -238,6 +262,64 @@ const showTxDetail = (txHash: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/tx/${txHash}`, '_blank')
 }
 
+const fetchExchangeRates = async (date: string) => {
+  try {
+    const params = new URLSearchParams({
+      apikey: 'fca_live_Ee3QsIH2QQUw3WCNypXcgeFzPXSxkWw1iEywJCeh',
+      date,
+      base_currency: 'USD',
+      currencies: `USD,${selectedCurrency.value}`
+    })
+    const link = `https://api.freecurrencyapi.com/v1/historical?${params}`
+
+    const response = await fetch(link, {
+      method: 'GET'
+    })
+    const data = await response.json()
+    if (data.data && data.data[date]) {
+      exchangeRates.value[selectedCurrency.value][date] = data.data[date][selectedCurrency.value]
+    }
+  } catch (error) {
+    console.error('Error fetching exchange rates:', error)
+  }
+}
+
+const formatAmount = (tx: Transaction) => {
+  let baseAmount: number
+  let symbol: string
+
+  if (tx.isToken) {
+    baseAmount = Number(tx.amount) / 1e6
+    symbol = 'USDC'
+  } else {
+    baseAmount = Number(formatEther(tx.amount))
+    symbol = NETWORK.currencySymbol
+  }
+
+  const txDate = new Date(tx.date).toISOString().split('T')[0]
+  const rate = exchangeRates.value[selectedCurrency.value]?.[txDate] || 1
+
+  const convertedAmount = baseAmount * rate
+  const convertedUSDC = tx.isToken ? convertedAmount : baseAmount
+
+  return {
+    original: `${baseAmount.toFixed(2)} ${symbol}`,
+    converted: `${convertedAmount.toFixed(2)} ${selectedCurrency.value}`,
+    convertedUSDC: `${convertedUSDC.toFixed(2)} ${selectedCurrency.value}`
+  }
+}
+
+const formatAddress = (address: string, truncate = true) => {
+  if (!props.team.members)
+    return truncate ? `${address.slice(0, 6)}...${address.slice(-4)}` : address
+
+  const member = props.team.members.find((m) => m.address.toLowerCase() === address.toLowerCase())
+  if (member) {
+    return `${member.name} (${truncate ? `${address.slice(0, 6)}...${address.slice(-4)}` : address})`
+  }
+  return truncate ? `${address.slice(0, 6)}...${address.slice(-4)}` : address
+}
+
 const fetchTransactions = async () => {
   loading.value = true
   try {
@@ -250,7 +332,6 @@ const fetchTransactions = async () => {
     if (addresses.length === 0) return
 
     const chainId = Number(NETWORK.chainId)
-    console.log('chainId', chainId)
 
     // Fetch both normal and token transactions
     const allTxPromises = addresses.map(async (address) => {
@@ -278,8 +359,6 @@ const fetchTransactions = async () => {
       const tokenTxs =
         tokenData.status === '1' && tokenData.result
           ? (tokenData.result as TokenTx[]).map((tx: TokenTx) => {
-              console.log('Token tx:', tx.functionName)
-
               return {
                 type: addresses.includes(tx.to.toLowerCase() as Address)
                   ? ('Deposit Token' as const)
@@ -303,6 +382,14 @@ const fetchTransactions = async () => {
     const uniqueTxs = Array.from(new Map(transactions.flat().map((tx) => [tx.hash, tx])).values())
 
     allTransactions.value = uniqueTxs
+
+    const uniqueDates = new Set(
+      uniqueTxs.map((tx) => new Date(tx.date).toISOString().split('T')[0])
+    )
+
+    for (const date of uniqueDates) {
+      await fetchExchangeRates(date)
+    }
   } catch (error) {
     console.error('Error fetching transactions:', error)
     addErrorToast('Failed to fetch transactions')
@@ -329,12 +416,23 @@ const downloadPDF = () => {
       tx.type,
       formatAddress(tx.from, false),
       formatAddress(tx.to, false),
-      formatAmount(tx),
+      formatAmount(tx).original,
+      formatAmount(tx).convertedUSDC,
       tx.hash
     ])
 
     doc.autoTable({
-      head: [['Date', 'Type', 'From', 'To', 'Amount', 'Transaction Hash']],
+      head: [
+        [
+          'Date',
+          'Type',
+          'From',
+          'To',
+          'Amount',
+          `Price (${selectedCurrency.value})`,
+          'Transaction Hash'
+        ]
+      ],
       body: tableData,
       startY: 30,
       styles: { fontSize: 8 },
@@ -358,12 +456,14 @@ const downloadPDF = () => {
 
 const downloadExcel = () => {
   try {
+    const columnPrice = `Price (${selectedCurrency.value})`
     const data = filteredTransactions.value.map((tx) => ({
       Date: formatDate(tx.date),
       Type: tx.type,
       From: formatAddress(tx.from, false),
       To: formatAddress(tx.to, false),
-      Amount: formatAmount(tx),
+      Amount: formatAmount(tx).original,
+      [columnPrice]: formatAmount(tx).convertedUSDC,
       'Transaction Hash': tx.hash
     }))
 
@@ -379,6 +479,7 @@ const downloadExcel = () => {
       { wch: 45 }, // From
       { wch: 45 }, // To
       { wch: 15 }, // Amount
+      { wch: 45 }, // Converted Amount
       { wch: max_width } // Transaction Hash
     ]
 
@@ -390,26 +491,6 @@ const downloadExcel = () => {
   }
 }
 
-const formatAmount = (tx: Transaction) => {
-  if (tx.isToken) {
-    // Format USDC amount (6 decimals)
-    return `${Number(tx.amount) / 1e6} USDC`
-  }
-  // Format native token amount (18 decimals)
-  return `${formatEther(tx.amount)} ${NETWORK.currencySymbol}`
-}
-
-const formatAddress = (address: string, truncate = true) => {
-  if (!props.team.members)
-    return truncate ? `${address.slice(0, 6)}...${address.slice(-4)}` : address
-
-  const member = props.team.members.find((m) => m.address.toLowerCase() === address.toLowerCase())
-  if (member) {
-    return `${member.name} (${truncate ? `${address.slice(0, 6)}...${address.slice(-4)}` : address})`
-  }
-  return truncate ? `${address.slice(0, 6)}...${address.slice(-4)}` : address
-}
-
 // Watchers
 watch([fromDate, toDate], () => {
   currentPage.value = 1
@@ -417,6 +498,19 @@ watch([fromDate, toDate], () => {
 
 watch(itemsPerPage, () => {
   currentPage.value = 1
+})
+
+watch([selectedCurrency], async () => {
+  // Fetch exchange rates for all transactions if they don't exist
+  const uniqueDates = new Set(
+    filteredTransactions.value.map((tx) => new Date(tx.date).toISOString().split('T')[0])
+  )
+
+  for (const date of uniqueDates) {
+    if (!exchangeRates.value[selectedCurrency.value][date]) {
+      await fetchExchangeRates(date)
+    }
+  }
 })
 
 // Lifecycle
