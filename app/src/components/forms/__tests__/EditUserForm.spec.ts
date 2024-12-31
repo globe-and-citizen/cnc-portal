@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 
@@ -82,8 +83,8 @@ describe('EditUserForm', () => {
 
     it('renders loading button if isLoading true', async () => {
       const wrapper = createComponent({ isLoading: true })
-      expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBeTruthy()
-      expect(wrapper.find('button[data-test="submit-edit-user"]').exists()).toBeFalsy()
+      expect(wrapper.findComponent(ButtonUI).exists()).toBeTruthy()
+      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
     })
   })
 

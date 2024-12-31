@@ -1,95 +1,91 @@
 <template>
   <div class="flex flex-col gap-4 mt-4">
     <div class="flex flex-wrap gap-2">
-      <button
-        class="btn btn-primary btn-sm"
-        v-if="!isBankDeployed && !isLoadingDeployBank && !isConfirmingDeployBank"
+      <ButtonUI
+        size="sm"
+        variant="primary"
+        :loading="!isBankDeployed && isLoadingDeployBank && !isConfirmingDeployBank"
+        :disabled="isBankDeployed || (isLoadingDeployBank && !isConfirmingDeployBank)"
         @click="deployBankAccount"
       >
         Deploy Bank
-      </button>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployBank || isConfirmingDeployBank"
-      />
+      </ButtonUI>
 
-      <button
-        class="btn btn-primary btn-sm"
-        v-if="!isVotingDeployed && !isLoadingDeployVoting && !isConfirmingDeployVoting"
+      <ButtonUI
+        size="sm"
+        variant="primary"
+        :loading="!isVotingDeployed && isLoadingDeployVoting && !isConfirmingDeployVoting"
+        :disabled="isVotingDeployed || (isLoadingDeployVoting && !isConfirmingDeployVoting)"
         @click="deployVotingContract"
       >
         Deploy Voting
-      </button>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployVoting || isConfirmingDeployVoting"
-      />
+      </ButtonUI>
 
-      <button
-        class="btn btn-primary btn-sm"
-        v-if="!isExpenseDeployed && !isLoadingDeployExpense && !isConfirmingDeployExpense"
+      <ButtonUI
+        size="sm"
+        variant="primary"
+        :loading="!isExpenseDeployed && isLoadingDeployExpense && !isConfirmingDeployExpense"
+        :disabled="isExpenseDeployed || (isLoadingDeployExpense && !isConfirmingDeployExpense)"
         @click="deployExpenseAccount"
       >
         Deploy Expense
-      </button>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployExpense || isConfirmingDeployExpense"
-      />
+      </ButtonUI>
 
-      <button
-        class="btn btn-primary btn-sm"
-        v-if="
+      <ButtonUI
+        size="sm"
+        variant="primary"
+        :loading="
           !isExpenseEip712Deployed &&
-          !isLoadingDeployExpenseEip712 &&
+          isLoadingDeployExpenseEip712 &&
           !isConfirmingDeployExpenseEip712
+        "
+        :disabled="
+          isExpenseEip712Deployed ||
+          (isLoadingDeployExpenseEip712 && !isConfirmingDeployExpenseEip712)
         "
         @click="deployExpenseAccountEip712"
       >
         Deploy Expense EIP712
-      </button>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployExpenseEip712 || isConfirmingDeployExpenseEip712"
-      />
+      </ButtonUI>
 
-      <button
-        class="btn btn-primary btn-sm"
-        v-if="
+      <ButtonUI
+        size="sm"
+        variant="primary"
+        :loading="
           !isCashRemunerationEip712Deployed &&
-          !isLoadingDeployCashRemunerationEip712 &&
+          isLoadingDeployCashRemunerationEip712 &&
           !isConfirmingDeployCashRemunerationEip712
+        "
+        :disabled="
+          isCashRemunerationEip712Deployed ||
+          (isLoadingDeployCashRemunerationEip712 && !isConfirmingDeployCashRemunerationEip712)
         "
         @click="deployCashRemunerationEip712"
       >
         Deploy Cash Remuneration EIP712
-      </button>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployCashRemunerationEip712 || isConfirmingDeployCashRemunerationEip712"
-      />
+      </ButtonUI>
 
-      <button
-        class="btn btn-primary btn-sm"
+      <ButtonUI
+        size="sm"
+        variant="primary"
         v-if="!isInvestorV1Deployed"
         @click="() => emits('openInvestorContractModal')"
       >
         Deploy Investor V1
-      </button>
+      </ButtonUI>
     </div>
 
     <div class="flex justify-center">
-      <button
-        class="btn btn-primary btn-sm"
-        v-if="!isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
+      <ButtonUI
+        size="sm"
+        variant="primary"
+        :loading="isLoadingDeployAll && !areAllContractsDeployed && !isConfirmingDeployAll"
+        :disabled="areAllContractsDeployed || (isLoadingDeployAll && !isConfirmingDeployAll)"
+        data-test="deploy-all-contracts"
         @click="deployAllContracts"
       >
         Deploy All Contracts
-      </button>
-      <LoadingButton
-        :color="'primary min-w-24'"
-        v-if="isLoadingDeployAll || isConfirmingDeployAll"
-      />
+      </ButtonUI>
     </div>
   </div>
 </template>
@@ -101,7 +97,6 @@ import { useUserDataStore } from '@/stores/user'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
 import { log, parseError } from '@/utils'
-import LoadingButton from '@/components/LoadingButton.vue'
 
 // Contract ABIs and constants
 import OfficerABI from '@/artifacts/abi/officer.json'
@@ -110,8 +105,9 @@ import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-import { TIPS_ADDRESS } from '@/constant'
+import { TIPS_ADDRESS, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import type { Team } from '@/types'
+import ButtonUI from '../ButtonUI.vue'
 
 const props = defineProps<{
   team: Team
@@ -344,7 +340,7 @@ const deployAllContracts = async () => {
       initializerData: encodeFunctionData({
         abi: BankABI,
         functionName: 'initialize',
-        args: [TIPS_ADDRESS, currentAddress]
+        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
       })
     })
   }

@@ -20,4 +20,5 @@
   "CashRemunerationEIP712Module#FactoryBeacon": "0x775dFE6F6645279568690f94c13129310736eAD7",
   "InvestorsV1BeaconModule#Beacon": "0x698a41c96bA97349069566f0dF909fe132102790",
   "InvestorsV1BeaconModule#InvestorV1": "0x63699a4F425FA751e502Acab618F54738C999B15"
+
 }

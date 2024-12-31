@@ -138,28 +138,27 @@
       </div>
 
       <div class="flex justify-center">
-        <LoadingButton v-if="isLoading" color="primary min-w-28" />
-
-        <button
-          v-else
+        <ButtonUI
+          :loading="isLoading"
+          :disabled="isLoading"
           class="btn btn-primary btn-md justify-center"
           data-test="submitButton"
           @click="submitForm"
         >
           Create Proposal
-        </button>
+        </ButtonUI>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import LoadingButton from '@/components/LoadingButton.vue'
 import type { Proposal, Team } from '@/types/index'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { MinusCircleIcon } from '@heroicons/vue/24/solid'
 import { required, minLength, requiredIf } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const emits = defineEmits(['createProposal'])
 const props = defineProps<{

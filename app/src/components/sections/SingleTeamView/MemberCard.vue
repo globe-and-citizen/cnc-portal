@@ -7,44 +7,60 @@
     </div>
     <div class="collapse-content">
       <div class="flex justify-center gap-2">
-        <button
+        <ButtonUI
           @click="openExplorer(member.address ?? '')"
-          class="btn btn-primary btn-xs"
+          variant="primary"
+          size="xs"
           data-test="show-address-button"
         >
           See in block explorer
-        </button>
-        <button
+        </ButtonUI>
+        <ButtonUI
           v-if="isSupported"
           @click="copy(member.address ?? '')"
-          class="btn btn-info btn-xs"
+          variant="info"
+          size="xs"
           data-test="copy-address-button"
         >
           {{ copied ? 'Copied!' : 'Copy address' }}
-        </button>
-        <button
+        </ButtonUI>
+        <ButtonUI
           v-if="member.address != ownerAddress && ownerAddress == useUserDataStore().address"
-          class="btn btn-error btn-xs"
+          variant="error"
+          size="xs"
           data-test="delete-member-button"
           @click="() => (showDeleteMemberConfirmModal = true)"
         >
           Delete
-        </button>
+        </ButtonUI>
       </div>
     </div>
     <ModalComponent v-model="showDeleteMemberConfirmModal">
-      <DeleteConfirmForm :isLoading="memberIsDeleting" @deleteItem="deleteMemberAPI">
+      <h3 class="font-bold text-lg">Confirmation</h3>
+      <hr class="" />
+      <p class="py-4">
         Are you sure you want to delete
         <span class="font-bold">{{ memberToBeDeleted.name }}</span>
         with address <span class="font-bold">{{ memberToBeDeleted.address }}</span>
         from the team?
-      </DeleteConfirmForm>
+      </p>
+      <div class="modal-action justify-center">
+        <ButtonUI
+          variant="error"
+          @click="deleteMemberAPI()"
+          :loading="memberIsDeleting"
+          :disabled="memberIsDeleting"
+          >Delete</ButtonUI
+        >
+        <ButtonUI variant="primary" outline @click="() => (showDeleteMemberConfirmModal = false)"
+          >Cancel</ButtonUI
+        >
+      </div>
     </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
 import { useUserDataStore } from '@/stores/user'
-import DeleteConfirmForm from '@/components/forms/DeleteConfirmForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useRoute } from 'vue-router'
 import type { MemberInput } from '@/types'
@@ -53,6 +69,7 @@ import { NETWORK } from '@/constant'
 import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
   member: Partial<MemberInput>
