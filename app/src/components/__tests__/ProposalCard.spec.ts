@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import VotingABI from '@/artifacts/abi/voting.json'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { createTestingPinia } from '@pinia/testing'
 // Create a router instance
 const router = createRouter({
   history: createWebHistory(),
@@ -137,7 +138,7 @@ const createComponent = (props = {}) => {
 
   return mount(ProposalCard, {
     global: {
-      plugins: [router]
+      plugins: [router, createTestingPinia({ createSpy: vi.fn() })]
     },
     props: {
       ...defaultProps,
