@@ -4,6 +4,16 @@ import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 
 export const NETWORK = getNetwork()
+
+interface TokenAddresses {
+  USDC: string
+  USDT: string
+}
+
+type ChainTokenAddresses = {
+  [key in 137 | 11155111 | 31337]: TokenAddresses
+}
+
 interface AddressMapping {
   'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
@@ -22,6 +32,8 @@ interface AddressMapping {
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
   'InvestorsV1BeaconModule#Beacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
+  'MockTokens#USDT'?: string
+  'MockTokens#USDC'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -46,6 +58,24 @@ export function resolveAddress(key: keyof AddressMapping): string {
     return ''
   }
   return address
+}
+// Token addresses for different networks
+export const TOKEN_ADDRESSES: ChainTokenAddresses = {
+  // Polygon Mainnet
+  137: {
+    USDC: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon USDC
+    USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // Polygon USDT
+  },
+  // Sepolia Testnet
+  11155111: {
+    USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Sepolia USDC
+    USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06' // Sepolia USDT
+  },
+  // Hardhat Local
+  31337: {
+    USDC: resolveAddress('MockTokens#USDC'), // Placeholder for local testing
+    USDT: resolveAddress('MockTokens#USDT') // Placeholder for local testing
+  }
 }
 
 export function validateAddresses() {
@@ -112,3 +142,8 @@ export const INVESTOR_V1_BEACON_ADDRESS = resolveAddress('InvestorsV1BeaconModul
 export const INVESTOR_V1_IMPL_ADDRESS = resolveAddress('InvestorsV1BeaconModule#InvestorV1')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
+
+// Export token addresses for current network
+const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
+export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
+export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''
