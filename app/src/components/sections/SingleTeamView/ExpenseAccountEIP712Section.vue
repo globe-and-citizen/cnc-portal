@@ -420,7 +420,6 @@ const deactivateApproval = async (signature: `0x{string}`, index: number) => {
     abi: expenseAccountABI,
     functionName: 'deactivateApproval'
   })
-  deactivateIndex.value = null
 }
 
 // useFetch instance for deleting member
