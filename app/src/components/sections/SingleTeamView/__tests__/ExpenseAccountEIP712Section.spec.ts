@@ -31,6 +31,8 @@ interface ComponentData {
   disapproveAddress: (address: string) => Promise<void>
   isBodAction: () => boolean
   init: () => Promise<void>
+  deactivateIndex: number | null
+  isLoadingDeactivateApproval: boolean
 }
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
@@ -388,6 +390,10 @@ describe('ExpenseAccountSection', () => {
       )
       expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
+
+      const transferButton = firstRowCells[4].find('button')
+      expect(transferButton.exists()).toBe(true)
+      expect(transferButton.text()).toBe('Transfer')
     })
 
     it('should show aprroval list table cells with correct data', async () => {
@@ -440,6 +446,8 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[5].find('button').exists()).toBe(true)
       expect(firstRowCells[5].find('button').text()).toBe('Deactivate')
 
+      const deactivateButton = firstRowCells[5].find('button')
+
       const secondRowCells = rows[1].findAll('td')
       expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
       expect(secondRowCells[1].text()).toBe(
@@ -451,7 +459,49 @@ describe('ExpenseAccountSection', () => {
       expect(secondRowCells[5].find('button').exists()).toBe(true)
       expect(secondRowCells[5].find('button').text()).toBe('Deactivate')
     })
+    it('show show loading spinner when deactivating approval', async () => {
+      const wrapper = createComponent()
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
+      wrapperVm.manyExpenseAccountData = mockExpenseData
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+
+      vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
+        return `${args as `0x${string}`}Hash`
+      })
+
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      // Locate the table using the data-test attribute
+      const table = wrapper.find('[data-test="approvals-list-table"]')
+      expect(table.exists()).toBe(true)
+
+       // Check table row data within the approvals-list-table
+      const rows = table.findAll('tbody tr')
+      expect(rows).toHaveLength(mockExpenseData.length)
+ 
+      const firstRowCells = rows[0].findAll('td')
+      const secondRowCells = rows[1].findAll('td')
+      
+      const firstDeactivateButton = firstRowCells[5].find('button')
+      const secondDeactivateButton = secondRowCells[5].find('button')
+
+      expect(firstDeactivateButton.exists()).toBe(true)
+      expect(secondDeactivateButton.exists()).toBe(true)
+
+      wrapperVm.isLoadingDeactivateApproval = true
+      wrapperVm.deactivateIndex = 0
+
+      await wrapper.vm.$nextTick()
+
+      expect(firstDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeTruthy()
+      expect(secondDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeFalsy()
+
+      wrapperVm.isLoadingDeactivateApproval = false
+      wrapperVm.deactivateIndex = null
+    })
     it('should show expense account if expense account address exists', () => {
       const team = { expenseAccountEip712Address: '0x123' }
       const wrapper = createComponent({
