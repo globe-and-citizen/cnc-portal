@@ -52,6 +52,7 @@
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenDepositModal = true"
             class="btn btn-sm btn-secondary"
+            data-test="deposit-usdc-button-bank-section"
           >
             Deposit USDC
           </ButtonUI>
@@ -59,6 +60,7 @@
             v-if="team.bankAddress && (team.ownerAddress == currentAddress || isBod)"
             @click="tokenTransferModal = true"
             class="btn btn-sm btn-secondary"
+            data-test="transfer-usdc-button-bank-section"
           >
             Transfer USDC
           </ButtonUI>
@@ -66,6 +68,7 @@
             v-if="team.bankAddress"
             @click="() => (tokenTipModal = true)"
             class="btn btn-sm btn-secondary"
+            data-test="tip-usdc-button-bank-section"
           >
             Tip USDC
           </ButtonUI>
@@ -152,7 +155,7 @@
         </div>
       </div>
     </ModalComponent>
-    <ModalComponent v-model="tokenTipModal">
+    <ModalComponent v-model="tokenTipModal" data-test="token-tip-modal">
       <div class="flex flex-col gap-4 justify-start">
         <span class="font-bold text-xl sm:text-2xl">Tip USDC</span>
         <div class="form-control w-full">
@@ -193,7 +196,7 @@
       </div>
     </ModalComponent>
 
-    <ModalComponent v-model="tokenDepositModal">
+    <ModalComponent v-model="tokenDepositModal" data-test="token-deposit-modal">
       <div class="flex flex-col gap-4 justify-start">
         <span class="font-bold text-xl sm:text-2xl">Deposit USDC</span>
         <div class="form-control w-full">
@@ -233,7 +236,7 @@
       </div>
     </ModalComponent>
 
-    <ModalComponent v-model="tokenTransferModal">
+    <ModalComponent v-model="tokenTransferModal" data-test="token-transfer-modal">
       <div class="flex flex-col gap-4 justify-start">
         <span class="font-bold text-xl sm:text-2xl">Transfer USDC</span>
         <div class="form-control w-full">

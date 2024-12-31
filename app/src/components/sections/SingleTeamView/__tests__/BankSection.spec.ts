@@ -179,6 +179,29 @@ describe('BankSection', () => {
       expect((wrapper.vm as unknown as BankSectionVM).depositModal).toBeFalsy()
     })
 
+    it('should render token deposit modal', async () => {
+      const tokenDepositButton = wrapper.find(
+        'button[data-test="deposit-usdc-button-bank-section"]'
+      )
+      await tokenDepositButton.trigger('click')
+
+      expect((wrapper.vm as unknown as BankSectionVM).tokenDepositModal).toBeTruthy()
+    })
+
+    it('should render token transfer modal', async () => {
+      const tokenTransferButton = wrapper.find(
+        'button[data-test="transfer-usdc-button-bank-section"]'
+      )
+      await tokenTransferButton.trigger('click')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTransferModal).toBeTruthy()
+    })
+
+    it('should render token tip modal', async () => {
+      const tokenTipButton = wrapper.find('button[data-test="tip-usdc-button-bank-section"]')
+      await tokenTipButton.trigger('click')
+      expect((wrapper.vm as unknown as BankSectionVM).tokenTipModal).toBeTruthy()
+    })
+
     it('should close deposit modal when DepositBankForm emit @close-modal', async () => {
       const depositButton = wrapper.find('button[data-test="deposit-button"]')
       await depositButton.trigger('click')
