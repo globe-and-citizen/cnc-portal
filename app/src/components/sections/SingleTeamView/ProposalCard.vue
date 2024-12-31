@@ -119,7 +119,7 @@
       />
     </ModalComponent>
     <ModalComponent v-model="showProposalDetailsModal" data-test="details-modal">
-      <ProposalDetails :proposal="proposal" :team="team" />
+      <ProposalDetails :proposal="proposal" :team="team" @getTeam="emits('getTeam')" />
     </ModalComponent>
   </div>
 </template>

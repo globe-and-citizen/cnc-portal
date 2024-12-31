@@ -31,34 +31,66 @@
       >
         <h4 class="font-bold">Select Tie Break Option:</h4>
         <div class="flex flex-col gap-2 mt-2">
-          <button
+          <ButtonUI
+            :loading="
+              (isConfirmingResolveTie || isLoadingSelectWinner || isLoadingResolveTie) &&
+              selectedTieBreakOption == TieBreakOption.RANDOM_SELECTION
+            "
+            :disabled="
+              (isLoadingSelectWinner || isLoadingResolveTie || isConfirmingResolveTie) &&
+              selectedTieBreakOption == TieBreakOption.RANDOM_SELECTION
+            "
             class="btn btn-primary btn-sm"
             @click="resolveTie(TieBreakOption.RANDOM_SELECTION)"
             data-test="random-selection-btn"
           >
             Random Selection
-          </button>
-          <button
+          </ButtonUI>
+          <ButtonUI
+            :loading="
+              (isConfirmingResolveTie || isLoadingSelectWinner || isLoadingResolveTie) &&
+              selectedTieBreakOption == TieBreakOption.RUNOFF_ELECTION
+            "
+            :disabled="
+              (isLoadingSelectWinner || isLoadingResolveTie || isConfirmingResolveTie) &&
+              selectedTieBreakOption == TieBreakOption.RUNOFF_ELECTION
+            "
             class="btn btn-primary btn-sm"
             @click="resolveTie(TieBreakOption.RUNOFF_ELECTION)"
             data-test="runoff-election-btn"
           >
             Runoff Election
-          </button>
-          <button
+          </ButtonUI>
+          <ButtonUI
+            :loading="
+              (isConfirmingResolveTie || isLoadingSelectWinner || isLoadingResolveTie) &&
+              selectedTieBreakOption == TieBreakOption.FOUNDER_CHOICE
+            "
+            :disabled="
+              (isLoadingSelectWinner || isLoadingResolveTie || isConfirmingResolveTie) &&
+              selectedTieBreakOption == TieBreakOption.FOUNDER_CHOICE
+            "
             class="btn btn-primary btn-sm"
             @click="resolveTie(TieBreakOption.FOUNDER_CHOICE)"
             data-test="founder-choice-btn"
           >
             Choose Winner
-          </button>
-          <button
+          </ButtonUI>
+          <ButtonUI
+            :loading="
+              (isConfirmingResolveTie || isLoadingResolveTie || isLoadingSelectWinner) &&
+              selectedTieBreakOption == TieBreakOption.INCREASE_WINNER_COUNT
+            "
+            :disabled="
+              (isLoadingSelectWinner || isLoadingResolveTie || isConfirmingResolveTie) &&
+              selectedTieBreakOption == TieBreakOption.INCREASE_WINNER_COUNT
+            "
             class="btn btn-primary btn-sm"
             @click="resolveTie(TieBreakOption.INCREASE_WINNER_COUNT)"
             data-test="increase-winner-btn"
           >
             Increase Winner Count
-          </button>
+          </ButtonUI>
         </div>
       </div>
 
@@ -72,27 +104,25 @@
       >
         <h4 class="font-bold">Select Winner:</h4>
         <div class="flex flex-col gap-2 mt-2">
-          <button
+          <ButtonUI
             v-for="address in proposal.tiedCandidates"
             :key="address"
             class="btn btn-secondary btn-sm"
             @click="selectWinner(address)"
+            :loading="isLoadingSelectWinner || isConfirmingSelectWinner"
+            :disabled="isLoadingSelectWinner || isConfirmingSelectWinner"
             data-test="select-winner-btn"
           >
             {{ team.members.find((m: Member) => m.address === address)?.name || 'Unknown' }}
-          </button>
+          </ButtonUI>
         </div>
       </div>
 
-      <div v-if="proposal.selectedTieBreakOption !== undefined" class="mt-4">
+      <div v-if="selectedTieBreakOption != undefined" class="mt-4">
         <p class="text-sm">
           Selected tie break option:
           <span class="font-bold">
-            {{
-              tieBreakOptionLabels[
-                proposal.selectedTieBreakOption as keyof typeof tieBreakOptionLabels
-              ]
-            }}
+            {{ tieBreakOptionLabels[selectedTieBreakOption as keyof typeof tieBreakOptionLabels] }}
           </span>
         </p>
       </div>
@@ -101,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, watch } from 'vue'
+import { computed, defineProps, ref, watch } from 'vue'
 import PieChart from '@/components/PieChart.vue'
 import type { Member, Proposal } from '@/types'
 import { TieBreakOption } from '@/types'
@@ -110,6 +140,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import VotingABI from '@/artifacts/abi/voting.json'
 import type { Address } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps(['proposal', 'team'])
 const emits = defineEmits(['getTeam'])
@@ -122,6 +153,8 @@ const tieBreakOptionLabels: Record<TieBreakOption, string> = {
   [TieBreakOption.FOUNDER_CHOICE]: 'Founder Choice',
   [TieBreakOption.INCREASE_WINNER_COUNT]: 'Increase Winner Count'
 }
+
+const selectedTieBreakOption = ref<TieBreakOption | undefined>(undefined)
 
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}
@@ -153,7 +186,8 @@ const chartData = computed(() => {
 const {
   writeContract: resolveTieContract,
   error: resolveTieError,
-  data: hashResolveTie
+  data: hashResolveTie,
+  isPending: isLoadingResolveTie
 } = useWriteContract()
 
 const { isLoading: isConfirmingResolveTie, isSuccess: isConfirmedResolveTie } =
@@ -164,7 +198,8 @@ const { isLoading: isConfirmingResolveTie, isSuccess: isConfirmedResolveTie } =
 const {
   writeContract: selectWinnerContract,
   error: selectWinnerError,
-  data: hashSelectWinner
+  data: hashSelectWinner,
+  isPending: isLoadingSelectWinner
 } = useWriteContract()
 
 const { isLoading: isConfirmingSelectWinner, isSuccess: isConfirmedSelectWinner } =
@@ -173,6 +208,7 @@ const { isLoading: isConfirmingSelectWinner, isSuccess: isConfirmedSelectWinner 
   })
 
 const resolveTie = (option: TieBreakOption) => {
+  selectedTieBreakOption.value = option
   if (props.team.votingAddress) {
     resolveTieContract({
       address: props.team.votingAddress as Address,
@@ -198,7 +234,6 @@ const selectWinner = (winner: string) => {
 watch(isConfirmingResolveTie, (isConfirming: boolean, wasConfirming: boolean) => {
   if (wasConfirming && !isConfirming && isConfirmedResolveTie.value) {
     addSuccessToast('Tie break option selected successfully')
-    emits('getTeam')
   }
 })
 
@@ -213,12 +248,14 @@ watch(isConfirmingSelectWinner, (isConfirming: boolean, wasConfirming: boolean) 
 watch(resolveTieError, () => {
   if (resolveTieError.value) {
     addErrorToast('Error selecting tie break option')
+    selectedTieBreakOption.value = undefined
   }
 })
 
 watch(selectWinnerError, () => {
   if (selectWinnerError.value) {
     addErrorToast('Error selecting winner')
+    selectedTieBreakOption.value = undefined
   }
 })
 </script>
