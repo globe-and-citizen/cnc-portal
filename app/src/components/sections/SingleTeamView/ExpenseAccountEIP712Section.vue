@@ -159,8 +159,8 @@
                 <ButtonUI
                   :disabled="contractOwnerAddress !== currentUserAddress"
                   class="btn btn-success"
-                  :loading="isLoadingDeactivateApproval"
-                  @click="deactivateApproval(data.signature)"
+                  :loading="isLoadingDeactivateApproval && deactivateIndex === index"
+                  @click="deactivateApproval(data.signature, index)"
                 >
                   Deactivate
                 </ButtonUI>
@@ -265,6 +265,7 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const web3Library = new EthersJsAdapter()
 const expenseBalanceFormated = ref<string | number>(`0`)
 const signatureHash = ref<string | null>(null)
+const deactivateIndex = ref<number | null>(null)
 //#endregion variable declarations
 
 //#region expense account composable
@@ -409,7 +410,8 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   }
 })
 
-const deactivateApproval = async (signature: `0x{string}`) => {
+const deactivateApproval = async (signature: `0x{string}`, index: number) => {
+  deactivateIndex.value = index
   const signatureHash = keccak256(signature)
 
   executeDeactivateApproval({
@@ -418,6 +420,7 @@ const deactivateApproval = async (signature: `0x{string}`) => {
     abi: expenseAccountABI,
     functionName: 'deactivateApproval'
   })
+  deactivateIndex.value = null
 }
 
 // useFetch instance for deleting member
