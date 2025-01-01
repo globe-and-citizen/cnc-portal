@@ -1,7 +1,8 @@
-import { test as login } from '../fixtures/login.fixture'
+import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
 import { testWithSynpress } from '@synthetixio/synpress'
+import connectedSetup from 'test/wallet-setup/connected.setup'
 
-const test = testWithSynpress(login)
+const test = testWithSynpress(metaMaskFixtures(connectedSetup))
 
 const { expect, describe, beforeEach } = test
 
@@ -14,8 +15,7 @@ describe('Teams', () => {
     }
   ]
 
-  beforeEach(async ({ login, page }) => {
-    await login()
+  beforeEach(async ({ page }) => {
     await page.route('**/api/notification', async (route) => {
       await route.fulfill({
         status: 200,

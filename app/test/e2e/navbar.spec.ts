@@ -1,23 +1,12 @@
 import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
 import { testWithSynpress } from '@synthetixio/synpress'
-import basicSetup from 'test/wallet-setup/basic.setup'
+import connectedSetup from 'test/wallet-setup/connected.setup'
 
-const test = testWithSynpress(metaMaskFixtures(basicSetup))
+const test = testWithSynpress(metaMaskFixtures(connectedSetup))
 
-const { expect, describe, beforeEach } = test
+const { expect, describe } = test
 
 describe('Navbar', () => {
-  beforeEach(async ({ page }) => {
-    await page.evaluate(() => {
-      window.localStorage.setItem('isAuth', 'true')
-      window.localStorage.setItem('name', 'test')
-      window.localStorage.setItem('ownerAddress', '0x1234567890')
-      window.localStorage.setItem('nonce', '41vj7bz5Ow8oT5xaE')
-      window.localStorage.setItem('authToken', '1234567890')
-    })
-    await page.goto('http://localhost:5173')
-  })
-
   describe('profile', () => {
     test('should be able to edit user', async ({ page, metamask }) => {
       const address = await metamask.getAccountAddress()

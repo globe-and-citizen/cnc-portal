@@ -10,7 +10,7 @@
     "test:unit": "vitest",
     "test:watch": "vitest -u",
     "test:unit:coverage": "npx vitest run --coverage",
-    "test": "playwright test",
+    "test": "playwright test --trace on",
     "test:debug": "playwright test --debug",
     "test:build:cache": "synpress",
     "test:headless": "HEADLESS=true playwright test",
