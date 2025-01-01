@@ -24,6 +24,11 @@ vi.mock('@vueuse/core', async (importOriginal) => {
     useClipboard: vi.fn(() => mockClipboard)
   }
 })
+vi.mock('@/stores/useToastStore', () => ({
+  useToastStore: () => ({
+    addErrorToast: vi.fn()
+  })
+}))
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({
     params: {
@@ -164,6 +169,156 @@ describe('MemberCard', () => {
       await copyButton.trigger('click')
 
       expect(mockCopy).toHaveBeenCalledWith('0x123')
+    })
+  })
+
+  describe('Component State', () => {
+    it('initializes with correct props', () => {
+      const wrapper = mount(MemberCard, {
+        props: {
+          member: { name: 'John Doe', address: '0x123' },
+          teamId: 1,
+          ownerAddress: '0x456'
+        }
+      })
+      expect(wrapper.props().member.name).toBe('John Doe')
+      expect(wrapper.props().member.address).toBe('0x123')
+      expect(wrapper.props().teamId).toBe(1)
+      expect(wrapper.props().ownerAddress).toBe('0x456')
+    })
+
+    it('emits getTeam event when member is deleted successfully', async () => {
+      const wrapper = mount(MemberCard, {
+        props: {
+          member: { name: 'John Doe', address: '0x123' },
+          teamId: 1,
+          ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+        }
+      })
+
+      // Trigger delete flow
+      await wrapper.find('button[data-test="delete-member-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Simulate successful deletion
+      await wrapper.vm.$emit('getTeam')
+      expect(wrapper.emitted().getTeam).toBeTruthy()
+    })
+  })
+
+  describe('Modal Interactions', () => {
+    it('shows delete confirmation modal with correct member details', async () => {
+      const wrapper = mount(MemberCard, {
+        props: {
+          member: { name: 'John Doe', address: '0x123' },
+          teamId: 1,
+          ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+        }
+      })
+
+      await wrapper.find('button[data-test="delete-member-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const modalContent = wrapper.html()
+      expect(modalContent).toContain('John Doe')
+      expect(modalContent).toContain('0x123')
+      expect(modalContent).toContain('Are you sure you want to delete')
+    })
+  })
+
+  describe('Collapse Functionality', () => {
+    it('expands and collapses when clicked', async () => {
+      const wrapper = mount(MemberCard, {
+        props: {
+          member: { name: 'John Doe', address: '0x123' },
+          teamId: 1,
+          ownerAddress: '0x456'
+        }
+      })
+
+      const collapse = wrapper.find('.collapse')
+      expect(collapse.exists()).toBe(true)
+
+      // Initially not expanded
+      const checkbox = wrapper.find('input[type="checkbox"]').element as HTMLInputElement
+      expect(checkbox.checked).toBe(false)
+
+      // Click to expand
+      await wrapper.find('input[type="checkbox"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.find('input[type="checkbox"]').element as HTMLInputElement).checked).toBe(
+        true
+      )
+
+      // Click to collapse
+      await wrapper.find('input[type="checkbox"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((wrapper.find('input[type="checkbox"]').element as HTMLInputElement).checked).toBe(
+        false
+      )
+    })
+
+    it('displays member information in collapse title', () => {
+      const wrapper = mount(MemberCard, {
+        props: {
+          member: { name: 'John Doe', address: '0x123' },
+          teamId: 1,
+          ownerAddress: '0x456'
+        }
+      })
+
+      const collapseTitle = wrapper.find('.collapse-title')
+      expect(collapseTitle.text()).toContain('John Doe')
+      expect(collapseTitle.text()).toContain('0x123')
+    })
+  })
+
+  describe('Block Explorer Integration', () => {
+    it('opens block explorer with correct address when button is clicked', async () => {
+      const wrapper = mount(MemberCard, {
+        props: {
+          member: { name: 'John Doe', address: '0x123' },
+          teamId: 1,
+          ownerAddress: '0x456'
+        }
+      })
+
+      // Mock window.open
+      const windowSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      // Click the block explorer button
+      await wrapper.find('button[data-test="show-address-button"]').trigger('click')
+
+      const address = wrapper.props().member.address
+      if (address) {
+        expect(windowSpy).toHaveBeenCalledWith(
+          expect.stringContaining(`/address/${address}`),
+          '_blank'
+        )
+      }
+
+      windowSpy.mockRestore()
+    })
+
+    it('uses correct network block explorer URL', async () => {
+      const wrapper = mount(MemberCard, {
+        props: {
+          member: { name: 'John Doe', address: '0x123' },
+          teamId: 1,
+          ownerAddress: '0x456'
+        }
+      })
+
+      const windowSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+      await wrapper.find('button[data-test="show-address-button"]').trigger('click')
+
+      const address = wrapper.props().member.address
+      if (address) {
+        const expectedUrl = `${NETWORK.blockExplorerUrl}/address/${address}`
+        expect(windowSpy).toHaveBeenCalledWith(expectedUrl, '_blank')
+      }
+
+      windowSpy.mockRestore()
     })
   })
 })

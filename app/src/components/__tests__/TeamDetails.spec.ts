@@ -2,49 +2,82 @@
 import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TeamDetails from '../sections/SingleTeamView/TeamDetails.vue'
+import { useUserDataStore } from '@/stores/user'
+
+vi.mock('@/stores/user')
 
 describe('TeamDetails.vue', () => {
-  let wrapper: ReturnType<typeof mount>
+  const mockTeam = {
+    name: 'Test Team',
+    description: 'Test description',
+    ownerAddress: '0xUserAddress'
+  }
 
-  beforeEach(() => {
-    wrapper = mount(TeamDetails, {
-      props: {
-        team: {
-          name: 'Test Team',
-          description: 'Test description',
-          ownerAddress: '0xUserAddress'
-        },
-        teamBalance: 1000,
-        balanceLoading: false
-      }
+  const createWrapper = (userAddress: string) => {
+    // @ts-ignore
+    vi.mocked(useUserDataStore).mockReturnValue({ address: userAddress })
+    return mount(TeamDetails, {
+      props: { team: mockTeam }
     })
-  })
-  describe('Renders ', () => {
+  }
+
+  describe('Owner View', () => {
+    let wrapper: ReturnType<typeof mount>
+
+    beforeEach(() => {
+      wrapper = createWrapper('0xUserAddress')
+    })
+
     it('renders team name and description correctly', () => {
       expect(wrapper.find('h2').text()).toBe('Test Team')
       expect(wrapper.find('p').text()).toBe('Test description')
     })
 
-    it('renders Employee badge if the user is not the owner', async () => {
-      vi.mock('@/stores/user', () => ({
-        useUserDataStore: vi.fn(() => ({ address: '0xAnotherAddress' }))
-      }))
-      wrapper = mount(TeamDetails, {
-        props: {
-          team: {
-            name: 'Test Team',
-            description: 'Test description',
-            ownerAddress: '0xUserAddress'
-          },
-          teamBalance: 1000,
-          balanceLoading: false
-        }
-      })
-      await wrapper.vm.$nextTick()
+    it('renders Owner badge', () => {
+      const ownerBadge = wrapper.find('.badge-primary')
+      const employeeBadge = wrapper.find('.badge-secondary')
+      expect(ownerBadge.exists()).toBe(true)
+      expect(ownerBadge.text()).toBe('Owner')
+      expect(employeeBadge.exists()).toBe(false)
+    })
+
+    it('shows and handles owner action buttons', async () => {
+      const buttons = wrapper.findAll('button')
+      expect(buttons).toHaveLength(2)
+      expect(buttons[0].text()).toBe('Update')
+      expect(buttons[1].text()).toBe('Delete')
+
+      await buttons[0].trigger('click')
+      expect(wrapper.emitted('updateTeamModalOpen')).toBeTruthy()
+
+      await buttons[1].trigger('click')
+      expect(wrapper.emitted('deleteTeam')).toBeTruthy()
+    })
+  })
+
+  describe('Employee View', () => {
+    let wrapper: ReturnType<typeof mount>
+
+    beforeEach(() => {
+      wrapper = createWrapper('0xAnotherAddress')
+    })
+
+    it('renders team name and description correctly', () => {
+      expect(wrapper.find('h2').text()).toBe('Test Team')
+      expect(wrapper.find('p').text()).toBe('Test description')
+    })
+
+    it('renders Employee badge', () => {
       const ownerBadge = wrapper.find('.badge-primary')
       const employeeBadge = wrapper.find('.badge-secondary')
       expect(ownerBadge.exists()).toBe(false)
       expect(employeeBadge.exists()).toBe(true)
+      expect(employeeBadge.text()).toBe('Employee')
+    })
+
+    it('hides owner action buttons', () => {
+      const buttons = wrapper.findAll('button')
+      expect(buttons).toHaveLength(0)
     })
   })
 })

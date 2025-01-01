@@ -15,16 +15,20 @@ vi.mock('@/stores/useToastStore', () => ({
     addSuccessToast: vi.fn()
   })
 }))
+
+// Define proper types for the mocks
+type MockError = Error | null
+
 const mockUseReadContract = {
-  data: ref<string | null>('0x1234567890123456789012345678901234567890'),
+  data: ref<boolean | string | null>('0x1234567890123456789012345678901234567890'),
   isLoading: ref(false),
-  error: ref(null),
+  error: ref<MockError>(null),
   refetch: vi.fn()
 }
 
 const mockUseWriteContract = {
   writeContract: vi.fn(),
-  error: ref(null),
+  error: ref<MockError>(null),
   isPending: ref(false),
   data: ref(null)
 }
@@ -35,14 +39,14 @@ const mockUseWaitForTransactionReceipt = {
 }
 const mockUseSendTransaction = {
   isPending: ref(false),
-  error: ref(false),
+  error: ref<MockError>(null),
   data: ref<string>(''),
   sendTransaction: vi.fn()
 }
 const mockUseBalance = {
   data: ref<string | null>(null),
   isLoading: ref(false),
-  error: ref(null),
+  error: ref<MockError>(null),
   refetch: vi.fn()
 }
 
@@ -118,6 +122,18 @@ describe('VotingManagement', () => {
       await transferOwnershipButton.trigger('click')
       expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
     })
+
+    it('shows loading skeleton when owner is loading', async () => {
+      mockUseReadContract.isLoading.value = true
+      const wrapper = createComponent()
+      expect(wrapper.findComponent({ name: 'SkeletonLoading' }).exists()).toBeTruthy()
+    })
+
+    it('shows loading skeleton when paused status is loading', async () => {
+      mockUseReadContract.isLoading.value = true
+      const wrapper = createComponent()
+      expect(wrapper.findComponent({ name: 'SkeletonLoading' }).exists()).toBeTruthy()
+    })
   })
 
   describe('Emits', async () => {
@@ -126,6 +142,72 @@ describe('VotingManagement', () => {
       const transferOwnershipButton = wrapper.find('[data-test="transfer-ownership"]')
       await transferOwnershipButton.trigger('click')
       expect((wrapper.vm as unknown as ComponentData).transferOwnershipModal).toBeTruthy()
+    })
+  })
+
+  describe('Pause/Unpause Functionality', () => {
+    it('shows correct button text based on pause status', async () => {
+      mockUseReadContract.data.value = false // Not paused
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('.btn.btn-primary').text()).toBe('Pause')
+
+      mockUseReadContract.data.value = true // Paused
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('.btn.btn-primary').text()).toBe('Unpause')
+    })
+
+    it('calls pause function when clicking pause button', async () => {
+      mockUseReadContract.data.value = false // Not paused
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+      await wrapper.find('.btn.btn-primary').trigger('click')
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        functionName: 'pause',
+        args: [],
+        abi: expect.any(Array),
+        address: '0x1234567890123456789012345678901234567890'
+      })
+    })
+
+    it('calls unpause function when clicking unpause button', async () => {
+      mockUseReadContract.data.value = true // Paused
+      const wrapper = createComponent()
+      await wrapper.vm.$nextTick()
+      await wrapper.find('.btn.btn-primary').trigger('click')
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        functionName: 'unpause',
+        args: [],
+        abi: expect.any(Array),
+        address: '0x1234567890123456789012345678901234567890'
+      })
+    })
+  })
+
+  describe('Ownership Transfer', () => {
+    it('calls transferOwnership with BoD address when clicking transfer to BoD button', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('[data-test="transfer-to-board-of-directors"]').trigger('click')
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        functionName: 'transferOwnership',
+        args: ['0x0987654321098765432109876543210987654321'],
+        abi: expect.any(Array),
+        address: '0x1234567890123456789012345678901234567890'
+      })
+    })
+
+    it('closes transfer ownership modal after successful transfer', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('[data-test="transfer-ownership"]').trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).transferOwnershipModal).toBeTruthy()
+
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await wrapper.vm.$nextTick()
+
+      expect((wrapper.vm as unknown as ComponentData).transferOwnershipModal).toBeFalsy()
     })
   })
 })
