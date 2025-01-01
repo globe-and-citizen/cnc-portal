@@ -3,6 +3,7 @@ import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
+import type { Proposal } from '@/types'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({ params: { id: '1' } }))
@@ -36,7 +37,13 @@ const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
 }
-
+interface ProposalSectionInstance {
+  showModal: boolean
+  showBoDModal: boolean
+  showVotingControlModal: boolean
+  tabs: string[]
+  newProposalInput: Proposal
+}
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: Object = await importOriginal()
@@ -58,6 +65,7 @@ describe('ProposalSection.vue', () => {
           name: 'Test Team',
           ownerAddress: '0xOwnerAddress',
           bankAddress: '0xBankAddress',
+          votingAddress: '0xVotingAddress',
           members: [
             { name: 'Member 1', address: '0xMember1', teamId: 1, id: '1' },
             { name: 'Member 2', address: '0xMember2', teamId: 1, id: '1' }
@@ -84,5 +92,125 @@ describe('ProposalSection.vue', () => {
     await wrapper.vm.$nextTick()
     // expect(wrapper.find('span.loading').exists()).toBe(true)
     expect(wrapper.find('[data-test="parent-div"]').exists()).toBe(false)
+  })
+
+  it('renders create proposal button', () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          members: []
+        }
+      }
+    })
+    const createButton = wrapper.find('button[data-test="create-proposal"]')
+    expect(createButton.exists()).toBe(true)
+  })
+
+  it('opens modal when create proposal button is clicked', async () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          members: []
+        }
+      }
+    })
+    const createButton = wrapper.find('button[data-test="create-proposal"]')
+    await createButton.trigger('click')
+    expect((wrapper.vm as unknown as ProposalSectionInstance).showModal).toBe(true)
+  })
+
+  it('shows View BoD button when boardOfDirectorsAddress exists', () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          boardOfDirectorsAddress: '0xBoDAddress',
+          members: []
+        }
+      }
+    })
+    const bodButton = wrapper.find('button[data-test="view-bod"]')
+    expect(bodButton.exists()).toBe(true)
+  })
+
+  it('does not show View BoD button when boardOfDirectorsAddress does not exist', () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          members: []
+        }
+      }
+    })
+    const bodButton = wrapper.find('button[data-test="view-bod"]')
+    expect(bodButton.exists()).toBe(false)
+  })
+
+  it('opens BoD modal and fetches directors when View BoD button is clicked', async () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          boardOfDirectorsAddress: '0xBoDAddress',
+          members: []
+        }
+      }
+    })
+    const bodButton = wrapper.find('button[data-test="view-bod"]')
+    await bodButton.trigger('click')
+
+    expect((wrapper.vm as unknown as ProposalSectionInstance).showBoDModal).toBe(true)
+    expect(mockUseReadContract.refetch).toHaveBeenCalled()
+  })
+
+  it('shows manage button and opens voting management modal', async () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          members: []
+        }
+      }
+    })
+    const manageButton = wrapper.find('button[data-test="manage-voting"]')
+    expect(manageButton.exists()).toBe(true)
+
+    await manageButton.trigger('click')
+    expect((wrapper.vm as unknown as ProposalSectionInstance).showVotingControlModal).toBe(true)
+  })
+
+  it('initializes with correct tabs', () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          members: []
+        }
+      }
+    })
+    const tabs = (wrapper.vm as unknown as ProposalSectionInstance).tabs
+    expect(tabs).toEqual(['Ongoing', 'Done'])
+  })
+
+  it('initializes newProposalInput with correct default values', () => {
+    wrapper = mount(ProposalSection, {
+      props: {
+        team: {
+          votingAddress: '0xVotingAddress',
+          members: []
+        }
+      }
+    })
+    expect((wrapper.vm as unknown as ProposalSectionInstance).newProposalInput).toEqual({
+      title: '',
+      description: '',
+      isElection: false,
+      voters: [],
+      candidates: [],
+      winnerCount: 0,
+      teamId: 1
+    })
   })
 })
