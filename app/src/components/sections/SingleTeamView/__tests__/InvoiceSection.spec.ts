@@ -2,7 +2,7 @@ import { DOMWrapper, mount, type VueWrapper } from '@vue/test-utils'
 import InvoiceSection from '../InvoiceSection.vue'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
-import type { Team, Member } from '@/types'
+import type { Team } from '@/types'
 import type { Transaction } from 'ethers'
 
 // Mock the fetch API
