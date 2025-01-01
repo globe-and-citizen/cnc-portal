@@ -43,6 +43,7 @@ jobs:
           xvfb-run npm run dev &
           DEV_PID=$!
           sleep 10 # Adjust the sleep time as needed to ensure the app is fully started
+        working-directory: ./app
 
       - name: 💾 Build Cache
         run: xvfb-run npm run test:build:cache
