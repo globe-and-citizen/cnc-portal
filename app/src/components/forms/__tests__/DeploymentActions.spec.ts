@@ -1,22 +1,22 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DeploymentActions from '../DeploymentActions.vue'
-
 import { useWriteContract } from '@wagmi/vue'
 import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 // Mock the stores and wagmi hooks
+const mockToastStore = {
+  addErrorToast: vi.fn(),
+  addSuccessToast: vi.fn()
+}
 vi.mock('@/stores', () => ({
-  useToastStore: vi.fn(() => ({
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  }))
+  useToastStore: () => mockToastStore
 }))
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({
-    address: '0x123'
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
   }))
 }))
 
@@ -75,15 +75,29 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 describe('DeploymentActions', () => {
   const defaultProps = {
     team: {
-      officerAddress: '0x456'
+      officerAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
     },
-    founders: ['0x123'],
+    founders: ['0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'],
     isBankDeployed: false,
     isVotingDeployed: false,
     isBoDDeployed: false,
     isExpenseDeployed: false,
     isExpenseEip712Deployed: false,
     isInvestorV1Deployed: false
+  }
+
+  const defaultTeam = {
+    id: '1',
+    name: 'Test Team',
+    description: 'Test Description',
+    bankAddress: '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199',
+    votingAddress: '0xdD2FD4581271e230360230F9337D5c0430Bf44C0',
+    expenseAccountAddress: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E',
+    expenseAccountEip712Address: '0x2546BcD3c84621e976D8185a91A922aE77ECEc30',
+    officerAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    members: [],
+    ownerAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    boardOfDirectorsAddress: '0xcd3B766CCDd6AE721141F452C550Ca635964ce71'
   }
 
   beforeEach(() => {
@@ -95,19 +109,7 @@ describe('DeploymentActions', () => {
       props: {
         ...defaultProps,
         isCashRemunerationEip712Deployed: false,
-        team: {
-          id: '1',
-          name: 'Test Team',
-          description: 'Test Description',
-          bankAddress: '0x0',
-          votingAddress: '0x0',
-          expenseAccountAddress: '0x0',
-          expenseAccountEip712Address: '0x0',
-          officerAddress: '0x456',
-          members: [],
-          ownerAddress: '0x789',
-          boardOfDirectorsAddress: '0x0'
-        }
+        team: defaultTeam
       }
     })
 
@@ -120,73 +122,11 @@ describe('DeploymentActions', () => {
     expect(wrapper.text()).toContain('Deploy All Contracts')
   })
 
-  // TODO, check instead if the button is disabled when the contract is deployed
-  // it.only('hides individual buttons when contracts are deployed', () => {
-  //   const wrapper = mount(DeploymentActions, {
-  //     props: {
-  //       ...defaultProps,
-  //       isBankDeployed: true,
-  //       isVotingDeployed: true,
-  //       isCashRemunerationEip712Deployed: true,
-  //       team: {
-  //         id: '1',
-  //         name: 'Test Team',
-  //         description: 'Test Description',
-  //         bankAddress: '0x0',
-  //         votingAddress: '0x0',
-  //         expenseAccountAddress: '0x0',
-  //         expenseAccountEip712Address: '0x0',
-  //         officerAddress: '0x456',
-  //         members: [],
-  //         ownerAddress: '0x789',
-  //         boardOfDirectorsAddress: '0x0'
-  //       }
-  //     }
-  //   })
-  //   console.log(wrapper.html())
-
-  //   expect(wrapper.text()).not.toContain('Deploy Bank')
-  //   expect(wrapper.text()).not.toContain('Deploy Voting')
-  //   expect(wrapper.text()).toContain('Deploy Expense')
-  //   expect(wrapper.text()).toContain('Deploy Expense EIP712')
-  // })
-  // TODO improve it.
-  // it('hides "Deploy All Contracts" when all contracts are deployed', () => {
-  //   const wrapper = mount(DeploymentActions, {
-  //     props: {
-  //       ...defaultProps,
-  //       isBankDeployed: true,
-  //       isVotingDeployed: true,
-  //       isBoDDeployed: true,
-  //       isCashRemunerationEip712Deployed: true,
-  //       isExpenseDeployed: true,
-  //       isExpenseEip712Deployed: true,
-  //       isInvestorV1Deployed: true,
-  //       team: {
-  //         id: '1',
-  //         name: 'Test Team',
-  //         description: 'Test Description',
-  //         bankAddress: '0x0',
-  //         votingAddress: '0x0',
-  //         expenseAccountAddress: '0x0',
-  //         expenseAccountEip712Address: '0x0',
-  //         officerAddress: '0x456',
-  //         members: [],
-  //         ownerAddress: '0x789',
-  //         boardOfDirectorsAddress: '0x0'
-  //       }
-  //     }
-  //   })
-  //   const button= wrapper.find('[data-test="deploy-all-contracts"]').findComponent(ButtonUI)
-  //   expect(button.exists()).toBe(true)
-  //   // expect(button.props().disabled).toBe(true)
-  // })
-
   it('shows loading button when deployment is in progress', () => {
     vi.mocked(useWriteContract as Mock).mockReturnValue({
       writeContract: vi.fn(),
       isPending: ref(true),
-      data: ref('0x0'),
+      data: ref('0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199'),
       error: ref(null)
     })
 
@@ -194,50 +134,41 @@ describe('DeploymentActions', () => {
       props: {
         ...defaultProps,
         isCashRemunerationEip712Deployed: false,
-        team: {
-          id: '1',
-          name: 'Test Team',
-          description: 'Test Description',
-          bankAddress: '0x0',
-          votingAddress: '0x0',
-          expenseAccountAddress: '0x0',
-          expenseAccountEip712Address: '0x0',
-          officerAddress: '0x456',
-          members: [],
-          ownerAddress: '0x789',
-          boardOfDirectorsAddress: '0x0'
-        }
+        team: defaultTeam
       }
     })
 
     expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
-    // expect(wrapper.findComponent({ name: 'LoadingButton' }).exists()).toBe(true)
   })
 
-  it('displays 5 buttons when no contracts are deployed', () => {
+  it('displays 7 buttons when no contracts are deployed', () => {
     mockUseWriteContract.isPending.value = true
 
     const wrapper = mount(DeploymentActions, {
       props: {
         ...defaultProps,
         isCashRemunerationEip712Deployed: false,
-        team: {
-          id: '1',
-          name: 'Test Team',
-          description: 'Test Description',
-          bankAddress: '0x0',
-          votingAddress: '0x0',
-          expenseAccountAddress: '0x0',
-          expenseAccountEip712Address: '0x0',
-          officerAddress: '0x456',
-          members: [],
-          ownerAddress: '0x789',
-          boardOfDirectorsAddress: '0x0'
-        }
+        team: defaultTeam
       }
     })
 
     const buttons = wrapper.findAll('button')
     expect(buttons.length).toBe(7)
+  })
+
+  it('opens investor contract modal when deploying all contracts without investor', async () => {
+    const wrapper = mount(DeploymentActions, {
+      props: {
+        ...defaultProps,
+        isCashRemunerationEip712Deployed: false,
+        isInvestorV1Deployed: false,
+        team: defaultTeam
+      }
+    })
+
+    await wrapper.find('[data-test="deploy-all-contracts"]').trigger('click')
+
+    expect(wrapper.emitted()).toHaveProperty('openInvestorContractModal')
+    expect(wrapper.emitted('openInvestorContractModal')?.[0]).toBeTruthy()
   })
 })
