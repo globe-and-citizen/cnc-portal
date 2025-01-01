@@ -199,6 +199,8 @@ const exchangeRates = ref<ExchangeRates>({
   CAD: {}
 })
 
+const exchangeRateCache: ExchangeRates = {}
+
 // Computed
 const filteredTransactions = computed(() => {
   let filtered = [...allTransactions.value]
@@ -264,6 +266,13 @@ const showTxDetail = (txHash: string) => {
 
 const fetchExchangeRates = async (date: string) => {
   try {
+    // Check if the rate is already in the cache
+    if (exchangeRateCache[selectedCurrency.value]?.[date]) {
+      exchangeRates.value[selectedCurrency.value][date] =
+        exchangeRateCache[selectedCurrency.value][date]
+      return
+    }
+
     const params = new URLSearchParams({
       apikey: 'fca_live_Ee3QsIH2QQUw3WCNypXcgeFzPXSxkWw1iEywJCeh',
       date,
@@ -277,7 +286,12 @@ const fetchExchangeRates = async (date: string) => {
     })
     const data = await response.json()
     if (data.data && data.data[date]) {
-      exchangeRates.value[selectedCurrency.value][date] = data.data[date][selectedCurrency.value]
+      const rate = data.data[date][selectedCurrency.value]
+      exchangeRates.value[selectedCurrency.value][date] = rate
+      if (!exchangeRateCache[selectedCurrency.value]) {
+        exchangeRateCache[selectedCurrency.value] = {}
+      }
+      exchangeRateCache[selectedCurrency.value][date] = rate
     }
   } catch (error) {
     console.error('Error fetching exchange rates:', error)
