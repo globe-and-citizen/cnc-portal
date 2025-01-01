@@ -33,7 +33,7 @@ vi.mock('node-fetch', () => ({
   )
 }))
 
-// Mock the jsPDF and XLSX libraries
+// Mock modules
 vi.mock('jspdf', () => ({
   jsPDF: vi.fn(() => ({
     setFontSize: vi.fn(),
@@ -95,6 +95,8 @@ describe('InvoiceSection.vue', () => {
   }
 
   beforeEach(() => {
+    vi.clearAllMocks()
+
     wrapper = mount(InvoiceSection, {
       props: {
         team: mockTeam
@@ -173,6 +175,61 @@ describe('InvoiceSection.vue', () => {
 
     expect(windowSpy).toHaveBeenCalled()
     windowSpy.mockRestore()
+  })
+
+  describe('Download functionality', () => {
+    it('downloads PDF with correct formatting', async () => {
+      const mockTransaction: CustomTransaction = {
+        type: 'Deposit',
+        from: '0x123',
+        to: '0x456',
+        amount: BigInt('1000000000000000000'),
+        hash: '0xabc',
+        date: Date.now(),
+        isToken: false
+      }
+
+      const vm = wrapper.vm as unknown as invoiceComponent
+      vm.allTransactions = [mockTransaction]
+      vm.fromDate = '2024-01-01'
+      vm.toDate = '2024-01-31'
+
+      const jspdfModule = await import('jspdf')
+      const mockJsPDF = vi.mocked(jspdfModule.jsPDF)
+
+      await vm.downloadPDF()
+
+      const mockInstance = mockJsPDF.mock.results[0].value
+      expect(mockInstance.setFontSize).toHaveBeenCalled()
+      expect(mockInstance.text).toHaveBeenCalled()
+      expect(mockInstance.save).toHaveBeenCalledWith('transaction-invoice.pdf')
+    })
+
+    it('downloads Excel with correct data', async () => {
+      const mockTransaction: CustomTransaction = {
+        type: 'Transfer',
+        from: '0x123',
+        to: '0x456',
+        amount: BigInt('1000000000000000000'),
+        hash: '0xdef',
+        date: Date.now(),
+        isToken: false
+      }
+
+      const vm = wrapper.vm as unknown as invoiceComponent
+      vm.allTransactions = [mockTransaction]
+
+      const xlsxModule = await import('xlsx')
+      const jsonToSheetMock = vi.fn()
+      const writeFileMock = vi.fn()
+
+      vi.mocked(xlsxModule).utils.json_to_sheet = jsonToSheetMock
+      vi.mocked(xlsxModule).writeFile = writeFileMock
+
+      await vm.downloadExcel()
+
+      expect(jsonToSheetMock).toHaveBeenCalled()
+    })
   })
 
   describe('Exchange rates and amount formatting', () => {
