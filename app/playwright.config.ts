@@ -27,7 +27,7 @@ export default defineConfig({
 
   use: {
     baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry', // record traces on first retry of each test
+    trace: 'on-first-retry' // record traces on first retry of each test
   },
 
   // Synpress currently only supports Chromium, however, this will change in the future.

@@ -13,55 +13,54 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
 
   const page = await context.newPage()
 
-
   await page.goto('http://localhost:5173')
 
   const address = await metamask.getAccountAddress()
-    await page.route('**/api/user/nonce/*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, nonce: '41vj7bz5Ow8oT5xaE' })
+  await page.route('**/api/user/nonce/*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, nonce: '41vj7bz5Ow8oT5xaE' })
+    })
+  })
+  await page.route('**/api/auth/siwe', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, accessToken: 'token' })
+    })
+  })
+  await page.route(`**/api/user/${address}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        address: await metamask.getAccountAddress(),
+        name: null,
+        nonce: '41vj7bz5Ow8oT5xaE'
       })
     })
-    await page.route('**/api/auth/siwe', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, accessToken: 'token' })
-      })
-    })
-    await page.route(`**/api/user/${address}`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          address: await metamask.getAccountAddress(),
-          name: null,
-          nonce: '41vj7bz5Ow8oT5xaE'
-        })
-      })
-    })
+  })
 
-    // Click sign-in button
-    await page.getByTestId('sign-in').click()
+  // Click sign-in button
+  await page.getByTestId('sign-in').click()
 
-    await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('networkidle')
 
-    // Wait for connect metamask popup to appear
-    await page.waitForTimeout(3000)
+  // Wait for connect metamask popup to appear
+  await page.waitForTimeout(3000)
 
-    // Connect to dapp
-    await metamask.connectToDapp()
+  // Connect to dapp
+  await metamask.connectToDapp()
 
-    // Confirm signature
-    await metamask.confirmSignature()
+  // Confirm signature
+  await metamask.confirmSignature()
 
-    await page.evaluate(() => {
-      window.localStorage.setItem('isAuth', 'true')
-      window.localStorage.setItem('name', 'test')
-      window.localStorage.setItem('ownerAddress', '0x1234567890')
-      window.localStorage.setItem('nonce', '41vj7bz5Ow8oT5xaE')
-      window.localStorage.setItem('authToken', '1234567890')
-    })
+  await page.evaluate(() => {
+    window.localStorage.setItem('isAuth', 'true')
+    window.localStorage.setItem('name', 'test')
+    window.localStorage.setItem('ownerAddress', '0x1234567890')
+    window.localStorage.setItem('nonce', '41vj7bz5Ow8oT5xaE')
+    window.localStorage.setItem('authToken', '1234567890')
+  })
 })
