@@ -3,13 +3,32 @@ import InvoiceSection from '../InvoiceSection.vue'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types'
-import type { Transaction } from 'ethers'
+
+// Custom transaction type for our component
+interface CustomTransaction {
+  type: string
+  from: string
+  to: string
+  amount: bigint
+  hash: string
+  date: number
+  isToken: boolean
+}
 
 // Mock the fetch API
 vi.mock('node-fetch', () => ({
   default: vi.fn(() =>
     Promise.resolve({
-      json: () => Promise.resolve({ data: {} })
+      json: () =>
+        Promise.resolve({
+          data: {
+            '2024-01-01': {
+              USD: 1,
+              INR: 83.24,
+              CAD: 1.35
+            }
+          }
+        })
     })
   )
 }))
@@ -32,16 +51,36 @@ vi.mock('xlsx', () => ({
   },
   writeFile: vi.fn()
 }))
+
+interface TransactionWithAmount {
+  amount: bigint
+  isToken: boolean
+  date: number
+  type?: string
+  from?: string
+  to?: string
+  hash?: string
+}
+
 interface invoiceComponent {
   currentPage: number
   itemsPerPage: number
   selectedCurrency: string
-  allTransactions: Transaction[]
+  allTransactions: CustomTransaction[]
   fromDate: string
   formatDate: (timestamp: number) => string
   showTxDetail: (txHash: string) => void
   formatAddress: (address: string, isShort: boolean) => string
   toDate: string
+  downloadPDF: () => Promise<void>
+  downloadExcel: () => void
+  fetchExchangeRates: (date: string) => Promise<void>
+  formatAmount: (tx: TransactionWithAmount) => {
+    original: string
+    converted: string
+    convertedUSDC: string
+  }
+  filteredTransactions: CustomTransaction[]
 }
 
 describe('InvoiceSection.vue', () => {
@@ -134,5 +173,99 @@ describe('InvoiceSection.vue', () => {
 
     expect(windowSpy).toHaveBeenCalled()
     windowSpy.mockRestore()
+  })
+
+  describe('Exchange rates and amount formatting', () => {
+    it('fetches exchange rates correctly', async () => {
+      const date = '2024-01-01'
+      const vm = wrapper.vm as unknown as invoiceComponent
+      await vm.fetchExchangeRates(date)
+
+      const formattedAmount = vm.formatAmount({
+        amount: BigInt('1000000000000000000'),
+        isToken: false,
+        date: new Date('2024-01-01').getTime()
+      })
+
+      expect(formattedAmount.original).toContain('1.00')
+      expect(formattedAmount.convertedUSDC).toContain('1.00')
+    })
+
+    it('handles different currencies correctly', async () => {
+      const vm = wrapper.vm as unknown as invoiceComponent
+      vm.selectedCurrency = 'INR'
+      const date = '2024-01-01'
+      await vm.fetchExchangeRates(date)
+
+      const formattedAmount = vm.formatAmount({
+        amount: BigInt('1000000000000000000'),
+        isToken: false,
+        date: new Date('2024-01-01').getTime()
+      })
+
+      expect(formattedAmount.convertedUSDC).toContain('INR')
+    })
+  })
+
+  describe('Transaction filtering', () => {
+    it('filters transactions by date range', async () => {
+      const transactions: CustomTransaction[] = [
+        {
+          type: 'Deposit',
+          from: '0x123',
+          to: '0x456',
+          amount: BigInt('1000000000000000000'),
+          hash: '0xabc',
+          date: new Date('2024-01-01').getTime(),
+          isToken: false
+        },
+        {
+          type: 'Transfer',
+          from: '0x789',
+          to: '0x123',
+          amount: BigInt('2000000000000000000'),
+          hash: '0xdef',
+          date: new Date('2024-02-01').getTime(),
+          isToken: false
+        }
+      ]
+
+      const vm = wrapper.vm as unknown as invoiceComponent
+      vm.allTransactions = transactions
+      vm.fromDate = '2024-01-01'
+      vm.toDate = '2024-01-31'
+
+      expect(vm.filteredTransactions.length).toBe(1)
+      expect(vm.filteredTransactions[0].hash).toBe('0xabc')
+    })
+
+    it('sorts transactions by date in descending order', async () => {
+      const transactions: CustomTransaction[] = [
+        {
+          type: 'Deposit',
+          from: '0x123',
+          to: '0x456',
+          amount: BigInt('1000000000000000000'),
+          hash: '0xabc',
+          date: new Date('2024-01-01').getTime(),
+          isToken: false
+        },
+        {
+          type: 'Transfer',
+          from: '0x789',
+          to: '0x123',
+          amount: BigInt('2000000000000000000'),
+          hash: '0xdef',
+          date: new Date('2024-02-01').getTime(),
+          isToken: false
+        }
+      ]
+
+      const vm = wrapper.vm as unknown as invoiceComponent
+      vm.allTransactions = transactions
+
+      expect(vm.filteredTransactions[0].hash).toBe('0xdef')
+      expect(vm.filteredTransactions[1].hash).toBe('0xabc')
+    })
   })
 })
