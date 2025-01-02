@@ -4,6 +4,22 @@ import MemberSection from '@/components/sections/SingleTeamView/MemberSection.vu
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
+import type { ComponentPublicInstance } from 'vue'
+import type { User } from '@/types'
+
+interface MemberSectionInstance extends ComponentPublicInstance {
+  teamMembers: { name: string; address: string; isValid: boolean }[]
+  searchUserName: string
+  searchUserAddress: string
+  searchUsers: (input: { name: string; address: string }) => Promise<void>
+  executeSearchUser: () => Promise<void>
+  users: { users: User[] }
+  searchUserResponse: { ok: boolean }
+  foundUsers: User[]
+  addMembersError: string | null
+  addMembersLoading: boolean
+  showAddMemberForm: boolean
+}
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn()
@@ -93,6 +109,107 @@ describe('MemberSection.vue', () => {
       //   address: '1234'
       // })
       // expect(searchSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('Table Structure', () => {
+    it('renders table headers correctly', () => {
+      const headers = wrapper.findAll('thead th')
+      expect(headers[1].text()).toBe('Name')
+      expect(headers[2].text()).toBe('Address')
+      expect(headers[3].text()).toBe('Action')
+    })
+
+    it('shows action column only for team owner', async () => {
+      // Test when user is owner
+      expect(wrapper.find('th:nth-child(4)').exists()).toBe(true)
+
+      // Test when user is not owner
+      await wrapper.setProps({
+        team: {
+          ...teamMock,
+          ownerAddress: 'different_owner'
+        }
+      })
+      expect(wrapper.find('th:nth-child(4)').exists()).toBe(false)
+    })
+
+    it('renders correct number of member rows', () => {
+      const rows = wrapper.findAll('tbody tr')
+      expect(rows.length).toBe(teamMock.members.length)
+    })
+  })
+
+  describe('Add Member Form', () => {
+    it('shows add member button only for team owner', async () => {
+      // Test when user is owner
+      expect(wrapper.find('[data-test="add-member-button"]').exists()).toBe(true)
+
+      // Test when user is not owner
+      await wrapper.setProps({
+        team: {
+          ...teamMock,
+          ownerAddress: 'different_owner'
+        }
+      })
+      expect(wrapper.find('[data-test="add-member-button"]').exists()).toBe(false)
+    })
+
+    it('initializes with empty team members array', () => {
+      const defaultTeamMembers = (wrapper.vm as MemberSectionInstance).teamMembers
+      expect(defaultTeamMembers).toEqual([{ name: '', address: '', isValid: false }])
+    })
+  })
+
+  describe('User Search', () => {
+    it('updates search input values correctly', async () => {
+      const searchInput = {
+        name: 'John',
+        address: '0x123'
+      }
+
+      await (wrapper.vm as MemberSectionInstance).searchUsers(searchInput)
+      expect((wrapper.vm as MemberSectionInstance).searchUserName).toBe('John')
+      expect((wrapper.vm as MemberSectionInstance).searchUserAddress).toBe('0x123')
+    })
+
+    it('updates foundUsers when search is successful', async () => {
+      const mockUsers = [
+        { name: 'John', address: '0x123' },
+        { name: 'Jane', address: '0x456' }
+      ]
+
+      const vm = wrapper.vm as MemberSectionInstance
+      vm.users = { users: mockUsers }
+      vm.searchUserResponse = { ok: true }
+
+      await wrapper.vm.$nextTick()
+      expect(vm.foundUsers).toEqual(mockUsers)
+    })
+  })
+
+  describe('Add Members', () => {
+    it('resets form after successful member addition', async () => {
+      const vm = wrapper.vm as MemberSectionInstance
+      // Mock successful member addition
+      vm.addMembersError = null
+      vm.addMembersLoading = false
+
+      await wrapper.vm.$nextTick()
+
+      expect(vm.teamMembers).toEqual([{ name: '', address: '', isValid: false }])
+      expect(vm.foundUsers).toEqual([])
+      expect(vm.showAddMemberForm).toBe(false)
+    })
+
+    it('shows error toast on failed member addition', async () => {
+      const error = 'Failed to add members'
+      const vm = wrapper.vm as MemberSectionInstance
+      vm.addMembersError = error
+
+      await wrapper.vm.$nextTick()
+
+      expect(addErrorToast).toHaveBeenCalledWith(error)
     })
   })
 })

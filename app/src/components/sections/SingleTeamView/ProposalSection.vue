@@ -12,7 +12,12 @@
         > -->
           </div>
           <div class="flex justify-between gap-4">
-            <ButtonUI variant="primary" size="md" @click="showModal = !showModal">
+            <ButtonUI
+              variant="primary"
+              size="md"
+              @click="showModal = !showModal"
+              data-test="create-proposal"
+            >
               Create Proposal
             </ButtonUI>
             <ButtonUI
@@ -25,10 +30,16 @@
                   showBoDModal = true
                 }
               "
+              data-test="view-bod"
             >
               View BoD
             </ButtonUI>
-            <ButtonUI variant="secondary" size="md" @click="showVotingControlModal = true">
+            <ButtonUI
+              variant="secondary"
+              size="md"
+              @click="showVotingControlModal = true"
+              data-test="manage-voting"
+            >
               Manage
             </ButtonUI>
           </div>

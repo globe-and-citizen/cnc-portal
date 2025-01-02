@@ -7,6 +7,8 @@ import { useBankGetFunction } from '@/composables/__mocks__/bank'
 import { useExpenseGetFunction } from '@/composables/__mocks__/useExpenseAccount'
 import { useUserDataStore } from '@/stores'
 import { ref } from 'vue'
+import { useReadContract } from '@wagmi/vue'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
 
 vi.mock('@/composables/bod')
 vi.mock('@/composables/bank')
@@ -331,6 +333,60 @@ describe('ApproveRevokeAction', () => {
 
       await wrapper.vm.$nextTick()
       expect(wrapper.find("[data-test='approve-revoke-button']").exists()).toBeFalsy()
+    })
+  })
+
+  describe('Button States and Actions', () => {
+    it('should disable button when loading approve', async () => {
+      const wrapper = createComponent()
+      mockUseWriteContract.isPending.value = true
+
+      await wrapper.vm.$nextTick()
+      const button = wrapper.find("[data-test='approve-revoke-button']")
+      expect(button.attributes('disabled')).toBeDefined()
+    })
+
+    it('should disable button when confirming transaction', async () => {
+      const wrapper = createComponent()
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+
+      await wrapper.vm.$nextTick()
+      const button = wrapper.find("[data-test='approve-revoke-button']")
+      expect(button.attributes('disabled')).toBeDefined()
+    })
+  })
+
+  describe('Loading States', () => {
+    it('should show skeleton loading when isApproved is loading', async () => {
+      const wrapper = createComponent()
+      mockUseReadContract.isLoading.value = true
+
+      await wrapper.vm.$nextTick()
+      expect(wrapper.findComponent(SkeletonLoading).exists()).toBeTruthy()
+    })
+  })
+
+  describe('Status Badge', () => {
+    it('should show Approved by You when approved', async () => {
+      const wrapper = createComponent()
+      const { data: isApproved } = useReadContract()
+      isApproved.value = true
+
+      await wrapper.vm.$nextTick()
+      const badge = wrapper.find("[data-test='action-status']")
+      expect(badge.text()).toBe('Approved by You')
+      expect(badge.classes()).toContain('badge-primary')
+    })
+
+    it('should show Waiting for your approval when not approved', async () => {
+      const wrapper = createComponent()
+      const { data: isApproved } = useReadContract()
+      isApproved.value = false
+
+      await wrapper.vm.$nextTick()
+      const badge = wrapper.find("[data-test='action-status']")
+      expect(badge.text()).toBe('Waiting for your approval')
+      expect(badge.classes()).toContain('badge-secondary')
     })
   })
 })
