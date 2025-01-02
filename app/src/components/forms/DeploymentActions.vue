@@ -244,7 +244,7 @@ const deployBankAccount = async () => {
   const initData = encodeFunctionData({
     abi: BankABI,
     functionName: 'initialize',
-    args: [TIPS_ADDRESS, currentAddress]
+    args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
   })
 
   deployBank({
