@@ -74,6 +74,13 @@ const mockUseWriteContract = {
   data: ref(null)
 }
 
+const mockUseBalance = {
+  data: ref(null),
+  refetch: vi.fn(),
+  error: ref(null),
+  isLoading: ref(false)
+}
+
 const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
@@ -88,7 +95,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
       return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
     }),
     useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useBalance: vi.fn(() => mockUseBalance),
+    useChainId: vi.fn(() => '0xChainId')
   }
 })
 
@@ -573,7 +582,17 @@ describe('ExpenseAccountSection', () => {
       const wrapper = createComponent()
 
       expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
-        `${'0'} ${NETWORK.currencySymbol}`
+        `${'--'} ${NETWORK.currencySymbol}`
+      )
+      //@ts-ignore
+      wrapper.vm.expenseAccountBalance = { value: 500n * 10n ** 18n }
+
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
+        `${'500'} ${NETWORK.currencySymbol}`
       )
     })
 
