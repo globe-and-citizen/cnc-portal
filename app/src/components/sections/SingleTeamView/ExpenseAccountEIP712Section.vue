@@ -291,17 +291,6 @@ const {
 })
 
 const {
-  data: expenseBalance,
-  refetch: executeGetExpenseBalance,
-  //error: errorGetExpenseBalance,
-  isLoading: isLoadingGetExpenseBalance
-} = useReadContract({
-  functionName: 'getBalance',
-  address: team.value.expenseAccountEip712Address as Address,
-  abi: expenseAccountABI
-})
-
-const {
   data: amountWithdrawn,
   refetch: executeGetAmountWithdrawn,
   error: errorGetAmountWithdrawn
@@ -513,13 +502,6 @@ const init = async () => {
 const getExpenseAccountOwner = async () => {
   if (team.value.expenseAccountEip712Address) await executeExpenseAccountGetOwner()
 }
-
-// const getExpenseAccountBalance = async () => {
-//   if (team.value.expenseAccountEip712Address) {
-//     await executeGetExpenseBalance()
-//     expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
-//   }
-// }
 
 const getAmountWithdrawnBalance = async () => {
   if (team.value.expenseAccountEip712Address) {
