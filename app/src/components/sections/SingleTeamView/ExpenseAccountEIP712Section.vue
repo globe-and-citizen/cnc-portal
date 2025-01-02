@@ -4,6 +4,7 @@
       v-if="team.expenseAccountEip712Address"
       class="stats bg-green-100 flex text-primary-content border-outline p-5 overflow-visible"
     >
+      <!-- TODO: add ERC20 token support  -->
       <!-- Expense A/c Info Section -->
       <section class="stat flex flex-col justify-start">
         <div
