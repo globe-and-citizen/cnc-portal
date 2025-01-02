@@ -43,7 +43,7 @@ const updateTimeLeft = () => {
 }
 
 onMounted(() => {
-  setInterval(updateTimeLeft, 1000)
+  interval = setInterval(updateTimeLeft, 1000) as unknown as number
 })
 
 onUnmounted(() => {
