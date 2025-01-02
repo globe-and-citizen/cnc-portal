@@ -1,0 +1,49 @@
+name: Frontend Vitest Unit Tests
+
+on:
+  pull_request:
+    branches: "**"
+    paths:
+      - "app/**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+      - edited
+      - labeled
+      - unlabeled
+      - review_requested
+      - review_request_removed
+      - ready_for_review
+      - converted_to_draft
+      - assigned
+      - unassigned
+      - dependabot[bot]
+  workflow_dispatch:
+
+jobs:
+  app-unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up NodeJS 20.10.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: "npm"
+          cache-dependency-path: ./app/package-lock.json
+
+      - name: 💻 Run Vitest
+        run: |
+          npm install
+          npm run test:unit:coverage
+        working-directory: ./app
+
+      - name: ✅ Upload coverage to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: app-unit-tests
