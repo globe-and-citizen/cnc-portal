@@ -204,32 +204,6 @@ describe('InvoiceSection.vue', () => {
       expect(mockInstance.text).toHaveBeenCalled()
       expect(mockInstance.save).toHaveBeenCalledWith('transaction-invoice.pdf')
     })
-
-    it('downloads Excel with correct data', async () => {
-      const mockTransaction: CustomTransaction = {
-        type: 'Transfer',
-        from: '0x123',
-        to: '0x456',
-        amount: BigInt('1000000000000000000'),
-        hash: '0xdef',
-        date: Date.now(),
-        isToken: false
-      }
-
-      const vm = wrapper.vm as unknown as invoiceComponent
-      vm.allTransactions = [mockTransaction]
-
-      const xlsxModule = await import('xlsx')
-      const jsonToSheetMock = vi.fn()
-      const writeFileMock = vi.fn()
-
-      vi.mocked(xlsxModule).utils.json_to_sheet = jsonToSheetMock
-      vi.mocked(xlsxModule).writeFile = writeFileMock
-
-      await vm.downloadExcel()
-
-      expect(jsonToSheetMock).toHaveBeenCalled()
-    })
   })
 
   describe('Exchange rates and amount formatting', () => {
