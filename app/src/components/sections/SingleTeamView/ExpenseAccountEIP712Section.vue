@@ -15,9 +15,9 @@
               <span class="inline-block min-w-16 h-10">
                 <span
                   class="loading loading-spinner loading-lg"
-                  v-if="isLoadingGetExpenseBalance"
+                  v-if="isLoadingExpenseAccountBalance"
                 ></span>
-                <span v-else>{{ expenseBalanceFormated }} </span>
+                <span v-else>{{ expenseBalanceFormatted }} </span>
               </span>
               <span class="text-xs">{{ ' ' + NETWORK.currencySymbol }}</span>
             </div>
@@ -187,7 +187,13 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import {
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useBalance,
+  useChainId
+} from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -263,7 +269,12 @@ const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
 const { addErrorToast, addSuccessToast } = useToastStore()
 const web3Library = new EthersJsAdapter()
-const expenseBalanceFormated = ref<string | number>(`0`)
+// const expenseBalanceFormated = ref<string | number>(`0`)
+const expenseBalanceFormatted = computed(() => {
+  if (typeof expenseAccountBalance.value?.value === 'bigint')
+    return formatEther(expenseAccountBalance.value.value)
+  else return '--'
+})
 const signatureHash = ref<string | null>(null)
 const deactivateIndex = ref<number | null>(null)
 //#endregion variable declarations
@@ -376,7 +387,7 @@ const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    await getExpenseAccountBalance()
+    await executeGetExpenseAccountBalance()
     await getAmountWithdrawnBalance()
     transferModal.value = false
   }
@@ -494,7 +505,6 @@ watch(searchUserResponse, () => {
 const init = async () => {
   await fetchExpenseAccountData()
   await getExpenseAccountOwner()
-  await getExpenseAccountBalance()
   await getAmountWithdrawnBalance()
   await fetchManyExpenseAccountData()
   await initializeBalances()
@@ -504,12 +514,12 @@ const getExpenseAccountOwner = async () => {
   if (team.value.expenseAccountEip712Address) await executeExpenseAccountGetOwner()
 }
 
-const getExpenseAccountBalance = async () => {
-  if (team.value.expenseAccountEip712Address) {
-    await executeGetExpenseBalance()
-    expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
-  }
-}
+// const getExpenseAccountBalance = async () => {
+//   if (team.value.expenseAccountEip712Address) {
+//     await executeGetExpenseBalance()
+//     expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
+//   }
+// }
 
 const getAmountWithdrawnBalance = async () => {
   if (team.value.expenseAccountEip712Address) {
@@ -627,6 +637,23 @@ watch(fetchExpenseAccountDataError, (newVal) => {
   if (newVal) addErrorToast('Error fetching expense account data')
 })
 //#endregion watch success
+
+const chainId = useChainId()
+const {
+  data: expenseAccountBalance,
+  isLoading: isLoadingExpenseAccountBalance,
+  error: isErrorExpenseAccountBalance,
+  refetch: executeGetExpenseAccountBalance
+} = useBalance({
+  address: team.value.expenseAccountEip712Address as Address,
+  chainId
+})
+watch(isErrorExpenseAccountBalance, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Error fetching expense account data')
+  }
+})
 
 onMounted(async () => {
   await init()
