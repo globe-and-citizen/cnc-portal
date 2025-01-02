@@ -147,7 +147,7 @@ import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { formatEther, type Address } from 'viem'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
-import * as XLSX from 'xlsx'
+import xlsx from 'node-xlsx'
 import type { Team } from '@/types'
 
 interface Transaction {
@@ -484,33 +484,40 @@ const downloadPDF = () => {
 const downloadExcel = () => {
   try {
     const columnPrice = `Price (${selectedCurrency.value})`
-    const data = filteredTransactions.value.map((tx) => ({
-      Date: formatDate(tx.date),
-      Type: tx.type,
-      From: formatAddress(tx.from, false),
-      To: formatAddress(tx.to, false),
-      Amount: formatAmount(tx).original,
-      [columnPrice]: formatAmount(tx).convertedUSDC,
-      'Transaction Hash': tx.hash
-    }))
+    const headers = ['Date', 'Type', 'From', 'To', 'Amount', columnPrice, 'Transaction Hash']
 
-    const worksheet = XLSX.utils.json_to_sheet(data)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions')
+    const rows = filteredTransactions.value.map((tx) => [
+      formatDate(tx.date),
+      tx.type,
+      formatAddress(tx.from, false),
+      formatAddress(tx.to, false),
+      formatAmount(tx).original,
+      formatAmount(tx).convertedUSDC,
+      tx.hash
+    ])
 
-    // Auto-size columns
-    const max_width = data.reduce((w, r) => Math.max(w, r['Transaction Hash'].length), 10)
-    worksheet['!cols'] = [
-      { wch: 20 }, // Date
-      { wch: 10 }, // Type
-      { wch: 45 }, // From
-      { wch: 45 }, // To
-      { wch: 15 }, // Amount
-      { wch: 45 }, // Converted Amount
-      { wch: max_width } // Transaction Hash
-    ]
+    const data = [headers, ...rows]
+    const buffer = xlsx.build([
+      {
+        name: 'Transactions',
+        data,
+        options: {}
+      }
+    ])
 
-    XLSX.writeFile(workbook, 'transaction-invoice.xlsx')
+    // Create a Blob and trigger download
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'transaction-invoice.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
     addSuccessToast('Excel file downloaded successfully')
   } catch (error) {
     console.error('Error generating Excel:', error)

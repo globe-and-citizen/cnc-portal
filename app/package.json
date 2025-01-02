@@ -35,17 +35,17 @@
     "@wagmi/vue": "^0.0.48",
     "buffer": "^6.0.3",
     "dayjs": "^1.11.10",
-    "echarts": "^5.5.1",
+    "echarts": "^5.6.0",
     "ethers": "^6.13.1",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
+    "node-xlsx": "^0.24.0",
     "pinia": "^2.1.7",
     "siwe": "^2.1.4",
     "viem": "^2.21.2",
     "vue": "^3.4.15",
     "vue-echarts": "^7.0.3",
-    "vue-router": "^4.2.5",
-    "xlsx": "^0.18.5"
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@pinia/testing": "^0.1.3",
