@@ -23,7 +23,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 export function useSiwe() {
   const { addErrorToast } = useToastStore()
   const isProcessing = ref(false)
-  const authData = ref({signature: '', message: ''})
+  const authData = ref({ signature: '', message: '' })
   const apiEndpoint = ref<string>('')
   const account = useAccount()
   const { data: signature, error: signMessageError, signMessage } = useSignMessage()
@@ -55,16 +55,13 @@ export function useSiwe() {
       log.error('signMessageError.value', newVal)
       addErrorToast('Unable to sign SIWE message')
     }
-
   })
 
-  const { 
-    error: siweError, 
+  const {
+    error: siweError,
     data: siweData,
     execute: executeAddAuthData
-  } = useCustomFetch<string>('auth/siwe', {immediate: false})
-    .post(authData)
-    .json()
+  } = useCustomFetch<string>('auth/siwe', { immediate: false }).post(authData).json()
 
   watch(siweError, (newVal) => {
     if (newVal) {
@@ -73,16 +70,11 @@ export function useSiwe() {
     }
   })
 
-  const { 
-    error: fetchUserNonceError, 
+  const {
+    error: fetchUserNonceError,
     data: nonce,
-    execute: executeFetchUserNonce 
-  } = useCustomFetch<string>(
-    apiEndpoint,
-    {immediate: false}
-  )
-    .get()
-    .json()
+    execute: executeFetchUserNonce
+  } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
 
   watch(fetchUserNonceError, (newVal) => {
     if (newVal) {
@@ -91,13 +83,11 @@ export function useSiwe() {
     }
   })
 
-  const { 
-    error: fetchUserError, 
+  const {
+    error: fetchUserError,
     data: user,
     execute: executeFetchUser
-  } = useCustomFetch<string>(apiEndpoint, { immediate: false })
-    .get()
-    .json()
+  } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
 
   watch(fetchUserError, (newVal) => {
     if (newVal) {
@@ -120,11 +110,15 @@ export function useSiwe() {
       await executeFetchUserNonce()
 
       const statement = 'Sign in with Ethereum to the app.'
-      const siweMessageCreator = createSiweMessageCreator(account.address.value as string, statement, nonce.value.nonce)
+      const siweMessageCreator = createSiweMessageCreator(
+        account.address.value as string,
+        statement,
+        nonce.value.nonce
+      )
 
       authData.value.message = await siweMessageCreator.create()
 
-      signMessage({ message: authData.value.message})
+      signMessage({ message: authData.value.message })
     } catch (_error) {
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
