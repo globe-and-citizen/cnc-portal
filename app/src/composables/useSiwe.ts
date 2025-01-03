@@ -1,6 +1,4 @@
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
-// import { SIWEAuthService } from '@/services/authService'
 import router from '@/router'
 import { ref, watch } from 'vue'
 import { useUserDataStore } from '@/stores/user'
@@ -10,9 +8,7 @@ import { useCustomFetch } from './useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
 import { MetaMaskUtil } from '@/utils/web3Util'
 import { useStorage } from '@vueuse/core'
-import { useClient, useAccount, useSignMessage } from '@wagmi/vue'
-
-const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
+import { useAccount, useSignMessage } from '@wagmi/vue'
 
 function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
   return new SLSiweMessageCreator({
@@ -30,12 +26,10 @@ export function useSiwe() {
   const authData = ref({signature: '', message: ''})
   const apiEndpoint = ref<string>('')
   const account = useAccount()
-  const client = useClient()
   const { data: signature, error: signMessageError, signMessage } = useSignMessage()
 
   watch(signature, async (newVal) => {
     if (newVal) {
-      console.log(`signature: `, newVal)
       authData.value.signature = newVal
       await executeAddAuthData()
       const token = siweData.value.accessToken
@@ -43,6 +37,7 @@ export function useSiwe() {
       storageToken.value = token
       apiEndpoint.value = `user/${account.address.value}`
       await executeFetchUser()
+      if (!user.value) return
       const userData: Partial<User> = user.value
       useUserDataStore().setUserData(
         userData.name || '',
@@ -83,7 +78,6 @@ export function useSiwe() {
     data: nonce,
     execute: executeFetchUserNonce 
   } = useCustomFetch<string>(
-    //`user/nonce/${account.address.value}`
     apiEndpoint,
     {immediate: false}
   )
@@ -119,19 +113,6 @@ export function useSiwe() {
 
     try {
       isProcessing.value = true
-      //const address = await ethersJsAdapter.getAddress()
-      console.log(`address: `, account.address.value)
-      // const { error: fetchError, data: nonce } = await useCustomFetch<string>(
-      //   `user/nonce/${account.address.value}`
-      // )
-      //   .get()
-      //   .json()
-
-      // if (fetchError.value) {
-      //   log.info('fetchError.value', fetchError.value)
-      //   addErrorToast('Unable to fetch nonce')
-      //   return
-      // }
 
       apiEndpoint.value = `user/nonce/${account.address.value}`
       await executeFetchUserNonce()
@@ -139,46 +120,9 @@ export function useSiwe() {
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(account.address.value as string, statement, nonce.value.nonce)
 
-      // const message = await siweMessageCreator.create()
       authData.value.message = await siweMessageCreator.create()
 
-      //const signature = await ethersJsAdapter.requestSign(message)
       signMessage({ message: authData.value.message})
-
-      // console.log(`signature: `, signature.value)
-
-      // const { error: siweError, data: siweData } = await useCustomFetch<string>('auth/siwe')
-      //   .post({ signature, message })
-      //   .json()
-
-      // if (siweError.value) {
-      //   log.info('siweError.value', siweError.value)
-      //   addErrorToast('Unable to authenticate with SIWE')
-      //   return
-      // }
-      // const token = siweData.value.accessToken
-      // const storageToken = useStorage('authToken', token)
-      // storageToken.value = token
-
-      // const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${account.address.value}`)
-      //   .get()
-      //   .json()
-
-      // if (fetchUserError.value) {
-      //   log.info('fetchUserError.value', fetchUserError.value)
-      //   addErrorToast('Unable to fetch user data')
-      //   return
-      // }
-
-      // const userData: Partial<User> = user.value
-      // useUserDataStore().setUserData(
-      //   userData.name || '',
-      //   userData.address || '',
-      //   userData.nonce || ''
-      // )
-      // useUserDataStore().setAuthStatus(true)
-
-      // router.push('/teams')
     } catch (_error) {
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
