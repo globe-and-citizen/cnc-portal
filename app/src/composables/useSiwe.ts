@@ -100,8 +100,10 @@ export function useSiwe() {
     .json()
 
   watch(fetchUserError, (newVal) => {
-    log.info('fetchUserError.value', fetchUserError.value)
-    addErrorToast('Unable to fetch user data')
+    if (newVal) {
+      log.info('fetchUserError.value', fetchUserError.value)
+      addErrorToast('Unable to fetch user data')
+    }
   })
 
   async function siwe() {
