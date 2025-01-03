@@ -47,6 +47,8 @@ export function useSiwe() {
       useUserDataStore().setAuthStatus(true)
 
       router.push('/teams')
+
+      isProcessing.value = false
     }
   })
 
@@ -54,6 +56,7 @@ export function useSiwe() {
     if (newVal) {
       log.error('signMessageError.value', newVal)
       addErrorToast('Unable to sign SIWE message')
+      isProcessing.value = false
     }
   })
 
@@ -67,6 +70,7 @@ export function useSiwe() {
     if (newVal) {
       log.info('siweError.value', newVal)
       addErrorToast('Unable to authenticate with SIWE')
+      isProcessing.value = false
     }
   })
 
@@ -80,6 +84,7 @@ export function useSiwe() {
     if (newVal) {
       log.info('fetchError.value', newVal)
       addErrorToast('Unable to fetch nonce')
+      isProcessing.value = false
     }
   })
 
@@ -93,6 +98,7 @@ export function useSiwe() {
     if (newVal) {
       log.info('fetchUserError.value', fetchUserError.value)
       addErrorToast('Unable to fetch user data')
+      isProcessing.value = false
     }
   })
 
@@ -124,7 +130,6 @@ export function useSiwe() {
     } catch (_error) {
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
-    } finally {
       isProcessing.value = false
     }
   }
