@@ -43,6 +43,15 @@ export function useSiwe() {
       storageToken.value = token
       apiEndpoint.value = `user/${account.address.value}`
       await executeFetchUser()
+      const userData: Partial<User> = user.value
+      useUserDataStore().setUserData(
+        userData.name || '',
+        userData.address || '',
+        userData.nonce || ''
+      )
+      useUserDataStore().setAuthStatus(true)
+
+      router.push('/teams')
     }
   })
 
@@ -153,15 +162,15 @@ export function useSiwe() {
       //   return
       // }
 
-      const userData: Partial<User> = user.value
-      useUserDataStore().setUserData(
-        userData.name || '',
-        userData.address || '',
-        userData.nonce || ''
-      )
-      useUserDataStore().setAuthStatus(true)
+      // const userData: Partial<User> = user.value
+      // useUserDataStore().setUserData(
+      //   userData.name || '',
+      //   userData.address || '',
+      //   userData.nonce || ''
+      // )
+      // useUserDataStore().setAuthStatus(true)
 
-      router.push('/teams')
+      // router.push('/teams')
     } catch (_error) {
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
