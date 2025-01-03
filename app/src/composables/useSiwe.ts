@@ -28,6 +28,7 @@ export function useSiwe() {
   const { addErrorToast } = useToastStore()
   const isProcessing = ref(false)
   const authData = ref({signature: '', message: ''})
+  const apiEndpoint = ref<string>('')
   const account = useAccount()
   const client = useClient()
   const { data: signature, error, signMessage } = useSignMessage()
@@ -41,7 +42,7 @@ export function useSiwe() {
 
   const { 
     error: siweError, 
-    data: siweData, 
+    data: siweData,
     execute: executeAddAuthData
   } = useCustomFetch<string>('auth/siwe', {immediate: false})
     .post(authData)
@@ -51,6 +52,24 @@ export function useSiwe() {
     if (newVal) {
       log.info('siweError.value', siweError.value)
       addErrorToast('Unable to authenticate with SIWE')
+    }
+  })
+
+  const { 
+    error: fetchUserNonceError, 
+    data: nonce,
+    execute: executeFetchUserNonce 
+  } = useCustomFetch<string>(
+    //`user/nonce/${account.address.value}`
+    apiEndpoint
+  )
+    .get()
+    .json()
+
+  watch(fetchUserNonceError, (newVal) => {
+    if (newVal) {
+      log.info('fetchError.value', newVal)
+      addErrorToast('Unable to fetch nonce')
     }
   })
 
@@ -65,17 +84,20 @@ export function useSiwe() {
       isProcessing.value = true
       //const address = await ethersJsAdapter.getAddress()
       console.log(`address: `, account.address.value)
-      const { error: fetchError, data: nonce } = await useCustomFetch<string>(
-        `user/nonce/${account.address.value}`
-      )
-        .get()
-        .json()
+      // const { error: fetchError, data: nonce } = await useCustomFetch<string>(
+      //   `user/nonce/${account.address.value}`
+      // )
+      //   .get()
+      //   .json()
 
-      if (fetchError.value) {
-        log.info('fetchError.value', fetchError.value)
-        addErrorToast('Unable to fetch nonce')
-        return
-      }
+      // if (fetchError.value) {
+      //   log.info('fetchError.value', fetchError.value)
+      //   addErrorToast('Unable to fetch nonce')
+      //   return
+      // }
+
+      apiEndpoint.value = `user/nonce/${account.address.value}`
+      await executeFetchUserNonce()
 
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(account.address.value as string, statement, nonce.value.nonce)
