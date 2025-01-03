@@ -108,6 +108,8 @@ export function useSiwe() {
 
       apiEndpoint.value = `user/nonce/${account.address.value}`
       await executeFetchUserNonce()
+      if (!nonce.value)
+        return
 
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(
