@@ -10,6 +10,7 @@ import { useCustomFetch } from './useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
 import { MetaMaskUtil } from '@/utils/web3Util'
 import { useStorage } from '@vueuse/core'
+import { useClient, useAccount } from '@wagmi/vue'
 
 const ethersJsAdapter = EthersJsAdapter.getInstance() //new EthersJsAdapter()
 
@@ -26,6 +27,7 @@ function createSiweMessageCreator(address: string, statement: string, nonce: str
 export function useSiwe() {
   const { addErrorToast } = useToastStore()
   const isProcessing = ref(false)
+  const account = useAccount()
 
   async function siwe() {
     // Check if we have metamask installation befor continue the process
@@ -36,9 +38,10 @@ export function useSiwe() {
 
     try {
       isProcessing.value = true
-      const address = await ethersJsAdapter.getAddress()
+      //const address = await ethersJsAdapter.getAddress()
+      console.log(`address: `, account.address.value)
       const { error: fetchError, data: nonce } = await useCustomFetch<string>(
-        `user/nonce/${address}`
+        `user/nonce/${account.address.value}`
       )
         .get()
         .json()
@@ -50,7 +53,7 @@ export function useSiwe() {
       }
 
       const statement = 'Sign in with Ethereum to the app.'
-      const siweMessageCreator = createSiweMessageCreator(address, statement, nonce.value.nonce)
+      const siweMessageCreator = createSiweMessageCreator(account.address.value as string, statement, nonce.value.nonce)
 
       const message = await siweMessageCreator.create()
       const signature = await ethersJsAdapter.requestSign(message)
@@ -68,7 +71,7 @@ export function useSiwe() {
       const storageToken = useStorage('authToken', token)
       storageToken.value = token
 
-      const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${address}`)
+      const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${account.address.value}`)
         .get()
         .json()
 
@@ -88,7 +91,7 @@ export function useSiwe() {
 
       router.push('/teams')
     } catch (_error) {
-      log.info(parseError(_error))
+      log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
     } finally {
       isProcessing.value = false
