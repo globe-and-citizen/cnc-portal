@@ -31,7 +31,7 @@ export function useSiwe() {
   const apiEndpoint = ref<string>('')
   const account = useAccount()
   const client = useClient()
-  const { data: signature, error, signMessage } = useSignMessage()
+  const { data: signature, error: signMessageError, signMessage } = useSignMessage()
 
   watch(signature, async (newVal) => {
     if (newVal) {
@@ -55,6 +55,14 @@ export function useSiwe() {
     }
   })
 
+  watch(signMessageError, (newVal) => {
+    if (newVal) {
+      log.error('signMessageError.value', newVal)
+      addErrorToast('Unable to sign SIWE message')
+    }
+
+  })
+
   const { 
     error: siweError, 
     data: siweData,
@@ -65,7 +73,7 @@ export function useSiwe() {
 
   watch(siweError, (newVal) => {
     if (newVal) {
-      log.info('siweError.value', siweError.value)
+      log.info('siweError.value', newVal)
       addErrorToast('Unable to authenticate with SIWE')
     }
   })
