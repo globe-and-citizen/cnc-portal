@@ -33,10 +33,16 @@ export function useSiwe() {
   const client = useClient()
   const { data: signature, error, signMessage } = useSignMessage()
 
-  watch(signature, (newVal) => {
+  watch(signature, async (newVal) => {
     if (newVal) {
       console.log(`signature: `, newVal)
       authData.value.signature = newVal
+      await executeAddAuthData()
+      const token = siweData.value.accessToken
+      const storageToken = useStorage('authToken', token)
+      storageToken.value = token
+      apiEndpoint.value = `user/${account.address.value}`
+      await executeFetchUser()
     }
   })
 
@@ -61,7 +67,8 @@ export function useSiwe() {
     execute: executeFetchUserNonce 
   } = useCustomFetch<string>(
     //`user/nonce/${account.address.value}`
-    apiEndpoint
+    apiEndpoint,
+    {immediate: false}
   )
     .get()
     .json()
@@ -71,6 +78,19 @@ export function useSiwe() {
       log.info('fetchError.value', newVal)
       addErrorToast('Unable to fetch nonce')
     }
+  })
+
+  const { 
+    error: fetchUserError, 
+    data: user,
+    execute: executeFetchUser
+  } = useCustomFetch<string>(apiEndpoint, { immediate: false })
+    .get()
+    .json()
+
+  watch(fetchUserError, (newVal) => {
+    log.info('fetchUserError.value', fetchUserError.value)
+    addErrorToast('Unable to fetch user data')
   })
 
   async function siwe() {
@@ -108,7 +128,7 @@ export function useSiwe() {
       //const signature = await ethersJsAdapter.requestSign(message)
       signMessage({ message: authData.value.message})
 
-      console.log(`signature: `, signature.value)
+      // console.log(`signature: `, signature.value)
 
       // const { error: siweError, data: siweData } = await useCustomFetch<string>('auth/siwe')
       //   .post({ signature, message })
@@ -119,19 +139,19 @@ export function useSiwe() {
       //   addErrorToast('Unable to authenticate with SIWE')
       //   return
       // }
-      const token = siweData.value.accessToken
-      const storageToken = useStorage('authToken', token)
-      storageToken.value = token
+      // const token = siweData.value.accessToken
+      // const storageToken = useStorage('authToken', token)
+      // storageToken.value = token
 
-      const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${account.address.value}`)
-        .get()
-        .json()
+      // const { error: fetchUserError, data: user } = await useCustomFetch<string>(`user/${account.address.value}`)
+      //   .get()
+      //   .json()
 
-      if (fetchUserError.value) {
-        log.info('fetchUserError.value', fetchUserError.value)
-        addErrorToast('Unable to fetch user data')
-        return
-      }
+      // if (fetchUserError.value) {
+      //   log.info('fetchUserError.value', fetchUserError.value)
+      //   addErrorToast('Unable to fetch user data')
+      //   return
+      // }
 
       const userData: Partial<User> = user.value
       useUserDataStore().setUserData(
