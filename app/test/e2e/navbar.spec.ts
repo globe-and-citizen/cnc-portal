@@ -10,7 +10,7 @@ describe('Navbar', () => {
   describe('profile', () => {
     test('should be able to edit user', async ({ page, metamask }) => {
       const address = await metamask.getAccountAddress()
-      expect(await page.textContent('data-test=user-name')).toBe('test')
+      expect(await page.textContent('data-test=user-name')).toBe('Local 1')
       await page.locator('data-test=profile').click()
 
       await page.locator('data-test=toggleEditUser').click()
