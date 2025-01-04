@@ -39,13 +39,18 @@ const mockUseWaitForTransactionReceipt = {
   isSuccess: ref(false)
 }
 
+const mockUseAccount = {
+  isDisconnected: ref(false)
+}
+
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => mockUseReadContract),
     useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useAccount: vi.fn(() => mockUseAccount)
   }
 })
 
