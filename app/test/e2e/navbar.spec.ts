@@ -16,7 +16,7 @@ describe('Navbar', () => {
       await page.locator('data-test=toggleEditUser').click()
       await page.waitForSelector('data-test=edit-user-modal')
 
-      expect(page.locator('data-test=name-input')).toHaveValue('test')
+      expect(page.locator('data-test=name-input')).toHaveValue('John Doe')
       await page.locator('data-test=name-input').fill('John Doe')
 
       await page.route('**/api/user/*', async (route) => {
