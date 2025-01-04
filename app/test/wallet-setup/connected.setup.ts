@@ -58,8 +58,8 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
 
   await page.evaluate(() => {
     window.localStorage.setItem('isAuth', 'true')
-    window.localStorage.setItem('name', 'test')
-    window.localStorage.setItem('ownerAddress', '0x1234567890')
+    window.localStorage.setItem('name', 'Local 1')
+    window.localStorage.setItem('ownerAddress', '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
     window.localStorage.setItem('nonce', '41vj7bz5Ow8oT5xaE')
     window.localStorage.setItem('authToken', '1234567890')
   })
