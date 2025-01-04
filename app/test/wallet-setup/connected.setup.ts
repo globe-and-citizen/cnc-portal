@@ -15,7 +15,6 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
 
   await page.goto('http://localhost:5173')
 
-  const address = await metamask.getAccountAddress()
   await page.route('**/api/user/nonce/*', async (route) => {
     await route.fulfill({
       status: 200,
@@ -30,12 +29,12 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
       body: JSON.stringify({ success: true, accessToken: 'token' })
     })
   })
-  await page.route(`**/api/user/${address}`, async (route) => {
+  await page.route(`**/api/user/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        address: await metamask.getAccountAddress(),
+        address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
         name: null,
         nonce: '41vj7bz5Ow8oT5xaE'
       })
