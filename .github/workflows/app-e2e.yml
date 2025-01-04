@@ -33,17 +33,21 @@ jobs:
         run: npx playwright install chromium
         working-directory: ./app
 
+      - name: </> Install linux dependencies
+        run: |
+          sudo apt-get install --no-install-recommends -y \
+          xvfb
+
       - name: 🌎 Run App for cache
         run: |
           npm run dev &
-          sleep 2
         working-directory: ./app
 
       - name: 💾 Build Cache
-        run: npm run test:build:cache
+        run: xvfb-run npm run test:build:cache
         working-directory: ./app
 
       - name: 💻 Run E2E
         run: |
-          npm run test
+          xvfb-run npm run test
         working-directory: ./app
