@@ -74,10 +74,12 @@ export const useTeamStore = defineStore('team', () => {
     }
   })
 
-  watch(currentTeamId, (newCurrentTeamIdVal) => {
-    console.log('current team id', newCurrentTeamIdVal)
+  watch(currentTeamId, (newCurrentTeamIdVal, old) => {
     // fetch the current team
-    if (newCurrentTeamIdVal) {
+    if (
+      (!old && newCurrentTeamIdVal) ||
+      (old && newCurrentTeamIdVal && old !== newCurrentTeamIdVal)
+    ) {
       fetchTeam(newCurrentTeamIdVal)
     }
   })
@@ -102,7 +104,6 @@ export const useTeamStore = defineStore('team', () => {
       teams,
       teamsAreFetching,
       teamsError,
-      executeFetchTeams,
       reloadTeams
     },
     fetchTeam,

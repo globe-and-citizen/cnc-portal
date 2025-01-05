@@ -40,11 +40,11 @@
         <span
           class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
         >
-          {{ selectedTeam.charAt(0) }}
+          {{ currentTeam?.name.charAt(0) }}
         </span>
       </div>
       <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
-        <span class="text-sm font-medium text-gray-700">{{ selectedTeam }}</span>
+        <span class="text-sm font-medium text-gray-700">{{ currentTeam?.name }}</span>
         <div class="relative">
           <button
             class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
@@ -65,17 +65,15 @@
               class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-[9999]"
               ref="target"
             >
-              <div v-if="teamsAreFetching" class="flex items-center justify-center">
+              <div v-if="teamsMeta.teamsAreFetching" class="flex items-center justify-center">
                 <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
               </div>
-              <TeamMetaComponent
-                class="hover:bg-slate-100"
-                v-else
-                v-for="team in teams"
-                :key="team.id"
-                :team="team"
-                @click="navigateToTeam(team.id, team.name)"
-              />
+              <RouterLink :to="`/teams/${team.id}`" v-else v-for="team in teamsMeta.teams" :key="team.id">
+                <TeamMetaComponent
+                  class="hover:bg-slate-100"
+                  :team="team"
+                  @click="navigateToTeam(team.id)"
+              /></RouterLink>
               <!-- TODO: Make the button functional -->
               <div class="w-full flex justify-center items-center h-12 hover:bg-slate-100">
                 Create a new Team
@@ -155,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import {
   HomeIcon,
@@ -167,9 +165,9 @@ import {
   ArrowRightStartOnRectangleIcon,
   ChevronUpDownIcon
 } from '@heroicons/vue/24/outline'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
+import { useTeamStore } from '@/stores/teamStore'
 
 interface User {
   name: string
@@ -185,12 +183,18 @@ const props = defineProps<{
 }>()
 
 const target = ref(null)
-const selectedTeam = ref('CNC Team')
 const isDropdownOpen = ref(false)
+const { teamsMeta, setCurrentTeamId, getCurrentTeam } = useTeamStore()
+
+// Use computed property to avoid calling the function every time the component re-renders
+const currentTeam = computed(() => {
+  return getCurrentTeam()
+})
 
 onMounted(() => {
   onClickOutside(target, () => (isDropdownOpen.value = false))
 })
+
 const emits = defineEmits(['openEditUserModal'])
 
 const toggleCollapse = () => {
@@ -234,23 +238,8 @@ const menuItems = [
   }
 ]
 
-const {
-  isFetching: teamsAreFetching,
-  error: teamError,
-  data: teams,
-  execute: executeFetchTeams
-} = useCustomFetch('teams').json()
-
-watch(teamError, () => {
-  if (teamError.value) {
-    console.error('Error fetching teams:', teamError.value)
-  }
-})
-
-executeFetchTeams()
-
-const navigateToTeam = (teamId: string, teamName: string) => {
-  selectedTeam.value = teamName
+const navigateToTeam = (teamId: string) => {
+  setCurrentTeamId(teamId)
   isCollapsed.value = false
 }
 
