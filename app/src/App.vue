@@ -20,7 +20,7 @@
 
         <!-- Content Wrapper -->
         <div
-          class="relative flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll"
+          class="flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll"
         >
           <!-- Responsive Navbar -->
           <NavBar
@@ -43,7 +43,7 @@
             :balance="balance ? formatEther(balance as bigint).toString() : '0'"
             :balanceLoading="balanceLoading"
           />
-          <div class="w-full p-5 mt-10 md:p-10">
+          <div class="w-full p-5 md:p-10">
             <RouterView />
           </div>
 
