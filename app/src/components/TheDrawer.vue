@@ -59,26 +59,23 @@
             leave-from-class="opacity-100 scale-100"
             leave-to-class="opacity-0 scale-95"
           >
-            <ul
+            <div
               v-if="isDropdownOpen"
-              class="absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-lg py-1 z-[9999]"
+              class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-[9999]"
             >
-              <li v-if="teamsAreFetching" class="px-4 py-2 text-sm text-gray-700">
-                <div class="flex items-center justify-center">
-                  <div
-                    class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"
-                  ></div>
-                </div>
-              </li>
-              <li v-else v-for="team in teams" :key="team.id">
-                <a
-                  @click="navigateToTeam(team.id, team.name)"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200"
-                >
-                  {{ team.name }}
-                </a>
-              </li>
-            </ul>
+              <div v-if="teamsAreFetching" class="flex items-center justify-center">
+                <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
+              </div>
+              <TeamMetaComponent
+                v-else
+                v-for="team in teams"
+                :key="team.id"
+                :team="team"
+                @click="navigateToTeam(team.id, team.name)"
+              />
+              <!-- TODO: Make the button functional -->
+              <ButtonUI class="w-full">Create a new Team</ButtonUI>
+            </div>
           </transition>
         </div>
       </div>
@@ -166,6 +163,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import ButtonUI from './ButtonUI.vue'
+import TeamMetaComponent from './TeamMetaComponent.vue'
 
 interface User {
   name: string
