@@ -68,7 +68,12 @@
               <div v-if="teamsMeta.teamsAreFetching" class="flex items-center justify-center">
                 <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
               </div>
-              <RouterLink :to="`/teams/${team.id}`" v-else v-for="team in teamsMeta.teams" :key="team.id">
+              <RouterLink
+                :to="`/teams/${team.id}`"
+                v-else
+                v-for="team in teamsMeta.teams"
+                :key="team.id"
+              >
                 <TeamMetaComponent
                   class="hover:bg-slate-100"
                   :team="team"
