@@ -63,7 +63,7 @@
             <div
               v-if="isDropdownOpen"
               class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-[9999]"
-              @mouseleave="isDropdownOpen = false"
+              ref="target"
             >
               <div v-if="teamsAreFetching" class="flex items-center justify-center">
                 <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
@@ -155,7 +155,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import {
   HomeIcon,
   BanknotesIcon,
@@ -183,6 +184,13 @@ const props = defineProps<{
   user: User
 }>()
 
+const target = ref(null)
+const selectedTeam = ref('CNC Team')
+const isDropdownOpen = ref(false)
+
+onMounted(() => {
+  onClickOutside(target, () => (isDropdownOpen.value = false))
+})
 const emits = defineEmits(['openEditUserModal'])
 
 const toggleCollapse = () => {
@@ -241,14 +249,10 @@ watch(teamError, () => {
 
 executeFetchTeams()
 
-const selectedTeam = ref('CNC Team')
-
 const navigateToTeam = (teamId: string, teamName: string) => {
   selectedTeam.value = teamName
   isCollapsed.value = false
 }
-
-const isDropdownOpen = ref(false)
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
