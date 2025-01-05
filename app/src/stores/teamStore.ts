@@ -63,7 +63,6 @@ export const useTeamStore = defineStore('team', () => {
    * @description Watch the team and update the teamsFetched cache
    */
   watch(team, () => {
-    console.log('team fetched', team.value)
     teamsFetched.value.set(team.value.id, team.value)
   })
 
