@@ -43,7 +43,7 @@
             :balance="balance ? formatEther(balance as bigint).toString() : '0'"
             :balanceLoading="balanceLoading"
           />
-          <div class="w-full p-5 md:p-10">
+          <div class="w-full p-5 mt-10 md:p-10">
             <RouterView />
           </div>
 
