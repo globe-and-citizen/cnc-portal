@@ -59,14 +59,17 @@
             leave-from-class="opacity-100 scale-100"
             leave-to-class="opacity-0 scale-95"
           >
+            <!-- Team Dropdown -->
             <div
               v-if="isDropdownOpen"
               class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-[9999]"
+              @mouseleave="isDropdownOpen = false"
             >
               <div v-if="teamsAreFetching" class="flex items-center justify-center">
                 <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
               </div>
               <TeamMetaComponent
+                class="hover:bg-slate-100"
                 v-else
                 v-for="team in teams"
                 :key="team.id"
@@ -74,7 +77,9 @@
                 @click="navigateToTeam(team.id, team.name)"
               />
               <!-- TODO: Make the button functional -->
-              <ButtonUI class="w-full">Create a new Team</ButtonUI>
+              <div class="w-full flex justify-center items-center h-12 hover:bg-slate-100">
+                Create a new Team
+              </div>
             </div>
           </transition>
         </div>
