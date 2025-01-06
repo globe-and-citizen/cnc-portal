@@ -1,5 +1,7 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types/team'
+import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import { onMounted, ref, watch } from 'vue'
 
@@ -13,6 +15,7 @@ export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
   const teamsFetched = ref<Map<string, Team>>(new Map())
   const teamURI = ref<string>('teams/id')
+  const { addErrorToast } = useToastStore()
 
   /**
    * @description Fetch teams lists
@@ -77,6 +80,19 @@ export const useTeamStore = defineStore('team', () => {
     // fetch the current team
     if (newCurrentTeamIdVal) {
       fetchTeam(newCurrentTeamIdVal)
+    }
+  })
+
+  watch(teamsError, () => {
+    if (teamsError.value) {
+      log.error('Failed to load user teams', teamsError.value)
+      addErrorToast('Failed to load user teams')
+    }
+  })  
+  watch(teamError, () => {
+    if (teamError.value) {
+      log.error('Failed to load user team', teamError.value)
+      addErrorToast('Failed to load user team')
     }
   })
 
