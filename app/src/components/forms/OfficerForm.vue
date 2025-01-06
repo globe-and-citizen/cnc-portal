@@ -263,7 +263,7 @@ watch(deployedContracts, async (value) => {
 })
 
 watch(officerTeam, async (value) => {
-  const temp: Array<Object> = value as Array<Object>
+  const temp: Array<object> = value as Array<object>
   const team = {
     founders: temp[0] as string[],
     members: temp[1] as string[]

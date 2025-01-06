@@ -29,7 +29,7 @@ let sendTipEvents = [
 
 vi.mock('@/stores/useToastStore')
 vi.mock('viem/actions', async (importOriginal) => {
-  const original: Object = await importOriginal()
+  const original: object = await importOriginal()
   return {
     ...original,
     getLogs: vi.fn(() => sendTipEvents),

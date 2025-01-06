@@ -18,7 +18,7 @@ const mockClipboard = {
   isSupported: ref(true)
 }
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -46,7 +46,7 @@ describe('MemberCard', () => {
 
   beforeEach(() => {
     interface mockReturn {
-      mockReturnValue: (address: Object) => {}
+      mockReturnValue: (address: object) => {}
     }
     ;(useUserDataStore as unknown as mockReturn).mockReturnValue(userDataStore)
   })

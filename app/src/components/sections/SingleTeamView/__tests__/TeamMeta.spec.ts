@@ -48,7 +48,7 @@ describe('TeamMeta.vue ', () => {
   // Setup before each test
   beforeEach(() => {
     interface mockReturn {
-      mockReturnValue: (address: Object) => {}
+      mockReturnValue: (address: object) => {}
     }
     setActivePinia(createPinia())
     ;(useRoute as unknown as mockReturn).mockReturnValue(mockRoute)
