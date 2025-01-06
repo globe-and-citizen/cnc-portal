@@ -7,7 +7,7 @@ import {
   BanknotesIcon,
   DocumentTextIcon
 } from '@heroicons/vue/24/outline'
-import { RouterLinkStub } from '@vue/test-utils'
+import { mount, RouterLinkStub } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
