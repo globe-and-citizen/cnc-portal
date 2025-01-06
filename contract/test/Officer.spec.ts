@@ -60,26 +60,6 @@ describe('Officer Contract', function () {
       .configureBeacon('ExpenseAccount', await expenseAccountBeacon.getAddress())
   })
 
-  describe('Team Management', () => {
-    it('Should create a new team', async function () {
-      const founders = [await addr1.getAddress(), await addr2.getAddress()]
-      const members = [ethers.Wallet.createRandom().address]
-
-      await expect(officer.connect(owner).createTeam(founders, members))
-        .to.emit(officer, 'TeamCreated')
-        .withArgs(founders, members)
-
-      const [actualFounders, actualMembers, deployedContracts] = await officer.getTeam()
-      expect(actualFounders).to.deep.equal(founders)
-      expect(actualMembers).to.deep.equal(members)
-      expect(deployedContracts).to.be.empty
-    })
-
-    it('Should fail to create team without founders', async () => {
-      await expect(officer.createTeam([], [])).to.be.revertedWith('Must have at least one founder')
-    })
-  })
-
   describe('Contract Deployment', () => {
     it('Should deploy contracts via BeaconProxy', async function () {
       const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
@@ -101,7 +81,7 @@ describe('Officer Contract', function () {
         'ContractDeployed'
       )
 
-      const [, , deployedContracts] = await officer.getTeam()
+      const deployedContracts = await officer.getTeam()
       expect(deployedContracts.length).to.equal(2)
       expect(deployedContracts[0].contractType).to.equal('Voting')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
@@ -117,8 +97,6 @@ describe('Officer Contract', function () {
     })
 
     it('Should restrict deployment to owners and founders', async function () {
-      await officer.connect(owner).createTeam([addr1.address], [])
-
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
         addr1.address,
         ethers.ZeroAddress,
@@ -132,7 +110,7 @@ describe('Officer Contract', function () {
       )
 
       // Test authorized access (founder)
-      await expect(officer.connect(addr1).deployBeaconProxy('Bank', initData)).to.emit(
+      await expect(officer.connect(owner).deployBeaconProxy('Bank', initData)).to.emit(
         officer,
         'ContractDeployed'
       )
@@ -265,7 +243,6 @@ describe('Officer Contract', function () {
   describe('Batch Contract Deployment', () => {
     it('Should deploy multiple contracts in a single transaction', async function () {
       // Create team first to ensure proper setup
-      await officer.connect(owner).createTeam([owner.address], [])
 
       const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
         owner.address
@@ -294,7 +271,7 @@ describe('Officer Contract', function () {
       await tx.wait()
 
       // Verify deployments
-      const [, , deployedContracts] = await officer.getTeam()
+      const deployedContracts = await officer.getTeam()
 
       // Should have 3 contracts (Bank, Voting, and auto-deployed BoardOfDirectors)
       expect(deployedContracts.length).to.equal(3)
@@ -489,7 +466,7 @@ describe('Officer Contract', function () {
 
       // Get data from both functions
       const deployedContracts = await officer.getDeployedContracts()
-      const [, , teamDeployedContracts] = await officer.getTeam()
+      const teamDeployedContracts = await officer.getTeam()
 
       // Compare results
       expect(deployedContracts.length).to.equal(teamDeployedContracts.length)
