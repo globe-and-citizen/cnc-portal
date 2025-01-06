@@ -305,6 +305,7 @@ useWatchContractEvent({
         emits('getTeam')
         loading.value = false
       } catch (error) {
+        console.log('Error updating officer address:', error)
         addErrorToast('Error updating officer address')
         loading.value = false
       }

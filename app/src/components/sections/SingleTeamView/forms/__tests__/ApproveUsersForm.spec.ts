@@ -167,7 +167,6 @@ describe('ApproveUsersForm', () => {
       })
       await wrapper.find('button[data-test="approve-button"]').trigger('click')
       await wrapper.vm.$nextTick()
-      //@ts-ignore
       expect(wrapper.vm.v$.$invalid).toBe(true)
       expect(wrapper.emitted('approveAddress')).toBeFalsy()
     })
@@ -182,7 +181,6 @@ describe('ApproveUsersForm', () => {
       await wrapper.find('button[data-test="disapprove-button"]').trigger('click')
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
-      //@ts-ignore
       expect(wrapper.vm.v$.$invalid).toBe(true)
       expect(wrapper.emitted('disapproveAddress')).toBeFalsy()
     })

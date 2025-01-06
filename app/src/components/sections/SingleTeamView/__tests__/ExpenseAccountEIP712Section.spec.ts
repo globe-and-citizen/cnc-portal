@@ -42,7 +42,7 @@ vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
   EthersJsAdapter.prototype.getSigner = vi.fn(() => ({})) // Mock getSigner if needed
 
   // Step 3: Mock the static method getInstance
-  //@ts-ignore
+  // @ts-expect-error: "Mocking static method"
   EthersJsAdapter['getInstance'] = vi.fn()
 
   return { ...actual, EthersJsAdapter }
@@ -552,7 +552,7 @@ describe('ExpenseAccountSection', () => {
 
     describe('ApproveUsersForm', async () => {
       beforeAll(() => {
-        //@ts-ignore
+        // @ts-expect-error: Mocking window object
         ;(global as object).window.ethereum = {
           request: vi.fn()
           // Mock other methods as needed
@@ -560,7 +560,7 @@ describe('ExpenseAccountSection', () => {
       })
 
       afterAll(() => {
-        //@ts-ignore
+        // @ts-expect-error: Mocking window object
         delete (global as object).window.ethereum
       })
       const wrapper = createComponent({
