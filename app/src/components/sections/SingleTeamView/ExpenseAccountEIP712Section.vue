@@ -303,31 +303,34 @@ const {
 })
 
 watch(amountWithdrawn, async (newVal) => {
-  if (newVal) await initializeBalances()
+  // if (newVal) await initializeBalances()
 })
 
 // Reactive storage for balances
-const balances = reactive<Record<string, { [key: number]: string }>>({})
+const balances = reactive<Record<string, { [key: number]: string | boolean }>>({})
 
 // Async initialization function
 const initializeBalances = async () => {
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
-      const signatureHash = keccak256(data.signature)
+      signatureHash.value = keccak256(data.signature)
 
-      // Simulate fetching data asynchronously
       await executeGetAmountWithdrawn()
 
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
-        balances[signatureHash] = {
+        balances[signatureHash.value] = {
           0: amountWithdrawn.value[0],
-          1: formatEther(amountWithdrawn.value[1])
+          1: formatEther(amountWithdrawn.value[1]),
+          2: amountWithdrawn.value[2] === 2? 
+            false:
+            true
         }
       } else {
-        balances[signatureHash] = {
+        balances[signatureHash.value] = {
           0: '--',
-          1: '--'
+          1: '--',
+          2: false
         }
       }
     }
@@ -335,9 +338,10 @@ const initializeBalances = async () => {
 
 // Computed property for getting balances
 const getLimitBalance = computed(() => {
-  return (signature: `0x{string}`, index: number): string => {
+  return (signature: `0x{string}`, index: number): string | boolean => {
     const signatureHash = keccak256(signature)
-    return balances[signatureHash] ? balances[signatureHash][`${index}`] : '--'
+    console.log(`computed balance: `, balances[signatureHash] ? `${balances[signatureHash][`${index}`]}`: `--`)
+    return balances[signatureHash] ? `${balances[signatureHash][`${index}`]}` : '--'
   }
 })
 
@@ -348,11 +352,11 @@ watch(errorGetAmountWithdrawn, (newVal) => {
   }
 })
 
-watch(signatureHash, async (newVal) => {
-  if (newVal) {
-    await executeGetAmountWithdrawn()
-  }
-})
+// watch(signatureHash, async (newVal) => {
+//   if (newVal) {
+//     await executeGetAmountWithdrawn()
+//   }
+// })
 
 //expense account transfer
 const {
@@ -381,6 +385,11 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
     transferModal.value = false
   }
 })
+
+// watch(balances, (newVal) => {
+//   if (newVal)
+//   console.log(`balances: `, balances)
+// })
 
 //deactivate approval
 const {
