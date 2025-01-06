@@ -170,6 +170,72 @@
         </table>
       </div>
     </div>
+
+    <div
+      v-if="manyExpenseAccountDataInactive.length > 0"
+      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+    >
+      <div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Deactivated Addresses</span>
+      </div>
+      <div class="overflow-x-auto" data-test="deactivated-list-table">
+        <table class="table">
+          <!-- head -->
+          <thead class="text-sm font-bold">
+            <tr>
+              <th>User</th>
+              <th>Expiry Date</th>
+              <th>Max Amount Per Tx</th>
+              <th>Total Transactions</th>
+              <th>Total Transfers</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(data, index) in manyExpenseAccountDataInactive" :key="index">
+              <td class="flex flex-row justify-start gap-4">
+                <div role="button" class="relative group">
+                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
+                    <img
+                      alt="User Avatar"
+                      :src="
+                        data.avatarUrl ||
+                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+                      "
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col text-gray-600">
+                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
+                    {{ data.name || 'User' }}
+                  </p>
+                  <p class="text-sm">
+                    {{
+                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
+                    }}
+                  </p>
+                </div>
+              </td>
+              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
+              <td>{{ data.budgetData[2].value }}</td>
+              <td>{{ `${data.balances['0']}/${data.budgetData[0].value}` }}</td>
+              <td>{{ `${data.balances['1']}/${data.budgetData[1].value}` }}</td>
+              <td class="flex justify-end" data-test="action-td">
+                <ButtonUI
+                  :disabled="contractOwnerAddress !== currentUserAddress"
+                  class="btn btn-success"
+                  :loading="isLoadingDeactivateApproval && deactivateIndex === index"
+                  @click="deactivateApproval(data.signature, index)"
+                >
+                  Activate
+                </ButtonUI>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   <!-- Expense Account Not Yet Created -->
 </template>
@@ -177,7 +243,7 @@
 <script setup lang="ts">
 //#region imports
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit, BudgetData } from '@/types'
+import type { Team, User, BudgetLimit, BudgetData, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -306,27 +372,82 @@ watch(amountWithdrawn, async (newVal) => {
   // if (newVal) await initializeBalances()
 })
 
+// const manyExpenseDataWithBalances = computed(() => manyExpenseAccountData.value?.map(item => {
+//   signatureHash.value = keccak256(item.signature)
+
+//   await executeGetAmountWithdrawn()
+
+//   if (Array.isArray(amountWithdrawn.value)) {
+//     return {
+//       ...item,
+//       balances: {
+//         0: amountWithdrawn.value[0],
+//         1: formatEther(amountWithdrawn.value[1]),
+//         2: amountWithdrawn.value[2] === 2? 
+//           false:
+//           true
+//     }}
+//   } else {
+//     return {
+//       ...item,
+//       balances: {
+//         0: '--',
+//         1: '--',
+//         2: false
+//     }}
+//   }
+// }))
+
 // Reactive storage for balances
 const balances = reactive<Record<string, { [key: number]: string | boolean }>>({})
+
+const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
+const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
 
 // Async initialization function
 const initializeBalances = async () => {
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
       signatureHash.value = keccak256(data.signature)
-
+      
       await executeGetAmountWithdrawn()
 
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
+        if (amountWithdrawn.value[2] === 2)
+          manyExpenseAccountDataInactive.push({
+            ...data,
+            balances: {
+              0: `${amountWithdrawn.value[0]}`,
+              1: formatEther(amountWithdrawn.value[1]),
+              2: amountWithdrawn.value[2] === true
+            }  
+          })
+        else
+          manyExpenseAccountDataActive.push({
+            ...data,
+            balances: {
+              0: `${amountWithdrawn.value[0]}`,
+              1: formatEther(amountWithdrawn.value[1]),
+              2: amountWithdrawn.value[2] === false
+            }  
+          })
         balances[signatureHash.value] = {
-          0: amountWithdrawn.value[0],
+          0: `${amountWithdrawn.value[0]}`,
           1: formatEther(amountWithdrawn.value[1]),
           2: amountWithdrawn.value[2] === 2? 
             false:
             true
         }
       } else {
+        manyExpenseAccountDataInactive.push({
+          ...data,
+          balances: {
+            0: '--',
+            1: '--',
+            2: false
+          }  
+        })
         balances[signatureHash.value] = {
           0: '--',
           1: '--',
@@ -340,8 +461,7 @@ const initializeBalances = async () => {
 const getLimitBalance = computed(() => {
   return (signature: `0x{string}`, index: number): string | boolean => {
     const signatureHash = keccak256(signature)
-    console.log(`computed balance: `, balances[signatureHash] ? `${balances[signatureHash][`${index}`]}`: `--`)
-    return balances[signatureHash] ? `${balances[signatureHash][`${index}`]}` : '--'
+    return balances[signatureHash] ? `${balances[signatureHash][`${index}`]}` : 'xx'
   }
 })
 
@@ -460,7 +580,7 @@ const {
   immediate: false
 })
   .get()
-  .json()
+  .json<ManyExpenseResponse[]>()
 
 watch(fetchManyExpenseAccountDataError, (newVal) => {
   if (newVal) {
@@ -502,9 +622,10 @@ watch(searchUserResponse, () => {
 //#region helper functions
 const init = async () => {
   await getExpenseAccountOwner()
+  await fetchExpenseAccountData()
   await fetchManyExpenseAccountData()
   await initializeBalances()
-  await fetchExpenseAccountData()
+  // await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
 }
 
@@ -648,5 +769,6 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
 
 onMounted(async () => {
   await init()
+  console.log(`manyExpenseAccountDataInactive `, JSON.stringify(manyExpenseAccountDataInactive))
 })
 </script>
