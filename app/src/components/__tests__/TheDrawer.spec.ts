@@ -1,4 +1,3 @@
-import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import TheDrawer from '@/components/TheDrawer.vue'
 import {
@@ -12,7 +11,6 @@ import { RouterLinkStub } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { constants } from 'buffer'
 
 // Create a router instance with a basic route
 const router = createRouter({
