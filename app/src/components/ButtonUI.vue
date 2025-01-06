@@ -57,7 +57,7 @@ interface IButtonProps {
   shape?: IButtonShape
   size?: ISize
   tag?: 'button' | 'a' | 'input'
-   
+
   // onClick?: (e: MouseEvent) => any
 }
 const {

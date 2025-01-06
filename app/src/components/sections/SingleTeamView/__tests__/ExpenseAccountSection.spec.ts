@@ -89,7 +89,7 @@ vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
   EthersJsAdapter.prototype.parseEther = vi.fn((amount: string) => `${amount}*10^18`)
 
   // Step 3: Mock the static method getInstance
-    // @ts-expect-error: mocked
+  // @ts-expect-error: mocked
   EthersJsAdapter['getInstance'] = vi.fn()
 
   return { ...actual, EthersJsAdapter }
