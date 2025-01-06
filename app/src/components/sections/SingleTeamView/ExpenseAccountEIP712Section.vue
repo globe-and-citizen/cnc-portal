@@ -503,9 +503,9 @@ watch(searchUserResponse, () => {
 const init = async () => {
   await fetchExpenseAccountData()
   await getExpenseAccountOwner()
-  await getAmountWithdrawnBalance()
   await fetchManyExpenseAccountData()
   await initializeBalances()
+  await getAmountWithdrawnBalance()
 }
 
 const getExpenseAccountOwner = async () => {
