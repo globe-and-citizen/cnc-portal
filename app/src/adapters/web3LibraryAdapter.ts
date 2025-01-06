@@ -45,7 +45,7 @@ export class EthersJsAdapter implements IWeb3Library {
     try {
       metaMaskUtil = new MetaMaskUtil()
     } catch (e) {
-      log.error('MetaMask is not installed')
+      log.error('MetaMask is not installed', e)
     }
 
     // Stop the initialisation when MetaMask is not installed

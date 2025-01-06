@@ -189,14 +189,14 @@ const dynamicDisplayData = computed(() => {
     const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
     if (budgetType === 0) {
       return {
-        //@ts-ignore
+        // @ts-expect-error: amountWithdrawn.value is a array
         value: Number(amountWithdrawn.value[0]),
         heading: 'Total Transactions',
         symbol: 'TXs'
       }
     } else {
       return {
-        //@ts-ignore
+        // @ts-expect-error: amountWithdrawn.value is a array
         value: formatEther(amountWithdrawn.value[1]),
         heading: 'Total Withdrawn',
         symbol: NETWORK.currencySymbol
@@ -346,7 +346,7 @@ const getDigest = async () => {
   const domain = await getDomain()
   const types = await getTypes()
   if (!_expenseAccountData?.value?.data) return
-  let message = JSON.parse(_expenseAccountData.value.data)
+  const message = JSON.parse(_expenseAccountData.value.data)
   if (typeof message.value === 'string') message.value = Number(parseEther(message.value))
   const _digest = hashTypedData({
     domain: { ...domain, chainId: Number(domain.chainId) },

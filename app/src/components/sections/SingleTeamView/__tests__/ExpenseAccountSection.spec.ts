@@ -60,7 +60,7 @@ const mockUseBalance = {
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => mockUseReadContract),
@@ -71,7 +71,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 vi.mock('@/services/expenseAccountService', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
 
   const ExpenseAccountService = vi.fn()
   ExpenseAccountService.prototype.getFunctionSignature = vi.fn()
@@ -82,14 +82,14 @@ vi.mock('@/services/expenseAccountService', async (importOriginal) => {
 })
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
 
   // Step 2: Mock the class itself and its instance methods
   const EthersJsAdapter = vi.fn()
   EthersJsAdapter.prototype.parseEther = vi.fn((amount: string) => `${amount}*10^18`)
 
   // Step 3: Mock the static method getInstance
-  //@ts-ignore
+  // @ts-expect-error: mocked
   EthersJsAdapter['getInstance'] = vi.fn()
 
   return { ...actual, EthersJsAdapter }
@@ -103,7 +103,7 @@ const mockClipboard = {
 }
 
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -173,7 +173,7 @@ const mockExpenseAccountSetMaxLimit = {
 }
 
 vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
@@ -198,7 +198,7 @@ const mockAddAction = {
 }
 
 vi.mock('@/composables/bod', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useGetBoardOfDirectors: vi.fn(() => mockGetBoardOfDirectors),

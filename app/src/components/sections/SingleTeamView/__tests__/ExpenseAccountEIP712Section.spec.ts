@@ -31,7 +31,7 @@ interface ComponentData {
 }
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
 
   // Step 2: Mock the class itself and its instance methods
   const EthersJsAdapter = vi.fn()
@@ -42,7 +42,7 @@ vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
   EthersJsAdapter.prototype.getSigner = vi.fn(() => ({})) // Mock getSigner if needed
 
   // Step 3: Mock the static method getInstance
-  //@ts-ignore
+  // @ts-expect-error: "Mocking static method"
   EthersJsAdapter['getInstance'] = vi.fn()
 
   return { ...actual, EthersJsAdapter }
@@ -75,7 +75,7 @@ const mockUseWaitForTransactionReceipt = {
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => {
@@ -87,7 +87,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 vi.mock('viem', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     parseSignature: vi.fn(),
@@ -96,7 +96,7 @@ vi.mock('viem', async (importOriginal) => {
 })
 
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -163,7 +163,7 @@ const mockExpenseAccountSetMaxLimit = {
 }
 
 vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
@@ -248,7 +248,7 @@ vi.mock('@/composables/useCustomFetch', () => {
 })
 
 vi.mock('@/composables/bod', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useGetBoardOfDirectors: vi.fn(() => mockGetBoardOfDirectors),
@@ -552,16 +552,16 @@ describe('ExpenseAccountSection', () => {
 
     describe('ApproveUsersForm', async () => {
       beforeAll(() => {
-        //@ts-ignore
-        ;(global as Object).window.ethereum = {
+        // @ts-expect-error: Mocking window object
+        ;(global as object).window.ethereum = {
           request: vi.fn()
           // Mock other methods as needed
         }
       })
 
       afterAll(() => {
-        //@ts-ignore
-        delete (global as Object).window.ethereum
+        // @ts-expect-error: Mocking window object
+        delete (global as object).window.ethereum
       })
       const wrapper = createComponent({
         global: {

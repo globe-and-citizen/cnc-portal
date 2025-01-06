@@ -57,7 +57,7 @@ interface IButtonProps {
   shape?: IButtonShape
   size?: ISize
   tag?: 'button' | 'a' | 'input'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   // onClick?: (e: MouseEvent) => any
 }
 const {
