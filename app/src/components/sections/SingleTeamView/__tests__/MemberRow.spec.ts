@@ -42,7 +42,7 @@ describe('MemberRow.vue', () => {
   // let mockToastStore: ReturnType<typeof useToastStore>
   beforeEach(() => {
     interface mockReturn {
-      mockReturnValue: (address: Object) => {}
+      mockReturnValue: (address: object) => {}
     }
     // mockToastStore = {
     //   addSuccessToast: vi.fn(),
@@ -74,7 +74,7 @@ describe('MemberRow.vue', () => {
     })
     it('does not render delete and set wage if not owner', () => {
       interface mockReturn {
-        mockReturnValue: (address: Object) => {}
+        mockReturnValue: (address: object) => {}
       }
 
       ;(useUserDataStore as unknown as mockReturn).mockReturnValue({

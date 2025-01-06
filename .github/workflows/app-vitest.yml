@@ -1,6 +1,8 @@
 name: Frontend Vitest Unit Tests
 
 on:
+  pull_request_target:
+    types: [assigned]
   pull_request:
     branches: "**"
     paths:

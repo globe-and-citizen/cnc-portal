@@ -9,7 +9,7 @@ import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
 const mockWriteContract = vi.fn()
 vi.mock('@wagmi/vue', (importOriginal) => {
-  const original: Object = importOriginal()
+  const original: object = importOriginal()
 
   return {
     ...original,

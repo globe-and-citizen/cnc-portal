@@ -9,7 +9,7 @@ import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 
 export function useAddAction() {
   const loadingContract = ref(false)
-  const actionCount = ref<BigInt | null>(null)
+  const actionCount = ref<bigint | null>(null)
   const team = ref<Partial<Team> | null>(null)
   const action = ref<Partial<Action> | null>(null)
 
@@ -34,7 +34,7 @@ export function useAddAction() {
         address: teamData.boardOfDirectorsAddress as Address,
         functionName: 'actionCount',
         abi: BoDABI
-      })) as BigInt
+      })) as bigint
       team.value = teamData
       action.value = actionData
 
