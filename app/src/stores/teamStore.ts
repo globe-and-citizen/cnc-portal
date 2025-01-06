@@ -88,7 +88,7 @@ export const useTeamStore = defineStore('team', () => {
       log.error('Failed to load user teams', teamsError.value)
       addErrorToast('Failed to load user teams')
     }
-  })  
+  })
   watch(teamError, () => {
     if (teamError.value) {
       log.error('Failed to load user team', teamError.value)
