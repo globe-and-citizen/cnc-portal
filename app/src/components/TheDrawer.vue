@@ -1,4 +1,4 @@
-<template class="">
+<template>
   <div
     class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
     :class="[isCollapsed ? 'w-20' : 'w-[280px]']"
@@ -34,7 +34,9 @@
     <div
       class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
+      data-test="team-display"
       @click="toggleDropdown"
+      v-if="currentTeam"
     >
       <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
         <span
@@ -63,6 +65,7 @@
             <div
               v-if="isDropdownOpen"
               class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-[9999]"
+              data-test="team-dropdown"
               ref="target"
             >
               <div v-if="teamsMeta.teamsAreFetching" class="flex items-center justify-center">
