@@ -25,7 +25,7 @@ const { mockLog, mockGetContract } = vi.hoisted(() => {
   }
 })
 vi.mock('@/utils', async (importOriginal) => {
-  const original: Object = await importOriginal()
+  const original: object = await importOriginal()
   return {
     ...original,
     log: {

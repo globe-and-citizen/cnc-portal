@@ -1,12 +1,12 @@
 export interface Proposal {
-  id: Number
+  id: number
   title: string
   description: string
   draftedBy: string
   isActive: boolean
   isElection: boolean
-  teamId: Number
-  winnerCount: Number
+  teamId: number
+  winnerCount: number
   voters?: {
     memberAddress: string
     name: string

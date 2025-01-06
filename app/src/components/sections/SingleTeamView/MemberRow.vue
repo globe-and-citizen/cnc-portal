@@ -125,8 +125,8 @@ interface Member extends MemberInput {
 }
 const props = defineProps<{
   member: Partial<Member>
-  teamId: Number
-  ownerAddress: String
+  teamId: number
+  ownerAddress: string
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const userDataStore = useUserDataStore()
