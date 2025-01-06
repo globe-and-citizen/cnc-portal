@@ -27,7 +27,9 @@ export default [
   {
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
-      '@typescript-eslint/no-explicit-any': 'error'
+      '@typescript-eslint/no-explicit-any': 'error',
+      // TODO: remove @typescript-eslint/no-empty-object-type
+      '@typescript-eslint/no-empty-object-type': 'off'
     }
   },
   skipFormatting,
