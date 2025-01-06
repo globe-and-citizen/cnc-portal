@@ -431,7 +431,7 @@ const deactivateApproval = async (signature: `0x{string}`, index: number) => {
   })
 }
 
-// useFetch instance for deleting member
+// useFetch instance for fetching expence account data
 const {
   error: fetchExpenseAccountDataError,
   // isFetching: isFetchingExpenseAccountData,
@@ -501,10 +501,10 @@ watch(searchUserResponse, () => {
 
 //#region helper functions
 const init = async () => {
-  await fetchExpenseAccountData()
   await getExpenseAccountOwner()
   await fetchManyExpenseAccountData()
   await initializeBalances()
+  await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
 }
 
