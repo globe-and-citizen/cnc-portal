@@ -925,7 +925,7 @@ describe('ExpenseAccountSection', () => {
       expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
         `${'--'} ${NETWORK.currencySymbol}`
       )
-      //@ts-ignore
+      //@ts-expect-error
       wrapper.vm.expenseAccountBalance = { value: 500n * 10n ** 18n }
 
       await wrapper.vm.$nextTick()
