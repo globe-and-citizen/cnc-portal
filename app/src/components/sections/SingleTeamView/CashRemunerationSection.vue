@@ -65,6 +65,21 @@
     <div class="divider m-0"></div>
     <div class="overflow-x-auto flex flex-col gap-4" v-if="wageClaims" data-test="claims-table">
       <span class="text-2xl sm:text-3xl font-bold">Claims Table</span>
+      
+      <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
+        <template #tab-0>
+          Tab 1
+        </template>
+        <template #tab-1>
+          Tab 2
+        </template>
+        <template #tab-2>
+          Tab 3
+        </template>
+        <template #tab-3>
+          Tab 4
+        </template>
+      </TabNavigation>
       <table class="table table-zebra">
         <!-- head -->
         <thead class="text-sm font-bold">
@@ -115,7 +130,7 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
 import CashRemunerationStats from './CashRemunerationStats.vue'
-
+import TabNavigation from '@/components/TabNavigation.vue'
 const route = useRoute()
 const web3Library = new EthersJsAdapter()
 
@@ -130,6 +145,9 @@ const approvalData = ref<{
   id: number
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
+
+const tabs = ref(["Submited", "Approved", "Withdrawed" ,"Disabled"])
+const activeTab = ref(0)
 
 const rules = {
   hoursWorked: {
