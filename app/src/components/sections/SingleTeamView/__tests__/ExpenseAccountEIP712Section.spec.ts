@@ -33,6 +33,7 @@ interface ComponentData {
   init: () => Promise<void>
   deactivateIndex: number | null
   isLoadingDeactivateApproval: boolean
+  isLoadingActivateApproval: boolean
 }
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
@@ -748,6 +749,53 @@ describe('ExpenseAccountSection', () => {
       expect(secondDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeFalsy()
 
       wrapperVm.isLoadingDeactivateApproval = false
+      wrapperVm.deactivateIndex = null
+    })
+    it('show loading spinner when activating approval', async () => {
+      const wrapper = createComponent()
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+      wrapperVm.manyExpenseAccountData = mockExpenseData
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
+
+      vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
+        return `${args as `0x${string}`}Hash`
+      })
+
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick() //anything less the test fails
+
+      // Locate the table using the data-test attribute
+      const table = wrapper.find('[data-test="deactivated-list-table"]')
+      expect(table.exists()).toBe(true)
+
+      // Check table row data within the approvals-list-table
+      const rows = table.findAll('tbody tr')
+      expect(rows).toHaveLength(mockExpenseData.length)
+
+      const firstRowCells = rows[0].findAll('td')
+      const secondRowCells = rows[1].findAll('td')
+
+      const firstDeactivateButton = firstRowCells[5].find('button')
+      const secondDeactivateButton = secondRowCells[5].find('button')
+
+      expect(firstDeactivateButton.exists()).toBe(true)
+      expect(secondDeactivateButton.exists()).toBe(true)
+
+      wrapperVm.isLoadingActivateApproval = true
+      wrapperVm.deactivateIndex = 0
+
+      await wrapper.vm.$nextTick()
+
+      expect(firstDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeTruthy()
+      expect(secondDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeFalsy()
+
+      wrapperVm.isLoadingActivateApproval = false
       wrapperVm.deactivateIndex = null
     })
     it('should show expense account if expense account address exists', () => {
