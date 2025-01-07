@@ -97,7 +97,7 @@
       </section>
     </div>
 
-    <!-- Activated List -->    
+    <!-- Activated List -->
     <div
       v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
       class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
@@ -245,7 +245,14 @@
 <script setup lang="ts">
 //#region imports
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit, BudgetData, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
+import type {
+  Team,
+  User,
+  BudgetLimit,
+  BudgetData,
+  ManyExpenseResponse,
+  ManyExpenseWithBalances
+} from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -375,10 +382,12 @@ const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
 const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
 
 // Check if the current user is disapproved
-const isDisapprovedAddress = computed(() => 
-  manyExpenseAccountDataInactive
-    .findIndex(item => 
-      item.approvedAddress === currentUserAddress) !== -1)
+const isDisapprovedAddress = computed(
+  () =>
+    manyExpenseAccountDataInactive.findIndex(
+      (item) => item.approvedAddress === currentUserAddress
+    ) !== -1
+)
 
 // Async initialization function
 const initializeBalances = async () => {
@@ -387,7 +396,7 @@ const initializeBalances = async () => {
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
       signatureHash.value = keccak256(data.signature)
-      
+
       await executeGetAmountWithdrawn()
 
       // Populate the reactive balances object
@@ -399,7 +408,7 @@ const initializeBalances = async () => {
               0: `${amountWithdrawn.value[0]}`,
               1: formatEther(amountWithdrawn.value[1]),
               2: amountWithdrawn.value[2] === true
-            }  
+            }
           })
         else
           manyExpenseAccountDataActive.push({
@@ -408,7 +417,7 @@ const initializeBalances = async () => {
               0: `${amountWithdrawn.value[0]}`,
               1: formatEther(amountWithdrawn.value[1]),
               2: amountWithdrawn.value[2] === false
-            }  
+            }
           })
       } else {
         manyExpenseAccountDataInactive.push({
@@ -417,7 +426,7 @@ const initializeBalances = async () => {
             0: '--',
             1: '--',
             2: false
-          }  
+          }
         })
       }
     }

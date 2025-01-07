@@ -408,17 +408,19 @@ describe('ExpenseAccountSection', () => {
       expect(transferButton.exists()).toBe(true)
       expect(transferButton.text()).toBe('Transfer')
     })
-    it("should disable the transfer button if the approval is disapproved", async () => {
-      const wrapper = createComponent({global: {
-        plugins: [
-          createTestingPinia({
-            createSpy: vi.fn,
-            initialState: {
-              user: { address: '0x0123456789012345678901234567890123456789' }
-            }
-          })
-        ]
-      }})
+    it('should disable the transfer button if the approval is disapproved', async () => {
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0x0123456789012345678901234567890123456789' }
+              }
+            })
+          ]
+        }
+      })
 
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
@@ -564,7 +566,7 @@ describe('ExpenseAccountSection', () => {
       ]
       headers.forEach((header, i) => {
         expect(header.text()).toBe(expectedHeaders[i])
-      })  
+      })
 
       // Check table row data within the approvals-list-table
       const rows = table.findAll('tbody tr')
@@ -595,7 +597,6 @@ describe('ExpenseAccountSection', () => {
       expect(secondActivateButton.exists()).toBe(true)
       expect(secondActivateButton.text()).toBe('Deactivate')
       expect(secondActivateButton.props().disabled).toBeTruthy()
-
     })
     it('should show deactivated list table', async () => {
       const wrapper = createComponent()
@@ -634,7 +635,7 @@ describe('ExpenseAccountSection', () => {
       ]
       headers.forEach((header, i) => {
         expect(header.text()).toBe(expectedHeaders[i])
-      })  
+      })
 
       // Check table row data within the approvals-list-table
       const rows = table.findAll('tbody tr')
@@ -665,7 +666,6 @@ describe('ExpenseAccountSection', () => {
       expect(secondActivateButton.exists()).toBe(true)
       expect(secondActivateButton.text()).toBe('Activate')
       expect(secondActivateButton.props().disabled).toBeTruthy()
-
     })
     it('should enable deactivate button if contract owner', async () => {
       const wrapper = createComponent({
