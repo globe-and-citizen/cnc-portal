@@ -52,7 +52,7 @@
                   <td class="flex justify-end" data-test="action-td">
                     <ButtonUI
                       variant="success"
-                      :disabled="!_expenseAccountData?.data"
+                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
                       v-if="true"
                       @click="transferModal = true"
                       data-test="transfer-button"
@@ -479,6 +479,11 @@ const balances = reactive<Record<string, { [key: number]: string | boolean }>>({
 
 const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
 const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
+
+const isDisapprovedAddress = computed(() => 
+  manyExpenseAccountDataInactive
+    .findIndex(item => 
+      item.approvedAddress === currentUserAddress) !== -1)
 
 // Async initialization function
 const initializeBalances = async () => {
