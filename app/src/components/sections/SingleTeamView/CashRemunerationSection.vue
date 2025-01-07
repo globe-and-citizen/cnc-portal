@@ -56,6 +56,7 @@
         <template #tab-1> Tab 2 </template>
         <template #tab-2> Tab 3 </template>
         <template #tab-3> Tab 4 </template>
+        <template #tab-4> Tab 4 </template>
       </TabNavigation>
       <table class="table table-zebra">
         <!-- head -->
@@ -122,7 +123,7 @@ const approvalData = ref<{
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
 
-const tabs = ref(['Submited', 'Approved', 'Withdrawed', 'Disabled'])
+const tabs = ref(['Submited', 'Approved', 'Withdrawed', 'Disabled', 'Archived'])
 const activeTab = ref(0)
 
 const rules = {
