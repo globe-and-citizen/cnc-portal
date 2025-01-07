@@ -364,7 +364,7 @@ describe('ExpenseAccountSection', () => {
     //   })
     // })
 
-    it("should show the user's approval data in the approval table", async () => {
+    it("should show the current user's approval data in the approval table", async () => {
       const wrapper = createComponent()
 
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
@@ -411,7 +411,64 @@ describe('ExpenseAccountSection', () => {
       expect(transferButton.exists()).toBe(true)
       expect(transferButton.text()).toBe('Transfer')
     })
+    it("should disable the transfer button if the approval is disapproved", async () => {
+      const wrapper = createComponent({global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              user: { address: '0x0123456789012345678901234567890123456789' }
+            }
+          })
+        ]
+      }})
 
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      console.log(`manyExpenseAccountDataInactive`, wrapper.vm.manyExpenseAccountDataInactive)
+
+      const approvalTable = wrapper.find('[data-test="approval-table"]')
+      expect(approvalTable.exists()).toBeTruthy()
+
+      const headers = approvalTable.findAll('thead th')
+
+      const expectedHeaders = [
+        'Expiry Date',
+        'Max Amount Per Tx',
+        'Total Transactions',
+        'Total Transfers',
+        'Action'
+      ]
+      headers.forEach((header, i) => {
+        expect(header.text()).toBe(expectedHeaders[i])
+      })
+
+      const rows = approvalTable.findAll('tbody tr')
+      expect(rows).toHaveLength(1)
+
+      const firstRowCells = rows[0].findAll('td')
+      expect(firstRowCells[0].text()).toBe(
+        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
+      )
+      expect(firstRowCells[1].text()).toBe(
+        `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
+      )
+      expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
+      expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
+
+      const transferButton = firstRowCells[4].findComponent(ButtonUI)
+      expect(transferButton.exists()).toBe(true)
+      expect(transferButton.text()).toBe('Transfer')
+      expect(transferButton.props().disabled).toBe(true)
+    })
     // it('should show aprroval list table cells with correct data', async () => {
     //   const wrapper = createComponent()
     //   const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData

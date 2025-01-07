@@ -894,6 +894,5 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
 
 onMounted(async () => {
   await init()
-  console.log(`manyExpenseAccountDataInactive `, JSON.stringify(manyExpenseAccountDataInactive))
 })
 </script>
