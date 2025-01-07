@@ -237,7 +237,7 @@
                   :loading="isLoadingDeactivateApproval && deactivateIndex === index"
                   @click="deactivateApproval(data.signature, index)"
                 >
-                  Deactivate
+                  Activate
                 </ButtonUI>
               </td>
             </tr>
