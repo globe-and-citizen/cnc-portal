@@ -4,27 +4,12 @@
     <!-- Cash Remuneration stats: Only apear for owner -->
 
     <CashRemunerationStats></CashRemunerationStats>
-    <div class="divider m-0"></div>
-    <div class="flex flex-col gap-4">
-      <span class="text-2xl sm:text-3xl font-bold">Cash Remuneration system</span>
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <span>Balance</span>
-          <div class="font-extrabold text-4xl">
-            <span class="inline-block min-w-16 h-10">
-              <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-              <span v-else>{{ cashRemunerationBalance?.formatted }} </span>
-            </span>
-            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
-          <span class="text-xs sm:text-sm">≈ $ 1.28</span>
-        </div>
+      <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
         <div class="flex flex-wrap gap-2 sm:gap-4">
           <span class="text-sm">Cash Remuneration Address </span>
           <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
         </div>
       </div>
-    </div>
     <div class="divider m-0"></div>
     <div class="flex justify-between">
       <span class="text-2xl sm:text-3xl font-bold">Submit Claims</span>
@@ -65,20 +50,12 @@
     <div class="divider m-0"></div>
     <div class="overflow-x-auto flex flex-col gap-4" v-if="wageClaims" data-test="claims-table">
       <span class="text-2xl sm:text-3xl font-bold">Claims Table</span>
-      
+
       <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
-        <template #tab-0>
-          Tab 1
-        </template>
-        <template #tab-1>
-          Tab 2
-        </template>
-        <template #tab-2>
-          Tab 3
-        </template>
-        <template #tab-3>
-          Tab 4
-        </template>
+        <template #tab-0> Tab 1 </template>
+        <template #tab-1> Tab 2 </template>
+        <template #tab-2> Tab 3 </template>
+        <template #tab-3> Tab 4 </template>
       </TabNavigation>
       <table class="table table-zebra">
         <!-- head -->
@@ -146,7 +123,7 @@ const approvalData = ref<{
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
 
-const tabs = ref(["Submited", "Approved", "Withdrawed" ,"Disabled"])
+const tabs = ref(['Submited', 'Approved', 'Withdrawed', 'Disabled'])
 const activeTab = ref(0)
 
 const rules = {
