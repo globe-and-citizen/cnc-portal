@@ -97,80 +97,6 @@
       </section>
     </div>
 
-    <!--<div
-      v-if="manyExpenseAccountData"
-      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
-    >
-      <div class="flex flex-row justify-between mb-5">
-        <span class="text-2xl font-bold">Approved Addresses</span>
-        <ButtonUI
-          variant="secondary"
-          :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
-          @click="approveUsersModal = true"
-          data-test="approve-users-button"
-        >
-          Approve User
-        </ButtonUI>
-      </div>
-      <div class="overflow-x-auto" data-test="approvals-list-table">
-        <table class="table">
-          -- head -->
-          <!--<thead class="text-sm font-bold">
-            <tr>
-              <th>User</th>
-              <th>Expiry Date</th>
-              <th>Max Amount Per Tx</th>
-              <th>Total Transactions</th>
-              <th>Total Transfers</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(data, index) in manyExpenseAccountData" :key="index">
-              <td class="flex flex-row justify-start gap-4">
-                <div role="button" class="relative group">
-                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
-                    <img
-                      alt="User Avatar"
-                      :src="
-                        data.avatarUrl ||
-                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
-                      "
-                      class="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div class="flex flex-col text-gray-600">
-                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
-                    {{ data.name || 'User' }}
-                  </p>
-                  <p class="text-sm">
-                    {{
-                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
-                    }}
-                  </p>
-                </div>
-              </td>
-              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
-              <td>{{ data.budgetData[2].value }}</td>
-              <td>{{ `${getLimitBalance(data.signature, 0)}/${data.budgetData[0].value}` }}</td>
-              <td>{{ `${getLimitBalance(data.signature, 1)}/${data.budgetData[1].value}` }}</td>
-              <td class="flex justify-end" data-test="action-td">
-                <ButtonUI
-                  :disabled="contractOwnerAddress !== currentUserAddress"
-                  class="btn btn-success"
-                  :loading="isLoadingDeactivateApproval && deactivateIndex === index"
-                  @click="deactivateApproval(data.signature, index)"
-                >
-                  Deactivate
-                </ButtonUI>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>-->
-
     <!-- Activated List -->    
     <div
       v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
@@ -444,42 +370,11 @@ const {
   args: [signatureHash]
 })
 
-watch(amountWithdrawn, async (newVal) => {
-  // if (newVal) await initializeBalances()
-})
-
-// const manyExpenseDataWithBalances = computed(() => manyExpenseAccountData.value?.map(item => {
-//   signatureHash.value = keccak256(item.signature)
-
-//   await executeGetAmountWithdrawn()
-
-//   if (Array.isArray(amountWithdrawn.value)) {
-//     return {
-//       ...item,
-//       balances: {
-//         0: amountWithdrawn.value[0],
-//         1: formatEther(amountWithdrawn.value[1]),
-//         2: amountWithdrawn.value[2] === 2? 
-//           false:
-//           true
-//     }}
-//   } else {
-//     return {
-//       ...item,
-//       balances: {
-//         0: '--',
-//         1: '--',
-//         2: false
-//     }}
-//   }
-// }))
-
 // Reactive storage for balances
-const balances = reactive<Record<string, { [key: number]: string | boolean }>>({})
-
 const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
 const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
 
+// Check if the current user is disapproved
 const isDisapprovedAddress = computed(() => 
   manyExpenseAccountDataInactive
     .findIndex(item => 
@@ -515,13 +410,6 @@ const initializeBalances = async () => {
               2: amountWithdrawn.value[2] === false
             }  
           })
-        // balances[signatureHash.value] = {
-        //   0: `${amountWithdrawn.value[0]}`,
-        //   1: formatEther(amountWithdrawn.value[1]),
-        //   2: amountWithdrawn.value[2] === 2? 
-        //     false:
-        //     true
-        // }
       } else {
         manyExpenseAccountDataInactive.push({
           ...data,
@@ -531,22 +419,9 @@ const initializeBalances = async () => {
             2: false
           }  
         })
-        // balances[signatureHash.value] = {
-        //   0: '--',
-        //   1: '--',
-        //   2: false
-        // }
       }
     }
 }
-
-// Computed property for getting balances
-// const getLimitBalance = computed(() => {
-//   return (signature: `0x{string}`, index: number): string | boolean => {
-//     const signatureHash = keccak256(signature)
-//     return balances[signatureHash] ? `${balances[signatureHash][`${index}`]}` : 'xx'
-//   }
-// })
 
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
@@ -554,12 +429,6 @@ watch(errorGetAmountWithdrawn, (newVal) => {
     addErrorToast('Failed to fetch amount withdrawn')
   }
 })
-
-// watch(signatureHash, async (newVal) => {
-//   if (newVal) {
-//     await executeGetAmountWithdrawn()
-//   }
-// })
 
 //expense account transfer
 const {
@@ -589,11 +458,6 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   }
 })
 
-// watch(balances, (newVal) => {
-//   if (newVal)
-//   console.log(`balances: `, balances)
-// })
-
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
@@ -617,9 +481,6 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
     addSuccessToast('Deactivate Successful')
     await initializeBalances()
-    // await getExpenseAccountBalance()
-    // await getAmountWithdrawnBalance()
-    // transferModal.value = false
   }
 })
 
@@ -658,9 +519,6 @@ watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
     addSuccessToast('Activate Successful')
     await initializeBalances()
-    // await getExpenseAccountBalance()
-    // await getAmountWithdrawnBalance()
-    // transferModal.value = false
   }
 })
 

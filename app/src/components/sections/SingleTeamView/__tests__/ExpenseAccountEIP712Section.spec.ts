@@ -375,9 +375,6 @@ describe('ExpenseAccountSection', () => {
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
 
-      console.log(`manyExpenseAccountData`, wrapper.vm.manyExpenseAccountData)
-      console.log(`_expenseAccountData`, wrapper.vm._expenseAccountData)
-
       const approvalTable = wrapper.find('[data-test="approval-table"]')
       expect(approvalTable.exists()).toBeTruthy()
 
@@ -432,8 +429,6 @@ describe('ExpenseAccountSection', () => {
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
-
-      console.log(`manyExpenseAccountDataInactive`, wrapper.vm.manyExpenseAccountDataInactive)
 
       const approvalTable = wrapper.find('[data-test="approval-table"]')
       expect(approvalTable.exists()).toBeTruthy()
