@@ -29,7 +29,7 @@
   </div>
   <div class="divider m-0"></div>
   <div class="overflow-x-auto">
-    <table class="table table-zebra">
+    <table class="table table-zebra" data-test="members-table">
       <!-- head -->
       <thead class="text-sm font-bold">
         <tr>
