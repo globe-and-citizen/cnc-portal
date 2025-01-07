@@ -301,8 +301,8 @@
                 <ButtonUI
                   :disabled="contractOwnerAddress !== currentUserAddress"
                   class="btn btn-success"
-                  :loading="isLoadingDeactivateApproval && deactivateIndex === index"
-                  @click="deactivateApproval(data.signature, index)"
+                  :loading="isLoadingActivateApproval && deactivateIndex === index"
+                  @click="activateApproval(data.signature, index)"
                 >
                   Activate
                 </ButtonUI>
@@ -510,13 +510,13 @@ const initializeBalances = async () => {
               2: amountWithdrawn.value[2] === false
             }  
           })
-        balances[signatureHash.value] = {
-          0: `${amountWithdrawn.value[0]}`,
-          1: formatEther(amountWithdrawn.value[1]),
-          2: amountWithdrawn.value[2] === 2? 
-            false:
-            true
-        }
+        // balances[signatureHash.value] = {
+        //   0: `${amountWithdrawn.value[0]}`,
+        //   1: formatEther(amountWithdrawn.value[1]),
+        //   2: amountWithdrawn.value[2] === 2? 
+        //     false:
+        //     true
+        // }
       } else {
         manyExpenseAccountDataInactive.push({
           ...data,
@@ -526,22 +526,22 @@ const initializeBalances = async () => {
             2: false
           }  
         })
-        balances[signatureHash.value] = {
-          0: '--',
-          1: '--',
-          2: false
-        }
+        // balances[signatureHash.value] = {
+        //   0: '--',
+        //   1: '--',
+        //   2: false
+        // }
       }
     }
 }
 
 // Computed property for getting balances
-const getLimitBalance = computed(() => {
-  return (signature: `0x{string}`, index: number): string | boolean => {
-    const signatureHash = keccak256(signature)
-    return balances[signatureHash] ? `${balances[signatureHash][`${index}`]}` : 'xx'
-  }
-})
+// const getLimitBalance = computed(() => {
+//   return (signature: `0x{string}`, index: number): string | boolean => {
+//     const signatureHash = keccak256(signature)
+//     return balances[signatureHash] ? `${balances[signatureHash][`${index}`]}` : 'xx'
+//   }
+// })
 
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
@@ -627,6 +627,47 @@ const deactivateApproval = async (signature: `0x{string}`, index: number) => {
     args: [signatureHash],
     abi: expenseAccountABI,
     functionName: 'deactivateApproval'
+  })
+}
+
+//activate approval
+const {
+  writeContract: executeActivateApproval,
+  isPending: isLoadingActivateApproval,
+  error: errorActivateApproval,
+  data: activateHash
+} = useWriteContract()
+
+watch(errorActivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to activate approval')
+  }
+})
+
+const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
+  useWaitForTransactionReceipt({
+    hash: activateHash
+  })
+watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
+    addSuccessToast('Activate Successful')
+    await initializeBalances()
+    // await getExpenseAccountBalance()
+    // await getAmountWithdrawnBalance()
+    // transferModal.value = false
+  }
+})
+
+const activateApproval = async (signature: `0x{string}`, index: number) => {
+  deactivateIndex.value = index
+  const signatureHash = keccak256(signature)
+
+  executeActivateApproval({
+    address: team.value.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'activateApproval'
   })
 }
 
