@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!--Select budget limit type-->
+  <!--Select budget limit type
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md">
       <select v-model="budgetLimitType" class="bg-white grow">
@@ -118,9 +118,9 @@
     :key="error.$uid"
   >
     {{ error.$message }}
-  </div>
+  </div>-->
 
-  <!-- Budget limit value -->
+  <!-- Budget limit value 
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Limit</span>
@@ -141,9 +141,56 @@
     :key="error.$uid"
   >
     {{ error.$message }}
-  </div>
+  </div>-->
 
-  <div class="mt-2">
+  <!-- #region Multi Limit Inputs-->
+  <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
+    <h3 class="text-lg font-semibold">Budget Limits:</h3>
+    <div
+      v-for="(label, budgetType) in budgetTypes"
+      :key="budgetType"
+      class="shadow-md"
+      data-test="budget-limit-input"
+    >
+      <label
+        :for="'checkbox-' + budgetType"
+        class="input input-bordered flex items-center gap-2 input-md mt-2"
+      >
+        <!-- Checkbox -->
+        <input
+          type="checkbox"
+          class="checkbox checkbox-primary"
+          v-model="selectedOptions[budgetType]"
+          :id="'checkbox-' + budgetType"
+          :data-test="`limit-checkbox-${budgetType}`"
+          @change="toggleOption(budgetType)"
+        />
+        <!-- Numeric Input -->
+        <span class="w-48">{{ label }}</span
+        >|
+        <input
+          :disabled="!selectedOptions[budgetType]"
+          type="number"
+          class="grow pl-4"
+          v-model.number="values[budgetType]"
+          placeholder="Enter value"
+          :data-test="`limit-input-${budgetType}`"
+          @input="updateValue(budgetType)"
+        />
+      </label>
+    </div>
+
+    <!-- Display Selected Options -->
+    <!--<div class="p-4 mt-6 border-t">
+      <h3 class="text-lg font-semibold">Selected Options:</h3>
+      <pre class="bg-gray-100 p-4 rounded-lg">{{ resultArray }}</pre>
+    </div>-->
+  </div>
+  <!-- #endregion Multi Limit Inputs -->
+
+  <hr />
+
+  <div class="mt-3">
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
@@ -166,14 +213,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { isAddress } from 'ethers'
 import { useVuelidate } from '@vuelidate/core'
-import { helpers, numeric, required } from '@vuelidate/validators'
+import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
@@ -189,12 +235,46 @@ const description = ref<string>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
-const budgetLimitTypes = ref([
-  { id: 0, name: 'Transactions per period' },
-  { id: 1, name: 'Amount per period' },
-  { id: 2, name: 'Amount per transaction' }
-])
-const web3Library = new EthersJsAdapter()
+
+//#region multi limit
+// Labels for budget types
+const budgetTypes = {
+  0: 'Transactions Per Period',
+  1: 'Amount Per Period',
+  2: 'Amount Per Transaction'
+}
+
+// Reactive states
+const selectedOptions = reactive<{ [key in 0 | 1 | 2]: boolean }>({ 0: false, 1: false, 2: false })
+const values = reactive<{ [key in 0 | 1 | 2]: null | string | number }>({
+  0: null,
+  1: null,
+  2: null
+})
+
+// Result array
+const resultArray = computed(() =>
+  Object.entries(selectedOptions)
+    .filter(([, isSelected]) => isSelected)
+    .map(([budgetType]) => ({
+      budgetType: Number(budgetType),
+      value: values[budgetType as unknown as 0 | 1 | 2] || 0
+    }))
+)
+
+// Handlers
+const toggleOption = (budgetType: 0 | 1 | 2) => {
+  if (!selectedOptions[budgetType]) {
+    values[budgetType] = null // Reset value if deselected
+  }
+}
+
+const updateValue = (budgetType: 0 | 1 | 2) => {
+  if (values[budgetType] === null || isNaN(Number(values[budgetType]))) {
+    values[budgetType] = 0 // Default value if input is empty
+  }
+}
+//#endregion multi limit
 
 const rules = {
   formData: {
@@ -212,15 +292,15 @@ const rules = {
       }
     )
   },
-  limitValue: {
-    required,
-    numeric
-  },
-  budgetLimitType: {
-    required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
-      return typeof value === 'number' && value >= 0 ? true : false
-    })
-  },
+  // limitValue: {
+  //   required,
+  //   numeric
+  // },
+  // budgetLimitType: {
+  //   required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
+  //     return typeof value === 'number' && value >= 0 ? true : false
+  //   })
+  // },
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
@@ -228,7 +308,7 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { budgetLimitType, description, limitValue, formData })
+const v$ = useVuelidate(rules, { /*budgetLimitType, */ description, /*limitValue, */ formData })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -236,6 +316,7 @@ const clear = () => {
   limitValue.value = ''
   budgetLimitType.value = null
   date.value = ''
+  emit('closeModal')
 }
 
 const submitApprove = () => {
@@ -245,11 +326,7 @@ const submitApprove = () => {
   }
   emit('approveUser', {
     approvedAddress: formData.value[0].address,
-    budgetType: budgetLimitType.value,
-    value:
-      budgetLimitType.value === 0
-        ? Number(limitValue.value)
-        : web3Library.parseEther(limitValue.value),
+    budgetData: resultArray.value,
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }

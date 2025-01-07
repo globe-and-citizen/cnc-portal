@@ -2,12 +2,61 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "AddressInsufficientBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "AuthorizedAmountExceeded",
+    "name": "AmountPerPeriodExceeded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "AmountPerTransactionExceeded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ECDSAInvalidSignature",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureLength",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "s",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureS",
     "type": "error"
   },
   {
@@ -18,6 +67,11 @@
   {
     "inputs": [],
     "name": "ExpectedPause",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FailedInnerCall",
     "type": "error"
   },
   {
@@ -72,6 +126,32 @@
     ],
     "name": "UnauthorizedAccess",
     "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ApprovalActivated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ApprovalDeactivated",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -185,6 +265,19 @@
     "inputs": [
       {
         "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "activateApproval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
       }
@@ -200,9 +293,27 @@
         "internalType": "uint256",
         "name": "amountWithdrawn",
         "type": "uint256"
+      },
+      {
+        "internalType": "enum ExpenseAccountEIP712.ApprovalState",
+        "name": "state",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "deactivateApproval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -334,14 +445,21 @@
             "type": "address"
           },
           {
-            "internalType": "enum ExpenseAccountEIP712.BudgetType",
-            "name": "budgetType",
-            "type": "uint8"
-          },
-          {
-            "internalType": "uint256",
-            "name": "value",
-            "type": "uint256"
+            "components": [
+              {
+                "internalType": "enum ExpenseAccountEIP712.BudgetType",
+                "name": "budgetType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ExpenseAccountEIP712.BudgetData[]",
+            "name": "budgetData",
+            "type": "tuple[]"
           },
           {
             "internalType": "uint256",
@@ -354,19 +472,9 @@
         "type": "tuple"
       },
       {
-        "internalType": "uint8",
-        "name": "v",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "r",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "s",
-        "type": "bytes32"
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
       }
     ],
     "name": "transfer",
