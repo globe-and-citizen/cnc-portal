@@ -16,7 +16,7 @@
     </div>
     <div class="card bg-blue-100 text-blue-800 w-1/3 shadow-xl">
       <div class="card-body">
-        <h2 class="card-title">Mount Claims withdrawed</h2>
+        <h2 class="card-title">Month Claims withdrawed</h2>
         <div class="font-extrabold flex gap-2 items-baseline">
           <span class="inline-block h-10 text-4xl">
             <span class="loading loading-spinner loading-lg" v-if="false"></span>
