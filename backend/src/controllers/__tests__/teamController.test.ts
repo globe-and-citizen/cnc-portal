@@ -922,7 +922,7 @@ describe('GET /expenseAccount/:id', () => {
   app.use(express.json())
   app.get('/expenseAccount/:id', getExpenseAccountData)
 
-  const mockExpenseAccountData = {
+  const mockExpenseAccountData = [{
     id: 1,
     userAddress: '0xMemberAddress',
     teamId: 1,
@@ -930,7 +930,15 @@ describe('GET /expenseAccount/:id', () => {
     expenseAccountSignature: '0xSignature',
     maxHoursPerWeek: null,
     hourlyRate: null
-  }
+  },{
+    id: 2,
+    userAddress: '0xAnotherMemberAddress',
+    teamId: 1,
+    expenseAccountData: JSON.stringify({ approvedAddress: '0xAnotherApprovedAddress', someOtherField: 'someData' }),
+    expenseAccountSignature: '0xAnotherSignature',
+    maxHoursPerWeek: null,
+    hourlyRate: null
+  }]
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -938,17 +946,30 @@ describe('GET /expenseAccount/:id', () => {
 
   it('should return 201 with expense account data and signature if data exists', async () => {
     // Mock the Prisma findUnique function to return the test data
-    vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockExpenseAccountData)
+    vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(mockExpenseAccountData[0])
 
     const response = await request(app)
       .get('/expenseAccount/1')
-      .set('memberaddress', '0xApprovedAddress')
+      .set('memberaddress', '0xApprovedAddressX')
 
     expect(response.status).toBe(201)
     expect(response.body).toEqual({
-      data: mockExpenseAccountData.expenseAccountData,
-      signature: mockExpenseAccountData.expenseAccountSignature
+      data: mockExpenseAccountData[0].expenseAccountData,
+      signature: mockExpenseAccountData[0].expenseAccountSignature
     })
+  })
+
+  it('should return 201 with many expense data if member address is not set', async () => {
+    vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue(mockExpenseAccountData)
+
+    const response = await request(app)
+      .get('/expenseAccount/1')
+    
+    expect(response.status).toBe(201)
+    expect(response.body).toEqual(mockExpenseAccountData.map(item => ({
+      ...JSON.parse(item.expenseAccountData), 
+      signature: item.expenseAccountSignature
+    })))
   })
 
   it('should return 500 if there is a server error', async () => {
