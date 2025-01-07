@@ -497,20 +497,46 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
   const memberAddress = req.headers.memberaddress;
 
   try {
-    const memberTeamsData = await prisma.memberTeamsData.findUnique({
-      where: {
-        userAddress_teamId: {
-          userAddress: String(memberAddress),
-          teamId: Number(id)
+    if (memberAddress) {
+      const memberTeamsData = await prisma.memberTeamsData.findUnique({
+        where: {
+          userAddress_teamId: {
+            userAddress: String(memberAddress),
+            teamId: Number(id)
+          }
         }
-      }
-    })
-
-    res.status(201)
-      .json({
-        data: memberTeamsData?.expenseAccountData,
-        signature: memberTeamsData?.expenseAccountSignature
       })
+
+      res.status(201)
+        .json({
+          data: memberTeamsData?.expenseAccountData,
+          signature: memberTeamsData?.expenseAccountSignature
+        })
+    } else {
+      let memberTeamsData = await prisma.memberTeamsData.findMany({
+        where: {
+          teamId: Number(id)
+        },
+        include: {
+          user: {
+            select: {
+              name: true
+            }
+          }
+        }
+      })
+      let expenseAccountData = memberTeamsData.map(item => {
+        if (item.expenseAccountData)
+          return {
+            ...JSON.parse(item.expenseAccountData), 
+            signature: item.expenseAccountSignature,
+            name: item?.user?.name
+          }
+      })
+
+      res.status(201)
+        .json(expenseAccountData)
+    }
   } catch (error) {
     return errorResponse(500, error, res)
   } finally {
