@@ -97,7 +97,7 @@
       </section>
     </div>
 
-    <div
+    <!--<div
       v-if="manyExpenseAccountData"
       class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
@@ -114,8 +114,8 @@
       </div>
       <div class="overflow-x-auto" data-test="approvals-list-table">
         <table class="table">
-          <!-- head -->
-          <thead class="text-sm font-bold">
+          -- head -->
+          <!--<thead class="text-sm font-bold">
             <tr>
               <th>User</th>
               <th>Expiry Date</th>
@@ -169,8 +169,84 @@
           </tbody>
         </table>
       </div>
+    </div>-->
+
+    <!-- Activated List -->    
+    <div
+      v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
+      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+    >
+      <div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Approved Addresses</span>
+        <ButtonUI
+          variant="secondary"
+          :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
+          @click="approveUsersModal = true"
+          data-test="approve-users-button"
+        >
+          Approve User
+        </ButtonUI>
+      </div>
+      <div class="overflow-x-auto" data-test="deactivated-list-table">
+        <table class="table">
+          <!-- head -->
+          <thead class="text-sm font-bold">
+            <tr>
+              <th>User</th>
+              <th>Expiry Date</th>
+              <th>Max Amount Per Tx</th>
+              <th>Total Transactions</th>
+              <th>Total Transfers</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(data, index) in manyExpenseAccountDataActive" :key="index">
+              <td class="flex flex-row justify-start gap-4">
+                <div role="button" class="relative group">
+                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
+                    <img
+                      alt="User Avatar"
+                      :src="
+                        data.avatarUrl ||
+                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+                      "
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col text-gray-600">
+                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
+                    {{ data.name || 'User' }}
+                  </p>
+                  <p class="text-sm">
+                    {{
+                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
+                    }}
+                  </p>
+                </div>
+              </td>
+              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
+              <td>{{ data.budgetData[2].value }}</td>
+              <td>{{ `${data.balances['0']}/${data.budgetData[0].value}` }}</td>
+              <td>{{ `${data.balances['1']}/${data.budgetData[1].value}` }}</td>
+              <td class="flex justify-end" data-test="action-td">
+                <ButtonUI
+                  :disabled="contractOwnerAddress !== currentUserAddress"
+                  class="btn btn-success"
+                  :loading="isLoadingDeactivateApproval && deactivateIndex === index"
+                  @click="deactivateApproval(data.signature, index)"
+                >
+                  Deactivate
+                </ButtonUI>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
+    <!-- Deactivated List -->
     <div
       v-if="manyExpenseAccountDataInactive.length > 0"
       class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
@@ -769,6 +845,6 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
 
 onMounted(async () => {
   await init()
-  console.log(`manyExpenseAccountDataInactive `, JSON.stringify(manyExpenseAccountDataInactive))
+  console.log(`manyExpenseAccountDataActive `, JSON.stringify(manyExpenseAccountDataActive))
 })
 </script>
