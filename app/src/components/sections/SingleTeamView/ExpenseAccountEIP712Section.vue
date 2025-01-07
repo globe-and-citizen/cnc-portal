@@ -187,7 +187,7 @@
           Approve User
         </ButtonUI>
       </div>
-      <div class="overflow-x-auto" data-test="deactivated-list-table">
+      <div class="overflow-x-auto" data-test="approvals-list-table">
         <table class="table">
           <!-- head -->
           <thead class="text-sm font-bold">
@@ -237,7 +237,7 @@
                   :loading="isLoadingDeactivateApproval && deactivateIndex === index"
                   @click="deactivateApproval(data.signature, index)"
                 >
-                  Activate
+                  Deactivate
                 </ButtonUI>
               </td>
             </tr>
@@ -845,6 +845,6 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
 
 onMounted(async () => {
   await init()
-  console.log(`manyExpenseAccountDataActive `, JSON.stringify(manyExpenseAccountDataActive))
+  console.log(`manyExpenseAccountDataInactive `, JSON.stringify(manyExpenseAccountDataInactive))
 })
 </script>
