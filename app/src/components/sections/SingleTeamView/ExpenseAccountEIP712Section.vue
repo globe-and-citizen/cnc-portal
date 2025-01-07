@@ -129,28 +129,9 @@
           <tbody>
             <tr v-for="(data, index) in manyExpenseAccountDataActive" :key="index">
               <td class="flex flex-row justify-start gap-4">
-                <div role="button" class="relative group">
-                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
-                    <img
-                      alt="User Avatar"
-                      :src="
-                        data.avatarUrl ||
-                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
-                      "
-                      class="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div class="flex flex-col text-gray-600">
-                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
-                    {{ data.name || 'User' }}
-                  </p>
-                  <p class="text-sm">
-                    {{
-                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
-                    }}
-                  </p>
-                </div>
+                <UserComponent
+                  :user="{ name: data.name, address: data.approvedAddress }"
+                ></UserComponent>
               </td>
               <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
               <td>{{ data.budgetData[2].value }}</td>
@@ -196,28 +177,9 @@
           <tbody>
             <tr v-for="(data, index) in manyExpenseAccountDataInactive" :key="index">
               <td class="flex flex-row justify-start gap-4">
-                <div role="button" class="relative group">
-                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
-                    <img
-                      alt="User Avatar"
-                      :src="
-                        data.avatarUrl ||
-                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
-                      "
-                      class="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div class="flex flex-col text-gray-600">
-                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
-                    {{ data.name || 'User' }}
-                  </p>
-                  <p class="text-sm">
-                    {{
-                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
-                    }}
-                  </p>
-                </div>
+                <UserComponent
+                  :user="{ name: data.name, address: data.approvedAddress }"
+                ></UserComponent>
               </td>
               <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
               <td>{{ data.budgetData[2].value }}</td>
@@ -272,6 +234,7 @@ import {
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+import UserComponent from '@/components/UserComponent.vue'
 //#endregion imports
 
 //#region variable declarations
