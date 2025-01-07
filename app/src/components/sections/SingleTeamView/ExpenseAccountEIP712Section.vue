@@ -482,6 +482,8 @@ const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
 
 // Async initialization function
 const initializeBalances = async () => {
+  manyExpenseAccountDataActive.length = 0
+  manyExpenseAccountDataInactive.length = 0
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
       signatureHash.value = keccak256(data.signature)
@@ -609,6 +611,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
     addSuccessToast('Deactivate Successful')
+    await initializeBalances()
     // await getExpenseAccountBalance()
     // await getAmountWithdrawnBalance()
     // transferModal.value = false
