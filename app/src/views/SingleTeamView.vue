@@ -2,7 +2,7 @@
   <div class="flex min-h-screen justify-center">
     <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
 
-    <div v-if="!teamIsFetching && team" class="pt-10 flex flex-col gap-5 w-full items-center">
+    <div v-if="!teamIsFetching && team" class="flex flex-col gap-5 w-full items-center">
       <TeamMeta :team="team" @getTeam="getTeamAPI" />
       <div class="grid grid-cols-4 gap-2">
         <div>

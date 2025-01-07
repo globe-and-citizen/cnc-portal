@@ -323,13 +323,13 @@ const dynamicDisplayData = (budgetType: number) =>
       if (budgetType === 0) {
         return {
           ...data,
-          //@ts-ignore
+          // @ts-expect-error: amountWithdrawn.value is a array
           value: Number(amountWithdrawn.value[0])
         }
       } else {
         return {
           ...data,
-          //@ts-ignore
+          // @ts-expect-error: amountWithdrawn.value is a array
           value: formatEther(amountWithdrawn.value[1])
         }
       }

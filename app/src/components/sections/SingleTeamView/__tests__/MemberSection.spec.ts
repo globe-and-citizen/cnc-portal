@@ -55,7 +55,7 @@ describe('MemberSection.vue', () => {
 
   beforeEach(() => {
     interface mockReturn {
-      mockReturnValue: (address: Object) => {}
+      mockReturnValue: (address: object) => {}
     }
     ;(useUserDataStore as unknown as mockReturn).mockReturnValue({
       address: 'owner123'

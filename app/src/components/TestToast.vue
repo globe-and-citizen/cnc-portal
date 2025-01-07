@@ -24,7 +24,7 @@ const props = defineProps<Toast>()
 
 const visible = ref(true)
 const timeLeft = ref(props.timeout / 1000)
-let interval: number
+let interval: ReturnType<typeof setInterval>
 
 const typeClass = computed(() => {
   return {

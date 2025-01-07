@@ -1,6 +1,6 @@
 <template>
   <div
-    class="collapse collapse-arrow border"
+    class="collapse collapse-arrow border static"
     :class="`${team.ownerAddress == address ? 'bg-green-100' : 'bg-blue-100'}`"
   >
     <input type="checkbox" />

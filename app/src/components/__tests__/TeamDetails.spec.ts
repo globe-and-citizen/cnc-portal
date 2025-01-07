@@ -14,7 +14,7 @@ describe('TeamDetails.vue', () => {
   }
 
   const createWrapper = (userAddress: string) => {
-    // @ts-ignore
+    // @ts-expect-error: mocked
     vi.mocked(useUserDataStore).mockReturnValue({ address: userAddress })
     return mount(TeamDetails, {
       props: { team: mockTeam }
