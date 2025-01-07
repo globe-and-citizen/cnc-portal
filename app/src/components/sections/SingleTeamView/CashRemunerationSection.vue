@@ -4,12 +4,12 @@
     <!-- Cash Remuneration stats: Only apear for owner -->
 
     <CashRemunerationStats></CashRemunerationStats>
-      <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-        <div class="flex flex-wrap gap-2 sm:gap-4">
-          <span class="text-sm">Cash Remuneration Address </span>
-          <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
-        </div>
+    <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+      <div class="flex flex-wrap gap-2 sm:gap-4">
+        <span class="text-sm">Cash Remuneration Address </span>
+        <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
       </div>
+    </div>
     <div class="divider m-0"></div>
     <div class="flex justify-between">
       <span class="text-2xl sm:text-3xl font-bold">Submit Claims</span>
@@ -102,7 +102,6 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { log, parseError } from '@/utils'
 import { parseEther, type Address } from 'viem'
 import { useBalance } from '@wagmi/vue'
-import { NETWORK } from '@/constant'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
@@ -137,8 +136,8 @@ const rules = {
 const v$ = useVuelidate(rules, { hoursWorked })
 
 const {
-  data: cashRemunerationBalance,
-  isLoading: balanceLoading,
+  // data: cashRemunerationBalance,
+  // isLoading: balanceLoading,
   error: balanceError,
   refetch: fetchBalance
 } = useBalance({
