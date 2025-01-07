@@ -39,15 +39,28 @@ const mockUseWaitForTransactionReceipt = {
   isSuccess: ref(false)
 }
 
+const mockUseAccount = {
+  isDisconnected: ref(false)
+}
+
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => mockUseReadContract),
     useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useAccount: vi.fn(() => mockUseAccount)
   }
 })
+
+const mockUseAuth = {
+  logout: vi.fn()
+}
+
+vi.mock('@/composables/useAuth', () => ({
+  useAuth: vi.fn(() => mockUseAuth)
+}))
 
 describe('App.vue', () => {
   describe('Toast', () => {
@@ -109,6 +122,23 @@ describe('App.vue', () => {
       await wrapper.setValue({ showModal: true })
 
       expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+    })
+  })
+
+  describe('Emits', () => {
+    it('should call addErrorToast and logout on disconnect', async () => {
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const { addErrorToast } = useToastStore()
+      mockUseAccount.isDisconnected.value = true
+      await wrapper.vm.$nextTick()
+
+      expect(addErrorToast).toHaveBeenCalledWith('Disconnected from wallet')
+      expect(mockUseAuth.logout).toHaveBeenCalled()
     })
   })
 })
