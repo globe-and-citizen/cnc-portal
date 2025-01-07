@@ -36,6 +36,7 @@
           <th></th>
           <th>Name</th>
           <th>Address</th>
+          <th>Wage</th>
           <th v-if="team.ownerAddress === userDataStore.address">Action</th>
         </tr>
       </thead>
