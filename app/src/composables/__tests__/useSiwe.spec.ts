@@ -3,6 +3,7 @@ import { useSiwe } from '@/composables/useSiwe'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
+import { beforeEach } from 'node:test'
 
 // import { SLSiweMessageCreator } from "@/adapters/siweMessageCreatorAdapter";
 
@@ -15,7 +16,10 @@ const mocks = vi.hoisted(() => ({
     setUserData: vi.fn(),
     setAuthStatus: vi.fn()
   },
-  mockHasInstalledWallet: vi.fn()
+  mockHasInstalledWallet: vi.fn(),
+  mockUseToastStore: {
+    addErrorToast: vi.fn()
+  }
 }))
 const mockUseAccount = {
   address: { value: '0xUserAddress' }
@@ -44,7 +48,8 @@ vi.mock('@/stores/user', async (importOriginal) => {
     useUserDataStore: vi.fn(() => ({
       setUserData: mocks.mockUserDataStore.setUserData,
       setAuthStatus: mocks.mockUserDataStore.setAuthStatus
-    }))
+    })),
+    useToastStore: vi.fn(() => ({addErrorToast: mocks.mockUseToastStore.addErrorToast}))
   }
 })
 
@@ -112,6 +117,7 @@ vi.mock('@/composables/useCustomFetch', () => ({
 }))
 
 describe('useSiwe', () => {
+  setActivePinia(createPinia())
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
     mockUseSignMessage.signMessage.mockImplementation(
@@ -119,7 +125,6 @@ describe('useSiwe', () => {
     )
     mocks.mockHasInstalledWallet.mockImplementation(() => true)
     
-    setActivePinia(createPinia())
     const { siwe } = useSiwe()
     await siwe()
     expect(mocks.mockSlSiweMessageCreator.create).toBeCalled()
@@ -134,5 +139,13 @@ describe('useSiwe', () => {
     await flushPromises()
     expect(mocks.mockUserDataStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
     expect(mocks.mockUserDataStore.setAuthStatus).toBeCalledWith(true)
+  })
+  it('should give an error when MetaMask is not installed', async () => {
+    mocks.mockHasInstalledWallet.mockReset()
+    mocks.mockSlSiweMessageCreator.create.mockClear()
+    mocks.mockHasInstalledWallet.mockImplementation(() => false)
+    const { siwe } = useSiwe()
+    await siwe()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('MetaMask is not installed, Please install MetaMask to continue')
   })
 })
