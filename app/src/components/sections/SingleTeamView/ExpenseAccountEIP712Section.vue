@@ -8,8 +8,8 @@
           <h2 class="card-title">Balance</h2>
           <div class="font-extrabold text-neutral flex gap-2 items-baseline">
             <span class="inline-block h-10 text-4xl">
-              <span class="loading loading-spinner loading-lg" v-if="false"></span>
-              <span v-else>1000 </span>
+              <span class="loading loading-spinner loading-lg" v-if="isLoadingExpenseAccountBalance"></span>
+              <span v-else>{{ expenseBalanceFormatted }} </span>
             </span>
             <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
