@@ -4,6 +4,8 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import * as utils from '@/utils'
+import * as useCustomFetch from "@/composables/useCustomFetch";
+import { afterEach } from 'node:test'
 
 const mocks = vi.hoisted(() => ({
   mockSlSiweMessageCreator: {
@@ -73,6 +75,10 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
 // const mockUseCustomFetch = {
 //   executeGet: vi.fn()
 // }
+const mockCustomFetchError = {
+  error: ref<null | Error>(null),
+  execute: vi.fn()
+}
 
 vi.mock('@/composables/useCustomFetch', () => ({
   useCustomFetch: (url: Ref<string>) => {
@@ -106,8 +112,8 @@ vi.mock('@/composables/useCustomFetch', () => ({
       post: () => ({
         json: () => ({
           data: ref({ accessToken: 'token' }),
-          execute: vi.fn(),
-          error: ref(null)
+          execute: mockCustomFetchError.execute,//vi.fn(),
+          error: mockCustomFetchError.error//ref(null)
         })
       })
     }
@@ -118,6 +124,9 @@ describe('useSiwe', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
   beforeEach(() => {
     setActivePinia(createPinia())
+  })
+  afterEach(() => {
+    vi.clearAllMocks()
   })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
@@ -143,7 +152,6 @@ describe('useSiwe', () => {
   })
   it('should give an error when MetaMask is not installed', async () => {
     mocks.mockHasInstalledWallet.mockReset()
-    mocks.mockSlSiweMessageCreator.create.mockClear()
     mocks.mockHasInstalledWallet.mockImplementation(() => false)
     const { isProcessing, siwe } = useSiwe()
     await siwe()
@@ -153,7 +161,6 @@ describe('useSiwe', () => {
     expect(isProcessing.value).toBe(false)
   })
   it('should report an error if error processing', async () => {
-    mocks.mockUseToastStore.addErrorToast.mockClear()
     mocks.mockHasInstalledWallet.mockReset()
     mocks.mockHasInstalledWallet.mockImplementation(() => true)
     mocks.mockSlSiweMessageCreator.create.mockReset()
@@ -165,18 +172,18 @@ describe('useSiwe', () => {
   })
   it('should display error when signature error', async () => {
     mocks.mockHasInstalledWallet.mockReset()
-    mocks.mockSlSiweMessageCreator.create.mockClear()
     mocks.mockSlSiweMessageCreator.create.mockReset()
     mocks.mockHasInstalledWallet.mockImplementation(() => true)
-    mocks.mockUseToastStore.addErrorToast.mockClear()
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.error.value = new Error('Sign message error'))
     )
-    logErrorSpy.mockReset()
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to sign SIWE message')
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', new Error('Sign message error'))
+  })
+  it('should if notify error if error posting siwe data', async () => {
+  
   })
 })
