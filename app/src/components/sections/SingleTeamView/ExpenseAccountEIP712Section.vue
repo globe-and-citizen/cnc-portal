@@ -1,36 +1,63 @@
 <template>
-  <div class="flex flex-col gap-y-4">
-    <div
-      v-if="team.expenseAccountEip712Address"
-      class="stats bg-green-100 flex text-primary-content border-outline p-5 overflow-visible"
-    >
-      <!-- Expense A/c Info Section -->
-      <section class="stat flex flex-col justify-start">
-        <div
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 mb-10"
-        >
-          <div>
-            <span>Expense Account Balance</span>
-            <div class="font-extrabold text-4xl" data-test="expense-account-balance">
-              <span class="inline-block min-w-16 h-10">
-                <span
-                  class="loading loading-spinner loading-lg"
-                  v-if="isLoadingExpenseAccountBalance"
-                ></span>
-                <span v-else>{{ expenseBalanceFormatted }} </span>
-              </span>
-              <span class="text-xs">{{ ' ' + NETWORK.currencySymbol }}</span>
-            </div>
-            <span class="text-xs sm:text-sm">≈ $ 1.28</span>
-          </div>
-          <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
-            <span class="text-sm">Expense Account Address </span>
-            <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
+  <div class="flex flex-col gap-y-4 ">
+    <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
+    <!-- Cash Remuneration stats: Only apear for owner -->
+    <div class="flex gap-10">
+      <div class="card bg-base-200 w-1/3 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Balance</h2>
+          <div class="font-extrabold text-neutral flex gap-2 items-baseline">
+            <span class="inline-block h-10 text-4xl">
+              <span class="loading loading-spinner loading-lg" v-if="false"></span>
+              <span v-else>1000 </span>
+            </span>
+            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
         </div>
+      </div>
+      <div class="card bg-blue-100 text-blue-800 w-1/3 shadow-xl">
+        <div class="card-body">
+          <div class="font-extrabold flex gap-2 items-baseline">
+            <span class="inline-block h-10 text-4xl">
+              <span class="loading loading-spinner loading-lg" v-if="false"></span>
+              <span v-else>10 </span>
+            </span>
+            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          </div>
+          <h2 class="card-title">Spent this month</h2>
+        </div>
+      </div>
+      <div class="card bg-orange-200 text-orange-800 w-1/3 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Approved Address</h2>
+          <div class="font-extrabold flex gap-2 items-baseline">
+            <span class="inline-block h-10 text-4xl">
+              <span class="loading loading-spinner loading-lg" v-if="false"></span>
+              <span v-else>20 </span>
+            </span>
+            <span class="text-xs">User</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-10">
+      <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
+        <span class="text-sm">Expense Account Address </span>
+        <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
+      </div>
+    </div>
+    <div
+      v-if="team.expenseAccountEip712Address"
+      class="card shadow-xl flex text-primary-content p-5 overflow-visible"
+    >
+    <span class="text-2xl font-bold">My Approved Expense</span>
+    <!-- TODO display this only if the use have an approved expense -->
+      <!-- Expense A/c Info Section -->
+      <section class="stat flex flex-col justify-start">
         <!-- New Header -->
-        <div>
+
+        <div class="flex flex-col gap-8">
           <div class="overflow-x-auto" data-test="approval-table">
             <table class="table">
               <!-- head -->
@@ -40,7 +67,7 @@
                   <th>Max Amount Per Tx</th>
                   <th>Total Transactions</th>
                   <th>Total Transfers</th>
-                  <th>Action</th>
+                  <th class="flex justify-end">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -57,7 +84,7 @@
                       @click="transferModal = true"
                       data-test="transfer-button"
                     >
-                      Transfer
+                      Spend
                     </ButtonUI>
                   </td>
                 </tr>
@@ -100,7 +127,7 @@
     <!-- Activated List -->
     <div
       v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
-      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+      class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
       <div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Approved Addresses</span>
@@ -110,7 +137,7 @@
           @click="approveUsersModal = true"
           data-test="approve-users-button"
         >
-          Approve User
+          Approve User Expense
         </ButtonUI>
       </div>
       <div class="overflow-x-auto" data-test="approvals-list-table">
@@ -123,7 +150,7 @@
               <th>Max Amount Per Tx</th>
               <th>Total Transactions</th>
               <th>Total Transfers</th>
-              <th>Action</th>
+              <th class="flex justify-end">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -140,11 +167,12 @@
               <td class="flex justify-end" data-test="action-td">
                 <ButtonUI
                   :disabled="contractOwnerAddress !== currentUserAddress"
-                  class="btn btn-success"
+                  variant="error"
+                  outline
                   :loading="isLoadingDeactivateApproval && deactivateIndex === index"
                   @click="deactivateApproval(data.signature, index)"
                 >
-                  Deactivate
+                  Disable Approval
                 </ButtonUI>
               </td>
             </tr>
@@ -156,7 +184,7 @@
     <!-- Deactivated List -->
     <div
       v-if="manyExpenseAccountDataInactive.length > 0"
-      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+      class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
       <div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Deactivated Addresses</span>
@@ -171,7 +199,7 @@
               <th>Max Amount Per Tx</th>
               <th>Total Transactions</th>
               <th>Total Transfers</th>
-              <th>Action</th>
+              <th class="flex justify-end">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -188,11 +216,12 @@
               <td class="flex justify-end" data-test="action-td">
                 <ButtonUI
                   :disabled="contractOwnerAddress !== currentUserAddress"
-                  class="btn btn-success"
+                  variant="success"
+                  outline
                   :loading="isLoadingActivateApproval && deactivateIndex === index"
                   @click="activateApproval(data.signature, index)"
                 >
-                  Activate
+                  Reactivate Approval
                 </ButtonUI>
               </td>
             </tr>
