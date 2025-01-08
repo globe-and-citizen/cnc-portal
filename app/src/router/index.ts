@@ -22,6 +22,27 @@ const router = createRouter({
       }
     },
     {
+      path: '/bank',
+      name: 'bank',
+      components: {
+        login: HomeView
+      }
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      components: {
+        login: HomeView
+      }
+    },
+    {
+      path: '/contracts',
+      name: 'contracts',
+      components: {
+        login: HomeView
+      }
+    },
+    {
       path: '/teams',
       children: [
         {

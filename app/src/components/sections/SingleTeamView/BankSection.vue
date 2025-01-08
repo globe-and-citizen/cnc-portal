@@ -544,6 +544,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
       await executeSearchUser()
     }
   } catch (error) {
+    console.log(error)
     addErrorToast('Failed to search users')
   }
 }

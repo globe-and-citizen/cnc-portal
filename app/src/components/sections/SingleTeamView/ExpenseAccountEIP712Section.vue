@@ -2,101 +2,70 @@
   <div class="flex flex-col gap-y-4">
     <div
       v-if="team.expenseAccountEip712Address"
-      class="stats bg-green-100 flex text-primary-content border-outline justify-center items-center p-5 overflow-visible"
+      class="stats bg-green-100 flex text-primary-content border-outline p-5 overflow-visible"
     >
       <!-- Expense A/c Info Section -->
-      <section class="stat flex flex-col justify-center items-center">
-        <div class="stat-title text-center">Expense Account Address</div>
-
-        <span class="flex gap-2 items-center">
-          <ToolTip
-            data-test="expense-account-address-tooltip"
-            content="Click to see address in block explorer"
-          >
-            <span
-              class="badge badge-sm cursor-pointer"
-              data-test="expense-account-address"
-              @click="openExplorer(team.expenseAccountEip712Address)"
-              :class="`${team.ownerAddress == currentUserAddress ? 'badge-primary' : 'badge-secondary'}`"
-              >{{ team.expenseAccountEip712Address }}</span
-            >
-          </ToolTip>
-          <ToolTip
-            data-test="copy-address-tooltip"
-            :content="copied ? 'Copied!' : 'Click to copy address'"
-          >
-            <ClipboardDocumentListIcon
-              v-if="isSupported && !copied"
-              class="size-5 cursor-pointer"
-              @click="copy(team.expenseAccountEip712Address)"
-            />
-            <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
-          </ToolTip>
-        </span>
-
-        <div class="flex items-center pt-3 mt-10" style="border-width: 0">
+      <section class="stat flex flex-col justify-start">
+        <div
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 mb-10"
+        >
           <div>
-            <div class="stat-title pr-3">Balance</div>
-            <div
-              v-if="isLoadingGetExpenseBalance"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="balance-loading"> </span>
+            <span>Expense Account Balance</span>
+            <div class="font-extrabold text-4xl" data-test="expense-account-balance">
+              <span class="inline-block min-w-16 h-10">
+                <span
+                  class="loading loading-spinner loading-lg"
+                  v-if="isLoadingExpenseAccountBalance"
+                ></span>
+                <span v-else>{{ expenseBalanceFormatted }} </span>
+              </span>
+              <span class="text-xs">{{ ' ' + NETWORK.currencySymbol }}</span>
             </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="contract-balance"
-            >
-              {{ expenseBalanceFormated }} <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-            </div>
+            <span class="text-xs sm:text-sm">≈ $ 1.28</span>
           </div>
-
-          <div class="pl-3">
-            <div class="stat-title pr-3">Max Limit</div>
-            <div
-              v-if="isFetchingExpenseAccountData"
-              class="stat-value mt-1 border-r border-gray-400 pr-3"
-            >
-              <span class="loading loading-dots loading-xs" data-test="max-loading"> </span>
-            </div>
-            <div
-              v-else
-              class="stat-value text-3xl mt-2 border-r border-gray-400 pr-3"
-              data-test="max-limit"
-            >
-              {{ maxLimit }} <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
-            </div>
-          </div>
-
-          <div class="pl-3">
-            <div class="stat-title pr-3">{{ dynamicDisplayData?.heading }}</div>
-            <div v-if="false" class="stat-value mt-1 pr-3">
-              <span class="loading loading-dots loading-xs" data-test="limit-loading"> </span>
-            </div>
-            <div v-else class="stat-value text-3xl mt-2 pr-3" data-test="limit-balance">
-              {{ dynamicDisplayData?.value }}
-              <span class="text-xs">{{ dynamicDisplayData?.symbol }}</span>
-            </div>
+          <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
+            <span class="text-sm">Expense Account Address </span>
+            <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
           </div>
         </div>
 
-        <div class="stat-title text-center mt-10">
-          Approval Expiry:
-          <span data-test="approval-expiry" class="font-bold text-black">{{ expiry }}</span>
+        <!-- New Header -->
+        <div>
+          <div class="overflow-x-auto" data-test="approval-table">
+            <table class="table">
+              <!-- head -->
+              <thead class="text-sm font-bold">
+                <tr>
+                  <th>Expiry Date</th>
+                  <th>Max Amount Per Tx</th>
+                  <th>Total Transactions</th>
+                  <th>Total Transfers</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ expiry }}</td>
+                  <td>{{ `${maxLimitAmountPerTx} ${NETWORK.currencySymbol}` }}</td>
+                  <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
+                  <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
+                  <td class="flex justify-end" data-test="action-td">
+                    <ButtonUI
+                      variant="success"
+                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
+                      v-if="true"
+                      @click="transferModal = true"
+                      data-test="transfer-button"
+                    >
+                      Transfer
+                    </ButtonUI>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="stat-actions flex justify-center gap-2 items-center mt-8">
-          <ButtonUI
-            variant="secondary"
-            :disabled="!_expenseAccountData?.data"
-            v-if="true"
-            @click="transferModal = true"
-            data-test="transfer-button"
-          >
-            Transfer
-          </ButtonUI>
-        </div>
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
             v-if="transferModal"
@@ -113,15 +82,9 @@
             service="Expense Account"
           />
         </ModalComponent>
-      </section>
-
-      <!-- Approve User Form -->
-      <section
-        v-if="contractOwnerAddress === currentUserAddress || isBodAction()"
-        class="stat flex flex-col justify-center items-center"
-      >
-        <div class="w-3/4">
+        <ModalComponent v-model="approveUsersModal">
           <ApproveUsersForm
+            v-if="approveUsersModal"
             :form-data="teamMembers"
             :users="foundUsers"
             :loading-approve="loadingApprove"
@@ -130,8 +93,150 @@
             @close-modal="approveUsersModal = false"
             @search-users="(input) => searchUsers(input)"
           />
-        </div>
+        </ModalComponent>
       </section>
+    </div>
+
+    <!-- Activated List -->
+    <div
+      v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
+      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+    >
+      <div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Approved Addresses</span>
+        <ButtonUI
+          variant="secondary"
+          :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
+          @click="approveUsersModal = true"
+          data-test="approve-users-button"
+        >
+          Approve User
+        </ButtonUI>
+      </div>
+      <div class="overflow-x-auto" data-test="approvals-list-table">
+        <table class="table">
+          <!-- head -->
+          <thead class="text-sm font-bold">
+            <tr>
+              <th>User</th>
+              <th>Expiry Date</th>
+              <th>Max Amount Per Tx</th>
+              <th>Total Transactions</th>
+              <th>Total Transfers</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(data, index) in manyExpenseAccountDataActive" :key="index">
+              <td class="flex flex-row justify-start gap-4">
+                <div role="button" class="relative group">
+                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
+                    <img
+                      alt="User Avatar"
+                      :src="
+                        data.avatarUrl ||
+                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+                      "
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col text-gray-600">
+                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
+                    {{ data.name || 'User' }}
+                  </p>
+                  <p class="text-sm">
+                    {{
+                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
+                    }}
+                  </p>
+                </div>
+              </td>
+              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
+              <td>{{ data.budgetData[2].value }}</td>
+              <td>{{ `${data.balances['0']}/${data.budgetData[0].value}` }}</td>
+              <td>{{ `${data.balances['1']}/${data.budgetData[1].value}` }}</td>
+              <td class="flex justify-end" data-test="action-td">
+                <ButtonUI
+                  :disabled="contractOwnerAddress !== currentUserAddress"
+                  class="btn btn-success"
+                  :loading="isLoadingDeactivateApproval && deactivateIndex === index"
+                  @click="deactivateApproval(data.signature, index)"
+                >
+                  Deactivate
+                </ButtonUI>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Deactivated List -->
+    <div
+      v-if="manyExpenseAccountDataInactive.length > 0"
+      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+    >
+      <div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Deactivated Addresses</span>
+      </div>
+      <div class="overflow-x-auto" data-test="deactivated-list-table">
+        <table class="table">
+          <!-- head -->
+          <thead class="text-sm font-bold">
+            <tr>
+              <th>User</th>
+              <th>Expiry Date</th>
+              <th>Max Amount Per Tx</th>
+              <th>Total Transactions</th>
+              <th>Total Transfers</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(data, index) in manyExpenseAccountDataInactive" :key="index">
+              <td class="flex flex-row justify-start gap-4">
+                <div role="button" class="relative group">
+                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
+                    <img
+                      alt="User Avatar"
+                      :src="
+                        data.avatarUrl ||
+                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+                      "
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col text-gray-600">
+                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
+                    {{ data.name || 'User' }}
+                  </p>
+                  <p class="text-sm">
+                    {{
+                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
+                    }}
+                  </p>
+                </div>
+              </td>
+              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
+              <td>{{ data.budgetData[2].value }}</td>
+              <td>{{ `${data.balances['0']}/${data.budgetData[0].value}` }}</td>
+              <td>{{ `${data.balances['1']}/${data.budgetData[1].value}` }}</td>
+              <td class="flex justify-end" data-test="action-td">
+                <ButtonUI
+                  :disabled="contractOwnerAddress !== currentUserAddress"
+                  class="btn btn-success"
+                  :loading="isLoadingActivateApproval && deactivateIndex === index"
+                  @click="activateApproval(data.signature, index)"
+                >
+                  Activate
+                </ButtonUI>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -139,24 +244,34 @@
 
 <script setup lang="ts">
 //#region imports
-import { computed, onMounted, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit } from '@/types'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import type {
+  Team,
+  User,
+  BudgetLimit,
+  BudgetData,
+  ManyExpenseResponse,
+  ManyExpenseWithBalances
+} from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from './forms/ApproveUsersEIP712Form.vue'
-import { useClipboard } from '@vueuse/core'
-import ToolTip from '@/components/ToolTip.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import {
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useBalance,
+  useChainId
+} from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, parseSignature, hashTypedData } from 'viem'
+import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
-
 //#endregion imports
 
 //#region variable declarations
@@ -172,9 +287,23 @@ const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
-const maxLimit = computed(() =>
-  _expenseAccountData.value?.data ? JSON.parse(_expenseAccountData.value.data).value : '0.0'
-)
+const maxLimit = (budgetType: number) =>
+  computed(() => {
+    const budgetData =
+      _expenseAccountData.value?.data &&
+      Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)
+        ? JSON.parse(_expenseAccountData.value?.data).budgetData.find(
+            (item: BudgetData) => item.budgetType === budgetType
+          )
+        : undefined
+    if (_expenseAccountData.value?.data && budgetData && budgetData.budgetType === budgetType)
+      return budgetData.value
+    else return '--'
+  })
+const maxLimitTxsPerPeriod = maxLimit(0)
+const maxLimitAmountPerPeriod = maxLimit(1)
+const maxLimitAmountPerTx = maxLimit(2)
+
 const expiry = computed(() => {
   if (_expenseAccountData.value?.data) {
     const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
@@ -184,36 +313,45 @@ const expiry = computed(() => {
     return '--/--/--, --:--:--'
   }
 })
-const dynamicDisplayData = computed(() => {
-  if (_expenseAccountData.value?.data && amountWithdrawn.value) {
-    const budgetType = JSON.parse(_expenseAccountData.value.data).budgetType
-    if (budgetType === 0) {
-      return {
-        //@ts-ignore
-        value: Number(amountWithdrawn.value[0]),
-        heading: 'Total Transactions',
-        symbol: 'TXs'
+const dynamicDisplayData = (budgetType: number) =>
+  computed(() => {
+    const data =
+      budgetType === 0
+        ? { heading: 'Total Transactions', symbol: 'TXs' }
+        : { heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
+    if (_expenseAccountData.value?.data && amountWithdrawn.value) {
+      if (budgetType === 0) {
+        return {
+          ...data,
+          // @ts-expect-error: amountWithdrawn.value is a array
+          value: Number(amountWithdrawn.value[0])
+        }
+      } else {
+        return {
+          ...data,
+          // @ts-expect-error: amountWithdrawn.value is a array
+          value: formatEther(amountWithdrawn.value[1])
+        }
       }
     } else {
       return {
-        //@ts-ignore
-        value: formatEther(amountWithdrawn.value[1]),
-        heading: 'Total Withdrawn',
-        symbol: NETWORK.currencySymbol
+        ...data,
+        value: `--`
       }
     }
-  } else {
-    return { value: `0.0`, heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
-  }
-})
-// const limitBalanceHeading = computed(() => {
-//   if ()
-// })
+  })
+const dynamicDisplayDataTx = dynamicDisplayData(0)
+const dynamicDisplayDataAmount = dynamicDisplayData(1)
 const { addErrorToast, addSuccessToast } = useToastStore()
-const { copy, copied, isSupported } = useClipboard()
 const web3Library = new EthersJsAdapter()
-const expenseBalanceFormated = ref<string | number>(`0`)
-const digest = ref<string | null>(null)
+// const expenseBalanceFormated = ref<string | number>(`0`)
+const expenseBalanceFormatted = computed(() => {
+  if (typeof expenseAccountBalance.value?.value === 'bigint')
+    return formatEther(expenseAccountBalance.value.value)
+  else return '--'
+})
+const signatureHash = ref<string | null>(null)
+const deactivateIndex = ref<number | null>(null)
 //#endregion variable declarations
 
 //#region expense account composable
@@ -228,17 +366,6 @@ const {
 })
 
 const {
-  data: expenseBalance,
-  refetch: executeGetExpenseBalance,
-  //error: errorGetExpenseBalance,
-  isLoading: isLoadingGetExpenseBalance
-} = useReadContract({
-  functionName: 'getBalance',
-  address: team.value.expenseAccountEip712Address as Address,
-  abi: expenseAccountABI
-})
-
-const {
   data: amountWithdrawn,
   refetch: executeGetAmountWithdrawn,
   error: errorGetAmountWithdrawn
@@ -247,8 +374,63 @@ const {
   functionName: 'balances',
   address: team.value.expenseAccountEip712Address as Address,
   abi: expenseAccountABI,
-  args: [digest]
+  args: [signatureHash]
 })
+
+// Reactive storage for balances
+const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
+const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
+
+// Check if the current user is disapproved
+const isDisapprovedAddress = computed(
+  () =>
+    manyExpenseAccountDataInactive.findIndex(
+      (item) => item.approvedAddress === currentUserAddress
+    ) !== -1
+)
+
+// Async initialization function
+const initializeBalances = async () => {
+  manyExpenseAccountDataActive.length = 0
+  manyExpenseAccountDataInactive.length = 0
+  if (Array.isArray(manyExpenseAccountData.value))
+    for (const data of manyExpenseAccountData.value) {
+      signatureHash.value = keccak256(data.signature)
+
+      await executeGetAmountWithdrawn()
+
+      // Populate the reactive balances object
+      if (Array.isArray(amountWithdrawn.value)) {
+        if (amountWithdrawn.value[2] === 2)
+          manyExpenseAccountDataInactive.push({
+            ...data,
+            balances: {
+              0: `${amountWithdrawn.value[0]}`,
+              1: formatEther(amountWithdrawn.value[1]),
+              2: amountWithdrawn.value[2] === true
+            }
+          })
+        else
+          manyExpenseAccountDataActive.push({
+            ...data,
+            balances: {
+              0: `${amountWithdrawn.value[0]}`,
+              1: formatEther(amountWithdrawn.value[1]),
+              2: amountWithdrawn.value[2] === false
+            }
+          })
+      } else {
+        manyExpenseAccountDataInactive.push({
+          ...data,
+          balances: {
+            0: '--',
+            1: '--',
+            2: false
+          }
+        })
+      }
+    }
+}
 
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
@@ -257,13 +439,7 @@ watch(errorGetAmountWithdrawn, (newVal) => {
   }
 })
 
-watch(digest, async (newVal) => {
-  if (newVal) {
-    await executeGetAmountWithdrawn()
-    console.log(`amountWithdrawn`, amountWithdrawn)
-  }
-})
-
+//expense account transfer
 const {
   writeContract: executeExpenseAccountTransfer,
   isPending: isLoadingTransfer,
@@ -285,16 +461,92 @@ const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    await getExpenseAccountBalance()
+    await executeGetExpenseAccountBalance()
     await getAmountWithdrawnBalance()
     transferModal.value = false
   }
 })
 
-// useFetch instance for deleting member
+//deactivate approval
+const {
+  writeContract: executeDeactivateApproval,
+  isPending: isLoadingDeactivateApproval,
+  error: errorDeactivateApproval,
+  data: deactivateHash
+} = useWriteContract()
+
+watch(errorDeactivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to deactivate approval')
+  }
+})
+
+const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
+  useWaitForTransactionReceipt({
+    hash: deactivateHash
+  })
+watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
+    addSuccessToast('Deactivate Successful')
+    await initializeBalances()
+  }
+})
+
+const deactivateApproval = async (signature: `0x{string}`, index: number) => {
+  deactivateIndex.value = index
+  const signatureHash = keccak256(signature)
+
+  executeDeactivateApproval({
+    address: team.value.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'deactivateApproval'
+  })
+}
+
+//activate approval
+const {
+  writeContract: executeActivateApproval,
+  isPending: isLoadingActivateApproval,
+  error: errorActivateApproval,
+  data: activateHash
+} = useWriteContract()
+
+watch(errorActivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to activate approval')
+  }
+})
+
+const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
+  useWaitForTransactionReceipt({
+    hash: activateHash
+  })
+watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
+    addSuccessToast('Activate Successful')
+    await initializeBalances()
+  }
+})
+
+const activateApproval = async (signature: `0x{string}`, index: number) => {
+  deactivateIndex.value = index
+  const signatureHash = keccak256(signature)
+
+  executeActivateApproval({
+    address: team.value.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'activateApproval'
+  })
+}
+
+// useFetch instance for fetching expence account data
 const {
   error: fetchExpenseAccountDataError,
-  isFetching: isFetchingExpenseAccountData,
+  // isFetching: isFetchingExpenseAccountData,
   execute: fetchExpenseAccountData,
   data: _expenseAccountData
 } = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
@@ -310,6 +562,24 @@ const {
 })
   .get()
   .json()
+
+const {
+  error: fetchManyExpenseAccountDataError,
+  //isFetching: isFetchingManyExpenseAccountData,
+  execute: fetchManyExpenseAccountData,
+  data: manyExpenseAccountData
+} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
+  immediate: false
+})
+  .get()
+  .json<ManyExpenseResponse[]>()
+
+watch(fetchManyExpenseAccountDataError, (newVal) => {
+  if (newVal) {
+    addErrorToast('Error fetching many expense account data')
+    log.error(parseError(newVal))
+  }
+})
 
 const {
   execute: executeSearchUser,
@@ -342,25 +612,12 @@ watch(searchUserResponse, () => {
 })
 
 //#region helper functions
-const getDigest = async () => {
-  const domain = await getDomain()
-  const types = await getTypes()
-  if (!_expenseAccountData?.value?.data) return
-  let message = JSON.parse(_expenseAccountData.value.data)
-  if (typeof message.value === 'string') message.value = Number(parseEther(message.value))
-  const _digest = hashTypedData({
-    domain: { ...domain, chainId: Number(domain.chainId) },
-    types,
-    primaryType: 'BudgetLimit',
-    message
-  })
-
-  digest.value = _digest
-}
 const init = async () => {
-  await fetchExpenseAccountData()
   await getExpenseAccountOwner()
-  await getExpenseAccountBalance()
+  await fetchExpenseAccountData()
+  await fetchManyExpenseAccountData()
+  await initializeBalances()
+  // await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
 }
 
@@ -368,16 +625,10 @@ const getExpenseAccountOwner = async () => {
   if (team.value.expenseAccountEip712Address) await executeExpenseAccountGetOwner()
 }
 
-const getExpenseAccountBalance = async () => {
-  if (team.value.expenseAccountEip712Address) {
-    await executeGetExpenseBalance()
-    expenseBalanceFormated.value = formatEther(expenseBalance.value as bigint)
-  }
-}
-
 const getAmountWithdrawnBalance = async () => {
   if (team.value.expenseAccountEip712Address) {
-    await getDigest()
+    if (!_expenseAccountData?.value?.data) return
+    signatureHash.value = keccak256(_expenseAccountData.value.signature)
     await executeGetAmountWithdrawn()
   }
 }
@@ -385,40 +636,24 @@ const getAmountWithdrawnBalance = async () => {
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-    const { v, r, s } = parseSignature(_expenseAccountData.value.signature)
-
-    if (typeof budgetLimit.value === 'string') budgetLimit.value = parseEther(budgetLimit.value)
 
     executeExpenseAccountTransfer({
       address: team.value.expenseAccountEip712Address as Address,
-      args: [to, parseEther(amount), budgetLimit, v, r, s],
+      args: [
+        to,
+        parseEther(amount),
+        {
+          ...budgetLimit,
+          budgetData: budgetLimit.budgetData.map((item) => ({
+            ...item,
+            value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+          }))
+        },
+        _expenseAccountData.value.signature
+      ],
       abi: expenseAccountABI,
       functionName: 'transfer'
     })
-  }
-}
-
-const getDomain = async () => {
-  const provider = await web3Library.getProvider()
-  const chainId = (await provider.getNetwork()).chainId
-  const verifyingContract = team.value.expenseAccountEip712Address as Address
-
-  return {
-    name: 'CNCExpenseAccount',
-    version: '1',
-    chainId, //: 31337n,
-    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
-  }
-}
-
-const getTypes = async () => {
-  return {
-    BudgetLimit: [
-      { name: 'approvedAddress', type: 'address' },
-      { name: 'budgetType', type: 'uint8' },
-      { name: 'value', type: 'uint256' },
-      { name: 'expiry', type: 'uint256' }
-    ]
   }
 }
 
@@ -432,22 +667,30 @@ const approveUser = async (data: BudgetLimit) => {
   const domain = {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId, //: 31337n,
-    verifyingContract //: '0x6DcBc91229d812910b54dF91b5c2b592572CD6B0'
+    chainId,
+    verifyingContract
   }
-
   const types = {
+    BudgetData: [
+      { name: 'budgetType', type: 'uint8' },
+      { name: 'value', type: 'uint256' }
+    ],
     BudgetLimit: [
       { name: 'approvedAddress', type: 'address' },
-      { name: 'budgetType', type: 'uint8' },
-      { name: 'value', type: 'uint256' },
+      { name: 'budgetData', type: 'BudgetData[]' },
       { name: 'expiry', type: 'uint256' }
     ]
   }
 
   try {
-    const signature = await signer.signTypedData(domain, types, data)
-    if (typeof data.value === 'bigint') data.value = web3Library.formatEther(data.value)
+    const signature = await signer.signTypedData(domain, types, {
+      ...data,
+      budgetData: data.budgetData.map((item) => ({
+        ...item,
+        value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+      }))
+    })
+
     expenseAccountData.value = {
       expenseAccountData: data,
       signature
@@ -464,10 +707,6 @@ const approveUser = async (data: BudgetLimit) => {
 
 const isBodAction = () => {
   return false
-}
-
-const openExplorer = (address: string) => {
-  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 
 const searchUsers = async (input: { name: string; address: string }) => {
@@ -503,8 +742,24 @@ watch(fetchExpenseAccountDataError, (newVal) => {
 })
 //#endregion watch success
 
+const chainId = useChainId()
+const {
+  data: expenseAccountBalance,
+  isLoading: isLoadingExpenseAccountBalance,
+  error: isErrorExpenseAccountBalance,
+  refetch: executeGetExpenseAccountBalance
+} = useBalance({
+  address: team.value.expenseAccountEip712Address as Address,
+  chainId
+})
+watch(isErrorExpenseAccountBalance, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Error fetching expense account data')
+  }
+})
+
 onMounted(async () => {
   await init()
-  // console.log(`expense account data`, _expenseAccountData.value)
 })
 </script>
