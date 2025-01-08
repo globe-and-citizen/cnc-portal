@@ -1,11 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useSiwe } from '@/composables/useSiwe'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import * as utils from '@/utils'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { afterEach } from 'node:test'
 
 const mocks = vi.hoisted(() => ({
   mockSlSiweMessageCreator: {
@@ -128,13 +126,13 @@ describe('useSiwe', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     //logErrorSpy.mockClear()
+    // vi.clearAllMocks()
+    // mockUseSignMessage.data.value = undefined
+  })
+  afterEach(() => {
     vi.clearAllMocks()
     mockUseSignMessage.data.value = undefined
   })
-  // afterEach(() => {
-  //   vi.clearAllMocks()
-  //   logErrorSpy.mockClear()
-  // })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
     mockUseSignMessage.signMessage.mockImplementation(
