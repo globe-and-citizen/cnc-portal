@@ -29,13 +29,14 @@
   </div>
   <div class="divider m-0"></div>
   <div class="overflow-x-auto">
-    <table class="table table-zebra">
+    <table class="table table-zebra" data-test="members-table">
       <!-- head -->
       <thead class="text-sm font-bold">
         <tr>
           <th></th>
           <th>Name</th>
           <th>Address</th>
+          <th>Wage</th>
           <th v-if="team.ownerAddress === userDataStore.address">Action</th>
         </tr>
       </thead>
