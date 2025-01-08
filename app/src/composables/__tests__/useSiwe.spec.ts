@@ -4,7 +4,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import * as utils from '@/utils'
-import * as useCustomFetch from "@/composables/useCustomFetch";
+import { useCustomFetch } from '@/composables/useCustomFetch'
 import { afterEach } from 'node:test'
 
 const mocks = vi.hoisted(() => ({
@@ -75,13 +75,15 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
 // const mockUseCustomFetch = {
 //   executeGet: vi.fn()
 // }
-const mockCustomFetchError = {
-  error: ref<null | Error>(null),
-  execute: vi.fn()
+const mockCustomFetch = {
+  post: {
+    error: ref<null | Error>(null),
+    execute: vi.fn()
+  }
 }
 
 vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: (url: Ref<string>) => {
+  useCustomFetch: vi.fn((url: Ref<string>) => {
     const data = ref<unknown>(null)
     return {
       json: () => ({
@@ -112,22 +114,27 @@ vi.mock('@/composables/useCustomFetch', () => ({
       post: () => ({
         json: () => ({
           data: ref({ accessToken: 'token' }),
-          execute: mockCustomFetchError.execute,//vi.fn(),
-          error: mockCustomFetchError.error//ref(null)
+          execute: mockCustomFetch.post.execute, //vi.fn(),
+          error: mockCustomFetch.post.error //ref(null)
         })
       })
     }
-  }
+  })
 }))
 
 describe('useSiwe', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
+  const logInfoSpy = vi.spyOn(utils.log, 'info')
   beforeEach(() => {
     setActivePinia(createPinia())
-  })
-  afterEach(() => {
+    //logErrorSpy.mockClear()
     vi.clearAllMocks()
+    mockUseSignMessage.data.value = undefined
   })
+  // afterEach(() => {
+  //   vi.clearAllMocks()
+  //   logErrorSpy.mockClear()
+  // })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
     mockUseSignMessage.signMessage.mockImplementation(
@@ -182,8 +189,24 @@ describe('useSiwe', () => {
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to sign SIWE message')
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', new Error('Sign message error'))
+    mockUseSignMessage.error.value = null
   })
-  it('should if notify error if error posting siwe data', async () => {
-  
+  it('should notify error if error posting siwe data', async () => {
+    mockUseSignMessage.signMessage.mockReset()
+    mockUseSignMessage.signMessage.mockImplementation(
+      () => (mockUseSignMessage.data.value = '0xSignature')
+    )
+    mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
+    mockCustomFetch.post.execute.mockImplementation(() => {
+      console.log(`Executing error fetch...`)
+      mockCustomFetch.post.error.value = new Error('Error posting auth data')
+    })
+    const { isProcessing, siwe } = useSiwe()
+    await siwe()
+    await flushPromises()
+    expect(mockCustomFetch.post.execute).toBeCalled()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to authenticate with SIWE')
+    expect(isProcessing.value).toBe(false)
+    expect(logInfoSpy).toBeCalledWith('siweError.value', new Error('Error posting auth data'))
   })
 })
