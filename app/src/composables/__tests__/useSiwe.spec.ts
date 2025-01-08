@@ -1,11 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { useSiwe } from '@/composables/useSiwe'
-import { setActivePinia, createPinia } from 'pinia'
+import { setActivePinia } from 'pinia'
 import { ref, type Ref } from 'vue'
-import { useUserDataStore } from '@/stores/user'
+// import { useUserDataStore } from '@/stores/user'
 import { createTestingPinia } from '@pinia/testing'
-import * as utils from '@/utils'
-import { mock } from 'node:test'
 
 // import { SLSiweMessageCreator } from "@/adapters/siweMessageCreatorAdapter";
 
@@ -127,7 +125,7 @@ describe('useSiwe', () => {
       createSpy: vi.fn
     })
     setActivePinia(pinia)
-    const userStore = useUserDataStore()
+    // const userStore = useUserDataStore()
     const { siwe } = useSiwe()
     await siwe()
     expect(mocks.mockSlSiweMessageCreator.create).toBeCalled()
