@@ -1,16 +1,26 @@
-import { describe, it, expect, vi, beforeAll, afterAll, vitest } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { useSiwe } from '@/composables/useSiwe'
-import { useCustomFetch } from '../useCustomFetch'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
+import { useUserDataStore } from '@/stores/user'
+import { createTestingPinia } from '@pinia/testing'
+import * as utils from '@/utils'
+import { mock } from 'node:test'
+
 // import { SLSiweMessageCreator } from "@/adapters/siweMessageCreatorAdapter";
-
-
 
 const mocks = vi.hoisted(() => ({
   mockSlSiweMessageCreator: {
     constructor: vi.fn(),
     create: vi.fn()
+  },
+  mockUserDataStore: {
+    useUserDataStore: vi.fn(() => ({
+      setUserData: mocks.mockUserDataStore.setUserData,
+      setAuthStatus: mocks.mockUserDataStore.setAuthStatus
+    })),
+    setUserData: vi.fn(),
+    setAuthStatus: vi.fn()
   }
 }))
 const mockUseAccount = {
@@ -20,7 +30,7 @@ const mockUseAccount = {
 const mockUseSignMessage = {
   data: ref<string | undefined>(undefined),
   error: null,
-  signMessage: vi.fn() 
+  signMessage: vi.fn()
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -32,15 +42,23 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-const mockSlSiweMessageCreator = {
-  constructor: vi.fn()
-}
+// vi.mock('@/stores/user', async (importOriginal) => {
+//   const actual: Object = await importOriginal()
+//   return {
+//     ...actual,
+//     useUserDataStore: mocks.mockUserDataStore.useUserDataStore
+//     // useUserDataStore: vi.fn(() => ({
+//     //   setUserData: mocks.mockUserDataStore.setUserData,
+//     //   setAuthStatus: mocks.mockUserDataStore.setAuthStatus
+//     // }))
+//   }
+// })
 
 vi.mock('@/adapters/siweMessageCreatorAdapter', async (importOriginal) => {
   const actual: Object = await importOriginal()
 
   const SLSiweMessageCreator = mocks.mockSlSiweMessageCreator.constructor
-  SLSiweMessageCreator.prototype.constructor =  mocks.mockSlSiweMessageCreator.constructor
+  SLSiweMessageCreator.prototype.constructor = mocks.mockSlSiweMessageCreator.constructor
   SLSiweMessageCreator.prototype.create = mocks.mockSlSiweMessageCreator.create
   return { ...actual, SLSiweMessageCreator }
 })
@@ -55,7 +73,9 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
   return { ...actual, MetaMaskUtil }
 })
 
-const executeMock = vi.fn()
+// const mockUseCustomFetch = {
+//   executeGet: vi.fn()
+// }
 
 vi.mock('@/composables/useCustomFetch', () => ({
   useCustomFetch: (url: Ref<string>) => {
@@ -75,8 +95,13 @@ vi.mock('@/composables/useCustomFetch', () => ({
         json: () => ({
           data,
           execute: vi.fn(() => {
-            if (url.value === `user/nonce/0xUserAddress`)
-              data.value = {nonce: `xyz`}
+            if (url.value === `user/nonce/0xUserAddress`) data.value = { nonce: `xyz` }
+            else
+              data.value = {
+                name: 'User Name',
+                address: '0xUserAddress',
+                nonce: 'xyz'
+              }
           }),
           error: ref(null)
         })
@@ -95,9 +120,15 @@ vi.mock('@/composables/useCustomFetch', () => ({
 describe('useSiwe', () => {
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
-    mockUseSignMessage.signMessage.mockImplementation(() => mockUseSignMessage.data.value = '0xSignature')
-    setActivePinia(createPinia())
-    const { isProcessing, siwe } = useSiwe()
+    mockUseSignMessage.signMessage.mockImplementation(
+      () => (mockUseSignMessage.data.value = '0xSignature')
+    )
+    const pinia = createTestingPinia({
+      createSpy: vi.fn
+    })
+    setActivePinia(pinia)
+    const userStore = useUserDataStore()
+    const { siwe } = useSiwe()
     await siwe()
     expect(mocks.mockSlSiweMessageCreator.create).toBeCalled()
     expect(mocks.mockSlSiweMessageCreator.constructor).toBeCalledWith({
@@ -107,6 +138,7 @@ describe('useSiwe', () => {
       version: '1',
       chainId: 1
     })
-    expect(mockUseSignMessage.signMessage).toBeCalledWith({message: 'Siwe message'})
+    expect(mockUseSignMessage.signMessage).toBeCalledWith({ message: 'Siwe message' })
+    // expect(userStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
   })
 })

@@ -49,6 +49,7 @@ export function useSiwe() {
       router.push('/teams')
 
       isProcessing.value = false
+      console.log(`Got to the end of the code...`)
     }
   })
 
@@ -114,8 +115,7 @@ export function useSiwe() {
 
       apiEndpoint.value = `user/nonce/${account.address.value}`
       await executeFetchUserNonce()
-      if (!nonce.value)
-        return
+      if (!nonce.value) return
 
       const statement = 'Sign in with Ethereum to the app.'
       const siweMessageCreator = createSiweMessageCreator(
