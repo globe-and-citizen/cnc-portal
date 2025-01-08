@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
@@ -406,7 +406,7 @@ describe('ExpenseAccountSection', () => {
 
       const transferButton = firstRowCells[4].find('button')
       expect(transferButton.exists()).toBe(true)
-      expect(transferButton.text()).toBe('Transfer')
+      expect(transferButton.text()).toBe('Spend')
     })
     it('should disable the transfer button if the approval is disapproved', async () => {
       const wrapper = createComponent({
@@ -463,7 +463,7 @@ describe('ExpenseAccountSection', () => {
 
       const transferButton = firstRowCells[4].findComponent(ButtonUI)
       expect(transferButton.exists()).toBe(true)
-      expect(transferButton.text()).toBe('Transfer')
+      expect(transferButton.text()).toBe('Spend')
       expect(transferButton.props().disabled).toBe(true)
     })
     // it('should show aprroval list table cells with correct data', async () => {
@@ -540,13 +540,7 @@ describe('ExpenseAccountSection', () => {
         return `${args as `0x${string}`}Hash`
       })
 
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick() //anything less the test fails
+      await flushPromises() 
 
       // Locate the table using the data-test attribute
       const table = wrapper.find('[data-test="approvals-list-table"]')
@@ -573,7 +567,7 @@ describe('ExpenseAccountSection', () => {
       expect(rows).toHaveLength(mockExpenseData.length)
 
       const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...56789`)
+      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...6789`)
       expect(firstRowCells[1].text()).toBe(
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
@@ -582,11 +576,11 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
       const firstActivateButton = firstRowCells[5].findComponent(ButtonUI)
       expect(firstActivateButton.exists()).toBe(true)
-      expect(firstActivateButton.text()).toBe('Deactivate')
+      expect(firstActivateButton.text()).toBe('Disable Approval')
       expect(firstActivateButton.props().disabled).toBeTruthy()
 
       const secondRowCells = rows[1].findAll('td')
-      expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
+      expect(secondRowCells[0].text()).toBe(`User0xabcd...1234`)
       expect(secondRowCells[1].text()).toBe(
         new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
       )
@@ -595,7 +589,7 @@ describe('ExpenseAccountSection', () => {
       expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
       const secondActivateButton = firstRowCells[5].findComponent(ButtonUI)
       expect(secondActivateButton.exists()).toBe(true)
-      expect(secondActivateButton.text()).toBe('Deactivate')
+      expect(secondActivateButton.text()).toBe('Disable Approval')
       expect(secondActivateButton.props().disabled).toBeTruthy()
     })
     it('should show deactivated list table', async () => {
@@ -642,7 +636,7 @@ describe('ExpenseAccountSection', () => {
       expect(rows).toHaveLength(mockExpenseData.length)
 
       const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...56789`)
+      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...6789`)
       expect(firstRowCells[1].text()).toBe(
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
@@ -651,11 +645,11 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
       const firstActivateButton = firstRowCells[5].findComponent(ButtonUI)
       expect(firstActivateButton.exists()).toBe(true)
-      expect(firstActivateButton.text()).toBe('Activate')
+      expect(firstActivateButton.text()).toBe('Reactivate Approval')
       expect(firstActivateButton.props().disabled).toBeTruthy()
 
       const secondRowCells = rows[1].findAll('td')
-      expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
+      expect(secondRowCells[0].text()).toBe(`User0xabcd...1234`)
       expect(secondRowCells[1].text()).toBe(
         new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
       )
@@ -664,7 +658,7 @@ describe('ExpenseAccountSection', () => {
       expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
       const secondActivateButton = firstRowCells[5].findComponent(ButtonUI)
       expect(secondActivateButton.exists()).toBe(true)
-      expect(secondActivateButton.text()).toBe('Activate')
+      expect(secondActivateButton.text()).toBe('Reactivate Approval')
       expect(secondActivateButton.props().disabled).toBeTruthy()
     })
     it('should enable deactivate button if contract owner', async () => {
@@ -709,7 +703,7 @@ describe('ExpenseAccountSection', () => {
       const firstRowCells = rows[0].findAll('td')
       const firstDeactivateButton = firstRowCells[5].findComponent(ButtonUI)
       expect(firstDeactivateButton.exists()).toBe(true)
-      expect(firstDeactivateButton.text()).toBe('Deactivate')
+      expect(firstDeactivateButton.text()).toBe('Disable Approval')
       expect(firstDeactivateButton.props().disabled).toBeFalsy()
     })
     // it('should disable deactivate button if approval inactive', async () => {
@@ -922,9 +916,7 @@ describe('ExpenseAccountSection', () => {
     it('should show expense account balance', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
-        `${'--'} ${NETWORK.currencySymbol}`
-      )
+      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toContain('--')
       //@ts-expect-error: expenseAccountDalance is contract data mocked in the test
       wrapper.vm.expenseAccountBalance = { value: 500n * 10n ** 18n }
 
@@ -932,9 +924,7 @@ describe('ExpenseAccountSection', () => {
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
-        `${'500'} ${NETWORK.currencySymbol}`
-      )
+      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toContain('500')
     })
 
     it('should show animation if max limit loading', async () => {

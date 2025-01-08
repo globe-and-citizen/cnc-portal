@@ -6,7 +6,7 @@
       <div class="card bg-base-200 w-1/3 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">Balance</h2>
-          <div class="font-extrabold text-neutral flex gap-2 items-baseline">
+          <div class="font-extrabold text-neutral flex gap-2 items-baseline" data-test="expense-account-balance">
             <span class="inline-block h-10 text-4xl">
               <span class="loading loading-spinner loading-lg" v-if="isLoadingExpenseAccountBalance"></span>
               <span v-else>{{ expenseBalanceFormatted }} </span>
