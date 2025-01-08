@@ -42,7 +42,6 @@ vi.mock('@/stores/user', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
     ...actual,
-    // useUserDataStore: mocks.mockUserDataStore.useUserDataStore
     useUserDataStore: vi.fn(() => ({
       setUserData: mocks.mockUserDataStore.setUserData,
       setAuthStatus: mocks.mockUserDataStore.setAuthStatus
@@ -65,14 +64,11 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
 
   const MetaMaskUtil = vi.fn()
   //@ts-expect-error: mock test function
-  MetaMaskUtil['hasInstalledWallet'] = mocks.mockHasInstalledWallet //vi.fn(() => true)
+  MetaMaskUtil['hasInstalledWallet'] = mocks.mockHasInstalledWallet
 
   return { ...actual, MetaMaskUtil }
 })
 
-// const mockUseCustomFetch = {
-//   executeGet: vi.fn()
-// }
 const mockCustomFetch = {
   post: {
     error: ref<null | Error>(null),
@@ -112,8 +108,8 @@ vi.mock('@/composables/useCustomFetch', () => ({
       post: () => ({
         json: () => ({
           data: ref({ accessToken: 'token' }),
-          execute: mockCustomFetch.post.execute, //vi.fn(),
-          error: mockCustomFetch.post.error //ref(null)
+          execute: mockCustomFetch.post.execute,
+          error: mockCustomFetch.post.error
         })
       })
     }
@@ -125,9 +121,6 @@ describe('useSiwe', () => {
   const logInfoSpy = vi.spyOn(utils.log, 'info')
   beforeEach(() => {
     setActivePinia(createPinia())
-    //logErrorSpy.mockClear()
-    // vi.clearAllMocks()
-    // mockUseSignMessage.data.value = undefined
   })
   afterEach(() => {
     vi.clearAllMocks()
@@ -196,7 +189,6 @@ describe('useSiwe', () => {
     )
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
     mockCustomFetch.post.execute.mockImplementation(() => {
-      console.log(`Executing error fetch...`)
       mockCustomFetch.post.error.value = new Error('Error posting auth data')
     })
     const { isProcessing, siwe } = useSiwe()
