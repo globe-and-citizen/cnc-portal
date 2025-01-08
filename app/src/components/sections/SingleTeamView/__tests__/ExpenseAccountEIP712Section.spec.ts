@@ -540,7 +540,7 @@ describe('ExpenseAccountSection', () => {
         return `${args as `0x${string}`}Hash`
       })
 
-      await flushPromises() 
+      await flushPromises()
 
       // Locate the table using the data-test attribute
       const table = wrapper.find('[data-test="approvals-list-table"]')
