@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-y-4 ">
+  <div class="flex flex-col gap-y-4">
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
     <div class="flex gap-10">
@@ -51,8 +51,8 @@
       v-if="team.expenseAccountEip712Address"
       class="card shadow-xl flex text-primary-content p-5 overflow-visible"
     >
-    <span class="text-2xl font-bold">My Approved Expense</span>
-    <!-- TODO display this only if the use have an approved expense -->
+      <span class="text-2xl font-bold">My Approved Expense</span>
+      <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
       <section class="stat flex flex-col justify-start">
         <!-- New Header -->
