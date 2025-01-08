@@ -1,7 +1,7 @@
 import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import router from '@/router'
 import { ref, watch } from 'vue'
-import { useUserDataStore, useToastStore } from "@/stores";
+import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
 import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'

@@ -1,11 +1,9 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useSiwe } from '@/composables/useSiwe'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
-import { beforeEach } from 'node:test'
-
-// import { SLSiweMessageCreator } from "@/adapters/siweMessageCreatorAdapter";
+import * as utils from '@/utils'
 
 const mocks = vi.hoisted(() => ({
   mockSlSiweMessageCreator: {
@@ -27,7 +25,7 @@ const mockUseAccount = {
 
 const mockUseSignMessage = {
   data: ref<string | undefined>(undefined),
-  error: null,
+  error: ref<null | Error>(null),
   signMessage: vi.fn()
 }
 
@@ -49,7 +47,7 @@ vi.mock('@/stores/user', async (importOriginal) => {
       setUserData: mocks.mockUserDataStore.setUserData,
       setAuthStatus: mocks.mockUserDataStore.setAuthStatus
     })),
-    useToastStore: vi.fn(() => ({addErrorToast: mocks.mockUseToastStore.addErrorToast}))
+    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
   }
 })
 
@@ -67,7 +65,7 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
 
   const MetaMaskUtil = vi.fn()
   //@ts-expect-error: mock test function
-  MetaMaskUtil['hasInstalledWallet'] = mocks.mockHasInstalledWallet//vi.fn(() => true)
+  MetaMaskUtil['hasInstalledWallet'] = mocks.mockHasInstalledWallet //vi.fn(() => true)
 
   return { ...actual, MetaMaskUtil }
 })
@@ -117,14 +115,17 @@ vi.mock('@/composables/useCustomFetch', () => ({
 }))
 
 describe('useSiwe', () => {
-  setActivePinia(createPinia())
+  const logErrorSpy = vi.spyOn(utils.log, 'error')
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
     mocks.mockHasInstalledWallet.mockImplementation(() => true)
-    
+
     const { siwe } = useSiwe()
     await siwe()
     expect(mocks.mockSlSiweMessageCreator.create).toBeCalled()
@@ -144,8 +145,38 @@ describe('useSiwe', () => {
     mocks.mockHasInstalledWallet.mockReset()
     mocks.mockSlSiweMessageCreator.create.mockClear()
     mocks.mockHasInstalledWallet.mockImplementation(() => false)
+    const { isProcessing, siwe } = useSiwe()
+    await siwe()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'MetaMask is not installed, Please install MetaMask to continue'
+    )
+    expect(isProcessing.value).toBe(false)
+  })
+  it('should report an error if error processing', async () => {
+    mocks.mockUseToastStore.addErrorToast.mockClear()
+    mocks.mockHasInstalledWallet.mockReset()
+    mocks.mockHasInstalledWallet.mockImplementation(() => true)
+    mocks.mockSlSiweMessageCreator.create.mockReset()
+    mocks.mockSlSiweMessageCreator.create.mockRejectedValue(new Error('Error creating message'))
     const { siwe } = useSiwe()
     await siwe()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('MetaMask is not installed, Please install MetaMask to continue')
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(`Couldn't authenticate with SIWE`)
+    expect(logErrorSpy).toBeCalledWith('Error creating message')
+  })
+  it('should display error when signature error', async () => {
+    mocks.mockHasInstalledWallet.mockReset()
+    mocks.mockSlSiweMessageCreator.create.mockClear()
+    mocks.mockSlSiweMessageCreator.create.mockReset()
+    mocks.mockHasInstalledWallet.mockImplementation(() => true)
+    mocks.mockUseToastStore.addErrorToast.mockClear()
+    mockUseSignMessage.signMessage.mockImplementation(
+      () => (mockUseSignMessage.error.value = new Error('Sign message error'))
+    )
+    logErrorSpy.mockReset()
+    const { isProcessing, siwe } = useSiwe()
+    await siwe()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to sign SIWE message')
+    expect(isProcessing.value).toBe(false)
+    expect(logErrorSpy).toBeCalledWith('signMessageError.value', new Error('Sign message error'))
   })
 })
