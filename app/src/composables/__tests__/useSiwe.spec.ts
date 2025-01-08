@@ -1,9 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { useSiwe } from '@/composables/useSiwe'
-import { setActivePinia } from 'pinia'
+import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
-// import { useUserDataStore } from '@/stores/user'
-import { createTestingPinia } from '@pinia/testing'
+import { flushPromises } from '@vue/test-utils'
 
 // import { SLSiweMessageCreator } from "@/adapters/siweMessageCreatorAdapter";
 
@@ -13,13 +12,10 @@ const mocks = vi.hoisted(() => ({
     create: vi.fn()
   },
   mockUserDataStore: {
-    useUserDataStore: vi.fn(() => ({
-      setUserData: mocks.mockUserDataStore.setUserData,
-      setAuthStatus: mocks.mockUserDataStore.setAuthStatus
-    })),
     setUserData: vi.fn(),
     setAuthStatus: vi.fn()
-  }
+  },
+  mockHasInstalledWallet: vi.fn()
 }))
 const mockUseAccount = {
   address: { value: '0xUserAddress' }
@@ -40,17 +36,17 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-// vi.mock('@/stores/user', async (importOriginal) => {
-//   const actual: Object = await importOriginal()
-//   return {
-//     ...actual,
-//     useUserDataStore: mocks.mockUserDataStore.useUserDataStore
-//     // useUserDataStore: vi.fn(() => ({
-//     //   setUserData: mocks.mockUserDataStore.setUserData,
-//     //   setAuthStatus: mocks.mockUserDataStore.setAuthStatus
-//     // }))
-//   }
-// })
+vi.mock('@/stores/user', async (importOriginal) => {
+  const actual: Object = await importOriginal()
+  return {
+    ...actual,
+    // useUserDataStore: mocks.mockUserDataStore.useUserDataStore
+    useUserDataStore: vi.fn(() => ({
+      setUserData: mocks.mockUserDataStore.setUserData,
+      setAuthStatus: mocks.mockUserDataStore.setAuthStatus
+    }))
+  }
+})
 
 vi.mock('@/adapters/siweMessageCreatorAdapter', async (importOriginal) => {
   const actual: Object = await importOriginal()
@@ -66,7 +62,7 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
 
   const MetaMaskUtil = vi.fn()
   //@ts-expect-error: mock test function
-  MetaMaskUtil['hasInstalledWallet'] = vi.fn(() => true)
+  MetaMaskUtil['hasInstalledWallet'] = mocks.mockHasInstalledWallet//vi.fn(() => true)
 
   return { ...actual, MetaMaskUtil }
 })
@@ -121,11 +117,9 @@ describe('useSiwe', () => {
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
-    const pinia = createTestingPinia({
-      createSpy: vi.fn
-    })
-    setActivePinia(pinia)
-    // const userStore = useUserDataStore()
+    mocks.mockHasInstalledWallet.mockImplementation(() => true)
+    
+    setActivePinia(createPinia())
     const { siwe } = useSiwe()
     await siwe()
     expect(mocks.mockSlSiweMessageCreator.create).toBeCalled()
@@ -137,6 +131,8 @@ describe('useSiwe', () => {
       chainId: 1
     })
     expect(mockUseSignMessage.signMessage).toBeCalledWith({ message: 'Siwe message' })
-    // expect(userStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
+    await flushPromises()
+    expect(mocks.mockUserDataStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
+    expect(mocks.mockUserDataStore.setAuthStatus).toBeCalledWith(true)
   })
 })
