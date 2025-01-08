@@ -5,6 +5,7 @@
     <td>
       <AddressToolTip :address="member.address ?? ''" />
     </td>
+    <td>20 h/week & 10 USD/h</td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
       <div v-if="ownerAddress == userDataStore.address" class="flex flex-wrap gap-2">
         <ButtonUI
