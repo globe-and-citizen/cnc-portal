@@ -31,6 +31,7 @@
 
       <ModalComponent v-model="officerModal">
         <OfficerForm
+          v-if="officerModal"
           :team="team"
           @getTeam="
             () => {

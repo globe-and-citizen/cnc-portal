@@ -1,7 +1,18 @@
 <template>
   <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
+    <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
+    <!-- Cash Remuneration stats: Only apear for owner -->
+
+    <CashRemunerationStats></CashRemunerationStats>
+    <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+      <div class="flex flex-wrap gap-2 sm:gap-4">
+        <span class="text-sm">Cash Remuneration Address </span>
+        <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
+      </div>
+    </div>
+    <div class="divider m-0"></div>
     <div class="flex justify-between">
-      <span class="text-2xl sm:text-3xl font-bold">Pending Claims</span>
+      <span class="text-2xl sm:text-3xl font-bold">Submit Claims</span>
       <div class="flex gap-2">
         <div>
           <label class="input input-bordered flex items-center gap-2 input-md">
@@ -37,7 +48,16 @@
       </div>
     </div>
     <div class="divider m-0"></div>
-    <div class="overflow-x-auto" v-if="wageClaims" data-test="claims-table">
+    <div class="overflow-x-auto flex flex-col gap-4" v-if="wageClaims" data-test="claims-table">
+      <span class="text-2xl sm:text-3xl font-bold">Claims Table</span>
+
+      <TabNavigation v-model="activeTab" :tabs="tabs" class="w-full">
+        <template #tab-0> Tab 1 </template>
+        <template #tab-1> Tab 2 </template>
+        <template #tab-2> Tab 3 </template>
+        <template #tab-3> Tab 4 </template>
+        <template #tab-4> Tab 4 </template>
+      </TabNavigation>
       <table class="table table-zebra">
         <!-- head -->
         <thead class="text-sm font-bold">
@@ -68,23 +88,6 @@
         </tbody>
       </table>
     </div>
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div>
-        <span>Cash Remuneration Balance</span>
-        <div class="font-extrabold text-4xl">
-          <span class="inline-block min-w-16 h-10">
-            <span class="loading loading-spinner loading-lg" v-if="balanceLoading"></span>
-            <span v-else>{{ cashRemunerationBalance?.formatted }} </span>
-          </span>
-          <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-        </div>
-        <span class="text-xs sm:text-sm">≈ $ 1.28</span>
-      </div>
-      <div class="flex flex-wrap gap-2 sm:gap-4">
-        <span class="text-sm">Cash Remuneration Address </span>
-        <AddressToolTip :address="team.cashRemunerationEip712Address ?? ''" class="text-xs" />
-      </div>
-    </div>
   </div>
 </template>
 
@@ -100,11 +103,11 @@ import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { log, parseError } from '@/utils'
 import { parseEther, type Address } from 'viem'
 import { useBalance } from '@wagmi/vue'
-import { NETWORK } from '@/constant'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
-
+import CashRemunerationStats from './CashRemunerationStats.vue'
+import TabNavigation from '@/components/TabNavigation.vue'
 const route = useRoute()
 const web3Library = new EthersJsAdapter()
 
@@ -120,6 +123,9 @@ const approvalData = ref<{
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref(false)
 
+const tabs = ref(['Submited', 'Approved', 'Withdrawed', 'Disabled', 'Archived'])
+const activeTab = ref(0)
+
 const rules = {
   hoursWorked: {
     hoursWorked: {
@@ -131,8 +137,8 @@ const rules = {
 const v$ = useVuelidate(rules, { hoursWorked })
 
 const {
-  data: cashRemunerationBalance,
-  isLoading: balanceLoading,
+  // data: cashRemunerationBalance,
+  // isLoading: balanceLoading,
   error: balanceError,
   refetch: fetchBalance
 } = useBalance({

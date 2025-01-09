@@ -5,8 +5,18 @@ import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 
 export default [
   {
+    // TODO turn this rule into an error by march 2025
     name: 'app/files-to-lint',
-    files: ['**/*.{ts,mts,tsx,vue}']
+    files: ['**/*.{ts,mts,tsx,vue}'],
+    rules: {
+      'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }]
+    }
+  },
+  {
+    files: ['src/artifacts/**/*.{ts,mts,tsx,vue}'],
+    rules: {
+      'max-lines': 'off'
+    }
   },
   {
     name: 'app/files-to-ignore',

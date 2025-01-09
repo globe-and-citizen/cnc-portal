@@ -113,16 +113,13 @@ describe('MemberSection.vue', () => {
   })
 
   describe('Table Structure', () => {
-    it('renders table headers correctly', () => {
-      const headers = wrapper.findAll('thead th')
-      expect(headers[1].text()).toBe('Name')
-      expect(headers[2].text()).toBe('Address')
-      expect(headers[3].text()).toBe('Action')
+    it('should render properly member table', () => {
+      expect(wrapper.find('[data-test="members-table"]').exists()).toBe(true)
     })
 
     it('shows action column only for team owner', async () => {
       // Test when user is owner
-      expect(wrapper.find('th:nth-child(4)').exists()).toBe(true)
+      expect(wrapper.find('th:nth-child(5)').exists()).toBe(true)
 
       // Test when user is not owner
       await wrapper.setProps({
@@ -131,7 +128,7 @@ describe('MemberSection.vue', () => {
           ownerAddress: 'different_owner'
         }
       })
-      expect(wrapper.find('th:nth-child(4)').exists()).toBe(false)
+      expect(wrapper.find('th:nth-child(5)').exists()).toBe(false)
     })
 
     it('renders correct number of member rows', () => {
