@@ -73,12 +73,19 @@ const mockCustomFetch = {
   post: {
     error: ref<null | Error>(null),
     execute: vi.fn()
+  },
+  get: {
+    url: '',
+    data: ref<unknown>(null),
+    execute: vi.fn(),
+    error: ref<null | Error>(null)
   }
 }
 
 vi.mock('@/composables/useCustomFetch', () => ({
   useCustomFetch: vi.fn((url: Ref<string>) => {
     const data = ref<unknown>(null)
+    mockCustomFetch.get.url = url.value
     return {
       json: () => ({
         data,
@@ -92,17 +99,18 @@ vi.mock('@/composables/useCustomFetch', () => ({
       }),
       get: () => ({
         json: () => ({
-          data,
-          execute: vi.fn(() => {
-            if (url.value === `user/nonce/0xUserAddress`) data.value = { nonce: `xyz` }
-            else
-              data.value = {
-                name: 'User Name',
-                address: '0xUserAddress',
-                nonce: 'xyz'
-              }
-          }),
-          error: ref(null)
+          data: mockCustomFetch.get.data,
+          execute: mockCustomFetch.get.execute,
+          // execute: vi.fn(() => {
+          //   if (url.value === `user/nonce/0xUserAddress`) data.value = { nonce: `xyz` }
+          //   else
+          //     data.value = {
+          //       name: 'User Name',
+          //       address: '0xUserAddress',
+          //       nonce: 'xyz'
+          //     }
+          // }),
+          error: mockCustomFetch.get.error
         })
       }),
       post: () => ({
@@ -132,9 +140,17 @@ describe('useSiwe', () => {
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
     mocks.mockHasInstalledWallet.mockImplementation(() => true)
-
+    mockCustomFetch.get.execute.mockImplementation(
+      () =>
+        (mockCustomFetch.get.data.value = {
+          name: 'User Name',
+          address: '0xUserAddress',
+          nonce: 'xyz'
+        })
+    )
     const { siwe } = useSiwe()
     await siwe()
+    console.log(`mockCustomFetch.get.url`, mockCustomFetch.get.url)
     expect(mocks.mockSlSiweMessageCreator.create).toBeCalled()
     expect(mocks.mockSlSiweMessageCreator.constructor).toBeCalledWith({
       address: '0xUserAddress',
@@ -198,5 +214,18 @@ describe('useSiwe', () => {
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to authenticate with SIWE')
     expect(isProcessing.value).toBe(false)
     expect(logInfoSpy).toBeCalledWith('siweError.value', new Error('Error posting auth data'))
+  })
+  it('should notify error if fetch nonce error', async () => {
+    mockCustomFetch.get.execute.mockReset()
+    mockCustomFetch.get.data.value = null
+    mockCustomFetch.get.execute.mockImplementation(() => {
+      mockCustomFetch.get.error.value = new Error('Error getting data')
+    })
+    const { isProcessing, siwe } = useSiwe()
+    await siwe()
+    await flushPromises()
+    expect(logInfoSpy).toBeCalledWith('fetchError.value', new Error('Error getting data'))
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to fetch nonce')
+    expect(isProcessing.value).toBe(false)
   })
 })
