@@ -229,7 +229,7 @@ const chainId = useChainId()
 const claimData = ref<ClaimResponse | null>(null)
 const { signTypedData, data } = useSignTypedData()
 
-watch( data, async (newVal) => {
+watch(data, async (newVal) => {
   if (newVal && claimData.value) {
     approvalData.value = {
       id: claimData.value.id,
@@ -270,9 +270,9 @@ const approveClaim = async (claim: ClaimResponse) => {
   }
 
   signTypedData({
-    types, 
-    primaryType: 'WageClaim', 
-    message: data as unknown as Record<string, unknown>, 
+    types,
+    primaryType: 'WageClaim',
+    message: data as unknown as Record<string, unknown>,
     domain
   })
 }
