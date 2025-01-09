@@ -6,7 +6,7 @@ import type { Result } from 'ethers'
 // mock web3Util
 vi.mock('@/utils/web3Util')
 vi.mock('@/utils', async (importOriginal) => {
-  const original: Object = await importOriginal()
+  const original: object = await importOriginal()
   return {
     ...original,
     log: mockLog
