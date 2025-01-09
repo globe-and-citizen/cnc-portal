@@ -60,11 +60,16 @@
     </div>
     <ModalComponent v-model="showAddTeamModal">
       <AddTeamForm
-        :isLoading="createTeamFetching"
-        v-model="team"
+        :isLoading="
+          createTeamFetching ||
+          isLoadingDeployOfficer ||
+          isConfirmingDeployOfficer ||
+          isLoadingDeployAll ||
+          isConfirmingDeployAll
+        "
         :users="foundUsers"
         @searchUsers="(input) => searchUsers(input)"
-        @addTeam="executeCreateTeam"
+        @addTeam="handleAddTeam"
       />
     </ModalComponent>
   </div>
@@ -73,19 +78,29 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { encodeFunctionData, type Address } from 'viem'
 
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { TeamsResponse } from '@/types'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
-const router = useRouter()
 
+// Contract ABIs
+import OfficerABI from '@/artifacts/abi/officer.json'
+import BankABI from '@/artifacts/abi/bank.json'
+import VotingABI from '@/artifacts/abi/voting.json'
+import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
+import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
+import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { TIPS_ADDRESS, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+
+const router = useRouter()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const {
@@ -100,20 +115,42 @@ watch(teamError, () => {
     addErrorToast(teamError.value)
   }
 })
-
 const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
-const team = ref<TeamInput>({
+
+interface TeamInputWithOfficer extends TeamInput {
+  officerAddress?: Address
+}
+
+const team = ref<TeamInputWithOfficer>({
   name: '',
   description: '',
-  members: [
-    {
-      name: '',
-      address: ''
-    }
-  ]
+  members: [{ name: '', address: '' }],
+  officerAddress: undefined
 })
 
+// Contract deployment states
+const {
+  writeContract: deployOfficer,
+  isPending: isLoadingDeployOfficer,
+  data: deployOfficerHash,
+  error: deployOfficerError
+} = useWriteContract()
+
+const { isLoading: isConfirmingDeployOfficer, isSuccess: isConfirmedDeployOfficer } =
+  useWaitForTransactionReceipt({ hash: deployOfficerHash })
+
+const {
+  writeContract: deployAll,
+  isPending: isLoadingDeployAll,
+  data: deployAllHash,
+  error: deployAllError
+} = useWriteContract()
+
+const { isLoading: isConfirmingDeployAll, isSuccess: isConfirmedDeployAll } =
+  useWaitForTransactionReceipt({ hash: deployAllHash })
+
+// Team creation API call
 const {
   isFetching: createTeamFetching,
   error: createTeamError,
@@ -195,7 +232,154 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
-function navigateToTeam(id: string) {
-  router.push('/teams/' + id)
+// Watch for errors
+watch(teamError, () => {
+  if (teamError.value) {
+    addErrorToast(teamError.value)
+  }
+})
+
+watch(createTeamError, () => {
+  if (createTeamError.value) {
+    addErrorToast(createTeamError.value)
+  }
+})
+
+watch(deployOfficerError, () => {
+  if (deployOfficerError.value) {
+    addErrorToast('Failed to deploy officer contract')
+  }
+})
+
+watch(deployAllError, () => {
+  if (deployAllError.value) {
+    addErrorToast('Failed to deploy contracts')
+  }
+})
+
+// Watch for successful operations
+watch([isConfirmingDeployOfficer, isConfirmedDeployOfficer], ([isConfirming, isConfirmed]) => {
+  if (!isConfirming && isConfirmed) {
+    addSuccessToast('Officer contract deployed successfully')
+    // Continue with team creation
+    executeCreateTeam()
+  }
+})
+
+watch([isConfirmingDeployAll, isConfirmedDeployAll], ([isConfirming, isConfirmed]) => {
+  if (!isConfirming && isConfirmed) {
+    addSuccessToast('All contracts deployed successfully')
+    executeFetchTeams()
+  }
+})
+
+watch(
+  [() => createTeamFetching.value, () => createTeamError.value, () => createTeamResponse.value],
+  () => {
+    if (!createTeamFetching.value && !createTeamError.value && createTeamResponse.value?.ok) {
+      addSuccessToast('Team created successfully')
+      // Deploy all contracts
+      deployAllContracts()
+      showAddTeamModal.value = false
+      executeFetchTeams()
+    }
+  }
+)
+
+// Helper functions
+const deployAllContracts = async () => {
+  const currentAddress = useUserDataStore().address as Address
+  const deployments = []
+
+  // Bank contract
+  deployments.push({
+    contractType: 'Bank',
+    initializerData: encodeFunctionData({
+      abi: BankABI,
+      functionName: 'initialize',
+      args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
+    })
+  })
+
+  // Voting contract
+  deployments.push({
+    contractType: 'Voting',
+    initializerData: encodeFunctionData({
+      abi: VotingABI,
+      functionName: 'initialize',
+      args: [currentAddress]
+    })
+  })
+
+  // Expense account
+  deployments.push({
+    contractType: 'ExpenseAccount',
+    initializerData: encodeFunctionData({
+      abi: ExpenseAccountABI,
+      functionName: 'initialize',
+      args: [currentAddress]
+    })
+  })
+
+  // Expense account EIP712
+  deployments.push({
+    contractType: 'ExpenseAccountEIP712',
+    initializerData: encodeFunctionData({
+      abi: ExpenseAccountEIP712ABI,
+      functionName: 'initialize',
+      args: [currentAddress]
+    })
+  })
+
+  // Cash remuneration EIP712
+  deployments.push({
+    contractType: 'CashRemunerationEIP712',
+    initializerData: encodeFunctionData({
+      abi: CashRemunerationEIP712ABI,
+      functionName: 'initialize',
+      args: [currentAddress]
+    })
+  })
+
+  try {
+    deployAll({
+      address: team.value.officerAddress as Address,
+      abi: OfficerABI,
+      functionName: 'deployAllContracts',
+      args: [deployments]
+    })
+  } catch (error) {
+    addErrorToast('Error deploying contracts')
+  }
+}
+
+const handleAddTeam = async (data: {
+  team: TeamInput
+  investorContract: { name: string; symbol: string }
+}) => {
+  team.value = {
+    ...data.team,
+    officerAddress: undefined // Will be set after deployment
+  }
+  // First deploy the officer contract
+  try {
+    deployOfficer({
+      address: '0x0000000000000000000000000000000000000000' as Address, // Factory address
+      abi: OfficerABI,
+      functionName: 'createTeam',
+      args: [
+        data.team.members.map((m) => m.address as Address),
+        [], // No additional members initially
+        data.investorContract.name,
+        data.investorContract.symbol
+      ]
+    })
+  } catch (error) {
+    addErrorToast('Error creating team')
+  }
+}
+
+const navigateToTeam = (id: number) => {
+  router.push(`/teams/${id}`)
 }
 </script>
