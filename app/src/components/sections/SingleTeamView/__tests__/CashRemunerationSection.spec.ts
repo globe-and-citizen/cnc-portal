@@ -22,12 +22,19 @@ const mockUseBalance = {
   refetch: vi.fn()
 }
 
+const mockUseSignTypedData = {
+  data: ref<`0x{string}` | null>(null),
+  signTypedData: vi.fn()
+}
+
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useBalance: vi.fn(() => mockUseBalance)
+    useBalance: vi.fn(() => mockUseBalance),
+    useChainId: vi.fn(() => 123),
+    useSignTypedData: vi.fn(() => mockUseSignTypedData)
   }
 })
 
