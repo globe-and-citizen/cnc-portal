@@ -227,9 +227,9 @@ watch(addApprovalError, (newVal) => {
 
 const chainId = useChainId()
 const claimData = ref<ClaimResponse | null>(null)
-const { signTypedData, data } = useSignTypedData()
+const { signTypedData, data: signature } = useSignTypedData()
 
-watch(data, async (newVal) => {
+watch(signature, async (newVal) => {
   if (newVal && claimData.value) {
     approvalData.value = {
       id: claimData.value.id,
