@@ -22,10 +22,10 @@
           <label class="label">
             <span class="label-text">Currency</span>
           </label>
-          <select v-model="selectedCurrency" class="select select-bordered">
-            <option value="USD">USD</option>
-            <option value="INR">INR</option>
-            <option value="CAD">CAD</option>
+          <select v-model="selectedCurrency" class="select select-bordered custom-select">
+            <option value="USD">USD - US Dollar</option>
+            <option value="INR">INR - Indian Rupee</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
           </select>
         </div>
       </div>
