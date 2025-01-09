@@ -186,7 +186,9 @@ watch(isConfirmingWithdraw, (isConfirming, wasConfirming) => {
 watch(isDisconnected, (value) => {
   if (value && userStore.isAuth) {
     addErrorToast('Disconnected from wallet')
-    logout()
+    setTimeout(() => {
+      logout()
+    }, 3000)
   }
 })
 </script>
