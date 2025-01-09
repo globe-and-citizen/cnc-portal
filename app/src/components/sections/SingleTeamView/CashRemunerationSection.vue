@@ -99,7 +99,6 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { log, parseError } from '@/utils'
 import { parseEther, type Address } from 'viem'
 import { useBalance, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -109,7 +108,6 @@ import { numeric, required } from '@vuelidate/validators'
 import CashRemunerationStats from './CashRemunerationStats.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 const route = useRoute()
-const web3Library = new EthersJsAdapter()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{ team: Partial<Team> }>()
@@ -246,9 +244,6 @@ watch( data, async (newVal) => {
 const approveClaim = async (claim: ClaimResponse) => {
   loadingApprove.value = true
   claimData.value = claim
-  // const provider = await web3Library.getProvider()
-  // const signer = await web3Library.getSigner()
-  // const chainId = (await provider.getNetwork()).chainId
   const verifyingContract = team.value.cashRemunerationEip712Address
 
   const domain = {
@@ -280,21 +275,6 @@ const approveClaim = async (claim: ClaimResponse) => {
     message: data as unknown as Record<string, unknown>, 
     domain
   })
-
-  // try {
-  //   const signature = await signer.signTypedData(domain, types, data)
-  //   approvalData.value = {
-  //     id: claim.id,
-  //     signature
-  //   }
-  //   await addApprovalAPI()
-  //   await getWageClaimsAPI()
-  // } catch (err) {
-  //   log.error(parseError(err))
-  //   addErrorToast(parseError(err))
-  // } finally {
-  //   loadingApprove.value = false
-  // }
 }
 
 onMounted(async () => {
