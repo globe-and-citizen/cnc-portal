@@ -143,8 +143,7 @@
                     address: team.bankAddress as Address,
                     abi: BankABI,
                     functionName: 'pushTip',
-                    args: [members, parseEther(tipAmount.toString())],
-                    value: parseEther(tipAmount.toString())
+                    args: [members, parseEther(tipAmount.toString())]
                   })
                 }
               }
@@ -386,6 +385,7 @@ const { isLoading: isConfirmingPushTip, isSuccess: isConfirmedPushTip } =
 watch(isConfirmingPushTip, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedPushTip.value) {
     addSuccessToast('Tips pushed successfully')
+    fetchBalance()
     pushTipModal.value = false
   }
 })
@@ -479,6 +479,7 @@ watch(balanceError, () => {
 })
 watch(pushTipError, async () => {
   if (pushTipError.value) {
+    console.log(pushTipError.value)
     addErrorToast('Failed to push tip')
   }
 })
