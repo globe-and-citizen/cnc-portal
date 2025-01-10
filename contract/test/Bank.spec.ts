@@ -286,7 +286,9 @@ describe('Bank', () => {
         expect(await ethers.provider.getBalance(await bankProxy.getAddress())).to.equal(
           bankBalanceBefore - tipAmount
         )
-        expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(ownerBalanceBefore - tipAmount)
+        expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(
+          ownerBalanceBefore - tipAmount
+        )
 
         // Push tips
         await expect(bankProxy.connect(owner).pushTip(recipients, tipAmount))
@@ -296,7 +298,9 @@ describe('Bank', () => {
         expect(await ethers.provider.getBalance(await bankProxy.getAddress())).to.equal(
           bankBalanceBefore - (tipAmount + tipAmount)
         )
-        expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(ownerBalanceBefore - tipAmount - tipAmount)
+        expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(
+          ownerBalanceBefore - tipAmount - tipAmount
+        )
       })
 
       it('should not allow other addresses to send or push tips', async () => {
