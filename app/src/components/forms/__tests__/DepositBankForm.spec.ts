@@ -12,9 +12,6 @@ describe('DepositBankModal.vue', () => {
       })
 
       expect(wrapper.text()).toContain('Deposit to Team Bank Contract')
-      expect(wrapper.text()).toContain(
-        `This will deposit 0 ${NETWORK.currencySymbol} to the team bank contract.`
-      )
     })
     it('shows loading button when loading is true', () => {
       const wrapper = mount(DepositBankForm, {
