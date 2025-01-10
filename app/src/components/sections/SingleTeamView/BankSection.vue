@@ -479,7 +479,6 @@ watch(balanceError, () => {
 })
 watch(pushTipError, async () => {
   if (pushTipError.value) {
-    console.log(pushTipError.value)
     addErrorToast('Failed to push tip')
   }
 })
