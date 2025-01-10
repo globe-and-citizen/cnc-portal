@@ -14,6 +14,16 @@ interface IVoting {
     function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external;
 }
 /**
+ * @notice Struct for contract deployment data
+ * @param contractType Type of contract to deploy
+ * @param initializerData Initialization data for the contract
+ */
+struct DeploymentData {
+    string contractType;
+    bytes initializerData;
+}
+
+/**
  * @title Officer Contract
  * @dev Manages team creation, beacon proxy deployment, and contract upgrades
  * Inherits from OwnableUpgradeable, ReentrancyGuardUpgradeable, and PausableUpgradeable
@@ -53,7 +63,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function initialize(
         address _owner,
-        BeaconConfig[] memory beaconConfigs
+        BeaconConfig[] memory beaconConfigs,
+        DeploymentData[] calldata _deployments,
+        bool _isDeployAllContracts
     ) public initializer {
         __Ownable_init(_owner);
         __ReentrancyGuard_init();
@@ -74,6 +86,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
             contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
             emit BeaconConfigured(beaconConfigs[i].beaconType, beaconConfigs[i].beaconAddress);
+        }
+        if(_isDeployAllContracts){
+            deployAllContracts(_deployments);
         }
     }
 
@@ -165,15 +180,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     function getDeployedContracts() external view returns (DeployedContract[] memory) {
         return deployedContracts;
     }
-    /**
-     * @notice Struct for contract deployment data
-     * @param contractType Type of contract to deploy
-     * @param initializerData Initialization data for the contract
-     */
-    struct DeploymentData {
-        string contractType;
-        bytes initializerData;
-    }
+    
 
     /**
      * @notice Deploys all configured contract types via beacon proxies
@@ -182,7 +189,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function deployAllContracts(
         DeploymentData[] calldata deployments
-    ) external whenNotPaused onlyOwners returns (address[] memory) {
+    ) public whenNotPaused onlyOwners returns (address[] memory) {
         address[] memory deployedAddresses = new address[](deployments.length);
         
         for (uint256 i = 0; i < deployments.length; i++) {
