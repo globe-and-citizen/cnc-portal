@@ -65,6 +65,8 @@
           isLoadingDeployOfficer ||
           isConfirmingDeployOfficer ||
           isLoadingDeployAll ||
+          createOfficerLoading ||
+          isConfirmingCreateOfficer ||
           isConfirmingDeployAll
         "
         :users="foundUsers"
@@ -76,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
@@ -98,7 +100,23 @@ import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-import { TIPS_ADDRESS, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
+
+import {
+  BANK_BEACON_ADDRESS,
+  BOD_BEACON_ADDRESS,
+  CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
+  EXPENSE_ACCOUNT_BEACON_ADDRESS,
+  EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
+  INVESTOR_V1_BEACON_ADDRESS,
+  OFFICER_ADDRESS,
+  OFFICER_BEACON,
+  TIPS_ADDRESS,
+  USDC_ADDRESS,
+  USDT_ADDRESS,
+  validateAddresses,
+  VOTING_BEACON_ADDRESS
+} from '@/constant'
 
 const router = useRouter()
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -127,6 +145,36 @@ const team = ref<TeamInputWithOfficer>({
   description: '',
   members: [{ name: '', address: '' }],
   officerAddress: undefined
+})
+// Officer contract creation
+const {
+  isPending: officerContractCreating,
+  data: createOfficerHash,
+  error: createOfficerError,
+  writeContract: createOfficer
+} = useWriteContract()
+
+const { isLoading: isConfirmingCreateOfficer, isSuccess: isConfirmedCreateOfficer } =
+  useWaitForTransactionReceipt({
+    hash: createOfficerHash
+  })
+
+const loading = ref(false)
+const createOfficerLoading = computed(
+  () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
+)
+watch(createOfficerError, (error) => {
+  if (error) {
+    addErrorToast('Failed to create officer contract')
+  }
+})
+
+watch([isConfirmingCreateOfficer, isConfirmedCreateOfficer], ([isConfirming, isConfirmed]) => {
+  if (!isConfirming && isConfirmed) {
+    addSuccessToast('Officer contract deployed successfully')
+    // Continue with team creation
+    executeCreateTeam()
+  }
 })
 
 // Contract deployment states
@@ -363,22 +411,65 @@ const handleAddTeam = async (data: {
   }
   // First deploy the officer contract
   try {
-    deployOfficer({
-      address: '0x0000000000000000000000000000000000000000' as Address, // Factory address
-      abi: OfficerABI,
-      functionName: 'createTeam',
-      args: [
-        data.team.members.map((m) => m.address as Address),
-        [], // No additional members initially
-        data.investorContract.name,
-        data.investorContract.symbol
-      ]
-    })
+    deployOfficerContract()
   } catch (error) {
     addErrorToast('Error creating team')
   }
 }
+const deployOfficerContract = async () => {
+  try {
+    const currentAddress = useUserDataStore().address as Address
+    console.log('Validating addresses')
+    validateAddresses()
 
+    const beaconConfigs = [
+      {
+        beaconType: 'Bank',
+        beaconAddress: BANK_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'Voting',
+        beaconAddress: VOTING_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'BoardOfDirectors',
+        beaconAddress: BOD_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccount',
+        beaconAddress: EXPENSE_ACCOUNT_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccountEIP712',
+        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'CashRemunerationEIP712',
+        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'InvestorsV1',
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
+      }
+    ]
+
+    const encodedFunction = encodeFunctionData({
+      abi: OfficerABI,
+      functionName: 'initialize',
+      args: [currentAddress, beaconConfigs]
+    })
+
+    createOfficer({
+      address: OFFICER_BEACON as Address,
+      abi: FACTORY_BEACON_ABI,
+      functionName: 'createBeaconProxy',
+      args: [encodedFunction]
+    })
+  } catch (error) {
+    loading.value = false
+    addErrorToast('Error deploying contract')
+  }
+}
 const navigateToTeam = (id: number) => {
   router.push(`/teams/${id}`)
 }
