@@ -272,7 +272,10 @@ describe('Bank', () => {
 
       it('should allow the owner to send and push tips', async () => {
         // Send tips
-        await expect(bankProxy.sendTip(recipients, tipAmount))
+        const bankBalanceBefore = await ethers.provider.getBalance(await bankProxy.getAddress())
+        const ownerBalanceBefore = await ethers.provider.getBalance(owner.address)
+
+        await expect(bankProxy.connect(owner).sendTip(recipients, tipAmount))
           .to.emit(bankProxy, 'SendTip')
           .withArgs(owner.address, recipients, tipAmount)
 
@@ -280,11 +283,20 @@ describe('Bank', () => {
         expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
         expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
         expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
+        expect(await ethers.provider.getBalance(await bankProxy.getAddress())).to.equal(
+          bankBalanceBefore - tipAmount
+        )
+        expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(ownerBalanceBefore - tipAmount)
 
         // Push tips
-        await expect(bankProxy.pushTip(recipients, tipAmount))
+        await expect(bankProxy.connect(owner).pushTip(recipients, tipAmount))
           .to.emit(bankProxy, 'PushTip')
           .withArgs(owner.address, recipients, tipAmount)
+
+        expect(await ethers.provider.getBalance(await bankProxy.getAddress())).to.equal(
+          bankBalanceBefore - (tipAmount + tipAmount)
+        )
+        expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(ownerBalanceBefore - tipAmount - tipAmount)
       })
 
       it('should not allow other addresses to send or push tips', async () => {
