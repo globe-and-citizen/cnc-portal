@@ -2,7 +2,6 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
-import type { Team } from '@/types'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import ButtonUI from '@/components/ButtonUI.vue'
 
