@@ -139,11 +139,6 @@ import ContractManagementSection from '@/components/sections/SingleTeamView/Cont
 import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Address } from 'viem'
 import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
-import DeployInvestorContractForm from '@/components/forms/DeployInvestorContractForm.vue'
-import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import OfficerABI from '@/artifacts/abi/officer.json'
-import { log } from '@/utils'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 
 //imports for add campaign creation.
 import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
@@ -195,46 +190,6 @@ const {
 })
   .get()
   .json()
-
-const {
-  writeContract: deployInvestors,
-  isPending: isLoadingDeployInvestors,
-  data: deployInvestorsHash,
-  error: deployInvestorsError
-} = useWriteContract()
-const { isLoading: isConfirmingDeployInvestors, isSuccess: isConfirmedDeployInvestors } =
-  useWaitForTransactionReceipt({ hash: deployInvestorsHash })
-
-const deployInvestorsContract = async (name: string, symbol: string) => {
-  const currentAddress = useUserDataStore().address as Address
-  const initData = encodeFunctionData({
-    abi: INVESTOR_ABI,
-    functionName: 'initialize',
-    args: [name, symbol, currentAddress]
-  })
-
-  deployInvestors({
-    address: team.value.officerAddress,
-    abi: OfficerABI,
-    functionName: 'deployBeaconProxy',
-    args: ['InvestorsV1', initData]
-  })
-}
-
-watch(isConfirmingDeployInvestors, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployInvestors.value) {
-    addSuccessToast('Investors deployed successfully')
-    getTeamAPI()
-    investorModal.value = false
-  }
-})
-
-watch(deployInvestorsError, (value) => {
-  if (value) {
-    log.error('Failed to deploy investors', value)
-    addErrorToast('Failed to deploy investors')
-  }
-})
 
 // Watchers for getting team details
 watch(team, () => {
