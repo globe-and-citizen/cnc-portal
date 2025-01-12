@@ -22,9 +22,6 @@
               {{ team?.officerAddress }}
             </span>
           </div>
-          <div v-if="showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
-            <CreateOfficerTeam :team="team" @getTeam="emits('getTeam')" />
-          </div>
           <div v-if="!showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
             <div class="flex flex-col">
               <h5 class="text-md font-bold">Deployed Contracts</h5>
@@ -60,40 +57,6 @@
           <div v-if="isLoadingGetTeam || isLoadingFetchDeployedContracts">
             <span class="loading loading-spinner loading-lg"></span>
           </div>
-          <div v-if="!showCreateTeam && !isLoadingGetTeam && !isLoadingFetchDeployedContracts">
-            <div class="flex flex-col">
-              <h5 class="text-md font-bold">Founders</h5>
-              <div v-for="(founderAddress, index) in founders" data-test="founder-div" :key="index">
-                <span
-                  v-if="team && team.members"
-                  data-test="founder"
-                  class="badge badge-primary badge-sm"
-                >
-                  {{
-                    team.members.find((member: Member) => member.address == founderAddress)?.name ||
-                    'Unknown Member'
-                  }}
-                  | {{ founderAddress }}
-                </span>
-              </div>
-            </div>
-            <div class="flex flex-col">
-              <h5 class="text-md font-bold">Members</h5>
-              <div v-for="(memberAddress, index) in members" data-test="member-div" :key="index">
-                <span
-                  v-if="team && team.members"
-                  data-test="member"
-                  class="badge badge-secondary badge-sm"
-                >
-                  {{
-                    team.members.find((member: Member) => member.address == memberAddress)?.name ||
-                    'Unknown Member'
-                  }}
-                  | {{ memberAddress }}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -105,7 +68,6 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { useToastStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
 import ButtonUI from '@/components/ButtonUI.vue'
-import CreateOfficerTeam from '@/components/forms/CreateOfficerTeam.vue'
 import DeploymentActions from './DeploymentActions.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import {

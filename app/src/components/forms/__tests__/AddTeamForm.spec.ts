@@ -34,7 +34,7 @@ describe('AddTeamForm.vue', () => {
 
   // Reset props
   beforeEach(() => {
-    wrapper.setProps({ modelValue: team, users, isLoading: false })
+    wrapper.setProps({ users, isLoading: false })
   })
   describe('Render', () => {
     it('renders correctly with initial props', () => {
