@@ -469,7 +469,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(officer.connect(addr3).deployAllContracts(deployments)).to.be.revertedWith(
-        'You are not authorized to perform this action'
+        'Caller is not an owner and contract is not initializing'
       )
     })
   })
