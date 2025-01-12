@@ -137,7 +137,7 @@ import { type TeamContract, type Deployment, type User, SingleTeamTabs } from '@
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { encodeFunctionData, type Address } from 'viem'
+import { type Address } from 'viem'
 import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
 
 //imports for add campaign creation.

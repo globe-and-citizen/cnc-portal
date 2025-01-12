@@ -288,6 +288,7 @@ const handleAddTeam = async (data: {
     deployOfficerContract(data.investorContract)
   } catch (error) {
     addErrorToast('Error creating team')
+    console.log(error)
   }
 }
 const deployOfficerContract = async (investorContract: { name: string; symbol: string }) => {
