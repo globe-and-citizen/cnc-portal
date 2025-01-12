@@ -62,12 +62,9 @@
       <AddTeamForm
         :isLoading="
           createTeamFetching ||
-          isLoadingDeployOfficer ||
-          isConfirmingDeployOfficer ||
-          isLoadingDeployAll ||
           createOfficerLoading ||
           isConfirmingCreateOfficer ||
-          isConfirmingDeployAll
+          loadingCreateTeam
         "
         :users="foundUsers"
         @searchUsers="(input) => searchUsers(input)"
@@ -109,7 +106,6 @@ import {
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
   INVESTOR_V1_BEACON_ADDRESS,
-  OFFICER_ADDRESS,
   OFFICER_BEACON,
   TIPS_ADDRESS,
   USDC_ADDRESS,
@@ -122,6 +118,7 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 const router = useRouter()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
+const loadingCreateTeam = ref(false)
 const {
   isFetching: teamsAreFetching,
   error: teamError,
@@ -177,27 +174,6 @@ watch([isConfirmingCreateOfficer, isConfirmedCreateOfficer], ([isConfirming, isC
     // Continue with team creation
   }
 })
-
-// Contract deployment states
-const {
-  writeContract: deployOfficer,
-  isPending: isLoadingDeployOfficer,
-  data: deployOfficerHash,
-  error: deployOfficerError
-} = useWriteContract()
-
-const { isLoading: isConfirmingDeployOfficer, isSuccess: isConfirmedDeployOfficer } =
-  useWaitForTransactionReceipt({ hash: deployOfficerHash })
-
-const {
-  writeContract: deployAll,
-  isPending: isLoadingDeployAll,
-  data: deployAllHash,
-  error: deployAllError
-} = useWriteContract()
-
-const { isLoading: isConfirmingDeployAll, isSuccess: isConfirmedDeployAll } =
-  useWaitForTransactionReceipt({ hash: deployAllHash })
 
 // Team creation API call
 const {
@@ -286,40 +262,14 @@ const searchUsers = async (input: { name: string; address: string }) => {
 watch(teamError, () => {
   if (teamError.value) {
     addErrorToast(teamError.value)
+    loading.value = false
   }
 })
 
 watch(createTeamError, () => {
   if (createTeamError.value) {
     addErrorToast(createTeamError.value)
-  }
-})
-
-watch(deployOfficerError, () => {
-  if (deployOfficerError.value) {
-    addErrorToast('Failed to deploy officer contract')
-  }
-})
-
-watch(deployAllError, () => {
-  if (deployAllError.value) {
-    console.log(deployAllError.value)
-    addErrorToast('Failed to deploy contracts')
-  }
-})
-
-// Watch for successful operations
-watch([isConfirmingDeployOfficer, isConfirmedDeployOfficer], ([isConfirming, isConfirmed]) => {
-  if (!isConfirming && isConfirmed) {
-    addSuccessToast('Officer contract deployed successfully')
-    // Continue with team creation
-  }
-})
-
-watch([isConfirmingDeployAll, isConfirmedDeployAll], ([isConfirming, isConfirmed]) => {
-  if (!isConfirming && isConfirmed) {
-    addSuccessToast('All contracts deployed successfully')
-    executeFetchTeams()
+    loadingCreateTeam.value = false
   }
 })
 
@@ -329,6 +279,7 @@ const handleAddTeam = async (data: {
   team: TeamInput
   investorContract: { name: string; symbol: string }
 }) => {
+  loadingCreateTeam.value = true
   team.value = {
     ...data.team,
     officerAddress: '' as Address // Will be set after deployment
@@ -475,10 +426,12 @@ useWatchContractEvent({
         console.log('team', team.value)
         executeCreateTeam()
         loading.value = false
+        loadingCreateTeam.value = false
       } catch (error) {
         console.log('Error updating officer address:', error)
         addErrorToast('Error updating officer address')
         loading.value = false
+        loadingCreateTeam.value = false
       }
     }
   }
