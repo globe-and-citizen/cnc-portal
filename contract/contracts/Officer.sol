@@ -192,7 +192,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function deployAllContracts(
         DeploymentData[] calldata deployments
-    ) public whenNotPaused onlyOwners returns (address[] memory) {
+    ) public whenNotPaused onlyInitializingOrOwners returns (address[] memory) {
         address[] memory deployedAddresses = new address[](deployments.length);
         
         for (uint256 i = 0; i < deployments.length; i++) {
@@ -212,5 +212,13 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function getConfiguredContractTypes() external view returns (string[] memory) {
         return contractTypes;
+    }
+
+    modifier onlyInitializingOrOwners() {
+        require(
+            _isInitializing() || owner() == msg.sender,
+            "Caller is not an owner and contract is not initializing"
+        );
+        _;
     }
 }
