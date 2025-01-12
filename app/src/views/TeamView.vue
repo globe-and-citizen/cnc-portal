@@ -117,6 +117,7 @@ import {
   validateAddresses,
   VOTING_BEACON_ADDRESS
 } from '@/constant'
+import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 
 const router = useRouter()
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -322,18 +323,6 @@ watch([isConfirmingDeployAll, isConfirmedDeployAll], ([isConfirming, isConfirmed
   }
 })
 
-watch(
-  [() => createTeamFetching.value, () => createTeamError.value, () => createTeamResponse.value],
-  () => {
-    if (!createTeamFetching.value && !createTeamError.value && createTeamResponse.value?.ok) {
-      addSuccessToast('Team created successfully')
-      // Deploy all contracts
-      showAddTeamModal.value = false
-      executeFetchTeams()
-    }
-  }
-)
-
 // Helper functions
 
 const handleAddTeam = async (data: {
@@ -345,12 +334,12 @@ const handleAddTeam = async (data: {
     officerAddress: '' as Address // Will be set after deployment
   }
   try {
-    deployOfficerContract()
+    deployOfficerContract(data.investorContract)
   } catch (error) {
     addErrorToast('Error creating team')
   }
 }
-const deployOfficerContract = async () => {
+const deployOfficerContract = async (investorContract: { name: string; symbol: string }) => {
   try {
     const currentAddress = useUserDataStore().address as Address
     console.log('Validating addresses')
@@ -395,6 +384,14 @@ const deployOfficerContract = async () => {
         abi: BankABI,
         functionName: 'initialize',
         args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
+      })
+    })
+    deployments.push({
+      contractType: 'InvestorsV1',
+      initializerData: encodeFunctionData({
+        abi: INVESTOR_ABI,
+        functionName: 'initialize',
+        args: [investorContract.name, investorContract.symbol, currentAddress]
       })
     })
 
