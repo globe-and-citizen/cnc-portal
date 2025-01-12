@@ -63,10 +63,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-interface Props {
-  team: Partial<Team>
-}
-
 describe('OfficerForm.vue', () => {
   it('renders officer deployment button when no officer contract is deployed', () => {
     const wrapper: VueWrapper = mount(OfficerForm, {
