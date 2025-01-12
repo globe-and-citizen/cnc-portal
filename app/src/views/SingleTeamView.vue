@@ -53,28 +53,6 @@
         />
       </ModalComponent>
 
-      <ModalComponent v-model="investorModal">
-        <DeployInvestorContractForm
-          v-if="investorModal"
-          :team="team"
-          :isDeployAll="isDeployAll"
-          :loading="
-            isDeployAll
-              ? isLoadingDeployAll || isConfirmingDeployAll
-              : isLoadingDeployInvestors || isConfirmingDeployInvestors
-          "
-          @submit="
-            (name: string, symbol: string) => {
-              if (isDeployAll) {
-                deployAllContracts(name, symbol)
-              } else {
-                deployInvestorsContract(name, symbol)
-              }
-            }
-          "
-        />
-      </ModalComponent>
-
       <ModalComponent v-model="addCampaignModal">
         <CreateAddCamapaign
           @create-add-campaign="deployAddCampaignContract"
@@ -255,55 +233,6 @@ watch(deployInvestorsError, (value) => {
   if (value) {
     log.error('Failed to deploy investors', value)
     addErrorToast('Failed to deploy investors')
-  }
-})
-
-// Deploy All Contracts
-const {
-  writeContract: deployAll,
-  isPending: isLoadingDeployAll,
-  error: deployAllError,
-  data: deployAllData
-} = useWriteContract()
-
-const { isLoading: isConfirmingDeployAll, isSuccess: isConfirmedDeployAll } =
-  useWaitForTransactionReceipt({
-    hash: deployAllData
-  })
-
-watch(isConfirmingDeployAll, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedDeployAll.value) {
-    addSuccessToast('All contracts deployed successfully')
-    investorModal.value = false
-    await getTeamAPI()
-    setTabs()
-  }
-})
-
-const deployAllContracts = async (name: string, symbol: string) => {
-  const { address } = useUserDataStore()
-
-  deployments.value.push({
-    contractType: 'InvestorsV1',
-    initializerData: encodeFunctionData({
-      abi: INVESTOR_ABI,
-      functionName: 'initialize',
-      args: [name, symbol, address as Address]
-    })
-  })
-
-  deployAll({
-    address: team.value.officerAddress,
-    abi: OfficerABI,
-    functionName: 'deployAllContracts',
-    args: [deployments.value]
-  })
-}
-
-watch(deployAllError, (value) => {
-  if (value) {
-    log.error('Failed to deploy all contracts', value)
-    addErrorToast('Failed to deploy all contracts')
   }
 })
 
