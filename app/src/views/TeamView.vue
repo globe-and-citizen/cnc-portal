@@ -174,7 +174,6 @@ watch([isConfirmingCreateOfficer, isConfirmedCreateOfficer], ([isConfirming, isC
   if (!isConfirming && isConfirmed) {
     addSuccessToast('Officer contract deployed successfully')
     // Continue with team creation
-    executeCreateTeam()
   }
 })
 
@@ -476,8 +475,8 @@ useWatchContractEvent({
     else {
       try {
         team.value.officerAddress = proxyAddress as Address
-        await useCustomFetch<string>('teams').post(team.value).json()
-        addSuccessToast('Officer contract deployed successfully')
+        console.log('team', team.value)
+        executeCreateTeam()
         loading.value = false
       } catch (error) {
         console.log('Error updating officer address:', error)
