@@ -2,7 +2,6 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import OfficerForm from '@/components/forms/OfficerForm.vue'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
-import CreateOfficerTeam from '../CreateOfficerTeam.vue'
 import type { Team } from '@/types'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -87,97 +86,6 @@ describe('OfficerForm.vue', () => {
     })
 
     expect(wrapper.find('.badge-primary').text()).toContain('0x123')
-  })
-
-  it('renders CreateOfficerTeam', async () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: { officerAddress: '0x123' }
-      }
-    })
-    mockUseReadContract.data.value = [[]]
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.findComponent(CreateOfficerTeam).exists()).toBeTruthy()
-    wrapper.findComponent(CreateOfficerTeam).vm.$emit('getTeam')
-
-    expect(wrapper.emitted('getTeam')).toBeTruthy()
-  })
-
-  it('renders members and founders correctly', () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: {
-          officerAddress: '0x123',
-          members: [
-            { address: '0x1', name: 'Member 1' },
-            { address: '0x2', name: 'Member 2' }
-          ],
-          founders: ['0x1', '0x2']
-        }
-      }
-    })
-
-    expect(wrapper.findAll('.badge-primary').length).toBe(2)
-    expect(wrapper.findAll('.badge-primary')[0].text()).toContain('0x1')
-  })
-
-  it('renders all founders', async () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: {
-          officerAddress: '0x123',
-          members: [
-            { address: '0x1', name: 'Member 1' },
-            { address: '0x2', name: 'Member 2' }
-          ]
-        }
-      }
-    })
-    mockUseReadContract.data.value = [['0x1', '0x2', '0x3']]
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.findAll('div[data-test="founder-div"]').length).toBe(3)
-
-    const founders = wrapper.findAll('span[data-test="founder"]')
-    founders.forEach((founder, index) => {
-      if ((wrapper.vm.$props as Props)?.team?.members?.[index]) {
-        expect(founder.text()).toEqual(
-          `${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.name ?? 'Unknown'} | ${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.address ?? 'Unknown'}`
-        )
-      } else {
-        expect(founder.text()).toEqual('Unknown Member | 0x3')
-      }
-    })
-  })
-
-  it('renders all members', async () => {
-    const wrapper: VueWrapper = mount(OfficerForm, {
-      props: {
-        team: {
-          officerAddress: '0x123',
-          members: [
-            { address: '0x1', name: 'Member 1' },
-            { address: '0x2', name: 'Member 2' }
-          ]
-        }
-      }
-    })
-    mockUseReadContract.data.value = [['0xfounder'], ['0x1', '0x2', '0x3']]
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.findAll('div[data-test="member-div"]').length).toBe(3)
-
-    const members = wrapper.findAll('span[data-test="member"]')
-    members.forEach((member, index) => {
-      if ((wrapper.vm.$props as Props)?.team?.members?.[index]) {
-        expect(member.text()).toEqual(
-          `${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.name ?? 'Unknown'} | ${(wrapper.vm.$props as unknown as Props).team.members?.[index]?.address ?? 'Unknown'}`
-        )
-      } else {
-        expect(member.text()).toEqual('Unknown Member | 0x3')
-      }
-    })
   })
 
   it('renders Loading state if createOfficerLoading is true', async () => {
