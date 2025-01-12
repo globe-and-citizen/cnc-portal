@@ -94,7 +94,7 @@ import {
   INVESTOR_V1_BEACON_ADDRESS
 } from '@/constant'
 import { validateAddresses } from '@/constant/index'
-import type { Deployment, Member } from '@/types'
+import type { Deployment } from '@/types'
 
 const props = defineProps(['team'])
 const emits = defineEmits(['getTeam', 'openInvestorContractModal'])
