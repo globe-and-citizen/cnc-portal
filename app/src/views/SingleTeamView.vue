@@ -324,6 +324,7 @@ watch(getTeamError, () => {
 })
 const currentAddress = useUserDataStore().address as Address
 onMounted(async () => {
+  console.log(team.value)
   await getTeamAPI() //Call the execute function to get team details on mount
   if (team?.value?.ownerAddress == currentAddress) {
     isOwner.value = true

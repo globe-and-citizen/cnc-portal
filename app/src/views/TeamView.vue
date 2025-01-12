@@ -166,6 +166,7 @@ const createOfficerLoading = computed(
 watch(createOfficerError, (error) => {
   if (error) {
     addErrorToast('Failed to create officer contract')
+    console.log(error)
   }
 })
 
@@ -302,6 +303,7 @@ watch(deployOfficerError, () => {
 
 watch(deployAllError, () => {
   if (deployAllError.value) {
+    console.log(deployAllError.value)
     addErrorToast('Failed to deploy contracts')
   }
 })
@@ -311,7 +313,6 @@ watch([isConfirmingDeployOfficer, isConfirmedDeployOfficer], ([isConfirming, isC
   if (!isConfirming && isConfirmed) {
     addSuccessToast('Officer contract deployed successfully')
     // Continue with team creation
-    executeCreateTeam()
   }
 })
 
@@ -328,7 +329,6 @@ watch(
     if (!createTeamFetching.value && !createTeamError.value && createTeamResponse.value?.ok) {
       addSuccessToast('Team created successfully')
       // Deploy all contracts
-      deployAllContracts()
       showAddTeamModal.value = false
       executeFetchTeams()
     }
@@ -336,71 +336,6 @@ watch(
 )
 
 // Helper functions
-const deployAllContracts = async () => {
-  const currentAddress = useUserDataStore().address as Address
-  const deployments = []
-
-  // Bank contract
-  deployments.push({
-    contractType: 'Bank',
-    initializerData: encodeFunctionData({
-      abi: BankABI,
-      functionName: 'initialize',
-      args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
-    })
-  })
-
-  // Voting contract
-  deployments.push({
-    contractType: 'Voting',
-    initializerData: encodeFunctionData({
-      abi: VotingABI,
-      functionName: 'initialize',
-      args: [currentAddress]
-    })
-  })
-
-  // Expense account
-  deployments.push({
-    contractType: 'ExpenseAccount',
-    initializerData: encodeFunctionData({
-      abi: ExpenseAccountABI,
-      functionName: 'initialize',
-      args: [currentAddress]
-    })
-  })
-
-  // Expense account EIP712
-  deployments.push({
-    contractType: 'ExpenseAccountEIP712',
-    initializerData: encodeFunctionData({
-      abi: ExpenseAccountEIP712ABI,
-      functionName: 'initialize',
-      args: [currentAddress]
-    })
-  })
-
-  // Cash remuneration EIP712
-  deployments.push({
-    contractType: 'CashRemunerationEIP712',
-    initializerData: encodeFunctionData({
-      abi: CashRemunerationEIP712ABI,
-      functionName: 'initialize',
-      args: [currentAddress]
-    })
-  })
-
-  try {
-    deployAll({
-      address: team.value.officerAddress as Address,
-      abi: OfficerABI,
-      functionName: 'deployAllContracts',
-      args: [deployments]
-    })
-  } catch (error) {
-    addErrorToast('Error deploying contracts')
-  }
-}
 
 const handleAddTeam = async (data: {
   team: TeamInput
@@ -410,7 +345,6 @@ const handleAddTeam = async (data: {
     ...data.team,
     officerAddress: '' as Address // Will be set after deployment
   }
-  // First deploy the officer contract
   try {
     deployOfficerContract()
   } catch (error) {
@@ -453,11 +387,62 @@ const deployOfficerContract = async () => {
         beaconAddress: INVESTOR_V1_BEACON_ADDRESS
       }
     ]
+    const deployments = []
+
+    // Bank contract
+    deployments.push({
+      contractType: 'Bank',
+      initializerData: encodeFunctionData({
+        abi: BankABI,
+        functionName: 'initialize',
+        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
+      })
+    })
+
+    // Voting contract
+    deployments.push({
+      contractType: 'Voting',
+      initializerData: encodeFunctionData({
+        abi: VotingABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+
+    // Expense account
+    deployments.push({
+      contractType: 'ExpenseAccount',
+      initializerData: encodeFunctionData({
+        abi: ExpenseAccountABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+
+    // Expense account EIP712
+    deployments.push({
+      contractType: 'ExpenseAccountEIP712',
+      initializerData: encodeFunctionData({
+        abi: ExpenseAccountEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+
+    // Cash remuneration EIP712
+    deployments.push({
+      contractType: 'CashRemunerationEIP712',
+      initializerData: encodeFunctionData({
+        abi: CashRemunerationEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
 
     const encodedFunction = encodeFunctionData({
       abi: OfficerABI,
       functionName: 'initialize',
-      args: [currentAddress, beaconConfigs]
+      args: [currentAddress, beaconConfigs, deployments, true]
     })
 
     createOfficer({
@@ -468,6 +453,7 @@ const deployOfficerContract = async () => {
     })
   } catch (error) {
     loading.value = false
+    console.log(error)
     addErrorToast('Error deploying contract')
   }
 }
@@ -489,10 +475,8 @@ useWatchContractEvent({
       loading.value = false
     else {
       try {
+        team.value.officerAddress = proxyAddress as Address
         await useCustomFetch<string>('teams').post(team.value).json()
-        const teams = await useCustomFetch<string>('teams').get().json()
-        const teamId = teams.data.value?.find((t) => t.name === team.value.name)?.id
-        await useCustomFetch<string>(`teams/${teamId}`).put({ officerAddress: proxyAddress }).json()
         addSuccessToast('Officer contract deployed successfully')
         loading.value = false
       } catch (error) {
