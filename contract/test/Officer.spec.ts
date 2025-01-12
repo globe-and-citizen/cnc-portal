@@ -106,7 +106,7 @@ describe('Officer Contract', function () {
 
       // Test unauthorized access
       await expect(officer.connect(addr3).deployBeaconProxy('Bank', initData)).to.be.revertedWith(
-        'You are not authorized to perform this action'
+        'Caller is not an owner and contract is not initializing'
       )
 
       // Test authorized access (founder)

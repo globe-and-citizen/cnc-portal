@@ -118,7 +118,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     function deployBeaconProxy(
         string calldata contractType,
         bytes calldata initializerData
-    ) public whenNotPaused onlyOwners returns (address) {
+    ) public whenNotPaused onlyInitializingOrOwners returns (address) {
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
         require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");
 
