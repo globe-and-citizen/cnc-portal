@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
 
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
@@ -137,14 +137,14 @@ const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
 
 interface TeamInputWithOfficer extends TeamInput {
-  officerAddress?: Address
+  officerAddress: Address
 }
 
 const team = ref<TeamInputWithOfficer>({
   name: '',
   description: '',
   members: [{ name: '', address: '' }],
-  officerAddress: undefined
+  officerAddress: '' as Address
 })
 // Officer contract creation
 const {
@@ -224,7 +224,8 @@ watch(
       team.value = {
         name: '',
         description: '',
-        members: []
+        members: [],
+        officerAddress: '' as Address
       }
       showAddTeamModal.value = false
       executeFetchTeams()
@@ -407,7 +408,7 @@ const handleAddTeam = async (data: {
 }) => {
   team.value = {
     ...data.team,
-    officerAddress: undefined // Will be set after deployment
+    officerAddress: '' as Address // Will be set after deployment
   }
   // First deploy the officer contract
   try {
@@ -470,6 +471,38 @@ const deployOfficerContract = async () => {
     addErrorToast('Error deploying contract')
   }
 }
+useWatchContractEvent({
+  address: OFFICER_BEACON as Address,
+  abi: FACTORY_BEACON_ABI,
+  eventName: 'BeaconProxyCreated',
+  async onLogs(logs) {
+    interface ILogs {
+      args: {
+        deployer: string
+        proxy: string
+      }
+    }
+    const deployer = (logs[0] as unknown as ILogs).args.deployer
+    const proxyAddress = (logs[0] as unknown as ILogs).args.proxy
+    const currentAddress = useUserDataStore().address as Address
+    if (!proxyAddress || proxyAddress == team.value.officerAddress || deployer !== currentAddress)
+      loading.value = false
+    else {
+      try {
+        await useCustomFetch<string>('teams').post(team.value).json()
+        const teams = await useCustomFetch<string>('teams').get().json()
+        const teamId = teams.data.value?.find((t) => t.name === team.value.name)?.id
+        await useCustomFetch<string>(`teams/${teamId}`).put({ officerAddress: proxyAddress }).json()
+        addSuccessToast('Officer contract deployed successfully')
+        loading.value = false
+      } catch (error) {
+        console.log('Error updating officer address:', error)
+        addErrorToast('Error updating officer address')
+        loading.value = false
+      }
+    }
+  }
+})
 const navigateToTeam = (id: number) => {
   router.push(`/teams/${id}`)
 }
