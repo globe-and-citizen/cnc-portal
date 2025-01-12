@@ -38,6 +38,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     /// @notice Emitted when a new beacon is configured
     event BeaconConfigured(string contractType, address beaconAddress);
 
+    /// @notice Emitted when beacon proxies are deployed
+    event BeaconProxiesDeployed(address[] beaconProxies);
+
     /// @notice Configuration struct for beacon initialization
     struct BeaconConfig {
         string beaconType;
@@ -199,7 +202,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             require(keccak256(bytes(deployments[i].contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");      
             deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
         }
-        
+        emit BeaconProxiesDeployed(deployedAddresses);
         return deployedAddresses;
     }
 
