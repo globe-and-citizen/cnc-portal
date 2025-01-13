@@ -20,7 +20,8 @@ const mocks = vi.hoisted(() => ({
   }
 }))
 const mockUseAccount = {
-  address: { value: '0xUserAddress' }
+  address: ref('0xUserAddress'),
+  isConnected: ref(true)
 }
 
 const mockUseSignMessage = {
@@ -29,12 +30,19 @@ const mockUseSignMessage = {
   signMessage: vi.fn()
 }
 
+const mockUseConnect = {
+  connect: vi.fn(),
+  connectors: [],
+  error: ref(null)
+}
+
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: Object = await importOriginal()
   return {
     ...actual,
     useAccount: vi.fn(() => mockUseAccount),
-    useSignMessage: vi.fn(() => mockUseSignMessage)
+    useSignMessage: vi.fn(() => mockUseSignMessage),
+    useConnect: vi.fn(() => mockUseConnect)
   }
 })
 
