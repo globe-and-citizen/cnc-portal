@@ -10,7 +10,7 @@
       <div>
         <div
           role="button"
-          class="flex items-center cursor-pointer gap-4 badge badge-info"
+          class="flex items-center cursor-pointer gap-4 badge badge-lg badge-info"
           @click="
             () => {
               isDropdownOpen = !isDropdownOpen
