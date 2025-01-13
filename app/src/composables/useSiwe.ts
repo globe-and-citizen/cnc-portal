@@ -38,22 +38,23 @@ export function useSiwe() {
   watch(address, async (newVal) => {
     if (newVal) {
       console.log(`connected address: `, newVal)
-      isProcessing.value = true
+      await executeSiwe()
+      // isProcessing.value = true
 
-      apiEndpoint.value = `user/nonce/${address.value}`
-      await executeFetchUserNonce()
-      if (!nonce.value) return
+      // apiEndpoint.value = `user/nonce/${address.value}`
+      // await executeFetchUserNonce()
+      // if (!nonce.value) return
 
-      const statement = 'Sign in with Ethereum to the app.'
-      const siweMessageCreator = createSiweMessageCreator(
-        address.value as string,
-        statement,
-        nonce.value.nonce
-      )
+      // const statement = 'Sign in with Ethereum to the app.'
+      // const siweMessageCreator = createSiweMessageCreator(
+      //   address.value as string,
+      //   statement,
+      //   nonce.value.nonce
+      // )
 
-      authData.value.message = await siweMessageCreator.create()
+      // authData.value.message = await siweMessageCreator.create()
 
-      signMessage({ message: authData.value.message })
+      // signMessage({ message: authData.value.message })
     }
   })
 
@@ -133,6 +134,23 @@ export function useSiwe() {
     }
   })
 
+  async function executeSiwe() {
+    apiEndpoint.value = `user/nonce/${address.value}`
+    await executeFetchUserNonce()
+    if (!nonce.value) return
+
+    const statement = 'Sign in with Ethereum to the app.'
+    const siweMessageCreator = createSiweMessageCreator(
+      address.value as string,
+      statement,
+      nonce.value.nonce
+    )
+
+    authData.value.message = await siweMessageCreator.create()
+
+    signMessage({ message: authData.value.message })
+  }
+
   async function siwe() {
     // Check if we have metamask installation befor continue the process
     if (!MetaMaskUtil.hasInstalledWallet()) {
@@ -154,6 +172,7 @@ export function useSiwe() {
         })
       }
 
+      await executeSiwe()
       // apiEndpoint.value = `user/nonce/${account.address.value}`
       // await executeFetchUserNonce()
       // if (!nonce.value) return
