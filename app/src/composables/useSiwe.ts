@@ -7,7 +7,7 @@ import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { MetaMaskUtil } from '@/utils/web3Util'
 import { useStorage } from '@vueuse/core'
-import { useAccount, useSignMessage } from '@wagmi/vue'
+import { useAccount, useSignMessage, useConnect } from '@wagmi/vue'
 
 function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
   return new SLSiweMessageCreator({
@@ -24,7 +24,39 @@ export function useSiwe() {
   const isProcessing = ref(false)
   const authData = ref({ signature: '', message: '' })
   const apiEndpoint = ref<string>('')
-  const account = useAccount()
+  const { connectors, connect, error: connectError } = useConnect()
+  const { address, isConnected } = useAccount()
+
+  watch(connectError, (newVal) => {
+    if (newVal) {
+      addErrorToast(parseError(newVal))
+      log.error('connectError.value', newVal)
+      isProcessing.value = false
+    }
+  })
+
+  watch(address, async (newVal) => {
+    if (newVal) {
+      console.log(`connected address: `, newVal)
+      isProcessing.value = true
+
+      apiEndpoint.value = `user/nonce/${address.value}`
+      await executeFetchUserNonce()
+      if (!nonce.value) return
+
+      const statement = 'Sign in with Ethereum to the app.'
+      const siweMessageCreator = createSiweMessageCreator(
+        address.value as string,
+        statement,
+        nonce.value.nonce
+      )
+
+      authData.value.message = await siweMessageCreator.create()
+
+      signMessage({ message: authData.value.message })
+    }
+  })
+
   const { data: signature, error: signMessageError, signMessage } = useSignMessage()
 
   watch(signature, async (newVal) => {
@@ -34,7 +66,7 @@ export function useSiwe() {
       const token = siweData.value.accessToken
       const storageToken = useStorage('authToken', token)
       storageToken.value = token
-      apiEndpoint.value = `user/${account.address.value}`
+      apiEndpoint.value = `user/${address.value}`
       await executeFetchUser()
       if (!user.value) return
       const userData: Partial<User> = user.value
@@ -111,20 +143,31 @@ export function useSiwe() {
     try {
       isProcessing.value = true
 
-      apiEndpoint.value = `user/nonce/${account.address.value}`
-      await executeFetchUserNonce()
-      if (!nonce.value) return
+      if (!isConnected.value) {
+        console.log(`not connected...`)
+        connectors.map((connector) => {
+          console.log(`connector name: `, connector.name)
+          const connectorName = connector.name.split(' ')[0]
+          if (connectorName === 'MetaMask') {
+            connect({connector})
+          }
+        })
+      }
 
-      const statement = 'Sign in with Ethereum to the app.'
-      const siweMessageCreator = createSiweMessageCreator(
-        account.address.value as string,
-        statement,
-        nonce.value.nonce
-      )
+      // apiEndpoint.value = `user/nonce/${account.address.value}`
+      // await executeFetchUserNonce()
+      // if (!nonce.value) return
 
-      authData.value.message = await siweMessageCreator.create()
+      // const statement = 'Sign in with Ethereum to the app.'
+      // const siweMessageCreator = createSiweMessageCreator(
+      //   account.address.value as string,
+      //   statement,
+      //   nonce.value.nonce
+      // )
 
-      signMessage({ message: authData.value.message })
+      // authData.value.message = await siweMessageCreator.create()
+
+      // signMessage({ message: authData.value.message })
     } catch (_error) {
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
