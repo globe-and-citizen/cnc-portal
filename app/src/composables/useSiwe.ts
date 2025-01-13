@@ -167,7 +167,7 @@ export function useSiwe() {
           console.log(`connector name: `, connector.name)
           const connectorName = connector.name.split(' ')[0]
           if (connectorName === 'MetaMask') {
-            connect({connector})
+            connect({ connector })
           }
         })
       }
