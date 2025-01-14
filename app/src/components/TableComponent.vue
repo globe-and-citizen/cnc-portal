@@ -10,13 +10,41 @@
       <thead :class="{ 'sticky top-0': sticky }">
         <tr>
           <th v-for="(column, index) in columns" :key="index" :class="column.class">
-            <div class="flex items-center space-x-2">
-              <span>{{ column.label }}</span>
-              <button v-if="column.sortable" @click="toggleSort(column)" :class="sortButton?.class">
-                <span v-if="isSortedAsc(column)">{{ sortAscIcon || '▲' }}</span>
-                <span v-if="isSortedDesc(column)">{{ sortDescIcon || '▼' }}</span>
-              </button>
-            </div>
+            <slot :name="`${column.key}-header`" :column="column" :sort="column.sort">
+              <div class="flex items-center space-x-2">
+                <span>{{ column.label }}</span>
+                <button
+                  v-if="column.sortable"
+                  @click="toggleSort(column)"
+                  :class="sortButton?.class"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-6"
+                    v-if="!isSortedAsc(column) && !isSortedDesc(column)"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
+                    />
+                  </svg>
+
+                  <span v-if="isSortedAsc(column)"
+                    >{{ sortAscIcon }}
+                    <ArrowUpIcon class="size-5 cursor-pointer" v-if="!sortAscIcon"
+                  /></span>
+                  <span v-if="isSortedDesc(column)">
+                    {{ sortDescIcon }}
+                    <ArrowDownIcon class="size-5 cursor-pointer" v-if="!sortDescIcon" />
+                  </span>
+                </button>
+              </div>
+            </slot>
           </th>
         </tr>
       </thead>
@@ -28,7 +56,12 @@
             </div>
           </td>
         </tr>
-        <tr v-for="(row, rowIndex) in sortedRows" :key="rowIndex" @click="$emit('row-click', row)">
+        <tr
+          v-for="(row, rowIndex) in sortedRows"
+          :key="rowIndex"
+          @click="$emit('row-click', row)"
+          class="hover"
+        >
           <td v-for="(column, colIndex) in columns" :key="colIndex">
             <slot
               :name="`${column.key}-data`"
@@ -47,19 +80,23 @@
 
 <script setup lang="ts">
 import { computed, defineProps, defineEmits, ref } from 'vue'
+import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
 import type { PropType } from 'vue'
 
 export interface TableRow {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
 export interface TableColumn {
   key: string
   sortable?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sort?: (a: any, b: any, direction: 'asc' | 'desc') => number
   direction?: 'asc' | 'desc'
   class?: string
   rowClass?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -95,16 +132,15 @@ const props = defineProps({
     default: 'auto'
   },
   sortButton: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: Object as PropType<Record<string, any>>,
     default: () => ({})
   },
   sortAscIcon: {
-    type: String,
-    default: ''
+    type: String
   },
   sortDescIcon: {
-    type: String,
-    default: ''
+    type: String
   },
   loadingState: {
     type: Object as PropType<LoadingState>,
@@ -116,7 +152,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['update:sort', 'row-click'])
+const emit = defineEmits(['update:sort', 'row-click'])
 
 // Sort function
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,7 +182,7 @@ const columns = computed(() => {
 
   const hasColumnSelect = defaultColumns.find((v) => v.key === 'select')
 
-  if (hasColumnSelect || !props.modelValue) {
+  if (hasColumnSelect) {
     return defaultColumns
   }
 
@@ -165,11 +201,12 @@ const currentSort = ref<string | null>(null)
 const currentDirection = ref<'asc' | 'desc' | null>(null)
 
 const sortedRows = computed(() => {
-  if (props.sortMode === 'manual' || !currentSort.value) {
+  const sortKey = currentSort.value
+  if (props.sortMode === 'manual' || !sortKey) {
     return props.rows
   }
+
   return [...props.rows].sort((a, b) => {
-    const sortKey = currentSort.value
     const direction = currentDirection.value === 'asc' ? 1 : -1
     if (typeof a[sortKey] === 'string') {
       return direction * a[sortKey].localeCompare(b[sortKey])
@@ -185,7 +222,7 @@ const toggleSort = (column: TableColumn) => {
     currentSort.value = column.key
     currentDirection.value = column.direction || 'asc'
   }
-  if (sortMode === 'manual') {
+  if (props.sortMode === 'manual') {
     emit('update:sort', { key: currentSort.value, direction: currentDirection.value })
   }
 }
