@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
@@ -848,7 +848,7 @@ describe('ExpenseAccountSection', () => {
       //   // @ts-expect-error: Mocking window object
       //   delete (global as object).window.ethereum
       // })
-      let wrapper = createComponent({
+      const wrapper = createComponent({
         global: {
           plugins: [
             createTestingPinia({
