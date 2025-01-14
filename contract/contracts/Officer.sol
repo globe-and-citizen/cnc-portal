@@ -14,15 +14,22 @@ interface IVoting {
     function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external;
 }
 /**
+ * @notice Struct for contract deployment data
+ * @param contractType Type of contract to deploy
+ * @param initializerData Initialization data for the contract
+ */
+struct DeploymentData {
+    string contractType;
+    bytes initializerData;
+}
+
+/**
  * @title Officer Contract
  * @dev Manages team creation, beacon proxy deployment, and contract upgrades
  * Inherits from OwnableUpgradeable, ReentrancyGuardUpgradeable, and PausableUpgradeable
  */
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
-    /// @notice Array of founder addresses
-    address[] founders;
-    /// @notice Array of member addresses
-    address[] members;
+ 
     /// @notice Mapping of contract type to beacon address
     mapping(string => address) public contractBeacons;
 
@@ -30,8 +37,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     event ContractDeployed(string contractType, address deployedAddress);
     /// @notice Emitted when a new beacon is configured
     event BeaconConfigured(string contractType, address beaconAddress);
-    /// @notice Emitted when a new team is created
-    event TeamCreated(address[] founders, address[] members);
+
+    /// @notice Emitted when beacon proxies are deployed
+    event BeaconProxiesDeployed(address[] beaconProxies);
 
     /// @notice Configuration struct for beacon initialization
     struct BeaconConfig {
@@ -58,7 +66,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function initialize(
         address _owner,
-        BeaconConfig[] memory beaconConfigs
+        BeaconConfig[] memory beaconConfigs,
+        DeploymentData[] calldata _deployments,
+        bool _isDeployAllContracts
     ) public initializer {
         __Ownable_init(_owner);
         __ReentrancyGuard_init();
@@ -80,6 +90,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
             emit BeaconConfigured(beaconConfigs[i].beaconType, beaconConfigs[i].beaconAddress);
         }
+        if(_isDeployAllContracts){
+            deployAllContracts(_deployments);
+        }
     }
 
     /**
@@ -95,24 +108,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         emit BeaconConfigured(contractType, beaconAddress);
     }
 
-    /**
-     * @notice Creates a new team with founders and members
-     * @param _founders Array of founder addresses
-     * @param _members Array of member addresses
-     */
-    function createTeam(address[] memory _founders, address[] memory _members) external whenNotPaused {
-        require(_founders.length > 0, "Must have at least one founder");
-
-        for (uint256 i = 0; i < _founders.length; i++) {
-            require(_founders[i] != address(0), "Invalid founder address");
-            founders.push(_founders[i]);
-        }
-        for (uint256 i = 0; i < _members.length; i++) {
-            require(_members[i] != address(0), "Invalid member address");
-            members.push(_members[i]);
-        }
-        emit TeamCreated(_founders, _members);
-    }
 
     /**
      * @notice Deploys a new beacon proxy for a contract type
@@ -123,7 +118,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     function deployBeaconProxy(
         string calldata contractType,
         bytes calldata initializerData
-    ) public whenNotPaused onlyOwners returns (address) {
+    ) public whenNotPaused onlyInitializingOrOwners returns (address) {
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
         require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");
 
@@ -152,8 +147,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      * @notice Returns the current team's founders and members
      * @return Array of founder addresses and array of member addresses
      */
-    function getTeam() external view returns (address[] memory, address[] memory, DeployedContract[] memory) {
-        return (founders, members, deployedContracts);
+    function getTeam() external view returns (DeployedContract[] memory) {
+        return ( deployedContracts);
     }
 
     /**
@@ -163,12 +158,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         if (msg.sender == owner()) {
             _;
             return;
-        }
-        for (uint256 i = 0; i < founders.length; i++) {
-            if (msg.sender == founders[i]) {
-                _;
-                return;
-            }
         }
         revert("You are not authorized to perform this action");
     }
@@ -194,15 +183,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     function getDeployedContracts() external view returns (DeployedContract[] memory) {
         return deployedContracts;
     }
-    /**
-     * @notice Struct for contract deployment data
-     * @param contractType Type of contract to deploy
-     * @param initializerData Initialization data for the contract
-     */
-    struct DeploymentData {
-        string contractType;
-        bytes initializerData;
-    }
+    
 
     /**
      * @notice Deploys all configured contract types via beacon proxies
@@ -211,7 +192,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function deployAllContracts(
         DeploymentData[] calldata deployments
-    ) external whenNotPaused onlyOwners returns (address[] memory) {
+    ) public whenNotPaused onlyInitializingOrOwners returns (address[] memory) {
         address[] memory deployedAddresses = new address[](deployments.length);
         
         for (uint256 i = 0; i < deployments.length; i++) {
@@ -221,7 +202,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             require(keccak256(bytes(deployments[i].contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");      
             deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
         }
-        
+        emit BeaconProxiesDeployed(deployedAddresses);
         return deployedAddresses;
     }
 
@@ -231,5 +212,13 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function getConfiguredContractTypes() external view returns (string[] memory) {
         return contractTypes;
+    }
+
+    modifier onlyInitializingOrOwners() {
+        require(
+            _isInitializing() || owner() == msg.sender,
+            "Caller is not an owner and contract is not initializing"
+        );
+        _;
     }
 }

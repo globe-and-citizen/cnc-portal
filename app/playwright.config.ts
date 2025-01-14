@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: './test/e2e',
 
   // Run all tests in parallel.
-  fullyParallel: process.env.CI ? false : true,
+  fullyParallel: true,
 
   // Fail the build on CI if you accidentally left test.only in the source code.
   forbidOnly: !!process.env.CI,
@@ -26,7 +26,8 @@ export default defineConfig({
   timeout: 0,
 
   use: {
-    baseURL: 'http://localhost:5173'
+    baseURL: 'http://localhost:5173',
+    trace: 'on-first-retry' // record traces on first retry of each test
   },
 
   // Synpress currently only supports Chromium, however, this will change in the future.
@@ -35,10 +36,5 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] }
     }
-  ],
-
-  webServer: {
-    command: 'npm run dev',
-    port: 5173
-  }
+  ]
 })

@@ -73,8 +73,8 @@ import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
   member: Partial<MemberInput>
-  teamId: Number
-  ownerAddress: String
+  teamId: number
+  ownerAddress: string
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
 

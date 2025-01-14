@@ -1,37 +1,70 @@
 <template>
   <div class="flex flex-col gap-y-4">
-    <div
-      v-if="team.expenseAccountEip712Address"
-      class="stats bg-green-100 flex text-primary-content border-outline p-5 overflow-visible"
-    >
-      <!-- TODO: add ERC20 token support  -->
-      <!-- Expense A/c Info Section -->
-      <section class="stat flex flex-col justify-start">
-        <div
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 mb-10"
-        >
-          <div>
-            <span>Expense Account Balance</span>
-            <div class="font-extrabold text-4xl" data-test="expense-account-balance">
-              <span class="inline-block min-w-16 h-10">
-                <span
-                  class="loading loading-spinner loading-lg"
-                  v-if="isLoadingExpenseAccountBalance"
-                ></span>
-                <span v-else>{{ expenseBalanceFormatted }} </span>
-              </span>
-              <span class="text-xs">{{ ' ' + NETWORK.currencySymbol }}</span>
-            </div>
-            <span class="text-xs sm:text-sm">≈ $ 1.28</span>
-          </div>
-          <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
-            <span class="text-sm">Expense Account Address </span>
-            <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
+    <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
+    <!-- Cash Remuneration stats: Only apear for owner -->
+    <div class="flex gap-10">
+      <div class="card bg-base-200 w-1/3 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Balance</h2>
+          <div
+            class="font-extrabold text-neutral flex gap-2 items-baseline"
+            data-test="expense-account-balance"
+          >
+            <span class="inline-block h-10 text-4xl">
+              <span
+                class="loading loading-spinner loading-lg"
+                v-if="isLoadingExpenseAccountBalance"
+              ></span>
+              <span v-else>{{ expenseBalanceFormatted }} </span>
+            </span>
+            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
         </div>
+      </div>
+      <div class="card bg-blue-100 text-blue-800 w-1/3 shadow-xl">
+        <div class="card-body">
+          <div class="font-extrabold flex gap-2 items-baseline">
+            <span class="inline-block h-10 text-4xl">
+              <span class="loading loading-spinner loading-lg" v-if="false"></span>
+              <span v-else>10 </span>
+            </span>
+            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
+          </div>
+          <h2 class="card-title">Spent this month</h2>
+        </div>
+      </div>
+      <div class="card bg-orange-200 text-orange-800 w-1/3 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Approved Address</h2>
+          <div class="font-extrabold flex gap-2 items-baseline">
+            <span class="inline-block h-10 text-4xl">
+              <span class="loading loading-spinner loading-lg" v-if="false"></span>
+              <span v-else>20 </span>
+            </span>
+            <span class="text-xs">User</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-10">
+      <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
+        <span class="text-sm">Expense Account Address </span>
+        <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
+      </div>
+    </div>
+    <div
+      v-if="team.expenseAccountEip712Address"
+      class="card shadow-xl flex text-primary-content p-5 overflow-visible"
+    >
+
+      <span class="text-2xl font-bold">My Approved Expense</span>
+      <!-- TODO display this only if the use have an approved expense -->
+      <!-- Expense A/c Info Section -->
+      <section class="stat flex flex-col justify-start">
         <!-- New Header -->
-        <div>
+
+        <div class="flex flex-col gap-8">
           <div class="overflow-x-auto" data-test="approval-table">
             <table class="table">
               <!-- head -->
@@ -41,7 +74,7 @@
                   <th>Max Amount Per Tx</th>
                   <th>Total Transactions</th>
                   <th>Total Transfers</th>
-                  <th>Action</th>
+                  <th class="flex justify-end">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -53,12 +86,12 @@
                   <td class="flex justify-end" data-test="action-td">
                     <ButtonUI
                       variant="success"
-                      :disabled="!_expenseAccountData?.data"
+                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
                       v-if="true"
                       @click="transferModal = true"
                       data-test="transfer-button"
                     >
-                      Transfer
+                      Spend
                     </ButtonUI>
                   </td>
                 </tr>
@@ -98,9 +131,10 @@
       </section>
     </div>
 
+    <!-- Activated List -->
     <div
-      v-if="manyExpenseAccountData"
-      class="stats bg-green-100 flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+      v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
+      class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
       <div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Approved Addresses</span>
@@ -110,7 +144,7 @@
           @click="approveUsersModal = true"
           data-test="approve-users-button"
         >
-          Approve User
+          Approve User Expense
         </ButtonUI>
       </div>
       <div class="overflow-x-auto" data-test="approvals-list-table">
@@ -123,47 +157,78 @@
               <th>Max Amount Per Tx</th>
               <th>Total Transactions</th>
               <th>Total Transfers</th>
-              <th>Action</th>
+              <th class="flex justify-end">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(data, index) in manyExpenseAccountData" :key="index">
+            <tr v-for="(data, index) in manyExpenseAccountDataActive" :key="index">
               <td class="flex flex-row justify-start gap-4">
-                <div role="button" class="relative group">
-                  <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
-                    <img
-                      alt="User Avatar"
-                      :src="
-                        data.avatarUrl ||
-                        'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
-                      "
-                      class="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div class="flex flex-col text-gray-600">
-                  <p class="font-bold text-sm line-clamp-1" data-test="user-name">
-                    {{ data.name || 'User' }}
-                  </p>
-                  <p class="text-sm">
-                    {{
-                      `${(data.approvedAddress as string).slice(0, 6)}...${(data.approvedAddress as string).slice(37)}`
-                    }}
-                  </p>
-                </div>
+                <UserComponent
+                  :user="{ name: data.name, address: data.approvedAddress }"
+                ></UserComponent>
               </td>
               <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
               <td>{{ data.budgetData[2].value }}</td>
-              <td>{{ `${getLimitBalance(data.signature, 0)}/${data.budgetData[0].value}` }}</td>
-              <td>{{ `${getLimitBalance(data.signature, 1)}/${data.budgetData[1].value}` }}</td>
+              <td>{{ `${data.balances['0']}/${data.budgetData[0].value}` }}</td>
+              <td>{{ `${data.balances['1']}/${data.budgetData[1].value}` }}</td>
               <td class="flex justify-end" data-test="action-td">
                 <ButtonUI
                   :disabled="contractOwnerAddress !== currentUserAddress"
-                  class="btn btn-success"
+                  variant="error"
+                  outline
                   :loading="isLoadingDeactivateApproval && deactivateIndex === index"
                   @click="deactivateApproval(data.signature, index)"
                 >
-                  Deactivate
+                  Disable Approval
+                </ButtonUI>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Deactivated List -->
+    <div
+      v-if="manyExpenseAccountDataInactive.length > 0"
+      class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+    >
+      <div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Deactivated Addresses</span>
+      </div>
+      <div class="overflow-x-auto" data-test="deactivated-list-table">
+        <table class="table">
+          <!-- head -->
+          <thead class="text-sm font-bold">
+            <tr>
+              <th>User</th>
+              <th>Expiry Date</th>
+              <th>Max Amount Per Tx</th>
+              <th>Total Transactions</th>
+              <th>Total Transfers</th>
+              <th class="flex justify-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(data, index) in manyExpenseAccountDataInactive" :key="index">
+              <td class="flex flex-row justify-start gap-4">
+                <UserComponent
+                  :user="{ name: data.name, address: data.approvedAddress }"
+                ></UserComponent>
+              </td>
+              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
+              <td>{{ data.budgetData[2].value }}</td>
+              <td>{{ `${data.balances['0']}/${data.budgetData[0].value}` }}</td>
+              <td>{{ `${data.balances['1']}/${data.budgetData[1].value}` }}</td>
+              <td class="flex justify-end" data-test="action-td">
+                <ButtonUI
+                  :disabled="contractOwnerAddress !== currentUserAddress"
+                  variant="success"
+                  outline
+                  :loading="isLoadingActivateApproval && deactivateIndex === index"
+                  @click="activateApproval(data.signature, index)"
+                >
+                  Reactivate Approval
                 </ButtonUI>
               </td>
             </tr>
@@ -178,7 +243,14 @@
 <script setup lang="ts">
 //#region imports
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit, BudgetData } from '@/types'
+import type {
+  Team,
+  User,
+  BudgetLimit,
+  BudgetData,
+  ManyExpenseResponse,
+  ManyExpenseWithBalances
+} from '@/types'
 import { NETWORK } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -198,6 +270,7 @@ import {
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+import UserComponent from '@/components/UserComponent.vue'
 //#endregion imports
 
 //#region variable declarations
@@ -249,13 +322,13 @@ const dynamicDisplayData = (budgetType: number) =>
       if (budgetType === 0) {
         return {
           ...data,
-          //@ts-ignore
+          // @ts-expect-error: amountWithdrawn.value is a array
           value: Number(amountWithdrawn.value[0])
         }
       } else {
         return {
           ...data,
-          //@ts-ignore
+          // @ts-expect-error: amountWithdrawn.value is a array
           value: formatEther(amountWithdrawn.value[1])
         }
       }
@@ -303,55 +376,65 @@ const {
   args: [signatureHash]
 })
 
-watch(amountWithdrawn, async (newVal) => {
-  if (newVal) await initializeBalances()
-})
-
 // Reactive storage for balances
-const balances = reactive<Record<string, { [key: number]: string }>>({})
+const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
+const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
+
+// Check if the current user is disapproved
+const isDisapprovedAddress = computed(
+  () =>
+    manyExpenseAccountDataInactive.findIndex(
+      (item) => item.approvedAddress === currentUserAddress
+    ) !== -1
+)
 
 // Async initialization function
 const initializeBalances = async () => {
+  manyExpenseAccountDataActive.length = 0
+  manyExpenseAccountDataInactive.length = 0
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
-      const signatureHash = keccak256(data.signature)
+      signatureHash.value = keccak256(data.signature)
 
-      // Simulate fetching data asynchronously
       await executeGetAmountWithdrawn()
 
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
-        balances[signatureHash] = {
-          0: amountWithdrawn.value[0],
-          1: formatEther(amountWithdrawn.value[1])
-        }
+        if (amountWithdrawn.value[2] === 2)
+          manyExpenseAccountDataInactive.push({
+            ...data,
+            balances: {
+              0: `${amountWithdrawn.value[0]}`,
+              1: formatEther(amountWithdrawn.value[1]),
+              2: amountWithdrawn.value[2] === true
+            }
+          })
+        else
+          manyExpenseAccountDataActive.push({
+            ...data,
+            balances: {
+              0: `${amountWithdrawn.value[0]}`,
+              1: formatEther(amountWithdrawn.value[1]),
+              2: amountWithdrawn.value[2] === false
+            }
+          })
       } else {
-        balances[signatureHash] = {
-          0: '--',
-          1: '--'
-        }
+        manyExpenseAccountDataInactive.push({
+          ...data,
+          balances: {
+            0: '--',
+            1: '--',
+            2: false
+          }
+        })
       }
     }
 }
-
-// Computed property for getting balances
-const getLimitBalance = computed(() => {
-  return (signature: `0x{string}`, index: number): string => {
-    const signatureHash = keccak256(signature)
-    return balances[signatureHash] ? balances[signatureHash][`${index}`] : '--'
-  }
-})
 
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
     addErrorToast('Failed to fetch amount withdrawn')
-  }
-})
-
-watch(signatureHash, async (newVal) => {
-  if (newVal) {
-    await executeGetAmountWithdrawn()
   }
 })
 
@@ -405,9 +488,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
     addSuccessToast('Deactivate Successful')
-    // await getExpenseAccountBalance()
-    // await getAmountWithdrawnBalance()
-    // transferModal.value = false
+    await initializeBalances()
   }
 })
 
@@ -423,7 +504,45 @@ const deactivateApproval = async (signature: `0x{string}`, index: number) => {
   })
 }
 
-// useFetch instance for deleting member
+//activate approval
+const {
+  writeContract: executeActivateApproval,
+  isPending: isLoadingActivateApproval,
+  error: errorActivateApproval,
+  data: activateHash
+} = useWriteContract()
+
+watch(errorActivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to activate approval')
+  }
+})
+
+const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
+  useWaitForTransactionReceipt({
+    hash: activateHash
+  })
+watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
+    addSuccessToast('Activate Successful')
+    await initializeBalances()
+  }
+})
+
+const activateApproval = async (signature: `0x{string}`, index: number) => {
+  deactivateIndex.value = index
+  const signatureHash = keccak256(signature)
+
+  executeActivateApproval({
+    address: team.value.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'activateApproval'
+  })
+}
+
+// useFetch instance for fetching expence account data
 const {
   error: fetchExpenseAccountDataError,
   // isFetching: isFetchingExpenseAccountData,
@@ -452,7 +571,7 @@ const {
   immediate: false
 })
   .get()
-  .json()
+  .json<ManyExpenseResponse[]>()
 
 watch(fetchManyExpenseAccountDataError, (newVal) => {
   if (newVal) {
@@ -493,11 +612,12 @@ watch(searchUserResponse, () => {
 
 //#region helper functions
 const init = async () => {
-  await fetchExpenseAccountData()
   await getExpenseAccountOwner()
-  await getAmountWithdrawnBalance()
+  await fetchExpenseAccountData()
   await fetchManyExpenseAccountData()
   await initializeBalances()
+  // await fetchExpenseAccountData()
+  await getAmountWithdrawnBalance()
 }
 
 const getExpenseAccountOwner = async () => {

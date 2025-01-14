@@ -47,7 +47,7 @@ describe('Officer Contract', function () {
 
     // Deploy Officer contract
     const Officer = await ethers.getContractFactory('Officer')
-    officer = (await upgrades.deployProxy(Officer, [owner.address, []], {
+    officer = (await upgrades.deployProxy(Officer, [owner.address, [], [], false], {
       initializer: 'initialize'
     })) as unknown as Officer
 
@@ -58,26 +58,6 @@ describe('Officer Contract', function () {
     await officer
       .connect(owner)
       .configureBeacon('ExpenseAccount', await expenseAccountBeacon.getAddress())
-  })
-
-  describe('Team Management', () => {
-    it('Should create a new team', async function () {
-      const founders = [await addr1.getAddress(), await addr2.getAddress()]
-      const members = [ethers.Wallet.createRandom().address]
-
-      await expect(officer.connect(owner).createTeam(founders, members))
-        .to.emit(officer, 'TeamCreated')
-        .withArgs(founders, members)
-
-      const [actualFounders, actualMembers, deployedContracts] = await officer.getTeam()
-      expect(actualFounders).to.deep.equal(founders)
-      expect(actualMembers).to.deep.equal(members)
-      expect(deployedContracts).to.be.empty
-    })
-
-    it('Should fail to create team without founders', async () => {
-      await expect(officer.createTeam([], [])).to.be.revertedWith('Must have at least one founder')
-    })
   })
 
   describe('Contract Deployment', () => {
@@ -101,7 +81,7 @@ describe('Officer Contract', function () {
         'ContractDeployed'
       )
 
-      const [, , deployedContracts] = await officer.getTeam()
+      const deployedContracts = await officer.getTeam()
       expect(deployedContracts.length).to.equal(2)
       expect(deployedContracts[0].contractType).to.equal('Voting')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
@@ -117,8 +97,6 @@ describe('Officer Contract', function () {
     })
 
     it('Should restrict deployment to owners and founders', async function () {
-      await officer.connect(owner).createTeam([addr1.address], [])
-
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
         addr1.address,
         ethers.ZeroAddress,
@@ -128,11 +106,11 @@ describe('Officer Contract', function () {
 
       // Test unauthorized access
       await expect(officer.connect(addr3).deployBeaconProxy('Bank', initData)).to.be.revertedWith(
-        'You are not authorized to perform this action'
+        'Caller is not an owner and contract is not initializing'
       )
 
       // Test authorized access (founder)
-      await expect(officer.connect(addr1).deployBeaconProxy('Bank', initData)).to.emit(
+      await expect(officer.connect(owner).deployBeaconProxy('Bank', initData)).to.emit(
         officer,
         'ContractDeployed'
       )
@@ -198,7 +176,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(
-        upgrades.deployProxy(Officer, [owner.address, invalidConfig], {
+        upgrades.deployProxy(Officer, [owner.address, invalidConfig, [], false], {
           initializer: 'initialize'
         })
       ).to.be.revertedWith('Invalid beacon address')
@@ -214,7 +192,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(
-        upgrades.deployProxy(Officer, [owner.address, invalidConfig], {
+        upgrades.deployProxy(Officer, [owner.address, invalidConfig, [], false], {
           initializer: 'initialize'
         })
       ).to.be.revertedWith('Empty beacon type')
@@ -234,7 +212,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(
-        upgrades.deployProxy(Officer, [owner.address, duplicateConfigs], {
+        upgrades.deployProxy(Officer, [owner.address, duplicateConfigs, [], false], {
           initializer: 'initialize'
         })
       ).to.be.revertedWith('Duplicate beacon type')
@@ -253,19 +231,140 @@ describe('Officer Contract', function () {
         }
       ]
 
-      const officerContract = (await upgrades.deployProxy(Officer, [owner.address, validConfigs], {
-        initializer: 'initialize'
-      })) as unknown as Officer
+      const officerContract = (await upgrades.deployProxy(
+        Officer,
+        [owner.address, validConfigs, [], false],
+        {
+          initializer: 'initialize'
+        }
+      )) as unknown as Officer
 
       expect(await officerContract.contractBeacons('TestBeacon1')).to.equal(addr1.address)
       expect(await officerContract.contractBeacons('TestBeacon2')).to.equal(addr2.address)
+    })
+
+    it('Should initialize and deploy contracts in one transaction when isDeployAllContracts is true', async function () {
+      const Officer = await ethers.getContractFactory('Officer')
+      const bankBeaconAddr = await bankAccountBeacon.getAddress()
+      const votingBeaconAddr = await votingContractBeacon.getAddress()
+      const bodBeaconAddr = await bodBeacon.getAddress()
+
+      const validConfigs = [
+        {
+          beaconType: 'Bank',
+          beaconAddress: bankBeaconAddr
+        },
+        {
+          beaconType: 'Voting',
+          beaconAddress: votingBeaconAddr
+        },
+        {
+          beaconType: 'BoardOfDirectors',
+          beaconAddress: bodBeaconAddr
+        }
+      ]
+
+      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+
+      const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
+        owner.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        owner.address
+      ])
+
+      const deployments = [
+        {
+          contractType: 'Bank',
+          initializerData: bankInitData
+        },
+        {
+          contractType: 'Voting',
+          initializerData: votingInitData
+        }
+      ]
+
+      const officerContract = (await upgrades.deployProxy(
+        Officer,
+        [owner.address, validConfigs, deployments, true],
+        {
+          initializer: 'initialize'
+        }
+      )) as unknown as Officer
+
+      const deployedContracts = await officerContract.getDeployedContracts()
+      expect(deployedContracts.length).to.equal(3) // Bank, Voting, and auto-deployed BoardOfDirectors
+      expect(deployedContracts[0].contractType).to.equal('Bank')
+      expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      expect(deployedContracts[1].contractType).to.equal('Voting')
+      expect(deployedContracts[1].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      expect(deployedContracts[2].contractType).to.equal('BoardOfDirectors')
+      expect(deployedContracts[2].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      // Verify the Voting contract has the correct BoardOfDirectors address
+      const votingInstance = await ethers.getContractAt(
+        'Voting',
+        deployedContracts[1].contractAddress
+      )
+      const bodAddress = await votingInstance.boardOfDirectorsContractAddress()
+      expect(bodAddress).to.equal(deployedContracts[2].contractAddress)
+    })
+
+    it('Should not deploy contracts during initialization when isDeployAllContracts is false', async function () {
+      const Officer = await ethers.getContractFactory('Officer')
+      const validConfigs = [
+        {
+          beaconType: 'Bank',
+          beaconAddress: await bankAccountBeacon.getAddress()
+        },
+        {
+          beaconType: 'Voting',
+          beaconAddress: await votingContractBeacon.getAddress()
+        }
+      ]
+
+      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+
+      const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
+        owner.address,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        owner.address
+      ])
+
+      const deployments = [
+        {
+          contractType: 'Bank',
+          initializerData: bankInitData
+        },
+        {
+          contractType: 'Voting',
+          initializerData: votingInitData
+        }
+      ]
+
+      const officerContract = (await upgrades.deployProxy(
+        Officer,
+        [owner.address, validConfigs, deployments, false],
+        {
+          initializer: 'initialize'
+        }
+      )) as unknown as Officer
+
+      const deployedContracts = await officerContract.getDeployedContracts()
+      expect(deployedContracts.length).to.equal(0) // No contracts should be deployed
     })
   })
 
   describe('Batch Contract Deployment', () => {
     it('Should deploy multiple contracts in a single transaction', async function () {
       // Create team first to ensure proper setup
-      await officer.connect(owner).createTeam([owner.address], [])
 
       const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
         owner.address
@@ -294,7 +393,7 @@ describe('Officer Contract', function () {
       await tx.wait()
 
       // Verify deployments
-      const [, , deployedContracts] = await officer.getTeam()
+      const deployedContracts = await officer.getTeam()
 
       // Should have 3 contracts (Bank, Voting, and auto-deployed BoardOfDirectors)
       expect(deployedContracts.length).to.equal(3)
@@ -370,7 +469,7 @@ describe('Officer Contract', function () {
       ]
 
       await expect(officer.connect(addr3).deployAllContracts(deployments)).to.be.revertedWith(
-        'You are not authorized to perform this action'
+        'Caller is not an owner and contract is not initializing'
       )
     })
   })
@@ -489,7 +588,7 @@ describe('Officer Contract', function () {
 
       // Get data from both functions
       const deployedContracts = await officer.getDeployedContracts()
-      const [, , teamDeployedContracts] = await officer.getTeam()
+      const teamDeployedContracts = await officer.getTeam()
 
       // Compare results
       expect(deployedContracts.length).to.equal(teamDeployedContracts.length)

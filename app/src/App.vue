@@ -20,7 +20,7 @@
 
         <!-- Content Wrapper -->
         <div
-          class="relative flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll"
+          class="flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll"
         >
           <!-- Responsive Navbar -->
           <NavBar
@@ -43,7 +43,7 @@
             :balance="balance ? formatEther(balance as bigint).toString() : '0'"
             :balanceLoading="balanceLoading"
           />
-          <div class="w-full p-5 mt-10 md:p-10">
+          <div class="w-full p-5 md:p-10">
             <RouterView />
           </div>
 
@@ -86,12 +86,20 @@ import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import { useCustomFetch } from './composables/useCustomFetch'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import {
+  useAccount,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWriteContract
+} from '@wagmi/vue'
 import TIPS_ABI from '@/artifacts/abi/tips.json'
 import { TIPS_ADDRESS } from './constant'
 import { formatEther, type Address } from 'viem'
+import { useAuth } from './composables/useAuth'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+const { isDisconnected } = useAccount()
+const { logout } = useAuth()
 const toggleSide = ref(false)
 const showModal = ref(false)
 
@@ -173,6 +181,14 @@ watch(withdrawError, () => {
 watch(isConfirmingWithdraw, (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isSuccessConfirmed.value) {
     addSuccessToast('Tips withdrawn successfully')
+  }
+})
+watch(isDisconnected, (value) => {
+  if (value && userStore.isAuth) {
+    addErrorToast('Disconnected from wallet')
+    setTimeout(() => {
+      logout()
+    }, 3000)
   }
 })
 </script>

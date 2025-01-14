@@ -5,6 +5,7 @@
     <td>
       <AddressToolTip :address="member.address ?? ''" />
     </td>
+    <td>20 h/week & 10 USD/h</td>
     <td class="relative w-1/4" v-if="ownerAddress === userDataStore.address">
       <div v-if="ownerAddress == userDataStore.address" class="flex flex-wrap gap-2">
         <ButtonUI
@@ -125,8 +126,8 @@ interface Member extends MemberInput {
 }
 const props = defineProps<{
   member: Partial<Member>
-  teamId: Number
-  ownerAddress: String
+  teamId: number
+  ownerAddress: string
 }>()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const userDataStore = useUserDataStore()

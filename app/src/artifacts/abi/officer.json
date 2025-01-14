@@ -134,25 +134,6 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "address[]",
-        "name": "founders",
-        "type": "address[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "address[]",
-        "name": "members",
-        "type": "address[]"
-      }
-    ],
-    "name": "TeamCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "address",
         "name": "account",
         "type": "address"
@@ -220,24 +201,6 @@
   {
     "inputs": [
       {
-        "internalType": "address[]",
-        "name": "_founders",
-        "type": "address[]"
-      },
-      {
-        "internalType": "address[]",
-        "name": "_members",
-        "type": "address[]"
-      }
-    ],
-    "name": "createTeam",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "components": [
           {
             "internalType": "string",
@@ -250,7 +213,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct Officer.DeploymentData[]",
+        "internalType": "struct DeploymentData[]",
         "name": "deployments",
         "type": "tuple[]"
       }
@@ -333,16 +296,6 @@
     "name": "getTeam",
     "outputs": [
       {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      },
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      },
-      {
         "components": [
           {
             "internalType": "string",
@@ -386,37 +339,33 @@
         "internalType": "struct Officer.BeaconConfig[]",
         "name": "beaconConfigs",
         "type": "tuple[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "contractType",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes",
+            "name": "initializerData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct DeploymentData[]",
+        "name": "_deployments",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isDeployAllContracts",
+        "type": "bool"
       }
     ],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "investorBeacon",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "investorContract",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

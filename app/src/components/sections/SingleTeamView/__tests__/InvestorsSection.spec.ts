@@ -15,7 +15,7 @@ const mockUseReadContract = {
 }
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => mockUseReadContract)

@@ -38,6 +38,11 @@ jobs:
           sudo apt-get install --no-install-recommends -y \
           xvfb
 
+      - name: 🌎 Run App for cache
+        run: |
+          npm run dev &
+        working-directory: ./app
+
       - name: 💾 Build Cache
         run: xvfb-run npm run test:build:cache
         working-directory: ./app

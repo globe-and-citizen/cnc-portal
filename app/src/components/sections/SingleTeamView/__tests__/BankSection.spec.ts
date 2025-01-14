@@ -78,7 +78,7 @@ const mockUseBalance = {
 
 const mockUseAddAction = {
   loadingContract: ref(false),
-  actionCount: ref<BigInt | null>(null),
+  actionCount: ref<bigint | null>(null),
   team: ref<Partial<Team> | null>(null),
   action: ref<Partial<Action> | null>(null),
   executeAddAction: vi.fn(),
@@ -97,7 +97,7 @@ const createComponent = () => {
 }
 
 vi.mock('@/composables/bod', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useAddAction: vi.fn(() => mockUseAddAction)
@@ -106,7 +106,7 @@ vi.mock('@/composables/bod', async (importOriginal) => {
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => mockUseReadContract),

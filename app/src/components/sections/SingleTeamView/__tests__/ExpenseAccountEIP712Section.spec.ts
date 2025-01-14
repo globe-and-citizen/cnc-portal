@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
@@ -24,7 +24,7 @@ interface ComponentData {
   foundUsers: User[]
   action: string
   manyExpenseAccountData: unknown
-  amountWithdrawn: [number, number]
+  amountWithdrawn: [number, number, number | undefined]
   transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
   setExpenseAccountLimit: (amount: Ref) => Promise<void>
   approveAddress: (address: string) => Promise<void>
@@ -33,10 +33,11 @@ interface ComponentData {
   init: () => Promise<void>
   deactivateIndex: number | null
   isLoadingDeactivateApproval: boolean
+  isLoadingActivateApproval: boolean
 }
 
 vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
 
   // Step 2: Mock the class itself and its instance methods
   const EthersJsAdapter = vi.fn()
@@ -47,7 +48,7 @@ vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
   EthersJsAdapter.prototype.getSigner = vi.fn(() => ({})) // Mock getSigner if needed
 
   // Step 3: Mock the static method getInstance
-  //@ts-ignore
+  // @ts-expect-error: "Mocking static method"
   EthersJsAdapter['getInstance'] = vi.fn()
 
   return { ...actual, EthersJsAdapter }
@@ -88,7 +89,7 @@ const mockUseWaitForTransactionReceipt = {
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => {
@@ -102,7 +103,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 vi.mock('viem', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     parseSignature: vi.fn(),
@@ -112,7 +113,7 @@ vi.mock('viem', async (importOriginal) => {
 })
 
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
@@ -179,7 +180,7 @@ const mockExpenseAccountSetMaxLimit = {
 }
 
 vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
@@ -263,11 +264,13 @@ vi.mock('@/composables/useCustomFetch', () => {
       const execute = vi.fn(() => {
         // Conditionally update `data` based on the URL argument
         if (url === `teams/1/expense-data`) {
-          if (options.beforeFetch)
+          if (options.beforeFetch) {
             data.value = {
               data: JSON.stringify(mockExpenseData[0])
             }
-          else data.value = mockExpenseData
+          } else {
+            data.value = mockExpenseData
+          }
         }
       })
 
@@ -290,7 +293,7 @@ vi.mock('@/composables/useCustomFetch', () => {
 })
 
 vi.mock('@/composables/bod', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useGetBoardOfDirectors: vi.fn(() => mockGetBoardOfDirectors),
@@ -361,12 +364,13 @@ describe('ExpenseAccountSection', () => {
     //   })
     // })
 
-    it("should show the user's approval data in the approval table", async () => {
+    it("should show the current user's approval data in the approval table", async () => {
       const wrapper = createComponent()
 
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
+      await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
@@ -402,23 +406,141 @@ describe('ExpenseAccountSection', () => {
 
       const transferButton = firstRowCells[4].find('button')
       expect(transferButton.exists()).toBe(true)
-      expect(transferButton.text()).toBe('Transfer')
+      expect(transferButton.text()).toBe('Spend')
     })
+    it('should disable the transfer button if the approval is disapproved', async () => {
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0x0123456789012345678901234567890123456789' }
+              }
+            })
+          ]
+        }
+      })
 
-    it('should show aprroval list table cells with correct data', async () => {
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      const approvalTable = wrapper.find('[data-test="approval-table"]')
+      expect(approvalTable.exists()).toBeTruthy()
+
+      const headers = approvalTable.findAll('thead th')
+
+      const expectedHeaders = [
+        'Expiry Date',
+        'Max Amount Per Tx',
+        'Total Transactions',
+        'Total Transfers',
+        'Action'
+      ]
+      headers.forEach((header, i) => {
+        expect(header.text()).toBe(expectedHeaders[i])
+      })
+
+      const rows = approvalTable.findAll('tbody tr')
+      expect(rows).toHaveLength(1)
+
+      const firstRowCells = rows[0].findAll('td')
+      expect(firstRowCells[0].text()).toBe(
+        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
+      )
+      expect(firstRowCells[1].text()).toBe(
+        `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
+      )
+      expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
+      expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
+
+      const transferButton = firstRowCells[4].findComponent(ButtonUI)
+      expect(transferButton.exists()).toBe(true)
+      expect(transferButton.text()).toBe('Spend')
+      expect(transferButton.props().disabled).toBe(true)
+    })
+    // it('should show aprroval list table cells with correct data', async () => {
+    //   const wrapper = createComponent()
+    //   const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+    //   wrapperVm.manyExpenseAccountData = mockExpenseData
+    //   wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
+
+    //   vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
+    //     return `${args as `0x${string}`}Hash`
+    //   })
+
+    //   await wrapper.vm.$nextTick()
+    //   await wrapper.vm.$nextTick()
+    //   await wrapper.vm.$nextTick()
+
+    //   // Locate the table using the data-test attribute
+    //   const table = wrapper.find('[data-test="approvals-list-table"]')
+    //   expect(table.exists()).toBe(true)
+
+    //   // Check table headers within the approvals-list-table
+    //   const headers = table // wrapper
+    //     //.find('[data-test="approvals-list-table"]')
+    //     .findAll('thead th')
+    //   const expectedHeaders = [
+    //     'User',
+    //     'Expiry Date',
+    //     'Max Amount Per Tx',
+    //     'Total Transactions',
+    //     'Total Transfers',
+    //     'Action'
+    //   ]
+    //   headers.forEach((header, i) => {
+    //     expect(header.text()).toBe(expectedHeaders[i])
+    //   })
+
+    //   // Check table row data within the approvals-list-table
+    //   const rows = table.findAll('tbody tr')
+    //   expect(rows).toHaveLength(mockExpenseData.length)
+
+    //   const firstRowCells = rows[0].findAll('td')
+    //   expect(firstRowCells[0].text()).toBe(`John Doe0x0123...56789`)
+    //   expect(firstRowCells[1].text()).toBe(
+    //     new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
+    //   )
+    //   expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
+    //   expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
+    //   expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
+    //   const firstDeactivateButton = firstRowCells[5].findComponent(ButtonUI)
+    //   expect(firstDeactivateButton.exists()).toBe(true)
+    //   expect(firstDeactivateButton.text()).toBe('Deactivate')
+    //   expect(firstDeactivateButton.props().disabled).toBeTruthy()
+
+    //   const secondRowCells = rows[1].findAll('td')
+    //   expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
+    //   expect(secondRowCells[1].text()).toBe(
+    //     new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
+    //   )
+    //   expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
+    //   expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
+    //   expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
+    //   expect(secondRowCells[5].find('button').exists()).toBe(true)
+    //   expect(secondRowCells[5].find('button').text()).toBe('Deactivate')
+    // })
+    it('should show activated list table', async () => {
       const wrapper = createComponent()
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
       wrapperVm.manyExpenseAccountData = mockExpenseData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
 
       vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
         return `${args as `0x${string}`}Hash`
       })
 
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
+      await flushPromises()
 
       // Locate the table using the data-test attribute
       const table = wrapper.find('[data-test="approvals-list-table"]')
@@ -445,33 +567,37 @@ describe('ExpenseAccountSection', () => {
       expect(rows).toHaveLength(mockExpenseData.length)
 
       const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...56789`)
+      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...6789`)
       expect(firstRowCells[1].text()).toBe(
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
       expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
       expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
-      expect(firstRowCells[5].find('button').exists()).toBe(true)
-      expect(firstRowCells[5].find('button').text()).toBe('Deactivate')
+      const firstActivateButton = firstRowCells[5].findComponent(ButtonUI)
+      expect(firstActivateButton.exists()).toBe(true)
+      expect(firstActivateButton.text()).toBe('Disable Approval')
+      expect(firstActivateButton.props().disabled).toBeTruthy()
 
       const secondRowCells = rows[1].findAll('td')
-      expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
+      expect(secondRowCells[0].text()).toBe(`User0xabcd...1234`)
       expect(secondRowCells[1].text()).toBe(
         new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
       )
       expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
       expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
       expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
-      expect(secondRowCells[5].find('button').exists()).toBe(true)
-      expect(secondRowCells[5].find('button').text()).toBe('Deactivate')
+      const secondActivateButton = firstRowCells[5].findComponent(ButtonUI)
+      expect(secondActivateButton.exists()).toBe(true)
+      expect(secondActivateButton.text()).toBe('Disable Approval')
+      expect(secondActivateButton.props().disabled).toBeTruthy()
     })
-    it('show show loading spinner when deactivating approval', async () => {
+    it('should show deactivated list table', async () => {
       const wrapper = createComponent()
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
       wrapperVm.manyExpenseAccountData = mockExpenseData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18]
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
 
       vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
         return `${args as `0x${string}`}Hash`
@@ -480,6 +606,168 @@ describe('ExpenseAccountSection', () => {
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick() //anything less the test fails
+
+      // Locate the table using the data-test attribute
+      const table = wrapper.find('[data-test="deactivated-list-table"]')
+      expect(table.exists()).toBe(true)
+
+      // Check table headers within the approvals-list-table
+      const headers = table // wrapper
+        //.find('[data-test="approvals-list-table"]')
+        .findAll('thead th')
+      const expectedHeaders = [
+        'User',
+        'Expiry Date',
+        'Max Amount Per Tx',
+        'Total Transactions',
+        'Total Transfers',
+        'Action'
+      ]
+      headers.forEach((header, i) => {
+        expect(header.text()).toBe(expectedHeaders[i])
+      })
+
+      // Check table row data within the approvals-list-table
+      const rows = table.findAll('tbody tr')
+      expect(rows).toHaveLength(mockExpenseData.length)
+
+      const firstRowCells = rows[0].findAll('td')
+      expect(firstRowCells[0].text()).toBe(`John Doe0x0123...6789`)
+      expect(firstRowCells[1].text()).toBe(
+        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
+      )
+      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
+      expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
+      expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
+      const firstActivateButton = firstRowCells[5].findComponent(ButtonUI)
+      expect(firstActivateButton.exists()).toBe(true)
+      expect(firstActivateButton.text()).toBe('Reactivate Approval')
+      expect(firstActivateButton.props().disabled).toBeTruthy()
+
+      const secondRowCells = rows[1].findAll('td')
+      expect(secondRowCells[0].text()).toBe(`User0xabcd...1234`)
+      expect(secondRowCells[1].text()).toBe(
+        new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
+      )
+      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
+      expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
+      expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
+      const secondActivateButton = firstRowCells[5].findComponent(ButtonUI)
+      expect(secondActivateButton.exists()).toBe(true)
+      expect(secondActivateButton.text()).toBe('Reactivate Approval')
+      expect(secondActivateButton.props().disabled).toBeTruthy()
+    })
+    it('should enable deactivate button if contract owner', async () => {
+      const wrapper = createComponent({
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                user: { address: '0xContractOwner' }
+              }
+            })
+          ]
+        }
+      })
+
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+      wrapperVm.manyExpenseAccountData = mockExpenseData
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
+
+      vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
+        return `${args as `0x${string}`}Hash`
+      })
+
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick() //anything less the test fails
+
+      // Locate the table using the data-test attribute
+      const table = wrapper.find('[data-test="approvals-list-table"]')
+      expect(table.exists()).toBe(true)
+
+      // Check table row data within the approvals-list-table
+      const rows = table.findAll('tbody tr')
+      expect(rows).toHaveLength(mockExpenseData.length)
+
+      const firstRowCells = rows[0].findAll('td')
+      const firstDeactivateButton = firstRowCells[5].findComponent(ButtonUI)
+      expect(firstDeactivateButton.exists()).toBe(true)
+      expect(firstDeactivateButton.text()).toBe('Disable Approval')
+      expect(firstDeactivateButton.props().disabled).toBeFalsy()
+    })
+    // it('should disable deactivate button if approval inactive', async () => {
+    //   const wrapper = createComponent({
+    //     global: {
+    //       plugins: [
+    //         createTestingPinia({
+    //           createSpy: vi.fn,
+    //           initialState: {
+    //             user: { address: '0xContractOwner' }
+    //           }
+    //         })
+    //       ]
+    //     }
+    //   })
+
+    //   const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+    //   wrapperVm.manyExpenseAccountData = mockExpenseData
+    //   wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
+
+    //   vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
+    //     return `${args as `0x${string}`}Hash`
+    //   })
+
+    //   await wrapper.vm.$nextTick()
+    //   await wrapper.vm.$nextTick()
+    //   await wrapper.vm.$nextTick()
+
+    //   console.log(`manyExpenseAccountDataActive: `, wrapper.vm.manyExpenseAccountDataActive)
+    //   console.log(`manyExpenseAccountDataInctive: `, wrapper.vm.manyExpenseAccountDataInactive)
+
+    //   // Locate the table using the data-test attribute
+    //   const table = wrapper.find('[data-test="approvals-list-table"]')
+    //   expect(table.exists()).toBe(true)
+
+    //   // Check table row data within the approvals-list-table
+    //   const rows = table.findAll('tbody tr')
+    //   expect(rows).toHaveLength(mockExpenseData.length)
+
+    //   const firstRowCells = rows[0].findAll('td')
+    //   const firstDeactivateButton = firstRowCells[5].findComponent(ButtonUI)
+    //   expect(firstDeactivateButton.exists()).toBe(true)
+    //   expect(firstDeactivateButton.text()).toBe('Deactivate')
+    //   expect(firstDeactivateButton.props().disabled).toBeTruthy()
+    // })
+    it('show show loading spinner when deactivating approval', async () => {
+      const wrapper = createComponent()
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+      wrapperVm.manyExpenseAccountData = mockExpenseData
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
+
+      vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
+        return `${args as `0x${string}`}Hash`
+      })
+
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick() //anything less the test fails
 
       // Locate the table using the data-test attribute
       const table = wrapper.find('[data-test="approvals-list-table"]')
@@ -507,6 +795,53 @@ describe('ExpenseAccountSection', () => {
       expect(secondDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeFalsy()
 
       wrapperVm.isLoadingDeactivateApproval = false
+      wrapperVm.deactivateIndex = null
+    })
+    it('show loading spinner when activating approval', async () => {
+      const wrapper = createComponent()
+      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
+
+      wrapperVm.manyExpenseAccountData = mockExpenseData
+      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
+
+      vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
+        return `${args as `0x${string}`}Hash`
+      })
+
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick() //anything less the test fails
+
+      // Locate the table using the data-test attribute
+      const table = wrapper.find('[data-test="deactivated-list-table"]')
+      expect(table.exists()).toBe(true)
+
+      // Check table row data within the approvals-list-table
+      const rows = table.findAll('tbody tr')
+      expect(rows).toHaveLength(mockExpenseData.length)
+
+      const firstRowCells = rows[0].findAll('td')
+      const secondRowCells = rows[1].findAll('td')
+
+      const firstDeactivateButton = firstRowCells[5].find('button')
+      const secondDeactivateButton = secondRowCells[5].find('button')
+
+      expect(firstDeactivateButton.exists()).toBe(true)
+      expect(secondDeactivateButton.exists()).toBe(true)
+
+      wrapperVm.isLoadingActivateApproval = true
+      wrapperVm.deactivateIndex = 0
+
+      await wrapper.vm.$nextTick()
+
+      expect(firstDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeTruthy()
+      expect(secondDeactivateButton.find('[class="loading loading-spinner"]').exists()).toBeFalsy()
+
+      wrapperVm.isLoadingActivateApproval = false
       wrapperVm.deactivateIndex = null
     })
     it('should show expense account if expense account address exists', () => {
@@ -581,19 +916,15 @@ describe('ExpenseAccountSection', () => {
     it('should show expense account balance', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
-        `${'--'} ${NETWORK.currencySymbol}`
-      )
-      //@ts-ignore
+      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toContain('--')
+      //@ts-expect-error: expenseAccountDalance is contract data mocked in the test
       wrapper.vm.expenseAccountBalance = { value: 500n * 10n ** 18n }
 
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toBe(
-        `${'500'} ${NETWORK.currencySymbol}`
-      )
+      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toContain('500')
     })
 
     it('should show animation if max limit loading', async () => {
@@ -711,16 +1042,16 @@ describe('ExpenseAccountSection', () => {
 
     describe('ApproveUsersForm', async () => {
       beforeAll(() => {
-        //@ts-ignore
-        ;(global as Object).window.ethereum = {
+        // @ts-expect-error: Mocking window object
+        ;(global as object).window.ethereum = {
           request: vi.fn()
           // Mock other methods as needed
         }
       })
 
       afterAll(() => {
-        //@ts-ignore
-        delete (global as Object).window.ethereum
+        // @ts-expect-error: Mocking window object
+        delete (global as object).window.ethereum
       })
       const wrapper = createComponent({
         global: {

@@ -1,4 +1,4 @@
-<template class="">
+<template>
   <div
     class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
     :class="[isCollapsed ? 'w-20' : 'w-[280px]']"
@@ -30,20 +30,23 @@
         <ArrowRightStartOnRectangleIcon class="w-5 h-5 text-gray-600" v-else />
       </ButtonUI>
     </div>
+    <!-- Team Display Group -->
     <div
       class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
+      data-test="team-display"
       @click="toggleDropdown"
+      v-if="currentTeam"
     >
       <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
         <span
           class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
         >
-          {{ selectedTeam.charAt(0) }}
+          {{ currentTeam?.name.charAt(0) }}
         </span>
       </div>
       <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
-        <span class="text-sm font-medium text-gray-700">{{ selectedTeam }}</span>
+        <span class="text-sm font-medium text-gray-700">{{ currentTeam?.name }}</span>
         <div class="relative">
           <button
             class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
@@ -58,26 +61,32 @@
             leave-from-class="opacity-100 scale-100"
             leave-to-class="opacity-0 scale-95"
           >
-            <ul
+            <!-- Team Dropdown -->
+            <div
               v-if="isDropdownOpen"
-              class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg py-1 z-50"
+              class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-[9999]"
+              data-test="team-dropdown"
+              ref="target"
             >
-              <li v-if="teamsAreFetching" class="px-4 py-2 text-sm text-gray-700">
-                <div class="flex items-center justify-center">
-                  <div
-                    class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"
-                  ></div>
-                </div>
-              </li>
-              <li v-else v-for="team in teams" :key="team.id">
-                <a
-                  @click="navigateToTeam(team.id, team.name)"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200"
-                >
-                  {{ team.name }}
-                </a>
-              </li>
-            </ul>
+              <div v-if="teamsMeta.teamsAreFetching" class="flex items-center justify-center">
+                <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
+              </div>
+              <RouterLink
+                :to="`/teams/${team.id}`"
+                v-else
+                v-for="team in teamsMeta.teams"
+                :key="team.id"
+              >
+                <TeamMetaComponent
+                  class="hover:bg-slate-100"
+                  :team="team"
+                  @click="navigateToTeam(team.id)"
+              /></RouterLink>
+              <!-- TODO: Make the button functional -->
+              <div class="w-full flex justify-center items-center h-12 hover:bg-slate-100">
+                Create a new Team
+              </div>
+            </div>
           </transition>
         </div>
       </div>
@@ -88,14 +97,13 @@
         <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
 
-      <nav class="space-y-4 z-10">
+      <nav class="space-y-4">
         <RouterLink
           v-for="item in menuItems"
           :key="item.label"
           :to="item.route"
-          class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group relative transition-all duration-200 z-10"
+          class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
           :class="{
-            'justify-center': isCollapsed,
             'bg-emerald-500/10 shadow-sm': item.active,
             'hover:bg-gray-100': !item.active
           }"
@@ -121,6 +129,7 @@
       </nav>
     </div>
 
+    <!-- User Meta -->
     <div
       class="w-full bg-base-200 flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-sm rounded-xl p-4"
       data-test="edit-user-card"
@@ -152,7 +161,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import {
   HomeIcon,
   BanknotesIcon,
@@ -163,8 +173,9 @@ import {
   ArrowRightStartOnRectangleIcon,
   ChevronUpDownIcon
 } from '@heroicons/vue/24/outline'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import ButtonUI from './ButtonUI.vue'
+import TeamMetaComponent from './TeamMetaComponent.vue'
+import { useTeamStore } from '@/stores/teamStore'
 
 interface User {
   name: string
@@ -178,6 +189,19 @@ const isCollapsed = defineModel({
 const props = defineProps<{
   user: User
 }>()
+
+const target = ref(null)
+const isDropdownOpen = ref(false)
+const { teamsMeta, setCurrentTeamId, getCurrentTeam } = useTeamStore()
+
+// Use computed property to avoid calling the function every time the component re-renders
+const currentTeam = computed(() => {
+  return getCurrentTeam()
+})
+
+onMounted(() => {
+  onClickOutside(target, () => (isDropdownOpen.value = false))
+})
 
 const emits = defineEmits(['openEditUserModal'])
 
@@ -222,29 +246,10 @@ const menuItems = [
   }
 ]
 
-const {
-  isFetching: teamsAreFetching,
-  error: teamError,
-  data: teams,
-  execute: executeFetchTeams
-} = useCustomFetch('teams').json()
-
-watch(teamError, () => {
-  if (teamError.value) {
-    console.error('Error fetching teams:', teamError.value)
-  }
-})
-
-executeFetchTeams()
-
-const selectedTeam = ref('CNC Team')
-
-const navigateToTeam = (teamId: string, teamName: string) => {
-  selectedTeam.value = teamName
+const navigateToTeam = (teamId: string) => {
+  setCurrentTeamId(teamId)
   isCollapsed.value = false
 }
-
-const isDropdownOpen = ref(false)
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value

@@ -8,7 +8,7 @@ The Goal of POO is to have an encapsulation of the attributes & restricts direct
 Here we juste need a function that return the provider and the network. No need to have an object for that
  */
 interface EthereumProvider {
-  request: (object: Object) => Promise<void>
+  request: (object: object) => Promise<void>
   on: (event: string, callback: () => void) => void
 }
 
