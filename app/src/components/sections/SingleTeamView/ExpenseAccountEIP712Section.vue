@@ -258,13 +258,13 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import {
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
   useBalance,
-  useChainId
+  useChainId,
+  useSignTypedData
 } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
@@ -341,8 +341,6 @@ const dynamicDisplayData = (budgetType: number) =>
 const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
 const { addErrorToast, addSuccessToast } = useToastStore()
-const web3Library = new EthersJsAdapter()
-// const expenseBalanceFormated = ref<string | number>(`0`)
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
     return formatEther(expenseAccountBalance.value.value)
@@ -655,18 +653,38 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   }
 }
 
+const { signTypedData, data: signature, error: signTypedDataError } = useSignTypedData()
+
+watch(signature, async (newVal) => {
+  if (newVal && expenseAccountData.value) {
+    expenseAccountData.value = {
+      expenseAccountData: expenseAccountData.value,
+      signature
+    }
+    await executeAddExpenseData()
+    emits('getTeam')
+    loadingApprove.value = false
+  }
+})
+
+watch(signTypedDataError, async (newVal) => {
+  if (newVal) {
+    addErrorToast('Error signing expense data')
+    log.error('signTypedDataError.value', parseError(newVal))
+    loadingApprove.value = false
+  }
+})
+
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
-  const provider = await web3Library.getProvider()
-  const signer = await web3Library.getSigner()
-  const chainId = (await provider.getNetwork()).chainId
+  expenseAccountData.value = data
   const verifyingContract = team.value.expenseAccountEip712Address
 
   const domain = {
     name: 'CNCExpenseAccount',
     version: '1',
-    chainId,
-    verifyingContract
+    chainId: chainId.value,
+    verifyingContract: verifyingContract as Address
   }
   const types = {
     BudgetData: [
@@ -680,27 +698,20 @@ const approveUser = async (data: BudgetLimit) => {
     ]
   }
 
-  try {
-    const signature = await signer.signTypedData(domain, types, {
-      ...data,
-      budgetData: data.budgetData.map((item) => ({
-        ...item,
-        value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
-      }))
-    })
-
-    expenseAccountData.value = {
-      expenseAccountData: data,
-      signature
-    }
-    await executeAddExpenseData()
-    emits('getTeam')
-  } catch (err) {
-    log.error(parseError(err))
-    addErrorToast(parseError(err))
-  } finally {
-    loadingApprove.value = false
+  const message = {
+    ...data,
+    budgetData: data.budgetData.map((item) => ({
+      ...item,
+      value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+    }))
   }
+
+  signTypedData({
+    types,
+    primaryType: 'BudgetLimit',
+    message,
+    domain
+  })
 }
 
 const isBodAction = () => {
