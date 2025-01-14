@@ -1,12 +1,12 @@
 // TableComponent.vue
 <template>
   <div class="overflow-x-auto">
-    <div v-if="loading" class="flex justify-center items-center py-4">
+    <div v-if="loading" class="flex justify-center items-center py-4" data-test="loading">
       <span class="loading-icon" :class="loadingState?.icon">{{
         loadingState?.label || 'Loading...'
       }}</span>
     </div>
-    <table v-else class="table table-zebra w-full">
+    <table v-else class="table table-zebra w-full" data-test="table">
       <thead :class="{ 'sticky top-0': sticky }">
         <tr>
           <th v-for="(column, index) in columns" :key="index" :class="column.class">
@@ -17,6 +17,7 @@
                   v-if="column.sortable"
                   @click="toggleSort(column)"
                   :class="sortButton?.class"
+                  data-test="sort-button"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -25,6 +26,7 @@
                     stroke-width="1.5"
                     stroke="currentColor"
                     class="size-6"
+                    data-test="sort-icon"
                     v-if="!isSortedAsc(column) && !isSortedDesc(column)"
                   >
                     <path
@@ -34,11 +36,11 @@
                     />
                   </svg>
 
-                  <span v-if="isSortedAsc(column)"
-                    >{{ sortAscIcon }}
+                  <span v-if="isSortedAsc(column)" data-test="sort-asc">
+                    {{ sortAscIcon }}
                     <ArrowUpIcon class="size-5 cursor-pointer" v-if="!sortAscIcon"
                   /></span>
-                  <span v-if="isSortedDesc(column)">
+                  <span v-if="isSortedDesc(column)" data-test="sort-desc">
                     {{ sortDescIcon }}
                     <ArrowDownIcon class="size-5 cursor-pointer" v-if="!sortDescIcon" />
                   </span>
@@ -49,7 +51,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-if="!rows.length" class="text-center">
+        <tr v-if="!rows.length" class="text-center" data-test="empty-state">
           <td :colspan="columns.length">
             <div class="empty-state flex flex-col items-center space-y-2">
               <span :class="emptyState?.icon">{{ emptyState?.label || 'No data available' }}</span>
@@ -167,8 +169,29 @@ function defaultSort(a: any, b: any, direction: 'asc' | 'desc') {
     return a > b ? -1 : 1
   }
 }
+
+// const rows = computed(() => {
+//       if (!sort.value?.column || props.sortMode === 'manual') {
+//         return props.rows
+//       }
+
+//       const { column, direction } = sort.value
+
+//       return props.rows.slice().sort((a, b) => {
+//         const aValue = get(a, column)
+//         const bValue = get(b, column)
+
+//         const sort = columns.value.find(col => col.key === column)?.sort ?? defaultSort
+
+//         return sort(aValue, bValue, direction)
+//       })
+//     })
+
 // compute columns, if columns prop is not provided, generate columns from rows
 const columns = computed(() => {
+  if (!props.rows.length) {
+    return [] // Return an empty array if props.rows is empty
+  }
   const defaultColumns =
     props.columns ??
     (Object.keys(props.rows[0]).map((key) => ({
