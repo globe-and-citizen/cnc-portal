@@ -24,7 +24,7 @@ describe('HomeView.vue', () => {
     it('should render the "Tip your Team" button with a RouterLink', () => {
       const wrapper = mount(HomeView, globalStubs)
 
-      const button = wrapper.find('button')
+      const button = wrapper.find('[data-test="tip-button"]')
       expect(button.text()).toBe('Tip your Team')
 
       const routerLink = wrapper.findComponent(RouterLinkStub)

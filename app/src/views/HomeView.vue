@@ -103,7 +103,7 @@ const columns = [
         </template>
       </TableComponent>
     </div>
-    <ButtonUI class="mt-6" variant="secondary">
+    <ButtonUI class="mt-6" variant="secondary" data-test="tip-button">
       <RouterLink to="/teams" data-test="tip-button">Tip your Team</RouterLink>
     </ButtonUI>
   </div>
