@@ -700,7 +700,7 @@ const approveUser = async (data: BudgetLimit) => {
 
   const message = {
     ...data,
-    budgetData: data.budgetData.map((item) => ({
+    budgetData: data.budgetData?.map((item) => ({
       ...item,
       value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
     }))

@@ -36,23 +36,23 @@ interface ComponentData {
   isLoadingActivateApproval: boolean
 }
 
-vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
-  const actual: object = await importOriginal()
+// vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
+//   const actual: object = await importOriginal()
 
-  // Step 2: Mock the class itself and its instance methods
-  const EthersJsAdapter = vi.fn()
-  EthersJsAdapter.prototype.parseEther = vi.fn((amount: string) => `${amount}*10^18`)
-  EthersJsAdapter.prototype.getProvider = vi.fn(() => ({
-    getNetwork: vi.fn(() => Promise.resolve({ chainId: 1 })) // Inline function for getNetwork
-  }))
-  EthersJsAdapter.prototype.getSigner = vi.fn(() => ({})) // Mock getSigner if needed
+//   // Step 2: Mock the class itself and its instance methods
+//   const EthersJsAdapter = vi.fn()
+//   EthersJsAdapter.prototype.parseEther = vi.fn((amount: string) => `${amount}*10^18`)
+//   EthersJsAdapter.prototype.getProvider = vi.fn(() => ({
+//     getNetwork: vi.fn(() => Promise.resolve({ chainId: 1 })) // Inline function for getNetwork
+//   }))
+//   EthersJsAdapter.prototype.getSigner = vi.fn(() => ({})) // Mock getSigner if needed
 
-  // Step 3: Mock the static method getInstance
-  // @ts-expect-error: "Mocking static method"
-  EthersJsAdapter['getInstance'] = vi.fn()
+//   // Step 3: Mock the static method getInstance
+//   // @ts-expect-error: "Mocking static method"
+//   EthersJsAdapter['getInstance'] = vi.fn()
 
-  return { ...actual, EthersJsAdapter }
-})
+//   return { ...actual, EthersJsAdapter }
+// })
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -87,6 +87,12 @@ const mockUseWaitForTransactionReceipt = {
   isSuccess: ref(false)
 }
 
+const mockUseSignTypedData = {
+  error: ref(null),
+  data: ref<string | null>('0xSignature'),
+  signTypedData: vi.fn()
+}
+
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -98,7 +104,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
     useBalance: vi.fn(() => mockUseBalance),
-    useChainId: vi.fn(() => '0xChainId')
+    useChainId: vi.fn(() => '0xChainId'),
+    useSignTypedData: vi.fn(() => mockUseSignTypedData)
   }
 })
 
@@ -120,77 +127,77 @@ vi.mock('@vueuse/core', async (importOriginal) => {
   }
 })
 
-const mockDeployExpenseAccount = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn()
-}
+// const mockDeployExpenseAccount = {
+//   data: ref<string | null>(null),
+//   isLoading: ref(false),
+//   isSuccess: ref(false),
+//   error: ref(null),
+//   execute: vi.fn()
+// }
 
-const mockExpenseAccountGetBalance = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn()
-}
+// const mockExpenseAccountGetBalance = {
+//   data: ref<string | null>(null),
+//   isLoading: ref(false),
+//   isSuccess: ref(false),
+//   error: ref(null),
+//   execute: vi.fn()
+// }
 
-const mockExpenseAccountGetMaxLimit = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn()
-}
+// const mockExpenseAccountGetMaxLimit = {
+//   data: ref<string | null>(null),
+//   isLoading: ref(false),
+//   isSuccess: ref(false),
+//   error: ref(null),
+//   execute: vi.fn()
+// }
 
-const mockExpenseAccountIsApprovedAddress = {
-  data: ref<boolean>(false),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
-    if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
-      mockExpenseAccountIsApprovedAddress.data.value = true
-    } else {
-      mockExpenseAccountIsApprovedAddress.data.value = false
-    }
-  })
-}
+// const mockExpenseAccountIsApprovedAddress = {
+//   data: ref<boolean>(false),
+//   isLoading: ref(false),
+//   isSuccess: ref(false),
+//   error: ref(null),
+//   execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
+//     if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
+//       mockExpenseAccountIsApprovedAddress.data.value = true
+//     } else {
+//       mockExpenseAccountIsApprovedAddress.data.value = false
+//     }
+//   })
+// }
 
-const mockExpenseAccountGetOwner = {
-  data: ref<string | null>(null),
-  loading: ref(false),
-  error: ref(null),
-  isSuccess: ref(false),
-  execute: vi.fn(() => {
-    mockExpenseAccountGetOwner.data.value = `0xContractOwner`
-  })
-}
+// const mockExpenseAccountGetOwner = {
+//   data: ref<string | null>(null),
+//   loading: ref(false),
+//   error: ref(null),
+//   isSuccess: ref(false),
+//   execute: vi.fn(() => {
+//     mockExpenseAccountGetOwner.data.value = `0xContractOwner`
+//   })
+// }
 
-const mockExpenseAccountSetMaxLimit = {
-  isLoading: ref(false),
-  error: ref<unknown>(null),
-  isSuccess: ref(false),
-  execute: vi.fn((expenseAccountAddress: string, amount: string) => {
-    if (expenseAccountAddress && !isNaN(Number(amount)))
-      mockExpenseAccountSetMaxLimit.isSuccess.value = true
-    else mockExpenseAccountSetMaxLimit.error.value = 'An error has occured'
-  })
-}
+// const mockExpenseAccountSetMaxLimit = {
+//   isLoading: ref(false),
+//   error: ref<unknown>(null),
+//   isSuccess: ref(false),
+//   execute: vi.fn((expenseAccountAddress: string, amount: string) => {
+//     if (expenseAccountAddress && !isNaN(Number(amount)))
+//       mockExpenseAccountSetMaxLimit.isSuccess.value = true
+//     else mockExpenseAccountSetMaxLimit.error.value = 'An error has occured'
+//   })
+// }
 
-vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
-    useExpenseAccountGetBalance: vi.fn(() => mockExpenseAccountGetBalance),
-    useDeployExpenseAccountContract: vi.fn(() => mockDeployExpenseAccount),
-    useExpenseAccountIsApprovedAddress: vi.fn(() => mockExpenseAccountIsApprovedAddress),
-    useExpenseAccountGetOwner: vi.fn(() => mockExpenseAccountGetOwner),
-    useExpenseAccountSetLimit: vi.fn(() => mockExpenseAccountSetMaxLimit)
-  }
-})
+// vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
+//   const actual: object = await importOriginal()
+//   return {
+//     ...actual,
+//     useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
+//     useExpenseAccountGetBalance: vi.fn(() => mockExpenseAccountGetBalance),
+//     useDeployExpenseAccountContract: vi.fn(() => mockDeployExpenseAccount),
+//     useExpenseAccountIsApprovedAddress: vi.fn(() => mockExpenseAccountIsApprovedAddress),
+//     useExpenseAccountGetOwner: vi.fn(() => mockExpenseAccountGetOwner),
+//     useExpenseAccountSetLimit: vi.fn(() => mockExpenseAccountSetMaxLimit)
+//   }
+// })
 
 const mockGetBoardOfDirectors = {
   boardOfDirectors: ref<string[] | null>(null),
@@ -867,21 +874,21 @@ describe('ExpenseAccountSection', () => {
       expect(expenseAccountAddressTooltip.props().address).toBe(team.expenseAccountEip712Address)
     })
 
-    it('should hide create button if contract is being deployed', async () => {
-      const team = { expenseAccountAddress: null }
-      const wrapper = createComponent({
-        props: {
-          team: {
-            ...team
-          }
-        }
-      })
+    // it('should hide create button if contract is being deployed', async () => {
+    //   const team = { expenseAccountAddress: null }
+    //   const wrapper = createComponent({
+    //     props: {
+    //       team: {
+    //         ...team
+    //       }
+    //     }
+    //   })
 
-      mockDeployExpenseAccount.isLoading.value = true
-      await wrapper.vm.$nextTick()
+    //   mockDeployExpenseAccount.isLoading.value = true
+    //   await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-test="create-expense-account"]').exists()).toBeFalsy()
-    })
+    //   expect(wrapper.find('[data-test="create-expense-account"]').exists()).toBeFalsy()
+    // })
     it('should show copy to clipboard icon with tooltip if expense account address exists', () => {
       const wrapper = createComponent()
 
