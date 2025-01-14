@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
@@ -11,10 +11,12 @@ import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
+import * as utils from '@/utils'
 
 interface ComponentData {
   expiry: string
   _expenseAccountData: unknown
+  expenseAccountData: unknown
   isFetchingExpenseAccountData: boolean
   transferModal: boolean
   setLimitModal: boolean
@@ -34,7 +36,23 @@ interface ComponentData {
   deactivateIndex: number | null
   isLoadingDeactivateApproval: boolean
   isLoadingActivateApproval: boolean
+  signature: undefined | `0x${string}`
+  signTypedDataError: unknown
 }
+
+const mocks = vi.hoisted(() => ({
+  mockUseToastStore: {
+    addErrorToast: vi.fn()
+  }
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
+  }
+})
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -70,8 +88,8 @@ const mockUseWaitForTransactionReceipt = {
 }
 
 const mockUseSignTypedData = {
-  error: ref(null),
-  data: ref<string | null>('0xSignature'),
+  error: ref<Error | null>(null),
+  data: ref<string | undefined>('0xExpenseDataSignature'),
   signTypedData: vi.fn()
 }
 
@@ -86,7 +104,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
     useBalance: vi.fn(() => mockUseBalance),
-    useChainId: vi.fn(() => '0xChainId'),
+    useChainId: vi.fn(() => ref('0xChainId')),
     useSignTypedData: vi.fn(() => mockUseSignTypedData)
   }
 })
@@ -818,19 +836,19 @@ describe('ExpenseAccountSection', () => {
     //describe('Methods', )
 
     describe('ApproveUsersForm', async () => {
-      beforeAll(() => {
-        // @ts-expect-error: Mocking window object
-        ;(global as object).window.ethereum = {
-          request: vi.fn()
-          // Mock other methods as needed
-        }
-      })
+      // beforeAll(() => {
+      //   // @ts-expect-error: Mocking window object
+      //   ;(global as object).window.ethereum = {
+      //     request: vi.fn()
+      //     // Mock other methods as needed
+      //   }
+      // })
 
-      afterAll(() => {
-        // @ts-expect-error: Mocking window object
-        delete (global as object).window.ethereum
-      })
-      const wrapper = createComponent({
+      // afterAll(() => {
+      //   // @ts-expect-error: Mocking window object
+      //   delete (global as object).window.ethereum
+      // })
+      let wrapper = createComponent({
         global: {
           plugins: [
             createTestingPinia({
@@ -842,6 +860,23 @@ describe('ExpenseAccountSection', () => {
           ]
         }
       })
+      // beforeEach(() =>
+      //   wrapper = createComponent({
+      //     global: {
+      //       plugins: [
+      //         createTestingPinia({
+      //           createSpy: vi.fn,
+      //           initialState: {
+      //             user: { address: '0xContractOwner' }
+      //           }
+      //         })
+      //       ]
+      //     }
+      //   })
+      // )
+      // afterEach(() =>
+      //   wrapper.unmount()
+      // )
 
       it('should pass corrent props to ApproveUsersForm', async () => {
         const approveUsersButton = wrapper.find('[data-test="approve-users-button"]')
@@ -862,15 +897,95 @@ describe('ExpenseAccountSection', () => {
         const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
         expect(approveUsersForm.exists()).toBe(true)
 
+        const expiry = new Date()
+
         const data = {
           approvedUser: '0x123',
-          budgetType: 1,
-          value: 100,
-          expiry: new Date()
+          budgetData: [
+            { budgetType: 0, value: 10 },
+            { budgetType: 1, value: 100 },
+            { budgetType: 2, value: 10 }
+          ],
+          expiry
         }
 
         approveUsersForm.vm.$emit('approveUser', data)
         expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
+        expect(mockUseSignTypedData.signTypedData).toBeCalledWith({
+          domain: {
+            chainId: '0xChainId',
+            version: '1',
+            verifyingContract: '0xExpenseAccount',
+            name: 'CNCExpenseAccount'
+          },
+          message: {
+            approvedUser: '0x123',
+            budgetData: [
+              { budgetType: 0, value: 10 },
+              { budgetType: 1, value: 100n * 10n ** 18n },
+              { budgetType: 2, value: 10n * 10n ** 18n }
+            ],
+            expiry
+          },
+          primaryType: 'BudgetLimit',
+          types: {
+            BudgetData: [
+              { name: 'budgetType', type: 'uint8' },
+              { name: 'value', type: 'uint256' }
+            ],
+            BudgetLimit: [
+              { name: 'approvedAddress', type: 'address' },
+              { name: 'budgetData', type: 'BudgetData[]' },
+              { name: 'expiry', type: 'uint256' }
+            ]
+          }
+        })
+
+        expect((wrapper.vm as unknown as ComponentData).expenseAccountData).toEqual(data)
+        expect((wrapper.vm as unknown as ComponentData).signature).toBe('0xExpenseDataSignature')
+        await wrapper.vm.$nextTick()
+        console.log(`wrapper.emitted`, wrapper.emitted())
+        expect(wrapper.emitted('click')).toBeTruthy()
+      })
+      it('should give an error notification if sign typed data error occurs', async () => {
+        // const wrapper = createComponent({
+        //   global: {
+        //     plugins: [
+        //       createTestingPinia({
+        //         createSpy: vi.fn,
+        //         initialState: {
+        //           user: { address: '0xContractOwner' }
+        //         }
+        //       })
+        //     ]
+        //   }
+        // })
+        const logErrorSpy = vi.spyOn(utils.log, 'error')
+        mockUseSignTypedData.signTypedData.mockImplementation(
+          () => (mockUseSignTypedData.error.value = new Error('Error signing typed data'))
+        )
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
+
+        const expiry = new Date()
+
+        const data = {
+          approvedUser: '0x123',
+          budgetData: [
+            { budgetType: 0, value: 10 },
+            { budgetType: 1, value: 100 },
+            { budgetType: 2, value: 10 }
+          ],
+          expiry
+        }
+
+        approveUsersForm.vm.$emit('approveUser', data)
+        expect(approveUsersForm.emitted('approveUser')).toBeTruthy()
+        expect((wrapper.vm as unknown as ComponentData).signTypedDataError).toEqual(
+          new Error('Error signing typed data')
+        )
+        await wrapper.vm.$nextTick()
+        expect(logErrorSpy).toBeCalledWith('signTypedDataError.value', 'Error signing typed data')
       })
     })
   })
