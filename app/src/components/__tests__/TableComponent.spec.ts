@@ -92,6 +92,25 @@ describe('TableComponent.vue', () => {
       expect(wrapper.find('[data-test="loading"]').exists()).toBe(true)
     })
 
+    it.only('should render header only without data', async () => {
+      wrapper.setProps({ columns })
+      await wrapper.vm.$nextTick()
+      
+      // role header should contain no sort button and his lable is his key
+      expect(wrapper.find('[data-test="role-header"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="role-header"]').text()).toBe('role')
+      expect(wrapper.find('[data-test="role-header"] [data-test="sort-button"]').exists()).toBe(false)
+
+      // name header should contain sort button and his lable is his label
+      expect(wrapper.find('[data-test="name-header"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="name-header"]').text()).toBe('User name')
+      expect(wrapper.find('[data-test="name-header"] [data-test="sort-button"]').exists()).toBe(true)
+
+      // assert empty state
+      expect(wrapper.find('[data-test="empty-state"]').exists()).toBe(true)
+    })
+
+
     // it('should render table with rows', async () => {
     //   wrapper.setProps({ rows: people, columns })
     // })

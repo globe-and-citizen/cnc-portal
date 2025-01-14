@@ -10,9 +10,9 @@
       <thead :class="{ 'sticky top-0': sticky }">
         <tr>
           <th v-for="(column, index) in columns" :key="index" :class="column.class">
-            <slot :name="`${column.key}-header`" :column="column" :sort="column.sort">
-              <div class="flex items-center space-x-2">
-                <span>{{ column.label }}</span>
+            <slot :name="`${column.key}-header`" :column="column" :sort="column.sort" >
+              <div class="flex items-center space-x-2" :data-test="`${column.key}-header`">
+                <span>{{ column.label ?? column.key }}</span>
                 <button
                   v-if="column.sortable"
                   @click="toggleSort(column)"
@@ -25,7 +25,7 @@
                     viewBox="0 0 24 24"
                     stroke-width="1.5"
                     stroke="currentColor"
-                    class="size-6"
+                    class="size-5"
                     data-test="sort-icon"
                     v-if="!isSortedAsc(column) && !isSortedDesc(column)"
                   >
@@ -189,7 +189,7 @@ function defaultSort(a: any, b: any, direction: 'asc' | 'desc') {
 
 // compute columns, if columns prop is not provided, generate columns from rows
 const columns = computed(() => {
-  if (!props.rows.length) {
+  if (!props.columns && !props.rows.length) {
     return [] // Return an empty array if props.rows is empty
   }
   const defaultColumns =
