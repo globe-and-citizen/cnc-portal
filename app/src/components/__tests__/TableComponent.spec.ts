@@ -60,7 +60,8 @@ const columns = [
   },
   {
     key: 'title',
-    label: 'Job position'
+    label: 'Job position',
+    sortable: true
   },
   {
     key: 'email',
@@ -92,24 +93,39 @@ describe('TableComponent.vue', () => {
       expect(wrapper.find('[data-test="loading"]').exists()).toBe(true)
     })
 
-    it.only('should render header only without data', async () => {
+    it('should render header only without data', async () => {
       wrapper.setProps({ columns })
       await wrapper.vm.$nextTick()
-      
+
       // role header should contain no sort button and his lable is his key
       expect(wrapper.find('[data-test="role-header"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="role-header"]').text()).toBe('role')
-      expect(wrapper.find('[data-test="role-header"] [data-test="sort-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="role-header"] [data-test="sort-button"]').exists()).toBe(
+        false
+      )
 
       // name header should contain sort button and his lable is his label
       expect(wrapper.find('[data-test="name-header"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="name-header"]').text()).toBe('User name')
-      expect(wrapper.find('[data-test="name-header"] [data-test="sort-button"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="name-header"] [data-test="sort-button"]').exists()).toBe(
+        true
+      )
 
       // assert empty state
       expect(wrapper.find('[data-test="empty-state"]').exists()).toBe(true)
     })
 
+    // should render table with rows
+    it('should render table with rows', async () => {
+      wrapper.setProps({ rows: people, columns })
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="table"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="1-row"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="1-row"]').html()).toContain(people[1].name)
+
+      //
+    })
 
     // it('should render table with rows', async () => {
     //   wrapper.setProps({ rows: people, columns })
@@ -136,6 +152,7 @@ describe('TableComponent.vue', () => {
       expect(sortButton.find('[data-test="sort-icon"]').exists()).toBe(false)
       expect(sortButton.find('[data-test="sort-desc"]').exists()).toBe(false)
       expect(sortButton.find('[data-test="sort-asc"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="0-row"]').html()).toContain(people[1].name) // assert sorted row
 
       // Click the button again
       await sortButton.trigger('click')
@@ -143,6 +160,7 @@ describe('TableComponent.vue', () => {
       expect(sortButton.find('[data-test="sort-icon"]').exists()).toBe(false)
       expect(sortButton.find('[data-test="sort-desc"]').exists()).toBe(true)
       expect(sortButton.find('[data-test="sort-asc"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="0-row"]').html()).toContain(people[3].name) // assert sorted row
     })
   })
 })

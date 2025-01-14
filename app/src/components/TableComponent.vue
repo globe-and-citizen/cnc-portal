@@ -62,6 +62,7 @@
           v-for="(row, rowIndex) in sortedRows"
           :key="rowIndex"
           @click="$emit('row-click', row)"
+          :data-test="`${rowIndex}-row`"
           class="hover"
         >
           <td v-for="(column, colIndex) in columns" :key="colIndex">
