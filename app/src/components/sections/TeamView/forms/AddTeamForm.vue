@@ -2,6 +2,7 @@
   <h1 class="font-bold text-2xl mb-4">Create New Team</h1>
   <hr class="mb-6" />
   <div class="flex flex-col gap-5">
+    <!-- Team Details Section -->
     <div>
       <label class="input input-bordered flex items-center gap-2 input-md mt-4">
         <span class="w-24">Team Name</span>
@@ -10,13 +11,13 @@
           class="grow"
           placeholder="Daisy"
           data-test="team-name-input"
-          v-model="team.name"
+          v-model="teamData.name"
           name="name"
         />
       </label>
       <div
         class="pl-4 text-red-500 text-sm"
-        v-for="error of $v.team.name.$errors"
+        v-for="error of $v.teamData.name.$errors"
         data-test="name-error"
         :key="error.$uid"
       >
@@ -30,28 +31,66 @@
         class="grow"
         placeholder="Enter a short description"
         data-test="team-description-input"
-        v-model="team.description"
+        v-model="teamData.description"
         name="description"
       />
     </label>
 
-    <div v-for="(input, index) of team.members" :key="index" class="input-group">
+    <!-- Investor Contract Section -->
+    <div class="divider">Investor Contract Details</div>
+    <label class="input input-bordered flex items-center gap-2 input-md">
+      <span class="w-24">Share Name</span>
+      <input
+        type="text"
+        class="grow"
+        placeholder="Company Shares"
+        data-test="share-name-input"
+        v-model="investorContract.name"
+        name="shareName"
+      />
+    </label>
+    <div
+      class="pl-4 text-red-500 text-sm"
+      v-for="error of $v.investorContract.name.$errors"
+      data-test="share-name-error"
+      :key="error.$uid"
+    >
+      {{ error.$message }}
+    </div>
+
+    <label class="input input-bordered flex items-center gap-2 input-md">
+      <span class="w-24">Symbol</span>
+      <input
+        type="text"
+        class="grow"
+        placeholder="SHR"
+        data-test="share-symbol-input"
+        v-model="investorContract.symbol"
+        name="shareSymbol"
+      />
+    </label>
+    <div
+      class="pl-4 text-red-500 text-sm"
+      v-for="error of $v.investorContract.symbol.$errors"
+      data-test="share-symbol-error"
+      :key="error.$uid"
+    >
+      {{ error.$message }}
+    </div>
+
+    <!-- Members Section -->
+    <div class="divider">Members</div>
+    <div v-for="(input, index) of teamData.members" :key="index" class="input-group">
       <label
         class="input input-bordered flex items-center gap-2 input-md"
-        :class="{ 'input-error': !isValidMember(index), 'input-success': isValidMember(index) }"
+        :data-test="`member-${index}-input`"
       >
         <input
           type="text"
           class="w-24"
           v-model="input.name"
           @focus="() => setActiveInput(index)"
-          @keyup.stop="
-            () => {
-              emits('searchUsers', input)
-              showDropdown = true
-            }
-          "
-          data-test="member-name-input"
+          @keyup.stop="searchUsers({ name: input.name, address: input.address })"
           :placeholder="'Member Name ' + (index + 1)"
         />
         |
@@ -59,18 +98,11 @@
           type="text"
           class="grow"
           v-model="input.address"
-          @focus="() => setActiveInput(index)"
-          @keyup.stop="
-            () => {
-              emits('searchUsers', input)
-              showDropdown = true
-            }
-          "
-          data-test="member-address-input"
-          :placeholder="'Wallet Address ' + (index + 1)"
+          @keyup.stop="searchUsers({ name: input.name, address: input.address })"
+          :placeholder="`Member ${index + 1} Address`"
         />
       </label>
-      <div v-if="$v.team.members.$errors.length">
+      <div v-if="$v.teamData.members.$errors.length">
         <div
           class="pl-4 text-sm text-red-500"
           v-for="(error, errorIndex) of getMessages(index)"
@@ -93,10 +125,10 @@
           :data-test="`user-dropdown-${user.address}`"
           @click="
             () => {
-              const l = team.members.length - 1
+              const l = teamData.members.length - 1
               if (l >= 0) {
-                team.members[l].name = user.name ?? ''
-                team.members[l].address = user.address ?? ''
+                teamData.members[l].name = user.name ?? ''
+                teamData.members[l].address = user.address ?? ''
                 showDropdown = false
               }
             }
@@ -113,7 +145,7 @@
       data-test="add-member"
       @click="
         () => {
-          team.members.push({ name: '', address: '' })
+          teamData.members.push({ name: '', address: '' })
         }
       "
     >
@@ -124,8 +156,8 @@
       data-test="remove-member"
       @click="
         () => {
-          if (team.members.length > 1) {
-            team.members.pop()
+          if (teamData.members.length > 1) {
+            teamData.members.pop()
           }
         }
       "
@@ -133,96 +165,98 @@
       <MinusCircleIcon class="size-6" />
     </div>
   </div>
-
-  <div class="modal-action justify-center mt-6">
+  <div class="flex justify-center mt-6">
     <ButtonUI
-      variant="primary"
-      data-test="submit"
       :loading="isLoading"
       :disabled="isLoading"
-      @click="submitForm"
-      >Submit</ButtonUI
+      variant="primary"
+      class="w-44 text-center"
+      data-test="create-team-button"
+      @click="onSubmit"
     >
+      Create Team
+    </ButtonUI>
   </div>
 </template>
+
 <script setup lang="ts">
-import type { User } from '@/types'
-import { ref, onMounted, onUnmounted } from 'vue'
-import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { ref, watch } from 'vue'
+import useVuelidate from '@vuelidate/core'
+import { required, helpers } from '@vuelidate/validators'
 import { isAddress } from 'ethers'
-import { helpers, required } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
+import type { TeamInput, User } from '@/types'
 
+const props = defineProps<{
+  isLoading: boolean
+  users: User[]
+}>()
+
+const emit = defineEmits(['searchUsers', 'addTeam'])
+
+const teamData = ref<TeamInput>({
+  name: '',
+  description: '',
+  members: [{ name: '', address: '' }]
+})
+
+const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
-const showDropdown = ref<boolean>(false)
 
-const handleClickOutside = (event: MouseEvent) => {
-  if (formRef.value && !formRef.value.contains(event.target as Node)) {
-    showDropdown.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
-
-const team = defineModel({
-  default: {
-    name: '',
-    description: '',
-    members: [{ name: '', address: '' }]
-  }
+const investorContract = ref({
+  name: '',
+  symbol: ''
 })
 
 const rules = {
-  team: {
+  teamData: {
     name: { required },
     members: {
-      $each: helpers.forEach({
+      $each: {
         address: {
           required,
-          isValid: helpers.withMessage('Invalid address', (value: string) => {
-            return isAddress(value)
-          })
+          isValidAddress: helpers.withMessage('Invalid Ethereum address', (value: string) =>
+            isAddress(value)
+          )
         }
-      })
+      }
+    }
+  },
+  investorContract: {
+    name: { required },
+    symbol: { required }
+  }
+}
+
+const $v = useVuelidate(rules, { teamData, investorContract })
+
+const searchUsers = (input: { name: string; address: string }) => {
+  showDropdown.value = true
+  emit('searchUsers', input)
+}
+
+const onSubmit = async () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
+
+  emit('addTeam', {
+    team: teamData.value,
+    investorContract: investorContract.value
+  })
+}
+const getMessages = (index: number) => {
+  return $v.value.teamData.members.$errors[0].$response.$errors[index].address
+}
+// Watch for model updates
+watch(
+  () => props.users,
+  (newUsers) => {
+    if (newUsers && newUsers.length === 0) {
+      showDropdown.value = false
     }
   }
-}
-const $v = useVuelidate(rules, { team })
-
-// Check if the member input is valid
-const isValidMember = (index: number) => {
-  return $v.value.team.members.$errors[0]?.$response.$errors[index].address.length == 0
-}
-
-const submitForm = () => {
-  // Touch to check validation
-  $v.value.$touch()
-
-  // Checking the actual validation state
-  if ($v.value.$invalid) {
-    return
-  }
-  emits('addTeam')
-}
-
-const getMessages = (index: number) => {
-  return $v.value.team.members.$errors[0].$response.$errors[index].address
-}
-
-const emits = defineEmits(['addTeam', 'searchUsers'])
-
-defineProps<{
-  users: User[]
-  isLoading: boolean
-}>()
-
+)
 const activeInputIndex = ref<number | null>(null)
 
 const setActiveInput = (index: number) => {
