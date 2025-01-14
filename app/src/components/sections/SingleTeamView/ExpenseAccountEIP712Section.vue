@@ -57,7 +57,6 @@
       v-if="team.expenseAccountEip712Address"
       class="card shadow-xl flex text-primary-content p-5 overflow-visible"
     >
-
       <span class="text-2xl font-bold">My Approved Expense</span>
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
