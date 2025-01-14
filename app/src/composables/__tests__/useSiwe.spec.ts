@@ -37,7 +37,7 @@ const mockUseConnect = {
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useAccount: vi.fn(() => mockUseAccount),
@@ -47,7 +47,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 vi.mock('@/stores/user', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useUserDataStore: vi.fn(() => ({
@@ -59,7 +59,7 @@ vi.mock('@/stores/user', async (importOriginal) => {
 })
 
 vi.mock('@/adapters/siweMessageCreatorAdapter', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
 
   const SLSiweMessageCreator = mocks.mockSlSiweMessageCreator.constructor
   SLSiweMessageCreator.prototype.constructor = mocks.mockSlSiweMessageCreator.constructor
@@ -68,7 +68,7 @@ vi.mock('@/adapters/siweMessageCreatorAdapter', async (importOriginal) => {
 })
 
 vi.mock('@/utils/web3Util', async (importOriginal) => {
-  const actual: Object = await importOriginal()
+  const actual: object = await importOriginal()
 
   const MetaMaskUtil = vi.fn()
   //@ts-expect-error: mock test function
