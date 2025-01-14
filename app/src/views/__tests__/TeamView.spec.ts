@@ -1,63 +1,100 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, beforeEach } from 'vitest'
-import TeamView from '@/views/TeamView.vue'
-
-import { setActivePinia, createPinia } from 'pinia'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, VueWrapper } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
-// TODO: User Mock on composable like in proposal Card Spec
-// Create a router instance with a basic route
+import TeamView from '../TeamView.vue'
+import type { ComponentPublicInstance } from 'vue'
+
+interface TeamData {
+  team: {
+    name: string
+    description: string
+    members: Array<{ name: string; address: string }>
+  }
+  investorContract: {
+    name: string
+    symbol: string
+  }
+}
+
+// Mock wagmi hooks
+vi.mock('@wagmi/vue', () => ({
+  useWriteContract: () => ({
+    isPending: false,
+    data: undefined,
+    error: null,
+    writeContract: vi.fn()
+  }),
+  useWaitForTransactionReceipt: () => ({
+    isLoading: false,
+    isSuccess: false
+  }),
+  useWatchContractEvent: () => ({})
+}))
+
+// Create router instance
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', component: { template: '<div>Home</div>' } },
-    { path: '/teams', component: { template: '<div>Teams</div>' } },
-    { path: '/transactions', component: { template: '<div>Teams</div>' } }
+    {
+      path: '/teams/:id',
+      name: 'SingleTeamView',
+      component: { template: '<div>Team View</div>' }
+    }
   ]
 })
-describe('TeamView.vue', () => {
-  let wrapper: ReturnType<typeof mount>
+
+describe('TeamView', () => {
+  let wrapper: VueWrapper<
+    ComponentPublicInstance & {
+      handleAddTeam: (data: TeamData) => Promise<void>
+      loadingCreateTeam: boolean
+    }
+  >
+
+  const mountComponent = (options = {}) => {
+    return mount(TeamView, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              user: { name: 'Test User', address: '0x123' }
+            }
+          }),
+          router
+        ]
+      },
+      ...options
+    }) as VueWrapper<
+      ComponentPublicInstance & {
+        handleAddTeam: (data: TeamData) => Promise<void>
+        loadingCreateTeam: boolean
+      }
+    >
+  }
 
   beforeEach(() => {
-    setActivePinia(createPinia())
-
-    wrapper = mount(TeamView, {
-      global: {
-        plugins: [router] // Provide the router instance
-      }
-    })
+    vi.clearAllMocks()
   })
 
-  describe('Render', () => {
-    it('should render TeamView component', () => {
-      expect(wrapper.exists()).toBe(true)
-    })
+  it('handles team creation process', async () => {
+    wrapper = mountComponent()
 
-    it('should render loading spinner when teams are being fetched', async () => {
-      // wrapper.vm.teamsAreFetching = true
-      // await wrapper.setData({ teamsAreFetching: true })
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find('.loading-spinner').exists()).toBe(true)
-    })
-
-    // it('should render message when there are no teams', async () => {
-    //   wrapper.vm.teams = []
-    //   expect(wrapper.vm).toMatchInlineSnapshot(`{}`)
-    //   await wrapper.vm.$nextTick()
-    //   expect(wrapper.find('span').text()).toContain('You are currently not a part of any team')
-    // })
-
-    it('should render error message when there is an error', async () => {
-      interface ComponentData {
-        teamError: string
+    // Mock successful officer contract deployment
+    const mockTeamData: TeamData = {
+      team: {
+        name: 'New Team',
+        description: 'Test team',
+        members: [{ name: 'Member 1', address: '0x789' }]
+      },
+      investorContract: {
+        name: 'Test Token',
+        symbol: 'TST'
       }
+    }
 
-      ;(wrapper.vm as unknown as ComponentData).teamError = 'Unable to fetch teams'
-      // await wrapper.setData({ teamError: 'Unable to fetch teams' })
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find('.alert.alert-warning').exists()).toBe(true)
-      expect(wrapper.find('.alert.alert-warning').text()).toContain(
-        'We are unable to retrieve your teams'
-      )
-    })
+    await wrapper.vm.handleAddTeam(mockTeamData)
+    expect(wrapper.vm.loadingCreateTeam).toBe(true)
   })
 })

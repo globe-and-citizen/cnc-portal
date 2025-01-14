@@ -28,7 +28,7 @@ export default buildModule('Officer', (m) => {
     { beaconType: 'CashRemunerationEIP712', beaconAddress: cashRemunerationEip712FactoryBeacon }
   ]
 
-  m.call(officer, 'initialize', [beaconAdmin, beaconConfigs])
+  m.call(officer, 'initialize', [beaconAdmin, beaconConfigs, [], false])
 
   const beacon = m.contract('FactoryBeacon', [officer], {
     from: beaconAdmin
