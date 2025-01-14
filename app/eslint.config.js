@@ -20,7 +20,13 @@ export default [
   },
   {
     name: 'app/files-to-ignore',
-    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/playwright-report/**', "**/.cache-synpress/**"],
+    ignores: [
+      '**/dist/**',
+      '**/dist-ssr/**',
+      '**/coverage/**',
+      '**/playwright-report/**',
+      '**/.cache-synpress/**'
+    ]
   },
   ...pluginVue.configs['flat/essential'],
   ...vueTsEslintConfig(),
