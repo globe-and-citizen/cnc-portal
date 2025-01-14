@@ -10,7 +10,7 @@
       <thead :class="{ 'sticky top-0': sticky }">
         <tr>
           <th v-for="(column, index) in columns" :key="index" :class="column.class">
-            <slot :name="`${column.key}-header`" :column="column" :sort="column.sort" >
+            <slot :name="`${column.key}-header`" :column="column" :sort="column.sort">
               <div class="flex items-center space-x-2" :data-test="`${column.key}-header`">
                 <span>{{ column.label ?? column.key }}</span>
                 <button
