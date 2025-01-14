@@ -11,7 +11,7 @@ const addTeam = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const { name, members, description } = req.body;
+  const { name, members, description, officerAddress } = req.body;
   const callerAddress = (req as any).address;
   try {
     // Validate all members' wallet addresses
@@ -51,6 +51,7 @@ const addTeam = async (req: Request, res: Response) => {
             address: member.address,
           })),
         },
+        officerAddress: officerAddress,
       },
       include: {
         members: {
@@ -126,9 +127,9 @@ const getTeam = async (req: Request, res: Response) => {
             memberTeamsData: {
               select: {
                 expenseAccountData: true,
-                expenseAccountSignature: true
-              }
-            }
+                expenseAccountSignature: true,
+              },
+            },
           },
         },
         teamContracts: true,
@@ -193,7 +194,7 @@ const updateTeam = async (req: Request, res: Response) => {
     officerAddress,
     teamContract,
     cashRemunerationEip712Address,
-    investorsAddress
+    investorsAddress,
   } = req.body;
   const callerAddress = (req as any).address;
   try {
@@ -214,23 +215,23 @@ const updateTeam = async (req: Request, res: Response) => {
         return errorResponse(400, "Invalid contract address", res);
       }
 
-      const existingContract= await prisma.teamContract.findUnique({
-        where:{
-          address:teamContract.address
-        }
+      const existingContract = await prisma.teamContract.findUnique({
+        where: {
+          address: teamContract.address,
+        },
       });
 
-      if(existingContract){
+      if (existingContract) {
         //update the existing contract if found
         await prisma.teamContract.update({
-          where: {address: teamContract.address},
-          data:{
+          where: { address: teamContract.address },
+          data: {
             type: teamContract.type,
             deployer: teamContract.deployer,
-            admins:teamContract.admins,
+            admins: teamContract.admins,
           },
         });
-      }else{
+      } else {
         await prisma.teamContract.create({
           data: {
             address: teamContract.address,
@@ -241,7 +242,6 @@ const updateTeam = async (req: Request, res: Response) => {
           },
         });
       }
-      
     }
 
     const teamU = await prisma.team.update({
@@ -256,7 +256,7 @@ const updateTeam = async (req: Request, res: Response) => {
         officerAddress,
         expenseAccountEip712Address,
         cashRemunerationEip712Address,
-        investorsAddress
+        investorsAddress,
       },
       include: {
         members: {
@@ -265,7 +265,7 @@ const updateTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
-        teamContracts:true
+        teamContracts: true,
       },
     });
     res.status(200).json(teamU);
@@ -294,8 +294,8 @@ const deleteTeam = async (req: Request, res: Response) => {
       return errorResponse(403, "Unauthorized", res);
     }
     await prisma.boardOfDirectorActions.deleteMany({
-      where: { teamId: Number(id) }
-    })
+      where: { teamId: Number(id) },
+    });
 
     //delete claims
     // Step 1: Find all MemberTeamsData IDs associated with the Team
@@ -322,11 +322,11 @@ const deleteTeam = async (req: Request, res: Response) => {
     }
 
     await prisma.memberTeamsData.deleteMany({
-      where: { teamId: Number(id) }
-    })
+      where: { teamId: Number(id) },
+    });
     await prisma.teamContract.deleteMany({
-      where: { teamId: Number(id) }
-    })
+      where: { teamId: Number(id) },
+    });
     const teamD = await prisma.team.delete({
       where: {
         id: Number(id),
@@ -379,10 +379,10 @@ const deleteMember = async (req: Request, res: Response) => {
       where: {
         userAddress_teamId: {
           userAddress: String(memberAddress),
-          teamId: Number(id)
-        }
-      }
-    })
+          teamId: Number(id),
+        },
+      },
+    });
 
     const updatedTeam = await prisma.team.update({
       where: { id: Number(id) },
@@ -450,50 +450,53 @@ const addMembers = async (req: Request, res: Response) => {
 
 //Add Expense Account Data
 export const addExpenseAccountData = async (req: Request, res: Response) => {
-  const { id } = req.params
-  const callerAddress = (req as any).address
-  const expenseAccountData = req.body
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
+  const expenseAccountData = req.body;
 
   try {
     const team = await prisma.team.findUnique({
-      where: { id: Number(id) }
-    })
-    const ownerAddress = team?.ownerAddress
+      where: { id: Number(id) },
+    });
+    const ownerAddress = team?.ownerAddress;
     if (callerAddress !== ownerAddress) {
-      return errorResponse(403, `Forbidden`, res)
+      return errorResponse(403, `Forbidden`, res);
     }
-  
+
     //create expense account data
     await prisma.memberTeamsData.upsert({
       where: {
         userAddress_teamId: {
           userAddress: expenseAccountData.expenseAccountData.approvedAddress,
-          teamId: Number(id)
-        }
+          teamId: Number(id),
+        },
       },
       update: {
-        expenseAccountData: JSON.stringify(expenseAccountData.expenseAccountData),
-        expenseAccountSignature: expenseAccountData.signature
+        expenseAccountData: JSON.stringify(
+          expenseAccountData.expenseAccountData
+        ),
+        expenseAccountSignature: expenseAccountData.signature,
       },
       create: {
         userAddress: expenseAccountData.expenseAccountData.approvedAddress,
         teamId: Number(id),
-        expenseAccountData: JSON.stringify(expenseAccountData.expenseAccountData),
-        expenseAccountSignature: expenseAccountData.signature
-      }
-    })
+        expenseAccountData: JSON.stringify(
+          expenseAccountData.expenseAccountData
+        ),
+        expenseAccountSignature: expenseAccountData.signature,
+      },
+    });
 
-    res.status(201)
-      .json({
-        success: true
-      })
+    res.status(201).json({
+      success: true,
+    });
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   }
-}
+};
 
 export const getExpenseAccountData = async (req: Request, res: Response) => {
-  const { id } = req.params
+  const { id } = req.params;
   const memberAddress = req.headers.memberaddress;
 
   try {
@@ -502,314 +505,302 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
         where: {
           userAddress_teamId: {
             userAddress: String(memberAddress),
-            teamId: Number(id)
-          }
-        }
-      })
+            teamId: Number(id),
+          },
+        },
+      });
 
-      res.status(201)
-        .json({
-          data: memberTeamsData?.expenseAccountData,
-          signature: memberTeamsData?.expenseAccountSignature
-        })
+      res.status(201).json({
+        data: memberTeamsData?.expenseAccountData,
+        signature: memberTeamsData?.expenseAccountSignature,
+      });
     } else {
       let memberTeamsData = await prisma.memberTeamsData.findMany({
         where: {
-          teamId: Number(id)
+          teamId: Number(id),
         },
         include: {
           user: {
             select: {
-              name: true
-            }
-          }
-        }
-      })
-      let expenseAccountData = memberTeamsData.map(item => {
+              name: true,
+            },
+          },
+        },
+      });
+      let expenseAccountData = memberTeamsData.map((item) => {
         if (item.expenseAccountData)
           return {
-            ...JSON.parse(item.expenseAccountData), 
+            ...JSON.parse(item.expenseAccountData),
             signature: item.expenseAccountSignature,
-            name: item?.user?.name
-          }
-      })
+            name: item?.user?.name,
+          };
+      });
 
-      res.status(201)
-        .json(expenseAccountData)
+      res.status(201).json(expenseAccountData);
     }
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 export const addEmployeeWage = async (req: Request, res: Response) => {
-  const { id } = req.params
-  const callerAddress = (req as any).address
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
   const memberAddress = req.headers.memberaddress;
-  const wageData = req.body
+  const wageData = req.body;
 
   try {
     const team = await prisma.team.findUnique({
-      where: { id: Number(id) }
-    })
-    const ownerAddress = team?.ownerAddress
+      where: { id: Number(id) },
+    });
+    const ownerAddress = team?.ownerAddress;
     if (callerAddress !== ownerAddress) {
-      return errorResponse(403, `Forbidden`, res)
+      return errorResponse(403, `Forbidden`, res);
     }
-    if (typeof memberAddress !== 'string') {
-      return errorResponse(400, 'Bad Request', res)
+    if (typeof memberAddress !== "string") {
+      return errorResponse(400, "Bad Request", res);
     }
     //create or update wage data
     await prisma.memberTeamsData.upsert({
       where: {
         userAddress_teamId: {
           userAddress: memberAddress,
-          teamId: Number(id)
-        }
+          teamId: Number(id),
+        },
       },
       update: {
         hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: wageData.maxHoursPerWeek
+        maxHoursPerWeek: wageData.maxHoursPerWeek,
       },
       create: {
         userAddress: memberAddress,
         teamId: Number(id),
         hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: wageData.maxHoursPerWeek
-      }
-    })
+        maxHoursPerWeek: wageData.maxHoursPerWeek,
+      },
+    });
 
-    res.status(201)
-      .json({
-        success: true
-      })
-
+    res.status(201).json({
+      success: true,
+    });
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 export const addClaim = async (req: Request, res: Response) => {
-  const { id } = req.params
-  const callerAddress = (req as any).address
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
   //const hoursWorked = req.headers.hoursworked
-  const { hoursWorked } = req.body
+  const { hoursWorked } = req.body;
 
   try {
-    if (isNaN(Number(hoursWorked)) || !hoursWorked) 
-      return errorResponse(400, 'Bad Request', res)
+    if (isNaN(Number(hoursWorked)) || !hoursWorked)
+      return errorResponse(400, "Bad Request", res);
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
       where: {
         userAddress_teamId: {
           userAddress: callerAddress,
-          teamId: Number(id)
-        }
-      }
-    })
+          teamId: Number(id),
+        },
+      },
+    });
     if (!memberTeamsData) {
-      return errorResponse(404, 'Record Not Found', res)
+      return errorResponse(404, "Record Not Found", res);
     }
     await prisma.claim.create({
       data: {
         hoursWorked: Number(hoursWorked),
-        status: 'pending',
-        memberTeamsDataId: memberTeamsData?.id
-      }
-    })
-    res.status(201)
-      .json({
-        success: true
-      })
+        status: "pending",
+        memberTeamsDataId: memberTeamsData?.id,
+      },
+    });
+    res.status(201).json({
+      success: true,
+    });
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 export const updateClaim = async (req: Request, res: Response) => {
-  const { callerRole } = req.params
+  const { callerRole } = req.params;
 
   if (callerRole === "employee") {
-    await updateClaimEmployee(req, res)
+    await updateClaimEmployee(req, res);
   } else if (callerRole === "employer") {
-    await updateClaimEmployer(req, res)
+    await updateClaimEmployer(req, res);
   } else {
-    return errorResponse(404, 'Resource Not Found', res)
+    return errorResponse(404, "Resource Not Found", res);
   }
-}
+};
 
 export const updateClaimEmployee = async (req: Request, res: Response) => {
-  const { id } = req.params
-  const callerAddress = (req as any).address
-  const { 
-    claimid: claimId, 
-    hoursworked: hoursWorked 
-  } = req.headers
-  
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
+  const { claimid: claimId, hoursworked: hoursWorked } = req.headers;
+
   try {
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
       where: {
         userAddress_teamId: {
           userAddress: callerAddress,
-          teamId: Number(id)
-        }
-      }
-    })
+          teamId: Number(id),
+        },
+      },
+    });
 
     const claim = await prisma.claim.findUnique({
-      where: { id: Number(claimId) }
-    })
+      where: { id: Number(claimId) },
+    });
 
-    if (claim?.status !== `pending`) 
-      return errorResponse(403, `Forbidden`, res)
+    if (claim?.status !== `pending`)
+      return errorResponse(403, `Forbidden`, res);
 
     if (claim?.memberTeamsDataId !== memberTeamsData?.id)
-      return errorResponse(403, `Forbidden`, res)
-    
+      return errorResponse(403, `Forbidden`, res);
+
     await prisma.claim.update({
       where: { id: Number(id) },
-      data: { hoursWorked: Number(hoursWorked) }
-    })
-    
-    res.status(201)
-      .json({ success: true })
+      data: { hoursWorked: Number(hoursWorked) },
+    });
+
+    res.status(201).json({ success: true });
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 export const deleteClaim = async (req: Request, res: Response) => {
-  const { id } = req.params
-  const callerAddress = (req as any).address
-  const claimId = req.headers.claimid
-  
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
+  const claimId = req.headers.claimid;
+
   try {
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
       where: {
         userAddress_teamId: {
           userAddress: callerAddress,
-          teamId: Number(id)
-        }
-      }
-    })
+          teamId: Number(id),
+        },
+      },
+    });
 
     const claim = await prisma.claim.findUnique({
-      where: { id: Number(claimId) }
-    })
+      where: { id: Number(claimId) },
+    });
 
     if (claim?.memberTeamsDataId !== memberTeamsData?.id)
-      return errorResponse(403, `Forbidden`, res)
+      return errorResponse(403, `Forbidden`, res);
 
-    if (claim?.status !== `pending`) 
-      return errorResponse(403, `Forbidden`, res)
+    if (claim?.status !== `pending`)
+      return errorResponse(403, `Forbidden`, res);
 
     await prisma.claim.delete({
-      where: { id: Number(id) }
-    })
+      where: { id: Number(id) },
+    });
 
-    res.status(201)
-      .json({ success: true })
+    res.status(201).json({ success: true });
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 export const updateClaimEmployer = async (req: Request, res: Response) => {
-  const { id } = req.params
-  const callerAddress = (req as any).address
-  const approvalData = req.body
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
+  const approvalData = req.body;
 
   try {
     const team = await prisma.team.findUnique({
-      where: { id: Number(id) }
-    })
-    if (team?.ownerAddress !== callerAddress) 
-      return errorResponse(403, `Forbidden`, res)
+      where: { id: Number(id) },
+    });
+    if (team?.ownerAddress !== callerAddress)
+      return errorResponse(403, `Forbidden`, res);
     const claim = await prisma.claim.findUnique({
-      where: { id: Number(approvalData.id) }
-    })
-    if (claim?.status !== 'pending')
-      return errorResponse(403, 'Forbidden', res)
+      where: { id: Number(approvalData.id) },
+    });
+    if (claim?.status !== "pending")
+      return errorResponse(403, "Forbidden", res);
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
-      where: { id: claim?.memberTeamsDataId }
-    })
-    if (memberTeamsData?.teamId !== team?.id) 
-      return errorResponse(403, `Forbidden`, res)
-    if (typeof approvalData.signature !== 'string')
-      return errorResponse(400, 'Bad Request', res)
+      where: { id: claim?.memberTeamsDataId },
+    });
+    if (memberTeamsData?.teamId !== team?.id)
+      return errorResponse(403, `Forbidden`, res);
+    if (typeof approvalData.signature !== "string")
+      return errorResponse(400, "Bad Request", res);
 
     await prisma.claim.update({
       where: { id: claim?.id },
-      data: { cashRemunerationSignature: approvalData.signature, status: 'approved' }
-    })
+      data: {
+        cashRemunerationSignature: approvalData.signature,
+        status: "approved",
+      },
+    });
     if (memberTeamsData?.userAddress)
-      addNotification(
-        [memberTeamsData?.userAddress],
-        {
-          message: `Your wage claim for ${ (new Date(claim.createdAt)).toLocaleString() } has been approved.`,
-          subject: "Wage Claim Approval",
-          author: team?.ownerAddress || "",
-          resource: `wage-claim/${claim.id}`,
-        }
-      );
+      addNotification([memberTeamsData?.userAddress], {
+        message: `Your wage claim for ${new Date(
+          claim.createdAt
+        ).toLocaleString()} has been approved.`,
+        subject: "Wage Claim Approval",
+        author: team?.ownerAddress || "",
+        resource: `wage-claim/${claim.id}`,
+      });
 
-    res.status(201)
-      .json({ success: true })
+    res.status(201).json({ success: true });
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 export const getClaim = async (req: Request, res: Response) => {
-  const { id } = req.params
+  const { id } = req.params;
 
   try {
     const claim = await prisma.claim.findUnique({
-      where: { id: Number(id) }
-    })
+      where: { id: Number(id) },
+    });
 
-    if (!claim)
-      return errorResponse(404, 'Resource Not Found', res)
+    if (!claim) return errorResponse(404, "Resource Not Found", res);
 
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
-      where: { id: claim.memberTeamsDataId }
-    })
+      where: { id: claim.memberTeamsDataId },
+    });
 
-    res.status(201)
-      .json({ 
-        ...claim, 
-        hourlyRate: memberTeamsData?.hourlyRate, 
-        teamId: memberTeamsData?.teamId 
-      })
+    res.status(201).json({
+      ...claim,
+      hourlyRate: memberTeamsData?.hourlyRate,
+      teamId: memberTeamsData?.teamId,
+    });
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 export const getClaims = async (req: Request, res: Response) => {
-  const { id, status } = req.params
-  const callerAddress = (req as any).address
+  const { id, status } = req.params;
+  const callerAddress = (req as any).address;
 
   try {
     const team = await prisma.team.findUnique({
-      where: { id: Number(id) }
-    })
+      where: { id: Number(id) },
+    });
 
-    if (!team)
-      return errorResponse(404, 'Resource Not Found', res)
+    if (!team) return errorResponse(404, "Resource Not Found", res);
 
     if (team.ownerAddress === callerAddress) {
       const claims = await prisma.memberTeamsData.findMany({
@@ -840,9 +831,9 @@ export const getClaims = async (req: Request, res: Response) => {
           },
           hourlyRate: true,
         },
-      })
+      });
 
-      const flattenedClaims = claims.flatMap(item =>
+      const flattenedClaims = claims.flatMap((item) =>
         item.claims.map((claim) => ({
           id: claim.id,
           name: item.user.name,
@@ -851,10 +842,9 @@ export const getClaims = async (req: Request, res: Response) => {
           hoursWorked: claim.hoursWorked,
           createdAt: claim.createdAt,
         }))
-      )
+      );
 
-      res.status(201)
-        .json(flattenedClaims)
+      res.status(201).json(flattenedClaims);
     } else {
       const claims = await prisma.memberTeamsData.findMany({
         where: {
@@ -885,9 +875,9 @@ export const getClaims = async (req: Request, res: Response) => {
           },
           hourlyRate: true,
         },
-      })
+      });
 
-      const flattenedClaims = claims.flatMap(item =>
+      const flattenedClaims = claims.flatMap((item) =>
         item.claims.map((claim) => ({
           id: claim.id,
           name: item.user.name,
@@ -896,17 +886,16 @@ export const getClaims = async (req: Request, res: Response) => {
           hoursWorked: claim.hoursWorked,
           createdAt: claim.createdAt,
         }))
-      )
+      );
 
-      res.status(201)
-        .json(flattenedClaims)
+      res.status(201).json(flattenedClaims);
     }
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
-}
+};
 
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
