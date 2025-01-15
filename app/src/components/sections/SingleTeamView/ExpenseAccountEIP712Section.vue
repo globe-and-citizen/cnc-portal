@@ -19,6 +19,14 @@
             </span>
             <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
           </div>
+          <div class="text-lg mt-2">
+            <div v-if="isLoadingTokenBalances">
+              <span class="loading loading-spinner loading-md"></span>
+            </div>
+            <div v-else>
+              <div>USDC: {{ usdcBalance ? Number(usdcBalance) / 1e6 : '0' }}</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="card bg-blue-100 text-blue-800 w-1/3 shadow-xl">
@@ -92,6 +100,14 @@
                     >
                       Spend
                     </ButtonUI>
+                    <ButtonUI
+                      variant="success"
+                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
+                      @click="tokenTransferModal = true"
+                      data-test="token-transfer-button"
+                    >
+                      Transfer Token
+                    </ButtonUI>
                   </td>
                 </tr>
               </tbody>
@@ -140,7 +156,12 @@
         <ButtonUI
           variant="secondary"
           :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
-          @click="approveUsersModal = true"
+          @click="
+            () => {
+              approveUsersModal = true
+              console.log('approveUsersModal', approveUsersModal)
+            }
+          "
           data-test="approve-users-button"
         >
           Approve User Expense
@@ -163,7 +184,7 @@
             <tr v-for="(data, index) in manyExpenseAccountDataActive" :key="index">
               <td class="flex flex-row justify-start gap-4">
                 <UserComponent
-                  :user="{ name: data.name, address: data.approvedAddress }"
+                  :user="{ name: data?.name, address: data?.approvedAddress }"
                 ></UserComponent>
               </td>
               <td>{{ new Date(data?.expiry * 1000).toLocaleString('en-US') }}</td>
@@ -237,6 +258,64 @@
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
+
+  <ModalComponent v-model="tokenTransferModal" data-test="token-transfer-modal">
+    <div class="flex flex-col gap-4 justify-start">
+      <span class="font-bold text-xl sm:text-2xl">Transfer Token</span>
+      <div class="form-control w-full">
+        <label class="label">
+          <span class="label-text">Token</span>
+        </label>
+        <select v-model="selectedToken" class="select select-bordered w-full">
+          <option value="USDC">USDC</option>
+        </select>
+      </div>
+      <div class="form-control w-full">
+        <label class="label">
+          <span class="label-text">To Address</span>
+        </label>
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          placeholder="Enter recipient address"
+          v-model="tokenRecipient"
+        />
+      </div>
+      <div class="form-control w-full">
+        <label class="label">
+          <span class="label-text">Amount</span>
+        </label>
+        <input
+          type="number"
+          class="input input-bordered w-full"
+          placeholder="Enter amount"
+          v-model="tokenAmount"
+        />
+      </div>
+      <div class="text-center">
+        <ButtonUI
+          :loading="
+            isLoadingTokenTransfer ||
+            isConfirmingTokenTransfer ||
+            isPendingApprove ||
+            isConfirmingApprove
+          "
+          :disabled="
+            isLoadingTokenTransfer ||
+            isConfirmingTokenTransfer ||
+            isPendingApprove ||
+            isConfirmingApprove
+          "
+          class="w-full sm:w-44"
+          variant="primary"
+          @click="transferToken"
+          data-test="transfer-token-button"
+        >
+          Transfer Token
+        </ButtonUI>
+      </div>
+    </div>
+  </ModalComponent>
 </template>
 
 <script setup lang="ts">
@@ -270,6 +349,10 @@ import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256 } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from '@/components/UserComponent.vue'
+import { USDC_ADDRESS } from '@/constant'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 //#endregion imports
 
 //#region variable declarations
@@ -617,6 +700,7 @@ const init = async () => {
   await initializeBalances()
   // await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
+  await fetchUsdcBalance()
 }
 
 const getExpenseAccountOwner = async () => {
@@ -754,6 +838,146 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
     addErrorToast('Error fetching expense account data')
+  }
+})
+
+// Token related refs
+const tokenTransferModal = ref(false)
+const tokenAmount = ref('')
+const tokenRecipient = ref('')
+const selectedToken = ref('USDC')
+
+// Token balances
+const {
+  data: usdcBalance,
+  isLoading: isLoadingUsdcBalance,
+  refetch: fetchUsdcBalance,
+  error: usdcBalanceError
+} = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [team.value.expenseAccountEip712Address as Address]
+})
+
+const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
+
+// Token transfer
+const {
+  writeContract: writeTokenTransfer,
+  isPending: isLoadingTokenTransfer,
+  data: tokenTransferHash,
+  error: tokenTransferError
+} = useWriteContract()
+
+const { isLoading: isConfirmingTokenTransfer } = useWaitForTransactionReceipt({
+  hash: tokenTransferHash
+})
+
+// Token approval
+const {
+  writeContract: approve,
+  error: approveError,
+  data: approveHash,
+  isPending: isPendingApprove
+} = useWriteContract()
+
+const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
+  hash: approveHash
+})
+
+// Token transfer function
+const transferToken = async () => {
+  if (
+    !team.value.expenseAccountEip712Address ||
+    !tokenAmount.value ||
+    !tokenRecipient.value ||
+    !_expenseAccountData.value?.data
+  )
+    return
+
+  const tokenAddress = USDC_ADDRESS
+  const amount = BigInt(Number(tokenAmount.value) * 1e6)
+  const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+
+  try {
+    const allowance = await readContract(config, {
+      address: tokenAddress as Address,
+      abi: ERC20ABI,
+      functionName: 'allowance',
+      args: [currentUserAddress as Address, team.value.expenseAccountEip712Address as Address]
+    })
+
+    const currentAllowance = allowance ? allowance.toString() : 0n
+    if (Number(currentAllowance) < Number(amount)) {
+      approve({
+        address: tokenAddress as Address,
+        abi: ERC20ABI,
+        functionName: 'approve',
+        args: [team.value.expenseAccountEip712Address as Address, amount]
+      })
+    } else {
+      writeTokenTransfer({
+        address: team.value.expenseAccountEip712Address as Address,
+        abi: expenseAccountABI,
+        functionName: 'transferToken',
+        args: [
+          tokenRecipient.value as Address,
+          tokenAddress as Address,
+          amount,
+          {
+            ...budgetLimit,
+            budgetData: budgetLimit.budgetData.map((item) => ({
+              ...item,
+              value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+            }))
+          },
+          _expenseAccountData.value.signature
+        ]
+      })
+    }
+  } catch (error) {
+    log.error(parseError(error))
+    addErrorToast('Failed to transfer token')
+  }
+}
+
+// Watch for token transfer events
+watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Token transferred successfully')
+    fetchUsdcBalance()
+    tokenTransferModal.value = false
+    tokenAmount.value = ''
+    tokenRecipient.value = ''
+  }
+})
+
+watch(tokenTransferError, () => {
+  if (tokenTransferError.value) {
+    log.error(parseError(tokenTransferError.value))
+    addErrorToast('Failed to transfer token')
+  }
+})
+
+watch(approveError, () => {
+  if (approveError.value) {
+    log.error(parseError(approveError.value))
+    addErrorToast('Failed to approve token spending')
+  }
+})
+
+watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Approval granted successfully')
+    transferToken()
+  }
+})
+
+watch([usdcBalanceError], ([newUsdcError]) => {
+  if (newUsdcError) {
+    log.error(parseError(newUsdcError))
+    addErrorToast('Failed to fetch USDC balance')
   }
 })
 
