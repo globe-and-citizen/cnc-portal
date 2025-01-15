@@ -236,10 +236,10 @@
                   :user="{ name: data.name, address: data.approvedAddress }"
                 ></UserComponent>
               </td>
-              <td>{{ new Date(data.expiry * 1000).toLocaleString('en-US') }}</td>
-              <td>{{ data.budgetData[2].value }}</td>
-              <td>{{ `${data.balances['0']}/${data.budgetData[0].value}` }}</td>
-              <td>{{ `${data.balances['1']}/${data.budgetData[1].value}` }}</td>
+              <td>{{ new Date(data?.expiry * 1000).toLocaleString('en-US') }}</td>
+              <td>{{ data?.budgetData[2]?.value }}</td>
+              <td>{{ `${data?.balances['0']}/${data?.budgetData[0]?.value}` }}</td>
+              <td>{{ `${data?.balances['1']}/${data?.budgetData[1]?.value}` }}</td>
               <td class="flex justify-end" data-test="action-td">
                 <ButtonUI
                   :disabled="contractOwnerAddress !== currentUserAddress"
