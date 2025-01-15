@@ -38,6 +38,8 @@ jobs:
           sudo apt-get install --no-install-recommends -y \
           xvfb
           curl -L https://foundry.paradigm.xyz | bash
+          source ~/.foundry/bin/foundryup
+          foundryup
 
       - name: 🌎 Run App for cache
         run: |
