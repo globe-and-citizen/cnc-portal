@@ -34,10 +34,12 @@ contract ExpenseAccountEIP712 is
      * - For `TransactionsPerPeriod`: the maximum number of transactions allowed.
      * - For `AmountPerPeriod`: the total allowed withdrawal amount within the period.
      * - For `AmountPerTransaction`: the maximum amount per transaction.
+     * @param token Address of the token (zero address for native ETH)
      */
     struct BudgetData {
         BudgetType budgetType;
         uint256 value;
+        address token;
     }
 
     /**
@@ -73,7 +75,7 @@ contract ExpenseAccountEIP712 is
     }
 
     /// @dev Type signature for the BudgetData struct, used in EIP-712 encoding.
-    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value)";
+    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value,address token)";
 
     /// @dev Type signature for the BudgetLimit struct, used in EIP-712 encoding.
     string private constant BUDGETLIMIT_TYPE = 
@@ -166,7 +168,8 @@ contract ExpenseAccountEIP712 is
         return keccak256(abi.encode(
             BUDGETDATA_TYPEHASH,
             budgetData.budgetType,
-            budgetData.value
+            budgetData.value,
+            budgetData.token
         ));
     }
 
@@ -240,7 +243,7 @@ contract ExpenseAccountEIP712 is
 
         require((block.timestamp <= limit.expiry), "Authorization expired");
 
-        _checkAndUpdateBudgetData(limit.budgetData, amount, signature);
+        _checkAndUpdateBudgetData(limit.budgetData, amount, signature, address(0));
 
         payable(to).sendValue(amount);
 
@@ -253,6 +256,7 @@ contract ExpenseAccountEIP712 is
      * @param budgetData The budget data representing the set limits.
      * @param amount The amount to transfer.
      * @param signature The ECDSA signature.
+     * @param token Address of the token (zero address for native ETH)
      *
      * Requirements:
      * - The number of transactions must not exceed the specified amount.
@@ -263,13 +267,16 @@ contract ExpenseAccountEIP712 is
     function _checkAndUpdateBudgetData(
         BudgetData[] calldata budgetData, 
         uint256 amount, 
-        bytes calldata signature
+        bytes calldata signature,
+        address token
     ) private {
         bytes32 sigHash = keccak256(signature);
 
         bool isAmountWithdrawn;
 
         for (uint8 i = 0; i < budgetData.length; i++) {
+            if (budgetData[i].token != token) continue;
+
             if (budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
                 require(balances[sigHash].transactionCount < budgetData[i].value, "Transaction limit reached");
                 balances[sigHash].transactionCount++;
@@ -380,7 +387,7 @@ contract ExpenseAccountEIP712 is
 
         require((block.timestamp <= limit.expiry), "Authorization expired");
 
-        _checkAndUpdateBudgetData(limit.budgetData, amount, signature);
+        _checkAndUpdateBudgetData(limit.budgetData, amount, signature, token);
 
         require(IERC20(token).transfer(to, amount), "Token transfer failed");
 
