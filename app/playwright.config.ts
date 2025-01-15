@@ -41,6 +41,6 @@ export default defineConfig({
   webServer: {
     command: 'VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
     port: 5173,
-    reuseExistingServer: !process.env.CI
+    reuseExistingServer: true
   }
 })
