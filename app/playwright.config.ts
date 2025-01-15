@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: 'html',
 
   // Disable timeout
-  timeout: 0,
+  timeout: 60000,
 
   use: {
     baseURL: 'http://localhost:5173',
@@ -36,5 +36,11 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] }
     }
-  ]
+  ],
+
+  webServer: {
+    command: 'VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
+    port: 5173,
+    reuseExistingServer: !process.env.CI
+  }
 })
