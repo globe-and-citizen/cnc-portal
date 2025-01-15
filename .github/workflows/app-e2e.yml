@@ -44,12 +44,12 @@ jobs:
           VITE_APP_NETWORK_ALIAS=hardhat npm run dev &
         working-directory: ./app
 
-      - name: 💾 Build Cache
-        run: xvfb-run npm run test:build:cache
-        working-directory: ./app
-
       - name: ⛓️ Run Local Node (Anvil)
         run: anvil --load-state ./local-node-state.js &
+        working-directory: ./app
+
+      - name: 💾 Build Cache
+        run: xvfb-run npm run test:build:cache
         working-directory: ./app
 
       - name: 💻 Run E2E
