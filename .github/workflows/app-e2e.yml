@@ -49,7 +49,7 @@ jobs:
         working-directory: ./app
 
       - name: ⛓️ Run Local Node (Anvil)
-        run: anvil --load-state ./local-node-state.js &
+        run: anvil --load-state ./local-node-state.json &
         working-directory: ./app
 
       - name: 💾 Build Cache
