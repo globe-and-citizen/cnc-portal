@@ -37,9 +37,11 @@ jobs:
         run: |
           sudo apt-get install --no-install-recommends -y \
           xvfb
-          curl -L https://foundry.paradigm.xyz | bash
-          source /home/runner/.bashrc
-          foundryup
+
+      - name: ⛓️ Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
 
       - name: 🌎 Run App for cache
         run: |
