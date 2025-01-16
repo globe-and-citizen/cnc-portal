@@ -2,7 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { NETWORK } from '@/constant'
 
 describe('DepositBankModal.vue', () => {
   describe('render', () => {
