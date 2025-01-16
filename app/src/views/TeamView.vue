@@ -60,34 +60,65 @@
     </div>
     <ModalComponent v-model="showAddTeamModal">
       <AddTeamForm
-        :isLoading="createTeamFetching"
-        v-model="team"
+        :isLoading="
+          createTeamFetching ||
+          createOfficerLoading ||
+          isConfirmingCreateOfficer ||
+          loadingCreateTeam
+        "
         :users="foundUsers"
         @searchUsers="(input) => searchUsers(input)"
-        @addTeam="executeCreateTeam"
+        @addTeam="handleAddTeam"
       />
     </ModalComponent>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
+import { encodeFunctionData, type Address } from 'viem'
 
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { TeamsResponse } from '@/types'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
-const router = useRouter()
 
+// Contract ABIs
+import OfficerABI from '@/artifacts/abi/officer.json'
+import BankABI from '@/artifacts/abi/bank.json'
+import VotingABI from '@/artifacts/abi/voting.json'
+import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
+import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
+import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
+
+import {
+  BANK_BEACON_ADDRESS,
+  BOD_BEACON_ADDRESS,
+  CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
+  EXPENSE_ACCOUNT_BEACON_ADDRESS,
+  EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
+  INVESTOR_V1_BEACON_ADDRESS,
+  OFFICER_BEACON,
+  TIPS_ADDRESS,
+  USDC_ADDRESS,
+  USDT_ADDRESS,
+  validateAddresses,
+  VOTING_BEACON_ADDRESS
+} from '@/constant'
+import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+
+const router = useRouter()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
+const loadingCreateTeam = ref(false)
 const {
   isFetching: teamsAreFetching,
   error: teamError,
@@ -100,20 +131,51 @@ watch(teamError, () => {
     addErrorToast(teamError.value)
   }
 })
-
 const foundUsers = ref<User[]>([])
 const showAddTeamModal = ref(false)
-const team = ref<TeamInput>({
+
+interface TeamInputWithOfficer extends TeamInput {
+  officerAddress: Address
+}
+
+const team = ref<TeamInputWithOfficer>({
   name: '',
   description: '',
-  members: [
-    {
-      name: '',
-      address: ''
-    }
-  ]
+  members: [{ name: '', address: '' }],
+  officerAddress: '' as Address
+})
+// Officer contract creation
+const {
+  isPending: officerContractCreating,
+  data: createOfficerHash,
+  error: createOfficerError,
+  writeContract: createOfficer
+} = useWriteContract()
+
+const { isLoading: isConfirmingCreateOfficer, isSuccess: isConfirmedCreateOfficer } =
+  useWaitForTransactionReceipt({
+    hash: createOfficerHash
+  })
+
+const loading = ref(false)
+const createOfficerLoading = computed(
+  () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
+)
+watch(createOfficerError, (error) => {
+  if (error) {
+    addErrorToast('Failed to create officer contract')
+    console.log(error)
+  }
 })
 
+watch([isConfirmingCreateOfficer, isConfirmedCreateOfficer], ([isConfirming, isConfirmed]) => {
+  if (!isConfirming && isConfirmed) {
+    addSuccessToast('Officer contract deployed successfully')
+    // Continue with team creation
+  }
+})
+
+// Team creation API call
 const {
   isFetching: createTeamFetching,
   error: createTeamError,
@@ -139,7 +201,8 @@ watch(
       team.value = {
         name: '',
         description: '',
-        members: []
+        members: [],
+        officerAddress: '' as Address
       }
       showAddTeamModal.value = false
       executeFetchTeams()
@@ -195,7 +258,186 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
-function navigateToTeam(id: string) {
-  router.push('/teams/' + id)
+// Watch for errors
+watch(teamError, () => {
+  if (teamError.value) {
+    addErrorToast(teamError.value)
+    loading.value = false
+  }
+})
+
+watch(createTeamError, () => {
+  if (createTeamError.value) {
+    addErrorToast(createTeamError.value)
+    loadingCreateTeam.value = false
+  }
+})
+
+// Helper functions
+
+const handleAddTeam = async (data: {
+  team: TeamInput
+  investorContract: { name: string; symbol: string }
+}) => {
+  loadingCreateTeam.value = true
+  team.value = {
+    ...data.team,
+    officerAddress: '' as Address // Will be set after deployment
+  }
+  try {
+    deployOfficerContract(data.investorContract)
+  } catch (error) {
+    addErrorToast('Error creating team')
+    console.log(error)
+  }
+}
+const deployOfficerContract = async (investorContract: { name: string; symbol: string }) => {
+  try {
+    const currentAddress = useUserDataStore().address as Address
+    console.log('Validating addresses')
+    validateAddresses()
+
+    const beaconConfigs = [
+      {
+        beaconType: 'Bank',
+        beaconAddress: BANK_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'Voting',
+        beaconAddress: VOTING_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'BoardOfDirectors',
+        beaconAddress: BOD_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccount',
+        beaconAddress: EXPENSE_ACCOUNT_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'ExpenseAccountEIP712',
+        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'CashRemunerationEIP712',
+        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'InvestorsV1',
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
+      }
+    ]
+    const deployments = []
+
+    // Bank contract
+    deployments.push({
+      contractType: 'Bank',
+      initializerData: encodeFunctionData({
+        abi: BankABI,
+        functionName: 'initialize',
+        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentAddress]
+      })
+    })
+    deployments.push({
+      contractType: 'InvestorsV1',
+      initializerData: encodeFunctionData({
+        abi: INVESTOR_ABI,
+        functionName: 'initialize',
+        args: [investorContract.name, investorContract.symbol, currentAddress]
+      })
+    })
+
+    // Voting contract
+    deployments.push({
+      contractType: 'Voting',
+      initializerData: encodeFunctionData({
+        abi: VotingABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+
+    // Expense account
+    deployments.push({
+      contractType: 'ExpenseAccount',
+      initializerData: encodeFunctionData({
+        abi: ExpenseAccountABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+
+    // Expense account EIP712
+    deployments.push({
+      contractType: 'ExpenseAccountEIP712',
+      initializerData: encodeFunctionData({
+        abi: ExpenseAccountEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+
+    // Cash remuneration EIP712
+    deployments.push({
+      contractType: 'CashRemunerationEIP712',
+      initializerData: encodeFunctionData({
+        abi: CashRemunerationEIP712ABI,
+        functionName: 'initialize',
+        args: [currentAddress]
+      })
+    })
+
+    const encodedFunction = encodeFunctionData({
+      abi: OfficerABI,
+      functionName: 'initialize',
+      args: [currentAddress, beaconConfigs, deployments, true]
+    })
+
+    createOfficer({
+      address: OFFICER_BEACON as Address,
+      abi: FACTORY_BEACON_ABI,
+      functionName: 'createBeaconProxy',
+      args: [encodedFunction]
+    })
+  } catch (error) {
+    loading.value = false
+    console.log(error)
+    addErrorToast('Error deploying contract')
+  }
+}
+useWatchContractEvent({
+  address: OFFICER_BEACON as Address,
+  abi: FACTORY_BEACON_ABI,
+  eventName: 'BeaconProxyCreated',
+  async onLogs(logs) {
+    interface ILogs {
+      args: {
+        deployer: string
+        proxy: string
+      }
+    }
+    const deployer = (logs[0] as unknown as ILogs).args.deployer
+    const proxyAddress = (logs[0] as unknown as ILogs).args.proxy
+    const currentAddress = useUserDataStore().address as Address
+    if (!proxyAddress || proxyAddress == team.value.officerAddress || deployer !== currentAddress)
+      loading.value = false
+    else {
+      try {
+        team.value.officerAddress = proxyAddress as Address
+        console.log('team', team.value)
+        executeCreateTeam()
+        loading.value = false
+        loadingCreateTeam.value = false
+      } catch (error) {
+        console.log('Error updating officer address:', error)
+        addErrorToast('Error updating officer address')
+        loading.value = false
+        loadingCreateTeam.value = false
+      }
+    }
+  }
+})
+const navigateToTeam = (id: number) => {
+  router.push(`/teams/${id}`)
 }
 </script>
