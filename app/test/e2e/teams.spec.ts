@@ -150,11 +150,10 @@ describe('Teams', () => {
       // Fill form
       await page.fill('[data-test="team-name-input"]', 'Team 1')
       await page.fill('[data-test="team-description-input"]', 'Description of Team 1')
-      await page.fill('input[data-test="share-name-input"]', 'Testing')
-      await page.fill('input[data-test="share-symbol-input"]', 'TST')
-      await page.click(`input[data-test="member-${userIndex}-name-input"]`)
+      await page.fill('[data-test="share-name-input"]', 'Testing')
+      await page.fill('[data-test="share-symbol-input"]', 'TST')
+      await page.click(`[data-test="member-${userIndex}-name-input"]`)
       await page.keyboard.type(`Local ${userIndex + 1}`)
-
       // Wait for user search to load
       await page.waitForSelector(`[data-test="user-dropdown-${users[userIndex].address}"]`)
       expect(
