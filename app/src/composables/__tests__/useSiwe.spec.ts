@@ -181,6 +181,7 @@ describe('useSiwe', () => {
   it('should give an error when MetaMask is not installed', async () => {
     mocks.mockHasInstalledWallet.mockReset()
     mocks.mockHasInstalledWallet.mockImplementation(() => false)
+    mockUseConnect.connectors = []
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
