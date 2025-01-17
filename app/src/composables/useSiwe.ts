@@ -7,7 +7,8 @@ import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { MetaMaskUtil } from '@/utils/web3Util'
 import { useStorage } from '@vueuse/core'
-import { useAccount, useSignMessage, useConnect } from '@wagmi/vue'
+import { useAccount, useSignMessage, useConnect, useSwitchChain } from '@wagmi/vue'
+import { NETWORK } from '@/constant'
 
 function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
   return new SLSiweMessageCreator({
@@ -26,6 +27,7 @@ export function useSiwe() {
   const apiEndpoint = ref<string>('')
   const { connectors, connect, error: connectError } = useConnect()
   const { address, isConnected } = useAccount()
+  const { switchChain } = useSwitchChain()
 
   watch(connectError, (newVal) => {
     if (newVal) {
@@ -161,15 +163,51 @@ export function useSiwe() {
     try {
       isProcessing.value = true
 
+      const metaMaskConnector = connectors
+        .find(connector => connector.name.split(' ')[0] === 'MetaMask')
+
+      if (!metaMaskConnector) {
+        addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
+        return
+      }
+
+      const networkChainId = parseInt(NETWORK.chainId)
+
+      // if ( await metaMaskConnector.getChainId() !== networkChainId) {
+      //   switchChain( {
+      //     chainId: networkChainId,
+      //     connector: metaMaskConnector
+      //   } )
+      //   console.log(
+      //     `connector.chainId: `, await metaMaskConnector.getChainId(), 
+      //     `NETWORK.chainId: `, parseInt(NETWORK.chainId)
+      //   )
+      // }
+
+      // const metaMaskUtil = new MetaMaskUtil()
+      // metaMaskUtil.switchNetwork()
+
       if (!isConnected.value) {
         console.log(`not connected...`)
-        connectors.map((connector) => {
-          console.log(`connector name: `, connector.name)
-          const connectorName = connector.name.split(' ')[0]
-          if (connectorName === 'MetaMask') {
-            connect({ connector })
-          }
-        })
+        // connectors.map(async (connector) => {
+          console.log(`connector name: `, metaMaskConnector.name)
+          console.log(`connector id: `, await metaMaskConnector.getChainId())
+          // const connectorName = connector.name.split(' ')[0]
+          // if (connectorName === 'MetaMask') {
+            connect({ connector: metaMaskConnector, chainId: networkChainId })
+        //   }
+        // })
+      }
+
+      if ( await metaMaskConnector.getChainId() !== networkChainId) {
+        switchChain( {
+          chainId: networkChainId,
+          connector: metaMaskConnector
+        } )
+        console.log(
+          `connector.chainId: `, await metaMaskConnector.getChainId(), 
+          `NETWORK.chainId: `, parseInt(NETWORK.chainId)
+        )
       }
 
       await executeSiwe()
