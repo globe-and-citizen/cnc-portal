@@ -5,7 +5,6 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
 import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
-// import { MetaMaskUtil } from '@/utils/web3Util'
 import { useStorage } from '@vueuse/core'
 import { useAccount, useSignMessage, useConnect, useSwitchChain } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
@@ -41,22 +40,6 @@ export function useSiwe() {
     if (newVal) {
       console.log(`connected address: `, newVal)
       await executeSiwe()
-      // isProcessing.value = true
-
-      // apiEndpoint.value = `user/nonce/${address.value}`
-      // await executeFetchUserNonce()
-      // if (!nonce.value) return
-
-      // const statement = 'Sign in with Ethereum to the app.'
-      // const siweMessageCreator = createSiweMessageCreator(
-      //   address.value as string,
-      //   statement,
-      //   nonce.value.nonce
-      // )
-
-      // authData.value.message = await siweMessageCreator.create()
-
-      // signMessage({ message: authData.value.message })
     }
   })
 
@@ -155,12 +138,9 @@ export function useSiwe() {
 
   async function siwe() {
     // Check if we have metamask installation befor continue the process
-    // if (!MetaMaskUtil.hasInstalledWallet()) {
-    //   addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
-    //   return
-    // }
-    const metaMaskConnector = connectors
-      .find(connector => connector.name.split(' ')[0] === 'MetaMask')
+    const metaMaskConnector = connectors.find(
+      (connector) => connector.name.split(' ')[0] === 'MetaMask'
+    )
 
     if (!metaMaskConnector) {
       addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
@@ -172,58 +152,18 @@ export function useSiwe() {
 
       const networkChainId = parseInt(NETWORK.chainId)
 
-      // if ( await metaMaskConnector.getChainId() !== networkChainId) {
-      //   switchChain( {
-      //     chainId: networkChainId,
-      //     connector: metaMaskConnector
-      //   } )
-      //   console.log(
-      //     `connector.chainId: `, await metaMaskConnector.getChainId(), 
-      //     `NETWORK.chainId: `, parseInt(NETWORK.chainId)
-      //   )
-      // }
-
-      // const metaMaskUtil = new MetaMaskUtil()
-      // metaMaskUtil.switchNetwork()
-
       if (!isConnected.value) {
-        console.log(`not connected...`)
-        // connectors.map(async (connector) => {
-          console.log(`connector name: `, metaMaskConnector.name)
-          console.log(`connector id: `, await metaMaskConnector.getChainId())
-          // const connectorName = connector.name.split(' ')[0]
-          // if (connectorName === 'MetaMask') {
-            connect({ connector: metaMaskConnector, chainId: networkChainId })
-        //   }
-        // })
+        connect({ connector: metaMaskConnector, chainId: networkChainId })
       }
 
-      if ( await metaMaskConnector.getChainId() !== networkChainId) {
-        switchChain( {
+      if ((await metaMaskConnector.getChainId()) !== networkChainId) {
+        switchChain({
           chainId: networkChainId,
           connector: metaMaskConnector
-        } )
-        console.log(
-          `connector.chainId: `, await metaMaskConnector.getChainId(), 
-          `NETWORK.chainId: `, parseInt(NETWORK.chainId)
-        )
+        })
       }
 
       await executeSiwe()
-      // apiEndpoint.value = `user/nonce/${account.address.value}`
-      // await executeFetchUserNonce()
-      // if (!nonce.value) return
-
-      // const statement = 'Sign in with Ethereum to the app.'
-      // const siweMessageCreator = createSiweMessageCreator(
-      //   account.address.value as string,
-      //   statement,
-      //   nonce.value.nonce
-      // )
-
-      // authData.value.message = await siweMessageCreator.create()
-
-      // signMessage({ message: authData.value.message })
     } catch (_error) {
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")

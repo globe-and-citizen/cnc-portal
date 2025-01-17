@@ -36,7 +36,7 @@ const mockUseConnect = {
   error: ref(null)
 }
 
-const mockUseSwitchChain ={
+const mockUseSwitchChain = {
   switchChain: vi.fn()
 }
 
@@ -142,7 +142,7 @@ describe('useSiwe', () => {
   const logInfoSpy = vi.spyOn(utils.log, 'info')
   beforeEach(() => {
     setActivePinia(createPinia())
-    mockUseConnect.connectors = [{ name: 'MetaMask', getChainId: () =>  31137}]
+    mockUseConnect.connectors = [{ name: 'MetaMask', getChainId: () => 31137 }]
   })
   afterEach(() => {
     vi.clearAllMocks()
