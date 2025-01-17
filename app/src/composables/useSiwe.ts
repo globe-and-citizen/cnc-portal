@@ -5,7 +5,7 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
 import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
-import { MetaMaskUtil } from '@/utils/web3Util'
+// import { MetaMaskUtil } from '@/utils/web3Util'
 import { useStorage } from '@vueuse/core'
 import { useAccount, useSignMessage, useConnect, useSwitchChain } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
@@ -155,21 +155,20 @@ export function useSiwe() {
 
   async function siwe() {
     // Check if we have metamask installation befor continue the process
-    if (!MetaMaskUtil.hasInstalledWallet()) {
+    // if (!MetaMaskUtil.hasInstalledWallet()) {
+    //   addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
+    //   return
+    // }
+    const metaMaskConnector = connectors
+      .find(connector => connector.name.split(' ')[0] === 'MetaMask')
+
+    if (!metaMaskConnector) {
       addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
       return
     }
 
     try {
       isProcessing.value = true
-
-      const metaMaskConnector = connectors
-        .find(connector => connector.name.split(' ')[0] === 'MetaMask')
-
-      if (!metaMaskConnector) {
-        addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
-        return
-      }
 
       const networkChainId = parseInt(NETWORK.chainId)
 
