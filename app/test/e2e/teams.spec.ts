@@ -1,6 +1,7 @@
 import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
 import { testWithSynpress } from '@synthetixio/synpress'
 import connectedSetup from 'test/wallet-setup/connected.setup'
+import type { Page } from '@playwright/test'
 
 const test = testWithSynpress(metaMaskFixtures(connectedSetup))
 
@@ -9,8 +10,13 @@ const { expect, describe, beforeEach } = test
 describe('Teams', () => {
   const users = [
     {
-      address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
       name: 'Local 1',
+      nonce: 'tHBSeHXuveVFzEirM'
+    },
+    {
+      address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      name: 'Local 2',
       nonce: 'tHBSeHXuveVFzEirM'
     }
   ]
@@ -130,7 +136,41 @@ describe('Teams', () => {
   })
 
   describe('Add Team', () => {
-    test('should be able to add a new team', async ({ page }) => {
+    const addMember = async (page: Page, userIndex: number) => {
+      await page.route(`**/api/user/search*`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            users: Array(users[userIndex])
+          })
+        })
+      })
+      // Fill form
+      await page.fill('[data-test="team-name-input"]', 'Team 1')
+      await page.fill('[data-test="team-description-input"]', 'Description of Team 1')
+      await page.fill('[data-test="share-name-input"]', 'Testing')
+      await page.fill('[data-test="share-symbol-input"]', 'TST')
+      await page.click(`[data-test="member-${userIndex}-name-input"]`)
+      await page.keyboard.type(`Local ${userIndex + 1}`)
+      // Wait for user search to load
+      await page.waitForSelector(`[data-test="user-dropdown-${users[userIndex].address}"]`)
+      expect(
+        await page.isVisible(`[data-test="user-dropdown-${users[userIndex].address}"]`)
+      ).toBeTruthy()
+
+      // Select user
+      await page.click(`[data-test="user-dropdown-${users[userIndex].address}"]`)
+      expect(page.locator(`input[data-test="member-${userIndex}-name-input"]`)).toHaveValue(
+        users[userIndex].name
+      )
+      await expect(
+        page.locator(`input[data-test="member-${userIndex}-address-input"]`)
+      ).toHaveValue(users[userIndex].address)
+    }
+
+    test('should be able to add a new team', async ({ page, metamask }) => {
       // Mock api
       await page.route(`**/api/teams`, async (route) => {
         await route.fulfill({
@@ -140,45 +180,13 @@ describe('Teams', () => {
         })
       })
 
-      await page.route(`**/api/user/search?address=*`, async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            users: users
-          })
-        })
-      })
-
       await page.goto('http://localhost:5173/teams')
       await page.click('div[data-test="add-team"]')
 
-      // Fill form
-      await page.fill('[data-test="team-name-input"]', 'Team 1')
-      await page.fill('[data-test="team-description-input"]', 'Description of Team 1')
-      await page.click('[data-test="member-address-input"]')
-      await page.keyboard.type('0x7')
-      await page.keyboard.up('Enter')
-
-      // Wait for user search to load
-      await page.waitForSelector(`[data-test="user-dropdown-${users[0].address}"]`)
-      expect(await page.isVisible(`[data-test="user-dropdown-${users[0].address}"]`)).toBeTruthy()
-
-      // Select user
-      await page.click(`[data-test="user-dropdown-${users[0].address}"]`)
-      expect(page.locator(`input[data-test="member-name-input"]`)).toHaveValue(users[0].name)
-      await expect(page.locator(`input[data-test="member-address-input"]`)).toHaveValue(
-        users[0].address
-      )
-
-      // Add member
+      await addMember(page, 0)
+      // Add second member
       await page.click('[data-test="add-member"]')
-      await expect(page.locator('[data-test="member-name-input"]')).toHaveCount(2)
-
-      // Remove member
-      await page.click('[data-test="remove-member"]')
-      await expect(page.locator('[data-test="member-name-input"]')).toHaveCount(1)
+      await addMember(page, 1)
 
       // Submit form
       await page.route(`**/api/teams`, async (route) => {
@@ -190,11 +198,12 @@ describe('Teams', () => {
           })
         })
       })
-      await page.click('[data-test="submit"]')
+      await page.click('[data-test="create-team-button"]')
+      await metamask.confirmSignature()
 
       // Wait for success toast
+      await page.waitForTimeout(3000)
       await page.waitForSelector('[data-test="toast-container"]')
-      expect(await page.isVisible('[data-test="toast-container"]')).toBeTruthy()
       expect(await page.textContent('[data-test="toast-container"]')).toContain(
         'Team created successfully'
       )
@@ -240,24 +249,27 @@ describe('Teams', () => {
       await page.click('div[data-test="add-team"]')
 
       // Submit form
-      await page.click('[data-test="submit"]')
+      await page.click('[data-test="create-team-button"]')
 
       // Wait for error message to appear
-      await page.waitForSelector('[data-test="address-error"]')
-      expect(await page.textContent('[data-test="address-error"]')).toContain('Value is required')
+      // Team name error
+      await page.waitForSelector('div[data-test="name-error"]')
+      expect(await page.textContent('div[data-test="name-error"]')).toContain('Value is required')
 
-      await page.waitForSelector('[data-test="name-error"]')
-      expect(await page.textContent('[data-test="name-error"]')).toContain('Value is required')
+      // Share name error
+      await page.waitForSelector('div[data-test="share-name-error"]')
+      expect(await page.textContent('div[data-test="share-name-error"]')).toContain(
+        'Value is required'
+      )
 
-      // Invalid address error
-      await page.fill('[data-test="member-address-input"]', '0x7')
-      await page.click('[data-test="submit"]')
-
-      await page.waitForSelector('[data-test="address-error"]')
-      expect(await page.textContent('[data-test="address-error"]')).toContain('Invalid address')
+      // Share symbol error
+      await page.waitForSelector('div[data-test="share-symbol-error"]')
+      expect(await page.textContent('div[data-test="share-symbol-error"]')).toContain(
+        'Value is required'
+      )
     })
 
-    test('should show error toast if unable to add team', async ({ page }) => {
+    test('should show error toast if unable to add team', async ({ page, metamask }) => {
       await page.route(`**/api/teams`, async (route) => {
         await route.fulfill({
           status: 201,
@@ -266,44 +278,21 @@ describe('Teams', () => {
         })
       })
 
-      await page.route(`**/api/user/search?address=*`, async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            users: users
-          })
-        })
-      })
-
       await page.goto('http://localhost:5173/teams')
       await page.click('div[data-test="add-team"]')
 
       // Fill form
-      await page.fill('[data-test="team-name-input"]', 'Team 1')
-      await page.fill('[data-test="team-description-input"]', 'Description of Team 1')
-      await page.click('[data-test="member-address-input"]')
-      await page.keyboard.type('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')
-      await page.keyboard.up('Enter')
+      await addMember(page, 0)
 
       // Submit form
-      await page.route(`**/api/teams`, async (route) => {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: false
-          })
-        })
-      })
-      await page.click('[data-test="submit"]')
+      await page.click('[data-test="create-team-button"]')
+      await metamask.rejectTransaction()
 
       // Wait for error toast
       await page.waitForSelector('[data-test="toast-container"]')
       expect(await page.isVisible('[data-test="toast-container"]')).toBeTruthy()
       expect(await page.textContent('[data-test="toast-container"]')).toContain(
-        'Error: Internal Server Error'
+        'Failed to create officer contract'
       )
     })
   })

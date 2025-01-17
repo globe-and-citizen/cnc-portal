@@ -79,7 +79,7 @@ const columns = [
 
 <template>
   <div class="p-5 bg-base-200 flex gap-4 flex-col">
-    <h1>Welcome To the CNC portal</h1>
+    <h1 data-test="title">Welcome To the CNC portal</h1>
     <p>
       Our Website is still in construction. Look into our wonderfull tip feature and try to tip your
       team

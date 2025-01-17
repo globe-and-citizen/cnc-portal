@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: './test/e2e',
 
   // Run all tests in parallel.
-  fullyParallel: true,
+  fullyParallel: process.env.CI ? false : true,
 
   // Fail the build on CI if you accidentally left test.only in the source code.
   forbidOnly: !!process.env.CI,
@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: 'html',
 
   // Disable timeout
-  timeout: 0,
+  timeout: 300000,
 
   use: {
     baseURL: 'http://localhost:5173',
@@ -36,5 +36,11 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] }
     }
-  ]
+  ],
+
+  webServer: {
+    command: 'VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
+    port: 5173,
+    reuseExistingServer: true
+  }
 })

@@ -9,7 +9,6 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
   const metamask = new MetaMask(context, walletPage, PASSWORD, extensionId)
 
   await metamask.importWallet(SEED_PHRASE)
-  await metamask.switchNetwork('sepolia', true)
 
   const page = await context.newPage()
 
@@ -46,8 +45,12 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
 
   await page.waitForLoadState('networkidle')
 
+  await metamask.approveNewNetwork()
+
+  await metamask.approveSwitchNetwork()
+
   // Wait for connect metamask popup to appear
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(2000)
 
   // Connect to dapp
   await metamask.connectToDapp()
@@ -62,4 +65,7 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
     window.localStorage.setItem('nonce', '41vj7bz5Ow8oT5xaE')
     window.localStorage.setItem('authToken', '1234567890')
   })
+
+  await page.reload()
+  await page.waitForURL('http://localhost:5173')
 })
