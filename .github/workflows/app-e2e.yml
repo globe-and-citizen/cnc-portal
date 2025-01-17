@@ -38,9 +38,19 @@ jobs:
           sudo apt-get install --no-install-recommends -y \
           xvfb
 
+      - name: ⛓️ Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
       - name: 🌎 Run App for cache
         run: |
-          npm run dev &
+          VITE_APP_NETWORK_ALIAS=hardhat npm run dev &
+          echo $! > pid.txt
+        working-directory: ./app
+
+      - name: ⛓️ Run Local Node (Anvil)
+        run: anvil --load-state ./local-node-state.json &
         working-directory: ./app
 
       - name: 💾 Build Cache
@@ -49,5 +59,6 @@ jobs:
 
       - name: 💻 Run E2E
         run: |
+          kill $(cat pid.txt)
           xvfb-run npm run test
         working-directory: ./app

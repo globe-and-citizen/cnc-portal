@@ -8,8 +8,8 @@ const { expect, describe } = test
 
 describe('Dashboard', () => {
   test('should be able to access the dashboard', async ({ page }) => {
-    await page.locator('data-test=tip-button').click()
-    await page.waitForURL('http://localhost:5173/teams')
-    expect(page.url()).toContain('http://localhost:5173/teams')
+    expect(await page.locator('h1[data-test="title"]').textContent()).toBe(
+      'Welcome To the CNC portal'
+    )
   })
 })

@@ -118,8 +118,9 @@ In the `./app` folder, create a `.env` file with the following variable:
 2. Run `npm run dev` just for building cache
 3. Run `npm run test:build:cache` to build cache. This allows you to skip the wallet installation and setup steps, which can be quite time-consuming
 4. Kill terminal that run the Vue App
-5. Run `npm run test` to run the tests
-6. Or run `npm run test:headless` to run tests in headless mode
+5. Run `anvil --load-state ./local-node-state.json` to run local node for e2e testing.
+6. Run `npm run test` to run the tests.
+7. Or run `npm run test:headless` to run tests in headless mode
 
 ## Running the application
 
