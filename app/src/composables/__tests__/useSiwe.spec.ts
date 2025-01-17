@@ -32,8 +32,12 @@ const mockUseSignMessage = {
 
 const mockUseConnect = {
   connect: vi.fn(),
-  connectors: [],
+  connectors: [] as unknown,
   error: ref(null)
+}
+
+const mockUseSwitchChain ={
+  switchChain: vi.fn()
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -42,7 +46,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     ...actual,
     useAccount: vi.fn(() => mockUseAccount),
     useSignMessage: vi.fn(() => mockUseSignMessage),
-    useConnect: vi.fn(() => mockUseConnect)
+    useConnect: vi.fn(() => mockUseConnect),
+    useSwitchChain: vi.fn(() => mockUseSwitchChain)
   }
 })
 
@@ -137,6 +142,7 @@ describe('useSiwe', () => {
   const logInfoSpy = vi.spyOn(utils.log, 'info')
   beforeEach(() => {
     setActivePinia(createPinia())
+    mockUseConnect.connectors = [{ name: 'MetaMask', getChainId: () =>  31137}]
   })
   afterEach(() => {
     vi.clearAllMocks()
