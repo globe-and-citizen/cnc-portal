@@ -47,7 +47,7 @@ test.describe('Sign in', () => {
     // Switch network
     await metamask.approveNewNetwork()
     await metamask.approveSwitchNetwork()
-    
+
     // Confirm signature
     await page.waitForTimeout(3000)
     await metamask.confirmSignature()
