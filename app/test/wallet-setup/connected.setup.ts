@@ -43,19 +43,15 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
   // Click sign-in button
   await page.getByTestId('sign-in').click()
 
-  await page.waitForLoadState('networkidle')
-
-  await metamask.approveNewNetwork()
-
-  await metamask.approveSwitchNetwork()
-
-  // Wait for connect metamask popup to appear
-  await page.waitForTimeout(2000)
-
   // Connect to dapp
   await metamask.connectToDapp()
 
+  // Add and switch to new network
+  await metamask.approveNewNetwork()
+  await metamask.approveSwitchNetwork()
+
   // Confirm signature
+  await page.waitForTimeout(3000)
   await metamask.confirmSignature()
 
   await page.evaluate(() => {
