@@ -57,7 +57,7 @@
 import { required, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { ref } from 'vue'
-import { isAddress } from 'ethers'
+import { isAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 const newOwner = ref('')
