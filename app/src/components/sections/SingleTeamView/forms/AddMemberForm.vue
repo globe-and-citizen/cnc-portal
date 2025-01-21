@@ -107,7 +107,7 @@ import { useVuelidate } from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import type { User } from '@/types'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/solid'
-import { isAddress } from 'ethers'
+import { isAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 const emits = defineEmits(['updateForm', 'addMembers', 'searchUsers'])
