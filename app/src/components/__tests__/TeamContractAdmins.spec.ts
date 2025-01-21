@@ -11,7 +11,7 @@ const removeAdminMock = vi.fn()
 const getAdminListMock = vi.fn()
 const getEventsGroupedByCampaignCodeMock = vi.fn()
 vi.mock('@/stores/useToastStore')
-// Mock isAddress from ethers.js
+// Mock isAddress from viem
 vi.mock('viem', () => ({
   isAddress: vi.fn().mockReturnValue(true) // Always returns true in tests
 }))
