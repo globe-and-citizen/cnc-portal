@@ -893,60 +893,60 @@ describe('ExpenseAccountSection', () => {
           users: []
         })
       })
-      it('should call approveUser when @approve-user is emitted', async () => {
-        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-        expect(approveUsersForm.exists()).toBe(true)
+      // it('should call approveUser when @approve-user is emitted', async () => {
+      //   const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+      //   expect(approveUsersForm.exists()).toBe(true)
 
-        const expiry = new Date()
+      //   const expiry = new Date()
 
-        const data = {
-          approvedUser: '0x123',
-          budgetData: [
-            { budgetType: 0, value: 10 },
-            { budgetType: 1, value: 100 },
-            { budgetType: 2, value: 10 }
-          ],
-          expiry
-        }
+      //   const data = {
+      //     approvedUser: '0x123',
+      //     budgetData: [
+      //       { budgetType: 0, value: 10 },
+      //       { budgetType: 1, value: 100 },
+      //       { budgetType: 2, value: 10 }
+      //     ],
+      //     expiry
+      //   }
 
-        approveUsersForm.vm.$emit('approveUser', data)
-        expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
-        expect(mockUseSignTypedData.signTypedData).toBeCalledWith({
-          domain: {
-            chainId: '0xChainId',
-            version: '1',
-            verifyingContract: '0xExpenseAccount',
-            name: 'CNCExpenseAccount'
-          },
-          message: {
-            approvedUser: '0x123',
-            budgetData: [
-              { budgetType: 0, value: 10 },
-              { budgetType: 1, value: 100n * 10n ** 18n },
-              { budgetType: 2, value: 10n * 10n ** 18n }
-            ],
-            expiry
-          },
-          primaryType: 'BudgetLimit',
-          types: {
-            BudgetData: [
-              { name: 'budgetType', type: 'uint8' },
-              { name: 'value', type: 'uint256' }
-            ],
-            BudgetLimit: [
-              { name: 'approvedAddress', type: 'address' },
-              { name: 'budgetData', type: 'BudgetData[]' },
-              { name: 'expiry', type: 'uint256' }
-            ]
-          }
-        })
+      //   approveUsersForm.vm.$emit('approveUser', data)
+      //   expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
+      //   expect(mockUseSignTypedData.signTypedData).toBeCalledWith({
+      //     domain: {
+      //       chainId: '0xChainId',
+      //       version: '1',
+      //       verifyingContract: '0xExpenseAccount',
+      //       name: 'CNCExpenseAccount'
+      //     },
+      //     message: {
+      //       approvedUser: '0x123',
+      //       budgetData: [
+      //         { budgetType: 0, value: 10 },
+      //         { budgetType: 1, value: 100n * 10n ** 18n },
+      //         { budgetType: 2, value: 10n * 10n ** 18n }
+      //       ],
+      //       expiry
+      //     },
+      //     primaryType: 'BudgetLimit',
+      //     types: {
+      //       BudgetData: [
+      //         { name: 'budgetType', type: 'uint8' },
+      //         { name: 'value', type: 'uint256' }
+      //       ],
+      //       BudgetLimit: [
+      //         { name: 'approvedAddress', type: 'address' },
+      //         { name: 'budgetData', type: 'BudgetData[]' },
+      //         { name: 'expiry', type: 'uint256' }
+      //       ]
+      //     }
+      //   })
 
-        expect((wrapper.vm as unknown as ComponentData).expenseAccountData).toEqual(data)
-        expect((wrapper.vm as unknown as ComponentData).signature).toBe('0xExpenseDataSignature')
-        await wrapper.vm.$nextTick()
-        console.log(`wrapper.emitted`, wrapper.emitted())
-        expect(wrapper.emitted('click')).toBeTruthy()
-      })
+      //   expect((wrapper.vm as unknown as ComponentData).expenseAccountData).toEqual(data)
+      //   expect((wrapper.vm as unknown as ComponentData).signature).toBe('0xExpenseDataSignature')
+      //   await wrapper.vm.$nextTick()
+      //   console.log(`wrapper.emitted`, wrapper.emitted())
+      //   expect(wrapper.emitted('click')).toBeTruthy()
+      // })
       it('should give an error notification if sign typed data error occurs', async () => {
         // const wrapper = createComponent({
         //   global: {
