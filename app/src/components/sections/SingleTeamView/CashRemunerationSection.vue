@@ -99,17 +99,15 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
-import { EthersJsAdapter } from '@/adapters/web3LibraryAdapter'
 import { log, parseError } from '@/utils'
 import { parseEther, type Address } from 'viem'
-import { useBalance } from '@wagmi/vue'
+import { useBalance, useChainId, useSignTypedData } from '@wagmi/vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
 import CashRemunerationStats from './CashRemunerationStats.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 const route = useRoute()
-const web3Library = new EthersJsAdapter()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{ team: Partial<Team> }>()
@@ -227,18 +225,32 @@ watch(addApprovalError, (newVal) => {
   }
 })
 
+const chainId = useChainId()
+const claimData = ref<ClaimResponse | null>(null)
+const { signTypedData, data: signature } = useSignTypedData()
+
+watch(signature, async (newVal) => {
+  if (newVal && claimData.value) {
+    approvalData.value = {
+      id: claimData.value.id,
+      signature: newVal
+    }
+
+    await addApprovalAPI()
+    await getWageClaimsAPI()
+  }
+})
+
 const approveClaim = async (claim: ClaimResponse) => {
   loadingApprove.value = true
-  const provider = await web3Library.getProvider()
-  const signer = await web3Library.getSigner()
-  const chainId = (await provider.getNetwork()).chainId
+  claimData.value = claim
   const verifyingContract = team.value.cashRemunerationEip712Address
 
   const domain = {
     name: 'CashRemuneration',
     version: '1',
-    chainId,
-    verifyingContract
+    chainId: chainId.value,
+    verifyingContract: verifyingContract as Address
   }
 
   const types = {
@@ -253,24 +265,16 @@ const approveClaim = async (claim: ClaimResponse) => {
   const data: WageClaim = {
     hourlyRate: parseEther(claim.hourlyRate),
     hoursWorked: claim.hoursWorked,
-    employeeAddress: claim.address,
+    employeeAddress: claim.address as Address,
     date: Math.floor(new Date(claim.createdAt).getTime() / 1000)
   }
 
-  try {
-    const signature = await signer.signTypedData(domain, types, data)
-    approvalData.value = {
-      id: claim.id,
-      signature
-    }
-    await addApprovalAPI()
-    await getWageClaimsAPI()
-  } catch (err) {
-    log.error(parseError(err))
-    addErrorToast(parseError(err))
-  } finally {
-    loadingApprove.value = false
-  }
+  signTypedData({
+    types,
+    primaryType: 'WageClaim',
+    message: data as unknown as Record<string, unknown>,
+    domain
+  })
 }
 
 onMounted(async () => {

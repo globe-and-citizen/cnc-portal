@@ -22,12 +22,19 @@ const mockUseBalance = {
   refetch: vi.fn()
 }
 
+const mockUseSignTypedData = {
+  data: ref<`0x${string}` | null>(null),
+  signTypedData: vi.fn(() => (mockUseSignTypedData.data.value = `0xSignature`))
+}
+
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useBalance: vi.fn(() => mockUseBalance)
+    useBalance: vi.fn(() => mockUseBalance),
+    useChainId: vi.fn(() => 123),
+    useSignTypedData: vi.fn(() => mockUseSignTypedData)
   }
 })
 
@@ -36,6 +43,15 @@ interface ComponentData {
   hoursWorked: { hoursWorked: string | undefined }
   currentUserAddress: string
   team: Partial<Team>
+  signature: `0x${string}` | null
+  claimData: {
+    id: number
+    signature: `0x${string}`
+  }
+  approvalData: {
+    id: number
+    signature: `0x${string}`
+  }
 }
 
 describe('CashRemunerationSection.vue', () => {
@@ -150,7 +166,28 @@ describe('CashRemunerationSection.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="action-th"]').exists()).toBeTruthy()
-      expect(wrapper.find('[data-test="action-td"]').exists()).toBeTruthy()
+      const actionTd = wrapper.find('[data-test="action-td"]')
+      expect(actionTd.exists()).toBeTruthy()
+      const approveBtn = actionTd.findComponent(ButtonUI)
+      expect(approveBtn.exists()).toBe(true)
+      approveBtn.trigger('click')
+
+      await wrapper.vm.$nextTick()
+
+      expect(mockUseSignTypedData.signTypedData).toBeCalled()
+      expect((wrapper.vm as unknown as ComponentData).signature).toBe('0xSignature')
+      expect((wrapper.vm as unknown as ComponentData).claimData).toEqual({
+        address: '0xUserToApprove',
+        createdAt: '2024-02-02T12:00:00Z',
+        hourlyRate: '17.5',
+        hoursWorked: 20,
+        id: 1,
+        name: 'Local 1'
+      })
+      expect((wrapper.vm as unknown as ComponentData).approvalData).toEqual({
+        id: 1,
+        signature: '0xSignature'
+      })
     })
     it('should hide action column if not owner', async () => {
       const wrapper = createComponent()

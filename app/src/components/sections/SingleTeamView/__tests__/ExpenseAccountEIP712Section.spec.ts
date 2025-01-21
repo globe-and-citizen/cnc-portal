@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
@@ -11,10 +11,12 @@ import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
+import * as utils from '@/utils'
 
 interface ComponentData {
   expiry: string
   _expenseAccountData: unknown
+  expenseAccountData: unknown
   isFetchingExpenseAccountData: boolean
   transferModal: boolean
   setLimitModal: boolean
@@ -34,24 +36,22 @@ interface ComponentData {
   deactivateIndex: number | null
   isLoadingDeactivateApproval: boolean
   isLoadingActivateApproval: boolean
+  signature: undefined | `0x${string}`
+  signTypedDataError: unknown
 }
 
-vi.mock('@/adapters/web3LibraryAdapter', async (importOriginal) => {
+const mocks = vi.hoisted(() => ({
+  mockUseToastStore: {
+    addErrorToast: vi.fn()
+  }
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
-
-  // Step 2: Mock the class itself and its instance methods
-  const EthersJsAdapter = vi.fn()
-  EthersJsAdapter.prototype.parseEther = vi.fn((amount: string) => `${amount}*10^18`)
-  EthersJsAdapter.prototype.getProvider = vi.fn(() => ({
-    getNetwork: vi.fn(() => Promise.resolve({ chainId: 1 })) // Inline function for getNetwork
-  }))
-  EthersJsAdapter.prototype.getSigner = vi.fn(() => ({})) // Mock getSigner if needed
-
-  // Step 3: Mock the static method getInstance
-  // @ts-expect-error: "Mocking static method"
-  EthersJsAdapter['getInstance'] = vi.fn()
-
-  return { ...actual, EthersJsAdapter }
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
+  }
 })
 
 const mockCopy = vi.fn()
@@ -87,6 +87,12 @@ const mockUseWaitForTransactionReceipt = {
   isSuccess: ref(false)
 }
 
+const mockUseSignTypedData = {
+  error: ref<Error | null>(null),
+  data: ref<string | undefined>('0xExpenseDataSignature'),
+  signTypedData: vi.fn()
+}
+
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -98,7 +104,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
     useBalance: vi.fn(() => mockUseBalance),
-    useChainId: vi.fn(() => '0xChainId')
+    useChainId: vi.fn(() => ref('0xChainId')),
+    useSignTypedData: vi.fn(() => mockUseSignTypedData)
   }
 })
 
@@ -117,78 +124,6 @@ vi.mock('@vueuse/core', async (importOriginal) => {
   return {
     ...actual,
     useClipboard: vi.fn(() => mockClipboard)
-  }
-})
-
-const mockDeployExpenseAccount = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn()
-}
-
-const mockExpenseAccountGetBalance = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn()
-}
-
-const mockExpenseAccountGetMaxLimit = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn()
-}
-
-const mockExpenseAccountIsApprovedAddress = {
-  data: ref<boolean>(false),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref(null),
-  execute: vi.fn((expenseAccountAddress: string, memberAddress: string) => {
-    if (expenseAccountAddress === '0xExpenseAccount' && memberAddress === '0xApprovedAddress') {
-      mockExpenseAccountIsApprovedAddress.data.value = true
-    } else {
-      mockExpenseAccountIsApprovedAddress.data.value = false
-    }
-  })
-}
-
-const mockExpenseAccountGetOwner = {
-  data: ref<string | null>(null),
-  loading: ref(false),
-  error: ref(null),
-  isSuccess: ref(false),
-  execute: vi.fn(() => {
-    mockExpenseAccountGetOwner.data.value = `0xContractOwner`
-  })
-}
-
-const mockExpenseAccountSetMaxLimit = {
-  isLoading: ref(false),
-  error: ref<unknown>(null),
-  isSuccess: ref(false),
-  execute: vi.fn((expenseAccountAddress: string, amount: string) => {
-    if (expenseAccountAddress && !isNaN(Number(amount)))
-      mockExpenseAccountSetMaxLimit.isSuccess.value = true
-    else mockExpenseAccountSetMaxLimit.error.value = 'An error has occured'
-  })
-}
-
-vi.mock('@/composables/useExpenseAccount', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useExpenseAccountGetMaxLimit: vi.fn(() => mockExpenseAccountGetMaxLimit),
-    useExpenseAccountGetBalance: vi.fn(() => mockExpenseAccountGetBalance),
-    useDeployExpenseAccountContract: vi.fn(() => mockDeployExpenseAccount),
-    useExpenseAccountIsApprovedAddress: vi.fn(() => mockExpenseAccountIsApprovedAddress),
-    useExpenseAccountGetOwner: vi.fn(() => mockExpenseAccountGetOwner),
-    useExpenseAccountSetLimit: vi.fn(() => mockExpenseAccountSetMaxLimit)
   }
 })
 
@@ -346,24 +281,6 @@ describe('ExpenseAccountSection', () => {
   }
 
   describe('Render', () => {
-    // describe('Sub-Context', () => {
-    //   const wrapper = createComponent()
-    //   it('should retrieve, format and display expiry date', async () => {
-    //     const date = new Date(DATE)
-    //     const expiry = date.toLocaleString('en-US')
-
-    //     const approvalExpiry = wrapper.find('[data-test="approval-expiry"]')
-    //     expect(approvalExpiry.exists()).toBe(true)
-
-    //     expect(approvalExpiry.text()).toBe(expiry)
-    //   })
-    //   it('should show loading animation if fetching expense account data', async () => {
-    //     ;(wrapper.vm as unknown as ComponentData).isFetchingExpenseAccountData = true
-    //     await wrapper.vm.$nextTick()
-    //     expect(wrapper.find('[data-test="max-loading"]').exists()).toBeTruthy()
-    //   })
-    // })
-
     it("should show the current user's approval data in the approval table", async () => {
       const wrapper = createComponent()
 
@@ -466,69 +383,7 @@ describe('ExpenseAccountSection', () => {
       expect(transferButton.text()).toBe('Spend')
       expect(transferButton.props().disabled).toBe(true)
     })
-    // it('should show aprroval list table cells with correct data', async () => {
-    //   const wrapper = createComponent()
-    //   const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
-    //   wrapperVm.manyExpenseAccountData = mockExpenseData
-    //   wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
-
-    //   vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
-    //     return `${args as `0x${string}`}Hash`
-    //   })
-
-    //   await wrapper.vm.$nextTick()
-    //   await wrapper.vm.$nextTick()
-    //   await wrapper.vm.$nextTick()
-
-    //   // Locate the table using the data-test attribute
-    //   const table = wrapper.find('[data-test="approvals-list-table"]')
-    //   expect(table.exists()).toBe(true)
-
-    //   // Check table headers within the approvals-list-table
-    //   const headers = table // wrapper
-    //     //.find('[data-test="approvals-list-table"]')
-    //     .findAll('thead th')
-    //   const expectedHeaders = [
-    //     'User',
-    //     'Expiry Date',
-    //     'Max Amount Per Tx',
-    //     'Total Transactions',
-    //     'Total Transfers',
-    //     'Action'
-    //   ]
-    //   headers.forEach((header, i) => {
-    //     expect(header.text()).toBe(expectedHeaders[i])
-    //   })
-
-    //   // Check table row data within the approvals-list-table
-    //   const rows = table.findAll('tbody tr')
-    //   expect(rows).toHaveLength(mockExpenseData.length)
-
-    //   const firstRowCells = rows[0].findAll('td')
-    //   expect(firstRowCells[0].text()).toBe(`John Doe0x0123...56789`)
-    //   expect(firstRowCells[1].text()).toBe(
-    //     new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
-    //   )
-    //   expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
-    //   expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
-    //   expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
-    //   const firstDeactivateButton = firstRowCells[5].findComponent(ButtonUI)
-    //   expect(firstDeactivateButton.exists()).toBe(true)
-    //   expect(firstDeactivateButton.text()).toBe('Deactivate')
-    //   expect(firstDeactivateButton.props().disabled).toBeTruthy()
-
-    //   const secondRowCells = rows[1].findAll('td')
-    //   expect(secondRowCells[0].text()).toBe(`User0xabcd...f1234`)
-    //   expect(secondRowCells[1].text()).toBe(
-    //     new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
-    //   )
-    //   expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
-    //   expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
-    //   expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
-    //   expect(secondRowCells[5].find('button').exists()).toBe(true)
-    //   expect(secondRowCells[5].find('button').text()).toBe('Deactivate')
-    // })
     it('should show activated list table', async () => {
       const wrapper = createComponent()
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
@@ -706,50 +561,6 @@ describe('ExpenseAccountSection', () => {
       expect(firstDeactivateButton.text()).toBe('Disable Approval')
       expect(firstDeactivateButton.props().disabled).toBeFalsy()
     })
-    // it('should disable deactivate button if approval inactive', async () => {
-    //   const wrapper = createComponent({
-    //     global: {
-    //       plugins: [
-    //         createTestingPinia({
-    //           createSpy: vi.fn,
-    //           initialState: {
-    //             user: { address: '0xContractOwner' }
-    //           }
-    //         })
-    //       ]
-    //     }
-    //   })
-
-    //   const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-
-    //   wrapperVm.manyExpenseAccountData = mockExpenseData
-    //   wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
-
-    //   vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
-    //     return `${args as `0x${string}`}Hash`
-    //   })
-
-    //   await wrapper.vm.$nextTick()
-    //   await wrapper.vm.$nextTick()
-    //   await wrapper.vm.$nextTick()
-
-    //   console.log(`manyExpenseAccountDataActive: `, wrapper.vm.manyExpenseAccountDataActive)
-    //   console.log(`manyExpenseAccountDataInctive: `, wrapper.vm.manyExpenseAccountDataInactive)
-
-    //   // Locate the table using the data-test attribute
-    //   const table = wrapper.find('[data-test="approvals-list-table"]')
-    //   expect(table.exists()).toBe(true)
-
-    //   // Check table row data within the approvals-list-table
-    //   const rows = table.findAll('tbody tr')
-    //   expect(rows).toHaveLength(mockExpenseData.length)
-
-    //   const firstRowCells = rows[0].findAll('td')
-    //   const firstDeactivateButton = firstRowCells[5].findComponent(ButtonUI)
-    //   expect(firstDeactivateButton.exists()).toBe(true)
-    //   expect(firstDeactivateButton.text()).toBe('Deactivate')
-    //   expect(firstDeactivateButton.props().disabled).toBeTruthy()
-    // })
     it('show show loading spinner when deactivating approval', async () => {
       const wrapper = createComponent()
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
@@ -865,22 +676,6 @@ describe('ExpenseAccountSection', () => {
         .findComponent({ name: 'AddressToolTip' })
       expect(expenseAccountAddressTooltip.exists()).toBeTruthy()
       expect(expenseAccountAddressTooltip.props().address).toBe(team.expenseAccountEip712Address)
-    })
-
-    it('should hide create button if contract is being deployed', async () => {
-      const team = { expenseAccountAddress: null }
-      const wrapper = createComponent({
-        props: {
-          team: {
-            ...team
-          }
-        }
-      })
-
-      mockDeployExpenseAccount.isLoading.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="create-expense-account"]').exists()).toBeFalsy()
     })
     it('should show copy to clipboard icon with tooltip if expense account address exists', () => {
       const wrapper = createComponent()
@@ -1041,18 +836,18 @@ describe('ExpenseAccountSection', () => {
     //describe('Methods', )
 
     describe('ApproveUsersForm', async () => {
-      beforeAll(() => {
-        // @ts-expect-error: Mocking window object
-        ;(global as object).window.ethereum = {
-          request: vi.fn()
-          // Mock other methods as needed
-        }
-      })
+      // beforeAll(() => {
+      //   // @ts-expect-error: Mocking window object
+      //   ;(global as object).window.ethereum = {
+      //     request: vi.fn()
+      //     // Mock other methods as needed
+      //   }
+      // })
 
-      afterAll(() => {
-        // @ts-expect-error: Mocking window object
-        delete (global as object).window.ethereum
-      })
+      // afterAll(() => {
+      //   // @ts-expect-error: Mocking window object
+      //   delete (global as object).window.ethereum
+      // })
       const wrapper = createComponent({
         global: {
           plugins: [
@@ -1065,6 +860,23 @@ describe('ExpenseAccountSection', () => {
           ]
         }
       })
+      // beforeEach(() =>
+      //   wrapper = createComponent({
+      //     global: {
+      //       plugins: [
+      //         createTestingPinia({
+      //           createSpy: vi.fn,
+      //           initialState: {
+      //             user: { address: '0xContractOwner' }
+      //           }
+      //         })
+      //       ]
+      //     }
+      //   })
+      // )
+      // afterEach(() =>
+      //   wrapper.unmount()
+      // )
 
       it('should pass corrent props to ApproveUsersForm', async () => {
         const approveUsersButton = wrapper.find('[data-test="approve-users-button"]')
@@ -1085,15 +897,95 @@ describe('ExpenseAccountSection', () => {
         const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
         expect(approveUsersForm.exists()).toBe(true)
 
+        const expiry = new Date()
+
         const data = {
           approvedUser: '0x123',
-          budgetType: 1,
-          value: 100,
-          expiry: new Date()
+          budgetData: [
+            { budgetType: 0, value: 10 },
+            { budgetType: 1, value: 100 },
+            { budgetType: 2, value: 10 }
+          ],
+          expiry
         }
 
         approveUsersForm.vm.$emit('approveUser', data)
         expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
+        expect(mockUseSignTypedData.signTypedData).toBeCalledWith({
+          domain: {
+            chainId: '0xChainId',
+            version: '1',
+            verifyingContract: '0xExpenseAccount',
+            name: 'CNCExpenseAccount'
+          },
+          message: {
+            approvedUser: '0x123',
+            budgetData: [
+              { budgetType: 0, value: 10 },
+              { budgetType: 1, value: 100n * 10n ** 18n },
+              { budgetType: 2, value: 10n * 10n ** 18n }
+            ],
+            expiry
+          },
+          primaryType: 'BudgetLimit',
+          types: {
+            BudgetData: [
+              { name: 'budgetType', type: 'uint8' },
+              { name: 'value', type: 'uint256' }
+            ],
+            BudgetLimit: [
+              { name: 'approvedAddress', type: 'address' },
+              { name: 'budgetData', type: 'BudgetData[]' },
+              { name: 'expiry', type: 'uint256' }
+            ]
+          }
+        })
+
+        expect((wrapper.vm as unknown as ComponentData).expenseAccountData).toEqual(data)
+        expect((wrapper.vm as unknown as ComponentData).signature).toBe('0xExpenseDataSignature')
+        await wrapper.vm.$nextTick()
+        console.log(`wrapper.emitted`, wrapper.emitted())
+        expect(wrapper.emitted('click')).toBeTruthy()
+      })
+      it('should give an error notification if sign typed data error occurs', async () => {
+        // const wrapper = createComponent({
+        //   global: {
+        //     plugins: [
+        //       createTestingPinia({
+        //         createSpy: vi.fn,
+        //         initialState: {
+        //           user: { address: '0xContractOwner' }
+        //         }
+        //       })
+        //     ]
+        //   }
+        // })
+        const logErrorSpy = vi.spyOn(utils.log, 'error')
+        mockUseSignTypedData.signTypedData.mockImplementation(
+          () => (mockUseSignTypedData.error.value = new Error('Error signing typed data'))
+        )
+        const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
+        expect(approveUsersForm.exists()).toBe(true)
+
+        const expiry = new Date()
+
+        const data = {
+          approvedUser: '0x123',
+          budgetData: [
+            { budgetType: 0, value: 10 },
+            { budgetType: 1, value: 100 },
+            { budgetType: 2, value: 10 }
+          ],
+          expiry
+        }
+
+        approveUsersForm.vm.$emit('approveUser', data)
+        expect(approveUsersForm.emitted('approveUser')).toBeTruthy()
+        expect((wrapper.vm as unknown as ComponentData).signTypedDataError).toEqual(
+          new Error('Error signing typed data')
+        )
+        await wrapper.vm.$nextTick()
+        expect(logErrorSpy).toBeCalledWith('signTypedDataError.value', 'Error signing typed data')
       })
     })
   })

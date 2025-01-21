@@ -40,17 +40,16 @@ test.describe('Sign in', () => {
     await page.getByTestId('sign-in').click()
 
     await page.waitForLoadState('networkidle')
-    // Switch network
-    await metamask.approveNewNetwork()
-    await metamask.approveSwitchNetwork()
-
-    // Wait for connect metamask popup to appear
-    await page.waitForTimeout(3000)
 
     // Connect to dapp
     await metamask.connectToDapp()
 
+    // Switch network
+    await metamask.approveNewNetwork()
+    await metamask.approveSwitchNetwork()
+
     // Confirm signature
+    await page.waitForTimeout(3000)
     await metamask.confirmSignature()
 
     // Wait for redirection
