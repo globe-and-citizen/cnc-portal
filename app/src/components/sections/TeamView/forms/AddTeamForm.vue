@@ -92,6 +92,7 @@
           @focus="() => setActiveInput(index)"
           @keyup.stop="searchUsers({ name: input.name, address: input.address })"
           :placeholder="'Member Name ' + (index + 1)"
+          :data-test="`member-${index}-name-input`"
         />
         |
         <input
@@ -99,6 +100,7 @@
           class="grow"
           v-model="input.address"
           @keyup.stop="searchUsers({ name: input.name, address: input.address })"
+          :data-test="`member-${index}-address-input`"
           :placeholder="`Member ${index + 1} Address`"
         />
       </label>

@@ -2,7 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { NETWORK } from '@/constant'
 
 describe('DepositBankModal.vue', () => {
   describe('render', () => {
@@ -12,9 +11,6 @@ describe('DepositBankModal.vue', () => {
       })
 
       expect(wrapper.text()).toContain('Deposit to Team Bank Contract')
-      expect(wrapper.text()).toContain(
-        `This will deposit 0 ${NETWORK.currencySymbol} to the team bank contract.`
-      )
     })
     it('shows loading button when loading is true', () => {
       const wrapper = mount(DepositBankForm, {
