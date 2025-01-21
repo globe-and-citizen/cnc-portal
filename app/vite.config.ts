@@ -4,7 +4,7 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import inject from '@rollup/plugin-inject'
-import { isAddress } from 'ethers'
+import { isAddress } from 'viem'
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL']
 
