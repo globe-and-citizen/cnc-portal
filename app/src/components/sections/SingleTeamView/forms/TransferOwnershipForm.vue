@@ -75,7 +75,7 @@ const props = defineProps({
   }
 })
 
-const validAddress = helpers.withMessage('Invalid address', (address) => isAddress(address))
+const validAddress = helpers.withMessage('Invalid address', (address) => isAddress(address as string))
 const rules = {
   newOwner: {
     required,
