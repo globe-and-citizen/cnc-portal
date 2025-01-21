@@ -115,7 +115,7 @@ In the `./app` folder, create a `.env` file with the following variable:
 #### App end-to-end testing
 
 1. Go to `/app` folder by doing `cd app`
-2. Run `npm run dev` just for building cache
+2. Run `VITE_APP_NETWORK_ALIAS=hardhat npm run dev` just for building cache
 3. Run `npm run test:build:cache` to build cache. This allows you to skip the wallet installation and setup steps, which can be quite time-consuming
 4. Kill terminal that run the Vue App
 5. Run `anvil --load-state ./local-node-state.json` to run local node for e2e testing.
