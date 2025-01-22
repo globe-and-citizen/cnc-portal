@@ -8,6 +8,7 @@ import { useStorage } from '@vueuse/core'
 import { useAccount, useSignMessage, useConnect, useSwitchChain, useChainId } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
 import { SiweMessage } from 'siwe'
+import { useWalletChecks } from './useWalletChecks'
 
 function createSiweMessage(params: Partial<SiweMessage>) {
   // Create SiweMessage instance with provided data
@@ -25,6 +26,7 @@ export function useSiwe() {
   const { address, isConnected } = useAccount()
   const { switchChain } = useSwitchChain()
   const chainId = useChainId()
+  const { performChecks } = useWalletChecks()
 
   watch(connectError, (newVal) => {
     if (newVal) {
@@ -36,6 +38,7 @@ export function useSiwe() {
 
   watch(address, async (newVal) => {
     if (newVal) {
+      console.log(`Executing Siwe from address...`)
       await executeSiwe()
     }
   })
@@ -118,6 +121,7 @@ export function useSiwe() {
 
   async function executeSiwe() {
     apiEndpoint.value = `user/nonce/${address.value}`
+    console.log(`address: `, address.value)
     await executeFetchUserNonce()
     if (!nonce.value) return
 
@@ -136,32 +140,39 @@ export function useSiwe() {
 
   async function siwe() {
     // Check if we have metamask installation befor continue the process
-    const metaMaskConnector = connectors.find(
-      (connector) => connector.name.split(' ')[0] === 'MetaMask'
-    )
+    // const metaMaskConnector = connectors.find(
+    //   (connector) => connector.name.split(' ')[0] === 'MetaMask'
+    // )
 
-    if (!metaMaskConnector) {
-      addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
-      return
-    }
+    // if (!metaMaskConnector) {
+    //   addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
+    //   return
+    // }
 
     try {
       isProcessing.value = true
 
-      const networkChainId = parseInt(NETWORK.chainId)
+      // const networkChainId = parseInt(NETWORK.chainId)
 
-      if (!isConnected.value) {
-        connect({ connector: metaMaskConnector, chainId: networkChainId })
+      // if (!isConnected.value) {
+      //   connect({ connector: metaMaskConnector, chainId: networkChainId })
+      // }
+
+      // if ((await metaMaskConnector.getChainId()) !== networkChainId) {
+      //   switchChain({
+      //     chainId: networkChainId,
+      //     connector: metaMaskConnector
+      //   })
+      // }
+      if (!(await performChecks())) {
+        isProcessing.value = false
+        return
       }
 
-      if ((await metaMaskConnector.getChainId()) !== networkChainId) {
-        switchChain({
-          chainId: networkChainId,
-          connector: metaMaskConnector
-        })
+      if (address.value) {
+        console.log(`executing Siwe from siwe...`)
+        await executeSiwe()
       }
-
-      await executeSiwe()
     } catch (_error) {
       console.log(parseError(_error))
       log.error(parseError(_error))
