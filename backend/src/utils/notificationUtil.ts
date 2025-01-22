@@ -1,5 +1,5 @@
 import { prisma } from "./";
-import { isAddress } from 'ethers'
+import { isAddress } from 'viem'
  
 export const addNotification = async (
     userIds: string[], 

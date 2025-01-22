@@ -185,7 +185,7 @@
 import { ref, watch } from 'vue'
 import useVuelidate from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
-import { isAddress } from 'ethers'
+import { isAddress } from 'viem'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { TeamInput, User } from '@/types'
