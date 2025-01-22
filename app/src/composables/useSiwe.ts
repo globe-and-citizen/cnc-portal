@@ -1,4 +1,3 @@
-import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import router from '@/router'
 import { ref, watch } from 'vue'
 import { useUserDataStore, useToastStore } from '@/stores'
@@ -6,17 +5,15 @@ import type { User } from '@/types'
 import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useStorage } from '@vueuse/core'
-import { useAccount, useSignMessage, useConnect, useSwitchChain } from '@wagmi/vue'
+import { useAccount, useSignMessage, useConnect, useSwitchChain, useChainId } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
+import { SiweMessage } from 'siwe'
 
-function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
-  return new SLSiweMessageCreator({
-    address,
-    statement,
-    nonce,
-    version: '1',
-    chainId: 1
-  })
+function createSiweMessage(params: Partial<SiweMessage>) {
+  // Create SiweMessage instance with provided data
+  const siweMessage = new SiweMessage(params)
+  // Call prepareMessage method to properly format the message
+  return siweMessage.prepareMessage()
 }
 
 export function useSiwe() {
@@ -27,6 +24,7 @@ export function useSiwe() {
   const { connectors, connect, error: connectError } = useConnect()
   const { address, isConnected } = useAccount()
   const { switchChain } = useSwitchChain()
+  const chainId = useChainId()
 
   watch(connectError, (newVal) => {
     if (newVal) {
@@ -38,7 +36,6 @@ export function useSiwe() {
 
   watch(address, async (newVal) => {
     if (newVal) {
-      console.log(`connected address: `, newVal)
       await executeSiwe()
     }
   })
@@ -124,14 +121,15 @@ export function useSiwe() {
     await executeFetchUserNonce()
     if (!nonce.value) return
 
-    const statement = 'Sign in with Ethereum to the app.'
-    const siweMessageCreator = createSiweMessageCreator(
-      address.value as string,
-      statement,
-      nonce.value.nonce
-    )
-
-    authData.value.message = await siweMessageCreator.create()
+    authData.value.message = createSiweMessage({
+      address: address.value as string,
+      statement: 'Sign in with Ethereum to the app.',
+      nonce: nonce.value.nonce,
+      chainId: chainId.value,
+      uri: window.location.origin,
+      domain: window.location.host,
+      version: '1'
+    })
 
     signMessage({ message: authData.value.message })
   }
@@ -165,6 +163,7 @@ export function useSiwe() {
 
       await executeSiwe()
     } catch (_error) {
+      console.log(parseError(_error))
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
       isProcessing.value = false
