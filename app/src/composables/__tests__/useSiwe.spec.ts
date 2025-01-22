@@ -4,6 +4,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import * as utils from '@/utils'
+import { SiweMessage } from 'siwe'
 
 const mocks = vi.hoisted(() => ({
   mockSlSiweMessageCreator: {
@@ -17,6 +18,12 @@ const mocks = vi.hoisted(() => ({
   mockHasInstalledWallet: vi.fn(),
   mockUseToastStore: {
     addErrorToast: vi.fn()
+  },
+  mockUseChainId: vi.fn(() => ref(123)),
+  mockSiwe: {
+    mockSiweMessage: vi.fn(),
+    mockConstructor: vi.fn(),
+    mockPrepareMessage: vi.fn(() => 'Siwe message')
   }
 }))
 const mockUseAccount = {
@@ -47,7 +54,18 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useAccount: vi.fn(() => mockUseAccount),
     useSignMessage: vi.fn(() => mockUseSignMessage),
     useConnect: vi.fn(() => mockUseConnect),
-    useSwitchChain: vi.fn(() => mockUseSwitchChain)
+    useSwitchChain: vi.fn(() => mockUseSwitchChain),
+    useChainId: mocks.mockUseChainId
+  }
+})
+vi.mock('siwe', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  const SiweMessage = mocks.mockSiwe.mockSiweMessage
+  SiweMessage.prototype.constructor = mocks.mockSiwe.mockConstructor
+  SiweMessage.prototype.prepareMessage = mocks.mockSiwe.mockPrepareMessage
+  return {
+    ...actual,
+    SiweMessage
   }
 })
 
@@ -150,6 +168,11 @@ describe('useSiwe', () => {
   })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
+    // const siweMessageSpy = vi.spyOn(SiweMessage.prototype, 'prepareMessage')
+    // siweMessageSpy.mockImplementation(() => {
+    //   console.log('Executing...')
+    //   return 'Siwe message'
+    // })
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
@@ -159,19 +182,21 @@ describe('useSiwe', () => {
         (mockCustomFetch.get.data.value = {
           name: 'User Name',
           address: '0xUserAddress',
-          nonce: 'xyz'
+          nonce: 'xyz' //'41vj7bz5Ow8oT5xaE'
         })
     )
     const { siwe } = useSiwe()
     await siwe()
     console.log(`mockCustomFetch.get.url`, mockCustomFetch.get.url)
-    expect(mocks.mockSlSiweMessageCreator.create).toBeCalled()
-    expect(mocks.mockSlSiweMessageCreator.constructor).toBeCalledWith({
+    expect(mocks.mockSiwe.mockPrepareMessage).toBeCalled()
+    expect(mocks.mockSiwe.mockSiweMessage).toBeCalledWith({
       address: '0xUserAddress',
       statement: 'Sign in with Ethereum to the app.',
       nonce: 'xyz',
       version: '1',
-      chainId: 1
+      chainId: 123,
+      domain: 'localhost:3000',
+      uri: 'http://localhost:3000'
     })
     expect(mockUseSignMessage.signMessage).toBeCalledWith({ message: 'Siwe message' })
     await flushPromises()
@@ -192,12 +217,12 @@ describe('useSiwe', () => {
   it('should report an error if error processing', async () => {
     mocks.mockHasInstalledWallet.mockReset()
     mocks.mockHasInstalledWallet.mockImplementation(() => true)
-    mocks.mockSlSiweMessageCreator.create.mockReset()
-    mocks.mockSlSiweMessageCreator.create.mockRejectedValue(new Error('Error creating message'))
+    mockCustomFetch.get.execute.mockRejectedValue(new Error('Error fetching something...'))
     const { siwe } = useSiwe()
     await siwe()
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(`Couldn't authenticate with SIWE`)
-    expect(logErrorSpy).toBeCalledWith('Error creating message')
+    expect(logErrorSpy).toBeCalledWith('Error fetching something...')
+    mockCustomFetch.get.execute.mockReset()
   })
   it('should display error when signature error', async () => {
     mocks.mockHasInstalledWallet.mockReset()
