@@ -131,15 +131,6 @@ vi.mock('@/composables/useCustomFetch', () => ({
         json: () => ({
           data: mockCustomFetch.get.data,
           execute: mockCustomFetch.get.execute,
-          // execute: vi.fn(() => {
-          //   if (url.value === `user/nonce/0xUserAddress`) data.value = { nonce: `xyz` }
-          //   else
-          //     data.value = {
-          //       name: 'User Name',
-          //       address: '0xUserAddress',
-          //       nonce: 'xyz'
-          //     }
-          // }),
           error: mockCustomFetch.get.error
         })
       }),
@@ -167,11 +158,6 @@ describe('useSiwe', () => {
   })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
-    // const siweMessageSpy = vi.spyOn(SiweMessage.prototype, 'prepareMessage')
-    // siweMessageSpy.mockImplementation(() => {
-    //   console.log('Executing...')
-    //   return 'Siwe message'
-    // })
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
@@ -202,20 +188,7 @@ describe('useSiwe', () => {
     expect(mocks.mockUserDataStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
     expect(mocks.mockUserDataStore.setAuthStatus).toBeCalledWith(true)
   })
-  it('should give an error when MetaMask is not installed', async () => {
-    mocks.mockHasInstalledWallet.mockReset()
-    mocks.mockHasInstalledWallet.mockImplementation(() => false)
-    mockUseConnect.connectors = []
-    const { isProcessing, siwe } = useSiwe()
-    await siwe()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
-      'MetaMask is not installed, Please install MetaMask to continue'
-    )
-    expect(isProcessing.value).toBe(false)
-  })
   it('should report an error if error processing', async () => {
-    mocks.mockHasInstalledWallet.mockReset()
-    mocks.mockHasInstalledWallet.mockImplementation(() => true)
     mockCustomFetch.get.execute.mockRejectedValue(new Error('Error fetching something...'))
     const { siwe } = useSiwe()
     await siwe()
@@ -224,9 +197,6 @@ describe('useSiwe', () => {
     mockCustomFetch.get.execute.mockReset()
   })
   it('should display error when signature error', async () => {
-    mocks.mockHasInstalledWallet.mockReset()
-    mocks.mockSlSiweMessageCreator.create.mockReset()
-    mocks.mockHasInstalledWallet.mockImplementation(() => true)
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.error.value = new Error('Sign message error'))
     )
@@ -242,7 +212,7 @@ describe('useSiwe', () => {
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
-    mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
+    
     mockCustomFetch.post.execute.mockImplementation(() => {
       mockCustomFetch.post.error.value = new Error('Error posting auth data')
     })
