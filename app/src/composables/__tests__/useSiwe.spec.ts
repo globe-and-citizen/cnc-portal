@@ -4,7 +4,6 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import * as utils from '@/utils'
-import { SiweMessage } from 'siwe'
 
 const mocks = vi.hoisted(() => ({
   mockSlSiweMessageCreator: {
