@@ -61,12 +61,14 @@ model MemberTeamsData {
 }
 
 model Claim {
-  id                        Int      @id @default(autoincrement())  // Add an ID for easy referencing
-  createdAt                 DateTime @default(now())
-  status                    String
+  id                        Int             @id @default(autoincrement()) // Add an ID for easy referencing
+  status                    ClaimStatus     @default(PENDING)
   hoursWorked               Int?
   cashRemunerationSignature String?
   memberTeamsDataId         Int
+  createdAt                 DateTime        @default(now())
+  withdrawedAt              DateTime?
+  approvedAt                DateTime?
   memberTeamsData           MemberTeamsData @relation(fields: [memberTeamsDataId], references: [id])
 }
 
@@ -106,4 +108,10 @@ model BoardOfDirectorActions {
   teamId                    Int
   team                      Team     @relation(fields: [teamId], references: [id])
   createdAt                 DateTime @default(now())
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  WITHDRAWED
 }
