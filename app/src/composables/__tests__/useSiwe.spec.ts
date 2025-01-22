@@ -172,7 +172,6 @@ describe('useSiwe', () => {
     )
     const { siwe } = useSiwe()
     await siwe()
-    console.log(`mockCustomFetch.get.url`, mockCustomFetch.get.url)
     expect(mocks.mockSiwe.mockPrepareMessage).toBeCalled()
     expect(mocks.mockSiwe.mockSiweMessage).toBeCalledWith({
       address: '0xUserAddress',
@@ -212,7 +211,7 @@ describe('useSiwe', () => {
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
-    
+
     mockCustomFetch.post.execute.mockImplementation(() => {
       mockCustomFetch.post.error.value = new Error('Error posting auth data')
     })

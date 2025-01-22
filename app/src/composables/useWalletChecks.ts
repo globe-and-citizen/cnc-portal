@@ -39,7 +39,7 @@ export function useWalletChecks() {
     }
 
     const currentChainId = await metaMaskConnector.getChainId()
-    
+
     if (currentChainId !== networkChainId) {
       switchChain({
         chainId: networkChainId,
@@ -65,7 +65,7 @@ export function useWalletChecks() {
         isProcessing.value = false
         return false
       }
-      
+
       return true
     } catch (error) {
       addErrorToast('Failed to validate wallet and network.')

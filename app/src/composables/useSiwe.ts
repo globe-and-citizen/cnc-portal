@@ -5,8 +5,7 @@ import type { User } from '@/types'
 import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useStorage } from '@vueuse/core'
-import { useAccount, useSignMessage, useConnect, useSwitchChain, useChainId } from '@wagmi/vue'
-import { NETWORK } from '@/constant'
+import { useAccount, useSignMessage, useConnect, useChainId } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
 import { useWalletChecks } from './useWalletChecks'
 
@@ -22,9 +21,8 @@ export function useSiwe() {
   const isProcessing = ref(false)
   const authData = ref({ signature: '', message: '' })
   const apiEndpoint = ref<string>('')
-  const { connectors, connect, error: connectError } = useConnect()
-  const { address, isConnected } = useAccount()
-  const { switchChain } = useSwitchChain()
+  const { error: connectError } = useConnect()
+  const { address } = useAccount()
   const chainId = useChainId()
   const { performChecks } = useWalletChecks()
 
@@ -38,7 +36,6 @@ export function useSiwe() {
 
   watch(address, async (newVal) => {
     if (newVal) {
-      console.log(`Executing Siwe from address...`)
       await executeSiwe()
     }
   })
@@ -121,7 +118,6 @@ export function useSiwe() {
 
   async function executeSiwe() {
     apiEndpoint.value = `user/nonce/${address.value}`
-    console.log(`address: `, address.value)
     await executeFetchUserNonce()
     if (!nonce.value) return
 
@@ -139,42 +135,18 @@ export function useSiwe() {
   }
 
   async function siwe() {
-    // Check if we have metamask installation befor continue the process
-    // const metaMaskConnector = connectors.find(
-    //   (connector) => connector.name.split(' ')[0] === 'MetaMask'
-    // )
-
-    // if (!metaMaskConnector) {
-    //   addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
-    //   return
-    // }
-
     try {
       isProcessing.value = true
 
-      // const networkChainId = parseInt(NETWORK.chainId)
-
-      // if (!isConnected.value) {
-      //   connect({ connector: metaMaskConnector, chainId: networkChainId })
-      // }
-
-      // if ((await metaMaskConnector.getChainId()) !== networkChainId) {
-      //   switchChain({
-      //     chainId: networkChainId,
-      //     connector: metaMaskConnector
-      //   })
-      // }
       if (!(await performChecks())) {
         isProcessing.value = false
         return
       }
 
       if (address.value) {
-        console.log(`executing Siwe from siwe...`)
         await executeSiwe()
       }
     } catch (_error) {
-      console.log(parseError(_error))
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
       isProcessing.value = false
