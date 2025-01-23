@@ -89,52 +89,62 @@ export function useSiwe() {
     }
   })
 
-  watch(signature, async (newVal) => {
-    if (newVal) {
-      authData.value.signature = newVal
+  /**
+   * Watch for new signature to send auth payload to the backend
+   * to get a JWT token and retrieve user data to save to the store
+   */
+  watch(signature, async (newSignature) => {
+    if (newSignature) {
+      //update authData payload signature field with user's signature
+      authData.value.signature = newSignature
+      //send authData payload to backend for authentication
       await executeAddAuthData()
+      //get returned JWT authentication token and save to storage
       const token = siweData.value.accessToken
       const storageToken = useStorage('authToken', token)
       storageToken.value = token
+      //update API endpoint to call
       apiEndpoint.value = `user/${address.value}`
+      //fetch user data from backend
       await executeFetchUser()
       if (!user.value) return
+      //save user data to user store
       const userData: Partial<User> = user.value
       setUserData(userData.name || '', userData.address || '', userData.nonce || '')
       setAuthStatus(true)
 
-      router.push('/teams')
-
       isProcessing.value = false
+      //redirect user to teams page
+      router.push('/teams')
     }
   })
 
-  watch(signMessageError, (newVal) => {
-    if (newVal) {
-      log.error('signMessageError.value', newVal)
+  watch(signMessageError, (newError) => {
+    if (newError) {
+      log.error('signMessageError.value', newError)
       addErrorToast('Unable to sign SIWE message')
       isProcessing.value = false
     }
   })
 
-  watch(siweError, (newVal) => {
-    if (newVal) {
-      log.info('siweError.value', newVal)
+  watch(siweError, (newError) => {
+    if (newError) {
+      log.info('siweError.value', newError)
       addErrorToast('Unable to authenticate with SIWE')
       isProcessing.value = false
     }
   })
 
-  watch(fetchUserNonceError, (newVal) => {
-    if (newVal) {
-      log.info('fetchError.value', newVal)
+  watch(fetchUserNonceError, (newError) => {
+    if (newError) {
+      log.info('fetchError.value', newError)
       addErrorToast('Unable to fetch nonce')
       isProcessing.value = false
     }
   })
 
-  watch(fetchUserError, (newVal) => {
-    if (newVal) {
+  watch(fetchUserError, (newError) => {
+    if (newError) {
       log.info('fetchUserError.value', fetchUserError.value)
       addErrorToast('Unable to fetch user data')
       isProcessing.value = false
