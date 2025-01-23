@@ -11,20 +11,34 @@ import { NETWORK } from '@/constant'
 import { log, parseError } from '@/utils'
 
 export function useWalletChecks() {
+  const isProcessing = ref(false)
+  const isSuccess = ref(false)
+  const isConnectRequired = ref(false)
+
   const { addErrorToast } = useToastStore()
   const { connectors, connect, error: connectError, isPending: isPendingConnect } = useConnect()
   const { switchChain } = useSwitchChain()
   const { isConnected } = useAccount()
 
-  const isProcessing = ref(false)
-
   watch(connectError, (newVal) => {
     if (newVal) {
       addErrorToast(parseError(newVal))
       log.error('connectError.value', newVal)
-      isProcessing.value = false
+      resetRefs()
     }
   })
+
+  watch(isPendingConnect, (newStatus) => {
+    if (!newStatus && isConnected.value) {
+      isSuccess.value = true
+    }
+  })
+
+  function resetRefs() {
+    isConnectRequired.value = false
+    isSuccess.value = false
+    isProcessing.value = false
+  }
 
   async function validateMetaMask() {
     const metaMaskConnector = connectors.find(
@@ -32,8 +46,9 @@ export function useWalletChecks() {
     )
 
     if (!metaMaskConnector) {
+      resetRefs()
       addErrorToast('MetaMask is not installed. Please install MetaMask to continue.')
-      return false
+      return
     }
 
     return metaMaskConnector
@@ -43,6 +58,7 @@ export function useWalletChecks() {
     const networkChainId = parseInt(NETWORK.chainId)
 
     if (!isConnected.value) {
+      isConnectRequired.value = true
       connect({ connector: metaMaskConnector, chainId: networkChainId })
     }
 
@@ -64,24 +80,21 @@ export function useWalletChecks() {
 
       const metaMaskConnector = await validateMetaMask()
       if (!metaMaskConnector) {
-        isProcessing.value = false
-        return false
+        resetRefs()
+        return
       }
 
       const networkValid = await validateNetwork(metaMaskConnector)
-      if (!networkValid && !isPendingConnect.value) {
-        isProcessing.value = false
-        return false
-      }
-
-      return true
+      if (isConnectRequired.value && !networkValid && !isPendingConnect.value) {
+        resetRefs()
+        return
+      } else if (!isConnectRequired.value && networkValid) isSuccess.value = true
     } catch (error) {
       addErrorToast('Failed to validate wallet and network.')
       log.error('performChecks.catch', parseError(error))
       isProcessing.value = false
-      return false
     }
   }
 
-  return { isProcessing, performChecks }
+  return { isProcessing, performChecks, isSuccess, resetRefs }
 }
