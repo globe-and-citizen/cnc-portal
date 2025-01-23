@@ -11,10 +11,6 @@ const removeAdminMock = vi.fn()
 const getAdminListMock = vi.fn()
 const getEventsGroupedByCampaignCodeMock = vi.fn()
 vi.mock('@/stores/useToastStore')
-// Mock isAddress from ethers.js
-vi.mock('ethers', () => ({
-  isAddress: vi.fn().mockReturnValue(true) // Always returns true in tests
-}))
 vi.mock('@/services/AddCampaignService', () => ({
   AddCampaignService: vi.fn().mockImplementation(() => ({
     addAdmin: addAdminMock,
@@ -25,7 +21,7 @@ vi.mock('@/services/AddCampaignService', () => ({
 }))
 
 describe('TeamContractAdmins', () => {
-  const adminsData = ['0x1234567890abcdef', '0xfedcba0987654321']
+  const adminsData = ['0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', '0xfedcba0987654321']
   const contract: TeamContract = {
     address: '0xcontractaddress',
     admins: adminsData,

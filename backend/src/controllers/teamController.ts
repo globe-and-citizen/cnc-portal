@@ -1,9 +1,8 @@
 import { Prisma, /*PrismaClient,*/ User } from "@prisma/client";
 import { Request, Response } from "express";
-import { isAddress } from "ethers";
+import { isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
 import { addNotification, prisma } from "../utils";
-import exp from "constants";
 
 //const prisma = new PrismaClient();
 // Create a new team

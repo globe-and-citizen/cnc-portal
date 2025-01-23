@@ -86,7 +86,7 @@
 import { NETWORK } from '@/constant'
 import type { User } from '@/types'
 import { ref, watch } from 'vue'
-import { isAddress } from 'ethers'
+import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
