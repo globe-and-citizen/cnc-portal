@@ -23,6 +23,7 @@ export function useSiwe() {
   const { address } = useAccount()
   const chainId = useChainId()
   const { performChecks, isProcessing } = useWalletChecks()
+  const { setUserData, setAuthStatus } = useUserDataStore()
 
   watch(address, async (newVal) => {
     if (newVal) {
@@ -43,12 +44,8 @@ export function useSiwe() {
       await executeFetchUser()
       if (!user.value) return
       const userData: Partial<User> = user.value
-      useUserDataStore().setUserData(
-        userData.name || '',
-        userData.address || '',
-        userData.nonce || ''
-      )
-      useUserDataStore().setAuthStatus(true)
+      setUserData(userData.name || '', userData.address || '', userData.nonce || '')
+      setAuthStatus(true)
 
       router.push('/teams')
 
