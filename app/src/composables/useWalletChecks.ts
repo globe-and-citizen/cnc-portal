@@ -20,10 +20,10 @@ export function useWalletChecks() {
   const { switchChain } = useSwitchChain()
   const { isConnected } = useAccount()
 
-  watch(connectError, (newVal) => {
-    if (newVal) {
-      addErrorToast(parseError(newVal))
-      log.error('connectError.value', newVal)
+  watch(connectError, (newConnectError) => {
+    if (newConnectError) {
+      addErrorToast('Failed to connect wallet')
+      log.error('connectError.value', newConnectError)
       resetRefs()
     }
   })
@@ -40,7 +40,7 @@ export function useWalletChecks() {
     isProcessing.value = false
   }
 
-  async function validateMetaMask() {
+  async function checkMetaMaskInstalled() {
     const metaMaskConnector = connectors.find(
       (connector) => connector.name.split(' ')[0] === 'MetaMask'
     )
@@ -54,7 +54,7 @@ export function useWalletChecks() {
     return metaMaskConnector
   }
 
-  async function validateNetwork(metaMaskConnector: Connector<CreateConnectorFn>) {
+  async function checkCorrectNetwork(metaMaskConnector: Connector<CreateConnectorFn>) {
     const networkChainId = parseInt(NETWORK.chainId)
 
     if (!isConnected.value) {
@@ -78,21 +78,21 @@ export function useWalletChecks() {
     try {
       isProcessing.value = true
 
-      const metaMaskConnector = await validateMetaMask()
+      const metaMaskConnector = await checkMetaMaskInstalled()
       if (!metaMaskConnector) {
         resetRefs()
         return
       }
 
-      const networkValid = await validateNetwork(metaMaskConnector)
-      if (isConnectRequired.value && !networkValid && !isPendingConnect.value) {
+      const isNetworkValid = await checkCorrectNetwork(metaMaskConnector)
+      if (isConnectRequired.value && !isNetworkValid && !isPendingConnect.value) {
         resetRefs()
         return
-      } else if (!isConnectRequired.value && networkValid) isSuccess.value = true
+      } else if (!isConnectRequired.value && isNetworkValid) isSuccess.value = true
     } catch (error) {
       addErrorToast('Failed to validate wallet and network.')
       log.error('performChecks.catch', parseError(error))
-      isProcessing.value = false
+      resetRefs()
     }
   }
 
