@@ -5,7 +5,7 @@ import type { User } from '@/types'
 import { log, parseError } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useStorage } from '@vueuse/core'
-import { useAccount, useSignMessage, useConnect, useChainId } from '@wagmi/vue'
+import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
 import { useWalletChecks } from './useWalletChecks'
 
