@@ -18,21 +18,11 @@ function createSiweMessage(params: Partial<SiweMessage>) {
 
 export function useSiwe() {
   const { addErrorToast } = useToastStore()
-  const isProcessing = ref(false)
   const authData = ref({ signature: '', message: '' })
   const apiEndpoint = ref<string>('')
-  const { error: connectError } = useConnect()
   const { address } = useAccount()
   const chainId = useChainId()
-  const { performChecks } = useWalletChecks()
-
-  watch(connectError, (newVal) => {
-    if (newVal) {
-      addErrorToast(parseError(newVal))
-      log.error('connectError.value', newVal)
-      isProcessing.value = false
-    }
-  })
+  const { performChecks, isProcessing } = useWalletChecks()
 
   watch(address, async (newVal) => {
     if (newVal) {
@@ -136,8 +126,6 @@ export function useSiwe() {
 
   async function siwe() {
     try {
-      isProcessing.value = true
-
       if (!(await performChecks())) {
         isProcessing.value = false
         return

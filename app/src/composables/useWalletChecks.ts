@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
 import {
   useConnect,
@@ -12,11 +12,19 @@ import { log, parseError } from '@/utils'
 
 export function useWalletChecks() {
   const { addErrorToast } = useToastStore()
-  const { connectors, connect } = useConnect()
+  const { connectors, connect, error: connectError } = useConnect()
   const { switchChain } = useSwitchChain()
   const { isConnected } = useAccount()
 
   const isProcessing = ref(false)
+
+  watch(connectError, (newVal) => {
+    if (newVal) {
+      addErrorToast(parseError(newVal))
+      log.error('connectError.value', newVal)
+      isProcessing.value = false
+    }
+  })
 
   async function validateMetaMask() {
     const metaMaskConnector = connectors.find(
