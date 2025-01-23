@@ -16,7 +16,7 @@ export function useSiwe() {
 
   //#region Composables
   const { addErrorToast } = useToastStore()
-  const { setUserData, setAuthStatus } = useUserDataStore()
+  const userDataStore = useUserDataStore()
   const { address } = useAccount()
   const chainId = useChainId()
   const { data: signature, error: signMessageError, signMessage } = useSignMessage()
@@ -110,8 +110,8 @@ export function useSiwe() {
       if (!user.value) return
       //save user data to user store
       const userData: Partial<User> = user.value
-      setUserData(userData.name || '', userData.address || '', userData.nonce || '')
-      setAuthStatus(true)
+      userDataStore.setUserData(userData.name || '', userData.address || '', userData.nonce || '')
+      userDataStore.setAuthStatus(true)
 
       isProcessing.value = false
       //redirect user to teams page
