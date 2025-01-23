@@ -9,71 +9,26 @@ import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
 import { useWalletChecks } from '@/composables'
 
-// function createSiweMessage(params: Partial<SiweMessage>) {
-//   // Create SiweMessage instance with provided data
-//   const siweMessage = new SiweMessage(params)
-//   // Call prepareMessage method to properly format the message
-//   return siweMessage.prepareMessage()
-// }
-
 export function useSiwe() {
-  const { addErrorToast } = useToastStore()
+  //#region Refs
   const authData = ref({ signature: '', message: '' })
   const apiEndpoint = ref<string>('')
+
+  //#region Composables
+  const { addErrorToast } = useToastStore()
+  const { setUserData, setAuthStatus } = useUserDataStore()
   const { address } = useAccount()
   const chainId = useChainId()
-  const { performChecks, isProcessing } = useWalletChecks()
-  const { setUserData, setAuthStatus } = useUserDataStore()
-
-  watch(address, async (newVal) => {
-    if (newVal) {
-      await executeSiwe()
-    }
-  })
-
   const { data: signature, error: signMessageError, signMessage } = useSignMessage()
+  const { performChecks, isProcessing } = useWalletChecks()
+  //#endregion
 
-  watch(signature, async (newVal) => {
-    if (newVal) {
-      authData.value.signature = newVal
-      await executeAddAuthData()
-      const token = siweData.value.accessToken
-      const storageToken = useStorage('authToken', token)
-      storageToken.value = token
-      apiEndpoint.value = `user/${address.value}`
-      await executeFetchUser()
-      if (!user.value) return
-      const userData: Partial<User> = user.value
-      setUserData(userData.name || '', userData.address || '', userData.nonce || '')
-      setAuthStatus(true)
-
-      router.push('/teams')
-
-      isProcessing.value = false
-    }
-  })
-
-  watch(signMessageError, (newVal) => {
-    if (newVal) {
-      log.error('signMessageError.value', newVal)
-      addErrorToast('Unable to sign SIWE message')
-      isProcessing.value = false
-    }
-  })
-
+  //#region useCustomeFetch
   const {
     error: siweError,
     data: siweData,
     execute: executeAddAuthData
   } = useCustomFetch<string>('auth/siwe', { immediate: false }).post(authData).json()
-
-  watch(siweError, (newVal) => {
-    if (newVal) {
-      log.info('siweError.value', newVal)
-      addErrorToast('Unable to authenticate with SIWE')
-      isProcessing.value = false
-    }
-  })
 
   const {
     error: fetchUserNonceError,
@@ -81,28 +36,14 @@ export function useSiwe() {
     execute: executeFetchUserNonce
   } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
 
-  watch(fetchUserNonceError, (newVal) => {
-    if (newVal) {
-      log.info('fetchError.value', newVal)
-      addErrorToast('Unable to fetch nonce')
-      isProcessing.value = false
-    }
-  })
-
   const {
     error: fetchUserError,
     data: user,
     execute: executeFetchUser
   } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
+  //#endregion
 
-  watch(fetchUserError, (newVal) => {
-    if (newVal) {
-      log.info('fetchUserError.value', fetchUserError.value)
-      addErrorToast('Unable to fetch user data')
-      isProcessing.value = false
-    }
-  })
-
+  //#region Functions
   async function executeSiwe() {
     apiEndpoint.value = `user/nonce/${address.value}`
     await executeFetchUserNonce()
@@ -139,6 +80,67 @@ export function useSiwe() {
       isProcessing.value = false
     }
   }
+  //#endregion
+
+  //#region Watch
+  watch(address, async (newVal) => {
+    if (newVal) {
+      await executeSiwe()
+    }
+  })
+
+  watch(signature, async (newVal) => {
+    if (newVal) {
+      authData.value.signature = newVal
+      await executeAddAuthData()
+      const token = siweData.value.accessToken
+      const storageToken = useStorage('authToken', token)
+      storageToken.value = token
+      apiEndpoint.value = `user/${address.value}`
+      await executeFetchUser()
+      if (!user.value) return
+      const userData: Partial<User> = user.value
+      setUserData(userData.name || '', userData.address || '', userData.nonce || '')
+      setAuthStatus(true)
+
+      router.push('/teams')
+
+      isProcessing.value = false
+    }
+  })
+
+  watch(signMessageError, (newVal) => {
+    if (newVal) {
+      log.error('signMessageError.value', newVal)
+      addErrorToast('Unable to sign SIWE message')
+      isProcessing.value = false
+    }
+  })
+
+  watch(siweError, (newVal) => {
+    if (newVal) {
+      log.info('siweError.value', newVal)
+      addErrorToast('Unable to authenticate with SIWE')
+      isProcessing.value = false
+    }
+  })
+
+  watch(fetchUserNonceError, (newVal) => {
+    if (newVal) {
+      log.info('fetchError.value', newVal)
+      addErrorToast('Unable to fetch nonce')
+      isProcessing.value = false
+    }
+  })
+
+  watch(fetchUserError, (newVal) => {
+    if (newVal) {
+      log.info('fetchUserError.value', fetchUserError.value)
+      addErrorToast('Unable to fetch user data')
+      isProcessing.value = false
+    }
+  })
+  //#endregion
 
   return { isProcessing, siwe }
 }
