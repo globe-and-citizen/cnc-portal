@@ -218,6 +218,7 @@
         class="w-32"
         @click="currentStep--"
         :disabled="isLoading"
+        data-test="previous-button"
       >
         Previous
       </ButtonUI>
@@ -226,6 +227,7 @@
         v-if="currentStep < 4"
         variant="primary"
         class="w-32"
+        data-test="next-button"
         @click="nextStep"
         :disabled="!canProceed || isLoading"
       >
