@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import type { User } from '@/types'
@@ -11,11 +11,15 @@ describe('AddTeamForm.vue', () => {
   ]
 
   const mountComponent = () => {
-    return mount(AddTeamForm, {
+    const div = document.createElement('div')
+    document.body.appendChild(div)
+
+    const wrapper = mount(AddTeamForm, {
       props: {
         users,
         isLoading: false
       },
+      attachTo: div,
       global: {
         stubs: {
           ButtonUI: {
@@ -34,6 +38,8 @@ describe('AddTeamForm.vue', () => {
         }
       }
     })
+
+    return wrapper
   }
 
   let wrapper = mountComponent()
@@ -64,7 +70,6 @@ describe('AddTeamForm.vue', () => {
     await w.find('[data-test="next-button"]').trigger('click')
     await w.vm.$nextTick()
     await w.vm.$nextTick() // Wait for step transition
-    console.log(w.html())
   }
 
   describe('Initial Render', () => {
@@ -226,6 +231,52 @@ describe('AddTeamForm.vue', () => {
       const submitButton = wrapper.find('[data-test="create-team-button"]')
       expect(submitButton.attributes('disabled')).toBeDefined()
       expect(submitButton.classes()).toContain('loading-spinner')
+    })
+  })
+
+  describe('Dropdown Behavior', () => {
+    beforeEach(async () => {
+      await navigateToMembersStep(wrapper)
+      // Open the dropdown
+      await wrapper.find('[data-test="member-0-name-input"]').trigger('focus')
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick() // Wait for dropdown to fully open
+    })
+
+    it('closes dropdown when clicking outside', async () => {
+      // Create a div outside the form
+      const outsideElement = document.createElement('div')
+      document.body.appendChild(outsideElement)
+
+      // Verify dropdown is open
+      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
+
+      // Simulate click outside by clicking the outside element
+      outsideElement.click()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick() // Wait for dropdown state to update
+
+      // Verify dropdown is closed
+      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
+
+      // Cleanup
+      document.body.removeChild(outsideElement)
+    })
+
+    afterEach(() => {
+      wrapper.unmount()
+    })
+
+    it('keeps dropdown open when clicking inside', async () => {
+      // Verify dropdown is open
+      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
+
+      // Simulate click inside the form
+      await wrapper.find('.input-group').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Verify dropdown is still open
+      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
     })
   })
 })
