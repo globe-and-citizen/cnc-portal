@@ -3,9 +3,9 @@
     <!-- Step Indicator -->
     <div class="steps w-full mb-4">
       <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Team Details</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Investor Contract</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Members</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 4 }">Confirm</a>
+      <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Members</a>
+      <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Investor Contract</a>
+      <a class="step" :class="{ 'step-primary': currentStep >= 4 }">Deploy Contracts</a>
     </div>
 
     <!-- Step 1: Team Details -->
@@ -48,55 +48,8 @@
       </div>
     </div>
 
-    <!-- Step 2: Investor Contract -->
+    <!-- Step 2: Members -->
     <div v-if="currentStep === 2">
-      <h1 class="font-bold text-2xl mb-4">Investor Contract Details</h1>
-      <hr class="mb-6" />
-      <div class="flex flex-col gap-5">
-        <label class="input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Share Name</span>
-          <input
-            type="text"
-            class="grow"
-            placeholder="Company Shares"
-            data-test="share-name-input"
-            v-model="investorContract.name"
-            name="shareName"
-          />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $v.investorContract.name.$errors"
-          data-test="share-name-error"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
-
-        <label class="input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Symbol</span>
-          <input
-            type="text"
-            class="grow"
-            placeholder="SHR"
-            data-test="share-symbol-input"
-            v-model="investorContract.symbol"
-            name="shareSymbol"
-          />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $v.investorContract.symbol.$errors"
-          data-test="share-symbol-error"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 3: Members -->
-    <div v-if="currentStep === 3">
       <h1 class="font-bold text-2xl mb-4">Team Members</h1>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
@@ -186,9 +139,56 @@
       </div>
     </div>
 
-    <!-- Step 4: Confirmation -->
+    <!-- Step 3: Investor Contract -->
+    <div v-if="currentStep === 3">
+      <h1 class="font-bold text-2xl mb-4">Investor Contract Details</h1>
+      <hr class="mb-6" />
+      <div class="flex flex-col gap-5">
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-24">Share Name</span>
+          <input
+            type="text"
+            class="grow"
+            placeholder="Company Shares"
+            data-test="share-name-input"
+            v-model="investorContract.name"
+            name="shareName"
+          />
+        </label>
+        <div
+          class="pl-4 text-red-500 text-sm"
+          v-for="error of $vInvestor.investorContract.name.$errors"
+          data-test="share-name-error"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
+
+        <label class="input input-bordered flex items-center gap-2 input-md">
+          <span class="w-24">Symbol</span>
+          <input
+            type="text"
+            class="grow"
+            placeholder="SHR"
+            data-test="share-symbol-input"
+            v-model="investorContract.symbol"
+            name="shareSymbol"
+          />
+        </label>
+        <div
+          class="pl-4 text-red-500 text-sm"
+          v-for="error of $vInvestor.investorContract.symbol.$errors"
+          data-test="share-symbol-error"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Deploy Contracts -->
     <div v-if="currentStep === 4">
-      <h1 class="font-bold text-2xl mb-4">Confirm Team Details</h1>
+      <h1 class="font-bold text-2xl mb-4">Deploy Contracts</h1>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <div class="bg-base-200 p-4 rounded-lg">
@@ -224,7 +224,7 @@
       </ButtonUI>
       <div class="flex-grow"></div>
       <ButtonUI
-        v-if="currentStep < 4"
+        v-if="currentStep === 1"
         variant="primary"
         class="w-32"
         data-test="next-button"
@@ -234,15 +234,26 @@
         Next
       </ButtonUI>
       <ButtonUI
-        v-else
+        v-else-if="currentStep === 2"
         variant="primary"
         class="w-44"
         :loading="isLoading"
         :disabled="isLoading || !canProceed"
         data-test="create-team-button"
-        @click="onSubmit"
+        @click="saveTeamToDatabase"
       >
         Create Team
+      </ButtonUI>
+      <ButtonUI
+        v-else-if="currentStep === 3"
+        variant="primary"
+        class="w-44"
+        :loading="isLoading"
+        :disabled="isLoading || !canProceed"
+        data-test="deploy-contracts-button"
+        @click="deployContracts"
+      >
+        Deploy Contracts
       </ButtonUI>
     </div>
   </div>
@@ -262,7 +273,7 @@ const props = defineProps<{
   users: User[]
 }>()
 
-const emit = defineEmits(['searchUsers', 'addTeam'])
+const emit = defineEmits(['searchUsers', 'addTeam', 'deployContracts', 'watchEvents'])
 
 const teamData = ref<TeamInput>({
   name: '',
@@ -292,14 +303,19 @@ const rules = {
         }
       }
     }
-  },
+  }
+}
+
+const investorContractRules = {
   investorContract: {
     name: { required },
     symbol: { required }
   }
 }
 
-const $v = useVuelidate(rules, { teamData, investorContract })
+// Create separate validation instances
+const $v = useVuelidate(rules, { teamData })
+const $vInvestor = useVuelidate(investorContractRules, { investorContract })
 
 const searchUsers = (input: { name: string; address: string }) => {
   if (!props.isLoading) {
@@ -308,12 +324,20 @@ const searchUsers = (input: { name: string; address: string }) => {
   }
 }
 
-const onSubmit = async () => {
+const saveTeamToDatabase = async () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
 
   emit('addTeam', {
-    team: teamData.value,
+    team: teamData.value
+  })
+}
+
+const deployContracts = async () => {
+  $vInvestor.value.$touch()
+  if ($vInvestor.value.$invalid) return
+
+  emit('deployContracts', {
     investorContract: investorContract.value
   })
 }
@@ -335,11 +359,11 @@ const canProceed = computed(() => {
     case 1:
       return !!teamData.value.name
     case 2:
-      return !!investorContract.value.name && !!investorContract.value.symbol
-    case 3:
       return teamData.value.members.every((member) => member.name && isAddress(member.address))
+    case 3:
+      return !!investorContract.value.name && !!investorContract.value.symbol
     case 4:
-      return !$v.value.$invalid
+      return !$vInvestor.value.$invalid
     default:
       return false
   }

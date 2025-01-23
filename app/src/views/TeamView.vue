@@ -68,7 +68,13 @@
         "
         :users="foundUsers"
         @searchUsers="(input) => searchUsers(input)"
-        @addTeam="handleAddTeam"
+        @addTeam="
+          (data) => {
+            console.log('addTeam', data)
+            handleAddTeam(data)
+          }
+        "
+        @deployContracts="handleDeployContracts"
       />
     </ModalComponent>
   </div>
@@ -198,14 +204,7 @@ watch(
   () => {
     if (!createTeamFetching.value && !createTeamError.value && createTeamResponse.value?.ok) {
       addSuccessToast('Team created successfully')
-      team.value = {
-        name: '',
-        description: '',
-        members: [],
-        officerAddress: '' as Address
-      }
-      showAddTeamModal.value = false
-      executeFetchTeams()
+      loadingCreateTeam.value = false
     }
   }
 )
@@ -275,22 +274,36 @@ watch(createTeamError, () => {
 
 // Helper functions
 
-const handleAddTeam = async (data: {
-  team: TeamInput
-  investorContract: { name: string; symbol: string }
-}) => {
+const handleAddTeam = async (data: { team: TeamInput }) => {
+  console.log('handleAddTeam', data)
   loadingCreateTeam.value = true
   team.value = {
     ...data.team,
-    officerAddress: '' as Address // Will be set after deployment
+    officerAddress: '' as Address
   }
   try {
-    deployOfficerContract(data.investorContract)
+    // Just create the team in database first
+    await executeCreateTeam()
   } catch (error) {
     addErrorToast('Error creating team')
     console.log(error)
+    loadingCreateTeam.value = false
   }
 }
+
+const handleDeployContracts = async (data: {
+  investorContract: { name: string; symbol: string }
+}) => {
+  loading.value = true
+  try {
+    await deployOfficerContract(data.investorContract)
+  } catch (error) {
+    addErrorToast('Error deploying contracts')
+    console.log(error)
+    loading.value = false
+  }
+}
+
 const deployOfficerContract = async (investorContract: { name: string; symbol: string }) => {
   try {
     const currentAddress = useUserDataStore().address as Address
@@ -419,15 +432,25 @@ useWatchContractEvent({
     const deployer = (logs[0] as unknown as ILogs).args.deployer
     const proxyAddress = (logs[0] as unknown as ILogs).args.proxy
     const currentAddress = useUserDataStore().address as Address
-    if (!proxyAddress || proxyAddress == team.value.officerAddress || deployer !== currentAddress)
+    if (!proxyAddress || proxyAddress == team.value.officerAddress || deployer !== currentAddress) {
       loading.value = false
-    else {
+    } else {
       try {
         team.value.officerAddress = proxyAddress as Address
-        console.log('team', team.value)
-        executeCreateTeam()
+        // Update the team with officer address
+        await executeCreateTeam()
         loading.value = false
         loadingCreateTeam.value = false
+        // Close modal and reset after successful contract deployment
+        showAddTeamModal.value = false
+        team.value = {
+          name: '',
+          description: '',
+          members: [],
+          officerAddress: '' as Address
+        }
+        addSuccessToast('Contracts deployed successfully')
+        executeFetchTeams()
       } catch (error) {
         console.log('Error updating officer address:', error)
         addErrorToast('Error updating officer address')
