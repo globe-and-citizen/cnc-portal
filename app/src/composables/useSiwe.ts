@@ -9,12 +9,12 @@ import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
 import { useWalletChecks } from '@/composables'
 
-function createSiweMessage(params: Partial<SiweMessage>) {
-  // Create SiweMessage instance with provided data
-  const siweMessage = new SiweMessage(params)
-  // Call prepareMessage method to properly format the message
-  return siweMessage.prepareMessage()
-}
+// function createSiweMessage(params: Partial<SiweMessage>) {
+//   // Create SiweMessage instance with provided data
+//   const siweMessage = new SiweMessage(params)
+//   // Call prepareMessage method to properly format the message
+//   return siweMessage.prepareMessage()
+// }
 
 export function useSiwe() {
   const { addErrorToast } = useToastStore()
@@ -108,7 +108,7 @@ export function useSiwe() {
     await executeFetchUserNonce()
     if (!nonce.value) return
 
-    authData.value.message = createSiweMessage({
+    const siweMessage = new SiweMessage({
       address: address.value as string,
       statement: 'Sign in with Ethereum to the app.',
       nonce: nonce.value.nonce,
@@ -117,6 +117,8 @@ export function useSiwe() {
       domain: window.location.host,
       version: '1'
     })
+
+    authData.value.message = siweMessage.prepareMessage()
 
     signMessage({ message: authData.value.message })
   }
