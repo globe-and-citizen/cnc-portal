@@ -20,7 +20,7 @@ const mockUseAccount = {
 const mockUseConnect = {
   connect: vi.fn(),
   connectors: [] as { name: string; getChainId: () => number | Error }[],
-  error: ref(null)
+  error: ref<Error | null>(null)
 }
 
 const mockUseSwitchChain = {
@@ -110,5 +110,17 @@ describe('useWalletChecks', () => {
     expect(logErrorSpy).toBeCalledWith('performChecks.catch', 'Error getting Chain ID')
     expect(isProcessing.value).toBe(false)
     expect(checksResult).toBe(false)
+  })
+  it('should notify error if error connecting wallet', async () => {
+    mockUseConnect.connect.mockImplementation(
+      () => (mockUseConnect.error.value = new Error('Error connecting wallet'))
+    )
+    mockUseAccount.isConnected.value = false
+    const { isProcessing, performChecks } = useWalletChecks()
+    await performChecks()
+    await flushPromises()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Error connecting wallet')
+    expect(logErrorSpy).toBeCalledWith('connectError.value', new Error('Error connecting wallet'))
+    expect(isProcessing.value).toBe(false)
   })
 })
