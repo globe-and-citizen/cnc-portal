@@ -7,7 +7,7 @@ import { useCustomFetch } from './useCustomFetch'
 import { useStorage } from '@vueuse/core'
 import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
-import { useWalletChecks } from './useWalletChecks'
+import { useWalletChecks } from '@/composables'
 
 function createSiweMessage(params: Partial<SiweMessage>) {
   // Create SiweMessage instance with provided data

@@ -57,6 +57,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useChainId: mocks.mockUseChainId
   }
 })
+
 vi.mock('siwe', async (importOriginal) => {
   const actual: object = await importOriginal()
   const SiweMessage = mocks.mockSiwe.mockSiweMessage
@@ -97,6 +98,17 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
   MetaMaskUtil['hasInstalledWallet'] = mocks.mockHasInstalledWallet
 
   return { ...actual, MetaMaskUtil }
+})
+
+const mockUseWalletChecks = {
+  isProcessing: ref(false),
+  performChecks: vi.fn()
+}
+
+vi.mock('@/composables', () => {
+  return {
+    useWalletChecks: vi.fn(() => mockUseWalletChecks)
+  }
 })
 
 const mockCustomFetch = {
@@ -151,6 +163,7 @@ describe('useSiwe', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     mockUseConnect.connectors = [{ name: 'MetaMask', getChainId: () => 31137 }]
+    mockUseWalletChecks.performChecks.mockImplementation(() => true)
   })
   afterEach(() => {
     vi.clearAllMocks()
@@ -234,6 +247,14 @@ describe('useSiwe', () => {
     await flushPromises()
     expect(logInfoSpy).toBeCalledWith('fetchError.value', new Error('Error getting data'))
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to fetch nonce')
+    expect(isProcessing.value).toBe(false)
+  })
+  it('should update isProcessing to false if checks failed', async () => {
+    mockUseWalletChecks.performChecks.mockReset()
+    mockUseWalletChecks.performChecks.mockImplementation(() => false)
+    const { isProcessing, siwe } = useSiwe()
+    await siwe()
+    await flushPromises()
     expect(isProcessing.value).toBe(false)
   })
 })
