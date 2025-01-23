@@ -12,7 +12,7 @@ import { log, parseError } from '@/utils'
 
 export function useWalletChecks() {
   const { addErrorToast } = useToastStore()
-  const { connectors, connect, error: connectError } = useConnect()
+  const { connectors, connect, error: connectError, isPending: isPendingConnect } = useConnect()
   const { switchChain } = useSwitchChain()
   const { isConnected } = useAccount()
 
@@ -55,7 +55,7 @@ export function useWalletChecks() {
       })
     }
 
-    return true
+    return isConnected.value
   }
 
   async function performChecks() {
@@ -69,7 +69,7 @@ export function useWalletChecks() {
       }
 
       const networkValid = await validateNetwork(metaMaskConnector)
-      if (!networkValid) {
+      if (!networkValid && !isPendingConnect.value) {
         isProcessing.value = false
         return false
       }
