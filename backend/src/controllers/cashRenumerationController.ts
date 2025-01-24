@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { prisma, errorResponse } from "../utils";
 import dayjs from "dayjs";
-import { Claim, ClaimStatus } from "@prisma/client";
+import { Claim, ClaimStatus, Prisma } from "@prisma/client";
 
 export const addEmployeeWage = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -52,6 +52,7 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
 
 export const getMonthlyClaims = async (req: Request, res: Response) => {
   const address = (req as any).address;
+  const teamId = req.params.id;
 
   var firstDayInMonth = dayjs().startOf("month").toDate();
   var lastDayInMonth = dayjs().endOf("month").toDate();
@@ -59,42 +60,47 @@ export const getMonthlyClaims = async (req: Request, res: Response) => {
   try {
     const { withdrawedAmount } = await prisma.$queryRaw<{
       withdrawedAmount: number;
-    }>`
+    }>(
+      Prisma.sql`
       SELECT
-        SUM(c.hoursWorked) * mtd.hourlyRate as withdrawedAmount
-      FROM claims c
-      JOIN MemberTeamsData mtd ON c.memberTeamsDataId = mtd.id
-      WHERE mtd.userAddress = ${address}
-      AND c.status = ${ClaimStatus.WITHDRAWED}
-      AND c.withdrawedAt >= ${firstDayInMonth}
-      AND c.withdrawedAt <= ${lastDayInMonth}
-      GROUP BY mtd.userAddress`;
+        SUM("c"."hoursWorked") * "mtd"."hourlyRate"::decimal as withdrawedAmount
+      FROM "Claim" c
+      JOIN "MemberTeamsData" mtd ON "c"."memberTeamsDataId" = "mtd"."id"
+      WHERE "mtd"."userAddress" = ${address}::text
+      AND "mtd"."teamId" = ${teamId}::int
+      AND "c"."status" = ${ClaimStatus.WITHDRAWED}::"ClaimStatus"
+      AND "c"."withdrawedAt" >= ${firstDayInMonth}::timestamp
+      AND "c"."withdrawedAt" <= ${lastDayInMonth}::timestamp
+      GROUP BY "mtd"."id"`
+    );
 
     const { approvedAmount } = await prisma.$queryRaw<{
       approvedAmount: number;
-    }>`
+    }>(
+      Prisma.sql`
       SELECT
-        SUM(c.hoursWorked) * mtd.hourlyRate as approvedAmount
-      FROM claims c
-      JOIN MemberTeamsData mtd ON c.memberTeamsDataId = mtd.id
-      WHERE mtd.userAddress = ${address}
-      AND c.status = ${ClaimStatus.APPROVED}
-      AND c.approvedAt >= ${firstDayInMonth}
-      AND c.approvedAt <= ${lastDayInMonth}
-      GROUP BY mtd.userAddress`;
+        SUM("c"."hoursWorked") * "mtd"."hourlyRate"::decimal as approvedAmount
+      FROM "Claim" c
+      JOIN "MemberTeamsData" mtd ON "c"."memberTeamsDataId" = "mtd"."id"
+      WHERE "mtd"."userAddress" = ${address}::text
+      AND "mtd"."teamId" = ${teamId}::int
+      AND "c"."status" = ${ClaimStatus.APPROVED}::"ClaimStatus"
+      AND "c"."approvedAt" >= ${firstDayInMonth}::timestamp
+      AND "c"."approvedAt" <= ${lastDayInMonth}::timestamp
+      GROUP BY "mtd"."id"`
+    );
 
-    //clean up
-    await prisma.$disconnect();
-
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       data: {
-        withdrawedAmount,
-        approvedAmount,
+        withdrawedAmount: withdrawedAmount || 0,
+        approvedAmount: approvedAmount || 0,
       },
     });
   } catch (error) {
     return errorResponse(500, error, res);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 

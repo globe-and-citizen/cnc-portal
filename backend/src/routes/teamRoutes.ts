@@ -15,6 +15,7 @@ import {
   createClaim,
   updateClaim,
   getClaims,
+  getMonthlyClaims,
 } from "../controllers/cashRenumerationController";
 const teamRoutes = express.Router();
 
@@ -31,6 +32,7 @@ teamRoutes.get("/:id/expense-data", getExpenseAccountData);
 teamRoutes.post("/:id/cash-remunerations/wages", addEmployeeWage);
 
 teamRoutes.get("/:id/cash-remunerations/claims", getClaims);
+teamRoutes.get("/:id/cash-remunerations/monthly-claims", getMonthlyClaims);
 teamRoutes.post("/:id/cash-remunerations/claims", createClaim);
 teamRoutes.patch("/:id/cash-remuneration/claims/:id", updateClaim);
 
