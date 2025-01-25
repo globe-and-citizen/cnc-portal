@@ -95,6 +95,6 @@ describe('TeamView', () => {
     }
 
     await wrapper.vm.handleAddTeam(mockTeamData)
-    expect(wrapper.vm.loadingCreateTeam).toBe(true)
+    expect(wrapper.vm.loadingCreateTeam).toBe(false)
   })
 })

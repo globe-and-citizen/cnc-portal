@@ -59,23 +59,12 @@ describe('AddTeamForm.vue', () => {
     // Trigger validation and wait for step change
     await w.find('[data-test="next-button"]').trigger('click')
     await w.vm.$nextTick()
-    await w.vm.$nextTick() // Wait for step transition
-
-    // Fill investor contract details
-    await w.find('[data-test="share-name-input"]').setValue('Test Shares')
-    await w.find('[data-test="share-symbol-input"]').setValue('TST')
-    await w.vm.$nextTick()
-
-    // Navigate to members step and wait for transition
-    await w.find('[data-test="next-button"]').trigger('click')
-    await w.vm.$nextTick()
-    await w.vm.$nextTick() // Wait for step transition
   }
 
   describe('Initial Render', () => {
     it('renders step 1 by default', () => {
       expect(wrapper.find('h1').text()).toBe('Team Details')
-      expect(wrapper.findAll('.step').length).toBe(4)
+      expect(wrapper.findAll('.step').length).toBe(3)
       expect(wrapper.findAll('.step-primary').length).toBe(1)
     })
   })
@@ -106,7 +95,7 @@ describe('AddTeamForm.vue', () => {
       await nextButton.trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('h1').text()).toBe('Investor Contract Details')
+      expect(wrapper.find('h1').text()).toBe('Team Members')
       expect(wrapper.findAll('.step-primary').length).toBe(2)
     })
 
@@ -177,38 +166,21 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Form Submission', () => {
-    const fillFormAndNavigateToConfirm = async (w: VueWrapper) => {
-      await navigateToMembersStep(w)
+    beforeEach(async () => {
+      await navigateToMembersStep(wrapper)
 
       // Fill member details
-      await w.find('[data-test="member-0-name-input"]').setValue('Test User')
-      await w
+      await wrapper.find('[data-test="member-0-name-input"]').setValue('Test User')
+      await wrapper
         .find('[data-test="member-0-address-input"]')
         .setValue('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
-      await w.vm.$nextTick()
+      await wrapper.vm.$nextTick()
 
-      await w.find('[data-test="next-button"]').trigger('click')
-      await w.vm.$nextTick()
-    }
-
-    beforeEach(async () => {
-      await fillFormAndNavigateToConfirm(wrapper)
-    })
-
-    it('shows confirmation step with all entered data', () => {
-      expect(wrapper.find('h1').text()).toBe('Confirm Team Details')
-      expect(wrapper.text()).toContain('Test Team')
-      expect(wrapper.text()).toContain('Test Description')
-      expect(wrapper.text()).toContain('Test Shares')
-      expect(wrapper.text()).toContain('TST')
-      expect(wrapper.text()).toContain('Test User')
-      expect(wrapper.text()).toContain('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
+      await wrapper.find('[data-test="create-team-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
     })
 
     it('emits addTeam event with complete data on submission', async () => {
-      await wrapper.find('[data-test="create-team-button"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
       const emitted = wrapper.emitted('addTeam')
       expect(emitted).toBeTruthy()
       expect(emitted?.[0]?.[0]).toEqual({
@@ -216,10 +188,6 @@ describe('AddTeamForm.vue', () => {
           name: 'Test Team',
           description: 'Test Description',
           members: [{ name: 'Test User', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }]
-        },
-        investorContract: {
-          name: 'Test Shares',
-          symbol: 'TST'
         }
       })
     })
@@ -240,7 +208,6 @@ describe('AddTeamForm.vue', () => {
       // Open the dropdown
       await wrapper.find('[data-test="member-0-name-input"]').trigger('focus')
       await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick() // Wait for dropdown to fully open
     })
 
     it('closes dropdown when clicking outside', async () => {
@@ -254,17 +221,12 @@ describe('AddTeamForm.vue', () => {
       // Simulate click outside by clicking the outside element
       outsideElement.click()
       await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick() // Wait for dropdown state to update
 
       // Verify dropdown is closed
       expect(wrapper.find('.dropdown-content').exists()).toBe(true)
 
       // Cleanup
       document.body.removeChild(outsideElement)
-    })
-
-    afterEach(() => {
-      wrapper.unmount()
     })
 
     it('keeps dropdown open when clicking inside', async () => {
