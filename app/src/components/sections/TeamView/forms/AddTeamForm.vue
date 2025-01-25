@@ -5,7 +5,6 @@
       <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Team Details</a>
       <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Members</a>
       <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Investor Contract</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 4 }">Deploy Contracts</a>
     </div>
 
     <!-- Step 1: Team Details -->
@@ -186,30 +185,6 @@
       </div>
     </div>
 
-    <!-- Step 4: Deploy Contracts -->
-    <div v-if="currentStep === 4">
-      <h1 class="font-bold text-2xl mb-4">Deploy Contracts</h1>
-      <hr class="mb-6" />
-      <div class="flex flex-col gap-5">
-        <div class="bg-base-200 p-4 rounded-lg">
-          <h3 class="font-bold mb-2">Team Information</h3>
-          <p><span class="font-semibold">Name:</span> {{ teamData.name }}</p>
-          <p><span class="font-semibold">Description:</span> {{ teamData.description }}</p>
-        </div>
-        <div class="bg-base-200 p-4 rounded-lg">
-          <h3 class="font-bold mb-2">Investor Contract</h3>
-          <p><span class="font-semibold">Share Name:</span> {{ investorContract.name }}</p>
-          <p><span class="font-semibold">Symbol:</span> {{ investorContract.symbol }}</p>
-        </div>
-        <div class="bg-base-200 p-4 rounded-lg">
-          <h3 class="font-bold mb-2">Team Members</h3>
-          <div v-for="(member, index) in teamData.members" :key="index" class="mb-2">
-            <p>{{ member.name }} | {{ member.address }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Navigation Buttons -->
     <div class="flex justify-between mt-6">
       <ButtonUI
@@ -260,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import useVuelidate from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import { isAddress } from 'viem'
@@ -332,6 +307,18 @@ const saveTeamToDatabase = async () => {
     team: teamData.value
   })
 }
+
+// Add a watch for isLoading prop
+watch(
+  () => props.isLoading,
+  (newValue, oldValue) => {
+    // If loading has finished (was true, now false)
+    if (oldValue && !newValue) {
+      // Move to next step
+      nextStep()
+    }
+  }
+)
 
 const deployContracts = async () => {
   $vInvestor.value.$touch()

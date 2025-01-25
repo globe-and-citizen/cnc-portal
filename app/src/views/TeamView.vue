@@ -91,7 +91,7 @@ import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { type TeamInput, type User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { TeamsResponse } from '@/types'
+import type { Team, TeamsResponse } from '@/types'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
@@ -186,24 +186,51 @@ const {
   isFetching: createTeamFetching,
   error: createTeamError,
   execute: executeCreateTeam,
-  response: createTeamResponse
+  response: createTeamResponse,
+  data: createTeamData
 } = useCustomFetch('teams', {
   immediate: false
 })
   .post(team)
-  .json()
+  .json<Partial<Team>>()
 
-watch(createTeamError, () => {
-  if (createTeamError.value) {
-    addErrorToast(createTeamError.value)
+// Remove the existing updateTeam fetch and create a function to handle updates
+const updateTeam = async (teamId: number) => {
+  const {
+    execute: executeUpdate,
+    error: updateError,
+    response: updateResponse
+  } = useCustomFetch(`teams/${teamId}`, {
+    immediate: false
+  })
+    .put(team)
+    .json()
+
+  try {
+    await executeUpdate()
+    if (updateResponse.value?.ok) {
+      addSuccessToast('Team updated successfully')
+    } else if (updateError.value) {
+      console.log('updateTeamError', updateError.value)
+      addErrorToast(updateError.value)
+    }
+  } catch (error) {
+    console.error('Error updating team:', error)
+    addErrorToast('Failed to update team')
   }
-})
+}
 
 watch(
-  [() => createTeamFetching.value, () => createTeamError.value, () => createTeamResponse.value],
+  [
+    () => createTeamFetching.value,
+    () => createTeamError.value,
+    () => createTeamResponse.value,
+    () => createTeamData.value
+  ],
   () => {
     if (!createTeamFetching.value && !createTeamError.value && createTeamResponse.value?.ok) {
       addSuccessToast('Team created successfully')
+      console.log('createTeamData', createTeamData.value)
       loadingCreateTeam.value = false
     }
   }
@@ -268,7 +295,6 @@ watch(teamError, () => {
 watch(createTeamError, () => {
   if (createTeamError.value) {
     addErrorToast(createTeamError.value)
-    loadingCreateTeam.value = false
   }
 })
 
@@ -287,6 +313,7 @@ const handleAddTeam = async (data: { team: TeamInput }) => {
   } catch (error) {
     addErrorToast('Error creating team')
     console.log(error)
+  } finally {
     loadingCreateTeam.value = false
   }
 }
@@ -437,8 +464,13 @@ useWatchContractEvent({
     } else {
       try {
         team.value.officerAddress = proxyAddress as Address
-        // Update the team with officer address
-        await executeCreateTeam()
+        console.log('team.value', team.value)
+        // Update the team with officer address if we have the team ID
+        if (createTeamData.value?.id) {
+          await updateTeam(Number(createTeamData.value.id))
+        } else {
+          throw new Error('Team ID not found')
+        }
         loading.value = false
         loadingCreateTeam.value = false
         // Close modal and reset after successful contract deployment
