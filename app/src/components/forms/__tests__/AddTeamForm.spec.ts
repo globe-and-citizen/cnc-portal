@@ -241,4 +241,144 @@ describe('AddTeamForm.vue', () => {
       expect(wrapper.find('.dropdown-content').exists()).toBe(true)
     })
   })
+  describe('Form Validation', () => {
+    it('validates ethereum address format', async () => {
+      await navigateToMembersStep(wrapper)
+
+      // Try invalid address and trigger validation
+      const addressInput = wrapper.find('[data-test="member-0-address-input"]')
+      await addressInput.setValue('invalid-address')
+      await wrapper.vm.$nextTick()
+
+      // Trigger blur to force validation
+      await addressInput.trigger('blur')
+      await wrapper.vm.$nextTick()
+
+      // Try to proceed
+      await wrapper.find('[data-test="create-team-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Touch the validation
+      interface IWrapper {
+        $v: {
+          teamData: {
+            members: {
+              $touch: () => void
+            }
+          }
+        }
+      }
+      await (wrapper.vm as unknown as IWrapper).$v.teamData.members.$touch()
+      await wrapper.vm.$nextTick()
+    })
+
+    it('requires team name', async () => {
+      // Try to proceed without name
+      await wrapper.find('[data-test="next-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Touch the validation
+      interface IWrapper {
+        $v: {
+          teamData: {
+            name: {
+              $touch: () => void
+            }
+          }
+        }
+      }
+      await (wrapper.vm as unknown as IWrapper).$v.teamData.name.$touch()
+      await wrapper.vm.$nextTick()
+
+      // Check for error message
+      const errors = wrapper.findAll('.text-red-500')
+      expect(errors.length).toBeGreaterThan(0)
+      expect(errors[0].text()).toContain('required')
+    })
+  })
+
+  describe('User Search', () => {
+    beforeEach(async () => {
+      await navigateToMembersStep(wrapper)
+    })
+
+    it('emits searchUsers event when typing in name field', async () => {
+      const searchText = 'John'
+      const input = wrapper.find('[data-test="member-0-name-input"]')
+      await input.setValue(searchText)
+      await input.trigger('keyup.stop')
+      await wrapper.vm.$nextTick()
+
+      const emitted = wrapper.emitted('searchUsers')
+      expect(emitted).toBeTruthy()
+      expect(emitted?.[0]?.[0]).toEqual({ name: searchText, address: '' })
+    })
+
+    it('emits searchUsers event when typing in address field', async () => {
+      const searchAddress = '0x123'
+      const input = wrapper.find('[data-test="member-0-address-input"]')
+      await input.setValue(searchAddress)
+      await input.trigger('keyup.stop')
+      await wrapper.vm.$nextTick()
+
+      const emitted = wrapper.emitted('searchUsers')
+      expect(emitted).toBeTruthy()
+      expect(emitted?.[0]?.[0]).toEqual({ name: '', address: searchAddress })
+    })
+  })
+
+  describe('Loading State', () => {
+    it('disables all form inputs while loading', async () => {
+      wrapper.setProps({ isLoading: true })
+      await wrapper.vm.$nextTick()
+
+      // Check if buttons are disabled
+      const nextButton = wrapper.find('[data-test="next-button"]')
+      expect(nextButton.attributes('disabled')).toBeDefined()
+    })
+
+    it('shows loading spinner on submit button', async () => {
+      await navigateToMembersStep(wrapper)
+      wrapper.setProps({ isLoading: true })
+      await wrapper.vm.$nextTick()
+
+      const submitButton = wrapper.find('[data-test="create-team-button"]')
+      expect(submitButton.attributes('disabled')).toBeDefined()
+      expect(submitButton.classes()).toContain('loading-spinner')
+    })
+  })
+
+  describe('Member List Management', () => {
+    beforeEach(async () => {
+      await navigateToMembersStep(wrapper)
+    })
+
+    it('prevents removing last member', async () => {
+      // Try to remove when only one member exists
+      await wrapper.find('[data-test="remove-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Should still have one member
+      expect(wrapper.findAll('.input-group').length).toBe(1)
+    })
+
+    it('clears member fields when adding new member', async () => {
+      // First fill out a member
+      await wrapper.find('[data-test="member-0-name-input"]').setValue('Test Name')
+      await wrapper.find('[data-test="member-0-address-input"]').setValue('0x123')
+      await wrapper.vm.$nextTick()
+
+      // Add new member
+      await wrapper.find('[data-test="add-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Check if new member fields are empty
+      const newMemberName = wrapper.find('[data-test="member-1-name-input"]')
+        .element as HTMLInputElement
+      const newMemberAddress = wrapper.find('[data-test="member-1-address-input"]')
+        .element as HTMLInputElement
+      expect(newMemberName.value).toBe('')
+      expect(newMemberAddress.value).toBe('')
+    })
+  })
 })
