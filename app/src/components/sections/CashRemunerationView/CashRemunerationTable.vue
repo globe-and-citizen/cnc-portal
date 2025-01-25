@@ -1,4 +1,15 @@
 <template>
+  <div class="form-control flex flex-row gap-1">
+    <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
+      <span class="label-text">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</span>
+      <input
+        type="radio"
+        name="pending"
+        class="radio checked:bg-primary"
+        :checked="selectedRadio === status"
+      />
+    </label>
+  </div>
   <div class="card bg-base-100 w-full shadow-xl">
     <TableComponent :rows="claims" :columns="columns">
       <template #action-data="{ row }">
@@ -27,6 +38,21 @@
           </div>
         </div>
       </template>
+      <template #hourlyRate-data="{ row }">
+        <span> ${{ row.hourlyRate }}</span>
+      </template>
+      <template #status-data="{ row }">
+        <span
+          class="badge"
+          :class="{
+            'badge-info': row.status === 'Pending',
+            'badge-outline': row.status === 'Approved',
+            'bg-error': row.status === 'Disabled',
+            'bg-neutral text-white': row.status === 'Withdrawn'
+          }"
+          >{{ row.status == 'Pending' ? 'Submitted' : row.status }}</span
+        >
+      </template>
     </TableComponent>
   </div>
 </template>
@@ -34,7 +60,10 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import { ref } from 'vue'
 
+const statusses = ['all', 'pending', 'approved', 'disabled', 'withdrawn']
+const selectedRadio = ref('all')
 const claims = [
   {
     id: 1,
