@@ -1,10 +1,38 @@
 <template>
   <div class="card bg-base-100 w-full shadow-xl">
-    <TableComponent :rows="claims" :columns="columns"></TableComponent>
+    <TableComponent :rows="claims" :columns="columns">
+      <template #action-data="{ row }">
+        <ButtonUI v-if="row.status == 'Pending'" variant="success" @click="() => {}"
+          >Approve</ButtonUI
+        >
+        <ButtonUI v-if="row.status == 'Approved'" variant="error" @click="() => {}"
+          >Disable</ButtonUI
+        >
+        <ButtonUI v-if="row.status == 'Disabled'" variant="info" @click="() => {}">Enable</ButtonUI>
+      </template>
+      <template #member-data="{ row }">
+        <div class="flex w-full gap-2">
+          <div class="w-8 sm:w-10">
+            <img
+              alt="User avatar"
+              class="rounded-full"
+              src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+            />
+          </div>
+          <div class="flex flex-col text-gray-600">
+            <p class="font-bold text-sm line-clamp-1" data-test="user-name">{{ row.name }}</p>
+            <p class="text-sm" data-test="formatted-address">
+              {{ row.address?.slice(0, 6) }}...{{ row.address?.slice(-6) }}
+            </p>
+          </div>
+        </div>
+      </template>
+    </TableComponent>
   </div>
 </template>
 
 <script setup lang="ts">
+import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 
 const claims = [
@@ -12,7 +40,7 @@ const claims = [
     id: 1,
     name: 'Lindsay Walton',
     img: 'https://randomuser.me/api/portraits',
-    address: '0x1234567890',
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     hourlyRate: '10',
     hoursWorked: 10,
     status: 'Pending',
@@ -22,7 +50,7 @@ const claims = [
     id: 2,
     name: 'Courtney Henry',
     img: 'https://randomuser.me/api/portraits',
-    address: '0x1234567890',
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     hourlyRate: '10',
     hoursWorked: 10,
     status: 'Approved',
@@ -32,7 +60,7 @@ const claims = [
     id: 3,
     name: 'Tom Cook',
     img: 'https://randomuser.me/api/portraits',
-    address: '0x1234567890',
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     hourlyRate: '10',
     hoursWorked: 10,
     status: 'Disabled',
@@ -42,7 +70,7 @@ const claims = [
     id: 4,
     name: 'Whitney Francis',
     img: 'https://randomuser.me/api/portraits',
-    address: '0x1234567890',
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     hourlyRate: '10',
     hoursWorked: 10,
     status: 'Pending',
@@ -52,7 +80,7 @@ const claims = [
     id: 5,
     name: 'Leonard Krasner',
     img: 'https://randomuser.me/api/portraits',
-    address: '0x1234567890',
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     hourlyRate: '10',
     hoursWorked: 10,
     status: 'Withdrawn',
@@ -67,7 +95,7 @@ const columns = [
     sortable: true
   },
   {
-    key: 'name',
+    key: 'member',
     label: 'Member',
     sortable: false
   },
