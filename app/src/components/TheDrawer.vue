@@ -230,6 +230,11 @@ const menuItems = [
     route: '/bank'
   },
   {
+    label: 'Cash Remuneration',
+    icon: BanknotesIcon,
+    route: `teams/${currentTeam.value?.id}/cash-remunerations`
+  },
+  {
     label: 'Transactions',
     icon: ChartBarIcon,
     route: '/transactions'

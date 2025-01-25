@@ -1,11 +1,11 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import CashRemunerationSection from '../CashRemunerationSection.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Team } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
+import CashRemunerationSection from '../../CashRemunerationView/CashRemunerationSection.vue'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({
