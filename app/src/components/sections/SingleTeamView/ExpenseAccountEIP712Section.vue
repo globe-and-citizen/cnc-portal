@@ -319,7 +319,7 @@
 </template>
 
 <script setup lang="ts">
-//#region imports
+//#region Imports
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type {
   Team,
@@ -353,10 +353,9 @@ import { USDC_ADDRESS } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-//#endregion imports
+//#endregion
 
-//#region variable declarations
-const currentUserAddress = useUserDataStore().address
+//#region Refs
 const props = defineProps<{ team: Partial<Team> }>()
 const emits = defineEmits(['getTeam'])
 const team = ref(props.team)
@@ -368,6 +367,8 @@ const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
+const signatureHash = ref<string | null>(null)
+const deactivateIndex = ref<number | null>(null)
 const maxLimit = (budgetType: number) =>
   computed(() => {
     const budgetData =
@@ -421,19 +422,31 @@ const dynamicDisplayData = (budgetType: number) =>
       }
     }
   })
-const dynamicDisplayDataTx = dynamicDisplayData(0)
-const dynamicDisplayDataAmount = dynamicDisplayData(1)
-const { addErrorToast, addSuccessToast } = useToastStore()
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
     return formatEther(expenseAccountBalance.value.value)
   else return '--'
 })
-const signatureHash = ref<string | null>(null)
-const deactivateIndex = ref<number | null>(null)
-//#endregion variable declarations
+const dynamicDisplayDataTx = dynamicDisplayData(0)
+const dynamicDisplayDataAmount = dynamicDisplayData(1)
+// Reactive storage for balances
+const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
+const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
 
-//#region expense account composable
+// Check if the current user is disapproved
+const isDisapprovedAddress = computed(
+  () =>
+    manyExpenseAccountDataInactive.findIndex(
+      (item) => item.approvedAddress === currentUserAddress
+    ) !== -1
+)
+//#endregion
+
+//#region Composables
+const currentUserAddress = useUserDataStore().address
+const { addErrorToast, addSuccessToast } = useToastStore()
+const { signTypedData, data: signature, error: signTypedDataError } = useSignTypedData()
+const chainId = useChainId()
 const {
   data: contractOwnerAddress,
   refetch: executeExpenseAccountGetOwner,
@@ -442,6 +455,16 @@ const {
   functionName: 'owner',
   address: team.value.expenseAccountEip712Address as Address,
   abi: expenseAccountABI
+})
+
+const {
+  data: expenseAccountBalance,
+  isLoading: isLoadingExpenseAccountBalance,
+  error: isErrorExpenseAccountBalance,
+  refetch: executeGetExpenseAccountBalance
+} = useBalance({
+  address: team.value.expenseAccountEip712Address as Address,
+  chainId
 })
 
 const {
@@ -456,18 +479,103 @@ const {
   args: [signatureHash]
 })
 
-// Reactive storage for balances
-const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
-const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
+//expense account transfer
+const {
+  writeContract: executeExpenseAccountTransfer,
+  isPending: isLoadingTransfer,
+  error: errorTransfer,
+  data: transferHash
+} = useWriteContract()
 
-// Check if the current user is disapproved
-const isDisapprovedAddress = computed(
-  () =>
-    manyExpenseAccountDataInactive.findIndex(
-      (item) => item.approvedAddress === currentUserAddress
-    ) !== -1
-)
+const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
+  useWaitForTransactionReceipt({
+    hash: transferHash
+  })
 
+//deactivate approval
+const {
+  writeContract: executeDeactivateApproval,
+  isPending: isLoadingDeactivateApproval,
+  error: errorDeactivateApproval,
+  data: deactivateHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
+  useWaitForTransactionReceipt({
+    hash: deactivateHash
+  })
+
+//activate approval
+const {
+  writeContract: executeActivateApproval,
+  isPending: isLoadingActivateApproval,
+  error: errorActivateApproval,
+  data: activateHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
+  useWaitForTransactionReceipt({
+    hash: activateHash
+  })
+//#endregion
+
+//#region useCustomFetch
+const {
+  error: fetchExpenseAccountDataError,
+  // isFetching: isFetchingExpenseAccountData,
+  execute: fetchExpenseAccountData,
+  data: _expenseAccountData
+} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: currentUserAddress,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+const {
+  error: fetchManyExpenseAccountDataError,
+  //isFetching: isFetchingManyExpenseAccountData,
+  execute: fetchManyExpenseAccountData,
+  data: manyExpenseAccountData
+} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
+  immediate: false
+})
+  .get()
+  .json<ManyExpenseResponse[]>()
+
+const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (!searchUserName.value && !searchUserAddress.value) return
+    if (searchUserName.value) params.append('name', searchUserName.value)
+    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+const { execute: executeAddExpenseData } = useCustomFetch(`teams/${team.value.id}/expense-data`, {
+  immediate: false
+})
+  .post(expenseAccountData)
+  .json()
+//#endregion
+
+//#region Functions
 // Async initialization function
 const initializeBalances = async () => {
   manyExpenseAccountDataActive.length = 0
@@ -511,66 +619,15 @@ const initializeBalances = async () => {
     }
 }
 
-watch(errorGetAmountWithdrawn, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to fetch amount withdrawn')
-  }
-})
-
-//expense account transfer
-const {
-  writeContract: executeExpenseAccountTransfer,
-  isPending: isLoadingTransfer,
-  error: errorTransfer,
-  data: transferHash
-} = useWriteContract()
-
-watch(errorTransfer, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to transfer')
-  }
-})
-
-const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
-  useWaitForTransactionReceipt({
-    hash: transferHash
-  })
-watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
-    addSuccessToast('Transfer Successful')
-    await executeGetExpenseAccountBalance()
-    await getAmountWithdrawnBalance()
-    transferModal.value = false
-  }
-})
-
-//deactivate approval
-const {
-  writeContract: executeDeactivateApproval,
-  isPending: isLoadingDeactivateApproval,
-  error: errorDeactivateApproval,
-  data: deactivateHash
-} = useWriteContract()
-
-watch(errorDeactivateApproval, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to deactivate approval')
-  }
-})
-
-const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
-  useWaitForTransactionReceipt({
-    hash: deactivateHash
-  })
-watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
-    addSuccessToast('Deactivate Successful')
-    await initializeBalances()
-  }
-})
+const init = async () => {
+  await getExpenseAccountOwner()
+  await fetchExpenseAccountData()
+  await fetchManyExpenseAccountData()
+  await initializeBalances()
+  // await fetchExpenseAccountData()
+  await getAmountWithdrawnBalance()
+  await fetchUsdcBalance()
+}
 
 const deactivateApproval = async (signature: `0x{string}`, index: number) => {
   deactivateIndex.value = index
@@ -584,32 +641,6 @@ const deactivateApproval = async (signature: `0x{string}`, index: number) => {
   })
 }
 
-//activate approval
-const {
-  writeContract: executeActivateApproval,
-  isPending: isLoadingActivateApproval,
-  error: errorActivateApproval,
-  data: activateHash
-} = useWriteContract()
-
-watch(errorActivateApproval, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to activate approval')
-  }
-})
-
-const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
-  useWaitForTransactionReceipt({
-    hash: activateHash
-  })
-watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
-    addSuccessToast('Activate Successful')
-    await initializeBalances()
-  }
-})
-
 const activateApproval = async (signature: `0x{string}`, index: number) => {
   deactivateIndex.value = index
   const signatureHash = keccak256(signature)
@@ -620,85 +651,6 @@ const activateApproval = async (signature: `0x{string}`, index: number) => {
     abi: expenseAccountABI,
     functionName: 'activateApproval'
   })
-}
-
-// useFetch instance for fetching expence account data
-const {
-  error: fetchExpenseAccountDataError,
-  // isFetching: isFetchingExpenseAccountData,
-  execute: fetchExpenseAccountData,
-  data: _expenseAccountData
-} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    options.headers = {
-      memberaddress: currentUserAddress,
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
-
-const {
-  error: fetchManyExpenseAccountDataError,
-  //isFetching: isFetchingManyExpenseAccountData,
-  execute: fetchManyExpenseAccountData,
-  data: manyExpenseAccountData
-} = useCustomFetch(`teams/${String(team.value.id)}/expense-data`, {
-  immediate: false
-})
-  .get()
-  .json<ManyExpenseResponse[]>()
-
-watch(fetchManyExpenseAccountDataError, (newVal) => {
-  if (newVal) {
-    addErrorToast('Error fetching many expense account data')
-    log.error(parseError(newVal))
-  }
-})
-
-const {
-  execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
-} = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
-
-const { execute: executeAddExpenseData } = useCustomFetch(`teams/${team.value.id}/expense-data`, {
-  immediate: false
-})
-  .post(expenseAccountData)
-  .json()
-
-watch(searchUserResponse, () => {
-  if (searchUserResponse.value?.ok && users.value?.users) {
-    foundUsers.value = users.value.users
-  }
-})
-
-//#region helper functions
-const init = async () => {
-  await getExpenseAccountOwner()
-  await fetchExpenseAccountData()
-  await fetchManyExpenseAccountData()
-  await initializeBalances()
-  // await fetchExpenseAccountData()
-  await getAmountWithdrawnBalance()
-  await fetchUsdcBalance()
 }
 
 const getExpenseAccountOwner = async () => {
@@ -736,28 +688,6 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     })
   }
 }
-
-const { signTypedData, data: signature, error: signTypedDataError } = useSignTypedData()
-
-watch(signature, async (newVal) => {
-  if (newVal && expenseAccountData.value) {
-    expenseAccountData.value = {
-      expenseAccountData: expenseAccountData.value,
-      signature
-    }
-    await executeAddExpenseData()
-    emits('getTeam')
-    loadingApprove.value = false
-  }
-})
-
-watch(signTypedDataError, async (newVal) => {
-  if (newVal) {
-    addErrorToast('Error signing expense data')
-    log.error('signTypedDataError.value', parseError(newVal))
-    loadingApprove.value = false
-  }
-})
 
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
@@ -818,11 +748,7 @@ const errorMessage = (error: {}, message: string) =>
   'reason' in error ? (error.reason as string) : message
 //#endregion helper functions
 
-//#region watch error
-watch(errorGetOwner, (newVal) => {
-  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
-})
-
+//#region Watch
 watch(
   () => team.value.expenseAccountAddress,
   async (newVal) => {
@@ -830,27 +756,105 @@ watch(
   }
 )
 
+watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
+    addSuccessToast('Transfer Successful')
+    await executeGetExpenseAccountBalance()
+    await getAmountWithdrawnBalance()
+    transferModal.value = false
+  }
+})
+
+watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
+    addSuccessToast('Activate Successful')
+    await initializeBalances()
+  }
+})
+
+watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
+    addSuccessToast('Deactivate Successful')
+    await initializeBalances()
+  }
+})
+
+watch(signature, async (newVal) => {
+  if (newVal && expenseAccountData.value) {
+    expenseAccountData.value = {
+      expenseAccountData: expenseAccountData.value,
+      signature
+    }
+    await executeAddExpenseData()
+    emits('getTeam')
+    loadingApprove.value = false
+  }
+})
+
+watch(searchUserResponse, () => {
+  if (searchUserResponse.value?.ok && users.value?.users) {
+    foundUsers.value = users.value.users
+  }
+})
+
+watch(errorGetOwner, (newVal) => {
+  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
+})
+
+watch(errorGetAmountWithdrawn, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to fetch amount withdrawn')
+  }
+})
+
+watch(errorTransfer, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to transfer')
+  }
+})
+
+watch(errorDeactivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to deactivate approval')
+  }
+})
+
+watch(errorActivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to activate approval')
+  }
+})
+
+watch(signTypedDataError, async (newVal) => {
+  if (newVal) {
+    addErrorToast('Error signing expense data')
+    log.error('signTypedDataError.value', parseError(newVal))
+    loadingApprove.value = false
+  }
+})
+
+watch(fetchManyExpenseAccountDataError, (newVal) => {
+  if (newVal) {
+    addErrorToast('Error fetching many expense account data')
+    log.error(parseError(newVal))
+  }
+})
+
 watch(fetchExpenseAccountDataError, (newVal) => {
   if (newVal) addErrorToast('Error fetching expense account data')
 })
-//#endregion watch success
 
-const chainId = useChainId()
-const {
-  data: expenseAccountBalance,
-  isLoading: isLoadingExpenseAccountBalance,
-  error: isErrorExpenseAccountBalance,
-  refetch: executeGetExpenseAccountBalance
-} = useBalance({
-  address: team.value.expenseAccountEip712Address as Address,
-  chainId
-})
 watch(isErrorExpenseAccountBalance, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
     addErrorToast('Error fetching expense account data')
   }
 })
+//#endregion
 
 // Token related refs
 const tokenTransferModal = ref(false)
