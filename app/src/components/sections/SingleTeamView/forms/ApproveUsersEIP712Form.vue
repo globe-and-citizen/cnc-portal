@@ -99,6 +99,27 @@
     </div>
   </div>
 
+  <div>
+    <label class="input input-bordered flex items-center gap-2 input-md">
+      <span class="w-24">Token</span>
+      |
+      <select v-model="token" class="bg-white grow">
+        <option disabled :value="null">-- Select a token --</option>
+        <option v-for="(token, index) of tokens" :key="index">
+          {{ token }}
+        </option>
+      </select>
+    </label>
+  </div>
+
+  <div
+    data-test="limit-value-error"
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.token.$errors"
+    :key="error.$uid"
+  >
+    {{ error.$message }}
+  </div>
   <!--Select budget limit type
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md">
@@ -221,6 +242,7 @@ import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { NETWORK } from "@/constant";
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -235,6 +257,8 @@ const description = ref<string>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
+const token = ref<string | null>(null)
+const tokens = [NETWORK.currencySymbol, "USDC", "USDT"]
 
 //#region multi limit
 // Labels for budget types
@@ -292,6 +316,7 @@ const rules = {
       }
     )
   },
+  token: { required },
   // limitValue: {
   //   required,
   //   numeric
@@ -308,7 +333,7 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { /*budgetLimitType, */ description, /*limitValue, */ formData })
+const v$ = useVuelidate(rules, { /*budgetLimitType, */ description, /*limitValue, */ formData, token })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -324,11 +349,12 @@ const submitApprove = () => {
   if (v$.value.$invalid) {
     return
   }
-  emit('approveUser', {
-    approvedAddress: formData.value[0].address,
-    budgetData: resultArray.value,
-    expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
-  })
+  console.log(`selected token: `, token.value)
+  // emit('approveUser', {
+  //   approvedAddress: formData.value[0].address,
+  //   budgetData: resultArray.value,
+  //   expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
+  // })
 }
 </script>
 <style>
