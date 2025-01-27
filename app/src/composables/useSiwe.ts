@@ -42,7 +42,7 @@ export function useSiwe() {
     error: fetchUserNonceError,
     data: nonce,
     execute: executeFetchUserNonce
-  } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
+  } = useCustomFetch(apiEndpoint, { immediate: false }).get().json<Partial<User>>()
 
   const {
     error: fetchUserError,
