@@ -13,6 +13,7 @@ export function useSiwe() {
   //#region Refs
   const authData = ref({ signature: '', message: '' })
   const apiEndpoint = ref<string>('')
+  //#endregion
 
   //#region Composables
   const { addErrorToast } = useToastStore()
@@ -20,7 +21,12 @@ export function useSiwe() {
   const { address } = useAccount()
   const chainId = useChainId()
   const { data: signature, error: signMessageError, signMessage } = useSignMessage()
-  const { performChecks, isProcessing } = useWalletChecks()
+  const {
+    performChecks,
+    isProcessing,
+    isSuccess: isSuccessWalletCheck,
+    resetRefs
+  } = useWalletChecks()
   //#endregion
 
   //#region useCustomeFetch
@@ -28,7 +34,9 @@ export function useSiwe() {
     error: siweError,
     data: siweData,
     execute: executeAddAuthData
-  } = useCustomFetch<string>('auth/siwe', { immediate: false }).post(authData).json()
+  } = useCustomFetch('auth/siwe', { immediate: false })
+    .post(authData)
+    .json<{ accessToken: string }>()
 
   const {
     error: fetchUserNonceError,
@@ -40,7 +48,7 @@ export function useSiwe() {
     error: fetchUserError,
     data: user,
     execute: executeFetchUser
-  } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
+  } = useCustomFetch(apiEndpoint, { immediate: false }).get().json<Partial<User>>()
   //#endregion
 
   //#region Functions
@@ -66,28 +74,33 @@ export function useSiwe() {
 
   async function siwe() {
     try {
-      if (!(await performChecks())) {
-        isProcessing.value = false
-        return
-      }
-
-      if (address.value) {
-        await executeSiwe()
-      }
+      // if (!(await performChecks())) {
+      //   isProcessing.value = false
+      //   return
+      // }
+      await performChecks()
+      // if (address.value) {
+      //   await executeSiwe()
+      // }
     } catch (_error) {
       log.error(parseError(_error))
       addErrorToast("Couldn't authenticate with SIWE")
-      isProcessing.value = false
+      // isSuccessWalletCheck.value = false
+      // isProcessing.value = false
+      resetRefs()
     }
   }
   //#endregion
 
   //#region Watch
-  watch(address, async (newVal) => {
-    if (newVal) {
-      await executeSiwe()
-    }
+  watch(isSuccessWalletCheck, async (newStatus) => {
+    if (newStatus) await executeSiwe()
   })
+  // watch(address, async (newVal) => {
+  //   if (newVal) {
+  //     await executeSiwe()
+  //   }
+  // })
 
   /**
    * Watch for new signature to send auth payload to the backend
@@ -100,7 +113,7 @@ export function useSiwe() {
       //send authData payload to backend for authentication
       await executeAddAuthData()
       //get returned JWT authentication token and save to storage
-      const token = siweData.value.accessToken
+      const token = siweData.value?.accessToken
       const storageToken = useStorage('authToken', token)
       storageToken.value = token
       //update API endpoint to call
@@ -123,7 +136,7 @@ export function useSiwe() {
     if (newError) {
       log.error('signMessageError.value', newError)
       addErrorToast('Unable to sign SIWE message')
-      isProcessing.value = false
+      resetRefs()
     }
   })
 
@@ -131,7 +144,9 @@ export function useSiwe() {
     if (newError) {
       log.info('siweError.value', newError)
       addErrorToast('Unable to authenticate with SIWE')
-      isProcessing.value = false
+      // isProcessing.value = false
+      // isSuccessWalletCheck.value = false
+      resetRefs()
     }
   })
 
@@ -139,7 +154,9 @@ export function useSiwe() {
     if (newError) {
       log.info('fetchError.value', newError)
       addErrorToast('Unable to fetch nonce')
-      isProcessing.value = false
+      // isProcessing.value = false
+      // isSuccessWalletCheck.value = false'
+      resetRefs()
     }
   })
 
@@ -147,7 +164,9 @@ export function useSiwe() {
     if (newError) {
       log.info('fetchUserError.value', fetchUserError.value)
       addErrorToast('Unable to fetch user data')
-      isProcessing.value = false
+      // isProcessing.value = false
+      // isSuccessWalletCheck.value = false
+      resetRefs()
     }
   })
   //#endregion
