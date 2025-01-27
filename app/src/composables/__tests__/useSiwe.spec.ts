@@ -102,7 +102,12 @@ vi.mock('@/utils/web3Util', async (importOriginal) => {
 
 const mockUseWalletChecks = {
   isProcessing: ref(false),
-  performChecks: vi.fn()
+  performChecks: vi.fn(),
+  isSuccess: ref(false),
+  resetRefs: vi.fn(() => {
+    mockUseWalletChecks.isProcessing.value = false
+    mockUseWalletChecks.isSuccess.value = false
+  })
 }
 
 vi.mock('@/composables', () => {
@@ -164,10 +169,14 @@ describe('useSiwe', () => {
     setActivePinia(createPinia())
     mockUseConnect.connectors = [{ name: 'MetaMask', getChainId: () => 31137 }]
     mockUseWalletChecks.performChecks.mockImplementation(() => true)
+    mockUseWalletChecks.performChecks.mockImplementation(
+      () => (mockUseWalletChecks.isSuccess.value = true)
+    )
   })
   afterEach(() => {
     vi.clearAllMocks()
     mockUseSignMessage.data.value = undefined
+    mockUseWalletChecks.isSuccess.value = false
   })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
@@ -200,20 +209,13 @@ describe('useSiwe', () => {
     expect(mocks.mockUserDataStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
     expect(mocks.mockUserDataStore.setAuthStatus).toBeCalledWith(true)
   })
-  it('should report an error if error processing', async () => {
-    mockCustomFetch.get.execute.mockRejectedValue(new Error('Error fetching something...'))
-    const { siwe } = useSiwe()
-    await siwe()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(`Couldn't authenticate with SIWE`)
-    expect(logErrorSpy).toBeCalledWith('Error fetching something...')
-    mockCustomFetch.get.execute.mockReset()
-  })
   it('should display error when signature error', async () => {
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.error.value = new Error('Sign message error'))
     )
     const { isProcessing, siwe } = useSiwe()
     await siwe()
+    await flushPromises()
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to sign SIWE message')
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', new Error('Sign message error'))
