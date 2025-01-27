@@ -75,8 +75,9 @@ describe('useWalletChecks', () => {
   })
   it('should connect wallet if not connected', async () => {
     mockUseAccount.isConnected.value = false
-    const { isProcessing, performChecks, isSuccess } = useWalletChecks()
+    const { isProcessing, performChecks } = useWalletChecks()
     await performChecks()
+    await flushPromises()
     expect(mockUseConnect.connect).toBeCalledWith({
       connector: mockUseConnect.connectors[0],
       chainId: parseInt(NETWORK.chainId)

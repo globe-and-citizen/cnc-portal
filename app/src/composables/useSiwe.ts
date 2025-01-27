@@ -2,7 +2,7 @@ import router from '@/router'
 import { ref, watch } from 'vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useStorage } from '@vueuse/core'
 import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
@@ -73,22 +73,7 @@ export function useSiwe() {
   }
 
   async function siwe() {
-    try {
-      // if (!(await performChecks())) {
-      //   isProcessing.value = false
-      //   return
-      // }
-      await performChecks()
-      // if (address.value) {
-      //   await executeSiwe()
-      // }
-    } catch (_error) {
-      log.error(parseError(_error))
-      addErrorToast("Couldn't authenticate with SIWE")
-      // isSuccessWalletCheck.value = false
-      // isProcessing.value = false
-      resetRefs()
-    }
+    await performChecks()
   }
   //#endregion
 
@@ -96,11 +81,6 @@ export function useSiwe() {
   watch(isSuccessWalletCheck, async (newStatus) => {
     if (newStatus) await executeSiwe()
   })
-  // watch(address, async (newVal) => {
-  //   if (newVal) {
-  //     await executeSiwe()
-  //   }
-  // })
 
   /**
    * Watch for new signature to send auth payload to the backend
@@ -144,8 +124,6 @@ export function useSiwe() {
     if (newError) {
       log.info('siweError.value', newError)
       addErrorToast('Unable to authenticate with SIWE')
-      // isProcessing.value = false
-      // isSuccessWalletCheck.value = false
       resetRefs()
     }
   })
@@ -154,8 +132,6 @@ export function useSiwe() {
     if (newError) {
       log.info('fetchError.value', newError)
       addErrorToast('Unable to fetch nonce')
-      // isProcessing.value = false
-      // isSuccessWalletCheck.value = false'
       resetRefs()
     }
   })
@@ -164,8 +140,6 @@ export function useSiwe() {
     if (newError) {
       log.info('fetchUserError.value', fetchUserError.value)
       addErrorToast('Unable to fetch user data')
-      // isProcessing.value = false
-      // isSuccessWalletCheck.value = false
       resetRefs()
     }
   })

@@ -81,25 +81,6 @@ vi.mock('@/stores/user', async (importOriginal) => {
   }
 })
 
-vi.mock('@/adapters/siweMessageCreatorAdapter', async (importOriginal) => {
-  const actual: object = await importOriginal()
-
-  const SLSiweMessageCreator = mocks.mockSlSiweMessageCreator.constructor
-  SLSiweMessageCreator.prototype.constructor = mocks.mockSlSiweMessageCreator.constructor
-  SLSiweMessageCreator.prototype.create = mocks.mockSlSiweMessageCreator.create
-  return { ...actual, SLSiweMessageCreator }
-})
-
-vi.mock('@/utils/web3Util', async (importOriginal) => {
-  const actual: object = await importOriginal()
-
-  const MetaMaskUtil = vi.fn()
-  //@ts-expect-error: mock test function
-  MetaMaskUtil['hasInstalledWallet'] = mocks.mockHasInstalledWallet
-
-  return { ...actual, MetaMaskUtil }
-})
-
 const mockUseWalletChecks = {
   isProcessing: ref(false),
   performChecks: vi.fn(),
@@ -183,7 +164,7 @@ describe('useSiwe', () => {
     mockUseSignMessage.signMessage.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
-    mocks.mockHasInstalledWallet.mockImplementation(() => true)
+    // mocks.mockHasInstalledWallet.mockImplementation(() => true)
     mockCustomFetch.get.execute.mockImplementation(
       () =>
         (mockCustomFetch.get.data.value = {
