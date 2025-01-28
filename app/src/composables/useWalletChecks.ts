@@ -5,8 +5,10 @@ import {
   useSwitchChain,
   useAccount,
   type Connector,
-  type CreateConnectorFn
+  type CreateConnectorFn,
+  // injected
 } from '@wagmi/vue'
+import { injected } from '@wagmi/connectors'
 import { NETWORK } from '@/constant'
 import { log, parseError } from '@/utils'
 
@@ -22,7 +24,7 @@ export function useWalletChecks() {
 
   watch(connectError, (newConnectError) => {
     if (newConnectError) {
-      addErrorToast('Failed to connect wallet')
+      addErrorToast(parseError(newConnectError))
       log.error('connectError.value', newConnectError)
       resetRefs()
     }
@@ -40,36 +42,37 @@ export function useWalletChecks() {
     isProcessing.value = false
   }
 
-  async function checkMetaMaskInstalled() {
-    const metaMaskConnector = connectors.find(
-      (connector) => connector.name.split(' ')[0] === 'MetaMask'
-    )
+  // async function checkMetaMaskInstalled() {
+  //   const metaMaskConnector = connectors.find(
+  //     (connector) => connector.name.split(' ')[0] === 'MetaMask'
+  //   )
 
-    if (!metaMaskConnector) {
-      resetRefs()
-      addErrorToast('MetaMask is not installed. Please install MetaMask to continue.')
-      return
-    }
+  //   if (!metaMaskConnector) {
+  //     resetRefs()
+  //     addErrorToast('MetaMask is not installed. Please install MetaMask to continue.')
+  //     return
+  //   }
 
-    return metaMaskConnector
-  }
+  //   return metaMaskConnector
+  // }
 
-  async function checkCorrectNetwork(metaMaskConnector: Connector<CreateConnectorFn>) {
+  async function checkCorrectNetwork(connector: ReturnType<typeof injected>) {
     const networkChainId = parseInt(NETWORK.chainId)
 
     if (!isConnected.value) {
       isConnectRequired.value = true
-      connect({ connector: metaMaskConnector, chainId: networkChainId })
+      // connect({ connector: metaMaskConnector, chainId: networkChainId })
+      connect({ connector, chainId: networkChainId })
     }
 
-    const currentChainId = await metaMaskConnector.getChainId()
+    //const currentChainId = await connector.getChainId()
 
-    if (currentChainId !== networkChainId) {
+    //if (currentChainId !== networkChainId) {
       switchChain({
         chainId: networkChainId,
-        connector: metaMaskConnector
+        // connector
       })
-    }
+    //}
 
     return isConnected.value
   }
@@ -78,13 +81,13 @@ export function useWalletChecks() {
     try {
       isProcessing.value = true
 
-      const metaMaskConnector = await checkMetaMaskInstalled()
-      if (!metaMaskConnector) {
-        resetRefs()
-        return
-      }
+      // const metaMaskConnector = await checkMetaMaskInstalled()
+      // if (!metaMaskConnector) {
+      //   resetRefs()
+      //   return
+      // }
 
-      const isNetworkValid = await checkCorrectNetwork(metaMaskConnector)
+      const isNetworkValid = await checkCorrectNetwork(injected())
       if (isConnectRequired.value && !isNetworkValid && !isPendingConnect.value) {
         resetRefs()
         return
