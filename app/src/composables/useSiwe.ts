@@ -63,9 +63,12 @@ export function useSiwe() {
       nonce: nonce.value.nonce,
       chainId: chainId.value,
       uri: window.location.origin,
-      domain: window.location.host,
+      domain: window.location.origin,
       version: '1'
     })
+
+    console.log(`domain: `, window.location.host)
+    console.log(`uri: `, window.location.origin)
 
     authData.value.message = siweMessage.prepareMessage()
 
