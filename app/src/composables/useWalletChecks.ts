@@ -12,7 +12,7 @@ export function useWalletChecks() {
   // Composables
   const { addErrorToast } = useToastStore()
   const { connectAsync, error: connectError } = useConnect()
-  const { switchChainAsync } = useSwitchChain()
+  const { switchChainAsync, error: switchChainError } = useSwitchChain()
   const { isConnected } = useAccount()
 
   // Functions
@@ -44,10 +44,33 @@ export function useWalletChecks() {
   }
 
   // Watch
-  watch(connectError, (newConnectError) => {
-    if (newConnectError) {
-      addErrorToast(newConnectError.message)
-      log.error('connectError.value', newConnectError)
+  watch(switchChainError, (newError) => {
+    if (newError) {
+      addErrorToast(
+        newError.name === 'UserRejectedRequestError'
+          ? 'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
+          : 'Something went wrong: Failed switch network'
+      )
+      log.error('switchChainError.value', newError)
+      isProcessing.value = false
+    }
+  })
+
+  watch(connectError, (newError) => {
+    if (newError) {
+      let message = 'Something went wrong: Failed to connect wallet'
+      switch (newError.name) {
+        case 'UserRejectedRequestError':
+          message =
+            'Wallet connection rejected: You need to connect your wallet to use the CNC Portal.'
+          break
+        //@ts-expect-error: not part of type but does show up here at run time
+        case 'ProviderNotFoundError':
+          message =
+            'No wallet detected: You need to install a wallet like metamask to use the CNC Portal'
+      }
+      addErrorToast(message)
+      log.error('connectError.value', newError)
       isProcessing.value = false
     }
   })

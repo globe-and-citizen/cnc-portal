@@ -96,8 +96,12 @@ export function useSiwe() {
   //#region Watch
   watch(signMessageError, (newError) => {
     if (newError) {
+      addErrorToast(
+        newError.name === 'UserRejectedRequestError'
+          ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
+          : 'Something went wrong: Unable to sign SIWE message'
+      )
       log.error('signMessageError.value', newError)
-      addErrorToast('Unable to sign SIWE message')
       isProcessing.value = false
     }
   })
