@@ -1,21 +1,15 @@
 import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
-import {
-  useConnect,
-  useSwitchChain,
-  useAccount,
-  injected
-} from '@wagmi/vue'
+import { useConnect, useSwitchChain, useAccount, injected } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
 import { log, parseError } from '@/utils'
 
 export function useWalletChecks() {
   const isProcessing = ref(false)
   const isSuccess = ref(false)
-  const wasConnected = ref(false)
 
   const { addErrorToast } = useToastStore()
-  const { connectAsync, error: connectError, isPending: isPendingConnect } = useConnect()
+  const { connectAsync, error: connectError } = useConnect()
   const { switchChainAsync } = useSwitchChain()
   const { isConnected } = useAccount()
 
@@ -27,14 +21,7 @@ export function useWalletChecks() {
     }
   })
 
-  watch(isPendingConnect, (newStatus) => {
-    if (!newStatus && isConnected.value) {
-      isSuccess.value = true
-    }
-  })
-
   function resetRefs() {
-    wasConnected.value = false
     isSuccess.value = false
     isProcessing.value = false
   }
@@ -49,14 +36,14 @@ export function useWalletChecks() {
       }
 
       await switchChainAsync({
-        chainId: networkChainId,
+        chainId: networkChainId
       })
 
       if (isConnected.value) {
         isSuccess.value = true
       } else {
         resetRefs()
-        return 
+        return
       }
     } catch (error) {
       addErrorToast('Failed to validate wallet and network.')
