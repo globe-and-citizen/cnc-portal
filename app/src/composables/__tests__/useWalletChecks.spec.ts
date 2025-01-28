@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   mockUseToastStore: {
     addErrorToast: vi.fn()
   },
-  mockUseChainId: vi.fn(() => ref(123))
+  mockUseChainId: vi.fn(() => ref(123)),
+  mockInjected: vi.fn(() => 'connector')
 }))
 const mockUseAccount = {
   address: ref('0xUserAddress'),
@@ -18,14 +19,13 @@ const mockUseAccount = {
 }
 
 const mockUseConnect = {
-  connect: vi.fn(),
-  connectors: [] as { name: string; getChainId: () => number | Error }[],
+  connectAsync: vi.fn(),
   error: ref<Error | null>(null),
   isPending: ref(true)
 }
 
 const mockUseSwitchChain = {
-  switchChain: vi.fn()
+  switchChainAsync: vi.fn()
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -35,7 +35,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useAccount: vi.fn(() => mockUseAccount),
     useConnect: vi.fn(() => mockUseConnect),
     useSwitchChain: vi.fn(() => mockUseSwitchChain),
-    useChainId: mocks.mockUseChainId
+    useChainId: mocks.mockUseChainId,
+    injected: mocks.mockInjected
   }
 })
 
@@ -51,7 +52,6 @@ describe('useWalletChecks', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
   beforeEach(() => {
     setActivePinia(createPinia())
-    mockUseConnect.connectors = [{ name: 'MetaMask', getChainId: vi.fn(() => 31137) }]
   })
   afterEach(() => {
     vi.clearAllMocks()
@@ -63,23 +63,28 @@ describe('useWalletChecks', () => {
     expect(isProcessing.value).toBe(true)
     expect(isSuccess.value).toBe(true)
   })
-  it('should give an error when MetaMask is not installed', async () => {
-    mockUseConnect.connectors = []
+  it('should give an error if an error connecting', async () => {
+    mockUseAccount.isConnected.value = false
+    mockUseConnect.connectAsync.mockImplementation(
+      () => (mockUseConnect.error.value = new Error('Wallet not installed'))
+    )
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
-      'MetaMask is not installed. Please install MetaMask to continue.'
-    )
+    await flushPromises()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Wallet not installed')
     expect(isProcessing.value).toBe(false)
     expect(isSuccess.value).toBe(false)
+    mockUseConnect.connectAsync.mockReset()
   })
   it('should connect wallet if not connected', async () => {
-    mockUseAccount.isConnected.value = false
+    mockUseSwitchChain.switchChainAsync.mockImplementation(
+      () => (mockUseAccount.isConnected.value = true)
+    )
     const { isProcessing, performChecks } = useWalletChecks()
     await performChecks()
     await flushPromises()
-    expect(mockUseConnect.connect).toBeCalledWith({
-      connector: mockUseConnect.connectors[0],
+    expect(mockUseConnect.connectAsync).toBeCalledWith({
+      connector: 'connector',
       chainId: parseInt(NETWORK.chainId)
     })
     expect(isProcessing.value).toBe(true)
@@ -89,45 +94,26 @@ describe('useWalletChecks', () => {
   it('should switch networks if user on different network', async () => {
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
-    expect(mockUseSwitchChain.switchChain).toBeCalledWith({
-      connector: mockUseConnect.connectors[0],
+    expect(mockUseSwitchChain.switchChainAsync).toBeCalledWith({
       chainId: parseInt(NETWORK.chainId)
     })
     expect(isProcessing.value).toBe(true)
     expect(isSuccess.value).toBe(true)
   })
-  it('should notify error if error posting validating wallet and network', async () => {
-    mockUseConnect.connectors = [
-      {
-        name: 'MetaMask',
-        getChainId: vi.fn().mockRejectedValue(new Error('Error getting Chain ID'))
-      }
-    ]
+  it('should notify error if error connecting or switching', async () => {
+    mockUseSwitchChain.switchChainAsync.mockRejectedValue(new Error('Error switching network'))
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
     await flushPromises()
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
       'Failed to validate wallet and network.'
     )
-    expect(logErrorSpy).toBeCalledWith('performChecks.catch', 'Error getting Chain ID')
+    expect(logErrorSpy).toBeCalledWith('performChecks.catch', 'Error switching network')
     expect(isProcessing.value).toBe(false)
     expect(isSuccess.value).toBe(false)
   })
-  it('should notify error if error connecting wallet', async () => {
-    mockUseConnect.connect.mockImplementation(
-      () => (mockUseConnect.error.value = new Error('Error connecting wallet'))
-    )
-    mockUseAccount.isConnected.value = false
-    const { isProcessing, performChecks } = useWalletChecks()
-    await performChecks()
-    await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to connect wallet')
-    expect(logErrorSpy).toBeCalledWith('connectError.value', new Error('Error connecting wallet'))
-    expect(isProcessing.value).toBe(false)
-    mockUseConnect.connect.mockReset()
-  })
   it('should set return false if network invalid', async () => {
-    mockUseConnect.connect.mockImplementation(() => {
+    mockUseConnect.connectAsync.mockImplementation(() => {
       mockUseAccount.isConnected.value = false
       mockUseConnect.isPending.value = false
     })
