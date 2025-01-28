@@ -17,29 +17,23 @@ export function useWalletChecks() {
 
   // Functions
   async function performChecks() {
-    try {
-      isSuccess.value = false
-      isProcessing.value = true
-      const networkChainId = parseInt(NETWORK.chainId)
+    isSuccess.value = false
+    isProcessing.value = true
+    const networkChainId = parseInt(NETWORK.chainId)
 
-      if (!isConnected.value) {
-        await connectAsync({ connector: injected(), chainId: networkChainId })
-      }
+    if (!isConnected.value) {
+      await connectAsync({ connector: injected(), chainId: networkChainId })
+    }
 
-      await switchChainAsync({
-        chainId: networkChainId
-      })
+    await switchChainAsync({
+      chainId: networkChainId
+    })
 
-      if (isConnected.value) {
-        isSuccess.value = true
-      } else {
-        isProcessing.value = false
-        return
-      }
-    } catch (error) {
-      addErrorToast('Failed to validate wallet and network.')
-      log.error('performChecks.catch', parseError(error))
+    if (isConnected.value) {
+      isSuccess.value = true
+    } else {
       isProcessing.value = false
+      return
     }
   }
 
