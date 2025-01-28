@@ -33,7 +33,7 @@ const mockUseAccount = {
 const mockUseSignMessage = {
   data: ref<string | undefined>(undefined),
   error: ref<null | Error>(null),
-  signMessage: vi.fn()
+  signMessageAsync: vi.fn()
 }
 
 const mockUseConnect = {
@@ -161,7 +161,7 @@ describe('useSiwe', () => {
   })
   it('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
-    mockUseSignMessage.signMessage.mockImplementation(
+    mockUseSignMessage.signMessageAsync.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
     // mocks.mockHasInstalledWallet.mockImplementation(() => true)
@@ -182,16 +182,16 @@ describe('useSiwe', () => {
       nonce: 'xyz',
       version: '1',
       chainId: 123,
-      domain: 'localhost:3000',
+      domain: 'http://localhost:3000',
       uri: 'http://localhost:3000'
     })
-    expect(mockUseSignMessage.signMessage).toBeCalledWith({ message: 'Siwe message' })
+    expect(mockUseSignMessage.signMessageAsync).toBeCalledWith({ message: 'Siwe message' })
     await flushPromises()
     expect(mocks.mockUserDataStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
     expect(mocks.mockUserDataStore.setAuthStatus).toBeCalledWith(true)
   })
   it('should display error when signature error', async () => {
-    mockUseSignMessage.signMessage.mockImplementation(
+    mockUseSignMessage.signMessageAsync.mockImplementation(
       () => (mockUseSignMessage.error.value = new Error('Sign message error'))
     )
     const { isProcessing, siwe } = useSiwe()
@@ -203,8 +203,8 @@ describe('useSiwe', () => {
     mockUseSignMessage.error.value = null
   })
   it('should notify error if error posting siwe data', async () => {
-    mockUseSignMessage.signMessage.mockReset()
-    mockUseSignMessage.signMessage.mockImplementation(
+    mockUseSignMessage.signMessageAsync.mockReset()
+    mockUseSignMessage.signMessageAsync.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
 
