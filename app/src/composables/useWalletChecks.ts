@@ -5,29 +5,20 @@ import { NETWORK } from '@/constant'
 import { log, parseError } from '@/utils'
 
 export function useWalletChecks() {
+  // Refs
   const isProcessing = ref(false)
   const isSuccess = ref(false)
 
+  // Composables
   const { addErrorToast } = useToastStore()
   const { connectAsync, error: connectError } = useConnect()
   const { switchChainAsync } = useSwitchChain()
   const { isConnected } = useAccount()
 
-  watch(connectError, (newConnectError) => {
-    if (newConnectError) {
-      addErrorToast(parseError(newConnectError))
-      log.error('connectError.value', newConnectError)
-      resetRefs()
-    }
-  })
-
-  function resetRefs() {
-    isSuccess.value = false
-    isProcessing.value = false
-  }
-
+  // Functions
   async function performChecks() {
     try {
+      isSuccess.value = false
       isProcessing.value = true
       const networkChainId = parseInt(NETWORK.chainId)
 
@@ -42,15 +33,24 @@ export function useWalletChecks() {
       if (isConnected.value) {
         isSuccess.value = true
       } else {
-        resetRefs()
+        isProcessing.value = false
         return
       }
     } catch (error) {
       addErrorToast('Failed to validate wallet and network.')
       log.error('performChecks.catch', parseError(error))
-      resetRefs()
+      isProcessing.value = false
     }
   }
 
-  return { isProcessing, performChecks, isSuccess, resetRefs }
+  // Watch
+  watch(connectError, (newConnectError) => {
+    if (newConnectError) {
+      addErrorToast(newConnectError.message)
+      log.error('connectError.value', newConnectError)
+      isProcessing.value = false
+    }
+  })
+
+  return { isProcessing, performChecks, isSuccess }
 }

@@ -20,13 +20,8 @@ export function useSiwe() {
   const userDataStore = useUserDataStore()
   const { address } = useAccount()
   const chainId = useChainId()
-  const { data: signature, error: signMessageError, signMessage } = useSignMessage()
-  const {
-    performChecks,
-    isProcessing,
-    isSuccess: isSuccessWalletCheck,
-    resetRefs
-  } = useWalletChecks()
+  const { data: signature, error: signMessageError, signMessageAsync } = useSignMessage()
+  const { performChecks, isProcessing, isSuccess: isSuccessWalletCheck } = useWalletChecks()
   //#endregion
 
   //#region useCustomeFetch
@@ -52,7 +47,10 @@ export function useSiwe() {
   //#endregion
 
   //#region Functions
-  async function executeSiwe() {
+  async function siwe() {
+    await performChecks()
+    if (!isSuccessWalletCheck.value) return
+
     apiEndpoint.value = `user/nonce/${address.value}`
     await executeFetchUserNonce()
     if (!nonce.value) return
@@ -66,60 +64,41 @@ export function useSiwe() {
       domain: window.location.origin,
       version: '1'
     })
-
-    console.log(`domain: `, window.location.host)
-    console.log(`uri: `, window.location.origin)
-
     authData.value.message = siweMessage.prepareMessage()
 
-    signMessage({ message: authData.value.message })
-  }
+    await signMessageAsync({ message: authData.value.message })
+    if (!signature.value) return
 
-  async function siwe() {
-    await performChecks()
+    //update authData payload signature field with user's signature
+    authData.value.signature = signature.value
+    //send authData payload to backend for authentication
+    await executeAddAuthData()
+    //get returned JWT authentication token and save to storage
+    const token = siweData.value?.accessToken
+    const storageToken = useStorage('authToken', token)
+    storageToken.value = token
+    //update API endpoint to call
+    apiEndpoint.value = `user/${address.value}`
+    //fetch user data from backend
+    await executeFetchUser()
+    if (!user.value) return
+    //save user data to user store
+    const userData: Partial<User> = user.value
+    userDataStore.setUserData(userData.name || '', userData.address || '', userData.nonce || '')
+    userDataStore.setAuthStatus(true)
+
+    isProcessing.value = false
+    //redirect user to teams page
+    router.push('/teams')
   }
   //#endregion
 
   //#region Watch
-  watch(isSuccessWalletCheck, async (newStatus) => {
-    if (newStatus) await executeSiwe()
-  })
-
-  /**
-   * Watch for new signature to send auth payload to the backend
-   * to get a JWT token and retrieve user data to save to the store
-   */
-  watch(signature, async (newSignature) => {
-    if (newSignature) {
-      //update authData payload signature field with user's signature
-      authData.value.signature = newSignature
-      //send authData payload to backend for authentication
-      await executeAddAuthData()
-      //get returned JWT authentication token and save to storage
-      const token = siweData.value?.accessToken
-      const storageToken = useStorage('authToken', token)
-      storageToken.value = token
-      //update API endpoint to call
-      apiEndpoint.value = `user/${address.value}`
-      //fetch user data from backend
-      await executeFetchUser()
-      if (!user.value) return
-      //save user data to user store
-      const userData: Partial<User> = user.value
-      userDataStore.setUserData(userData.name || '', userData.address || '', userData.nonce || '')
-      userDataStore.setAuthStatus(true)
-
-      isProcessing.value = false
-      //redirect user to teams page
-      router.push('/teams')
-    }
-  })
-
   watch(signMessageError, (newError) => {
     if (newError) {
       log.error('signMessageError.value', newError)
       addErrorToast('Unable to sign SIWE message')
-      resetRefs()
+      isProcessing.value = false
     }
   })
 
@@ -127,7 +106,7 @@ export function useSiwe() {
     if (newError) {
       log.info('siweError.value', newError)
       addErrorToast('Unable to authenticate with SIWE')
-      resetRefs()
+      isProcessing.value = false
     }
   })
 
@@ -135,7 +114,7 @@ export function useSiwe() {
     if (newError) {
       log.info('fetchError.value', newError)
       addErrorToast('Unable to fetch nonce')
-      resetRefs()
+      isProcessing.value = false
     }
   })
 
@@ -143,7 +122,7 @@ export function useSiwe() {
     if (newError) {
       log.info('fetchUserError.value', fetchUserError.value)
       addErrorToast('Unable to fetch user data')
-      resetRefs()
+      isProcessing.value = false
     }
   })
   //#endregion
