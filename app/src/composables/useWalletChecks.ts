@@ -2,7 +2,7 @@ import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
 import { useConnect, useSwitchChain, useAccount, injected } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 
 export function useWalletChecks() {
   // Refs
