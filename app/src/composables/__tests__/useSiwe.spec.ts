@@ -197,10 +197,27 @@ describe('useSiwe', () => {
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to sign SIWE message')
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'Something went wrong: Unable to sign SIWE message'
+    )
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', new Error('Sign message error'))
     mockUseSignMessage.error.value = null
+    mockUseSignMessage.signMessageAsync.mockReset()
+    mocks.mockUseToastStore.addErrorToast.mockClear()
+    logErrorSpy.mockClear()
+    const error = new Error('A new sign error')
+    error.name = 'UserRejectedRequestError'
+    mockUseSignMessage.signMessageAsync.mockImplementation(
+      () => (mockUseSignMessage.error.value = error)
+    )
+    await siwe()
+    await flushPromises()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
+    )
+    expect(isProcessing.value).toBe(false)
+    expect(logErrorSpy).toBeCalledWith('signMessageError.value', error)
   })
   it('should notify error if error posting siwe data', async () => {
     mockUseSignMessage.signMessageAsync.mockReset()

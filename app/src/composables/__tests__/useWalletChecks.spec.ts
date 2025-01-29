@@ -25,7 +25,8 @@ const mockUseConnect = {
 }
 
 const mockUseSwitchChain = {
-  switchChainAsync: vi.fn()
+  switchChainAsync: vi.fn(),
+  error: ref<Error | null>(null)
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -71,7 +72,9 @@ describe('useWalletChecks', () => {
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Wallet not installed')
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'Something went wrong: Failed to connect wallet'
+    )
     expect(isProcessing.value).toBe(false)
     expect(isSuccess.value).toBe(false)
     mockUseConnect.connectAsync.mockReset()
@@ -100,15 +103,69 @@ describe('useWalletChecks', () => {
     expect(isProcessing.value).toBe(true)
     expect(isSuccess.value).toBe(true)
   })
-  it('should notify error if error connecting or switching', async () => {
-    mockUseSwitchChain.switchChainAsync.mockRejectedValue(new Error('Error switching network'))
+  it('should notify error if error switching network', async () => {
+    const error = new Error('Error switching network')
+    error.name = 'UserRejectedRequestError'
+    mockUseSwitchChain.switchChainAsync.mockImplementation(() => {
+      mockUseSwitchChain.error.value = error
+      mockUseAccount.isConnected.value = false
+    })
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
     await flushPromises()
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
-      'Failed to validate wallet and network.'
+      'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
     )
-    expect(logErrorSpy).toBeCalledWith('performChecks.catch', 'Error switching network')
+    expect(logErrorSpy).toBeCalledWith('switchChainError.value', error)
+    expect(isProcessing.value).toBe(false)
+    expect(isSuccess.value).toBe(false)
+    mockUseSwitchChain.error.value = null
+    error.name = 'CustomError'
+    mockUseSwitchChain.switchChainAsync.mockReset()
+    mockUseSwitchChain.switchChainAsync.mockImplementation(
+      () => (mockUseSwitchChain.error.value = error)
+    )
+    await performChecks()
+    await flushPromises()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'Something went wrong: Failed switch network'
+    )
+    expect(logErrorSpy).toBeCalledWith('switchChainError.value', error)
+    expect(isProcessing.value).toBe(false)
+    expect(isSuccess.value).toBe(false)
+  })
+  it('should notify error if error connecting wallet', async () => {
+    let error = new Error('Error connecting wallet')
+    error.name = 'UserRejectedRequestError'
+    mockUseConnect.connectAsync.mockImplementation(() => {
+      mockUseConnect.error.value = error
+      mockUseAccount.isConnected.value = false
+    })
+    const { isProcessing, performChecks, isSuccess } = useWalletChecks()
+    await performChecks()
+    await flushPromises()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'Wallet connection rejected: You need to connect your wallet to use the CNC Portal.'
+    )
+    expect(logErrorSpy).toBeCalledWith('connectError.value', error)
+    expect(isProcessing.value).toBe(false)
+    expect(isSuccess.value).toBe(false)
+
+    //reset values
+    mockUseConnect.error.value = null
+    mocks.mockUseToastStore.addErrorToast.mockClear()
+    error = new Error('A new error has occurred')
+    error.name = 'ProviderNotFoundError'
+    mockUseConnect.connectAsync.mockReset()
+
+    mockUseConnect.connectAsync.mockImplementation(() => (mockUseConnect.error.value = error))
+    await performChecks()
+    await flushPromises()
+
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'No wallet detected: You need to install a wallet like metamask to use the CNC Portal'
+    )
+    expect(logErrorSpy).toBeCalledWith('connectError.value', error)
     expect(isProcessing.value).toBe(false)
     expect(isSuccess.value).toBe(false)
   })
