@@ -235,7 +235,7 @@
 </template>
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { isAddress } from 'ethers'
+import { isAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
