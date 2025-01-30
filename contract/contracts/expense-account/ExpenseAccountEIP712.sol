@@ -39,7 +39,7 @@ contract ExpenseAccountEIP712 is
     struct BudgetData {
         BudgetType budgetType;
         uint256 value;
-        address token;
+        // address token; // remove token address here
     }
 
     /**
@@ -57,6 +57,7 @@ contract ExpenseAccountEIP712 is
         address approvedAddress;
         BudgetData[] budgetData;
         uint256 expiry;
+        address tokenAddress; //Put token address here
     }
 
     /**
@@ -75,11 +76,11 @@ contract ExpenseAccountEIP712 is
     }
 
     /// @dev Type signature for the BudgetData struct, used in EIP-712 encoding.
-    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value,address token)";
+    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value)"; // remove token address here
 
     /// @dev Type signature for the BudgetLimit struct, used in EIP-712 encoding.
     string private constant BUDGETLIMIT_TYPE = 
-        "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry)";
+        "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry,address tokenAddress)"; //ad token address here
 
     /// @dev Typehash for the BudgetData struct, used in EIP-712 encoding.
     bytes32 constant BUDGETDATA_TYPEHASH = 
@@ -168,8 +169,8 @@ contract ExpenseAccountEIP712 is
         return keccak256(abi.encode(
             BUDGETDATA_TYPEHASH,
             budgetData.budgetType,
-            budgetData.value,
-            budgetData.token
+            budgetData.value//,
+            //budgetData.token //remove token here
         ));
     }
 
@@ -197,7 +198,8 @@ contract ExpenseAccountEIP712 is
             BUDGETLIMIT_TYPEHASH,
             limit.approvedAddress,
             budgetDataHash(limit.budgetData),
-            limit.expiry
+            limit.expiry,
+            limit.tokenAddress
         ));
     }
 
@@ -233,6 +235,8 @@ contract ExpenseAccountEIP712 is
 
         require(limit.budgetData.length > 0, "Empty budget data");
 
+        require(isTokenSupported(limit.tokenAddress), "Unsupported token");
+
         bytes32 digest = _hashTypedDataV4(budgetLimitHash(limit));
 
         address signer = digest.recover(signature);
@@ -243,11 +247,15 @@ contract ExpenseAccountEIP712 is
 
         require((block.timestamp <= limit.expiry), "Authorization expired");
 
-        _checkAndUpdateBudgetData(limit.budgetData, amount, signature, address(0));
+        _checkAndUpdateBudgetData(limit.budgetData, amount, signature);
 
-        payable(to).sendValue(amount);
-
-        emit Transfer(limit.approvedAddress, to, amount);
+        if (limit.tokenAddress == address(0)) {
+            payable(to).sendValue(amount);
+            emit Transfer(limit.approvedAddress, to, amount);
+        } else {
+            require(IERC20(limit.tokenAddress).transfer(to, amount), "Token transfer failed");
+            emit TokenTransfer(limit.approvedAddress, to, limit.tokenAddress, amount);
+        }
     }
 
     /**
@@ -256,7 +264,6 @@ contract ExpenseAccountEIP712 is
      * @param budgetData The budget data representing the set limits.
      * @param amount The amount to transfer.
      * @param signature The ECDSA signature.
-     * @param token Address of the token (zero address for native ETH)
      *
      * Requirements:
      * - The number of transactions must not exceed the specified amount.
@@ -267,15 +274,15 @@ contract ExpenseAccountEIP712 is
     function _checkAndUpdateBudgetData(
         BudgetData[] calldata budgetData, 
         uint256 amount, 
-        bytes calldata signature,
-        address token
+        bytes calldata signature//,
+        //address token //remove token here
     ) private {
         bytes32 sigHash = keccak256(signature);
 
         bool isAmountWithdrawn;
 
         for (uint8 i = 0; i < budgetData.length; i++) {
-            if (budgetData[i].token != token) continue;
+            //if (budgetData[i].token != token) continue; //remove check here
 
             if (budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
                 require(balances[sigHash].transactionCount < budgetData[i].value, "Transaction limit reached");
@@ -343,7 +350,10 @@ contract ExpenseAccountEIP712 is
      * @return True if the token is supported, false otherwise.
      */
     function isTokenSupported(address _token) public view returns (bool) {
-        return _token == supportedTokens["USDT"] || _token == supportedTokens["USDC"];
+        return 
+            _token == supportedTokens["USDT"] || 
+            _token == supportedTokens["USDC"] || 
+            _token == address(0); //add zero address here
     }
 
     /**
@@ -364,35 +374,35 @@ contract ExpenseAccountEIP712 is
      *
      * Emits a {TokenTransfer} event.
      */
-    function transferToken(
-        address to,
-        address token,
-        uint256 amount,
-        BudgetLimit calldata limit,
-        bytes calldata signature
-    ) external whenNotPaused nonReentrant {
-        require(isTokenSupported(token), "Unsupported token");
-        require(balances[keccak256(signature)].state != ApprovalState.Inactive, "Approval inactive");
-        require(msg.sender == limit.approvedAddress, "Withdrawer not approved");
-        require(to != address(0), "Address required");
-        require(amount > 0, "Amount must be greater than zero");
-        require(limit.budgetData.length > 0, "Empty budget data");
+    // function transferToken(
+    //     address to,
+    //     address token,
+    //     uint256 amount,
+    //     BudgetLimit calldata limit,
+    //     bytes calldata signature
+    // ) external whenNotPaused nonReentrant {
+    //     require(isTokenSupported(token), "Unsupported token");
+    //     require(balances[keccak256(signature)].state != ApprovalState.Inactive, "Approval inactive");
+    //     require(msg.sender == limit.approvedAddress, "Withdrawer not approved");
+    //     require(to != address(0), "Address required");
+    //     require(amount > 0, "Amount must be greater than zero");
+    //     require(limit.budgetData.length > 0, "Empty budget data");
 
-        bytes32 digest = _hashTypedDataV4(budgetLimitHash(limit));
-        address signer = digest.recover(signature);
+    //     bytes32 digest = _hashTypedDataV4(budgetLimitHash(limit));
+    //     address signer = digest.recover(signature);
 
-        if (signer != owner()) {
-            revert UnauthorizedAccess(owner(), signer);
-        }
+    //     if (signer != owner()) {
+    //         revert UnauthorizedAccess(owner(), signer);
+    //     }
 
-        require((block.timestamp <= limit.expiry), "Authorization expired");
+    //     require((block.timestamp <= limit.expiry), "Authorization expired");
 
-        _checkAndUpdateBudgetData(limit.budgetData, amount, signature, token);
+    //     _checkAndUpdateBudgetData(limit.budgetData, amount, signature, token);
 
-        require(IERC20(token).transfer(to, amount), "Token transfer failed");
+    //     require(IERC20(token).transfer(to, amount), "Token transfer failed");
 
-        emit TokenTransfer(limit.approvedAddress, to, token, amount);
-    }
+    //     emit TokenTransfer(limit.approvedAddress, to, token, amount);
+    // }
 
     /**
      * @dev Deposits tokens from the caller to the contract.
