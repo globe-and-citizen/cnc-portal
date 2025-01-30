@@ -18,7 +18,12 @@ const router = createRouter({
   routes: [
     { path: '/', component: { template: '<div>Home</div>' } },
     { path: '/teams', component: { template: '<div>Teams</div>' } },
-    { path: '/transactions', component: { template: '<div>Teams</div>' } }
+    { path: '/transactions', component: { template: '<div>Teams</div>' } },
+    {
+      path: '/teams/:id/cash-remunerations',
+      name: 'cash-remunerations',
+      component: { template: '<div>Teams</div>' }
+    }
   ]
 })
 
