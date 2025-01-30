@@ -802,14 +802,13 @@ export const getClaims = async (req: Request, res: Response) => {
     if (!team) return errorResponse(404, "Resource Not Found", res);
 
     if (team.ownerAddress === callerAddress) {
+      let statusQuery =
+        status === "all" ? {} : { claims: { some: { status } } };
+
       const claims = await prisma.memberTeamsData.findMany({
         where: {
           teamId: team.id,
-          claims: {
-            some: {
-              status,
-            },
-          },
+          ...statusQuery,
         },
         select: {
           user: {
@@ -826,6 +825,7 @@ export const getClaims = async (req: Request, res: Response) => {
               id: true,
               hoursWorked: true,
               createdAt: true,
+              status: true,
             },
           },
           hourlyRate: true,
