@@ -28,21 +28,21 @@
             />
           </label>
 
-          <div
+          <!-- <div
             data-test="hours-worked-error"
             class="pl-4 text-red-500 text-sm w-full text-left"
             v-for="error of v$.hoursWorked.$errors"
             :key="error.$uid"
           >
             {{ error.$message }}
-          </div>
+          </div> -->
         </div>
         <!--<button class="btn btn-success">Submit Hours</button>-->
         <ButtonUI
           :loading="isSubmittingHours"
           variant="success"
           data-test="submit-hours-button"
-          @click="addWageClaim"
+          @click="() => {}"
         >
           Submit Hours
         </ButtonUI>
@@ -65,31 +65,31 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useVuelidate } from '@vuelidate/core'
-import { numeric, required } from '@vuelidate/validators'
+// import { useVuelidate } from '@vuelidate/core'
+// import { numeric, required } from '@vuelidate/validators'
 import CashRemunerationCard from '@/components/sections/CashRemunerationView/CashRemunerationCard.vue'
 import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 
 const router = useRouter()
 const route = useRoute()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 const isSubmittingHours = ref(false)
 const hoursWorked = ref<{ hoursWorked: string | undefined }>({ hoursWorked: undefined })
-const approvalData = ref<{
-  signature: string | undefined
-  id: number
-}>({ signature: undefined, id: 0 })
+// const approvalData = ref<{
+//   signature: string | undefined
+//   id: number
+// }>({ signature: undefined, id: 0 })
 // const loadingApprove = ref(false)
 
-const rules = {
-  hoursWorked: {
-    hoursWorked: {
-      required,
-      numeric
-    }
-  }
-}
-const v$ = useVuelidate(rules, { hoursWorked })
+// const rules = {
+//   hoursWorked: {
+//     hoursWorked: {
+//       required,
+//       numeric
+//     }
+//   }
+// }
+// const v$ = useVuelidate(rules, { hoursWorked })
 
 const { data: team, error: teamError } = useCustomFetch(`teams/${String(route.params.id)}`)
   .get()
@@ -104,56 +104,56 @@ watch(teamError, (newVal) => {
   }
 })
 
-const {
-  error: addWageClaimError,
-  isFetching: isWageClaimAdding,
-  execute: addWageClaimAPI
-} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim`, {
-  immediate: false
-})
-  .post(hoursWorked)
-  .json()
-//watchers for add wage claim
-watch([() => isWageClaimAdding.value, () => addWageClaimError.value], async () => {
-  if (!isWageClaimAdding.value && !addWageClaimError.value) {
-    addSuccessToast('Wage claim added successfully')
-  }
-})
-watch(addWageClaimError, (newVal) => {
-  if (newVal) {
-    addErrorToast(addWageClaimError.value)
-  }
-})
+// const {
+//   error: addWageClaimError,
+//   isFetching: isWageClaimAdding,
+//   execute: addWageClaimAPI
+// } = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim`, {
+//   immediate: false
+// })
+//   .post(hoursWorked)
+//   .json()
+// //watchers for add wage claim
+// watch([() => isWageClaimAdding.value, () => addWageClaimError.value], async () => {
+//   if (!isWageClaimAdding.value && !addWageClaimError.value) {
+//     addSuccessToast('Wage claim added successfully')
+//   }
+// })
+// watch(addWageClaimError, (newVal) => {
+//   if (newVal) {
+//     addErrorToast(addWageClaimError.value)
+//   }
+// })
 
-const addWageClaim = async () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) {
-    return
-  }
-  await addWageClaimAPI()
-}
+// const addWageClaim = async () => {
+//   v$.value.$touch()
+//   if (v$.value.$invalid) {
+//     return
+//   }
+//   await addWageClaimAPI()
+// }
 //#endregion add wage claim
 
-//#region approve wage claims
-const {
-  error: addApprovalError,
-  isFetching: isApprovalAdding
-  // execute: addApprovalAPI
-} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/employer`, {
-  immediate: false
-})
-  .put(approvalData)
-  .json()
-watch([() => isApprovalAdding.value, () => addApprovalError.value], async (newVal) => {
-  if (newVal) {
-    addSuccessToast('Claim approved successfully')
-  }
-})
-watch(addApprovalError, (newVal) => {
-  if (newVal) {
-    addErrorToast(addApprovalError.value)
-  }
-})
+// //#region approve wage claims
+// const {
+//   error: addApprovalError,
+//   isFetching: isApprovalAdding
+//   // execute: addApprovalAPI
+// } = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/employer`, {
+//   immediate: false
+// })
+//   .put(approvalData)
+//   .json()
+// watch([() => isApprovalAdding.value, () => addApprovalError.value], async (newVal) => {
+//   if (newVal) {
+//     addSuccessToast('Claim approved successfully')
+//   }
+// })
+// watch(addApprovalError, (newVal) => {
+//   if (newVal) {
+//     addErrorToast(addApprovalError.value)
+//   }
+// })
 
 // const approveClaim = async (claim: ClaimResponse) => {
 //   loadingApprove.value = true

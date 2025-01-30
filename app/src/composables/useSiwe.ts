@@ -1,175 +1,135 @@
-import { SLSiweMessageCreator } from '@/adapters/siweMessageCreatorAdapter'
 import router from '@/router'
 import { ref, watch } from 'vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import { useCustomFetch } from './useCustomFetch'
 import { useStorage } from '@vueuse/core'
-import { useAccount, useSignMessage, useConnect, useSwitchChain } from '@wagmi/vue'
-import { NETWORK } from '@/constant'
-
-function createSiweMessageCreator(address: string, statement: string, nonce: string | undefined) {
-  return new SLSiweMessageCreator({
-    address,
-    statement,
-    nonce,
-    version: '1',
-    chainId: 1
-  })
-}
+import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
+import { SiweMessage } from 'siwe'
+import { useWalletChecks } from '@/composables'
 
 export function useSiwe() {
-  const { addErrorToast } = useToastStore()
-  const isProcessing = ref(false)
+  //#region Refs
   const authData = ref({ signature: '', message: '' })
   const apiEndpoint = ref<string>('')
-  const { connectors, connect, error: connectError } = useConnect()
-  const { address, isConnected } = useAccount()
-  const { switchChain } = useSwitchChain()
+  //#endregion
 
-  watch(connectError, (newVal) => {
-    if (newVal) {
-      addErrorToast(parseError(newVal))
-      log.error('connectError.value', newVal)
-      isProcessing.value = false
-    }
-  })
+  //#region Composables
+  const { addErrorToast } = useToastStore()
+  const userDataStore = useUserDataStore()
+  const { address } = useAccount()
+  const chainId = useChainId()
+  const { data: signature, error: signMessageError, signMessageAsync } = useSignMessage()
+  const { performChecks, isProcessing, isSuccess: isSuccessWalletCheck } = useWalletChecks()
+  //#endregion
 
-  watch(address, async (newVal) => {
-    if (newVal) {
-      console.log(`connected address: `, newVal)
-      await executeSiwe()
-    }
-  })
-
-  const { data: signature, error: signMessageError, signMessage } = useSignMessage()
-
-  watch(signature, async (newVal) => {
-    if (newVal) {
-      authData.value.signature = newVal
-      await executeAddAuthData()
-      const token = siweData.value.accessToken
-      const storageToken = useStorage('authToken', token)
-      storageToken.value = token
-      apiEndpoint.value = `user/${address.value}`
-      await executeFetchUser()
-      if (!user.value) return
-      const userData: Partial<User> = user.value
-      useUserDataStore().setUserData(
-        userData.name || '',
-        userData.address || '',
-        userData.nonce || ''
-      )
-      useUserDataStore().setAuthStatus(true)
-
-      router.push('/teams')
-
-      isProcessing.value = false
-    }
-  })
-
-  watch(signMessageError, (newVal) => {
-    if (newVal) {
-      log.error('signMessageError.value', newVal)
-      addErrorToast('Unable to sign SIWE message')
-      isProcessing.value = false
-    }
-  })
-
+  //#region useCustomeFetch
   const {
     error: siweError,
     data: siweData,
     execute: executeAddAuthData
-  } = useCustomFetch<string>('auth/siwe', { immediate: false }).post(authData).json()
-
-  watch(siweError, (newVal) => {
-    if (newVal) {
-      log.info('siweError.value', newVal)
-      addErrorToast('Unable to authenticate with SIWE')
-      isProcessing.value = false
-    }
-  })
+  } = useCustomFetch('auth/siwe', { immediate: false })
+    .post(authData)
+    .json<{ accessToken: string }>()
 
   const {
     error: fetchUserNonceError,
     data: nonce,
     execute: executeFetchUserNonce
-  } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
-
-  watch(fetchUserNonceError, (newVal) => {
-    if (newVal) {
-      log.info('fetchError.value', newVal)
-      addErrorToast('Unable to fetch nonce')
-      isProcessing.value = false
-    }
-  })
+  } = useCustomFetch(apiEndpoint, { immediate: false }).get().json<Partial<User>>()
 
   const {
     error: fetchUserError,
     data: user,
     execute: executeFetchUser
-  } = useCustomFetch<string>(apiEndpoint, { immediate: false }).get().json()
+  } = useCustomFetch(apiEndpoint, { immediate: false }).get().json<Partial<User>>()
+  //#endregion
 
-  watch(fetchUserError, (newVal) => {
-    if (newVal) {
+  //#region Functions
+  async function siwe() {
+    await performChecks()
+    if (!isSuccessWalletCheck.value) return
+
+    apiEndpoint.value = `user/nonce/${address.value}`
+    await executeFetchUserNonce()
+    if (!nonce.value) return
+
+    const siweMessage = new SiweMessage({
+      address: address.value as string,
+      statement: 'Sign in with Ethereum to the app.',
+      nonce: nonce.value.nonce,
+      chainId: chainId.value,
+      uri: window.location.origin,
+      domain: window.location.origin,
+      version: '1'
+    })
+    authData.value.message = siweMessage.prepareMessage()
+
+    await signMessageAsync({ message: authData.value.message })
+    if (!signature.value) return
+
+    //update authData payload signature field with user's signature
+    authData.value.signature = signature.value
+    //send authData payload to backend for authentication
+    await executeAddAuthData()
+    //get returned JWT authentication token and save to storage
+    const token = siweData.value?.accessToken
+    const storageToken = useStorage('authToken', token)
+    storageToken.value = token
+    //update API endpoint to call
+    apiEndpoint.value = `user/${address.value}`
+    //fetch user data from backend
+    await executeFetchUser()
+    if (!user.value) return
+    //save user data to user store
+    const userData: Partial<User> = user.value
+    userDataStore.setUserData(userData.name || '', userData.address || '', userData.nonce || '')
+    userDataStore.setAuthStatus(true)
+
+    isProcessing.value = false
+    //redirect user to teams page
+    router.push('/teams')
+  }
+  //#endregion
+
+  //#region Watch
+  watch(signMessageError, (newError) => {
+    if (newError) {
+      addErrorToast(
+        newError.name === 'UserRejectedRequestError'
+          ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
+          : 'Something went wrong: Unable to sign SIWE message'
+      )
+      log.error('signMessageError.value', newError)
+      isProcessing.value = false
+    }
+  })
+
+  watch(siweError, (newError) => {
+    if (newError) {
+      log.info('siweError.value', newError)
+      addErrorToast('Unable to authenticate with SIWE')
+      isProcessing.value = false
+    }
+  })
+
+  watch(fetchUserNonceError, (newError) => {
+    if (newError) {
+      log.info('fetchError.value', newError)
+      addErrorToast('Unable to fetch nonce')
+      isProcessing.value = false
+    }
+  })
+
+  watch(fetchUserError, (newError) => {
+    if (newError) {
       log.info('fetchUserError.value', fetchUserError.value)
       addErrorToast('Unable to fetch user data')
       isProcessing.value = false
     }
   })
-
-  async function executeSiwe() {
-    apiEndpoint.value = `user/nonce/${address.value}`
-    await executeFetchUserNonce()
-    if (!nonce.value) return
-
-    const statement = 'Sign in with Ethereum to the app.'
-    const siweMessageCreator = createSiweMessageCreator(
-      address.value as string,
-      statement,
-      nonce.value.nonce
-    )
-
-    authData.value.message = await siweMessageCreator.create()
-
-    signMessage({ message: authData.value.message })
-  }
-
-  async function siwe() {
-    // Check if we have metamask installation befor continue the process
-    const metaMaskConnector = connectors.find(
-      (connector) => connector.name.split(' ')[0] === 'MetaMask'
-    )
-
-    if (!metaMaskConnector) {
-      addErrorToast('MetaMask is not installed, Please install MetaMask to continue')
-      return
-    }
-
-    try {
-      isProcessing.value = true
-
-      const networkChainId = parseInt(NETWORK.chainId)
-
-      if (!isConnected.value) {
-        connect({ connector: metaMaskConnector, chainId: networkChainId })
-      }
-
-      if ((await metaMaskConnector.getChainId()) !== networkChainId) {
-        switchChain({
-          chainId: networkChainId,
-          connector: metaMaskConnector
-        })
-      }
-
-      await executeSiwe()
-    } catch (_error) {
-      log.error(parseError(_error))
-      addErrorToast("Couldn't authenticate with SIWE")
-      isProcessing.value = false
-    }
-  }
+  //#endregion
 
   return { isProcessing, siwe }
 }

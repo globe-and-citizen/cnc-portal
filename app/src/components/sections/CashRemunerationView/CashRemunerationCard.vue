@@ -1,11 +1,15 @@
 <template>
-  <div class="card w-1/3 shadow-xl" :class="cardClasses">
+  <div class="card w-1/3 shadow-xl" data-test="card" :class="cardClasses">
     <div class="card-body">
       <h2 class="card-title">{{ cardTitle }}</h2>
       <div class="font-extrabold text-neutral flex gap-2 items-baseline">
         <span class="inline-block h-10 text-4xl">
-          <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
-          <span v-else>{{ amount }} </span>
+          <span
+            class="loading loading-spinner loading-lg"
+            v-if="isLoading"
+            data-test="loading-spinner"
+          ></span>
+          <span v-else data-test="amount">{{ amount }} </span>
         </span>
         <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
       </div>
