@@ -58,13 +58,14 @@ describe('ExpenseAccount (EIP712)', () => {
         types = {
           BudgetData: [
             { name: 'budgetType', type: 'uint8' },
-            { name: 'value', type: 'uint256' },
-            { name: 'token', type: 'address' }
+            { name: 'value', type: 'uint256' }//,
+            //{ name: 'token', type: 'address' }
           ],
           BudgetLimit: [
             { name: 'approvedAddress', type: 'address' },
             { name: 'budgetData', type: 'BudgetData[]' },
-            { name: 'expiry', type: 'uint256' }
+            { name: 'expiry', type: 'uint256' },
+            { name: 'tokenAddress', type: 'address' }
           ]
         }
       })
@@ -109,12 +110,13 @@ describe('ExpenseAccount (EIP712)', () => {
         // })
 
         it('transactions per period', async () => {
-          const budgetData = [{ budgetType: 0, value: 10, token: ethers.ZeroAddress }]
+          const budgetData = [{ budgetType: 0, value: 10 }]//, token: ethers.ZeroAddress }]
 
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
+            expiry: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour from now
+            tokenAddress: ethers.ZeroAddress
           }
 
           const signature = await owner.signTypedData(domain, types, budgetLimit)
@@ -141,11 +143,12 @@ describe('ExpenseAccount (EIP712)', () => {
 
         it('amount per period', async () => {
           const budgetData = [
-            { budgetType: 1, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10')}//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -176,11 +179,12 @@ describe('ExpenseAccount (EIP712)', () => {
 
         it('amount per transaction', async () => {
           const budgetData = [
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 2, value: ethers.parseEther('10')}//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -212,12 +216,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('all limits', async () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10'), token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10')},//, token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10')}//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -254,12 +259,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the signer is not the contract owner', async () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10'), token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10') },// token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -275,12 +281,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the amount per period exceeds the budget limit', async () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('20'), token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 2, value: ethers.parseEther('20') }, //token: ethers.ZeroAddress },
+            { budgetType: 1, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -295,12 +302,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the amount per transaction exceeds the budget limit', async () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50'), token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -315,12 +323,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the number of transactions exceed the transaction limit', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50'), token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -348,6 +357,7 @@ describe('ExpenseAccount (EIP712)', () => {
             approvedAddress: withdrawer.address,
             //@ts-expect-error test empty array passed to contract
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -361,11 +371,12 @@ describe('ExpenseAccount (EIP712)', () => {
         })
         it('the budget data contains an invalid type', async () => {
           const budgetData = [
-            { budgetType: 4, value: ethers.parseEther('20'), token: ethers.ZeroAddress }
+            { budgetType: 4, value: ethers.parseEther('20') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -380,12 +391,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the to address is a zero address', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50'), token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -405,12 +417,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the amount is zero or negative', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50'), token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -425,12 +438,13 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the approval has expired', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50'), token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') },//, token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') },// token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor((Date.now() - 3600) / 1000) // 1 hour from now
           }
 
@@ -444,11 +458,12 @@ describe('ExpenseAccount (EIP712)', () => {
         })
         it('The approval is deactivated', async () => {
           const budgetData = [
-            { budgetType: 1, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
             budgetData,
+            tokenAddress: ethers.ZeroAddress,
             expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
           }
 
@@ -480,11 +495,12 @@ describe('ExpenseAccount (EIP712)', () => {
       })
       it('Then I can deactivate the approval', async () => {
         const budgetData = [
-          { budgetType: 0, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+          { budgetType: 0, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
         ]
         const budgetLimit = {
           approvedAddress: withdrawer.address,
           budgetData,
+          tokenAddress: ethers.ZeroAddress,
           expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
         }
 
@@ -505,11 +521,12 @@ describe('ExpenseAccount (EIP712)', () => {
       })
       it('Then I can activate the approval', async () => {
         const budgetData = [
-          { budgetType: 0, value: ethers.parseEther('10'), token: ethers.ZeroAddress }
+          { budgetType: 0, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
         ]
         const budgetLimit = {
           approvedAddress: withdrawer.address,
           budgetData,
+          tokenAddress: ethers.ZeroAddress,
           expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
         }
 
@@ -583,13 +600,14 @@ describe('ExpenseAccount (EIP712)', () => {
       types = {
         BudgetData: [
           { name: 'budgetType', type: 'uint8' },
-          { name: 'value', type: 'uint256' },
-          { name: 'token', type: 'address' }
+          { name: 'value', type: 'uint256' }//,
+          //{ name: 'token', type: 'address' }
         ],
         BudgetLimit: [
           { name: 'approvedAddress', type: 'address' },
           { name: 'budgetData', type: 'BudgetData[]' },
-          { name: 'expiry', type: 'uint256' }
+          { name: 'expiry', type: 'uint256' },
+          { name: 'tokenAddress', type: 'address' }
         ]
       }
 
@@ -626,13 +644,14 @@ describe('ExpenseAccount (EIP712)', () => {
     it('should allow token transfers with valid budget limits', async () => {
       const amount = ethers.parseEther('10')
       const budgetData = [
-        { budgetType: 0, value: 10, token: await mockUSDT.getAddress() },
-        { budgetType: 1, value: ethers.parseEther('50'), token: await mockUSDT.getAddress() },
-        { budgetType: 2, value: ethers.parseEther('20'), token: await mockUSDT.getAddress() }
+        { budgetType: 0, value: 10 },// token: await mockUSDT.getAddress() },
+        { budgetType: 1, value: ethers.parseEther('50') },// token: await mockUSDT.getAddress() },
+        { budgetType: 2, value: ethers.parseEther('20') },// token: await mockUSDT.getAddress() }
       ]
       const budgetLimit = {
         approvedAddress: withdrawer.address,
         budgetData,
+        tokenAddress: await mockUSDT.getAddress(),
         expiry: Math.floor(Date.now() / 1000) + 60 * 60
       }
 
@@ -640,9 +659,9 @@ describe('ExpenseAccount (EIP712)', () => {
 
       const tx = await expenseAccountProxy
         .connect(withdrawer)
-        .transferToken(
+        .transfer/*Token*/(
           withdrawer.address,
-          await mockUSDT.getAddress(),
+          //await mockUSDT.getAddress(),
           amount,
           budgetLimit,
           signature
@@ -670,11 +689,12 @@ describe('ExpenseAccount (EIP712)', () => {
         const amount = ethers.parseEther('10')
         const unsupportedToken = '0x9876543210987654321098765432109876543210'
         const budgetData = [
-          { budgetType: 1, value: ethers.parseEther('50'), token: unsupportedToken }
+          { budgetType: 1, value: ethers.parseEther('50') },// token: unsupportedToken }
         ]
         const budgetLimit = {
           approvedAddress: withdrawer.address,
           budgetData,
+          tokenAddress: unsupportedToken,
           expiry: Math.floor(Date.now() / 1000) + 60 * 60
         }
 
@@ -683,7 +703,7 @@ describe('ExpenseAccount (EIP712)', () => {
         await expect(
           expenseAccountProxy
             .connect(withdrawer)
-            .transferToken(withdrawer.address, unsupportedToken, amount, budgetLimit, signature)
+            .transfer(withdrawer.address, /*unsupportedToken, */amount, budgetLimit, signature)
         ).to.be.revertedWith('Unsupported token')
       })
 
