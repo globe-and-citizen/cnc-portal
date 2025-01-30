@@ -105,7 +105,8 @@
           class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
           :class="{
             'bg-emerald-500/10 shadow-sm': item.active,
-            'hover:bg-gray-100': !item.active
+            'hover:bg-gray-100': !item.active,
+            hidden: !item.show
           }"
         >
           <div class="relative">
@@ -217,39 +218,48 @@ const formatedUserAddress = computed(() => {
     : ''
 })
 
-const menuItems = [
+const menuItems = computed(() => [
   {
     label: 'Dashboard',
     icon: HomeIcon,
     route: '/',
-    active: true
+    active: true,
+    show: true
   },
   {
     label: 'Bank',
     icon: BanknotesIcon,
-    route: '/bank'
+    route: '/bank',
+    show: true
   },
   {
     label: 'Cash Remuneration',
     icon: BanknotesIcon,
-    route: `teams/${currentTeam.value?.id}/cash-remunerations`
+    route: {
+      name: 'cash-remunerations',
+      params: { id: currentTeam.value?.id || '1' }
+    },
+    show: currentTeam.value?.cashRemunerationEip712Address
   },
   {
     label: 'Transactions',
     icon: ChartBarIcon,
-    route: '/transactions'
+    route: '/transactions',
+    show: true
   },
   {
     label: 'Administration',
     icon: UsersIcon,
-    route: '/admin'
+    route: '/admin',
+    show: true
   },
   {
     label: 'Contract Management',
     icon: DocumentTextIcon,
-    route: '/contracts'
+    route: '/contracts',
+    show: true
   }
-]
+])
 
 const navigateToTeam = (teamId: string) => {
   setCurrentTeamId(teamId)
