@@ -13,13 +13,27 @@
   <div class="card bg-base-100 w-full shadow-xl">
     <TableComponent :rows="claims" :columns="columns">
       <template #action-data="{ row }">
-        <ButtonUI v-if="row.status == 'Pending'" variant="success" @click="() => {}"
+        <ButtonUI
+          v-if="row.status == 'Pending'"
+          variant="success"
+          data-test="approve-button"
+          @click="() => {}"
           >Approve</ButtonUI
         >
-        <ButtonUI v-if="row.status == 'Approved'" variant="error" @click="() => {}"
+        <ButtonUI
+          v-if="row.status == 'Approved'"
+          variant="error"
+          data-test="disable-button"
+          @click="() => {}"
           >Disable</ButtonUI
         >
-        <ButtonUI v-if="row.status == 'Disabled'" variant="info" @click="() => {}">Enable</ButtonUI>
+        <ButtonUI
+          v-if="row.status == 'Disabled'"
+          variant="info"
+          data-test="enable-button"
+          @click="() => {}"
+          >Enable</ButtonUI
+        >
       </template>
       <template #member-data="{ row }">
         <div class="flex w-full gap-2">
