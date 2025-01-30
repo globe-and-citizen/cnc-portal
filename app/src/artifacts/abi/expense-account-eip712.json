@@ -655,6 +655,11 @@
             "internalType": "uint256",
             "name": "expiry",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenAddress",
+            "type": "address"
           }
         ],
         "internalType": "struct ExpenseAccountEIP712.BudgetLimit",
@@ -681,68 +686,6 @@
       }
     ],
     "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "approvedAddress",
-            "type": "address"
-          },
-          {
-            "components": [
-              {
-                "internalType": "enum ExpenseAccountEIP712.BudgetType",
-                "name": "budgetType",
-                "type": "uint8"
-              },
-              {
-                "internalType": "uint256",
-                "name": "value",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct ExpenseAccountEIP712.BudgetData[]",
-            "name": "budgetData",
-            "type": "tuple[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "expiry",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct ExpenseAccountEIP712.BudgetLimit",
-        "name": "limit",
-        "type": "tuple"
-      },
-      {
-        "internalType": "bytes",
-        "name": "signature",
-        "type": "bytes"
-      }
-    ],
-    "name": "transferToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
