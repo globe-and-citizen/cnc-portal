@@ -51,14 +51,14 @@
     <div class="divider m-0"></div>
     <div class="overflow-x-auto flex flex-col gap-4" data-test="claims-table">
       <span class="text-2xl sm:text-3xl font-bold">Claims Table</span>
-      <CashRemunerationTable />
+      <CashRemunerationTable v-if="team?.id" :team-id="Number(team?.id)" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import type { Team, ClaimResponse } from '@/types'
+import type { Team } from '@/types'
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -131,32 +131,8 @@ const addWageClaim = async () => {
     return
   }
   await addWageClaimAPI()
-  await getWageClaimsAPI()
 }
 //#endregion add wage claim
-
-//#region get wage claims
-const {
-  error: getWageClaimsError,
-  // isFetching: isWageClaimsFetching,
-  execute: getWageClaimsAPI
-  // data: wageClaims
-} = useCustomFetch<ClaimResponse[]>(
-  `teams/${String(route.params.id)}/cash-remuneration/claim/pending`
-)
-  .get()
-  .json()
-// watch(wageClaims, async (newVal) => {
-//   if (newVal) {
-//     addSuccessToast('Wage claims fetched successfully')
-//   }
-// })
-watch(getWageClaimsError, (newVal) => {
-  if (newVal) {
-    addErrorToast(getWageClaimsError.value)
-  }
-})
-//#endregion get wage claims
 
 //#region approve wage claims
 const {
