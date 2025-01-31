@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
+import CashRemunerationView from '@/views/CashRemunerationView.vue'
 import { useStorage } from '@vueuse/core'
 
 const router = createRouter({
@@ -54,6 +55,11 @@ const router = createRouter({
           path: '',
           name: 'teams',
           component: TeamView
+        },
+        {
+          path: '/teams/:id/cash-remunerations',
+          name: 'cash-remunerations',
+          component: CashRemunerationView
         }
       ]
     },
