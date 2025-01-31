@@ -58,7 +58,7 @@ describe('ExpenseAccount (EIP712)', () => {
         types = {
           BudgetData: [
             { name: 'budgetType', type: 'uint8' },
-            { name: 'value', type: 'uint256' }//,
+            { name: 'value', type: 'uint256' } //,
             //{ name: 'token', type: 'address' }
           ],
           BudgetLimit: [
@@ -110,7 +110,7 @@ describe('ExpenseAccount (EIP712)', () => {
         // })
 
         it('transactions per period', async () => {
-          const budgetData = [{ budgetType: 0, value: 10 }]//, token: ethers.ZeroAddress }]
+          const budgetData = [{ budgetType: 0, value: 10 }] //, token: ethers.ZeroAddress }]
 
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -143,7 +143,7 @@ describe('ExpenseAccount (EIP712)', () => {
 
         it('amount per period', async () => {
           const budgetData = [
-            { budgetType: 1, value: ethers.parseEther('10')}//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -179,7 +179,7 @@ describe('ExpenseAccount (EIP712)', () => {
 
         it('amount per transaction', async () => {
           const budgetData = [
-            { budgetType: 2, value: ethers.parseEther('10')}//, token: ethers.ZeroAddress }
+            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -216,8 +216,8 @@ describe('ExpenseAccount (EIP712)', () => {
         it('all limits', async () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10')},//, token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10')}//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10') }, //, token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -259,8 +259,8 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the signer is not the contract owner', async () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10') },// token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10') }, // token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -282,7 +282,7 @@ describe('ExpenseAccount (EIP712)', () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
             { budgetType: 2, value: ethers.parseEther('20') }, //token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -302,8 +302,8 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the amount per transaction exceeds the budget limit', async () => {
           const budgetData = [
             { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -323,8 +323,8 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the number of transactions exceed the transaction limit', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -371,7 +371,7 @@ describe('ExpenseAccount (EIP712)', () => {
         })
         it('the budget data contains an invalid type', async () => {
           const budgetData = [
-            { budgetType: 4, value: ethers.parseEther('20') }//, token: ethers.ZeroAddress }
+            { budgetType: 4, value: ethers.parseEther('20') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -391,8 +391,8 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the to address is a zero address', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -417,8 +417,8 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the amount is zero or negative', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') },// token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -438,8 +438,8 @@ describe('ExpenseAccount (EIP712)', () => {
         it('the approval has expired', async () => {
           const budgetData = [
             { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') },//, token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') },// token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('50') }, //, token: ethers.ZeroAddress },
+            { budgetType: 2, value: ethers.parseEther('10') } // token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -458,7 +458,7 @@ describe('ExpenseAccount (EIP712)', () => {
         })
         it('The approval is deactivated', async () => {
           const budgetData = [
-            { budgetType: 1, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+            { budgetType: 1, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
           ]
           const budgetLimit = {
             approvedAddress: withdrawer.address,
@@ -495,7 +495,7 @@ describe('ExpenseAccount (EIP712)', () => {
       })
       it('Then I can deactivate the approval', async () => {
         const budgetData = [
-          { budgetType: 0, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+          { budgetType: 0, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
         ]
         const budgetLimit = {
           approvedAddress: withdrawer.address,
@@ -521,7 +521,7 @@ describe('ExpenseAccount (EIP712)', () => {
       })
       it('Then I can activate the approval', async () => {
         const budgetData = [
-          { budgetType: 0, value: ethers.parseEther('10') }//, token: ethers.ZeroAddress }
+          { budgetType: 0, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
         ]
         const budgetLimit = {
           approvedAddress: withdrawer.address,
@@ -600,7 +600,7 @@ describe('ExpenseAccount (EIP712)', () => {
       types = {
         BudgetData: [
           { name: 'budgetType', type: 'uint8' },
-          { name: 'value', type: 'uint256' }//,
+          { name: 'value', type: 'uint256' } //,
           //{ name: 'token', type: 'address' }
         ],
         BudgetLimit: [
@@ -644,9 +644,9 @@ describe('ExpenseAccount (EIP712)', () => {
     it('should allow token transfers with valid budget limits', async () => {
       const amount = ethers.parseEther('10')
       const budgetData = [
-        { budgetType: 0, value: 10 },// token: await mockUSDT.getAddress() },
-        { budgetType: 1, value: ethers.parseEther('50') },// token: await mockUSDT.getAddress() },
-        { budgetType: 2, value: ethers.parseEther('20') },// token: await mockUSDT.getAddress() }
+        { budgetType: 0, value: 10 }, // token: await mockUSDT.getAddress() },
+        { budgetType: 1, value: ethers.parseEther('50') }, // token: await mockUSDT.getAddress() },
+        { budgetType: 2, value: ethers.parseEther('20') } // token: await mockUSDT.getAddress() }
       ]
       const budgetLimit = {
         approvedAddress: withdrawer.address,
@@ -657,15 +657,13 @@ describe('ExpenseAccount (EIP712)', () => {
 
       const signature = await owner.signTypedData(domain, types, budgetLimit)
 
-      const tx = await expenseAccountProxy
-        .connect(withdrawer)
-        .transfer/*Token*/(
-          withdrawer.address,
-          //await mockUSDT.getAddress(),
-          amount,
-          budgetLimit,
-          signature
-        )
+      const tx = await expenseAccountProxy.connect(withdrawer).transfer(
+        /*Token*/ withdrawer.address,
+        //await mockUSDT.getAddress(),
+        amount,
+        budgetLimit,
+        signature
+      )
 
       await expect(tx)
         .to.emit(expenseAccountProxy, 'TokenTransfer')
@@ -689,7 +687,7 @@ describe('ExpenseAccount (EIP712)', () => {
         const amount = ethers.parseEther('10')
         const unsupportedToken = '0x9876543210987654321098765432109876543210'
         const budgetData = [
-          { budgetType: 1, value: ethers.parseEther('50') },// token: unsupportedToken }
+          { budgetType: 1, value: ethers.parseEther('50') } // token: unsupportedToken }
         ]
         const budgetLimit = {
           approvedAddress: withdrawer.address,
@@ -703,7 +701,7 @@ describe('ExpenseAccount (EIP712)', () => {
         await expect(
           expenseAccountProxy
             .connect(withdrawer)
-            .transfer(withdrawer.address, /*unsupportedToken, */amount, budgetLimit, signature)
+            .transfer(withdrawer.address, /*unsupportedToken, */ amount, budgetLimit, signature)
         ).to.be.revertedWith('Unsupported token')
       })
 

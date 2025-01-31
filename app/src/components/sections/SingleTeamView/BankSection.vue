@@ -577,12 +577,10 @@ const {
   error: tokenDepositError
 } = useWriteContract()
 
-const { 
-  isLoading: isConfirmingTokenDeposit,
-  isSuccess: isConfirmedTokenDeposit
-} = useWaitForTransactionReceipt({
-  hash: tokenDepositHash
-})
+const { isLoading: isConfirmingTokenDeposit, isSuccess: isConfirmedTokenDeposit } =
+  useWaitForTransactionReceipt({
+    hash: tokenDepositHash
+  })
 
 const {
   writeContract: writeTokenTransfer,
@@ -591,24 +589,20 @@ const {
   error: tokenTransferError
 } = useWriteContract()
 
-const { 
-  isLoading: isConfirmingTokenTransfer, 
-  isSuccess: isConfirmedTokenTransfer
-} = useWaitForTransactionReceipt({
-  hash: tokenTransferHash
-})
+const { isLoading: isConfirmingTokenTransfer, isSuccess: isConfirmedTokenTransfer } =
+  useWaitForTransactionReceipt({
+    hash: tokenTransferHash
+  })
 const {
   writeContract: approve,
   error: approveError,
   data: approveHash,
   isPending: isPendingApprove
 } = useWriteContract()
-const { 
-  isLoading: isConfirmingApprove, 
-  isSuccess: isConfirmedApprove
-} = useWaitForTransactionReceipt({
-  hash: approveHash
-})
+const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
+  useWaitForTransactionReceipt({
+    hash: approveHash
+  })
 const currentAction = ref('')
 
 const pushUSDC = async () => {

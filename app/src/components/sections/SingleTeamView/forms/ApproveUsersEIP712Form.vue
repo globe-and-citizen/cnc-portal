@@ -242,7 +242,7 @@ import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from "@/constant"
+import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -259,9 +259,9 @@ const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
 const selectedToken = ref<string | null>(null)
 const tokens = ref({
-  [NETWORK.currencySymbol]: zeroAddress, 
-  "USDC": USDC_ADDRESS, 
-  "USDT": USDT_ADDRESS
+  [NETWORK.currencySymbol]: zeroAddress,
+  USDC: USDC_ADDRESS,
+  USDT: USDT_ADDRESS
 })
 
 //#region multi limit
@@ -286,7 +286,7 @@ const resultArray = computed(() =>
     .filter(([, isSelected]) => isSelected)
     .map(([budgetType]) => ({
       budgetType: Number(budgetType),
-      value: values[budgetType as unknown as 0 | 1 | 2] || 0//,
+      value: values[budgetType as unknown as 0 | 1 | 2] || 0 //,
       //token: selectedToken.value
     }))
 )
@@ -338,7 +338,11 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { /*budgetLimitType, */ description, /*limitValue, */ formData, selectedToken })
+const v$ = useVuelidate(rules, {
+  /*budgetLimitType, */ description,
+  /*limitValue, */ formData,
+  selectedToken
+})
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 

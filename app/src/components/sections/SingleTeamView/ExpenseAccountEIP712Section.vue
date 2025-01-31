@@ -703,7 +703,7 @@ const approveUser = async (data: BudgetLimit) => {
   const types = {
     BudgetData: [
       { name: 'budgetType', type: 'uint8' },
-      { name: 'value', type: 'uint256' }//,
+      { name: 'value', type: 'uint256' } //,
       //{ name: 'token', type: 'address' }
     ],
     BudgetLimit: [
@@ -718,10 +718,12 @@ const approveUser = async (data: BudgetLimit) => {
     ...data,
     budgetData: data.budgetData?.map((item) => ({
       ...item,
-      value: item.budgetType === 0 ? item.value : 
-        data.tokenAddress === zeroAddress ?
-          parseEther(`${item.value}`) :
-          BigInt(Number(item.value) * 1e6)
+      value:
+        item.budgetType === 0
+          ? item.value
+          : data.tokenAddress === zeroAddress
+            ? parseEther(`${item.value}`)
+            : BigInt(Number(item.value) * 1e6)
     }))
   }
 
@@ -890,12 +892,10 @@ const {
   error: tokenTransferError
 } = useWriteContract()
 
-const { 
-  isLoading: isConfirmingTokenTransfer, 
-  isSuccess: isConfirmedTokenTransfer 
-} = useWaitForTransactionReceipt({
-  hash: tokenTransferHash
-})
+const { isLoading: isConfirmingTokenTransfer, isSuccess: isConfirmedTokenTransfer } =
+  useWaitForTransactionReceipt({
+    hash: tokenTransferHash
+  })
 
 // Token approval
 const {
@@ -905,12 +905,10 @@ const {
   isPending: isPendingApprove
 } = useWriteContract()
 
-const { 
-  isLoading: isConfirmingApprove, 
-  isSuccess: isConfirmedApprove 
-} = useWaitForTransactionReceipt({
-  hash: approveHash
-})
+const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
+  useWaitForTransactionReceipt({
+    hash: approveHash
+  })
 
 const {
   writeContract: writeTokenDeposit,
@@ -919,12 +917,10 @@ const {
   isPending: isPendingTokenDeposit
 } = useWriteContract()
 
-const {
-  isLoading: isConfirmingDeposit,
-  isSuccess: isConfirmedDeposit
-} = useWaitForTransactionReceipt({
-  hash: tokenDepositHash
-})
+const { isLoading: isConfirmingDeposit, isSuccess: isConfirmedDeposit } =
+  useWaitForTransactionReceipt({
+    hash: tokenDepositHash
+  })
 
 // Token transfer function
 const transferToken = async () => {
@@ -972,7 +968,7 @@ const transferToken = async () => {
             ...budgetLimit,
             budgetData: budgetLimit.budgetData.map((item) => ({
               ...item,
-              value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)//parseEther(`${item.value}`)
+              value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
             }))
           },
           _expenseAccountData.value.signature
@@ -984,7 +980,6 @@ const transferToken = async () => {
       //   functionName: 'depositToken',
       //   args: [USDC_ADDRESS, amount]
       // })
-
     }
   } catch (error) {
     log.error(parseError(error))
@@ -992,7 +987,7 @@ const transferToken = async () => {
   }
 }
 
-watch(tokenDepositError, newError => {
+watch(tokenDepositError, (newError) => {
   if (newError) {
     log.error('tokenDepositError.value', tokenDepositError)
     addErrorToast('Failed to deposit token')
@@ -1000,7 +995,7 @@ watch(tokenDepositError, newError => {
 })
 
 watch(isConfirmingDeposit, (isConfirming, wasConfirming) => {
-  if(!isConfirming && wasConfirming && isConfirmedDeposit.value) {
+  if (!isConfirming && wasConfirming && isConfirmedDeposit.value) {
     addSuccessToast('Deposited token successfuly')
   }
 })
