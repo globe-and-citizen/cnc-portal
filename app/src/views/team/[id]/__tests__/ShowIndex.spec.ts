@@ -40,7 +40,7 @@ describe('ShowIndex', () => {
       }
     }))
   }))
-  
+
   it('should render the team Breadcrumb', () => {
     // Your test here
     const wrapper = mount(ShowIndex)
