@@ -172,10 +172,13 @@ import {
   BanknotesIcon,
   ChartBarIcon,
   UsersIcon,
-  DocumentTextIcon,
   ArrowLeftStartOnRectangleIcon,
   ArrowRightStartOnRectangleIcon,
-  ChevronUpDownIcon
+  ChevronUpDownIcon,
+  BriefcaseIcon,
+  ChartPieIcon,
+  WrenchIcon,
+  CurrencyDollarIcon
 } from '@heroicons/vue/24/outline'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
@@ -220,7 +223,10 @@ const menuItems = computed(() => [
   {
     label: 'Dashboard',
     icon: HomeIcon,
-    route: '/',
+    route: {
+      name: 'show-team',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
     active: true,
     show: true
   },
@@ -235,13 +241,40 @@ const menuItems = computed(() => [
   },
   {
     label: 'Cash Remuneration',
-    icon: BanknotesIcon,
+    icon: CurrencyDollarIcon ,
     route: {
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     show: teamStore.currentTeam?.cashRemunerationEip712Address
   },
+  {
+    label: 'Expense Account ', 
+    icon: BriefcaseIcon ,
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    show: true
+  },
+  {
+    label: 'SHER TOKEN',
+    icon: ChartPieIcon,
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    show: true
+  }, 
+  {
+    label: 'Contract Management',
+    icon: WrenchIcon,
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    show: true
+  }, 
   {
     label: 'Transactions',
     icon: ChartBarIcon,
@@ -252,12 +285,6 @@ const menuItems = computed(() => [
     label: 'Administration',
     icon: UsersIcon,
     route: '/admin',
-    show: true
-  },
-  {
-    label: 'Contract Management',
-    icon: DocumentTextIcon,
-    route: '/contracts',
     show: true
   }
 ])
