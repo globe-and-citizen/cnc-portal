@@ -645,11 +645,6 @@
                 "internalType": "uint256",
                 "name": "value",
                 "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "token",
-                "type": "address"
               }
             ],
             "internalType": "struct ExpenseAccountEIP712.BudgetData[]",

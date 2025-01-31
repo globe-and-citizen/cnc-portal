@@ -662,7 +662,6 @@ const getAmountWithdrawnBalance = async () => {
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-
     executeExpenseAccountTransfer({
       address: team.value.expenseAccountEip712Address as Address,
       args: [
@@ -950,7 +949,6 @@ const transferToken = async () => {
         args: [team.value.expenseAccountEip712Address as Address, amount]
       })
     } else {
-      console.log(`Performing transfer...`, budgetLimit)
       executeExpenseAccountTransfer({
         address: team.value.expenseAccountEip712Address as Address,
         abi: expenseAccountABI,
