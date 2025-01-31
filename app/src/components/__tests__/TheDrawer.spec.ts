@@ -166,7 +166,7 @@ describe('TheDrawer', () => {
         currentTeam: { name: 'Team A' }
       })
     }))
-    it.only('should toggle team dropdown when clicked', async () => {
+    it('should toggle team dropdown when clicked', async () => {
       const wrapper = mount(TheDrawer, {
         props: {
           user: { name, address }
