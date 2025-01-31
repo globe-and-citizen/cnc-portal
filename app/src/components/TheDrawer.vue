@@ -241,7 +241,7 @@ const menuItems = computed(() => [
   },
   {
     label: 'Cash Remuneration',
-    icon: CurrencyDollarIcon ,
+    icon: CurrencyDollarIcon,
     route: {
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
@@ -249,8 +249,8 @@ const menuItems = computed(() => [
     show: teamStore.currentTeam?.cashRemunerationEip712Address
   },
   {
-    label: 'Expense Account ', 
-    icon: BriefcaseIcon ,
+    label: 'Expense Account ',
+    icon: BriefcaseIcon,
     route: {
       name: 'bank',
       params: { id: teamStore.currentTeam?.id || '1' }
@@ -265,7 +265,7 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     show: true
-  }, 
+  },
   {
     label: 'Contract Management',
     icon: WrenchIcon,
@@ -274,7 +274,7 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     show: true
-  }, 
+  },
   {
     label: 'Transactions',
     icon: ChartBarIcon,

@@ -19,7 +19,7 @@
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
-import {  onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 const teamStore = useTeamStore()
 

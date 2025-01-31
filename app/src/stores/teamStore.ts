@@ -65,7 +65,6 @@ export const useTeamStore = defineStore('team', () => {
     return currentTeamId.value ? teamsFetched.value.get(String(currentTeamId.value)) : undefined
   })
 
-
   watch(teams, (newTeamsVal) => {
     // set the current team id to the first team id if not already set and teams is not empty
     if (!currentTeamId.value && newTeamsVal.length > 0) {
