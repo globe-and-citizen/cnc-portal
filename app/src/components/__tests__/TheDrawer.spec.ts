@@ -7,7 +7,7 @@ import {
   BanknotesIcon,
   DocumentTextIcon
 } from '@heroicons/vue/24/outline'
-import { mount, RouterLinkStub } from '@vue/test-utils'
+import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
@@ -18,12 +18,22 @@ const router = createRouter({
   routes: [
     { path: '/', component: { template: '<div>Home</div>' } },
     { path: '/teams', component: { template: '<div>Teams</div>' } },
-    { path: '/transactions', component: { template: '<div>Teams</div>' } },
     {
-      path: '/teams/:id/cash-remunerations',
-      name: 'cash-remunerations',
-      component: { template: '<div>Teams</div>' }
-    }
+      path: '/teams/:id',
+      name: 'show-team',
+      meta: { name: 'Team View' },
+      component: { template: '<div>Teams Vew</div>' },
+      children: [
+        { path: '/teams/:id/bank', name: 'bank', component: { template: '<div>Teams Bank</div>' } },
+        {
+          path: '/teams/:id/cash-remunerations',
+          name: 'cash-remunerations',
+          component: { template: '<div>Teams</div>' }
+        }
+      ]
+    },
+    { path: '/transactions', component: { template: '<div>Teams</div>' } },
+    { path: '/admin', component: { template: '<div>Teams</div>' } }
   ]
 })
 
@@ -101,40 +111,26 @@ describe('TheDrawer', () => {
         }
       })
 
-      const collapseButton = wrapper.find('button')
+      const collapseButton = wrapper.find('[data-test="toggle-collapse"]')
+      // Check if the button exist and have a decendant with the class collapse-icon
+      expect(collapseButton.exists()).toBe(true)
+      expect(collapseButton.find('.not-collapsed').exists()).toBe(true)
+
       await collapseButton.trigger('click')
-      const updateModelValue = wrapper.emitted('update:modelValue')
-      expect(updateModelValue).toBeTruthy()
-      if (updateModelValue) {
-        expect(updateModelValue[0]).toEqual([true])
-      }
-    })
 
-    it('should adjust width based on collapse state', async () => {
-      const wrapper = mount(TheDrawer, {
-        props: {
-          user: { name, address },
-          modelValue: false
-        },
-        global: {
-          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+      expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([true])
 
-      // When expanded
-      expect(wrapper.classes()).toContain('w-[280px]')
-
-      // When collapsed
-      await wrapper.setProps({ modelValue: true })
-      expect(wrapper.classes()).toContain('w-20')
+      expect(collapseButton.exists()).toBe(true)
+      expect(collapseButton.find('.is-collapsed').exists()).toBe(true)
     })
   })
 
   describe('Team Selection', () => {
     vi.mock('@/stores/teamStore', () => ({
       useTeamStore: () => ({
-        currentTeamId: ref(null),
-        teamsMeta: ref({
+        currentTeamId: ref(1),
+        teamsMeta: {
           teams: [
             {
               id: '1',
@@ -150,10 +146,10 @@ describe('TheDrawer', () => {
           teamsAreFetching: false,
           teamsError: null,
           reloadTeams: vi.fn()
-        }),
+        },
         fetchTeam: vi.fn(),
         setCurrentTeamId: vi.fn(),
-        getCurrentTeam: vi.fn(() => ({ name: 'Team A' }))
+        currentTeam: { name: 'Team A' }
       })
     }))
     it('should toggle team dropdown when clicked', async () => {
@@ -178,9 +174,39 @@ describe('TheDrawer', () => {
       expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(true)
 
       // Trigger click outside event on the dropdown & check if it is hidden
+      await wrapper.find("[data-test='edit-user-card'").trigger('click')
+      // nest tick to wait for the click outside event to be processed
+      await wrapper.vm.$nextTick()
       // TODO: the result should be false, but it's returning true
-      // await wrapper.find("[data-test='user-name'").trigger('click')
       // expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)
+    })
+    it('should navigate to new team', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const teamSelector = wrapper.find('[data-test="team-display"]')
+
+      // Check if the team name is displayed and if the dropdown button is not visible
+      expect(teamSelector.exists()).toBe(true)
+      expect(teamSelector.text()).toContain('Team A')
+      expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)
+
+      // Click the team selector & check if dropdown is visible
+      await teamSelector.trigger('click')
+      const teamDropdown = teamSelector.find("[data-test='team-dropdown']")
+      expect(teamDropdown.exists()).toBe(true)
+      expect(teamDropdown.findAll("[data-test='team-item']").length > 1).toBe(true)
+
+      teamDropdown.findAll("[data-test='team-item']")[1].trigger('click')
+      // Check if we redirected to the team page with the id 2
+      await flushPromises()
+      expect(wrapper.vm.$route.params.id).toBe('2')
     })
     // TODO: click to navigate to team page
 
