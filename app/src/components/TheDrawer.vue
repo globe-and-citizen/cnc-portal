@@ -89,11 +89,9 @@
                 v-else
                 v-for="team in teamStore.teamsMeta.teams"
                 :key="team.id"
+                data-test="team-item"
               >
-                <TeamMetaComponent
-                  class="hover:bg-slate-100"
-                  :team="team"
-                  @click="navigateToTeam(team.id)"
+                <TeamMetaComponent class="hover:bg-slate-100" :team="team" :to="team.id"
               /></RouterLink>
               <!-- TODO: Make the button functional -->
               <div class="w-full flex justify-center items-center h-12 hover:bg-slate-100">
@@ -301,12 +299,6 @@ const menuItems = computed(() => [
     show: true
   }
 ])
-
-const navigateToTeam = (teamId: string) => {
-  // Seting current team id should be trigger in the page, not in the navigation
-  teamStore.setCurrentTeamId(teamId)
-  isCollapsed.value = false
-}
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
