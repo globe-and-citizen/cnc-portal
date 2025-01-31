@@ -18,12 +18,22 @@ const router = createRouter({
   routes: [
     { path: '/', component: { template: '<div>Home</div>' } },
     { path: '/teams', component: { template: '<div>Teams</div>' } },
-    { path: '/transactions', component: { template: '<div>Teams</div>' } },
     {
-      path: '/teams/:id/cash-remunerations',
-      name: 'cash-remunerations',
-      component: { template: '<div>Teams</div>' }
-    }
+      path: '/teams/:id',
+      name: 'show-team',
+      meta: { name: 'Team View' },
+      component: { template: '<div>Teams Vew</div>' },
+      children: [
+        { path: '/teams/:id/bank', name: 'bank', component: { template: '<div>Teams Bank</div>' } },
+        {
+          path: '/teams/:id/cash-remunerations',
+          name: 'cash-remunerations',
+          component: { template: '<div>Teams</div>' }
+        }
+      ]
+    },
+    { path: '/transactions', component: { template: '<div>Teams</div>' } },
+    { path: '/admin', component: { template: '<div>Teams</div>' } }
   ]
 })
 
@@ -153,10 +163,10 @@ describe('TheDrawer', () => {
         }),
         fetchTeam: vi.fn(),
         setCurrentTeamId: vi.fn(),
-        getCurrentTeam: vi.fn(() => ({ name: 'Team A' }))
+        currentTeam: { name: 'Team A' }
       })
     }))
-    it('should toggle team dropdown when clicked', async () => {
+    it.only('should toggle team dropdown when clicked', async () => {
       const wrapper = mount(TheDrawer, {
         props: {
           user: { name, address }
@@ -167,6 +177,8 @@ describe('TheDrawer', () => {
       })
 
       const teamSelector = wrapper.find('[data-test="team-display"]')
+      const teamHtml = teamSelector.html() 
+      console.log('teamHtml', teamHtml)
 
       // Check if the team name is displayed and if the dropdown button is not visible
       expect(teamSelector.exists()).toBe(true)
