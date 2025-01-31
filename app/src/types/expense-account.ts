@@ -4,6 +4,7 @@ export interface BudgetLimit {
   approvedAddress: string
   budgetData: BudgetData[]
   expiry: number
+  tokenAddress: string
 }
 
 export interface ExpenseData {

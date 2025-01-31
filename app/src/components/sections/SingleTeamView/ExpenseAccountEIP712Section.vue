@@ -346,7 +346,7 @@ import {
   useSignTypedData
 } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, keccak256 } from 'viem'
+import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { USDC_ADDRESS } from '@/constant'
@@ -718,7 +718,10 @@ const approveUser = async (data: BudgetLimit) => {
     ...data,
     budgetData: data.budgetData?.map((item) => ({
       ...item,
-      value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+      value: item.budgetType === 0 ? item.value : 
+        data.tokenAddress === zeroAddress ?
+          parseEther(`${item.value}`) :
+          BigInt(Number(item.value) * 1e6)
     }))
   }
 
