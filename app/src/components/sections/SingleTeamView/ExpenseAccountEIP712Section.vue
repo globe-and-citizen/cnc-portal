@@ -295,16 +295,10 @@
       <div class="text-center">
         <ButtonUI
           :loading="
-            isLoadingTokenTransfer ||
-            isConfirmingTokenTransfer ||
-            isPendingApprove ||
-            isConfirmingApprove
+            isLoadingTransfer || isConfirmingTransfer || isPendingApprove || isConfirmingApprove
           "
           :disabled="
-            isLoadingTokenTransfer ||
-            isConfirmingTokenTransfer ||
-            isPendingApprove ||
-            isConfirmingApprove
+            isLoadingTransfer || isConfirmingTransfer || isPendingApprove || isConfirmingApprove
           "
           class="w-full sm:w-44"
           variant="primary"
@@ -885,17 +879,17 @@ const {
 const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 
 // Token transfer
-const {
-  writeContract: writeTokenTransfer,
-  isPending: isLoadingTokenTransfer,
-  data: tokenTransferHash,
-  error: tokenTransferError
-} = useWriteContract()
+// const {
+//   writeContract: writeTokenTransfer,
+//   isPending: isLoadingTokenTransfer,
+//   data: tokenTransferHash,
+//   error: tokenTransferError
+// } = useWriteContract()
 
-const { isLoading: isConfirmingTokenTransfer, isSuccess: isConfirmedTokenTransfer } =
-  useWaitForTransactionReceipt({
-    hash: tokenTransferHash
-  })
+// const { isLoading: isConfirmingTokenTransfer, isSuccess: isConfirmedTokenTransfer } =
+//   useWaitForTransactionReceipt({
+//     hash: tokenTransferHash
+//   })
 
 // Token approval
 const {
@@ -910,17 +904,17 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
     hash: approveHash
   })
 
-const {
-  writeContract: writeTokenDeposit,
-  error: tokenDepositError,
-  data: tokenDepositHash,
-  isPending: isPendingTokenDeposit
-} = useWriteContract()
+// const {
+//   writeContract: writeTokenDeposit,
+//   error: tokenDepositError,
+//   data: tokenDepositHash,
+//   isPending: isPendingTokenDeposit
+// } = useWriteContract()
 
-const { isLoading: isConfirmingDeposit, isSuccess: isConfirmedDeposit } =
-  useWaitForTransactionReceipt({
-    hash: tokenDepositHash
-  })
+// const { isLoading: isConfirmingDeposit, isSuccess: isConfirmedDeposit } =
+//   useWaitForTransactionReceipt({
+//     hash: tokenDepositHash
+//   })
 
 // Token transfer function
 const transferToken = async () => {
@@ -987,29 +981,29 @@ const transferToken = async () => {
   }
 }
 
-watch(tokenDepositError, (newError) => {
-  if (newError) {
-    log.error('tokenDepositError.value', tokenDepositError)
-    addErrorToast('Failed to deposit token')
-  }
-})
+// watch(tokenDepositError, (newError) => {
+//   if (newError) {
+//     log.error('tokenDepositError.value', tokenDepositError)
+//     addErrorToast('Failed to deposit token')
+//   }
+// })
 
-watch(isConfirmingDeposit, (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedDeposit.value) {
-    addSuccessToast('Deposited token successfuly')
-  }
-})
+// watch(isConfirmingDeposit, (isConfirming, wasConfirming) => {
+//   if (!isConfirming && wasConfirming && isConfirmedDeposit.value) {
+//     addSuccessToast('Deposited token successfuly')
+//   }
+// })
 
 // Watch for token transfer events
-watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming && isConfirmedTokenTransfer.value) {
-    addSuccessToast('Token transferred successfully')
-    fetchUsdcBalance()
-    tokenTransferModal.value = false
-    tokenAmount.value = ''
-    tokenRecipient.value = ''
-  }
-})
+// watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
+//   if (!newIsConfirming && oldIsConfirming && isConfirmedTokenTransfer.value) {
+//     addSuccessToast('Token transferred successfully')
+//     fetchUsdcBalance()
+//     tokenTransferModal.value = false
+//     tokenAmount.value = ''
+//     tokenRecipient.value = ''
+//   }
+// })
 
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
@@ -1018,12 +1012,12 @@ watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   }
 })
 
-watch(tokenTransferError, () => {
-  if (tokenTransferError.value) {
-    log.error(parseError(tokenTransferError.value))
-    addErrorToast('Failed to transfer token')
-  }
-})
+// watch(tokenTransferError, () => {
+//   if (tokenTransferError.value) {
+//     log.error(parseError(tokenTransferError.value))
+//     addErrorToast('Failed to transfer token')
+//   }
+// })
 
 watch(approveError, () => {
   if (approveError.value) {
