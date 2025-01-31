@@ -25,10 +25,18 @@
           />
         </div>
       </div>
-      <ButtonUI variant="glass" @click="toggleCollapse" class="shadow-sm" data-test="toggle-collapse">
+      <ButtonUI
+        variant="glass"
+        @click="toggleCollapse"
+        class="shadow-sm"
+        data-test="toggle-collapse"
+      >
         {{ isCollapsed ? 'Expand' : 'Collapse' }}
         <!-- I adde is collapsed class because data-test is not working on the icone -->
-        <ArrowLeftStartOnRectangleIcon class="is-collapsed w-5 h-5 text-gray-600" v-if="isCollapsed"  />
+        <ArrowLeftStartOnRectangleIcon
+          class="is-collapsed w-5 h-5 text-gray-600"
+          v-if="isCollapsed"
+        />
         <ArrowRightStartOnRectangleIcon class="not-collapsed w-5 h-5 text-gray-600" v-else />
       </ButtonUI>
     </div>
@@ -204,7 +212,10 @@ const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
 
 onMounted(() => {
-  onClickOutside(target, () => (isDropdownOpen.value = false))
+  onClickOutside(target, () => {
+    console.log('clicked outside')
+    isDropdownOpen.value = false
+  })
 })
 
 const emits = defineEmits(['openEditUserModal'])
