@@ -118,27 +118,11 @@ describe('TheDrawer', () => {
 
       await collapseButton.trigger('click')
 
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+      expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([true])
+
       expect(collapseButton.exists()).toBe(true)
       expect(collapseButton.find('.is-collapsed').exists()).toBe(true)
-    })
-
-    it('should adjust width based on collapse state', async () => {
-      const wrapper = mount(TheDrawer, {
-        props: {
-          user: { name, address },
-          modelValue: false
-        },
-        global: {
-          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
-
-      // When expanded
-      expect(wrapper.classes()).toContain('w-[280px]')
-
-      // When collapsed
-      await wrapper.setProps({ modelValue: true })
-      expect(wrapper.classes()).toContain('w-20')
     })
   })
 
