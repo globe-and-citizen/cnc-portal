@@ -703,12 +703,14 @@ const approveUser = async (data: BudgetLimit) => {
   const types = {
     BudgetData: [
       { name: 'budgetType', type: 'uint8' },
-      { name: 'value', type: 'uint256' }
+      { name: 'value', type: 'uint256' }//,
+      //{ name: 'token', type: 'address' }
     ],
     BudgetLimit: [
       { name: 'approvedAddress', type: 'address' },
       { name: 'budgetData', type: 'BudgetData[]' },
-      { name: 'expiry', type: 'uint256' }
+      { name: 'expiry', type: 'uint256' },
+      { name: 'tokenAddress', type: 'address' }
     ]
   }
 
@@ -885,7 +887,10 @@ const {
   error: tokenTransferError
 } = useWriteContract()
 
-const { isLoading: isConfirmingTokenTransfer } = useWaitForTransactionReceipt({
+const { 
+  isLoading: isConfirmingTokenTransfer, 
+  isSuccess: isConfirmedTokenTransfer 
+} = useWaitForTransactionReceipt({
   hash: tokenTransferHash
 })
 
@@ -897,8 +902,25 @@ const {
   isPending: isPendingApprove
 } = useWriteContract()
 
-const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
+const { 
+  isLoading: isConfirmingApprove, 
+  isSuccess: isConfirmedApprove 
+} = useWaitForTransactionReceipt({
   hash: approveHash
+})
+
+const {
+  writeContract: writeTokenDeposit,
+  error: tokenDepositError,
+  data: tokenDepositHash,
+  isPending: isPendingTokenDeposit
+} = useWriteContract()
+
+const {
+  isLoading: isConfirmingDeposit,
+  isSuccess: isConfirmedDeposit
+} = useWaitForTransactionReceipt({
+  hash: tokenDepositHash
 })
 
 // Token transfer function
@@ -913,6 +935,8 @@ const transferToken = async () => {
 
   const tokenAddress = USDC_ADDRESS
   const amount = BigInt(Number(tokenAmount.value) * 1e6)
+  // console.log(`amount: `, tokenAmount.value, `typeOf tokenAmaount: `, typeof tokenAmount.value)
+  // const amount = parseEther(`${tokenAmount.value}`)
   const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
 
   try {
@@ -925,6 +949,7 @@ const transferToken = async () => {
 
     const currentAllowance = allowance ? allowance.toString() : 0n
     if (Number(currentAllowance) < Number(amount)) {
+      console.log(`Performing approval...`)
       approve({
         address: tokenAddress as Address,
         abi: ERC20ABI,
@@ -932,24 +957,31 @@ const transferToken = async () => {
         args: [team.value.expenseAccountEip712Address as Address, amount]
       })
     } else {
-      writeTokenTransfer({
+      console.log(`Performing transfer...`, budgetLimit)
+      executeExpenseAccountTransfer({
         address: team.value.expenseAccountEip712Address as Address,
         abi: expenseAccountABI,
-        functionName: 'transferToken',
+        functionName: 'transfer',
         args: [
           tokenRecipient.value as Address,
-          tokenAddress as Address,
           amount,
           {
             ...budgetLimit,
             budgetData: budgetLimit.budgetData.map((item) => ({
               ...item,
-              value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
+              value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)//parseEther(`${item.value}`)
             }))
           },
           _expenseAccountData.value.signature
         ]
       })
+      // writeTokenDeposit({
+      //   address: team.value.expenseAccountEip712Address as Address,
+      //   abi: expenseAccountABI,
+      //   functionName: 'depositToken',
+      //   args: [USDC_ADDRESS, amount]
+      // })
+
     }
   } catch (error) {
     log.error(parseError(error))
@@ -957,14 +989,34 @@ const transferToken = async () => {
   }
 }
 
+watch(tokenDepositError, newError => {
+  if (newError) {
+    log.error('tokenDepositError.value', tokenDepositError)
+    addErrorToast('Failed to deposit token')
+  }
+})
+
+watch(isConfirmingDeposit, (isConfirming, wasConfirming) => {
+  if(!isConfirming && wasConfirming && isConfirmedDeposit.value) {
+    addSuccessToast('Deposited token successfuly')
+  }
+})
+
 // Watch for token transfer events
 watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
+  if (!newIsConfirming && oldIsConfirming && isConfirmedTokenTransfer.value) {
     addSuccessToast('Token transferred successfully')
     fetchUsdcBalance()
     tokenTransferModal.value = false
     tokenAmount.value = ''
     tokenRecipient.value = ''
+  }
+})
+
+watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
+    addSuccessToast('Approval granted successfully')
+    transferToken()
   }
 })
 
@@ -979,13 +1031,6 @@ watch(approveError, () => {
   if (approveError.value) {
     log.error(parseError(approveError.value))
     addErrorToast('Failed to approve token spending')
-  }
-})
-
-watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Approval granted successfully')
-    transferToken()
   }
 })
 
