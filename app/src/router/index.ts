@@ -47,6 +47,13 @@ const router = createRouter({
       }
     },
     {
+      path: '/teams',
+      name: 'teams',
+      components: {
+        login: ListIndex
+      }
+    },
+    {
       path: '/teams/:id',
       component: ShowIndex,
       name: 'show-team',

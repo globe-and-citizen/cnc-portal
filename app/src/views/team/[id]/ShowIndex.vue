@@ -19,12 +19,10 @@
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
-import { watch } from 'fs'
-import { computed, onMounted, onUpdated, watchEffect } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import {  onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 const teamStore = useTeamStore()
 
-const router = useRouter()
 const route = useRoute()
 
 onMounted(() => {
