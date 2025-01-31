@@ -19,6 +19,7 @@
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
+import { watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 const teamStore = useTeamStore()
@@ -29,6 +30,17 @@ onMounted(() => {
   console.log('Mounted')
   teamStore.setCurrentTeamId(route.params.id as string)
 })
+
+// Watch for changes in the route params then update the current team id
+watch(
+  () => route.params.id,
+  (newId) => {
+    console.log('New id', newId)
+    if (newId !== teamStore.currentTeamId) {
+      teamStore.setCurrentTeamId(newId as string)
+    }
+  }
+)
 </script>
 <style>
 * {
