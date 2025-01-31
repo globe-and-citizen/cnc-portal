@@ -201,7 +201,6 @@ describe('TheDrawer', () => {
       await teamSelector.trigger('click')
       const teamDropdown = teamSelector.find("[data-test='team-dropdown']")
       expect(teamDropdown.exists()).toBe(true)
-      console.log('selector', teamSelector.html())
       expect(teamDropdown.findAll("[data-test='team-item']").length > 1).toBe(true)
 
       teamDropdown.findAll("[data-test='team-item']")[1].trigger('click')
