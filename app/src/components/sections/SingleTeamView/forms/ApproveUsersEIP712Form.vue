@@ -105,7 +105,7 @@
       |
       <select v-model="selectedToken" class="bg-white grow">
         <option disabled :value="null">-- Select a token --</option>
-        <option v-for="(address, symbol) of tokens" :value="address">
+        <option v-for="(address, symbol) of tokens" :value="address" :key="address">
           {{ symbol }}
         </option>
       </select>
