@@ -174,11 +174,11 @@ describe('TheDrawer', () => {
       expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(true)
 
       // Trigger click outside event on the dropdown & check if it is hidden
-      // TODO: the result should be false, but it's returning true
       await wrapper.find("[data-test='edit-user-card'").trigger('click')
       // nest tick to wait for the click outside event to be processed
-      // await wrapper.vm.$nextTick()
-      // expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)
+      await wrapper.vm.$nextTick()
+      // TODO: the result should be false, but it's returning true
+      // expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)  
     })
     // TODO: click to navigate to team page
 
