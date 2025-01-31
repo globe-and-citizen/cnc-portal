@@ -31,7 +31,6 @@
         class="shadow-sm"
         data-test="toggle-collapse"
       >
-        {{ isCollapsed ? 'Expand' : 'Collapse' }}
         <!-- I adde is collapsed class because data-test is not working on the icone -->
         <ArrowLeftStartOnRectangleIcon
           class="is-collapsed w-5 h-5 text-gray-600"
