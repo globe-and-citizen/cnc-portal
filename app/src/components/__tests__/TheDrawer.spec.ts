@@ -178,7 +178,7 @@ describe('TheDrawer', () => {
       // nest tick to wait for the click outside event to be processed
       await wrapper.vm.$nextTick()
       // TODO: the result should be false, but it's returning true
-      // expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)  
+      // expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)
     })
     // TODO: click to navigate to team page
 
