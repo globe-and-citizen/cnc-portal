@@ -111,13 +111,15 @@ describe('TheDrawer', () => {
         }
       })
 
-      const collapseButton = wrapper.find('button')
+      const collapseButton = wrapper.find('[data-test="toggle-collapse"]')
+      // Check if the button exist and have a decendant with the class collapse-icon
+      expect(collapseButton.exists()).toBe(true)
+      expect(collapseButton.find('.not-collapsed').exists()).toBe(true)
+
       await collapseButton.trigger('click')
-      const updateModelValue = wrapper.emitted('update:modelValue')
-      expect(updateModelValue).toBeTruthy()
-      if (updateModelValue) {
-        expect(updateModelValue[0]).toEqual([true])
-      }
+
+      expect(collapseButton.exists()).toBe(true)
+      expect(collapseButton.find('.is-collapsed').exists()).toBe(true)
     })
 
     it('should adjust width based on collapse state', async () => {
@@ -143,7 +145,7 @@ describe('TheDrawer', () => {
   describe('Team Selection', () => {
     vi.mock('@/stores/teamStore', () => ({
       useTeamStore: () => ({
-        currentTeamId: ref(null),
+        currentTeamId: ref(1),
         teamsMeta: ref({
           teams: [
             {
