@@ -3,7 +3,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 export const useTeamStore = defineStore('team', () => {
   // TODO: fetch teams on mounted
@@ -44,9 +44,10 @@ export const useTeamStore = defineStore('team', () => {
    * @param teamId
    * @returns team, teamIsFetching, teamError, executeFetchTeam
    */
-  const fetchTeam = (teamId: string) => {
+  const fetchTeam = async (teamId: string) => {
     teamURI.value = `teams/${teamId}`
-    executeFetchTeam()
+    await executeFetchTeam()
+    teamsFetched.value.set(String(team.value.id), team.value)
     return {
       teamIsFetching,
       teamError,
@@ -54,32 +55,21 @@ export const useTeamStore = defineStore('team', () => {
     }
   }
 
-  const setCurrentTeamId = (teamId: string) => {
+  const setCurrentTeamId = async (teamId: string) => {
+    log.info('Setting current team id to :', teamId)
+    if (currentTeamId.value === teamId) return
     currentTeamId.value = teamId
+    await fetchTeam(currentTeamId.value)
   }
-
-  const getCurrentTeam = () => {
-    return currentTeamId.value ? teamsFetched.value.get(currentTeamId.value) : undefined
-  }
-
-  /**
-   * @description Watch the team and update the teamsFetched cache
-   */
-  watch(team, () => {
-    teamsFetched.value.set(team.value.id, team.value)
+  const currentTeam = computed(() => {
+    return currentTeamId.value ? teamsFetched.value.get(String(currentTeamId.value)) : undefined
   })
 
   watch(teams, (newTeamsVal) => {
     // set the current team id to the first team id if not already set and teams is not empty
     if (!currentTeamId.value && newTeamsVal.length > 0) {
-      currentTeamId.value = newTeamsVal[0].id
-    }
-  })
-
-  watch(currentTeamId, (newCurrentTeamIdVal) => {
-    // fetch the current team
-    if (newCurrentTeamIdVal) {
-      fetchTeam(newCurrentTeamIdVal)
+      log.info('Current team id not set, setting to first team id:', newTeamsVal[0].id)
+      setCurrentTeamId(newTeamsVal[0].id)
     }
   })
 
@@ -120,6 +110,6 @@ export const useTeamStore = defineStore('team', () => {
     },
     fetchTeam,
     setCurrentTeamId,
-    getCurrentTeam
+    currentTeam
   }
 })
