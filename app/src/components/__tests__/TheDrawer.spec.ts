@@ -177,8 +177,6 @@ describe('TheDrawer', () => {
       })
 
       const teamSelector = wrapper.find('[data-test="team-display"]')
-      const teamHtml = teamSelector.html() 
-      console.log('teamHtml', teamHtml)
 
       // Check if the team name is displayed and if the dropdown button is not visible
       expect(teamSelector.exists()).toBe(true)
