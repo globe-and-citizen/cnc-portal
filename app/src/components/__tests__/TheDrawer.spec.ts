@@ -7,7 +7,7 @@ import {
   BanknotesIcon,
   DocumentTextIcon
 } from '@heroicons/vue/24/outline'
-import { mount, RouterLinkStub } from '@vue/test-utils'
+import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
@@ -130,7 +130,7 @@ describe('TheDrawer', () => {
     vi.mock('@/stores/teamStore', () => ({
       useTeamStore: () => ({
         currentTeamId: ref(1),
-        teamsMeta: ref({
+        teamsMeta: {
           teams: [
             {
               id: '1',
@@ -146,7 +146,7 @@ describe('TheDrawer', () => {
           teamsAreFetching: false,
           teamsError: null,
           reloadTeams: vi.fn()
-        }),
+        },
         fetchTeam: vi.fn(),
         setCurrentTeamId: vi.fn(),
         currentTeam: { name: 'Team A' }
@@ -179,6 +179,35 @@ describe('TheDrawer', () => {
       await wrapper.vm.$nextTick()
       // TODO: the result should be false, but it's returning true
       // expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)
+    })
+    it('should navigate to new team', async () => {
+      const wrapper = mount(TheDrawer, {
+        props: {
+          user: { name, address }
+        },
+        global: {
+          plugins: [router, createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const teamSelector = wrapper.find('[data-test="team-display"]')
+
+      // Check if the team name is displayed and if the dropdown button is not visible
+      expect(teamSelector.exists()).toBe(true)
+      expect(teamSelector.text()).toContain('Team A')
+      expect(teamSelector.find("[data-test='team-dropdown']").exists()).toBe(false)
+
+      // Click the team selector & check if dropdown is visible
+      await teamSelector.trigger('click')
+      const teamDropdown = teamSelector.find("[data-test='team-dropdown']")
+      expect(teamDropdown.exists()).toBe(true)
+      console.log('selector', teamSelector.html())
+      expect(teamDropdown.findAll("[data-test='team-item']").length > 1).toBe(true)
+
+      teamDropdown.findAll("[data-test='team-item']")[1].trigger('click')
+      // Check if we redirected to the team page with the id 2
+      await flushPromises()
+      expect(wrapper.vm.$route.params.id).toBe('2')
     })
     // TODO: click to navigate to team page
 
