@@ -1,0 +1,49 @@
+<template>
+  <!-- Navigation and breadcrumb -->
+  <div class="flex flex-col gap-6">
+    <div>
+      <h2>{{ route.meta.name }}</h2>
+      <div class="breadcrumbs text-sm">
+        <ul>
+          <li>
+            <a v-if="teamStore.currentTeam">{{ teamStore.currentTeam?.name }}</a>
+            <div class="skeleton h-4 w-20" v-else></div>
+          </li>
+
+          <li>{{ route.meta.name }}</li>
+        </ul>
+      </div>
+    </div>
+    <RouterView />
+  </div>
+</template>
+<script setup lang="ts">
+import { useTeamStore } from '@/stores/teamStore'
+import { watch } from 'vue'
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+const teamStore = useTeamStore()
+
+const route = useRoute()
+
+onMounted(() => {
+  console.log('Mounted')
+  teamStore.setCurrentTeamId(route.params.id as string)
+})
+
+// Watch for changes in the route params then update the current team id
+watch(
+  () => route.params.id,
+  (newId) => {
+    console.log('New id', newId)
+    if (newId !== teamStore.currentTeamId) {
+      teamStore.setCurrentTeamId(newId as string)
+    }
+  }
+)
+</script>
+<style>
+* {
+  /* border: 1px solid red; */
+}
+</style>

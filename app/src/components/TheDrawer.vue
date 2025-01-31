@@ -25,9 +25,18 @@
           />
         </div>
       </div>
-      <ButtonUI variant="glass" @click="toggleCollapse" class="shadow-sm">
-        <ArrowLeftStartOnRectangleIcon class="w-5 h-5 text-gray-600" v-if="isCollapsed" />
-        <ArrowRightStartOnRectangleIcon class="w-5 h-5 text-gray-600" v-else />
+      <ButtonUI
+        variant="glass"
+        @click="toggleCollapse"
+        class="shadow-sm"
+        data-test="toggle-collapse"
+      >
+        <!-- I adde is collapsed class because data-test is not working on the icone -->
+        <ArrowLeftStartOnRectangleIcon
+          class="is-collapsed w-5 h-5 text-gray-600"
+          v-if="isCollapsed"
+        />
+        <ArrowRightStartOnRectangleIcon class="not-collapsed w-5 h-5 text-gray-600" v-else />
       </ButtonUI>
     </div>
     <!-- Team Display Group -->
@@ -36,17 +45,17 @@
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
       data-test="team-display"
       @click="toggleDropdown"
-      v-if="currentTeam"
+      v-if="teamStore.currentTeam"
     >
       <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
         <span
           class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
         >
-          {{ currentTeam?.name.charAt(0) }}
+          {{ teamStore.currentTeam?.name.charAt(0) }}
         </span>
       </div>
       <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
-        <span class="text-sm font-medium text-gray-700">{{ currentTeam?.name }}</span>
+        <span class="text-sm font-medium text-gray-700">{{ teamStore.currentTeam?.name }}</span>
         <div class="relative">
           <button
             class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
@@ -68,19 +77,20 @@
               data-test="team-dropdown"
               ref="target"
             >
-              <div v-if="teamsMeta.teamsAreFetching" class="flex items-center justify-center">
+              <div
+                v-if="teamStore.teamsMeta.teamsAreFetching"
+                class="flex items-center justify-center"
+              >
                 <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
               </div>
               <RouterLink
                 :to="`/teams/${team.id}`"
                 v-else
-                v-for="team in teamsMeta.teams"
+                v-for="team in teamStore.teamsMeta.teams"
                 :key="team.id"
+                data-test="team-item"
               >
-                <TeamMetaComponent
-                  class="hover:bg-slate-100"
-                  :team="team"
-                  @click="navigateToTeam(team.id)"
+                <TeamMetaComponent class="hover:bg-slate-100" :team="team" :to="team.id"
               /></RouterLink>
               <!-- TODO: Make the button functional -->
               <div class="w-full flex justify-center items-center h-12 hover:bg-slate-100">
@@ -169,10 +179,13 @@ import {
   BanknotesIcon,
   ChartBarIcon,
   UsersIcon,
-  DocumentTextIcon,
   ArrowLeftStartOnRectangleIcon,
   ArrowRightStartOnRectangleIcon,
-  ChevronUpDownIcon
+  ChevronUpDownIcon,
+  BriefcaseIcon,
+  ChartPieIcon,
+  WrenchIcon,
+  CurrencyDollarIcon
 } from '@heroicons/vue/24/outline'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
@@ -193,15 +206,13 @@ const props = defineProps<{
 
 const target = ref(null)
 const isDropdownOpen = ref(false)
-const { teamsMeta, setCurrentTeamId, getCurrentTeam } = useTeamStore()
-
-// Use computed property to avoid calling the function every time the component re-renders
-const currentTeam = computed(() => {
-  return getCurrentTeam()
-})
+const teamStore = useTeamStore()
 
 onMounted(() => {
-  onClickOutside(target, () => (isDropdownOpen.value = false))
+  onClickOutside(target, () => {
+    console.log('clicked outside')
+    isDropdownOpen.value = false
+  })
 })
 
 const emits = defineEmits(['openEditUserModal'])
@@ -222,24 +233,57 @@ const menuItems = computed(() => [
   {
     label: 'Dashboard',
     icon: HomeIcon,
-    route: '/',
+    route: {
+      name: 'show-team',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
     active: true,
     show: true
   },
   {
     label: 'Bank',
     icon: BanknotesIcon,
-    route: '/bank',
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
     show: true
   },
   {
     label: 'Cash Remuneration',
-    icon: BanknotesIcon,
+    icon: CurrencyDollarIcon,
     route: {
       name: 'cash-remunerations',
-      params: { id: currentTeam.value?.id || '1' }
+      params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: currentTeam.value?.cashRemunerationEip712Address
+    show: teamStore.currentTeam?.cashRemunerationEip712Address
+  },
+  {
+    label: 'Expense Account ',
+    icon: BriefcaseIcon,
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    show: true
+  },
+  {
+    label: 'SHER TOKEN',
+    icon: ChartPieIcon,
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    show: true
+  },
+  {
+    label: 'Contract Management',
+    icon: WrenchIcon,
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    show: true
   },
   {
     label: 'Transactions',
@@ -252,19 +296,8 @@ const menuItems = computed(() => [
     icon: UsersIcon,
     route: '/admin',
     show: true
-  },
-  {
-    label: 'Contract Management',
-    icon: DocumentTextIcon,
-    route: '/contracts',
-    show: true
   }
 ])
-
-const navigateToTeam = (teamId: string) => {
-  setCurrentTeamId(teamId)
-  isCollapsed.value = false
-}
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
