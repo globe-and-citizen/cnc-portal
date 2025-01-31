@@ -56,7 +56,7 @@ export const useTeamStore = defineStore('team', () => {
   }
 
   const setCurrentTeamId = async (teamId: string) => {
-    log.warn('Setting current team id', teamId)
+    log.info('Setting current team id to :', teamId)
     if (currentTeamId.value === teamId) return
     currentTeamId.value = teamId
     await fetchTeam(currentTeamId.value)
@@ -65,14 +65,11 @@ export const useTeamStore = defineStore('team', () => {
     return currentTeamId.value ? teamsFetched.value.get(String(currentTeamId.value)) : undefined
   })
 
-  const getCurrentTeam = () => {
-    // console.log("Get Current Team Called", currentTeamId.value)
-    return currentTeamId.value ? teamsFetched.value.get(currentTeamId.value) : undefined
-  }
 
   watch(teams, (newTeamsVal) => {
     // set the current team id to the first team id if not already set and teams is not empty
     if (!currentTeamId.value && newTeamsVal.length > 0) {
+      log.info('Current team id not set, setting to first team id:', newTeamsVal[0].id)
       setCurrentTeamId(newTeamsVal[0].id)
     }
   })
@@ -114,7 +111,6 @@ export const useTeamStore = defineStore('team', () => {
     },
     fetchTeam,
     setCurrentTeamId,
-    currentTeam,
-    getCurrentTeam
+    currentTeam
   }
 })
