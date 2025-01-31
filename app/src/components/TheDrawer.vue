@@ -36,17 +36,17 @@
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
       data-test="team-display"
       @click="toggleDropdown"
-      v-if="currentTeam"
+      v-if="teamStore.currentTeam"
     >
       <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
         <span
           class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
         >
-          {{ currentTeam?.name.charAt(0) }}
+          {{ teamStore.currentTeam?.name.charAt(0) }}
         </span>
       </div>
       <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
-        <span class="text-sm font-medium text-gray-700">{{ currentTeam?.name }}</span>
+        <span class="text-sm font-medium text-gray-700">{{ teamStore.currentTeam?.name }}</span>
         <div class="relative">
           <button
             class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
@@ -68,13 +68,16 @@
               data-test="team-dropdown"
               ref="target"
             >
-              <div v-if="teamsMeta.teamsAreFetching" class="flex items-center justify-center">
+              <div
+                v-if="teamStore.teamsMeta.teamsAreFetching"
+                class="flex items-center justify-center"
+              >
                 <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
               </div>
               <RouterLink
                 :to="`/teams/${team.id}`"
                 v-else
-                v-for="team in teamsMeta.teams"
+                v-for="team in teamStore.teamsMeta.teams"
                 :key="team.id"
               >
                 <TeamMetaComponent
@@ -193,12 +196,7 @@ const props = defineProps<{
 
 const target = ref(null)
 const isDropdownOpen = ref(false)
-const { teamsMeta, setCurrentTeamId, getCurrentTeam } = useTeamStore()
-
-// Use computed property to avoid calling the function every time the component re-renders
-const currentTeam = computed(() => {
-  return getCurrentTeam()
-})
+const teamStore = useTeamStore()
 
 onMounted(() => {
   onClickOutside(target, () => (isDropdownOpen.value = false))
@@ -229,7 +227,10 @@ const menuItems = computed(() => [
   {
     label: 'Bank',
     icon: BanknotesIcon,
-    route: '/bank',
+    route: {
+      name: 'bank',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
     show: true
   },
   {
@@ -237,9 +238,9 @@ const menuItems = computed(() => [
     icon: BanknotesIcon,
     route: {
       name: 'cash-remunerations',
-      params: { id: currentTeam.value?.id || '1' }
+      params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: currentTeam.value?.cashRemunerationEip712Address
+    show: teamStore.currentTeam?.cashRemunerationEip712Address
   },
   {
     label: 'Transactions',
@@ -262,7 +263,8 @@ const menuItems = computed(() => [
 ])
 
 const navigateToTeam = (teamId: string) => {
-  setCurrentTeamId(teamId)
+  // Seting current team id should be trigger in the page, not in the navigation
+  teamStore.setCurrentTeamId(teamId)
   isCollapsed.value = false
 }
 
