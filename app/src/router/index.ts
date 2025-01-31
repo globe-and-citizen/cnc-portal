@@ -5,7 +5,10 @@ import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import CashRemunerationView from '@/views/CashRemunerationView.vue'
+import ListIndex from '@/views/team/ListIndex.vue'
+import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
+import BankView from '@/views/team/[id]/BankView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,7 +47,35 @@ const router = createRouter({
       }
     },
     {
-      path: '/teams',
+      path: '/teams/:id',
+      component: ShowIndex,
+      name: 'show-team',
+      meta: { name: 'Team View' },
+      children: [
+        // {
+        //   path: '',
+        //   name: 'teams',
+        //   component: ListIndex
+        // },
+        // {
+        //   path: ':id',
+        //   name: 'show-team',
+        //   component: ShowIndex
+        // },
+        {
+          path: '/teams/:id/cash-remunerations',
+          name: 'cash-remunerations',
+          component: CashRemunerationView
+        },
+        {
+          path: '/teams/:id/bank',
+          name: 'bank',
+          component: BankView
+        }
+      ]
+    },
+    {
+      path: '/teams-old',
       children: [
         {
           path: ':id',
@@ -53,7 +84,7 @@ const router = createRouter({
         },
         {
           path: '',
-          name: 'teams',
+          name: 'old-teams',
           component: TeamView
         },
         {
