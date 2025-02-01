@@ -49,10 +49,29 @@
 
     <!-- Step 2: Members -->
     <div v-if="currentStep === 2">
-      <h1 class="font-bold text-2xl mb-4">Team Members</h1>
+      <h1 class="font-bold text-2xl mb-4">Team Members (Optional)</h1>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
-        <div v-for="(input, index) of teamData.members" :key="index" class="input-group relative">
+        <div class="text-sm text-gray-600 mb-2">
+          You can add team members now or invite them later.
+        </div>
+        <div v-if="teamData.members.length === 0" class="text-center py-4">
+          <p class="text-gray-500">No team members added yet</p>
+          <ButtonUI
+            variant="secondary"
+            class="mt-4"
+            data-test="add-first-member"
+            @click="addMember"
+          >
+            Add Team Member
+          </ButtonUI>
+        </div>
+        <div
+          v-else
+          v-for="(input, index) of teamData.members"
+          :key="index"
+          class="input-group relative"
+        >
           <label
             class="input input-bordered flex items-center gap-2 input-md"
             :data-test="`member-${index}-input`"
@@ -109,29 +128,11 @@
             </div>
           </div>
         </div>
-        <div class="flex justify-end pt-3">
-          <div
-            class="w-6 h-6 cursor-pointer mr-2"
-            data-test="add-member"
-            @click="
-              () => {
-                teamData.members.push({ name: '', address: '' })
-              }
-            "
-          >
+        <div v-if="teamData.members.length > 0" class="flex justify-end pt-3">
+          <div class="w-6 h-6 cursor-pointer mr-2" data-test="add-member" @click="addMember">
             <PlusCircleIcon class="size-6" />
           </div>
-          <div
-            class="w-6 h-6 cursor-pointer"
-            data-test="remove-member"
-            @click="
-              () => {
-                if (teamData.members.length > 1) {
-                  teamData.members.pop()
-                }
-              }
-            "
-          >
+          <div class="w-6 h-6 cursor-pointer" data-test="remove-member" @click="removeMember">
             <MinusCircleIcon class="size-6" />
           </div>
         </div>
@@ -235,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import useVuelidate from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import { isAddress } from 'viem'
@@ -243,6 +244,7 @@ import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { TeamInput, User } from '@/types'
 
+// Props & Emits
 const props = defineProps<{
   isLoading: boolean
   users: User[]
@@ -250,28 +252,30 @@ const props = defineProps<{
 
 const emit = defineEmits(['searchUsers', 'addTeam', 'deployContracts', 'watchEvents'])
 
+// Refs
 const teamData = ref<TeamInput>({
   name: '',
   description: '',
-  members: [{ name: '', address: '' }]
+  members: []
 })
-
-const showDropdown = ref(false)
-const formRef = ref<HTMLElement | null>(null)
-const currentStep = ref(1)
 
 const investorContract = ref({
   name: '',
   symbol: ''
 })
 
+const showDropdown = ref(false)
+const formRef = ref<HTMLElement | null>(null)
+const currentStep = ref(1)
+const activeInputIndex = ref<number | null>(null)
+
+// Validation Rules
 const rules = {
   teamData: {
     name: { required },
     members: {
       $each: {
         address: {
-          required,
           isValidAddress: helpers.withMessage('Invalid Ethereum address', (value: string) =>
             isAddress(value)
           )
@@ -288,10 +292,31 @@ const investorContractRules = {
   }
 }
 
-// Create separate validation instances
+// Validation Instances
 const $v = useVuelidate(rules, { teamData })
 const $vInvestor = useVuelidate(investorContractRules, { investorContract })
 
+// Computed Properties
+const canProceed = computed(() => {
+  switch (currentStep.value) {
+    case 1:
+      return !!teamData.value.name
+    case 2:
+      // Members are optional, so always allow proceeding from step 2
+      return (
+        teamData.value.members.length === 0 ||
+        teamData.value.members.every((member) => !member.address || isAddress(member.address))
+      )
+    case 3:
+      return !!investorContract.value.name && !!investorContract.value.symbol
+    case 4:
+      return !$vInvestor.value.$invalid
+    default:
+      return false
+  }
+})
+
+// Dropdown Functions
 const searchUsers = (input: { name: string; address: string }) => {
   if (!props.isLoading) {
     showDropdown.value = true
@@ -299,6 +324,40 @@ const searchUsers = (input: { name: string; address: string }) => {
   }
 }
 
+const setActiveInput = (index: number) => {
+  activeInputIndex.value = index
+  showDropdown.value = true
+}
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (formRef.value && !formRef.value.contains(event.target as Node)) {
+    showDropdown.value = false
+  }
+}
+
+// Team Member Functions
+const addMember = () => {
+  teamData.value.members.push({ name: '', address: '' })
+}
+
+const removeMember = () => {
+  if (teamData.value.members.length > 0) {
+    teamData.value.members.pop()
+  }
+}
+
+const getMessages = (index: number) => {
+  return $v.value.teamData.members.$errors[0]?.$response.$errors[index]?.address ?? []
+}
+
+// Navigation Functions
+const nextStep = () => {
+  if (currentStep.value < 4 && canProceed.value) {
+    currentStep.value++
+  }
+}
+
+// Form Submission Functions
 const saveTeamToDatabase = async () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
@@ -306,19 +365,9 @@ const saveTeamToDatabase = async () => {
   emit('addTeam', {
     team: teamData.value
   })
+  // Move to next step only after successful team creation
+  nextStep()
 }
-
-// Add a watch for isLoading prop
-watch(
-  () => props.isLoading,
-  (newValue, oldValue) => {
-    // If loading has finished (was true, now false)
-    if (oldValue && !newValue) {
-      // Move to next step
-      nextStep()
-    }
-  }
-)
 
 const deployContracts = async () => {
   $vInvestor.value.$touch()
@@ -329,46 +378,7 @@ const deployContracts = async () => {
   })
 }
 
-const getMessages = (index: number) => {
-  return $v.value.teamData.members.$errors[0].$response.$errors[index].address
-}
-
-const activeInputIndex = ref<number | null>(null)
-
-const setActiveInput = (index: number) => {
-  activeInputIndex.value = index
-  showDropdown.value = true
-}
-
-// Computed property to determine if user can proceed to next step
-const canProceed = computed(() => {
-  switch (currentStep.value) {
-    case 1:
-      return !!teamData.value.name
-    case 2:
-      return teamData.value.members.every((member) => member.name && isAddress(member.address))
-    case 3:
-      return !!investorContract.value.name && !!investorContract.value.symbol
-    case 4:
-      return !$vInvestor.value.$invalid
-    default:
-      return false
-  }
-})
-
-const nextStep = () => {
-  if (currentStep.value < 4 && canProceed.value) {
-    currentStep.value++
-  }
-}
-
-// Close dropdown when clicking outside
-const handleClickOutside = (event: MouseEvent) => {
-  if (formRef.value && !formRef.value.contains(event.target as Node)) {
-    showDropdown.value = false
-  }
-}
-
+// Lifecycle Hooks
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
 })
