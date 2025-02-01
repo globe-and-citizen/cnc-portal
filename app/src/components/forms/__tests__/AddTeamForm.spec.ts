@@ -3,10 +3,9 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import type { TeamInput, User } from '@/types'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
-import type { ComponentPublicInstance } from 'vue'
 
 // Define interface for component instance
-interface ComponentInstance extends ComponentPublicInstance {
+interface ComponentInstance {
   currentStep: number
   canProceed: boolean
   teamData: TeamInput
@@ -141,7 +140,7 @@ describe('AddTeamForm.vue', () => {
   describe('Step Navigation Edge Cases', () => {
     it('prevents proceeding on invalid step number', async () => {
       // Access the component instance
-      const vm = wrapper.vm as ComponentInstance
+      const vm = wrapper.vm as unknown as ComponentInstance
 
       // Set an invalid step number
       vm.currentStep = 4
@@ -152,7 +151,7 @@ describe('AddTeamForm.vue', () => {
     })
 
     it('prevents proceeding on negative step number', async () => {
-      const vm = wrapper.vm as ComponentInstance
+      const vm = wrapper.vm as unknown as ComponentInstance
       vm.currentStep = -1
       await wrapper.vm.$nextTick()
 
@@ -160,7 +159,7 @@ describe('AddTeamForm.vue', () => {
     })
 
     it('prevents proceeding when step is not a number', async () => {
-      const vm = wrapper.vm as ComponentInstance
+      const vm = wrapper.vm as unknown as ComponentInstance
       ;(vm.currentStep as unknown) = 'invalid'
       await wrapper.vm.$nextTick()
 
@@ -169,7 +168,7 @@ describe('AddTeamForm.vue', () => {
 
     it('handles edge cases in member validation', async () => {
       await navigateToMembersStep(wrapper)
-      const vm = wrapper.vm as ComponentInstance
+      const vm = wrapper.vm as unknown as ComponentInstance
 
       // Test with empty address
       await wrapper.find('[data-test="add-first-member"]').trigger('click')
@@ -201,7 +200,7 @@ describe('AddTeamForm.vue', () => {
 
     it('handles edge cases in investor contract validation', async () => {
       await navigateToInvestorStep(wrapper)
-      const vm = wrapper.vm as ComponentInstance
+      const vm = wrapper.vm as unknown as ComponentInstance
 
       // Test with empty strings
       vm.investorContract.name = ''
