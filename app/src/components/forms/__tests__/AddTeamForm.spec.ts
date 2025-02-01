@@ -340,4 +340,85 @@ describe('AddTeamForm.vue', () => {
       expect(emitted?.[0]?.[0]).toEqual({ name: '', address: searchAddress })
     })
   })
+
+  describe('Investor Contract', () => {
+    // Helper function to navigate to investor contract step
+    const navigateToInvestorStep = async (w: VueWrapper) => {
+      await navigateToMembersStep(w)
+      await w.find('[data-test="create-team-button"]').trigger('click')
+      await w.vm.$nextTick()
+    }
+
+    beforeEach(async () => {
+      await navigateToInvestorStep(wrapper)
+    })
+
+    it('shows investor contract form in step 3', () => {
+      expect(wrapper.find('h1').text()).toBe('Investor Contract Details')
+      expect(wrapper.findAll('.step-primary').length).toBe(3)
+    })
+
+    it('requires share name and symbol', async () => {
+      // Try to deploy without filling required fields
+      await wrapper.find('[data-test="deploy-contracts-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Touch the validation
+      interface IWrapper {
+        $vInvestor: {
+          investorContract: {
+            $touch: () => void
+          }
+        }
+      }
+      await (wrapper.vm as unknown as IWrapper).$vInvestor.investorContract.$touch()
+      await wrapper.vm.$nextTick()
+
+      // Check for error messages
+      const errors = wrapper.findAll(
+        '[data-test="share-name-error"], [data-test="share-symbol-error"]'
+      )
+      expect(errors.length).toBe(2)
+      expect(errors[0].text()).toContain('required')
+      expect(errors[1].text()).toContain('required')
+    })
+
+    it('emits deployContracts event with valid data', async () => {
+      // Fill in required fields
+      await wrapper.find('[data-test="share-name-input"]').setValue('Test Shares')
+      await wrapper.find('[data-test="share-symbol-input"]').setValue('TST')
+      await wrapper.vm.$nextTick()
+
+      // Deploy contracts
+      await wrapper.find('[data-test="deploy-contracts-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const emitted = wrapper.emitted('deployContracts')
+      expect(emitted).toBeTruthy()
+      expect(emitted?.[0]?.[0]).toEqual({
+        investorContract: {
+          name: 'Test Shares',
+          symbol: 'TST'
+        }
+      })
+    })
+
+    it('disables deploy button while loading', async () => {
+      wrapper.setProps({ isLoading: true })
+      await wrapper.vm.$nextTick()
+
+      const deployButton = wrapper.find('[data-test="deploy-contracts-button"]')
+      expect(deployButton.attributes('disabled')).toBeDefined()
+      expect(deployButton.classes()).toContain('loading-spinner')
+    })
+
+    it('prevents deployment when validation fails', async () => {
+      // Try to deploy with invalid data
+      await wrapper.find('[data-test="deploy-contracts-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const emitted = wrapper.emitted('deployContracts')
+      expect(emitted).toBeFalsy()
+    })
+  })
 })
