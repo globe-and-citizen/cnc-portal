@@ -28,29 +28,23 @@ const router = createRouter({
     {
       path: '/bank',
       name: 'bank',
-      components: {
-        login: HomeView
-      }
+      components: HomeView
     },
     {
       path: '/admin',
       name: 'admin',
-      components: {
-        login: HomeView
-      }
+      components: HomeView
     },
     {
       path: '/contracts',
       name: 'contracts',
-      components: {
-        login: HomeView
-      }
+      components: HomeView
     },
     {
       path: '/teams',
       name: 'teams',
       components: {
-        login: ListIndex
+        default: ListIndex
       }
     },
     {
