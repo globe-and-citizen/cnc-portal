@@ -71,11 +71,17 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
     USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Sepolia USDC
     USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06' // Sepolia USDT
   },
-  // Hardhat Local
-  31337: {
-    USDC: resolveAddress('MockTokens#USDC'), // Placeholder for local testing
-    USDT: resolveAddress('MockTokens#USDT') // Placeholder for local testing
-  }
+  // Hardhat Local - only resolve mock addresses for local chain
+  31337:
+    chainId === 31337
+      ? {
+          USDC: resolveAddress('MockTokens#USDC'), // Placeholder for local testing
+          USDT: resolveAddress('MockTokens#USDT') // Placeholder for local testing
+        }
+      : {
+          USDC: '',
+          USDT: ''
+        }
 }
 
 export function validateAddresses() {
