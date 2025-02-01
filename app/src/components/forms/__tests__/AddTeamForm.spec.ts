@@ -1,8 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
-import type { User } from '@/types'
+import type { TeamInput, User } from '@/types'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
+import type { ComponentPublicInstance } from 'vue'
+
+// Define interface for component instance
+interface ComponentInstance extends ComponentPublicInstance {
+  currentStep: number
+  canProceed: boolean
+  teamData: TeamInput
+  investorContract: {
+    name: string
+    symbol: string
+  }
+}
 
 describe('AddTeamForm.vue', () => {
   const users: User[] = [
@@ -61,6 +73,13 @@ describe('AddTeamForm.vue', () => {
     await w.vm.$nextTick()
   }
 
+  // Helper function to navigate to investor contract step
+  const navigateToInvestorStep = async (w: VueWrapper) => {
+    await navigateToMembersStep(w)
+    await w.find('[data-test="create-team-button"]').trigger('click')
+    await w.vm.$nextTick()
+  }
+
   describe('Initial Render', () => {
     it('renders step 1 by default', () => {
       expect(wrapper.find('h1').text()).toBe('Team Details')
@@ -116,6 +135,102 @@ describe('AddTeamForm.vue', () => {
 
       expect(wrapper.find('h1').text()).toBe('Team Details')
       expect(wrapper.findAll('.step-primary').length).toBe(1)
+    })
+  })
+
+  describe('Step Navigation Edge Cases', () => {
+    it('prevents proceeding on invalid step number', async () => {
+      // Access the component instance
+      const vm = wrapper.vm as ComponentInstance
+
+      // Set an invalid step number
+      vm.currentStep = 4
+      await wrapper.vm.$nextTick()
+
+      // Check that canProceed is false
+      expect(vm.canProceed).toBe(false)
+    })
+
+    it('prevents proceeding on negative step number', async () => {
+      const vm = wrapper.vm as ComponentInstance
+      vm.currentStep = -1
+      await wrapper.vm.$nextTick()
+
+      expect(vm.canProceed).toBe(false)
+    })
+
+    it('prevents proceeding when step is not a number', async () => {
+      const vm = wrapper.vm as ComponentInstance
+      ;(vm.currentStep as unknown) = 'invalid'
+      await wrapper.vm.$nextTick()
+
+      expect(vm.canProceed).toBe(false)
+    })
+
+    it('handles edge cases in member validation', async () => {
+      await navigateToMembersStep(wrapper)
+      const vm = wrapper.vm as ComponentInstance
+
+      // Test with empty address
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(true) // Should allow proceeding with empty address
+
+      // Test with null address
+      vm.teamData.members[0].address = null as unknown as string
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(true) // Should allow proceeding with null address
+
+      // Test with undefined address
+      vm.teamData.members[0].address = undefined as unknown as string
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(true) // Should allow proceeding with undefined address
+
+      // Test with mixed valid and invalid addresses
+      vm.teamData.members.push({
+        name: 'Test',
+        address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+      })
+      vm.teamData.members.push({
+        name: 'Invalid',
+        address: 'invalid-address'
+      })
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(false) // Should not proceed with any invalid address
+    })
+
+    it('handles edge cases in investor contract validation', async () => {
+      await navigateToInvestorStep(wrapper)
+      const vm = wrapper.vm as ComponentInstance
+
+      // Test with empty strings
+      vm.investorContract.name = ''
+      vm.investorContract.symbol = ''
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(false)
+
+      // Test with whitespace only
+      vm.investorContract.name = ''
+      vm.investorContract.symbol = ''
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(false)
+
+      // Test with one field filled
+      vm.investorContract.name = 'Test'
+      vm.investorContract.symbol = ''
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(false)
+
+      vm.investorContract.name = ''
+      vm.investorContract.symbol = 'TST'
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(false)
+
+      // Test with special characters
+      vm.investorContract.name = '!@#$%'
+      vm.investorContract.symbol = '!@#'
+      await wrapper.vm.$nextTick()
+      expect(vm.canProceed).toBe(true) // Should allow special characters
     })
   })
 
@@ -342,13 +457,6 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Investor Contract', () => {
-    // Helper function to navigate to investor contract step
-    const navigateToInvestorStep = async (w: VueWrapper) => {
-      await navigateToMembersStep(w)
-      await w.find('[data-test="create-team-button"]').trigger('click')
-      await w.vm.$nextTick()
-    }
-
     beforeEach(async () => {
       await navigateToInvestorStep(wrapper)
     })

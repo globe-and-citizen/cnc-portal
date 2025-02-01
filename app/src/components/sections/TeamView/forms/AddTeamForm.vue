@@ -309,8 +309,6 @@ const canProceed = computed(() => {
       )
     case 3:
       return !!investorContract.value.name && !!investorContract.value.symbol
-    case 4:
-      return !$vInvestor.value.$invalid
     default:
       return false
   }
