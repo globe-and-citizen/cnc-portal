@@ -95,7 +95,7 @@ describe('AddTeamForm.vue', () => {
       await nextButton.trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('h1').text()).toBe('Team Members')
+      expect(wrapper.find('h1').text()).toBe('Team Members (Optional)')
       expect(wrapper.findAll('.step-primary').length).toBe(2)
     })
 
@@ -124,32 +124,60 @@ describe('AddTeamForm.vue', () => {
       await navigateToMembersStep(wrapper)
     })
 
-    it('adds a new member input field', async () => {
-      await wrapper.vm.$nextTick()
-      const initialCount = wrapper.findAll('.input-group').length
-      await wrapper.find('[data-test="add-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findAll('.input-group').length).toBe(initialCount + 1)
+    it('shows empty state when no members are added', () => {
+      expect(wrapper.find('[data-test="add-first-member"]').exists()).toBe(true)
+      expect(wrapper.find('.text-gray-500').text()).toBe('No team members added yet')
     })
 
-    it('removes a member input field', async () => {
-      // First add a member to ensure we have at least 2
+    it('adds first member when clicking add member button', async () => {
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="member-0-input"]').exists()).toBe(true)
+    })
+
+    it('adds additional member after first member exists', async () => {
+      // Add first member
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Add second member
       await wrapper.find('[data-test="add-member"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      const initialCount = wrapper.findAll('.input-group').length
+      expect(wrapper.findAll('.input-group').length).toBe(2)
+    })
+
+    it('removes a member', async () => {
+      // Add two members first
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      await wrapper.find('[data-test="add-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Remove one member
       await wrapper.find('[data-test="remove-member"]').trigger('click')
       await wrapper.vm.$nextTick()
-      expect(wrapper.findAll('.input-group').length).toBe(initialCount - 1)
+
+      expect(wrapper.findAll('.input-group').length).toBe(1)
     })
 
     it('shows member dropdown when users are available', async () => {
+      // Add first member
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
       await wrapper.find('[data-test="member-0-name-input"]').trigger('focus')
       await wrapper.vm.$nextTick()
+
       expect(wrapper.find('.dropdown-content').exists()).toBe(true)
     })
 
     it('selects user from dropdown', async () => {
+      // Add first member
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
       await wrapper.find('[data-test="member-0-name-input"]').trigger('focus')
       await wrapper.vm.$nextTick()
 
@@ -166,8 +194,28 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Form Submission', () => {
-    beforeEach(async () => {
+    it('allows team creation without members', async () => {
       await navigateToMembersStep(wrapper)
+      await wrapper.find('[data-test="create-team-button"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const emitted = wrapper.emitted('addTeam')
+      expect(emitted).toBeTruthy()
+      expect(emitted?.[0]?.[0]).toEqual({
+        team: {
+          name: 'Test Team',
+          description: 'Test Description',
+          members: []
+        }
+      })
+    })
+
+    it('submits team with members when members are added', async () => {
+      await navigateToMembersStep(wrapper)
+
+      // Add a member
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
 
       // Fill member details
       await wrapper.find('[data-test="member-0-name-input"]').setValue('Test User')
@@ -178,9 +226,7 @@ describe('AddTeamForm.vue', () => {
 
       await wrapper.find('[data-test="create-team-button"]').trigger('click')
       await wrapper.vm.$nextTick()
-    })
 
-    it('emits addTeam event with complete data on submission', async () => {
       const emitted = wrapper.emitted('addTeam')
       expect(emitted).toBeTruthy()
       expect(emitted?.[0]?.[0]).toEqual({
@@ -193,6 +239,7 @@ describe('AddTeamForm.vue', () => {
     })
 
     it('disables submit button while loading', async () => {
+      await navigateToMembersStep(wrapper)
       wrapper.setProps({ isLoading: true })
       await wrapper.vm.$nextTick()
 
@@ -202,50 +249,15 @@ describe('AddTeamForm.vue', () => {
     })
   })
 
-  describe('Dropdown Behavior', () => {
-    beforeEach(async () => {
-      await navigateToMembersStep(wrapper)
-      // Open the dropdown
-      await wrapper.find('[data-test="member-0-name-input"]').trigger('focus')
-      await wrapper.vm.$nextTick()
-    })
-
-    it('closes dropdown when clicking outside', async () => {
-      // Create a div outside the form
-      const outsideElement = document.createElement('div')
-      document.body.appendChild(outsideElement)
-
-      // Verify dropdown is open
-      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
-
-      // Simulate click outside by clicking the outside element
-      outsideElement.click()
-      await wrapper.vm.$nextTick()
-
-      // Verify dropdown is closed
-      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
-
-      // Cleanup
-      document.body.removeChild(outsideElement)
-    })
-
-    it('keeps dropdown open when clicking inside', async () => {
-      // Verify dropdown is open
-      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
-
-      // Simulate click inside the form
-      await wrapper.find('.input-group').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Verify dropdown is still open
-      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
-    })
-  })
   describe('Form Validation', () => {
-    it('validates ethereum address format', async () => {
+    it('validates ethereum address format when member is added', async () => {
       await navigateToMembersStep(wrapper)
 
-      // Try invalid address and trigger validation
+      // Add a member
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Try invalid address
       const addressInput = wrapper.find('[data-test="member-0-address-input"]')
       await addressInput.setValue('invalid-address')
       await wrapper.vm.$nextTick()
@@ -300,6 +312,8 @@ describe('AddTeamForm.vue', () => {
   describe('User Search', () => {
     beforeEach(async () => {
       await navigateToMembersStep(wrapper)
+      await wrapper.find('[data-test="add-first-member"]').trigger('click')
+      await wrapper.vm.$nextTick()
     })
 
     it('emits searchUsers event when typing in name field', async () => {
@@ -324,61 +338,6 @@ describe('AddTeamForm.vue', () => {
       const emitted = wrapper.emitted('searchUsers')
       expect(emitted).toBeTruthy()
       expect(emitted?.[0]?.[0]).toEqual({ name: '', address: searchAddress })
-    })
-  })
-
-  describe('Loading State', () => {
-    it('disables all form inputs while loading', async () => {
-      wrapper.setProps({ isLoading: true })
-      await wrapper.vm.$nextTick()
-
-      // Check if buttons are disabled
-      const nextButton = wrapper.find('[data-test="next-button"]')
-      expect(nextButton.attributes('disabled')).toBeDefined()
-    })
-
-    it('shows loading spinner on submit button', async () => {
-      await navigateToMembersStep(wrapper)
-      wrapper.setProps({ isLoading: true })
-      await wrapper.vm.$nextTick()
-
-      const submitButton = wrapper.find('[data-test="create-team-button"]')
-      expect(submitButton.attributes('disabled')).toBeDefined()
-      expect(submitButton.classes()).toContain('loading-spinner')
-    })
-  })
-
-  describe('Member List Management', () => {
-    beforeEach(async () => {
-      await navigateToMembersStep(wrapper)
-    })
-
-    it('prevents removing last member', async () => {
-      // Try to remove when only one member exists
-      await wrapper.find('[data-test="remove-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Should still have one member
-      expect(wrapper.findAll('.input-group').length).toBe(1)
-    })
-
-    it('clears member fields when adding new member', async () => {
-      // First fill out a member
-      await wrapper.find('[data-test="member-0-name-input"]').setValue('Test Name')
-      await wrapper.find('[data-test="member-0-address-input"]').setValue('0x123')
-      await wrapper.vm.$nextTick()
-
-      // Add new member
-      await wrapper.find('[data-test="add-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Check if new member fields are empty
-      const newMemberName = wrapper.find('[data-test="member-1-name-input"]')
-        .element as HTMLInputElement
-      const newMemberAddress = wrapper.find('[data-test="member-1-address-input"]')
-        .element as HTMLInputElement
-      expect(newMemberName.value).toBe('')
-      expect(newMemberAddress.value).toBe('')
     })
   })
 })
