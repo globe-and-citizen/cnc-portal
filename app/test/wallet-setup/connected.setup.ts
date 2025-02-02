@@ -12,7 +12,9 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
 
   const page = await context.newPage()
 
-  await page.goto('http://localhost:5173')
+  await page.goto('http://localhost:5173', {
+    waitUntil: 'domcontentloaded'
+  })
 
   await page.route('**/api/user/nonce/*', async (route) => {
     await route.fulfill({
