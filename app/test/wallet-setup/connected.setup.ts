@@ -12,9 +12,7 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
 
   const page = await context.newPage()
 
-  await page.goto('http://localhost:5173', {
-    waitUntil: 'domcontentloaded'
-  })
+  await page.goto('http://localhost:5173')
 
   await page.route('**/api/user/nonce/*', async (route) => {
     await route.fulfill({
@@ -43,6 +41,7 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
   })
 
   // Click sign-in button
+  await page.waitForSelector('[data-testid="sign-in"]', { timeout: 60000 })
   await page.getByTestId('sign-in').click()
 
   // Connect to dapp
