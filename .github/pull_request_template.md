@@ -6,7 +6,7 @@ Fixes # (issue)
 
 ## Contribution
 
-For your PR please add a commnent to eache file edited to explain the changes you made.
+For your PR please add a comment to each file edited to explain the changes you made.
 
 ## Type of change
 
