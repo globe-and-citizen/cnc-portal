@@ -47,7 +47,11 @@ export const useTeamStore = defineStore('team', () => {
   const fetchTeam = async (teamId: string) => {
     teamURI.value = `teams/${teamId}`
     await executeFetchTeam()
-    teamsFetched.value.set(String(team.value.id), team.value)
+    if (team.value) {
+      teamsFetched.value.set(String(team.value.id), team.value)
+    } else {
+      log.error('Team is falsy')
+    }
     return {
       teamIsFetching,
       teamError,
@@ -68,6 +72,7 @@ export const useTeamStore = defineStore('team', () => {
   watch(teams, (newTeamsVal) => {
     // set the current team id to the first team id if not already set and teams is not empty
     if (!currentTeamId.value && newTeamsVal.length > 0) {
+      log.info('new Val', newTeamsVal)
       log.info('Current team id not set, setting to first team id:', newTeamsVal[0].id)
       setCurrentTeamId(newTeamsVal[0].id)
     }
@@ -75,13 +80,13 @@ export const useTeamStore = defineStore('team', () => {
 
   watch(teamsError, () => {
     if (teamsError.value) {
-      log.error('Failed to load user teams', teamsError.value)
+      log.error('Failed to load user teams \n', teamsError.value)
       addErrorToast('Failed to load user teams')
     }
   })
   watch(teamError, () => {
     if (teamError.value) {
-      log.error('Failed to load user team', teamError.value)
+      log.error('Failed to load user team \n', teamError.value)
       addErrorToast('Failed to load user team')
     }
   })
