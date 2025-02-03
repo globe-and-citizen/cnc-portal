@@ -87,7 +87,7 @@
               <tbody>
                 <tr>
                   <td>{{ expiry }}</td>
-                  <td>{{ `${maxLimitAmountPerTx} ${NETWORK.currencySymbol}` }}</td>
+                  <td>{{ `${maxLimitAmountPerTx} ${tokenSymbol}` }}</td>
                   <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
                   <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
                   <td class="flex justify-end" data-test="action-td">
@@ -323,7 +323,7 @@ import type {
   ManyExpenseResponse,
   ManyExpenseWithBalances
 } from '@/types'
-import { NETWORK } from '@/constant'
+import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from './forms/ApproveUsersEIP712Form.vue'
@@ -343,7 +343,6 @@ import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { USDC_ADDRESS } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
@@ -387,6 +386,21 @@ const expiry = computed(() => {
     return date.toLocaleString('en-US')
   } else {
     return '--/--/--, --:--:--'
+  }
+})
+const tokenSymbol = computed(() => {
+  if (_expenseAccountData.value?.data) {
+    const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
+    switch (tokenAddress) {
+      case USDC_ADDRESS:
+        return `USDC`
+      case USDT_ADDRESS:
+        return `USDT`
+      case zeroAddress:
+        return NETWORK.currencySymbol
+    }
+  } else {
+    return ''
   }
 })
 const dynamicDisplayData = (budgetType: number) =>
