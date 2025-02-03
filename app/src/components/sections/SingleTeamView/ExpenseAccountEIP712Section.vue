@@ -100,14 +100,14 @@
                     >
                       Spend
                     </ButtonUI>
-                    <ButtonUI
+                    <!--<ButtonUI
                       variant="success"
                       :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
                       @click="tokenTransferModal = true"
                       data-test="token-transfer-button"
                     >
                       Transfer Token
-                    </ButtonUI>
+                    </ButtonUI>-->
                   </td>
                 </tr>
               </tbody>
@@ -259,7 +259,7 @@
   </div>
   <!-- Expense Account Not Yet Created -->
 
-  <ModalComponent v-model="tokenTransferModal" data-test="token-transfer-modal">
+  <!--<ModalComponent v-model="tokenTransferModal" data-test="token-transfer-modal">
     <div class="flex flex-col gap-4 justify-start">
       <span class="font-bold text-xl sm:text-2xl">Transfer Token</span>
       <div class="form-control w-full">
@@ -302,14 +302,14 @@
           "
           class="w-full sm:w-44"
           variant="primary"
-          @click="transferToken"
+          @click="transferErc20Token"
           data-test="transfer-token-button"
         >
           Transfer Token
         </ButtonUI>
       </div>
     </div>
-  </ModalComponent>
+  </ModalComponent>-->
 </template>
 
 <script setup lang="ts">
@@ -660,26 +660,63 @@ const getAmountWithdrawnBalance = async () => {
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
+  tokenAmount.value = amount
+  tokenRecipient.value = to
+
   if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-    executeExpenseAccountTransfer({
-      address: team.value.expenseAccountEip712Address as Address,
-      args: [
-        to,
-        parseEther(amount),
-        {
-          ...budgetLimit,
-          budgetData: budgetLimit.budgetData.map((item) => ({
-            ...item,
-            value: item.budgetType === 0 ? item.value : parseEther(`${item.value}`)
-          }))
-        },
-        _expenseAccountData.value.signature
-      ],
-      abi: expenseAccountABI,
-      functionName: 'transfer'
-    })
+
+    if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
+    else await transferErc20Token()
+    // executeExpenseAccountTransfer({
+    //   address: team.value.expenseAccountEip712Address as Address,
+    //   args: [
+    //     to,
+    //     parseEther(amount),
+    //     {
+    //       ...budgetLimit,
+    //       budgetData: budgetLimit.budgetData.map((item) => ({
+    //         ...item,
+    //         value: item.budgetType === 0 ? item.value :
+    //           budgetLimit.tokenAddress === zeroAddress?
+    //             parseEther(`${item.value}`):
+    //             BigInt(Number(item.value) * 1e6)
+    //       }))
+    //     },
+    //     _expenseAccountData.value.signature
+    //   ],
+    //   abi: expenseAccountABI,
+    //   functionName: 'transfer'
+    // })
   }
+}
+
+const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimit) => {
+  // if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
+  // const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+  executeExpenseAccountTransfer({
+    address: team.value.expenseAccountEip712Address as Address,
+    args: [
+      to,
+      parseEther(amount),
+      {
+        ...budgetLimit,
+        budgetData: budgetLimit.budgetData.map((item) => ({
+          ...item,
+          value:
+            item.budgetType === 0
+              ? item.value
+              : budgetLimit.tokenAddress === zeroAddress
+                ? parseEther(`${item.value}`)
+                : BigInt(Number(item.value) * 1e6)
+        }))
+      },
+      _expenseAccountData.value.signature
+    ],
+    abi: expenseAccountABI,
+    functionName: 'transfer'
+  })
+  // }
 }
 
 const approveUser = async (data: BudgetLimit) => {
@@ -916,7 +953,7 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 //   })
 
 // Token transfer function
-const transferToken = async () => {
+const transferErc20Token = async () => {
   if (
     !team.value.expenseAccountEip712Address ||
     !tokenAmount.value ||
@@ -926,7 +963,7 @@ const transferToken = async () => {
     return
 
   const tokenAddress = USDC_ADDRESS
-  const amount = BigInt(Number(tokenAmount.value) * 1e6)
+  const _amount = BigInt(Number(tokenAmount.value) * 1e6)
   // console.log(`amount: `, tokenAmount.value, `typeOf tokenAmaount: `, typeof tokenAmount.value)
   // const amount = parseEther(`${tokenAmount.value}`)
   const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
@@ -940,13 +977,13 @@ const transferToken = async () => {
     })
 
     const currentAllowance = allowance ? allowance.toString() : 0n
-    if (Number(currentAllowance) < Number(amount)) {
+    if (Number(currentAllowance) < Number(_amount)) {
       console.log(`Performing approval...`)
       approve({
         address: tokenAddress as Address,
         abi: ERC20ABI,
         functionName: 'approve',
-        args: [team.value.expenseAccountEip712Address as Address, amount]
+        args: [team.value.expenseAccountEip712Address as Address, _amount]
       })
     } else {
       executeExpenseAccountTransfer({
@@ -955,7 +992,7 @@ const transferToken = async () => {
         functionName: 'transfer',
         args: [
           tokenRecipient.value as Address,
-          amount,
+          _amount,
           {
             ...budgetLimit,
             budgetData: budgetLimit.budgetData.map((item) => ({
@@ -1006,7 +1043,7 @@ const transferToken = async () => {
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
     addSuccessToast('Approval granted successfully')
-    transferToken()
+    transferErc20Token()
   }
 })
 
