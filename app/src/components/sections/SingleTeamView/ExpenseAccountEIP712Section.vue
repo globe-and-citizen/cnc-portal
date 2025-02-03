@@ -305,6 +305,10 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
+// Token related refs
+const tokenAmount = ref('')
+const tokenRecipient = ref('')
+const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 const expenseAccountData = ref<{}>()
 const signatureHash = ref<string | null>(null)
 const deactivateIndex = ref<number | null>(null)
@@ -421,6 +425,19 @@ const {
   chainId
 })
 
+// Token balances
+const {
+  data: usdcBalance,
+  isLoading: isLoadingUsdcBalance,
+  refetch: fetchUsdcBalance,
+  error: usdcBalanceError
+} = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [team.value.expenseAccountEip712Address as Address]
+})
+
 const {
   data: amountWithdrawn,
   refetch: executeGetAmountWithdrawn,
@@ -470,6 +487,19 @@ const {
 const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
   useWaitForTransactionReceipt({
     hash: activateHash
+  })
+
+// Token approval
+const {
+  writeContract: approve,
+  error: approveError,
+  data: approveHash,
+  isPending: isPendingApprove
+} = useWriteContract()
+
+const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
+  useWaitForTransactionReceipt({
+    hash: approveHash
   })
 //#endregion
 
@@ -662,6 +692,57 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
   })
 }
 
+// Token transfer function
+const transferErc20Token = async () => {
+  if (
+    !team.value.expenseAccountEip712Address ||
+    !tokenAmount.value ||
+    !tokenRecipient.value ||
+    !_expenseAccountData.value?.data
+  )
+    return
+
+  const tokenAddress = USDC_ADDRESS
+  const _amount = BigInt(Number(tokenAmount.value) * 1e6)
+
+  const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+
+  const allowance = await readContract(config, {
+    address: tokenAddress as Address,
+    abi: ERC20ABI,
+    functionName: 'allowance',
+    args: [currentUserAddress as Address, team.value.expenseAccountEip712Address as Address]
+  })
+
+  const currentAllowance = allowance ? allowance.toString() : 0n
+  if (Number(currentAllowance) < Number(_amount)) {
+    approve({
+      address: tokenAddress as Address,
+      abi: ERC20ABI,
+      functionName: 'approve',
+      args: [team.value.expenseAccountEip712Address as Address, _amount]
+    })
+  } else {
+    executeExpenseAccountTransfer({
+      address: team.value.expenseAccountEip712Address as Address,
+      abi: expenseAccountABI,
+      functionName: 'transfer',
+      args: [
+        tokenRecipient.value as Address,
+        _amount,
+        {
+          ...budgetLimit,
+          budgetData: budgetLimit.budgetData.map((item) => ({
+            ...item,
+            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
+          }))
+        },
+        _expenseAccountData.value.signature
+      ]
+    })
+  }
+}
+
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   expenseAccountData.value = data
@@ -726,7 +807,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
 
 const errorMessage = (error: {}, message: string) =>
   'reason' in error ? (error.reason as string) : message
-//#endregion helper functions
+//#endregion
 
 //#region Watch
 watch(
@@ -834,90 +915,6 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
     addErrorToast('Error fetching expense account data')
   }
 })
-//#endregion
-
-// Token related refs
-const tokenAmount = ref('')
-const tokenRecipient = ref('')
-
-// Token balances
-const {
-  data: usdcBalance,
-  isLoading: isLoadingUsdcBalance,
-  refetch: fetchUsdcBalance,
-  error: usdcBalanceError
-} = useReadContract({
-  address: USDC_ADDRESS as Address,
-  abi: ERC20ABI,
-  functionName: 'balanceOf',
-  args: [team.value.expenseAccountEip712Address as Address]
-})
-
-const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
-
-// Token approval
-const {
-  writeContract: approve,
-  error: approveError,
-  data: approveHash,
-  isPending: isPendingApprove
-} = useWriteContract()
-
-const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
-  useWaitForTransactionReceipt({
-    hash: approveHash
-  })
-
-// Token transfer function
-const transferErc20Token = async () => {
-  if (
-    !team.value.expenseAccountEip712Address ||
-    !tokenAmount.value ||
-    !tokenRecipient.value ||
-    !_expenseAccountData.value?.data
-  )
-    return
-
-  const tokenAddress = USDC_ADDRESS
-  const _amount = BigInt(Number(tokenAmount.value) * 1e6)
-
-  const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-
-  const allowance = await readContract(config, {
-    address: tokenAddress as Address,
-    abi: ERC20ABI,
-    functionName: 'allowance',
-    args: [currentUserAddress as Address, team.value.expenseAccountEip712Address as Address]
-  })
-
-  const currentAllowance = allowance ? allowance.toString() : 0n
-  if (Number(currentAllowance) < Number(_amount)) {
-    approve({
-      address: tokenAddress as Address,
-      abi: ERC20ABI,
-      functionName: 'approve',
-      args: [team.value.expenseAccountEip712Address as Address, _amount]
-    })
-  } else {
-    executeExpenseAccountTransfer({
-      address: team.value.expenseAccountEip712Address as Address,
-      abi: expenseAccountABI,
-      functionName: 'transfer',
-      args: [
-        tokenRecipient.value as Address,
-        _amount,
-        {
-          ...budgetLimit,
-          budgetData: budgetLimit.budgetData.map((item) => ({
-            ...item,
-            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
-          }))
-        },
-        _expenseAccountData.value.signature
-      ]
-    })
-  }
-}
 
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
@@ -939,6 +936,7 @@ watch([usdcBalanceError], ([newUsdcError]) => {
     addErrorToast('Failed to fetch USDC balance')
   }
 })
+//#endregion
 
 onMounted(async () => {
   await init()
