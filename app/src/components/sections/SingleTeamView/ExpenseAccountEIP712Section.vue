@@ -87,7 +87,13 @@
               <tbody>
                 <tr>
                   <td>{{ expiry }}</td>
-                  <td>{{ `${maxLimitAmountPerTx} ${tokenSymbol}` }}</td>
+                  <td>
+                    {{ maxLimitAmountPerTx }}
+                    {{
+                      _expenseAccountData?.data &&
+                      tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
+                    }}
+                  </td>
                   <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
                   <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
                   <td class="flex justify-end" data-test="action-td">
@@ -188,7 +194,7 @@
                 ></UserComponent>
               </td>
               <td>{{ new Date(data?.expiry * 1000).toLocaleString('en-US') }}</td>
-              <td>{{ data?.budgetData[2]?.value }}</td>
+              <td>{{ data?.budgetData[2]?.value }} {{ tokenSymbol(data.tokenAddress) }}</td>
               <td>{{ `${data?.balances['0']}/${data?.budgetData[0]?.value}` }}</td>
               <td>{{ `${data?.balances['1']}/${data?.budgetData[1]?.value}` }}</td>
               <td class="flex justify-end" data-test="action-td">
@@ -237,7 +243,7 @@
                 ></UserComponent>
               </td>
               <td>{{ new Date(data?.expiry * 1000).toLocaleString('en-US') }}</td>
-              <td>{{ data?.budgetData[2]?.value }}</td>
+              <td>{{ data?.budgetData[2]?.value }} {{ tokenSymbol(data.tokenAddress) }}</td>
               <td>{{ `${data?.balances['0']}/${data?.budgetData[0]?.value}` }}</td>
               <td>{{ `${data?.balances['1']}/${data?.budgetData[1]?.value}` }}</td>
               <td class="flex justify-end" data-test="action-td">
@@ -388,9 +394,17 @@ const expiry = computed(() => {
     return '--/--/--, --:--:--'
   }
 })
-const tokenSymbol = computed(() => {
-  if (_expenseAccountData.value?.data) {
-    const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
+const tokenSymbol = (tokenAddress: string) =>
+  computed(() => {
+    const symbols = {
+      [USDC_ADDRESS]: 'USDC',
+      [USDT_ADDRESS]: 'USDT',
+      [zeroAddress]: NETWORK.currencySymbol
+    }
+
+    return symbols[tokenAddress] || ''
+    //if (_expenseAccountData.value?.data) {
+    //  const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
     switch (tokenAddress) {
       case USDC_ADDRESS:
         return `USDC`
@@ -398,11 +412,13 @@ const tokenSymbol = computed(() => {
         return `USDT`
       case zeroAddress:
         return NETWORK.currencySymbol
+      default:
+        return ''
     }
-  } else {
-    return ''
-  }
-})
+    // } else {
+    //   return ''
+    // }
+  })
 const dynamicDisplayData = (budgetType: number) =>
   computed(() => {
     const data =
@@ -424,7 +440,8 @@ const dynamicDisplayData = (budgetType: number) =>
             tokenAddress === zeroAddress
               ? // @ts-expect-error: amountWithdrawn.value is a array
                 formatEther(amountWithdrawn.value[1])
-              : Number(amountWithdrawn.value[1]) / 1e6
+              : // @ts-expect-error: amountWithdrawn.value is a array
+                Number(amountWithdrawn.value[1]) / 1e6
         }
       }
     } else {
