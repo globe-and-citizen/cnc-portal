@@ -493,8 +493,8 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
 const {
   writeContract: approve,
   error: approveError,
-  data: approveHash,
-  isPending: isPendingApprove
+  data: approveHash
+  // isPending: isPendingApprove
 } = useWriteContract()
 
 const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
