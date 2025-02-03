@@ -106,14 +106,6 @@
                     >
                       Spend
                     </ButtonUI>
-                    <!--<ButtonUI
-                      variant="success"
-                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
-                      @click="tokenTransferModal = true"
-                      data-test="token-transfer-button"
-                    >
-                      Transfer Token
-                    </ButtonUI>-->
                   </td>
                 </tr>
               </tbody>
@@ -264,58 +256,6 @@
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
-
-  <!--<ModalComponent v-model="tokenTransferModal" data-test="token-transfer-modal">
-    <div class="flex flex-col gap-4 justify-start">
-      <span class="font-bold text-xl sm:text-2xl">Transfer Token</span>
-      <div class="form-control w-full">
-        <label class="label">
-          <span class="label-text">Token</span>
-        </label>
-        <select v-model="selectedToken" class="select select-bordered w-full">
-          <option value="USDC">USDC</option>
-        </select>
-      </div>
-      <div class="form-control w-full">
-        <label class="label">
-          <span class="label-text">To Address</span>
-        </label>
-        <input
-          type="text"
-          class="input input-bordered w-full"
-          placeholder="Enter recipient address"
-          v-model="tokenRecipient"
-        />
-      </div>
-      <div class="form-control w-full">
-        <label class="label">
-          <span class="label-text">Amount</span>
-        </label>
-        <input
-          type="number"
-          class="input input-bordered w-full"
-          placeholder="Enter amount"
-          v-model="tokenAmount"
-        />
-      </div>
-      <div class="text-center">
-        <ButtonUI
-          :loading="
-            isLoadingTransfer || isConfirmingTransfer || isPendingApprove || isConfirmingApprove
-          "
-          :disabled="
-            isLoadingTransfer || isConfirmingTransfer || isPendingApprove || isConfirmingApprove
-          "
-          class="w-full sm:w-44"
-          variant="primary"
-          @click="transferErc20Token"
-          data-test="transfer-token-button"
-        >
-          Transfer Token
-        </ButtonUI>
-      </div>
-    </div>
-  </ModalComponent>-->
 </template>
 
 <script setup lang="ts">
@@ -403,21 +343,6 @@ const tokenSymbol = (tokenAddress: string) =>
     }
 
     return symbols[tokenAddress] || ''
-    //if (_expenseAccountData.value?.data) {
-    //  const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
-    switch (tokenAddress) {
-      case USDC_ADDRESS:
-        return `USDC`
-      case USDT_ADDRESS:
-        return `USDT`
-      case zeroAddress:
-        return NETWORK.currencySymbol
-      default:
-        return ''
-    }
-    // } else {
-    //   return ''
-    // }
   })
 const dynamicDisplayData = (budgetType: number) =>
   computed(() => {
@@ -709,32 +634,10 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
 
     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
-    // executeExpenseAccountTransfer({
-    //   address: team.value.expenseAccountEip712Address as Address,
-    //   args: [
-    //     to,
-    //     parseEther(amount),
-    //     {
-    //       ...budgetLimit,
-    //       budgetData: budgetLimit.budgetData.map((item) => ({
-    //         ...item,
-    //         value: item.budgetType === 0 ? item.value :
-    //           budgetLimit.tokenAddress === zeroAddress?
-    //             parseEther(`${item.value}`):
-    //             BigInt(Number(item.value) * 1e6)
-    //       }))
-    //     },
-    //     _expenseAccountData.value.signature
-    //   ],
-    //   abi: expenseAccountABI,
-    //   functionName: 'transfer'
-    // })
   }
 }
 
 const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimit) => {
-  // if (team.value.expenseAccountEip712Address && _expenseAccountData.value.data) {
-  // const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
   executeExpenseAccountTransfer({
     address: team.value.expenseAccountEip712Address as Address,
     args: [
@@ -757,7 +660,6 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
     abi: expenseAccountABI,
     functionName: 'transfer'
   })
-  // }
 }
 
 const approveUser = async (data: BudgetLimit) => {
@@ -935,10 +837,8 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
 //#endregion
 
 // Token related refs
-const tokenTransferModal = ref(false)
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
-const selectedToken = ref('USDC')
 
 // Token balances
 const {
@@ -955,19 +855,6 @@ const {
 
 const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 
-// Token transfer
-// const {
-//   writeContract: writeTokenTransfer,
-//   isPending: isLoadingTokenTransfer,
-//   data: tokenTransferHash,
-//   error: tokenTransferError
-// } = useWriteContract()
-
-// const { isLoading: isConfirmingTokenTransfer, isSuccess: isConfirmedTokenTransfer } =
-//   useWaitForTransactionReceipt({
-//     hash: tokenTransferHash
-//   })
-
 // Token approval
 const {
   writeContract: approve,
@@ -981,18 +868,6 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
     hash: approveHash
   })
 
-// const {
-//   writeContract: writeTokenDeposit,
-//   error: tokenDepositError,
-//   data: tokenDepositHash,
-//   isPending: isPendingTokenDeposit
-// } = useWriteContract()
-
-// const { isLoading: isConfirmingDeposit, isSuccess: isConfirmedDeposit } =
-//   useWaitForTransactionReceipt({
-//     hash: tokenDepositHash
-//   })
-
 // Token transfer function
 const transferErc20Token = async () => {
   if (
@@ -1005,81 +880,44 @@ const transferErc20Token = async () => {
 
   const tokenAddress = USDC_ADDRESS
   const _amount = BigInt(Number(tokenAmount.value) * 1e6)
-  // console.log(`amount: `, tokenAmount.value, `typeOf tokenAmaount: `, typeof tokenAmount.value)
-  // const amount = parseEther(`${tokenAmount.value}`)
+
   const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
 
-  try {
-    const allowance = await readContract(config, {
+  const allowance = await readContract(config, {
+    address: tokenAddress as Address,
+    abi: ERC20ABI,
+    functionName: 'allowance',
+    args: [currentUserAddress as Address, team.value.expenseAccountEip712Address as Address]
+  })
+
+  const currentAllowance = allowance ? allowance.toString() : 0n
+  if (Number(currentAllowance) < Number(_amount)) {
+    approve({
       address: tokenAddress as Address,
       abi: ERC20ABI,
-      functionName: 'allowance',
-      args: [currentUserAddress as Address, team.value.expenseAccountEip712Address as Address]
+      functionName: 'approve',
+      args: [team.value.expenseAccountEip712Address as Address, _amount]
     })
-
-    const currentAllowance = allowance ? allowance.toString() : 0n
-    if (Number(currentAllowance) < Number(_amount)) {
-      console.log(`Performing approval...`)
-      approve({
-        address: tokenAddress as Address,
-        abi: ERC20ABI,
-        functionName: 'approve',
-        args: [team.value.expenseAccountEip712Address as Address, _amount]
-      })
-    } else {
-      executeExpenseAccountTransfer({
-        address: team.value.expenseAccountEip712Address as Address,
-        abi: expenseAccountABI,
-        functionName: 'transfer',
-        args: [
-          tokenRecipient.value as Address,
-          _amount,
-          {
-            ...budgetLimit,
-            budgetData: budgetLimit.budgetData.map((item) => ({
-              ...item,
-              value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
-            }))
-          },
-          _expenseAccountData.value.signature
-        ]
-      })
-      // writeTokenDeposit({
-      //   address: team.value.expenseAccountEip712Address as Address,
-      //   abi: expenseAccountABI,
-      //   functionName: 'depositToken',
-      //   args: [USDC_ADDRESS, amount]
-      // })
-    }
-  } catch (error) {
-    log.error(parseError(error))
-    addErrorToast('Failed to transfer token')
+  } else {
+    executeExpenseAccountTransfer({
+      address: team.value.expenseAccountEip712Address as Address,
+      abi: expenseAccountABI,
+      functionName: 'transfer',
+      args: [
+        tokenRecipient.value as Address,
+        _amount,
+        {
+          ...budgetLimit,
+          budgetData: budgetLimit.budgetData.map((item) => ({
+            ...item,
+            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
+          }))
+        },
+        _expenseAccountData.value.signature
+      ]
+    })
   }
 }
-
-// watch(tokenDepositError, (newError) => {
-//   if (newError) {
-//     log.error('tokenDepositError.value', tokenDepositError)
-//     addErrorToast('Failed to deposit token')
-//   }
-// })
-
-// watch(isConfirmingDeposit, (isConfirming, wasConfirming) => {
-//   if (!isConfirming && wasConfirming && isConfirmedDeposit.value) {
-//     addSuccessToast('Deposited token successfuly')
-//   }
-// })
-
-// Watch for token transfer events
-// watch(isConfirmingTokenTransfer, (newIsConfirming, oldIsConfirming) => {
-//   if (!newIsConfirming && oldIsConfirming && isConfirmedTokenTransfer.value) {
-//     addSuccessToast('Token transferred successfully')
-//     fetchUsdcBalance()
-//     tokenTransferModal.value = false
-//     tokenAmount.value = ''
-//     tokenRecipient.value = ''
-//   }
-// })
 
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
@@ -1087,13 +925,6 @@ watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
     transferErc20Token()
   }
 })
-
-// watch(tokenTransferError, () => {
-//   if (tokenTransferError.value) {
-//     log.error(parseError(tokenTransferError.value))
-//     addErrorToast('Failed to transfer token')
-//   }
-// })
 
 watch(approveError, () => {
   if (approveError.value) {
