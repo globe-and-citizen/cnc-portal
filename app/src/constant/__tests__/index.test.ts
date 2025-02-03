@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { validateAddresses, resolveAddress } from '../index'
+import { validateAddresses, resolveAddress, TOKEN_ADDRESSES } from '../index'
 import * as networkModule from '../network'
 
 // Mock the imported JSON files
@@ -82,6 +82,77 @@ describe('Contract Address Resolution', () => {
         resolveAddress('BankBeaconModule#Beacon')
         resolveAddress('BankBeaconModule#Bank')
       }).not.toThrow()
+    })
+
+    describe('TOKEN_ADDRESSES', () => {
+      it('should use hardcoded addresses for Sepolia network', () => {
+        // Mock network to return Sepolia chain ID
+        vi.spyOn(networkModule, 'getNetwork').mockReturnValue({
+          chainId: '0xaa36a7', // 11155111 in hex
+          networkName: 'Sepolia',
+          rpcUrl: 'https://sepolia.example.com',
+          currencySymbol: 'ETH'
+        })
+
+        expect(TOKEN_ADDRESSES[11155111]).toEqual({
+          USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
+        })
+      })
+
+      it('should use hardcoded addresses for Polygon network', () => {
+        // Mock network to return Polygon chain ID
+        vi.spyOn(networkModule, 'getNetwork').mockReturnValue({
+          chainId: '0x89', // 137 in hex
+          networkName: 'Polygon',
+          rpcUrl: 'https://polygon-rpc.com',
+          currencySymbol: 'MATIC'
+        })
+
+        expect(TOKEN_ADDRESSES[137]).toEqual({
+          USDC: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+          USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
+        })
+      })
+
+      it('should resolve mock addresses only when on local hardhat network', () => {
+        // Mock network to return Hardhat chain ID
+        vi.spyOn(networkModule, 'getNetwork').mockReturnValue({
+          chainId: '0x7a69', // 31337 in hex
+          networkName: 'Hardhat',
+          rpcUrl: 'http://localhost:8545',
+          currencySymbol: 'ETH'
+        })
+
+        // Add mock token addresses to the hardhat mock
+        vi.mock('@/artifacts/deployed_addresses/chain-31337.json', () => ({
+          default: {
+            'TipsModule#Tips': '0x4567',
+            'MockTokens#USDC': '0xLocalMockUSDC',
+            'MockTokens#USDT': '0xLocalMockUSDT'
+          }
+        }))
+
+        expect(TOKEN_ADDRESSES[31337]).toEqual({
+          USDC: '',
+          USDT: ''
+        })
+      })
+
+      it('should return empty strings for local chain addresses when not on hardhat', () => {
+        // Mock network to return Sepolia chain ID
+        vi.spyOn(networkModule, 'getNetwork').mockReturnValue({
+          chainId: '0xaa36a7', // 11155111 in hex
+          networkName: 'Sepolia',
+          rpcUrl: 'https://sepolia.example.com',
+          currencySymbol: 'ETH'
+        })
+
+        expect(TOKEN_ADDRESSES[31337]).toEqual({
+          USDC: '',
+          USDT: ''
+        })
+      })
     })
   })
 })
