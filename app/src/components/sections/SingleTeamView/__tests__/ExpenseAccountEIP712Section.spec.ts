@@ -4,7 +4,7 @@ import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseA
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
-import { NETWORK } from '@/constant'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ApproveUsersForm from '../forms/ApproveUsersEIP712Form.vue'
@@ -174,7 +174,8 @@ const mockExpenseData = [
       { budgetType: 2, value: budgetData.amountPerTransaction }
     ],
     expiry: Math.floor(new Date(DATE).getTime() / 1000),
-    signature: '0xSignature'
+    signature: '0xSignature',
+    tokenAddress: viem.zeroAddress
   },
   {
     approvedAddress: `0xabcdef1234abcdef1234abcdef1234abcdef1234`,
@@ -184,7 +185,8 @@ const mockExpenseData = [
       { budgetType: 2, value: budgetData.amountPerTransaction * 2 }
     ],
     expiry: Math.floor(new Date(DATE).getTime() / 1000),
-    signature: '0xAnotherSignature'
+    signature: '0xAnotherSignature',
+    tokenAddress: USDC_ADDRESS
   }
 ]
 
@@ -389,7 +391,7 @@ describe('ExpenseAccountSection', () => {
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
       wrapperVm.manyExpenseAccountData = mockExpenseData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
+      wrapperVm.amountWithdrawn = [0, 1 * 1e18, 1]
 
       vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
         return `${args as `0x${string}`}Hash`
@@ -426,7 +428,9 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[1].text()).toBe(
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
-      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
+      expect(firstRowCells[2].text()).toBe(
+        `${mockExpenseData[0].budgetData[2].value.toString()} GO`
+      )
       expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
       const firstActivateButton = firstRowCells[5].findComponent(ButtonUI)
@@ -439,9 +443,13 @@ describe('ExpenseAccountSection', () => {
       expect(secondRowCells[1].text()).toBe(
         new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
       )
-      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
+      expect(secondRowCells[2].text()).toBe(
+        `${mockExpenseData[1].budgetData[2].value.toString()} USDC`
+      )
       expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
-      expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
+      expect(secondRowCells[4].text()).toBe(
+        `1000000000000/${mockExpenseData[1].budgetData[1].value}`
+      )
       const secondActivateButton = firstRowCells[5].findComponent(ButtonUI)
       expect(secondActivateButton.exists()).toBe(true)
       expect(secondActivateButton.text()).toBe('Disable Approval')
@@ -452,7 +460,7 @@ describe('ExpenseAccountSection', () => {
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
 
       wrapperVm.manyExpenseAccountData = mockExpenseData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
+      wrapperVm.amountWithdrawn = [0, 1e18, 2]
 
       vi.spyOn(viem, 'keccak256').mockImplementation((args) => {
         return `${args as `0x${string}`}Hash`
@@ -495,7 +503,9 @@ describe('ExpenseAccountSection', () => {
       expect(firstRowCells[1].text()).toBe(
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
-      expect(firstRowCells[2].text()).toBe(mockExpenseData[0].budgetData[2].value.toString())
+      expect(firstRowCells[2].text()).toBe(
+        `${mockExpenseData[0].budgetData[2].value.toString()} GO`
+      )
       expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
       const firstActivateButton = firstRowCells[5].findComponent(ButtonUI)
@@ -508,9 +518,13 @@ describe('ExpenseAccountSection', () => {
       expect(secondRowCells[1].text()).toBe(
         new Date(mockExpenseData[1].expiry * 1000).toLocaleString('en-US')
       )
-      expect(secondRowCells[2].text()).toBe(mockExpenseData[1].budgetData[2].value.toString())
+      expect(secondRowCells[2].text()).toBe(
+        `${mockExpenseData[1].budgetData[2].value.toString()} USDC`
+      )
       expect(secondRowCells[3].text()).toBe(`0/${mockExpenseData[1].budgetData[0].value}`)
-      expect(secondRowCells[4].text()).toBe(`1/${mockExpenseData[1].budgetData[1].value}`)
+      expect(secondRowCells[4].text()).toBe(
+        `1000000000000/${mockExpenseData[1].budgetData[1].value}`
+      )
       const secondActivateButton = firstRowCells[5].findComponent(ButtonUI)
       expect(secondActivateButton.exists()).toBe(true)
       expect(secondActivateButton.text()).toBe('Reactivate Approval')
