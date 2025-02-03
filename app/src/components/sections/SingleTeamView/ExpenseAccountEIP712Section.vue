@@ -417,10 +417,14 @@ const dynamicDisplayData = (budgetType: number) =>
           value: Number(amountWithdrawn.value[0])
         }
       } else {
+        const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
         return {
           ...data,
-          // @ts-expect-error: amountWithdrawn.value is a array
-          value: formatEther(amountWithdrawn.value[1])
+          value:
+            tokenAddress === zeroAddress
+              ? // @ts-expect-error: amountWithdrawn.value is a array
+                formatEther(amountWithdrawn.value[1])
+              : Number(amountWithdrawn.value[1]) / 1e6
         }
       }
     } else {
@@ -601,7 +605,10 @@ const initializeBalances = async () => {
             ...data,
             balances: {
               0: `${amountWithdrawn.value[0]}`,
-              1: formatEther(amountWithdrawn.value[1]),
+              1:
+                data.tokenAddress === zeroAddress
+                  ? formatEther(amountWithdrawn.value[1])
+                  : `${Number(amountWithdrawn.value[1]) / 1e6}`,
               2: amountWithdrawn.value[2] === true
             }
           })
@@ -610,7 +617,10 @@ const initializeBalances = async () => {
             ...data,
             balances: {
               0: `${amountWithdrawn.value[0]}`,
-              1: formatEther(amountWithdrawn.value[1]),
+              1:
+                data.tokenAddress === zeroAddress
+                  ? formatEther(amountWithdrawn.value[1])
+                  : `${Number(amountWithdrawn.value[1]) / 1e6}`,
               2: amountWithdrawn.value[2] === false
             }
           })

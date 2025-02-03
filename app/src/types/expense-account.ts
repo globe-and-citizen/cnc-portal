@@ -19,6 +19,7 @@ export interface BudgetData {
 
 export interface ManyExpenseResponse {
   approvedAddress: string
+  tokenAddress: string
   budgetData: BudgetData[]
   expiry: number
   signature: `0x{string}`
