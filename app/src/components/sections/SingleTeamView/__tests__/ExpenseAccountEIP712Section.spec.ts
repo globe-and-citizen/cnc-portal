@@ -397,6 +397,8 @@ describe('ExpenseAccountSection', () => {
         return `${args as `0x${string}`}Hash`
       })
 
+      console.log(`network alias: `, import.meta.env.VITE_APP_NETWORK_ALIAS)
+
       await flushPromises()
 
       // Locate the table using the data-test attribute
@@ -429,7 +431,7 @@ describe('ExpenseAccountSection', () => {
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
       expect(firstRowCells[2].text()).toBe(
-        `${mockExpenseData[0].budgetData[2].value.toString()} GO`
+        `${mockExpenseData[0].budgetData[2].value.toString()} SepoliaETH`
       )
       expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
@@ -504,7 +506,7 @@ describe('ExpenseAccountSection', () => {
         new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
       )
       expect(firstRowCells[2].text()).toBe(
-        `${mockExpenseData[0].budgetData[2].value.toString()} GO`
+        `${mockExpenseData[0].budgetData[2].value.toString()} SepoliaETH`
       )
       expect(firstRowCells[3].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
       expect(firstRowCells[4].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
