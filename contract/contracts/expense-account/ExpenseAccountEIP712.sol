@@ -39,7 +39,6 @@ contract ExpenseAccountEIP712 is
     struct BudgetData {
         BudgetType budgetType;
         uint256 value;
-        // address token; // remove token address here
     }
 
     /**
@@ -57,7 +56,7 @@ contract ExpenseAccountEIP712 is
         address approvedAddress;
         BudgetData[] budgetData;
         uint256 expiry;
-        address tokenAddress; //Put token address here
+        address tokenAddress;
     }
 
     /**
@@ -169,8 +168,7 @@ contract ExpenseAccountEIP712 is
         return keccak256(abi.encode(
             BUDGETDATA_TYPEHASH,
             budgetData.budgetType,
-            budgetData.value//,
-            //budgetData.token //remove token here
+            budgetData.value
         ));
     }
 
@@ -274,16 +272,13 @@ contract ExpenseAccountEIP712 is
     function _checkAndUpdateBudgetData(
         BudgetData[] calldata budgetData, 
         uint256 amount, 
-        bytes calldata signature//,
-        //address token //remove token here
+        bytes calldata signature
     ) private {
         bytes32 sigHash = keccak256(signature);
 
         bool isAmountWithdrawn;
 
         for (uint8 i = 0; i < budgetData.length; i++) {
-            //if (budgetData[i].token != token) continue; //remove check here
-
             if (budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
                 require(balances[sigHash].transactionCount < budgetData[i].value, "Transaction limit reached");
                 balances[sigHash].transactionCount++;
@@ -353,56 +348,8 @@ contract ExpenseAccountEIP712 is
         return 
             _token == supportedTokens["USDT"] || 
             _token == supportedTokens["USDC"] || 
-            _token == address(0); //add zero address here
+            _token == address(0);
     }
-
-    /**
-     * @dev Transfers tokens from the contract to a specified address.
-     * @param to The address to transfer tokens to.
-     * @param token The address of the token to transfer.
-     * @param amount The amount of tokens to transfer.
-     * @param limit The BudgetLimit struct that was signed by the contract owner
-     * @param signature The ECDSA signature.
-     *
-     * Requirements:
-     * - The token must be supported.
-     * - The approval must not be inactive
-     * - The caller must be the member specified in the budget limit.
-     * - The budget limit must be signed by the contract owner.
-     * - The budgetData must not be an empty array.
-     * - The contract must not be paused.
-     *
-     * Emits a {TokenTransfer} event.
-     */
-    // function transferToken(
-    //     address to,
-    //     address token,
-    //     uint256 amount,
-    //     BudgetLimit calldata limit,
-    //     bytes calldata signature
-    // ) external whenNotPaused nonReentrant {
-    //     require(isTokenSupported(token), "Unsupported token");
-    //     require(balances[keccak256(signature)].state != ApprovalState.Inactive, "Approval inactive");
-    //     require(msg.sender == limit.approvedAddress, "Withdrawer not approved");
-    //     require(to != address(0), "Address required");
-    //     require(amount > 0, "Amount must be greater than zero");
-    //     require(limit.budgetData.length > 0, "Empty budget data");
-
-    //     bytes32 digest = _hashTypedDataV4(budgetLimitHash(limit));
-    //     address signer = digest.recover(signature);
-
-    //     if (signer != owner()) {
-    //         revert UnauthorizedAccess(owner(), signer);
-    //     }
-
-    //     require((block.timestamp <= limit.expiry), "Authorization expired");
-
-    //     _checkAndUpdateBudgetData(limit.budgetData, amount, signature, token);
-
-    //     require(IERC20(token).transfer(to, amount), "Token transfer failed");
-
-    //     emit TokenTransfer(limit.approvedAddress, to, token, amount);
-    // }
 
     /**
      * @dev Deposits tokens from the caller to the contract.
