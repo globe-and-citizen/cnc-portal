@@ -3,6 +3,7 @@
     <div>
       <h2>{{ route.meta.name }}</h2>
     </div>
+    <!-- Loader -->
     <div class="flex gap-3" v-if="teamsAreFetching">
       <div class="flex w-1/4 flex-col gap-4" v-for="i in 4" :key="i">
         <div class="skeleton h-32 w-full"></div>
@@ -11,6 +12,8 @@
         <div class="skeleton h-4 w-full"></div>
       </div>
     </div>
+
+    <!-- Empty team or Error -->
     <div class="flex flex-col items-center animate-fade-in" v-if="teams?.length == 0 || teamsError">
       <img src="../../assets/login-illustration.png" alt="Login illustration" width="300" />
 
@@ -26,6 +29,22 @@
       <div class="alert alert-warning" v-if="teamsError" data-test="error-state">
         We are unable to retrieve your teams. Please try again in some time.
       </div>
+    </div>
+
+    <!-- Teams List -->
+
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
+      v-if="(teams?.length ?? 0) != 0"
+    >
+      <TeamCard
+        v-for="team in teams"
+        :key="team.id"
+        :team="team"
+        :data-test="`team-card-${team.id}`"
+        class="cursor-pointer transition duration-300 hover:scale-105"
+        @click="navigateToTeam(team.id as number)"
+      />
     </div>
 
     <!-- Add Team Button -->
@@ -46,19 +65,21 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import type { Team } from '@/types'
-import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useUserDataStore } from '@/stores/user'
-import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
+import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
+import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { ref } from 'vue'
 
 const route = useRoute()
 const userDataStore = useUserDataStore()
 
 const showAddTeamModal = ref(false)
+const router = useRouter()
 
 /**
  * @description Fetch User Team
@@ -69,4 +90,7 @@ const {
   error: teamsError,
   data: teams
 } = useCustomFetch('teams').json<Array<Team>>()
+const navigateToTeam = (id: number) => {
+  router.push(`/teams/${id}`)
+}
 </script>
