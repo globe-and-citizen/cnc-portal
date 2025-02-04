@@ -43,7 +43,7 @@
         :team="team"
         :data-test="`team-card-${team.id}`"
         class="cursor-pointer transition duration-300 hover:scale-105"
-        @click="navigateToTeam(team.id as number)"
+        @click="navigateToTeam(team.id)"
       />
     </div>
 
@@ -90,7 +90,7 @@ const {
   error: teamsError,
   data: teams
 } = useCustomFetch('teams').json<Array<Team>>()
-const navigateToTeam = (id: number) => {
+const navigateToTeam = (id: number | string) => {
   router.push(`/teams/${id}`)
 }
 </script>
