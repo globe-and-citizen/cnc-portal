@@ -178,25 +178,13 @@ const mockExpenseData = [
 
 vi.mock('@/composables/useCustomFetch', () => {
   return {
-    useCustomFetch: vi.fn((url, options) => {
+    useCustomFetch: vi.fn(() => {
       const data = ref<unknown>(null)
       const error = ref(null)
       const isFetching = ref(false)
       const response = ref<Response | null>(null)
 
-      const execute =
-        vi.fn(/*() => {
-          // Conditionally update `data` based on the URL argument
-          if (url === `teams/1/expense-data`) {
-            if (options.beforeFetch) {
-              data.value = {
-                data: JSON.stringify(mockExpenseData[0])
-              }
-            } else {
-              data.value = mockExpenseData
-            }
-          }
-        }*/)
+      const execute = vi.fn()
 
       const get = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
       const json = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
