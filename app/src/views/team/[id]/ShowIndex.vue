@@ -3,31 +3,51 @@
   <div class="flex flex-col gap-6">
     <div>
       <h2>{{ route.meta.name }}</h2>
-      <div class="breadcrumbs text-sm">
+      <div class="breadcrumbs text-sm" v-if="!teamError">
         <ul>
           <li>
-            <a v-if="teamStore.currentTeam">{{ teamStore.currentTeam?.name }}</a>
-            <div class="skeleton h-4 w-20" v-else></div>
+            <div class="skeleton h-4 w-20" v-if="teamIsFetching"></div>
+            <a v-if="team">{{ team?.name }}</a>
           </li>
 
           <li>{{ route.meta.name }}</li>
         </ul>
       </div>
     </div>
+    <div v-if="teamError">
+      <div class="alert alert-warning" v-if="statusCode === 404">Team not found</div>
+      <div class="alert alert-danger" v-else>Something went wrong</div>
+    </div>
     <RouterView />
   </div>
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
-import { watch } from 'vue'
+import { watch, computed } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 const teamStore = useTeamStore()
 
 const route = useRoute()
 
+const teamURI = computed(() => {
+  console.log('Route params', route.params.id)
+  return `teams/${route.params.id}`
+})
+
+/**
+ * @description Fetch team by id
+ * @returns team, teamIsFetching, teamError, executeFetchTeam
+ */
+const {
+  isFetching: teamIsFetching,
+  error: teamError,
+  statusCode,
+  data: team
+} = useCustomFetch(teamURI).json()
+
 onMounted(() => {
-  console.log('Mounted')
   teamStore.setCurrentTeamId(route.params.id as string)
 })
 
@@ -35,15 +55,10 @@ onMounted(() => {
 watch(
   () => route.params.id,
   (newId) => {
-    console.log('New id', newId)
     if (newId !== teamStore.currentTeamId) {
       teamStore.setCurrentTeamId(newId as string)
     }
   }
 )
 </script>
-<style>
-* {
-  /* border: 1px solid red; */
-}
-</style>
+<style></style>

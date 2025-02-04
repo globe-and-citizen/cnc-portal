@@ -40,6 +40,7 @@
       </ButtonUI>
     </div>
     <!-- Team Display Group -->
+    <!-- TODO: Display "Select team" if the current team don't exist -->
     <div
       class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
