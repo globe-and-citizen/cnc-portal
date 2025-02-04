@@ -43,6 +43,7 @@ const router = createRouter({
     {
       path: '/teams',
       name: 'teams',
+      meta: { name: 'Teams List' },
       components: {
         default: ListIndex
       }
