@@ -55,59 +55,54 @@
         <div class="text-sm text-gray-600 mb-2">
           You can add team members now or invite them later.
         </div>
-        <div v-if="teamData.members.length === 0" class="text-center py-4">
-          <p class="text-gray-500">No team members added yet</p>
-          <ButtonUI
-            variant="secondary"
-            class="mt-4"
-            data-test="add-first-member"
-            @click="addMember"
-          >
-            Add Team Member
-          </ButtonUI>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center" v-for="(member, index) of teamData.members">
+            <UserComponent
+              class="bg-base-200 p-4 flex-grow"
+              :user="{ name: member.name, address: member.address }"
+            />
+            <div>
+              <ButtonUI variant="error" class="mt-4" size="sm" @click="removeMember(index)">
+                -
+              </ButtonUI>
+            </div>
+          </div>
         </div>
-        <div
-          v-else
-          v-for="(input, index) of teamData.members"
-          :key="index"
-          class="input-group relative"
-        >
+        <div class="input-group relative" ref="formRef">
           <label
             class="input input-bordered flex items-center gap-2 input-md"
-            :data-test="`member-${index}-input`"
+            :data-test="`member-input`"
           >
             <input
               type="text"
               class="w-24"
               v-model="input.name"
-              @focus="() => setActiveInput(index)"
-              @keyup.stop="searchUsers({ name: input.name, address: input.address })"
-              :placeholder="'Member Name ' + (index + 1)"
-              :data-test="`member-${index}-name-input`"
+              @keyup.stop="searchUsers({ name: input.name, address: '' })"
+              :placeholder="'Member Name '"
+              :data-test="`member-name-input`"
             />
             |
             <input
               type="text"
               class="grow"
               v-model="input.address"
-              @keyup.stop="searchUsers({ name: input.name, address: input.address })"
-              :data-test="`member-${index}-address-input`"
-              :placeholder="`Member ${index + 1} Address`"
+              @keyup.stop="searchUsers({ name: '', address: input.address })"
+              :data-test="`member-address-input`"
+              :placeholder="`Member Address`"
             />
           </label>
           <!-- Dropdown positioned relative to the input -->
           <div
-            v-if="showDropdown && activeInputIndex === index && users && users.length > 0"
+            v-if="showDropdown && users.users && users.users.length > 0"
             class="absolute left-0 top-full mt-1 w-full z-10"
           >
             <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
-              <li v-for="user in users" :key="user.address">
+              <li v-for="user in users.users" :key="user.address">
                 <a
                   :data-test="`user-dropdown-${user.address}`"
                   @click="
                     () => {
-                      teamData.members[index].name = user.name ?? ''
-                      teamData.members[index].address = user.address ?? ''
+                      addMember(user)
                       showDropdown = false
                     }
                   "
@@ -117,23 +112,12 @@
               </li>
             </ul>
           </div>
-          <div v-if="$v.teamData.members.$errors.length">
-            <div
-              class="pl-4 text-sm text-red-500"
-              v-for="(error, errorIndex) of getMessages(index)"
-              data-test="address-error"
-              :key="errorIndex"
-            >
-              {{ error.$message }}
-            </div>
-          </div>
-        </div>
-        <div v-if="teamData.members.length > 0" class="flex justify-end pt-3">
-          <div class="w-6 h-6 cursor-pointer mr-2" data-test="add-member" @click="addMember">
-            <PlusCircleIcon class="size-6" />
-          </div>
-          <div class="w-6 h-6 cursor-pointer" data-test="remove-member" @click="removeMember">
-            <MinusCircleIcon class="size-6" />
+          <div
+            class="pl-4 pt-4 text-sm text-red-500"
+            data-test="create-team-error"
+            v-if="createTeamError"
+          >
+            Unable too create team
           </div>
         </div>
       </div>
@@ -193,7 +177,7 @@
         variant="secondary"
         class="w-32"
         @click="currentStep--"
-        :disabled="isLoading"
+        :disabled="createTeamFetching || false"
         data-test="previous-button"
       >
         Previous
@@ -205,7 +189,7 @@
         class="w-32"
         data-test="next-button"
         @click="nextStep"
-        :disabled="!canProceed || isLoading"
+        :disabled="!canProceed"
       >
         Next
       </ButtonUI>
@@ -213,8 +197,8 @@
         v-else-if="currentStep === 2"
         variant="primary"
         class="w-44"
-        :loading="isLoading"
-        :disabled="isLoading || !canProceed"
+        :loading="createTeamFetching"
+        :disabled="createTeamFetching || !canProceed"
         data-test="create-team-button"
         @click="saveTeamToDatabase"
       >
@@ -240,23 +224,29 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import useVuelidate from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import { isAddress } from 'viem'
-import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { log } from '@/utils'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import type { TeamInput, User } from '@/types'
+import { onClickOutside } from '@vueuse/core'
+import type { TeamInput, User, Team } from '@/types'
+import { useToastStore } from '@/stores/useToastStore'
 
-// Props & Emits
-const props = defineProps<{
-  isLoading: boolean
-  users: User[]
-}>()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 const emit = defineEmits(['searchUsers', 'addTeam', 'deployContracts', 'watchEvents'])
+const lastUpdatedInput = ref<'name' | 'address'>('name')
 
 // Refs
 const teamData = ref<TeamInput>({
   name: '',
   description: '',
   members: []
+})
+
+const input = ref({
+  name: '',
+  address: ''
 })
 
 const investorContract = ref({
@@ -267,7 +257,37 @@ const investorContract = ref({
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const currentStep = ref(1)
-const activeInputIndex = ref<number | null>(null)
+
+const url = ref('user/search')
+
+const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch(url, { immediate: false }).get().json()
+// Team creation API call
+const {
+  isFetching: createTeamFetching,
+  error: createTeamError,
+  execute: executeCreateTeam,
+  response: createTeamResponse,
+  data: createTeamData
+} = useCustomFetch('teams', {
+  immediate: false
+})
+  .post(teamData.value)
+  .json<Partial<Team>>()
+
+const searchUsers = async (input: { name: string; address: string }) => {
+  if (input.address == '' && input.name) {
+    url.value = 'user/search?name=' + input.name
+  } else if (input.name == '' && input.address) {
+    url.value = 'user/search?address=' + input.address
+  }
+
+  await executeSearchUser()
+  showDropdown.value = true
+}
 
 // Validation Rules
 const rules = {
@@ -314,34 +334,16 @@ const canProceed = computed(() => {
   }
 })
 
-// Dropdown Functions
-const searchUsers = (input: { name: string; address: string }) => {
-  if (!props.isLoading) {
-    showDropdown.value = true
-    emit('searchUsers', input)
-  }
-}
-
-const setActiveInput = (index: number) => {
-  activeInputIndex.value = index
-  showDropdown.value = true
-}
-
-const handleClickOutside = (event: MouseEvent) => {
-  if (formRef.value && !formRef.value.contains(event.target as Node)) {
-    showDropdown.value = false
-  }
-}
-
 // Team Member Functions
-const addMember = () => {
-  teamData.value.members.push({ name: '', address: '' })
+const addMember = (member: { name: string; address: string }) => {
+  // Check if there is any member with the same address
+  if (!teamData.value.members.find((m) => m.address === member.address)) {
+    teamData.value.members.push(member)
+  }
 }
 
-const removeMember = () => {
-  if (teamData.value.members.length > 0) {
-    teamData.value.members.pop()
-  }
+const removeMember = (id: number) => {
+  teamData.value.members.splice(id, 1)
 }
 
 const getMessages = (index: number) => {
@@ -359,10 +361,13 @@ const nextStep = () => {
 const saveTeamToDatabase = async () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-
-  emit('addTeam', {
-    team: teamData.value
-  })
+  await executeCreateTeam()
+  if (createTeamError.value) {
+    addErrorToast('Failed to create team')
+    log.error('Failed to create team', createTeamError.value)
+    return
+  }
+  addSuccessToast('Team created successfully')
   // Move to next step only after successful team creation
   nextStep()
 }
@@ -378,10 +383,8 @@ const deployContracts = async () => {
 
 // Lifecycle Hooks
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  onClickOutside(formRef, () => {
+    showDropdown.value = false
+  })
 })
 </script>
