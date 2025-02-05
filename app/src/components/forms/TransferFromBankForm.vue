@@ -1,12 +1,12 @@
 <template>
   <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
   <h3 class="pt-8">
-    This will transfer {{ amount }} {{ NETWORK.currencySymbol }} from the team
+    This will transfer {{ amount }} {{ tokenSymbol }} from the team
     {{ service.toLowerCase() }} contract to this address {{ to }}.
   </h3>
   <h3 class="pt-4">
     Current team {{ service.toLowerCase() }} contract's balance {{ bankBalance }}
-    {{ NETWORK.currencySymbol }}
+    {{ tokenSymbol }}
   </h3>
 
   <h3 v-if="asBod" class="pt-2 text-red-500">This is will create a board of direction's action</h3>
@@ -58,7 +58,7 @@
     |
     <input type="text" class="grow" data-test="amount-input" v-model="amount" />
     |
-    {{ NETWORK.currencySymbol }}
+    {{ tokenSymbol }}
   </label>
   <div
     class="pl-4 text-red-500 text-sm w-full text-left"
@@ -119,6 +119,11 @@ const props = defineProps({
     type: Boolean,
     required: false,
     default: false
+  },
+  tokenSymbol: {
+    type: String,
+    required: false,
+    default: NETWORK.currencySymbol
   }
 })
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {

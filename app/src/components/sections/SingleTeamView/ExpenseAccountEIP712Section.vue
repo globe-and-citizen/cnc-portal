@@ -125,7 +125,12 @@
             @searchMembers="(input) => searchUsers({ name: '', address: input })"
             :filteredMembers="foundUsers"
             :loading="isLoadingTransfer || isConfirmingTransfer"
-            :bank-balance="`${'0.0'}`"
+            :bank-balance="
+              JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
+                ? expenseBalanceFormatted
+                : `${Number(usdcBalance) / 1e6}`
+            "
+            :token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress).value"
             service="Expense Account"
           />
         </ModalComponent>
