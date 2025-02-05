@@ -272,13 +272,13 @@ describe('ExpenseAccountEIP712Section ERC20', () => {
     const wrapper = createComponent()
     const wrapperVm = wrapper.vm as unknown as ComponentData
     wrapperVm.transferModal = true
-    await wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
-    expect(transferForm.exists()).toBe(true)
     wrapperVm._expenseAccountData = {
       data: JSON.stringify(mockExpenseData[0]),
       signature: '0xDummySignature'
     }
+    await flushPromises() // wrapper.vm.$nextTick()
+    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    expect(transferForm.exists()).toBe(true)
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
     const mockAmount = '1.5'
     transferForm.vm.$emit('transfer', mockTo, mockAmount)
@@ -310,13 +310,13 @@ describe('ExpenseAccountEIP712Section ERC20', () => {
     const wrapper = createComponent()
     const wrapperVm = wrapper.vm as unknown as ComponentData
     wrapperVm.transferModal = true
-    await wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
-    expect(transferForm.exists()).toBe(true)
     wrapperVm._expenseAccountData = {
       data: JSON.stringify(mockExpenseData[1]),
       signature: '0xDummySignature'
     }
+    await flushPromises() // wrapper.vm.$nextTick()
+    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    expect(transferForm.exists()).toBe(true)
     await flushPromises()
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
     const mockAmount = '2.5'
@@ -348,13 +348,13 @@ describe('ExpenseAccountEIP712Section ERC20', () => {
     const wrapper = createComponent()
     const wrapperVm = wrapper.vm as unknown as ComponentData
     wrapperVm.transferModal = true
-    await wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
-    expect(transferForm.exists()).toBe(true)
     wrapperVm._expenseAccountData = {
       data: JSON.stringify(mockExpenseData[1]),
       signature: '0xDummySignature'
     }
+    await wrapper.vm.$nextTick()
+    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    expect(transferForm.exists()).toBe(true)
     await flushPromises()
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
     const mockAmount = '2.5'
@@ -418,14 +418,14 @@ describe('ExpenseAccountEIP712Section ERC20', () => {
     const wrapperVm = wrapper.vm as unknown as ComponentData
     await flushPromises()
     wrapperVm.transferModal = true
-    await flushPromises()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
-    expect(transferForm.exists()).toBe(true)
     wrapperVm._expenseAccountData = {
       data: JSON.stringify(mockExpenseData[1]),
       signature: '0xDummySignature'
     }
     await flushPromises()
+    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    expect(transferForm.exists()).toBe(true)
+    // await flushPromises()
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
     const mockAmount = '2.5'
     transferForm.vm.$emit('transfer', mockTo, mockAmount)

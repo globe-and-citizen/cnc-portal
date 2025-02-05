@@ -829,14 +829,33 @@ describe('ExpenseAccountSection', () => {
         ;(wrapper.vm as unknown as ComponentData).foundUsers = [
           { name: 'John Doe', address: '0x1234' }
         ]
-        await wrapper.vm.$nextTick()
+        ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
+          data: JSON.stringify(mockExpenseData[0])
+        }
+        await flushPromises() // wrapper.vm.$nextTick()
 
         const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
         expect(transferFromBankForm.exists()).toBe(true)
         expect(transferFromBankForm.props()).toEqual({
           filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
           service: 'Expense Account',
-          bankBalance: '0.0',
+          bankBalance: '500',
+          tokenSymbol: NETWORK.currencySymbol,
+          loading: false,
+          asBod: false
+        })
+        ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
+          data: JSON.stringify(mockExpenseData[1])
+        }
+        //@ts-expect-error: component property not included in wrapper
+        wrapper.vm.usdcBalance = 450_000_000n
+        await flushPromises()
+
+        expect(transferFromBankForm.props()).toEqual({
+          filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
+          service: 'Expense Account',
+          bankBalance: '450',
+          tokenSymbol: 'USDC',
           loading: false,
           asBod: false
         })

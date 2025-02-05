@@ -115,7 +115,7 @@
 
         <ModalComponent v-model="transferModal">
           <TransferFromBankForm
-            v-if="transferModal"
+            v-if="transferModal && _expenseAccountData?.data"
             @close-modal="() => (transferModal = false)"
             @transfer="
               async (to: string, amount: string) => {
