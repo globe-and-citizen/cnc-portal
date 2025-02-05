@@ -826,6 +826,7 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
     await executeGetExpenseAccountBalance()
+    await fetchUsdcBalance()
     await getAmountWithdrawnBalance()
     transferModal.value = false
   }
