@@ -56,7 +56,7 @@
           You can add team members now or invite them later.
         </div>
         <div class="flex flex-col gap-4">
-          <div class="flex items-center" v-for="(member, index) of teamData.members">
+          <div class="flex items-center" v-for="(member, index) of teamData.members" :key="index">
             <UserComponent
               class="bg-base-200 p-4 flex-grow"
               :user="{ name: member.name, address: member.address }"
@@ -135,13 +135,13 @@
             class="grow"
             placeholder="Company Shares"
             data-test="share-name-input"
-            v-model="investorContract.name"
+            v-model="investorContractInput.name"
             name="shareName"
           />
         </label>
         <div
           class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContract.name.$errors"
+          v-for="error of $vInvestor.investorContractInput.name.$errors"
           data-test="share-name-error"
           :key="error.$uid"
         >
@@ -155,13 +155,13 @@
             class="grow"
             placeholder="SHR"
             data-test="share-symbol-input"
-            v-model="investorContract.symbol"
+            v-model="investorContractInput.symbol"
             name="shareSymbol"
           />
         </label>
         <div
           class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContract.symbol.$errors"
+          v-for="error of $vInvestor.investorContractInput.symbol.$errors"
           data-test="share-symbol-error"
           :key="error.$uid"
         >
@@ -204,39 +204,36 @@
       >
         Create Team
       </ButtonUI>
-      <ButtonUI
-        v-else-if="currentStep === 3"
-        variant="primary"
-        class="w-44"
-        :loading="isLoading"
-        :disabled="isLoading || !canProceed"
-        data-test="deploy-contracts-button"
-        @click="deployContracts"
+      <DeployContractSection
+        v-else-if="currentStep === 3 && createdTeamData !== null && createdTeamData"
+        :disabled="!canProceed"
+        :investorContractInput="investorContractInput"
+        :createdTeamData="createdTeamData"
+        @contractDeployed="modalIsOpen = false"
       >
         Deploy Contracts
-      </ButtonUI>
+      </DeployContractSection>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import useVuelidate from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import UserComponent from '@/components/UserComponent.vue'
+import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { onClickOutside } from '@vueuse/core'
-import type { TeamInput, User, Team } from '@/types'
+import type { TeamInput, Team } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-const emit = defineEmits(['searchUsers', 'addTeam', 'deployContracts', 'watchEvents'])
-const lastUpdatedInput = ref<'name' | 'address'>('name')
-
+const modalIsOpen = defineModel({ default: true })
 // Refs
 const teamData = ref<TeamInput>({
   name: '',
@@ -249,7 +246,7 @@ const input = ref({
   address: ''
 })
 
-const investorContract = ref({
+const investorContractInput = ref({
   name: '',
   symbol: ''
 })
@@ -260,34 +257,20 @@ const currentStep = ref(1)
 
 const url = ref('user/search')
 
-const {
-  execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
-} = useCustomFetch(url, { immediate: false }).get().json()
+const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
+  .get()
+  .json()
 // Team creation API call
 const {
   isFetching: createTeamFetching,
   error: createTeamError,
   execute: executeCreateTeam,
-  response: createTeamResponse,
-  data: createTeamData
+  data: createdTeamData
 } = useCustomFetch('teams', {
   immediate: false
 })
   .post(teamData.value)
   .json<Partial<Team>>()
-
-const searchUsers = async (input: { name: string; address: string }) => {
-  if (input.address == '' && input.name) {
-    url.value = 'user/search?name=' + input.name
-  } else if (input.name == '' && input.address) {
-    url.value = 'user/search?address=' + input.address
-  }
-
-  await executeSearchUser()
-  showDropdown.value = true
-}
 
 // Validation Rules
 const rules = {
@@ -305,16 +288,18 @@ const rules = {
   }
 }
 
-const investorContractRules = {
-  investorContract: {
+const investorContractInputRules = {
+  investorContractInput: {
     name: { required },
     symbol: { required }
   }
 }
 
+// TODO validate this before proceeding to create deploy contract
+
 // Validation Instances
 const $v = useVuelidate(rules, { teamData })
-const $vInvestor = useVuelidate(investorContractRules, { investorContract })
+const $vInvestor = useVuelidate(investorContractInputRules, { investorContractInput })
 
 // Computed Properties
 const canProceed = computed(() => {
@@ -328,11 +313,25 @@ const canProceed = computed(() => {
         teamData.value.members.every((member) => !member.address || isAddress(member.address))
       )
     case 3:
-      return !!investorContract.value.name && !!investorContract.value.symbol
+      return !!investorContractInput.value.name && !!investorContractInput.value.symbol
     default:
       return false
   }
 })
+
+// Functions
+
+// Search User Functions
+const searchUsers = async (input: { name: string; address: string }) => {
+  if (input.address == '' && input.name) {
+    url.value = 'user/search?name=' + input.name
+  } else if (input.name == '' && input.address) {
+    url.value = 'user/search?address=' + input.address
+  }
+
+  await executeSearchUser()
+  showDropdown.value = true
+}
 
 // Team Member Functions
 const addMember = (member: { name: string; address: string }) => {
@@ -344,10 +343,6 @@ const addMember = (member: { name: string; address: string }) => {
 
 const removeMember = (id: number) => {
   teamData.value.members.splice(id, 1)
-}
-
-const getMessages = (index: number) => {
-  return $v.value.teamData.members.$errors[0]?.$response.$errors[index]?.address ?? []
 }
 
 // Navigation Functions
@@ -370,15 +365,6 @@ const saveTeamToDatabase = async () => {
   addSuccessToast('Team created successfully')
   // Move to next step only after successful team creation
   nextStep()
-}
-
-const deployContracts = async () => {
-  $vInvestor.value.$touch()
-  if ($vInvestor.value.$invalid) return
-
-  emit('deployContracts', {
-    investorContract: investorContract.value
-  })
 }
 
 // Lifecycle Hooks
