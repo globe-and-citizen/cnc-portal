@@ -15,11 +15,7 @@ import { useUserDataStore } from '@/stores/user'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useWatchContractEvent
-} from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
 import { ref, watch, computed, type Ref } from 'vue'
 
@@ -271,16 +267,16 @@ useWatchContractEvent({
       loading.value = false
       return
     }
-    if (!props.createdTeamData.value) {
+    if (!props.createdTeamData.id) {
       log.error('No team data found')
       addErrorToast('No team data found')
       loading.value = false
       return
     }
     const { error: updateTeamError } = await useCustomFetch<string>(
-      `teams/${props.createdTeamData.value.id}`
+      `teams/${props.createdTeamData.id}`
     )
-      .put({ contract: proxyAddress })
+      .put({ officerAddress: proxyAddress })
       .json()
     if (updateTeamError.value) {
       log.error('Error updating officer address')
