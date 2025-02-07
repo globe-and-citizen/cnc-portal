@@ -1,7 +1,6 @@
 <template>
   <ButtonUI
     variant="primary"
-    class="w-44"
     :loading="createOfficerLoading"
     :disabled="createOfficerLoading"
     data-test="deploy-contracts-button"
@@ -15,10 +14,14 @@
 import { useUserDataStore } from '@/stores/user'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
-// import type { TeamInput, User, Team } from '@/types'
-import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
+import type { Team } from '@/types'
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useWatchContractEvent
+} from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, type Ref } from 'vue'
 
 // Contract ABIs
 import OfficerABI from '@/artifacts/abi/officer.json'
@@ -44,17 +47,25 @@ import {
   VOTING_BEACON_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { log } from '@/utils'
 
-// Props
-const { investorContract } = defineProps<{
-  investorContract: { name: string; symbol: string }
+// Props const { investorContractInput, createdTeamData }
+const props = defineProps<{
+  investorContractInput: { name: string; symbol: string }
+  createdTeamData: Ref<Partial<Team>>
 }>()
 
+const emits = defineEmits(['contractDeployed'])
 // Store
 const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const loading = ref(false)
+const dynamicLoading = ref({
+  status: false,
+  message: ''
+})
 
 // Officer contract creation
 const {
@@ -81,6 +92,11 @@ const deployOfficerContract = async () => {
 
     console.log('Validating addresses')
     validateAddresses()
+    if (props.createdTeamData.value?.id) {
+      log.error('No team data found')
+      loading.value = false
+      return
+    }
 
     const beaconConfigs = [
       {
@@ -128,7 +144,11 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: INVESTOR_ABI,
         functionName: 'initialize',
-        args: [investorContract.name, investorContract.symbol, currentUserAddress]
+        args: [
+          props.investorContractInput.name,
+          props.investorContractInput.symbol,
+          currentUserAddress
+        ]
       })
     })
 
@@ -186,72 +206,94 @@ const deployOfficerContract = async () => {
     })
   } catch (error) {
     loading.value = false
-    console.log(error)
+    log.error('Error deploying contract')
+    log.error(String(error))
     addErrorToast('Error deploying contract')
-  } finally {
     loading.value = false
+  } finally {
+    dynamicLoading.value = {
+      ...dynamicLoading.value,
+      message: 'Officer Contract Ready for deployement'
+    }
   }
 }
 
 watch(createOfficerError, (error) => {
   if (error) {
+    log.error('Failed to create officer contract')
+    log.error(String(error))
     addErrorToast('Failed to create officer contract')
-    console.log(error)
+    loading.value = false
   }
 })
 
 watch([isConfirmingCreateOfficer, isConfirmedCreateOfficer], ([isConfirming, isConfirmed]) => {
   if (!isConfirming && isConfirmed) {
+    dynamicLoading.value = {
+      ...dynamicLoading.value,
+      message: 'Officer Contract deployed successfully'
+    }
     addSuccessToast('Officer contract deployed successfully')
     // Continue with team creation
   }
 })
 
-// useWatchContractEvent({
-//   address: OFFICER_BEACON as Address,
-//   abi: FACTORY_BEACON_ABI,
-//   eventName: 'BeaconProxyCreated',
-//   async onLogs(logs) {
-//     interface ILogs {
-//       args: {
-//         deployer: string
-//         proxy: string
-//       }
-//     }
-//     const deployer = (logs[0] as unknown as ILogs).args.deployer
-//     const proxyAddress = (logs[0] as unknown as ILogs).args.proxy
-//     const currentAddress = userDataStore.address as Address
-//     if (!proxyAddress || proxyAddress == team.value.officerAddress || deployer !== currentAddress) {
-//       loading.value = false
-//     } else {
-//       try {
-//         team.value.officerAddress = proxyAddress as Address
-//         console.log('team.value', team.value)
-//         // Update the team with officer address if we have the team ID
-//         if (createTeamData.value?.id) {
-//           await updateTeam(Number(createTeamData.value.id))
-//         } else {
-//           throw new Error('Team ID not found')
-//         }
-//         loading.value = false
-//         loadingCreateTeam.value = false
-//         // Close modal and reset after successful contract deployment
-//         showAddTeamModal.value = false
-//         team.value = {
-//           name: '',
-//           description: '',
-//           members: [],
-//           officerAddress: '' as Address
-//         }
-//         addSuccessToast('Contracts deployed successfully')
-//         executeFetchTeams()
-//       } catch (error) {
-//         console.log('Error updating officer address:', error)
-//         addErrorToast('Error updating officer address')
-//         loading.value = false
-//         loadingCreateTeam.value = false
-//       }
-//     }
-//   }
-// })
+// TODO: This is not working, the value of team is always undefined
+useWatchContractEvent({
+  address: OFFICER_BEACON as Address,
+  abi: FACTORY_BEACON_ABI,
+  eventName: 'BeaconProxyCreated',
+  async onLogs(logs) {
+    if (!logs.length) {
+      log.error('No logs found')
+      loading.value = false
+      return
+    }
+    if (logs[0].transactionHash !== createOfficerHash.value) {
+      log.error('Transaction hash does not match')
+      loading.value = false
+      return
+    }
+
+    interface ILogs {
+      args: {
+        deployer: Address
+        proxy: Address
+      }
+    }
+    const deployer = (logs[0] as unknown as ILogs).args.deployer
+    const proxyAddress = (logs[0] as unknown as ILogs).args.proxy
+    const currentAddress = userDataStore.address as Address
+
+    if (currentAddress !== deployer) {
+      log.error('Deployer address does not match, with the current user address')
+      addErrorToast('Deployer address does not match, with the current user address')
+      loading.value = false
+      return
+    }
+    if (!props.createdTeamData.value) {
+      log.error('No team data found')
+      addErrorToast('No team data found')
+      loading.value = false
+      return
+    }
+    const { error: updateTeamError } = await useCustomFetch<string>(
+      `teams/${props.createdTeamData.value.id}`
+    )
+      .put({ contract: proxyAddress })
+      .json()
+    if (updateTeamError.value) {
+      log.error('Error updating officer address')
+      addErrorToast('Error updating officer address')
+      loading.value = false
+      return
+    }
+    dynamicLoading.value = {
+      message: 'Loaded',
+      status: false
+    }
+    loading.value = false
+    emits('contractDeployed')
+  }
+})
 </script>
