@@ -20,9 +20,18 @@
             <div class="text-sm text-gray-500 mt-1">≈ 1250 CAD</div>
           </div>
           <div class="flex gap-2">
-            <ButtonUI variant="secondary">Deposit</ButtonUI>
-            <ButtonUI variant="secondary">Transfer</ButtonUI>
-            <ButtonUI variant="secondary">Send To Members</ButtonUI>
+            <ButtonUI variant="secondary" class="flex items-center gap-2">
+              <PlusIcon class="w-5 h-5" />
+              Deposit
+            </ButtonUI>
+            <ButtonUI variant="secondary" class="flex items-center gap-2">
+              <ArrowsRightLeftIcon class="w-5 h-5" />
+              Transfer
+            </ButtonUI>
+            <ButtonUI variant="secondary" class="flex items-center gap-2">
+              <UserGroupIcon class="w-5 h-5" />
+              Send To Members
+            </ButtonUI>
           </div>
         </div>
 
@@ -46,12 +55,9 @@
           ]"
         >
           <template #token-data="{ row }">
-            <div class="flex items-center gap-2">
-              <img :src="row.icon" class="w-6 h-6 rounded-full" :alt="row.name" />
-              <div>
-                <div class="font-medium">{{ row.name }}</div>
-                <div class="text-sm text-gray-500">{{ row.network }}</div>
-              </div>
+            <div class="flex flex-col">
+              <div class="font-medium">{{ row.name }}</div>
+              <div class="text-sm text-gray-500">{{ row.network }}</div>
             </div>
           </template>
           <template #rank-data="{ row }">
@@ -74,20 +80,7 @@
             </div>
             <button class="btn btn-success gap-2">
               Export
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
+              <ArrowDownTrayIcon class="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -111,7 +104,13 @@
             </span>
           </template>
           <template #receipts-data>
-            <a href="#" class="text-primary hover:underline">Receipt</a>
+            <a
+              href="#"
+              class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
+            >
+              <DocumentTextIcon class="h-4 w-4" />
+              Receipt
+            </a>
           </template>
         </TableComponent>
 
@@ -138,15 +137,19 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { svgs } from '@web3icons/core'
-
+import {
+  PlusIcon,
+  ArrowsRightLeftIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
+  ArrowDownTrayIcon
+} from '@heroicons/vue/24/outline'
 import TableComponent from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 interface Token {
   name: string
   network: string
-  icon: string
   price: number
   balance: number
   amount: number
@@ -160,7 +163,6 @@ const tokens = ref<Token[]>([
   {
     name: 'Pol',
     network: 'Polygon',
-    icon: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/master_CNC_Portal_17_feb_2024-u8KQr8bjr72u5KatKqAYvxJNlJMaTf.png',
     price: 10,
     balance: 40,
     amount: 4
@@ -168,7 +170,6 @@ const tokens = ref<Token[]>([
   {
     name: 'USDT',
     network: 'USDT',
-    icon: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/master_CNC_Portal_17_feb_2024-u8KQr8bjr72u5KatKqAYvxJNlJMaTf.png',
     price: 10,
     balance: 40,
     amount: 4
@@ -176,7 +177,6 @@ const tokens = ref<Token[]>([
   {
     name: 'USDC',
     network: 'USDC',
-    icon: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/master_CNC_Portal_17_feb_2024-u8KQr8bjr72u5KatKqAYvxJNlJMaTf.png',
     price: 10,
     balance: 40,
     amount: 4
@@ -200,7 +200,6 @@ const transactions = ref([
     amountUSD: 10,
     amountCAD: 12
   }
-  // Add more transaction data as needed
 ])
 </script>
 
