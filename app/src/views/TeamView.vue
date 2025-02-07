@@ -59,7 +59,9 @@
       </div>
     </div>
     <ModalComponent v-model="showAddTeamModal">
-      <AddTeamForm
+      <AddTeamForm v-model="showAddTeamModal" />
+      <!-- <AddTeamForm
+      v-model="showAddTeamModal"
         :isLoading="
           createTeamFetching ||
           createOfficerLoading ||
@@ -75,7 +77,7 @@
           }
         "
         @deployContracts="handleDeployContracts"
-      />
+      /> -->
     </ModalComponent>
   </div>
 </template>
