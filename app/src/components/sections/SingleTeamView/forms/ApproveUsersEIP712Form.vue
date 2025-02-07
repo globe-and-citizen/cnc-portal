@@ -99,6 +99,27 @@
     </div>
   </div>
 
+  <div>
+    <label class="input input-bordered flex items-center gap-2 input-md">
+      <span class="w-24">Token</span>
+      |
+      <select v-model="selectedToken" class="bg-white grow">
+        <option disabled :value="null">-- Select a token --</option>
+        <option v-for="(address, symbol) of tokens" :value="address" :key="address">
+          {{ symbol }}
+        </option>
+      </select>
+    </label>
+  </div>
+
+  <div
+    data-test="limit-value-error"
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.selectedToken.$errors"
+    :key="error.$uid"
+  >
+    {{ error.$message }}
+  </div>
   <!--Select budget limit type
   <div>
     <label class="input input-bordered flex items-center gap-2 input-md">
@@ -214,13 +235,14 @@
 </template>
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { isAddress } from 'viem'
+import { isAddress, zeroAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -235,6 +257,12 @@ const description = ref<string>('')
 const formData = ref(props.formData)
 const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
+const selectedToken = ref<string | null>(null)
+const tokens = ref({
+  [NETWORK.currencySymbol]: zeroAddress,
+  USDC: USDC_ADDRESS,
+  USDT: USDT_ADDRESS
+})
 
 //#region multi limit
 // Labels for budget types
@@ -258,7 +286,8 @@ const resultArray = computed(() =>
     .filter(([, isSelected]) => isSelected)
     .map(([budgetType]) => ({
       budgetType: Number(budgetType),
-      value: values[budgetType as unknown as 0 | 1 | 2] || 0
+      value: values[budgetType as unknown as 0 | 1 | 2] || 0 //,
+      //token: selectedToken.value
     }))
 )
 
@@ -292,6 +321,7 @@ const rules = {
       }
     )
   },
+  selectedToken: { required },
   // limitValue: {
   //   required,
   //   numeric
@@ -308,7 +338,11 @@ const rules = {
   }
 }
 
-const v$ = useVuelidate(rules, { /*budgetLimitType, */ description, /*limitValue, */ formData })
+const v$ = useVuelidate(rules, {
+  /*budgetLimitType, */ description,
+  /*limitValue, */ formData,
+  selectedToken
+})
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -324,9 +358,11 @@ const submitApprove = () => {
   if (v$.value.$invalid) {
     return
   }
+  console.log(`selectedToken: `, selectedToken.value)
   emit('approveUser', {
     approvedAddress: formData.value[0].address,
     budgetData: resultArray.value,
+    tokenAddress: selectedToken.value,
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }
