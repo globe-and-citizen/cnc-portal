@@ -117,7 +117,7 @@
             data-test="create-team-error"
             v-if="createTeamError"
           >
-            Unable too create team
+            Unable to create team
           </div>
         </div>
       </div>
