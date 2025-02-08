@@ -1,6 +1,7 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import type { TeamInput, User } from '@/types'
 import { createTestingPinia } from '@pinia/testing'
 
@@ -33,19 +34,6 @@ describe('AddTeamForm.vue', () => {
       attachTo: div,
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
-        // stubs: {
-        //   ButtonUI: {
-        //     template: `
-        //       <button
-        //         :disabled="$attrs.disabled"
-        //         :class="{ 'loading-spinner': $attrs.loading }"
-        //         data-test="button"
-        //       >
-        //         <slot />
-        //       </button>
-        //     `
-        //   }
-        // }
       }
     })
 
@@ -88,9 +76,9 @@ describe('AddTeamForm.vue', () => {
 
   describe('Step Navigation', () => {
     it('disables next button when step 1 validation fails', async () => {
-      const nextButton = wrapper.find('[data-test="next-button"]')
+      const nextButton = wrapper.find('[data-test="next-button"]').findComponent(ButtonUI)
       expect(nextButton.text()).toBe('Next')
-      expect(nextButton.classes()).toContain('btn-disabled')
+      expect(nextButton.props().disabled).toBe(true)
 
       // Trigger validation by clicking next without filling required fields
       await nextButton.trigger('click')
@@ -99,40 +87,32 @@ describe('AddTeamForm.vue', () => {
       // Wait for validation to update
       await wrapper.vm.$nextTick()
 
-      expect(nextButton.classes()).toContain('btn-disabled')
+      expect(nextButton.props().disabled).toBe(true)
     })
 
-    it('allows navigation from step 1 to step 2 when validation passes', async () => {
-      // Fill required fields
-      await wrapper.find('[data-test="team-name-input"]').setValue('Test Team')
-      await wrapper.find('[data-test="team-description-input"]').setValue('Test Description')
-      await wrapper.vm.$nextTick()
+    // Moving from step 1 to step 2 and back to step 1
+    it('allows going back from step2 to step 1', async () => {
+      // Check Step 1 states
+      expect(wrapper.find('[data-test="step-1"]').exists()).toBeTruthy()
+      expect(wrapper.find('[data-test="step-2"]').exists()).toBeFalsy()
+      expect(wrapper.findAll('.step-primary').length).toBe(1)
 
-      // Click next
-      const nextButton = wrapper.find('[data-test="next-button"]')
-      await nextButton.trigger('click')
-      await wrapper.vm.$nextTick()
+      // Navigate TO step 2
+      await navigateToMembersStep(wrapper)
 
-      expect(wrapper.find("[data-test='step-2']").text()).toContain('Team Members (Optional)')
+      // Check Step 2 States
+      expect(wrapper.find('[data-test="step-1"]').exists()).toBeFalsy()
+      expect(wrapper.find('[data-test="step-2"]').exists()).toBeTruthy()
       expect(wrapper.findAll('.step-primary').length).toBe(2)
-    })
 
-    it('allows going back to previous step', async () => {
-      // First navigate to step 2
-      await wrapper.find('[data-test="team-name-input"]').setValue('Test Team')
-      await wrapper.find('[data-test="team-description-input"]').setValue('Test Description')
-      await wrapper.vm.$nextTick()
-
-      const nextButton = wrapper.find('[data-test="next-button"]')
-      await nextButton.trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Then go back
-      const prevButton = wrapper.find('[data-test="previous-button"]')
+      // Navigate back to step 1
+      const prevButton = wrapper.find('[data-test="previous-button"]').findComponent(ButtonUI)
       await prevButton.trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('h1').text()).toBe('Team Details')
+      // Check Step 1 states
+      expect(wrapper.find('[data-test="step-1"]').exists()).toBeTruthy()
+      expect(wrapper.find('[data-test="step-2"]').exists()).toBeFalsy()
       expect(wrapper.findAll('.step-primary').length).toBe(1)
     })
   })
