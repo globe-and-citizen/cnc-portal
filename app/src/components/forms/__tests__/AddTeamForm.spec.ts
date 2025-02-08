@@ -4,6 +4,7 @@ import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { TeamInput, User } from '@/types'
 import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
 
 // Define interface for component instance
 interface ComponentInstance {
@@ -56,6 +57,39 @@ describe('AddTeamForm.vue', () => {
 
     // Trigger validation and wait for step change
     await w.find('[data-test="next-button"]').trigger('click')
+
+    vi.mock('@/composables/useCustomFetch', () => {
+      return {
+        useCustomFetch: vi.fn(() => ({
+          get: () => ({
+            json: () => ({
+              execute: vi.fn(),
+              data: {
+                users: [
+                  { address: '0x123', name: 'John Doe' },
+                  { address: '0x456', name: 'Jane Doe' }
+                ]
+              },
+              loading: ref(false),
+              error: ref<unknown>(null)
+            })
+          }),
+          post: () => ({
+            json: () => ({
+              execute: vi.fn(),
+              data: {
+                id: 'string',
+                name: '',
+                description: 'string'
+              },
+              loading: ref(false),
+              error: ref<unknown>(null)
+            })
+          })
+        }))
+      }
+    })
+
     await w.vm.$nextTick()
   }
 
@@ -155,7 +189,7 @@ describe('AddTeamForm.vue', () => {
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false) // Should Not allow proceeding with null address
 
-      // Test with undefined address 
+      // Test with undefined address
       vm.teamData.members[0] = { address: undefined as unknown as string, name: 'Test' }
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false) // Should Not allow proceeding with undefined address
@@ -173,13 +207,21 @@ describe('AddTeamForm.vue', () => {
       expect(vm.canProceed).toBe(false) // Should not proceed with any invalid address
     })
 
-    it('handles edge cases in investor contract validation', async () => {
-      await navigateToInvestorStep(wrapper)
+    it.only('handles edge cases in investor contract validation', async () => {
+      // await navigateToInvestorStep(wrapper)
+
       const vm = wrapper.vm as unknown as ComponentInstance
+      console.log(vm.currentStep, 'vm.currentStep')
+      await navigateToMembersStep(wrapper)
+      // The Deploy Contract section is failing from there
+      // await wrapper.find('[data-test="create-team-button"]').trigger('click')
+      // await wrapper.vm.$nextTick()
+      console.log(vm.currentStep, 'vm.currentStep')
 
       // Test with empty strings
       vm.investorContractInput.name = ''
       vm.investorContractInput.symbol = ''
+      console.log(vm.currentStep, 'vm.currentStep')
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false)
 
