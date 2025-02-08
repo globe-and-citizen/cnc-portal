@@ -17,7 +17,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
-import { ref, watch, computed, type Ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 // Contract ABIs
 import OfficerABI from '@/artifacts/abi/officer.json'
@@ -49,7 +49,7 @@ import { log } from '@/utils'
 // Props const { investorContractInput, createdTeamData }
 const props = defineProps<{
   investorContractInput: { name: string; symbol: string }
-  createdTeamData: Ref<Partial<Team>>
+  createdTeamData: Partial<Team>
 }>()
 
 const emits = defineEmits(['contractDeployed'])
@@ -88,7 +88,7 @@ const deployOfficerContract = async () => {
 
     console.log('Validating addresses')
     validateAddresses()
-    if (props.createdTeamData.value?.id) {
+    if (props.createdTeamData?.id) {
       log.error('No team data found')
       loading.value = false
       return
