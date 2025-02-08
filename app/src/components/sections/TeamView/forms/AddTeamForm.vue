@@ -8,8 +8,8 @@
     </div>
 
     <!-- Step 1: Team Details -->
-    <div v-if="currentStep === 1">
-      <h1 class="font-bold text-2xl mb-4">Team Details</h1>
+    <div v-if="currentStep === 1" data-test="step-1">
+      <span class="font-bold text-2xl mb-4">Team Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <div>
@@ -48,8 +48,8 @@
     </div>
 
     <!-- Step 2: Members -->
-    <div v-if="currentStep === 2">
-      <h1 class="font-bold text-2xl mb-4">Team Members (Optional)</h1>
+    <div v-if="currentStep === 2" data-test="step-2">
+      <span class="font-bold text-2xl mb-4">Team Members (Optional)</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <div class="text-sm text-gray-600 mb-2">
@@ -124,8 +124,8 @@
     </div>
 
     <!-- Step 3: Investor Contract -->
-    <div v-if="currentStep === 3">
-      <h1 class="font-bold text-2xl mb-4">Investor Contract Details</h1>
+    <div v-if="currentStep === 3" data-test="step-3">
+      <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <label class="input input-bordered flex items-center gap-2 input-md">
@@ -294,7 +294,7 @@ const investorContractInputRules = {
     symbol: { required }
   }
 }
-
+// TODO: validate Team Details on key up and require at least 5 letter for Team Name
 // TODO validate this before proceeding to create deploy contract
 
 // Validation Instances
