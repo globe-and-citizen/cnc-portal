@@ -10,7 +10,7 @@ interface ComponentInstance {
   currentStep: number
   canProceed: boolean
   teamData: TeamInput
-  investorContract: {
+  investorContractInput: {
     name: string
     symbol: string
   }
@@ -178,31 +178,31 @@ describe('AddTeamForm.vue', () => {
       const vm = wrapper.vm as unknown as ComponentInstance
 
       // Test with empty strings
-      vm.investorContract.name = ''
-      vm.investorContract.symbol = ''
+      vm.investorContractInput.name = ''
+      vm.investorContractInput.symbol = ''
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false)
 
       // Test with whitespace only
-      vm.investorContract.name = ''
-      vm.investorContract.symbol = ''
+      vm.investorContractInput.name = ''
+      vm.investorContractInput.symbol = ''
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false)
 
       // Test with one field filled
-      vm.investorContract.name = 'Test'
-      vm.investorContract.symbol = ''
+      vm.investorContractInput.name = 'Test'
+      vm.investorContractInput.symbol = ''
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false)
 
-      vm.investorContract.name = ''
-      vm.investorContract.symbol = 'TST'
+      vm.investorContractInput.name = ''
+      vm.investorContractInput.symbol = 'TST'
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false)
 
       // Test with special characters
-      vm.investorContract.name = '!@#$%'
-      vm.investorContract.symbol = '!@#'
+      vm.investorContractInput.name = '!@#$%'
+      vm.investorContractInput.symbol = '!@#'
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(true) // Should allow special characters
     })
@@ -448,12 +448,12 @@ describe('AddTeamForm.vue', () => {
       // Touch the validation
       interface IWrapper {
         $vInvestor: {
-          investorContract: {
+          investorContractInput: {
             $touch: () => void
           }
         }
       }
-      await (wrapper.vm as unknown as IWrapper).$vInvestor.investorContract.$touch()
+      await (wrapper.vm as unknown as IWrapper).$vInvestor.investorContractInput.$touch()
       await wrapper.vm.$nextTick()
 
       // Check for error messages
@@ -478,7 +478,7 @@ describe('AddTeamForm.vue', () => {
       const emitted = wrapper.emitted('deployContracts')
       expect(emitted).toBeTruthy()
       expect(emitted?.[0]?.[0]).toEqual({
-        investorContract: {
+        investorContractInput: {
           name: 'Test Shares',
           symbol: 'TST'
         }
