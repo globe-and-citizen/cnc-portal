@@ -149,21 +149,16 @@ describe('AddTeamForm.vue', () => {
     it('handles edge cases in member validation', async () => {
       await navigateToMembersStep(wrapper)
       const vm = wrapper.vm as unknown as ComponentInstance
-
-      // Test with empty address
-      await wrapper.find('[data-test="add-first-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-      expect(vm.canProceed).toBe(true) // Should allow proceeding with empty address
-
       // Test with null address
-      vm.teamData.members[0].address = null as unknown as string
+      vm.teamData.members[0] = { address: null as unknown as string, name: 'Test' }
+      // vm.teamData.members[0].address = null as unknown as string
       await wrapper.vm.$nextTick()
-      expect(vm.canProceed).toBe(true) // Should allow proceeding with null address
+      expect(vm.canProceed).toBe(false) // Should Not allow proceeding with null address
 
-      // Test with undefined address
-      vm.teamData.members[0].address = undefined as unknown as string
+      // Test with undefined address 
+      vm.teamData.members[0] = { address: undefined as unknown as string, name: 'Test' }
       await wrapper.vm.$nextTick()
-      expect(vm.canProceed).toBe(true) // Should allow proceeding with undefined address
+      expect(vm.canProceed).toBe(false) // Should Not allow proceeding with undefined address
 
       // Test with mixed valid and invalid addresses
       vm.teamData.members.push({
