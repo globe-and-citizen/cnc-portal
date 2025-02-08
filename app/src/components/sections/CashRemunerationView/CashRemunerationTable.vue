@@ -12,28 +12,41 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full shadow-xl">
-    <TableComponent :rows="claims ?? undefined" :columns="columns" :loading="claimsLoading">
+    <TableComponent :rows="claims ?? undefined" :columns="columns" :loading="isLoading">
+      <template #createdAt-data="{ row }">
+        <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
+      </template>
       <template #action-data="{ row }">
         <ButtonUI
-          v-if="row.status == 'Pending'"
+          v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
           variant="success"
           data-test="approve-button"
-          @click="() => {}"
+          :loading="loadingApprove[row.id]"
+          @click="async () => await approveClaim(row as ClaimResponse)"
           >Approve</ButtonUI
         >
-        <ButtonUI
-          v-if="row.status == 'Approved'"
+        <!-- <ButtonUI
+          v-if="row.status == 'approved' && ownerAddress == userDataStore.address"
           variant="error"
           data-test="disable-button"
           @click="() => {}"
           >Disable</ButtonUI
-        >
-        <ButtonUI
-          v-if="row.status == 'Disabled'"
+        > -->
+        <!-- <ButtonUI
+          v-if="row.status == 'disabled'"
           variant="info"
           data-test="enable-button"
           @click="() => {}"
           >Enable</ButtonUI
+        > -->
+        <ButtonUI
+          v-if="row.status == 'approved'"
+          :disabled="userDataStore.address != row.address"
+          :loading="withdrawLoading[row.id]"
+          variant="warning"
+          data-test="withdraw-button"
+          @click="async () => await withdrawClaim(row.id as number)"
+          >Withdraw</ButtonUI
         >
       </template>
       <template #member-data="{ row }">
@@ -46,8 +59,10 @@
             />
           </div>
           <div class="flex flex-col text-gray-600">
-            <p class="font-bold text-sm line-clamp-1" data-test="user-name">{{ row.name }}</p>
-            <p class="text-sm" data-test="formatted-address">
+            <p class="font-bold text-sm line-clamp-1" data-test="user-name">
+              {{ row.name ?? 'Unknown' }}
+            </p>
+            <p class="text-sm text-center" data-test="formatted-address">
               {{ row.address?.slice(0, 6) }}...{{ row.address?.slice(-6) }}
             </p>
           </div>
@@ -60,12 +75,16 @@
         <span
           class="badge"
           :class="{
-            'badge-info': row.status === 'Pending',
-            'badge-outline': row.status === 'Approved',
-            'bg-error': row.status === 'Disabled',
-            'bg-neutral text-white': row.status === 'Withdrawn'
+            'badge-info': row.status === 'pending',
+            'badge-outline': row.status === 'approved',
+            'bg-error': row.status === 'disabled',
+            'bg-neutral text-white': row.status === 'withdrawn'
           }"
-          >{{ row.status == 'Pending' ? 'Submitted' : row.status }}</span
+          >{{
+            row.status == 'pending'
+              ? 'Submitted'
+              : row.status.charAt(0).toUpperCase() + row.status.slice(1)
+          }}</span
         >
       </template>
     </TableComponent>
@@ -75,91 +94,94 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import { useSignWageClaim, useWithdrawClaim } from '@/composables/useClaim'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore } from '@/stores'
+import { useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
-import { log } from '@/utils'
-import { computed, ref, watch } from 'vue'
+import { log, parseError } from '@/utils'
+import type { Address } from 'viem'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
-const { addErrorToast } = useToastStore()
-const props = defineProps<{
-  teamId: number
+defineProps<{
+  claims: ClaimResponse[] | null
+  isLoading: boolean
+  ownerAddress: string | undefined
 }>()
-const statusses = ['all', 'pending', 'approved', 'disabled', 'withdrawn']
+const route = useRoute()
+const userDataStore = useUserDataStore()
+const toastStore = useToastStore()
+const emits = defineEmits(['fetchClaims'])
+const statusses = ['all', 'pending', 'approved', 'withdrawn']
 const selectedRadio = ref('all')
-const claimsUrl = computed(
-  () => `/teams/${props.teamId}/cash-remuneration/claim/${selectedRadio.value}`
-)
+
+const approvalData = ref<{
+  signature: Address | undefined
+  id: number
+}>({ signature: undefined, id: 0 })
+const loadingApprove = ref<{ [key: number]: boolean }>({})
+const withdrawLoading = ref<{ [key: number]: boolean }>({})
+
+const { signature, execute: signClaim } = useSignWageClaim()
+const { execute: executeWithdrawClaim } = useWithdrawClaim()
+
+const approveClaim = async (claim: ClaimResponse) => {
+  loadingApprove.value[claim.id] = true
+
+  try {
+    await signClaim(claim)
+    approvalData.value = {
+      id: claim.id,
+      signature: signature.value
+    }
+
+    await addApprovalAPI()
+
+    emits('fetchClaims', selectedRadio.value)
+  } catch (err) {
+    log.error(parseError(err))
+    toastStore.addErrorToast('Failed to approve claim')
+  } finally {
+    loadingApprove.value[claim.id] = false
+  }
+}
+
+const withdrawClaim = async (id: number) => {
+  withdrawLoading.value[id] = true
+  try {
+    await executeWithdrawClaim(id)
+    emits('fetchClaims', selectedRadio.value)
+  } catch (err) {
+    log.error(parseError(err))
+    toastStore.addErrorToast('Failed to withdraw claim')
+  } finally {
+    withdrawLoading.value[id] = false
+  }
+}
+
 const {
-  data: claims,
-  error: claimsError,
-  isFetching: claimsLoading,
-  execute: fetchClaims
-} = useCustomFetch(claimsUrl).get().json<ClaimResponse[]>()
-
-watch(selectedRadio, async () => {
-  await fetchClaims()
+  error: addApprovalError,
+  execute: addApprovalAPI,
+  statusCode: addApprovalStatusCode
+} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/employer`, {
+  immediate: false
 })
+  .put(approvalData)
+  .json()
 
-watch(claimsError, (newVal) => {
-  if (newVal) {
-    log.error(newVal)
-    addErrorToast('Failed to fetch claims')
+watch(addApprovalStatusCode, async (newVal) => {
+  if (newVal == 200) {
+    toastStore.addSuccessToast('Claim approved successfully')
   }
 })
-
-// const claims = [
-//   {
-//     id: 1,
-//     name: 'Lindsay Walton',
-//     img: 'https://randomuser.me/api/portraits',
-//     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-//     hourlyRate: '10',
-//     hoursWorked: 10,
-//     status: 'Pending',
-//     createdAt: new Date().toLocaleDateString()
-//   },
-//   {
-//     id: 2,
-//     name: 'Courtney Henry',
-//     img: 'https://randomuser.me/api/portraits',
-//     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-//     hourlyRate: '10',
-//     hoursWorked: 10,
-//     status: 'Approved',
-//     createdAt: new Date().toLocaleDateString()
-//   },
-//   {
-//     id: 3,
-//     name: 'Tom Cook',
-//     img: 'https://randomuser.me/api/portraits',
-//     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-//     hourlyRate: '10',
-//     hoursWorked: 10,
-//     status: 'Disabled',
-//     createdAt: new Date().toLocaleDateString()
-//   },
-//   {
-//     id: 4,
-//     name: 'Whitney Francis',
-//     img: 'https://randomuser.me/api/portraits',
-//     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-//     hourlyRate: '10',
-//     hoursWorked: 10,
-//     status: 'Pending',
-//     createdAt: new Date().toLocaleDateString()
-//   },
-//   {
-//     id: 5,
-//     name: 'Leonard Krasner',
-//     img: 'https://randomuser.me/api/portraits',
-//     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-//     hourlyRate: '10',
-//     hoursWorked: 10,
-//     status: 'Withdrawn',
-//     createdAt: new Date().toLocaleDateString()
-//   }
-// ]
+watch(addApprovalError, (newVal) => {
+  if (newVal) {
+    toastStore.addErrorToast(addApprovalError.value)
+  }
+})
+watch(selectedRadio, () => {
+  emits('fetchClaims', selectedRadio.value)
+})
 
 const columns = [
   {

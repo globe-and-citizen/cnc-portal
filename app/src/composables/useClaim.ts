@@ -1,0 +1,156 @@
+import { useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore } from '@/stores/teamStore'
+import type { ClaimResponse } from '@/types'
+import { log, parseError } from '@/utils'
+import {
+  useChainId,
+  useSignTypedData,
+  useWaitForTransactionReceipt,
+  useWriteContract
+} from '@wagmi/vue'
+import { parseEther, type Address } from 'viem'
+import { ref, watch } from 'vue'
+import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { useCustomFetch } from './useCustomFetch'
+
+export function useSignWageClaim() {
+  const isLoading = ref(false)
+  const { signTypedDataAsync, data: signature } = useSignTypedData()
+  const teamStore = useTeamStore()
+  const toastStore = useToastStore()
+  const chainId = useChainId()
+
+  const execute = async (claim: ClaimResponse) => {
+    isLoading.value = true
+
+    try {
+      await signTypedDataAsync({
+        domain: {
+          name: 'CashRemuneration',
+          version: '1',
+          chainId: chainId.value,
+          verifyingContract: teamStore.currentTeam?.cashRemunerationEip712Address as Address
+        },
+        types: {
+          WageClaim: [
+            { name: 'employeeAddress', type: 'address' },
+            { name: 'hoursWorked', type: 'uint8' },
+            { name: 'hourlyRate', type: 'uint256' },
+            { name: 'date', type: 'uint256' }
+          ]
+        },
+        message: {
+          hourlyRate: BigInt(claim.hourlyRate),
+          hoursWorked: claim.hoursWorked,
+          employeeAddress: claim.address as Address,
+          date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
+        },
+        primaryType: 'WageClaim'
+      })
+    } catch (err) {
+      log.error(parseError(err))
+      toastStore.addErrorToast('Failed to sign claim')
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  return {
+    execute,
+    isLoading,
+    signature
+  }
+}
+
+export function useWithdrawClaim() {
+  const isLoading = ref(false)
+  const toastStore = useToastStore()
+  const teamStore = useTeamStore()
+  const claimURL = ref('')
+  const userStore = useUserDataStore()
+  const claimBody = ref({})
+  const {
+    data: claim,
+    error: claimError,
+    execute: fetchClaim
+  } = useCustomFetch(claimURL, {
+    immediate: false
+  })
+    .get()
+    .json<ClaimResponse>()
+  const {
+    writeContractAsync: withdraw,
+    data: withdrawHash,
+    error: withdrawError
+  } = useWriteContract()
+  const { error: withdrawTrxError } = useWaitForTransactionReceipt({
+    hash: withdrawHash
+  })
+  const { execute: updateClaimStatus, isFinished: finishTrx } = useCustomFetch(claimURL, {
+    immediate: false
+  })
+    .put(claimBody)
+    .json()
+
+  const execute = async (claimId: number) => {
+    isLoading.value = true
+    claimURL.value = `/teams/${teamStore.currentTeamId}/cash-remuneration/claim`
+    claimBody.value = { claimid: claimId }
+
+    await fetchClaim()
+    withdraw({
+      abi: EIP712ABI,
+      address: teamStore.currentTeam?.cashRemunerationEip712Address as Address,
+      functionName: 'withdraw',
+      args: [
+        {
+          employeeAddress: userStore.address,
+          hoursWorked: claim.value!.hoursWorked,
+          hourlyRate: parseEther(claim.value!.hourlyRate),
+          date: Math.floor(new Date(claim.value!.createdAt).getTime() / 1000)
+        },
+        claim.value!.cashRemunerationSignature
+      ]
+    })
+
+    claimURL.value = `/teams/${claimId}/cash-remuneration/claim/employee`
+  }
+
+  watch(finishTrx, async () => {
+    console.log('finishedTrx', finishTrx.value)
+    if (finishTrx.value && withdrawTrxError.value === null) {
+      await updateClaimStatus()
+      isLoading.value = false
+      toastStore.addSuccessToast('Claim withdrawn')
+    }
+  })
+
+  watch(withdrawError, (error) => {
+    console.log('withdrawError', withdrawError.value)
+    if (error) {
+      isLoading.value = false
+      toastStore.addErrorToast('Failed to withdraw claim')
+    }
+  })
+
+  watch(claimError, (error) => {
+    console.log('claimError', claimError.value)
+    if (error) {
+      isLoading.value = false
+      toastStore.addErrorToast('Failed to fetch claim')
+    }
+  })
+
+  watch(withdrawTrxError, (error) => {
+    console.log('withdrawTrxError', withdrawTrxError.value)
+    if (error) {
+      isLoading.value = false
+      toastStore.addErrorToast('Failed to withdraw claim')
+    }
+  })
+
+  return {
+    execute,
+    isLoading
+  }
+}

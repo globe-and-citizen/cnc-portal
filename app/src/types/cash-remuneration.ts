@@ -12,5 +12,6 @@ export interface ClaimResponse {
   hoursWorked: number
   hourlyRate: string
   name: string
-  status: string
+  status: string,
+  cashRemunerationSignature: string
 }
