@@ -413,7 +413,7 @@ const deployOfficerContract = async (investorContract: { name: string; symbol: s
       initializerData: encodeFunctionData({
         abi: ExpenseAccountEIP712ABI,
         functionName: 'initialize',
-        args: [currentAddress]
+        args: [currentAddress, USDT_ADDRESS, USDC_ADDRESS]
       })
     })
 
