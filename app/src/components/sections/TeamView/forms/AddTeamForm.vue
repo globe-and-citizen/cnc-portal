@@ -310,7 +310,7 @@ const canProceed = computed(() => {
       // Members are optional, so always allow proceeding from step 2
       return (
         teamData.value.members.length === 0 ||
-        teamData.value.members.every((member) => !member.address || isAddress(member.address))
+        teamData.value.members.every((member) =>  isAddress(member.address))
       )
     case 3:
       return !!investorContractInput.value.name && !!investorContractInput.value.symbol
