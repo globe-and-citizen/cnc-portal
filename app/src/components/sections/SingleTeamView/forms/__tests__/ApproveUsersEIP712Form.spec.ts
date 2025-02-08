@@ -27,6 +27,7 @@ interface ComponentData {
   addressToDisapprove: string
   description: string
   action: string
+  selectedToken: string
   v$: Ref<
     Validation<{
       formData: {
@@ -297,12 +298,14 @@ describe('ApproveUsersForm', () => {
       const formData = [
         { name: 'Test User', address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' }
       ]
+      const tokenAddress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
 
       ;(wrapper.vm as unknown as ComponentData).budgetLimitType = budgetLimitType
       ;(wrapper.vm as unknown as ComponentData).limitValue = limitValue
       ;(wrapper.vm as unknown as ComponentData).date = date
       ;(wrapper.vm as unknown as ComponentData).formData = formData
       ;(wrapper.vm as unknown as ComponentData).description = 'description'
+      ;(wrapper.vm as unknown as ComponentData).selectedToken = tokenAddress
 
       await wrapper.vm.$nextTick()
 
