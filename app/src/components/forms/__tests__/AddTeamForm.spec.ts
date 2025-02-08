@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import type { TeamInput, User } from '@/types'
-import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { createTestingPinia } from '@pinia/testing'
 
 // Define interface for component instance
 interface ComponentInstance {
@@ -32,21 +32,20 @@ describe('AddTeamForm.vue', () => {
       },
       attachTo: div,
       global: {
-        stubs: {
-          ButtonUI: {
-            template: `
-              <button 
-                :disabled="$attrs.disabled" 
-                :class="{ 'loading-spinner': $attrs.loading }"
-                data-test="button"
-              >
-                <slot />
-              </button>
-            `
-          },
-          PlusCircleIcon,
-          MinusCircleIcon
-        }
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        // stubs: {
+        //   ButtonUI: {
+        //     template: `
+        //       <button
+        //         :disabled="$attrs.disabled"
+        //         :class="{ 'loading-spinner': $attrs.loading }"
+        //         data-test="button"
+        //       >
+        //         <slot />
+        //       </button>
+        //     `
+        //   }
+        // }
       }
     })
 
@@ -81,7 +80,7 @@ describe('AddTeamForm.vue', () => {
 
   describe('Initial Render', () => {
     it('renders step 1 by default', () => {
-      expect(wrapper.find('h1').text()).toBe('Team Details')
+      expect(wrapper.text()).toContain('Team Details')
       expect(wrapper.findAll('.step').length).toBe(3)
       expect(wrapper.findAll('.step-primary').length).toBe(1)
     })
@@ -91,6 +90,7 @@ describe('AddTeamForm.vue', () => {
     it('disables next button when step 1 validation fails', async () => {
       const nextButton = wrapper.find('[data-test="next-button"]')
       expect(nextButton.text()).toBe('Next')
+      expect(nextButton.classes()).toContain('btn-disabled')
 
       // Trigger validation by clicking next without filling required fields
       await nextButton.trigger('click')
@@ -99,10 +99,10 @@ describe('AddTeamForm.vue', () => {
       // Wait for validation to update
       await wrapper.vm.$nextTick()
 
-      expect(nextButton.attributes('disabled')).toBeDefined()
+      expect(nextButton.classes()).toContain('btn-disabled')
     })
 
-    it('allows navigation to next step when validation passes', async () => {
+    it('allows navigation from step 1 to step 2 when validation passes', async () => {
       // Fill required fields
       await wrapper.find('[data-test="team-name-input"]').setValue('Test Team')
       await wrapper.find('[data-test="team-description-input"]').setValue('Test Description')
@@ -113,7 +113,7 @@ describe('AddTeamForm.vue', () => {
       await nextButton.trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('h1').text()).toBe('Team Members (Optional)')
+      expect(wrapper.find("[data-test='step-2']").text()).toContain('Team Members (Optional)')
       expect(wrapper.findAll('.step-primary').length).toBe(2)
     })
 
