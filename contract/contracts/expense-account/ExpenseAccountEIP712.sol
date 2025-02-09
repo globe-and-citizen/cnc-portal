@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title ExpenseAccountEIP712
@@ -33,6 +34,7 @@ contract ExpenseAccountEIP712 is
      * - For `TransactionsPerPeriod`: the maximum number of transactions allowed.
      * - For `AmountPerPeriod`: the total allowed withdrawal amount within the period.
      * - For `AmountPerTransaction`: the maximum amount per transaction.
+     * @param token Address of the token (zero address for native ETH)
      */
     struct BudgetData {
         BudgetType budgetType;
@@ -54,6 +56,7 @@ contract ExpenseAccountEIP712 is
         address approvedAddress;
         BudgetData[] budgetData;
         uint256 expiry;
+        address tokenAddress;
     }
 
     /**
@@ -72,11 +75,11 @@ contract ExpenseAccountEIP712 is
     }
 
     /// @dev Type signature for the BudgetData struct, used in EIP-712 encoding.
-    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value)";
+    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value)"; // remove token address here
 
     /// @dev Type signature for the BudgetLimit struct, used in EIP-712 encoding.
     string private constant BUDGETLIMIT_TYPE = 
-        "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry)";
+        "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry,address tokenAddress)"; //ad token address here
 
     /// @dev Typehash for the BudgetData struct, used in EIP-712 encoding.
     bytes32 constant BUDGETDATA_TYPEHASH = 
@@ -114,6 +117,9 @@ contract ExpenseAccountEIP712 is
     /// @dev Mapping to track transfer balances.
     mapping(bytes32 => Balance) public balances;
 
+    /// @dev Mapping to track supported tokens.
+    mapping(string => address) public supportedTokens;
+
     event Deposited(address indexed depositor, uint256 amount);
 
     event Transfer(address indexed withdrawer, address indexed to, uint256 amount);
@@ -122,17 +128,35 @@ contract ExpenseAccountEIP712 is
 
     event ApprovalActivated(bytes32 indexed signatureHash);
 
+    event TokenDeposited(address indexed depositor, address indexed token, uint256 amount);
+
+    event TokenTransfer(address indexed withdrawer, address indexed to, address indexed token, uint256 amount);
+
+    event TokenAddressChanged(
+        address indexed addressWhoChanged,
+        string tokenSymbol,
+        address indexed oldAddress,
+        address indexed newAddress
+    );
+
     error UnauthorizedAccess(address expected, address received);
 
     error AmountPerPeriodExceeded(uint256 amount);
 
     error AmountPerTransactionExceeded(uint256 amount);
     
-    function initialize(address owner) public initializer {
+    function initialize(
+        address owner,
+        address _usdtAddress,
+        address _usdcAddress
+    ) public initializer {
         __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
         __EIP712_init("CNCExpenseAccount", "1");
+        
+        supportedTokens["USDT"] = _usdtAddress;
+        supportedTokens["USDC"] = _usdcAddress;
     }
 
     /**
@@ -172,7 +196,8 @@ contract ExpenseAccountEIP712 is
             BUDGETLIMIT_TYPEHASH,
             limit.approvedAddress,
             budgetDataHash(limit.budgetData),
-            limit.expiry
+            limit.expiry,
+            limit.tokenAddress
         ));
     }
 
@@ -208,6 +233,8 @@ contract ExpenseAccountEIP712 is
 
         require(limit.budgetData.length > 0, "Empty budget data");
 
+        require(isTokenSupported(limit.tokenAddress), "Unsupported token");
+
         bytes32 digest = _hashTypedDataV4(budgetLimitHash(limit));
 
         address signer = digest.recover(signature);
@@ -220,9 +247,13 @@ contract ExpenseAccountEIP712 is
 
         _checkAndUpdateBudgetData(limit.budgetData, amount, signature);
 
-        payable(to).sendValue(amount);
-
-        emit Transfer(limit.approvedAddress, to, amount);
+        if (limit.tokenAddress == address(0)) {
+            payable(to).sendValue(amount);
+            emit Transfer(limit.approvedAddress, to, amount);
+        } else {
+            require(IERC20(limit.tokenAddress).transfer(to, amount), "Token transfer failed");
+            emit TokenTransfer(limit.approvedAddress, to, limit.tokenAddress, amount);
+        }
     }
 
     /**
@@ -307,4 +338,69 @@ contract ExpenseAccountEIP712 is
     receive() external payable {
         emit Deposited(msg.sender, msg.value);
      }
+
+    /**
+     * @dev Checks if a token is supported.
+     * @param _token The address of the token to check.
+     * @return True if the token is supported, false otherwise.
+     */
+    function isTokenSupported(address _token) public view returns (bool) {
+        return 
+            _token == supportedTokens["USDT"] || 
+            _token == supportedTokens["USDC"] || 
+            _token == address(0);
+    }
+
+    /**
+     * @dev Deposits tokens from the caller to the contract.
+     * @param token The address of the token to deposit.
+     * @param amount The amount of tokens to deposit.
+     *
+     * Requirements:
+     * - The token must be supported.
+     * - The amount must be greater than zero.
+     *
+     * Emits a {TokenDeposited} event.
+     */
+    function depositToken(address token, uint256 amount) external nonReentrant whenNotPaused {
+        require(isTokenSupported(token), "Unsupported token");
+        require(amount > 0, "Amount must be greater than zero");
+        
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "Token transfer failed");
+        emit TokenDeposited(msg.sender, token, amount);
+    }
+
+    /**
+     * @dev Changes the address of a supported token.
+     * @param symbol The symbol of the token to change.
+     * @param newAddress The new address of the token.
+     *
+     * Requirements:
+     * - The new address must not be zero.
+     * - The symbol must be "USDT" or "USDC".
+     *
+     * Emits a {TokenAddressChanged} event.
+     */
+    function changeTokenAddress(string calldata symbol, address newAddress) external onlyOwner whenNotPaused {
+        require(newAddress != address(0), "Address cannot be zero");
+        require(
+            keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked("USDT")) || 
+            keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked("USDC")), 
+            "Invalid token symbol"
+        );
+        
+        address oldAddress = supportedTokens[symbol];
+        supportedTokens[symbol] = newAddress;
+        emit TokenAddressChanged(msg.sender, symbol, oldAddress, newAddress);
+    }
+
+    /**
+     * @dev Gets the balance of a supported token.
+     * @param token The address of the token to get the balance of.
+     * @return The balance of the token.
+     */
+    function getTokenBalance(address token) external view returns (uint256) {
+        require(isTokenSupported(token), "Unsupported token");
+        return IERC20(token).balanceOf(address(this));
+    }
 }

@@ -12,8 +12,8 @@ const MockTokensModule = buildModule('MockTokens', (m) => {
   ]
 
   testAccounts.forEach((account, index) => {
-    m.call(usdc, 'mint', [account, 1_000_000_000000n], { id: `mint_usdc_${index}` })
-    m.call(usdt, 'mint', [account, 1_000_000_000000n], { id: `mint_usdt_${index}` })
+    m.call(usdc, 'mint', [account, 1_000_000_000_000n], { id: `mint_usdc_${index}` })
+    m.call(usdt, 'mint', [account, 1_000_000_000_000n], { id: `mint_usdt_${index}` })
   })
 
   return { usdc, usdt }
