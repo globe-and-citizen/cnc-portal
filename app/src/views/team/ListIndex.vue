@@ -4,7 +4,7 @@
       <h2>{{ route.meta.name }}</h2>
     </div>
     <!-- Loader -->
-    <div class="flex gap-3" v-if="teamsAreFetching">
+    <div class="flex gap-3" data-test="loader" v-if="teamsAreFetching">
       <div class="flex w-1/4 flex-col gap-4" v-for="i in 4" :key="i">
         <div class="skeleton h-32 w-full"></div>
         <div class="skeleton h-4 w-28"></div>
@@ -48,7 +48,7 @@
     </div>
 
     <!-- Add Team Button -->
-    <div class="flex justify-center" data-test="testing" v-if="!teamsError && !teamsAreFetching">
+    <div class="flex justify-center" data-test="add-team-button" v-if="!teamsError && !teamsAreFetching">
       <AddTeamCard
         data-test="add-team-card"
         @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
@@ -89,7 +89,7 @@ const {
   isFetching: teamsAreFetching,
   error: teamsError,
   data: teams
-} = useCustomFetch('teams').json<Array<Team>>()
+} = useCustomFetch('teams').get().json<Array<Team>>()
 const navigateToTeam = (id: number | string) => {
   router.push(`/teams/${id}`)
 }
