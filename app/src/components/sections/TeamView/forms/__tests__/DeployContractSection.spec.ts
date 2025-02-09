@@ -30,7 +30,7 @@ vi.mock('viem', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    encodeFunctionData: vi.fn(() => "EncodedFunctionData")
+    encodeFunctionData: vi.fn(() => 'EncodedFunctionData')
   }
 })
 describe('DeployContractSection', () => {
