@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
-import TeamView from '../views/TeamView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import CashRemunerationView from '@/views/CashRemunerationView.vue'
@@ -43,6 +42,7 @@ const router = createRouter({
     {
       path: '/teams',
       name: 'teams',
+      meta: { name: 'Teams List' },
       components: {
         default: ListIndex
       }
@@ -82,11 +82,6 @@ const router = createRouter({
           path: ':id',
           name: 'singleteam',
           component: SingleTeamView
-        },
-        {
-          path: '',
-          name: 'old-teams',
-          component: TeamView
         },
         {
           path: '/teams/:id/cash-remunerations',
