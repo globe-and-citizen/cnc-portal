@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import ListIndex from '@/views/team/ListIndex.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
