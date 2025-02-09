@@ -173,7 +173,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: ExpenseAccountEIP712ABI,
         functionName: 'initialize',
-        args: [currentUserAddress]
+        args: [currentUserAddress, USDT_ADDRESS, USDC_ADDRESS]
       })
     })
 
