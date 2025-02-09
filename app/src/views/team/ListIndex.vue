@@ -48,7 +48,11 @@
     </div>
 
     <!-- Add Team Button -->
-    <div class="flex justify-center" data-test="add-team-button" v-if="!teamsError && !teamsAreFetching">
+    <div
+      class="flex justify-center"
+      data-test="add-team-button"
+      v-if="!teamsError && !teamsAreFetching"
+    >
       <AddTeamCard
         data-test="add-team-card"
         @openAddTeamModal="showAddTeamModal = !showAddTeamModal"

@@ -77,20 +77,18 @@ describe('ListIndex', () => {
 
     expect(wrapper.html()).toContain('Team List View')
     expect(wrapper.html()).toContain('John Doe')
-    
+
     const vm = wrapper.vm as unknown as ComponentInstance
 
     // Set an invalid step number
-    vm.teamsError = "New Error"
+    vm.teamsError = 'New Error'
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
 
-    
     // Set an invalid step number
     vm.teamsAreFetching = true
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-test="loader"]').exists()).toBeTruthy()
   })
-
 })
