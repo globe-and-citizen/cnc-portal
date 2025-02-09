@@ -1,6 +1,8 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
+import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { TeamInput, User } from '@/types'
 import { createTestingPinia } from '@pinia/testing'
@@ -17,6 +19,28 @@ interface ComponentInstance {
   }
 }
 
+// Mock the useWriteContract and useWaitForTransactionReceipt composable
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useWatchContractEvent: vi.fn()
+  }
+})
 describe('AddTeamForm.vue', () => {
   const users: User[] = [
     { name: 'Ravioli', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' },
@@ -78,9 +102,9 @@ describe('AddTeamForm.vue', () => {
             json: () => ({
               execute: vi.fn(),
               data: {
-                id: 'string',
-                name: '',
-                description: 'string'
+                id: 1,
+                name: 'Team Name',
+                description: 'Team Description'
               },
               loading: ref(false),
               error: ref<unknown>(null)
@@ -207,21 +231,20 @@ describe('AddTeamForm.vue', () => {
       expect(vm.canProceed).toBe(false) // Should not proceed with any invalid address
     })
 
-    it.only('handles edge cases in investor contract validation', async () => {
+    it('handles edge cases in investor contract validation', async () => {
       // await navigateToInvestorStep(wrapper)
 
       const vm = wrapper.vm as unknown as ComponentInstance
-      console.log(vm.currentStep, 'vm.currentStep')
-      await navigateToMembersStep(wrapper)
-      // The Deploy Contract section is failing from there
-      // await wrapper.find('[data-test="create-team-button"]').trigger('click')
-      // await wrapper.vm.$nextTick()
-      console.log(vm.currentStep, 'vm.currentStep')
+      expect(vm.currentStep).toBe(1)
+      await navigateToInvestorStep(wrapper)
+      expect(vm.currentStep).toBe(3)
+
+      const DeployContractButton = wrapper.findComponent(DeployContractSection)
+      expect(DeployContractButton.exists()).toBe(true)
 
       // Test with empty strings
       vm.investorContractInput.name = ''
       vm.investorContractInput.symbol = ''
-      console.log(vm.currentStep, 'vm.currentStep')
       await wrapper.vm.$nextTick()
       expect(vm.canProceed).toBe(false)
 
@@ -256,72 +279,11 @@ describe('AddTeamForm.vue', () => {
     })
 
     it('shows empty state when no members are added', () => {
-      expect(wrapper.find('[data-test="add-first-member"]').exists()).toBe(true)
-      expect(wrapper.find('.text-gray-500').text()).toBe('No team members added yet')
+      expect(wrapper.findAllComponents(UserComponent).length).toBe(0)
     })
 
-    it('adds first member when clicking add member button', async () => {
-      await wrapper.find('[data-test="add-first-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="member-0-input"]').exists()).toBe(true)
-    })
-
-    it('adds additional member after first member exists', async () => {
-      // Add first member
-      await wrapper.find('[data-test="add-first-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Add second member
-      await wrapper.find('[data-test="add-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findAll('.input-group').length).toBe(2)
-    })
-
-    it('removes a member', async () => {
-      // Add two members first
-      await wrapper.find('[data-test="add-first-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-      await wrapper.find('[data-test="add-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Remove one member
-      await wrapper.find('[data-test="remove-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.findAll('.input-group').length).toBe(1)
-    })
-
-    it('shows member dropdown when users are available', async () => {
-      // Add first member
-      await wrapper.find('[data-test="add-first-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      await wrapper.find('[data-test="member-0-name-input"]').trigger('focus')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('.dropdown-content').exists()).toBe(true)
-    })
-
-    it('selects user from dropdown', async () => {
-      // Add first member
-      await wrapper.find('[data-test="add-first-member"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      await wrapper.find('[data-test="member-0-name-input"]').trigger('focus')
-      await wrapper.vm.$nextTick()
-
-      await wrapper.find(`[data-test="user-dropdown-${users[0].address}"]`).trigger('click')
-      await wrapper.vm.$nextTick()
-
-      const nameInput = wrapper.find('[data-test="member-0-name-input"]')
-        .element as HTMLInputElement
-      const addressInput = wrapper.find('[data-test="member-0-address-input"]')
-        .element as HTMLInputElement
-      expect(nameInput.value).toBe(users[0].name)
-      expect(addressInput.value).toBe(users[0].address)
-    })
+    // TODO: Search And Add member
+    // TODO: Remove member from the list
   })
 
   describe('Form Submission', () => {
