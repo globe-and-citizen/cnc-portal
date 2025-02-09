@@ -88,8 +88,7 @@ const deployOfficerContract = async () => {
 
     console.log('Validating addresses')
     validateAddresses()
-    if (props.createdTeamData?.id) {
-      log.error('No team data found')
+    if (!props.createdTeamData?.id) {
       loading.value = false
       return
     }
@@ -201,6 +200,7 @@ const deployOfficerContract = async () => {
       args: [encodedFunction]
     })
   } catch (error) {
+    console.log('Error deploying contract V2', error)
     loading.value = false
     log.error('Error deploying contract')
     log.error(String(error))

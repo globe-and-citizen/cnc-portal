@@ -26,6 +26,13 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWatchContractEvent: vi.fn()
   }
 })
+vi.mock('viem', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    encodeFunctionData: vi.fn(() => "EncodedFunctionData")
+  }
+})
 describe('DeployContractSection', () => {
   describe('Rendering', () => {
     it('should render the form correctly', async () => {
@@ -55,6 +62,9 @@ describe('DeployContractSection', () => {
       // nexttick
 
       await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+      console.log(wrapper.html())
     })
   })
 })
