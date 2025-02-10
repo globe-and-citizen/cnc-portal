@@ -358,7 +358,7 @@ const submitApprove = () => {
   if (v$.value.$invalid) {
     return
   }
-  console.log(`selectedToken: `, selectedToken.value)
+
   emit('approveUser', {
     approvedAddress: formData.value[0].address,
     budgetData: resultArray.value,
