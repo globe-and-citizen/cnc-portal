@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-y-4" v-if="team">
+  <div class="flex flex-col gap-y-4">
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
     <div class="flex gap-10">
@@ -58,11 +58,11 @@
     <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-10">
       <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
         <span class="text-sm">Expense Account Address </span>
-        <AddressToolTip :address="team.expenseAccountEip712Address ?? ''" class="text-xs" />
+        <AddressToolTip :address="team?.expenseAccountEip712Address ?? ''" class="text-xs" />
       </div>
     </div>
     <div
-      v-if="team.expenseAccountEip712Address"
+      v-if="team?.expenseAccountEip712Address"
       class="card shadow-xl flex text-primary-content p-5 overflow-visible"
     >
       <span class="text-2xl font-bold">My Approved Expense</span>
@@ -162,7 +162,6 @@
           @click="
             () => {
               approveUsersModal = true
-              console.log('approveUsersModal', approveUsersModal)
             }
           "
           data-test="approve-users-button"
@@ -277,7 +276,7 @@ import type {
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ApproveUsersForm from '@/components/sections/SingleTeamView/forms/ApproveUsersEIP712Form.vue'
+import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -321,7 +320,9 @@ const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 const expenseAccountData = ref<{}>()
 const signatureHash = ref<string | null>(null)
 const deactivateIndex = ref<number | null>(null)
-const expenseAccountEip712Address = computed(() => team.value?.expenseAccountEip712Address as Address)
+const expenseAccountEip712Address = computed(
+  () => team.value?.expenseAccountEip712Address as Address
+)
 const maxLimit = (budgetType: number) =>
   computed(() => {
     const budgetData =
@@ -411,7 +412,11 @@ const isDisapprovedAddress = computed(
 //#endregion
 
 //#region useCustomFetch
-const { data: team, error: teamError, execute: executeFetchTeam } = useCustomFetch(`teams/${String(route.params.id)}`)
+const {
+  data: team,
+  error: teamError,
+  execute: executeFetchTeam
+} = useCustomFetch(`teams/${String(route.params.id)}`)
   .get()
   .json<Team>()
 
@@ -628,7 +633,7 @@ const init = async () => {
   await fetchExpenseAccountData()
   await fetchManyExpenseAccountData()
   await initializeBalances()
-  // await fetchExpenseAccountData()
+  await executeFetchTeam()
   await getAmountWithdrawnBalance()
   await fetchUsdcBalance()
 }
@@ -862,11 +867,9 @@ watch(signature, async (newVal) => {
       signature
     }
     await executeAddExpenseData()
-    // emits('getTeam')
-    console.log(`executed fetch team...`)
-    await executeFetchTeam()
-    console.log(`executed fetch team...`)
+    await init()
     loadingApprove.value = false
+    approveUsersModal.value = false
   }
 })
 
@@ -958,6 +961,5 @@ watch([usdcBalanceError], ([newUsdcError]) => {
 
 onMounted(async () => {
   await init()
-  console.log(`currentTeam.expenseAccountEip712Address: `, teamStore.currentTeam?.expenseAccountEip712Address)
 })
 </script>
