@@ -3,14 +3,13 @@
     <!-- Step Indicator -->
     <div class="steps w-full mb-4">
       <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Team Details</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Investor Contract</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Members</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 4 }">Confirm</a>
+      <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Members</a>
+      <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Investor Contract</a>
     </div>
 
     <!-- Step 1: Team Details -->
-    <div v-if="currentStep === 1">
-      <h1 class="font-bold text-2xl mb-4">Team Details</h1>
+    <div v-if="currentStep === 1" data-test="step-1">
+      <span class="font-bold text-2xl mb-4">Team Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <div>
@@ -48,9 +47,85 @@
       </div>
     </div>
 
-    <!-- Step 2: Investor Contract -->
-    <div v-if="currentStep === 2">
-      <h1 class="font-bold text-2xl mb-4">Investor Contract Details</h1>
+    <!-- Step 2: Members -->
+    <div v-if="currentStep === 2" data-test="step-2">
+      <span class="font-bold text-2xl mb-4">Team Members (Optional)</span>
+      <hr class="mb-6" />
+      <div class="flex flex-col gap-5">
+        <div class="text-sm text-gray-600 mb-2">
+          You can add team members now or invite them later.
+        </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center" v-for="(member, index) of teamData.members" :key="index">
+            <UserComponent
+              class="bg-base-200 p-4 flex-grow"
+              :user="{ name: member.name, address: member.address }"
+            />
+            <div>
+              <ButtonUI variant="error" class="mt-4" size="sm" @click="removeMember(index)">
+                -
+              </ButtonUI>
+            </div>
+          </div>
+        </div>
+        <div class="input-group relative" ref="formRef">
+          <label
+            class="input input-bordered flex items-center gap-2 input-md"
+            :data-test="`member-input`"
+          >
+            <input
+              type="text"
+              class="w-24"
+              v-model="input.name"
+              @keyup.stop="searchUsers({ name: input.name, address: '' })"
+              :placeholder="'Member Name '"
+              :data-test="`member-name-input`"
+            />
+            |
+            <input
+              type="text"
+              class="grow"
+              v-model="input.address"
+              @keyup.stop="searchUsers({ name: '', address: input.address })"
+              :data-test="`member-address-input`"
+              :placeholder="`Member Address`"
+            />
+          </label>
+          <!-- Dropdown positioned relative to the input -->
+          <div
+            v-if="showDropdown && users.users && users.users.length > 0"
+            class="absolute left-0 top-full mt-1 w-full z-10"
+          >
+            <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
+              <li v-for="user in users.users" :key="user.address">
+                <a
+                  :data-test="`user-dropdown-${user.address}`"
+                  @click="
+                    () => {
+                      addMember(user)
+                      showDropdown = false
+                    }
+                  "
+                >
+                  {{ user.name }} | {{ user.address }}
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div
+            class="pl-4 pt-4 text-sm text-red-500"
+            data-test="create-team-error"
+            v-if="createTeamError"
+          >
+            Unable to create team
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Investor Contract -->
+    <div v-if="currentStep === 3" data-test="step-3">
+      <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <label class="input input-bordered flex items-center gap-2 input-md">
@@ -60,13 +135,13 @@
             class="grow"
             placeholder="Company Shares"
             data-test="share-name-input"
-            v-model="investorContract.name"
+            v-model="investorContractInput.name"
             name="shareName"
           />
         </label>
         <div
           class="pl-4 text-red-500 text-sm"
-          v-for="error of $v.investorContract.name.$errors"
+          v-for="error of $vInvestor.investorContractInput.name.$errors"
           data-test="share-name-error"
           :key="error.$uid"
         >
@@ -80,132 +155,17 @@
             class="grow"
             placeholder="SHR"
             data-test="share-symbol-input"
-            v-model="investorContract.symbol"
+            v-model="investorContractInput.symbol"
             name="shareSymbol"
           />
         </label>
         <div
           class="pl-4 text-red-500 text-sm"
-          v-for="error of $v.investorContract.symbol.$errors"
+          v-for="error of $vInvestor.investorContractInput.symbol.$errors"
           data-test="share-symbol-error"
           :key="error.$uid"
         >
           {{ error.$message }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 3: Members -->
-    <div v-if="currentStep === 3">
-      <h1 class="font-bold text-2xl mb-4">Team Members</h1>
-      <hr class="mb-6" />
-      <div class="flex flex-col gap-5">
-        <div v-for="(input, index) of teamData.members" :key="index" class="input-group relative">
-          <label
-            class="input input-bordered flex items-center gap-2 input-md"
-            :data-test="`member-${index}-input`"
-          >
-            <input
-              type="text"
-              class="w-24"
-              v-model="input.name"
-              @focus="() => setActiveInput(index)"
-              @keyup.stop="searchUsers({ name: input.name, address: input.address })"
-              :placeholder="'Member Name ' + (index + 1)"
-              :data-test="`member-${index}-name-input`"
-            />
-            |
-            <input
-              type="text"
-              class="grow"
-              v-model="input.address"
-              @keyup.stop="searchUsers({ name: input.name, address: input.address })"
-              :data-test="`member-${index}-address-input`"
-              :placeholder="`Member ${index + 1} Address`"
-            />
-          </label>
-          <!-- Dropdown positioned relative to the input -->
-          <div
-            v-if="showDropdown && activeInputIndex === index && users && users.length > 0"
-            class="absolute left-0 top-full mt-1 w-full z-10"
-          >
-            <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
-              <li v-for="user in users" :key="user.address">
-                <a
-                  :data-test="`user-dropdown-${user.address}`"
-                  @click="
-                    () => {
-                      teamData.members[index].name = user.name ?? ''
-                      teamData.members[index].address = user.address ?? ''
-                      showDropdown = false
-                    }
-                  "
-                >
-                  {{ user.name }} | {{ user.address }}
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div v-if="$v.teamData.members.$errors.length">
-            <div
-              class="pl-4 text-sm text-red-500"
-              v-for="(error, errorIndex) of getMessages(index)"
-              data-test="address-error"
-              :key="errorIndex"
-            >
-              {{ error.$message }}
-            </div>
-          </div>
-        </div>
-        <div class="flex justify-end pt-3">
-          <div
-            class="w-6 h-6 cursor-pointer mr-2"
-            data-test="add-member"
-            @click="
-              () => {
-                teamData.members.push({ name: '', address: '' })
-              }
-            "
-          >
-            <PlusCircleIcon class="size-6" />
-          </div>
-          <div
-            class="w-6 h-6 cursor-pointer"
-            data-test="remove-member"
-            @click="
-              () => {
-                if (teamData.members.length > 1) {
-                  teamData.members.pop()
-                }
-              }
-            "
-          >
-            <MinusCircleIcon class="size-6" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 4: Confirmation -->
-    <div v-if="currentStep === 4">
-      <h1 class="font-bold text-2xl mb-4">Confirm Team Details</h1>
-      <hr class="mb-6" />
-      <div class="flex flex-col gap-5">
-        <div class="bg-base-200 p-4 rounded-lg">
-          <h3 class="font-bold mb-2">Team Information</h3>
-          <p><span class="font-semibold">Name:</span> {{ teamData.name }}</p>
-          <p><span class="font-semibold">Description:</span> {{ teamData.description }}</p>
-        </div>
-        <div class="bg-base-200 p-4 rounded-lg">
-          <h3 class="font-bold mb-2">Investor Contract</h3>
-          <p><span class="font-semibold">Share Name:</span> {{ investorContract.name }}</p>
-          <p><span class="font-semibold">Symbol:</span> {{ investorContract.symbol }}</p>
-        </div>
-        <div class="bg-base-200 p-4 rounded-lg">
-          <h3 class="font-bold mb-2">Team Members</h3>
-          <div v-for="(member, index) in teamData.members" :key="index" class="mb-2">
-            <p>{{ member.name }} | {{ member.address }}</p>
-          </div>
         </div>
       </div>
     </div>
@@ -217,152 +177,200 @@
         variant="secondary"
         class="w-32"
         @click="currentStep--"
-        :disabled="isLoading"
+        :disabled="createTeamFetching || false"
         data-test="previous-button"
       >
         Previous
       </ButtonUI>
       <div class="flex-grow"></div>
       <ButtonUI
-        v-if="currentStep < 4"
+        v-if="currentStep === 1"
         variant="primary"
         class="w-32"
         data-test="next-button"
         @click="nextStep"
-        :disabled="!canProceed || isLoading"
+        :disabled="!canProceed"
       >
         Next
       </ButtonUI>
       <ButtonUI
-        v-else
+        v-else-if="currentStep === 2"
         variant="primary"
         class="w-44"
-        :loading="isLoading"
-        :disabled="isLoading || !canProceed"
+        :loading="createTeamFetching"
+        :disabled="createTeamFetching || !canProceed"
         data-test="create-team-button"
-        @click="onSubmit"
+        @click="saveTeamToDatabase"
       >
         Create Team
       </ButtonUI>
+      <DeployContractSection
+        v-else-if="currentStep === 3 && createdTeamData !== null && createdTeamData"
+        :disabled="!canProceed"
+        :investorContractInput="investorContractInput"
+        :createdTeamData="createdTeamData"
+        @contractDeployed="modalIsOpen = false"
+      >
+        Deploy Contracts
+      </DeployContractSection>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import useVuelidate from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import { isAddress } from 'viem'
-import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/outline'
+import { log } from '@/utils'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import UserComponent from '@/components/UserComponent.vue'
+import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import type { TeamInput, User } from '@/types'
+import { onClickOutside } from '@vueuse/core'
+import type { TeamInput, Team } from '@/types'
+import { useToastStore } from '@/stores/useToastStore'
 
-const props = defineProps<{
-  isLoading: boolean
-  users: User[]
-}>()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
-const emit = defineEmits(['searchUsers', 'addTeam'])
-
+const modalIsOpen = defineModel({ default: true })
+// Refs
 const teamData = ref<TeamInput>({
   name: '',
   description: '',
-  members: [{ name: '', address: '' }]
+  members: []
+})
+
+const input = ref({
+  name: '',
+  address: ''
+})
+
+const investorContractInput = ref({
+  name: '',
+  symbol: ''
 })
 
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const currentStep = ref(1)
 
-const investorContract = ref({
-  name: '',
-  symbol: ''
-})
+const url = ref('user/search')
 
+const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
+  .get()
+  .json()
+// Team creation API call
+const {
+  isFetching: createTeamFetching,
+  error: createTeamError,
+  execute: executeCreateTeam,
+  data: createdTeamData
+} = useCustomFetch('teams', {
+  immediate: false
+})
+  .post(teamData.value)
+  .json<Partial<Team>>()
+
+// Validation Rules
 const rules = {
   teamData: {
     name: { required },
     members: {
       $each: {
         address: {
-          required,
           isValidAddress: helpers.withMessage('Invalid Ethereum address', (value: string) =>
             isAddress(value)
           )
         }
       }
     }
-  },
-  investorContract: {
+  }
+}
+
+const investorContractInputRules = {
+  investorContractInput: {
     name: { required },
     symbol: { required }
   }
 }
+// TODO: validate Team Details on key up and require at least 5 letter for Team Name
+// TODO validate this before proceeding to create deploy contract
 
-const $v = useVuelidate(rules, { teamData, investorContract })
+// Validation Instances
+const $v = useVuelidate(rules, { teamData })
+const $vInvestor = useVuelidate(investorContractInputRules, { investorContractInput })
 
-const searchUsers = (input: { name: string; address: string }) => {
-  if (!props.isLoading) {
-    showDropdown.value = true
-    emit('searchUsers', input)
-  }
-}
-
-const onSubmit = async () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-
-  emit('addTeam', {
-    team: teamData.value,
-    investorContract: investorContract.value
-  })
-}
-
-const getMessages = (index: number) => {
-  return $v.value.teamData.members.$errors[0].$response.$errors[index].address
-}
-
-const activeInputIndex = ref<number | null>(null)
-
-const setActiveInput = (index: number) => {
-  activeInputIndex.value = index
-  showDropdown.value = true
-}
-
-// Computed property to determine if user can proceed to next step
+// Computed Properties
 const canProceed = computed(() => {
   switch (currentStep.value) {
     case 1:
       return !!teamData.value.name
     case 2:
-      return !!investorContract.value.name && !!investorContract.value.symbol
+      // Members are optional, so always allow proceeding from step 2
+      return (
+        teamData.value.members.length === 0 ||
+        teamData.value.members.every((member) => isAddress(member.address))
+      )
     case 3:
-      return teamData.value.members.every((member) => member.name && isAddress(member.address))
-    case 4:
-      return !$v.value.$invalid
+      return !!investorContractInput.value.name && !!investorContractInput.value.symbol
     default:
       return false
   }
 })
 
+// Functions
+
+// Search User Functions
+const searchUsers = async (input: { name: string; address: string }) => {
+  if (input.address == '' && input.name) {
+    url.value = 'user/search?name=' + input.name
+  } else if (input.name == '' && input.address) {
+    url.value = 'user/search?address=' + input.address
+  }
+
+  await executeSearchUser()
+  showDropdown.value = true
+}
+
+// Team Member Functions
+const addMember = (member: { name: string; address: string }) => {
+  // Check if there is any member with the same address
+  if (!teamData.value.members.find((m) => m.address === member.address)) {
+    teamData.value.members.push(member)
+  }
+}
+
+const removeMember = (id: number) => {
+  teamData.value.members.splice(id, 1)
+}
+
+// Navigation Functions
 const nextStep = () => {
   if (currentStep.value < 4 && canProceed.value) {
     currentStep.value++
   }
 }
 
-// Close dropdown when clicking outside
-const handleClickOutside = (event: MouseEvent) => {
-  if (formRef.value && !formRef.value.contains(event.target as Node)) {
-    showDropdown.value = false
+// Form Submission Functions
+const saveTeamToDatabase = async () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
+  await executeCreateTeam()
+  if (createTeamError.value) {
+    addErrorToast('Failed to create team')
+    log.error('Failed to create team', createTeamError.value)
+    return
   }
+  addSuccessToast('Team created successfully')
+  // Move to next step only after successful team creation
+  nextStep()
 }
 
+// Lifecycle Hooks
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  onClickOutside(formRef, () => {
+    showDropdown.value = false
+  })
 })
 </script>
