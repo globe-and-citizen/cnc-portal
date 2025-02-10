@@ -278,7 +278,7 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'
+import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import {
@@ -296,16 +296,11 @@ import UserComponent from '@/components/UserComponent.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { /*useRouter,*/ useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 //#endregion
 
 //#region Refs
-// const router = useRouter()
-const teamStore = useTeamStore()
 const route = useRoute()
-// const props = defineProps<{ team: Partial<Team> }>()
-const emits = defineEmits(['getTeam'])
-// const team = ref(props.team)
 const transferModal = ref(false)
 const approveUsersModal = ref(false)
 const foundUsers = ref<User[]>([])
@@ -414,7 +409,7 @@ const isDisapprovedAddress = computed(
 //#region useCustomFetch
 const {
   data: team,
-  error: teamError,
+  // error: teamError,
   execute: executeFetchTeam
 } = useCustomFetch(`teams/${String(route.params.id)}`)
   .get()
