@@ -13,20 +13,20 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full shadow-xl">
-    <TableComponent :rows="filteredApprovals" :columns="columns">
+    <TableComponent :rows="_filteredApprovals" :columns="columns">
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
           variant="error"
           data-test="disable-button"
-          @click="() => {}"
+          @click="() => {console.log(`signature to disable: `, row.signature)}"
           >Disable</ButtonUI
         >
         <ButtonUI
           v-if="row.status == 'disabled'"
           variant="info"
           data-test="enable-button"
-          @click="() => {}"
+          @click="() => {console.log(`signature to enable: `, row.signature)}"
           >Enable</ButtonUI
         >
       </template>
@@ -78,8 +78,12 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { USDC_ADDRESS } from '@/constant';
-import { computed, ref } from 'vue'
+import { computed, ref, type Reactive } from 'vue'
+import type { ManyExpenseWithBalances } from '@/types'
 
+const { approvals: _approvals } = defineProps<{
+  approvals: Reactive<ManyExpenseWithBalances[]>
+}>()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const approvals = ref([
@@ -138,6 +142,14 @@ const approvals = ref([
     status: 'expired'
   }
 ])
+
+const _filteredApprovals = computed(() => {
+  if (selectedRadio.value === 'all') {
+    return _approvals;
+  } else {
+    return _approvals.filter(approval => approval.status === selectedRadio.value);
+  }
+});
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {

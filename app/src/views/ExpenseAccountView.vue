@@ -275,7 +275,7 @@
           Approve User Expense
         </ButtonUI>
       </div>
-      <ExpenseAccountTable />
+      <ExpenseAccountTable :approvals="manyExpenseAccountDataAll"/>
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -416,6 +416,7 @@ const dynamicDisplayDataAmount = dynamicDisplayData(1)
 // Reactive storage for balances
 const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
 const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
+const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 // Check if the current user is disapproved
 const isDisapprovedAddress = computed(
@@ -598,15 +599,37 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 const initializeBalances = async () => {
   manyExpenseAccountDataActive.length = 0
   manyExpenseAccountDataInactive.length = 0
+  manyExpenseAccountDataAll.length = 0
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
       signatureHash.value = keccak256(data.signature)
 
       await executeGetAmountWithdrawn()
 
+      const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
+
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
-        if (amountWithdrawn.value[2] === 2)
+        // New algo
+        console.log(`amountWithdrawn.value[]`)
+        manyExpenseAccountDataAll.push({
+            ...data,
+            balances: {
+              0: `${amountWithdrawn.value[0]}`,
+              1:
+                data.tokenAddress === zeroAddress
+                  ? formatEther(amountWithdrawn.value[1])
+                  : `${Number(amountWithdrawn.value[1]) / 1e6}`,
+              2: amountWithdrawn.value[2] === true
+            },
+            status: isExpired
+              ? 'expired'
+              : amountWithdrawn.value[2] === 2
+                ? 'disabled'
+                : 'enabled'
+          })
+        // Old algo
+        if (amountWithdrawn.value[2] === 2) {
           manyExpenseAccountDataInactive.push({
             ...data,
             balances: {
@@ -618,7 +641,7 @@ const initializeBalances = async () => {
               2: amountWithdrawn.value[2] === true
             }
           })
-        else
+        } else
           manyExpenseAccountDataActive.push({
             ...data,
             balances: {

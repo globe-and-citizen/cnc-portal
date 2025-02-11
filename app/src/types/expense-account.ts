@@ -40,4 +40,5 @@ export interface ManyExpenseWithBalances {
     1: string
     2: boolean
   }
+  status?: 'disabled' | 'enabled' | 'expired' 
 }
