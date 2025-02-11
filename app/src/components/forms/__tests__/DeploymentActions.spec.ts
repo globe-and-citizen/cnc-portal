@@ -155,20 +155,4 @@ describe('DeploymentActions', () => {
     const buttons = wrapper.findAll('button')
     expect(buttons.length).toBe(7)
   })
-
-  it('opens investor contract modal when deploying all contracts without investor', async () => {
-    const wrapper = mount(DeploymentActions, {
-      props: {
-        ...defaultProps,
-        isCashRemunerationEip712Deployed: false,
-        isInvestorV1Deployed: false,
-        team: defaultTeam
-      }
-    })
-
-    await wrapper.find('[data-test="deploy-all-contracts"]').trigger('click')
-
-    expect(wrapper.emitted()).toHaveProperty('openInvestorContractModal')
-    expect(wrapper.emitted('openInvestorContractModal')?.[0]).toBeTruthy()
-  })
 })

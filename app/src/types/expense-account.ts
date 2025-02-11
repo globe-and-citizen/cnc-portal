@@ -4,6 +4,7 @@ export interface BudgetLimit {
   approvedAddress: string
   budgetData: BudgetData[]
   expiry: number
+  tokenAddress: string
 }
 
 export interface ExpenseData {
@@ -18,6 +19,7 @@ export interface BudgetData {
 
 export interface ManyExpenseResponse {
   approvedAddress: string
+  tokenAddress: string
   budgetData: BudgetData[]
   expiry: number
   signature: `0x{string}`
@@ -27,6 +29,7 @@ export interface ManyExpenseResponse {
 
 export interface ManyExpenseWithBalances {
   approvedAddress: string
+  tokenAddress: string
   budgetData: BudgetData[]
   expiry: number
   signature: `0x{string}`
