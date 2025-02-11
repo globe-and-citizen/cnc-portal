@@ -258,6 +258,25 @@
         </table>
       </div>
     </div>
+
+    <div class="overflow-x-auto flex flex-col gap-4" data-test="claims-table">
+      <div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Approved Addresses</span>
+        <ButtonUI
+          variant="secondary"
+          :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
+          @click="
+            () => {
+              approveUsersModal = true
+            }
+          "
+          data-test="approve-users-button"
+        >
+          Approve User Expense
+        </ButtonUI>
+      </div>
+      <ExpenseAccountTable />
+    </div>
   </div>
   <!-- Expense Account Not Yet Created -->
 </template>
@@ -278,6 +297,7 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
