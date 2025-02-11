@@ -150,7 +150,7 @@
     </div>
 
     <!-- Activated List -->
-    <div
+    <!--<div
       v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
       class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
@@ -171,7 +171,7 @@
       </div>
       <div class="overflow-x-auto" data-test="approvals-list-table">
         <table class="table">
-          <!-- head -->
+          <!-- head
           <thead class="text-sm font-bold">
             <tr>
               <th>User</th>
@@ -208,9 +208,9 @@
           </tbody>
         </table>
       </div>
-    </div>
+    </div>-->
 
-    <!-- Deactivated List -->
+    <!-- Deactivated List
     <div
       v-if="manyExpenseAccountDataInactive.length > 0"
       class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
@@ -220,7 +220,7 @@
       </div>
       <div class="overflow-x-auto" data-test="deactivated-list-table">
         <table class="table">
-          <!-- head -->
+          <!-- head 
           <thead class="text-sm font-bold">
             <tr>
               <th>User</th>
@@ -257,7 +257,7 @@
           </tbody>
         </table>
       </div>
-    </div>
+    </div>-->
 
     <div class="overflow-x-auto flex flex-col gap-4" data-test="claims-table">
       <div class="flex flex-row justify-between mb-5">
@@ -275,7 +275,11 @@
           Approve User Expense
         </ButtonUI>
       </div>
-      <ExpenseAccountTable :approvals="manyExpenseAccountDataAll"/>
+      <ExpenseAccountTable 
+        :approvals="manyExpenseAccountDataAll"
+        @disable-approval="(signature) => deactivateApproval(signature, 1)"
+        @enable-approval="(signature) => activateApproval(signature, 1)"
+      />
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -414,15 +418,15 @@ const expenseBalanceFormatted = computed(() => {
 const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
 // Reactive storage for balances
-const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
-const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
+// const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
+// const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
 const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 // Check if the current user is disapproved
 const isDisapprovedAddress = computed(
   () =>
-    manyExpenseAccountDataInactive.findIndex(
-      (item) => item.approvedAddress === currentUserAddress
+    manyExpenseAccountDataAll.findIndex(
+      (item) => item.approvedAddress === currentUserAddress && item.status === 'disabled'
     ) !== -1
 )
 //#endregion
@@ -597,8 +601,8 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 //#region Functions
 // Async initialization function
 const initializeBalances = async () => {
-  manyExpenseAccountDataActive.length = 0
-  manyExpenseAccountDataInactive.length = 0
+  // manyExpenseAccountDataActive.length = 0
+  // manyExpenseAccountDataInactive.length = 0
   manyExpenseAccountDataAll.length = 0
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
@@ -611,7 +615,6 @@ const initializeBalances = async () => {
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
         // New algo
-        console.log(`amountWithdrawn.value[]`)
         manyExpenseAccountDataAll.push({
             ...data,
             balances: {
@@ -629,7 +632,7 @@ const initializeBalances = async () => {
                 : 'enabled'
           })
         // Old algo
-        if (amountWithdrawn.value[2] === 2) {
+        /*if (amountWithdrawn.value[2] === 2) {
           manyExpenseAccountDataInactive.push({
             ...data,
             balances: {
@@ -652,15 +655,16 @@ const initializeBalances = async () => {
                   : `${Number(amountWithdrawn.value[1]) / 1e6}`,
               2: amountWithdrawn.value[2] === false
             }
-          })
+          })*/
       } else {
-        manyExpenseAccountDataInactive.push({
+        manyExpenseAccountDataAll.push({
           ...data,
           balances: {
             0: '--',
             1: '--',
             2: false
-          }
+          },
+          status: 'disabled'
         })
       }
     }

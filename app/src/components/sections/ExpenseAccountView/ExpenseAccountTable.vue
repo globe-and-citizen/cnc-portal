@@ -19,14 +19,14 @@
           v-if="row.status == 'enabled'"
           variant="error"
           data-test="disable-button"
-          @click="() => {console.log(`signature to disable: `, row.signature)}"
+          @click="() => emits('disableApproval', row.signature)"
           >Disable</ButtonUI
         >
         <ButtonUI
           v-if="row.status == 'disabled'"
           variant="info"
           data-test="enable-button"
-          @click="() => {console.log(`signature to enable: `, row.signature)}"
+          @click="() => emits('enableApproval', row.signature)"
           >Enable</ButtonUI
         >
       </template>
@@ -84,6 +84,7 @@ import type { ManyExpenseWithBalances } from '@/types'
 const { approvals: _approvals } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
 }>()
+const emits = defineEmits(['disableApproval', 'enableApproval'])
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const approvals = ref([
