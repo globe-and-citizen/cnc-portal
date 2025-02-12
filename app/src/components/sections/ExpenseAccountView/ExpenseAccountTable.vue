@@ -6,6 +6,7 @@
         type="radio"
         name="pending"
         class="radio checked:bg-primary"
+        :data-test="`status-input-${status}`"
         :id="status"
         :value="status"
         v-model="selectedRadio"
@@ -13,7 +14,7 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full shadow-xl">
-    <TableComponent :rows="_filteredApprovals" :columns="columns">
+    <TableComponent :rows="filteredApprovals" :columns="columns">
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
@@ -77,88 +78,87 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { USDC_ADDRESS } from '@/constant';
 import { computed, ref, type Reactive } from 'vue'
 import type { ManyExpenseWithBalances } from '@/types'
 
-const { approvals: _approvals } = defineProps<{
+const { approvals } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
 }>()
 const emits = defineEmits(['disableApproval', 'enableApproval'])
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
-const approvals = ref([
-  {
-    approvedAddress: '0x1234567890123456789012345678901234567890',
-    tokenAddress: USDC_ADDRESS,
-    budgetData: [
-      { budgetType: 0, value: `10` },
-      { budgetType: 1, value: `100` },
-      { budgetType: 2, value: `10` }
-    ],
-    expiry: new Date().toLocaleDateString('en-US'),
-    signature: `0xSignature`,
-    name: `Some One`,
-    avatarUrl: null,
-    balances: {
-      0: `5`,
-      1: `50`
-    },
-    status: 'enabled'
-  },
-  {
-    approvedAddress: '0x1234567890123456789012345678901234567890',
-    tokenAddress: USDC_ADDRESS,
-    budgetData: [
-      { budgetType: 0, value: `10` },
-      { budgetType: 1, value: `100` },
-      { budgetType: 2, value: `10` }
-    ],
-    expiry: new Date().toLocaleDateString('en-US'),
-    signature: `0xSignature`,
-    name: `Another One`,
-    avatarUrl: null,
-    balances: {
-      0: `5`,
-      1: `50`
-    },
-    status: 'disabled'
-  },
-  {
-    approvedAddress: '0x1234567890123456789012345678901234567890',
-    tokenAddress: USDC_ADDRESS,
-    budgetData: [
-      { budgetType: 0, value: `10` },
-      { budgetType: 1, value: `100` },
-      { budgetType: 2, value: `10` }
-    ],
-    expiry: new Date().toLocaleDateString('en-US'),
-    signature: `0xSignature`,
-    name: `Another One`,
-    avatarUrl: null,
-    balances: {
-      0: `5`,
-      1: `50`
-    },
-    status: 'expired'
-  }
-])
-
-const _filteredApprovals = computed(() => {
-  if (selectedRadio.value === 'all') {
-    return _approvals;
-  } else {
-    return _approvals.filter(approval => approval.status === selectedRadio.value);
-  }
-});
+// const approvals = ref([
+//   {
+//     approvedAddress: '0x1234567890123456789012345678901234567890',
+//     tokenAddress: USDC_ADDRESS,
+//     budgetData: [
+//       { budgetType: 0, value: `10` },
+//       { budgetType: 1, value: `100` },
+//       { budgetType: 2, value: `10` }
+//     ],
+//     expiry: new Date().toLocaleDateString('en-US'),
+//     signature: `0xSignature`,
+//     name: `Some One`,
+//     avatarUrl: null,
+//     balances: {
+//       0: `5`,
+//       1: `50`
+//     },
+//     status: 'enabled'
+//   },
+//   {
+//     approvedAddress: '0x1234567890123456789012345678901234567890',
+//     tokenAddress: USDC_ADDRESS,
+//     budgetData: [
+//       { budgetType: 0, value: `10` },
+//       { budgetType: 1, value: `100` },
+//       { budgetType: 2, value: `10` }
+//     ],
+//     expiry: new Date().toLocaleDateString('en-US'),
+//     signature: `0xSignature`,
+//     name: `Another One`,
+//     avatarUrl: null,
+//     balances: {
+//       0: `5`,
+//       1: `50`
+//     },
+//     status: 'disabled'
+//   },
+//   {
+//     approvedAddress: '0x1234567890123456789012345678901234567890',
+//     tokenAddress: USDC_ADDRESS,
+//     budgetData: [
+//       { budgetType: 0, value: `10` },
+//       { budgetType: 1, value: `100` },
+//       { budgetType: 2, value: `10` }
+//     ],
+//     expiry: new Date().toLocaleDateString('en-US'),
+//     signature: `0xSignature`,
+//     name: `Another One`,
+//     avatarUrl: null,
+//     balances: {
+//       0: `5`,
+//       1: `50`
+//     },
+//     status: 'expired'
+//   }
+// ])
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return approvals.value;
+    return approvals
   } else {
-    return approvals.value.filter(approval => approval.status === selectedRadio.value);
+    return approvals.filter((approval) => approval.status === selectedRadio.value)
   }
-});
+})
+
+// const filteredApprovals = computed(() => {
+//   if (selectedRadio.value === 'all') {
+//     return approvals.value;
+//   } else {
+//     return approvals.value.filter(approval => approval.status === selectedRadio.value);
+//   }
+// });
 
 const columns = [
   {
