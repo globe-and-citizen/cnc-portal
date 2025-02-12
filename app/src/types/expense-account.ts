@@ -22,7 +22,7 @@ export interface ManyExpenseResponse {
   tokenAddress: string
   budgetData: BudgetData[]
   expiry: number
-  signature: `0x{string}`
+  signature: `0x${string}`
   name: string
   avatarUrl: string | null
 }
@@ -32,13 +32,13 @@ export interface ManyExpenseWithBalances {
   tokenAddress: string
   budgetData: BudgetData[]
   expiry: number
-  signature: `0x{string}`
+  signature: `0x${string}`
   name: string
   avatarUrl: string | null
   balances: {
     0: string
     1: string
-    2: boolean
+    2?: boolean
   }
-  status?: 'disabled' | 'enabled' | 'expired' 
+  status?: 'disabled' | 'enabled' | 'expired'
 }

@@ -171,8 +171,8 @@
       </div>
       <div class="overflow-x-auto" data-test="approvals-list-table">
         <table class="table">
-          <!-- head
-          <thead class="text-sm font-bold">
+          head -->
+    <!--<thead class="text-sm font-bold">
             <tr>
               <th>User</th>
               <th>Expiry Date</th>
@@ -220,8 +220,8 @@
       </div>
       <div class="overflow-x-auto" data-test="deactivated-list-table">
         <table class="table">
-          <!-- head 
-          <thead class="text-sm font-bold">
+          head -->
+    <!-- <thead class="text-sm font-bold">
             <tr>
               <th>User</th>
               <th>Expiry Date</th>
@@ -275,7 +275,7 @@
           Approve User Expense
         </ButtonUI>
       </div>
-      <ExpenseAccountTable 
+      <ExpenseAccountTable
         :approvals="manyExpenseAccountDataAll"
         @disable-approval="(signature) => deactivateApproval(signature, 1)"
         @enable-approval="(signature) => activateApproval(signature, 1)"
@@ -316,7 +316,6 @@ import {
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
-import UserComponent from '@/components/UserComponent.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
@@ -426,7 +425,9 @@ const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 const isDisapprovedAddress = computed(
   () =>
     manyExpenseAccountDataAll.findIndex(
-      (item) => item.approvedAddress === currentUserAddress && item.status === 'disabled'
+      (item) =>
+        item.approvedAddress === currentUserAddress &&
+        (item.status === 'disabled' || item.status === 'expired')
     ) !== -1
 )
 //#endregion
@@ -561,7 +562,7 @@ const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
-  isPending: isLoadingDeactivateApproval,
+  // isPending: isLoadingDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -574,7 +575,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 //activate approval
 const {
   writeContract: executeActivateApproval,
-  isPending: isLoadingActivateApproval,
+  // isPending: isLoadingActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()
@@ -611,26 +612,22 @@ const initializeBalances = async () => {
       await executeGetAmountWithdrawn()
 
       const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
-
+      console.log(`isExpired: `, isExpired)
       // Populate the reactive balances object
       if (Array.isArray(amountWithdrawn.value)) {
         // New algo
         manyExpenseAccountDataAll.push({
-            ...data,
-            balances: {
-              0: `${amountWithdrawn.value[0]}`,
-              1:
-                data.tokenAddress === zeroAddress
-                  ? formatEther(amountWithdrawn.value[1])
-                  : `${Number(amountWithdrawn.value[1]) / 1e6}`,
-              2: amountWithdrawn.value[2] === true
-            },
-            status: isExpired
-              ? 'expired'
-              : amountWithdrawn.value[2] === 2
-                ? 'disabled'
-                : 'enabled'
-          })
+          ...data,
+          balances: {
+            0: `${amountWithdrawn.value[0]}`,
+            1:
+              data.tokenAddress === zeroAddress
+                ? formatEther(amountWithdrawn.value[1])
+                : `${Number(amountWithdrawn.value[1]) / 1e6}`,
+            2: amountWithdrawn.value[2] === true
+          },
+          status: isExpired ? 'expired' : amountWithdrawn.value[2] === 2 ? 'disabled' : 'enabled'
+        })
         // Old algo
         /*if (amountWithdrawn.value[2] === 2) {
           manyExpenseAccountDataInactive.push({
