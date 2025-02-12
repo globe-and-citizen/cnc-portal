@@ -64,6 +64,7 @@ export function useSignWageClaim() {
 
 export function useWithdrawClaim() {
   const isLoading = ref(false)
+  const isSuccess = ref(false)
   const toastStore = useToastStore()
   const teamStore = useTeamStore()
   const claimURL = ref('')
@@ -83,10 +84,14 @@ export function useWithdrawClaim() {
     data: withdrawHash,
     error: withdrawError
   } = useWriteContract()
-  const { error: withdrawTrxError } = useWaitForTransactionReceipt({
+  const {
+    isSuccess: withdrawSuccess,
+    isFetching: withdrawTrxLoading,
+    error: withdrawTrxError
+  } = useWaitForTransactionReceipt({
     hash: withdrawHash
   })
-  const { execute: updateClaimStatus, isFinished: finishTrx } = useCustomFetch(claimURL, {
+  const { execute: updateClaimStatus } = useCustomFetch(claimURL, {
     immediate: false
   })
     .put(claimBody)
@@ -94,11 +99,10 @@ export function useWithdrawClaim() {
 
   const execute = async (claimId: number) => {
     isLoading.value = true
-    claimURL.value = `/teams/${teamStore.currentTeamId}/cash-remuneration/claim`
-    claimBody.value = { claimid: claimId }
+    claimURL.value = `/teams/${claimId}/cash-remuneration/claim`
 
     await fetchClaim()
-    withdraw({
+    await withdraw({
       abi: EIP712ABI,
       address: teamStore.currentTeam?.cashRemunerationEip712Address as Address,
       functionName: 'withdraw',
@@ -113,37 +117,38 @@ export function useWithdrawClaim() {
       ]
     })
 
-    claimURL.value = `/teams/${claimId}/cash-remuneration/claim/employee`
+    claimURL.value = `/teams/${teamStore.currentTeam!.id}/cash-remuneration/claim/employee`
+    claimBody.value = { claimid: claimId }
   }
 
-  watch(finishTrx, async () => {
-    console.log('finishedTrx', finishTrx.value)
-    if (finishTrx.value && withdrawTrxError.value === null) {
+  watch(withdrawTrxLoading, async (isConfirming, wasConfirming) => {
+    if (!isConfirming && wasConfirming && withdrawSuccess.value) {
       await updateClaimStatus()
       isLoading.value = false
+      isSuccess.value = true
       toastStore.addSuccessToast('Claim withdrawn')
     }
   })
 
   watch(withdrawError, (error) => {
-    console.log('withdrawError', withdrawError.value)
     if (error) {
+      log.error(parseError(error))
       isLoading.value = false
       toastStore.addErrorToast('Failed to withdraw claim')
     }
   })
 
   watch(claimError, (error) => {
-    console.log('claimError', claimError.value)
     if (error) {
+      log.error(parseError(error))
       isLoading.value = false
       toastStore.addErrorToast('Failed to fetch claim')
     }
   })
 
   watch(withdrawTrxError, (error) => {
-    console.log('withdrawTrxError', withdrawTrxError.value)
     if (error) {
+      log.error(parseError(error))
       isLoading.value = false
       toastStore.addErrorToast('Failed to withdraw claim')
     }
@@ -151,6 +156,7 @@ export function useWithdrawClaim() {
 
   return {
     execute,
-    isLoading
+    isLoading,
+    isSuccess
   }
 }

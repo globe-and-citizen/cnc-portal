@@ -121,9 +121,14 @@ const approvalData = ref<{
 }>({ signature: undefined, id: 0 })
 const loadingApprove = ref<{ [key: number]: boolean }>({})
 const withdrawLoading = ref<{ [key: number]: boolean }>({})
+const selectedWithdrawClaim = ref<number | undefined>(undefined)
 
 const { signature, execute: signClaim } = useSignWageClaim()
-const { execute: executeWithdrawClaim } = useWithdrawClaim()
+const {
+  execute: executeWithdrawClaim,
+  isSuccess: withdrawSuccess,
+  isLoading: withdrawClaimLoading
+} = useWithdrawClaim()
 
 const approveClaim = async (claim: ClaimResponse) => {
   loadingApprove.value[claim.id] = true
@@ -147,15 +152,12 @@ const approveClaim = async (claim: ClaimResponse) => {
 }
 
 const withdrawClaim = async (id: number) => {
-  withdrawLoading.value[id] = true
+  selectedWithdrawClaim.value = id
   try {
     await executeWithdrawClaim(id)
-    emits('fetchClaims', selectedRadio.value)
   } catch (err) {
     log.error(parseError(err))
     toastStore.addErrorToast('Failed to withdraw claim')
-  } finally {
-    withdrawLoading.value[id] = false
   }
 }
 
@@ -182,6 +184,16 @@ watch(addApprovalError, (newVal) => {
 watch(selectedRadio, () => {
   emits('fetchClaims', selectedRadio.value)
 })
+
+watch(withdrawSuccess, (newVal) => {
+  if (newVal) {
+    emits('fetchClaims', selectedRadio.value)
+  }
+})
+watch(withdrawClaimLoading, (newVal) => {
+  withdrawLoading.value[selectedWithdrawClaim.value!] = newVal
+})
+
 
 const columns = [
   {

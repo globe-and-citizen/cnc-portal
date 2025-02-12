@@ -646,13 +646,14 @@ export const updateClaimEmployee = async (req: Request, res: Response) => {
   const { claimid: claimId, hoursworked: hoursWorked } = req.body;
 
   try {
-    const memberTeamsData = await prisma.memberTeamsData.findFirst({
+    const memberTeamsData = await prisma.memberTeamsData.findUnique({
       where: {
-        userAddress: callerAddress,
-        teamId: Number(id),
+        userAddress_teamId: {
+          teamId: Number(id),
+          userAddress: callerAddress,
+        },
       },
     });
-    console.log(callerAddress, id);
 
     const claim = await prisma.claim.findUnique({
       where: { id: Number(claimId) },
