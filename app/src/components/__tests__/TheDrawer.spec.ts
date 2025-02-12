@@ -29,6 +29,11 @@ const router = createRouter({
           path: '/teams/:id/cash-remunerations',
           name: 'cash-remunerations',
           component: { template: '<div>Teams</div>' }
+        },
+        {
+          path: '/teams/:id/expense-account',
+          name: 'expense-account',
+          component: { template: '<div>Teams</div>' }
         }
       ]
     },
