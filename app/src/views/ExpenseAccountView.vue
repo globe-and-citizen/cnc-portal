@@ -3,7 +3,7 @@
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
     <div class="flex gap-10">
-      <div class="card bg-base-200 w-1/3 shadow-xl">
+      <div class="card bg-white w-1/3 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">Balance</h2>
           <div
@@ -63,7 +63,7 @@
     </div>
     <div
       v-if="team?.expenseAccountEip712Address"
-      class="card shadow-xl flex text-primary-content p-5 overflow-visible"
+      class="card shadow-xl bg-white flex text-primary-content p-5 overflow-visible"
     >
       <span class="text-2xl font-bold">My Approved Expense</span>
       <!-- TODO display this only if the use have an approved expense -->
@@ -152,7 +152,7 @@
     <!-- Activated List -->
     <div
       v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
-      class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+      class="card bg-white shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
       <div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Approved Addresses</span>
@@ -213,7 +213,7 @@
     <!-- Deactivated List -->
     <div
       v-if="manyExpenseAccountDataInactive.length > 0"
-      class="card shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+      class="card bg-white shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
     >
       <div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Deactivated Addresses</span>
