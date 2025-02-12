@@ -194,7 +194,6 @@ watch(withdrawClaimLoading, (newVal) => {
   withdrawLoading.value[selectedWithdrawClaim.value!] = newVal
 })
 
-
 const columns = [
   {
     key: 'createdAt',
