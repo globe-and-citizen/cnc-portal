@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import ExpenseAccountSection from '@/views/ExpenseAccountView.vue'
+import ExpenseAccountSection from '../ExpenseAccountView.vue'
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
