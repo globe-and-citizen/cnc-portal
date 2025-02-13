@@ -1,6 +1,3 @@
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
-import { zeroAddress } from 'viem'
-
 const isDevelopment = import.meta.env.MODE === 'development'
 // const isVerbose = true
 
@@ -31,14 +28,4 @@ export const log = {
       console.debug(`[${getTimestamp()}] DEBUG: ${message}`, ...args)
     }
   }
-}
-
-export const getTokenSymbol = (tokenAddress: string) => {
-  const symbols = {
-    [USDC_ADDRESS]: 'USDC',
-    [USDT_ADDRESS]: 'USDT',
-    [zeroAddress]: NETWORK.currencySymbol
-  }
-
-  return symbols[tokenAddress] || ''
 }
