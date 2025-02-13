@@ -20,14 +20,26 @@
           v-if="row.status == 'enabled'"
           variant="error"
           data-test="disable-button"
-          @click="() => emits('disableApproval', row.signature)"
+          :loading="loading && signatureToUpdate === row.signature"
+          @click="
+            () => {
+              emits('disableApproval', row.signature)
+              signatureToUpdate = row.signature
+            }
+          "
           >Disable</ButtonUI
         >
         <ButtonUI
           v-if="row.status == 'disabled'"
           variant="info"
           data-test="enable-button"
-          @click="() => emits('enableApproval', row.signature)"
+          :loading="loading && signatureToUpdate === row.signature"
+          @click="
+            () => {
+              emits('enableApproval', row.signature)
+              signatureToUpdate = row.signature
+            }
+          "
           >Enable</ButtonUI
         >
       </template>
@@ -81,12 +93,14 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import { computed, ref, type Reactive } from 'vue'
 import type { ManyExpenseWithBalances } from '@/types'
 
-const { approvals } = defineProps<{
+const { approvals, loading } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
+  loading: boolean
 }>()
 const emits = defineEmits(['disableApproval', 'enableApproval'])
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
+const signatureToUpdate = ref('')
 // const approvals = ref([
 //   {
 //     approvedAddress: '0x1234567890123456789012345678901234567890',

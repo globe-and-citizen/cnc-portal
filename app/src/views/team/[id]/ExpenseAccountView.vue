@@ -277,6 +277,7 @@
       </div>
       <ExpenseAccountTable
         :approvals="manyExpenseAccountDataAll"
+        :loading="isLoadingActivateApproval || isLoadingDeactivateApproval"
         @disable-approval="(signature) => deactivateApproval(signature, 1)"
         @enable-approval="(signature) => activateApproval(signature, 1)"
       />
@@ -562,7 +563,7 @@ const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
-  // isPending: isLoadingDeactivateApproval,
+  isPending: isLoadingDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -575,7 +576,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 //activate approval
 const {
   writeContract: executeActivateApproval,
-  // isPending: isLoadingActivateApproval,
+  isPending: isLoadingActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()
