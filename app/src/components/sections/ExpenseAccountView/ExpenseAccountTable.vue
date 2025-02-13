@@ -61,7 +61,7 @@
         </div>
       </template>
       <template #expiryDate-data="{ row }">
-        <span>{{ row.expiry }}</span>
+        <span>{{ new Date(Number(row.expiry) * 1000).toLocaleString('en-US') }}</span>
       </template>
       <template #status-data="{ row }">
         <span
