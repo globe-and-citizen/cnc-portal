@@ -8,6 +8,7 @@ import type { ManyExpenseWithBalances } from '@/types'
 import { reactive } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const validExpiry = new Date().getTime() / 1000 + 60 * 60
 const invalidExpiry = new Date().getTime() / 1000 - 60 * 60
@@ -22,7 +23,7 @@ const mockApprovals = reactive<ManyExpenseWithBalances[]>([
       { budgetType: 2, value: 10 }
     ],
     expiry: validExpiry,
-    signature: `0xSignature`,
+    signature: `0xSignatureOne`,
     name: `Some One`,
     avatarUrl: null,
     balances: {
@@ -40,7 +41,7 @@ const mockApprovals = reactive<ManyExpenseWithBalances[]>([
       { budgetType: 2, value: 11 }
     ],
     expiry: validExpiry,
-    signature: `0xSignature`,
+    signature: `0xSignaturTwo`,
     name: `Another One`,
     avatarUrl: null,
     balances: {
@@ -58,7 +59,7 @@ const mockApprovals = reactive<ManyExpenseWithBalances[]>([
       { budgetType: 2, value: 12 }
     ],
     expiry: invalidExpiry,
-    signature: `0xSignature`,
+    signature: `0xSignatureThree`,
     name: `Last One`,
     avatarUrl: null,
     balances: {
@@ -72,12 +73,8 @@ const mockApprovals = reactive<ManyExpenseWithBalances[]>([
 describe('ExpenseAccountTable', () => {
   setActivePinia(createPinia())
 
-  interface Props {
-    props?: {}
-  }
-
   interface ComponentOptions {
-    props?: Props
+    props?: Record<string, unknown>
     data?: () => Record<string, unknown>
     global?: Record<string, unknown>
   }
@@ -89,6 +86,7 @@ describe('ExpenseAccountTable', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountTable, {
       props: {
+        loading: false,
         approvals: mockApprovals,
         ...props
       },
@@ -196,6 +194,50 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="enable-button"]').exists()).toBeFalsy()
+    })
+
+    it('should show loading button if enabling approval', async () => {
+      const wrapper = createComponent({ props: { loading: true } })
+      const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
+      expect(statusDisabledInput.exists()).toBeTruthy()
+      //@ts-expect-error: setChecked for setting the input to checked works instead of click
+      await statusDisabledInput.setChecked()
+      await flushPromises()
+      //@ts-expect-error: custom field of component not available by default
+      expect(wrapper.vm.selectedRadio).toBe('disabled')
+      const expenseAccountTable = wrapper.findComponent(TableComponent)
+      expect(expenseAccountTable.exists()).toBeTruthy()
+      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
+      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
+      expect(firstRow.exists()).toBeTruthy()
+      expect(firstRow.html()).toContain(mockApprovals[1].name)
+      const disableButton = firstRow.findComponent(ButtonUI)
+      expect(disableButton.exists()).toBeTruthy()
+      disableButton.trigger('click')
+      await flushPromises()
+      expect(disableButton.props('loading')).toBe(true)
+    })
+
+    it('should show loading button if disabling approvals', async () => {
+      const wrapper = createComponent({ props: { loading: true } })
+      const statusEnabledInput = wrapper.find('[data-test="status-input-enabled"]')
+      expect(statusEnabledInput.exists()).toBeTruthy()
+      //@ts-expect-error: setChecked for setting the input to checked works instead of click
+      await statusEnabledInput.setChecked()
+      await flushPromises()
+      //@ts-expect-error: custom field of component not available by default
+      expect(wrapper.vm.selectedRadio).toBe('enabled')
+      const expenseAccountTable = wrapper.findComponent(TableComponent)
+      expect(expenseAccountTable.exists()).toBeTruthy()
+      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
+      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
+      expect(firstRow.exists()).toBeTruthy()
+      expect(firstRow.html()).toContain(mockApprovals[0].name)
+      const enableButton = firstRow.findComponent(ButtonUI)
+      expect(enableButton.exists()).toBeTruthy()
+      enableButton.trigger('click')
+      await flushPromises()
+      expect(enableButton.props('loading')).toBe(true)
     })
   })
 })
