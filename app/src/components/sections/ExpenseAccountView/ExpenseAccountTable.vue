@@ -21,6 +21,7 @@
           variant="error"
           data-test="disable-button"
           :loading="loading && signatureToUpdate === row.signature"
+          :disabled="!isContractOwner"
           @click="
             () => {
               emits('disableApproval', row.signature)
@@ -34,6 +35,7 @@
           variant="info"
           data-test="enable-button"
           :loading="loading && signatureToUpdate === row.signature"
+          :disabled="!isContractOwner"
           @click="
             () => {
               emits('enableApproval', row.signature)
@@ -98,67 +100,12 @@ import { zeroAddress } from 'viem'
 const { approvals, loading } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
   loading: boolean
+  isContractOwner: boolean
 }>()
 const emits = defineEmits(['disableApproval', 'enableApproval'])
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
-// const approvals = ref([
-//   {
-//     approvedAddress: '0x1234567890123456789012345678901234567890',
-//     tokenAddress: USDC_ADDRESS,
-//     budgetData: [
-//       { budgetType: 0, value: `10` },
-//       { budgetType: 1, value: `100` },
-//       { budgetType: 2, value: `10` }
-//     ],
-//     expiry: new Date().toLocaleDateString('en-US'),
-//     signature: `0xSignature`,
-//     name: `Some One`,
-//     avatarUrl: null,
-//     balances: {
-//       0: `5`,
-//       1: `50`
-//     },
-//     status: 'enabled'
-//   },
-//   {
-//     approvedAddress: '0x1234567890123456789012345678901234567890',
-//     tokenAddress: USDC_ADDRESS,
-//     budgetData: [
-//       { budgetType: 0, value: `10` },
-//       { budgetType: 1, value: `100` },
-//       { budgetType: 2, value: `10` }
-//     ],
-//     expiry: new Date().toLocaleDateString('en-US'),
-//     signature: `0xSignature`,
-//     name: `Another One`,
-//     avatarUrl: null,
-//     balances: {
-//       0: `5`,
-//       1: `50`
-//     },
-//     status: 'disabled'
-//   },
-//   {
-//     approvedAddress: '0x1234567890123456789012345678901234567890',
-//     tokenAddress: USDC_ADDRESS,
-//     budgetData: [
-//       { budgetType: 0, value: `10` },
-//       { budgetType: 1, value: `100` },
-//       { budgetType: 2, value: `10` }
-//     ],
-//     expiry: new Date().toLocaleDateString('en-US'),
-//     signature: `0xSignature`,
-//     name: `Another One`,
-//     avatarUrl: null,
-//     balances: {
-//       0: `5`,
-//       1: `50`
-//     },
-//     status: 'expired'
-//   }
-// ])
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
@@ -178,14 +125,6 @@ const tokenSymbol = (tokenAddress: string) =>
 
     return symbols[tokenAddress] || ''
   })
-
-// const filteredApprovals = computed(() => {
-//   if (selectedRadio.value === 'all') {
-//     return approvals.value;
-//   } else {
-//     return approvals.value.filter(approval => approval.status === selectedRadio.value);
-//   }
-// });
 
 const columns = [
   {
