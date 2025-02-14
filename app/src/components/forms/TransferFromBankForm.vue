@@ -1,12 +1,12 @@
 <template>
   <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
   <h3 class="pt-8">
-    This will transfer {{ amount }} {{ tokenSymbol }} from the team
+    This will transfer {{ amount }} {{ tokenList[selectedTokenId].symbol }} from the team
     {{ service.toLowerCase() }} contract to this address {{ to }}.
   </h3>
   <h3 class="pt-4">
     Current team {{ service.toLowerCase() }} contract's balance {{ bankBalance }}
-    {{ tokenSymbol }}
+    {{ tokenList[selectedTokenId].symbol }}
   </h3>
 
   <h3 v-if="asBod" class="pt-2 text-red-500">This is will create a board of direction's action</h3>
@@ -53,13 +53,44 @@
     </div>
   </div>
 
-  <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+  <div class="input input-bordered flex items-center gap-2 input-md mt-2">
     <p>Amount</p>
     |
     <input type="text" class="grow" data-test="amount-input" v-model="amount" />
     |
-    {{ tokenSymbol }}
-  </label>
+    <div>
+      <div
+        role="button"
+        class="flex items-center cursor-pointer gap-4 badge badge-lg badge-info"
+        @click="
+          () => {
+            isDropdownOpen = !isDropdownOpen
+          }
+        "
+      >
+        <span>{{ tokenList[selectedTokenId].name }}</span>
+        <ChevronDownIcon class="w-4 h-4" />
+      </div>
+      <ul
+        class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
+        ref="target"
+        v-if="isDropdownOpen"
+      >
+        <li
+          v-for="(token, id) in tokenList"
+          :key="id"
+          @click="
+            () => {
+              selectedTokenId = id
+              isDropdownOpen = false
+            }
+          "
+        >
+          <a>{{ token.name }}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
   <div
     class="pl-4 text-red-500 text-sm w-full text-left"
     v-for="error of $v.amount.$errors"
@@ -90,11 +121,22 @@ import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { onClickOutside } from '@vueuse/core'
 
 const amount = ref<string>('0')
 const to = ref<string | null>(null)
 const description = ref<string>('')
 const dropdown = ref<boolean>(true)
+const selectedTokenId = ref(0)
+const isDropdownOpen = ref<boolean>(false)
+const target = ref<HTMLElement | null>(null)
+
+const tokenList = [
+  { name: NETWORK.currencySymbol, symbol: NETWORK.currencySymbol },
+  { name: 'USDC', symbol: 'USDC' }
+]
+
 const emit = defineEmits(['transfer', 'closeModal', 'searchMembers'])
 const props = defineProps({
   loading: {
@@ -119,13 +161,9 @@ const props = defineProps({
     type: Boolean,
     required: false,
     default: false
-  },
-  tokenSymbol: {
-    type: String,
-    required: false,
-    default: NETWORK.currencySymbol
   }
 })
+
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
@@ -155,13 +193,24 @@ const submitForm = () => {
   if ($v.value.$invalid) {
     return
   }
-  emit('transfer', to.value, amount.value, description.value)
+  emit(
+    'transfer',
+    to.value,
+    amount.value,
+    description.value,
+    tokenList[selectedTokenId.value].symbol
+  )
 }
 
 watch(to, () => {
   if (to.value?.length ?? 0 > 0) {
     emit('searchMembers', to.value)
   }
+})
+
+// Handle clicking outside of dropdown
+onClickOutside(target, () => {
+  isDropdownOpen.value = false
 })
 </script>
 

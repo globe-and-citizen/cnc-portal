@@ -470,14 +470,30 @@ const handleUsdcDeposit = async (amount: string) => {
   })
 }
 
-const transferFromBank = async (to: string, amount: string) => {
+const transferFromBank = async (to: string, amount: string, description: string, token: string) => {
   if (!bankAddress.value) return
-  transfer({
-    address: bankAddress.value,
-    abi: BankABI,
-    functionName: 'transfer',
-    args: [to, parseEther(amount)]
-  })
+
+  try {
+    if (token === NETWORK.currencySymbol) {
+      transfer({
+        address: bankAddress.value,
+        abi: BankABI,
+        functionName: 'transfer',
+        args: [to, parseEther(amount)]
+      })
+    } else if (token === 'USDC') {
+      const tokenAmount = BigInt(Number(amount) * 1e6)
+      transfer({
+        address: bankAddress.value,
+        abi: BankABI,
+        functionName: 'transferToken',
+        args: [USDC_ADDRESS as Address, to, tokenAmount]
+      })
+    }
+  } catch (error) {
+    console.error(error)
+    addErrorToast(`Failed to transfer ${token}`)
+  }
 }
 
 const depositToken = async () => {
