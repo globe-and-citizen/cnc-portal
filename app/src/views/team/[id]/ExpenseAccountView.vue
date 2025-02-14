@@ -608,26 +608,36 @@ const initializeBalances = async () => {
   manyExpenseAccountDataAll.length = 0
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
-      signatureHash.value = keccak256(data.signature)
-
-      await executeGetAmountWithdrawn()
+      const amountWithdrawn = await readContract(config, {
+        functionName: 'balances',
+        address: expenseAccountEip712Address.value as unknown as Address,
+        abi: expenseAccountABI,
+        args: [keccak256(data.signature)]
+      })
 
       const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
-      console.log(`isExpired: `, isExpired)
+
       // Populate the reactive balances object
-      if (Array.isArray(amountWithdrawn.value)) {
+      if (
+        Array.isArray(amountWithdrawn /*.value*/) &&
+        manyExpenseAccountDataAll.findIndex((item) => item.signature === data.signature) === -1
+      ) {
         // New algo
         manyExpenseAccountDataAll.push({
           ...data,
           balances: {
-            0: `${amountWithdrawn.value[0]}`,
+            0: `${amountWithdrawn /*.value*/[0]}`,
             1:
               data.tokenAddress === zeroAddress
-                ? formatEther(amountWithdrawn.value[1])
-                : `${Number(amountWithdrawn.value[1]) / 1e6}`,
-            2: amountWithdrawn.value[2] === true
+                ? formatEther(amountWithdrawn /*.value*/[1])
+                : `${Number(amountWithdrawn /*.value*/[1]) / 1e6}`,
+            2: amountWithdrawn /*.value*/[2] === true
           },
-          status: isExpired ? 'expired' : amountWithdrawn.value[2] === 2 ? 'disabled' : 'enabled'
+          status: isExpired
+            ? 'expired'
+            : amountWithdrawn /*.value*/[2] === 2
+              ? 'disabled'
+              : 'enabled'
         })
         // Old algo
         /*if (amountWithdrawn.value[2] === 2) {
@@ -654,7 +664,7 @@ const initializeBalances = async () => {
               2: amountWithdrawn.value[2] === false
             }
           })*/
-      } else {
+      } /* else {
         manyExpenseAccountDataAll.push({
           ...data,
           balances: {
@@ -664,7 +674,7 @@ const initializeBalances = async () => {
           },
           status: 'disabled'
         })
-      }
+      }*/
     }
 }
 
