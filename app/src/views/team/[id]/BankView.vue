@@ -17,21 +17,45 @@
               <div>
                 <h2 class="text-lg font-medium mb-1">Balance</h2>
                 <div class="flex items-baseline gap-2">
-                  <span class="text-4xl font-bold">1260</span>
-                  <span class="text-gray-600">USDT</span>
+                  <span class="text-4xl font-bold">
+                    <span class="inline-block min-w-16 h-10">
+                      <span
+                        class="loading loading-spinner loading-lg"
+                        v-if="balanceLoading || isLoadingUsdcBalance"
+                      ></span>
+                      <span v-else>{{ teamBalance?.formatted }}</span>
+                    </span>
+                  </span>
+                  <span class="text-gray-600">{{ NETWORK.currencySymbol }}</span>
                 </div>
-                <div class="text-sm text-gray-500 mt-1">≈ 1250 CAD</div>
+                <div class="text-sm text-gray-500 mt-1">≈ $ 1.28</div>
+                <div class="mt-2">
+                  <span>USDC Balance: </span>
+                  <span>{{ usdcBalance ? Number(usdcBalance) / 1e6 : '0' }}</span>
+                </div>
               </div>
               <div class="flex gap-2">
-                <ButtonUI variant="secondary" class="flex items-center gap-2">
+                <ButtonUI
+                  v-if="team?.bankAddress"
+                  variant="secondary"
+                  class="flex items-center gap-2"
+                >
                   <PlusIcon class="w-5 h-5" />
                   Deposit
                 </ButtonUI>
-                <ButtonUI variant="secondary" class="flex items-center gap-2">
+                <ButtonUI
+                  v-if="team?.bankAddress"
+                  variant="secondary"
+                  class="flex items-center gap-2"
+                >
                   <ArrowsRightLeftIcon class="w-5 h-5" />
                   Transfer
                 </ButtonUI>
-                <ButtonUI variant="secondary" class="flex items-center gap-2">
+                <ButtonUI
+                  v-if="team?.bankAddress"
+                  variant="secondary"
+                  class="flex items-center gap-2"
+                >
                   <UserGroupIcon class="w-5 h-5" />
                   Send To Members
                 </ButtonUI>
@@ -40,7 +64,7 @@
 
             <div class="text-sm text-gray-600 mt-4">
               Contract Address:
-              <span class="font-mono">0x70997970C51812dc3A010C7d01b50e0d17dc79C8</span>
+              <span class="font-mono">{{ team?.bankAddress }}</span>
             </div>
           </div>
         </div>
@@ -111,9 +135,10 @@
                 {{ row.type }}
               </span>
             </template>
-            <template #receipts-data>
+            <template #receipts-data="{ row }">
               <a
-                href="#"
+                :href="row.receipt"
+                target="_blank"
                 class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
               >
                 <DocumentTextIcon class="h-4 w-4" />
@@ -145,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import {
   PlusIcon,
   ArrowsRightLeftIcon,
@@ -155,19 +180,61 @@ import {
 } from '@heroicons/vue/24/outline'
 import TableComponent from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
+import type { Team } from '@/types'
+import { useToastStore } from '@/stores/useToastStore'
+import { log, parseError } from '@/utils'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { type Address } from 'viem'
+import { useRoute } from 'vue-router'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
-interface Token {
-  name: string
-  network: string
-  price: number
-  balance: number
-  amount: number
-}
+const route = useRoute()
+const { addErrorToast } = useToastStore()
+const chainId = useChainId()
 
-interface TokenWithRank extends Token {
-  rank: number
-}
+// Fetch team data
+const {
+  data: team,
+  error: teamError,
+  execute: executeFetchTeam
+} = useCustomFetch(`teams/${String(route.params.id)}`)
+  .get()
+  .json<Team>()
 
+// Computed bank address to handle undefined cases
+const bankAddress = computed(() => {
+  if (!team.value?.bankAddress) return undefined
+  return team.value.bankAddress as Address
+})
+
+// Balance fetching
+const {
+  data: teamBalance,
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: bankAddress as unknown as Address,
+  chainId
+})
+
+// USDC Balance
+const {
+  data: usdcBalance,
+  isLoading: isLoadingUsdcBalance,
+  refetch: fetchUsdcBalance,
+  error: usdcBalanceError
+} = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [bankAddress as unknown as Address]
+})
+
+//#region Functions
+// Template data
 const tokens = ref<Token[]>([
   {
     name: 'Pol',
@@ -186,11 +253,23 @@ const tokens = ref<Token[]>([
   {
     name: 'USDC',
     network: 'USDC',
-    price: 10,
-    balance: 40,
-    amount: 4
+    price: Number(usdcBalance.value) / 1e6 || 0,
+    balance: Number(usdcBalance.value) / 1e6 || 0,
+    amount: Number(usdcBalance.value) / 1e6 || 0
   }
 ])
+
+interface Token {
+  name: string
+  network: string
+  price: number
+  balance: number
+  amount: number
+}
+
+interface TokenWithRank extends Token {
+  rank: number
+}
 
 const tokensWithRank = computed<TokenWithRank[]>(() =>
   tokens.value.map((token, index) => ({
@@ -207,28 +286,50 @@ const transactions = ref([
     from: '0xf39Fd..DD',
     to: '0xf39Fd..DD',
     amountUSD: 10,
-    amountCAD: 12
+    amountCAD: 12,
+    receipt: 'https://example.com/receipt'
   }
 ])
+
+// Async initialization function
+const init = async () => {
+  await executeFetchTeam()
+  fetchBalance()
+  fetchUsdcBalance()
+}
+
+//#region Watch
+watch(
+  () => team.value,
+  async (newVal) => {
+    if (newVal) await init()
+  }
+)
+
+watch(teamError, () => {
+  if (teamError.value) {
+    addErrorToast('Failed to fetch team data')
+    log.error('Failed to fetch team data:', parseError(teamError.value))
+  }
+})
+
+watch(balanceError, () => {
+  if (balanceError.value) {
+    addErrorToast('Failed to fetch team balance')
+    log.error('Failed to fetch team balance:', parseError(balanceError.value))
+  }
+})
+
+watch(usdcBalanceError, () => {
+  if (usdcBalanceError.value) {
+    addErrorToast('Failed to fetch USDC balance')
+    log.error('Failed to fetch USDC balance:', parseError(usdcBalanceError.value))
+  }
+})
+
+//#endregion
+
+onMounted(async () => {
+  await init()
+})
 </script>
-
-<style>
-:root {
-  --primary: #4046dd;
-  --success: #00ab55;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  border-color: var(--primary);
-}
-
-.btn-success {
-  background-color: var(--success);
-  border-color: var(--success);
-}
-
-.badge-success {
-  background-color: var(--success);
-}
-</style>
