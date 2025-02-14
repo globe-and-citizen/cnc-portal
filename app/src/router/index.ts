@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import CashRemunerationView from '@/views/CashRemunerationView.vue'
+import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
 import ListIndex from '@/views/team/ListIndex.vue'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
@@ -67,6 +68,11 @@ const router = createRouter({
           path: '/teams/:id/cash-remunerations',
           name: 'cash-remunerations',
           component: CashRemunerationView
+        },
+        {
+          path: '/teams/:id/expense-account',
+          name: 'expense-account',
+          component: ExpenseAccountView
         },
         {
           path: '/teams/:id/bank',
