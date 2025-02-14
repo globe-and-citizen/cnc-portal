@@ -45,7 +45,8 @@ interface ComponentData {
 const mocks = vi.hoisted(() => ({
   mockUseToastStore: {
     addErrorToast: vi.fn()
-  }
+  },
+  mockReadContract: vi.fn()
 }))
 
 vi.mock('@/stores', async (importOriginal) => {
@@ -108,6 +109,16 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useBalance: vi.fn(() => mockUseBalance),
     useChainId: vi.fn(() => ref('0xChainId')),
     useSignTypedData: vi.fn(() => mockUseSignTypedData)
+  }
+})
+
+const mockReadContract = vi.fn()
+
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    readContract: mocks.mockReadContract
   }
 })
 
@@ -353,14 +364,13 @@ describe('ExpenseAccountSection', () => {
 
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
       wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
+      mocks.mockReadContract.mockImplementation(() => [0, 1 * 10 ** 18, 2])
       wrapperVm.team = {
         expenseAccountEip712Address: '0xExpenseAccount',
         ownerAddress: '0xOwner',
         boardOfDirectorsAddress: null
       }
       await flushPromises()
-
-      console.log(`manyExpenseAccountData: `, wrapperVm.manyExpenseAccountData)
 
       const approvalTable = wrapper.find('[data-test="approval-table"]')
       expect(approvalTable.exists()).toBeTruthy()
