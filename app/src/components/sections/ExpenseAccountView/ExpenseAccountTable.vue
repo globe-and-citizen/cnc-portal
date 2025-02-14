@@ -75,7 +75,7 @@
         >
       </template>
       <template #maxAmountPerTx-data="{ row }">
-        <span>{{ row.budgetData[2].value }}</span>
+        <span>{{ row.budgetData[2].value }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
       <template #transactions-data="{ row }">
         <span>{{ row.balances[0] }}/{{ row.budgetData[0].value }}</span>
@@ -92,6 +92,8 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, ref, type Reactive } from 'vue'
 import type { ManyExpenseWithBalances } from '@/types'
+import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { zeroAddress } from 'viem'
 
 const { approvals, loading } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
@@ -165,6 +167,17 @@ const filteredApprovals = computed(() => {
     return approvals.filter((approval) => approval.status === selectedRadio.value)
   }
 })
+
+const tokenSymbol = (tokenAddress: string) =>
+  computed(() => {
+    const symbols = {
+      [USDC_ADDRESS]: 'USDC',
+      [USDT_ADDRESS]: 'USDT',
+      [zeroAddress]: NETWORK.currencySymbol
+    }
+
+    return symbols[tokenAddress] || ''
+  })
 
 // const filteredApprovals = computed(() => {
 //   if (selectedRadio.value === 'all') {
