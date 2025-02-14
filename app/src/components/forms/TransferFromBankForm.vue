@@ -5,7 +5,7 @@
     {{ service.toLowerCase() }} contract to this address {{ to }}.
   </h3>
   <h3 class="pt-4">
-    Current team {{ service.toLowerCase() }} contract's balance {{ bankBalance }}
+    Current team {{ service.toLowerCase() }} contract's balance {{ getSelectedTokenBalance }}
     {{ tokenList[selectedTokenId].symbol }}
   </h3>
 
@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
 import type { User } from '@/types'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
@@ -148,6 +148,11 @@ const props = defineProps({
     required: false,
     default: '0'
   },
+  usdcBalance: {
+    type: String,
+    required: false,
+    default: '0'
+  },
   filteredMembers: {
     type: Array<User>,
     required: true,
@@ -162,6 +167,13 @@ const props = defineProps({
     required: false,
     default: false
   }
+})
+
+const getSelectedTokenBalance = computed(() => {
+  if (tokenList[selectedTokenId.value].symbol === 'USDC') {
+    return props.usdcBalance
+  }
+  return props.bankBalance
 })
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {

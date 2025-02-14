@@ -196,6 +196,7 @@
         :filteredMembers="foundUsers"
         :loading="transferLoading || isConfirmingTransfer"
         :bank-balance="teamBalance?.formatted || '0'"
+        :usdc-balance="usdcBalance ? (Number(usdcBalance) / 1e6).toString() : '0'"
         service="Bank"
       />
     </ModalComponent>
