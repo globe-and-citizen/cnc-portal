@@ -112,8 +112,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-const mockReadContract = vi.fn()
-
 vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
