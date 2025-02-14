@@ -39,6 +39,7 @@
                   v-if="team?.bankAddress"
                   variant="secondary"
                   class="flex items-center gap-2"
+                  @click="depositModal = true"
                 >
                   <PlusIcon class="w-5 h-5" />
                   Deposit
@@ -47,18 +48,20 @@
                   v-if="team?.bankAddress"
                   variant="secondary"
                   class="flex items-center gap-2"
+                  @click="transferModal = true"
                 >
                   <ArrowsRightLeftIcon class="w-5 h-5" />
                   Transfer
                 </ButtonUI>
-                <ButtonUI
+                <!-- <ButtonUI
                   v-if="team?.bankAddress"
                   variant="secondary"
                   class="flex items-center gap-2"
+                  @click="tokenDepositModal = true"
                 >
                   <UserGroupIcon class="w-5 h-5" />
                   Send To Members
-                </ButtonUI>
+                </ButtonUI> -->
               </div>
             </div>
 
@@ -166,6 +169,66 @@
         </div>
       </div>
     </div>
+
+    <ModalComponent v-model="depositModal">
+      <DepositBankForm
+        v-if="depositModal"
+        @close-modal="() => (depositModal = false)"
+        @deposit="depositToBank"
+        :loading="depositLoading || isConfirmingDeposit"
+      />
+    </ModalComponent>
+
+    <ModalComponent v-model="transferModal">
+      <TransferFromBankForm
+        v-if="transferModal"
+        @close-modal="() => (transferModal = false)"
+        @transfer="transferFromBank"
+        @searchMembers="(input: string) => searchUsers({ name: '', address: input })"
+        :filteredMembers="foundUsers"
+        :loading="transferLoading || isConfirmingTransfer"
+        :bank-balance="teamBalance?.formatted || '0'"
+        service="Bank"
+      />
+    </ModalComponent>
+
+    <ModalComponent v-model="tokenDepositModal">
+      <div class="flex flex-col gap-4 justify-start">
+        <span class="font-bold text-xl sm:text-2xl">Deposit USDC</span>
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Amount</span>
+          </label>
+          <input
+            type="number"
+            class="input input-bordered w-full"
+            placeholder="Enter amount"
+            v-model="tokenAmount"
+          />
+        </div>
+        <div class="text-center">
+          <ButtonUI
+            :loading="
+              isConfirmingTokenDeposit ||
+              tokenDepositLoading ||
+              isConfirmingApprove ||
+              isPendingApprove
+            "
+            :disabled="
+              isConfirmingTokenDeposit ||
+              tokenDepositLoading ||
+              isConfirmingApprove ||
+              isPendingApprove
+            "
+            class="w-full sm:w-44"
+            @click="depositToken"
+            variant="primary"
+          >
+            Deposit USDC
+          </ButtonUI>
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 
@@ -180,19 +243,36 @@ import {
 } from '@heroicons/vue/24/outline'
 import TableComponent from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
+import {
+  useBalance,
+  useReadContract,
+  useChainId,
+  useSendTransaction,
+  useWaitForTransactionReceipt,
+  useWriteContract
+} from '@wagmi/vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import type { Team } from '@/types'
+import type { Team, User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { log, parseError } from '@/utils'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { type Address } from 'viem'
 import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { parseEther } from 'viem'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import { useUserDataStore } from '@/stores/user'
+import BankABI from '@/artifacts/abi/bank.json'
 
 const route = useRoute()
-const { addErrorToast } = useToastStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
 const chainId = useChainId()
+const userDataStore = useUserDataStore()
+const currentAddress = userDataStore.address
 
 // Fetch team data
 const {
@@ -283,6 +363,117 @@ const transactions = ref([
   }
 ])
 
+// Add refs for modals and form data
+const depositModal = ref(false)
+const transferModal = ref(false)
+const tokenDepositModal = ref(false)
+const tokenAmount = ref('')
+const foundUsers = ref<User[]>([])
+
+// Add contract interactions
+const { sendTransaction, isPending: depositLoading, data: depositHash } = useSendTransaction()
+
+const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
+  hash: depositHash
+})
+
+const {
+  data: transferHash,
+  isPending: transferLoading,
+  writeContract: transfer
+} = useWriteContract()
+
+const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
+  hash: transferHash
+})
+
+const {
+  writeContract: writeTokenDeposit,
+  isPending: tokenDepositLoading,
+  data: tokenDepositHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
+  hash: tokenDepositHash
+})
+
+const {
+  writeContract: approve,
+  data: approveHash,
+  isPending: isPendingApprove
+} = useWriteContract()
+
+const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
+  hash: approveHash
+})
+
+// Add functions
+const depositToBank = async (amount: string) => {
+  if (bankAddress.value) {
+    sendTransaction({
+      to: bankAddress.value,
+      value: parseEther(amount)
+    })
+  }
+}
+
+const transferFromBank = async (to: string, amount: string) => {
+  if (!bankAddress.value) return
+  transfer({
+    address: bankAddress.value,
+    abi: BankABI,
+    functionName: 'transfer',
+    args: [to, parseEther(amount)]
+  })
+}
+
+const depositToken = async () => {
+  if (!bankAddress.value || !tokenAmount.value) return
+  const amount = BigInt(Number(tokenAmount.value) * 1e6)
+
+  try {
+    const allowance = await readContract(config, {
+      address: USDC_ADDRESS as Address,
+      abi: ERC20ABI,
+      functionName: 'allowance',
+      args: [currentAddress as Address, bankAddress.value]
+    })
+    const currentAllowance = allowance ? allowance.toString() : 0n
+    if (Number(currentAllowance) < Number(amount)) {
+      approve({
+        address: USDC_ADDRESS as Address,
+        abi: ERC20ABI,
+        functionName: 'approve',
+        args: [bankAddress.value, amount]
+      })
+    } else {
+      writeTokenDeposit({
+        address: bankAddress.value,
+        abi: BankABI,
+        functionName: 'depositToken',
+        args: [USDC_ADDRESS as Address, amount]
+      })
+    }
+  } catch (error) {
+    console.error(error)
+    addErrorToast('Failed to deposit token')
+  }
+}
+
+const searchUsers = async (input: { name: string; address: string }) => {
+  try {
+    if (input.address) {
+      const { data } = await useCustomFetch(`user/search?address=${input.address}`)
+        .get()
+        .json<{ users: User[] }>()
+      foundUsers.value = data.value?.users || []
+    }
+  } catch (error) {
+    console.error(error)
+    addErrorToast('Failed to search users')
+  }
+}
+
 // Async initialization function
 const init = async () => {
   await executeFetchTeam()
@@ -316,6 +507,31 @@ watch(usdcBalanceError, () => {
   if (usdcBalanceError.value) {
     addErrorToast('Failed to fetch USDC balance')
     log.error('Failed to fetch USDC balance:', parseError(usdcBalanceError.value))
+  }
+})
+
+watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Deposited successfully')
+    depositModal.value = false
+    fetchBalance()
+  }
+})
+
+watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Transferred successfully')
+    transferModal.value = false
+    fetchBalance()
+  }
+})
+
+watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Token deposited successfully')
+    fetchUsdcBalance()
+    tokenDepositModal.value = false
+    tokenAmount.value = ''
   }
 })
 
