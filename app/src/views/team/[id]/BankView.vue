@@ -237,7 +237,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import {
   PlusIcon,
   ArrowsRightLeftIcon,
-  UserGroupIcon,
   DocumentTextIcon,
   ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
@@ -482,12 +481,6 @@ const init = async () => {
 }
 
 //#region Watch
-watch(
-  () => team.value,
-  async (newVal) => {
-    if (newVal) await init()
-  }
-)
 
 watch(teamError, () => {
   if (teamError.value) {
