@@ -88,6 +88,7 @@ describe('ExpenseAccountTable', () => {
       props: {
         loading: false,
         approvals: mockApprovals,
+        isContractOwner: true,
         ...props
       },
       data,
@@ -238,6 +239,21 @@ describe('ExpenseAccountTable', () => {
       enableButton.trigger('click')
       await flushPromises()
       expect(enableButton.props('loading')).toBe(true)
+    })
+    it('should disable action buttons if not contract owner', async () => {
+      const wrapper = createComponent({ props: { isContractOwner: false } })
+      await flushPromises()
+      const expenseAccountTable = wrapper.findComponent(TableComponent)
+      expect(expenseAccountTable.exists()).toBeTruthy()
+      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
+      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
+      expect(firstRow.exists()).toBeTruthy()
+      const enableButton = firstRow.findComponent(ButtonUI)
+      expect(enableButton.props('disabled')).toBe(true)
+      const secondRow = expenseAccountTable.find('[data-test="1-row"]')
+      expect(secondRow.exists()).toBeTruthy()
+      const disableButton = secondRow.findComponent(ButtonUI)
+      expect(disableButton.props('disabled')).toBe(true)
     })
   })
 })
