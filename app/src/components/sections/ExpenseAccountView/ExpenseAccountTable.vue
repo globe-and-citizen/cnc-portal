@@ -13,7 +13,7 @@
       />
     </label>
   </div>
-  <div class="card bg-base-100 w-full shadow-xl">
+  <div class="card bg-base-100 w-full">
     <TableComponent :rows="filteredApprovals" :columns="columns">
       <template #action-data="{ row }">
         <ButtonUI
