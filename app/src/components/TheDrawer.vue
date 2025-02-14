@@ -263,10 +263,10 @@ const menuItems = computed(() => [
     label: 'Expense Account ',
     icon: BriefcaseIcon,
     route: {
-      name: 'bank',
+      name: 'expense-account',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: true
+    show: teamStore.currentTeam?.expenseAccountEip712Address
   },
   {
     label: 'SHER TOKEN',
