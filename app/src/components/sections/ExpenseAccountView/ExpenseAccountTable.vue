@@ -20,6 +20,7 @@
           v-if="row.status == 'enabled'"
           variant="error"
           data-test="disable-button"
+          size="sm"
           :loading="loading && signatureToUpdate === row.signature"
           :disabled="!isContractOwner"
           @click="
@@ -34,6 +35,7 @@
           v-if="row.status == 'disabled'"
           variant="info"
           data-test="enable-button"
+          size="sm"
           :loading="loading && signatureToUpdate === row.signature"
           :disabled="!isContractOwner"
           @click="
@@ -69,9 +71,9 @@
         <span
           class="badge"
           :class="{
-            'badge-success': row.status === 'enabled',
-            'badge-info': row.status === 'disabled',
-            'badge-error': row.status === 'expired'
+            'badge-success badge-outline': row.status === 'enabled',
+            'badge-info badge-outline': row.status === 'disabled',
+            'badge-error badge-outline': row.status === 'expired'
           }"
           >{{ row.status }}</span
         >
