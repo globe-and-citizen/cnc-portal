@@ -175,7 +175,15 @@
         v-if="depositModal"
         @close-modal="() => (depositModal = false)"
         @deposit="depositToBank"
-        :loading="depositLoading || isConfirmingDeposit"
+        :loading="
+          depositLoading ||
+          isConfirmingDeposit ||
+          isPendingApprove ||
+          isConfirmingApprove ||
+          tokenDepositLoading ||
+          isConfirmingTokenDeposit
+        "
+        :loading-text="loadingText"
       />
     </ModalComponent>
 
@@ -398,22 +406,68 @@ const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
 
 const {
   writeContract: approve,
-  data: approveHash,
-  isPending: isPendingApprove
+  isPending: isPendingApprove,
+  data: approveHash
 } = useWriteContract()
 
 const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
   hash: approveHash
 })
 
+// Add ref for storing deposit amount during approval process
+const depositAmount = ref('')
+
 // Add functions
-const depositToBank = async (amount: string) => {
-  if (bankAddress.value) {
-    sendTransaction({
-      to: bankAddress.value,
-      value: parseEther(amount)
-    })
+const depositToBank = async (data: { amount: string; token: string }) => {
+  if (!bankAddress.value) return
+
+  try {
+    if (data.token === 'ETH') {
+      sendTransaction({
+        to: bankAddress.value,
+        value: parseEther(data.amount)
+      })
+    } else if (data.token === 'USDC') {
+      const amount = BigInt(Number(data.amount) * 1e6)
+      depositAmount.value = data.amount // Store amount for after approval
+
+      const allowance = await readContract(config, {
+        address: USDC_ADDRESS as Address,
+        abi: ERC20ABI,
+        functionName: 'allowance',
+        args: [currentAddress as Address, bankAddress.value]
+      })
+
+      const currentAllowance = allowance ? allowance.toString() : 0n
+      if (Number(currentAllowance) < Number(amount)) {
+        approve({
+          address: USDC_ADDRESS as Address,
+          abi: ERC20ABI,
+          functionName: 'approve',
+          args: [bankAddress.value, amount]
+        })
+      } else {
+        // If already approved, deposit directly
+        await handleUsdcDeposit(data.amount)
+      }
+    }
+  } catch (error) {
+    console.error(error)
+    addErrorToast(`Failed to deposit ${data.token}`)
   }
+}
+
+// Add helper function for USDC deposit
+const handleUsdcDeposit = async (amount: string) => {
+  if (!bankAddress.value) return
+  const tokenAmount = BigInt(Number(amount) * 1e6)
+
+  writeTokenDeposit({
+    address: bankAddress.value,
+    abi: BankABI,
+    functionName: 'depositToken',
+    args: [USDC_ADDRESS as Address, tokenAmount]
+  })
 }
 
 const transferFromBank = async (to: string, amount: string) => {
@@ -473,6 +527,17 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
+// Add loading state text
+const loadingText = computed(() => {
+  if (isPendingApprove.value) return 'Approving USDC...'
+  if (isConfirmingApprove.value) return 'Confirming USDC approval...'
+  if (tokenDepositLoading.value) return 'Depositing USDC...'
+  if (isConfirmingTokenDeposit.value) return 'Confirming USDC deposit...'
+  if (depositLoading.value) return 'Depositing ETH...'
+  if (isConfirmingDeposit.value) return 'Confirming ETH deposit...'
+  return 'Processing...'
+})
+
 // Async initialization function
 const init = async () => {
   await executeFetchTeam()
@@ -505,7 +570,7 @@ watch(usdcBalanceError, () => {
 
 watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Deposited successfully')
+    addSuccessToast('ETH deposited successfully')
     depositModal.value = false
     fetchBalance()
   }
@@ -521,10 +586,20 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
 
 watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Token deposited successfully')
+    addSuccessToast('USDC deposited successfully')
+    depositModal.value = false
     fetchUsdcBalance()
-    tokenDepositModal.value = false
-    tokenAmount.value = ''
+    depositAmount.value = '' // Clear stored amount
+  }
+})
+
+watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Token approved successfully')
+    // Continue with the deposit after approval
+    if (depositAmount.value) {
+      await handleUsdcDeposit(depositAmount.value)
+    }
   }
 })
 
