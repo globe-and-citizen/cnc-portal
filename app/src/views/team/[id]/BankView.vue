@@ -233,38 +233,30 @@ const {
   args: [bankAddress as unknown as Address]
 })
 
-//#region Functions
 // Template data
-const tokens = ref<Token[]>([
+const tokens = computed<Token[]>(() => [
   {
-    name: 'Pol',
-    network: 'Polygon',
-    price: 10,
-    balance: 40,
-    amount: 4
-  },
-  {
-    name: 'USDT',
-    network: 'USDT',
-    price: 10,
-    balance: 40,
-    amount: 4
+    name: 'ETH',
+    network: 'Ethereum',
+    price: 0, // TODO: Add price fetching
+    balance: teamBalance.value ? Number(teamBalance.value.formatted) : 0,
+    amount: teamBalance.value ? Number(teamBalance.value.formatted) : 0
   },
   {
     name: 'USDC',
     network: 'USDC',
-    price: Number(usdcBalance.value) / 1e6 || 0,
-    balance: Number(usdcBalance.value) / 1e6 || 0,
-    amount: Number(usdcBalance.value) / 1e6 || 0
+    price: 1, // USDC is a stablecoin pegged to USD
+    balance: usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0,
+    amount: usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0
   }
 ])
 
 interface Token {
   name: string
   network: string
-  price: number
-  balance: number
-  amount: number
+  price: number // Price in USD
+  balance: number // Balance in token's native unit
+  amount: number // Amount in token's native unit
 }
 
 interface TokenWithRank extends Token {
