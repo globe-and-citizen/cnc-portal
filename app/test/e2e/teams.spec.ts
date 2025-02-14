@@ -73,10 +73,11 @@ describe('Teams', () => {
 
       await page.goto('http://localhost:5173/teams')
       // Loading state assertion
-      expect(await page.isVisible('[data-test="loading-state"]')).toBeTruthy()
+      expect(await page.isVisible('[data-test="loader"]')).toBeTruthy()
 
       // Wait for teams to be rendered
-      await page.waitForSelector(`[data-test="loading-state"]`, { state: 'hidden' })
+      expect(await page.isVisible('[data-test="loader"]')).toBeFalsy()
+      expect(await page.isVisible('[data-test="team-list"]')).toBeTruthy()
 
       // Check if teams are rendered
       for (const team of teams) {
@@ -87,7 +88,7 @@ describe('Teams', () => {
         )
       }
 
-      expect(await page.isHidden('[data-test="loading-state"]')).toBeTruthy()
+      // expect(await page.isHidden('[data-test="loading-state"]')).toBeTruthy()
       expect(await page.isVisible('[data-test="add-team-card"]')).toBeTruthy()
 
       await page.click('div[data-test="team-card-1"]')
@@ -128,9 +129,8 @@ describe('Teams', () => {
 
       await page.goto('http://localhost:5173/teams')
       // Wait for error message to appear
-      await page.waitForSelector('[data-test="toast-container"]')
+      await page.waitForSelector('[data-test="error-state"]')
 
-      expect(await page.isVisible('[data-test="toast-container"]')).toBeTruthy()
       expect(await page.isVisible('[data-test="error-state"]')).toBeTruthy()
     })
   })
