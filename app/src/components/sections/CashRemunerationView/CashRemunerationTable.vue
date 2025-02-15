@@ -98,7 +98,6 @@ import { useSignWageClaim, useWithdrawClaim } from '@/composables/useClaim'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
-import { log, parseError } from '@/utils'
 import type { Address } from 'viem'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -126,39 +125,29 @@ const selectedWithdrawClaim = ref<number | undefined>(undefined)
 const { signature, execute: signClaim } = useSignWageClaim()
 const {
   execute: executeWithdrawClaim,
-  isSuccess: withdrawSuccess,
-  isLoading: withdrawClaimLoading
+  isLoading: withdrawClaimLoading,
+  isSuccess: withdrawClaimSuccess
 } = useWithdrawClaim()
 
 const approveClaim = async (claim: ClaimResponse) => {
   loadingApprove.value[claim.id] = true
 
-  try {
-    await signClaim(claim)
-    approvalData.value = {
-      id: claim.id,
-      signature: signature.value
-    }
-
-    await addApprovalAPI()
-
-    emits('fetchClaims', selectedRadio.value)
-  } catch (err) {
-    log.error(parseError(err))
-    toastStore.addErrorToast('Failed to approve claim')
-  } finally {
-    loadingApprove.value[claim.id] = false
+  await signClaim(claim)
+  approvalData.value = {
+    id: claim.id,
+    signature: signature.value
   }
+
+  await addApprovalAPI()
+
+  emits('fetchClaims', selectedRadio.value)
+  loadingApprove.value[claim.id] = false
 }
 
 const withdrawClaim = async (id: number) => {
   selectedWithdrawClaim.value = id
-  try {
-    await executeWithdrawClaim(id)
-  } catch (err) {
-    log.error(parseError(err))
-    toastStore.addErrorToast('Failed to withdraw claim')
-  }
+
+  await executeWithdrawClaim(id)
 }
 
 const {
@@ -184,14 +173,13 @@ watch(addApprovalError, (newVal) => {
 watch(selectedRadio, () => {
   emits('fetchClaims', selectedRadio.value)
 })
-
-watch(withdrawSuccess, (newVal) => {
+watch(withdrawClaimLoading, (newVal) => {
+  withdrawLoading.value[selectedWithdrawClaim.value!] = newVal
+})
+watch(withdrawClaimSuccess, (newVal) => {
   if (newVal) {
     emits('fetchClaims', selectedRadio.value)
   }
-})
-watch(withdrawClaimLoading, (newVal) => {
-  withdrawLoading.value[selectedWithdrawClaim.value!] = newVal
 })
 
 const columns = [
