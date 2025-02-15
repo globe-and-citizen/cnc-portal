@@ -4,7 +4,8 @@
       <span class="label-text">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</span>
       <input
         type="radio"
-        name="pending"
+        :name="status"
+        :data-test="`radio-${status}`"
         class="radio checked:bg-primary"
         :checked="selectedRadio === status"
         @change="() => (selectedRadio = status)"

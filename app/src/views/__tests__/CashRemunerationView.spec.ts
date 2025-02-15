@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import CashRemunerationView from '@/views/CashRemunerationView.vue'
 import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
 
 vi.mock('@/stores/useToastStore')
 vi.mock('vue-router', async (importOriginal) => {
@@ -15,6 +16,21 @@ vi.mock('vue-router', async (importOriginal) => {
     })),
     useRouter: vi.fn(() => ({
       push: vi.fn()
+    }))
+  }
+})
+vi.mock('@/composables/useClaim', () => {
+  return {
+    useSignWageClaim: vi.fn(() => ({
+      execute: vi.fn(),
+      isLoading: ref(false),
+      signature: ref(undefined)
+    })),
+    useWithdrawClaim: vi.fn(() => ({
+      execute: vi.fn(),
+      isLoading: ref(false),
+      isSuccess: ref(false),
+      error: ref(undefined)
     }))
   }
 })
