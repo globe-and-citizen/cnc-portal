@@ -183,10 +183,6 @@ describe('Teams', () => {
       await page.click('div[data-test="add-team"]')
 
       await addMember(page, 0)
-      // Add second member
-      // await page.click('[data-test="add-member"]')
-      // await addMember(page, 1)
-
       // Submit form
       await page.route(`**/api/teams`, async (route) => {
         await route.fulfill({
