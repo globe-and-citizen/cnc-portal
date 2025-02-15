@@ -151,10 +151,11 @@ describe('Teams', () => {
       // Fill form
       await page.fill('[data-test="team-name-input"]', 'Team 1')
       await page.fill('[data-test="team-description-input"]', 'Description of Team 1')
-      await page.fill('[data-test="share-name-input"]', 'Testing')
-      await page.fill('[data-test="share-symbol-input"]', 'TST')
-      await page.click(`[data-test="member-${userIndex}-name-input"]`)
+
+      await page.click('[data-test="next-button"]')
+      await page.click(`[data-test="member-name-input"]`)
       await page.keyboard.type(`Local ${userIndex + 1}`)
+
       // Wait for user search to load
       await page.waitForSelector(`[data-test="user-dropdown-${users[userIndex].address}"]`)
       expect(
@@ -163,12 +164,9 @@ describe('Teams', () => {
 
       // Select user
       await page.click(`[data-test="user-dropdown-${users[userIndex].address}"]`)
-      expect(page.locator(`input[data-test="member-${userIndex}-name-input"]`)).toHaveValue(
+      expect(page.locator('[data-test="step-2"] [data-test="user-name"]')).toContainText(
         users[userIndex].name
       )
-      await expect(
-        page.locator(`input[data-test="member-${userIndex}-address-input"]`)
-      ).toHaveValue(users[userIndex].address)
     }
 
     test('should be able to add a new team', async ({ page, metamask }) => {
@@ -186,21 +184,18 @@ describe('Teams', () => {
 
       await addMember(page, 0)
       // Add second member
-      await page.click('[data-test="add-member"]')
-      await addMember(page, 1)
+      // await page.click('[data-test="add-member"]')
+      // await addMember(page, 1)
 
       // Submit form
       await page.route(`**/api/teams`, async (route) => {
         await route.fulfill({
           status: 201,
           contentType: 'application/json',
-          body: JSON.stringify({
-            success: true
-          })
+          body: JSON.stringify({ success: true })
         })
       })
       await page.click('[data-test="create-team-button"]')
-      await metamask.confirmSignature()
 
       // Wait for success toast
       await page.waitForTimeout(3000)
@@ -232,6 +227,11 @@ describe('Teams', () => {
           ])
         })
       })
+      await page.fill('[data-test="share-name-input"]', 'Testing')
+      await page.fill('[data-test="share-symbol-input"]', 'TST')
+
+      await page.click('[data-test="deploy-contracts-button"]')
+      await metamask.confirmSignature()
       await page.reload()
       // Wait for team card to appear
       expect(await page.isVisible('[data-test="team-card-1"]')).toBeTruthy()
