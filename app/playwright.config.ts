@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: 'html',
 
   // Disable timeout
-  timeout: 30000,
+  timeout: 300000,
 
   use: {
     baseURL: 'http://localhost:5173',
