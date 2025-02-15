@@ -21,6 +21,29 @@ describe('Teams', () => {
     }
   ]
 
+  const teams = [
+    {
+      id: '1',
+      name: 'Team 1',
+      description: 'Description of Team 1',
+      bankAddress: null,
+      members: [],
+      ownerAddress: 'Owner Address',
+      votingAddress: null,
+      boardOfDirectorsAddress: null
+    },
+    {
+      id: '2',
+      name: 'Team 2',
+      description: 'Description of Team 2',
+      bankAddress: null,
+      members: [],
+      ownerAddress: 'Owner Address',
+      votingAddress: null,
+      boardOfDirectorsAddress: null
+    }
+  ]
+
   beforeEach(async ({ page }) => {
     await page.route('**/api/notification', async (route) => {
       await route.fulfill({
@@ -35,35 +58,12 @@ describe('Teams', () => {
   })
 
   describe('Team List', () => {
-    test('should render loading state and then render teams', async ({ page }) => {
+    test('should display loading state and then render team list', async ({ page }) => {
       // Mock api to return teams
-      const teams = [
-        {
-          id: '1',
-          name: 'Team 1',
-          description: 'Description of Team 1',
-          bankAddress: null,
-          members: [],
-          ownerAddress: 'Owner Address',
-          votingAddress: null,
-          boardOfDirectorsAddress: null
-        },
-        {
-          id: '2',
-          name: 'Team 2',
-          description: 'Description of Team 2',
-          bankAddress: null,
-          members: [],
-          ownerAddress: 'Owner Address',
-          votingAddress: null,
-          boardOfDirectorsAddress: null
-        }
-      ]
 
       await page.route(`**/api/teams`, async (route) => {
-        // Delay the response to simulate loading state
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-
+        // Simulate a loading state by delaying the response
+        await page.waitForTimeout(500) // Delay for 2 seconds to simulate loading
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -76,6 +76,7 @@ describe('Teams', () => {
       expect(await page.isVisible('[data-test="loader"]')).toBeTruthy()
 
       // Wait for teams to be rendered
+      await page.waitForSelector('[data-test="team-list"]')
       expect(await page.isVisible('[data-test="loader"]')).toBeFalsy()
       expect(await page.isVisible('[data-test="team-list"]')).toBeTruthy()
 
