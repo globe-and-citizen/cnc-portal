@@ -9,7 +9,7 @@
     <TableComponent :rows="dummyData" :columns="columns">
       <template #txHash-data="{ row }">
         <!--<span>{{ row.txHash?.slice(0, 6) }}...{{ row.txHash?.slice(-4) }}</span>-->
-        <AddressToolTip :address="row.txHash ?? ''" :slice="true" />
+        <AddressToolTip :address="row.txHash ?? ''" :slice="true" type="transaction" />
       </template>
       <template #date-data="{ row }">
         {{ row.date }}
