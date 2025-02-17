@@ -43,10 +43,6 @@
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { ref } from 'vue'
-
-const types = ['all', 'deposit', 'transfer']
-const selectedRadio = ref('all')
 
 const dummyData = [
   {
