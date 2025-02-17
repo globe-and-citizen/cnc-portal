@@ -5,7 +5,9 @@
       content="Click to see address in block explorer"
       @click="openExplorer(address)"
     >
-      <span class="cursor-pointer underline">{{ address }}</span>
+      <span class="cursor-pointer underline">{{
+        slice ? `${address.slice(0, 6)}...${address.slice(-4)}` : address
+      }}</span>
     </ToolTip>
 
     <ToolTip
@@ -32,6 +34,7 @@ import { NETWORK } from '@/constant'
 import ToolTip from './ToolTip.vue'
 defineProps<{
   address: string
+  slice?: boolean
 }>()
 
 const { copy, copied, isSupported } = useClipboard()
