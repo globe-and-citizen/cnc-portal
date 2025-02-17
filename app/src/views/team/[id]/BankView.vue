@@ -324,8 +324,8 @@ const {
 // Template data
 const tokens = computed<Token[]>(() => [
   {
-    name: 'ETH',
-    network: 'Ethereum',
+    name: NETWORK.currencySymbol,
+    network: NETWORK.currencySymbol,
     price: 0, // TODO: Add price fetching
     balance: teamBalance.value ? Number(teamBalance.value.formatted) : 0,
     amount: teamBalance.value ? Number(teamBalance.value.formatted) : 0
@@ -333,7 +333,7 @@ const tokens = computed<Token[]>(() => [
   {
     name: 'USDC',
     network: 'USDC',
-    price: 1, // USDC is a stablecoin pegged to USD
+    price: 1,
     balance: usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0,
     amount: usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0
   }
