@@ -63,7 +63,7 @@
     </div>
     <div
       v-if="team?.expenseAccountEip712Address"
-      class="card shadow-xl bg-white flex text-primary-content p-5 overflow-visible"
+      class="card shadow-xl bg-white flex text-primary-content p-5 overflow-visible mb-10"
     >
       <span class="text-2xl font-bold">My Approved Expense</span>
       <!-- TODO display this only if the use have an approved expense -->
@@ -149,15 +149,16 @@
       </section>
     </div>
 
-    <!-- Activated List -->
     <div
-      v-if="manyExpenseAccountDataActive.length > 0 || manyExpenseAccountData"
-      class="card bg-white shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
+      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
+      data-test="claims-table"
     >
+      <!--<div class="card bg-white shadow-xl">
+        <div class="card-body">-->
       <div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Approved Addresses</span>
         <ButtonUI
-          variant="secondary"
+          variant="success"
           :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
           @click="
             () => {
@@ -169,94 +170,15 @@
           Approve User Expense
         </ButtonUI>
       </div>
-      <div class="overflow-x-auto" data-test="approvals-list-table">
-        <table class="table">
-          <!-- head -->
-          <thead class="text-sm font-bold">
-            <tr>
-              <th>User</th>
-              <th>Expiry Date</th>
-              <th>Max Amount Per Tx</th>
-              <th>Total Transactions</th>
-              <th>Total Transfers</th>
-              <th class="flex justify-end">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(data, index) in manyExpenseAccountDataActive" :key="index">
-              <td class="flex flex-row justify-start gap-4">
-                <UserComponent
-                  :user="{ name: data?.name, address: data?.approvedAddress }"
-                ></UserComponent>
-              </td>
-              <td>{{ new Date(data?.expiry * 1000).toLocaleString('en-US') }}</td>
-              <td>{{ data?.budgetData[2]?.value }} {{ tokenSymbol(data.tokenAddress) }}</td>
-              <td>{{ `${data?.balances['0']}/${data?.budgetData[0]?.value}` }}</td>
-              <td>{{ `${data?.balances['1']}/${data?.budgetData[1]?.value}` }}</td>
-              <td class="flex justify-end" data-test="action-td">
-                <ButtonUI
-                  :disabled="contractOwnerAddress !== currentUserAddress"
-                  variant="error"
-                  outline
-                  :loading="isLoadingDeactivateApproval && deactivateIndex === index"
-                  @click="deactivateApproval(data.signature, index)"
-                >
-                  Disable Approval
-                </ButtonUI>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Deactivated List -->
-    <div
-      v-if="manyExpenseAccountDataInactive.length > 0"
-      class="card bg-white shadow-xl flex flex-col justify-start text-primary-content border-outline p-5 overflow-visible"
-    >
-      <div class="flex flex-row justify-between mb-5">
-        <span class="text-2xl font-bold">Deactivated Addresses</span>
-      </div>
-      <div class="overflow-x-auto" data-test="deactivated-list-table">
-        <table class="table">
-          <!-- head -->
-          <thead class="text-sm font-bold">
-            <tr>
-              <th>User</th>
-              <th>Expiry Date</th>
-              <th>Max Amount Per Tx</th>
-              <th>Total Transactions</th>
-              <th>Total Transfers</th>
-              <th class="flex justify-end">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(data, index) in manyExpenseAccountDataInactive" :key="index">
-              <td class="flex flex-row justify-start gap-4">
-                <UserComponent
-                  :user="{ name: data.name, address: data.approvedAddress }"
-                ></UserComponent>
-              </td>
-              <td>{{ new Date(data?.expiry * 1000).toLocaleString('en-US') }}</td>
-              <td>{{ data?.budgetData[2]?.value }} {{ tokenSymbol(data.tokenAddress) }}</td>
-              <td>{{ `${data?.balances['0']}/${data?.budgetData[0]?.value}` }}</td>
-              <td>{{ `${data?.balances['1']}/${data?.budgetData[1]?.value}` }}</td>
-              <td class="flex justify-end" data-test="action-td">
-                <ButtonUI
-                  :disabled="contractOwnerAddress !== currentUserAddress"
-                  variant="success"
-                  outline
-                  :loading="isLoadingActivateApproval && deactivateIndex === index"
-                  @click="activateApproval(data.signature, index)"
-                >
-                  Reactivate Approval
-                </ButtonUI>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <ExpenseAccountTable
+        :approvals="manyExpenseAccountDataAll"
+        :loading="isLoadingActivateApproval || isLoadingDeactivateApproval"
+        :is-contract-owner="currentUserAddress === contractOwnerAddress"
+        @disable-approval="(signature) => deactivateApproval(signature, 1)"
+        @enable-approval="(signature) => activateApproval(signature, 1)"
+      />
+      <!--</div>
+      </div>-->
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -278,6 +200,7 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
@@ -292,7 +215,6 @@ import {
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
-import UserComponent from '@/components/UserComponent.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
@@ -393,15 +315,16 @@ const expenseBalanceFormatted = computed(() => {
 })
 const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
-// Reactive storage for balances
-const manyExpenseAccountDataActive = reactive<ManyExpenseWithBalances[]>([])
-const manyExpenseAccountDataInactive = reactive<ManyExpenseWithBalances[]>([])
+// Reactive storage for records to be displayed in table
+const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 // Check if the current user is disapproved
 const isDisapprovedAddress = computed(
   () =>
-    manyExpenseAccountDataInactive.findIndex(
-      (item) => item.approvedAddress === currentUserAddress
+    manyExpenseAccountDataAll.findIndex(
+      (item) =>
+        item.approvedAddress === currentUserAddress &&
+        (item.status === 'disabled' || item.status === 'expired')
     ) !== -1
 )
 //#endregion
@@ -491,7 +414,7 @@ const {
   error: isErrorExpenseAccountBalance,
   refetch: executeGetExpenseAccountBalance
 } = useBalance({
-  address: expenseAccountEip712Address as unknown as Address, // teamStore.currentTeam?.expenseAccountEip712Address as Address,
+  address: expenseAccountEip712Address as unknown as Address,
   chainId
 })
 
@@ -576,48 +499,35 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 //#region Functions
 // Async initialization function
 const initializeBalances = async () => {
-  manyExpenseAccountDataActive.length = 0
-  manyExpenseAccountDataInactive.length = 0
+  manyExpenseAccountDataAll.length = 0
   if (Array.isArray(manyExpenseAccountData.value))
     for (const data of manyExpenseAccountData.value) {
-      signatureHash.value = keccak256(data.signature)
+      const amountWithdrawn = await readContract(config, {
+        functionName: 'balances',
+        address: expenseAccountEip712Address.value as unknown as Address,
+        abi: expenseAccountABI,
+        args: [keccak256(data.signature)]
+      })
 
-      await executeGetAmountWithdrawn()
+      const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
 
       // Populate the reactive balances object
-      if (Array.isArray(amountWithdrawn.value)) {
-        if (amountWithdrawn.value[2] === 2)
-          manyExpenseAccountDataInactive.push({
-            ...data,
-            balances: {
-              0: `${amountWithdrawn.value[0]}`,
-              1:
-                data.tokenAddress === zeroAddress
-                  ? formatEther(amountWithdrawn.value[1])
-                  : `${Number(amountWithdrawn.value[1]) / 1e6}`,
-              2: amountWithdrawn.value[2] === true
-            }
-          })
-        else
-          manyExpenseAccountDataActive.push({
-            ...data,
-            balances: {
-              0: `${amountWithdrawn.value[0]}`,
-              1:
-                data.tokenAddress === zeroAddress
-                  ? formatEther(amountWithdrawn.value[1])
-                  : `${Number(amountWithdrawn.value[1]) / 1e6}`,
-              2: amountWithdrawn.value[2] === false
-            }
-          })
-      } else {
-        manyExpenseAccountDataInactive.push({
+      if (
+        Array.isArray(amountWithdrawn) &&
+        manyExpenseAccountDataAll.findIndex((item) => item.signature === data.signature) === -1
+      ) {
+        // New algo
+        manyExpenseAccountDataAll.push({
           ...data,
           balances: {
-            0: '--',
-            1: '--',
-            2: false
-          }
+            0: `${amountWithdrawn[0]}`,
+            1:
+              data.tokenAddress === zeroAddress
+                ? formatEther(amountWithdrawn[1])
+                : `${Number(amountWithdrawn[1]) / 1e6}`,
+            2: amountWithdrawn[2] === true
+          },
+          status: isExpired ? 'expired' : amountWithdrawn[2] === 2 ? 'disabled' : 'enabled'
         })
       }
     }
