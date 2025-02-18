@@ -191,6 +191,16 @@ describe('TransferFromBankForm.vue', () => {
       await tokenOption.trigger('click')
       expect((wrapper.vm as unknown as ComponentData).selectedTokenId).toBe(0) // Assuming first token is selected
     })
+
+    it('closes the token dropdown when clicking outside', async () => {
+      const dropdownButton = wrapper.find('.badge-info')
+      await dropdownButton.trigger('click')
+      expect(wrapper.find('[data-test="token-dropdown"]').isVisible()).toBe(true)
+
+      // Simulate clicking outside by clicking on the document body
+      await document.body.click()
+      expect(wrapper.find('[data-test="token-dropdown"]').exists()).toBe(false)
+    })
   })
 
   describe('Validation Rules', () => {
