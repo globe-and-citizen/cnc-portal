@@ -1,159 +1,28 @@
 <template>
-  <div>
+  <div class="min-h-screen">
     <!-- Main Content -->
-    <div>
+    <div class="p-6">
       <!-- Header Section -->
       <div class="mb-8">
-        <!-- Balance Card -->
-        <div class="card bg-base-100 shadow-sm mb-4">
-          <div class="card-body">
-            <div class="flex justify-between items-start">
-              <div>
-                <h2 class="text-lg font-medium mb-1">Balance</h2>
-                <div class="flex items-baseline gap-2">
-                  <span class="text-4xl font-bold">
-                    <span class="inline-block min-w-16 h-10">
-                      <span
-                        class="loading loading-spinner loading-lg"
-                        v-if="balanceLoading || isLoadingUsdcBalance"
-                      ></span>
-                      <span v-else>{{ teamBalance?.formatted }}</span>
-                    </span>
-                  </span>
-                  <span class="text-gray-600">{{ NETWORK.currencySymbol }}</span>
-                </div>
-                <div class="text-sm text-gray-500 mt-1">≈ $ 1.28</div>
-                <div class="mt-2">
-                  {{ usdcBalance ? (Number(usdcBalance) / 1e6).toString() : '0' }}
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <ButtonUI
-                  v-if="team?.bankAddress"
-                  variant="secondary"
-                  class="flex items-center gap-2"
-                  @click="depositModal = true"
-                  data-test="deposit-button"
-                >
-                  <PlusIcon class="w-5 h-5" />
-                  Deposit
-                </ButtonUI>
-                <ButtonUI
-                  v-if="team?.bankAddress"
-                  variant="secondary"
-                  class="flex items-center gap-2"
-                  @click="transferModal = true"
-                  data-test="transfer-button"
-                >
-                  <ArrowsRightLeftIcon class="w-5 h-5" />
-                  Transfer
-                </ButtonUI>
-              </div>
-            </div>
-
-            <div class="text-sm text-gray-600 mt-4">
-              Contract Address:
-              <span class="font-mono">{{ team?.bankAddress }}</span>
-            </div>
-          </div>
+        <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+          <span>CNC Team</span>
+          <span>•</span>
+          <span>Bank Account</span>
         </div>
+
+        <BankBalanceSection
+          :team-balance="formattedTeamBalance"
+          :usdc-balance="typedUsdcBalance"
+          :balance-loading="balanceLoading"
+          :is-loading-usdc-balance="isLoadingUsdcBalance"
+          :bank-address="typedBankAddress"
+          @open-deposit="depositModal = true"
+          @open-transfer="transferModal = true"
+        />
       </div>
 
-      <!-- Token Holdings Card -->
-      <div class="card bg-base-100 shadow-sm mb-8">
-        <div class="card-body">
-          <h3 class="text-lg font-medium mb-4">Token Holding</h3>
-          <TableComponent
-            :rows="tokensWithRank"
-            :columns="[
-              { key: 'rank', label: 'RANK' },
-              { key: 'token', label: 'Token', sortable: true },
-              { key: 'amount', label: 'Amount', sortable: true },
-              { key: 'price', label: 'Coin Price', sortable: true },
-              { key: 'balance', label: 'Balance', sortable: true }
-            ]"
-          >
-            <template #token-data="{ row }">
-              <div class="flex flex-col">
-                <div class="font-medium">{{ row.name }}</div>
-                <div class="text-sm text-gray-500">{{ row.network }}</div>
-              </div>
-            </template>
-            <template #rank-data="{ row }">
-              {{ row.rank }}
-            </template>
-            <template #price-data="{ row }"> ${{ row.price }} </template>
-            <template #balance-data="{ row }"> ${{ row.balance }} </template>
-          </TableComponent>
-        </div>
-      </div>
-
-      <!-- Transactions History Card -->
-      <div class="card bg-base-100 shadow-sm">
-        <div class="card-body">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium">Bank Transactions History</h3>
-            <div class="flex items-center gap-4">
-              <div class="flex">
-                <input class="input input-bordered join-item" placeholder="1st January" />
-                <span class="join-item flex items-center px-2">-</span>
-                <input class="input input-bordered join-item" placeholder="30 January" />
-              </div>
-              <button class="btn btn-success gap-2">
-                Export
-                <ArrowDownTrayIcon class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <TableComponent
-            :rows="transactions"
-            :columns="[
-              { key: 'hash', label: 'Tx Hash', sortable: true },
-              { key: 'date', label: 'Date', sortable: true },
-              { key: 'type', label: 'Type', sortable: true },
-              { key: 'from', label: 'From', sortable: true },
-              { key: 'to', label: 'To', sortable: true },
-              { key: 'amountUSD', label: 'Amount (USD)', sortable: true },
-              { key: 'amountCAD', label: 'Amount (CAD)', sortable: true },
-              { key: 'receipts', label: 'Receipts' }
-            ]"
-          >
-            <template #type-data="{ row }">
-              <span :class="`badge ${row.type === 'Deposit' ? 'badge-success' : 'badge-error'}`">
-                {{ row.type }}
-              </span>
-            </template>
-            <template #receipts-data="{ row }">
-              <a
-                :href="row.receipt"
-                target="_blank"
-                class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
-              >
-                <DocumentTextIcon class="h-4 w-4" />
-                Receipt
-              </a>
-            </template>
-          </TableComponent>
-
-          <!-- Pagination -->
-          <div class="flex justify-between items-center mt-4">
-            <div class="text-sm text-gray-600">
-              Rows per page:
-              <select class="select select-bordered select-sm w-20">
-                <option>20</option>
-                <option>50</option>
-                <option>100</option>
-              </select>
-            </div>
-            <div class="join">
-              <button class="join-item btn btn-sm">«</button>
-              <button class="join-item btn btn-sm">1-5 of 20</button>
-              <button class="join-item btn btn-sm">»</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TokenHoldingsSection :tokens-with-rank="tokensWithRank" />
+      <TransactionsHistorySection :transactions="transactions" />
     </div>
 
     <ModalComponent v-model="depositModal">
@@ -230,14 +99,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import {
-  PlusIcon,
-  ArrowsRightLeftIcon,
-  DocumentTextIcon,
-  ArrowDownTrayIcon
-} from '@heroicons/vue/24/outline'
-import TableComponent from '@/components/TableComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import {
   useBalance,
   useReadContract,
   useChainId,
@@ -259,8 +120,28 @@ import { config } from '@/wagmi.config'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore } from '@/stores/user'
 import BankABI from '@/artifacts/abi/bank.json'
+import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
+import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSection.vue'
+import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
+
+// Add type definitions
+interface TeamBalance {
+  formatted: string
+}
+
+interface Transaction {
+  hash: string
+  date: string
+  type: 'Deposit' | 'Transfer'
+  from: string
+  to: string
+  amountUSD: number
+  amountCAD: number
+  receipt: string
+}
 
 const route = useRoute()
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -290,9 +171,14 @@ const {
   error: balanceError,
   refetch: fetchBalance
 } = useBalance({
-  address: bankAddress as unknown as Address,
+  address: team.value?.bankAddress as Address,
   chainId
 })
+
+// Format team balance for component
+const formattedTeamBalance = computed<TeamBalance | null>(() =>
+  teamBalance.value ? { formatted: teamBalance.value.formatted } : null
+)
 
 // USDC Balance
 const {
@@ -304,8 +190,12 @@ const {
   address: USDC_ADDRESS as Address,
   abi: ERC20ABI,
   functionName: 'balanceOf',
-  args: [bankAddress as unknown as Address]
+  args: [team.value?.bankAddress as Address]
 })
+
+// Add computed properties for typed values
+const typedUsdcBalance = computed(() => usdcBalance.value as bigint | null)
+const typedBankAddress = computed(() => team.value?.bankAddress as Address | undefined)
 
 // Template data
 const tokens = computed<Token[]>(() => [
@@ -344,7 +234,8 @@ const tokensWithRank = computed<TokenWithRank[]>(() =>
   }))
 )
 
-const transactions = ref([
+// Mock transactions data with correct type
+const transactions = ref<Transaction[]>([
   {
     hash: '0xf39Fd..DD',
     date: '01/23/2025',
