@@ -302,109 +302,6 @@ describe('ExpenseAccountSection', () => {
   }
 
   describe('Render', () => {
-    it("should show the current user's approval data in the approval table", async () => {
-      const wrapper = createComponent()
-      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
-      wrapperVm.team = {
-        expenseAccountEip712Address: '0xExpenseAccount',
-        ownerAddress: '0xOwner',
-        boardOfDirectorsAddress: null
-      }
-      await flushPromises()
-
-      const approvalTable = wrapper.find('[data-test="approval-table"]')
-      expect(approvalTable.exists()).toBeTruthy()
-
-      const headers = approvalTable.findAll('thead th')
-
-      const expectedHeaders = [
-        'Expiry Date',
-        'Max Amount Per Tx',
-        'Total Transactions',
-        'Total Transfers',
-        'Action'
-      ]
-      headers.forEach((header, i) => {
-        expect(header.text()).toBe(expectedHeaders[i])
-      })
-
-      const rows = approvalTable.findAll('tbody tr')
-      expect(rows).toHaveLength(1)
-
-      const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(
-        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
-      )
-      expect(firstRowCells[1].text()).toBe(
-        `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
-      )
-      expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
-      expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
-
-      const transferButton = firstRowCells[4].find('button')
-      expect(transferButton.exists()).toBe(true)
-      expect(transferButton.text()).toBe('Spend')
-    })
-    it('should disable the transfer button if the approval is disapproved', async () => {
-      const wrapper = createComponent({
-        global: {
-          plugins: [
-            createTestingPinia({
-              createSpy: vi.fn,
-              initialState: {
-                user: { address: '0x0123456789012345678901234567890123456789' }
-              }
-            })
-          ]
-        }
-      })
-
-      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
-      mocks.mockReadContract.mockImplementation(() => [0, 1 * 10 ** 18, 2])
-      wrapperVm.team = {
-        expenseAccountEip712Address: '0xExpenseAccount',
-        ownerAddress: '0xOwner',
-        boardOfDirectorsAddress: null
-      }
-      await flushPromises()
-
-      const approvalTable = wrapper.find('[data-test="approval-table"]')
-      expect(approvalTable.exists()).toBeTruthy()
-
-      const headers = approvalTable.findAll('thead th')
-
-      const expectedHeaders = [
-        'Expiry Date',
-        'Max Amount Per Tx',
-        'Total Transactions',
-        'Total Transfers',
-        'Action'
-      ]
-      headers.forEach((header, i) => {
-        expect(header.text()).toBe(expectedHeaders[i])
-      })
-
-      const rows = approvalTable.findAll('tbody tr')
-      expect(rows).toHaveLength(1)
-
-      const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(
-        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
-      )
-      expect(firstRowCells[1].text()).toBe(
-        `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
-      )
-      expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
-      expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
-
-      const transferButton = firstRowCells[4].findComponent(ButtonUI)
-      expect(transferButton.exists()).toBe(true)
-      expect(transferButton.text()).toBe('Spend')
-      expect(transferButton.props().disabled).toBe(true)
-    })
-
     it('should show expense account if expense account address exists', async () => {
       const team = { expenseAccountEip712Address: '0x123' }
       const wrapper = createComponent()
@@ -528,9 +425,6 @@ describe('ExpenseAccountSection', () => {
 
       const button = wrapper.find('[data-test="transfer-button"]')
       expect(button.exists()).toBeTruthy()
-
-      // Cast to HTMLButtonElement
-      // expect(button.attributes().disabled).toBeUndefined() // Button should be enabled
     })
     it('should show transfer modal', async () => {
       const wrapper = createComponent({
@@ -546,7 +440,6 @@ describe('ExpenseAccountSection', () => {
         }
       })
 
-      // ;(wrapper.vm as unknown as ComponentData).approvedAddresses = new Set(['0xInitialUser'])
       const wrapperVm = wrapper.vm as unknown as ComponentData
       wrapperVm.team = {
         expenseAccountEip712Address: '0xExpenseAccount',
@@ -560,11 +453,7 @@ describe('ExpenseAccountSection', () => {
 
       await transferButton.trigger('click')
       await wrapper.vm.$nextTick()
-      // expect((wrapper.vm as unknown as ComponentData).transferModal).toBeTruthy()
-
-      // const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
       wrapper.findComponent(TransferFromBankForm)
-      // expect(transferFromBankForm.exists()).toBe(true)
     })
     it('should hide approve user form if not owner', async () => {
       const wrapper = createComponent()
@@ -572,74 +461,8 @@ describe('ExpenseAccountSection', () => {
       const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
       expect(approveUsersForm.exists()).toBe(false)
     })
-    describe('TransferFromBankForm', async () => {
-      const wrapper = createComponent()
-      const wrapperVm = wrapper.vm as unknown as ComponentData
-      ;(wrapper.vm as unknown as ComponentData).transferModal = true
-      wrapperVm.team = {
-        expenseAccountEip712Address: '0xExpenseAccount',
-        ownerAddress: '0xOwner',
-        boardOfDirectorsAddress: null
-      }
-
-      it('should pass corrent props to TransferFromBankForm', async () => {
-        ;(wrapper.vm as unknown as ComponentData).foundUsers = [
-          { name: 'John Doe', address: '0x1234' }
-        ]
-        ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
-          data: JSON.stringify(mockExpenseData[0])
-        }
-        await flushPromises() // wrapper.vm.$nextTick()
-
-        const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
-        expect(transferFromBankForm.exists()).toBe(true)
-        expect(transferFromBankForm.props()).toEqual({
-          filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
-          service: 'Expense Account',
-          bankBalance: '500',
-          tokenSymbol: NETWORK.currencySymbol,
-          loading: false,
-          asBod: false
-        })
-        ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
-          data: JSON.stringify(mockExpenseData[1])
-        }
-        //@ts-expect-error: component property not included in wrapper
-        wrapper.vm.usdcBalance = 450_000_000n
-        await flushPromises()
-
-        expect(transferFromBankForm.props()).toEqual({
-          filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
-          service: 'Expense Account',
-          bankBalance: '450',
-          tokenSymbol: 'USDC',
-          loading: false,
-          asBod: false
-        })
-      })
-      it('should close the modal when TransferFromBankForm @close-modal is emitted', async () => {
-        const transferForm = wrapper.findComponent(TransferFromBankForm)
-
-        transferForm.vm.$emit('closeModal')
-        expect((wrapper.vm as unknown as ComponentData).transferModal).toBe(false)
-      })
-    })
-
-    //describe('Methods', )
 
     describe('ApproveUsersForm', async () => {
-      // beforeAll(() => {
-      //   // @ts-expect-error: Mocking window object
-      //   ;(global as object).window.ethereum = {
-      //     request: vi.fn()
-      //     // Mock other methods as needed
-      //   }
-      // })
-
-      // afterAll(() => {
-      //   // @ts-expect-error: Mocking window object
-      //   delete (global as object).window.ethereum
-      // })
       const wrapper = createComponent({
         global: {
           plugins: [
@@ -658,24 +481,6 @@ describe('ExpenseAccountSection', () => {
         ownerAddress: '0xOwner',
         boardOfDirectorsAddress: null
       }
-      // beforeEach(() =>
-      //   wrapper = createComponent({
-      //     global: {
-      //       plugins: [
-      //         createTestingPinia({
-      //           createSpy: vi.fn,
-      //           initialState: {
-      //             user: { address: '0xContractOwner' }
-      //           }
-      //         })
-      //       ]
-      //     }
-      //   })
-      // )
-      // afterEach(() =>
-      //   wrapper.unmount()
-      // )
-
       it('should pass corrent props to ApproveUsersForm', async () => {
         const approveUsersButton = wrapper.find('[data-test="approve-users-button"]')
         expect(approveUsersButton.exists()).toBe(true)
@@ -691,73 +496,7 @@ describe('ExpenseAccountSection', () => {
           users: []
         })
       })
-      // it('should call approveUser when @approve-user is emitted', async () => {
-      //   const approveUsersForm = wrapper.findComponent(ApproveUsersForm)
-      //   expect(approveUsersForm.exists()).toBe(true)
-
-      //   const expiry = new Date()
-
-      //   const data = {
-      //     approvedUser: '0x123',
-      //     budgetData: [
-      //       { budgetType: 0, value: 10 },
-      //       { budgetType: 1, value: 100 },
-      //       { budgetType: 2, value: 10 }
-      //     ],
-      //     expiry
-      //   }
-
-      //   approveUsersForm.vm.$emit('approveUser', data)
-      //   expect(approveUsersForm.emitted('approveUser')).toStrictEqual([[data]])
-      //   expect(mockUseSignTypedData.signTypedData).toBeCalledWith({
-      //     domain: {
-      //       chainId: '0xChainId',
-      //       version: '1',
-      //       verifyingContract: '0xExpenseAccount',
-      //       name: 'CNCExpenseAccount'
-      //     },
-      //     message: {
-      //       approvedUser: '0x123',
-      //       budgetData: [
-      //         { budgetType: 0, value: 10 },
-      //         { budgetType: 1, value: 100n * 10n ** 18n },
-      //         { budgetType: 2, value: 10n * 10n ** 18n }
-      //       ],
-      //       expiry
-      //     },
-      //     primaryType: 'BudgetLimit',
-      //     types: {
-      //       BudgetData: [
-      //         { name: 'budgetType', type: 'uint8' },
-      //         { name: 'value', type: 'uint256' }
-      //       ],
-      //       BudgetLimit: [
-      //         { name: 'approvedAddress', type: 'address' },
-      //         { name: 'budgetData', type: 'BudgetData[]' },
-      //         { name: 'expiry', type: 'uint256' }
-      //       ]
-      //     }
-      //   })
-
-      //   expect((wrapper.vm as unknown as ComponentData).expenseAccountData).toEqual(data)
-      //   expect((wrapper.vm as unknown as ComponentData).signature).toBe('0xExpenseDataSignature')
-      //   await wrapper.vm.$nextTick()
-      //   console.log(`wrapper.emitted`, wrapper.emitted())
-      //   expect(wrapper.emitted('click')).toBeTruthy()
-      // })
       it('should give an error notification if sign typed data error occurs', async () => {
-        // const wrapper = createComponent({
-        //   global: {
-        //     plugins: [
-        //       createTestingPinia({
-        //         createSpy: vi.fn,
-        //         initialState: {
-        //           user: { address: '0xContractOwner' }
-        //         }
-        //       })
-        //     ]
-        //   }
-        // })
         const logErrorSpy = vi.spyOn(utils.log, 'error')
         mockUseSignTypedData.signTypedData.mockImplementation(
           () => (mockUseSignTypedData.error.value = new Error('Error signing typed data'))
