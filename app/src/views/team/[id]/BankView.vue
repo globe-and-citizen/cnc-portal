@@ -111,7 +111,6 @@ import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } fr
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import type { Team, User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { log, parseError } from '@/utils'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { type Address } from 'viem'
 import { useRoute } from 'vue-router'
@@ -412,12 +411,6 @@ const refetchBalances = async () => {
     addErrorToast('Failed to fetch balance')
   }
 }
-watch(teamError, () => {
-  if (teamError.value) {
-    addErrorToast('Failed to fetch team data')
-    log.error('Failed to fetch team data:', parseError(teamError.value))
-  }
-})
 
 watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {

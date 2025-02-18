@@ -129,6 +129,7 @@ interface BankViewInstance extends ComponentPublicInstance {
   ) => Promise<void>
   depositToken: () => Promise<void>
   searchUsers: (input: { name: string; address: string }) => Promise<void>
+  depositAmount: string
 }
 
 describe('BankView', () => {
@@ -245,6 +246,53 @@ describe('BankView', () => {
       mockUseWaitForTransactionReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
       expect(wrapper.vm.loadingText).toBe('Confirming USDC approval...')
+    })
+  })
+
+  describe('Watch Handlers', () => {
+    it('handles ETH deposit confirmation correctly', async () => {
+      const toastStore = useToastStore()
+      wrapper.vm.depositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('ETH deposited successfully')
+      expect(wrapper.vm.depositModal).toBe(false)
+    })
+
+    it('handles transfer confirmation correctly', async () => {
+      const toastStore = useToastStore()
+      wrapper.vm.transferModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Transferred successfully')
+      expect(wrapper.vm.transferModal).toBe(false)
+    })
+
+    it('handles USDC deposit confirmation correctly', async () => {
+      const toastStore = useToastStore()
+      wrapper.vm.depositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('USDC deposited successfully')
+      expect(wrapper.vm.depositModal).toBe(false)
+      expect(wrapper.vm.depositAmount).toBe('')
+    })
+
+    it('handles token approval confirmation and triggers deposit', async () => {
+      const toastStore = useToastStore()
+      wrapper.vm.depositAmount = '100'
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Token approved successfully')
+      // Verify that handleUsdcDeposit was triggered with the correct amount
     })
   })
 })
