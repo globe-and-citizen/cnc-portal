@@ -597,7 +597,7 @@ describe('ExpenseAccountSection', () => {
           filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
           service: 'Expense Account',
           bankBalance: '500',
-          tokenSymbol: NETWORK.currencySymbol,
+          usdcBalance: '0',
           loading: false,
           asBod: false
         })
@@ -612,7 +612,7 @@ describe('ExpenseAccountSection', () => {
           filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
           service: 'Expense Account',
           bankBalance: '450',
-          tokenSymbol: 'USDC',
+          usdcBalance: '0',
           loading: false,
           asBod: false
         })
