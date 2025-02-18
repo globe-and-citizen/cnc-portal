@@ -5,7 +5,7 @@
       <!-- Responsive Drawer and Content -->
       <div class="h-screen flex">
         <!-- Drawer -->
-        <div class="bg-base-100 transition-transform duration-300 ease-in-out">
+        <div class="bg-base-100 transition-transform duration-300 ease-in-out z-10">
           <Drawer
             :user="{ name, address }"
             v-model="toggleSide"
