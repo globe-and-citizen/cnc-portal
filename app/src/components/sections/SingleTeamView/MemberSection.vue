@@ -3,7 +3,11 @@
     <template #card-action>
       <ButtonUI
         v-if="team.ownerAddress == userDataStore.address"
-        @click="() => { showAddMemberForm = !showAddMemberForm }"
+        @click="
+          () => {
+            showAddMemberForm = !showAddMemberForm
+          }
+        "
         data-test="add-member-button"
         variant="primary"
         class="w-max"
@@ -24,28 +28,40 @@
       <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
       <div class="divider m-0"></div>
       <div class="overflow-x-auto">
-        <table class="table table-zebra" data-test="members-table">
-          <thead class="text-sm font-bold">
-            <tr>
-              <th></th>
-              <th>Name</th>
-              <th>Address</th>
-              <th>Wage</th>
-              <th v-if="team.ownerAddress === userDataStore.address">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <MemberRow
-              v-for="(member, index) in team.members"
-              :ownerAddress="team.ownerAddress"
-              :teamId="Number(team.id)"
-              :member="{ ...member, index: index + 1 }"
-              :key="member.address"
-              @getTeam="emits('getTeam')"
-              v-memo="[member, team.ownerAddress, team.id]"
-            />
-          </tbody>
-        </table>
+        <TableComponent
+          :rows="team.members"
+          :columns="columns"
+          :loading="teamIsFetching"
+          data-test="members-table"
+        >
+          <template #name-data="{ row }">
+            {{ row.name }}
+          </template>
+          <template #address-data="{ row }">
+            <AddressToolTip :address="row.address" />
+          </template>
+          <template #wage-data=""> 20 h/week & 10 USD/h </template>
+          <template #action-data="{ row }" v-if="team.ownerAddress === userDataStore.address">
+            <div class="flex flex-wrap gap-2">
+              <ButtonUI
+                variant="error"
+                size="sm"
+                @click="() => (row.showDeleteMemberConfirmModal = true)"
+                data-test="delete-member-button"
+              >
+                <TrashIcon class="size-4" />
+              </ButtonUI>
+              <ButtonUI
+                size="sm"
+                variant="success"
+                @click="() => (row.showSetMemberWageModal = true)"
+                data-test="set-wage-button"
+              >
+                Set Wage
+              </ButtonUI>
+            </div>
+          </template>
+        </TableComponent>
       </div>
     </template>
   </CardComponent>
@@ -54,9 +70,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { PlusCircleIcon } from '@heroicons/vue/24/outline'
+import { PlusCircleIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import MemberRow from '@/components/sections/SingleTeamView/MemberRow.vue'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import type { User } from '@/types'
@@ -64,6 +79,8 @@ import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
+import TableComponent from '@/components/TableComponent.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 
 const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)
@@ -84,7 +101,7 @@ const {
   .post({ data: teamMembers.value })
   .json()
 
-  const {
+const {
   execute: executeSearchUser,
   response: searchUserResponse,
   data: users
@@ -103,6 +120,7 @@ const {
 })
   .get()
   .json()
+
 watch(addMembersError, () => {
   if (addMembersError.value) {
     addErrorToast(addMembersError.value || 'Failed to add members')
@@ -127,7 +145,6 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const foundUsers = ref<User[]>([])
 const lastUpdatedInput = ref<'name' | 'address'>('name')
-
 
 watch(searchUserResponse, () => {
   if (searchUserResponse.value?.ok && users.value?.users) {
@@ -154,4 +171,12 @@ const searchUsers = async (input: { name: string; address: string }) => {
     }
   }
 }
+
+const columns = ref([
+  { key: 'index', label: '#' },
+  { key: 'name', label: 'Name' },
+  { key: 'address', label: 'Address' },
+  { key: 'wage', label: 'Wage' },
+  { key: 'action', label: 'Action', sortable: false }
+])
 </script>
