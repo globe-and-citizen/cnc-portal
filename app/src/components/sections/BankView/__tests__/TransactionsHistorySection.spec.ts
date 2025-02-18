@@ -118,4 +118,25 @@ describe('TransactionsHistorySection', () => {
     // Assuming one header row, so transactions + 1
     expect(rows.length).toBe(mockTransactions.length)
   })
+
+  it('renders rows per page select with correct options', async () => {
+    const wrapper = mount(TransactionsHistorySection, {
+      props: {
+        transactions: mockTransactions,
+        isLoadingTransactions: false
+      }
+    })
+
+    const select = wrapper.find("[data-test='rows-per-page-select']")
+    expect(select.exists()).toBe(true)
+
+    const options = wrapper.findAll('[data-test="rows-per-page-select"] option')
+    expect(options.length).toBe(3)
+    expect(options[0].text()).toBe('20')
+    expect(options[1].text()).toBe('50')
+    expect(options[2].text()).toBe('100')
+
+    // Verify default value
+    expect((select.element as HTMLSelectElement).value).toBe('20')
+  })
 })

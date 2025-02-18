@@ -61,7 +61,11 @@
       <div class="flex justify-between items-center mt-4">
         <div class="text-sm text-gray-600">
           Rows per page:
-          <select class="select select-bordered select-sm w-20" v-model="rowsPerPage">
+          <select
+            class="select select-bordered select-sm w-20"
+            v-model="rowsPerPage"
+            data-test="rows-per-page-select"
+          >
             <option>20</option>
             <option>50</option>
             <option>100</option>
@@ -123,15 +127,7 @@ const paginationText = computed(() => {
   return `${start}-${end} of ${props.transactions.length}`
 })
 
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
+const prevPage = () => {}
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
+const nextPage = () => {}
 </script>
