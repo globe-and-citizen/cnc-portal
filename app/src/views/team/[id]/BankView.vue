@@ -3,7 +3,7 @@
     <div>
       <div>
         <BankBalanceSection
-          v-if="team"
+          v-if="teamStore.currentTeam"
           ref="bankBalanceSection"
           :bank-address="typedBankAddress"
           @open-deposit="depositModal = true"
@@ -46,7 +46,6 @@
         service="Bank"
       />
     </ModalComponent>
-
   </div>
 </template>
 
@@ -54,11 +53,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import type { Team, User } from '@/types'
+import type { User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { type Address } from 'viem'
-import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseEther } from 'viem'
 import { readContract } from '@wagmi/core'
@@ -71,6 +69,7 @@ import BankABI from '@/artifacts/abi/bank.json'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
 import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSection.vue'
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
+import { useTeamStore } from '@/stores'
 
 interface Transaction {
   hash: string
@@ -83,25 +82,17 @@ interface Transaction {
   receipt: string
 }
 
-const route = useRoute()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const currentAddress = userDataStore.address
 
-const {
-  data: team,
-  error: teamError,
-  execute: executeFetchTeam
-} = useCustomFetch(`teams/${String(route.params.id)}`)
-  .get()
-  .json<Team>()
-
+const teamStore = useTeamStore()
 const bankAddress = computed(() => {
-  if (!team.value?.bankAddress) return undefined
-  return team.value.bankAddress as Address
+  if (!teamStore.currentTeam?.bankAddress) return undefined
+  return teamStore.currentTeam.bankAddress as Address
 })
 
-const typedBankAddress = computed(() => team.value?.bankAddress as Address | undefined)
+const typedBankAddress = computed(() => teamStore.currentTeam?.bankAddress as Address | undefined)
 
 const tokens = computed(() => [
   {
@@ -390,7 +381,6 @@ watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
 })
 
 onMounted(async () => {
-  await executeFetchTeam()
   await refetchBalances()
 })
 </script>
