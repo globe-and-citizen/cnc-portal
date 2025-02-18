@@ -39,7 +39,7 @@ describe('DepositBankModal.vue', () => {
       await amountInput.setValue('100')
       await wrapper.find('.btn-primary').trigger('click')
       expect(wrapper.emitted()).toHaveProperty('deposit')
-      expect(wrapper.emitted('deposit')?.[0]).toEqual(['100'])
+      expect(wrapper.emitted('deposit')?.[0]).toEqual([{ amount: '100', token: 'ETH' }])
     })
 
     it('emits closeModal when close button is clicked', async () => {
