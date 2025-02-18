@@ -47,43 +47,6 @@
       />
     </ModalComponent>
 
-    <ModalComponent v-model="tokenDepositModal">
-      <div class="flex flex-col gap-4 justify-start">
-        <span class="font-bold text-xl sm:text-2xl">Deposit USDC</span>
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Amount</span>
-          </label>
-          <input
-            type="number"
-            class="input input-bordered w-full"
-            placeholder="Enter amount"
-            v-model="tokenAmount"
-          />
-        </div>
-        <div class="text-center">
-          <ButtonUI
-            :loading="
-              isConfirmingTokenDeposit ||
-              tokenDepositLoading ||
-              isConfirmingApprove ||
-              isPendingApprove
-            "
-            :disabled="
-              isConfirmingTokenDeposit ||
-              tokenDepositLoading ||
-              isConfirmingApprove ||
-              isPendingApprove
-            "
-            class="w-full sm:w-44"
-            @click="depositToken"
-            variant="primary"
-          >
-            Deposit USDC
-          </ButtonUI>
-        </div>
-      </div>
-    </ModalComponent>
   </div>
 </template>
 
@@ -103,7 +66,6 @@ import { config } from '@/wagmi.config'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore } from '@/stores/user'
 import BankABI from '@/artifacts/abi/bank.json'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
@@ -202,7 +164,6 @@ const transactions = ref<Transaction[]>([
 // Add refs for modals and form data
 const depositModal = ref(false)
 const transferModal = ref(false)
-const tokenDepositModal = ref(false)
 const tokenAmount = ref('')
 const foundUsers = ref<User[]>([])
 
