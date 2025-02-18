@@ -170,7 +170,7 @@ describe('BankView', () => {
           ArrowsRightLeftIcon: true
         }
       }
-    }) as VueWrapper<BankViewInstance>
+    }) as unknown as VueWrapper<BankViewInstance>
   })
 
   it('renders the bank view correctly', () => {
