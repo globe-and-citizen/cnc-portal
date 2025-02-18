@@ -19,7 +19,7 @@
           </div>
           <div class="text-sm text-gray-500 mt-1">≈ $ 1.28</div>
           <div class="mt-2">
-            {{ usdcBalance ? (Number(usdcBalance) / 1e6).toString() : '0' }}
+            {{ formattedUsdcBalance }}
           </div>
         </div>
         <div class="flex gap-2">
@@ -57,19 +57,96 @@
 <script setup lang="ts">
 import { PlusIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { NETWORK } from '@/constant'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
+import { computed, watch } from 'vue'
 import type { Address } from 'viem'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { useToastStore } from '@/stores/useToastStore'
+import { log, parseError } from '@/utils'
 
-defineProps<{
-  teamBalance: { formatted: string } | null
-  usdcBalance: bigint | null
-  balanceLoading: boolean
-  isLoadingUsdcBalance: boolean
+const props = defineProps<{
   bankAddress: Address | undefined
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'open-deposit'): void
   (e: 'open-transfer'): void
+  (e: 'error'): void
+  (e: 'balance-updated'): void
 }>()
+
+const { addErrorToast } = useToastStore()
+const chainId = useChainId()
+
+// Balance fetching
+const {
+  data: teamBalance,
+  isLoading: balanceLoading,
+  error: balanceError,
+  refetch: fetchBalance
+} = useBalance({
+  address: props.bankAddress,
+  chainId
+})
+
+// USDC Balance
+const {
+  data: usdcBalance,
+  isLoading: isLoadingUsdcBalance,
+  refetch: fetchUsdcBalance,
+  error: usdcBalanceError
+} = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [props.bankAddress as Address]
+})
+
+// Computed properties
+const formattedUsdcBalance = computed(() =>
+  usdcBalance.value ? (Number(usdcBalance.value) / 1e6).toString() : '0'
+)
+
+// Watch for balance errors
+watch(balanceError, () => {
+  if (balanceError.value) {
+    addErrorToast('Failed to fetch team balance')
+    log.error('Failed to fetch team balance:', parseError(balanceError.value))
+    emit('error')
+  }
+})
+
+watch(usdcBalanceError, () => {
+  if (usdcBalanceError.value) {
+    addErrorToast('Failed to fetch USDC balance')
+    log.error('Failed to fetch USDC balance:', parseError(usdcBalanceError.value))
+    emit('error')
+  }
+})
+
+// Watch for balance updates
+watch([teamBalance, usdcBalance], () => {
+  emit('balance-updated')
+})
+
+// Watch for bank address changes
+watch(
+  () => props.bankAddress,
+  async (newAddress) => {
+    if (newAddress) {
+      await Promise.all([fetchBalance(), fetchUsdcBalance()])
+    }
+  }
+)
+
+// Expose methods and data for parent component
+defineExpose({
+  teamBalance,
+  formattedUsdcBalance,
+  balanceError,
+  usdcBalanceError,
+  fetchBalance,
+  fetchUsdcBalance
+})
 </script>

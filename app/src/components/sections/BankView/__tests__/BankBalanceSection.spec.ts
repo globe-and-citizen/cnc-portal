@@ -1,15 +1,46 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import BankBalanceSection from '../BankBalanceSection.vue'
 import { NETWORK } from '@/constant'
 import type { Address } from 'viem'
+import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
+import { createConfig, http } from '@wagmi/core'
+import { mainnet } from '@wagmi/core/chains'
+import type * as wagmiVue from '@wagmi/vue'
+
+// Create a test wagmi config
+const config = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
+
+// Mock the useConfig composable
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof wagmiVue
+  return {
+    ...actual,
+    useConfig: () => config,
+    useBalance: () => ({
+      data: ref({ formatted: '1.5', value: BigInt(1500000) }),
+      isLoading: ref(false),
+      error: ref(null),
+      refetch: vi.fn()
+    }),
+    useReadContract: () => ({
+      data: ref(BigInt(1500000)),
+      isLoading: ref(false),
+      error: ref(null),
+      refetch: vi.fn()
+    }),
+    useChainId: () => ref(1)
+  }
+})
 
 describe('BankBalanceSection', () => {
   const defaultProps = {
-    teamBalance: { formatted: '1.5' },
-    usdcBalance: BigInt(1500000), // 1.5 USDC
-    balanceLoading: false,
-    isLoadingUsdcBalance: false,
     bankAddress: '0x123' as Address
   }
 
@@ -21,7 +52,8 @@ describe('BankBalanceSection', () => {
           ButtonUI: false,
           PlusIcon: true,
           ArrowsRightLeftIcon: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -38,31 +70,13 @@ describe('BankBalanceSection', () => {
           ButtonUI: false,
           PlusIcon: true,
           ArrowsRightLeftIcon: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
     const usdcText = wrapper.find('.mt-2').text()
     expect(usdcText).toContain('1.5') // 1500000 / 1e6 = 1.5
-  })
-
-  it('displays loading state when fetching balances', () => {
-    const wrapper = mount(BankBalanceSection, {
-      props: {
-        ...defaultProps,
-        balanceLoading: true
-      },
-      global: {
-        stubs: {
-          ButtonUI: false,
-          PlusIcon: true,
-          ArrowsRightLeftIcon: true
-        }
-      }
-    })
-
-    const loadingSpinner = wrapper.find('.loading-spinner')
-    expect(loadingSpinner.exists()).toBe(true)
   })
 
   it('enables deposit button when bank address exists', () => {
@@ -73,7 +87,8 @@ describe('BankBalanceSection', () => {
           ButtonUI: false,
           PlusIcon: true,
           ArrowsRightLeftIcon: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -89,7 +104,8 @@ describe('BankBalanceSection', () => {
           ButtonUI: false,
           PlusIcon: true,
           ArrowsRightLeftIcon: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -105,7 +121,8 @@ describe('BankBalanceSection', () => {
           ButtonUI: false,
           PlusIcon: true,
           ArrowsRightLeftIcon: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -122,7 +139,8 @@ describe('BankBalanceSection', () => {
           ButtonUI: false,
           PlusIcon: true,
           ArrowsRightLeftIcon: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 

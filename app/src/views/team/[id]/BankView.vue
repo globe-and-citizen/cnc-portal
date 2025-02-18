@@ -11,13 +11,11 @@
         </div>
 
         <BankBalanceSection
-          :team-balance="formattedTeamBalance"
-          :usdc-balance="typedUsdcBalance"
-          :balance-loading="balanceLoading"
-          :is-loading-usdc-balance="isLoadingUsdcBalance"
+          ref="bankBalanceSection"
           :bank-address="typedBankAddress"
           @open-deposit="depositModal = true"
           @open-transfer="transferModal = true"
+          @balance-updated="$forceUpdate()"
         />
       </div>
 
@@ -50,8 +48,8 @@
         @searchMembers="(input: string) => searchUsers({ name: '', address: input })"
         :filteredMembers="foundUsers"
         :loading="transferLoading || isConfirmingTransfer"
-        :bank-balance="teamBalance?.formatted || '0'"
-        :usdc-balance="usdcBalance ? (Number(usdcBalance) / 1e6).toString() : '0'"
+        :bank-balance="bankBalanceSection?.teamBalance?.formatted || '0'"
+        :usdc-balance="bankBalanceSection?.formattedUsdcBalance || '0'"
         service="Bank"
       />
     </ModalComponent>
@@ -98,14 +96,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import {
-  useBalance,
-  useReadContract,
-  useChainId,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-  useWriteContract
-} from '@wagmi/vue'
+import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import type { Team, User } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
@@ -128,10 +119,6 @@ import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSe
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 
 // Add type definitions
-interface TeamBalance {
-  formatted: string
-}
-
 interface Transaction {
   hash: string
   date: string
@@ -145,7 +132,6 @@ interface Transaction {
 
 const route = useRoute()
 const { addErrorToast, addSuccessToast } = useToastStore()
-const chainId = useChainId()
 const userDataStore = useUserDataStore()
 const currentAddress = userDataStore.address
 
@@ -164,54 +150,31 @@ const bankAddress = computed(() => {
   return team.value.bankAddress as Address
 })
 
-// Balance fetching
-const {
-  data: teamBalance,
-  isLoading: balanceLoading,
-  error: balanceError,
-  refetch: fetchBalance
-} = useBalance({
-  address: team.value?.bankAddress as Address,
-  chainId
-})
-
-// Format team balance for component
-const formattedTeamBalance = computed<TeamBalance | null>(() =>
-  teamBalance.value ? { formatted: teamBalance.value.formatted } : null
-)
-
-// USDC Balance
-const {
-  data: usdcBalance,
-  isLoading: isLoadingUsdcBalance,
-  refetch: fetchUsdcBalance,
-  error: usdcBalanceError
-} = useReadContract({
-  address: USDC_ADDRESS as Address,
-  abi: ERC20ABI,
-  functionName: 'balanceOf',
-  args: [team.value?.bankAddress as Address]
-})
-
-// Add computed properties for typed values
-const typedUsdcBalance = computed(() => usdcBalance.value as bigint | null)
 const typedBankAddress = computed(() => team.value?.bankAddress as Address | undefined)
 
 // Template data
-const tokens = computed<Token[]>(() => [
+const tokens = computed(() => [
   {
     name: NETWORK.currencySymbol,
     network: NETWORK.currencySymbol,
     price: 0, // TODO: Add price fetching
-    balance: teamBalance.value ? Number(teamBalance.value.formatted) : 0,
-    amount: teamBalance.value ? Number(teamBalance.value.formatted) : 0
+    balance: bankBalanceSection.value?.teamBalance?.formatted
+      ? Number(bankBalanceSection.value.teamBalance.formatted)
+      : 0,
+    amount: bankBalanceSection.value?.teamBalance?.formatted
+      ? Number(bankBalanceSection.value.teamBalance.formatted)
+      : 0
   },
   {
     name: 'USDC',
     network: 'USDC',
     price: 1,
-    balance: usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0,
-    amount: usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0
+    balance: bankBalanceSection.value?.formattedUsdcBalance
+      ? Number(bankBalanceSection.value.formattedUsdcBalance)
+      : 0,
+    amount: bankBalanceSection.value?.formattedUsdcBalance
+      ? Number(bankBalanceSection.value.formattedUsdcBalance)
+      : 0
   }
 ])
 
@@ -432,10 +395,13 @@ const loadingText = computed(() => {
   return 'Processing...'
 })
 
+// Create a ref for the BankBalanceSection component
+const bankBalanceSection = ref()
+
 const refetchBalances = async () => {
   try {
-    await fetchBalance()
-    await fetchUsdcBalance()
+    await bankBalanceSection.value?.fetchBalance()
+    await bankBalanceSection.value?.fetchUsdcBalance()
   } catch (error: unknown) {
     console.error('Failed to fetch balances:', error)
     addErrorToast('Failed to fetch balance')
@@ -448,20 +414,6 @@ watch(teamError, () => {
   if (teamError.value) {
     addErrorToast('Failed to fetch team data')
     log.error('Failed to fetch team data:', parseError(teamError.value))
-  }
-})
-
-watch(balanceError, () => {
-  if (balanceError.value) {
-    addErrorToast('Failed to fetch team balance')
-    log.error('Failed to fetch team balance:', parseError(balanceError.value))
-  }
-})
-
-watch(usdcBalanceError, () => {
-  if (usdcBalanceError.value) {
-    addErrorToast('Failed to fetch USDC balance')
-    log.error('Failed to fetch USDC balance:', parseError(usdcBalanceError.value))
   }
 })
 
