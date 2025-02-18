@@ -209,4 +209,19 @@ describe('TransferFromBankForm.vue', () => {
       expect(wrapper.find('.text-red-500').exists()).toBe(true)
     })
   })
+
+  describe('Computed Properties', () => {
+    it('returns correct balance for selected token', async () => {
+      // Initially, the selected token is the default currency
+      expect((wrapper.vm as unknown as ComponentData).getSelectedTokenBalance).toBe('100')
+
+      // Change to USDC and check the balance
+      await wrapper.setProps({ usdcBalance: '50' })
+      const dropdownButton = wrapper.find('.badge-info')
+      await dropdownButton.trigger('click')
+      const tokenOption = wrapper.find('[data-test="token-dropdown"] li:nth-child(2)')
+      await tokenOption.trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).getSelectedTokenBalance).toBe('50')
+    })
+  })
 })
