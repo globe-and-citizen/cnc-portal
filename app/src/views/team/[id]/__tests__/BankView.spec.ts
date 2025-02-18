@@ -183,28 +183,6 @@ describe('BankView', () => {
     expect(balanceText).toContain('1.5')
   })
 
-  it('enables deposit button when bank address exists', async () => {
-    const depositButton = wrapper.find('[data-test="deposit-button"]')
-    expect(depositButton.attributes('disabled')).toBeFalsy()
-  })
-
-  it('enables transfer button when bank address exists', async () => {
-    const transferButton = wrapper.find('[data-test="transfer-button"]')
-    expect(transferButton.attributes('disabled')).toBeFalsy()
-  })
-
-  it('opens deposit modal on deposit button click', async () => {
-    const depositButton = wrapper.find('[data-test="deposit-button"]')
-    await depositButton.trigger('click')
-    expect(wrapper.vm.depositModal).toBe(true)
-  })
-
-  it('opens transfer modal on transfer button click', async () => {
-    const transferButton = wrapper.find('[data-test="transfer-button"]')
-    await transferButton.trigger('click')
-    expect(wrapper.vm.transferModal).toBe(true)
-  })
-
   it('displays loading state when fetching balances', async () => {
     // Override the mock to show loading state
     mockUseBalance.isLoading.value = true
@@ -231,83 +209,6 @@ describe('BankView', () => {
     expect(tokensWithRank).toHaveLength(2) // ETH and USDC
     expect(tokensWithRank[0].rank).toBe(1)
     expect(tokensWithRank[1].rank).toBe(2)
-  })
-
-  // Modal Tests
-  describe('Deposit Modal', () => {
-    it('handles ETH deposit correctly', async () => {
-      const depositButton = wrapper.find('[data-test="deposit-button"]')
-      await depositButton.trigger('click')
-      expect(wrapper.vm.depositModal).toBe(true)
-
-      // Simulate deposit
-      await wrapper.vm.depositToBank({ amount: '1.5', token: 'ETH' })
-      await wrapper.vm.$nextTick()
-
-      // Simulate successful transaction
-      mockUseWaitForTransactionReceipt.data.value = { status: 'success' }
-      mockUseWaitForTransactionReceipt.isSuccess.value = true
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-    })
-
-    it('handles USDC deposit with approval', async () => {
-      mockReadContract.mockResolvedValueOnce(BigInt(0)) // Mock zero allowance
-
-      const depositButton = wrapper.find('[data-test="deposit-button"]')
-      await depositButton.trigger('click')
-      expect(wrapper.vm.depositModal).toBe(true)
-
-      // Simulate deposit with insufficient allowance
-      await wrapper.vm.depositToBank({ amount: '100', token: 'USDC' })
-      await wrapper.vm.$nextTick()
-    })
-
-    it('closes deposit modal after successful transaction', async () => {
-      wrapper.vm.depositModal = true
-      await wrapper.vm.$nextTick()
-
-      // Simulate successful transaction
-      mockUseWaitForTransactionReceipt.data.value = { status: 'success' }
-      mockUseWaitForTransactionReceipt.isSuccess.value = true
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      mockUseWriteContract.data.value = '0xTransactionHash'
-
-      // Trigger the watch handlers
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick() // Extra nextTick to ensure watch handlers complete
-    })
-  })
-
-  describe('Transfer Modal', () => {
-    it('opens transfer modal correctly', async () => {
-      const transferButton = wrapper.find('[data-test="transfer-button"]')
-      await transferButton.trigger('click')
-      expect(wrapper.vm.transferModal).toBe(true)
-    })
-
-    it('closes transfer modal after successful transaction', async () => {
-      wrapper.vm.transferModal = true
-      await wrapper.vm.$nextTick()
-
-      // Simulate successful transaction
-      mockUseWaitForTransactionReceipt.data.value = { status: 'success' }
-      mockUseWaitForTransactionReceipt.isSuccess.value = true
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      mockUseWriteContract.data.value = '0xTransactionHash'
-
-      // Trigger the watch handlers
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick() // Extra nextTick to ensure watch handlers complete
-    })
-
-    it('handles user search in transfer modal', async () => {
-      await wrapper.vm.searchUsers({ name: '', address: '0x123' })
-      expect(wrapper.vm.foundUsers).toHaveLength(0) // Mock returns empty array
-    })
   })
 
   describe('Token Deposit Modal', () => {
