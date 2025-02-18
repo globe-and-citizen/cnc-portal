@@ -155,7 +155,6 @@ const transactions = ref<Transaction[]>([
 // Add refs for modals and form data
 const depositModal = ref(false)
 const transferModal = ref(false)
-const tokenAmount = ref('')
 const foundUsers = ref<User[]>([])
 
 // Add contract interactions
@@ -274,39 +273,6 @@ const transferFromBank = async (to: string, amount: string, description: string,
   } catch (error) {
     console.error(error)
     addErrorToast(`Failed to transfer ${token}`)
-  }
-}
-
-const depositToken = async () => {
-  if (!bankAddress.value || !tokenAmount.value) return
-  const amount = BigInt(Number(tokenAmount.value) * 1e6)
-
-  try {
-    const allowance = await readContract(config, {
-      address: USDC_ADDRESS as Address,
-      abi: ERC20ABI,
-      functionName: 'allowance',
-      args: [currentAddress as Address, bankAddress.value]
-    })
-    const currentAllowance = allowance ? allowance.toString() : 0n
-    if (Number(currentAllowance) < Number(amount)) {
-      approve({
-        address: USDC_ADDRESS as Address,
-        abi: ERC20ABI,
-        functionName: 'approve',
-        args: [bankAddress.value, amount]
-      })
-    } else {
-      writeTokenDeposit({
-        address: bankAddress.value,
-        abi: BankABI,
-        functionName: 'depositToken',
-        args: [USDC_ADDRESS as Address, amount]
-      })
-    }
-  } catch (error) {
-    console.error(error)
-    addErrorToast('Failed to deposit token')
   }
 }
 
