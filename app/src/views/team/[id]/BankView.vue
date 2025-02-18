@@ -30,8 +30,7 @@
                 </div>
                 <div class="text-sm text-gray-500 mt-1">≈ $ 1.28</div>
                 <div class="mt-2">
-                  <span>USDC Balance: </span>
-                  <span>{{ usdcBalance ? Number(usdcBalance) / 1e6 : '0' }}</span>
+                  {{ usdcBalance ? (Number(usdcBalance) / 1e6).toString() : '0' }}
                 </div>
               </div>
               <div class="flex gap-2">
@@ -40,6 +39,7 @@
                   variant="secondary"
                   class="flex items-center gap-2"
                   @click="depositModal = true"
+                  data-test="deposit-button"
                 >
                   <PlusIcon class="w-5 h-5" />
                   Deposit
@@ -49,6 +49,7 @@
                   variant="secondary"
                   class="flex items-center gap-2"
                   @click="transferModal = true"
+                  data-test="transfer-button"
                 >
                   <ArrowsRightLeftIcon class="w-5 h-5" />
                   Transfer
@@ -555,11 +556,14 @@ const loadingText = computed(() => {
   return 'Processing...'
 })
 
-// Async initialization function
-const init = async () => {
-  await executeFetchTeam()
-  fetchBalance()
-  fetchUsdcBalance()
+const refetchBalances = async () => {
+  try {
+    await fetchBalance()
+    await fetchUsdcBalance()
+  } catch (error: unknown) {
+    console.error('Failed to fetch balances:', error)
+    addErrorToast('Failed to fetch balance')
+  }
 }
 
 //#region Watch
@@ -589,7 +593,7 @@ watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('ETH deposited successfully')
     depositModal.value = false
-    fetchBalance()
+    refetchBalances()
   }
 })
 
@@ -597,7 +601,7 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
     transferModal.value = false
-    fetchBalance()
+    refetchBalances()
   }
 })
 
@@ -605,7 +609,7 @@ watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('USDC deposited successfully')
     depositModal.value = false
-    fetchUsdcBalance()
+    refetchBalances()
     depositAmount.value = '' // Clear stored amount
   }
 })
@@ -623,6 +627,7 @@ watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
 //#endregion
 
 onMounted(async () => {
-  await init()
+  await executeFetchTeam()
+  await refetchBalances()
 })
 </script>
