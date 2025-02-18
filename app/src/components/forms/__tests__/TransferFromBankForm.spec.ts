@@ -3,6 +3,7 @@ import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TransferFromBankForm from '../TransferFromBankForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { NETWORK } from '@/constant'
 
 interface ComponentData {
   to: string
@@ -18,6 +19,8 @@ describe('TransferFromBankForm.vue', () => {
         loading: false,
         bankBalance: '100',
         service: 'Test Service',
+        tokenSymbol: NETWORK.networkName,
+        asBod: false,
         filteredMembers: [
           { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
           { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -33,6 +36,8 @@ describe('TransferFromBankForm.vue', () => {
           loading: true,
           bankBalance: '100',
           service: 'Test Service',
+          tokenSymbol: 'SepoliaETH',
+          asBod: false,
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -108,6 +113,8 @@ describe('TransferFromBankForm.vue', () => {
           loading: false,
           bankBalance: '100',
           service: 'Test Service',
+          tokenSymbol: 'SepoliaETH',
+          asBod: false,
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -129,6 +136,8 @@ describe('TransferFromBankForm.vue', () => {
           loading: false,
           bankBalance: '100',
           service: 'Test Service',
+          tokenSymbol: 'SepoliaETH',
+          asBod: false,
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
@@ -147,6 +156,8 @@ describe('TransferFromBankForm.vue', () => {
           loading: false,
           bankBalance: '100',
           service: 'Test Service',
+          tokenSymbol: 'SepoliaETH',
+          asBod: false,
           filteredMembers: [
             { id: '1', name: 'John Doe', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' },
             { id: '2', name: 'Jane Smith', address: '0xc542BdA5EC1aC9b86fF470c04062D6a181e67928' }
