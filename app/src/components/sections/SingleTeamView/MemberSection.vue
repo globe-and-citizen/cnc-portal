@@ -1,59 +1,56 @@
 <template>
-  <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
-  <div class="flex justify-between py-6" v-if="!teamIsFetching && team">
-    <span class="text-3xl font-bold">Team Members List</span>
-
-    <ButtonUI
-      v-if="team.ownerAddress == userDataStore.address"
-      @click="
-        () => {
-          showAddMemberForm = !showAddMemberForm
-        }
-      "
-      data-test="add-member-button"
-      variant="primary"
-      class="w-max"
-    >
-      <PlusCircleIcon class="size-6" /> Add a new Member
-    </ButtonUI>
-
-    <ModalComponent v-model="showAddMemberForm">
-      <AddMemberForm
-        :isLoading="addMembersLoading"
-        :users="foundUsers"
-        :formData="teamMembers"
-        @searchUsers="(input) => searchUsers(input)"
-        @addMembers="handleAddMembers"
-      />
-    </ModalComponent>
-  </div>
-  <div class="divider m-0"></div>
-  <div class="overflow-x-auto">
-    <table class="table table-zebra" data-test="members-table">
-      <!-- head -->
-      <thead class="text-sm font-bold">
-        <tr>
-          <th></th>
-          <th>Name</th>
-          <th>Address</th>
-          <th>Wage</th>
-          <th v-if="team.ownerAddress === userDataStore.address">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <MemberRow
-          v-for="(member, index) in team.members"
-          :ownerAddress="team.ownerAddress"
-          :teamId="Number(team.id)"
-          :member="{ ...member, index: index + 1 }"
-          :key="member.address"
-          @getTeam="emits('getTeam')"
-          v-memo="[member, team.ownerAddress, team.id]"
+  <CardComponent title="Team Members List">
+    <template #card-action>
+      <ButtonUI
+        v-if="team.ownerAddress == userDataStore.address"
+        @click="() => { showAddMemberForm = !showAddMemberForm }"
+        data-test="add-member-button"
+        variant="primary"
+        class="w-max"
+      >
+        <PlusCircleIcon class="size-6" /> Add a new Member
+      </ButtonUI>
+      <ModalComponent v-model="showAddMemberForm">
+        <AddMemberForm
+          :isLoading="addMembersLoading"
+          :users="foundUsers"
+          :formData="teamMembers"
+          @searchUsers="(input) => searchUsers(input)"
+          @addMembers="handleAddMembers"
         />
-      </tbody>
-    </table>
-  </div>
+      </ModalComponent>
+    </template>
+    <template #default>
+      <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
+      <div class="divider m-0"></div>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra" data-test="members-table">
+          <thead class="text-sm font-bold">
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Wage</th>
+              <th v-if="team.ownerAddress === userDataStore.address">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <MemberRow
+              v-for="(member, index) in team.members"
+              :ownerAddress="team.ownerAddress"
+              :teamId="Number(team.id)"
+              :member="{ ...member, index: index + 1 }"
+              :key="member.address"
+              @getTeam="emits('getTeam')"
+              v-memo="[member, team.ownerAddress, team.id]"
+            />
+          </tbody>
+        </table>
+      </div>
+    </template>
+  </CardComponent>
 </template>
+
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -64,38 +61,54 @@ import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberF
 import ModalComponent from '@/components/ModalComponent.vue'
 import type { User } from '@/types'
 import { useUserDataStore } from '@/stores/user'
-
 import { useToastStore } from '@/stores/useToastStore'
 import ButtonUI from '@/components/ButtonUI.vue'
+import CardComponent from '@/components/CardComponent.vue'
 
 const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 
 const { addSuccessToast, addErrorToast } = useToastStore()
-
 const route = useRoute()
 
 defineProps(['team', 'teamIsFetching'])
 const emits = defineEmits(['getTeam'])
 const teamId = String(route.params.id)
 
-// useFetch instance for adding members to team
 const {
   execute: executeAddMembers,
   error: addMembersError,
   isFetching: addMembersLoading
-} = useCustomFetch(`teams/${teamId}/member`, {
-  immediate: false
-})
+} = useCustomFetch(`teams/${teamId}/member`, { immediate: false })
   .post({ data: teamMembers.value })
   .json()
-// Watchers for adding members to team
+
+  const {
+  execute: executeSearchUser,
+  response: searchUserResponse,
+  data: users
+} = useCustomFetch('user/search', {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    const params = new URLSearchParams()
+    if (lastUpdatedInput.value === 'name' && searchUserName.value) {
+      params.append('name', searchUserName.value)
+    } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
+      params.append('address', searchUserAddress.value)
+    }
+    url += '?' + params.toString()
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
 watch(addMembersError, () => {
   if (addMembersError.value) {
     addErrorToast(addMembersError.value || 'Failed to add members')
   }
 })
+
 watch([() => addMembersLoading.value, () => addMembersError.value], async () => {
   if (!addMembersLoading.value && !addMembersError.value) {
     addSuccessToast('Members added successfully')
@@ -115,31 +128,13 @@ const searchUserAddress = ref('')
 const foundUsers = ref<User[]>([])
 const lastUpdatedInput = ref<'name' | 'address'>('name')
 
-const {
-  execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
-} = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (lastUpdatedInput.value === 'name' && searchUserName.value) {
-      params.append('name', searchUserName.value)
-    } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
-      params.append('address', searchUserAddress.value)
-    }
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
 
 watch(searchUserResponse, () => {
   if (searchUserResponse.value?.ok && users.value?.users) {
     foundUsers.value = users.value.users
   }
 })
+
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
     if (input.name !== searchUserName.value) {
