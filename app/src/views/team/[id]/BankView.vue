@@ -10,7 +10,26 @@
           <span>Bank Account</span>
         </div>
 
+        <div v-if="teamError" class="card bg-base-100 shadow-sm mb-4">
+          <div class="card-body">
+            <div class="flex justify-between items-start">
+              <div class="text-error">
+                Failed to load team data. Please try refreshing the page.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="!team" class="card bg-base-100 shadow-sm mb-4">
+          <div class="card-body">
+            <div class="flex justify-between items-start">
+              <div class="loading loading-spinner loading-lg"></div>
+            </div>
+          </div>
+        </div>
+
         <BankBalanceSection
+          v-else
           ref="bankBalanceSection"
           :bank-address="typedBankAddress"
           @open-deposit="depositModal = true"
