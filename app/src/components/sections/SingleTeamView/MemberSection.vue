@@ -34,11 +34,10 @@
           :loading="teamIsFetching"
           data-test="members-table"
         >
-          <template #name-data="{ row }">
-            {{ row.name }}
-          </template>
-          <template #address-data="{ row }">
-            <AddressToolTip :address="row.address" />
+          <template #member-data="{ row }">
+            <UserComponent
+              :user="{ name: row.name, address: row.address, avatarUrl: row.avatarUrl }"
+            />
           </template>
           <template #wage-data=""> 20 h/week & 10 USD/h </template>
           <template #action-data="{ row }" v-if="team.ownerAddress === userDataStore.address">
@@ -80,7 +79,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import UserComponent from '@/components/UserComponent.vue'
 
 const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)
@@ -174,8 +173,7 @@ const searchUsers = async (input: { name: string; address: string }) => {
 
 const columns = ref([
   { key: 'index', label: '#' },
-  { key: 'name', label: 'Name' },
-  { key: 'address', label: 'Address' },
+  { key: 'member', label: 'Member' },
   { key: 'wage', label: 'Wage' },
   { key: 'action', label: 'Action', sortable: false }
 ])
