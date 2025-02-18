@@ -3,14 +3,24 @@
   <div class="card bg-base-100 shadow-sm">
     <div class="card-body">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium">Bank Transactions History</h3>
+        <h3 class="text-lg font-medium" data-test="transactions-history-title">
+          Bank Transactions History
+        </h3>
         <div class="flex items-center gap-4">
           <div class="flex">
-            <input class="input input-bordered join-item" placeholder="1st January" />
+            <input
+              class="input input-bordered join-item"
+              placeholder="1st January"
+              data-test="start-date-input"
+            />
             <span class="join-item flex items-center px-2">-</span>
-            <input class="input input-bordered join-item" placeholder="30 January" />
+            <input
+              class="input input-bordered join-item"
+              placeholder="30 January"
+              data-test="end-date-input"
+            />
           </div>
-          <button class="btn btn-success gap-2">
+          <button class="btn btn-success gap-2" data-test="export-button">
             Export
             <ArrowDownTrayIcon class="h-4 w-4" />
           </button>
@@ -58,11 +68,23 @@
           </select>
         </div>
         <div class="join">
-          <button class="join-item btn btn-sm" @click="prevPage" :disabled="currentPage === 1">
+          <button
+            class="join-item btn btn-sm"
+            @click="prevPage"
+            :disabled="currentPage === 1"
+            data-test="prev-page-button"
+          >
             «
           </button>
           <button class="join-item btn btn-sm">{{ paginationText }}</button>
-          <button class="join-item btn btn-sm" @click="nextPage" :disabled="isLastPage">»</button>
+          <button
+            class="join-item btn btn-sm"
+            @click="nextPage"
+            :disabled="isLastPage"
+            data-test="next-page-button"
+          >
+            »
+          </button>
         </div>
       </div>
     </div>

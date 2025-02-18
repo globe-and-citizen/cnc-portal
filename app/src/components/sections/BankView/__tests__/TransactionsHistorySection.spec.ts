@@ -40,6 +40,82 @@ describe('TransactionsHistorySection', () => {
       }
     })
 
-    expect(wrapper.find('h3').text()).toBe('Bank Transactions History')
+    expect(wrapper.find('[data-test="transactions-history-title"]').text()).toBe(
+      'Bank Transactions History'
+    )
+  })
+
+  it('renders pagination controls correctly', () => {
+    const wrapper = mount(TransactionsHistorySection, {
+      props: {
+        transactions: mockTransactions,
+        isLoadingTransactions: false
+      },
+      global: {
+        stubs: {
+          TableComponent: true
+        }
+      }
+    })
+
+    const prevButton = wrapper.find('[data-test="prev-page-button"]')
+    const nextButton = wrapper.find('[data-test="next-page-button"]')
+
+    expect(prevButton.exists()).toBe(true)
+    expect(nextButton.exists()).toBe(true)
+  })
+
+  it('renders export button correctly', () => {
+    const wrapper = mount(TransactionsHistorySection, {
+      props: {
+        transactions: mockTransactions,
+        isLoadingTransactions: false
+      },
+      global: {
+        stubs: {
+          TableComponent: true
+        }
+      }
+    })
+
+    const exportButton = wrapper.find('[data-test="export-button"]')
+    expect(exportButton.exists()).toBe(true)
+  })
+
+  it('renders date input fields correctly', () => {
+    const wrapper = mount(TransactionsHistorySection, {
+      props: {
+        transactions: mockTransactions,
+        isLoadingTransactions: false
+      },
+      global: {
+        stubs: {
+          TableComponent: true
+        }
+      }
+    })
+
+    const dateInputs = wrapper.findAll(
+      '[data-test="start-date-input"], [data-test="end-date-input"]'
+    )
+    expect(dateInputs.length).toBe(2)
+  })
+
+  it('renders correct number of transaction rows', () => {
+    const wrapper = mount(TransactionsHistorySection, {
+      props: {
+        transactions: mockTransactions,
+        isLoadingTransactions: false
+      },
+      global: {
+        stubs: {
+          TableComponent: false
+        }
+      }
+    })
+
+    const rows = wrapper.findAll('tbody tr')
+    // Assuming one header row, so transactions + 1
+    expect(rows.length).toBe(mockTransactions.length)
   })
 })
