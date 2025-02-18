@@ -174,7 +174,6 @@ describe('BankView', () => {
   })
 
   it('renders the bank view correctly', () => {
-    expect(wrapper.find('.min-h-screen').exists()).toBe(true)
     expect(wrapper.find('[data-test="expense-account-balance"]').exists()).toBe(false)
   })
 

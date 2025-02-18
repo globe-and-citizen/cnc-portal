@@ -1,15 +1,9 @@
 <template>
-  <div class="min-h-screen">
+  <div>
     <!-- Main Content -->
-    <div class="p-6">
+    <div>
       <!-- Header Section -->
       <div class="mb-8">
-        <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>CNC Team</span>
-          <span>•</span>
-          <span>Bank Account</span>
-        </div>
-
         <!-- Balance Card -->
         <div class="card bg-base-100 shadow-sm mb-4">
           <div class="card-body">
@@ -54,15 +48,6 @@
                   <ArrowsRightLeftIcon class="w-5 h-5" />
                   Transfer
                 </ButtonUI>
-                <!-- <ButtonUI
-                  v-if="team?.bankAddress"
-                  variant="secondary"
-                  class="flex items-center gap-2"
-                  @click="tokenDepositModal = true"
-                >
-                  <UserGroupIcon class="w-5 h-5" />
-                  Send To Members
-                </ButtonUI> -->
               </div>
             </div>
 
