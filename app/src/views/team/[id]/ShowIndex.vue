@@ -18,7 +18,7 @@
       <div class="alert alert-warning" v-if="statusCode === 404">Error! Team not found</div>
       <div class="alert alert-error" v-else>Error! Something went wrong</div>
     </div>
-    <RouterView v-if="team" />
+    <RouterView v-if="teamStore.currentTeam" />
   </div>
 </template>
 <script setup lang="ts">
