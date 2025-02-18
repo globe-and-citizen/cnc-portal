@@ -117,14 +117,6 @@ watch(balanceError, () => {
   }
 })
 
-watch(usdcBalanceError, () => {
-  if (usdcBalanceError.value) {
-    addErrorToast('Failed to fetch USDC balance')
-    log.error('Failed to fetch USDC balance:', parseError(usdcBalanceError.value))
-    emit('error')
-  }
-})
-
 // Watch for balance updates
 watch([teamBalance, usdcBalance], () => {
   emit('balance-updated')
