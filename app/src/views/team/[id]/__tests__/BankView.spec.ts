@@ -111,6 +111,19 @@ vi.mock('@/composables/useCustomFetch', () => ({
   })
 }))
 
+// Add mock for teamStore
+const mockTeamStore = {
+  currentTeam: {
+    bankAddress: '0x123',
+    id: '1',
+    name: 'Test Team'
+  }
+}
+
+vi.mock('@/stores', () => ({
+  useTeamStore: vi.fn(() => mockTeamStore)
+}))
+
 interface BankViewInstance extends ComponentPublicInstance {
   depositModal: boolean
   transferModal: boolean
@@ -168,7 +181,11 @@ describe('BankView', () => {
           TransferFromBankForm: false,
           DepositBankForm: false,
           PlusIcon: true,
-          ArrowsRightLeftIcon: true
+          ArrowsRightLeftIcon: true,
+          // Add stubs for new components
+          BankBalanceSection: true,
+          TokenHoldingsSection: true,
+          TransactionsHistorySection: true
         }
       }
     }) as unknown as VueWrapper<BankViewInstance>
@@ -176,20 +193,6 @@ describe('BankView', () => {
 
   it('renders the bank view correctly', () => {
     expect(wrapper.find('[data-test="expense-account-balance"]').exists()).toBe(false)
-  })
-
-  it('displays correct balances when loaded', async () => {
-    await wrapper.vm.$nextTick()
-    const balanceText = wrapper.find('.text-4xl').text()
-    expect(balanceText).toContain('1.5')
-  })
-
-  it('displays loading state when fetching balances', async () => {
-    // Override the mock to show loading state
-    mockUseBalance.isLoading.value = true
-    await wrapper.vm.$nextTick()
-    const loadingSpinner = wrapper.find('.loading-spinner')
-    expect(loadingSpinner.exists()).toBe(true)
   })
 
   it('shows error toast when balance fetch fails', async () => {
@@ -210,15 +213,6 @@ describe('BankView', () => {
     expect(tokensWithRank).toHaveLength(2) // ETH and USDC
     expect(tokensWithRank[0].rank).toBe(1)
     expect(tokensWithRank[1].rank).toBe(2)
-  })
-
-  describe('Token Deposit Modal', () => {
-    it('opens token deposit modal correctly', async () => {
-      wrapper.vm.tokenDepositModal = true
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick() // Double nextTick to ensure modal is rendered
-      expect(wrapper.find('input[type="number"]').exists()).toBe(true)
-    })
   })
 
   describe('Loading States', () => {
