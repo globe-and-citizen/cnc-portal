@@ -1,15 +1,7 @@
 <template>
   <div class="min-h-screen">
-    <!-- Main Content -->
-    <div class="p-6">
-      <!-- Header Section -->
-      <div class="mb-8">
-        <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>CNC Team</span>
-          <span>•</span>
-          <span>Bank Account</span>
-        </div>
-
+    <div>
+      <div>
         <div v-if="teamError" class="card bg-base-100 shadow-sm mb-4">
           <div class="card-body">
             <div class="flex justify-between items-start">
@@ -137,7 +129,6 @@ import BankBalanceSection from '@/components/sections/BankView/BankBalanceSectio
 import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSection.vue'
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 
-// Add type definitions
 interface Transaction {
   hash: string
   date: string
@@ -154,7 +145,6 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const currentAddress = userDataStore.address
 
-// Fetch team data
 const {
   data: team,
   error: teamError,
@@ -163,7 +153,6 @@ const {
   .get()
   .json<Team>()
 
-// Computed bank address to handle undefined cases
 const bankAddress = computed(() => {
   if (!team.value?.bankAddress) return undefined
   return team.value.bankAddress as Address
@@ -171,7 +160,6 @@ const bankAddress = computed(() => {
 
 const typedBankAddress = computed(() => team.value?.bankAddress as Address | undefined)
 
-// Template data
 const tokens = computed(() => [
   {
     name: NETWORK.currencySymbol,
@@ -403,7 +391,6 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 }
 
-// Add loading state text
 const loadingText = computed(() => {
   if (isPendingApprove.value) return 'Approving USDC...'
   if (isConfirmingApprove.value) return 'Confirming USDC approval...'
@@ -414,7 +401,6 @@ const loadingText = computed(() => {
   return 'Processing...'
 })
 
-// Create a ref for the BankBalanceSection component
 const bankBalanceSection = ref()
 
 const refetchBalances = async () => {
@@ -426,9 +412,6 @@ const refetchBalances = async () => {
     addErrorToast('Failed to fetch balance')
   }
 }
-
-//#region Watch
-
 watch(teamError, () => {
   if (teamError.value) {
     addErrorToast('Failed to fetch team data')
@@ -464,14 +447,11 @@ watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
 watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Token approved successfully')
-    // Continue with the deposit after approval
     if (depositAmount.value) {
       await handleUsdcDeposit(depositAmount.value)
     }
   }
 })
-
-//#endregion
 
 onMounted(async () => {
   await executeFetchTeam()
