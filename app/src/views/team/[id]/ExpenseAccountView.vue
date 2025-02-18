@@ -223,7 +223,6 @@ import type {
   ManyExpenseWithBalances
 } from '@/types'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -252,7 +251,6 @@ import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/M
 
 //#region Refs
 const route = useRoute()
-const transferModal = ref(false)
 const approveUsersModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
@@ -260,41 +258,13 @@ const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 // Token related refs
-const tokenAmount = ref('')
-const tokenRecipient = ref('')
 const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 const expenseAccountData = ref<{}>()
-const signatureHash = ref<string | null>(null)
 const deactivateIndex = ref<number | null>(null)
 const expenseAccountEip712Address = computed(
   () => team.value?.expenseAccountEip712Address as Address
 )
-// const maxLimit = (budgetType: number) =>
-//   computed(() => {
-//     const budgetData =
-//       _expenseAccountData.value?.data &&
-//       Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)
-//         ? JSON.parse(_expenseAccountData.value?.data).budgetData.find(
-//             (item: BudgetData) => item.budgetType === budgetType
-//           )
-//         : undefined
-//     if (_expenseAccountData.value?.data && budgetData && budgetData.budgetType === budgetType)
-//       return budgetData.value
-//     else return '--'
-//   })
-// const maxLimitTxsPerPeriod = maxLimit(0)
-// const maxLimitAmountPerPeriod = maxLimit(1)
-// const maxLimitAmountPerTx = maxLimit(2)
 
-// const expiry = computed(() => {
-//   if (_expenseAccountData.value?.data) {
-//     const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
-//     const date = new Date(Number(unixEpoch) * 1000)
-//     return date.toLocaleString('en-US')
-//   } else {
-//     return '--/--/--, --:--:--'
-//   }
-// })
 const tokenSymbol = (tokenAddress: string) =>
   computed(() => {
     const symbols = {
@@ -305,46 +275,12 @@ const tokenSymbol = (tokenAddress: string) =>
 
     return symbols[tokenAddress] || ''
   })
-// const dynamicDisplayData = (budgetType: number) =>
-//   computed(() => {
-//     const data =
-//       budgetType === 0
-//         ? { heading: 'Total Transactions', symbol: 'TXs' }
-//         : { heading: 'Total Withdrawn', symbol: NETWORK.currencySymbol }
-//     if (_expenseAccountData.value?.data && amountWithdrawn.value) {
-//       if (budgetType === 0) {
-//         return {
-//           ...data,
-//           // @ts-expect-error: amountWithdrawn.value is a array
-//           value: Number(amountWithdrawn.value[0])
-//         }
-//       } else {
-//         const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
-//         return {
-//           ...data,
-//           value:
-//             tokenAddress === zeroAddress
-//               ? // @ts-expect-error: amountWithdrawn.value is a array
-//                 formatEther(amountWithdrawn.value[1])
-//               : // @ts-expect-error: amountWithdrawn.value is a array
-//                 Number(amountWithdrawn.value[1]) / 1e6
-//         }
-//       }
-//     } else {
-//       return {
-//         ...data,
-//         value: `--`
-//       }
-//     }
-//   })
+
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
     return formatEther(expenseAccountBalance.value.value)
   else return '--'
 })
-// const dynamicDisplayDataTx = dynamicDisplayData(0)
-// const dynamicDisplayDataAmount = dynamicDisplayData(1)
-// Reactive storage for records to be displayed in table
 const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 // Check if the current user is disapproved
@@ -459,31 +395,6 @@ const {
   args: [expenseAccountEip712Address as unknown as Address]
 })
 
-// const {
-//   data: amountWithdrawn,
-//   refetch: executeGetAmountWithdrawn,
-//   error: errorGetAmountWithdrawn
-//   //isLoading: isLoadingGetAmountWithdrawn
-// } = useReadContract({
-//   functionName: 'balances',
-//   address: expenseAccountEip712Address as unknown as Address,
-//   abi: expenseAccountABI,
-//   args: [signatureHash]
-// })
-
-//expense account transfer
-// const {
-//   writeContract: executeExpenseAccountTransfer,
-//   isPending: isLoadingTransfer,
-//   error: errorTransfer,
-//   data: transferHash
-// } = useWriteContract()
-
-// const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
-//   useWaitForTransactionReceipt({
-//     hash: transferHash
-//   })
-
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
@@ -509,19 +420,6 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
   useWaitForTransactionReceipt({
     hash: activateHash
   })
-
-// Token approval
-// const {
-//   writeContract: approve,
-//   error: approveError,
-//   data: approveHash
-//   // isPending: isPendingApprove
-// } = useWriteContract()
-
-// const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
-//   useWaitForTransactionReceipt({
-//     hash: approveHash
-//   })
 //#endregion
 
 //#region Functions
@@ -600,102 +498,6 @@ const getExpenseAccountOwner = async () => {
   if (team.value?.expenseAccountEip712Address) await executeExpenseAccountGetOwner()
 }
 
-// const getAmountWithdrawnBalance = async () => {
-//   if (team.value?.expenseAccountEip712Address) {
-//     if (!_expenseAccountData?.value?.data) return
-//     signatureHash.value = keccak256(_expenseAccountData.value.signature)
-//     await executeGetAmountWithdrawn()
-//   }
-// }
-
-// const transferFromExpenseAccount = async (to: string, amount: string) => {
-//   tokenAmount.value = amount
-//   tokenRecipient.value = to
-
-//   if (team.value?.expenseAccountEip712Address && _expenseAccountData.value.data) {
-//     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-
-//     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
-//     else await transferErc20Token()
-//   }
-// }
-
-// const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimit) => {
-//   executeExpenseAccountTransfer({
-//     address: team.value?.expenseAccountEip712Address as Address,
-//     args: [
-//       to,
-//       parseEther(amount),
-//       {
-//         ...budgetLimit,
-//         budgetData: budgetLimit.budgetData.map((item) => ({
-//           ...item,
-//           value:
-//             item.budgetType === 0
-//               ? item.value
-//               : budgetLimit.tokenAddress === zeroAddress
-//                 ? parseEther(`${item.value}`)
-//                 : BigInt(Number(item.value) * 1e6)
-//         }))
-//       },
-//       _expenseAccountData.value.signature
-//     ],
-//     abi: expenseAccountABI,
-//     functionName: 'transfer'
-//   })
-// }
-
-// // Token transfer function
-// const transferErc20Token = async () => {
-//   if (
-//     !team.value?.expenseAccountEip712Address ||
-//     !tokenAmount.value ||
-//     !tokenRecipient.value ||
-//     !_expenseAccountData.value?.data
-//   )
-//     return
-
-//   const tokenAddress = USDC_ADDRESS
-//   const _amount = BigInt(Number(tokenAmount.value) * 1e6)
-
-//   const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
-
-//   const allowance = await readContract(config, {
-//     address: tokenAddress as Address,
-//     abi: ERC20ABI,
-//     functionName: 'allowance',
-//     args: [currentUserAddress as Address, team.value.expenseAccountEip712Address as Address]
-//   })
-
-//   const currentAllowance = allowance ? allowance.toString() : 0n
-//   if (Number(currentAllowance) < Number(_amount)) {
-//     approve({
-//       address: tokenAddress as Address,
-//       abi: ERC20ABI,
-//       functionName: 'approve',
-//       args: [team.value.expenseAccountEip712Address as Address, _amount]
-//     })
-//   } else {
-//     executeExpenseAccountTransfer({
-//       address: team.value.expenseAccountEip712Address as Address,
-//       abi: expenseAccountABI,
-//       functionName: 'transfer',
-//       args: [
-//         tokenRecipient.value as Address,
-//         _amount,
-//         {
-//           ...budgetLimit,
-//           budgetData: budgetLimit.budgetData.map((item) => ({
-//             ...item,
-//             value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
-//           }))
-//         },
-//         _expenseAccountData.value.signature
-//       ]
-//     })
-//   }
-// }
-
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   expenseAccountData.value = data
@@ -770,16 +572,6 @@ watch(
   }
 )
 
-// watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
-//   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
-//     addSuccessToast('Transfer Successful')
-//     await executeGetExpenseAccountBalance()
-//     await fetchUsdcBalance()
-//     await getAmountWithdrawnBalance()
-//     transferModal.value = false
-//   }
-// })
-
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
     addSuccessToast('Activate Successful')
@@ -816,20 +608,6 @@ watch(searchUserResponse, () => {
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })
-
-// watch(errorGetAmountWithdrawn, (newVal) => {
-//   if (newVal) {
-//     log.error(parseError(newVal))
-//     addErrorToast('Failed to fetch amount withdrawn')
-//   }
-// })
-
-// watch(errorTransfer, (newVal) => {
-//   if (newVal) {
-//     log.error(parseError(newVal))
-//     addErrorToast('Failed to transfer')
-//   }
-// })
 
 watch(errorDeactivateApproval, (newVal) => {
   if (newVal) {
@@ -870,20 +648,6 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
     addErrorToast('Error fetching expense account data')
   }
 })
-
-// watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
-//   if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
-//     addSuccessToast('Approval granted successfully')
-//     transferErc20Token()
-//   }
-// })
-
-// watch(approveError, () => {
-//   if (approveError.value) {
-//     log.error(parseError(approveError.value))
-//     addErrorToast('Failed to approve token spending')
-//   }
-// })
 
 watch([usdcBalanceError], ([newUsdcError]) => {
   if (newUsdcError) {
