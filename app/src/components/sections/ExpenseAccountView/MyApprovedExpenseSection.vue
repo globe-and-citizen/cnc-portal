@@ -1,104 +1,92 @@
 <template>
   <div
-      v-if="team?.expenseAccountEip712Address"
-      class="card shadow-xl bg-white flex text-primary-content p-5 overflow-visible mb-10"
-    >
-      <span class="text-2xl font-bold">My Approved Expense</span>
-      <!-- TODO display this only if the use have an approved expense -->
-      <!-- Expense A/c Info Section -->
-      <section class="stat flex flex-col justify-start">
-        <!-- New Header -->
+    v-if="team?.expenseAccountEip712Address"
+    class="card shadow-xl bg-white flex text-primary-content p-5 overflow-visible mb-10"
+  >
+    <span class="text-2xl font-bold">My Approved Expense</span>
+    <!-- TODO display this only if the use have an approved expense -->
+    <!-- Expense A/c Info Section -->
+    <section class="stat flex flex-col justify-start">
+      <!-- New Header -->
 
-        <div class="flex flex-col gap-8">
-          <div class="overflow-x-auto" data-test="approval-table">
-            <table class="table">
-              <!-- head -->
-              <thead class="text-sm font-bold">
-                <tr>
-                  <th>Expiry Date</th>
-                  <th>Max Amount Per Tx</th>
-                  <th>Total Transactions</th>
-                  <th>Total Transfers</th>
-                  <th class="flex justify-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ expiry }}</td>
-                  <td>
-                    {{ maxLimitAmountPerTx }}
-                    {{
-                      _expenseAccountData?.data &&
-                      tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
-                    }}
-                  </td>
-                  <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
-                  <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
-                  <td class="flex justify-end" data-test="action-td">
-                    <ButtonUI
-                      variant="success"
-                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
-                      v-if="true"
-                      @click="transferModal = true"
-                      data-test="transfer-button"
-                    >
-                      Spend
-                    </ButtonUI>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <div class="flex flex-col gap-8">
+        <div class="overflow-x-auto" data-test="approval-table">
+          <table class="table">
+            <!-- head -->
+            <thead class="text-sm font-bold">
+              <tr>
+                <th>Expiry Date</th>
+                <th>Max Amount Per Tx</th>
+                <th>Total Transactions</th>
+                <th>Total Transfers</th>
+                <th class="flex justify-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ expiry }}</td>
+                <td>
+                  {{ maxLimitAmountPerTx }}
+                  {{
+                    _expenseAccountData?.data &&
+                    tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
+                  }}
+                </td>
+                <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
+                <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
+                <td class="flex justify-end" data-test="action-td">
+                  <ButtonUI
+                    variant="success"
+                    :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
+                    v-if="true"
+                    @click="transferModal = true"
+                    data-test="transfer-button"
+                  >
+                    Spend
+                  </ButtonUI>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        <ModalComponent v-model="transferModal">
-          <TransferFromBankForm
-            v-if="transferModal && _expenseAccountData?.data"
-            @close-modal="() => (transferModal = false)"
-            @transfer="
-              async (to: string, amount: string) => {
-                await transferFromExpenseAccount(to, amount)
-              }
-            "
-            @searchMembers="(input) => searchUsers({ name: '', address: input })"
-            :filteredMembers="foundUsers"
-            :loading="isLoadingTransfer || isConfirmingTransfer"
-            :bank-balance="
-              JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
-                ? expenseBalanceFormatted
-                : `${Number(usdcBalance) / 1e6}`
-            "
-            :token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress).value"
-            service="Expense Account"
-          />
-        </ModalComponent>
-      </section>
-    </div>
+      <ModalComponent v-model="transferModal">
+        <TransferFromBankForm
+          v-if="transferModal && _expenseAccountData?.data"
+          @close-modal="() => (transferModal = false)"
+          @transfer="
+            async (to: string, amount: string) => {
+              await transferFromExpenseAccount(to, amount)
+            }
+          "
+          @searchMembers="(input) => searchUsers({ name: '', address: input })"
+          :filteredMembers="foundUsers"
+          :loading="isLoadingTransfer || isConfirmingTransfer"
+          :bank-balance="
+            JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
+              ? expenseBalanceFormatted
+              : `${Number(usdcBalance) / 1e6}`
+          "
+          :token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress).value"
+          service="Expense Account"
+        />
+      </ModalComponent>
+    </section>
+  </div>
 </template>
 
 <script setup lang="ts">
 //#region Imports
-import { computed, type ComputedRef, onMounted, reactive, type Ref, ref, watch } from 'vue'
-import type {
-  Team,
-  User,
-  BudgetLimit,
-  BudgetData
-} from '@/types'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { computed, type ComputedRef, onMounted, ref, watch } from 'vue'
+import type { Team, User, BudgetLimit, BudgetData } from '@/types'
+import { USDC_ADDRESS } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
-import {
-  useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useBalance,
-  useChainId,
-  useSignTypedData
-} from '@wagmi/vue'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -149,7 +137,11 @@ const maxLimitAmountPerTx = maxLimit(2)
 const dynamicDisplayData = (budgetType: number) =>
   computed(() => {
     const data = {}
-    if (_expenseAccountData.value?.data && amountWithdrawn.value && Array.isArray(amountWithdrawn.value)) {
+    if (
+      _expenseAccountData.value?.data &&
+      amountWithdrawn.value &&
+      Array.isArray(amountWithdrawn.value)
+    ) {
       if (budgetType === 0) {
         return {
           ...data,
@@ -247,17 +239,13 @@ const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
   })
 
 // Token approval
-const {
-  writeContract: approve,
-  error: approveError,
-  data: approveHash
-} = useWriteContract()
+const { writeContract: approve, error: approveError, data: approveHash } = useWriteContract()
 
 const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
   useWaitForTransactionReceipt({
     hash: approveHash
   })
-//#endregion 
+//#endregion
 
 //#region functions
 const init = async () => {

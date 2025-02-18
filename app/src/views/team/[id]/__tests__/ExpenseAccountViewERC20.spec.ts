@@ -270,7 +270,7 @@ describe('ExpenseAccountEIP712Section ERC20', () => {
               [USDT_ADDRESS]: 'USDT',
               [zeroAddress]: NETWORK.currencySymbol
             }
-        
+
             return symbols[tokenAddress] || ''
           }),
         ...props

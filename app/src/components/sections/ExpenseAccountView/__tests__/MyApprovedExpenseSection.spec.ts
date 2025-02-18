@@ -1,17 +1,14 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
-import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
 import { setActivePinia, createPinia } from 'pinia'
 import { computed, ref, type Ref } from 'vue'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
-import * as utils from '@/utils'
 import { zeroAddress } from 'viem'
 
 interface ComponentData {
@@ -295,7 +292,7 @@ describe('ExpenseAccountSection', () => {
               [USDT_ADDRESS]: 'USDT',
               [zeroAddress]: NETWORK.currencySymbol
             }
-        
+
             return symbols[tokenAddress] || ''
           }),
         ...props
@@ -411,7 +408,6 @@ describe('ExpenseAccountSection', () => {
       expect(transferButton.props().disabled).toBe(true)
     })
 
-    
     describe('TransferFromBankForm', async () => {
       const wrapper = createComponent()
       const wrapperVm = wrapper.vm as unknown as ComponentData

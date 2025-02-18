@@ -148,9 +148,9 @@
         </ModalComponent>
       </section>
     </div>-->
-    <MyApprovedExpenseSection 
-      v-if="team" 
-      :team="team" 
+    <MyApprovedExpenseSection
+      v-if="team"
+      :team="team"
       :is-disapproved-address="isDisapprovedAddress"
       :token-symbol="tokenSymbol"
       :expense-balance-formatted="expenseBalanceFormatted"
@@ -187,18 +187,18 @@
       />
       <!--</div>
       </div>-->
-        <ModalComponent v-model="approveUsersModal">
-          <ApproveUsersForm
-            v-if="approveUsersModal"
-            :form-data="teamMembers"
-            :users="foundUsers"
-            :loading-approve="loadingApprove"
-            :is-bod-action="isBodAction()"
-            @approve-user="approveUser"
-            @close-modal="approveUsersModal = false"
-            @search-users="(input) => searchUsers(input)"
-          />
-        </ModalComponent>
+      <ModalComponent v-model="approveUsersModal">
+        <ApproveUsersForm
+          v-if="approveUsersModal"
+          :form-data="teamMembers"
+          :users="foundUsers"
+          :loading-approve="loadingApprove"
+          :is-bod-action="isBodAction()"
+          @approve-user="approveUser"
+          @close-modal="approveUsersModal = false"
+          @search-users="(input) => searchUsers(input)"
+        />
+      </ModalComponent>
     </div>
 
     <div
@@ -214,14 +214,7 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type {
-  Team,
-  User,
-  BudgetLimit,
-  BudgetData,
-  ManyExpenseResponse,
-  ManyExpenseWithBalances
-} from '@/types'
+import type { Team, User, BudgetLimit, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
