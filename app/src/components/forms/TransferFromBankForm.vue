@@ -74,6 +74,7 @@
       <ul
         class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
         ref="target"
+        data-test="token-dropdown"
         v-if="isDropdownOpen"
       >
         <li

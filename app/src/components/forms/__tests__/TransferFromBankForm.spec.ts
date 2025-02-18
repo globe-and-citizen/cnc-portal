@@ -6,9 +6,11 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 
 interface ComponentData {
-  to: string
+  to: string | null
   amount: string
   description: string
+  selectedTokenId: number
+  getSelectedTokenBalance: string
 }
 describe('TransferFromBankForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
@@ -168,6 +170,42 @@ describe('TransferFromBankForm.vue', () => {
       const amountInput = wrapper.find('input[data-test="amount-input"]')
       await amountInput.setValue('sdkjnvc')
       await wrapper.find('.btn-primary').trigger('click')
+      expect(wrapper.find('.text-red-500').exists()).toBe(true)
+    })
+  })
+
+  describe('Dropdown Functionality', () => {
+    it('opens and closes the token dropdown', async () => {
+      const dropdownButton = wrapper.find('.badge-info')
+      await dropdownButton.trigger('click')
+      expect(wrapper.find('[data-test="token-dropdown"]').isVisible()).toBe(true)
+
+      await dropdownButton.trigger('click')
+      expect(wrapper.find('[data-test="token-dropdown"]').exists()).toBe(false)
+    })
+
+    it('selects a token from the dropdown', async () => {
+      const dropdownButton = wrapper.find('.badge-info')
+      await dropdownButton.trigger('click')
+      const tokenOption = wrapper.find('[data-test="token-dropdown"] li')
+      await tokenOption.trigger('click')
+      expect((wrapper.vm as unknown as ComponentData).selectedTokenId).toBe(0) // Assuming first token is selected
+    })
+  })
+
+  describe('Validation Rules', () => {
+    it('validates recipient address correctly', async () => {
+      const recipientInput = wrapper.find('input[data-test="recipient-input"]')
+      await recipientInput.setValue('invalidAddress')
+      await wrapper.find('button[data-test="transferButton"]').trigger('click')
+      expect(wrapper.find('.text-red-500').exists()).toBe(true)
+    })
+
+    it('validates description when asBod is true', async () => {
+      await wrapper.setProps({ asBod: true })
+      const descriptionInput = wrapper.find('input[data-test="description-input"]')
+      await descriptionInput.setValue('')
+      await wrapper.find('button[data-test="transferButton"]').trigger('click')
       expect(wrapper.find('.text-red-500').exists()).toBe(true)
     })
   })
