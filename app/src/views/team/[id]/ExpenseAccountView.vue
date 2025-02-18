@@ -180,6 +180,13 @@
       <!--</div>
       </div>-->
     </div>
+
+    <div
+      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
+      data-test="claims-table"
+    >
+      <ExpenseAccountTransferHistoryTable />
+    </div>
   </div>
   <!-- Expense Account Not Yet Created -->
 </template>
@@ -201,6 +208,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
+import ExpenseAccountTransferHistoryTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTransactionHistoryTable.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'

@@ -84,5 +84,18 @@ describe('AddressToolTip.vue', () => {
         '_blank'
       )
     })
+    it('should open the transaction with correct url', async () => {
+      wrapper = mount(AddressToolTip, {
+        props: { ...props, type: 'transaction' }
+      })
+
+      const open = vi.fn()
+      global.open = open
+      await wrapper.find('[data-test="address-tooltip"]').trigger('click')
+      expect(open).toHaveBeenCalledWith(
+        `https://sepolia.etherscan.io/tx/${props.address}`,
+        '_blank'
+      )
+    })
   })
 })
