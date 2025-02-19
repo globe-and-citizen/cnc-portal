@@ -17,6 +17,12 @@ const config = createConfig({
     [mainnet.id]: http()
   }
 })
+vi.mock('@/stores/useToastStore', () => ({
+  useToastStore: vi.fn().mockReturnValue({
+    addSuccessToast: vi.fn(),
+    addErrorToast: vi.fn()
+  })
+}))
 
 // Mock hooks
 const mockUseBalance = {
@@ -308,6 +314,32 @@ describe('BankBalanceSection', () => {
       mockUseWaitForTransactionReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
       expect(wrapper.vm.loadingText).toBe('Confirming USDC approval...')
+    })
+  })
+
+  describe('Transfer Modal Interactions', () => {
+    it('opens transfer modal with correct initial state', async () => {
+      const wrapper = createWrapper()
+      const transferButton = wrapper.find('[data-test="transfer-button"]')
+
+      await transferButton.trigger('click')
+
+      expect(wrapper.vm.transferModal).toBe(true)
+      const modal = wrapper.find('[data-test="transfer-modal"]')
+      expect(modal.exists()).toBe(true)
+    })
+  })
+
+  describe('Deposit Modal Interactions', () => {
+    it('opens deposit modal with correct initial state', async () => {
+      const wrapper = createWrapper()
+      const depositButton = wrapper.find('[data-test="deposit-button"]')
+
+      await depositButton.trigger('click')
+
+      expect(wrapper.vm.depositModal).toBe(true)
+      const modal = wrapper.find('[data-test="deposit-modal"]')
+      expect(modal.exists()).toBe(true)
     })
   })
 })

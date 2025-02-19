@@ -142,15 +142,7 @@ const paginationText = computed(() => {
   return `${start}-${end} of ${transactions.value.length}`
 })
 
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
+const prevPage = () => {}
 
-const nextPage = () => {
-  if (!isLastPage.value) {
-    currentPage.value++
-  }
-}
+const nextPage = () => {}
 </script>

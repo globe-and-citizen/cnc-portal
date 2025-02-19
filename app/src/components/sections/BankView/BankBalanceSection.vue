@@ -50,7 +50,7 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent v-model="depositModal">
+    <ModalComponent v-model="depositModal" data-test="deposit-modal">
       <DepositBankForm
         v-if="depositModal"
         @close-modal="() => (depositModal = false)"
@@ -68,7 +68,7 @@
     </ModalComponent>
 
     <!-- Transfer Modal -->
-    <ModalComponent v-model="transferModal">
+    <ModalComponent v-model="transferModal" data-test="transfer-modal">
       <TransferFromBankForm
         v-if="transferModal"
         @close-modal="() => (transferModal = false)"
