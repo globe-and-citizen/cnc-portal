@@ -6,6 +6,7 @@ import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
 import { ref } from 'vue'
 import type { Abi } from 'viem'
+import { useTeamStore } from '@/stores'
 
 const mockUseReadContractRefetch = vi.fn()
 const mockUseReadContract = {
@@ -35,6 +36,12 @@ const mockUseWaitForTransactionReceipt = {
   data: ref({ status: 'success' })
 }
 
+const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref<Error | null>(null),
+  data: ref<string | undefined>(undefined)
+}
+
 // Mock readContract function
 const mockReadContract = vi.fn().mockResolvedValue(BigInt(0))
 
@@ -49,7 +56,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
     useBalance: vi.fn(() => mockUseBalance),
-    useChainId: vi.fn(() => ref('0xChainId'))
+    useChainId: vi.fn(() => ref('0xChainId')),
+    useSendTransaction: vi.fn(() => mockUseSendTransaction)
   }
 })
 
@@ -108,8 +116,27 @@ vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => mockTeamStore)
 }))
 
+// Add mock components
+const BankBalanceSection = {
+  name: 'BankBalanceSection',
+  template: '<div>Bank Balance Section</div>',
+  props: ['bankAddress']
+}
+
+const TokenHoldingsSection = {
+  name: 'TokenHoldingsSection',
+  template: '<div>Token Holdings Section</div>',
+  props: ['bankBalanceSection']
+}
+
+const TransactionsHistorySection = {
+  name: 'TransactionsHistorySection',
+  template: '<div>Transactions History Section</div>'
+}
+
 interface BankViewInstance extends ComponentPublicInstance {
   refetchBalances: () => Promise<void>
+  typedBankAddress: string | undefined
 }
 
 describe('BankView', () => {
@@ -141,23 +168,34 @@ describe('BankView', () => {
           })
         ],
         stubs: {
-          ButtonUI: false,
+          ButtonUI: true,
           TableComponent: true,
-          ModalComponent: false,
-          TransferFromBankForm: false,
-          DepositBankForm: false,
+          ModalComponent: true,
+          TransferFromBankForm: true,
+          DepositBankForm: true,
           PlusIcon: true,
-          ArrowsRightLeftIcon: true,
-          // Add stubs for new components
-          BankBalanceSection: true,
-          TokenHoldingsSection: true,
-          TransactionsHistorySection: true
+          ArrowsRightLeftIcon: true
+        },
+        components: {
+          BankBalanceSection,
+          TokenHoldingsSection,
+          TransactionsHistorySection
         }
       }
     }) as unknown as VueWrapper<BankViewInstance>
   })
 
-  it('renders the bank view correctly', () => {
-    expect(wrapper.find('[data-test="expense-account-balance"]').exists()).toBe(false)
+  it('passes correct bank address to BankBalanceSection', () => {
+    const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
+    expect(bankBalanceSection.props('bankAddress')).toBe(mockTeamStore.currentTeam.bankAddress)
+  })
+
+  it('passes bankBalanceSection ref to TokenHoldingsSection', () => {
+    const tokenHoldingsSection = wrapper.findComponent({ name: 'TokenHoldingsSection' })
+    expect(tokenHoldingsSection.props('bankBalanceSection')).toBeDefined()
+  })
+
+  it('computes typedBankAddress correctly from teamStore', () => {
+    expect(wrapper.vm.typedBankAddress).toBe(mockTeamStore.currentTeam.bankAddress)
   })
 })
