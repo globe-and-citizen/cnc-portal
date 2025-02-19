@@ -97,10 +97,7 @@ import { useRoute } from 'vue-router'
 //#endregion
 
 const { team } = defineProps<{
-  // stokenSymbol: (tokenAddress: string) => ComputedRef<string>
   team: Partial<Team>
-  expenseBalanceFormatted: string
-  usdcBalance: unknown
   isDisapprovedAddress: boolean
 }>()
 
@@ -109,6 +106,11 @@ const transferModal = ref(false)
 const foundUsers = ref<User[]>([])
 const searchUserName = ref('')
 const searchUserAddress = ref('')
+const expenseBalanceFormatted = computed(() => {
+  if (typeof expenseAccountBalance.value?.value === 'bigint')
+    return formatEther(expenseAccountBalance.value.value)
+  else return '--'
+})
 const expiry = computed(() => {
   if (_expenseAccountData.value?.data) {
     const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
@@ -214,6 +216,30 @@ const {
 
 //#region composables
 const { addErrorToast, addSuccessToast } = useToastStore()
+const chainId = useChainId()
+
+const {
+  data: expenseAccountBalance,
+  isLoading: isLoadingExpenseAccountBalance,
+  error: isErrorExpenseAccountBalance,
+  refetch: fetchExpenseAccountBalance
+} = useBalance({
+  address: team.expenseAccountEip712Address as unknown as Address,
+  chainId
+})
+
+// Token balances
+const {
+  data: usdcBalance,
+  isLoading: isLoadingUsdcBalance,
+  refetch: fetchUsdcBalance,
+  error: usdcBalanceError
+} = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [team.expenseAccountEip712Address as unknown as Address]
+})
 
 const {
   data: amountWithdrawn,
@@ -252,6 +278,8 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 const init = async () => {
   await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
+  await fetchUsdcBalance()
+  await fetchExpenseAccountBalance()
 }
 const searchUsers = async (input: { name: string; address: string }) => {
   try {
@@ -372,7 +400,8 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
     addSuccessToast('Transfer Successful')
     // await executeGetExpenseAccountBalance()
     // await fetchUsdcBalance()
-    await getAmountWithdrawnBalance()
+    // await getAmountWithdrawnBalance()
+    await init()
     transferModal.value = false
   }
 })
@@ -402,6 +431,18 @@ watch(approveError, () => {
 })
 watch(fetchExpenseAccountDataError, (newVal) => {
   if (newVal) addErrorToast('Error fetching expense account data')
+})
+watch(isErrorExpenseAccountBalance, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Error fetching expense account data')
+  }
+})
+watch([usdcBalanceError], ([newUsdcError]) => {
+  if (newUsdcError) {
+    log.error(parseError(newUsdcError))
+    addErrorToast('Failed to fetch USDC balance')
+  }
 })
 //#endregion
 

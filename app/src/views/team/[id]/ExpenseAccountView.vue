@@ -152,8 +152,6 @@
       v-if="team"
       :team="team"
       :is-disapproved-address="isDisapprovedAddress"
-      :expense-balance-formatted="expenseBalanceFormatted"
-      :usdc-balance="usdcBalance"
     />
 
     <div
