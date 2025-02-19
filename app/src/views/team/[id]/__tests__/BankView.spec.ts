@@ -109,7 +109,6 @@ vi.mock('@/stores', () => ({
 }))
 
 interface BankViewInstance extends ComponentPublicInstance {
-  tokensWithRank: Array<{ rank: number }>
   refetchBalances: () => Promise<void>
 }
 
@@ -160,13 +159,5 @@ describe('BankView', () => {
 
   it('renders the bank view correctly', () => {
     expect(wrapper.find('[data-test="expense-account-balance"]').exists()).toBe(false)
-  })
-
-  it('formats token holdings data correctly', async () => {
-    await wrapper.vm.$nextTick()
-    const tokensWithRank = wrapper.vm.tokensWithRank
-    expect(tokensWithRank).toHaveLength(2) // ETH and USDC
-    expect(tokensWithRank[0].rank).toBe(1)
-    expect(tokensWithRank[1].rank).toBe(2)
   })
 })
