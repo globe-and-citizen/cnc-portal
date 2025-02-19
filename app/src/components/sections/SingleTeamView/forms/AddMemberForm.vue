@@ -1,19 +1,14 @@
 <template>
   <h1 class="font-bold text-2xl">Add New Member</h1>
   <hr />
-  <div ref="formRef">
+  <div ref="formRef" class="min-h-56">
     <div v-for="(input, index) in formData" :key="index" class="input-group mt-3">
       <label class="input input-bordered flex items-center gap-2 input-md">
         <input
           type="text"
           class="w-24"
           v-model="input.name"
-          @keyup.stop="
-            () => {
-              emits('searchUsers', input)
-              showDropdown = true
-            }
-          "
+          @keyup.stop="searchUsers({ name: input.name, address: '' })"
           :placeholder="'Member Name ' + (index + 1)"
         />
         |
@@ -21,12 +16,7 @@
           type="text"
           class="grow"
           v-model="input.address"
-          @keyup.stop="
-            () => {
-              emits('searchUsers', input)
-              showDropdown = true
-            }
-          "
+          @keyup.stop="searchUsers({ name: '', address: input.address })"
           :placeholder="'Wallet Address ' + (index + 1)"
         />
         <span class="badge badge-primary">Mandatory</span>
@@ -35,11 +25,11 @@
 
     <div
       class="dropdown"
-      :class="{ 'dropdown-open': !!users && users.length > 0 }"
+      :class="{ 'dropdown-open': !!data?.users && data?.users.length > 0 }"
       v-if="showDropdown"
     >
       <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
-        <li v-for="user in users" :key="user.address">
+        <li v-for="user in data?.users" :key="user.address">
           <a
             @click="
               () => {
@@ -109,18 +99,37 @@ import type { User } from '@/types'
 import { PlusCircleIcon, MinusCircleIcon } from '@heroicons/vue/24/solid'
 import { isAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
-const emits = defineEmits(['updateForm', 'addMembers', 'searchUsers'])
+const emits = defineEmits(['updateForm', 'addMembers'])
 
 const props = defineProps<{
   formData: Array<{ name: string; address: string }>
-  users: User[]
   isLoading: boolean
 }>()
 
 const formData = ref(props.formData)
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)
+
+const url = ref('user/search')
+const { execute: executeSearchUser, data } = useCustomFetch(url, {
+  immediate: false,
+  refetch: true
+})
+  .get()
+  .json<{ users: Array<User> }>()
+
+const searchUsers = async (input: { name: string; address: string }) => {
+  if (input.address == '' && input.name) {
+    url.value = 'user/search?name=' + input.name
+  } else if (input.name == '' && input.address) {
+    url.value = 'user/search?address=' + input.address
+  }
+
+  await executeSearchUser()
+  showDropdown.value = true
+}
 
 const rules = {
   formData: {
