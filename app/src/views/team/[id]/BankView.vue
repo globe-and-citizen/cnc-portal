@@ -6,8 +6,6 @@
           v-if="teamStore.currentTeam"
           ref="bankBalanceSection"
           :bank-address="typedBankAddress"
-          @open-deposit="depositModal = true"
-          @open-transfer="transferModal = true"
           @balance-updated="$forceUpdate()"
         />
       </div>
@@ -15,57 +13,13 @@
       <TokenHoldingsSection :tokens-with-rank="tokensWithRank" />
       <TransactionsHistorySection :transactions="transactions" />
     </div>
-
-    <ModalComponent v-model="depositModal">
-      <DepositBankForm
-        v-if="depositModal"
-        @close-modal="() => (depositModal = false)"
-        @deposit="depositToBank"
-        :loading="
-          depositLoading ||
-          isConfirmingDeposit ||
-          isPendingApprove ||
-          isConfirmingApprove ||
-          tokenDepositLoading ||
-          isConfirmingTokenDeposit
-        "
-        :loading-text="loadingText"
-      />
-    </ModalComponent>
-
-    <ModalComponent v-model="transferModal">
-      <TransferFromBankForm
-        v-if="transferModal"
-        @close-modal="() => (transferModal = false)"
-        @transfer="transferFromBank"
-        @searchMembers="(input: string) => searchUsers({ name: '', address: input })"
-        :filteredMembers="foundUsers"
-        :loading="transferLoading || isConfirmingTransfer"
-        :bank-balance="bankBalanceSection?.teamBalance?.formatted || '0'"
-        :usdc-balance="bankBalanceSection?.formattedUsdcBalance || '0'"
-        service="Bank"
-      />
-    </ModalComponent>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
-import type { User } from '@/types'
-import { useToastStore } from '@/stores/useToastStore'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { ref, computed } from 'vue'
+import { NETWORK } from '@/constant'
 import { type Address } from 'viem'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { parseEther } from 'viem'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import { useUserDataStore } from '@/stores/user'
-import BankABI from '@/artifacts/abi/bank.json'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
 import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSection.vue'
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
@@ -82,16 +36,7 @@ interface Transaction {
   receipt: string
 }
 
-const { addErrorToast, addSuccessToast } = useToastStore()
-const userDataStore = useUserDataStore()
-const currentAddress = userDataStore.address
-
 const teamStore = useTeamStore()
-const bankAddress = computed(() => {
-  if (!teamStore.currentTeam?.bankAddress) return undefined
-  return teamStore.currentTeam.bankAddress as Address
-})
-
 const typedBankAddress = computed(() => teamStore.currentTeam?.bankAddress as Address | undefined)
 
 const tokens = computed(() => [
@@ -152,201 +97,5 @@ const transactions = ref<Transaction[]>([
   }
 ])
 
-// Add refs for modals and form data
-const depositModal = ref(false)
-const transferModal = ref(false)
-const foundUsers = ref<User[]>([])
-
-// Add contract interactions
-const { sendTransaction, isPending: depositLoading, data: depositHash } = useSendTransaction()
-
-const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
-  hash: depositHash
-})
-
-const {
-  data: transferHash,
-  isPending: transferLoading,
-  writeContract: transfer
-} = useWriteContract()
-
-const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
-  hash: transferHash
-})
-
-const {
-  writeContract: writeTokenDeposit,
-  isPending: tokenDepositLoading,
-  data: tokenDepositHash
-} = useWriteContract()
-
-const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
-  hash: tokenDepositHash
-})
-
-const {
-  writeContract: approve,
-  isPending: isPendingApprove,
-  data: approveHash
-} = useWriteContract()
-
-const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
-  hash: approveHash
-})
-
-// Add ref for storing deposit amount during approval process
-const depositAmount = ref('')
-
-// Add functions
-const depositToBank = async (data: { amount: string; token: string }) => {
-  if (!bankAddress.value) return
-
-  try {
-    if (data.token === 'ETH') {
-      sendTransaction({
-        to: bankAddress.value,
-        value: parseEther(data.amount)
-      })
-    } else if (data.token === 'USDC') {
-      const amount = BigInt(Number(data.amount) * 1e6)
-      depositAmount.value = data.amount // Store amount for after approval
-
-      const allowance = await readContract(config, {
-        address: USDC_ADDRESS as Address,
-        abi: ERC20ABI,
-        functionName: 'allowance',
-        args: [currentAddress as Address, bankAddress.value]
-      })
-
-      const currentAllowance = allowance ? allowance.toString() : 0n
-      if (Number(currentAllowance) < Number(amount)) {
-        approve({
-          address: USDC_ADDRESS as Address,
-          abi: ERC20ABI,
-          functionName: 'approve',
-          args: [bankAddress.value, amount]
-        })
-      } else {
-        // If already approved, deposit directly
-        await handleUsdcDeposit(data.amount)
-      }
-    }
-  } catch (error) {
-    console.error(error)
-    addErrorToast(`Failed to deposit ${data.token}`)
-  }
-}
-
-// Add helper function for USDC deposit
-const handleUsdcDeposit = async (amount: string) => {
-  if (!bankAddress.value) return
-  const tokenAmount = BigInt(Number(amount) * 1e6)
-
-  writeTokenDeposit({
-    address: bankAddress.value,
-    abi: BankABI,
-    functionName: 'depositToken',
-    args: [USDC_ADDRESS as Address, tokenAmount]
-  })
-}
-
-const transferFromBank = async (to: string, amount: string, description: string, token: string) => {
-  if (!bankAddress.value) return
-
-  try {
-    if (token === NETWORK.currencySymbol) {
-      transfer({
-        address: bankAddress.value,
-        abi: BankABI,
-        functionName: 'transfer',
-        args: [to, parseEther(amount)]
-      })
-    } else if (token === 'USDC') {
-      const tokenAmount = BigInt(Number(amount) * 1e6)
-      transfer({
-        address: bankAddress.value,
-        abi: BankABI,
-        functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, to, tokenAmount]
-      })
-    }
-  } catch (error) {
-    console.error(error)
-    addErrorToast(`Failed to transfer ${token}`)
-  }
-}
-
-const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    if (input.address) {
-      const { data } = await useCustomFetch(`user/search?address=${input.address}`)
-        .get()
-        .json<{ users: User[] }>()
-      foundUsers.value = data.value?.users || []
-    }
-  } catch (error) {
-    console.error(error)
-    addErrorToast('Failed to search users')
-  }
-}
-
-const loadingText = computed(() => {
-  if (isPendingApprove.value) return 'Approving USDC...'
-  if (isConfirmingApprove.value) return 'Confirming USDC approval...'
-  if (tokenDepositLoading.value) return 'Depositing USDC...'
-  if (isConfirmingTokenDeposit.value) return 'Confirming USDC deposit...'
-  if (depositLoading.value) return 'Depositing ETH...'
-  if (isConfirmingDeposit.value) return 'Confirming ETH deposit...'
-  return 'Processing...'
-})
-
 const bankBalanceSection = ref()
-
-const refetchBalances = async () => {
-  try {
-    await bankBalanceSection.value?.fetchBalance()
-    await bankBalanceSection.value?.fetchUsdcBalance()
-  } catch (error: unknown) {
-    console.error('Failed to fetch balances:', error)
-    addErrorToast('Failed to fetch balance')
-  }
-}
-
-watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('ETH deposited successfully')
-    depositModal.value = false
-    refetchBalances()
-  }
-})
-
-watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Transferred successfully')
-    transferModal.value = false
-    refetchBalances()
-  }
-})
-
-watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('USDC deposited successfully')
-    depositModal.value = false
-    refetchBalances()
-    depositAmount.value = '' // Clear stored amount
-  }
-})
-
-watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Token approved successfully')
-    if (depositAmount.value) {
-      await handleUsdcDeposit(depositAmount.value)
-    }
-  }
-})
-
-onMounted(async () => {
-  await refetchBalances()
-})
 </script>
