@@ -79,7 +79,7 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit, BudgetData } from '@/types'
+import type { Team, BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -110,6 +110,39 @@ const { team } = defineProps<{
 //#region refs
 const transferModal = ref(false)
 const url = ref('user/search')
+const tokenAmount = ref('')
+const tokenRecipient = ref('')
+const signatureHash = ref<string | null>(null)
+//#endregion
+
+const route = useRoute()
+const currentUserAddress = useUserDataStore().address
+
+//#region useCustomFetch
+const {
+  error: fetchExpenseAccountDataError,
+  execute: fetchExpenseAccountData,
+  data: _expenseAccountData
+} = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: currentUserAddress,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .get()
+  .json()
+
+const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
+  .get()
+  .json()
+//#endregion
+
+//#endregion Computed Values
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
     return formatEther(expenseAccountBalance.value.value)
@@ -172,39 +205,9 @@ const dynamicDisplayData = (budgetType: number) =>
   })
 const dynamicDisplayDataTx = dynamicDisplayData(0)
 const dynamicDisplayDataAmount = dynamicDisplayData(1)
-const tokenAmount = ref('')
-const tokenRecipient = ref('')
-const signatureHash = ref<string | null>(null)
 //#endregion
 
-const route = useRoute()
-const currentUserAddress = useUserDataStore().address
-
-//#region useCustomFetch
-const {
-  error: fetchExpenseAccountDataError,
-  execute: fetchExpenseAccountData,
-  data: _expenseAccountData
-} = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    options.headers = {
-      memberaddress: currentUserAddress,
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
-
-const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
-  .get()
-  .json()
-//#endregion
-
-//#region composables
+//#region Composables
 const { addErrorToast, addSuccessToast } = useToastStore()
 const chainId = useChainId()
 
@@ -262,7 +265,7 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
   })
 //#endregion
 
-//#region functions
+//#region Functions
 const init = async () => {
   await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
@@ -277,7 +280,6 @@ const searchUsers = async (input: { name: string; address: string }) => {
   }
 
   await executeSearchUser()
-  // showDropdown.value = true
 }
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
@@ -376,7 +378,7 @@ const getAmountWithdrawnBalance = async () => {
 }
 //#endregion
 
-//#region watch
+//#region Watch
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
