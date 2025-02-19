@@ -10,14 +10,6 @@ import type * as wagmiVue from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { ComponentPublicInstance } from 'vue'
 
-// Define the type for the component instance
-interface BankBalanceSectionInstance extends ComponentPublicInstance {
-  depositModal: boolean
-  transferModal: boolean
-  depositAmount: string
-  loadingText: string
-}
-
 // Create a test wagmi config
 const config = createConfig({
   chains: [mainnet],
@@ -81,6 +73,22 @@ describe('BankBalanceSection', () => {
   }
 
   const createWrapper = () => {
+    interface BankBalanceSectionInstance extends ComponentPublicInstance {
+      depositModal: boolean
+      transferModal: boolean
+      depositAmount: string
+      loadingText: string
+      totalValueUSD: number
+      totalValueLocal: number
+      formattedUsdcBalance: string
+      depositToBank: (amount: string, token: string) => Promise<void>
+      transferFromBank: (
+        toAddress: string,
+        amount: string,
+        memo: string,
+        token: string
+      ) => Promise<void>
+    }
     return mount(BankBalanceSection, {
       props: defaultProps,
       global: {
@@ -92,7 +100,11 @@ describe('BankBalanceSection', () => {
         },
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
-    }) as unknown as { vm: BankBalanceSectionInstance; find: (selector: string) => VueWrapper }
+    }) as unknown as {
+      vm: BankBalanceSectionInstance
+      find: (selector: string) => VueWrapper
+      findAll: (selector: string) => VueWrapper[]
+    }
   }
 
   beforeEach(() => {
@@ -225,6 +237,77 @@ describe('BankBalanceSection', () => {
 
       const toastStore = useToastStore()
       expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch team balance')
+    })
+  })
+
+  describe('Computed Properties', () => {
+    it('calculates total value in USD correctly', async () => {
+      const wrapper = createWrapper()
+      mockUseBalance.data.value = { formatted: '1.0', value: BigInt(1000000) }
+      mockUseReadContract.data.value = BigInt(2000000) // 2 USDC
+      await wrapper.vm.$nextTick()
+
+      // ETH price is mocked at 2500 USD, USDC at 1 USD
+      // 1 ETH * 2500 + 2 USDC * 1 = 2502 USD
+      expect(wrapper.vm.totalValueUSD).toBe(2502)
+    })
+
+    it('calculates total value in local currency correctly', async () => {
+      const wrapper = createWrapper()
+      mockUseBalance.data.value = { formatted: '1.0', value: BigInt(1000000) }
+      mockUseReadContract.data.value = BigInt(2000000) // 2 USDC
+      await wrapper.vm.$nextTick()
+
+      // Total USD value 2502 * 1.28 (CAD rate) = 3202.56
+      expect(wrapper.vm.totalValueLocal).toBe(3202.56)
+    })
+
+    it('formats USDC balance correctly', async () => {
+      const wrapper = createWrapper()
+      mockUseReadContract.data.value = BigInt(1500000) // 1.5 USDC (1500000 / 1e6)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.vm.formattedUsdcBalance).toBe('1.5')
+    })
+  })
+
+  describe('Token Interactions', () => {
+    it('handles USDC transfer correctly', async () => {
+      const wrapper = createWrapper()
+      const toAddress = '0x456'
+      const amount = '50'
+
+      await wrapper.vm.transferFromBank(toAddress, amount, 'Test transfer', 'USDC')
+
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith(
+        expect.objectContaining({
+          functionName: 'transferToken',
+          args: [expect.any(String), toAddress, BigInt(50000000)] // 50 * 1e6
+        })
+      )
+    })
+  })
+
+  describe('Loading States', () => {
+    it('shows loading spinner when fetching balances', async () => {
+      const wrapper = createWrapper()
+      mockUseBalance.isLoading.value = true
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.loading-spinner').exists()).toBe(true)
+    })
+
+    it('updates loading text during USDC deposit process', async () => {
+      const wrapper = createWrapper()
+
+      mockUseWriteContract.isPending.value = true
+      await wrapper.vm.$nextTick()
+      expect(wrapper.vm.loadingText).toBe('Approving USDC...')
+
+      mockUseWriteContract.isPending.value = false
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      expect(wrapper.vm.loadingText).toBe('Confirming USDC approval...')
     })
   })
 })
