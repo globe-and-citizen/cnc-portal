@@ -30,18 +30,62 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
+import { NETWORK } from '@/constant'
 
 interface Token {
   name: string
   network: string
-  price: number
-  balance: number
-  amount: number
+  price: number // Price in USD
+  balance: number // Balance in token's native unit
+  amount: number // Amount in token's native unit
+}
+
+interface TokenWithRank extends Token {
   rank: number
 }
 
-defineProps<{
-  tokensWithRank: Token[]
+interface BankBalanceSection {
+  teamBalance?: {
+    formatted?: string
+  }
+  formattedUsdcBalance?: string
+}
+
+const props = defineProps<{
+  bankBalanceSection: BankBalanceSection
 }>()
+
+const tokens = computed(() => [
+  {
+    name: NETWORK.currencySymbol,
+    network: NETWORK.currencySymbol,
+    price: 0, // TODO: Add price fetching
+    balance: props.bankBalanceSection?.teamBalance?.formatted
+      ? Number(props.bankBalanceSection.teamBalance.formatted)
+      : 0,
+    amount: props.bankBalanceSection?.teamBalance?.formatted
+      ? Number(props.bankBalanceSection.teamBalance.formatted)
+      : 0
+  },
+  {
+    name: 'USDC',
+    network: 'USDC',
+    price: 1,
+    balance: props.bankBalanceSection?.formattedUsdcBalance
+      ? Number(props.bankBalanceSection.formattedUsdcBalance)
+      : 0,
+    amount: props.bankBalanceSection?.formattedUsdcBalance
+      ? Number(props.bankBalanceSection.formattedUsdcBalance)
+      : 0
+  }
+])
+
+const tokensWithRank = computed<TokenWithRank[]>(() =>
+  tokens.value.map((token, index) => ({
+    ...token,
+    rank: index + 1
+  }))
+)
 </script>
