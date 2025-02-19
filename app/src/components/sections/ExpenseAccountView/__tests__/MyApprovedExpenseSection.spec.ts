@@ -418,9 +418,10 @@ describe('ExpenseAccountSection', () => {
       }
 
       it('should pass corrent props to TransferFromBankForm', async () => {
-        ;(wrapper.vm as unknown as ComponentData).foundUsers = [
-          { name: 'John Doe', address: '0x1234' }
-        ]
+        //@ts-expect-error: not on wrapper but available on component
+        wrapper.vm.users = {
+          users: [{ name: 'John Doe', address: '0x1234' }]
+        }
         ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
           data: JSON.stringify(mockExpenseData[0])
         }
