@@ -1,6 +1,6 @@
 <!-- BankBalanceSection.vue -->
 <template>
-  <div class="card bg-base-100 shadow-sm mb-4">
+  <div class="card bg-base-100 shadow-sm">
     <div class="card-body">
       <div class="flex justify-between items-start">
         <div>

@@ -1,18 +1,14 @@
 <template>
-  <div>
-    <div>
-      <div>
-        <BankBalanceSection
-          v-if="teamStore.currentTeam"
-          ref="bankBalanceSection"
-          :bank-address="typedBankAddress"
-          @balance-updated="$forceUpdate()"
-        />
-      </div>
+  <div class="flex flex-col gap-6">
+    <BankBalanceSection
+      v-if="teamStore.currentTeam"
+      ref="bankBalanceSection"
+      :bank-address="typedBankAddress"
+      @balance-updated="$forceUpdate()"
+    />
 
-      <TokenHoldingsSection :bank-balance-section="bankBalanceSection" />
-      <TransactionsHistorySection />
-    </div>
+    <TokenHoldingsSection :bank-balance-section="bankBalanceSection" />
+    <TransactionsHistorySection />
   </div>
 </template>
 
