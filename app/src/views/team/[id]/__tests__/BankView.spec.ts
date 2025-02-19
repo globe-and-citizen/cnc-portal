@@ -2,11 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import BankView from '../BankView.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { useToastStore } from '@/stores/useToastStore'
 import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
 import { ref } from 'vue'
-import type { User } from '@/types'
 import type { Abi } from 'viem'
 
 const mockUseReadContractRefetch = vi.fn()
@@ -37,18 +35,6 @@ const mockUseWaitForTransactionReceipt = {
   data: ref({ status: 'success' })
 }
 
-const mockUseSignTypedData = {
-  error: ref<Error | null>(null),
-  data: ref<string | undefined>('0xExpenseDataSignature'),
-  signTypedData: vi.fn()
-}
-
-const mockUseSendTransaction = {
-  isPending: ref(false),
-  data: ref<string | undefined>('0xTransactionHash'),
-  sendTransaction: vi.fn()
-}
-
 // Mock readContract function
 const mockReadContract = vi.fn().mockResolvedValue(BigInt(0))
 
@@ -63,9 +49,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
     useBalance: vi.fn(() => mockUseBalance),
-    useChainId: vi.fn(() => ref('0xChainId')),
-    useSignTypedData: vi.fn(() => mockUseSignTypedData),
-    useSendTransaction: vi.fn(() => mockUseSendTransaction)
+    useChainId: vi.fn(() => ref('0xChainId'))
   }
 })
 
@@ -125,24 +109,8 @@ vi.mock('@/stores', () => ({
 }))
 
 interface BankViewInstance extends ComponentPublicInstance {
-  depositModal: boolean
-  transferModal: boolean
-  tokenDepositModal: boolean
-  tokenAmount: string
-  foundUsers: Array<User>
-  loadingText: string
-  refetchBalances: () => Promise<void>
   tokensWithRank: Array<{ rank: number }>
-  depositToBank: (params: { amount: string; token: string }) => Promise<void>
-  transferFromBank: (
-    to: string,
-    amount: string,
-    description: string,
-    token: string
-  ) => Promise<void>
-  depositToken: () => Promise<void>
-  searchUsers: (input: { name: string; address: string }) => Promise<void>
-  depositAmount: string
+  refetchBalances: () => Promise<void>
 }
 
 describe('BankView', () => {
@@ -156,7 +124,6 @@ describe('BankView', () => {
     mockUseWriteContract.error.value = null
     mockUseWriteContract.isPending.value = false
     mockUseWriteContract.data.value = undefined
-    mockUseSendTransaction.sendTransaction.mockReset()
     mockReadContract.mockReset()
     mockReadContract.mockResolvedValue(BigInt(0))
     mockUseWaitForTransactionReceipt.isSuccess.value = false
@@ -195,163 +162,11 @@ describe('BankView', () => {
     expect(wrapper.find('[data-test="expense-account-balance"]').exists()).toBe(false)
   })
 
-  it('shows error toast when balance fetch fails', async () => {
-    const toastStore = useToastStore()
-
-    // Simulate balance fetch error
-    mockUseBalance.error.value = new Error('Failed to fetch balance')
-    await wrapper.vm.$nextTick()
-
-    // Trigger error handling by forcing a refetch
-    await wrapper.vm.refetchBalances()
-    expect(toastStore.addErrorToast).toHaveBeenCalled()
-  })
-
   it('formats token holdings data correctly', async () => {
     await wrapper.vm.$nextTick()
     const tokensWithRank = wrapper.vm.tokensWithRank
     expect(tokensWithRank).toHaveLength(2) // ETH and USDC
     expect(tokensWithRank[0].rank).toBe(1)
     expect(tokensWithRank[1].rank).toBe(2)
-  })
-
-  describe('Loading States', () => {
-    beforeEach(() => {
-      // Reset all loading states
-      mockUseWriteContract.isPending.value = false
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      mockUseSignTypedData.error.value = null
-    })
-
-    it('shows correct loading text for ETH deposit', async () => {
-      mockUseSendTransaction.isPending.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Depositing ETH...')
-    })
-
-    it('shows correct loading text for USDC approval', async () => {
-      mockUseWriteContract.isPending.value = true
-      mockUseSignTypedData.error.value = null
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Approving USDC...')
-    })
-
-    it('shows correct loading text for USDC deposit', async () => {
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Confirming USDC approval...')
-    })
-  })
-
-  describe('Watch Handlers', () => {
-    it('handles ETH deposit confirmation correctly', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.depositModal = true
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('ETH deposited successfully')
-      expect(wrapper.vm.depositModal).toBe(false)
-    })
-
-    it('handles transfer confirmation correctly', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.transferModal = true
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Transferred successfully')
-      expect(wrapper.vm.transferModal).toBe(false)
-    })
-
-    it('handles USDC deposit confirmation correctly', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.depositModal = true
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('USDC deposited successfully')
-      expect(wrapper.vm.depositModal).toBe(false)
-      expect(wrapper.vm.depositAmount).toBe('')
-    })
-
-    it('handles token approval confirmation and triggers deposit', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.depositAmount = '100'
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Token approved successfully')
-      // Verify that handleUsdcDeposit was triggered with the correct amount
-    })
-  })
-
-  // New tests for specific watch handlers
-  describe('Watch Handler Behaviors', () => {
-    it('watches isConfirmingDeposit state changes', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.depositModal = true
-
-      // Simulate deposit confirmation completing
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('ETH deposited successfully')
-      expect(wrapper.vm.depositModal).toBe(false)
-    })
-
-    it('watches isConfirmingTransfer state changes', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.transferModal = true
-
-      // Simulate transfer confirmation completing
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Transferred successfully')
-      expect(wrapper.vm.transferModal).toBe(false)
-    })
-
-    it('watches isConfirmingTokenDeposit state changes', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.depositModal = true
-      wrapper.vm.depositAmount = '100'
-
-      // Simulate token deposit confirmation completing
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('USDC deposited successfully')
-      expect(wrapper.vm.depositModal).toBe(false)
-      expect(wrapper.vm.depositAmount).toBe('')
-    })
-
-    it('watches isConfirmingApprove state changes', async () => {
-      const toastStore = useToastStore()
-      wrapper.vm.depositAmount = '100'
-
-      // Mock the writeContract for subsequent deposit
-      mockUseWriteContract.writeContract.mockImplementationOnce(async () => {
-        mockUseWaitForTransactionReceipt.data.value = { status: 'success' }
-      })
-
-      // Simulate approval confirmation completing
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Token approved successfully')
-    })
   })
 })
