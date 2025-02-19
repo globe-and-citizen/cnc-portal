@@ -35,7 +35,7 @@
     </label>
     <!-- Dropdown positioned relative to the input -->
     <div
-      v-if="showDropdown && users.users && users.users.length > 0"
+      v-if="showDropdown && users?.users && users?.users.length > 0"
       class="absolute left-0 top-full mt-1 w-full z-10"
     >
       <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
