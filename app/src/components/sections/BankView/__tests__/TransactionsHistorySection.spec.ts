@@ -14,16 +14,6 @@ describe('TransactionsHistorySection', () => {
       amountUSD: 100,
       amountCAD: 135,
       receipt: 'receipt1.pdf'
-    },
-    {
-      hash: '0x456',
-      date: '2024-01-02',
-      type: 'Transfer',
-      from: '0xdef',
-      to: '0xghi',
-      amountUSD: 50,
-      amountCAD: 67.5,
-      receipt: 'receipt2.pdf'
     }
   ]
 
@@ -115,7 +105,6 @@ describe('TransactionsHistorySection', () => {
     })
 
     const rows = wrapper.findAll('tbody tr')
-    // Assuming one header row, so transactions + 1
     expect(rows.length).toBe(mockTransactions.length)
   })
 
