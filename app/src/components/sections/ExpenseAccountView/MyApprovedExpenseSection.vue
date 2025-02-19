@@ -68,7 +68,7 @@
               ? expenseBalanceFormatted
               : `${Number(usdcBalance) / 1e6}`
           "
-          :token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress).value"
+          :token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)"
           service="Expense Account"
         />
       </ModalComponent>
@@ -85,8 +85,8 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { parseError, log } from '@/utils'
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { parseError, log, tokenSymbol } from '@/utils'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useBalance } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -97,7 +97,7 @@ import { useRoute } from 'vue-router'
 //#endregion
 
 const { team } = defineProps<{
-  tokenSymbol: (tokenAddress: string) => ComputedRef<string>
+  // stokenSymbol: (tokenAddress: string) => ComputedRef<string>
   team: Partial<Team>
   expenseBalanceFormatted: string
   usdcBalance: unknown
@@ -214,6 +214,7 @@ const {
 
 //#region composables
 const { addErrorToast, addSuccessToast } = useToastStore()
+
 const {
   data: amountWithdrawn,
   refetch: executeGetAmountWithdrawn,

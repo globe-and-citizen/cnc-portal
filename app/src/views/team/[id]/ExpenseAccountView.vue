@@ -152,7 +152,6 @@
       v-if="team"
       :team="team"
       :is-disapproved-address="isDisapprovedAddress"
-      :token-symbol="tokenSymbol"
       :expense-balance-formatted="expenseBalanceFormatted"
       :usdc-balance="usdcBalance"
     />
@@ -258,16 +257,16 @@ const expenseAccountEip712Address = computed(
   () => team.value?.expenseAccountEip712Address as Address
 )
 
-const tokenSymbol = (tokenAddress: string) =>
-  computed(() => {
-    const symbols = {
-      [USDC_ADDRESS]: 'USDC',
-      [USDT_ADDRESS]: 'USDT',
-      [zeroAddress]: NETWORK.currencySymbol
-    }
+// const tokenSymbol = (tokenAddress: string) =>
+//   computed(() => {
+//     const symbols = {
+//       [USDC_ADDRESS]: 'USDC',
+//       [USDT_ADDRESS]: 'USDT',
+//       [zeroAddress]: NETWORK.currencySymbol
+//     }
 
-    return symbols[tokenAddress] || ''
-  })
+//     return symbols[tokenAddress] || ''
+//   })
 
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
