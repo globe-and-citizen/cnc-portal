@@ -283,18 +283,18 @@ describe('ExpenseAccountSection', () => {
           ...props?.team
         },
         isDisapprovedAddress: false,
-        expenseBalanceFormatted: `5000`,
-        usdcBalance: 1_000_000_000n,
-        tokenSymbol: (tokenAddress: string) =>
-          computed(() => {
-            const symbols = {
-              [USDC_ADDRESS]: 'USDC',
-              [USDT_ADDRESS]: 'USDT',
-              [zeroAddress]: NETWORK.currencySymbol
-            }
+        // expenseBalanceFormatted: `5000`,
+        // usdcBalance: 1_000_000_000n,
+        // tokenSymbol: (tokenAddress: string) =>
+        //   computed(() => {
+        //     const symbols = {
+        //       [USDC_ADDRESS]: 'USDC',
+        //       [USDT_ADDRESS]: 'USDT',
+        //       [zeroAddress]: NETWORK.currencySymbol
+        //     }
 
-            return symbols[tokenAddress] || ''
-          }),
+        //     return symbols[tokenAddress] || ''
+        //   }),
         ...props
       },
       data,
@@ -425,7 +425,9 @@ describe('ExpenseAccountSection', () => {
         ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
           data: JSON.stringify(mockExpenseData[0])
         }
-        await flushPromises() // wrapper.vm.$nextTick()
+        //@ts-expect-error: vailable on actual component but not visible on wrapper
+        wrapper.vm.expenseAccountBalance = { value: viem.parseEther('5000') }
+        await flushPromises()
 
         const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
         expect(transferFromBankForm.exists()).toBe(true)
