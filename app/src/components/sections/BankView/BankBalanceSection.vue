@@ -12,15 +12,12 @@
                   class="loading loading-spinner loading-lg"
                   v-if="balanceLoading || isLoadingUsdcBalance"
                 ></span>
-                <span v-else>{{ teamBalance?.formatted }}</span>
+                <span v-else>{{ totalValueUSD }}</span>
               </span>
             </span>
-            <span class="text-gray-600">{{ NETWORK.currencySymbol }}</span>
+            <span class="text-gray-600">USDC</span>
           </div>
-          <div class="text-sm text-gray-500 mt-1">≈ $ 1.28</div>
-          <div class="mt-2">
-            {{ formattedUsdcBalance }}
-          </div>
+          <div class="text-sm text-gray-500 mt-1">≈ {{ totalValueLocal }} CAD</div>
         </div>
         <div class="flex gap-2">
           <ButtonUI
@@ -196,6 +193,11 @@ const {
   args: [props.bankAddress as Address]
 })
 
+// Add token price constants (these should come from an API in production)
+const ETH_PRICE_USD = 2500 // Example ETH price in USD
+const USDC_PRICE_USD = 1 // USDC is pegged to USD
+const USD_TO_LOCAL_RATE = 1.28 // Example conversion rate to local currency
+
 // Functions
 const depositToBank = async (data: { amount: string; token: string }) => {
   if (!props.bankAddress) return
@@ -301,6 +303,17 @@ const loadingText = computed(() => {
   if (depositLoading.value) return 'Depositing ETH...'
   if (isConfirmingDeposit.value) return 'Confirming ETH deposit...'
   return 'Processing...'
+})
+
+// Add computed properties for total values
+const totalValueUSD = computed(() => {
+  const ethValue = teamBalance.value ? Number(teamBalance.value.formatted) * ETH_PRICE_USD : 0
+  const usdcValue = Number(formattedUsdcBalance.value) * USDC_PRICE_USD
+  return ethValue + usdcValue
+})
+
+const totalValueLocal = computed(() => {
+  return totalValueUSD.value * USD_TO_LOCAL_RATE
 })
 
 // Watch handlers
