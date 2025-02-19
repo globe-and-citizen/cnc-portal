@@ -11,7 +11,7 @@
       </div>
 
       <TokenHoldingsSection :tokens-with-rank="tokensWithRank" />
-      <TransactionsHistorySection :transactions="transactions" />
+      <TransactionsHistorySection />
     </div>
   </div>
 </template>
@@ -24,17 +24,6 @@ import BankBalanceSection from '@/components/sections/BankView/BankBalanceSectio
 import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSection.vue'
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
-
-interface Transaction {
-  hash: string
-  date: string
-  type: 'Deposit' | 'Transfer'
-  from: string
-  to: string
-  amountUSD: number
-  amountCAD: number
-  receipt: string
-}
 
 const teamStore = useTeamStore()
 const typedBankAddress = computed(() => teamStore.currentTeam?.bankAddress as Address | undefined)
@@ -82,20 +71,6 @@ const tokensWithRank = computed<TokenWithRank[]>(() =>
     rank: index + 1
   }))
 )
-
-// Mock transactions data with correct type
-const transactions = ref<Transaction[]>([
-  {
-    hash: '0xf39Fd..DD',
-    date: '01/23/2025',
-    type: 'Deposit',
-    from: '0xf39Fd..DD',
-    to: '0xf39Fd..DD',
-    amountUSD: 10,
-    amountCAD: 12,
-    receipt: 'https://example.com/receipt'
-  }
-])
 
 const bankBalanceSection = ref()
 </script>

@@ -27,19 +27,7 @@
         </div>
       </div>
 
-      <TableComponent
-        :rows="transactions"
-        :columns="[
-          { key: 'hash', label: 'Tx Hash', sortable: true },
-          { key: 'date', label: 'Date', sortable: true },
-          { key: 'type', label: 'Type', sortable: true },
-          { key: 'from', label: 'From', sortable: true },
-          { key: 'to', label: 'To', sortable: true },
-          { key: 'amountUSD', label: 'Amount (USD)', sortable: true },
-          { key: 'amountCAD', label: 'Amount (CAD)', sortable: true },
-          { key: 'receipts', label: 'Receipts' }
-        ]"
-      >
+      <TableComponent :rows="paginatedTransactions" :columns="columns">
         <template #type-data="{ row }">
           <span :class="`badge ${row.type === 'Deposit' ? 'badge-success' : 'badge-error'}`">
             {{ row.type }}
@@ -111,23 +99,58 @@ interface Transaction {
   receipt: string
 }
 
-const props = defineProps<{
-  transactions: Transaction[]
-}>()
+// Move transactions data here
+const transactions = ref<Transaction[]>([
+  {
+    hash: '0xf39Fd..DD',
+    date: '01/23/2025',
+    type: 'Deposit',
+    from: '0xf39Fd..DD',
+    to: '0xf39Fd..DD',
+    amountUSD: 10,
+    amountCAD: 12,
+    receipt: 'https://example.com/receipt'
+  }
+])
+
+const columns = [
+  { key: 'hash', label: 'Tx Hash', sortable: true },
+  { key: 'date', label: 'Date', sortable: true },
+  { key: 'type', label: 'Type', sortable: true },
+  { key: 'from', label: 'From', sortable: true },
+  { key: 'to', label: 'To', sortable: true },
+  { key: 'amountUSD', label: 'Amount (USD)', sortable: true },
+  { key: 'amountCAD', label: 'Amount (CAD)', sortable: true },
+  { key: 'receipts', label: 'Receipts' }
+]
 
 const rowsPerPage = ref(20)
 const currentPage = ref(1)
 
-const totalPages = computed(() => Math.ceil(props.transactions.length / rowsPerPage.value))
+const totalPages = computed(() => Math.ceil(transactions.value.length / rowsPerPage.value))
 const isLastPage = computed(() => currentPage.value >= totalPages.value)
+
+const paginatedTransactions = computed(() => {
+  const start = (currentPage.value - 1) * rowsPerPage.value
+  const end = start + rowsPerPage.value
+  return transactions.value.slice(start, end)
+})
 
 const paginationText = computed(() => {
   const start = (currentPage.value - 1) * rowsPerPage.value + 1
-  const end = Math.min(currentPage.value * rowsPerPage.value, props.transactions.length)
-  return `${start}-${end} of ${props.transactions.length}`
+  const end = Math.min(currentPage.value * rowsPerPage.value, transactions.value.length)
+  return `${start}-${end} of ${transactions.value.length}`
 })
 
-const prevPage = () => {}
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
 
-const nextPage = () => {}
+const nextPage = () => {
+  if (!isLastPage.value) {
+    currentPage.value++
+  }
+}
 </script>
