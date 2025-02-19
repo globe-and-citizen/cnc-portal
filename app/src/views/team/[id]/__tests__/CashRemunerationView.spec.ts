@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import CashRemunerationView from '@/views/CashRemunerationView.vue'
+import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 

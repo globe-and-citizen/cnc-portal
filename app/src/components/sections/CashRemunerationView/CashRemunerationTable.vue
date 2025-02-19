@@ -12,8 +12,17 @@
       />
     </label>
   </div>
-  <div class="card bg-base-100 w-full shadow-xl">
+  <div class="bg-base-100 w-full">
     <TableComponent :rows="claims ?? undefined" :columns="columns" :loading="isLoading">
+      <template
+        v-for="header in columns.map((column) => column.key)"
+        #[`${header}-header`]="{ column }"
+        :key="header"
+      >
+        <span class="text-black text-base">
+          {{ column.label }}
+        </span>
+      </template>
       <template #createdAt-data="{ row }">
         <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
       </template>
@@ -69,8 +78,11 @@
           </div>
         </div>
       </template>
+      <template #hoursWorked-data="{ row }">
+        <span class="font-bold">{{ row.hoursWorked }}</span>
+      </template>
       <template #hourlyRate-data="{ row }">
-        <span> ${{ row.hourlyRate }}</span>
+        <span class="font-bold"> $ {{ row.hourlyRate }}</span>
       </template>
       <template #status-data="{ row }">
         <span

@@ -1,5 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
+    <h2>CASH Remuneration</h2>
     <div class="flex gap-10">
       <CashRemunerationCard cardType="balance" :amount="1000" />
       <CashRemunerationCard cardType="month-claims" :amount="500" />
@@ -7,15 +8,18 @@
     </div>
     <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
       <div class="flex flex-wrap gap-2 sm:gap-4">
-        <span class="text-sm">Cash Remuneration Address </span>
-        <AddressToolTip :address="team?.cashRemunerationEip712Address ?? ''" class="text-xs" />
+        <span class="text-sm">Contract Address </span>
+        <AddressToolTip
+          :address="team?.cashRemunerationEip712Address ?? ''"
+          class="text-sm font-bold"
+        />
       </div>
     </div>
-    <div class="divider m-0"></div>
-    <SubmitClaims @refetch-claims="async () => await fetchClaims()" />
-    <div class="divider m-0"></div>
-    <div class="overflow-x-auto flex flex-col gap-4" data-test="claims-table">
-      <span class="text-2xl sm:text-3xl font-bold">Claims Table</span>
+    <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
+      <div class="w-full flex justify-between">
+        <span class="font-bold text-lg">Claims Table</span>
+        <SubmitClaims @refetch-claims="async () => await fetchClaims()" />
+      </div>
       <CashRemunerationTable
         @fetch-claims="
           async (status: string) => {

@@ -61,12 +61,12 @@ describe('SubmitClaims', () => {
 
     // case 1: hours worked is empty
     await wrapper.find('input[data-test="hours-worked-input"]').setValue('')
-    await wrapper.find('[data-test="submit-hours-button"]').trigger('click')
+    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
     expect(wrapper.find('[data-test="hours-worked-error"]').exists()).toBe(true)
 
     // case 2: hours worked is not a number
     await wrapper.find('input[data-test="hours-worked-input"]').setValue('a')
-    await wrapper.find('[data-test="submit-hours-button"]').trigger('click')
+    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
     expect(wrapper.find('[data-test="hours-worked-error"]').exists()).toBe(true)
   })
 
@@ -75,7 +75,7 @@ describe('SubmitClaims', () => {
     const { addSuccessToast } = useToastStore()
 
     await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
-    await wrapper.find('[data-test="submit-hours-button"]').trigger('click')
+    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
     statusCodeMock.value = 201
     await wrapper.vm.$nextTick()
     expect(addSuccessToast).toHaveBeenCalledWith('Wage claim added successfully')
@@ -86,7 +86,7 @@ describe('SubmitClaims', () => {
     const { addErrorToast } = useToastStore()
 
     await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
-    await wrapper.find('[data-test="submit-hours-button"]').trigger('click')
+    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
     errorMock.value = new Error('Error')
     await wrapper.vm.$nextTick()
     expect(addErrorToast).toHaveBeenCalledWith(errorMock.value)
