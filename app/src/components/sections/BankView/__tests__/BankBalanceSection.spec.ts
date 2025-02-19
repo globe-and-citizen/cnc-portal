@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, VueWrapper } from '@vue/test-utils'
 import BankBalanceSection from '../BankBalanceSection.vue'
 import type { Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
@@ -92,7 +92,7 @@ describe('BankBalanceSection', () => {
         },
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
-    }) as unknown as { vm: BankBalanceSectionInstance }
+    }) as unknown as { vm: BankBalanceSectionInstance; find: (selector: string) => VueWrapper }
   }
 
   beforeEach(() => {
@@ -110,34 +110,34 @@ describe('BankBalanceSection', () => {
 
   it('displays correct balance', () => {
     const wrapper = createWrapper()
-    const balanceText = wrapper.vm.$el.querySelector('.text-4xl')?.textContent
-    expect(balanceText).toContain('1.5')
-    expect(wrapper.vm.$el.querySelector('.text-gray-600')?.textContent).toContain('USDC')
+    const balanceText = wrapper.find('.text-4xl')
+    expect(balanceText.text()).toContain('1.5')
+    expect(wrapper.find('.text-gray-600').text()).toContain('USDC')
   })
 
   it('enables deposit button when bank address exists', () => {
     const wrapper = createWrapper()
-    const depositButton = wrapper.vm.$el.querySelector('[data-test="deposit-button"]')
-    expect(depositButton?.getAttribute('disabled')).toBeFalsy()
+    const depositButton = wrapper.find('[data-test="deposit-button"]')
+    expect(depositButton.attributes('disabled')).toBeFalsy()
   })
 
   it('enables transfer button when bank address exists', () => {
     const wrapper = createWrapper()
-    const transferButton = wrapper.vm.$el.querySelector('[data-test="transfer-button"]')
-    expect(transferButton?.getAttribute('disabled')).toBeFalsy()
+    const transferButton = wrapper.find('[data-test="transfer-button"]')
+    expect(transferButton.attributes('disabled')).toBeFalsy()
   })
 
   it('shows deposit modal on deposit button click', async () => {
     const wrapper = createWrapper()
-    const depositButton = wrapper.vm.$el.querySelector('[data-test="deposit-button"]')
-    await depositButton?.dispatchEvent(new Event('click'))
+    const depositButton = wrapper.find('[data-test="deposit-button"]')
+    await depositButton.trigger('click')
     expect(wrapper.vm.depositModal).toBe(true)
   })
 
   it('shows transfer modal on transfer button click', async () => {
     const wrapper = createWrapper()
-    const transferButton = wrapper.vm.$el.querySelector('[data-test="transfer-button"]')
-    await transferButton?.dispatchEvent(new Event('click'))
+    const transferButton = wrapper.find('[data-test="transfer-button"]')
+    await transferButton.trigger('click')
     expect(wrapper.vm.transferModal).toBe(true)
   })
 
