@@ -212,7 +212,7 @@
 //#region Imports
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -254,17 +254,6 @@ const deactivateIndex = ref<number | null>(null)
 const expenseAccountEip712Address = computed(
   () => team.value?.expenseAccountEip712Address as Address
 )
-
-// const tokenSymbol = (tokenAddress: string) =>
-//   computed(() => {
-//     const symbols = {
-//       [USDC_ADDRESS]: 'USDC',
-//       [USDT_ADDRESS]: 'USDT',
-//       [zeroAddress]: NETWORK.currencySymbol
-//     }
-
-//     return symbols[tokenAddress] || ''
-//   })
 
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')

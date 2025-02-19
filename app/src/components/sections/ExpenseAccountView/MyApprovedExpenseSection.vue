@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, type ComputedRef, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
@@ -86,7 +86,13 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log, tokenSymbol } from '@/utils'
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useBalance } from '@wagmi/vue'
+import {
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+  useBalance
+} from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -220,7 +226,6 @@ const chainId = useChainId()
 
 const {
   data: expenseAccountBalance,
-  isLoading: isLoadingExpenseAccountBalance,
   error: isErrorExpenseAccountBalance,
   refetch: fetchExpenseAccountBalance
 } = useBalance({
@@ -231,7 +236,6 @@ const {
 // Token balances
 const {
   data: usdcBalance,
-  isLoading: isLoadingUsdcBalance,
   refetch: fetchUsdcBalance,
   error: usdcBalanceError
 } = useReadContract({

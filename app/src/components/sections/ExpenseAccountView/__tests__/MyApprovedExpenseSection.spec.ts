@@ -2,14 +2,13 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { computed, ref, type Ref } from 'vue'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { ref, type Ref } from 'vue'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { zeroAddress } from 'viem'
 
 interface ComponentData {
   isDisapprovedAddress: boolean
