@@ -6,7 +6,6 @@ import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
 import { ref } from 'vue'
 import type { Abi } from 'viem'
-import { useTeamStore } from '@/stores'
 
 const mockUseReadContractRefetch = vi.fn()
 const mockUseReadContract = {
@@ -197,5 +196,13 @@ describe('BankView', () => {
 
   it('computes typedBankAddress correctly from teamStore', () => {
     expect(wrapper.vm.typedBankAddress).toBe(mockTeamStore.currentTeam.bankAddress)
+  })
+
+  it('renders all required sections', () => {
+    expect(wrapper.findComponent({ name: 'BankBalanceSection' }).exists()).toBe(true)
+
+    expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).exists()).toBe(true)
+
+    expect(wrapper.findComponent({ name: 'TransactionsHistorySection' }).exists()).toBe(true)
   })
 })
