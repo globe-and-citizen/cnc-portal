@@ -144,7 +144,7 @@ describe('useClaim', () => {
 
       const promise = withdrawClaim(1)
       mockWaitTransaction.value = true
-      
+
       await promise
       mockWaitTransaction.value = false
       await flushPromises()
