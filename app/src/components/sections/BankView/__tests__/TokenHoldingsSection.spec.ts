@@ -84,4 +84,26 @@ describe('TokenHoldingsSection', () => {
     expect(tokensWithRank[0].balance).toBe(0)
     expect(tokensWithRank[1].balance).toBe(0)
   })
+
+  it('renders formatted data in table correctly', () => {
+    const mockBankBalanceSection = {
+      teamBalance: {
+        formatted: '1.5'
+      },
+      formattedUsdcBalance: '100'
+    }
+
+    const wrapper = mount(TokenHoldingsSection, {
+      props: {
+        bankBalanceSection: mockBankBalanceSection
+      }
+    })
+
+    const html = wrapper.html()
+
+    expect(html).toContain('$1.5') // For balance
+    expect(html).toContain('$100') // For USDC price/balance
+    expect(html).toContain('1') // For rank
+    expect(html).toContain('2') // For rank
+  })
 })
