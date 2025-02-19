@@ -481,6 +481,42 @@ describe("Cash Remuneration", () => {
         });
       });
 
+      it('should update claim status to withdrawn if current claim status is "approved"', async () => {
+        const app = express();
+        app.use(express.json());
+        app.use(setAddressMiddleware("0xOwnerAddress"));
+        app.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
+        vi.spyOn(prisma.memberTeamsData, "findUnique").mockResolvedValue(
+          mockMemberTeamsData
+        );
+        vi.spyOn(prisma.claim, "findUnique").mockResolvedValue({
+          ...mockClaimData,
+          status: "approved",
+        });
+        vi.spyOn(prisma.claim, "update").mockResolvedValue({
+          ...mockClaimData,
+          status: "withdrawn",
+        });
+        vi.spyOn
+
+        const response = await request(app)
+          .put("/1/cash-remuneration/claim/employee")
+          .set("address", "0xOwnerAddress")
+          .send({
+            hoursworked: hoursWorked,
+            claimid: claimId,
+          });
+
+        expect(prisma.claim.update).toBeCalledWith({
+          where: { id: claimId },
+          data: { status: "withdrawn" },
+        });
+        expect(response.status).toBe(201);
+        expect(response.body).toEqual({
+          success: true,
+        });
+      });
+
       it("should return 500 if there is a server error", async () => {
         const app = express();
         app.use(express.json());
