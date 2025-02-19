@@ -61,7 +61,7 @@
             }
           "
           @searchMembers="(input) => searchUsers({ name: '', address: input })"
-          :filteredMembers="foundUsers"
+          :filteredMembers="users?.users"
           :loading="isLoadingTransfer || isConfirmingTransfer"
           :bank-balance="
             JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
@@ -109,9 +109,7 @@ const { team } = defineProps<{
 
 //#region refs
 const transferModal = ref(false)
-const foundUsers = ref<User[]>([])
-const searchUserName = ref('')
-const searchUserAddress = ref('')
+const url = ref('user/search')
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
     return formatEther(expenseAccountBalance.value.value)
@@ -201,21 +199,7 @@ const {
   .get()
   .json()
 
-const {
-  execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
-} = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
+const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
   .get()
   .json()
 //#endregion
@@ -286,15 +270,14 @@ const init = async () => {
   await fetchExpenseAccountBalance()
 }
 const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    searchUserName.value = input.name
-    searchUserAddress.value = input.address
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
-    }
-  } catch (error) {
-    addErrorToast(parseError(error))
+  if (input.address == '' && input.name) {
+    url.value = 'user/search?name=' + input.name
+  } else if (input.name == '' && input.address) {
+    url.value = 'user/search?address=' + input.address
   }
+
+  await executeSearchUser()
+  // showDropdown.value = true
 }
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
@@ -394,17 +377,9 @@ const getAmountWithdrawnBalance = async () => {
 //#endregion
 
 //#region watch
-watch(searchUserResponse, () => {
-  if (searchUserResponse.value?.ok && users.value?.users) {
-    foundUsers.value = users.value.users
-  }
-})
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    // await executeGetExpenseAccountBalance()
-    // await fetchUsdcBalance()
-    // await getAmountWithdrawnBalance()
     await init()
     transferModal.value = false
   }
