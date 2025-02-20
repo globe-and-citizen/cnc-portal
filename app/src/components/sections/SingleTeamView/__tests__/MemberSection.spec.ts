@@ -5,22 +5,23 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
-import { nextTick, type ComponentPublicInstance } from 'vue'
-import type { User } from '@/types'
+import { nextTick } from 'vue'
+// import { nextTick, type ComponentPublicInstance } from 'vue'
+// import type { User } from '@/types'
 
-interface MemberSectionInstance extends ComponentPublicInstance {
-  teamMembers: { name: string; address: string; isValid: boolean }[]
-  searchUserName: string
-  searchUserAddress: string
-  searchUsers: (input: { name: string; address: string }) => Promise<void>
-  executeSearchUser: () => Promise<void>
-  users: { users: User[] }
-  searchUserResponse: { ok: boolean }
-  foundUsers: User[]
-  addMembersError: string | null
-  addMembersLoading: boolean
-  showAddMemberForm: boolean
-}
+// interface MemberSectionInstance extends ComponentPublicInstance {
+//   teamMembers: { name: string; address: string; isValid: boolean }[]
+//   searchUserName: string
+//   searchUserAddress: string
+//   searchUsers: (input: { name: string; address: string }) => Promise<void>
+//   executeSearchUser: () => Promise<void>
+//   users: { users: User[] }
+//   searchUserResponse: { ok: boolean }
+//   foundUsers: User[]
+//   addMembersError: string | null
+//   addMembersLoading: boolean
+//   showAddMemberForm: boolean
+// }
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn()
