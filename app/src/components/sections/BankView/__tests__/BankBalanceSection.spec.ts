@@ -130,7 +130,7 @@ describe('BankBalanceSection', () => {
     const wrapper = createWrapper()
     const balanceText = wrapper.find('.text-4xl')
     expect(balanceText.text()).toContain('1.5')
-    expect(wrapper.find('.text-gray-600').text()).toContain('USDC')
+    expect(wrapper.find('.text-gray-600').text()).toContain('USD')
   })
 
   it('enables deposit button when bank address exists', () => {
