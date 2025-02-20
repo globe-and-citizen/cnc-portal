@@ -18,6 +18,9 @@
       <div class="alert alert-warning" v-if="statusCode === 404">Error! Team not found</div>
       <div class="alert alert-error" v-else>Error! Something went wrong</div>
     </div>
+    <div v-if="route.name == 'show-team' && team">
+      <MemberSection :team="team" :teamIsFetching="teamIsFetching" @getTeam="execute" />
+    </div>
     <RouterView v-if="teamStore.currentTeam" />
   </div>
 </template>
@@ -27,6 +30,7 @@ import { watch, computed } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import MemberSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 const teamStore = useTeamStore()
 
 const route = useRoute()
@@ -44,7 +48,8 @@ const {
   isFetching: teamIsFetching,
   error: teamError,
   statusCode,
-  data: team
+  data: team,
+  execute
 } = useCustomFetch(teamURI).json()
 
 onMounted(() => {
