@@ -15,7 +15,7 @@
                 <span v-else>{{ totalValueUSD }}</span>
               </span>
             </span>
-            <span class="text-gray-600">USDC</span>
+            <span class="text-gray-600">USD</span>
           </div>
           <div class="text-sm text-gray-500 mt-1">≈ {{ totalValueLocal }} CAD</div>
         </div>
