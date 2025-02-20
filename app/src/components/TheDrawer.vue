@@ -94,7 +94,11 @@
                 <TeamMetaComponent class="hover:bg-slate-100" :team="team" :to="team.id"
               /></RouterLink>
               <!-- TODO: Make the button functional -->
-              <div class="w-full flex justify-center items-center h-12 hover:bg-slate-100">
+              <div
+                class="w-full flex justify-center items-center h-12 hover:bg-slate-100"
+                data-test="add-team"
+                @click="appStore.showAddTeamModal = true"
+              >
                 Create a new Team
               </div>
             </div>
@@ -190,7 +194,8 @@ import {
 } from '@heroicons/vue/24/outline'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
-import { useTeamStore } from '@/stores/teamStore'
+import { useTeamStore, useAppStore } from '@/stores'
+const appStore = useAppStore()
 
 interface User {
   name: string
@@ -207,6 +212,7 @@ const props = defineProps<{
 
 const target = ref(null)
 const isDropdownOpen = ref(false)
+const showAddTeamModal = ref(false)
 const teamStore = useTeamStore()
 
 onMounted(() => {
