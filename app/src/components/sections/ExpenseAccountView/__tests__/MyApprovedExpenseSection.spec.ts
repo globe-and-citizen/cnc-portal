@@ -282,18 +282,6 @@ describe('ExpenseAccountSection', () => {
           ...props?.team
         },
         isDisapprovedAddress: false,
-        // expenseBalanceFormatted: `5000`,
-        // usdcBalance: 1_000_000_000n,
-        // tokenSymbol: (tokenAddress: string) =>
-        //   computed(() => {
-        //     const symbols = {
-        //       [USDC_ADDRESS]: 'USDC',
-        //       [USDT_ADDRESS]: 'USDT',
-        //       [zeroAddress]: NETWORK.currencySymbol
-        //     }
-
-        //     return symbols[tokenAddress] || ''
-        //   }),
         ...props
       },
       data,

@@ -61,93 +61,7 @@
         <AddressToolTip :address="team?.expenseAccountEip712Address ?? ''" class="text-xs" />
       </div>
     </div>
-    <!--<div
-      v-if="team?.expenseAccountEip712Address"
-      class="card shadow-xl bg-white flex text-primary-content p-5 overflow-visible mb-10"
-    >
-      <span class="text-2xl font-bold">My Approved Expense</span>
-      -- TODO display this only if the use have an approved expense --
-      -- Expense A/c Info Section --
-      <section class="stat flex flex-col justify-start">
-        -- New Header --
 
-        <div class="flex flex-col gap-8">
-          <div class="overflow-x-auto" data-test="approval-table">
-            <table class="table">
-              -- head --
-              <thead class="text-sm font-bold">
-                <tr>
-                  <th>Expiry Date</th>
-                  <th>Max Amount Per Tx</th>
-                  <th>Total Transactions</th>
-                  <th>Total Transfers</th>
-                  <th class="flex justify-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ expiry }}</td>
-                  <td>
-                    {{ maxLimitAmountPerTx }}
-                    {{
-                      _expenseAccountData?.data &&
-                      tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
-                    }}
-                  </td>
-                  <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
-                  <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
-                  <td class="flex justify-end" data-test="action-td">
-                    <ButtonUI
-                      variant="success"
-                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
-                      v-if="true"
-                      @click="transferModal = true"
-                      data-test="transfer-button"
-                    >
-                      Spend
-                    </ButtonUI>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <ModalComponent v-model="transferModal">
-          <TransferFromBankForm
-            v-if="transferModal && _expenseAccountData?.data"
-            @close-modal="() => (transferModal = false)"
-            @transfer="
-              async (to: string, amount: string) => {
-                await transferFromExpenseAccount(to, amount)
-              }
-            "
-            @searchMembers="(input) => searchUsers({ name: '', address: input })"
-            :filteredMembers="foundUsers"
-            :loading="isLoadingTransfer || isConfirmingTransfer"
-            :bank-balance="
-              JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
-                ? expenseBalanceFormatted
-                : `${Number(usdcBalance) / 1e6}`
-            "
-            :token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress).value"
-            service="Expense Account"
-          />
-        </ModalComponent>
-        <ModalComponent v-model="approveUsersModal">
-          <ApproveUsersForm
-            v-if="approveUsersModal"
-            :form-data="teamMembers"
-            :users="foundUsers"
-            :loading-approve="loadingApprove"
-            :is-bod-action="isBodAction()"
-            @approve-user="approveUser"
-            @close-modal="approveUsersModal = false"
-            @search-users="(input) => searchUsers(input)"
-          />
-        </ModalComponent>
-      </section>
-    </div>-->
     <MyApprovedExpenseSection
       v-if="team"
       :team="team"
@@ -158,8 +72,6 @@
       class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
       data-test="claims-table"
     >
-      <!--<div class="card bg-white shadow-xl">
-        <div class="card-body">-->
       <div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Approved Addresses</span>
         <ButtonUI
@@ -182,8 +94,6 @@
         @disable-approval="(signature) => deactivateApproval(signature, 1)"
         @enable-approval="(signature) => activateApproval(signature, 1)"
       />
-      <!--</div>
-      </div>-->
       <ModalComponent v-model="approveUsersModal">
         <ApproveUsersForm
           v-if="approveUsersModal"
