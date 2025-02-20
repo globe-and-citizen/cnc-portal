@@ -435,9 +435,10 @@ describe('ExpenseAccountSection', () => {
           filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
           service: 'Expense Account',
           bankBalance: '5000',
-          tokenSymbol: NETWORK.currencySymbol,
+          _tokenSymbol: NETWORK.currencySymbol,
           loading: false,
-          asBod: false
+          asBod: false,
+          usdcBalance: '0'
         })
         ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
           data: JSON.stringify(mockExpenseData[1])
