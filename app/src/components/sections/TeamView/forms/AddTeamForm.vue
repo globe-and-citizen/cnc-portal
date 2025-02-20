@@ -195,11 +195,6 @@ const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const currentStep = ref(1)
 
-// const url = ref('user/search')
-
-// const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
-//   .get()
-//   .json()
 // Team creation API call
 const {
   isFetching: createTeamFetching,
@@ -258,32 +253,6 @@ const canProceed = computed(() => {
       return false
   }
 })
-
-// Functions
-
-// Search User Functions
-// const searchUsers = async (input: { name: string; address: string }) => {
-//   if (input.address == '' && input.name) {
-//     url.value = 'user/search?name=' + input.name
-//   } else if (input.name == '' && input.address) {
-//     url.value = 'user/search?address=' + input.address
-//   }
-
-//   await executeSearchUser()
-//   showDropdown.value = true
-// }
-
-// Team Member Functions
-// const addMember = (member: { name: string; address: string }) => {
-//   // Check if there is any member with the same address
-//   if (!teamData.value.members.find((m) => m.address === member.address)) {
-//     teamData.value.members.push(member)
-//   }
-// }
-
-// const removeMember = (id: number) => {
-//   teamData.value.members.splice(id, 1)
-// }
 
 // Navigation Functions
 const nextStep = () => {
