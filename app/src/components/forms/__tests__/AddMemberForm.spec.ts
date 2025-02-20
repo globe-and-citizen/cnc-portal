@@ -92,7 +92,7 @@ describe('AddMemberForm.vue', () => {
     expect(button.props('disabled')).toBe(true)
   })
 
-  it('State 3: error exists, not loading, statusCode 500', async () => {
+  it('State 3: error exists, not loading, statusCode', async () => {
     const wrapper = mountComponent()
 
     // Simulate error state
@@ -105,6 +105,14 @@ describe('AddMemberForm.vue', () => {
     const alert = wrapper.find('.alert.alert-danger')
     expect(alert.exists()).toBe(true)
     expect(alert.text()).toContain('Something went wrong')
+
+    mockStatusCode.value = 401
+
+    await wrapper.vm.$nextTick()
+
+    const alert2 = wrapper.find('.alert.alert-warning')
+    expect(alert2.exists()).toBe(true)
+    expect(alert2.text()).toContain("You don't have the right for this")
   })
 
   it('State 4: no error, not loading, statusCode 201', async () => {
