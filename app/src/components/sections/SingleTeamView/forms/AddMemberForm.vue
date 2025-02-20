@@ -2,7 +2,7 @@
   <h1 class="font-bold text-2xl">Add New Member</h1>
   <hr />
   <div class="flex flex-col gap-5 pt-5">
-    <SelectMemberInput v-model="formData" />
+    <MultiSelectMemberInput v-model="formData" />
 
     <div v-if="addMembersError">
       <div class="alert alert-warning" v-if="statusCode === 401">
@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import SelectMemberInput from '@/components/sections/TeamView/forms/SelectMemberInput.vue'
+import MultiSelectMemberInput from '@/components/sections/TeamView/forms/MultiSelectMemberInput.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 

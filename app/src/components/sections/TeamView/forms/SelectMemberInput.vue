@@ -1,15 +1,4 @@
 <template>
-  <div class="flex flex-col gap-4" data-test="members-list">
-    <div class="flex items-center" v-for="(member, index) of teamMembers" :key="index">
-      <UserComponent
-        class="bg-base-200 p-4 flex-grow"
-        :user="{ name: member.name, address: member.address }"
-      />
-      <div>
-        <ButtonUI variant="error" class="mt-4" size="sm" @click="removeMember(index)"> - </ButtonUI>
-      </div>
-    </div>
-  </div>
   <div class="input-group relative" ref="formRef" data-test="member-input">
     <label
       class="input input-bordered flex items-center gap-2 input-md"
@@ -44,7 +33,7 @@
             :data-test="`user-dropdown-${user.address}`"
             @click="
               () => {
-                addMember(user)
+                selectMember(user)
                 showDropdown = false
               }
             "
@@ -58,21 +47,22 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import UserComponent from '@/components/UserComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { ref } from 'vue'
 
-const teamMembers = defineModel({
-  type: Array<{
-    name: string
-    address: string
-    id?: string | undefined
-  }>,
+const emit = defineEmits(['selectMember'])
+const input = defineModel({
+  type: {
+    name: String,
+    address: String
+  },
   required: true,
-  default: []
+  default: {
+    name: '',
+    address: ''
+  }
 })
-const input = ref({ name: '', address: '' })
+
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const url = ref('user/search')
@@ -89,14 +79,8 @@ const searchUsers = async (input: { name: string; address: string }) => {
   await executeSearchUser()
   showDropdown.value = true
 }
-
-const addMember = (member: { name: string; address: string }) => {
-  if (!teamMembers.value.find((m) => m.address === member.address)) {
-    teamMembers.value.push(member)
-  }
-}
-
-const removeMember = (id: number) => {
-  teamMembers.value.splice(id, 1)
+const selectMember = (member: { name: string; address: string }) => {
+  input.value = member
+  emit('selectMember', member)
 }
 </script>

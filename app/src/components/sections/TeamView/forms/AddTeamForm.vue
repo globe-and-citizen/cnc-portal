@@ -56,7 +56,7 @@
         <div class="text-sm text-gray-600 mb-2">
           You can add team members now or invite them later.
         </div>
-        <SelectMemberInput v-model="teamData.members" />
+        <MultiSelectMemberInput v-model="teamData.members" />
 
         <div
           class="pl-4 pt-4 text-sm text-red-500"
@@ -171,7 +171,7 @@ import { log } from '@/utils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import SelectMemberInput from '@/components/sections/TeamView/forms/SelectMemberInput.vue'
+import MultiSelectMemberInput from '@/components/sections/TeamView/forms/MultiSelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import type { TeamInput, Team } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
