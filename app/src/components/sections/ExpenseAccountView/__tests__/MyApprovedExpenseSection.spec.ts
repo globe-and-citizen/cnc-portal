@@ -9,6 +9,8 @@ import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
+import * as util from '@/utils'
+import { mock } from 'node:test'
 
 interface ComponentData {
   isDisapprovedAddress: boolean
@@ -231,16 +233,7 @@ vi.mock('@/composables/useCustomFetch', () => {
       const json = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
       const post = vi.fn(() => ({ get, json, execute, data, error, isFetching, response }))
 
-      return {
-        post,
-        get,
-        json,
-        error,
-        isFetching,
-        execute,
-        data,
-        response
-      }
+      return { post, get, json, error, isFetching, execute, data, response }
     })
   }
 })
@@ -393,6 +386,19 @@ describe('ExpenseAccountSection', () => {
       expect(transferButton.exists()).toBe(true)
       expect(transferButton.text()).toBe('Spend')
       expect(transferButton.props().disabled).toBe(true)
+    })
+
+    it('should notify amount withdrawn error', async () => {
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(util.log, 'error')
+      //@ts-expect-error: property on component but not wrapper
+      wrapper.vm.errorGetAmountWithdrawn = new Error('Error getting amount withdrawn')
+      await flushPromises()
+
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+        'Failed to fetch amount withdrawn'
+      )
+      expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
     })
 
     describe('TransferFromBankForm', async () => {
