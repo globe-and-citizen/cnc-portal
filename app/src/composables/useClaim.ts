@@ -40,7 +40,7 @@ export function useSignWageClaim() {
           ]
         },
         message: {
-          hourlyRate: BigInt(claim.hourlyRate),
+          hourlyRate: parseEther(`${Number(claim.hourlyRate)}`), //BigInt(claim.hourlyRate),
           hoursWorked: claim.hoursWorked,
           employeeAddress: claim.address as Address,
           date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
@@ -102,6 +102,7 @@ export function useWithdrawClaim() {
     claimURL.value = `/teams/${claimId}/cash-remuneration/claim`
 
     await fetchClaim()
+
     await withdraw({
       abi: EIP712ABI,
       address: teamStore.currentTeam?.cashRemunerationEip712Address as Address,
@@ -110,8 +111,8 @@ export function useWithdrawClaim() {
         {
           employeeAddress: userStore.address,
           hoursWorked: claim.value!.hoursWorked,
-          hourlyRate: parseEther(claim.value!.hourlyRate),
-          date: Math.floor(new Date(claim.value!.createdAt).getTime() / 1000)
+          hourlyRate: parseEther(`${Number(claim.value!.hourlyRate)}`), //using parseEther here but not in sign
+          date: BigInt(Math.floor(new Date(claim.value!.createdAt).getTime() / 1000))
         },
         claim.value!.cashRemunerationSignature
       ]
