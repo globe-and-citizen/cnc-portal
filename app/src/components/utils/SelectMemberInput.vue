@@ -26,6 +26,7 @@
     <div
       v-if="showDropdown && users?.users && users?.users.length > 0"
       class="absolute left-0 top-full mt-1 w-full z-10"
+      data-test="user-dropdown"
     >
       <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
         <li v-for="user in users.users" :key="user.address">
