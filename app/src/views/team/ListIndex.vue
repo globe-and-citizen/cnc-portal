@@ -55,25 +55,25 @@
     >
       <AddTeamCard
         data-test="add-team-card"
-        @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
+        @openAddTeamModal="appStore.showAddTeamModal = true"
         class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
       />
     </div>
 
     <!-- Add Team Modal -->
-    <ModalComponent v-model="showAddTeamModal">
+    <ModalComponent v-model="appStore.showAddTeamModal">
       <!-- May be return an event that will trigger team reload -->
-      <AddTeamForm v-model="showAddTeamModal" />
+      <AddTeamForm @done="appStore.showAddTeamModal = false" v-if="appStore.showAddTeamModal" />
     </ModalComponent>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { Team } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useUserDataStore } from '@/stores/user'
+import { useUserDataStore } from '@/stores'
+import { useAppStore } from '@/stores/appStore'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
@@ -81,8 +81,8 @@ import ModalComponent from '@/components/ModalComponent.vue'
 
 const route = useRoute()
 const userDataStore = useUserDataStore()
+const appStore = useAppStore()
 
-const showAddTeamModal = ref(false)
 const router = useRouter()
 
 /**
