@@ -33,10 +33,7 @@
 
     <!-- Teams List -->
 
-    <div
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
-      v-if="(teams?.length ?? 0) != 0"
-    >
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20" v-if="teams?.length != 0">
       <TeamCard
         v-for="team in teams"
         :key="team.id"
@@ -55,7 +52,7 @@
     >
       <AddTeamCard
         data-test="add-team-card"
-        @openAddTeamModal="appStore.showAddTeamModal = true"
+        @openAddTeamModal="appStore.setShowAddTeamModal(true)"
         class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
       />
     </div>
@@ -94,6 +91,7 @@ const {
   error: teamsError,
   data: teams
 } = useCustomFetch('teams').get().json<Array<Team>>()
+
 const navigateToTeam = (id: number | string) => {
   router.push(`/teams/${id}`)
 }
