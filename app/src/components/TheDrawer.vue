@@ -212,7 +212,6 @@ const props = defineProps<{
 
 const target = ref(null)
 const isDropdownOpen = ref(false)
-const showAddTeamModal = ref(false)
 const teamStore = useTeamStore()
 
 onMounted(() => {
