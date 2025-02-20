@@ -16,7 +16,7 @@
 <script lang="ts" setup>
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import SelectMemberInput from './SelectMemberInput.vue'
+import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { ref } from 'vue'
 
 const teamMembers = defineModel({

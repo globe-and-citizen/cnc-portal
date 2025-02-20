@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import MultiSelectMemberInput from '@/components/sections/TeamView/forms/MultiSelectMemberInput.vue'
+import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 
