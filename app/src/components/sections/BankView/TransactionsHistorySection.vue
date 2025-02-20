@@ -2,7 +2,7 @@
 <template>
   <div class="card bg-base-100 w-full shadow-sm">
     <div class="card-body">
-      <div class="flex flex-row justify-between mb-5">
+      <div class="flex flex-row justify-between">
         <span class="text-lg font-medium" data-test="transactions-history-title">
           Bank Transactions History
         </span>
