@@ -57,7 +57,7 @@ describe('SelectMemberInput.vue', () => {
     nameInput.setValue('John')
     await nameInput.trigger('keyup')
 
-    expect(wrapper.props().modelValue.name).toBe('John')
+    expect(wrapper.props().modelValue?.name).toBe('John')
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('John Doe')
 
@@ -65,7 +65,7 @@ describe('SelectMemberInput.vue', () => {
     addressInput.setValue('0x1')
     await addressInput.trigger('keyup')
 
-    expect(wrapper.props().modelValue.address).toBe('0x1')
+    expect(wrapper.props().modelValue?.address).toBe('0x1')
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('0x123')
 
