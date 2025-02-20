@@ -64,12 +64,12 @@
         class="flex items-center cursor-pointer gap-4 badge badge-lg badge-info"
         @click="
           () => {
-            isDropdownOpen = !isDropdownOpen
+            if (!_tokenSymbol) isDropdownOpen = !isDropdownOpen
           }
         "
       >
         <span>{{ tokenList[selectedTokenId].name }}</span>
-        <ChevronDownIcon class="w-4 h-4" />
+        <ChevronDownIcon v-if="!_tokenSymbol" class="w-4 h-4" />
       </div>
       <ul
         class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
@@ -117,7 +117,7 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
 import type { User } from '@/types'
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
@@ -167,6 +167,10 @@ const props = defineProps({
     type: Boolean,
     required: false,
     default: false
+  },
+  _tokenSymbol: {
+    type: String,
+    required: false
   }
 })
 
@@ -224,6 +228,12 @@ watch(to, () => {
 // Handle clicking outside of dropdown
 onClickOutside(target, () => {
   isDropdownOpen.value = false
+})
+
+onMounted(() => {
+  if (props._tokenSymbol) {
+    selectedTokenId.value = tokenList.findIndex((token) => token.symbol === props._tokenSymbol)
+  }
 })
 </script>
 

@@ -66,9 +66,14 @@
           :bank-balance="
             JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
               ? expenseBalanceFormatted
+              : undefined
+          "
+          :usdc-balance="
+            JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
+              ? undefined
               : `${Number(usdcBalance) / 1e6}`
           "
-          :token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)"
+          :_token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)"
           service="Expense Account"
         />
       </ModalComponent>
