@@ -87,6 +87,6 @@ const columns = ref([
 ])
 // v-if="team.ownerAddress == userDataStore.address"
 if (props.team?.ownerAddress == userDataStore.address) {
-  columns.value.push({ key: 'action', label: 'Action'})
+  columns.value.push({ key: 'action', label: 'Action' })
 }
 </script>
