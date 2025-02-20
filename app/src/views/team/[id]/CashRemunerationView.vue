@@ -10,7 +10,7 @@
       <div class="flex flex-wrap gap-2 sm:gap-4">
         <span class="text-sm">Contract Address </span>
         <AddressToolTip
-          :address="team?.cashRemunerationEip712Address ?? ''"
+          :address="teamStore.currentTeam?.cashRemunerationEip712Address ?? ''"
           class="text-sm font-bold"
         />
       </div>
@@ -27,7 +27,7 @@
             await fetchClaims()
           }
         "
-        :owner-address="team?.ownerAddress"
+        :owner-address="teamStore.currentTeam?.ownerAddress"
         :claims="claims"
         :is-loading="claimsLoading"
       />
@@ -36,25 +36,21 @@
 </template>
 
 <script setup lang="ts">
-import type { ClaimResponse, Team } from '@/types'
+import type { ClaimResponse } from '@/types'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore } from '@/stores'
-import { log, parseError } from '@/utils'
+import { useTeamStore, useToastStore } from '@/stores'
+import { log } from '@/utils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CashRemunerationCard from '@/components/sections/CashRemunerationView/CashRemunerationCard.vue'
 import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import SubmitClaims from '@/components/sections/CashRemunerationView/SubmitClaims.vue'
 
-const router = useRouter()
 const route = useRoute()
 const claimStatus = ref<string>('all')
 const { addErrorToast } = useToastStore()
-
-const { data: team, error: teamError } = useCustomFetch(`teams/${String(route.params.id)}`)
-  .get()
-  .json<Team>()
+const teamStore = useTeamStore()
 
 const claimsUrl = computed(
   () => `/teams/${route.params.id}/cash-remuneration/claim/${claimStatus.value}`
@@ -73,16 +69,8 @@ watch(claimsError, (newVal) => {
   }
 })
 
-watch(teamError, (newVal) => {
-  if (newVal) {
-    addErrorToast(parseError(newVal))
-    log.error(parseError(newVal))
-
-    router.push({ name: 'teams' })
-  }
-})
-
 onMounted(async () => {
+  await teamStore.setCurrentTeamId(route.params.id as string)
   await fetchClaims()
 })
 </script>
