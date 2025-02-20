@@ -70,7 +70,8 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
           execute: vi.fn(),
           data: ref({
             hoursWorked: 10,
-            hourlyRate: '100'
+            hourlyRate: '100',
+            createdAt: '2021-09-01T00:00:00.000Z'
           }),
           loading: ref(false),
           error: mockClaimError,
