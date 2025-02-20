@@ -15,13 +15,13 @@
       </div>
     </div>
     <div v-if="teamError">
-      <div class="alert alert-warning" v-if="statusCode === 404">Team not found</div>
-      <div class="alert alert-danger" v-else>Something went wrong</div>
+      <div class="alert alert-warning" v-if="statusCode === 404">Error! Team not found</div>
+      <div class="alert alert-error" v-else>Error! Something went wrong</div>
     </div>
     <div v-if="route.name == 'show-team' && team">
       <MemberSection :team="team" :teamIsFetching="teamIsFetching" @getTeam="execute" />
     </div>
-    <RouterView />
+    <RouterView v-if="teamStore.currentTeam" />
   </div>
 </template>
 <script setup lang="ts">
