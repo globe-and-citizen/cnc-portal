@@ -117,8 +117,8 @@ describe('ListIndex', () => {
     // wrapper.find('[data-test="add-team-card"]').trigger('click')
     // await wrapper.vm.$nextTick()
 
-    // expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
-    // console.log(wrapper.findComponent(ModalComponent).props())
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+    console.log(wrapper.findComponent(ModalComponent).props())
     // expect(wrapper.findComponent(ModalComponent).props().modelValue).toBeTruthy()
   })
 })
