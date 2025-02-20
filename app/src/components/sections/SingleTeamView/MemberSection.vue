@@ -76,14 +76,17 @@ const showAddMemberForm = ref(false)
 
 const route = useRoute()
 
-defineProps(['team', 'teamIsFetching'])
+const props = defineProps(['team', 'teamIsFetching'])
 // const emits = defineEmits(['getTeam'])
 const teamId = String(route.params.id)
 
 const columns = ref([
   { key: 'index', label: '#' },
   { key: 'member', label: 'Member' },
-  { key: 'wage', label: 'Wage' },
-  { key: 'action', label: 'Action', sortable: false }
+  { key: 'wage', label: 'Wage' }
 ])
+// v-if="team.ownerAddress == userDataStore.address"
+if (props.team?.ownerAddress == userDataStore.address) {
+  columns.value.push({ key: 'action', label: 'Action'})
+}
 </script>
