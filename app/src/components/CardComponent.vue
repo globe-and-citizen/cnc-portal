@@ -4,13 +4,11 @@
       <div class="flex justify-between items-center">
         <span class="card-title">{{ props.title }}</span>
         <div class="card-actions justify-end">
-          <slot name="card-action">
-          </slot>
+          <slot name="card-action"> </slot>
         </div>
       </div>
       <div class="card-content">
-        <slot>
-        </slot>
+        <slot> </slot>
       </div>
     </div>
   </div>
@@ -26,4 +24,3 @@ const props = defineProps({
   }
 })
 </script>
-

@@ -15,11 +15,7 @@
         <PlusCircleIcon class="size-6" /> Add a new Member
       </ButtonUI>
       <ModalComponent v-model="showAddMemberForm">
-        <AddMemberForm
-          v-if="teamId"
-          :teamId="teamId"
-          @memberAdded="showAddMemberForm = false"
-        />
+        <AddMemberForm v-if="teamId" :teamId="teamId" @memberAdded="showAddMemberForm = false" />
       </ModalComponent>
     </template>
     <template #default>
@@ -83,8 +79,6 @@ const route = useRoute()
 defineProps(['team', 'teamIsFetching'])
 // const emits = defineEmits(['getTeam'])
 const teamId = String(route.params.id)
-
-
 
 const columns = ref([
   { key: 'index', label: '#' },
