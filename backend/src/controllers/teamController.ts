@@ -670,11 +670,6 @@ export const updateClaimEmployee = async (req: Request, res: Response) => {
       await handleApprovedClaim(claim.id);
     }
 
-    await prisma.claim.update({
-      where: { id: Number(id) },
-      data: { hoursWorked: Number(hoursWorked) },
-    });
-
     res.status(201).json({ success: true });
   } catch (error) {
     return errorResponse(500, error, res);

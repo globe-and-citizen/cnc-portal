@@ -5,7 +5,7 @@ import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { flushPromises } from '@vue/test-utils'
 
 const mockSignature = ref<string | undefined>(undefined)
-const mockWaitTransaction = ref(false)
+const mockSuccess = ref(false)
 const mockSignTypedDataAsync = vi.fn()
 const mockError = ref<unknown>(undefined)
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -28,8 +28,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
       data: ref(null)
     })),
     useWaitForTransactionReceipt: vi.fn(() => ({
-      isFetching: mockWaitTransaction,
-      isSuccess: ref(true),
+      isSuccess: mockSuccess,
       error: mockError
     }))
   }
@@ -79,6 +78,14 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
         })
       })
     }))
+  }
+})
+
+vi.mock('viem/actions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    getBalance: vi.fn().mockResolvedValue(1000000000n)
   }
 })
 
@@ -144,10 +151,10 @@ describe('useClaim', () => {
       const { execute: withdrawClaim, isLoading, isSuccess } = useWithdrawClaim()
 
       const promise = withdrawClaim(1)
-      mockWaitTransaction.value = true
+      mockSuccess.value = true
 
       await promise
-      mockWaitTransaction.value = false
+      mockSuccess.value = false
       await flushPromises()
       expect(isLoading.value).toBe(false)
       expect(isSuccess.value).toBe(true)

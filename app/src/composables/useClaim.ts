@@ -8,16 +8,19 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract
 } from '@wagmi/vue'
-import { parseEther, type Address } from 'viem'
+import { formatEther, parseEther, type Address } from 'viem'
 import { ref, watch } from 'vue'
 import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { useCustomFetch } from './useCustomFetch'
+import { getBalance } from 'viem/actions'
+import { config } from '@/wagmi.config'
 
 export function useSignWageClaim() {
   const isLoading = ref(false)
   const { signTypedDataAsync, data: signature } = useSignTypedData()
   const teamStore = useTeamStore()
   const toastStore = useToastStore()
+  const userStore = useUserDataStore()
   const chainId = useChainId()
 
   const execute = async (claim: ClaimResponse) => {
@@ -40,9 +43,9 @@ export function useSignWageClaim() {
           ]
         },
         message: {
-          hourlyRate: parseEther(`${Number(claim.hourlyRate)}`), //BigInt(claim.hourlyRate),
+          hourlyRate: parseEther(claim.hourlyRate),
           hoursWorked: claim.hoursWorked,
-          employeeAddress: claim.address as Address,
+          employeeAddress: userStore.address as Address,
           date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
         },
         primaryType: 'WageClaim'
@@ -84,11 +87,7 @@ export function useWithdrawClaim() {
     data: withdrawHash,
     error: withdrawError
   } = useWriteContract()
-  const {
-    isSuccess: withdrawSuccess,
-    isFetching: withdrawTrxLoading,
-    error: withdrawTrxError
-  } = useWaitForTransactionReceipt({
+  const { isSuccess: withdrawSuccess, error: withdrawTrxError } = useWaitForTransactionReceipt({
     hash: withdrawHash
   })
   const { execute: updateClaimStatus } = useCustomFetch(claimURL, {
@@ -99,9 +98,21 @@ export function useWithdrawClaim() {
 
   const execute = async (claimId: number) => {
     isLoading.value = true
+    isSuccess.value = false
     claimURL.value = `/teams/${claimId}/cash-remuneration/claim`
 
     await fetchClaim()
+
+    const balance = formatEther(
+      await getBalance(config.getClient(), {
+        address: teamStore.currentTeam?.cashRemunerationEip712Address as Address
+      })
+    )
+    if (Number(balance) < Number(claim.value!.hourlyRate) * claim.value!.hoursWorked) {
+      isLoading.value = false
+      toastStore.addErrorToast('Insufficient balance')
+      return
+    }
 
     await withdraw({
       abi: EIP712ABI,
@@ -109,9 +120,9 @@ export function useWithdrawClaim() {
       functionName: 'withdraw',
       args: [
         {
-          employeeAddress: userStore.address,
+          hourlyRate: parseEther(claim.value!.hourlyRate),
           hoursWorked: claim.value!.hoursWorked,
-          hourlyRate: parseEther(`${Number(claim.value!.hourlyRate)}`), //using parseEther here but not in sign
+          employeeAddress: userStore.address as Address,
           date: BigInt(Math.floor(new Date(claim.value!.createdAt).getTime() / 1000))
         },
         claim.value!.cashRemunerationSignature
@@ -122,8 +133,8 @@ export function useWithdrawClaim() {
     claimBody.value = { claimid: claimId }
   }
 
-  watch(withdrawTrxLoading, async (isConfirming, wasConfirming) => {
-    if (!isConfirming && wasConfirming && withdrawSuccess.value) {
+  watch(withdrawSuccess, async (value) => {
+    if (value) {
       await updateClaimStatus()
       isLoading.value = false
       isSuccess.value = true
