@@ -53,11 +53,6 @@ import { ref } from 'vue'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
-  type: {
-    name: String,
-    address: String
-  },
-  required: true,
   default: {
     name: '',
     address: ''
