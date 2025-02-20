@@ -15,37 +15,38 @@
                 <span v-else>{{ totalValueUSD }}</span>
               </span>
             </span>
-            <span class="text-gray-600">USDC</span>
+            <span class="text-gray-600">USD</span>
           </div>
           <div class="text-sm text-gray-500 mt-1">≈ {{ totalValueLocal }} CAD</div>
         </div>
-        <div class="flex gap-2">
-          <ButtonUI
-            v-if="bankAddress"
-            variant="secondary"
-            class="flex items-center gap-2"
-            @click="depositModal = true"
-            data-test="deposit-button"
-          >
-            <PlusIcon class="w-5 h-5" />
-            Deposit
-          </ButtonUI>
-          <ButtonUI
-            v-if="bankAddress"
-            variant="secondary"
-            class="flex items-center gap-2"
-            @click="transferModal = true"
-            data-test="transfer-button"
-          >
-            <ArrowsRightLeftIcon class="w-5 h-5" />
-            Transfer
-          </ButtonUI>
+        <div class="flex flex-col items-end gap-4">
+          <div class="flex gap-2">
+            <ButtonUI
+              v-if="bankAddress"
+              variant="secondary"
+              class="flex items-center gap-2"
+              @click="depositModal = true"
+              data-test="deposit-button"
+            >
+              <PlusIcon class="w-5 h-5" />
+              Deposit
+            </ButtonUI>
+            <ButtonUI
+              v-if="bankAddress"
+              variant="secondary"
+              class="flex items-center gap-2"
+              @click="transferModal = true"
+              data-test="transfer-button"
+            >
+              <ArrowsRightLeftIcon class="w-5 h-5" />
+              Transfer
+            </ButtonUI>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="text-sm text-gray-600">Contract Address:</div>
+            <AddressToolTip :address="bankAddress!" />
+          </div>
         </div>
-      </div>
-
-      <div class="text-sm text-gray-600 mt-4">
-        Contract Address:
-        <span class="font-mono" data-test="bank-address">{{ bankAddress }}</span>
       </div>
     </div>
 
@@ -87,6 +88,7 @@
 <script setup lang="ts">
 import { PlusIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import {
   useBalance,

@@ -45,6 +45,7 @@ describe('TokenHoldingsSection', () => {
     expect(tokensWithRank[0]).toEqual({
       name: NETWORK.currencySymbol,
       network: NETWORK.currencySymbol,
+      icon: '/src/assets/Ethereum.png',
       price: 0,
       balance: 1.5,
       amount: 1.5,
@@ -56,6 +57,7 @@ describe('TokenHoldingsSection', () => {
       name: 'USDC',
       network: 'USDC',
       price: 1,
+      icon: '/src/assets/usdc.png',
       balance: 100,
       amount: 100,
       rank: 2
