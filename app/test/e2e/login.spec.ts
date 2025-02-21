@@ -4,7 +4,7 @@ import differentNetworkSetup from '../wallet-setup/different-network.setup'
 
 const test = testWithSynpress(metaMaskFixtures(differentNetworkSetup))
 
-const { expect } = test
+// const { expect } = test
 
 test.describe('Sign in', () => {
   test('should be able to sign in and redirect to the teams page', async ({ page, metamask }) => {
