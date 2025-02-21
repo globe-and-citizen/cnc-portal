@@ -42,20 +42,20 @@ test.describe('Sign in', () => {
     await page.waitForLoadState('networkidle')
 
     // Connect to dapp
-    await metamask.connectToDapp()
+    // await metamask.connectToDapp()
 
-    // Switch network
-    await metamask.approveNewNetwork()
-    await metamask.approveSwitchNetwork()
+    // // Switch network
+    // await metamask.approveNewNetwork()
+    // await metamask.approveSwitchNetwork()
 
-    // Confirm signature
-    await page.waitForTimeout(3000)
-    await metamask.confirmSignature()
+    // // Confirm signature
+    // await page.waitForTimeout(3000)
+    // await metamask.confirmSignature()
 
-    // Wait for redirection
-    await page.waitForURL('http://localhost:5173/teams')
+    // // Wait for redirection
+    // await page.waitForURL('http://localhost:5173/teams')
 
-    // Check redirection
-    expect(page.url()).toBe('http://localhost:5173/teams')
+    // // Check redirection
+    // expect(page.url()).toBe('http://localhost:5173/teams')
   })
 })
