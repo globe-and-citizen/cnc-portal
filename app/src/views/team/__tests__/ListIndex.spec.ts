@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import ModalComponent from '@/components/ModalComponent.vue'
+import { createPinia, setActivePinia } from 'pinia'
 
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
@@ -86,6 +87,13 @@ describe('ListIndex', () => {
     expect(wrapper.find('[data-test="empty-state"]').exists()).toBeTruthy()
 
     // Set state after mount (simulate async change)
+    // set error to a string
+    mockError.value = 'New Error'
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
+
+    // Set state after mount (simulate async change)
     // set data to an array with one team
     mockData.value = [{ id: '0x123', name: 'John Doe', description: 'Lorem' }]
     await wrapper.vm.$nextTick()
@@ -94,31 +102,50 @@ describe('ListIndex', () => {
     expect(wrapper.html()).toContain('Team List View')
     expect(wrapper.html()).toContain('John Doe')
 
-    // Set state after mount (simulate async change)
-    // set error to a string
-    mockError.value = 'New Error'
+    // Click the team card to navigate to the team detail view
+    wrapper.find('[data-test="team-card-0x123"]').trigger('click')
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
+    // TODO: Assert the redirection is done
   })
 
   it('Should open the modal on click ', async () => {
-
+    setActivePinia(createPinia())
+    // const appStore = useAppStore()
     const wrapper = mount(ListIndex, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: ['AddTeamForm']
       }
     })
 
-    wrapper.find('[data-test="add-team-card"]').trigger('click')
+    // Open the modal by clicking the button
+    wrapper.find('[data-test="add-team"]').trigger('click')
     await wrapper.vm.$nextTick()
 
-    // wrapper.find('[data-test="add-team-card"]').trigger('click')
-    // await wrapper.vm.$nextTick()
+    // Assert the modal is open
+    const modalComponent = wrapper.findComponent(ModalComponent)
+    expect(modalComponent.exists()).toBeTruthy()
+    expect(modalComponent.props().modelValue).toBeTruthy()
 
-    expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
-    console.log(wrapper.findComponent(ModalComponent).props())
-    // expect(wrapper.findComponent(ModalComponent).props().modelValue).toBeTruthy()
+    // Close the modal by emitting the done event
+    wrapper.findComponent({ name: 'AddTeamForm' }).vm.$emit('done')
+    await wrapper.vm.$nextTick()
+
+    // Assert the modal is closed
+    expect(modalComponent.props().modelValue).toBeFalsy()
+
+    // Open the modal by clicking the button
+    wrapper.find('[data-test="add-team"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Assert the modal is open
+    expect(modalComponent.props().modelValue).toBeTruthy()
+
+    // Close the modal by clicking the backdrop
+    wrapper.find('.modal-backdrop').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Assert the modal is closed
+    expect(modalComponent.props().modelValue).toBeFalsy()
   })
 })
