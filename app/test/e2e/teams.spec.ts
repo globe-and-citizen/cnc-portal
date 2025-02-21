@@ -170,7 +170,7 @@ describe('Teams', () => {
     }
 
     // test('should be able to add a new team', async ({ page, metamask }) => {
-      test('should be able to add a new team', async ({ page }) => {
+    test('should be able to add a new team', async ({ page }) => {
       // Mock api
       await page.route(`**/api/teams`, async (route) => {
         await route.fulfill({
