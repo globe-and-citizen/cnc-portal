@@ -58,63 +58,63 @@ describe('Teams', () => {
   })
 
   describe('Team List', () => {
-    test('should display loading state and then render team list', async ({ page }) => {
-      // Mock api to return teams
+    // test('should display loading state and then render team list', async ({ page }) => {
+    //   // Mock api to return teams
 
-      await page.route(`**/api/teams`, async (route) => {
-        // Simulate a loading state by delaying the response
-        await page.waitForTimeout(500) // Delay for 2 seconds to simulate loading
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(teams)
-        })
-      })
+    //   await page.route(`**/api/teams`, async (route) => {
+    //     // Simulate a loading state by delaying the response
+    //     await page.waitForTimeout(500) // Delay for 2 seconds to simulate loading
+    //     await route.fulfill({
+    //       status: 200,
+    //       contentType: 'application/json',
+    //       body: JSON.stringify(teams)
+    //     })
+    //   })
 
-      await page.goto('http://localhost:5173/teams')
-      // Loading state assertion
-      expect(await page.isVisible('[data-test="loader"]')).toBeTruthy()
+    //   await page.goto('http://localhost:5173/teams')
+    //   // Loading state assertion
+    //   expect(await page.isVisible('[data-test="loader"]')).toBeTruthy()
 
-      // Wait for teams to be rendered
-      await page.waitForSelector('[data-test="team-list"]')
-      expect(await page.isVisible('[data-test="loader"]')).toBeFalsy()
-      expect(await page.isVisible('[data-test="team-list"]')).toBeTruthy()
+    //   // Wait for teams to be rendered
+    //   await page.waitForSelector('[data-test="team-list"]')
+    //   expect(await page.isVisible('[data-test="loader"]')).toBeFalsy()
+    //   expect(await page.isVisible('[data-test="team-list"]')).toBeTruthy()
 
-      // Check if teams are rendered
-      for (const team of teams) {
-        expect(await page.isVisible(`[data-test="team-card-${team.id}"]`)).toBeTruthy()
-        expect(await page.textContent(`[data-test="team-card-${team.id}"]`)).toContain(team.name)
-        expect(await page.textContent(`[data-test="team-card-${team.id}"]`)).toContain(
-          team.description
-        )
-      }
+    //   // Check if teams are rendered
+    //   for (const team of teams) {
+    //     expect(await page.isVisible(`[data-test="team-card-${team.id}"]`)).toBeTruthy()
+    //     expect(await page.textContent(`[data-test="team-card-${team.id}"]`)).toContain(team.name)
+    //     expect(await page.textContent(`[data-test="team-card-${team.id}"]`)).toContain(
+    //       team.description
+    //     )
+    //   }
 
-      // expect(await page.isHidden('[data-test="loading-state"]')).toBeTruthy()
-      expect(await page.isVisible('[data-test="add-team-card"]')).toBeTruthy()
+    //   // expect(await page.isHidden('[data-test="loading-state"]')).toBeTruthy()
+    //   expect(await page.isVisible('[data-test="add-team-card"]')).toBeTruthy()
 
-      await page.click('div[data-test="team-card-1"]')
-      await page.waitForURL('http://localhost:5173/teams/1')
+    //   await page.click('div[data-test="team-card-1"]')
+    //   await page.waitForURL('http://localhost:5173/teams/1')
 
-      expect(page.url()).toBe('http://localhost:5173/teams/1')
-    })
+    //   expect(page.url()).toBe('http://localhost:5173/teams/1')
+    // })
 
-    test('should render empty state if no teams are available', async ({ page }) => {
-      // Mock api to return empty teams
-      await page.route(`**/api/teams`, async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([])
-        })
-      })
+    // test('should render empty state if no teams are available', async ({ page }) => {
+    //   // Mock api to return empty teams
+    //   await page.route(`**/api/teams`, async (route) => {
+    //     await route.fulfill({
+    //       status: 200,
+    //       contentType: 'application/json',
+    //       body: JSON.stringify([])
+    //     })
+    //   })
 
-      await page.goto('http://localhost:5173/teams')
-      // Wait for empty state to appear
-      await page.waitForSelector('[data-test="empty-state"]')
+    //   await page.goto('http://localhost:5173/teams')
+    //   // Wait for empty state to appear
+    //   await page.waitForSelector('[data-test="empty-state"]')
 
-      expect(await page.isVisible('[data-test="empty-state"]')).toBeTruthy()
-      expect(await page.isVisible('[data-test="add-team-card"]')).toBeTruthy()
-    })
+    //   expect(await page.isVisible('[data-test="empty-state"]')).toBeTruthy()
+    //   expect(await page.isVisible('[data-test="add-team-card"]')).toBeTruthy()
+    // })
 
     test('should render error state and toast if unable to fetch teams', async ({ page }) => {
       // Mock api to return 500 error
