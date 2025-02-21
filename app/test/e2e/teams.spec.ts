@@ -21,28 +21,28 @@ describe('Teams', () => {
     }
   ]
 
-  const teams = [
-    {
-      id: '1',
-      name: 'Team 1',
-      description: 'Description of Team 1',
-      bankAddress: null,
-      members: [],
-      ownerAddress: 'Owner Address',
-      votingAddress: null,
-      boardOfDirectorsAddress: null
-    },
-    {
-      id: '2',
-      name: 'Team 2',
-      description: 'Description of Team 2',
-      bankAddress: null,
-      members: [],
-      ownerAddress: 'Owner Address',
-      votingAddress: null,
-      boardOfDirectorsAddress: null
-    }
-  ]
+  // const teams = [
+  //   {
+  //     id: '1',
+  //     name: 'Team 1',
+  //     description: 'Description of Team 1',
+  //     bankAddress: null,
+  //     members: [],
+  //     ownerAddress: 'Owner Address',
+  //     votingAddress: null,
+  //     boardOfDirectorsAddress: null
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Team 2',
+  //     description: 'Description of Team 2',
+  //     bankAddress: null,
+  //     members: [],
+  //     ownerAddress: 'Owner Address',
+  //     votingAddress: null,
+  //     boardOfDirectorsAddress: null
+  //   }
+  // ]
 
   beforeEach(async ({ page }) => {
     await page.route('**/api/notification', async (route) => {
@@ -169,7 +169,8 @@ describe('Teams', () => {
       )
     }
 
-    test('should be able to add a new team', async ({ page, metamask }) => {
+    // test('should be able to add a new team', async ({ page, metamask }) => {
+      test('should be able to add a new team', async ({ page }) => {
       // Mock api
       await page.route(`**/api/teams`, async (route) => {
         await route.fulfill({
