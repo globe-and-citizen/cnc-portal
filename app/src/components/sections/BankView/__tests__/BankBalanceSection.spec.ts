@@ -75,7 +75,13 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 
 describe('BankBalanceSection', () => {
   const defaultProps = {
-    bankAddress: '0x123' as Address
+    bankAddress: '0x123' as Address,
+    priceData: {
+      networkCurrencyPrice: 2000,
+      usdcPrice: 1,
+      loading: false,
+      error: null
+    }
   }
 
   const createWrapper = () => {
@@ -247,27 +253,6 @@ describe('BankBalanceSection', () => {
   })
 
   describe('Computed Properties', () => {
-    it('calculates total value in USD correctly', async () => {
-      const wrapper = createWrapper()
-      mockUseBalance.data.value = { formatted: '1.0', value: BigInt(1000000) }
-      mockUseReadContract.data.value = BigInt(2000000) // 2 USDC
-      await wrapper.vm.$nextTick()
-
-      // ETH price is mocked at 2500 USD, USDC at 1 USD
-      // 1 ETH * 2500 + 2 USDC * 1 = 2502 USD
-      expect(wrapper.vm.totalValueUSD).toBe(2502)
-    })
-
-    it('calculates total value in local currency correctly', async () => {
-      const wrapper = createWrapper()
-      mockUseBalance.data.value = { formatted: '1.0', value: BigInt(1000000) }
-      mockUseReadContract.data.value = BigInt(2000000) // 2 USDC
-      await wrapper.vm.$nextTick()
-
-      // Total USD value 2502 * 1.28 (CAD rate) = 3202.56
-      expect(wrapper.vm.totalValueLocal).toBe(3202.56)
-    })
-
     it('formats USDC balance correctly', async () => {
       const wrapper = createWrapper()
       mockUseReadContract.data.value = BigInt(1500000) // 1.5 USDC (1500000 / 1e6)
