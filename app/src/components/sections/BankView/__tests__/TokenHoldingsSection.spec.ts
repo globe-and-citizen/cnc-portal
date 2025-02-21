@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import TokenHoldingsSection from '../TokenHoldingsSection.vue'
 import { NETWORK } from '@/constant'
 import type { ComponentPublicInstance } from 'vue'
+
 describe('TokenHoldingsSection', () => {
   interface Token {
     name: string
@@ -19,6 +20,13 @@ describe('TokenHoldingsSection', () => {
     tokensWithRank: TokenWithRank[]
   }
 
+  const defaultPriceData = {
+    networkCurrencyPrice: 2000,
+    usdcPrice: 1,
+    loading: false,
+    error: null
+  }
+
   it('formats token holdings data correctly', async () => {
     const mockBankBalanceSection = {
       teamBalance: {
@@ -29,7 +37,8 @@ describe('TokenHoldingsSection', () => {
 
     const wrapper = mount(TokenHoldingsSection, {
       props: {
-        bankBalanceSection: mockBankBalanceSection
+        bankBalanceSection: mockBankBalanceSection,
+        priceData: defaultPriceData
       },
       global: {
         stubs: {
@@ -45,10 +54,10 @@ describe('TokenHoldingsSection', () => {
     expect(tokensWithRank[0]).toEqual({
       name: NETWORK.currencySymbol,
       network: NETWORK.currencySymbol,
-      icon: '/src/assets/Ethereum.png',
-      price: 0,
-      balance: 1.5,
-      amount: 1.5,
+      icon: expect.any(String),
+      price: '2000.00',
+      balance: '3000.00', // 1.5 ETH * $2000
+      amount: '1.50',
       rank: 1
     })
 
@@ -56,10 +65,10 @@ describe('TokenHoldingsSection', () => {
     expect(tokensWithRank[1]).toEqual({
       name: 'USDC',
       network: 'USDC',
-      price: 1,
-      icon: '/src/assets/usdc.png',
-      balance: 100,
-      amount: 100,
+      icon: expect.any(String),
+      price: '1.00',
+      balance: '100.00',
+      amount: '100.00',
       rank: 2
     })
   })
@@ -72,7 +81,8 @@ describe('TokenHoldingsSection', () => {
 
     const wrapper = mount(TokenHoldingsSection, {
       props: {
-        bankBalanceSection: mockBankBalanceSection
+        bankBalanceSection: mockBankBalanceSection,
+        priceData: defaultPriceData
       },
       global: {
         stubs: {
@@ -83,8 +93,8 @@ describe('TokenHoldingsSection', () => {
 
     const tokensWithRank = (wrapper.vm as unknown as TokenHoldingsSectionInstance).tokensWithRank
     expect(tokensWithRank).toHaveLength(2)
-    expect(tokensWithRank[0].balance).toBe(0)
-    expect(tokensWithRank[1].balance).toBe(0)
+    expect(tokensWithRank[0].balance).toBe('0.00')
+    expect(tokensWithRank[1].balance).toBe('0.00')
   })
 
   it('renders formatted data in table correctly', () => {
@@ -97,14 +107,17 @@ describe('TokenHoldingsSection', () => {
 
     const wrapper = mount(TokenHoldingsSection, {
       props: {
-        bankBalanceSection: mockBankBalanceSection
+        bankBalanceSection: mockBankBalanceSection,
+        priceData: defaultPriceData
       }
     })
 
     const html = wrapper.html()
 
-    expect(html).toContain('$1.5') // For balance
-    expect(html).toContain('$100') // For USDC price/balance
+    expect(html).toContain('$2000.00') // ETH price
+    expect(html).toContain('$3000.00') // ETH balance (1.5 * 2000)
+    expect(html).toContain('$1.00') // USDC price
+    expect(html).toContain('$100.00') // USDC balance
     expect(html).toContain('1') // For rank
     expect(html).toContain('2') // For rank
   })
