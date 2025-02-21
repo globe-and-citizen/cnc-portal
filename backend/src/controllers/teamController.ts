@@ -643,14 +643,14 @@ export const updateClaim = async (req: Request, res: Response) => {
 export const updateClaimEmployee = async (req: Request, res: Response) => {
   const { id } = req.params;
   const callerAddress = (req as any).address;
-  const { claimid: claimId, hoursworked: hoursWorked } = req.headers;
+  const { claimid: claimId, hoursworked: hoursWorked } = req.body;
 
   try {
     const memberTeamsData = await prisma.memberTeamsData.findUnique({
       where: {
         userAddress_teamId: {
-          userAddress: callerAddress,
           teamId: Number(id),
+          userAddress: callerAddress,
         },
       },
     });
@@ -659,16 +659,16 @@ export const updateClaimEmployee = async (req: Request, res: Response) => {
       where: { id: Number(claimId) },
     });
 
-    if (claim?.status !== `pending`)
-      return errorResponse(403, `Forbidden`, res);
-
     if (claim?.memberTeamsDataId !== memberTeamsData?.id)
       return errorResponse(403, `Forbidden`, res);
 
-    await prisma.claim.update({
-      where: { id: Number(id) },
-      data: { hoursWorked: Number(hoursWorked) },
-    });
+    if (claim?.status == `pending`) {
+      await handlePendingClaimUpdate(claim.id, hoursWorked as string);
+    }
+
+    if (claim?.status == "approved") {
+      await handleApprovedClaim(claim.id);
+    }
 
     res.status(201).json({ success: true });
   } catch (error) {
@@ -801,15 +801,11 @@ export const getClaims = async (req: Request, res: Response) => {
 
     if (!team) return errorResponse(404, "Resource Not Found", res);
 
+    let statusQuery = status === "all" ? {} : { status };
     if (team.ownerAddress === callerAddress) {
       const claims = await prisma.memberTeamsData.findMany({
         where: {
           teamId: team.id,
-          claims: {
-            some: {
-              status,
-            },
-          },
         },
         select: {
           user: {
@@ -819,13 +815,12 @@ export const getClaims = async (req: Request, res: Response) => {
           },
           userAddress: true,
           claims: {
-            where: {
-              status,
-            },
+            where: statusQuery,
             select: {
               id: true,
               hoursWorked: true,
               createdAt: true,
+              status: true,
             },
           },
           hourlyRate: true,
@@ -836,6 +831,7 @@ export const getClaims = async (req: Request, res: Response) => {
         item.claims.map((claim) => ({
           id: claim.id,
           name: item.user.name,
+          status: claim.status,
           address: item.userAddress,
           hourlyRate: item.hourlyRate,
           hoursWorked: claim.hoursWorked,
@@ -849,11 +845,6 @@ export const getClaims = async (req: Request, res: Response) => {
         where: {
           teamId: team.id,
           userAddress: callerAddress,
-          claims: {
-            some: {
-              status,
-            },
-          },
         },
         select: {
           user: {
@@ -863,13 +854,12 @@ export const getClaims = async (req: Request, res: Response) => {
           },
           userAddress: true,
           claims: {
-            where: {
-              status,
-            },
+            where: statusQuery,
             select: {
               id: true,
               hoursWorked: true,
               createdAt: true,
+              status: true,
             },
           },
           hourlyRate: true,
@@ -880,6 +870,7 @@ export const getClaims = async (req: Request, res: Response) => {
         item.claims.map((claim) => ({
           id: claim.id,
           name: item.user.name,
+          status: claim.status,
           address: item.userAddress,
           hourlyRate: item.hourlyRate,
           hoursWorked: claim.hoursWorked,
@@ -925,6 +916,23 @@ const buildFilterMember = (queryParams: Request["query"]) => {
   // can add others filter
 
   return filterQuery;
+};
+
+const handlePendingClaimUpdate = async (
+  claimId: number,
+  hoursWorked: string
+) => {
+  await prisma.claim.update({
+    where: { id: Number(claimId) },
+    data: { hoursWorked: Number(hoursWorked) },
+  });
+};
+
+const handleApprovedClaim = async (claimId: number) => {
+  await prisma.claim.update({
+    where: { id: Number(claimId) },
+    data: { status: "withdrawn" },
+  });
 };
 
 export {
