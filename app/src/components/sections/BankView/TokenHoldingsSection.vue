@@ -42,14 +42,17 @@ import USDCIcon from '@/assets/usdc.png'
 interface Token {
   name: string
   network: string
-  price: number // Price in USD
-  balance: number // Balance in token's native unit
-  amount: number // Amount in token's native unit
+  price: number | string
+  balance: number | string
+  amount: number | string
   icon: string
 }
 
 interface TokenWithRank extends Token {
   rank: number
+  price: string
+  balance: string
+  amount: string
 }
 
 interface BankBalanceSection {
@@ -61,15 +64,22 @@ interface BankBalanceSection {
 
 const props = defineProps<{
   bankBalanceSection: BankBalanceSection
+  priceData: {
+    networkCurrencyPrice: number
+    usdcPrice: number
+    loading: boolean
+    error: boolean | null
+  }
 }>()
 
 const tokens = computed(() => [
   {
     name: NETWORK.currencySymbol,
     network: NETWORK.currencySymbol,
-    price: 0, // TODO: Add price fetching
+    price: props.priceData.networkCurrencyPrice,
     balance: props.bankBalanceSection?.teamBalance?.formatted
-      ? Number(props.bankBalanceSection.teamBalance.formatted)
+      ? Number(props.bankBalanceSection.teamBalance.formatted) *
+        props.priceData.networkCurrencyPrice
       : 0,
     amount: props.bankBalanceSection?.teamBalance?.formatted
       ? Number(props.bankBalanceSection.teamBalance.formatted)
@@ -79,9 +89,9 @@ const tokens = computed(() => [
   {
     name: 'USDC',
     network: 'USDC',
-    price: 1,
+    price: props.priceData.usdcPrice,
     balance: props.bankBalanceSection?.formattedUsdcBalance
-      ? Number(props.bankBalanceSection.formattedUsdcBalance)
+      ? Number(props.bankBalanceSection.formattedUsdcBalance) * props.priceData.usdcPrice
       : 0,
     amount: props.bankBalanceSection?.formattedUsdcBalance
       ? Number(props.bankBalanceSection.formattedUsdcBalance)
@@ -93,6 +103,9 @@ const tokens = computed(() => [
 const tokensWithRank = computed<TokenWithRank[]>(() =>
   tokens.value.map((token, index) => ({
     ...token,
+    price: token.price.toFixed(2),
+    balance: token.balance.toFixed(2),
+    amount: token.amount.toFixed(2),
     rank: index + 1
   }))
 )
