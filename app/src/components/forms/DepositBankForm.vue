@@ -51,8 +51,16 @@
   </label>
 
   <div class="modal-action justify-center">
-    <ButtonUI variant="primary" @click="submitForm" :loading="loading" :disabled="loading">
-      Deposit
+    <ButtonUI
+      variant="primary"
+      @click="submitForm"
+      :loading="props.loading"
+      :disabled="props.loading"
+    >
+      <template v-if="props.loading">
+        {{ props.loadingText }}
+      </template>
+      <template v-else> Deposit </template>
     </ButtonUI>
     <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
   </div>
@@ -67,24 +75,29 @@ import ButtonUI from '../ButtonUI.vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { onClickOutside } from '@vueuse/core'
 
-defineProps<{
-  loading: boolean
+const props = defineProps<{
+  loading?: boolean
+  loadingText?: string
 }>()
 
 const amount = ref<string>('')
 const selectedTokenId = ref(0)
 const isDropdownOpen = ref<boolean>(false)
 
-const tokenList = [{ name: NETWORK.currencySymbol }, { name: 'DAI' }, { name: 'USDC' }]
+const tokenList = [
+  { name: NETWORK.currencySymbol, symbol: 'ETH' },
+  { name: 'USDC', symbol: 'USDC' }
+]
+
 const emits = defineEmits(['deposit', 'closeModal'])
 
 const target = ref<HTMLElement | null>(null)
 onMounted(() => {
   onClickOutside(target, () => {
     isDropdownOpen.value = false
-    console.log('clicked outside')
   })
 })
+
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
@@ -102,6 +115,9 @@ const $v = useVuelidate(rules, { amount })
 const submitForm = async () => {
   await $v.value.$touch()
   if ($v.value.$invalid) return
-  emits('deposit', amount.value)
+  emits('deposit', {
+    amount: amount.value,
+    token: tokenList[selectedTokenId.value].symbol
+  })
 }
 </script>

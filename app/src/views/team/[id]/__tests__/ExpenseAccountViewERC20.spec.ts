@@ -1,9 +1,9 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import ExpenseAccountSection from '../ExpenseAccountView.vue'
+import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { ref } from 'vue'
-import { USDC_ADDRESS } from '@/constant'
+import { computed, ref } from 'vue'
+import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import * as viem from 'viem'
@@ -11,6 +11,7 @@ import expenseABI from '../../../../artifacts/abi/expense-account-eip712.json'
 import erc20ABI from '../../../../artifacts/abi/erc20.json'
 import * as utils from '@/utils'
 import type { Team } from '@/types'
+import { zeroAddress } from 'viem'
 
 interface ComponentData {
   team: Partial<Team>
@@ -252,6 +253,26 @@ describe('ExpenseAccountEIP712Section ERC20', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
+        team: {
+          id: `1`,
+          expenseAccountEip712Address: '0xExpenseAccount',
+          ownerAddress: '0xOwner',
+          boardOfDirectorsAddress: null,
+          ...props?.team
+        },
+        isDisapprovedAddress: false,
+        expenseBalanceFormatted: `5000`,
+        usdcBalance: 1_000_000_000n,
+        tokenSymbol: (tokenAddress: string) =>
+          computed(() => {
+            const symbols = {
+              [USDC_ADDRESS]: 'USDC',
+              [USDT_ADDRESS]: 'USDT',
+              [zeroAddress]: NETWORK.currencySymbol
+            }
+
+            return symbols[tokenAddress] || ''
+          }),
         ...props
       },
       data,

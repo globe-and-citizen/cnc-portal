@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-row justify-start gap-4 transition-all duration-300 shadow-sm rounded-xl"
+    class="flex flex-row justify-start gap-4 transition-all duration-300"
     :class="{ 'justify-center': isCollapsed }"
   >
     <div role="button" class="relative group">
