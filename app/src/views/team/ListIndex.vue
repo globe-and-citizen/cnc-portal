@@ -33,7 +33,11 @@
 
     <!-- Teams List -->
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20" v-if="teams?.length != 0">
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
+      data-test="team-list"
+      v-if="teams?.length != 0"
+    >
       <TeamCard
         v-for="team in teams"
         :key="team.id"
