@@ -116,6 +116,12 @@ import type { User } from '@/types'
 
 const props = defineProps<{
   bankAddress: Address | undefined
+  priceData: {
+    networkCurrencyPrice: number
+    usdcPrice: number
+    loading: boolean
+    error: boolean | null
+  }
 }>()
 
 const emit = defineEmits<{
@@ -195,9 +201,6 @@ const {
   args: [props.bankAddress as Address]
 })
 
-// Add token price constants (these should come from an API in production)
-const ETH_PRICE_USD = 2500 // Example ETH price in USD
-const USDC_PRICE_USD = 1 // USDC is pegged to USD
 const USD_TO_LOCAL_RATE = 1.28 // Example conversion rate to local currency
 
 // Functions
@@ -307,15 +310,16 @@ const loadingText = computed(() => {
   return 'Processing...'
 })
 
-// Add computed properties for total values
 const totalValueUSD = computed(() => {
-  const ethValue = teamBalance.value ? Number(teamBalance.value.formatted) * ETH_PRICE_USD : 0
-  const usdcValue = Number(formattedUsdcBalance.value) * USDC_PRICE_USD
-  return ethValue + usdcValue
+  const ethValue = teamBalance.value
+    ? Number(teamBalance.value.formatted) * props.priceData.networkCurrencyPrice
+    : 0
+  const usdcValue = Number(formattedUsdcBalance.value) * props.priceData.usdcPrice
+  return (ethValue + usdcValue).toFixed(2)
 })
 
 const totalValueLocal = computed(() => {
-  return totalValueUSD.value * USD_TO_LOCAL_RATE
+  return (Number(totalValueUSD.value) * USD_TO_LOCAL_RATE).toFixed(2)
 })
 
 // Watch handlers
