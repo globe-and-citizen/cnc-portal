@@ -154,7 +154,7 @@
         :disabled="!canProceed"
         :investorContractInput="investorContractInput"
         :createdTeamData="createdTeamData"
-        @contractDeployed="modalIsOpen = false"
+        @contractDeployed="$emit('done')"
       >
         Deploy Contracts
       </DeployContractSection>
@@ -176,9 +176,9 @@ import { onClickOutside } from '@vueuse/core'
 import type { TeamInput, Team } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 
+defineEmits(['done'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-const modalIsOpen = defineModel({ default: true })
 // Refs
 const teamData = ref<TeamInput>({
   name: '',
