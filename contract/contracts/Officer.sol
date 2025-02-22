@@ -41,6 +41,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     /// @notice Emitted when beacon proxies are deployed
     event BeaconProxiesDeployed(address[] beaconProxies);
 
+    /// @notice Emitted when a beacon proxy is deployed
+    event BeaconProxyDeployed(address indexed proxyAddress, string indexed contractType);
+
     /// @notice Configuration struct for beacon initialization
     struct BeaconConfig {
         string beaconType;
@@ -201,6 +204,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             require(contractBeacons[deployments[i].contractType] != address(0), string.concat("Beacon not configured for ", deployments[i].contractType));
             require(keccak256(bytes(deployments[i].contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");      
             deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
+            emit BeaconProxyDeployed(deployedAddresses[i], deployments[i].contractType);
         }
         emit BeaconProxiesDeployed(deployedAddresses);
         return deployedAddresses;

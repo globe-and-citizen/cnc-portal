@@ -1,0 +1,47 @@
+specVersion: 1.2.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Officer
+    network: sepolia
+    source:
+      address: "0x850D9800196d0C71963814Dce2B96E85379A35DD"
+      abi: Officer
+      startBlock: 7762576
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - BeaconConfigured
+        - BeaconProxiesDeployed
+        - BeaconProxyDeployed
+        - ContractDeployed
+        - Initialized
+        - OwnershipTransferred
+        - Paused
+        - Unpaused
+      abis:
+        - name: Officer
+          file: ./abis/Officer.json
+      eventHandlers:
+        - event: BeaconConfigured(string,address)
+          handler: handleBeaconConfigured
+        - event: BeaconProxiesDeployed(address[])
+          handler: handleBeaconProxiesDeployed
+        - event: BeaconProxyDeployed(indexed address,indexed string)
+          handler: handleBeaconProxyDeployed
+        - event: ContractDeployed(string,address)
+          handler: handleContractDeployed
+        - event: Initialized(uint64)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(address)
+          handler: handlePaused
+        - event: Unpaused(address)
+          handler: handleUnpaused
+      file: ./src/officer.ts
