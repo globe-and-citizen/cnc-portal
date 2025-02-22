@@ -56,7 +56,7 @@ export function handleBeaconProxyDeployed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.proxyAddress = event.params.proxyAddress
-  entity.contractType = event.params.contractType
+  entity.contractType = event.params.contractType.toString()
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
