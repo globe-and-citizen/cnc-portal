@@ -56,24 +56,8 @@ export function handleBeaconProxyDeployed(
   let entity = new BeaconProxyDeployed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-
-  const proxyAddress = event.params.proxyAddress
-  const contractType = event.params.contractType.toString()
-
-  entity.proxyAddress = proxyAddress
-  entity.contractType = contractType
-
-  if (contractType === "ExpenseAccountEIP712")
-    ExpenseAccountEIP712.create(proxyAddress)
-
-  // switch (contractType) {
-  //   case "ExpenseAccountEIP712":
-  //     ExpenseAccountEIP712.create(proxyAddress)
-  //     break;
-  
-  //   default:
-  //     break;
-  // }
+  entity.proxyAddress = event.params.proxyAddress
+  entity.contractType = event.params.contractType.toString()
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
@@ -86,14 +70,30 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
   let entity = new ContractDeployed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.contractType = event.params.contractType
-  entity.deployedAddress = event.params.deployedAddress
+  const deployedAddress = event.params.deployedAddress
+  const contractType = event.params.contractType
+
+  entity.contractType = contractType
+  entity.deployedAddress = deployedAddress
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
 
   entity.save()
+
+  //Create Expense Account template dynamically when new contract is deployed
+  if (contractType === "ExpenseAccountEIP712")
+    ExpenseAccountEIP712.create(deployedAddress)
+
+  // switch (contractType) {
+  //   case "ExpenseAccountEIP712":
+  //     ExpenseAccountEIP712.create(proxyAddress)
+  //     break;
+  
+  //   default:
+  //     break;
+  // }
 }
 
 export function handleInitialized(event: InitializedEvent): void {
