@@ -45,3 +45,28 @@ dataSources:
         - event: Unpaused(address)
           handler: handleUnpaused
       file: ./src/officer.ts
+templates:
+  - name: ExpenseAccountEIP712
+    kind: ethereum/contract
+    network: sepolia
+    source:
+      abi: ExpenseAccountEIP712
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/expenseAccountEip712.ts
+      entities:
+        - Transfer
+        - Deposited
+      abis:
+        - name: ExpenseAccountEIP712
+          file: ./abis/ExpenseAccountEIP712.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Deposited(indexed address,uint256)
+          handler: handleDeposited
+        - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
+          handler: handleTransfer
+
