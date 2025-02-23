@@ -18,6 +18,7 @@ import {
   Paused,
   Unpaused
 } from "../generated/schema"
+import { ExpenseAccountEIP712 } from "../generated/templates"
 import { Bytes } from "@graphprotocol/graph-ts"
 
 export function handleBeaconConfigured(event: BeaconConfiguredEvent): void {
@@ -55,8 +56,24 @@ export function handleBeaconProxyDeployed(
   let entity = new BeaconProxyDeployed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.proxyAddress = event.params.proxyAddress
-  entity.contractType = event.params.contractType.toString()
+
+  const proxyAddress = event.params.proxyAddress
+  const contractType = event.params.contractType.toString()
+
+  entity.proxyAddress = proxyAddress
+  entity.contractType = contractType
+
+  if (contractType === "ExpenseAccountEIP712")
+    ExpenseAccountEIP712.create(proxyAddress)
+
+  // switch (contractType) {
+  //   case "ExpenseAccountEIP712":
+  //     ExpenseAccountEIP712.create(proxyAddress)
+  //     break;
+  
+  //   default:
+  //     break;
+  // }
 
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
