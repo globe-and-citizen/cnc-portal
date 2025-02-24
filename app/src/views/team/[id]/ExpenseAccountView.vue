@@ -88,6 +88,7 @@
         </ButtonUI>
       </div>
       <ExpenseAccountTable
+        :team="team"
         :approvals="manyExpenseAccountDataAll"
         :loading="isLoadingActivateApproval || isLoadingDeactivateApproval"
         :is-contract-owner="currentUserAddress === contractOwnerAddress"

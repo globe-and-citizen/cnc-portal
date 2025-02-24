@@ -94,26 +94,29 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, ref, type Reactive } from 'vue'
-import type { ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
+import { computed, onMounted, reactive, ref, type Reactive } from 'vue'
+import type { ManyExpenseResponse, ManyExpenseWithBalances, Team } from '@/types'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
-import { zeroAddress } from 'viem'
 import { tokenSymbol } from '@/utils'
 import { useCustomFetch } from '@/composables'
 import { useRoute } from 'vue-router'
+import { formatEther, zeroAddress, type Address, keccak256 } from 'viem'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
-
-const { approvals, loading } = defineProps<{
+const { approvals, loading, team } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
   loading: boolean
   isContractOwner: boolean
+  team: Partial<Team> | null
 }>()
 const route = useRoute()
 const emits = defineEmits(['disableApproval', 'enableApproval'])
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
-
+const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 const {
   error: fetchManyExpenseAccountDataError,
@@ -127,9 +130,9 @@ const {
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return approvals
+    return manyExpenseAccountDataAll //approvals
   } else {
-    return approvals.filter((approval) => approval.status === selectedRadio.value)
+    return /*approvals*/manyExpenseAccountDataAll.filter((approval) => approval.status === selectedRadio.value)
   }
 })
 
@@ -180,4 +183,45 @@ const columns = [
     sortable: false
   }
 ] as TableColumn[]
+
+//#region Functions
+const initializeBalances = async () => {
+  manyExpenseAccountDataAll.length = 0
+  if (Array.isArray(manyExpenseAccountData.value) && team)
+    for (const data of manyExpenseAccountData.value) {
+      const amountWithdrawn = await readContract(config, {
+        functionName: 'balances',
+        address: team.expenseAccountEip712Address as Address,
+        abi: expenseAccountABI,
+        args: [keccak256(data.signature)]
+      })
+
+      const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
+
+      // Populate the reactive balances object
+      if (
+        Array.isArray(amountWithdrawn) &&
+        manyExpenseAccountDataAll.findIndex((item) => item.signature === data.signature) === -1
+      ) {
+        // New algo
+        manyExpenseAccountDataAll.push({
+          ...data,
+          balances: {
+            0: `${amountWithdrawn[0]}`,
+            1:
+              data.tokenAddress === zeroAddress
+                ? formatEther(amountWithdrawn[1])
+                : `${Number(amountWithdrawn[1]) / 1e6}`,
+            2: amountWithdrawn[2] === true
+          },
+          status: isExpired ? 'expired' : amountWithdrawn[2] === 2 ? 'disabled' : 'enabled'
+        })
+      }
+    }
+}
+
+onMounted(async () => {
+  await fetchManyExpenseAccountData()
+  await initializeBalances()
+})
 </script>
