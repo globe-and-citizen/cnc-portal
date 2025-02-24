@@ -21,12 +21,13 @@
           variant="error"
           data-test="disable-button"
           size="sm"
-          :loading="loading && signatureToUpdate === row.signature"
+          :loading="isLoadingDeactivateApproval && signatureToUpdate === row.signature"
           :disabled="!isContractOwner"
           @click="
             () => {
-              emits('disableApproval', row.signature)
+              //emits('disableApproval', row.signature)
               signatureToUpdate = row.signature
+              deactivateApproval(row.signature)
             }
           "
           >Disable</ButtonUI
@@ -36,12 +37,13 @@
           variant="info"
           data-test="enable-button"
           size="sm"
-          :loading="loading && signatureToUpdate === row.signature"
+          :loading="isLoadingActivateApproval && signatureToUpdate === row.signature"
           :disabled="!isContractOwner"
           @click="
             () => {
-              emits('enableApproval', row.signature)
+              //emits('enableApproval', row.signature)
               signatureToUpdate = row.signature
+              activateApproval(row.signature)
             }
           "
           >Enable</ButtonUI
@@ -94,12 +96,14 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, onMounted, reactive, ref, type Reactive } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { ManyExpenseResponse, ManyExpenseWithBalances, Team } from '@/types'
-import { tokenSymbol } from '@/utils'
+import { log, parseError, tokenSymbol } from '@/utils'
 import { useCustomFetch } from '@/composables'
+import { useToastStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { formatEther, zeroAddress, type Address, keccak256 } from 'viem'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
@@ -109,11 +113,13 @@ const { loading, team } = defineProps<{
   isContractOwner: boolean
   team: Partial<Team> | null
 }>()
-const route = useRoute()
 const emits = defineEmits(['disableApproval', 'enableApproval'])
+const route = useRoute()
+const { addErrorToast, addSuccessToast } = useToastStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
+const deactivateIndex = ref(-1)
 const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 const {
@@ -171,6 +177,34 @@ const columns = [
   }
 ] as TableColumn[]
 
+//#endregion Composables
+//deactivate approval
+const {
+  writeContract: executeDeactivateApproval,
+  isPending: isLoadingDeactivateApproval,
+  error: errorDeactivateApproval,
+  data: deactivateHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
+  useWaitForTransactionReceipt({
+    hash: deactivateHash
+  })
+
+//activate approval
+const {
+  writeContract: executeActivateApproval,
+  isPending: isLoadingActivateApproval,
+  error: errorActivateApproval,
+  data: activateHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
+  useWaitForTransactionReceipt({
+    hash: activateHash
+  })
+//#region 
+
 //#region Functions
 const initializeBalances = async () => {
   manyExpenseAccountDataAll.length = 0
@@ -206,6 +240,57 @@ const initializeBalances = async () => {
       }
     }
 }
+
+const deactivateApproval = async (signature: `0x{string}`/*, index: number*/) => {
+ // deactivateIndex.value = index
+  const signatureHash = keccak256(signature)
+
+  executeDeactivateApproval({
+    address: team?.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'deactivateApproval'
+  })
+}
+
+const activateApproval = async (signature: `0x{string}`/*, index: number*/) => {
+  //deactivateIndex.value = index
+  const signatureHash = keccak256(signature)
+
+  executeActivateApproval({
+    address: team?.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'activateApproval'
+  })
+
+  console.log(`team?.expenseAccountEiop712Address: `, team?.expenseAccountEip712Address)
+  console.log(`signatureToUpdate: `, signatureToUpdate.value)
+  console.log(`isLoadingActivateApproval: `, isLoadingActivateApproval.value)
+}
+
+//#endregion
+
+//#region Watch
+watch(fetchManyExpenseAccountDataError, (newVal) => {
+  if (newVal) {
+    addErrorToast('Error fetching many expense account data')
+    log.error(parseError(newVal))
+  }
+})
+watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
+    addSuccessToast('Activate Successful')
+    await initializeBalances()
+  }
+})
+watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
+    addSuccessToast('Deactivate Successful')
+    await initializeBalances()
+  }
+})
+//#endregion
 
 onMounted(async () => {
   await fetchManyExpenseAccountData()
