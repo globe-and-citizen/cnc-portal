@@ -89,7 +89,6 @@
       </div>
       <ExpenseAccountTable
         :team="team"
-        :approvals="manyExpenseAccountDataAll"
         :loading="isLoadingActivateApproval || isLoadingDeactivateApproval"
         :is-contract-owner="currentUserAddress === contractOwnerAddress"
         @disable-approval="(signature) => deactivateApproval(signature, 1)"

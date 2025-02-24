@@ -96,7 +96,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, onMounted, reactive, ref, type Reactive } from 'vue'
 import type { ManyExpenseResponse, ManyExpenseWithBalances, Team } from '@/types'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { tokenSymbol } from '@/utils'
 import { useCustomFetch } from '@/composables'
 import { useRoute } from 'vue-router'
@@ -105,8 +104,7 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
-const { approvals, loading, team } = defineProps<{
-  approvals: Reactive<ManyExpenseWithBalances[]>
+const { loading, team } = defineProps<{
   loading: boolean
   isContractOwner: boolean
   team: Partial<Team> | null
@@ -130,22 +128,11 @@ const {
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return manyExpenseAccountDataAll //approvals
+    return manyExpenseAccountDataAll
   } else {
-    return /*approvals*/manyExpenseAccountDataAll.filter((approval) => approval.status === selectedRadio.value)
+    return manyExpenseAccountDataAll.filter((approval) => approval.status === selectedRadio.value)
   }
 })
-
-// const tokenSymbol = (tokenAddress: string) =>
-//   computed(() => {
-//     const symbols = {
-//       [USDC_ADDRESS]: 'USDC',
-//       [USDT_ADDRESS]: 'USDT',
-//       [zeroAddress]: NETWORK.currencySymbol
-//     }
-
-//     return symbols[tokenAddress] || ''
-//   })
 
 const columns = [
   {
