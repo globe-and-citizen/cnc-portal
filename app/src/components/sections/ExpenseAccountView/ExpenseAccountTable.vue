@@ -95,20 +95,35 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, ref, type Reactive } from 'vue'
-import type { ManyExpenseWithBalances } from '@/types'
+import type { ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import { tokenSymbol } from '@/utils'
+import { useCustomFetch } from '@/composables'
+import { useRoute } from 'vue-router'
+
 
 const { approvals, loading } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
   loading: boolean
   isContractOwner: boolean
 }>()
+const route = useRoute()
 const emits = defineEmits(['disableApproval', 'enableApproval'])
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
+
+
+const {
+  error: fetchManyExpenseAccountDataError,
+  execute: fetchManyExpenseAccountData,
+  data: manyExpenseAccountData
+} = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
+  immediate: false
+})
+  .get()
+  .json<ManyExpenseResponse[]>()
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
