@@ -98,6 +98,7 @@ import { computed, ref, type Reactive } from 'vue'
 import type { ManyExpenseWithBalances } from '@/types'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
+import { tokenSymbol } from '@/utils'
 
 const { approvals, loading } = defineProps<{
   approvals: Reactive<ManyExpenseWithBalances[]>
@@ -117,16 +118,16 @@ const filteredApprovals = computed(() => {
   }
 })
 
-const tokenSymbol = (tokenAddress: string) =>
-  computed(() => {
-    const symbols = {
-      [USDC_ADDRESS]: 'USDC',
-      [USDT_ADDRESS]: 'USDT',
-      [zeroAddress]: NETWORK.currencySymbol
-    }
+// const tokenSymbol = (tokenAddress: string) =>
+//   computed(() => {
+//     const symbols = {
+//       [USDC_ADDRESS]: 'USDC',
+//       [USDT_ADDRESS]: 'USDT',
+//       [zeroAddress]: NETWORK.currencySymbol
+//     }
 
-    return symbols[tokenAddress] || ''
-  })
+//     return symbols[tokenAddress] || ''
+//   })
 
 const columns = [
   {
