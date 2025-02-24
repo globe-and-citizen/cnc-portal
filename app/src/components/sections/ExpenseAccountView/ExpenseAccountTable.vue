@@ -241,8 +241,7 @@ const initializeBalances = async () => {
     }
 }
 
-const deactivateApproval = async (signature: `0x{string}`/*, index: number*/) => {
- // deactivateIndex.value = index
+const deactivateApproval = async (signature: `0x{string}`) => {
   const signatureHash = keccak256(signature)
 
   executeDeactivateApproval({
@@ -253,8 +252,7 @@ const deactivateApproval = async (signature: `0x{string}`/*, index: number*/) =>
   })
 }
 
-const activateApproval = async (signature: `0x{string}`/*, index: number*/) => {
-  //deactivateIndex.value = index
+const activateApproval = async (signature: `0x{string}`) => {
   const signatureHash = keccak256(signature)
 
   executeActivateApproval({
@@ -263,10 +261,6 @@ const activateApproval = async (signature: `0x{string}`/*, index: number*/) => {
     abi: expenseAccountABI,
     functionName: 'activateApproval'
   })
-
-  console.log(`team?.expenseAccountEiop712Address: `, team?.expenseAccountEip712Address)
-  console.log(`signatureToUpdate: `, signatureToUpdate.value)
-  console.log(`isLoadingActivateApproval: `, isLoadingActivateApproval.value)
 }
 
 //#endregion
