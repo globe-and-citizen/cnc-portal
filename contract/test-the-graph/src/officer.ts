@@ -1,18 +1,15 @@
 import {
   BeaconConfigured as BeaconConfiguredEvent,
   BeaconProxiesDeployed as BeaconProxiesDeployedEvent,
-  BeaconProxyDeployed as BeaconProxyDeployedEvent,
   ContractDeployed as ContractDeployedEvent,
   Initialized as InitializedEvent,
   OwnershipTransferred as OwnershipTransferredEvent,
   Paused as PausedEvent,
-  Unpaused as UnpausedEvent,
-  ExpenseAccountEIP712Deployed as ExpenseAccountEIP712DeployedEvent
+  Unpaused as UnpausedEvent
 } from "../generated/templates/Officer/Officer"
 import {
   BeaconConfigured,
   BeaconProxiesDeployed,
-  BeaconProxyDeployed,
   ContractDeployed,
   Initialized,
   OwnershipTransferred,
@@ -51,34 +48,6 @@ export function handleBeaconProxiesDeployed(
   entity.save()
 }
 
-// export function handleBeaconProxyDeployed(
-//   event: BeaconProxyDeployedEvent
-// ): void {
-//   let entity = new BeaconProxyDeployed(
-//     event.transaction.hash.concatI32(event.logIndex.toI32())
-//   )
-//   entity.proxyAddress = event.params.proxyAddress
-//   entity.contractType = event.params.contractType.toString()
-
-//   entity.blockNumber = event.block.number
-//   entity.blockTimestamp = event.block.timestamp
-//   entity.transactionHash = event.transaction.hash
-
-//   entity.save()
-// }
-
-// export function handleExpenseAccountEIP712Deployed(event: ExpenseAccountEIP712DeployedEvent): void {
-//   // Create Expense Account template dynamically when new contract is deployed
-
-//   log.info("ExpenseAccountEIP712 Deployed, Address: {}", [
-//     event.params.proxyAddress.toHexString()
-//   ])
-//   log.info("Creating ExpenseAccountEIP712 template for address: {}", [
-//     event.params.proxyAddress.toHexString()
-//   ])
-//   ExpenseAccountEIP712.create(event.params.proxyAddress)
-// }
-
 export function handleContractDeployed(event: ContractDeployedEvent): void {
   if (event.params.contractType == "ExpenseAccountEIP712") {
     log.info("Creating ExpenseAccountEIP712 template for address: {}", [
@@ -101,15 +70,6 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
-
-  // switch (contractType) {
-  //   case "ExpenseAccountEIP712":
-  //     ExpenseAccountEIP712.create(proxyAddress)
-  //     break;
-  
-  //   default:
-  //     break;
-  // }
 }
 
 export function handleInitialized(event: InitializedEvent): void {
