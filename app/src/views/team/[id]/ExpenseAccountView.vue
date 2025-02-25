@@ -114,8 +114,8 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit, ManyExpenseWithBalances } from '@/types'
+import { computed, onMounted, ref, watch } from 'vue'
+import type { Team, User, BudgetLimit } from '@/types'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
@@ -203,7 +203,7 @@ const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.
 
 //#region Composables
 const currentUserAddress = useUserDataStore().address
-const { addErrorToast, addSuccessToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 const { signTypedData, data: signature, error: signTypedDataError } = useSignTypedData()
 const chainId = useChainId()

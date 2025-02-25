@@ -100,23 +100,18 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, onMounted, reactive, ref, watch, type Ref } from 'vue'
-import type { ManyExpenseResponse, ManyExpenseWithBalances, Team } from '@/types'
+import { computed, onMounted, ref, watch } from 'vue'
+import type { Team } from '@/types'
 import { log, parseError, tokenSymbol } from '@/utils'
-import { useCustomFetch, useExpenseAccountDataCollection } from '@/composables'
+import { useExpenseAccountDataCollection } from '@/composables'
 import { useToastStore, useUserDataStore } from '@/stores'
-import { useRoute } from 'vue-router'
-import { formatEther, zeroAddress, type Address, keccak256 } from 'viem'
+import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
 const { team } = defineProps<{
   team: Partial<Team> | null
 }>()
-const emits = defineEmits(['disableApproval', 'enableApproval'])
-const route = useRoute()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']

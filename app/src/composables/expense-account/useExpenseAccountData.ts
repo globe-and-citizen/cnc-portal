@@ -1,7 +1,7 @@
 import type { ManyExpenseResponse, ManyExpenseWithBalances, Team } from '@/types'
 import { useCustomFetch } from '../useCustomFetch'
 import { useRoute } from 'vue-router'
-import { reactive, ref, type Ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { readContract } from '@wagmi/core'
 import { formatEther, keccak256, zeroAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
