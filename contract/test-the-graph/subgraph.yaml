@@ -23,7 +23,7 @@ dataSources:
       eventHandlers:
         - event: BeaconProxyCreated(indexed address,indexed address)
           handler: handleBeaconProxyCreated
-      file: ./src/OfficerFactoryBeacon.ts
+      file: ./src/officerFactoryBeacon.ts
 templates:
   - name: ExpenseAccountEIP712
     kind: ethereum/contract
