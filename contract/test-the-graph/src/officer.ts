@@ -51,39 +51,41 @@ export function handleBeaconProxiesDeployed(
   entity.save()
 }
 
-export function handleBeaconProxyDeployed(
-  event: BeaconProxyDeployedEvent
-): void {
-  let entity = new BeaconProxyDeployed(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.proxyAddress = event.params.proxyAddress
-  entity.contractType = event.params.contractType.toString()
+// export function handleBeaconProxyDeployed(
+//   event: BeaconProxyDeployedEvent
+// ): void {
+//   let entity = new BeaconProxyDeployed(
+//     event.transaction.hash.concatI32(event.logIndex.toI32())
+//   )
+//   entity.proxyAddress = event.params.proxyAddress
+//   entity.contractType = event.params.contractType.toString()
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+//   entity.blockNumber = event.block.number
+//   entity.blockTimestamp = event.block.timestamp
+//   entity.transactionHash = event.transaction.hash
 
-  entity.save()
-}
+//   entity.save()
+// }
 
-export function handleExpenseAccountEIP712Deployed(event: ExpenseAccountEIP712DeployedEvent): void {
-  // Create Expense Account template dynamically when new contract is deployed
+// export function handleExpenseAccountEIP712Deployed(event: ExpenseAccountEIP712DeployedEvent): void {
+//   // Create Expense Account template dynamically when new contract is deployed
 
-  log.info("ExpenseAccountEIP712 Deployed, Address: {}", [
-    event.params.proxyAddress.toHexString()
-  ])
-  log.info("Creating ExpenseAccountEIP712 template for address: {}", [
-    event.params.proxyAddress.toHexString()
-  ])
-  ExpenseAccountEIP712.create(event.params.proxyAddress)
-}
+//   log.info("ExpenseAccountEIP712 Deployed, Address: {}", [
+//     event.params.proxyAddress.toHexString()
+//   ])
+//   log.info("Creating ExpenseAccountEIP712 template for address: {}", [
+//     event.params.proxyAddress.toHexString()
+//   ])
+//   ExpenseAccountEIP712.create(event.params.proxyAddress)
+// }
 
 export function handleContractDeployed(event: ContractDeployedEvent): void {
-  if (event.params.contractType == "ExpenseAccountEIP712")
-    log.info("Contract deployed is '{}'", [event.params.contractType])
-  else
-    log.info("Contract deplod is not 'ExpenseAccountEIP712' but, '{}'", [event.params.contractType])
+  if (event.params.contractType == "ExpenseAccountEIP712") {
+    log.info("Creating ExpenseAccountEIP712 template for address: {}", [
+      event.params.deployedAddress.toHexString()
+    ])
+    ExpenseAccountEIP712.create(event.params.deployedAddress)
+  } else log.info("Contract deployed is not 'ExpenseAccountEIP712' but, '{}'", [event.params.contractType])
 
   let entity = new ContractDeployed(
     event.transaction.hash.concatI32(event.logIndex.toI32())

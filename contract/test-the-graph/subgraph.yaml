@@ -74,8 +74,6 @@ templates:
           handler: handleBeaconConfigured
         - event: BeaconProxiesDeployed(address[])
           handler: handleBeaconProxiesDeployed
-        - event: BeaconProxyDeployed(indexed address,indexed string)
-          handler: handleBeaconProxyDeployed
         - event: ContractDeployed(string,address)
           handler: handleContractDeployed
         - event: Initialized(uint64)
@@ -86,7 +84,5 @@ templates:
           handler: handlePaused
         - event: Unpaused(address)
           handler: handleUnpaused
-        - event: ExpenseAccountEIP712Deployed(indexed address)
-          handler: handleExpenseAccountEIP712Deployed
       file: ./src/officer.ts
 

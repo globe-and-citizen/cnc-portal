@@ -24,15 +24,6 @@ type BeaconProxiesDeployed @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type BeaconProxyDeployed @entity(immutable: true) {
-  id: Bytes!
-  proxyAddress: Bytes! # address
-  contractType: String! # string
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
 type ContractDeployed @entity(immutable: true) {
   id: Bytes!
   contractType: String! # string
