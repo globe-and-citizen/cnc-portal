@@ -36,8 +36,6 @@ export const useExpenseAccountDataCollection = () => {
     await executeFetchTeam()
     await fetchManyExpenseAccountData()
     data.length = 0
-    console.log(`manyExpenseAccountData: `, manyExpenseAccountData.value)
-    console.log(`team: `, team)
     if (Array.isArray(manyExpenseAccountData.value) && team.value) {
       console.log(`Updating data...`)
       for (const expenseAccountData of manyExpenseAccountData.value) {
