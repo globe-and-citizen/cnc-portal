@@ -3,7 +3,7 @@ const bankBeaconModule = buildModule('BankBeaconModule', (m) => {
   const beaconAdmin = m.getAccount(0)
   const bankImplementation = m.contract('Bank')
 
-  const beacon = m.contract('Beacon', [bankImplementation], {
+  const beacon = m.contract('FactoryBeacon', [bankImplementation], {
     from: beaconAdmin
   })
 

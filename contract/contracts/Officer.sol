@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IFactoryBeacon} from "./interfaces/IFactoryBeacon.sol";
 
 interface IBodContract {    
     function initialize(address[] memory votingAddress) external;
@@ -122,19 +122,15 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
         require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");
 
-        BeaconProxy proxy = new BeaconProxy(
-            contractBeacons[contractType],
-            initializerData
-        );
-        
-        address proxyAddress = address(proxy);
+        address proxyAddress = IFactoryBeacon(contractBeacons[contractType]).createBeaconProxy(initializerData);
+
         deployedContracts.push(DeployedContract(contractType, proxyAddress));
         emit ContractDeployed(contractType, proxyAddress);
         if(keccak256(bytes(contractType)) == keccak256(bytes("Voting"))){
             address bodContractBeacon = contractBeacons["BoardOfDirectors"];
             address[] memory args = new address[](1);
             args[0] = proxyAddress;
-            address bodContract = address(new BeaconProxy(bodContractBeacon, abi.encodeWithSelector(IBodContract.initialize.selector, args)));
+            address bodContract = IFactoryBeacon(bodContractBeacon).createBeaconProxy(abi.encodeWithSelector(IBodContract.initialize.selector, args));
             deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
             IVoting(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
             emit ContractDeployed("BoardOfDirectors", bodContract);

@@ -3,7 +3,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "implementation",
+        "name": "implementationAddress",
         "type": "address"
       }
     ],
@@ -103,7 +103,13 @@
       }
     ],
     "name": "createBeaconProxy",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

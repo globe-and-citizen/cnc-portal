@@ -16,11 +16,11 @@ type ChainTokenAddresses = {
 
 interface AddressMapping {
   'TipsModule#Tips': string
-  'BankBeaconModule#Beacon': string
+  'BankBeaconModule#FactoryBeacon': string
   'BankBeaconModule#Bank': string
-  'VotingBeaconModule#Beacon': string
+  'VotingBeaconModule#FactoryBeacon': string
   'VotingBeaconModule#Voting': string
-  'BoardOfDirectorsModule#Beacon': string
+  'BoardOfDirectorsModule#FactoryBeacon': string
   'BoardOfDirectorsModule#BoardOfDirectors': string
   'ExpenseAccountModule#ExpenseAccount'?: string
   'ExpenseAccountModule#FactoryBeacon'?: string
@@ -30,7 +30,7 @@ interface AddressMapping {
   'ExpenseAccountEIP712Module#FactoryBeacon'?: string
   'CashRemunerationEIP712Module#FactoryBeacon': string
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
-  'InvestorsV1BeaconModule#Beacon'?: string
+  'InvestorsV1BeaconModule#FactoryBeacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
@@ -87,11 +87,11 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
     'TipsModule#Tips',
-    'BankBeaconModule#Beacon',
+    'BankBeaconModule#FactoryBeacon',
     'BankBeaconModule#Bank',
-    'VotingBeaconModule#Beacon',
+    'VotingBeaconModule#FactoryBeacon',
     'VotingBeaconModule#Voting',
-    'BoardOfDirectorsModule#Beacon',
+    'BoardOfDirectorsModule#FactoryBeacon',
     'BoardOfDirectorsModule#BoardOfDirectors',
     'Officer#Officer',
     'Officer#FactoryBeacon',
@@ -99,7 +99,7 @@ export function validateAddresses() {
     'ExpenseAccountModule#ExpenseAccount',
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
     'ExpenseAccountEIP712Module#FactoryBeacon',
-    'InvestorsV1BeaconModule#Beacon',
+    'InvestorsV1BeaconModule#FactoryBeacon',
     'InvestorsV1BeaconModule#InvestorV1',
     'CashRemunerationEIP712Module#FactoryBeacon',
     'CashRemunerationEIP712Module#CashRemunerationEIP712'
@@ -122,11 +122,11 @@ try {
   console.error(error)
 }
 export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
-export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
+export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#FactoryBeacon')
 export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
-export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
+export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#FactoryBeacon')
 export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
-export const BOD_BEACON_ADDRESS = resolveAddress('BoardOfDirectorsModule#Beacon')
+export const BOD_BEACON_ADDRESS = resolveAddress('BoardOfDirectorsModule#FactoryBeacon')
 export const BOD_IMPL_ADDRESS = resolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
 export const EXPENSE_ACCOUNT_BEACON_ADDRESS = resolveAddress('ExpenseAccountModule#FactoryBeacon')
 export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = resolveAddress('ExpenseAccountModule#ExpenseAccount')
@@ -144,7 +144,7 @@ export const CASH_REMUNERATION_EIP712_BEACON_ADDRESS = resolveAddress(
 )
 export const OFFICER_ADDRESS = resolveAddress('Officer#Officer')
 export const OFFICER_BEACON = resolveAddress('Officer#FactoryBeacon')
-export const INVESTOR_V1_BEACON_ADDRESS = resolveAddress('InvestorsV1BeaconModule#Beacon')
+export const INVESTOR_V1_BEACON_ADDRESS = resolveAddress('InvestorsV1BeaconModule#FactoryBeacon')
 export const INVESTOR_V1_IMPL_ADDRESS = resolveAddress('InvestorsV1BeaconModule#InvestorV1')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
