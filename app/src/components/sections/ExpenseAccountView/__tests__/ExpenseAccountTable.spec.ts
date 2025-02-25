@@ -298,6 +298,8 @@ describe('ExpenseAccountTable', () => {
 
     it('should show loading button if enabling approval', async () => {
       const wrapper = createComponent()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.contractOwnerAddress = '0xInitialUser'
       const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
       expect(statusDisabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
@@ -313,7 +315,10 @@ describe('ExpenseAccountTable', () => {
       expect(firstRow.html()).toContain(mockApprovals[1].name)
       const disableButton = firstRow.findComponent(ButtonUI)
       expect(disableButton.exists()).toBeTruthy()
+      expect(disableButton.props('disabled')).toBe(false)
       disableButton.trigger('click')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isLoadingDeactivateApproval = true
       await flushPromises()
       expect(disableButton.props('loading')).toBe(true)
     })
