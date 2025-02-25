@@ -44,6 +44,24 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     /// @notice Emitted when a beacon proxy is deployed
     event BeaconProxyDeployed(address indexed proxyAddress, string indexed contractType);
 
+    /// @notice Emitted when expense account is deployed
+    event ExpenseAccountEIP712Deployed(address indexed proxyAddress);
+
+    /// @notice Emitted when cash remuneration is deployed
+    event CashRemunerationEIP712Deployed(address indexed proxyAddress);
+
+    /// @notice Emitted when bank is deployed
+    event BankDeployed(address indexed proxyAddress);
+
+    /// @notice Emitted when voting is deployed
+    event VotingDeployed(address indexed proxyAddress);
+
+    /// @notice Emitted when investors is deployed
+    event InvestorsDeployed(address indexed proxyAddress);
+
+    /// @notice Emitted when a board of directors is deployed
+    event BoardOfDirectorsDeployed(address indexed proxyAddress);
+
     /// @notice Configuration struct for beacon initialization
     struct BeaconConfig {
         string beaconType;
@@ -113,6 +131,27 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
 
     /**
+     * @notice Emits the relevant event for the deployed contract
+     * @param contractType Type identifier for the contract
+     * @param proxyAddress The address of the deployed contract
+     */
+    function emitContractDeployedEvent(string calldata contractType, address proxyAddress) private {
+        if (keccak256(bytes(contractType)) == keccak256(bytes("Bank")))
+            emit BankDeployed(proxyAddress);
+        else if (keccak256(bytes(contractType)) == keccak256(bytes("Voting"))) 
+             emit VotingDeployed(proxyAddress);
+        else if (keccak256(bytes(contractType)) == keccak256(bytes("BoardOfDirectors")))
+            emit BoardOfDirectorsDeployed(proxyAddress);
+        else if (keccak256(bytes(contractType)) == keccak256(bytes("ExpenseAccountEIP712")))
+            emit ExpenseAccountEIP712Deployed(proxyAddress);
+        else if (keccak256(bytes(contractType)) == keccak256(bytes("InvestorsV1")))
+            emit InvestorsDeployed(proxyAddress);
+        else if (keccak256(bytes(contractType)) == keccak256(bytes("CashRemunerationEIP712")))
+            emit CashRemunerationEIP712Deployed(proxyAddress);
+    }
+
+
+    /**
      * @notice Deploys a new beacon proxy for a contract type
      * @param contractType Type identifier for the contract
      * @param initializerData Initialization data for the proxy
@@ -133,6 +172,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         address proxyAddress = address(proxy);
         deployedContracts.push(DeployedContract(contractType, proxyAddress));
         emit ContractDeployed(contractType, proxyAddress);
+        emitContractDeployedEvent(contractType, proxyAddress);
         if(keccak256(bytes(contractType)) == keccak256(bytes("Voting"))){
             address bodContractBeacon = contractBeacons["BoardOfDirectors"];
             address[] memory args = new address[](1);
@@ -141,6 +181,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
             IVoting(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
             emit ContractDeployed("BoardOfDirectors", bodContract);
+            emit BoardOfDirectorsDeployed(bodContract);
         }
         
         return proxyAddress;
