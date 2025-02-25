@@ -7,7 +7,7 @@ import {
     Transfer,
     Deposited
   } from "../generated/schema"
-  import { Bytes, Address } from "@graphprotocol/graph-ts"
+  import { Address } from "@graphprotocol/graph-ts"
   
   export function handleTransfer(event: TransferEvent): void {
     let entity = new Transfer(
