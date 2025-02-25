@@ -15,10 +15,9 @@ export const useExpenseAccountDataCollection = () => {
   const data = reactive<ManyExpenseWithBalances[]>([])
   const isLoading = ref<boolean>(false)
 
-  const {
-    data: team,
-    execute: executeFetchTeam
-  } = useCustomFetch(`teams/${String(route.params.id)}`)
+  const { data: team, execute: executeFetchTeam } = useCustomFetch(
+    `teams/${String(route.params.id)}`
+  )
     .get()
     .json<Team>()
 
@@ -48,9 +47,9 @@ export const useExpenseAccountDataCollection = () => {
           abi: expenseAccountABI,
           args: [keccak256(expenseAccountData.signature)]
         })
-  
+
         const isExpired = expenseAccountData.expiry <= Math.floor(new Date().getTime() / 1000)
-  
+
         // Populate the reactive balances object
         if (
           Array.isArray(amountWithdrawn) &&
@@ -74,7 +73,7 @@ export const useExpenseAccountDataCollection = () => {
     }
     isLoading.value = false
   }
-    
+
   watch(fetchManyExpenseAccountDataError, (newVal) => {
     if (newVal) {
       addErrorToast('Error fetching many expense account data')

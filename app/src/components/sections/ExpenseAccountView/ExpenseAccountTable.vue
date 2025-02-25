@@ -14,7 +14,11 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent :rows="filteredApprovals" :columns="columns" :loading="isLoadingExpensewAccountData">
+    <TableComponent
+      :rows="filteredApprovals"
+      :columns="columns"
+      :loading="isLoadingExpensewAccountData"
+    >
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
@@ -119,20 +123,6 @@ const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const expenseAccountEip712Address = ref('')
-const _team = ref<Partial<Team> | null>(null)
-// const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
-
-// const {
-//   error: fetchManyExpenseAccountDataError,
-//   execute: fetchManyExpenseAccountData,
-//   data: manyExpenseAccountData
-// } = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
-//   immediate: false
-// })
-//   .get()
-//   .json<ManyExpenseResponse[]>()
-
-
 
 const columns = [
   {
@@ -172,11 +162,11 @@ const columns = [
 ] as TableColumn[]
 
 //#endregion Composables
-const { 
+const {
   data: manyExpenseAccountDataAll,
   isLoading: isLoadingExpensewAccountData,
   initializeBalances
- } = useExpenseAccountDataCollection()
+} = useExpenseAccountDataCollection()
 const {
   data: contractOwnerAddress,
   refetch: fetchExpenseAccountOwner,
@@ -211,7 +201,7 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
   useWaitForTransactionReceipt({
     hash: activateHash
   })
-//#region 
+//#region
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
@@ -222,41 +212,6 @@ const filteredApprovals = computed(() => {
 })
 
 //#region Functions
-// const initializeBalances = async () => {
-//   manyExpenseAccountDataAll.length = 0
-//   if (Array.isArray(manyExpenseAccountData.value) && team)
-//     for (const data of manyExpenseAccountData.value) {
-//       const amountWithdrawn = await readContract(config, {
-//         functionName: 'balances',
-//         address: team.expenseAccountEip712Address as Address,
-//         abi: expenseAccountABI,
-//         args: [keccak256(data.signature)]
-//       })
-
-//       const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
-
-//       // Populate the reactive balances object
-//       if (
-//         Array.isArray(amountWithdrawn) &&
-//         manyExpenseAccountDataAll.findIndex((item) => item.signature === data.signature) === -1
-//       ) {
-//         // New algo
-//         manyExpenseAccountDataAll.push({
-//           ...data,
-//           balances: {
-//             0: `${amountWithdrawn[0]}`,
-//             1:
-//               data.tokenAddress === zeroAddress
-//                 ? formatEther(amountWithdrawn[1])
-//                 : `${Number(amountWithdrawn[1]) / 1e6}`,
-//             2: amountWithdrawn[2] === true
-//           },
-//           status: isExpired ? 'expired' : amountWithdrawn[2] === 2 ? 'disabled' : 'enabled'
-//         })
-//       }
-//     }
-// }
-
 const deactivateApproval = async (signature: `0x{string}`) => {
   const signatureHash = keccak256(signature)
 
@@ -282,12 +237,15 @@ const activateApproval = async (signature: `0x{string}`) => {
 //#endregion
 
 //#region Watch
-watch(() => team, async (newTeam) => {
-  if (newTeam) {
-    expenseAccountEip712Address.value = newTeam.expenseAccountEip712Address as string
-    await fetchExpenseAccountOwner()
+watch(
+  () => team,
+  async (newTeam) => {
+    if (newTeam) {
+      expenseAccountEip712Address.value = newTeam.expenseAccountEip712Address as string
+      await fetchExpenseAccountOwner()
+    }
   }
-})
+)
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
     addSuccessToast('Activate Successful')

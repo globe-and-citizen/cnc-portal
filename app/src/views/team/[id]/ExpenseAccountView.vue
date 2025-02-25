@@ -125,12 +125,7 @@ import ExpenseAccountTransferHistoryTable from '@/components/sections/ExpenseAcc
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
-import {
-  useReadContract,
-  useBalance,
-  useChainId,
-  useSignTypedData
-} from '@wagmi/vue'
+import { useReadContract, useBalance, useChainId, useSignTypedData } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -160,7 +155,6 @@ const expenseBalanceFormatted = computed(() => {
     return formatEther(expenseAccountBalance.value.value)
   else return '--'
 })
-// const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 // Check if the current user is disapproved
 const isDisapprovedAddress = computed(
