@@ -87,13 +87,7 @@
           Approve User Expense
         </ButtonUI>
       </div>
-      <ExpenseAccountTable
-        :team="team"
-        :loading="isLoadingActivateApproval || isLoadingDeactivateApproval"
-        :is-contract-owner="currentUserAddress === contractOwnerAddress"
-        @disable-approval="(signature) => deactivateApproval(signature, 1)"
-        @enable-approval="(signature) => activateApproval(signature, 1)"
-      />
+      <ExpenseAccountTable :team="team" />
       <ModalComponent v-model="approveUsersModal">
         <ApproveUsersForm
           v-if="approveUsersModal"
@@ -121,7 +115,7 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import type { Team, User, BudgetLimit, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
+import type { Team, User, BudgetLimit, ManyExpenseWithBalances } from '@/types'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
@@ -133,18 +127,14 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import {
   useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
   useBalance,
   useChainId,
   useSignTypedData
 } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
+import { type Address, formatEther, parseEther, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
 import { useRoute } from 'vue-router'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 //#endregion
@@ -160,7 +150,6 @@ const loadingApprove = ref(false)
 // Token related refs
 const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 const expenseAccountData = ref<{}>()
-const deactivateIndex = ref<number | null>(null)
 const expenseAccountEip712Address = computed(
   () => team.value?.expenseAccountEip712Address as Address
 )
@@ -191,16 +180,6 @@ const {
 } = useCustomFetch(`teams/${String(route.params.id)}`)
   .get()
   .json<Team>()
-
-const {
-  error: fetchManyExpenseAccountDataError,
-  execute: fetchManyExpenseAccountData,
-  data: manyExpenseAccountData
-} = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
-  immediate: false
-})
-  .get()
-  .json<ManyExpenseResponse[]>()
 
 const {
   execute: executeSearchUser,
@@ -264,102 +243,14 @@ const {
   functionName: 'balanceOf',
   args: [expenseAccountEip712Address as unknown as Address]
 })
-
-//deactivate approval
-const {
-  writeContract: executeDeactivateApproval,
-  isPending: isLoadingDeactivateApproval,
-  error: errorDeactivateApproval,
-  data: deactivateHash
-} = useWriteContract()
-
-const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
-  useWaitForTransactionReceipt({
-    hash: deactivateHash
-  })
-
-//activate approval
-const {
-  writeContract: executeActivateApproval,
-  isPending: isLoadingActivateApproval,
-  error: errorActivateApproval,
-  data: activateHash
-} = useWriteContract()
-
-const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
-  useWaitForTransactionReceipt({
-    hash: activateHash
-  })
 //#endregion
 
 //#region Functions
-// Async initialization function
-const initializeBalances = async () => {
-  manyExpenseAccountDataAll.length = 0
-  if (Array.isArray(manyExpenseAccountData.value))
-    for (const data of manyExpenseAccountData.value) {
-      const amountWithdrawn = await readContract(config, {
-        functionName: 'balances',
-        address: expenseAccountEip712Address.value as unknown as Address,
-        abi: expenseAccountABI,
-        args: [keccak256(data.signature)]
-      })
-
-      const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
-
-      // Populate the reactive balances object
-      if (
-        Array.isArray(amountWithdrawn) &&
-        manyExpenseAccountDataAll.findIndex((item) => item.signature === data.signature) === -1
-      ) {
-        // New algo
-        manyExpenseAccountDataAll.push({
-          ...data,
-          balances: {
-            0: `${amountWithdrawn[0]}`,
-            1:
-              data.tokenAddress === zeroAddress
-                ? formatEther(amountWithdrawn[1])
-                : `${Number(amountWithdrawn[1]) / 1e6}`,
-            2: amountWithdrawn[2] === true
-          },
-          status: isExpired ? 'expired' : amountWithdrawn[2] === 2 ? 'disabled' : 'enabled'
-        })
-      }
-    }
-}
-
 const init = async () => {
   await getExpenseAccountOwner()
-  await fetchManyExpenseAccountData()
   await executeFetchTeam()
   await executeGetExpenseAccountBalance()
   await fetchUsdcBalance()
-  await initializeBalances()
-}
-
-const deactivateApproval = async (signature: `0x{string}`, index: number) => {
-  deactivateIndex.value = index
-  const signatureHash = keccak256(signature)
-
-  executeDeactivateApproval({
-    address: team.value?.expenseAccountEip712Address as Address,
-    args: [signatureHash],
-    abi: expenseAccountABI,
-    functionName: 'deactivateApproval'
-  })
-}
-
-const activateApproval = async (signature: `0x{string}`, index: number) => {
-  deactivateIndex.value = index
-  const signatureHash = keccak256(signature)
-
-  executeActivateApproval({
-    address: team.value?.expenseAccountEip712Address as Address,
-    args: [signatureHash],
-    abi: expenseAccountABI,
-    functionName: 'activateApproval'
-  })
 }
 
 const getExpenseAccountOwner = async () => {
@@ -438,18 +329,6 @@ watch(
     if (newVal) await init()
   }
 )
-watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
-    addSuccessToast('Activate Successful')
-    await initializeBalances()
-  }
-})
-watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
-    addSuccessToast('Deactivate Successful')
-    await initializeBalances()
-  }
-})
 watch(signature, async (newVal) => {
   if (newVal && expenseAccountData.value) {
     expenseAccountData.value = {
@@ -470,29 +349,11 @@ watch(searchUserResponse, () => {
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })
-watch(errorDeactivateApproval, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to deactivate approval')
-  }
-})
-watch(errorActivateApproval, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to activate approval')
-  }
-})
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {
     addErrorToast('Error signing expense data')
     log.error('signTypedDataError.value', parseError(newVal))
     loadingApprove.value = false
-  }
-})
-watch(fetchManyExpenseAccountDataError, (newVal) => {
-  if (newVal) {
-    addErrorToast('Error fetching many expense account data')
-    log.error(parseError(newVal))
   }
 })
 watch(isErrorExpenseAccountBalance, (newVal) => {
