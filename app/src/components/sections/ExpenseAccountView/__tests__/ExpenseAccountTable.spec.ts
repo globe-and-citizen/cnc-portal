@@ -5,10 +5,92 @@ import TableComponent from '@/components/TableComponent.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import type { ManyExpenseWithBalances } from '@/types'
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+
+const mocks = vi.hoisted(() => ({
+  mockUseToastStore: {
+    addErrorToast: vi.fn()
+  },
+  mockReadContract: vi.fn()
+}))
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRoute: vi.fn(() => ({ params: { id: 1 } }))
+  }
+})
+
+const mockUseReadContractRefetch = vi.fn()
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: mockUseReadContractRefetch //vi.fn()
+}
+
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseBalance = {
+  data: ref(null),
+  refetch: vi.fn(),
+  error: ref(null),
+  isLoading: ref(false)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+
+const mockUseSignTypedData = {
+  error: ref<Error | null>(null),
+  data: ref<string | undefined>('0xExpenseDataSignature'),
+  signTypedData: vi.fn()
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => {
+      return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
+    }),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useBalance: vi.fn(() => mockUseBalance),
+    useChainId: vi.fn(() => ref('0xChainId')),
+    useSignTypedData: vi.fn(() => mockUseSignTypedData)
+  }
+})
+
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    readContract: mocks.mockReadContract
+  }
+})
+
+vi.mock('viem', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    parseSignature: vi.fn(),
+    hashTypedData: vi.fn(),
+    keccak256: vi.fn()
+  }
+})
 
 const validExpiry = new Date().getTime() / 1000 + 60 * 60
 const invalidExpiry = new Date().getTime() / 1000 - 60 * 60
@@ -70,6 +152,22 @@ const mockApprovals = reactive<ManyExpenseWithBalances[]>([
   }
 ])
 
+const mockUseExpenseAccountData = {
+  data: reactive<ManyExpenseWithBalances[]>([]),
+  isLoading: false,
+  initializeBalances: vi.fn(() => (mockUseExpenseAccountData.data = mockApprovals))
+}
+
+vi.mock('@/composables', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useExpenseAccountDataCollection: vi.fn(() => ({
+      ...mockUseExpenseAccountData
+    }))
+  }
+})
+
 describe('ExpenseAccountTable', () => {
   setActivePinia(createPinia())
 
@@ -117,6 +215,7 @@ describe('ExpenseAccountTable', () => {
 
     it('should filter all approvals', async () => {
       const wrapper = createComponent()
+      // wrapper.vm.manyExpenseAccountDataAll = mockApprovals
       await flushPromises()
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -198,7 +297,7 @@ describe('ExpenseAccountTable', () => {
     })
 
     it('should show loading button if enabling approval', async () => {
-      const wrapper = createComponent({ props: { loading: true } })
+      const wrapper = createComponent()
       const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
       expect(statusDisabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
@@ -220,7 +319,7 @@ describe('ExpenseAccountTable', () => {
     })
 
     it('should show loading button if disabling approvals', async () => {
-      const wrapper = createComponent({ props: { loading: true } })
+      const wrapper = createComponent()
       const statusEnabledInput = wrapper.find('[data-test="status-input-enabled"]')
       expect(statusEnabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
@@ -241,7 +340,7 @@ describe('ExpenseAccountTable', () => {
       expect(enableButton.props('loading')).toBe(true)
     })
     it('should disable action buttons if not contract owner', async () => {
-      const wrapper = createComponent({ props: { isContractOwner: false } })
+      const wrapper = createComponent()
       await flushPromises()
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
