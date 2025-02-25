@@ -86,9 +86,9 @@ describe('ExpenseAccountTable', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountTable, {
       props: {
-        loading: false,
-        approvals: mockApprovals,
-        isContractOwner: true,
+        team: {
+          expenseAccountEip712Address: '0xExpenseAccount'
+        },
         ...props
       },
       data,
