@@ -9,13 +9,26 @@ import { reactive, ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+import * as utils from '@/utils'
 
 const mocks = vi.hoisted(() => ({
   mockUseToastStore: {
-    addErrorToast: vi.fn()
+    addErrorToast: vi.fn(),
+    addSuccessToast: vi.fn()
   },
   mockReadContract: vi.fn()
 }))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => ({
+      addErrorToast: mocks.mockUseToastStore.addErrorToast,
+      addSuccessToast: mocks.mockUseToastStore.addSuccessToast
+    }))
+  }
+})
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -358,6 +371,60 @@ describe('ExpenseAccountTable', () => {
       expect(secondRow.exists()).toBeTruthy()
       const disableButton = secondRow.findComponent(ButtonUI)
       expect(disableButton.props('disabled')).toBe(true)
+    })
+
+    it('should notify success if activate successful', async () => {
+      const wrapper = createComponent()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingActivate = true
+      await flushPromises()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingActivate = false
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmedActivate = { value: true }
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
+      expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+    })
+    it('should notify success if activate successful', async () => {
+      const wrapper = createComponent()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingDeativate = true
+      await flushPromises()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingDeactivate = false
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmedDeactivate = { value: true }
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
+      expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+    })
+    it('should notify error if error deactivate approval', async () => {
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
+      expect(logErrorSpy).toBeCalledWith('Error deactivating approval')
+    })
+    it('should notify error if error activate approval', async () => {
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
+      expect(logErrorSpy).toBeCalledWith('Error activating approval')
+    })
+    it('should notify error if error getting owner', async () => {
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')
+      expect(logErrorSpy).toBeCalledWith('Error getting owner')
     })
   })
 })
