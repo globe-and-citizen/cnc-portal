@@ -73,6 +73,7 @@ type Transfer @entity(immutable: true) {
   contractType: String! # string
   tokenAddress: Bytes! # address
   amount: BigInt!
+  contractAddress: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -84,6 +85,7 @@ type Deposited @entity(immutable: true) {
   to: Bytes! # address
   contractType: String! # string
   amount: BigInt!
+  contractAddress: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

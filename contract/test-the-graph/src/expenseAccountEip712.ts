@@ -17,7 +17,9 @@ import {
     entity.to = event.params.to
     entity.tokenAddress = Address.zero()
     entity.amount = event.params.amount
+
     entity.contractType = "ExpenseAccountEIP712"
+    entity.contractAddress = event.address
   
     entity.blockNumber = event.block.number
     entity.blockTimestamp = event.block.timestamp
@@ -34,7 +36,9 @@ import {
     entity.to = event.params.to
     entity.tokenAddress = event.params.token
     entity.amount = event.params.amount
+
     entity.contractType = "ExpenseAccountEIP712"
+    entity.contractAddress = event.address
   
     entity.blockNumber = event.block.number
     entity.blockTimestamp = event.block.timestamp
@@ -50,7 +54,9 @@ import {
     entity.from = event.params.depositor
     entity.to = event.address
     entity.amount = event.params.amount
+
     entity.contractType = "ExpenseAccountEIP712"
+    entity.contractAddress = event.address
   
     entity.blockNumber = event.block.number
     entity.blockTimestamp = event.block.timestamp
