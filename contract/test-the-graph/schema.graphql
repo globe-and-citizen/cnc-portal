@@ -1,3 +1,12 @@
+type BeaconProxyCreated @entity(immutable: true) {
+  id: Bytes!
+  officerAddress: Bytes! # address
+  deployer: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type BeaconConfigured @entity(immutable: true) {
   id: Bytes!
   contractType: String! # string
