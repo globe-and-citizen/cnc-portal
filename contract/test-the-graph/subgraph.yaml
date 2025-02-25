@@ -5,12 +5,54 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: Officer
+    name: OfficerFactoryBeacon
     network: sepolia
     source:
-      address: "0x850D9800196d0C71963814Dce2B96E85379A35DD"
+      address: "0x153bD539fA2e55894ED5A48Fd07787Ed80864519"
+      abi: OfficerFactoryBeacon
+      startBlock: 7781315
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - BeaconProxyCreated
+      abis:
+        - name: OfficerFactoryBeacon
+          file: ./abis/OfficerFactoryBeacon.json
+      eventHandlers:
+        - event: BeaconProxyCreated(indexed address,indexed address)
+          handler: handleBeaconProxyCreated
+      file: ./src/OfficerFactoryBeacon.ts
+templates:
+  - name: ExpenseAccountEIP712
+    kind: ethereum/contract
+    network: sepolia
+    source:
+      abi: ExpenseAccountEIP712
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/expenseAccountEip712.ts
+      entities:
+        - Transfer
+        - Deposited
+      abis:
+        - name: ExpenseAccountEIP712
+          file: ./abis/ExpenseAccountEIP712.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Deposited(indexed address,uint256)
+          handler: handleDeposited
+        - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
+          handler: handleTransfer
+  - name: Officer 
+    kind: ethereum    
+    network: sepolia
+    source:
       abi: Officer
-      startBlock: 7762576
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -44,29 +86,7 @@ dataSources:
           handler: handlePaused
         - event: Unpaused(address)
           handler: handleUnpaused
+        - event: ExpenseAccountEIP712Deployed(indexed address)
+          handler: handleExpenseAccountEIP712Deployed
       file: ./src/officer.ts
-templates:
-  - name: ExpenseAccountEIP712
-    kind: ethereum/contract
-    network: sepolia
-    source:
-      abi: ExpenseAccountEIP712
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.9
-      language: wasm/assemblyscript
-      file: ./src/expenseAccountEip712.ts
-      entities:
-        - Transfer
-        - Deposited
-      abis:
-        - name: ExpenseAccountEIP712
-          file: ./abis/ExpenseAccountEIP712.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-        - event: Deposited(indexed address,uint256)
-          handler: handleDeposited
-        - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
-          handler: handleTransfer
 
