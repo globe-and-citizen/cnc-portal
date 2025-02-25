@@ -137,6 +137,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useRoute } from 'vue-router'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
+import { useExpenseAccountDataCollection } from '@/composables'
 //#endregion
 
 //#region Refs
@@ -159,7 +160,7 @@ const expenseBalanceFormatted = computed(() => {
     return formatEther(expenseAccountBalance.value.value)
   else return '--'
 })
-const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
+// const manyExpenseAccountDataAll = reactive<ManyExpenseWithBalances[]>([])
 
 // Check if the current user is disapproved
 const isDisapprovedAddress = computed(
@@ -209,6 +210,7 @@ const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.
 //#region Composables
 const currentUserAddress = useUserDataStore().address
 const { addErrorToast, addSuccessToast } = useToastStore()
+const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 const { signTypedData, data: signature, error: signTypedDataError } = useSignTypedData()
 const chainId = useChainId()
 const {
@@ -251,6 +253,7 @@ const init = async () => {
   await executeFetchTeam()
   await executeGetExpenseAccountBalance()
   await fetchUsdcBalance()
+  await initializeBalances()
 }
 
 const getExpenseAccountOwner = async () => {
