@@ -6,7 +6,7 @@ import {
   OwnershipTransferred as OwnershipTransferredEvent,
   Paused as PausedEvent,
   Unpaused as UnpausedEvent
-} from "../generated/templates/Officer/Officer"
+} from '../generated/templates/Officer/Officer'
 import {
   BeaconConfigured,
   BeaconProxiesDeployed,
@@ -15,14 +15,12 @@ import {
   OwnershipTransferred,
   Paused,
   Unpaused
-} from "../generated/schema"
-import { ExpenseAccountEIP712 } from "../generated/templates"
-import { Bytes, log } from "@graphprotocol/graph-ts"
+} from '../generated/schema'
+import { ExpenseAccountEIP712 } from '../generated/templates'
+import { Bytes, log } from '@graphprotocol/graph-ts'
 
 export function handleBeaconConfigured(event: BeaconConfiguredEvent): void {
-  let entity = new BeaconConfigured(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+  let entity = new BeaconConfigured(event.transaction.hash.concatI32(event.logIndex.toI32()))
   entity.contractType = event.params.contractType
   entity.beaconAddress = event.params.beaconAddress
 
@@ -33,12 +31,8 @@ export function handleBeaconConfigured(event: BeaconConfiguredEvent): void {
   entity.save()
 }
 
-export function handleBeaconProxiesDeployed(
-  event: BeaconProxiesDeployedEvent
-): void {
-  let entity = new BeaconProxiesDeployed(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+export function handleBeaconProxiesDeployed(event: BeaconProxiesDeployedEvent): void {
+  let entity = new BeaconProxiesDeployed(event.transaction.hash.concatI32(event.logIndex.toI32()))
   entity.beaconProxies = changetype<Bytes[]>(event.params.beaconProxies)
 
   entity.blockNumber = event.block.number
@@ -49,16 +43,17 @@ export function handleBeaconProxiesDeployed(
 }
 
 export function handleContractDeployed(event: ContractDeployedEvent): void {
-  if (event.params.contractType == "ExpenseAccountEIP712") {
-    log.info("Creating ExpenseAccountEIP712 template for address: {}", [
+  if (event.params.contractType == 'ExpenseAccountEIP712') {
+    log.info('Creating ExpenseAccountEIP712 template for address: {}', [
       event.params.deployedAddress.toHexString()
     ])
     ExpenseAccountEIP712.create(event.params.deployedAddress)
-  } else log.info("Contract deployed is not 'ExpenseAccountEIP712' but, '{}'", [event.params.contractType])
+  } else
+    log.info("Contract deployed is not 'ExpenseAccountEIP712' but, '{}'", [
+      event.params.contractType
+    ])
 
-  let entity = new ContractDeployed(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+  let entity = new ContractDeployed(event.transaction.hash.concatI32(event.logIndex.toI32()))
   const deployedAddress = event.params.deployedAddress
   const contractType = event.params.contractType
 
@@ -73,9 +68,7 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
 }
 
 export function handleInitialized(event: InitializedEvent): void {
-  let entity = new Initialized(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+  let entity = new Initialized(event.transaction.hash.concatI32(event.logIndex.toI32()))
   entity.version = event.params.version
 
   entity.blockNumber = event.block.number
@@ -85,12 +78,8 @@ export function handleInitialized(event: InitializedEvent): void {
   entity.save()
 }
 
-export function handleOwnershipTransferred(
-  event: OwnershipTransferredEvent
-): void {
-  let entity = new OwnershipTransferred(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+export function handleOwnershipTransferred(event: OwnershipTransferredEvent): void {
+  let entity = new OwnershipTransferred(event.transaction.hash.concatI32(event.logIndex.toI32()))
   entity.previousOwner = event.params.previousOwner
   entity.newOwner = event.params.newOwner
 
@@ -102,9 +91,7 @@ export function handleOwnershipTransferred(
 }
 
 export function handlePaused(event: PausedEvent): void {
-  let entity = new Paused(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+  let entity = new Paused(event.transaction.hash.concatI32(event.logIndex.toI32()))
   entity.account = event.params.account
 
   entity.blockNumber = event.block.number
@@ -115,9 +102,7 @@ export function handlePaused(event: PausedEvent): void {
 }
 
 export function handleUnpaused(event: UnpausedEvent): void {
-  let entity = new Unpaused(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+  let entity = new Unpaused(event.transaction.hash.concatI32(event.logIndex.toI32()))
   entity.account = event.params.account
 
   entity.blockNumber = event.block.number

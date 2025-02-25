@@ -1,5 +1,5 @@
-import { newMockEvent } from "matchstick-as"
-import { ethereum, Address, BigInt } from "@graphprotocol/graph-ts"
+import { newMockEvent } from 'matchstick-as'
+import { ethereum, Address, BigInt } from '@graphprotocol/graph-ts'
 import {
   BeaconConfigured,
   BeaconProxiesDeployed,
@@ -9,7 +9,7 @@ import {
   OwnershipTransferred,
   Paused,
   Unpaused
-} from "../generated/Officer/Officer"
+} from '../generated/Officer/Officer'
 
 export function createBeaconConfiguredEvent(
   contractType: string,
@@ -20,16 +20,10 @@ export function createBeaconConfiguredEvent(
   beaconConfiguredEvent.parameters = new Array()
 
   beaconConfiguredEvent.parameters.push(
-    new ethereum.EventParam(
-      "contractType",
-      ethereum.Value.fromString(contractType)
-    )
+    new ethereum.EventParam('contractType', ethereum.Value.fromString(contractType))
   )
   beaconConfiguredEvent.parameters.push(
-    new ethereum.EventParam(
-      "beaconAddress",
-      ethereum.Value.fromAddress(beaconAddress)
-    )
+    new ethereum.EventParam('beaconAddress', ethereum.Value.fromAddress(beaconAddress))
   )
 
   return beaconConfiguredEvent
@@ -38,16 +32,12 @@ export function createBeaconConfiguredEvent(
 export function createBeaconProxiesDeployedEvent(
   beaconProxies: Array<Address>
 ): BeaconProxiesDeployed {
-  let beaconProxiesDeployedEvent =
-    changetype<BeaconProxiesDeployed>(newMockEvent())
+  let beaconProxiesDeployedEvent = changetype<BeaconProxiesDeployed>(newMockEvent())
 
   beaconProxiesDeployedEvent.parameters = new Array()
 
   beaconProxiesDeployedEvent.parameters.push(
-    new ethereum.EventParam(
-      "beaconProxies",
-      ethereum.Value.fromAddressArray(beaconProxies)
-    )
+    new ethereum.EventParam('beaconProxies', ethereum.Value.fromAddressArray(beaconProxies))
   )
 
   return beaconProxiesDeployedEvent
@@ -62,16 +52,10 @@ export function createBeaconProxyDeployedEvent(
   beaconProxyDeployedEvent.parameters = new Array()
 
   beaconProxyDeployedEvent.parameters.push(
-    new ethereum.EventParam(
-      "proxyAddress",
-      ethereum.Value.fromAddress(proxyAddress)
-    )
+    new ethereum.EventParam('proxyAddress', ethereum.Value.fromAddress(proxyAddress))
   )
   beaconProxyDeployedEvent.parameters.push(
-    new ethereum.EventParam(
-      "contractType",
-      ethereum.Value.fromString(contractType)
-    )
+    new ethereum.EventParam('contractType', ethereum.Value.fromString(contractType))
   )
 
   return beaconProxyDeployedEvent
@@ -86,16 +70,10 @@ export function createContractDeployedEvent(
   contractDeployedEvent.parameters = new Array()
 
   contractDeployedEvent.parameters.push(
-    new ethereum.EventParam(
-      "contractType",
-      ethereum.Value.fromString(contractType)
-    )
+    new ethereum.EventParam('contractType', ethereum.Value.fromString(contractType))
   )
   contractDeployedEvent.parameters.push(
-    new ethereum.EventParam(
-      "deployedAddress",
-      ethereum.Value.fromAddress(deployedAddress)
-    )
+    new ethereum.EventParam('deployedAddress', ethereum.Value.fromAddress(deployedAddress))
   )
 
   return contractDeployedEvent
@@ -107,10 +85,7 @@ export function createInitializedEvent(version: BigInt): Initialized {
   initializedEvent.parameters = new Array()
 
   initializedEvent.parameters.push(
-    new ethereum.EventParam(
-      "version",
-      ethereum.Value.fromUnsignedBigInt(version)
-    )
+    new ethereum.EventParam('version', ethereum.Value.fromUnsignedBigInt(version))
   )
 
   return initializedEvent
@@ -120,19 +95,15 @@ export function createOwnershipTransferredEvent(
   previousOwner: Address,
   newOwner: Address
 ): OwnershipTransferred {
-  let ownershipTransferredEvent =
-    changetype<OwnershipTransferred>(newMockEvent())
+  let ownershipTransferredEvent = changetype<OwnershipTransferred>(newMockEvent())
 
   ownershipTransferredEvent.parameters = new Array()
 
   ownershipTransferredEvent.parameters.push(
-    new ethereum.EventParam(
-      "previousOwner",
-      ethereum.Value.fromAddress(previousOwner)
-    )
+    new ethereum.EventParam('previousOwner', ethereum.Value.fromAddress(previousOwner))
   )
   ownershipTransferredEvent.parameters.push(
-    new ethereum.EventParam("newOwner", ethereum.Value.fromAddress(newOwner))
+    new ethereum.EventParam('newOwner', ethereum.Value.fromAddress(newOwner))
   )
 
   return ownershipTransferredEvent
@@ -144,7 +115,7 @@ export function createPausedEvent(account: Address): Paused {
   pausedEvent.parameters = new Array()
 
   pausedEvent.parameters.push(
-    new ethereum.EventParam("account", ethereum.Value.fromAddress(account))
+    new ethereum.EventParam('account', ethereum.Value.fromAddress(account))
   )
 
   return pausedEvent
@@ -156,7 +127,7 @@ export function createUnpausedEvent(account: Address): Unpaused {
   unpausedEvent.parameters = new Array()
 
   unpausedEvent.parameters.push(
-    new ethereum.EventParam("account", ethereum.Value.fromAddress(account))
+    new ethereum.EventParam('account', ethereum.Value.fromAddress(account))
   )
 
   return unpausedEvent

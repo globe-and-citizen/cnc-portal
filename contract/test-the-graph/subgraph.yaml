@@ -8,7 +8,7 @@ dataSources:
     name: OfficerFactoryBeacon
     network: sepolia
     source:
-      address: "0x07590c9C010AfA8ca9A185B237a59c2E5B6F0Bb1"
+      address: '0x07590c9C010AfA8ca9A185B237a59c2E5B6F0Bb1'
       abi: OfficerFactoryBeacon
       startBlock: 7782061
     mapping:
@@ -48,8 +48,8 @@ templates:
           handler: handleDeposited
         - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
           handler: handleTransfer
-  - name: Officer 
-    kind: ethereum    
+  - name: Officer
+    kind: ethereum
     network: sepolia
     source:
       abi: Officer
@@ -85,4 +85,3 @@ templates:
         - event: Unpaused(address)
           handler: handleUnpaused
       file: ./src/officer.ts
-
