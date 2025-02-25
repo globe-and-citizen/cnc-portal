@@ -6,8 +6,9 @@ import {
   Initialized as InitializedEvent,
   OwnershipTransferred as OwnershipTransferredEvent,
   Paused as PausedEvent,
-  Unpaused as UnpausedEvent
-} from "../generated/Officer/Officer"
+  Unpaused as UnpausedEvent,
+  ExpenseAccountEIP712Deployed as ExpenseAccountEIP712DeployedEvent
+} from "../generated/templates/Officer/Officer"
 import {
   BeaconConfigured,
   BeaconProxiesDeployed,
@@ -19,7 +20,7 @@ import {
   Unpaused
 } from "../generated/schema"
 import { ExpenseAccountEIP712 } from "../generated/templates"
-import { Bytes } from "@graphprotocol/graph-ts"
+import { Bytes, log } from "@graphprotocol/graph-ts"
 
 export function handleBeaconConfigured(event: BeaconConfiguredEvent): void {
   let entity = new BeaconConfigured(
@@ -66,7 +67,24 @@ export function handleBeaconProxyDeployed(
   entity.save()
 }
 
+export function handleExpenseAccountEIP712Deployed(event: ExpenseAccountEIP712DeployedEvent): void {
+  // Create Expense Account template dynamically when new contract is deployed
+
+  log.info("ExpenseAccountEIP712 Deployed, Address: {}", [
+    event.params.proxyAddress.toHexString()
+  ])
+  log.info("Creating ExpenseAccountEIP712 template for address: {}", [
+    event.params.proxyAddress.toHexString()
+  ])
+  ExpenseAccountEIP712.create(event.params.proxyAddress)
+}
+
 export function handleContractDeployed(event: ContractDeployedEvent): void {
+  if (event.params.contractType == "ExpenseAccountEIP712")
+    log.info("Contract deployed is '{}'", [event.params.contractType])
+  else
+    log.info("Contract deplod is not 'ExpenseAccountEIP712' but, '{}'", [event.params.contractType])
+
   let entity = new ContractDeployed(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
@@ -81,10 +99,6 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
   entity.transactionHash = event.transaction.hash
 
   entity.save()
-
-  //Create Expense Account template dynamically when new contract is deployed
-  if (contractType === "ExpenseAccountEIP712")
-    ExpenseAccountEIP712.create(deployedAddress)
 
   // switch (contractType) {
   //   case "ExpenseAccountEIP712":
