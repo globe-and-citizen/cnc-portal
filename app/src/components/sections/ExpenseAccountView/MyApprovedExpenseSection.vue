@@ -392,9 +392,11 @@ watch(reload, async (newState) => {
 })
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
+    reload.value = true
     addSuccessToast('Transfer Successful')
     await init()
     transferModal.value = false
+    reload.value = false
   }
 })
 watch(errorGetAmountWithdrawn, (newVal) => {
