@@ -422,33 +422,6 @@ describe("Cash Remuneration", () => {
         vi.clearAllMocks();
       });
 
-      it("should return 403 if status is not pending", async () => {
-        const app = express();
-        app.use(express.json());
-        app.use(setAddressMiddleware("0xOwnerAddress"));
-        app.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
-        vi.spyOn(prisma.memberTeamsData, "findUnique").mockResolvedValue(
-          mockMemberTeamsData
-        );
-        vi.spyOn(prisma.claim, "findUnique").mockResolvedValue({
-          ...mockClaimData,
-          status: "approved",
-        });
-        vi.spyOn(prisma.claim, "update"); //.mockResolvedValue(mockClaimData)
-
-        const response = await request(app)
-          .put("/1/cash-remuneration/claim/employee")
-          .set("address", "0xOwnerAddress") // Simulate unauthorized caller
-          .set("hoursworked", `${hoursWorked}`)
-          .set("claimid", `${claimId}`);
-
-        expect(response.status).toBe(403);
-        expect(response.body).toEqual({
-          success: false,
-          message: "Forbidden",
-        });
-      });
-
       it("should return 403 if the caller is not the team member", async () => {
         const app = express();
         app.use(express.json());
@@ -493,12 +466,50 @@ describe("Cash Remuneration", () => {
         const response = await request(app)
           .put("/1/cash-remuneration/claim/employee")
           .set("address", "0xOwnerAddress") // Simulate unauthorized caller
-          .set("hoursworked", `${hoursWorked}`)
-          .set("claimid", `${claimId}`);
+          .send({
+            hoursworked: hoursWorked,
+            claimid: claimId,
+          });
 
         expect(prisma.claim.update).toBeCalledWith({
           where: { id: claimId },
           data: { hoursWorked: hoursWorked },
+        });
+        expect(response.status).toBe(201);
+        expect(response.body).toEqual({
+          success: true,
+        });
+      });
+
+      it('should update claim status to withdrawn if current claim status is "approved"', async () => {
+        const app = express();
+        app.use(express.json());
+        app.use(setAddressMiddleware("0xOwnerAddress"));
+        app.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
+        vi.spyOn(prisma.memberTeamsData, "findUnique").mockResolvedValue(
+          mockMemberTeamsData
+        );
+        vi.spyOn(prisma.claim, "findUnique").mockResolvedValue({
+          ...mockClaimData,
+          status: "approved",
+        });
+        vi.spyOn(prisma.claim, "update").mockResolvedValue({
+          ...mockClaimData,
+          status: "withdrawn",
+        });
+        vi.spyOn
+
+        const response = await request(app)
+          .put("/1/cash-remuneration/claim/employee")
+          .set("address", "0xOwnerAddress")
+          .send({
+            hoursworked: hoursWorked,
+            claimid: claimId,
+          });
+
+        expect(prisma.claim.update).toBeCalledWith({
+          where: { id: claimId },
+          data: { status: "withdrawn" },
         });
         expect(response.status).toBe(201);
         expect(response.body).toEqual({
