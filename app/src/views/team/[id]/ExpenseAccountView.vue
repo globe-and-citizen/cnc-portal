@@ -66,6 +66,7 @@
       v-if="team"
       :team="team"
       :is-disapproved-address="isDisapprovedAddress"
+      v-model="reload"
     />
 
     <div
@@ -87,7 +88,7 @@
           Approve User Expense
         </ButtonUI>
       </div>
-      <ExpenseAccountTable :team="team" />
+      <ExpenseAccountTable v-if="team" :team="team" v-model="reload" />
       <ModalComponent v-model="approveUsersModal">
         <ApproveUsersForm
           v-if="approveUsersModal"
@@ -143,6 +144,7 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
+const reload = ref(false)
 // Token related refs
 const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 const expenseAccountData = ref<{}>()
@@ -333,9 +335,11 @@ watch(signature, async (newVal) => {
       signature
     }
     await executeAddExpenseData()
+    reload.value = true
     await init()
     loadingApprove.value = false
     approveUsersModal.value = false
+    reload.value = false
   }
 })
 watch(searchUserResponse, () => {

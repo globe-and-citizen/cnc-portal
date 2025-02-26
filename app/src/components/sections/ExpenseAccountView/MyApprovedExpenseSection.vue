@@ -111,6 +111,7 @@ const { team } = defineProps<{
   team: Partial<Team>
   isDisapprovedAddress: boolean
 }>()
+const reload = defineModel()
 
 //#region refs
 const transferModal = ref(false)
@@ -384,6 +385,11 @@ const getAmountWithdrawnBalance = async () => {
 //#endregion
 
 //#region Watch
+watch(reload, async (newState) => {
+  if (newState) {
+    await init()
+  }
+})
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')

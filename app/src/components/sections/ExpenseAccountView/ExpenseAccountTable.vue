@@ -109,9 +109,10 @@ import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
-const { team } = defineProps<{
+const { team /*, reload*/ } = defineProps<{
   team: Partial<Team> | null
 }>()
+const reload = defineModel()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
@@ -232,6 +233,15 @@ const activateApproval = async (signature: `0x{string}`) => {
 //#endregion
 
 //#region Watch
+watch(reload, async (newState) => {
+  console.log(`reload state changed: `, newState)
+  if (newState) {
+    console.log(`Reloading...`)
+    await fetchExpenseAccountOwner()
+    await initializeBalances()
+    console.log(`manyExpenseAccountDataAll: `, manyExpenseAccountDataAll)
+  }
+})
 watch(
   () => team,
   async (newTeam) => {
