@@ -9,7 +9,9 @@
             v-if="isLoading"
             data-test="loading-spinner"
           ></span>
-          <span v-else data-test="amount">{{ amount }} </span>
+          <span v-else data-test="amount"
+            >{{ props.cardType == 'balance' ? formatEther(balance?.value!) : amount }}
+          </span>
         </span>
         <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
       </div>
@@ -18,13 +20,32 @@
 </template>
 <script lang="ts" setup>
 import { NETWORK } from '@/constant'
-import { computed } from 'vue'
+import { useToastStore } from '@/stores'
+import { useBalance } from '@wagmi/vue'
+import { formatEther, type Address } from 'viem'
+import { computed, watch } from 'vue'
 
+const toastStore = useToastStore()
 const props = defineProps<{
   cardType: string
   amount?: number | undefined
-  isLoading?: boolean | undefined
+  cashRemunerationEip712Address: string
 }>()
+
+const {
+  data: balance,
+  isLoading: balanceLoading,
+  error: balanceError
+} = useBalance({
+  address: props.cashRemunerationEip712Address as Address,
+  query: {
+    enabled: props.cardType === 'balance'
+  }
+})
+
+const isLoading = computed(() => {
+  return props.cardType === 'balance' ? balanceLoading.value : false
+})
 
 const cardClasses = computed(() => {
   return {
@@ -39,5 +60,13 @@ const cardTitle = computed(() => {
     'month-claims': 'Month Claims Withdrawed',
     'approved-claims': 'Approved Claims'
   }[props.cardType]
+})
+
+watch(balanceError, (val) => {
+  if (val) {
+    console.error(val)
+    toastStore.addErrorToast('Error fetching balance')
+    
+  }
 })
 </script>
