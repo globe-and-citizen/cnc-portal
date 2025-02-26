@@ -322,6 +322,11 @@ const errorMessage = (error: {}, message: string) =>
 //#endregion
 
 //#region Watch
+watch(reload, async (newState) => {
+  if (newState) {
+    await init()
+  }
+})
 watch(
   () => team.value?.expenseAccountAddress,
   async (newVal) => {

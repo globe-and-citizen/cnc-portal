@@ -253,14 +253,18 @@ watch(
 )
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
+    reload.value = true
     addSuccessToast('Activate Successful')
     await initializeBalances()
+    reload.value = false
   }
 })
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
+    reload.value = true
     addSuccessToast('Deactivate Successful')
     await initializeBalances()
+    reload.value = false
   }
 })
 watch(errorDeactivateApproval, (newVal) => {
