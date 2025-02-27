@@ -13,27 +13,6 @@
       <span class="font-medium text-gray-700">{{ labels[key as keyof typeof labels] }}:</span>
       <span class="text-gray-900">{{ formattedReceiptData[key as keyof typeof labels] }}</span>
     </div>
-    <!--<span data-test="receipt-data-txHash">Dummy Text</span>-->
-    <!--<div class="flex justify-between py-2 border-b">
-      <span class="font-medium text-gray-700">Transaction hash</span>
-      <span class="text-gray-900">{{ receiptData['txHash'] }}</span>
-    </div>
-    <div class="flex justify-between py-2 border-b">
-      <span class="font-medium text-gray-700">Amount</span>
-      <span class="text-gray-900">{{ receiptData['amount'] }}</span>
-    </div>
-    <div class="flex justify-between py-2 border-b">
-      <span class="font-medium text-gray-700">Token</span>
-      <span class="text-gray-900">{{ receiptData['token'] }}</span>
-    </div>
-    <div class="flex justify-between py-2 border-b">
-      <span class="font-medium text-gray-700">Value</span>
-      <span class="text-gray-900">{{ receiptData['amountUsd'] }}</span>
-    </div>
-    <div class="flex justify-between py-2 border-b">
-      <span class="font-medium text-gray-700">Value</span>
-      <span class="text-gray-900">{{ receiptData['amountUsd'] }}</span>
-    </div>-->
     <div class="modal-action justify-center">
       <ButtonUI variant="primary" @click="() => {}" data-test="export-pdf">
         Export in PDF
@@ -54,8 +33,6 @@ interface ReceiptData {
   from: string
   to: string
   amountUsd: number
-  // amountCad: number
-  // receipt: string
   amount: string
   token: string
 }

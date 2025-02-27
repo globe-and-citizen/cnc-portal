@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import TransactionHistorySection from '../TransactionHistorySection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
@@ -43,7 +43,6 @@ describe('TransactionHistorySection', () => {
       )
       const receiptComponent = wrapper.findComponent(ReceiptComponent)
       expect(receiptComponent.exists()).toBeTruthy()
-      // expect(enableButton.props('disabled')).toBe(true)
     })
   })
 })

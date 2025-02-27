@@ -1,6 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
-import ButtonUI from '@/components/ButtonUI.vue'
+import { describe, it, expect } from 'vitest'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
 
 const DATE = new Date().toLocaleDateString()
@@ -78,7 +77,6 @@ describe('ReceiptComponent', () => {
       expect(receiptDataTo.html()).toContain(
         `${mockReceiptData['to']?.slice(0, 6)}...${mockReceiptData['to']?.slice(-4)}`
       )
-      // expect(enableButton.props('disabled')).toBe(true)
     })
   })
 })

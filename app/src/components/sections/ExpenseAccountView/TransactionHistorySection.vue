@@ -26,11 +26,9 @@
         </span>
       </template>
       <template #from-data="{ row }">
-        <!--<span>{{ row.from?.slice(0, 6) }}...{{ row.from?.slice(-4) }}</span>-->
         <AddressToolTip :address="row.from ?? ''" :slice="true" />
       </template>
       <template #to-data="{ row }">
-        <!--<span>{{ row.to?.slice(0, 6) }}...{{ row.to?.slice(-4) }}</span>-->
         <AddressToolTip :address="row.to ?? ''" :slice="true" />
       </template>
       <template #amountUsd-data="{ row }">{{ row.amountUsd }}</template>
@@ -73,6 +71,7 @@ const receiptData = computed(() => {
       token: 'POL',
       amount: '0.01'
     }
+  else return undefined
 })
 
 const dummyData = [
