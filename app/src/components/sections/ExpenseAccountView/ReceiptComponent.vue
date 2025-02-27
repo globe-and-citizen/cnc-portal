@@ -34,10 +34,18 @@
       <span class="font-medium text-gray-700">Value</span>
       <span class="text-gray-900">{{ receiptData['amountUsd'] }}</span>
     </div>-->
+    <div class="modal-action justify-center">
+      <ButtonUI variant="primary" @click="() => {}" data-test="export-pdf">
+        Export in PDF
+      </ButtonUI>
+      <ButtonUI variant="primary" @click="() => {}" data-test="export-csv">
+        Export in CSV
+      </ButtonUI>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ReceiptData {
   txHash: string
