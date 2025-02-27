@@ -6,7 +6,8 @@ import { createTestingPinia } from '@pinia/testing'
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
 const mockIsFetching = ref(false)
-const mockData = ref<Array<unknown> | null>(null)
+type TeamData = { id: string; name: string; description: string }
+const mockData = ref<TeamData | null>(null)
 
 // Mock the modules BEFORE importing the component
 vi.mock('@/composables/useCustomFetch', () => {
@@ -47,32 +48,6 @@ describe('ShowIndex', () => {
     mockIsFetching.value = false
     mockData.value = null
   })
-
-  // vi.mock('@/stores/teamStore', () => ({
-  //   useTeamStore: () => ({
-  //     currentTeamId: ref(1),
-  //     teamsMeta: {
-  //       teams: [
-  //         {
-  //           id: '1',
-  //           name: 'Team A',
-  //           members: []
-  //         },
-  //         {
-  //           id: '2',
-  //           name: 'Team B',
-  //           members: [1, 2]
-  //         }
-  //       ],
-  //       teamsAreFetching: false,
-  //       teamsError: null,
-  //       reloadTeams: vi.fn()
-  //     },
-  //     fetchTeam: vi.fn(),
-  //     setCurrentTeamId: vi.fn(),
-  //     currentTeam: { name: 'Team A' }
-  //   })
-  // }))
 
   vi.mock('vue-router', () => ({
     useRoute: vi.fn(() => ({
