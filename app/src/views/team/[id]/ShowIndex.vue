@@ -6,7 +6,11 @@
       <div class="breadcrumbs text-sm" v-if="!teamStore.currentTeamMeta?.teamError">
         <ul>
           <li>
-            <div class="skeleton h-4 w-20" v-if="teamStore.currentTeamMeta?.teamIsFetching"></div>
+            <div
+              class="skeleton h-4 w-20"
+              data-test="loader"
+              v-if="teamStore.currentTeamMeta?.teamIsFetching"
+            ></div>
             <a v-if="teamStore.currentTeamMeta?.team">{{ teamStore.currentTeamMeta.team?.name }}</a>
           </li>
 
@@ -14,13 +18,16 @@
         </ul>
       </div>
     </div>
-    <div v-if="teamStore.currentTeamMeta?.teamError">
+    <div v-if="teamStore.currentTeamMeta?.teamError" data-test="error-state">
       <div class="alert alert-warning" v-if="teamStore.currentTeamMeta?.statusCode === 404">
         Error! Team not found
       </div>
       <div class="alert alert-error" v-else>Error! Something went wrong</div>
     </div>
-    <div v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.team" class="flex flex-col gap-6">
+    <div
+      v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.team"
+      class="flex flex-col gap-6"
+    >
       <TeamMeta
         :team="teamStore.currentTeamMeta.team"
         @getTeam="teamStore.currentTeamMeta.executeFetchTeam"
