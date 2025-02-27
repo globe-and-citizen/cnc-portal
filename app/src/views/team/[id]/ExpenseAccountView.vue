@@ -70,7 +70,7 @@
     />
 
     <div
-      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
+      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4 mb-10"
       data-test="claims-table"
     >
       <div class="flex flex-row justify-between mb-5">
