@@ -35,7 +35,6 @@
       <MemberSection
         :team="teamStore.currentTeamMeta.team"
         :teamIsFetching="teamStore.currentTeamMeta.teamIsFetching"
-        @getTeam="teamStore.currentTeamMeta.executeFetchTeams"
       />
     </div>
     <RouterView v-if="teamStore.currentTeam" />
