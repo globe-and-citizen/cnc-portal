@@ -60,7 +60,7 @@ describe('ShowIndex', () => {
     }))
   }))
 
-  it.only('should render the team Breadcrumb', async () => {
+  it('should render the team Breadcrumb', async () => {
     // Your test here
     const wrapper = mount(ShowIndex, {
       global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
