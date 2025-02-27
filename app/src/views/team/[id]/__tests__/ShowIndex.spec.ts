@@ -1,34 +1,53 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
+// Create mutable refs for reactive state outside the mock
+const mockError = ref<string | null>(null)
+const mockIsFetching = ref(false)
+type TeamData = { id: string; name: string; description: string }
+const mockData = ref<TeamData | null>(null)
 
-describe('ShowIndex', () => {
-  vi.mock('@/stores/teamStore', () => ({
-    useTeamStore: () => ({
-      currentTeamId: ref(1),
-      teamsMeta: {
-        teams: [
-          {
-            id: '1',
-            name: 'Team A',
-            members: []
-          },
-          {
-            id: '2',
-            name: 'Team B',
-            members: [1, 2]
-          }
-        ],
-        teamsAreFetching: false,
-        teamsError: null,
-        reloadTeams: vi.fn()
-      },
-      fetchTeam: vi.fn(),
-      setCurrentTeamId: vi.fn(),
-      currentTeam: { name: 'Team A' }
+// Mock the modules BEFORE importing the component
+vi.mock('@/composables/useCustomFetch', () => {
+  // Inline the fake implementation to avoid hoisting issues
+  return {
+    useCustomFetch: () => ({
+      json: () => ({
+        execute: vi.fn(),
+        error: mockError,
+        isFetching: mockIsFetching,
+        data: mockData
+      }),
+      post: () => ({
+        json: () => ({
+          execute: vi.fn(),
+          error: mockError,
+          isFetching: mockIsFetching,
+          data: mockData
+        })
+      }),
+      get: () => ({
+        json: () => ({
+          execute: vi.fn(),
+          error: mockError,
+          isFetching: mockIsFetching,
+          data: mockData
+        })
+      })
     })
-  }))
+  }
+})
+describe('ShowIndex', () => {
+  // Define interface for component instance
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Reset refs between tests if needed
+    mockError.value = null
+    mockIsFetching.value = false
+    mockData.value = null
+  })
 
   vi.mock('vue-router', () => ({
     useRoute: vi.fn(() => ({
@@ -41,27 +60,37 @@ describe('ShowIndex', () => {
     }))
   }))
 
-  it('should render the team Breadcrumb', () => {
+  it('should render the team Breadcrumb', async () => {
     // Your test here
-    const wrapper = mount(ShowIndex)
+    const wrapper = mount(ShowIndex, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+    console.log('Wrapper HTML', wrapper.html())
     expect(wrapper.html()).toContain('Team View')
-    // Test if setCurrentTeamId is called
+    expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
 
-    // Update team meta and check it the team name is displayed
+    // Set state after mount (simulate async change)
 
-    // Navigate to a new page
+    // Set loader to loading
+    mockError.value = null
+    mockIsFetching.value = true
+    mockData.value = null
+    // Wait for watchers to run
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="loader"]').exists()).toBeTruthy()
 
-    // wrapper.vm.$router.push('/teams/1')
-    // vi.mock('vue-router', () => ({
-    //   useRoute: vi.fn(() => ({
-    //     params: {
-    //       id: 0
-    //     },
-    //     meta: {
-    //       name: 'Team View V2'
-    //     }
-    //   }))
-    // }))
-    // expect(wrapper.html()).toContain('Team View V2')
+    // Set state after mount (simulate async change)
+    // set error to a string
+    mockIsFetching.value = false
+    mockError.value = 'New Error'
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
+    expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
+
+    mockData.value = { id: '0x123', name: 'Team Name', description: 'Lorem' }
+    mockError.value = null
+    await wrapper.vm.$nextTick()
+    expect(wrapper.html()).toContain('Team Name')
   })
 })
