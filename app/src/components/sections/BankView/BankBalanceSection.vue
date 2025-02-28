@@ -42,9 +42,9 @@
               Transfer
             </ButtonUI>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2" v-if="bankAddress">
             <div class="text-sm text-gray-600">Contract Address:</div>
-            <AddressToolTip :address="bankAddress!" />
+            <AddressToolTip :address="bankAddress" />
           </div>
         </div>
       </div>
