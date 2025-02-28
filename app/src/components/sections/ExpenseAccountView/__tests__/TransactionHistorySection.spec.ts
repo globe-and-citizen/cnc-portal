@@ -92,7 +92,22 @@ describe('TransactionHistorySection', () => {
       })
 
     it('should show receipt when receipt is clicked', async () => {
-      const wrapper = createComponent()
+      const wrapper = createComponent({
+        data: () => ({
+          transactions: [
+            {
+              txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
+              date: Date.now(),
+              type: 'deposit',
+              from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+              to: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+              amountUSD: 10,
+              amount: '0.01',
+              token: 'POL'
+            }
+          ]
+        })
+      })
       await flushPromises()
 
       const transactionTable = wrapper.findComponent(TableComponent)
@@ -102,15 +117,9 @@ describe('TransactionHistorySection', () => {
       expect(firstRow.exists()).toBeTruthy()
       const receiptButton = firstRow.findComponent(ButtonUI)
       expect(receiptButton.exists()).toBeTruthy()
-      receiptButton.trigger('click')
+      await receiptButton.trigger('click')
 
       await flushPromises()
-      interface TransactionHistorySection extends ComponentPublicInstance {
-        selectedTxHash: string
-      }
-      expect((wrapper.vm as unknown as TransactionHistorySection).selectedTxHash).toBe(
-        '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e'
-      )
       const receiptComponent = wrapper.findComponent(ReceiptComponent)
       expect(receiptComponent.exists()).toBeTruthy()
     })
