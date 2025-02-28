@@ -189,9 +189,34 @@ const displayedTransactions = computed(() => {
   })
 })
 
-// Methods
 const formatDate = (date: string | number) => {
-  return new Date(date).toLocaleDateString()
+  try {
+    if (typeof date === 'number') {
+      const dateObj = new Date(date)
+      if (!isNaN(dateObj.getTime())) {
+        return dateObj.toLocaleString()
+      }
+    }
+
+    if (typeof date === 'string') {
+      const dateObj = new Date(date)
+      if (!isNaN(dateObj.getTime())) {
+        return dateObj.toLocaleString()
+      }
+
+      const timestamp = parseInt(date) * 1000
+      const timestampDate = new Date(timestamp)
+      if (!isNaN(timestampDate.getTime())) {
+        return timestampDate.toLocaleString()
+      }
+    }
+
+    console.error('Invalid date format:', date)
+    return 'Invalid Date'
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return 'Invalid Date'
+  }
 }
 
 const formatAmount = (transaction: BaseTransaction, currency: string) => {

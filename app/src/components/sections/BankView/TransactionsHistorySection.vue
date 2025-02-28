@@ -30,7 +30,7 @@ defineProps<Props>()
 const transactions = ref<BankTransaction[]>([
   {
     txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
-    date: new Date().toLocaleDateString(),
+    date: Date.now(),
     type: 'Deposit',
     from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     to: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
