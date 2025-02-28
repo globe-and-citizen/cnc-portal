@@ -195,7 +195,9 @@ import {
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore } from '@/stores'
+import { useRoute } from 'vue-router'
 const appStore = useAppStore()
+const route = useRoute()
 
 interface User {
   name: string
@@ -243,7 +245,7 @@ const menuItems = computed(() => [
       name: 'show-team',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: true,
+    active: route.name === 'show-team',
     show: true
   },
   {
@@ -253,6 +255,7 @@ const menuItems = computed(() => [
       name: 'bank',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'bank',
     show: true
   },
   {
@@ -262,6 +265,7 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'cash-remunerations',
     show: teamStore.currentTeam?.cashRemunerationEip712Address
   },
   {
@@ -271,6 +275,7 @@ const menuItems = computed(() => [
       name: 'expense-account',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'expense-account',
     show: teamStore.currentTeam?.expenseAccountEip712Address
   },
   {
