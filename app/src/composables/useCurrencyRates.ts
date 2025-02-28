@@ -30,13 +30,6 @@ export function useCurrencyRates() {
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch exchange rates'
-      // Fallback to static rates if API fails
-      rates.value = {
-        USD: 1,
-        CAD: 1.28,
-        INR: 83.12,
-        EUR: 0.92
-      }
     } finally {
       loading.value = false
     }
