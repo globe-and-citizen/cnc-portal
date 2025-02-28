@@ -66,10 +66,11 @@
       v-if="team"
       :team="team"
       :is-disapproved-address="isDisapprovedAddress"
+      v-model="reload"
     />
 
     <div
-      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
+      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4 mb-10"
       data-test="claims-table"
     >
       <div class="flex flex-row justify-between mb-5">
@@ -87,7 +88,7 @@
           Approve User Expense
         </ButtonUI>
       </div>
-      <ExpenseAccountTable :team="team" />
+      <ExpenseAccountTable v-if="team" :team="team" v-model="reload" />
       <ModalComponent v-model="approveUsersModal">
         <ApproveUsersForm
           v-if="approveUsersModal"
@@ -106,7 +107,7 @@
       class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
       data-test="claims-table"
     >
-      <ExpenseAccountTransferHistoryTable />
+      <TransactionHistorySection />
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->
@@ -121,7 +122,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import ExpenseAccountTransferHistoryTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTransactionHistoryTable.vue'
+import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
@@ -143,6 +144,7 @@ const searchUserName = ref('')
 const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
+const reload = ref(false)
 // Token related refs
 const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 const expenseAccountData = ref<{}>()
@@ -320,6 +322,11 @@ const errorMessage = (error: {}, message: string) =>
 //#endregion
 
 //#region Watch
+watch(reload, async (newState) => {
+  if (newState) {
+    await init()
+  }
+})
 watch(
   () => team.value?.expenseAccountAddress,
   async (newVal) => {
@@ -333,9 +340,11 @@ watch(signature, async (newVal) => {
       signature
     }
     await executeAddExpenseData()
+    reload.value = true
     await init()
     loadingApprove.value = false
     approveUsersModal.value = false
+    reload.value = false
   }
 })
 watch(searchUserResponse, () => {

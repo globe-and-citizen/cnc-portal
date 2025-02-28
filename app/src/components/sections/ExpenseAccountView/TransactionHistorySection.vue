@@ -26,23 +26,51 @@
         </span>
       </template>
       <template #from-data="{ row }">
-        <!--<span>{{ row.from?.slice(0, 6) }}...{{ row.from?.slice(-4) }}</span>-->
         <AddressToolTip :address="row.from ?? ''" :slice="true" />
       </template>
       <template #to-data="{ row }">
-        <!--<span>{{ row.to?.slice(0, 6) }}...{{ row.to?.slice(-4) }}</span>-->
         <AddressToolTip :address="row.to ?? ''" :slice="true" />
       </template>
-      <template #amountUsd-data="{ row }">{{ row.amountUsd }}</template>
-      <template #amountCad-data="{ row }">{{ row.amountCad }}</template>
-      <template #receipt-data="{ row }">{{ row.receipt }}</template>
+      <template #receipt-data="{ row }">
+        <ButtonUI
+          size="sm"
+          @click="
+            () => {
+              selectedTxHash = row.txHash
+              receiptModal = true
+            }
+          "
+        >
+          {{ row.receipt }}
+        </ButtonUI>
+      </template>
     </TableComponent>
+    <ModalComponent v-model="receiptModal">
+      <ReceiptComponent v-if="receiptModal && receiptData" :receipt-data="receiptData" />
+    </ModalComponent>
   </div>
 </template>
 <script setup lang="ts">
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
+import { computed, ref } from 'vue'
+
+const receiptModal = ref(false)
+const selectedTxHash = ref('')
+
+const receiptData = computed(() => {
+  const data = dummyData.find((item) => item.txHash === selectedTxHash.value)
+  if (data)
+    return {
+      ...data,
+      token: 'POL',
+      amount: '0.01'
+    }
+  else return undefined
+})
 
 const dummyData = [
   {
@@ -56,7 +84,7 @@ const dummyData = [
     receipt: 'Receipt'
   },
   {
-    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
+    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55f',
     date: new Date().toLocaleDateString(),
     type: 'transfer',
     from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
@@ -66,7 +94,7 @@ const dummyData = [
     receipt: 'Receipt'
   },
   {
-    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
+    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55a',
     date: new Date().toLocaleDateString(),
     type: 'transfer',
     from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
@@ -76,7 +104,7 @@ const dummyData = [
     receipt: 'Receipt'
   },
   {
-    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
+    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55b',
     date: new Date().toLocaleDateString(),
     type: 'deposit',
     from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
@@ -86,7 +114,7 @@ const dummyData = [
     receipt: 'Receipt'
   },
   {
-    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
+    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55c',
     date: new Date().toLocaleDateString(),
     type: 'deposit',
     from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',

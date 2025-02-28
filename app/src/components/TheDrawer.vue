@@ -107,7 +107,7 @@
       </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto custom-scrollbar">
+    <div class="flex-1 overflow-y-auto custom-scrollbar border-b-2">
       <div class="mb-4">
         <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
