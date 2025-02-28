@@ -91,7 +91,7 @@
 
         <!-- Dynamic currency amounts -->
         <template
-          v-for="currency in currencies"
+          v-for="currency in props.currencies"
           :key="currency"
           #[`amount${currency}-data`]="{ row }"
         >
