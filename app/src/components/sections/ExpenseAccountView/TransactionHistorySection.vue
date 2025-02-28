@@ -31,8 +31,6 @@
       <template #to-data="{ row }">
         <AddressToolTip :address="row.to ?? ''" :slice="true" />
       </template>
-      <template #amountUsd-data="{ row }">{{ row.amountUsd }}</template>
-      <template #amountCad-data="{ row }">{{ row.amountCad }}</template>
       <template #receipt-data="{ row }">
         <ButtonUI
           size="sm"
