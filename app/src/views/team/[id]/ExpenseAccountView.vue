@@ -107,7 +107,13 @@
       class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
       data-test="claims-table"
     >
-      <TransactionHistorySection />
+      <TransactionHistorySection
+        :currency-rates="{
+          loading: false,
+          error: null,
+          getRate: () => 1
+        }"
+      />
     </div>
   </div>
   <!-- Expense Account Not Yet Created -->

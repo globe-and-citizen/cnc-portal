@@ -12,8 +12,9 @@
       v-if="bankBalanceSection"
       :bank-balance-section="bankBalanceSection"
       :price-data="priceData"
+      :currency-rates="currencyRatesData"
     />
-    <TransactionsHistorySection />
+    <TransactionsHistorySection :currency-rates="currencyRatesData" />
   </div>
 </template>
 
@@ -25,6 +26,7 @@ import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSe
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
+import { useCurrencyRates } from '@/composables/useCurrencyRates'
 
 const teamStore = useTeamStore()
 const typedBankAddress = computed(() => teamStore.currentTeam?.bankAddress as Address | undefined)
@@ -55,5 +57,13 @@ const priceData = computed(() => ({
   usdcPrice: usdcPrice.value,
   loading: pricesLoading.value,
   error: pricesError.value ? true : null
+}))
+
+const { loading: currencyLoading, error: currencyError, getRate } = useCurrencyRates()
+
+const currencyRatesData = computed(() => ({
+  loading: currencyLoading.value,
+  error: currencyError.value,
+  getRate
 }))
 </script>
