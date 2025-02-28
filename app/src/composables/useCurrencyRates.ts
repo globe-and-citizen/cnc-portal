@@ -1,34 +1,59 @@
 import { ref, computed } from 'vue'
 
-// Define static conversion rates (you might want to fetch these from an API in production)
-const USD_TO_CAD_RATE = 1.28
-const USD_TO_INR_RATE = 83.12
-const USD_TO_EUR_RATE = 0.92
+interface ExchangeRates {
+  [currency: string]: number
+}
 
 export function useCurrencyRates() {
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const rates = ref<ExchangeRates>({})
 
-  // You could implement real API calls here to get live rates
-  const getRate = (currency: string): number => {
-    switch (currency.toUpperCase()) {
-      case 'USD':
-        return 1
-      case 'CAD':
-        return USD_TO_CAD_RATE
-      case 'INR':
-        return USD_TO_INR_RATE
-      case 'EUR':
-        return USD_TO_EUR_RATE
-      default:
-        return 1
+  const fetchRates = async () => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const params = new URLSearchParams({
+        apikey: 'fca_live_Ee3QsIH2QQUw3WCNypXcgeFzPXSxkWw1iEywJCeh',
+        base_currency: 'USD',
+        currencies: 'USD,CAD,INR,EUR'
+      })
+
+      const response = await fetch(`https://api.freecurrencyapi.com/v1/latest?${params}`)
+      const data = await response.json()
+
+      if (data.data) {
+        rates.value = data.data
+      } else {
+        throw new Error('Failed to fetch exchange rates')
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to fetch exchange rates'
+      // Fallback to static rates if API fails
+      rates.value = {
+        USD: 1,
+        CAD: 1.28,
+        INR: 83.12,
+        EUR: 0.92
+      }
+    } finally {
+      loading.value = false
     }
   }
+
+  const getRate = (currency: string): number => {
+    return rates.value[currency.toUpperCase()] || 1
+  }
+
+  // Fetch rates when the composable is initialized
+  fetchRates()
 
   // Return the composable interface
   return {
     loading: computed(() => loading.value),
     error: computed(() => error.value),
-    getRate
+    getRate,
+    fetchRates
   }
 }
