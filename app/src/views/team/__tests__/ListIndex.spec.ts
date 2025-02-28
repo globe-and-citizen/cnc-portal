@@ -3,7 +3,6 @@ import ListIndex from '@/views/team/ListIndex.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { createPinia, setActivePinia } from 'pinia'
 
 // Create mutable refs for reactive state outside the mock
