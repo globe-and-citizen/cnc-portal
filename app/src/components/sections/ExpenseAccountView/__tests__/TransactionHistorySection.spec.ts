@@ -1,11 +1,78 @@
+import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
 import TransactionHistorySection from '../TransactionHistorySection.vue'
+import type { BaseTransaction, ExpenseTransaction } from '@/types/transactions'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
+import type { ComponentPublicInstance } from 'vue'
 
 describe('TransactionHistorySection', () => {
+  const defaultProps = {
+    currencyRates: {
+      loading: false as const,
+      error: null as null,
+      getRate: () => 1
+    }
+  }
+
+  const mockTransactions: ExpenseTransaction[] = [
+    {
+      txHash: '0x123',
+      date: Date.now(),
+      type: 'deposit',
+      from: '0xabc',
+      to: '0xdef',
+      amountUSD: 100,
+      amount: '100',
+      token: 'USDC'
+    }
+  ]
+
+  it('renders correctly', () => {
+    const wrapper = mount(TransactionHistorySection, {
+      props: defaultProps,
+      global: {
+        stubs: {
+          GenericTransactionHistory: true
+        }
+      }
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('displays transaction history component', () => {
+    const wrapper = mount(TransactionHistorySection, {
+      props: defaultProps,
+      global: {
+        stubs: {
+          GenericTransactionHistory: true
+        }
+      }
+    })
+    expect(wrapper.find('[data-test="expense-transactions"]').exists()).toBe(true)
+  })
+
+  it('handles receipt click', async () => {
+    const wrapper = mount(TransactionHistorySection, {
+      props: defaultProps,
+      global: {
+        stubs: {
+          GenericTransactionHistory: true
+        }
+      }
+    })
+
+    interface TransactionHistorySection extends ComponentPublicInstance {
+      handleReceiptClick: (transaction: BaseTransaction) => void
+    }
+    const consoleSpy = vi.spyOn(console, 'log')
+    await (wrapper.vm as unknown as TransactionHistorySection).handleReceiptClick(
+      mockTransactions[0]
+    )
+    expect(consoleSpy).toHaveBeenCalledWith('Receipt clicked:', mockTransactions[0])
+  })
+
   describe('Render', () => {
     interface ComponentOptions {
       props?: Record<string, unknown>
@@ -19,7 +86,7 @@ describe('TransactionHistorySection', () => {
       global = {}
     }: ComponentOptions = {}) =>
       mount(TransactionHistorySection, {
-        props: { ...props },
+        props: { ...props, currencyRates: defaultProps.currencyRates },
         data,
         global: { ...global }
       })
@@ -38,7 +105,10 @@ describe('TransactionHistorySection', () => {
       receiptButton.trigger('click')
 
       await flushPromises()
-      expect(wrapper.vm.selectedTxHash).toBe(
+      interface TransactionHistorySection extends ComponentPublicInstance {
+        selectedTxHash: string
+      }
+      expect((wrapper.vm as unknown as TransactionHistorySection).selectedTxHash).toBe(
         '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e'
       )
       const receiptComponent = wrapper.findComponent(ReceiptComponent)

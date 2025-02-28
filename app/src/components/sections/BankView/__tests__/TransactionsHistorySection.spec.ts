@@ -21,7 +21,12 @@ describe('TransactionsHistorySection', () => {
     const wrapper = mount(TransactionsHistorySection, {
       props: {
         transactions: mockTransactions,
-        isLoadingTransactions: false
+        isLoadingTransactions: false,
+        currencyRates: {
+          loading: false,
+          error: null,
+          getRate: () => 1
+        }
       },
       global: {
         stubs: {
@@ -39,7 +44,12 @@ describe('TransactionsHistorySection', () => {
     const wrapper = mount(TransactionsHistorySection, {
       props: {
         transactions: mockTransactions,
-        isLoadingTransactions: false
+        isLoadingTransactions: false,
+        currencyRates: {
+          loading: false,
+          error: null,
+          getRate: () => 1
+        }
       },
       global: {
         stubs: {
@@ -56,7 +66,12 @@ describe('TransactionsHistorySection', () => {
     const wrapper = mount(TransactionsHistorySection, {
       props: {
         transactions: mockTransactions,
-        isLoadingTransactions: false
+        isLoadingTransactions: false,
+        currencyRates: {
+          loading: false,
+          error: null,
+          getRate: () => 1
+        }
       },
       global: {
         stubs: {

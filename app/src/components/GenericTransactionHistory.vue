@@ -127,15 +127,15 @@ interface Props {
   transactions: BaseTransaction[]
   title: string
   currencies: string[] // Array of currency codes: ['USD', 'CAD', 'INR', 'EUR']
-  showDateFilter?: boolean
-  showExport?: boolean
-  showReceiptModal?: boolean
-  dataTestPrefix?: string
-  currencyRates?: {
+  currencyRates: {
     loading: boolean
     error: string | null
     getRate: (currency: string) => number
   }
+  showDateFilter?: boolean
+  showExport?: boolean
+  showReceiptModal?: boolean
+  dataTestPrefix?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {

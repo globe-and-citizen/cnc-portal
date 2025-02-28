@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
-import type { ExpenseTransaction } from '@/types/transactions'
+import type { ExpenseTransaction, BaseTransaction } from '@/types/transactions'
 
 interface Props {
   currencyRates: {
@@ -48,8 +48,8 @@ const transactions = ref<ExpenseTransaction[]>([
   }
 ])
 
-const handleReceiptClick = (transaction: ExpenseTransaction) => {
+const handleReceiptClick = (transaction: BaseTransaction) => {
   // Handle receipt click if needed
-  console.log('Receipt clicked:', transaction)
+  console.log('Receipt clicked:', transaction as ExpenseTransaction)
 }
 </script>
