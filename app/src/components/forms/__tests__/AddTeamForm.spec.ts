@@ -1,12 +1,12 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { TeamInput, User } from '@/types'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
 // Define interface for component instance
 interface ComponentInstance {
