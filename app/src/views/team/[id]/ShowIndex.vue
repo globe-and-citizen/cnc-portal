@@ -28,10 +28,27 @@
       v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.team"
       class="flex flex-col gap-6"
     >
+      <!-- Continue Team Creation section -->
+      <div v-if="!hasContract">
+        <p>
+          You have created your team without deploying the Smart contracts necessary for its
+          management. Click
+          <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI> to
+          continue deploying his Smart contracts.
+        </p>
+        <ModalComponent v-model="showModal">
+          <!-- May be return an event that will trigger team reload -->
+          <ContinueAddTeamForm
+            :team="teamStore.currentTeamMeta.team"
+            @done="showModal = false"
+          ></ContinueAddTeamForm>
+        </ModalComponent>
+      </div>
       <TeamMeta
         :team="teamStore.currentTeamMeta.team"
         @getTeam="teamStore.currentTeamMeta.executeFetchTeam"
       />
+
       <MemberSection
         :team="teamStore.currentTeamMeta.team"
         :teamIsFetching="teamStore.currentTeamMeta.teamIsFetching"
@@ -42,17 +59,25 @@
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
-import { watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import MemberSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 const teamStore = useTeamStore()
+const showModal = ref(false)
 
 const route = useRoute()
 
 onMounted(() => {
   teamStore.setCurrentTeamId(route.params.id as string)
+})
+
+const hasContract = computed(() => {
+  return !!teamStore.currentTeam?.officerAddress
 })
 
 // Watch for changes in the route params then update the current team id
