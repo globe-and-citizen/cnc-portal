@@ -2,9 +2,9 @@
   <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
     <h2>CASH Remuneration</h2>
     <div class="flex gap-10">
-      <CashRemunerationCard cardType="balance" :amount="1000" />
-      <CashRemunerationCard cardType="month-claims" :amount="500" />
-      <CashRemunerationCard cardType="approved-claims" :amount="50" />
+      <CashRemunerationCard cardType="balance" :amount="73900" :previous-amount="52000" />
+      <CashRemunerationCard cardType="month-claims" :amount="10200" :previous-amount="8000" />
+      <CashRemunerationCard cardType="approved-claims" :amount="47900" :previous-amount="43200" />
     </div>
     <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
       <div class="flex flex-wrap gap-2 sm:gap-4">
