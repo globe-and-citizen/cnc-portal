@@ -204,21 +204,7 @@ const columns = computed(() => {
       sort: defaultSort
     })) as TableColumn[])
 
-  const hasColumnSelect = defaultColumns.find((v) => v.key === 'select')
-
-  if (hasColumnSelect) {
-    return defaultColumns
-  }
-
-  return [
-    {
-      key: 'select',
-      sortable: false,
-      class: undefined,
-      sort: defaultSort
-    },
-    ...defaultColumns
-  ]
+  return defaultColumns
 })
 
 const currentSort = ref<string | null>(null)
