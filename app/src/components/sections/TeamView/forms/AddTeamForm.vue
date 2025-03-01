@@ -118,7 +118,7 @@
     <!-- Navigation Buttons -->
     <div class="flex justify-between mt-6">
       <ButtonUI
-        v-if="currentStep > 1"
+        v-if="currentStep > 1 && currentStep!=3"
         variant="secondary"
         class="w-32"
         @click="currentStep--"
