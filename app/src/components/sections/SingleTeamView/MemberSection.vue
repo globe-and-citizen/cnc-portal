@@ -22,7 +22,11 @@
       <div class="divider m-0"></div>
       <div class="overflow-x-auto">
         <TableComponent
-          :rows="team.members"
+          :rows="
+            team.members.map((member: any, index: number) => {
+              return { index: index + 1, ...member }
+            })
+          "
           :columns="columns"
           :loading="teamIsFetching"
           data-test="members-table"
