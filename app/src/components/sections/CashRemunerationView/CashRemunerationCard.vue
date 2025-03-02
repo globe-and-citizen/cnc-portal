@@ -61,11 +61,11 @@ const cardAttributes = computed(() => {
       currency: NETWORK.currencySymbol
     },
     'month-claims': {
-      title: 'Month Spent',
+      title: 'Month Claimed',
       currency: null
     },
     'approved-claims': {
-      title: 'Total Approved',
+      title: 'Pending Claim',
       currency: null
     }
   }[props.cardType]
