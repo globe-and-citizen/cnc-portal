@@ -3,7 +3,10 @@
     <CardComponent :class="cardClasses" title="" class="w-80 h-56">
       <div class="flex flex-col gap-1 items-center">
         <img :src="cardIcon" alt="icon" class="w-16 h-16" />
-        <span class="text-4xl font-bold" v-if="!props.isLoading"
+        <span
+          class="text-4xl font-bold"
+          v-if="!props.isLoading"
+          :class="{ truncate: (cardAttributes?.currency ?? '').length > 4 }"
           >{{
             Intl.NumberFormat('en-US', {
               notation: 'compact',
