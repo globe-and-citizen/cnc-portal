@@ -47,7 +47,7 @@ templates:
         - event: Deposited(indexed address,uint256)
           handler: handleDeposited
         - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
-          handler: handleTransfer
+          handler: handleTokenTransfer
   - name: Officer
     kind: ethereum
     network: sepolia
