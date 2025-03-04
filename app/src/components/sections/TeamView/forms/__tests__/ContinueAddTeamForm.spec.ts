@@ -85,7 +85,7 @@ describe('ContinueAddTeamForm', () => {
 
     const deployCompoent = wrapper.findComponent(DeployContractSection)
     expect(wrapper.emitted('done')).toBeFalsy()
-    
+
     deployCompoent.vm.$emit('contractDeployed')
     // Check if wrapper emmit done event
     expect(wrapper.emitted('done')).toBeTruthy()
