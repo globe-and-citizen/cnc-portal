@@ -73,7 +73,7 @@ const { result, loading, error } = useQuery(gql`
 const transactionData = computed<ExpenseTransaction[]>(() => 
   result.value?.transfers ?
     result.value.transfers.map(
-      (transaction) => ({
+      (transaction: Record<string, string>) => ({
         txHash: transaction.transactionHash,
         date: (new Date(Number(transaction.blockTimestamp) * 1000)).toLocaleString('en-US'),
         from: transaction.from,
