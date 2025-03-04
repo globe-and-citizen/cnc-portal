@@ -3,11 +3,11 @@ import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import type { Team } from '@/types/team'
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
 const mockIsFetching = ref(false)
-type TeamData = { id: string; name: string; description: string }
-const mockData = ref<TeamData | null>(null)
+const mockData = ref<Team | null>(null)
 
 // Mock the modules BEFORE importing the component
 vi.mock('@/composables/useCustomFetch', () => {
@@ -98,10 +98,24 @@ describe('ShowIndex', () => {
 
     console.log('Wrapper HTML', wrapper.html())
 
-    mockData.value = { id: '0x123', name: 'Team Name', description: 'Lorem' }
+    mockData.value = {
+      id: '0x123',
+      name: 'Team Name',
+      description: 'Lorem',
+      bankAddress: null,
+      members: [],
+      ownerAddress: '',
+      votingAddress: null,
+      boardOfDirectorsAddress: '',
+      teamContracts: []
+    }
     mockError.value = null
     await wrapper.vm.$nextTick()
     expect(wrapper.html()).toContain('Team Name')
     console.log('Wrapper HTML', wrapper.html())
+
+    mockData.value = { ...mockData.value, officerAddress: '0x123' }
+    mockError.value = null
+    await wrapper.vm.$nextTick()
   })
 })
