@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import DeployContractSection from './DeployContractSection.vue'
 import useVuelidate from '@vuelidate/core'
-import { required } from '@vuelidate/validators'
+import { minLength, required } from '@vuelidate/validators'
 import type { Team } from '@/types'
 
 defineEmits(['done'])
@@ -11,18 +11,15 @@ const investorContractInput = ref({
   symbol: ''
 })
 const props = defineProps<{
-  // investorContractInput: { name: string; symbol: string }
   team: Partial<Team>
 }>()
 
 const investorContractInputRules = {
   investorContractInput: {
-    name: { required },
-    symbol: { required }
+    name: { required, minLength: minLength(4) },
+    symbol: { required, minLength: minLength(3) }
   }
 }
-// TODO: validate Team Details on key up and require at least 5 letter for Team Name
-// TODO validate this before proceeding to create deploy contract
 
 // Validation Instances
 const $vInvestor = useVuelidate(investorContractInputRules, { investorContractInput })
@@ -50,6 +47,7 @@ const $vInvestor = useVuelidate(investorContractInputRules, { investorContractIn
             placeholder="Company Shares"
             data-test="share-name-input"
             v-model="investorContractInput.name"
+            @keyup.stop="$vInvestor.investorContractInput.name.$touch()"
             name="shareName"
           />
         </label>
@@ -70,6 +68,7 @@ const $vInvestor = useVuelidate(investorContractInputRules, { investorContractIn
             placeholder="SHR"
             data-test="share-symbol-input"
             v-model="investorContractInput.symbol"
+            @keyup.stop="$vInvestor.investorContractInput.symbol.$touch()"
             name="shareSymbol"
           />
         </label>
@@ -87,6 +86,7 @@ const $vInvestor = useVuelidate(investorContractInputRules, { investorContractIn
     <!-- Navigation Buttons -->
     <div class="flex justify-between mt-6">
       <DeployContractSection
+        :disabled="$vInvestor.$invalid"
         :investorContractInput="investorContractInput"
         :createdTeamData="props.team"
         @contractDeployed="$emit('done')"
