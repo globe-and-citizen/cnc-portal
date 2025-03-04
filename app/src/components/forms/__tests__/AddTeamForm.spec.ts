@@ -56,7 +56,6 @@ describe('AddTeamForm.vue', () => {
         users,
         isLoading: false
       },
-      attachTo: div,
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
