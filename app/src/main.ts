@@ -6,6 +6,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import apolloClient from './apollo-client'
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
 export function setupApp() {
   const app = createApp(App)
@@ -15,6 +17,7 @@ export function setupApp() {
   app.use(router)
   app.use(WagmiPlugin, { config })
   app.use(VueQueryPlugin, { queryClient })
+  app.provide(DefaultApolloClient, apolloClient)
 
   return app
 }
