@@ -46,7 +46,7 @@ describe('ContinueAddTeamForm', () => {
     }
   })
 
-  it.only('should render the component', async () => {
+  it('should render the component', async () => {
     expect(wrapper.exists()).toBe(true)
 
     // Expect the error message to not be displayed by default
