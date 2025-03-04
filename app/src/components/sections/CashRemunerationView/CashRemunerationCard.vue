@@ -51,9 +51,9 @@ const props = defineProps<{
 
 const cardClasses = computed(() => {
   return {
-    'bg-[#C8FACD] text-[#005249]': props.cardType === 'balance',
-    'bg-[#FEF3DE] text-[#6A3B13]': props.cardType === 'month-claims',
-    'bg-[#D9F1F6] text-[#0C315A]': props.cardType === 'approved-claims'
+    '!bg-[#C8FACD] text-[#005249]': props.cardType === 'balance',
+    '!bg-[#FEF3DE] text-[#6A3B13]': props.cardType === 'month-claims',
+    '!bg-[#D9F1F6] text-[#0C315A]': props.cardType === 'approved-claims'
   }
 })
 
