@@ -8,6 +8,7 @@ import type { Team } from '@/types/team'
 const mockError = ref<string | null>(null)
 const mockIsFetching = ref(false)
 const mockData = ref<Team | null>(null)
+const mockStatus = ref(200)
 
 // Mock the modules BEFORE importing the component
 vi.mock('@/composables/useCustomFetch', () => {
@@ -18,14 +19,16 @@ vi.mock('@/composables/useCustomFetch', () => {
         execute: vi.fn(),
         error: mockError,
         isFetching: mockIsFetching,
-        data: mockData
+        data: mockData,
+        status: mockStatus
       }),
       post: () => ({
         json: () => ({
           execute: vi.fn(),
           error: mockError,
           isFetching: mockIsFetching,
-          data: mockData
+          data: mockData,
+          status: mockStatus
         })
       }),
       get: () => ({
@@ -33,7 +36,8 @@ vi.mock('@/composables/useCustomFetch', () => {
           execute: vi.fn(),
           error: mockError,
           isFetching: mockIsFetching,
-          data: mockData
+          data: mockData,
+          status: mockStatus
         })
       })
     })
@@ -47,6 +51,7 @@ describe('ShowIndex', () => {
     mockError.value = null
     mockIsFetching.value = false
     mockData.value = null
+    mockStatus.value = 200
   })
 
   vi.mock('vue-router', () => ({
@@ -73,7 +78,6 @@ describe('ShowIndex', () => {
         }
       }
     })
-    console.log('Wrapper HTML', wrapper.html())
     expect(wrapper.html()).toContain('Team View')
     expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
 
@@ -91,12 +95,15 @@ describe('ShowIndex', () => {
     // set error to a string
     mockIsFetching.value = false
     mockError.value = 'New Error'
+    mockStatus.value = 500
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
     expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
 
-    console.log('Wrapper HTML', wrapper.html())
+    mockError.value = 'New Error'
+    mockStatus.value = 404
+    await wrapper.vm.$nextTick()
 
     mockData.value = {
       id: '0x123',
@@ -107,15 +114,16 @@ describe('ShowIndex', () => {
       ownerAddress: '',
       votingAddress: null,
       boardOfDirectorsAddress: '',
+      officerAddress: '0x123',
       teamContracts: []
     }
     mockError.value = null
     await wrapper.vm.$nextTick()
     expect(wrapper.html()).toContain('Team Name')
-    console.log('Wrapper HTML', wrapper.html())
-
-    mockData.value = { ...mockData.value, officerAddress: '0x123' }
-    mockError.value = null
-    await wrapper.vm.$nextTick()
   })
+
+  // Display the component whit the officer address
+
+  // TODO: change route
+  // TODO: Click the modal
 })
