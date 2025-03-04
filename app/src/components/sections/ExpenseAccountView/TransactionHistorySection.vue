@@ -1,6 +1,7 @@
 <template>
   <GenericTransactionHistory
-    :transactions="transactions"
+    v-if="transactionData.length > 0"
+    :transactions="transactionData"
     title="Expense Account Transfer History"
     :currencies="['USD', 'CAD', 'INR', 'EUR']"
     :currency-rates="currencyRates"
@@ -11,9 +12,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
 import type { ExpenseTransaction, BaseTransaction } from '@/types/transactions'
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { formatEtherUtil, log, tokenSymbol } from '@/utils'
+import { formatEther } from 'viem'
 
 interface Props {
   currencyRates: {
@@ -48,8 +53,56 @@ const transactions = ref<ExpenseTransaction[]>([
   }
 ])
 
+const { result, loading, error } = useQuery(gql`
+  query GetTransfers {
+    transfers {
+      id
+      from
+      to
+      amount
+      contractType
+      tokenAddress
+      contractAddress
+      transactionHash
+      blockNumber
+      blockTimestamp
+   }
+  }
+`)
+
+const transactionData = computed<ExpenseTransaction[]>(() => 
+  result.value?.transfers ?
+    result.value.transfers.map(
+      (transaction) => ({
+        txHash: transaction.transactionHash,
+        date: (new Date(Number(transaction.blockTimestamp) * 1000)).toLocaleString('en-US'),
+        from: transaction.from,
+        to: transaction.to,
+        amountUSD: 10,
+        amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
+        token: tokenSymbol(transaction.tokenAddress),
+        type: "transfer"
+      })
+    ) : []
+  )
+
 const handleReceiptClick = (transaction: BaseTransaction) => {
   // Handle receipt click if needed
   console.log('Receipt clicked:', transaction as ExpenseTransaction)
 }
+
+watch(error, newError => {
+  if (newError) {
+    log.error('useQueryError: ', newError)
+  }
+
+})
+
+watch(result, newData => {
+  if (newData) {
+    console.log(`newData`, newData)
+    console.log(`transactionData`, transactionData.value)
+    console.log(`typeof transaction.amount`, Number(BigInt(newData.transfers[0].amount)) / 10e6)
+  }
+})
 </script>
