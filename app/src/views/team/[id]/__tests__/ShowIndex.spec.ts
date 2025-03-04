@@ -54,6 +54,7 @@ describe('ShowIndex', () => {
       params: {
         id: 0
       },
+      name: 'show-team',
       meta: {
         name: 'Team View'
       }
@@ -63,7 +64,14 @@ describe('ShowIndex', () => {
   it('should render the team Breadcrumb', async () => {
     // Your test here
     const wrapper = mount(ShowIndex, {
-      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          ContinueAddTeamForm: true,
+          TeamMeta: true,
+          MemberSection: true
+        }
+      }
     })
     console.log('Wrapper HTML', wrapper.html())
     expect(wrapper.html()).toContain('Team View')
@@ -88,9 +96,12 @@ describe('ShowIndex', () => {
     expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
     expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
 
+    console.log('Wrapper HTML', wrapper.html())
+
     mockData.value = { id: '0x123', name: 'Team Name', description: 'Lorem' }
     mockError.value = null
     await wrapper.vm.$nextTick()
     expect(wrapper.html()).toContain('Team Name')
+    console.log('Wrapper HTML', wrapper.html())
   })
 })
