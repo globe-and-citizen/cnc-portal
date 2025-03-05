@@ -94,12 +94,4 @@ watch(error, (newError) => {
     log.error('useQueryError: ', newError)
   }
 })
-
-watch(result, (newData) => {
-  if (newData) {
-    console.log(`newData`, newData)
-    console.log(`transactionData`, transactionData.value)
-    console.log(`typeof transaction.amount`, Number(BigInt(newData.transfers[0].amount)) / 10e6)
-  }
-})
 </script>
