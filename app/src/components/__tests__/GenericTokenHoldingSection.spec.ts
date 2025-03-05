@@ -2,8 +2,9 @@ import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import TokenHoldingSection from '@/components/GenericTokenHoldingsSection.vue'
 import TableComponent from '@/components/TableComponent.vue'
-import { ref, type ComponentPublicInstance } from 'vue'
+import { ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
+import * as utils from '@/utils'
 
 const mockUseCryptoPrice = {
   prices: ref({'ethereum': {usd: 2500}, 'usd-coin': {usd: 1}}),
@@ -45,5 +46,15 @@ describe('TransactionHistorySection', () => {
     expect(secondRow.html()).toContain(`20000.00`)
     expect(secondRow.html()).toContain(`$1.00`)
     expect(secondRow.html()).toContain(`$20000.00`)
+  })
+
+  it('should log error', async () => {
+    mockUseCryptoPrice.error.value = new Error('Error getting price')
+    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    mount(TokenHoldingSection, {props:defaultProps})
+
+    await flushPromises()
+
+    expect(logErrorSpy).toBeCalledWith('priceError.value', 'Error getting price')
   })
 })
