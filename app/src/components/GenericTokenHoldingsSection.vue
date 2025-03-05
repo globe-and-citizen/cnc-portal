@@ -3,6 +3,7 @@
   <CardComponent title="Token Holding" class="mb-8">
     <TableComponent
       :rows="tokensWithRank"
+      :loading="pricesLoading"
       :columns="[
         { key: 'rank', label: 'RANK' },
         { key: 'token', label: 'Token', sortable: true },
@@ -30,13 +31,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK } from '@/constant'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
+import { log, parseError } from '@/utils'
 // import { useCurrencyRates } from '@/composables/useCurrencyRates'
 
 interface Token {
@@ -130,4 +132,10 @@ const tokensWithRank = computed<TokenWithRank[]>(() =>
     rank: index + 1
   }))
 )
+
+watch(pricesError, newError => {
+  if (newError) {
+    log.error('priceError.value', parseError(newError))
+  }
+})
 </script>
