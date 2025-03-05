@@ -1,40 +1,38 @@
 <!-- TokenHoldingsSection.vue -->
 <template>
-  <div class="card bg-base-100 shadow-sm mb-8">
-    <div class="card-body">
-      <h3 class="text-lg font-medium mb-4">Token Holding</h3>
-      <TableComponent
-        :rows="tokensWithRank"
-        :columns="[
-          { key: 'rank', label: 'RANK' },
-          { key: 'token', label: 'Token', sortable: true },
-          { key: 'amount', label: 'Amount', sortable: true },
-          { key: 'price', label: 'Coin Price', sortable: true },
-          { key: 'balance', label: 'Balance', sortable: true }
-        ]"
-      >
-        <template #token-data="{ row }">
-          <div class="flex items-center gap-2">
-            <img :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
-            <div class="flex flex-col">
-              <div class="font-medium">{{ row.name }}</div>
-              <div class="text-sm text-gray-500">{{ row.network }}</div>
-            </div>
+  <CardComponent title="Token Holding" class="mb-8">
+    <TableComponent
+      :rows="tokensWithRank"
+      :columns="[
+        { key: 'rank', label: 'RANK' },
+        { key: 'token', label: 'Token', sortable: true },
+        { key: 'amount', label: 'Amount', sortable: true },
+        { key: 'price', label: 'Coin Price', sortable: true },
+        { key: 'balance', label: 'Balance', sortable: true }
+      ]"
+    >
+      <template #token-data="{ row }">
+        <div class="flex items-center gap-2">
+          <img :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
+          <div class="flex flex-col">
+            <div class="font-medium">{{ row.name }}</div>
+            <div class="text-sm text-gray-500">{{ row.network }}</div>
           </div>
-        </template>
-        <template #rank-data="{ row }">
-          {{ row.rank }}
-        </template>
-        <template #price-data="{ row }"> ${{ row.price }} </template>
-        <template #balance-data="{ row }"> ${{ row.balance }} </template>
-      </TableComponent>
-    </div>
-  </div>
+        </div>
+      </template>
+      <template #rank-data="{ row }">
+        {{ row.rank }}
+      </template>
+      <template #price-data="{ row }"> ${{ row.price }} </template>
+      <template #balance-data="{ row }"> ${{ row.balance }} </template>
+    </TableComponent>
+  </CardComponent>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
+import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK } from '@/constant'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
