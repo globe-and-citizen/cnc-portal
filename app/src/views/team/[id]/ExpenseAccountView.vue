@@ -62,7 +62,7 @@
       </div>
     </div>
 
-    <GenericTokenHoldingsSection 
+    <GenericTokenHoldingsSection
       :network-currency-balance="formattedNetworkCurrencyBalance"
       :usdc-balance="formattedUsdcBalance"
     />
@@ -108,9 +108,7 @@
       </ModalComponent>
     </div>
 
-    <div
-      data-test="claims-table"
-    >
+    <div data-test="claims-table">
       <TransactionHistorySection
         :currency-rates="{
           loading: false,
@@ -255,16 +253,12 @@ const {
 })
 //#endregion
 
-const formattedNetworkCurrencyBalance = computed(() => formatEther(
-  expenseAccountBalance.value?.value
-    ? expenseAccountBalance.value?.value
-    : 0n
-))
+const formattedNetworkCurrencyBalance = computed(() =>
+  formatEther(expenseAccountBalance.value?.value ? expenseAccountBalance.value?.value : 0n)
+)
 
-const formattedUsdcBalance = computed(() => 
-  usdcBalance.value
-    ? `${Number(usdcBalance.value) / 1e6}`
-    : `0`
+const formattedUsdcBalance = computed(() =>
+  usdcBalance.value ? `${Number(usdcBalance.value) / 1e6}` : `0`
 )
 
 //#region Functions

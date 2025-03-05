@@ -39,7 +39,6 @@ import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { log, parseError } from '@/utils'
-// import { useCurrencyRates } from '@/composables/useCurrencyRates'
 
 interface Token {
   name: string
@@ -57,23 +56,9 @@ interface TokenWithRank extends Token {
   amount: string
 }
 
-// interface BankBalanceSection {
-//   teamBalance?: {
-//     formatted?: string
-//   }
-//   formattedUsdcBalance?: string
-// }
-
 const props = defineProps<{
-  // bankBalanceSection: BankBalanceSection
-  networkCurrencyBalance: string 
+  networkCurrencyBalance: string
   usdcBalance: string
-  /*priceData: {
-    networkCurrencyPrice: number
-    usdcPrice: number
-    loading: boolean
-    error: boolean | null
-  }*/
 }>()
 
 // Map network currency symbol to CoinGecko ID - always use ethereum price for testnets
@@ -101,24 +86,17 @@ const tokens = computed(() => [
     network: NETWORK.currencySymbol,
     price: networkCurrencyPrice.value,
     balance: props.networkCurrencyBalance
-      ? Number(props.networkCurrencyBalance) *
-        networkCurrencyPrice.value
+      ? Number(props.networkCurrencyBalance) * networkCurrencyPrice.value
       : 0,
-    amount: props.networkCurrencyBalance
-      ? Number(props.networkCurrencyBalance)
-      : 0,
+    amount: props.networkCurrencyBalance ? Number(props.networkCurrencyBalance) : 0,
     icon: EthereumIcon
   },
   {
     name: 'USDC',
     network: 'USDC',
     price: usdcPrice.value,
-    balance: props.usdcBalance
-      ? Number(props.usdcBalance) * usdcPrice.value
-      : 0,
-    amount: props.usdcBalance
-      ? Number(props.usdcBalance)
-      : 0,
+    balance: props.usdcBalance ? Number(props.usdcBalance) * usdcPrice.value : 0,
+    amount: props.usdcBalance ? Number(props.usdcBalance) : 0,
     icon: USDCIcon
   }
 ])
@@ -133,7 +111,7 @@ const tokensWithRank = computed<TokenWithRank[]>(() =>
   }))
 )
 
-watch(pricesError, newError => {
+watch(pricesError, (newError) => {
   if (newError) {
     log.error('priceError.value', parseError(newError))
   }

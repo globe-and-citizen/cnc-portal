@@ -7,7 +7,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import * as utils from '@/utils'
 
 const mockUseCryptoPrice = {
-  prices: ref({'ethereum': {usd: 2500}, 'usd-coin': {usd: 1}}),
+  prices: ref({ ethereum: { usd: 2500 }, 'usd-coin': { usd: 1 } }),
   loading: ref(false),
   error: ref<Error | null>(null)
 }
@@ -16,7 +16,7 @@ vi.mock('@/composables/useCryptoPrice', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
-    useCryptoPrice: vi.fn(() => ({...mockUseCryptoPrice}))
+    useCryptoPrice: vi.fn(() => ({ ...mockUseCryptoPrice }))
   }
 })
 
@@ -26,7 +26,7 @@ describe('TransactionHistorySection', () => {
     usdcBalance: `20000`
   }
 
-  const createComponent = mount(TokenHoldingSection, {props:defaultProps})
+  const createComponent = mount(TokenHoldingSection, { props: defaultProps })
 
   it('renders correctly', async () => {
     const wrapper = createComponent
@@ -51,7 +51,7 @@ describe('TransactionHistorySection', () => {
   it('should log error', async () => {
     mockUseCryptoPrice.error.value = new Error('Error getting price')
     const logErrorSpy = vi.spyOn(utils.log, 'error')
-    mount(TokenHoldingSection, {props:defaultProps})
+    mount(TokenHoldingSection, { props: defaultProps })
 
     await flushPromises()
 
