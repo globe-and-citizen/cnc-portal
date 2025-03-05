@@ -11,7 +11,5 @@ export const tokenSymbol = (tokenAddress: string) => {
   return symbols[tokenAddress.toLocaleLowerCase()] || ''
 }
 
-export const formatEtherUtil = (amount: bigint, tokenAddress: string) => 
-  tokenAddress === zeroAddress?
-    formatEther(amount):
-    `${Number(amount) / 1e6}`
+export const formatEtherUtil = (amount: bigint, tokenAddress: string) =>
+  tokenAddress === zeroAddress ? formatEther(amount) : `${Number(amount) / 1e6}`

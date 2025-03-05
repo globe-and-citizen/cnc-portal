@@ -9,19 +9,21 @@ import { ref, type ComponentPublicInstance } from 'vue'
 
 const mockUseQuery = {
   result: ref({
-    transfers: [{
-      amount: "7000000",
-      blockNumber: "33",
-      blockTimestamp: "1741077830",
-      contractAddress: "0x552a6b9d3c6ef286fb40eeae9e8cfecdab468c0a",
-      contractType: "ExpenseAccountEIP712",
-      from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-      id: "0xe5a1940c7d5b338a4383fed25d08d338efe17a40cd94d66677f374a81c0d2d3a01000000",
-      to: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-      tokenAddress: "0x59b670e9fa9d0a427751af201d676719a970857b",
-      transactionHash: "0xe5a1940c7d5b338a4383fed25d08d338efe17a40cd94d66677f374a81c0d2d3a",
-      __typename: "Transfer"
-    }]
+    transfers: [
+      {
+        amount: '7000000',
+        blockNumber: '33',
+        blockTimestamp: '1741077830',
+        contractAddress: '0x552a6b9d3c6ef286fb40eeae9e8cfecdab468c0a',
+        contractType: 'ExpenseAccountEIP712',
+        from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        id: '0xe5a1940c7d5b338a4383fed25d08d338efe17a40cd94d66677f374a81c0d2d3a01000000',
+        to: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        tokenAddress: '0x59b670e9fa9d0a427751af201d676719a970857b',
+        transactionHash: '0xe5a1940c7d5b338a4383fed25d08d338efe17a40cd94d66677f374a81c0d2d3a',
+        __typename: 'Transfer'
+      }
+    ]
   }),
   error: ref<Error | null>(),
   loading: ref(false)
@@ -31,8 +33,8 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
-    useQuery: vi.fn(() => ({...mockUseQuery}))
-  } 
+    useQuery: vi.fn(() => ({ ...mockUseQuery }))
+  }
 })
 
 describe('TransactionHistorySection', () => {
@@ -120,7 +122,8 @@ describe('TransactionHistorySection', () => {
       })
 
     it('should show receipt when receipt is clicked', async () => {
-      const wrapper = createComponent(/*{
+      const wrapper =
+        createComponent(/*{
         data: () => ({
           transactions: [
             {

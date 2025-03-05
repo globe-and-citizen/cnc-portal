@@ -66,39 +66,37 @@ const { result, loading, error } = useQuery(gql`
       transactionHash
       blockNumber
       blockTimestamp
-   }
+    }
   }
 `)
 
-const transactionData = computed<ExpenseTransaction[]>(() => 
-  result.value?.transfers ?
-    result.value.transfers.map(
-      (transaction: Record<string, string>) => ({
+const transactionData = computed<ExpenseTransaction[]>(() =>
+  result.value?.transfers
+    ? result.value.transfers.map((transaction: Record<string, string>) => ({
         txHash: transaction.transactionHash,
-        date: (new Date(Number(transaction.blockTimestamp) * 1000)).toLocaleString('en-US'),
+        date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
         to: transaction.to,
         amountUSD: 10,
         amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
         token: tokenSymbol(transaction.tokenAddress),
-        type: "transfer"
-      })
-    ) : []
-  )
+        type: 'transfer'
+      }))
+    : []
+)
 
 const handleReceiptClick = (transaction: BaseTransaction) => {
   // Handle receipt click if needed
   console.log('Receipt clicked:', transaction as ExpenseTransaction)
 }
 
-watch(error, newError => {
+watch(error, (newError) => {
   if (newError) {
     log.error('useQueryError: ', newError)
   }
-
 })
 
-watch(result, newData => {
+watch(result, (newData) => {
   if (newData) {
     console.log(`newData`, newData)
     console.log(`transactionData`, transactionData.value)
