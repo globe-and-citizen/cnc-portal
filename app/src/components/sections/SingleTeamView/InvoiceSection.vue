@@ -30,13 +30,13 @@
         </div>
       </div>
       <div class="flex gap-2">
-        <button
+        <!-- <button
           class="btn btn-primary"
           @click="downloadPDF"
           :disabled="loading || !hasTransactions"
         >
           Download PDF
-        </button>
+        </button> -->
         <button
           class="btn btn-primary"
           @click="downloadExcel"
@@ -145,8 +145,8 @@ import { useToastStore } from '@/stores/useToastStore'
 import { NETWORK } from '@/constant'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { formatEther, type Address } from 'viem'
-import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+// import { jsPDF } from 'jspdf'
+// import 'jspdf-autotable'
 import xlsx from 'node-xlsx'
 import type { Team } from '@/types'
 
@@ -409,75 +409,6 @@ const fetchTransactions = async () => {
     addErrorToast('Failed to fetch transactions')
   } finally {
     loading.value = false
-  }
-}
-
-const downloadPDF = () => {
-  try {
-    interface jsPDFInt {
-      setFontSize: (size: number) => void
-      text: (text: string, x: number, y: number) => void
-      save: (filename: string) => void
-      autoTable: (options: {
-        head: string[][]
-        body: string[][]
-        startY: number
-        styles: { fontSize: number }
-        columnStyles: { [key: number]: { cellWidth: number } }
-      }) => void
-    }
-    const doc: Partial<jsPDFInt> = new jsPDF()
-
-    // Add title
-    doc?.setFontSize?.(16)
-    doc?.text?.('Transaction Invoice', 14, 15)
-
-    // Add date range
-    doc?.setFontSize?.(10)
-    doc?.text?.(`Period: ${fromDate.value || 'All'} to ${toDate.value || 'All'}`, 14, 25)
-
-    // Add table
-    const tableData = filteredTransactions.value.map((tx) => [
-      formatDate(tx.date),
-      tx.type,
-      formatAddress(tx.from, false),
-      formatAddress(tx.to, false),
-      formatAmount(tx).original,
-      formatAmount(tx).convertedUSDC,
-      tx.hash
-    ])
-
-    doc?.autoTable?.({
-      head: [
-        [
-          'Date',
-          'Type',
-          'From',
-          'To',
-          'Amount',
-          `Price (${selectedCurrency.value})`,
-          'Transaction Hash'
-        ]
-      ],
-      body: tableData,
-      startY: 30,
-      styles: { fontSize: 8 },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 20 },
-        2: { cellWidth: 40 },
-        3: { cellWidth: 40 },
-        4: { cellWidth: 15 },
-        5: { cellWidth: 15 },
-        6: { cellWidth: 45 }
-      }
-    })
-
-    doc?.save?.('transaction-invoice.pdf')
-    addSuccessToast('PDF downloaded successfully')
-  } catch (error) {
-    console.error('Error generating PDF:', error)
-    addErrorToast('Failed to generate PDF')
   }
 }
 

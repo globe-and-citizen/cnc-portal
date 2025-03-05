@@ -177,35 +177,6 @@ describe('InvoiceSection.vue', () => {
     windowSpy.mockRestore()
   })
 
-  describe('Download functionality', () => {
-    it('downloads PDF with correct formatting', async () => {
-      const mockTransaction: CustomTransaction = {
-        type: 'Deposit',
-        from: '0x123',
-        to: '0x456',
-        amount: BigInt('1000000000000000000'),
-        hash: '0xabc',
-        date: Date.now(),
-        isToken: false
-      }
-
-      const vm = wrapper.vm as unknown as invoiceComponent
-      vm.allTransactions = [mockTransaction]
-      vm.fromDate = '2024-01-01'
-      vm.toDate = '2024-01-31'
-
-      const jspdfModule = await import('jspdf')
-      const mockJsPDF = vi.mocked(jspdfModule.jsPDF)
-
-      await vm.downloadPDF()
-
-      const mockInstance = mockJsPDF.mock.results[0].value
-      expect(mockInstance.setFontSize).toHaveBeenCalled()
-      expect(mockInstance.text).toHaveBeenCalled()
-      expect(mockInstance.save).toHaveBeenCalledWith('transaction-invoice.pdf')
-    })
-  })
-
   describe('Exchange rates and amount formatting', () => {
     it('fetches exchange rates correctly', async () => {
       const date = '2024-01-01'
