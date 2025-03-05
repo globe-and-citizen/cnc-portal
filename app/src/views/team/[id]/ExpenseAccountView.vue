@@ -62,6 +62,11 @@
       </div>
     </div>
 
+    <GenericTokenHoldingsSection 
+      :network-currency-balance="formattedNetworkCurrencyBalance"
+      :usdc-balance="formattedUsdcBalance"
+    />
+
     <MyApprovedExpenseSection
       v-if="team"
       :team="team"
@@ -104,7 +109,6 @@
     </div>
 
     <div
-      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
       data-test="claims-table"
     >
       <TransactionHistorySection
@@ -140,6 +144,8 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useRoute } from 'vue-router'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { useExpenseAccountDataCollection } from '@/composables'
+import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+
 //#endregion
 
 //#region Refs
@@ -248,6 +254,18 @@ const {
   args: [expenseAccountEip712Address as unknown as Address]
 })
 //#endregion
+
+const formattedNetworkCurrencyBalance = computed(() => formatEther(
+  expenseAccountBalance.value?.value
+    ? expenseAccountBalance.value?.value
+    : 0n
+))
+
+const formattedUsdcBalance = computed(() => 
+  usdcBalance.value
+    ? `${Number(usdcBalance.value) / 1e6}`
+    : `0`
+)
 
 //#region Functions
 const init = async () => {
