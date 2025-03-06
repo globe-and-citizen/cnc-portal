@@ -79,7 +79,7 @@ describe('TransactionHistorySection', () => {
     expect(secondRow.html()).toContain(`$20000.00`)
   })
 
-  it('should log error', async () => {
+  it('should log getting error', async () => {
     mockUseCryptoPrice.error.value = new Error('Error getting price')
     const logErrorSpy = vi.spyOn(utils.log, 'error')
     mount(TokenHoldingSection, { props: defaultProps })
@@ -87,5 +87,28 @@ describe('TransactionHistorySection', () => {
     await flushPromises()
 
     expect(logErrorSpy).toBeCalledWith('priceError.value', 'Error getting price')
+  })
+
+  it('should log network currency balance error', async () => {
+    mockUseBalance.error.value = new Error('Error getting network currency balance')
+    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    mount(TokenHoldingSection, { props: defaultProps })
+
+    await flushPromises()
+
+    expect(logErrorSpy).toBeCalledWith(
+      'networkCurrencyBalanceError.value',
+      'Error getting network currency balance'
+    )
+  })
+
+  it('should log network usdc balance error', async () => {
+    mockUseReadContract.error.value = new Error('Error getting USDC balance')
+    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    mount(TokenHoldingSection, { props: defaultProps })
+
+    await flushPromises()
+
+    expect(logErrorSpy).toBeCalledWith('usdcBalanceError.value', 'Error getting USDC balance')
   })
 })
