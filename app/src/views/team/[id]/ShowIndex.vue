@@ -3,57 +3,81 @@
   <div class="flex flex-col gap-6">
     <div>
       <h2>{{ route.meta.name }}</h2>
-      <div class="breadcrumbs text-sm" v-if="!teamError">
+      <div class="breadcrumbs text-sm" v-if="!teamStore.currentTeamMeta?.teamError">
         <ul>
           <li>
-            <div class="skeleton h-4 w-20" v-if="teamIsFetching"></div>
-            <a v-if="team">{{ team?.name }}</a>
+            <div
+              class="skeleton h-4 w-20"
+              data-test="loader"
+              v-if="teamStore.currentTeamMeta?.teamIsFetching"
+            ></div>
+            <a v-if="teamStore.currentTeamMeta?.team">{{ teamStore.currentTeamMeta.team?.name }}</a>
           </li>
 
           <li>{{ route.meta.name }}</li>
         </ul>
       </div>
     </div>
-    <div v-if="teamError">
-      <div class="alert alert-warning" v-if="statusCode === 404">Error! Team not found</div>
+    <div v-if="teamStore.currentTeamMeta?.teamError" data-test="error-state">
+      <div class="alert alert-warning" v-if="teamStore.currentTeamMeta?.statusCode === 404">
+        Error! Team not found
+      </div>
       <div class="alert alert-error" v-else>Error! Something went wrong</div>
     </div>
-    <div v-if="route.name == 'show-team' && team">
-      <MemberSection :team="team" :teamIsFetching="teamIsFetching" @getTeam="execute" />
+    <div
+      v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.team"
+      class="flex flex-col gap-6"
+    >
+      <!-- Continue Team Creation section -->
+      <div v-if="!hasContract">
+        <p>
+          You have created your team without deploying the Smart contracts necessary for its
+          management. Click
+          <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI> to
+          continue deploying his Smart contracts.
+        </p>
+        <ModalComponent v-model="showModal">
+          <!-- May be return an event that will trigger team reload -->
+          <ContinueAddTeamForm
+            :team="teamStore.currentTeamMeta.team"
+            @done="showModal = false"
+          ></ContinueAddTeamForm>
+        </ModalComponent>
+      </div>
+      <TeamMeta
+        :team="teamStore.currentTeamMeta.team"
+        @getTeam="teamStore.currentTeamMeta.executeFetchTeam"
+      />
+
+      <MemberSection
+        :team="teamStore.currentTeamMeta.team"
+        :teamIsFetching="teamStore.currentTeamMeta.teamIsFetching"
+      />
     </div>
     <RouterView v-if="teamStore.currentTeam" />
   </div>
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
-import { watch, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import MemberSection from '@/components/sections/SingleTeamView/MemberSection.vue'
+import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 const teamStore = useTeamStore()
+const showModal = ref(false)
 
 const route = useRoute()
 
-const teamURI = computed(() => {
-  console.log('Route params', route.params.id)
-  return `teams/${route.params.id}`
-})
-
-/**
- * @description Fetch team by id
- * @returns team, teamIsFetching, teamError, executeFetchTeam
- */
-const {
-  isFetching: teamIsFetching,
-  error: teamError,
-  statusCode,
-  data: team,
-  execute
-} = useCustomFetch(teamURI).json()
-
 onMounted(() => {
   teamStore.setCurrentTeamId(route.params.id as string)
+})
+
+const hasContract = computed(() => {
+  return !!teamStore.currentTeam?.officerAddress
 })
 
 // Watch for changes in the route params then update the current team id

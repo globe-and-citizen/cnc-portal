@@ -67,6 +67,11 @@
         :isLoading="userIsUpdating"
       />
     </ModalComponent>
+    <!-- Add Team Modal -->
+    <ModalComponent v-model="appStore.showAddTeamModal">
+      <!-- May be return an event that will trigger team reload -->
+      <AddTeamForm @done="appStore.showAddTeamModal = false" v-if="appStore.showAddTeamModal" />
+    </ModalComponent>
 
     <!-- Toast Notifications -->
     <ToastContainer position="bottom-right" />
@@ -85,6 +90,8 @@ import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
+import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+
 import { useCustomFetch } from './composables/useCustomFetch'
 import {
   useAccount,
@@ -96,8 +103,11 @@ import TIPS_ABI from '@/artifacts/abi/tips.json'
 import { TIPS_ADDRESS } from './constant'
 import { formatEther, type Address } from 'viem'
 import { useAuth } from './composables/useAuth'
+import { useAppStore } from './stores'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const appStore = useAppStore()
 const { isDisconnected } = useAccount()
 const { logout } = useAuth()
 const toggleSide = ref(false)

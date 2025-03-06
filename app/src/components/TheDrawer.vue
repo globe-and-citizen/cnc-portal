@@ -41,22 +41,26 @@
     </div>
     <!-- Team Display Group -->
     <!-- TODO: Display "Select team" if the current team don't exist -->
+    <!-- <pre>{{ teamStore.teamsMeta }}</pre> -->
     <div
       class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
       data-test="team-display"
       @click="toggleDropdown"
-      v-if="teamStore.currentTeam"
     >
       <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
         <span
           class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
         >
-          {{ teamStore.currentTeam?.name.charAt(0) }}
+          {{ teamStore.currentTeam?.name.charAt(0) ?? 'N' }}
         </span>
       </div>
       <div class="flex flex-row justify-center items-center gap-8" v-if="!isCollapsed">
-        <span class="text-sm font-medium text-gray-700">{{ teamStore.currentTeam?.name }}</span>
+        <span
+          class="text-sm font-medium text-gray-700"
+          :class="teamStore.currentTeam?.name ? '' : 'border p-2'"
+          >{{ teamStore.currentTeam?.name ?? 'Select Team' }}</span
+        >
         <div class="relative">
           <button
             class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
@@ -107,7 +111,7 @@
       </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto custom-scrollbar">
+    <div class="flex-1 overflow-y-auto custom-scrollbar border-b-2">
       <div class="mb-4">
         <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
@@ -195,7 +199,9 @@ import {
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore } from '@/stores'
+import { useRoute } from 'vue-router'
 const appStore = useAppStore()
+const route = useRoute()
 
 interface User {
   name: string
@@ -243,7 +249,7 @@ const menuItems = computed(() => [
       name: 'show-team',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: true,
+    active: route.name === 'show-team',
     show: true
   },
   {
@@ -253,6 +259,7 @@ const menuItems = computed(() => [
       name: 'bank',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'bank',
     show: true
   },
   {
@@ -262,6 +269,7 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'cash-remunerations',
     show: teamStore.currentTeam?.cashRemunerationEip712Address
   },
   {
@@ -271,6 +279,7 @@ const menuItems = computed(() => [
       name: 'expense-account',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'expense-account',
     show: teamStore.currentTeam?.expenseAccountEip712Address
   },
   {

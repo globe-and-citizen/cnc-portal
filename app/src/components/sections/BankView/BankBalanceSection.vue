@@ -1,51 +1,48 @@
 <!-- BankBalanceSection.vue -->
 <template>
-  <div class="card bg-base-100 shadow-sm">
-    <div class="card-body">
-      <div class="flex justify-between items-start">
-        <div>
-          <h2 class="text-lg font-medium mb-1">Balance</h2>
-          <div class="flex items-baseline gap-2">
-            <span class="text-4xl font-bold">
-              <span class="inline-block min-w-16 h-10">
-                <span
-                  class="loading loading-spinner loading-lg"
-                  v-if="balanceLoading || isLoadingUsdcBalance"
-                ></span>
-                <span v-else>{{ totalValueUSD }}</span>
-              </span>
+  <CardComponent title="Balance">
+    <div class="flex justify-between items-start">
+      <div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-4xl font-bold">
+            <span class="inline-block min-w-16 h-10">
+              <span
+                class="loading loading-spinner loading-lg"
+                v-if="balanceLoading || isLoadingUsdcBalance"
+              ></span>
+              <span v-else>{{ totalValueUSD }}</span>
             </span>
-            <span class="text-gray-600">USD</span>
-          </div>
-          <div class="text-sm text-gray-500 mt-1">≈ {{ totalValueLocal }} CAD</div>
+          </span>
+          <span class="text-gray-600">USD</span>
         </div>
-        <div class="flex flex-col items-end gap-4">
-          <div class="flex gap-2">
-            <ButtonUI
-              v-if="bankAddress"
-              variant="secondary"
-              class="flex items-center gap-2"
-              @click="depositModal = true"
-              data-test="deposit-button"
-            >
-              <PlusIcon class="w-5 h-5" />
-              Deposit
-            </ButtonUI>
-            <ButtonUI
-              v-if="bankAddress"
-              variant="secondary"
-              class="flex items-center gap-2"
-              @click="transferModal = true"
-              data-test="transfer-button"
-            >
-              <ArrowsRightLeftIcon class="w-5 h-5" />
-              Transfer
-            </ButtonUI>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="text-sm text-gray-600">Contract Address:</div>
-            <AddressToolTip :address="bankAddress!" />
-          </div>
+        <div class="text-sm text-gray-500 mt-1">≈ {{ totalValueLocal }} CAD</div>
+      </div>
+      <div class="flex flex-col items-end gap-4">
+        <div class="flex gap-2">
+          <ButtonUI
+            v-if="bankAddress"
+            variant="secondary"
+            class="flex items-center gap-2"
+            @click="depositModal = true"
+            data-test="deposit-button"
+          >
+            <PlusIcon class="w-5 h-5" />
+            Deposit
+          </ButtonUI>
+          <ButtonUI
+            v-if="bankAddress"
+            variant="secondary"
+            class="flex items-center gap-2"
+            @click="transferModal = true"
+            data-test="transfer-button"
+          >
+            <ArrowsRightLeftIcon class="w-5 h-5" />
+            Transfer
+          </ButtonUI>
+        </div>
+        <div class="flex items-center gap-2" v-if="bankAddress">
+          <div class="text-sm text-gray-600">Contract Address:</div>
+          <AddressToolTip :address="bankAddress" />
         </div>
       </div>
     </div>
@@ -82,13 +79,14 @@
         service="Bank"
       />
     </ModalComponent>
-  </div>
+  </CardComponent>
 </template>
 
 <script setup lang="ts">
 import { PlusIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import {
   useBalance,

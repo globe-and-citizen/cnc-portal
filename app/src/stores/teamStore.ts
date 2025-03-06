@@ -36,7 +36,8 @@ export const useTeamStore = defineStore('team', () => {
     isFetching: teamIsFetching,
     error: teamError,
     data: team,
-    execute: executeFetchTeam
+    execute: executeFetchTeam,
+    statusCode
   } = useCustomFetch(teamURI, { immediate: false }).json()
 
   /**
@@ -115,6 +116,13 @@ export const useTeamStore = defineStore('team', () => {
     },
     fetchTeam,
     setCurrentTeamId,
-    currentTeam
+    currentTeam,
+    currentTeamMeta: {
+      teamIsFetching,
+      teamError,
+      team,
+      statusCode,
+      executeFetchTeam
+    }
   }
 })
