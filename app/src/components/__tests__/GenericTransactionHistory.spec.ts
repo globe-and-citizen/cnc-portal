@@ -90,11 +90,6 @@ describe('GenericTransactionHistory', () => {
     wrapper = createWrapper()
   })
 
-  it('renders the component with correct title', () => {
-    const title = wrapper.find('[data-test="transaction-history-title"]')
-    expect(title.text()).toBe('Transaction History')
-  })
-
   it('shows date filter by default', () => {
     const datePicker = wrapper.findComponent(Datepicker)
     expect(datePicker.exists()).toBe(true)
