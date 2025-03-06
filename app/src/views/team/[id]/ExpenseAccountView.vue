@@ -63,8 +63,8 @@
     </div>
 
     <GenericTokenHoldingsSection
-      :network-currency-balance="formattedNetworkCurrencyBalance"
-      :usdc-balance="formattedUsdcBalance"
+      v-if="team?.expenseAccountEip712Address"
+      :address="team.expenseAccountEip712Address"
     />
 
     <MyApprovedExpenseSection

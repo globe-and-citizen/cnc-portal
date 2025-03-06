@@ -3,7 +3,7 @@
   <CardComponent title="Token Holding" class="mb-8">
     <TableComponent
       :rows="tokensWithRank"
-      :loading="pricesLoading"
+      :loading="pricesLoading || isLoadingNetworkCuerrencyBalance || isLoadingUsdcBalance"
       :columns="[
         { key: 'rank', label: 'RANK' },
         { key: 'token', label: 'Token', sortable: true },
@@ -31,14 +31,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
-import { NETWORK } from '@/constant'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { log, parseError } from '@/utils'
+import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
+import { formatEther, type Address } from 'viem'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
 
 interface Token {
   name: string
@@ -57,8 +60,9 @@ interface TokenWithRank extends Token {
 }
 
 const props = defineProps<{
-  networkCurrencyBalance: string
-  usdcBalance: string
+  // networkCurrencyBalance: string
+  // usdcBalance: string
+  address: string
 }>()
 
 // Map network currency symbol to CoinGecko ID - always use ethereum price for testnets
@@ -67,11 +71,36 @@ const networkCurrencyId = computed(() => {
   return 'ethereum'
 })
 
+const chainId = useChainId()
+
 const {
   prices,
   loading: pricesLoading,
   error: pricesError
 } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
+
+const {
+  data: networkCurrencyBalance,
+  isLoading: isLoadingNetworkCuerrencyBalance,
+  error: isErrorNetworkCurrencyBalance,
+  refetch: refetchNetworkCurrencyBalance
+} = useBalance({
+  address: props.address as unknown as Address,
+  chainId
+})
+
+// Token balances
+const {
+  data: usdcBalance,
+  isLoading: isLoadingUsdcBalance,
+  refetch: refetchUsdcBalance,
+  error: usdcBalanceError
+} = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [props.address as unknown as Address]
+})
 
 // Computed properties for prices
 const networkCurrencyPrice = computed(() => prices.value[networkCurrencyId.value]?.usd || 0)
@@ -85,21 +114,27 @@ const tokens = computed(() => [
     name: NETWORK.currencySymbol,
     network: NETWORK.currencySymbol,
     price: networkCurrencyPrice.value,
-    balance: props.networkCurrencyBalance
-      ? Number(props.networkCurrencyBalance) * networkCurrencyPrice.value
-      : 0,
-    amount: props.networkCurrencyBalance ? Number(props.networkCurrencyBalance) : 0,
+    balance: Number(formattedNetworkCurrencyBalance.value) * networkCurrencyPrice.value,
+    amount: Number(formattedNetworkCurrencyBalance.value), //props.networkCurrencyBalance ? Number(props.networkCurrencyBalance) : 0,
     icon: EthereumIcon
   },
   {
     name: 'USDC',
     network: 'USDC',
     price: usdcPrice.value,
-    balance: props.usdcBalance ? Number(props.usdcBalance) * usdcPrice.value : 0,
-    amount: props.usdcBalance ? Number(props.usdcBalance) : 0,
+    balance: Number(formattedUsdcBalance.value) * usdcPrice.value,
+    amount: Number(formattedUsdcBalance.value), //props.usdcBalance ? Number(props.usdcBalance) : 0,
     icon: USDCIcon
   }
 ])
+
+const formattedNetworkCurrencyBalance = computed(() =>
+  networkCurrencyBalance.value?.value ? formatEther(networkCurrencyBalance.value.value) : `0`
+)
+
+const formattedUsdcBalance = computed(() =>
+  usdcBalance.value ? Number(usdcBalance.value) / 1e6 : `0`
+)
 
 const tokensWithRank = computed<TokenWithRank[]>(() =>
   tokens.value.map((token, index) => ({
@@ -115,5 +150,13 @@ watch(pricesError, (newError) => {
   if (newError) {
     log.error('priceError.value', parseError(newError))
   }
+})
+
+onMounted(async () => {
+  await refetchNetworkCurrencyBalance()
+  await refetchUsdcBalance()
+  console.log(`address: `, props.addressaddress)
+  console.log(`networkCurrencyBalance: `, networkCurrencyBalance.value)
+  console.log(`usdcBalance: `, usdcBalance.value)
 })
 </script>
