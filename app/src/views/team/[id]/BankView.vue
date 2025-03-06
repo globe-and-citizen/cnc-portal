@@ -7,13 +7,7 @@
       :price-data="priceData"
       @balance-updated="$forceUpdate()"
     />
-
-    <TokenHoldingsSection
-      v-if="bankBalanceSection"
-      :bank-balance-section="bankBalanceSection"
-      :price-data="priceData"
-      :currency-rates="currencyRatesData"
-    />
+    <GenericTokenHoldingsSection v-if="typedBankAddress" :address="typedBankAddress" />
     <TransactionsHistorySection :currency-rates="currencyRatesData" />
   </div>
 </template>
@@ -22,7 +16,7 @@
 import { ref, computed } from 'vue'
 import { type Address } from 'viem'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
-import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSection.vue'
+import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
