@@ -5,6 +5,7 @@ import TableComponent from '@/components/TableComponent.vue'
 import { ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
 import * as utils from '@/utils'
+import { parseEther } from 'viem'
 
 const mockUseCryptoPrice = {
   prices: ref({ ethereum: { usd: 2500 }, 'usd-coin': { usd: 1 } }),
@@ -20,10 +21,40 @@ vi.mock('@/composables/useCryptoPrice', async (importOriginal) => {
   }
 })
 
+const mockUseBalance = {
+  data: ref({
+    decimals: 18,
+    formatted: `100`,
+    symbol: `SepoliaETH`,
+    value: parseEther(`100`)
+  }),
+  refetch: vi.fn(),
+  error: ref<Error | null>(null),
+  isLoading: ref(false)
+}
+
+const mockUseReadContract = {
+  data: ref(BigInt(20000 * 1e6)),
+  refetch: vi.fn(),
+  error: ref<Error | null>(null),
+  isLoading: ref(false)
+}
+
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useBalance: vi.fn(() => ({ ...mockUseBalance })),
+    useReadContract: vi.fn(() => ({ ...mockUseReadContract })),
+    useChainId: vi.fn(() => ref(1))
+  }
+})
+
 describe('TransactionHistorySection', () => {
   const defaultProps = {
-    networkCurrencyBalance: `100`,
-    usdcBalance: `20000`
+    // networkCurrencyBalance: `100`,
+    // usdcBalance: `20000`
+    address: `0xContractAddress`
   }
 
   const createComponent = mount(TokenHoldingSection, { props: defaultProps })
