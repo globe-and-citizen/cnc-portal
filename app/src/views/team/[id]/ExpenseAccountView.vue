@@ -253,14 +253,6 @@ const {
 })
 //#endregion
 
-const formattedNetworkCurrencyBalance = computed(() =>
-  formatEther(expenseAccountBalance.value?.value ? expenseAccountBalance.value?.value : 0n)
-)
-
-const formattedUsdcBalance = computed(() =>
-  usdcBalance.value ? `${Number(usdcBalance.value) / 1e6}` : `0`
-)
-
 //#region Functions
 const init = async () => {
   await getExpenseAccountOwner()

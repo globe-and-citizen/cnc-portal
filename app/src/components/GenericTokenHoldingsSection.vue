@@ -60,8 +60,6 @@ interface TokenWithRank extends Token {
 }
 
 const props = defineProps<{
-  // networkCurrencyBalance: string
-  // usdcBalance: string
   address: string
 }>()
 
@@ -115,7 +113,7 @@ const tokens = computed(() => [
     network: NETWORK.currencySymbol,
     price: networkCurrencyPrice.value,
     balance: Number(formattedNetworkCurrencyBalance.value) * networkCurrencyPrice.value,
-    amount: Number(formattedNetworkCurrencyBalance.value), //props.networkCurrencyBalance ? Number(props.networkCurrencyBalance) : 0,
+    amount: Number(formattedNetworkCurrencyBalance.value),
     icon: EthereumIcon
   },
   {
@@ -123,7 +121,7 @@ const tokens = computed(() => [
     network: 'USDC',
     price: usdcPrice.value,
     balance: Number(formattedUsdcBalance.value) * usdcPrice.value,
-    amount: Number(formattedUsdcBalance.value), //props.usdcBalance ? Number(props.usdcBalance) : 0,
+    amount: Number(formattedUsdcBalance.value),
     icon: USDCIcon
   }
 ])
