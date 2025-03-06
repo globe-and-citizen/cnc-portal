@@ -82,7 +82,7 @@ const {
 const {
   data: networkCurrencyBalance,
   isLoading: isLoadingNetworkCuerrencyBalance,
-  error: isErrorNetworkCurrencyBalance,
+  error: networkCurrencyBalanceError,
   refetch: refetchNetworkCurrencyBalance
 } = useBalance({
   address: props.address as unknown as Address,
@@ -152,11 +152,20 @@ watch(pricesError, (newError) => {
   }
 })
 
+watch(networkCurrencyBalanceError, (newError) => {
+  if (newError) {
+    log.error('networkCurrencyBalanceError.value', parseError(newError))
+  }
+})
+
+watch(usdcBalanceError, (newError) => {
+  if (newError) {
+    log.error('usdcBalanceError.value', parseError(newError))
+  }
+})
+
 onMounted(async () => {
   await refetchNetworkCurrencyBalance()
   await refetchUsdcBalance()
-  console.log(`address: `, props.addressaddress)
-  console.log(`networkCurrencyBalance: `, networkCurrencyBalance.value)
-  console.log(`usdcBalance: `, usdcBalance.value)
 })
 </script>
