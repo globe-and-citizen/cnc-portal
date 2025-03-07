@@ -90,6 +90,8 @@ import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
+import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+
 import { useCustomFetch } from './composables/useCustomFetch'
 import {
   useAccount,
@@ -101,7 +103,6 @@ import TIPS_ABI from '@/artifacts/abi/tips.json'
 import { TIPS_ADDRESS } from './constant'
 import { formatEther, type Address } from 'viem'
 import { useAuth } from './composables/useAuth'
-import AddTeamForm from './components/sections/TeamView/forms/AddTeamForm.vue'
 import { useAppStore } from './stores'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
