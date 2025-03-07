@@ -257,6 +257,20 @@ vi.mock('@/composables/bod', async (importOriginal) => {
   }
 })
 
+const mockUseQuery = {
+  result: ref(null),
+  error: ref<Error | null>(),
+  loading: ref(false)
+}
+
+vi.mock('@vue/apollo-composable', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useQuery: vi.fn(() => ({ ...mockUseQuery }))
+  }
+})
+
 describe('ExpenseAccountSection', () => {
   setActivePinia(createPinia())
 
