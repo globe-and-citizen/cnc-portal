@@ -62,6 +62,11 @@
       </div>
     </div>
 
+    <GenericTokenHoldingsSection
+      v-if="team?.expenseAccountEip712Address"
+      :address="team.expenseAccountEip712Address"
+    />
+
     <MyApprovedExpenseSection
       v-if="team"
       :team="team"
@@ -103,10 +108,7 @@
       </ModalComponent>
     </div>
 
-    <div
-      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4"
-      data-test="claims-table"
-    >
+    <div data-test="claims-table">
       <TransactionHistorySection
         :currency-rates="{
           loading: false,
@@ -140,6 +142,8 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useRoute } from 'vue-router'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { useExpenseAccountDataCollection } from '@/composables'
+import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+
 //#endregion
 
 //#region Refs
