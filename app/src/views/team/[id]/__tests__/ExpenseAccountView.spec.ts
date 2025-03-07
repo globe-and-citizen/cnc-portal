@@ -524,6 +524,19 @@ describe('ExpenseAccountSection', () => {
         await wrapper.vm.$nextTick()
         expect(logErrorSpy).toBeCalledWith('signTypedDataError.value', 'Error signing typed data')
       })
+      it('should give an error if fetch balance error', async () => {
+        const logErrorSpy = vi.spyOn(utils.log, 'error')
+        const wrapper = createComponent()
+        await flushPromises()
+        //@ts-expect-error: not visible from .vm
+        wrapper.vm.isErrorExpenseAccountBalance = new Error('Error getting expense account balance')
+        await flushPromises()
+
+        expect(logErrorSpy).toBeCalledWith('Error getting expense account balance')
+        expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+          'Error fetching expense account data'
+        )
+      })
     })
   })
 })

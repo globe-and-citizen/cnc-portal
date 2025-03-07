@@ -287,7 +287,6 @@
       </div>
     </ModalComponent>
   </div>
-  <InvoiceSection :team="team" />
   <!-- <BankManagement :isBod="isBod" :team="team" :bankOwner="owner" :loadingOwner="loadingOwner" /> -->
 </template>
 <script setup lang="ts">
@@ -313,7 +312,6 @@ import BoDABI from '@/artifacts/abi/bod.json'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import InvoiceSection from './InvoiceSection.vue'
 
 const tipAmount = ref(0)
 const transferModal = ref(false)

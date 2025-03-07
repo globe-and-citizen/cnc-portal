@@ -190,8 +190,8 @@ describe('BankView', () => {
   })
 
   it('passes bankBalanceSection ref to TokenHoldingsSection', () => {
-    const tokenHoldingsSection = wrapper.findComponent({ name: 'TokenHoldingsSection' })
-    expect(tokenHoldingsSection.props('bankBalanceSection')).toBeDefined()
+    const tokenHoldingsSection = wrapper.findComponent({ name: 'GenericTokenHoldingsSection' })
+    expect(tokenHoldingsSection.props('address')).toBe(mockTeamStore.currentTeam.bankAddress)
   })
 
   it('computes typedBankAddress correctly from teamStore', () => {
@@ -201,7 +201,7 @@ describe('BankView', () => {
   it('renders all required sections', () => {
     expect(wrapper.findComponent({ name: 'BankBalanceSection' }).exists()).toBe(true)
 
-    expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'GenericTokenHoldingsSection' }).exists()).toBe(true)
 
     expect(wrapper.findComponent({ name: 'TransactionsHistorySection' }).exists()).toBe(true)
   })

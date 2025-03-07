@@ -2,7 +2,7 @@
   <ButtonUI
     variant="primary"
     :loading="createOfficerLoading"
-    :disabled="createOfficerLoading"
+    :disabled="disable || createOfficerLoading"
     data-test="deploy-contracts-button"
     @click="deployOfficerContract()"
   >
@@ -46,12 +46,16 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { log } from '@/utils'
 
-// Props const { investorContractInput, createdTeamData }
-const props = defineProps<{
-  investorContractInput: { name: string; symbol: string }
-  createdTeamData: Partial<Team>
-}>()
-
+const props = withDefaults(
+  defineProps<{
+    investorContractInput: { name: string; symbol: string }
+    createdTeamData: Partial<Team>
+    disable?: boolean
+  }>(),
+  {
+    disable: false
+  }
+)
 const emits = defineEmits(['contractDeployed'])
 // Store
 const userDataStore = useUserDataStore()

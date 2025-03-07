@@ -1,104 +1,99 @@
 <!-- GenericTransactionHistory.vue -->
 <template>
-  <div class="card bg-base-100 w-full shadow-sm">
-    <div class="card-body">
-      <div class="flex flex-row justify-between">
-        <span class="text-lg font-medium" :data-test="`${dataTestPrefix}-title`">
-          {{ title }}
-        </span>
-        <div class="flex items-center gap-10">
-          <Datepicker
-            v-if="showDateFilter"
-            v-model="dateRange"
-            class="w-96"
-            range
-            :format="'dd/MM/yyyy'"
-            placeholder="Select Date Range"
-            auto-apply
-            :data-test="`${dataTestPrefix}-date-range-picker`"
-          />
-          <ButtonUI
-            v-if="showExport"
-            variant="success"
-            @click="handleExport"
-            :data-test="`${dataTestPrefix}-export-button`"
-          >
-            Export
-          </ButtonUI>
-        </div>
-      </div>
-
-      <TableComponent :rows="displayedTransactions" :columns="columns">
-        <!-- Transaction Hash -->
-        <template #txHash-data="{ row }">
-          <AddressToolTip
-            :address="(row as unknown as BaseTransaction).txHash"
-            :slice="true"
-            type="transaction"
-          />
-        </template>
-
-        <!-- Date -->
-        <template #date-data="{ row }">
-          {{ formatDate((row as unknown as BaseTransaction).date) }}
-        </template>
-
-        <!-- Type -->
-        <template #type-data="{ row }">
-          <span
-            class="badge"
-            :class="{
-              'badge-success': (row as unknown as BaseTransaction).type.toLowerCase() === 'deposit',
-              'badge-info': (row as unknown as BaseTransaction).type.toLowerCase() === 'transfer'
-            }"
-          >
-            {{ (row as unknown as BaseTransaction).type }}
-          </span>
-        </template>
-
-        <!-- From Address -->
-        <template #from-data="{ row }">
-          <AddressToolTip :address="(row as unknown as BaseTransaction).from" :slice="true" />
-        </template>
-
-        <!-- To Address -->
-        <template #to-data="{ row }">
-          <AddressToolTip :address="(row as unknown as BaseTransaction).to" :slice="true" />
-        </template>
-
-        <!-- Receipt -->
-        <template #receipt-data="{ row }">
-          <template v-if="showReceiptModal">
-            <ButtonUI
-              size="sm"
-              @click="handleReceiptClick(row as unknown as BaseTransaction)"
-              :data-test="`${dataTestPrefix}-receipt-button`"
-            >
-              Receipt
-            </ButtonUI>
-          </template>
-          <template v-else>
-            <a
-              :href="getReceiptUrl(row as unknown as BaseTransaction)"
-              target="_blank"
-              class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
-            >
-              <DocumentTextIcon class="h-4 w-4" />
-              Receipt
-            </a>
-          </template>
-        </template>
-
-        <!-- Dynamic currency amounts -->
-        <template
-          v-for="currency in props.currencies"
-          :key="currency"
-          #[`amount${currency}-data`]="{ row }"
+  <CardComponent :title="title" class="w-full">
+    <template #card-action>
+      <div class="flex items-center gap-10">
+        <Datepicker
+          v-if="showDateFilter"
+          v-model="dateRange"
+          class="w-96"
+          range
+          :format="'dd/MM/yyyy'"
+          placeholder="Select Date Range"
+          auto-apply
+          :data-test="`${dataTestPrefix}-date-range-picker`"
+        />
+        <ButtonUI
+          v-if="showExport"
+          variant="success"
+          @click="handleExport"
+          :data-test="`${dataTestPrefix}-export-button`"
         >
-          {{ formatAmount(row as unknown as BaseTransaction, currency) }}
+          Export
+        </ButtonUI>
+      </div>
+    </template>
+
+    <TableComponent :rows="displayedTransactions" :columns="columns">
+      <!-- Transaction Hash -->
+      <template #txHash-data="{ row }">
+        <AddressToolTip
+          :address="(row as unknown as BaseTransaction).txHash"
+          :slice="true"
+          type="transaction"
+        />
+      </template>
+
+      <!-- Date -->
+      <template #date-data="{ row }">
+        {{ formatDate((row as unknown as BaseTransaction).date) }}
+      </template>
+
+      <!-- Type -->
+      <template #type-data="{ row }">
+        <span
+          class="badge"
+          :class="{
+            'badge-success': (row as unknown as BaseTransaction).type.toLowerCase() === 'deposit',
+            'badge-info': (row as unknown as BaseTransaction).type.toLowerCase() === 'transfer'
+          }"
+        >
+          {{ (row as unknown as BaseTransaction).type }}
+        </span>
+      </template>
+
+      <!-- From Address -->
+      <template #from-data="{ row }">
+        <AddressToolTip :address="(row as unknown as BaseTransaction).from" :slice="true" />
+      </template>
+
+      <!-- To Address -->
+      <template #to-data="{ row }">
+        <AddressToolTip :address="(row as unknown as BaseTransaction).to" :slice="true" />
+      </template>
+
+      <!-- Receipt -->
+      <template #receipt-data="{ row }">
+        <template v-if="showReceiptModal">
+          <ButtonUI
+            size="sm"
+            @click="handleReceiptClick(row as unknown as BaseTransaction)"
+            :data-test="`${dataTestPrefix}-receipt-button`"
+          >
+            Receipt
+          </ButtonUI>
         </template>
-      </TableComponent>
-    </div>
+        <template v-else>
+          <a
+            :href="getReceiptUrl(row as unknown as BaseTransaction)"
+            target="_blank"
+            class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
+          >
+            <DocumentTextIcon class="h-4 w-4" />
+            Receipt
+          </a>
+        </template>
+      </template>
+
+      <!-- Dynamic currency amounts -->
+      <template
+        v-for="currency in props.currencies"
+        :key="currency"
+        #[`amount${currency}-data`]="{ row }"
+      >
+        {{ formatAmount(row as unknown as BaseTransaction, currency) }}
+      </template>
+    </TableComponent>
 
     <!-- Receipt Modal -->
     <ModalComponent v-if="showReceiptModal" v-model="receiptModal">
@@ -107,7 +102,7 @@
         :receipt-data="formatReceiptData(selectedTransaction)"
       />
     </ModalComponent>
-  </div>
+  </CardComponent>
 </template>
 
 <script setup lang="ts">
@@ -120,6 +115,7 @@ import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
+import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
 
