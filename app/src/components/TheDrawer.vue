@@ -89,7 +89,6 @@
                     <div class="skeleton w-11 h-4"></div>
                     <div class="skeleton w-28 h-4"></div>
                   </div>
-                  <CheckIcon class="size-6" v-if="false" />
                 </div>
               </div>
 
@@ -100,7 +99,11 @@
                 :key="team.id"
                 data-test="team-item"
               >
-                <TeamMetaComponent class="hover:bg-slate-100" :team="team" :to="team.id"
+                <TeamMetaComponent
+                  class="hover:bg-slate-100"
+                  :isSelected="team.id === teamStore.currentTeam?.id"
+                  :team="team"
+                  :to="team.id"
               /></RouterLink>
               <!-- TODO: Make the button functional -->
               <div class="min-w-40 w-full p-1">
