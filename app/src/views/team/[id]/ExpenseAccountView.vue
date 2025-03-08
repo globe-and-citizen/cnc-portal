@@ -55,7 +55,7 @@
       </div>
     </div>
 
-    <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-10">
+    <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-8">
       <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
         <span class="text-sm">Expense Account Address </span>
         <AddressToolTip :address="team?.expenseAccountEip712Address ?? ''" class="text-xs" />
@@ -65,20 +65,23 @@
     <GenericTokenHoldingsSection
       v-if="team?.expenseAccountEip712Address"
       :address="team.expenseAccountEip712Address"
+      class="mb-10"
     />
 
-    <MyApprovedExpenseSection
-      v-if="team"
-      :team="team"
-      :is-disapproved-address="isDisapprovedAddress"
-      v-model="reload"
-    />
+    <CardComponent title="My Approved Expense" class="mb-8">
+      <MyApprovedExpenseSection
+        v-if="team"
+        :team="team"
+        :is-disapproved-address="isDisapprovedAddress"
+        v-model="reload"
+      />
+    </CardComponent>
 
     <!--<div
       class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4 mb-10"
       data-test="claims-table"
     >-->
-    <CardComponent title="Approved Addresses">
+    <CardComponent title="Approved Addresses" class="mb-8">
       <!--<div class="flex flex-row justify-between mb-5">
         <span class="text-2xl font-bold">Approved Addresses</span>-->
       <template #card-action>
