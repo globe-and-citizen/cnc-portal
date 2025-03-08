@@ -1,0 +1,87 @@
+<template>
+  <div class="card w-full rounded-2xl py-6" :class="[bgColor, textColor]">
+    <div class="flex flex-col gap-4 items-center">
+      <img :src="cardIcon" alt="icon" class="w-16 h-16" data-test="card-icon" />
+      <span
+        class="text-4xl font-bold"
+        data-test="amount"
+        v-if="!isLoading"
+        :class="{ truncate: (currency ?? '').length > 4 }"
+        >{{
+          Intl.NumberFormat('en-US', {
+            notation: 'compact',
+            maximumFractionDigits: 1
+          }).format(amount ?? 0)
+        }}
+        {{ currency }}</span
+      >
+      <SkeletonLoading class="w-20 h-11 opacity-30" v-if="isLoading" />
+      <div class="text-center">
+        <span class="text-sm font-semibold">{{ title }}</span>
+        <div class="flex flex-row gap-1 text-black" v-if="!isLoading">
+          <img :src="lastMonthStatusIcon" alt="status-icon" />
+          <div>
+            <span class="font-semibold text-sm" data-test="percentage-increase"
+              >{{ parseFloat(percentageIncrease.toString()) > 0 ? '+' : '-'
+              }}{{ percentageIncrease == 0 ? '' : percentageIncrease }}%
+            </span>
+            <span class="font-medium text-[#637381] text-xs">than last week</span>
+          </div>
+        </div>
+        <SkeletonLoading class="w-32 h-6 opacity-30" v-if="isLoading" />
+      </div>
+    </div>
+  </div>
+</template>
+<script lang="ts" setup>
+import { computed } from 'vue'
+import uptrendIcon from '@/assets/uptrend.svg'
+import SkeletonLoading from '@/components/SkeletonLoading.vue'
+
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
+  },
+  amount: {
+    type: Number,
+    default: 0
+  },
+  currency: {
+    type: String
+  },
+  previousAmount: {
+    type: Number,
+    default: 0
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
+  },
+  bgColor: {
+    type: String,
+    default: 'bg-base-100'
+  },
+  cardIcon: {
+    type: String,
+    default: ''
+  },
+  textColor: {
+    type: String,
+    default: 'text-base-content'
+  }
+})
+
+const lastMonthStatusIcon = computed(() => {
+  if (props.previousAmount === 0) return ''
+  return props.amount! > props.previousAmount ? uptrendIcon : ''
+})
+
+const percentageIncrease = computed(() => {
+  if (props.previousAmount === 0) return 0
+  const amount = props.amount ?? 0
+  const previousAmount = props.previousAmount ?? 0
+
+  return (((amount - previousAmount) / previousAmount) * 100).toFixed(2)
+})
+</script>

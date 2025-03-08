@@ -1,10 +1,32 @@
 <template>
-  <div class="flex flex-col gap-y-4 py-6 lg:px-4 sm:px-6">
+  <div class="flex flex-col gap-6">
     <h2>CASH Remuneration</h2>
     <div class="flex gap-10">
-      <CashRemunerationCard cardType="balance" :amount="73900" :previous-amount="52000" />
-      <CashRemunerationCard cardType="month-claims" :amount="10200" :previous-amount="8000" />
-      <CashRemunerationCard cardType="approved-claims" :amount="47900" :previous-amount="43200" />
+      <OverviewCard
+        title="Total Balance"
+        bg-color="bg-[#C8FACD]"
+        :card-icon="bagIcon"
+        text-color="text-[#005249]"
+        currency="USD"
+        :amount="73900"
+        :previous-amount="52000"
+      />
+      <OverviewCard
+        title="Month Claimed"
+        bg-color="bg-[#FEF3DE]"
+        :card-icon="cartIcon"
+        text-color="text-[#6A3B13]"
+        :amount="10200"
+        :previous-amount="8000"
+      />
+      <OverviewCard
+        title="Pending Claim"
+        bg-color="bg-[#D9F1F6]"
+        :card-icon="personIcon"
+        text-color="text-[#0C315A]"
+        :amount="47900"
+        :previous-amount="43200"
+      />
     </div>
     <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
       <div class="flex flex-wrap gap-2 sm:gap-4">
@@ -53,12 +75,15 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import CashRemunerationCard from '@/components/sections/CashRemunerationView/CashRemunerationCard.vue'
+import OverviewCard from '@/components/OverviewCard.vue'
 import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import SubmitClaims from '@/components/sections/CashRemunerationView/SubmitClaims.vue'
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
 import type { BaseTransaction } from '@/types/transactions'
 import { NETWORK } from '@/constant'
+import bagIcon from '@/assets/bag.svg'
+import cartIcon from '@/assets/cart.svg'
+import personIcon from '@/assets/person.svg'
 
 const route = useRoute()
 const claimStatus = ref<string>('all')
