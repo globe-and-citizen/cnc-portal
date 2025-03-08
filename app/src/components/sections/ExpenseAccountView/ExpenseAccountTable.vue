@@ -104,7 +104,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { Team } from '@/types'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useExpenseAccountDataCollection } from '@/composables'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useExpenseStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
@@ -157,7 +157,8 @@ const columns = [
   }
 ] as TableColumn[]
 
-//#endregion Composables
+//#region Composables
+const expenseStore = useExpenseStore()
 const {
   data: manyExpenseAccountDataAll,
   isLoading: isLoadingExpensewAccountData,
@@ -197,7 +198,7 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
   useWaitForTransactionReceipt({
     hash: activateHash
   })
-//#region
+//#endregion
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
@@ -229,19 +230,21 @@ const activateApproval = async (signature: `0x{string}`) => {
     functionName: 'activateApproval'
   })
 }
-
 //#endregion
 
 //#region Watch
-watch(reload, async (newState) => {
-  console.log(`reload state changed: `, newState)
-  if (newState) {
-    console.log(`Reloading...`)
-    await fetchExpenseAccountOwner()
-    await initializeBalances()
-    console.log(`manyExpenseAccountDataAll: `, manyExpenseAccountDataAll)
+watch(
+  () => expenseStore.reload,
+  async (newState) => {
+    console.log(`reload state changed: `, newState)
+    if (newState) {
+      console.log(`Reloading...`)
+      await fetchExpenseAccountOwner()
+      await initializeBalances()
+      console.log(`manyExpenseAccountDataAll: `, manyExpenseAccountDataAll)
+    }
   }
-})
+)
 watch(
   () => team,
   async (newTeam) => {
@@ -253,18 +256,22 @@ watch(
 )
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
-    reload.value = true
+    // reload.value = true
+    expenseStore.setReload(true)
     addSuccessToast('Activate Successful')
     await initializeBalances()
-    reload.value = false
+    // reload.value = false
+    expenseStore.setReload(false)
   }
 })
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
-    reload.value = true
+    // reload.value = true
+    expenseStore.setReload(true)
     addSuccessToast('Deactivate Successful')
     await initializeBalances()
-    reload.value = false
+    // reload.value = false
+    expenseStore.setReload(false)
   }
 })
 watch(errorDeactivateApproval, (newVal) => {
