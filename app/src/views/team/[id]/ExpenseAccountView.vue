@@ -74,12 +74,14 @@
       v-model="reload"
     />
 
-    <div
+    <!--<div
       class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4 mb-10"
       data-test="claims-table"
-    >
-      <div class="flex flex-row justify-between mb-5">
-        <span class="text-2xl font-bold">Approved Addresses</span>
+    >-->
+    <CardComponent title="Approved Addresses">
+      <!--<div class="flex flex-row justify-between mb-5">
+        <span class="text-2xl font-bold">Approved Addresses</span>-->
+      <template #card-action>
         <ButtonUI
           variant="success"
           :disabled="!(currentUserAddress === contractOwnerAddress || isBodAction())"
@@ -92,7 +94,8 @@
         >
           Approve User Expense
         </ButtonUI>
-      </div>
+      </template>
+      <!--</div>-->
       <ExpenseAccountTable v-if="team" :team="team" v-model="reload" />
       <ModalComponent v-model="approveUsersModal">
         <ApproveUsersForm
@@ -106,7 +109,8 @@
           @search-users="(input) => searchUsers(input)"
         />
       </ModalComponent>
-    </div>
+    </CardComponent>
+    <!--</div>-->
 
     <div data-test="claims-table">
       <TransactionHistorySection
@@ -143,6 +147,7 @@ import { useRoute } from 'vue-router'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { useExpenseAccountDataCollection } from '@/composables'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+import CardComponent from '@/components/CardComponent.vue'
 
 //#endregion
 
