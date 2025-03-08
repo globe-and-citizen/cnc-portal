@@ -77,13 +77,7 @@
       />
     </CardComponent>
 
-    <!--<div
-      class="card shadow-xl bg-white p-5 overflow-x-auto flex flex-col gap-4 mb-10"
-      data-test="claims-table"
-    >-->
-    <CardComponent title="Approved Addresses" class="mb-8">
-      <!--<div class="flex flex-row justify-between mb-5">
-        <span class="text-2xl font-bold">Approved Addresses</span>-->
+    <CardComponent title="Approved Addresses" class="mb-8" data-test="claims-table">
       <template #card-action>
         <ButtonUI
           variant="success"
@@ -98,7 +92,7 @@
           Approve User Expense
         </ButtonUI>
       </template>
-      <!--</div>-->
+
       <ExpenseAccountTable v-if="team" :team="team" v-model="reload" />
       <ModalComponent v-model="approveUsersModal">
         <ApproveUsersForm
@@ -113,7 +107,6 @@
         />
       </ModalComponent>
     </CardComponent>
-    <!--</div>-->
 
     <div data-test="claims-table">
       <TransactionHistorySection
@@ -125,7 +118,6 @@
       />
     </div>
   </div>
-  <!-- Expense Account Not Yet Created -->
 </template>
 
 <script setup lang="ts">

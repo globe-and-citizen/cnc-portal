@@ -1,6 +1,5 @@
 <template>
   <div v-if="team?.expenseAccountEip712Address">
-    <!--<span class="text-2xl font-bold">My Approved Expense</span>-->
     <!-- TODO display this only if the use have an approved expense -->
     <!-- Expense A/c Info Section -->
     <section class="stat flex flex-col justify-start">
