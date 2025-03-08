@@ -16,7 +16,7 @@ import { CheckIcon } from '@heroicons/vue/24/solid'
 import type { Team } from '@/types'
 
 defineProps<{
-  team: Team,
+  team: Team
   isSelected: boolean
 }>()
 </script>
