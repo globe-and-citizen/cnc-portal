@@ -4,8 +4,9 @@
     <!-- Cash Remuneration stats: Only apear for owner -->
     <div class="flex gap-6">
       <OverviewCard
+        data-test="expense-account-balance"
         title="Total Balance"
-        :amount="parseInt(expenseBalanceFormatted)"
+        :amount="parseInt(expenseBalanceFormatted ?? 0)"
         :currency="NETWORK.currencySymbol"
         bg-color="bg-[#C8FACD]"
         :card-icon="bagIcon"

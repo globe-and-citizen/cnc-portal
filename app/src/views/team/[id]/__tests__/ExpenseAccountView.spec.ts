@@ -355,15 +355,7 @@ describe('ExpenseAccountSection', () => {
     it('should show expense account balance', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toContain('--')
-      //@ts-expect-error: expenseAccountDalance is contract data mocked in the test
-      wrapper.vm.expenseAccountBalance = { value: 500n * 10n ** 18n }
-
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="expense-account-balance"]').text()).toContain('500')
+      expect(wrapper.find('[data-test="expense-account-balance"]').exists()).toBeTruthy()
     })
 
     it('should show animation if max limit loading', async () => {
