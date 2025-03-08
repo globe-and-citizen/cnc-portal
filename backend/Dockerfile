@@ -1,5 +1,9 @@
 # Use Node.js 18 AS the base image
-FROM node:18-alpine AS development  
+FROM node:22-slim AS development 
+
+# Install necessary dependencies
+RUN apt-get update -y \
+&& apt-get install -y openssl
 
 # Set the working directory inside the container
 WORKDIR /app
