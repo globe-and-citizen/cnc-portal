@@ -19,7 +19,7 @@
       <div class="text-center">
         <span class="text-sm font-semibold">{{ title }}</span>
         <div class="flex flex-row gap-1 text-black" v-if="!isLoading">
-          <img :src="lastMonthStatusIcon" alt="status-icon" />
+          <img :src="lastMonthStatusIcon" alt="status-icon" v-if="lastMonthStatusIcon !== ''" />
           <div>
             <span class="font-semibold text-sm" data-test="percentage-increase"
               >{{ parseFloat(percentageIncrease.toString()) > 0 ? '+' : '-'

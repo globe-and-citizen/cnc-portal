@@ -2,57 +2,33 @@
   <div class="flex flex-col gap-y-4">
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
-    <div class="flex gap-10">
-      <div class="card bg-white w-1/3 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">Balance</h2>
-          <div
-            class="font-extrabold text-neutral flex gap-2 items-baseline"
-            data-test="expense-account-balance"
-          >
-            <span class="inline-block h-10 text-4xl">
-              <span
-                class="loading loading-spinner loading-lg"
-                v-if="isLoadingExpenseAccountBalance"
-              ></span>
-              <span v-else>{{ expenseBalanceFormatted }} </span>
-            </span>
-            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
-          <div class="text-lg mt-2">
-            <div v-if="isLoadingTokenBalances">
-              <span class="loading loading-spinner loading-md"></span>
-            </div>
-            <div v-else>
-              <div>USDC: {{ usdcBalance ? Number(usdcBalance) / 1e6 : '0' }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card bg-blue-100 text-blue-800 w-1/3 shadow-xl">
-        <div class="card-body">
-          <div class="font-extrabold flex gap-2 items-baseline">
-            <span class="inline-block h-10 text-4xl">
-              <span class="loading loading-spinner loading-lg" v-if="false"></span>
-              <span v-else>10 </span>
-            </span>
-            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
-          <h2 class="card-title">Spent this month</h2>
-        </div>
-      </div>
-      <div class="card bg-orange-200 text-orange-800 w-1/3 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">Approved Address</h2>
-          <div class="font-extrabold flex gap-2 items-baseline">
-            <span class="inline-block h-10 text-4xl">
-              <span class="loading loading-spinner loading-lg" v-if="false"></span>
-              <span v-else>20 </span>
-            </span>
-            <span class="text-xs">User</span>
-          </div>
-        </div>
-      </div>
+    <div class="flex gap-6">
+      <OverviewCard
+        title="Total Balance"
+        :amount="parseInt(expenseBalanceFormatted)"
+        :currency="NETWORK.currencySymbol"
+        bg-color="bg-[#C8FACD]"
+        :card-icon="bagIcon"
+        :is-loading="isLoadingExpenseAccountBalance"
+        text-color="text-[#005249]"
+      >
+      </OverviewCard>
+      <OverviewCard
+        title="Month Spent"
+        :amount="10200"
+        :card-icon="cartIcon"
+        bg-color="bg-[#FEF3DE]"
+        text-color="text-[#6A3B13]"
+        :previous-amount="8000"
+      ></OverviewCard>
+      <OverviewCard
+        title="Total Approved"
+        :amount="47900"
+        :previous-amount="43200"
+        :card-icon="personIcon"
+        bg-color="bg-[#D6E4FF]"
+        text-color="text-[#1A3D7A]"
+      ></OverviewCard>
     </div>
 
     <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-10">
@@ -125,7 +101,7 @@
 //#region Imports
 import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit } from '@/types'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { NETWORK } from '@/constant'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -138,11 +114,14 @@ import { useReadContract, useBalance, useChainId, useSignTypedData } from '@wagm
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { type Address, formatEther, parseEther, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useRoute } from 'vue-router'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { useExpenseAccountDataCollection } from '@/composables'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+import OverviewCard from '@/components/OverviewCard.vue'
+import bagIcon from '@/assets/bag.svg'
+import cartIcon from '@/assets/cart.svg'
+import personIcon from '@/assets/person.svg'
 
 //#endregion
 
@@ -156,7 +135,6 @@ const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const reload = ref(false)
 // Token related refs
-const isLoadingTokenBalances = computed(() => isLoadingUsdcBalance.value)
 const expenseAccountData = ref<{}>()
 const expenseAccountEip712Address = computed(
   () => team.value?.expenseAccountEip712Address as Address
@@ -238,19 +216,6 @@ const {
   address: expenseAccountEip712Address as unknown as Address,
   chainId
 })
-
-// Token balances
-const {
-  data: usdcBalance,
-  isLoading: isLoadingUsdcBalance,
-  refetch: fetchUsdcBalance,
-  error: usdcBalanceError
-} = useReadContract({
-  address: USDC_ADDRESS as Address,
-  abi: ERC20ABI,
-  functionName: 'balanceOf',
-  args: [expenseAccountEip712Address as unknown as Address]
-})
 //#endregion
 
 //#region Functions
@@ -258,7 +223,6 @@ const init = async () => {
   await getExpenseAccountOwner()
   await executeFetchTeam()
   await executeGetExpenseAccountBalance()
-  await fetchUsdcBalance()
   await initializeBalances()
 }
 
@@ -376,12 +340,6 @@ watch(isErrorExpenseAccountBalance, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
     addErrorToast('Error fetching expense account data')
-  }
-})
-watch([usdcBalanceError], ([newUsdcError]) => {
-  if (newUsdcError) {
-    log.error(parseError(newUsdcError))
-    addErrorToast('Failed to fetch USDC balance')
   }
 })
 //#endregion
