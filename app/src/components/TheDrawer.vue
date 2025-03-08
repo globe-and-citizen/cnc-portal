@@ -82,12 +82,17 @@
               data-test="team-dropdown"
               ref="target"
             >
-              <div
-                v-if="teamStore.teamsMeta.teamsAreFetching"
-                class="flex items-center justify-center"
-              >
-                <div class="w-5 h-5 border-t-2 border-emerald-500 rounded-full animate-spin"></div>
+              <div v-if="teamStore.teamsMeta.teamsAreFetching">
+                <div class="p-4 flex gap-4 border-b-2">
+                  <div class="skeleton w-11 h-11"></div>
+                  <div class="flex flex-col gap-2">
+                    <div class="skeleton w-11 h-4"></div>
+                    <div class="skeleton w-28 h-4"></div>
+                  </div>
+                  <CheckIcon class="size-6" v-if="false" />
+                </div>
               </div>
+
               <RouterLink
                 :to="`/teams/${team.id}`"
                 v-else
@@ -98,12 +103,14 @@
                 <TeamMetaComponent class="hover:bg-slate-100" :team="team" :to="team.id"
               /></RouterLink>
               <!-- TODO: Make the button functional -->
-              <div
-                class="w-full flex justify-center items-center h-12 hover:bg-slate-100"
-                data-test="add-team"
-                @click="appStore.showAddTeamModal = true"
-              >
-                Create a new Team
+              <div class="min-w-40 w-full p-1">
+                <div
+                  class="flex justify-center items-center h-12 hover:bg-slate-100 rounded-xl"
+                  data-test="add-team"
+                  @click="appStore.showAddTeamModal = true"
+                >
+                  Create a new Team
+                </div>
               </div>
             </div>
           </transition>
