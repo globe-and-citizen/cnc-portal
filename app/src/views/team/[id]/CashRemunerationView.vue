@@ -37,6 +37,10 @@
         />
       </div>
     </div>
+    <GenericTokenHoldingsSection
+      v-if="teamStore.currentTeam?.cashRemunerationEip712Address"
+      :address="teamStore.currentTeam?.cashRemunerationEip712Address"
+    />
     <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
       <div class="w-full flex justify-between">
         <span class="font-bold text-lg">Claims Table</span>
@@ -84,6 +88,7 @@ import { NETWORK } from '@/constant'
 import bagIcon from '@/assets/bag.svg'
 import cartIcon from '@/assets/cart.svg'
 import personIcon from '@/assets/person.svg'
+import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 
 const route = useRoute()
 const claimStatus = ref<string>('all')
