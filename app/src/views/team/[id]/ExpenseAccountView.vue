@@ -131,7 +131,7 @@ import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
-import { useUserDataStore, useToastStore } from '@/stores'
+import { useUserDataStore, useToastStore, useExpenseStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
 import { useReadContract, useBalance, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -143,7 +143,6 @@ import { useRoute } from 'vue-router'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { useExpenseAccountDataCollection } from '@/composables'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
-
 //#endregion
 
 //#region Refs
@@ -216,6 +215,7 @@ const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.
 //#region Composables
 const currentUserAddress = useUserDataStore().address
 const { addErrorToast } = useToastStore()
+const expenseStore = useExpenseStore()
 const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 const { signTypedData, data: signature, error: signTypedDataError } = useSignTypedData()
 const chainId = useChainId()
@@ -350,11 +350,13 @@ watch(signature, async (newVal) => {
       signature
     }
     await executeAddExpenseData()
-    reload.value = true
+    // reload.value = true
+    expenseStore.setReload(true)
     await init()
     loadingApprove.value = false
     approveUsersModal.value = false
-    reload.value = false
+    // reload.value = false
+    expenseStore.setReload(false)
   }
 })
 watch(searchUserResponse, () => {

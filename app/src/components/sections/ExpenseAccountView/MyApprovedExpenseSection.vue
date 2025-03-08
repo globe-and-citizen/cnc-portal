@@ -88,7 +88,7 @@ import type { Team, BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useUserDataStore, useToastStore } from '@/stores'
+import { useUserDataStore, useToastStore, useExpenseStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log, tokenSymbol } from '@/utils'
 import {
@@ -215,6 +215,7 @@ const dynamicDisplayDataAmount = dynamicDisplayData(1)
 
 //#region Composables
 const { addErrorToast, addSuccessToast } = useToastStore()
+const expenseStore = useExpenseStore()
 const chainId = useChainId()
 
 const {
@@ -385,11 +386,14 @@ const getAmountWithdrawnBalance = async () => {
 //#endregion
 
 //#region Watch
-watch(reload, async (newState) => {
-  if (newState) {
-    await init()
+watch(
+  () => expenseStore.reload,
+  async (newState) => {
+    if (newState) {
+      await init()
+    }
   }
-})
+)
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     reload.value = true
