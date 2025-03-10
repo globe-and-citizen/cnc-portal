@@ -64,11 +64,10 @@
 //#region Imports
 import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit } from '@/types'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { USDC_ADDRESS } from '@/constant'
 import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/ExpenseStatsSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
