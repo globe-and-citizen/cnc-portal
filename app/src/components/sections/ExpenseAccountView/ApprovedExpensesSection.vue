@@ -32,12 +32,12 @@
 </template>
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
+import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -94,6 +94,7 @@ const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.
 })
   .post(expenseAccountData)
   .json()
+//#region
 
 const {
   data: contractOwnerAddress,
@@ -104,7 +105,6 @@ const {
   address: _team.currentTeam?.expenseAccountEip712Address as unknown as Address,
   abi: expenseAccountABI
 })
-//#region
 
 //#region Funtions
 const init = async () => {
@@ -156,8 +156,6 @@ const approveUser = async (data: BudgetLimit) => {
     domain
   })
 
-  console.log(`signature: `, signature.value)
-
   expenseAccountData.value = {
     expenseAccountData: expenseAccountData.value,
     signature: signature.value
@@ -205,5 +203,7 @@ watch(errorGetOwner, (newVal) => {
 })
 //#endregion
 
-onMounted(async () => {})
+onMounted(async () => {
+  await init()
+})
 </script>
