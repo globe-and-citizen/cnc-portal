@@ -2,65 +2,7 @@
   <div class="flex flex-col gap-y-4">
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
-    <div class="flex gap-10">
-      <div class="card bg-white w-1/3 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">Balance</h2>
-          <div
-            class="font-extrabold text-neutral flex gap-2 items-baseline"
-            data-test="expense-account-balance"
-          >
-            <span class="inline-block h-10 text-4xl">
-              <span
-                class="loading loading-spinner loading-lg"
-                v-if="isLoadingExpenseAccountBalance"
-              ></span>
-              <span v-else>{{ expenseBalanceFormatted }} </span>
-            </span>
-            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
-          <div class="text-lg mt-2">
-            <div v-if="isLoadingTokenBalances">
-              <span class="loading loading-spinner loading-md"></span>
-            </div>
-            <div v-else>
-              <div>USDC: {{ usdcBalance ? Number(usdcBalance) / 1e6 : '0' }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card bg-blue-100 text-blue-800 w-1/3 shadow-xl">
-        <div class="card-body">
-          <div class="font-extrabold flex gap-2 items-baseline">
-            <span class="inline-block h-10 text-4xl">
-              <span class="loading loading-spinner loading-lg" v-if="false"></span>
-              <span v-else>10 </span>
-            </span>
-            <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-          </div>
-          <h2 class="card-title">Spent this month</h2>
-        </div>
-      </div>
-      <div class="card bg-orange-200 text-orange-800 w-1/3 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">Approved Address</h2>
-          <div class="font-extrabold flex gap-2 items-baseline">
-            <span class="inline-block h-10 text-4xl">
-              <span class="loading loading-spinner loading-lg" v-if="false"></span>
-              <span v-else>20 </span>
-            </span>
-            <span class="text-xs">User</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-8">
-      <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
-        <span class="text-sm">Expense Account Address </span>
-        <AddressToolTip :address="team?.expenseAccountEip712Address ?? ''" class="text-xs" />
-      </div>
-    </div>
+    <ExpenseStatsSection />
 
     <GenericTokenHoldingsSection
       v-if="team?.expenseAccountEip712Address"
@@ -125,6 +67,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit } from '@/types'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
+import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/ExpenseStatsSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
