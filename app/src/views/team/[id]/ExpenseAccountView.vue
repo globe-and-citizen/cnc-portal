@@ -10,14 +10,12 @@
       class="mb-10"
     />
 
-    <CardComponent title="My Approved Expense" class="mb-8">
-      <MyApprovedExpenseSection
-        v-if="team"
-        :team="team"
-        :is-disapproved-address="isDisapprovedAddress"
-        v-model="reload"
-      />
-    </CardComponent>
+    <MyApprovedExpenseSection
+      v-if="team"
+      :team="team"
+      :is-disapproved-address="isDisapprovedAddress"
+      v-model="reload"
+    />
 
     <CardComponent title="Approved Addresses" class="mb-8" data-test="claims-table">
       <template #card-action>
