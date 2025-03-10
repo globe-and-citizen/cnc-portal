@@ -16,7 +16,7 @@
       v-model="reload"
     />
 
-    <CardComponent title="Approved Addresses" data-test="claims-table">
+    <!--<CardComponent title="Approved Addresses" data-test="claims-table">
       <template #card-action>
         <ButtonUI
           variant="success"
@@ -45,7 +45,9 @@
           @search-users="(input) => searchUsers(input)"
         />
       </ModalComponent>
-    </CardComponent>
+    </CardComponent>-->
+
+    <ApprovedExpensesSection />
 
     <div data-test="claims-table">
       <TransactionHistorySection
@@ -65,10 +67,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, User, BudgetLimit } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/ExpenseStatsSection.vue'
+import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
+import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
+import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log } from '@/utils'
@@ -78,7 +82,6 @@ import { type Address, formatEther, parseEther, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useRoute } from 'vue-router'
-import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { useExpenseAccountDataCollection } from '@/composables'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CardComponent from '@/components/CardComponent.vue'
