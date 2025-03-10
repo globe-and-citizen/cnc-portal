@@ -1,5 +1,5 @@
 <template>
-  <CardComponent title="My Approved Expense" class="mb-8">
+  <CardComponent title="My Approved Expense">
     <div v-if="team?.expenseAccountEip712Address">
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->

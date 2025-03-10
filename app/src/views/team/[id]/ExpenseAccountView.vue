@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-y-4">
+  <div class="flex flex-col gap-y-8">
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
     <ExpenseStatsSection />
@@ -7,7 +7,6 @@
     <GenericTokenHoldingsSection
       v-if="team?.expenseAccountEip712Address"
       :address="team.expenseAccountEip712Address"
-      class="mb-10"
     />
 
     <MyApprovedExpenseSection
@@ -17,7 +16,7 @@
       v-model="reload"
     />
 
-    <CardComponent title="Approved Addresses" class="mb-8" data-test="claims-table">
+    <CardComponent title="Approved Addresses" data-test="claims-table">
       <template #card-action>
         <ButtonUI
           variant="success"
