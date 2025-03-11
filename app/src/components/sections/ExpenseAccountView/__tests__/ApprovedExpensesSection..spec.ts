@@ -5,6 +5,8 @@ import { createTestingPinia } from '@pinia/testing'
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import { ref } from 'vue'
 import * as utils from '@/utils'
+import { USDC_ADDRESS } from '@/constant'
+import { parseEther, zeroAddress } from 'viem'
 
 const mockUseWriteContract = {
   writeContract: vi.fn(),
@@ -145,6 +147,12 @@ describe('ApprovedExpensesSection', () => {
       expect(wrapper.vm.approveUsersModal).toBe(true)
       const approveUsersForm = wrapper.findComponent({ name: 'ApproveUsersEIP712Form' })
       expect(approveUsersForm.exists()).toBe(true)
+      const approvalModal = wrapper.findComponent({ name: 'ModalComponent' })
+      expect(approvalModal.exists()).toBeTruthy()
+      approvalModal.vm.toggleOpen = false
+      await flushPromises()
+      //@ts-expect-error: not visible on wrapper
+      expect(wrapper.vm.approveUsersModal).toBe(false)
     })
   })
   describe('ApproveUsersForm', async () => {
@@ -172,23 +180,68 @@ describe('ApprovedExpensesSection', () => {
       })
     })
     it('should approve user', async () => {
+      mockUseSignTypedData.signTypedDataAsync.mockClear()
       const approveUsersForm = wrapper.findComponent({ name: 'ApproveUsersEIP712Form' })
       expect(approveUsersForm.exists()).toBe(true)
 
-      const expiry = new Date()
+      const expiry = Math.floor(new Date().getTime() / 1000)
 
       const data = {
-        approvedUser: '0x123',
+        approvedAddress: '0x123',
         budgetData: [
           { budgetType: 0, value: 10 },
           { budgetType: 1, value: 100 },
           { budgetType: 2, value: 10 }
         ],
+        tokenAddress: USDC_ADDRESS,
         expiry
       }
 
       approveUsersForm.vm.$emit('approveUser', data)
       expect(approveUsersForm.emitted('approveUser')).toBeTruthy()
+      await flushPromises()
+      //@ts-expect-error: not visible from wrapper
+      expect(wrapper.vm.expenseAccountData).toEqual({
+        expenseAccountData: data,
+        signature: '0xSignature'
+      })
+
+      const domain = {
+        name: 'CNCExpenseAccount',
+        version: '1',
+        chainId: 1,
+        verifyingContract: '0xExpenseAccount'
+      }
+      const types = {
+        BudgetData: [
+          { name: 'budgetType', type: 'uint8' },
+          { name: 'value', type: 'uint256' }
+        ],
+        BudgetLimit: [
+          { name: 'approvedAddress', type: 'address' },
+          { name: 'budgetData', type: 'BudgetData[]' },
+          { name: 'expiry', type: 'uint256' },
+          { name: 'tokenAddress', type: 'address' }
+        ]
+      }
+      const message = {
+        ...data,
+        budgetData: data.budgetData?.map((item) => ({
+          ...item,
+          value:
+            item.budgetType === 0
+              ? item.value
+              : data.tokenAddress === zeroAddress
+                ? parseEther(`${item.value}`)
+                : BigInt(Number(item.value) * 1e6)
+        }))
+      }
+      expect(mockUseSignTypedData.signTypedDataAsync).toBeCalledWith({
+        types,
+        primaryType: 'BudgetLimit',
+        message,
+        domain
+      })
     })
     it('should give an error notification if sign typed data error occurs', async () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')

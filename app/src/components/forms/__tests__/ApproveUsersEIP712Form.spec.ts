@@ -186,10 +186,16 @@ describe('ApproveUsersForm', () => {
       expect(selectMemberInput.exists()).toBeTruthy()
       const memberAddressInput = selectMemberInput.find('[data-test="member-address-input"]')
       expect(memberAddressInput.exists()).toBeTruthy()
+      const memberNameInput = selectMemberInput.find('[data-test="member-name-input"]')
+      expect(memberNameInput.exists()).toBeTruthy()
       await memberAddressInput.setValue('0xAddressToApprove')
+      await memberNameInput.setValue('Test Name')
       await flushPromises()
       //@ts-expect-error: not visible on wrapper
-      expect(wrapper.vm.input.address).toBe('0xAddressToApprove')
+      expect(wrapper.vm.input).toEqual({
+        name: 'Test Name',
+        address: '0xAddressToApprove'
+      })
     })
     it('should update date when expiry date is selected', async () => {
       const wrapper = createComponent()
