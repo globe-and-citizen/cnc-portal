@@ -26,7 +26,7 @@
     </div>
   </div>
 
-  <!--Search user to approve-->
+  <!--Search user to approve
   <div v-for="(input, index) in formData" :key="index" class="input-group mt-3 mb-2">
     <label class="input input-bordered flex items-center gap-2 input-md">
       <input
@@ -79,11 +79,13 @@
         </a>
       </li>
     </ul>
-  </div>
+  </div>-->
+
+  <SelectMemberInput v-model="input" />
 
   <div
     class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.formData.$errors"
+    v-for="error of v$.input.$errors"
     :key="error.$uid"
     data-test="address-error"
   >
@@ -99,7 +101,7 @@
     </div>
   </div>
 
-  <div>
+  <div class="mt-2">
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24">Token</span>
       |
@@ -243,6 +245,7 @@ import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -251,6 +254,7 @@ const props = defineProps<{
   users: User[]
 }>()
 
+const input = ref({ name: '', address: '' })
 const limitValue = ref('')
 const date = ref<Date | string>('')
 const description = ref<string>('')
@@ -306,20 +310,26 @@ const updateValue = (budgetType: 0 | 1 | 2) => {
 //#endregion multi limit
 
 const rules = {
-  formData: {
-    $each: helpers.forEach({
-      address: {
-        required: helpers.withMessage('Address is required', required),
-        $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
-      }
-    }),
+  // formData: {
+  //   $each: helpers.forEach({
+  //     address: {
+  //       required: helpers.withMessage('Address is required', required),
+  //       $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
+  //     }
+  //   }),
 
-    $valid: helpers.withMessage(
-      'At least one member is required',
-      (value: Array<{ name: string; address: string }>) => {
-        return value.some((v) => v.address)
-      }
-    )
+  //   $valid: helpers.withMessage(
+  //     'At least one member is required',
+  //     (value: Array<{ name: string; address: string }>) => {
+  //       return value.some((v) => v.address)
+  //     }
+  //   )
+  // },
+  input: {
+    address: {
+      required: helpers.withMessage('Address is required', required),
+      $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
+    }
   },
   selectedToken: { required },
   // limitValue: {
@@ -340,7 +350,7 @@ const rules = {
 
 const v$ = useVuelidate(rules, {
   /*budgetLimitType, */ description,
-  /*limitValue, */ formData,
+  /*limitValue, */ input,
   selectedToken
 })
 
@@ -360,7 +370,7 @@ const submitApprove = () => {
   }
 
   emit('approveUser', {
-    approvedAddress: formData.value[0].address,
+    approvedAddress: input.value.address, // formData.value[0].address,
     budgetData: resultArray.value,
     tokenAddress: selectedToken.value,
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
