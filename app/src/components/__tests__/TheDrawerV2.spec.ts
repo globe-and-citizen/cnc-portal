@@ -228,7 +228,7 @@ describe('TheDrawer', () => {
 
       await wrapper.vm.$nextTick()
       const menuItems = wrapper.findAll('nav a:not(.hidden)')
-      expect(menuItems.length).toBe(6) // Two items should be hidden
+      expect(menuItems.length).toBe(5) // Three items should be hidden
     })
   })
 

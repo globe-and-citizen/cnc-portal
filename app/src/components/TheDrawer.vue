@@ -321,7 +321,8 @@ const menuItems = computed(() => [
       name: 'administration',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: true
+    active: route.name === 'administration',
+    show: teamStore.currentTeam?.votingAddress && teamStore.currentTeam?.boardOfDirectorsAddress
   }
 ])
 
