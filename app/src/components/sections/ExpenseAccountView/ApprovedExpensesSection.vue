@@ -16,6 +16,7 @@
     </template>
 
     <ExpenseAccountTable v-if="team" :team="team" v-model="reload" />
+
     <ModalComponent v-model="approveUsersModal">
       <ApproveUsersForm
         v-if="approveUsersModal"
@@ -44,7 +45,7 @@ import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import type { Team, User, BudgetLimit } from '@/types'
-import { parseError } from '@/utils'
+import { log, parseError } from '@/utils'
 
 const approveUsersModal = ref(false)
 const reload = ref(false)
@@ -59,7 +60,7 @@ const userDataStore = useUserDataStore()
 const { addErrorToast } = useToastStore()
 const route = useRoute()
 const chainId = useChainId()
-const { signTypedDataAsync, data: signature } = useSignTypedData()
+const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
 const _team = useTeamStore()
 
 //#region useCustomfetch
@@ -200,6 +201,13 @@ watch(searchUserResponse, () => {
 })
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
+})
+watch(signTypedDataError, async (newVal) => {
+  if (newVal) {
+    addErrorToast('Error signing expense data')
+    log.error('signTypedDataError.value', parseError(newVal))
+    loadingApprove.value = false
+  }
 })
 //#endregion
 
