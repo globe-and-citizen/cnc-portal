@@ -26,7 +26,6 @@
         :is-bod-action="isBodAction()"
         @approve-user="approveUser"
         @close-modal="approveUsersModal = false"
-        @search-users="(input) => searchUsers(input)"
       />
     </ModalComponent>
   </CardComponent>
@@ -50,8 +49,6 @@ import { log, parseError } from '@/utils'
 const approveUsersModal = ref(false)
 const reload = ref(false)
 const foundUsers = ref<User[]>([])
-const searchUserName = ref('')
-const searchUserAddress = ref('')
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
@@ -71,24 +68,6 @@ const {
 } = useCustomFetch(`teams/${String(route.params.id)}`)
   .get()
   .json<Team>()
-
-const {
-  execute: executeSearchUser,
-  response: searchUserResponse,
-  data: users
-} = useCustomFetch('user/search', {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    const params = new URLSearchParams()
-    if (!searchUserName.value && !searchUserAddress.value) return
-    if (searchUserName.value) params.append('name', searchUserName.value)
-    if (searchUserAddress.value) params.append('address', searchUserAddress.value)
-    url += '?' + params.toString()
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
 
 const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.id}/expense-data`, {
   immediate: false
@@ -169,18 +148,6 @@ const approveUser = async (data: BudgetLimit) => {
   reload.value = false
 }
 
-const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    searchUserName.value = input.name
-    searchUserAddress.value = input.address
-    if (searchUserName.value || searchUserAddress.value) {
-      await executeSearchUser()
-    }
-  } catch (error) {
-    addErrorToast(parseError(error))
-  }
-}
-
 const errorMessage = (error: {}, message: string) =>
   'reason' in error ? (error.reason as string) : message
 
@@ -194,11 +161,6 @@ watch(
     if (newVal) await init()
   }
 )
-watch(searchUserResponse, () => {
-  if (searchUserResponse.value?.ok && users.value?.users) {
-    foundUsers.value = users.value.users
-  }
-})
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })

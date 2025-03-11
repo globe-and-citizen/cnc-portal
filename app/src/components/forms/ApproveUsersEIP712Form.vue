@@ -26,61 +26,6 @@
     </div>
   </div>
 
-  <!--Search user to approve
-  <div v-for="(input, index) in formData" :key="index" class="input-group mt-3 mb-2">
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <input
-        type="text"
-        class="w-24"
-        :data-test="`name-input-${index}`"
-        v-model="input.name"
-        @keyup.stop="
-          () => {
-            emit('searchUsers', input)
-            dropdown = true
-          }
-        "
-        :placeholder="'Member Name ' + (index + 1)"
-      />
-      |
-      <input
-        type="text"
-        class="grow"
-        :data-test="`address-input-${index}`"
-        v-model="input.address"
-        @keyup.stop="
-          () => {
-            emit('searchUsers', input)
-            dropdown = true
-          }
-        "
-        :placeholder="'Wallet Address ' + (index + 1)"
-      />
-      <span class="badge badge-primary">Mandatory</span>
-    </label>
-  </div>
-
-  <div class="dropdown" :class="{ 'dropdown-open': !!users && users.length > 0 }" v-if="dropdown">
-    <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
-      <li v-for="user in users" :key="user.address">
-        <a
-          @click="
-            () => {
-              const l = formData.length - 1
-              if (l >= 0) {
-                formData[l].name = user.name ?? ''
-                formData[l].address = user.address ?? ''
-                dropdown = false
-              }
-            }
-          "
-        >
-          {{ user.name }} | {{ user.address }}
-        </a>
-      </li>
-    </ul>
-  </div>-->
-
   <SelectMemberInput v-model="input" />
 
   <div
@@ -122,49 +67,6 @@
   >
     {{ error.$message }}
   </div>
-  <!--Select budget limit type
-  <div>
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <select v-model="budgetLimitType" class="bg-white grow">
-        <option disabled :value="null">-- Select a budget limit type --</option>
-        <option v-for="type of budgetLimitTypes" :key="type.id" :value="type.id">
-          {{ type.name }}
-        </option>
-      </select>
-    </label>
-  </div>
-
-  <div
-    data-test="limit-type-error"
-    class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.budgetLimitType.$errors"
-    :key="error.$uid"
-  >
-    {{ error.$message }}
-  </div>-->
-
-  <!-- Budget limit value 
-  <div>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-      <span class="w-24">Limit</span>
-      <input
-        type="text"
-        class="grow pl-4"
-        data-test="limit-value-input"
-        v-model="limitValue"
-        placeholder="Enter a limit value"
-      />
-    </label>
-  </div>
-
-  <div
-    data-test="limit-value-error"
-    class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.limitValue.$errors"
-    :key="error.$uid"
-  >
-    {{ error.$message }}
-  </div>-->
 
   <!-- #region Multi Limit Inputs-->
   <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
@@ -202,12 +104,6 @@
         />
       </label>
     </div>
-
-    <!-- Display Selected Options -->
-    <!--<div class="p-4 mt-6 border-t">
-      <h3 class="text-lg font-semibold">Selected Options:</h3>
-      <pre class="bg-gray-100 p-4 rounded-lg">{{ resultArray }}</pre>
-    </div>-->
   </div>
   <!-- #endregion Multi Limit Inputs -->
 
@@ -258,8 +154,6 @@ const input = ref({ name: '', address: '' })
 const limitValue = ref('')
 const date = ref<Date | string>('')
 const description = ref<string>('')
-const formData = ref(props.formData)
-const dropdown = ref<boolean>(false)
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
 const selectedToken = ref<string | null>(null)
 const tokens = ref({
@@ -290,8 +184,7 @@ const resultArray = computed(() =>
     .filter(([, isSelected]) => isSelected)
     .map(([budgetType]) => ({
       budgetType: Number(budgetType),
-      value: values[budgetType as unknown as 0 | 1 | 2] || 0 //,
-      //token: selectedToken.value
+      value: values[budgetType as unknown as 0 | 1 | 2] || 0
     }))
 )
 
@@ -310,21 +203,6 @@ const updateValue = (budgetType: 0 | 1 | 2) => {
 //#endregion multi limit
 
 const rules = {
-  // formData: {
-  //   $each: helpers.forEach({
-  //     address: {
-  //       required: helpers.withMessage('Address is required', required),
-  //       $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
-  //     }
-  //   }),
-
-  //   $valid: helpers.withMessage(
-  //     'At least one member is required',
-  //     (value: Array<{ name: string; address: string }>) => {
-  //       return value.some((v) => v.address)
-  //     }
-  //   )
-  // },
   input: {
     address: {
       required: helpers.withMessage('Address is required', required),
@@ -332,15 +210,6 @@ const rules = {
     }
   },
   selectedToken: { required },
-  // limitValue: {
-  //   required,
-  //   numeric
-  // },
-  // budgetLimitType: {
-  //   required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
-  //     return typeof value === 'number' && value >= 0 ? true : false
-  //   })
-  // },
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
@@ -349,8 +218,8 @@ const rules = {
 }
 
 const v$ = useVuelidate(rules, {
-  /*budgetLimitType, */ description,
-  /*limitValue, */ input,
+  description,
+  input,
   selectedToken
 })
 
@@ -370,7 +239,7 @@ const submitApprove = () => {
   }
 
   emit('approveUser', {
-    approvedAddress: input.value.address, // formData.value[0].address,
+    approvedAddress: input.value.address,
     budgetData: resultArray.value,
     tokenAddress: selectedToken.value,
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
