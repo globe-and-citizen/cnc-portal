@@ -4,7 +4,7 @@ import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/Expens
 import * as utils from '@/utils'
 import { ref } from 'vue'
 import { parseEther } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+// import AddressToolTip from '@/components/AddressToolTip.vue'
 
 const { mockUseTeamStore } = vi.hoisted(() => ({
   mockUseTeamStore: {

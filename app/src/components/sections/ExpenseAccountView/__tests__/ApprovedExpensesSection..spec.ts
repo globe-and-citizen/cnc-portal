@@ -52,7 +52,7 @@ vi.mock('vue-router', async (importOriginal) => {
 
 vi.mock('@/composables/useCustomFetch', () => {
   return {
-    useCustomFetch: vi.fn((url, options) => {
+    useCustomFetch: vi.fn((url) => {
       const data = ref<unknown>(null)
       const error = ref(null)
       const isFetching = ref(false)

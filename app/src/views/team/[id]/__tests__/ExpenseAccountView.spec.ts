@@ -11,7 +11,6 @@ import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
-import * as utils from '@/utils'
 
 interface ComponentData {
   isDisapprovedAddress: boolean
