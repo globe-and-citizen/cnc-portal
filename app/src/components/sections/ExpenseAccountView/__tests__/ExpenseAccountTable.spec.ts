@@ -5,10 +5,105 @@ import TableComponent from '@/components/TableComponent.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import type { ManyExpenseWithBalances } from '@/types'
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+import * as utils from '@/utils'
+
+const mocks = vi.hoisted(() => ({
+  mockUseToastStore: {
+    addErrorToast: vi.fn(),
+    addSuccessToast: vi.fn()
+  },
+  mockReadContract: vi.fn()
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => ({
+      addErrorToast: mocks.mockUseToastStore.addErrorToast,
+      addSuccessToast: mocks.mockUseToastStore.addSuccessToast
+    }))
+  }
+})
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRoute: vi.fn(() => ({ params: { id: 1 } }))
+  }
+})
+
+const mockUseReadContractRefetch = vi.fn()
+const mockUseReadContract = {
+  data: ref<string | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: mockUseReadContractRefetch //vi.fn()
+}
+
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseBalance = {
+  data: ref(null),
+  refetch: vi.fn(),
+  error: ref(null),
+  isLoading: ref(false)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+
+const mockUseSignTypedData = {
+  error: ref<Error | null>(null),
+  data: ref<string | undefined>('0xExpenseDataSignature'),
+  signTypedData: vi.fn()
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useReadContract: vi.fn(() => {
+      return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
+    }),
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
+    useBalance: vi.fn(() => mockUseBalance),
+    useChainId: vi.fn(() => ref('0xChainId')),
+    useSignTypedData: vi.fn(() => mockUseSignTypedData)
+  }
+})
+
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    readContract: mocks.mockReadContract
+  }
+})
+
+vi.mock('viem', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    parseSignature: vi.fn(),
+    hashTypedData: vi.fn(),
+    keccak256: vi.fn()
+  }
+})
 
 const validExpiry = new Date().getTime() / 1000 + 60 * 60
 const invalidExpiry = new Date().getTime() / 1000 - 60 * 60
@@ -70,6 +165,22 @@ const mockApprovals = reactive<ManyExpenseWithBalances[]>([
   }
 ])
 
+const mockUseExpenseAccountData = {
+  data: reactive<ManyExpenseWithBalances[]>([]),
+  isLoading: false,
+  initializeBalances: vi.fn(() => (mockUseExpenseAccountData.data = mockApprovals))
+}
+
+vi.mock('@/composables', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useExpenseAccountDataCollection: vi.fn(() => ({
+      ...mockUseExpenseAccountData
+    }))
+  }
+})
+
 describe('ExpenseAccountTable', () => {
   setActivePinia(createPinia())
 
@@ -86,9 +197,9 @@ describe('ExpenseAccountTable', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountTable, {
       props: {
-        loading: false,
-        approvals: mockApprovals,
-        isContractOwner: true,
+        team: {
+          expenseAccountEip712Address: '0xExpenseAccount'
+        },
         ...props
       },
       data,
@@ -117,6 +228,7 @@ describe('ExpenseAccountTable', () => {
 
     it('should filter all approvals', async () => {
       const wrapper = createComponent()
+      // wrapper.vm.manyExpenseAccountDataAll = mockApprovals
       await flushPromises()
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -198,7 +310,9 @@ describe('ExpenseAccountTable', () => {
     })
 
     it('should show loading button if enabling approval', async () => {
-      const wrapper = createComponent({ props: { loading: true } })
+      const wrapper = createComponent()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.contractOwnerAddress = '0xInitialUser'
       const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
       expect(statusDisabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
@@ -214,13 +328,16 @@ describe('ExpenseAccountTable', () => {
       expect(firstRow.html()).toContain(mockApprovals[1].name)
       const disableButton = firstRow.findComponent(ButtonUI)
       expect(disableButton.exists()).toBeTruthy()
+      expect(disableButton.props('disabled')).toBe(false)
       disableButton.trigger('click')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isLoadingDeactivateApproval = true
       await flushPromises()
       expect(disableButton.props('loading')).toBe(true)
     })
 
     it('should show loading button if disabling approvals', async () => {
-      const wrapper = createComponent({ props: { loading: true } })
+      const wrapper = createComponent()
       const statusEnabledInput = wrapper.find('[data-test="status-input-enabled"]')
       expect(statusEnabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
@@ -241,7 +358,7 @@ describe('ExpenseAccountTable', () => {
       expect(enableButton.props('loading')).toBe(true)
     })
     it('should disable action buttons if not contract owner', async () => {
-      const wrapper = createComponent({ props: { isContractOwner: false } })
+      const wrapper = createComponent()
       await flushPromises()
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -254,6 +371,60 @@ describe('ExpenseAccountTable', () => {
       expect(secondRow.exists()).toBeTruthy()
       const disableButton = secondRow.findComponent(ButtonUI)
       expect(disableButton.props('disabled')).toBe(true)
+    })
+
+    it('should notify success if activate successful', async () => {
+      const wrapper = createComponent()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingActivate = true
+      await flushPromises()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingActivate = false
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmedActivate = { value: true }
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
+      expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+    })
+    it('should notify success if activate successful', async () => {
+      const wrapper = createComponent()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingDeativate = true
+      await flushPromises()
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmingDeactivate = false
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.isConfirmedDeactivate = { value: true }
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
+      expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+    })
+    it('should notify error if error deactivate approval', async () => {
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
+      expect(logErrorSpy).toBeCalledWith('Error deactivating approval')
+    })
+    it('should notify error if error activate approval', async () => {
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
+      expect(logErrorSpy).toBeCalledWith('Error activating approval')
+    })
+    it('should notify error if error getting owner', async () => {
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      //@ts-expect-error: custom field of component not available by default
+      wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
+      await flushPromises()
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')
+      expect(logErrorSpy).toBeCalledWith('Error getting owner')
     })
   })
 })

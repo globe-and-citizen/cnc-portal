@@ -14,19 +14,24 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent :rows="filteredApprovals" :columns="columns">
+    <TableComponent
+      :rows="filteredApprovals"
+      :columns="columns"
+      :loading="isLoadingExpensewAccountData"
+    >
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
           variant="error"
           data-test="disable-button"
           size="sm"
-          :loading="loading && signatureToUpdate === row.signature"
-          :disabled="!isContractOwner"
+          :loading="isLoadingDeactivateApproval && signatureToUpdate === row.signature"
+          :disabled="!(contractOwnerAddress === userDataStore.address)"
           @click="
             () => {
-              emits('disableApproval', row.signature)
+              //emits('disableApproval', row.signature)
               signatureToUpdate = row.signature
+              deactivateApproval(row.signature)
             }
           "
           >Disable</ButtonUI
@@ -36,12 +41,13 @@
           variant="info"
           data-test="enable-button"
           size="sm"
-          :loading="loading && signatureToUpdate === row.signature"
-          :disabled="!isContractOwner"
+          :loading="isLoadingActivateApproval && signatureToUpdate === row.signature"
+          :disabled="!(contractOwnerAddress === userDataStore.address)"
           @click="
             () => {
-              emits('enableApproval', row.signature)
+              //emits('enableApproval', row.signature)
               signatureToUpdate = row.signature
+              activateApproval(row.signature)
             }
           "
           >Enable</ButtonUI
@@ -94,39 +100,25 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, ref, type Reactive } from 'vue'
-import type { ManyExpenseWithBalances } from '@/types'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
-import { zeroAddress } from 'viem'
+import { computed, onMounted, ref, watch } from 'vue'
+import type { Team } from '@/types'
+import { log, parseError, tokenSymbol } from '@/utils'
+import { useExpenseAccountDataCollection } from '@/composables'
+import { useToastStore, useUserDataStore } from '@/stores'
+import { type Address, keccak256 } from 'viem'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
-const { approvals, loading } = defineProps<{
-  approvals: Reactive<ManyExpenseWithBalances[]>
-  loading: boolean
-  isContractOwner: boolean
+const { team /*, reload*/ } = defineProps<{
+  team: Partial<Team> | null
 }>()
-const emits = defineEmits(['disableApproval', 'enableApproval'])
+const reload = defineModel()
+const { addErrorToast, addSuccessToast } = useToastStore()
+const userDataStore = useUserDataStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
-
-const filteredApprovals = computed(() => {
-  if (selectedRadio.value === 'all') {
-    return approvals
-  } else {
-    return approvals.filter((approval) => approval.status === selectedRadio.value)
-  }
-})
-
-const tokenSymbol = (tokenAddress: string) =>
-  computed(() => {
-    const symbols = {
-      [USDC_ADDRESS]: 'USDC',
-      [USDT_ADDRESS]: 'USDT',
-      [zeroAddress]: NETWORK.currencySymbol
-    }
-
-    return symbols[tokenAddress] || ''
-  })
+const expenseAccountEip712Address = ref('')
 
 const columns = [
   {
@@ -164,4 +156,139 @@ const columns = [
     sortable: false
   }
 ] as TableColumn[]
+
+//#endregion Composables
+const {
+  data: manyExpenseAccountDataAll,
+  isLoading: isLoadingExpensewAccountData,
+  initializeBalances
+} = useExpenseAccountDataCollection()
+const {
+  data: contractOwnerAddress,
+  refetch: fetchExpenseAccountOwner,
+  error: errorGetOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: expenseAccountEip712Address as unknown as Address,
+  abi: expenseAccountABI
+})
+//deactivate approval
+const {
+  writeContract: executeDeactivateApproval,
+  isPending: isLoadingDeactivateApproval,
+  error: errorDeactivateApproval,
+  data: deactivateHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
+  useWaitForTransactionReceipt({
+    hash: deactivateHash
+  })
+
+//activate approval
+const {
+  writeContract: executeActivateApproval,
+  isPending: isLoadingActivateApproval,
+  error: errorActivateApproval,
+  data: activateHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
+  useWaitForTransactionReceipt({
+    hash: activateHash
+  })
+//#region
+
+const filteredApprovals = computed(() => {
+  if (selectedRadio.value === 'all') {
+    return manyExpenseAccountDataAll
+  } else {
+    return manyExpenseAccountDataAll.filter((approval) => approval.status === selectedRadio.value)
+  }
+})
+
+//#region Functions
+const deactivateApproval = async (signature: `0x{string}`) => {
+  const signatureHash = keccak256(signature)
+
+  executeDeactivateApproval({
+    address: team?.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'deactivateApproval'
+  })
+}
+
+const activateApproval = async (signature: `0x{string}`) => {
+  const signatureHash = keccak256(signature)
+
+  executeActivateApproval({
+    address: team?.expenseAccountEip712Address as Address,
+    args: [signatureHash],
+    abi: expenseAccountABI,
+    functionName: 'activateApproval'
+  })
+}
+
+//#endregion
+
+//#region Watch
+watch(reload, async (newState) => {
+  console.log(`reload state changed: `, newState)
+  if (newState) {
+    console.log(`Reloading...`)
+    await fetchExpenseAccountOwner()
+    await initializeBalances()
+    console.log(`manyExpenseAccountDataAll: `, manyExpenseAccountDataAll)
+  }
+})
+watch(
+  () => team,
+  async (newTeam) => {
+    if (newTeam) {
+      expenseAccountEip712Address.value = newTeam.expenseAccountEip712Address as string
+      await fetchExpenseAccountOwner()
+    }
+  }
+)
+watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
+    reload.value = true
+    addSuccessToast('Activate Successful')
+    await initializeBalances()
+    reload.value = false
+  }
+})
+watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
+    reload.value = true
+    addSuccessToast('Deactivate Successful')
+    await initializeBalances()
+    reload.value = false
+  }
+})
+watch(errorDeactivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to deactivate approval')
+  }
+})
+watch(errorActivateApproval, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to activate approval')
+  }
+})
+watch(errorGetOwner, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Error Getting Contract Owner')
+  }
+})
+//#endregion
+
+onMounted(async () => {
+  await fetchExpenseAccountOwner()
+  await initializeBalances()
+})
 </script>

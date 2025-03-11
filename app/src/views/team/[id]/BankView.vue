@@ -7,13 +7,8 @@
       :price-data="priceData"
       @balance-updated="$forceUpdate()"
     />
-
-    <TokenHoldingsSection
-      v-if="bankBalanceSection"
-      :bank-balance-section="bankBalanceSection"
-      :price-data="priceData"
-    />
-    <TransactionsHistorySection />
+    <GenericTokenHoldingsSection v-if="typedBankAddress" :address="typedBankAddress" />
+    <TransactionsHistorySection :currency-rates="currencyRatesData" />
   </div>
 </template>
 
@@ -21,10 +16,11 @@
 import { ref, computed } from 'vue'
 import { type Address } from 'viem'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
-import TokenHoldingsSection from '@/components/sections/BankView/TokenHoldingsSection.vue'
+import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
+import { useCurrencyRates } from '@/composables/useCurrencyRates'
 
 const teamStore = useTeamStore()
 const typedBankAddress = computed(() => teamStore.currentTeam?.bankAddress as Address | undefined)
@@ -55,5 +51,13 @@ const priceData = computed(() => ({
   usdcPrice: usdcPrice.value,
   loading: pricesLoading.value,
   error: pricesError.value ? true : null
+}))
+
+const { loading: currencyLoading, error: currencyError, getRate } = useCurrencyRates()
+
+const currencyRatesData = computed(() => ({
+  loading: currencyLoading.value,
+  error: currencyError.value,
+  getRate
 }))
 </script>
