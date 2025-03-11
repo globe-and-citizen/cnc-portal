@@ -18,15 +18,13 @@
 
     <ApprovedExpensesSection />
 
-    <div data-test="claims-table">
-      <TransactionHistorySection
-        :currency-rates="{
-          loading: false,
-          error: null,
-          getRate: () => 1
-        }"
-      />
-    </div>
+    <TransactionHistorySection
+      :currency-rates="{
+        loading: false,
+        error: null,
+        getRate: () => 1
+      }"
+    />
   </div>
 </template>
 
