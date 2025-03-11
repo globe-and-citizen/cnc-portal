@@ -3,7 +3,7 @@
     <div class="flex flex-col gap-4 items-center">
       <img :src="cardIcon" alt="icon" class="w-16 h-16" data-test="card-icon" />
       <span class="text-4xl font-bold" data-test="amount">{{ title }}</span>
-      <span class="text-sm font-semibold">{{ subtitle }}</span>
+      <span class="text-sm font-semibold" data-test="subtitle">{{ subtitle }}</span>
       <slot></slot>
     </div>
   </div>

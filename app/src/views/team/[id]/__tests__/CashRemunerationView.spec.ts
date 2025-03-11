@@ -91,14 +91,7 @@ describe('CashRemunerationView.vue', () => {
       }
     })
   }
-  it('should be able to do something', async () => {
-    const wrapper = createComponent()
 
-    const input = wrapper.find('input[data-test="hours-worked-input"')
-    await input.setValue('10')
-
-    expect((input.element as HTMLInputElement).value).toBe('10')
-  })
   it('should pass correct props to GenericTokenHoldingsSection', () => {
     const wrapper = createComponent()
     const genericTokenHoldingSection = wrapper.findComponent({

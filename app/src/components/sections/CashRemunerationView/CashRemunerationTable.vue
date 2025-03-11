@@ -121,6 +121,7 @@ import { log } from '@/utils'
 import type { Address } from 'viem'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import SubmitClaims from './SubmitClaims.vue'
 
 defineProps<{
   ownerAddress: string | undefined
