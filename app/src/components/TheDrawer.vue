@@ -317,7 +317,10 @@ const menuItems = computed(() => [
   {
     label: 'Administration',
     icon: UsersIcon,
-    route: '/admin',
+    route: {
+      name: 'administration',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
     show: true
   }
 ])
