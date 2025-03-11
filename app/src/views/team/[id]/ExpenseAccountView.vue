@@ -5,31 +5,37 @@
     <div class="flex gap-6">
       <OverviewCard
         data-test="expense-account-balance"
-        title="Total Balance"
-        :amount="parseInt(expenseBalanceFormatted ?? 0)"
-        :currency="NETWORK.currencySymbol"
-        bg-color="bg-[#C8FACD]"
+        :title="`${expenseBalanceFormatted} ${NETWORK.currencySymbol}`"
+        subtitle="Total Balance"
+        variant="success"
         :card-icon="bagIcon"
-        :is-loading="isLoadingExpenseAccountBalance"
-        text-color="text-[#005249]"
       >
+        <div class="flex flex-row gap-1 text-black">
+          <img :src="uptrendIcon" alt="status-icon" />
+          <div>
+            <span class="font-semibold text-sm" data-test="percentage-increase">+ 41.3% </span>
+            <span class="font-medium text-[#637381] text-xs">than last week</span>
+          </div>
+        </div>
       </OverviewCard>
-      <OverviewCard
-        title="Month Spent"
-        :amount="10200"
-        :card-icon="cartIcon"
-        bg-color="bg-[#FEF3DE]"
-        text-color="text-[#6A3B13]"
-        :previous-amount="8000"
-      ></OverviewCard>
-      <OverviewCard
-        title="Total Approved"
-        :amount="47900"
-        :previous-amount="43200"
-        :card-icon="personIcon"
-        bg-color="bg-[#D6E4FF]"
-        text-color="text-[#1A3D7A]"
-      ></OverviewCard>
+      <OverviewCard title="10.2K" subtitle="Month Spent" variant="warning" :card-icon="cartIcon">
+        <div class="flex flex-row gap-1 text-black">
+          <img :src="uptrendIcon" alt="status-icon" />
+          <div>
+            <span class="font-semibold text-sm" data-test="percentage-increase">+ 26.3% </span>
+            <span class="font-medium text-[#637381] text-xs">than last week</span>
+          </div>
+        </div>
+      </OverviewCard>
+      <OverviewCard title="47.9K" subtitle="Total Approved" variant="info" :card-icon="personIcon"
+        ><div class="flex flex-row gap-1 text-black">
+          <img :src="uptrendIcon" alt="status-icon" />
+          <div>
+            <span class="font-semibold text-sm" data-test="percentage-increase">+ 12.3% </span>
+            <span class="font-medium text-[#637381] text-xs">than last week</span>
+          </div>
+        </div></OverviewCard
+      >
     </div>
 
     <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-10">
@@ -123,6 +129,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import bagIcon from '@/assets/bag.svg'
 import cartIcon from '@/assets/cart.svg'
 import personIcon from '@/assets/person.svg'
+import uptrendIcon from '@/assets/uptrend.svg'
 
 //#endregion
 
@@ -143,7 +150,10 @@ const expenseAccountEip712Address = computed(
 
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
-    return formatEther(expenseAccountBalance.value.value)
+    return Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      maximumFractionDigits: 1
+    }).format(parseFloat(formatEther(expenseAccountBalance.value.value)) ?? 0)
   else return '--'
 })
 
@@ -210,7 +220,7 @@ const {
 
 const {
   data: expenseAccountBalance,
-  isLoading: isLoadingExpenseAccountBalance,
+  // isLoading: isLoadingExpenseAccountBalance,
   error: isErrorExpenseAccountBalance,
   refetch: executeGetExpenseAccountBalance
 } = useBalance({
