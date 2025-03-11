@@ -3,8 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import AdministrationView from '../team/[id]/AdministrationView.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
-import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
-import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
+
 import { SingleTeamTabs } from '@/types'
 
 const mockTeam = {
@@ -39,14 +38,11 @@ describe('AdministrationView', () => {
           })
         ],
         stubs: {
-          TabNavigation: true,
           ProposalSection: true,
           BoardOfDirectorsSection: true
         },
         components: {
-          TabNavigation,
-          ProposalSection,
-          BoardOfDirectorsSection
+          TabNavigation
         }
       }
     })
@@ -64,5 +60,18 @@ describe('AdministrationView', () => {
       SingleTeamTabs.Proposals,
       SingleTeamTabs.BoardOfDirectors
     ])
+  })
+  it('displays the proposal tab by default', () => {
+    const wrapper = createWrapper()
+    expect(wrapper.findComponent({ name: 'ProposalSection' }).exists()).toBe(true)
+  })
+  it('displays the board of directors tab', async () => {
+    interface IWrapper {
+      activeTab: number
+    }
+    const wrapper = createWrapper()
+    ;(wrapper.vm as unknown as IWrapper).activeTab = 1
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findComponent({ name: 'BoardOfDirectorsSection' }).exists()).toBe(true)
   })
 })
