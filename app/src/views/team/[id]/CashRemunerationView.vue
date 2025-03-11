@@ -26,6 +26,10 @@
         />
       </div>
     </div>
+    <GenericTokenHoldingsSection
+      v-if="teamStore.currentTeam?.cashRemunerationEip712Address"
+      :address="teamStore.currentTeam?.cashRemunerationEip712Address"
+    />
     <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
       <div class="w-full flex justify-between">
         <span class="font-bold text-lg">Claims Table</span>
@@ -70,6 +74,7 @@ import SubmitClaims from '@/components/sections/CashRemunerationView/SubmitClaim
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
 import type { BaseTransaction } from '@/types/transactions'
 import { NETWORK } from '@/constant'
+import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 
 const route = useRoute()
 const claimStatus = ref<string>('all')
