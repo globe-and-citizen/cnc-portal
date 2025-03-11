@@ -1,5 +1,9 @@
-# Use Node.js 14 AS the base image
-FROM node:18-alpine AS development  
+# Use Node.js 18 AS the base image
+FROM node:22-slim AS development 
+
+# Install necessary dependencies
+RUN apt-get update -y \
+&& apt-get install -y openssl
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -18,16 +22,20 @@ COPY . .
 RUN npm run prisma:generate
 
 # Expose the port defined in the environment variable
-ENV PORT $PORT
+ARG PORT
+ENV PORT=${PORT:-3000}
 
 # Command to run the application using nodemon
 CMD ["npm", "run", "start"]
 
 # Build stage
 FROM development AS production
+
 RUN npm run build
 
-CMD ["npm", "run", "prod"]
-
 # Expose the port defined in the environment variable
-ENV PORT $PORT
+ARG PORT
+ENV PORT=${PORT:-3000}
+
+# Command to run the application in production mode
+CMD ["npm", "run", "prod"]
