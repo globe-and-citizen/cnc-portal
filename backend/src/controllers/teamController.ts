@@ -3,7 +3,8 @@ import { Request, Response } from "express";
 import { isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
 import { addNotification, prisma } from "../utils";
-
+import publicClient from "../utils/viem.config";
+import OFFICER_ABI from "../artifacts/officer_abi.json";
 //const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
@@ -933,6 +934,33 @@ const handleApprovedClaim = async (claimId: number) => {
     where: { id: Number(claimId) },
     data: { status: "withdrawn" },
   });
+};
+
+export const addContracts = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
+
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!team) return errorResponse(404, "Team not found", res);
+
+    if (team.ownerAddress !== callerAddress)
+      return errorResponse(403, "Unauthorized", res);
+
+    const contracts = await publicClient.readContract({
+      address: team.officerAddress as `0x${string}`,
+      abi: OFFICER_ABI,
+      functionName: "getTeam",
+    });
+    console.log(contracts);
+  } catch (error) {
+    return errorResponse(500, error, res);
+  } finally {
+    await prisma.$disconnect();
+  }
 };
 
 export {
