@@ -1,84 +1,82 @@
 <template>
-  <div
-    v-if="team?.expenseAccountEip712Address"
-    class="card shadow-xl bg-white flex text-primary-content p-5 overflow-visible mb-10"
-  >
-    <span class="text-2xl font-bold">My Approved Expense</span>
-    <!-- TODO display this only if the use have an approved expense -->
-    <!-- Expense A/c Info Section -->
-    <section class="stat flex flex-col justify-start">
-      <!-- New Header -->
+  <CardComponent title="My Approved Expense">
+    <div v-if="team?.expenseAccountEip712Address">
+      <!-- TODO display this only if the use have an approved expense -->
+      <!-- Expense A/c Info Section -->
+      <section class="stat flex flex-col justify-start">
+        <!-- New Header -->
 
-      <div class="flex flex-col gap-8">
-        <div class="overflow-x-auto" data-test="approval-table">
-          <table class="table">
-            <!-- head -->
-            <thead class="text-sm font-bold">
-              <tr>
-                <th>Expiry Date</th>
-                <th>Max Amount Per Tx</th>
-                <th>Total Transactions</th>
-                <th>Total Transfers</th>
-                <th class="flex justify-end">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{{ expiry }}</td>
-                <td>
-                  {{ maxLimitAmountPerTx }}
-                  {{
-                    _expenseAccountData?.data &&
-                    tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
-                  }}
-                </td>
-                <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
-                <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
-                <td class="flex justify-end" data-test="action-td">
-                  <ButtonUI
-                    variant="success"
-                    :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
-                    v-if="true"
-                    @click="transferModal = true"
-                    data-test="transfer-button"
-                  >
-                    Spend
-                  </ButtonUI>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="flex flex-col gap-8">
+          <div class="overflow-x-auto" data-test="approval-table">
+            <table class="table">
+              <!-- head -->
+              <thead class="text-sm font-bold">
+                <tr>
+                  <th>Expiry Date</th>
+                  <th>Max Amount Per Tx</th>
+                  <th>Total Transactions</th>
+                  <th>Total Transfers</th>
+                  <th class="flex justify-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ expiry }}</td>
+                  <td>
+                    {{ maxLimitAmountPerTx }}
+                    {{
+                      _expenseAccountData?.data &&
+                      tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
+                    }}
+                  </td>
+                  <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
+                  <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
+                  <td class="flex justify-end" data-test="action-td">
+                    <ButtonUI
+                      variant="success"
+                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
+                      v-if="true"
+                      @click="transferModal = true"
+                      data-test="transfer-button"
+                    >
+                      Spend
+                    </ButtonUI>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
-      <ModalComponent v-model="transferModal">
-        <TransferFromBankForm
-          v-if="transferModal && _expenseAccountData?.data"
-          @close-modal="() => (transferModal = false)"
-          @transfer="
-            async (to: string, amount: string) => {
-              await transferFromExpenseAccount(to, amount)
-            }
-          "
-          @searchMembers="(input) => searchUsers({ name: '', address: input })"
-          :filteredMembers="users?.users"
-          :loading="isLoadingTransfer || isConfirmingTransfer"
-          :bank-balance="
-            JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
-              ? expenseBalanceFormatted
-              : undefined
-          "
-          :usdc-balance="
-            JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
-              ? undefined
-              : `${Number(usdcBalance) / 1e6}`
-          "
-          :_token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)"
-          service="Expense Account"
-        />
-      </ModalComponent>
-    </section>
-  </div>
+        <ModalComponent v-model="transferModal">
+          <TransferFromBankForm
+            v-if="transferModal && _expenseAccountData?.data"
+            @close-modal="() => (transferModal = false)"
+            @transfer="
+              async (to: string, amount: string) => {
+                await transferFromExpenseAccount(to, amount)
+              }
+            "
+            @searchMembers="(input) => searchUsers({ name: '', address: input })"
+            :filteredMembers="users?.users"
+            :loading="isLoadingTransfer || isConfirmingTransfer"
+            :bank-balance="
+              JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
+                ? expenseBalanceFormatted
+                : undefined
+            "
+            :usdc-balance="
+              JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
+                ? undefined
+                : `${Number(usdcBalance) / 1e6}`
+            "
+            :_token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)"
+            service="Expense Account"
+          />
+        </ModalComponent>
+      </section>
+    </div>
+  </CardComponent>
 </template>
 
 <script setup lang="ts">
@@ -86,6 +84,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
+import CardComponent from '@/components/CardComponent.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore } from '@/stores'

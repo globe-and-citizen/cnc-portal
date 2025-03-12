@@ -1,5 +1,5 @@
 # Use Node.js 18 AS the base image
-FROM node:18-alpine AS development  
+FROM node:22-alpine AS development  
 
 
 # Set the working directory inside the container
@@ -28,7 +28,7 @@ EXPOSE 5173
 # Command to run the application in development mode
 CMD ["npm", "run", "dev"]
 
-FROM node:18-alpine AS build
+FROM node:22-alpine AS build
 
 # Set the working directory in the container
 WORKDIR /app
