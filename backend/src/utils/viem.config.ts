@@ -3,7 +3,7 @@ import { mainnet, sepolia, polygon, hardhat } from "viem/chains";
 
 const chainId = process.env.CHAIN_ID;
 
-const getChain = (chainIdStr: string | undefined) => {
+export const getChain = (chainIdStr: string | undefined) => {
   if (!chainIdStr) return sepolia; // default to sepolia
 
   const id = chainIdStr.startsWith("0x")
