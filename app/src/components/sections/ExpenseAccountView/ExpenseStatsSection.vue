@@ -35,7 +35,7 @@
     >
   </div>
 
-  <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-10">
+  <div class="flex sm:flex-row justify-end sm:items-start">
     <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
       <span class="text-sm">Expense Account Address </span>
       <AddressToolTip
