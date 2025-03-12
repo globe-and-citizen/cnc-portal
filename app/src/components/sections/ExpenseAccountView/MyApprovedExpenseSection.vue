@@ -87,7 +87,7 @@ import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useUserDataStore, useToastStore, useExpenseStore } from '@/stores'
+import { useUserDataStore, useToastStore, useExpenseStore, useTeamStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log, tokenSymbol } from '@/utils'
 import {
@@ -215,6 +215,7 @@ const dynamicDisplayDataAmount = dynamicDisplayData(1)
 //#region Composables
 const { addErrorToast, addSuccessToast } = useToastStore()
 const expenseStore = useExpenseStore()
+const teamStore = useTeamStore()
 const chainId = useChainId()
 
 const {
@@ -222,7 +223,7 @@ const {
   error: isErrorExpenseAccountBalance,
   refetch: fetchExpenseAccountBalance
 } = useBalance({
-  address: team.expenseAccountEip712Address as unknown as Address,
+  address: teamStore.currentTeam?.expenseAccountEip712Address as Address, //team.expenseAccountEip712Address as unknown as Address,
   chainId
 })
 
@@ -235,7 +236,7 @@ const {
   address: USDC_ADDRESS as Address,
   abi: ERC20ABI,
   functionName: 'balanceOf',
-  args: [team.expenseAccountEip712Address as unknown as Address]
+  args: [teamStore.currentTeam?.expenseAccountEip712Address as Address]
 })
 
 const {
@@ -244,7 +245,7 @@ const {
   error: errorGetAmountWithdrawn
 } = useReadContract({
   functionName: 'balances',
-  address: team.expenseAccountEip712Address as unknown as Address,
+  address: teamStore.currentTeam?.expenseAccountEip712Address as Address,
   abi: expenseAccountABI,
   args: [signatureHash]
 })
@@ -343,7 +344,10 @@ const transferErc20Token = async () => {
     address: tokenAddress as Address,
     abi: ERC20ABI,
     functionName: 'allowance',
-    args: [currentUserAddress as Address, team.expenseAccountEip712Address as Address]
+    args: [
+      currentUserAddress as Address,
+      teamStore.currentTeam?.expenseAccountEip712Address as Address
+    ]
   })
 
   const currentAllowance = allowance ? allowance.toString() : 0n
@@ -352,11 +356,11 @@ const transferErc20Token = async () => {
       address: tokenAddress as Address,
       abi: ERC20ABI,
       functionName: 'approve',
-      args: [team.expenseAccountEip712Address as Address, _amount]
+      args: [teamStore.currentTeam?.expenseAccountEip712Address as Address, _amount]
     })
   } else {
     executeExpenseAccountTransfer({
-      address: team.expenseAccountEip712Address as Address,
+      address: teamStore.currentTeam?.expenseAccountEip712Address as Address,
       abi: expenseAccountABI,
       functionName: 'transfer',
       args: [
@@ -376,7 +380,7 @@ const transferErc20Token = async () => {
 }
 
 const getAmountWithdrawnBalance = async () => {
-  if (team.expenseAccountEip712Address) {
+  if (teamStore.currentTeam?.expenseAccountEip712Address) {
     if (!_expenseAccountData?.value?.data) return
     signatureHash.value = keccak256(_expenseAccountData.value.signature)
     await executeGetAmountWithdrawn()

@@ -68,7 +68,7 @@
 import { computed, onMounted, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useExpenseStore } from '@/stores'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
@@ -77,6 +77,7 @@ import { log, parseError } from '@/utils'
 //#region  Composables
 const teamStore = useTeamStore()
 const chainId = useChainId()
+const expenseStore = useExpenseStore()
 
 const {
   data: networkCurrencyBalance,
@@ -108,12 +109,20 @@ const formattedNetworkCurrencyBalance = computed(() =>
 )
 
 //#region Watch
+watch(
+  () => expenseStore.reload,
+  async (newState) => {
+    if (newState) {
+      await refetchNetworkCurrencyBalance()
+      await refetchUsdcBalance()
+    }
+  }
+)
 watch(networkCurrencyBalanceError, (newError) => {
   if (newError) {
     log.error('networkCurrencyBalanceError.value: ', parseError(newError))
   }
 })
-
 watch(usdcBalanceError, (newError) => {
   if (newError) {
     log.error('usdcBalanceError.value: ', parseError(newError))

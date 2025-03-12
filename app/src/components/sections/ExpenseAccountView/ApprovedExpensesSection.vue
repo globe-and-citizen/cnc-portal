@@ -37,7 +37,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useUserDataStore, useTeamStore, useToastStore, useExpenseStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -55,6 +55,7 @@ const expenseAccountData = ref<{}>()
 
 const userDataStore = useUserDataStore()
 const { addErrorToast } = useToastStore()
+const expenseStore = useExpenseStore()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
@@ -141,11 +142,13 @@ const approveUser = async (data: BudgetLimit) => {
     signature: signature.value
   }
   await executeAddExpenseData()
-  reload.value = true
+  // reload.value = true
+  expenseStore.setReload(true)
   await init()
   loadingApprove.value = false
   approveUsersModal.value = false
-  reload.value = false
+  // reload.value = false
+  expenseStore.setReload(false)
 }
 
 const errorMessage = (error: {}, message: string) =>
