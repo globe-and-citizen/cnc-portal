@@ -16,7 +16,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
-import { readContract } from '@wagmi/core'
 import { encodeFunctionData, type Address } from 'viem'
 import { ref, watch, computed } from 'vue'
 
@@ -46,7 +45,6 @@ import {
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { log } from '@/utils'
-import { config } from '@/wagmi.config'
 
 const props = withDefaults(
   defineProps<{
@@ -85,11 +83,6 @@ const { isLoading: isConfirmingCreateOfficer, isSuccess: isConfirmedCreateOffice
 const createOfficerLoading = computed(
   () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
 )
-
-interface TeamContract {
-  contractType: string
-  contractAddress: Address
-}
 
 const deployOfficerContract = async () => {
   loading.value = true
@@ -284,37 +277,26 @@ useWatchContractEvent({
       loading.value = false
       return
     }
-    const team = await readContract(config, {
-      address: proxyAddress as Address,
-      abi: OfficerABI,
-      functionName: 'getTeam'
-    })
-    const contractTypeToField: Record<string, keyof Partial<Team>> = {
-      Bank: 'bankAddress',
-      Voting: 'votingAddress',
-      BoardOfDirectors: 'boardOfDirectorsAddress',
-      ExpenseAccount: 'expenseAccountAddress',
-      ExpenseAccountEIP712: 'expenseAccountEip712Address',
-      InvestorsV1: 'investorsAddress',
-      CashRemunerationEIP712: 'cashRemunerationEip712Address'
-    }
 
-    const contractAddresses = (team as TeamContract[]).reduce(
-      (acc, { contractType, contractAddress }) => ({
-        ...acc,
-        [contractTypeToField[contractType]]: contractAddress
-      }),
-      {} as Partial<Team>
-    )
-    contractAddresses.officerAddress = proxyAddress
     const { error: updateTeamError } = await useCustomFetch<string>(
       `teams/${props.createdTeamData.id}`
     )
-      .put(contractAddresses)
+      .put({
+        officerAddress: proxyAddress
+      })
       .json()
     if (updateTeamError.value) {
       log.error('Error updating officer address')
       addErrorToast('Error updating officer address')
+      loading.value = false
+      return
+    }
+    const { error: updateContractsError } = await useCustomFetch<string>(
+      `teams/${props.createdTeamData.id}/add-contracts`
+    ).post()
+    if (updateContractsError.value) {
+      log.error('Error updating contracts')
+      addErrorToast('Error updating contracts')
       loading.value = false
       return
     }
