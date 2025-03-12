@@ -31,10 +31,10 @@
       <!-- Continue Team Creation section -->
       <div v-if="!hasContract">
         <p>
-          You have created your team without deploying the Smart contracts necessary for its
-          management. Click
+          You have created your team, but the necessary smart contracts for its management haven't
+          been deployed yet. Click
           <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI> to
-          continue deploying his Smart contracts.
+          to proceed with the deployment.
         </p>
         <ModalComponent v-model="showModal">
           <!-- May be return an event that will trigger team reload -->
