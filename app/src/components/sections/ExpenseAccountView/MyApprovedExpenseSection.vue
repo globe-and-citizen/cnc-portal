@@ -223,7 +223,7 @@ const {
   error: isErrorExpenseAccountBalance,
   refetch: fetchExpenseAccountBalance
 } = useBalance({
-  address: teamStore.currentTeam?.expenseAccountEip712Address as Address, //team.expenseAccountEip712Address as unknown as Address,
+  address: teamStore.currentTeam?.expenseAccountEip712Address as Address,
   chainId
 })
 
@@ -370,7 +370,7 @@ const transferErc20Token = async () => {
           ...budgetLimit,
           budgetData: budgetLimit.budgetData.map((item) => ({
             ...item,
-            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
+            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
           }))
         },
         _expenseAccountData.value.signature
@@ -399,12 +399,10 @@ watch(
 )
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
-    // reload.value = true
     expenseStore.reload = true
     addSuccessToast('Transfer Successful')
     await init()
     transferModal.value = false
-    // reload.value = false
     expenseStore.reload = false
   }
 })
