@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useExpenseStore } from '@/stores/useExpenseStore'
 
@@ -17,11 +17,8 @@ describe('useExpenseStore', () => {
   })
 
   it('sets the reload status to true', () => {
-    // toastStore.addInfoToast('Test Toast')
     expenseStore.setReload(true)
     expect(expenseStore.reload).toBeTruthy()
-    // expect(toastStore.toasts.length).toBe(1)
-    // expect(toastStore.toasts[0]).toMatchObject({ message: 'Test Toast', timeout: 5000, id: 1 })
   })
 
   it('sets the reload state to true', () => {

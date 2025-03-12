@@ -110,7 +110,6 @@ const { team } = defineProps<{
   team: Partial<Team>
   isDisapprovedAddress: boolean
 }>()
-const reload = defineModel()
 
 //#region refs
 const transferModal = ref(false)

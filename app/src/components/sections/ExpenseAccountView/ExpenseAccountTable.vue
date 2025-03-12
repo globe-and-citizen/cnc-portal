@@ -109,10 +109,9 @@ import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
-const { team /*, reload*/ } = defineProps<{
+const { team } = defineProps<{
   team: Partial<Team> | null
 }>()
-const reload = defineModel()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
