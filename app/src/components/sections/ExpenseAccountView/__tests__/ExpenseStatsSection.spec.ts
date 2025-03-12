@@ -4,6 +4,7 @@ import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/Expens
 import * as utils from '@/utils'
 import { ref } from 'vue'
 import { parseEther } from 'viem'
+import { setActivePinia, createPinia } from 'pinia'
 // import AddressToolTip from '@/components/AddressToolTip.vue'
 
 const { mockUseTeamStore } = vi.hoisted(() => ({
@@ -57,6 +58,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 describe('ExpenseStatsSection', () => {
+  setActivePinia(createPinia())
   const createComponent = () => mount(ExpenseStatsSection)
 
   describe('Render', () => {

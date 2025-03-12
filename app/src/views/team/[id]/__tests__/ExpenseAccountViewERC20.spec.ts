@@ -40,6 +40,9 @@ vi.mock('@/stores', async (importOriginal) => {
     useToastStore: vi.fn(() => ({
       addErrorToast: mockUseToastStore.addErrorToast,
       addSuccessToast: mockUseToastStore.addSuccessToast
+    })),
+    useTeamStore: vi.fn(() => ({
+      currentTeam: { expenseAccountEip712Address: '0xExpenseAccount' }
     }))
   }
 })
