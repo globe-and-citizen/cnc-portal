@@ -1,59 +1,41 @@
 <template>
-  <div class="flex gap-10">
-    <div class="card bg-white w-1/3 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">Balance</h2>
-        <div
-          class="font-extrabold text-neutral flex gap-2 items-baseline"
-          data-test="network-currency-balance"
-        >
-          <span class="inline-block h-10 text-4xl">
-            <span
-              class="loading loading-spinner loading-lg"
-              v-if="isLoadingNetworkCurrencyBalance"
-            ></span>
-            <span v-else>{{ formattedNetworkCurrencyBalance }} </span>
-          </span>
-          <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-        </div>
-        <div class="text-lg mt-2" data-test="usdc-balance">
-          <div v-if="isLoadingUsdcBalance">
-            <span class="loading loading-spinner loading-md"></span>
-          </div>
-          <div v-else>
-            <div>USDC: {{ usdcBalance ? Number(usdcBalance) / 1e6 : '0' }}</div>
-          </div>
+  <div class="flex gap-6">
+    <OverviewCard
+      data-test="expense-account-balance"
+      :title="`${formattedNetworkCurrencyBalance} ${NETWORK.currencySymbol}`"
+      subtitle="Total Balance"
+      variant="success"
+      :card-icon="bagIcon"
+    >
+      <div class="flex flex-row gap-1 text-black">
+        <img :src="uptrendIcon" alt="status-icon" />
+        <div>
+          <span class="font-semibold text-sm" data-test="percentage-increase">+ 41.3% </span>
+          <span class="font-medium text-[#637381] text-xs">than last week</span>
         </div>
       </div>
-    </div>
-
-    <div class="card bg-blue-100 text-blue-800 w-1/3 shadow-xl">
-      <div class="card-body">
-        <div class="font-extrabold flex gap-2 items-baseline">
-          <span class="inline-block h-10 text-4xl">
-            <span class="loading loading-spinner loading-lg" v-if="false"></span>
-            <span v-else>10 </span>
-          </span>
-          <span class="text-xs">{{ NETWORK.currencySymbol }}</span>
-        </div>
-        <h2 class="card-title">Spent this month</h2>
-      </div>
-    </div>
-    <div class="card bg-orange-200 text-orange-800 w-1/3 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">Approved Address</h2>
-        <div class="font-extrabold flex gap-2 items-baseline">
-          <span class="inline-block h-10 text-4xl">
-            <span class="loading loading-spinner loading-lg" v-if="false"></span>
-            <span v-else>20 </span>
-          </span>
-          <span class="text-xs">User</span>
+    </OverviewCard>
+    <OverviewCard title="10.2K" subtitle="Month Spent" variant="warning" :card-icon="cartIcon">
+      <div class="flex flex-row gap-1 text-black">
+        <img :src="uptrendIcon" alt="status-icon" />
+        <div>
+          <span class="font-semibold text-sm" data-test="percentage-increase">+ 26.3% </span>
+          <span class="font-medium text-[#637381] text-xs">than last week</span>
         </div>
       </div>
-    </div>
+    </OverviewCard>
+    <OverviewCard title="47.9K" subtitle="Total Approved" variant="info" :card-icon="personIcon"
+      ><div class="flex flex-row gap-1 text-black">
+        <img :src="uptrendIcon" alt="status-icon" />
+        <div>
+          <span class="font-semibold text-sm" data-test="percentage-increase">+ 12.3% </span>
+          <span class="font-medium text-[#637381] text-xs">than last week</span>
+        </div>
+      </div></OverviewCard
+    >
   </div>
 
-  <div class="flex sm:flex-row justify-end sm:items-start gap-4 mb-8">
+  <div class="flex sm:flex-row justify-end sm:items-start">
     <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
       <span class="text-sm">Expense Account Address </span>
       <AddressToolTip
@@ -67,12 +49,16 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { NETWORK } from '@/constant'
 import { useTeamStore } from '@/stores'
-import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
+import { useBalance, useChainId } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { log, parseError } from '@/utils'
+import OverviewCard from '@/components/OverviewCard.vue'
+import bagIcon from '@/assets/bag.svg'
+import cartIcon from '@/assets/cart.svg'
+import personIcon from '@/assets/person.svg'
+import uptrendIcon from '@/assets/uptrend.svg'
 
 //#region  Composables
 const teamStore = useTeamStore()
@@ -80,25 +66,12 @@ const chainId = useChainId()
 
 const {
   data: networkCurrencyBalance,
-  isLoading: isLoadingNetworkCurrencyBalance,
+  // isLoading: isLoadingNetworkCurrencyBalance,
   error: networkCurrencyBalanceError,
   refetch: refetchNetworkCurrencyBalance
 } = useBalance({
   address: teamStore.currentTeam?.expenseAccountEip712Address as unknown as Address,
   chainId
-})
-
-// Token balances
-const {
-  data: usdcBalance,
-  isLoading: isLoadingUsdcBalance,
-  refetch: refetchUsdcBalance,
-  error: usdcBalanceError
-} = useReadContract({
-  address: USDC_ADDRESS as Address,
-  abi: ERC20ABI,
-  functionName: 'balanceOf',
-  args: [teamStore.currentTeam?.expenseAccountEip712Address as unknown as Address]
 })
 //#endregion
 
@@ -113,16 +86,9 @@ watch(networkCurrencyBalanceError, (newError) => {
     log.error('networkCurrencyBalanceError.value: ', parseError(newError))
   }
 })
-
-watch(usdcBalanceError, (newError) => {
-  if (newError) {
-    log.error('usdcBalanceError.value: ', parseError(newError))
-  }
-})
 //#endregion
 
 onMounted(async () => {
   await refetchNetworkCurrencyBalance()
-  await refetchUsdcBalance()
 })
 </script>
