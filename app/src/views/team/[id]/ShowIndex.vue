@@ -33,7 +33,7 @@
         <p>
           You have created your team, but the necessary smart contracts for its management haven't
           been deployed yet. Click
-          <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI> to
+          <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI>
           to proceed with the deployment.
         </p>
         <ModalComponent v-model="showModal">

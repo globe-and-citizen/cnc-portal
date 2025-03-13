@@ -57,7 +57,7 @@
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
-    "viem": "^2.22.10",
+    "viem": "^2.23.10",
     "yamljs": "^0.3.0"
   }
 }
