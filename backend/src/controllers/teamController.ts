@@ -3,7 +3,8 @@ import { Request, Response } from "express";
 import { isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
 import { addNotification, prisma } from "../utils";
-
+import publicClient from "../utils/viem.config";
+import OFFICER_ABI from "../artifacts/officer_abi.json";
 //const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
@@ -933,6 +934,64 @@ const handleApprovedClaim = async (claimId: number) => {
     where: { id: Number(claimId) },
     data: { status: "withdrawn" },
   });
+};
+
+export const addContracts = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const callerAddress = (req as any).address;
+
+  try {
+    const team = await prisma.team.findUnique({ where: { id: Number(id) } });
+    if (!team) return errorResponse(404, "Team not found", res);
+    if (team.ownerAddress !== callerAddress)
+      return errorResponse(403, "Unauthorized", res);
+
+    type TeamUpdateFields = {
+      bankAddress?: string;
+      investorsAddress?: string;
+      votingAddress?: string;
+      boardOfDirectorsAddress?: string;
+      expenseAccountAddress?: string;
+      expenseAccountEip712Address?: string;
+      cashRemunerationEip712Address?: string;
+    };
+
+    const contractMapping = {
+      Bank: "bankAddress",
+      InvestorsV1: "investorsAddress",
+      Voting: "votingAddress",
+      BoardOfDirectors: "boardOfDirectorsAddress",
+      ExpenseAccount: "expenseAccountAddress",
+      ExpenseAccountEIP712: "expenseAccountEip712Address",
+      CashRemunerationEIP712: "cashRemunerationEip712Address",
+    } as const;
+
+    const contracts = (await publicClient.readContract({
+      address: team.officerAddress as `0x${string}`,
+      abi: OFFICER_ABI,
+      functionName: "getTeam",
+    })) as { contractType: string; contractAddress: string }[];
+
+    const teamUpdate = contracts.reduce<TeamUpdateFields>(
+      (acc, { contractType, contractAddress }) => ({
+        ...acc,
+        [contractMapping[contractType as keyof typeof contractMapping]]:
+          contractAddress,
+      }),
+      {}
+    );
+
+    const updatedTeam = await prisma.team.update({
+      where: { id: Number(id) },
+      data: teamUpdate,
+    });
+
+    res.status(200).json(updatedTeam);
+  } catch (error) {
+    return errorResponse(500, error, res);
+  } finally {
+    await prisma.$disconnect();
+  }
 };
 
 export {

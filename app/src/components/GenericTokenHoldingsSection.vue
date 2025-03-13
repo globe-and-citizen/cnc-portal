@@ -1,6 +1,6 @@
 <!-- TokenHoldingsSection.vue -->
 <template>
-  <CardComponent title="Token Holding" class="mb-8">
+  <CardComponent title="Token Holding">
     <TableComponent
       :rows="tokensWithRank"
       :loading="pricesLoading || isLoadingNetworkCuerrencyBalance || isLoadingUsdcBalance"

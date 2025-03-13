@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
 import { type Ref } from 'vue'
@@ -22,6 +22,7 @@ interface ComponentData {
   limitValue: string
   date: Date | string
   formData: { name: string; address: string }[]
+  input: { name: string; address: string }
   expiry: string
   addressToApprove: string
   addressToDisapprove: string
@@ -111,19 +112,12 @@ describe('ApproveUsersForm', () => {
     it('should show the user name and address inputs', async () => {
       const wrapper = createComponent()
 
-      const nameInput = wrapper.find('[data-test="name-input-0"]')
-      const addressInput = wrapper.find('[data-test="address-input-0"]')
-      expect(nameInput.exists()).toBe(true)
-      expect(addressInput.exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'SelectMemberInput' }).exists()).toBeTruthy()
     })
     it('should show address error when no address is entered', async () => {
       const wrapper = createComponent()
 
-      const nameInput = wrapper.find('[data-test="name-input-0"]')
-      const addressInput = wrapper.find('[data-test="address-input-0"]')
-      expect(nameInput.exists()).toBe(true)
-      expect(addressInput.exists()).toBe(true)
-
+      expect(wrapper.findComponent({ name: 'SelectMemberInput' }).exists()).toBeTruthy()
       const approveButton = wrapper.find('[data-test="approve-button"]')
       expect(approveButton.exists()).toBeTruthy()
       approveButton.trigger('click')
@@ -132,40 +126,6 @@ describe('ApproveUsersForm', () => {
       const addressError = wrapper.find('[data-test="address-error"]')
       expect(addressError.exists()).toBeTruthy()
     })
-    // it('should show budget limit types', () => {
-    //   const wrapper = createComponent()
-    //   expect(wrapper.find('select').exists()).toBeTruthy()
-    // })
-    // it('should show budget limit error when no limit is set', async () => {
-    //   const wrapper = createComponent()
-    //   expect(wrapper.find('select').exists()).toBeTruthy()
-
-    //   // expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
-    //   const approveButton = wrapper.find('[data-test="approve-button"]')
-    //   expect(approveButton.exists()).toBeTruthy()
-    //   approveButton.trigger('click')
-    //   await wrapper.vm.$nextTick()
-
-    //   const limitTypeError = wrapper.find('[data-test="limit-type-error"]')
-    //   expect(limitTypeError.exists()).toBeTruthy()
-    //   expect(limitTypeError.text()).toBe('Budget limit type is required')
-    // })
-    // it('should show limit value input', async () => {
-    //   const wrapper = createComponent()
-    //   expect(wrapper.find('[data-test="limit-value-input"]').exists()).toBeTruthy()
-    // })
-    // it('should show limit value error if no value is set', async () => {
-    //   const wrapper = createComponent()
-
-    //   const approveButton = wrapper.find('[data-test="approve-button"]')
-    //   expect(approveButton.exists()).toBeTruthy()
-    //   approveButton.trigger('click')
-    //   await wrapper.vm.$nextTick()
-
-    //   const limitValueError = wrapper.find('[data-test="limit-value-error"]')
-    //   expect(limitValueError.exists()).toBeTruthy()
-    //   expect(limitValueError.text()).toBe('Value is required')
-    // })
     it('should show set expiry date picker', async () => {
       const wrapper = createComponent()
       const datePicker = wrapper.find('[data-test="date-picker"]')
@@ -220,36 +180,23 @@ describe('ApproveUsersForm', () => {
       await descriptionInput.setValue('test description')
       expect((wrapper.vm as unknown as ComponentData).description).toBe('test description')
     })
-    it('should update user name when name is entered in name input', async () => {
+    it('should update user address when address is entered in name input', async () => {
       const wrapper = createComponent()
-      const addressInput = wrapper.find('[data-test="name-input-0"]')
-      expect(addressInput.exists()).toBeTruthy()
-      await addressInput.setValue('Test Name')
-      const formDataProp = wrapper.props('formData')
-      expect(formDataProp[0].name).toBe('Test Name')
+      const selectMemberInput = wrapper.findComponent({ name: 'SelectMemberInput' })
+      expect(selectMemberInput.exists()).toBeTruthy()
+      const memberAddressInput = selectMemberInput.find('[data-test="member-address-input"]')
+      expect(memberAddressInput.exists()).toBeTruthy()
+      const memberNameInput = selectMemberInput.find('[data-test="member-name-input"]')
+      expect(memberNameInput.exists()).toBeTruthy()
+      await memberAddressInput.setValue('0xAddressToApprove')
+      await memberNameInput.setValue('Test Name')
+      await flushPromises()
+      //@ts-expect-error: not visible on wrapper
+      expect(wrapper.vm.input).toEqual({
+        name: 'Test Name',
+        address: '0xAddressToApprove'
+      })
     })
-    it('should update user address when address is entered in address input', async () => {
-      const wrapper = createComponent()
-      const addressInput = wrapper.find('[data-test="address-input-0"]')
-      expect(addressInput.exists()).toBeTruthy()
-      await addressInput.setValue('0xAddressToApprove')
-      const formDataProp = wrapper.props('formData')
-      expect(formDataProp[0].address).toBe('0xAddressToApprove')
-    })
-    // it('should update budgetLimitType when limit type is is selected', async () => {
-    //   const wrapper = createComponent()
-    //   const limitTypeSelect = wrapper.find('select')
-    //   expect(limitTypeSelect.exists()).toBeTruthy()
-    //   await limitTypeSelect.setValue(1)
-    //   expect((wrapper.vm as unknown as ComponentData).budgetLimitType).toBe(1)
-    // })
-    // it('should update limitValue when limit value is entered', async () => {
-    //   const wrapper = createComponent()
-    //   const limitValue = wrapper.find('[data-test="limit-value-input"]')
-    //   expect(limitValue.exists()).toBeTruthy()
-    //   await limitValue.setValue('100')
-    //   expect((wrapper.vm as unknown as ComponentData).limitValue).toBe('100')
-    // })
     it('should update date when expiry date is selected', async () => {
       const wrapper = createComponent()
       const datePicker = wrapper.findComponent(VueDatePicker)
@@ -261,26 +208,6 @@ describe('ApproveUsersForm', () => {
     it('should correctly format expiry', async () => {})
   })
   describe('Emits', () => {
-    it('should emit searchUsers on keyup', async () => {
-      const wrapper = createComponent()
-
-      const nameInput = wrapper.find('[data-test="name-input-0"]')
-      const addressInput = wrapper.find('[data-test="address-input-0"]')
-      expect(nameInput.exists()).toBe(true)
-      expect(addressInput.exists()).toBe(true)
-
-      nameInput.setValue('Test Name')
-      nameInput.trigger('keyup')
-      expect(wrapper.emitted('searchUsers')).toBeTruthy()
-      expect(wrapper.emitted('searchUsers')?.[0]).toEqual([{ name: 'Test Name', address: '' }])
-
-      addressInput.setValue('0xSearchAddress')
-      nameInput.trigger('keyup')
-      expect(wrapper.emitted('searchUsers')).toBeTruthy()
-      expect(wrapper.emitted('searchUsers')?.[0]).toEqual([
-        { name: 'Test Name', address: '0xSearchAddress' }
-      ])
-    })
     it('should not emit approve address if form is invalid', async () => {
       const wrapper = createComponent()
       await wrapper.find('button[data-test="approve-button"]').trigger('click')
@@ -303,7 +230,7 @@ describe('ApproveUsersForm', () => {
       ;(wrapper.vm as unknown as ComponentData).budgetLimitType = budgetLimitType
       ;(wrapper.vm as unknown as ComponentData).limitValue = limitValue
       ;(wrapper.vm as unknown as ComponentData).date = date
-      ;(wrapper.vm as unknown as ComponentData).formData = formData
+      ;(wrapper.vm as unknown as ComponentData).input = formData[0]
       ;(wrapper.vm as unknown as ComponentData).description = 'description'
       ;(wrapper.vm as unknown as ComponentData).selectedToken = tokenAddress
 

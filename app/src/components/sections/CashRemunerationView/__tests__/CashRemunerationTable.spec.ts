@@ -28,12 +28,42 @@ vi.mock('@/composables/useClaim', () => {
 
 const statusCodeMock = ref<number | undefined>(undefined)
 const errorMock = ref<unknown>(undefined)
+const mockFetch = vi.fn()
 vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
     useCustomFetch: vi.fn(() => ({
       get: vi.fn(() => ({
+        json: vi.fn(() => ({
+          data: ref([
+            {
+              id: 1,
+              hourlyRate: '10',
+              hoursWorked: 20,
+              name: 'John Doe',
+              status: 'pending',
+              cashRemunerationSignature: null,
+              createdAt: '2021-09-01',
+              address: ' 0x123'
+            },
+            {
+              id: 2,
+              hourlyRate: '20',
+              hoursWorked: 10,
+              name: null,
+              status: 'approved',
+              cashRemunerationSignature: '0x123',
+              createdAt: '2021-09-02',
+              address: ' 0x456'
+            }
+          ]),
+          error: ref(undefined),
+          execute: mockFetch,
+          isFetching: ref(false)
+        }))
+      })),
+      post: vi.fn(() => ({
         json: vi.fn(() => ({
           data: ref({}),
           error: ref(undefined),
@@ -83,29 +113,6 @@ describe('CashRemunerationTable', () => {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       },
       props: {
-        claims: [
-          {
-            id: 1,
-            hourlyRate: '10',
-            hoursWorked: 20,
-            name: 'John Doe',
-            status: 'pending',
-            cashRemunerationSignature: null,
-            createdAt: '2021-09-01',
-            address: ' 0x123'
-          },
-          {
-            id: 2,
-            hourlyRate: '20',
-            hoursWorked: 10,
-            name: null,
-            status: 'approved',
-            cashRemunerationSignature: '0x123',
-            createdAt: '2021-09-02',
-            address: ' 0x456'
-          }
-        ],
-        isLoading: false,
         ownerAddress: '0x123'
       }
     })
@@ -121,7 +128,7 @@ describe('CashRemunerationTable', () => {
     await button.trigger('click')
 
     expect(signClaimMock).toHaveBeenCalled()
-    expect(wrapper.emitted('fetchClaims')).toBeTruthy()
+    expect(mockFetch).toHaveBeenCalled()
   })
 
   it('should be able to see and click withdraw button when current user is the claim owner', async () => {
@@ -136,7 +143,7 @@ describe('CashRemunerationTable', () => {
     expect(withdrawMock).toHaveBeenCalled()
     withdrawSuccess.value = true
     await wrapper.vm.$nextTick()
-    expect(wrapper.emitted('fetchClaims')).toBeTruthy()
+    expect(mockFetch).toHaveBeenCalled()
   })
 
   it('should show error if add approval error', async () => {
@@ -156,7 +163,7 @@ describe('CashRemunerationTable', () => {
     const radio = wrapper.find('input[data-test="radio-pending"]')
 
     await radio.trigger('change')
-    expect(wrapper.emitted('fetchClaims')).toBeTruthy()
+    expect(mockFetch).toHaveBeenCalled()
   })
 
   it('should set withdrawLoading correctly', async () => {
