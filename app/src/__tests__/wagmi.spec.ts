@@ -16,7 +16,7 @@ import { config } from '../wagmi.config'
 describe('wagmi.config.ts', () => {
   it('should create a config with the correct chains and transports', () => {
     expect(createConfig).toHaveBeenCalledWith({
-      chains: [mainnet, sepolia, polygon, hardhat],
+      chains: [mainnet, sepolia, polygon, hardhat, polygonAmoy],
       transports: {
         [mainnet.id]: 'mocked-http-transport',
         [sepolia.id]: 'mocked-http-transport',
@@ -27,7 +27,7 @@ describe('wagmi.config.ts', () => {
     })
 
     // Check the content of the created config
-    expect(config.chains).toEqual([mainnet, sepolia, polygon, hardhat])
+    expect(config.chains).toEqual([mainnet, sepolia, polygon, hardhat, polygonAmoy])
     expect(config._internal.transports[mainnet.id]).toBe('mocked-http-transport')
     expect(config._internal.transports[sepolia.id]).toBe('mocked-http-transport')
     expect(config._internal.transports[polygon.id]).toBe('mocked-http-transport')
