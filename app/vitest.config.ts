@@ -11,7 +11,7 @@ export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {
       environment: 'jsdom',
-      exclude: [...configDefaults.exclude, 'test/e2e/*'],
+      exclude: [...configDefaults.exclude, 'test/e2e/*', 'constants/*'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
         provider: 'istanbul',
