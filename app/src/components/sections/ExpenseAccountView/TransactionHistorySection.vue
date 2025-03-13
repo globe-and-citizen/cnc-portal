@@ -53,8 +53,8 @@ defineProps<Props>()
 // ])
 
 const { result, error } = useQuery(gql`
-  query GetTransfers {
-    transfers {
+  query GetTransactions {
+    transactions {
       id
       from
       to
@@ -65,13 +65,14 @@ const { result, error } = useQuery(gql`
       transactionHash
       blockNumber
       blockTimestamp
+      transactionType
     }
   }
 `)
 
 const transactionData = computed<ExpenseTransaction[]>(() =>
-  result.value?.transfers
-    ? result.value.transfers.map((transaction: Record<string, string>) => ({
+  result.value?.transactions
+    ? result.value.transactions.map((transaction: Record<string, string>) => ({
         txHash: transaction.transactionHash,
         date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
@@ -79,7 +80,7 @@ const transactionData = computed<ExpenseTransaction[]>(() =>
         amountUSD: 10,
         amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
         token: tokenSymbol(transaction.tokenAddress),
-        type: 'transfer'
+        type: transaction.transactionType // 'transfer'
       }))
     : []
 )
