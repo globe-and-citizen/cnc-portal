@@ -238,7 +238,6 @@ watch([isConfirmingCreateOfficer, isConfirmedCreateOfficer], ([isConfirming, isC
   }
 })
 
-// TODO: This is not working, the value of team is always undefined
 useWatchContractEvent({
   address: OFFICER_BEACON as Address,
   abi: FACTORY_BEACON_ABI,
