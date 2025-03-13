@@ -2,6 +2,7 @@ import { getNetwork } from './network'
 import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
+import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
 
 export const NETWORK = getNetwork()
 
@@ -11,7 +12,7 @@ interface TokenAddresses {
 }
 
 type ChainTokenAddresses = {
-  [key in 137 | 11155111 | 31337]: TokenAddresses
+  [key in 137 | 11155111 | 31337 | 80002]: TokenAddresses
 }
 
 interface AddressMapping {
@@ -39,6 +40,7 @@ interface AddressMapping {
 const addressesMap: Record<number, AddressMapping> = {
   11155111: sepolia as AddressMapping,
   31337: hardhat as AddressMapping,
+  80002: amoy as AddressMapping,
   137: polygon as AddressMapping
 }
 
@@ -70,6 +72,10 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
   11155111: {
     USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Sepolia USDC
     USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06' // Sepolia USDT
+  },
+  80002: {
+    USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
+    USDT: '' // Placeholder for Amoy USDT'
   },
   // Hardhat Local - only resolve mock addresses for local chain
   31337:
