@@ -18,6 +18,7 @@ import type { ExpenseTransaction, BaseTransaction } from '@/types/transactions'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
+import { useTeamStore } from '@/stores'
 
 interface Props {
   currencyRates: {
@@ -52,23 +53,30 @@ defineProps<Props>()
 //   }
 // ])
 
-const { result, error } = useQuery(gql`
-  query GetTransactions {
-    transactions {
-      id
-      from
-      to
-      amount
-      contractType
-      tokenAddress
-      contractAddress
-      transactionHash
-      blockNumber
-      blockTimestamp
-      transactionType
+const teamStore = useTeamStore()
+
+const contractAddress = teamStore.currentTeam?.expenseAccountEip712Address
+
+const { result, error } = useQuery(
+  gql`
+    query GetTransactions($contractAddress: Bytes!) {
+      transactions(where: { contractAddress: $contractAddress }) {
+        id
+        from
+        to
+        amount
+        contractType
+        tokenAddress
+        contractAddress
+        transactionHash
+        blockNumber
+        blockTimestamp
+        transactionType
+      }
     }
-  }
-`)
+  `,
+  { contractAddress }
+)
 
 const transactionData = computed<ExpenseTransaction[]>(() =>
   result.value?.transactions
