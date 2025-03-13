@@ -38,6 +38,7 @@ templates:
       entities:
         - Transfer
         - Deposited
+        - Transaction
       abis:
         - name: ExpenseAccountEIP712
           file: ./abis/ExpenseAccountEIP712.json
@@ -48,6 +49,8 @@ templates:
           handler: handleDeposited
         - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
           handler: handleTokenTransfer
+        - event: TokenDeposited(indexed address,indexed address,uint256)
+          handler: habdleTokenDeposited
   - name: Officer
     kind: ethereum
     network: sepolia
