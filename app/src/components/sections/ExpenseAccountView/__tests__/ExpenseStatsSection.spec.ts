@@ -63,35 +63,14 @@ describe('ExpenseStatsSection', () => {
     it('should display correct values', async () => {
       const wrapper = createComponent()
       await flushPromises()
-      const expenseBalance = wrapper.find('[data-test="network-currency-balance"]')
+      const expenseBalance = wrapper.find('[data-test="expense-account-balance"]')
       expect(expenseBalance.exists()).toBeTruthy()
       expect(expenseBalance.html()).toContain('100')
-      const usdcBalance = wrapper.find('[data-test=usdc-balance]')
-      expect(usdcBalance.exists()).toBeTruthy()
-      expect(usdcBalance.html()).toContain('20000')
       const addressToolTip = wrapper.findComponent({ name: 'AddressToolTip' })
       expect(addressToolTip.exists()).toBeTruthy()
       expect(addressToolTip.props('address')).toBe(
         mockUseTeamStore.currentTeam.expenseAccountEip712Address
       )
-    })
-    it('should show loading spinners', async () => {
-      const wrapper = createComponent()
-      //@ts-expect-error: not visible from wrapper
-      wrapper.vm.isLoadingNetworkCurrencyBalance = true
-      //@ts-expect-error: not visible from wrapper
-      wrapper.vm.isLoadingUsdcBalance = true
-      await flushPromises()
-      const networkBalance = wrapper.find('[data-test="network-currency-balance"]')
-      expect(networkBalance.exists()).toBeTruthy()
-      const networkBalanceLoading = networkBalance.find(
-        '[class="loading loading-spinner loading-lg"]'
-      )
-      expect(networkBalanceLoading.exists()).toBeTruthy()
-      const usdcBalance = wrapper.find('[data-test="usdc-balance"]')
-      expect(usdcBalance.exists()).toBeTruthy()
-      const usdcBalanceLoading = usdcBalance.find('[class="loading loading-spinner loading-md"]')
-      expect(usdcBalanceLoading.exists()).toBeTruthy()
     })
     it('should display zero values if no balances', async () => {
       mockUseBalance.data.value = null
@@ -99,15 +78,10 @@ describe('ExpenseStatsSection', () => {
       const wrapper = createComponent()
       //@ts-expect-error: not visible from wrapper
       wrapper.vm.isLoadingNetworkCurrencyBalance = false
-      //@ts-expect-error: not visible from wrapper
-      wrapper.vm.isLoadingUsdcBalance = false
       await flushPromises()
-      const expenseBalance = wrapper.find('[data-test="network-currency-balance"]')
+      const expenseBalance = wrapper.find('[data-test="expense-account-balance"]')
       expect(expenseBalance.exists()).toBeTruthy()
       expect(expenseBalance.html()).toContain('0')
-      const usdcBalance = wrapper.find('[data-test=usdc-balance]')
-      expect(usdcBalance.exists()).toBeTruthy()
-      expect(usdcBalance.html()).toContain('0')
     })
     it('should notify fetch network currency error', async () => {
       const wrapper = createComponent()
@@ -119,14 +93,6 @@ describe('ExpenseStatsSection', () => {
         'networkCurrencyBalanceError.value: ',
         'Error fetching network currency balance'
       )
-    })
-    it('should notify fetch usdc balance error', async () => {
-      const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
-      //@ts-expect-error: not visible from wrapper
-      wrapper.vm.usdcBalanceError = new Error('Error fetching usdc balance')
-      await flushPromises()
-      expect(logErrorSpy).toBeCalledWith('usdcBalanceError.value: ', 'Error fetching usdc balance')
     })
   })
 })
