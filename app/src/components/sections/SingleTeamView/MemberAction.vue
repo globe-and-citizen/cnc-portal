@@ -26,10 +26,17 @@
         with address <span class="font-bold">{{ member.address }}</span>
         from the team?
       </p>
+
+      <div v-if="deleteMemberError" data-test="error-state">
+        <div class="alert alert-warning" v-if="deleteMemberStatusCode === 401">
+          You don't have the permission to delete this member
+        </div>
+        <div class="alert" v-else>Error! Something went wrong</div>
+      </div>
       <div class="modal-action justify-center">
-        <ButtonUI v-if="memberIsDeleting" loading variant="error" />
         <ButtonUI
-          v-else
+          :loading="memberIsDeleting"
+          :disabled="memberIsDeleting"
           variant="error"
           @click="executeDeleteMember()"
           data-test="delete-member-confirm-button"
@@ -85,6 +92,12 @@
           {{ error.$message }}
         </div>
       </div>
+      <div v-if="addMemberWageDataError" data-test="error-state">
+        <div class="alert alert-warning" v-if="addMemberWageDataStatusCode === 401">
+          You don't have the permission to set wage for this member
+        </div>
+        <div class="alert" v-else>Error! Something went wrong</div>
+      </div>
       <div class="modal-action justify-center">
         <ButtonUI
           :loading="isMemberWageSaving"
@@ -111,7 +124,7 @@ import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
 import { ref, watch } from 'vue'
-const { addErrorToast } = useToastStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 const props = defineProps<{
   member: Partial<Member>
@@ -149,6 +162,7 @@ const v$ = useVuelidate(rules, { wageData })
 const {
   error: deleteMemberError,
   isFetching: memberIsDeleting,
+  statusCode: deleteMemberStatusCode,
   execute: executeDeleteMember
 } = useCustomFetch(`teams/${String(props.teamId)}/member`, {
   immediate: false,
@@ -167,6 +181,7 @@ const {
 const {
   error: addMemberWageDataError,
   isFetching: isMemberWageSaving,
+  statusCode: addMemberWageDataStatusCode,
   execute: addMemberWageDataAPI
 } = useCustomFetch(`teams/${String(props.teamId)}/cash-remuneration/wage`, {
   immediate: false,
@@ -182,19 +197,33 @@ const {
   .post(wageData)
   .json()
 
-watch(deleteMemberError, () => {
-  if (deleteMemberError.value) {
-    addErrorToast(deleteMemberError.value)
+watch(deleteMemberStatusCode, () => {
+  if (deleteMemberStatusCode.value === 204) {
+    addSuccessToast('Member deleted successfully')
     showDeleteMemberConfirmModal.value = false
   }
 })
 
-watch(addMemberWageDataError, (newVal) => {
-  if (newVal) {
-    addErrorToast(addMemberWageDataError.value)
+// watch(deleteMemberError, () => {
+//   if (deleteMemberError.value) {
+//     addErrorToast(deleteMemberError.value)
+//     showDeleteMemberConfirmModal.value = false
+//   }
+// })
+
+watch(addMemberWageDataStatusCode, () => {
+  if (addMemberWageDataStatusCode.value === 201) {
+    addSuccessToast('Member wage data added successfully')
     showSetMemberWageModal.value = false
   }
 })
+
+// watch(addMemberWageDataError, (newVal) => {
+//   if (newVal) {
+//     addErrorToast(addMemberWageDataError.value)
+//     showSetMemberWageModal.value = false
+//   }
+// })
 const addMemberWageData = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) {
