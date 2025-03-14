@@ -38,7 +38,13 @@
           </template>
           <template #wage-data=""> 20 h/week & 10 USD/h </template>
           <template #action-data="{ row }" v-if="team.ownerAddress === userDataStore.address">
-            <div class="flex flex-wrap gap-2">
+            <!-- <pre>
+            {{ row }}</pre> -->
+            <MemberAction
+              :member="{ name: row.name, address: row.address }"
+              :team-id="teamId"
+            ></MemberAction>
+            <!-- <div class="flex flex-wrap gap-2">
               <ButtonUI
                 variant="error"
                 size="sm"
@@ -55,7 +61,7 @@
               >
                 Set Wage
               </ButtonUI>
-            </div>
+            </div> -->
           </template>
         </TableComponent>
       </div>
@@ -74,6 +80,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
+import MemberAction from './MemberAction.vue'
 
 const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)
