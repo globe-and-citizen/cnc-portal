@@ -41,7 +41,7 @@
       </div>
     </ModalComponent>
 
-    <!-- <ModalComponent v-model="showSetMemberWageModal">
+    <ModalComponent v-model="showSetMemberWageModal">
       <p class="font-bold text-lg">Set Member Wage</p>
       <hr class="" />
       <div class="input-group mt-3">
@@ -51,7 +51,7 @@
           <input
             type="text"
             class="grow"
-            v-model="maxWeeklyHours"
+            v-model="wageData.maxWeeklyHours"
             placeholder="Enter max hours per week..."
             data-test="max-hours-input"
           />
@@ -59,7 +59,7 @@
         <div
           data-test="max-weekly-hours-error"
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.maxWeeklyHours.$errors"
+          v-for="error of v$.maxWeeklyHours?.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -70,7 +70,7 @@
           <input
             type="text"
             class="grow"
-            v-model="hourlyRate"
+            v-model="wageData.hourlyRate"
             placeholder="Enter hourly rate..."
             data-test="hourly-rate-input"
           />
@@ -79,20 +79,24 @@
         <div
           data-test="hourly-rate-error"
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.hourlyRate.$errors"
+          v-for="error of v$.hourlyRate?.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
         </div>
       </div>
       <div class="modal-action justify-center">
-        <ButtonUI v-if="isMemberWageSaving" loading variant="success" />
-        <ButtonUI v-else variant="success" @click="addMemberWageData" data-test="add-wage-button"
+        <ButtonUI
+          :loading="isMemberWageSaving"
+          :disabled="isMemberWageSaving"
+          variant="success"
+          @click="addMemberWageData"
+          data-test="add-wage-button"
           >Save</ButtonUI
         >
         <ButtonUI variant="error" outline @click="showSetMemberWageModal = false">Cancel</ButtonUI>
       </div>
-    </ModalComponent> -->
+    </ModalComponent>
   </div>
 </template>
 
@@ -103,6 +107,9 @@ import { useCustomFetch } from '@/composables'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { TrashIcon } from '@heroicons/vue/24/outline'
+import { NETWORK } from '@/constant'
+import { useVuelidate } from '@vuelidate/core'
+import { numeric, required, helpers } from '@vuelidate/validators'
 import { ref, watch } from 'vue'
 const { addErrorToast } = useToastStore()
 
@@ -114,6 +121,29 @@ const props = defineProps<{
 
 const showDeleteMemberConfirmModal = ref(false)
 const showSetMemberWageModal = ref(false)
+const wageData = ref({
+  maxWeeklyHours: 0,
+  hourlyRate: 0
+})
+const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
+  return parseFloat(value) > 0
+})
+
+const rules = {
+  wageData: {
+    maxWeeklyHours: {
+      required,
+      numeric,
+      notZero
+    },
+    hourlyRate: {
+      required: true,
+      numeric: true,
+      notZero
+    }
+  }
+}
+const v$ = useVuelidate(rules, { wageData })
 
 // useFetch instance for deleting member
 const {
@@ -134,12 +164,45 @@ const {
   .delete()
   .json()
 
+const {
+  error: addMemberWageDataError,
+  isFetching: isMemberWageSaving,
+  execute: addMemberWageDataAPI
+} = useCustomFetch(`teams/${String(props.teamId)}/cash-remuneration/wage`, {
+  immediate: false,
+  beforeFetch: async ({ options, url, cancel }) => {
+    options.headers = {
+      memberaddress: props.member.address ? props.member.address : '',
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+    return { options, url, cancel }
+  }
+})
+  .post(wageData)
+  .json()
+
 watch(deleteMemberError, () => {
   if (deleteMemberError.value) {
     addErrorToast(deleteMemberError.value)
     showDeleteMemberConfirmModal.value = false
   }
 })
+
+watch(addMemberWageDataError, (newVal) => {
+  if (newVal) {
+    addErrorToast(addMemberWageDataError.value)
+    showSetMemberWageModal.value = false
+  }
+})
+const addMemberWageData = async () => {
+  v$.value.$touch()
+  if (v$.value.$invalid) {
+    return
+  }
+  await addMemberWageDataAPI()
+  showSetMemberWageModal.value = false
+}
 </script>
 
 <style scoped></style>
