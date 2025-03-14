@@ -183,18 +183,8 @@ const {
   isFetching: isMemberWageSaving,
   statusCode: addMemberWageDataStatusCode,
   execute: addMemberWageDataAPI
-} = useCustomFetch(`teams/${String(props.teamId)}/cash-remuneration/wage`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    options.headers = {
-      memberaddress: props.member.address ? props.member.address : '',
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-    return { options, url, cancel }
-  }
-})
-  .post(wageData)
+} = useCustomFetch(`teams/${String(props.teamId)}/member/${props.member.address}/setWage`)
+  .put(wageData)
   .json()
 
 watch(deleteMemberStatusCode, () => {
@@ -204,12 +194,6 @@ watch(deleteMemberStatusCode, () => {
   }
 })
 
-// watch(deleteMemberError, () => {
-//   if (deleteMemberError.value) {
-//     addErrorToast(deleteMemberError.value)
-//     showDeleteMemberConfirmModal.value = false
-//   }
-// })
 
 watch(addMemberWageDataStatusCode, () => {
   if (addMemberWageDataStatusCode.value === 201) {
@@ -217,13 +201,6 @@ watch(addMemberWageDataStatusCode, () => {
     showSetMemberWageModal.value = false
   }
 })
-
-// watch(addMemberWageDataError, (newVal) => {
-//   if (newVal) {
-//     addErrorToast(addMemberWageDataError.value)
-//     showSetMemberWageModal.value = false
-//   }
-// })
 const addMemberWageData = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) {
