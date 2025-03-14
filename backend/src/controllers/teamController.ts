@@ -566,11 +566,11 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
     // Check for missing fields
     // Check for hourlyRate
     if (!wageData.hourlyRate) {
-      return errorResponse(400, "Missing hourly Rate", res);
+      return errorResponse(400, "Bad Request: Missing hourly Rate", res);
     }
     // Check for maxHoursPerWeek
     if (!wageData.maxWeeklyHours) {
-      return errorResponse(400, "Missing max weekly hours", res);
+      return errorResponse(400, "Bad Request: Missing max weekly hours", res);
     }
 
     // Check if wageData.hourlyRate & wageData.maxHoursPerWeek are numbers
