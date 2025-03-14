@@ -546,9 +546,10 @@ export const getExpenseAccountData = async (req: Request, res: Response) => {
 };
 
 export const addEmployeeWage = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id, memberAddress } = req.params;
+
   const callerAddress = (req as any).address;
-  const memberAddress = req.headers.memberaddress;
+  // const memberAddress = req.headers.memberaddress;
   const wageData = req.body;
 
   try {
@@ -559,9 +560,27 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
     if (callerAddress !== ownerAddress) {
       return errorResponse(403, `Forbidden`, res);
     }
-    if (typeof memberAddress !== "string") {
+    if (!isAddress(memberAddress)) {
       return errorResponse(400, "Bad Request", res);
     }
+    // Check for missing fields
+    // Check for hourlyRate
+    if (!wageData.hourlyRate) {
+      return errorResponse(400, "Missing hourly Rate", res);
+    }
+    // Check for maxHoursPerWeek
+    if (!wageData.maxWeeklyHours) {
+      return errorResponse(400, "Missing max weekly hours", res);
+    }
+
+    // Check if wageData.hourlyRate & wageData.maxHoursPerWeek are numbers
+    if (
+      isNaN(Number(wageData.hourlyRate)) ||
+      isNaN(Number(wageData.maxWeeklyHours))
+    ) {
+      return errorResponse(400, "Bad Request", res);
+    }
+
     //create or update wage data
     await prisma.memberTeamsData.upsert({
       where: {
@@ -582,7 +601,7 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
     });
   } catch (error) {
