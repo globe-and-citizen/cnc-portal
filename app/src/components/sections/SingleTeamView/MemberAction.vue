@@ -196,8 +196,8 @@ watch(deleteMemberStatusCode, () => {
 
 
 watch(addMemberWageDataStatusCode, () => {
-  if (addMemberWageDataStatusCode.value === 201) {
-    addSuccessToast('Member wage data added successfully')
+  if (addMemberWageDataStatusCode.value === 200) {
+    addSuccessToast('Member wage data set successfully')
     showSetMemberWageModal.value = false
   }
 })
@@ -207,7 +207,6 @@ const addMemberWageData = async () => {
     return
   }
   await addMemberWageDataAPI()
-  showSetMemberWageModal.value = false
 }
 </script>
 
