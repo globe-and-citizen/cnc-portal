@@ -124,7 +124,7 @@ import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
 import { ref, watch } from 'vue'
-const { addSuccessToast, addErrorToast } = useToastStore()
+const { addSuccessToast } = useToastStore()
 
 const props = defineProps<{
   member: Partial<Member>
@@ -193,7 +193,6 @@ watch(deleteMemberStatusCode, () => {
     showDeleteMemberConfirmModal.value = false
   }
 })
-
 
 watch(addMemberWageDataStatusCode, () => {
   if (addMemberWageDataStatusCode.value === 200) {
