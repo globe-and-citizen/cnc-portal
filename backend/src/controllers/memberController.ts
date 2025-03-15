@@ -123,18 +123,23 @@ export const addMembers = async (req: Request, res: Response) => {
       where: { id: Number(id) },
       data: {
         members: {
-          // connect: membersData
-          connect: membersData,
+          connect: membersData.map((member) => ({
+            address: member.address,
+          })),
         },
       },
-      include: { members: true },
+      include: {
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+      },
     });
 
-
     // Return the updated members list
-    return res
-      .status(201)
-      .json({ members: updatedTeam?.members});
+    return res.status(201).json({ members: updatedTeam?.members });
   } catch (error: any) {
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
