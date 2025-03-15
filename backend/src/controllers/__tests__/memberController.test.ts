@@ -57,6 +57,25 @@ const mockResolvedTeam = {
     { address: mockOwner.address, name: mockOwner.name },
   ],
 };
+type TeamMemberData = {
+  id: number;
+  userAddress: string;
+  teamId: number;
+  expenseAccountData: string | null;
+  expenseAccountSignature: string | null;
+  hourlyRate: string | null;
+  maxHoursPerWeek: number | null;
+};
+
+const mockTeamMemberData = <TeamMemberData>{
+  id: 1,
+  userAddress: "0xMemberAddress1",
+  teamId: 1,
+  expenseAccountData: null,
+  expenseAccountSignature: null,
+  hourlyRate: "10",
+  maxHoursPerWeek: 40,
+};
 
 function setAddressMiddleware(address: string) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -234,6 +253,118 @@ describe("Member Controller", () => {
       const response = await request(app).delete(
         "/team/1/member/0xMemberAddress1"
       );
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: "",
+        message: "Internal server error has occured",
+      });
+    });
+  });
+
+  describe("PUT: /team/:id/member/:memberAddress/setWage", () => {
+    // Prepare context
+    const app = express();
+    app.use(express.json());
+    app.use(setAddressMiddleware(fakeMembers[0].address));
+    app.put("/team/:id/member/:memberAddress/setWage", setEmployeeWage);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should set employee wage", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce({
+        ...mockResolvedTeam,
+        ownerAddress: fakeMembers[0].address,
+        members: fakeMembers,
+      });
+      vi.spyOn(prisma.memberTeamsData, "upsert").mockResolvedValueOnce(
+        mockTeamMemberData
+      );
+      const response = await request(app)
+        .put(`/team/1/member/${fakeMembers[0].address}/setWage`)
+        .send({ hourlyRate: "10", maxWeeklyHours: "40" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({});
+    });
+
+    it("should return 404 when team is not found", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+      const response = await request(app)
+        .put(`/team/1/member/${fakeMembers[0].address}/setWage`)
+        .send({ hourlyRate: "10", maxWeeklyHours: "40" });
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: "Team not found" });
+    });
+
+    it("should return 404 when member is not found in the team", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce({
+        ...mockResolvedTeam,
+        ownerAddress: fakeMembers[0].address,
+      });
+      const response = await request(app)
+        .put(`/team/1/member/${fakeMembers[0].address}/setWage`)
+        .send({ hourlyRate: "10", maxWeeklyHours: "40" });
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        message: "Member not found in the team",
+      });
+    });
+
+    it("should return 403 when the caller is not the owner", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce({
+        ...mockResolvedTeam,
+        ownerAddress: "0xNotOwnerAddress",
+      });
+      const response = await request(app)
+        .put(`/team/1/member/${fakeMembers[0].address}/setWage`)
+        .send({ hourlyRate: "10", maxWeeklyHours: "40" });
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({
+        message: "Unauthorized: Only the owner can set the wage",
+      });
+    });
+
+    it("should return 400 when wage data input is missing", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce({
+        ...mockResolvedTeam,
+        ownerAddress: fakeMembers[0].address,
+        members: fakeMembers,
+      });
+      const response = await request(app)
+        .put(`/team/1/member/${fakeMembers[0].address}/setWage`)
+        .send({ hourlyRate: "10" });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Bad Request: Missing hourly Rate or max weekly hours",
+      });
+    });
+
+    it("should return 400 when wage data input is not a number", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce({
+        ...mockResolvedTeam,
+        ownerAddress: fakeMembers[0].address,
+        members: fakeMembers,
+      });
+      const response = await request(app)
+        .put(`/team/1/member/${fakeMembers[0].address}/setWage`)
+        .send({ hourlyRate: "10", maxWeeklyHours: "Not a number" });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Bad Request: One of the wage data is not a number",
+      });
+    });
+
+    it("should return 500 when an error occurs", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockRejectedValue(new Error(""));
+      const response = await request(app)
+        .put(`/team/1/member/${fakeMembers[0].address}/setWage`)
+        .send({ hourlyRate: "10", maxWeeklyHours: "40" });
+
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: "",
