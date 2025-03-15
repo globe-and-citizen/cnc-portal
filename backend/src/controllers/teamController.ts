@@ -340,8 +340,7 @@ const deleteTeam = async (req: Request, res: Response) => {
 };
 
 const deleteMember = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const memberAddress = req.headers.memberaddress;
+  const { id, memberAddress } = req.params;
   const callerAddress = (req as any).address;
   try {
     // Find the team
@@ -352,13 +351,21 @@ const deleteMember = async (req: Request, res: Response) => {
 
     // Check if the team exists
     if (!team) {
-      throw new Error("Team not found");
+      return errorResponse(404, "Team not found", res);
     }
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, "Unauthorized", res);
+      return errorResponse(
+        403,
+        "Unauthorized: Only the owner can delete a member",
+        res
+      );
     }
     if (team.ownerAddress === memberAddress) {
-      return errorResponse(401, "Owner cannot be removed", res);
+      return errorResponse(
+        403,
+        "Unauthorized: The Owner cannot be removed",
+        res
+      );
     }
 
     // Find the index of the member in the team
@@ -368,7 +375,7 @@ const deleteMember = async (req: Request, res: Response) => {
 
     // If member not found in the team, throw an error
     if (memberIndex === -1) {
-      throw new Error("Member not found in the team");
+      return errorResponse(404, "Member not found in the team", res);
     }
 
     // Update the team to disconnect the specified member
@@ -558,10 +565,14 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
     });
     const ownerAddress = team?.ownerAddress;
     if (callerAddress !== ownerAddress) {
-      return errorResponse(403, `Forbidden`, res);
+      return errorResponse(
+        403,
+        "Unauthorized: Only the owner can set the wage",
+        res
+      );
     }
     if (!isAddress(memberAddress)) {
-      return errorResponse(400, "Bad Request", res);
+      return errorResponse(400, "Bad Request: MemberAddress is not valid", res);
     }
     // Check for missing fields
     // Check for hourlyRate
@@ -578,7 +589,7 @@ export const addEmployeeWage = async (req: Request, res: Response) => {
       isNaN(Number(wageData.hourlyRate)) ||
       isNaN(Number(wageData.maxWeeklyHours))
     ) {
-      return errorResponse(400, "Bad Request", res);
+      return errorResponse(400, "Bad Request: One of the wage data is not a number", res);
     }
 
     //create or update wage data
