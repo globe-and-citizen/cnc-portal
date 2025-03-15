@@ -48,14 +48,18 @@ export const deleteMember = async (req: Request, res: Response) => {
     const name = team.name;
     const description = team.description;
 
-    await prisma.memberTeamsData.delete({
-      where: {
-        userAddress_teamId: {
-          userAddress: String(memberAddress),
-          teamId: Number(id),
+    try {
+      await prisma.memberTeamsData.delete({
+        where: {
+          userAddress_teamId: {
+            userAddress: memberAddress,
+            teamId: Number(id),
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.log("Error deleting member Team data", error);
+    }
 
     const updatedTeam = await prisma.team.update({
       where: { id: Number(id) },
@@ -75,7 +79,7 @@ export const deleteMember = async (req: Request, res: Response) => {
         },
       },
     });
-    res.status(200).json({ success: true, team: updatedTeam });
+    res.status(200).json({ ...updatedTeam });
   } catch (error: any) {
     // Handle errors
     return errorResponse(500, error.message || "Internal Server Error", res);

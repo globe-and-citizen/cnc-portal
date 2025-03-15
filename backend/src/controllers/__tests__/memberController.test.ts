@@ -143,4 +143,91 @@ describe("Member Controller", () => {
       });
     });
   });
+
+  describe("DELET: /team/:id/member/:memberAddress", () => {
+    // Prepare context
+    const app = express();
+    app.use(express.json());
+    app.use(setAddressMiddleware(mockOwner.address));
+    app.delete("/team/:id/member/:memberAddress", deleteMember);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should delete member", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce(
+        mockResolvedTeam
+      );
+      vi.spyOn(prisma.team, "update").mockResolvedValueOnce(mockResolvedTeam);
+      vi.spyOn(prisma.memberTeamsData, "delete").mockRejectedValue(null);
+      const response = await request(app).delete(
+        "/team/1/member/0xMemberAddress1"
+      );
+      expect(response.status).toBe(200);
+    });
+
+    it("should return 404 when team is not found", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+      const response = await request(app).delete(
+        "/team/1/member/0xMemberAddress1"
+      );
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: "Team not found" });
+    });
+
+    it("should return 404 when member is not found in the team", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce(
+        mockResolvedTeam
+      );
+      const response = await request(app).delete(
+        "/team/1/member/0xNotMemberAddress"
+      );
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        message: "Member not found in the team",
+      });
+    });
+
+    it("should return 403 when the caller is not the owner", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce({
+        ...mockResolvedTeam,
+        ownerAddress: "0xNotOwnerAddress",
+      });
+      const response = await request(app).delete(
+        "/team/1/member/0xMemberAddress1"
+      );
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({
+        message: "Unauthorized: Only the owner can delete a member",
+      });
+    });
+
+    it("should return 403 when the owner is trying to delete himself", async () => {
+      
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce(
+        mockResolvedTeam
+      );
+      const response = await request(app).delete(
+        "/team/1/member/0xOwnerAddress"
+      );
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({
+        message: "Unauthorized: The Owner cannot be removed",
+      });
+    });
+
+    it("should return 500 when an error occurs", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockRejectedValue(new Error(""));
+      const response = await request(app).delete(
+        "/team/1/member/0xMemberAddress1"
+      );
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: "",
+        message: "Internal server error has occured",
+      });
+    });
+
+  });
 });
