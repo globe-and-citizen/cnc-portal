@@ -129,6 +129,19 @@ describe("Member Controller", () => {
           )} already in the team`,
         });
       });
+      it("Should return 403 when the caller is not the owner", async () => {
+        vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce({
+          ...mockResolvedTeam,
+          ownerAddress: "0xNotOwnerAddress",
+        });
+        const response = await request(app)
+          .post("/team/1/member")
+          .send(fakeMembers);
+        expect(response.status).toBe(403);
+        expect(response.body).toEqual({
+          message: "Unauthorized: Only the owner can Add a member",
+        });
+      });
       it("Should return 500 when an error occurs", async () => {
         // Make prisma to throw an error
         vi.spyOn(prisma.team, "findUnique").mockRejectedValue(new Error(""));
@@ -204,7 +217,6 @@ describe("Member Controller", () => {
     });
 
     it("should return 403 when the owner is trying to delete himself", async () => {
-      
       vi.spyOn(prisma.team, "findUnique").mockResolvedValueOnce(
         mockResolvedTeam
       );
@@ -228,6 +240,5 @@ describe("Member Controller", () => {
         message: "Internal server error has occured",
       });
     });
-
   });
 });
