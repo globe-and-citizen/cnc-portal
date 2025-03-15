@@ -4,7 +4,6 @@ import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types/team'
-import { create } from 'domain'
 import { createRouter, createWebHistory } from 'vue-router'
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
