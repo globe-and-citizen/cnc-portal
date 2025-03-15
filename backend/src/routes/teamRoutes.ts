@@ -26,8 +26,9 @@ teamRoutes.get("/:id", getTeam);
 teamRoutes.put("/:id", updateTeam);
 teamRoutes.delete("/:id", deleteTeam);
 
-teamRoutes.delete("/:id/member", deleteMember);
 teamRoutes.post("/:id/member", addMembers);
+teamRoutes.delete("/:id/member/:memberAddress", deleteMember);
+
 teamRoutes.put("/:id/member/:memberAddress/setWage", addEmployeeWage);
 
 teamRoutes.post("/:id/expense-data", addExpenseAccountData);
