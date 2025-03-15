@@ -58,11 +58,19 @@ const mockResolvedTeam = {
   ],
 };
 
+function setAddressMiddleware(address: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = address;
+    next();
+  };
+}
+
 describe("Member Controller", () => {
   describe("POST: /team/:id/member", () => {
     // Prepare context
     const app = express();
     app.use(express.json());
+    app.use(setAddressMiddleware(mockOwner.address));
     app.post("/team/:id/member", addMembers);
 
     beforeEach(() => {

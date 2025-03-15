@@ -106,6 +106,15 @@ export const addMembers = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Team not found" });
     }
 
+    const callerAddress = (req as any).address;
+    if (team.ownerAddress !== callerAddress) {
+      return errorResponse(
+        403,
+        "Unauthorized: Only the owner can Add a member",
+        res
+      );
+    }
+
     // List of members in membersData that already exist in the team.members
     const existingMembers = membersData.filter((member) =>
       team.members.some((m) => m.address === member.address)
