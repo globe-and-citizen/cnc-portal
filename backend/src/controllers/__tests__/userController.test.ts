@@ -58,7 +58,7 @@ const mockResolvedTeam = {
   ],
 };
 
-describe.only("Member Controller", () => {
+describe("Member Controller", () => {
   describe("POST: /team/:id/member", () => {
     // Prepare context
     const app = express();
