@@ -1,10 +1,7 @@
 <template>
   <div class="flex flex-col gap-4" data-test="members-list">
     <div class="flex items-center" v-for="(member, index) of teamMembers" :key="index">
-      <UserComponent
-        class="bg-base-200 p-4 flex-grow"
-        :user="member"
-      />
+      <UserComponent class="bg-base-200 p-4 flex-grow" :user="member" />
       <div>
         <ButtonUI variant="error" class="mt-4" size="sm" @click="removeMember(index)"> - </ButtonUI>
       </div>
