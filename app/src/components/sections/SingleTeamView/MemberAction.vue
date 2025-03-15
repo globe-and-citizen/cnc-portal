@@ -28,7 +28,7 @@
       </p>
 
       <div v-if="deleteMemberError" data-test="error-state">
-        <div class="alert alert-warning" v-if="deleteMemberStatusCode === 401">
+        <div class="alert alert-warning" v-if="deleteMemberStatusCode === 403">
           You don't have the permission to delete this member
         </div>
         <div class="alert" v-else>Error! Something went wrong</div>
@@ -93,8 +93,11 @@
         </div>
       </div>
       <div v-if="addMemberWageDataError" data-test="error-state">
-        <div class="alert alert-warning" v-if="addMemberWageDataStatusCode === 401">
-          You don't have the permission to set wage for this member
+        <div class="alert alert-warning" v-if="addMemberWageDataStatusCode === 403">
+          {{ addMemberWageDataError.message }}
+        </div>
+        <div v-else-if="addMemberWageDataStatusCode === 404">
+          {{ addMemberWageDataError.message }}
         </div>
         <div class="alert" v-else>Error! Something went wrong</div>
       </div>
@@ -164,16 +167,8 @@ const {
   isFetching: memberIsDeleting,
   statusCode: deleteMemberStatusCode,
   execute: executeDeleteMember
-} = useCustomFetch(`teams/${String(props.teamId)}/member`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    options.headers = {
-      memberaddress: props.member.address ? props.member.address : '',
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-    return { options, url, cancel }
-  }
+} = useCustomFetch(`teams/${props.teamId}/member/${props.member.address}`, {
+  immediate: false
 })
   .delete()
   .json()
@@ -183,7 +178,9 @@ const {
   isFetching: isMemberWageSaving,
   statusCode: addMemberWageDataStatusCode,
   execute: addMemberWageDataAPI
-} = useCustomFetch(`teams/${String(props.teamId)}/member/${props.member.address}/setWage`)
+} = useCustomFetch(`teams/${props.teamId}/member/${props.member.address}/setWage`, {
+  immediate: false
+})
   .put(wageData)
   .json()
 
