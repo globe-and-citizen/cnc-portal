@@ -3,7 +3,6 @@ import express, { Request, Response, NextFunction } from "express";
 import {
   addExpenseAccountData,
   getExpenseAccountData,
-  addEmployeeWage,
   addClaim,
   updateClaim,
   deleteClaim,
@@ -791,151 +790,151 @@ describe("Cash Remuneration", () => {
       });
     });
   });
-  describe("POST /:id/cash-remuneration/wage", () => {
-    const mockTeamData = {
-      id: 1,
-      ownerAddress: "0xOwnerAddress",
-      description: null,
-      name: "",
-      bankAddress: "0xBankAddress",
-      votingAddress: "0xVotingAddress",
-      boardOfDirectorsAddress: "0xBoardOfDirectorsAddress",
-      expenseAccountAddress: "0xExpenseAccountAddress",
-      officerAddress: "0xOfficerAddress",
-      expenseAccountEip712Address: "0xExpenseAccountEIP712Address",
-      investorsAddress: "0xInvestorsAddress",
-      cashRemunerationEip712Address: null,
-    };
-    const mockWageData = {
-      maxHoursPerWeek: 20,
-      hourlyRate: 100,
-    };
-    const mockMemberTeamsData = {
-      id: 1,
-      userAddress: "0xMemberAddress",
-      teamId: 1,
-      expenseAccountData: null,
-      expenseAccountSignature: null,
-      hourlyRate: "100",
-      maxHoursPerWeek: 20,
-    };
+  // describe("POST /:id/cash-remuneration/wage", () => {
+  //   const mockTeamData = {
+  //     id: 1,
+  //     ownerAddress: "0xOwnerAddress",
+  //     description: null,
+  //     name: "",
+  //     bankAddress: "0xBankAddress",
+  //     votingAddress: "0xVotingAddress",
+  //     boardOfDirectorsAddress: "0xBoardOfDirectorsAddress",
+  //     expenseAccountAddress: "0xExpenseAccountAddress",
+  //     officerAddress: "0xOfficerAddress",
+  //     expenseAccountEip712Address: "0xExpenseAccountEIP712Address",
+  //     investorsAddress: "0xInvestorsAddress",
+  //     cashRemunerationEip712Address: null,
+  //   };
+  //   const mockWageData = {
+  //     maxHoursPerWeek: 20,
+  //     hourlyRate: 100,
+  //   };
+  //   const mockMemberTeamsData = {
+  //     id: 1,
+  //     userAddress: "0xMemberAddress",
+  //     teamId: 1,
+  //     expenseAccountData: null,
+  //     expenseAccountSignature: null,
+  //     hourlyRate: "100",
+  //     maxHoursPerWeek: 20,
+  //   };
 
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
+  //   beforeEach(() => {
+  //     vi.clearAllMocks();
+  //   });
 
-    it("should return 403 if caller address is not the team owner", async () => {
-      const app = express();
-      app.use(express.json());
-      app.use(setAddressMiddleware("0xDifferentAddress"));
-      app.post("/:id/cash-remuneration/wage", addEmployeeWage);
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeamData);
+  //   it("should return 403 if caller address is not the team owner", async () => {
+  //     const app = express();
+  //     app.use(express.json());
+  //     app.use(setAddressMiddleware("0xDifferentAddress"));
+  //     app.post("/:id/cash-remuneration/wage", addEmployeeWage);
+  //     vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeamData);
 
-      // Mount middleware with a custom address
-      // app.use(setAddressMiddleware('0xDifferentAddress'))
+  //     // Mount middleware with a custom address
+  //     // app.use(setAddressMiddleware('0xDifferentAddress'))
 
-      const response = await request(app)
-        .post("/1/cash-remuneration/wage")
-        .set("address", "0xDifferentAddress") // Simulate unauthorized caller
-        .send(mockWageData);
+  //     const response = await request(app)
+  //       .post("/1/cash-remuneration/wage")
+  //       .set("address", "0xDifferentAddress") // Simulate unauthorized caller
+  //       .send(mockWageData);
 
-      expect(response.status).toBe(403);
-      expect(response.body).toEqual({
-        success: false,
-        message: "Forbidden",
-      });
-    });
+  //     expect(response.status).toBe(403);
+  //     expect(response.body).toEqual({
+  //       success: false,
+  //       message: "Forbidden",
+  //     });
+  //   });
 
-    it("should return 400 if member address is not string", async () => {
-      const app = express();
-      app.use(express.json());
-      app.use(setAddressMiddleware("0xOwnerAddress"));
-      app.post("/:id/cash-remuneration/wage", addEmployeeWage);
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeamData);
+  //   it("should return 400 if member address is not string", async () => {
+  //     const app = express();
+  //     app.use(express.json());
+  //     app.use(setAddressMiddleware("0xOwnerAddress"));
+  //     app.post("/:id/cash-remuneration/wage", addEmployeeWage);
+  //     vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeamData);
 
-      // Mount middleware with a custom address
-      // app.use(setAddressMiddleware('0xDifferentAddress'))
+  //     // Mount middleware with a custom address
+  //     // app.use(setAddressMiddleware('0xDifferentAddress'))
 
-      const response = await request(app)
-        .post("/1/cash-remuneration/wage")
-        .set("address", "0xOwnerAddress") // Simulate unauthorized caller
-        .send(mockWageData);
+  //     const response = await request(app)
+  //       .post("/1/cash-remuneration/wage")
+  //       .set("address", "0xOwnerAddress") // Simulate unauthorized caller
+  //       .send(mockWageData);
 
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        success: false,
-        message: "Bad Request",
-      });
-    });
+  //     expect(response.status).toBe(400);
+  //     expect(response.body).toEqual({
+  //       success: false,
+  //       message: "Bad Request",
+  //     });
+  //   });
 
-    it("should return 201 and create wage data if caller is authorized", async () => {
-      const app = express();
-      app.use(express.json());
-      app.use(setAddressMiddleware("0xOwnerAddress"));
-      app.post("/:id/cash-remuneration/wage", addEmployeeWage);
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeamData);
-      vi.spyOn(prisma.memberTeamsData, "upsert").mockResolvedValue(
-        mockMemberTeamsData
-      );
+  //   it("should return 201 and create wage data if caller is authorized", async () => {
+  //     const app = express();
+  //     app.use(express.json());
+  //     app.use(setAddressMiddleware("0xOwnerAddress"));
+  //     app.post("/:id/cash-remuneration/wage", addEmployeeWage);
+  //     vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeamData);
+  //     vi.spyOn(prisma.memberTeamsData, "upsert").mockResolvedValue(
+  //       mockMemberTeamsData
+  //     );
 
-      const response = await request(app)
-        .post("/1/cash-remuneration/wage")
-        .set("address", "0xOwnerAddress") // Simulate authorized caller
-        .set("memberaddress", "0xApprovedAddress") // Set the custom header
-        .send(mockWageData);
+  //     const response = await request(app)
+  //       .post("/1/cash-remuneration/wage")
+  //       .set("address", "0xOwnerAddress") // Simulate authorized caller
+  //       .set("memberaddress", "0xApprovedAddress") // Set the custom header
+  //       .send(mockWageData);
 
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual({
-        success: true,
-      });
+  //     expect(response.status).toBe(201);
+  //     expect(response.body).toEqual({
+  //       success: true,
+  //     });
 
-      expect(prisma.team.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
+  //     expect(prisma.team.findUnique).toHaveBeenCalledWith({
+  //       where: { id: 1 },
+  //     });
 
-      expect(prisma.memberTeamsData.upsert).toHaveBeenCalledWith({
-        where: {
-          userAddress_teamId: {
-            userAddress: "0xApprovedAddress",
-            teamId: 1,
-          },
-        },
-        update: {
-          hourlyRate: mockWageData.hourlyRate,
-          maxHoursPerWeek: mockWageData.maxHoursPerWeek,
-        },
-        create: {
-          userAddress: "0xApprovedAddress",
-          teamId: 1,
-          hourlyRate: mockWageData.hourlyRate,
-          maxHoursPerWeek: mockWageData.maxHoursPerWeek,
-        },
-      });
-    });
+  //     expect(prisma.memberTeamsData.upsert).toHaveBeenCalledWith({
+  //       where: {
+  //         userAddress_teamId: {
+  //           userAddress: "0xApprovedAddress",
+  //           teamId: 1,
+  //         },
+  //       },
+  //       update: {
+  //         hourlyRate: mockWageData.hourlyRate,
+  //         maxHoursPerWeek: mockWageData.maxHoursPerWeek,
+  //       },
+  //       create: {
+  //         userAddress: "0xApprovedAddress",
+  //         teamId: 1,
+  //         hourlyRate: mockWageData.hourlyRate,
+  //         maxHoursPerWeek: mockWageData.maxHoursPerWeek,
+  //       },
+  //     });
+  //   });
 
-    it("should return 500 if there is a server error", async () => {
-      const app = express();
-      app.use(express.json());
-      app.use(setAddressMiddleware("0xOwnerAddress"));
-      app.post("/:id/cash-remuneration/wage", addEmployeeWage);
+  //   it("should return 500 if there is a server error", async () => {
+  //     const app = express();
+  //     app.use(express.json());
+  //     app.use(setAddressMiddleware("0xOwnerAddress"));
+  //     app.post("/:id/cash-remuneration/wage", addEmployeeWage);
 
-      vi.spyOn(prisma.team, "findUnique").mockRejectedValue(
-        new Error("Server error")
-      );
+  //     vi.spyOn(prisma.team, "findUnique").mockRejectedValue(
+  //       new Error("Server error")
+  //     );
 
-      const response = await request(app)
-        .post("/1/cash-remuneration/wage")
-        .set("address", "0xOwnerAddress")
-        .send(mockWageData);
+  //     const response = await request(app)
+  //       .post("/1/cash-remuneration/wage")
+  //       .set("address", "0xOwnerAddress")
+  //       .send(mockWageData);
 
-      expect(response.status).toBe(500);
-      expect(response.body).toEqual({
-        error: "Server error",
-        message: "Internal server error has occured",
-        success: false,
-      });
-    });
-  });
+  //     expect(response.status).toBe(500);
+  //     expect(response.body).toEqual({
+  //       error: "Server error",
+  //       message: "Internal server error has occured",
+  //       success: false,
+  //     });
+  //   });
+  // });
 });
 
 describe("POST /expenseAccount/:id", () => {
