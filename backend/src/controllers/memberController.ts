@@ -84,7 +84,6 @@ export const deleteMember = async (req: Request, res: Response) => {
 
 export const addMembers = async (req: Request, res: Response) => {
   const { id } = req.params;
-  // const membersData = req.body as Address[];
   const membersData = req.body as Array<Pick<User, "address">>;
 
   // Check if the data is valid
@@ -106,7 +105,7 @@ export const addMembers = async (req: Request, res: Response) => {
     if (!team) {
       return res.status(404).json({ message: "Team not found" });
     }
-    
+
     // List of members in membersData that already exist in the team.members
     const existingMembers = membersData.filter((member) =>
       team.members.some((m) => m.address === member.address)
