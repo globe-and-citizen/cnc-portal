@@ -15,7 +15,7 @@
         <PlusCircleIcon class="size-6" /> Add a new Member
       </ButtonUI>
       <ModalComponent v-model="showAddMemberForm">
-        <AddMemberForm v-if="team.id" :teamId="team.id" @memberAdded="showAddMemberForm = false" />
+        <AddMemberForm v-if="team.id && showAddMemberForm" :teamId="team.id" @memberAdded="showAddMemberForm = false" />
       </ModalComponent>
     </template>
     <template #default>

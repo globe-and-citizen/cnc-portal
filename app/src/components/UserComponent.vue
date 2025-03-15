@@ -27,14 +27,11 @@
 </template>
 
 <script lang="ts" setup>
+import type { User } from '@/types'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user: {
-    name: string
-    address: string
-    avatarUrl?: string
-  }
+  user: Pick<User, 'address' | 'name' | 'avatarUrl'>
   isCollapsed?: boolean
 }>()
 
