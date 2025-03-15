@@ -58,7 +58,12 @@ describe('ShowIndex', () => {
   const router = createRouter({
     history: createWebHistory(),
     routes: [
-      { path: '/', component: { template: '<div>Home</div>' } } // Basic route
+      {
+        path: '/team/:id',
+        name: 'show-team',
+        meta: { name: 'Team View' },
+        component: { template: '<div>Home</div>' }
+      } // Basic route
     ] // Define your routes here if needed
   })
   // TODO test navigation
@@ -75,6 +80,8 @@ describe('ShowIndex', () => {
         }
       }
     })
+    await router.push({ name: 'show-team', params: { id: '1' } })
+    await wrapper.vm.$nextTick()
     expect(wrapper.html()).toContain('Team View')
     expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
 
