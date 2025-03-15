@@ -158,15 +158,53 @@ export const addMembers = async (req: Request, res: Response) => {
   }
 };
 
+// TODO: requirement for wage data: validation
+// Ex: hourlyRate in float, maxHoursPerWeek in number
 export const setEmployeeWage = async (req: Request, res: Response) => {
   const { id, memberAddress } = req.params;
 
   const callerAddress = (req as any).address;
-  // const memberAddress = req.headers.memberaddress;
+  // const memberAddress = req.headers.memberaddress; 
   const wageData = req.body as {
     hourlyRate: string;
     maxWeeklyHours: string;
   };
+  if (!isAddress(memberAddress)) {
+    console.log(memberAddress);
+    return errorResponse(400, "Bad Request: MemberAddress is not valid", res);
+  }
+  // Check for missing fields
+  // Check for hourlyRate maxHoursPerWeek
+  if (!wageData.hourlyRate || !wageData.maxWeeklyHours) {
+    return errorResponse(
+      400,
+      "Bad Request: Missing hourly Rate or max weekly hours",
+      res
+    );
+  }
+  // Check for if hourlyRate maxHoursPerWeek are numbers
+  if (
+    isNaN(Number(wageData.hourlyRate)) ||
+    isNaN(Number(wageData.maxWeeklyHours))
+  ) {
+    return errorResponse(
+      400,
+      "Bad Request: One of the wage data is not a number",
+      res
+    );
+  }
+
+  // Check if wageData.hourlyRate & wageData.maxHoursPerWeek are numbers
+  if (
+    isNaN(Number(wageData.hourlyRate)) ||
+    isNaN(Number(wageData.maxWeeklyHours))
+  ) {
+    return errorResponse(
+      400,
+      "Bad Request: One of the wage data is not a number",
+      res
+    );
+  }
 
   try {
     const team = await prisma.team.findUnique({
@@ -203,31 +241,6 @@ export const setEmployeeWage = async (req: Request, res: Response) => {
     if (memberIndex === -1) {
       return errorResponse(404, "Member not found in the team", res);
     }
-    if (!isAddress(memberAddress)) {
-      console.log(memberAddress);
-      return errorResponse(400, "Bad Request: MemberAddress is not valid", res);
-    }
-    // Check for missing fields
-    // Check for hourlyRate maxHoursPerWeek
-    if (!wageData.hourlyRate || !wageData.maxWeeklyHours) {
-      return errorResponse(400, "Bad Request: Missing hourly Rate or max weekly hours", res);
-    }
-    // Check for if hourlyRate maxHoursPerWeek are numbers
-    if (isNaN(Number(wageData.hourlyRate)) || isNaN(Number(wageData.maxWeeklyHours))) {
-      return errorResponse(400, "Bad Request: One of the wage data is not a number", res);
-    }
-
-    // Check if wageData.hourlyRate & wageData.maxHoursPerWeek are numbers
-    if (
-      isNaN(Number(wageData.hourlyRate)) ||
-      isNaN(Number(wageData.maxWeeklyHours))
-    ) {
-      return errorResponse(
-        400,
-        "Bad Request: One of the wage data is not a number",
-        res
-      );
-    }
 
     //create or update wage data
     await prisma.memberTeamsData.upsert({
@@ -239,13 +252,13 @@ export const setEmployeeWage = async (req: Request, res: Response) => {
       },
       update: {
         hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: wageData.maxHoursPerWeek,
+        maxHoursPerWeek: Number(wageData.maxWeeklyHours),
       },
       create: {
         userAddress: memberAddress,
         teamId: Number(id),
         hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: wageData.maxHoursPerWeek,
+        maxHoursPerWeek: Number(wageData.maxWeeklyHours),
       },
     });
 
