@@ -371,5 +371,15 @@ describe("Member Controller", () => {
         message: "Internal server error has occured",
       });
     });
+    it("should return 400 when member addres is not valid", async () => {
+      const response = await request(app)
+        .put(`/team/1/member/NotValidAddress/setWage`)
+        .send({ hourlyRate: "10", maxWeeklyHours: "40" });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Bad Request: MemberAddress is not valid",
+      });
+    });
   });
 });
