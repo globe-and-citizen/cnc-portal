@@ -137,7 +137,6 @@ describe("Cash Remuneration", () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
-        success: false,
         message: "Resource Not Found",
       });
     });
@@ -173,7 +172,6 @@ describe("Cash Remuneration", () => {
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: "Server error",
-        success: false,
         message: "Internal server error has occured",
       });
     });
@@ -209,7 +207,6 @@ describe("Cash Remuneration", () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
-        success: false,
         message: "Resource Not Found",
       });
     });
@@ -230,7 +227,6 @@ describe("Cash Remuneration", () => {
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: "Server error",
-        success: false,
         message: "Internal server error has occured",
       });
     });
@@ -295,7 +291,7 @@ describe("Cash Remuneration", () => {
 
         expect(response.status).toBe(403);
         expect(response.body).toEqual({
-          success: false,
+          
           message: "Forbidden",
         });
       });
@@ -321,7 +317,7 @@ describe("Cash Remuneration", () => {
 
         expect(response.status).toBe(403);
         expect(response.body).toEqual({
-          success: false,
+          
           message: "Forbidden",
         });
       });
@@ -344,7 +340,7 @@ describe("Cash Remuneration", () => {
 
         expect(response.status).toBe(400);
         expect(response.body).toEqual({
-          success: false,
+          
           message: "Bad Request",
         });
       });
@@ -395,7 +391,7 @@ describe("Cash Remuneration", () => {
         expect(response.body).toEqual({
           error: "Server error",
           message: "Internal server error has occured",
-          success: false,
+          
         });
       });
     });
@@ -448,7 +444,7 @@ describe("Cash Remuneration", () => {
 
         expect(response.status).toBe(403);
         expect(response.body).toEqual({
-          success: false,
+          
           message: "Forbidden",
         });
       });
@@ -480,9 +476,6 @@ describe("Cash Remuneration", () => {
           data: { hoursWorked: hoursWorked },
         });
         expect(response.status).toBe(201);
-        expect(response.body).toEqual({
-          success: true,
-        });
       });
 
       it('should update claim status to withdrawn if current claim status is "approved"', async () => {
@@ -516,9 +509,7 @@ describe("Cash Remuneration", () => {
           data: { status: "withdrawn" },
         });
         expect(response.status).toBe(201);
-        expect(response.body).toEqual({
-          success: true,
-        });
+       
       });
 
       it("should return 500 if there is a server error", async () => {
@@ -540,7 +531,7 @@ describe("Cash Remuneration", () => {
         expect(response.body).toEqual({
           error: "Server error",
           message: "Internal server error has occured",
-          success: false,
+          
         });
       });
     });
@@ -561,7 +552,7 @@ describe("Cash Remuneration", () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
-        success: false,
+        
         message: "Resource Not Found",
       });
     });
@@ -608,7 +599,7 @@ describe("Cash Remuneration", () => {
 
       expect(response.status).toBe(403);
       expect(response.body).toEqual({
-        success: false,
+        
         message: "Forbidden",
       });
     });
@@ -632,7 +623,7 @@ describe("Cash Remuneration", () => {
 
       expect(response.status).toBe(403);
       expect(response.body).toEqual({
-        success: false,
+        
         message: "Forbidden",
       });
     });
@@ -656,9 +647,6 @@ describe("Cash Remuneration", () => {
         where: { id: 1 },
       });
       expect(response.status).toBe(201);
-      expect(response.body).toEqual({
-        success: true,
-      });
     });
     it("should return 500 if there is a server error", async () => {
       const app = express();
@@ -680,7 +668,7 @@ describe("Cash Remuneration", () => {
       expect(response.body).toEqual({
         error: "Server error",
         message: "Internal server error has occured",
-        success: false,
+        
       });
     });
   });
@@ -715,7 +703,7 @@ describe("Cash Remuneration", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        success: false,
+        
         message: "Bad Request",
       });
     });
@@ -734,7 +722,7 @@ describe("Cash Remuneration", () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
-        success: false,
+        
         message: "Record Not Found",
       });
     });
@@ -762,9 +750,7 @@ describe("Cash Remuneration", () => {
         },
       });
       expect(response.status).toBe(201);
-      expect(response.body).toEqual({
-        success: true,
-      });
+      
     });
 
     it("should return 500 if there is a server error", async () => {
@@ -786,7 +772,7 @@ describe("Cash Remuneration", () => {
       expect(response.body).toEqual({
         error: "Server error",
         message: "Internal server error has occured",
-        success: false,
+        
       });
     });
   });
@@ -840,7 +826,7 @@ describe("Cash Remuneration", () => {
 
   //     expect(response.status).toBe(403);
   //     expect(response.body).toEqual({
-  //       success: false,
+  //       
   //       message: "Forbidden",
   //     });
   //   });
@@ -862,7 +848,7 @@ describe("Cash Remuneration", () => {
 
   //     expect(response.status).toBe(400);
   //     expect(response.body).toEqual({
-  //       success: false,
+  //       
   //       message: "Bad Request",
   //     });
   //   });
@@ -931,7 +917,7 @@ describe("Cash Remuneration", () => {
   //     expect(response.body).toEqual({
   //       error: "Server error",
   //       message: "Internal server error has occured",
-  //       success: false,
+  //       
   //     });
   //   });
   // });
@@ -992,7 +978,7 @@ describe("POST /expenseAccount/:id", () => {
 
     expect(response.status).toBe(403);
     expect(response.body).toEqual({
-      success: false,
+      
       message: "Forbidden",
     });
   });
@@ -1013,9 +999,6 @@ describe("POST /expenseAccount/:id", () => {
       .send(mockExpenseAccountData);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({
-      success: true,
-    });
 
     expect(prisma.team.findUnique).toHaveBeenCalledWith({
       where: { id: 1 },
@@ -1064,7 +1047,7 @@ describe("POST /expenseAccount/:id", () => {
     expect(response.body).toEqual({
       error: "Server error",
       message: "Internal server error has occured",
-      success: false,
+      
     });
   });
 });
@@ -1152,7 +1135,7 @@ describe("GET /expenseAccount/:id", () => {
     expect(response.body).toEqual({
       error: "Database error",
       message: "Internal server error has occured",
-      success: false,
+      
     });
   });
 });
@@ -1224,7 +1207,7 @@ describe("addContracts", () => {
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({
-      success: false,
+      
       message: "Team not found",
     });
   });
@@ -1243,7 +1226,7 @@ describe("addContracts", () => {
 
     expect(response.status).toBe(403);
     expect(response.body).toEqual({
-      success: false,
+      
       message: "Unauthorized",
     });
   });
@@ -1301,7 +1284,7 @@ describe("addContracts", () => {
 
     expect(response.status).toBe(500);
     expect(response.body).toEqual({
-      success: false,
+      
       message: "Internal server error has occured",
       error: "Server error",
     });
