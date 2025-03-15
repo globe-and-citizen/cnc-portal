@@ -163,12 +163,28 @@ export const setEmployeeWage = async (req: Request, res: Response) => {
 
   const callerAddress = (req as any).address;
   // const memberAddress = req.headers.memberaddress;
-  const wageData = req.body;
+  const wageData = req.body as {
+    hourlyRate: string;
+    maxWeeklyHours: string;
+  };
 
   try {
     const team = await prisma.team.findUnique({
       where: { id: Number(id) },
+      include: {
+        members: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+      },
     });
+
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
     const ownerAddress = team?.ownerAddress;
     if (callerAddress !== ownerAddress) {
       return errorResponse(
@@ -177,17 +193,28 @@ export const setEmployeeWage = async (req: Request, res: Response) => {
         res
       );
     }
+
+    // Find the index of the member in the team
+    const memberIndex = team.members.findIndex(
+      (member) => member.address === memberAddress
+    );
+
+    // If member not found in the team, throw an error
+    if (memberIndex === -1) {
+      return errorResponse(404, "Member not found in the team", res);
+    }
     if (!isAddress(memberAddress)) {
+      console.log(memberAddress);
       return errorResponse(400, "Bad Request: MemberAddress is not valid", res);
     }
     // Check for missing fields
-    // Check for hourlyRate
-    if (!wageData.hourlyRate) {
-      return errorResponse(400, "Bad Request: Missing hourly Rate", res);
+    // Check for hourlyRate maxHoursPerWeek
+    if (!wageData.hourlyRate || !wageData.maxWeeklyHours) {
+      return errorResponse(400, "Bad Request: Missing hourly Rate or max weekly hours", res);
     }
-    // Check for maxHoursPerWeek
-    if (!wageData.maxWeeklyHours) {
-      return errorResponse(400, "Bad Request: Missing max weekly hours", res);
+    // Check for if hourlyRate maxHoursPerWeek are numbers
+    if (isNaN(Number(wageData.hourlyRate)) || isNaN(Number(wageData.maxWeeklyHours))) {
+      return errorResponse(400, "Bad Request: One of the wage data is not a number", res);
     }
 
     // Check if wageData.hourlyRate & wageData.maxHoursPerWeek are numbers
@@ -222,9 +249,7 @@ export const setEmployeeWage = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(200).json({
-      success: true,
-    });
+    res.status(200).json({});
   } catch (error) {
     return errorResponse(500, error, res);
   } finally {
