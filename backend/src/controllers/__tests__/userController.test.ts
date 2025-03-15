@@ -102,7 +102,6 @@ describe.only("Member Controller", () => {
         const response = await request(app)
           .post("/team/1/member")
           .send(fakeMembers);
-        // console.log({ body: response.body, status: response.status });
         expect(response.status).toBe(404);
         expect(response.body).toEqual({ message: "Team not found" });
       });
@@ -128,7 +127,6 @@ describe.only("Member Controller", () => {
         const response = await request(app)
           .post("/team/1/member")
           .send(fakeMembers);
-        console.log({ body: response.body, status: response.status });
         expect(response.status).toBe(500);
         expect(response.body).toEqual({
           error: "",
