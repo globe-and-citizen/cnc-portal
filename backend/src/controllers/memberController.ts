@@ -104,8 +104,9 @@ export const addMembers = async (req: Request, res: Response) => {
       include: { members: true },
     });
     if (!team) {
-      throw new Error("Team not found");
+      return res.status(404).json({ message: "Team not found" });
     }
+    
     // List of members in membersData that already exist in the team.members
     const existingMembers = membersData.filter((member) =>
       team.members.some((m) => m.address === member.address)
