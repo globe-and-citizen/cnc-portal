@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { isAddress } from "viem";
+import { Address, isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
 import { addNotification, prisma } from "../utils";
 import { Prisma, User } from "@prisma/client";
@@ -84,39 +84,57 @@ export const deleteMember = async (req: Request, res: Response) => {
 
 export const addMembers = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const membersData = req.body.data;
+  // const membersData = req.body as Address[];
+  const membersData = req.body as Array<Pick<User, "address">>;
+
+  // Check if the data is valid
+  if (
+    !Array.isArray(membersData) ||
+    membersData.length === 0 ||
+    !membersData.every((member) => isAddress(member.address))
+  ) {
+    return res.status(400).json({
+      message: "Bad Request: Members data is not well formated",
+    });
+  }
   try {
     // Fetch the team and its current members
     const team = await prisma.team.findUnique({
       where: { id: Number(id) },
       include: { members: true },
     });
-
     if (!team) {
       throw new Error("Team not found");
     }
+    // List of members in membersData that already exist in the team.members
+    const existingMembers = membersData.filter((member) =>
+      team.members.some((m) => m.address === member.address)
+    );
 
-    await prisma.team.update({
+    if (existingMembers.length > 0) {
+      return res.status(400).json({
+        message: `Members ${existingMembers.map(
+          (member) => member.address
+        )} already in the team`,
+      });
+    }
+
+    const updatedTeam = await prisma.team.update({
       where: { id: Number(id) },
       data: {
         members: {
-          connect: membersData.map((member: User) => ({
-            address: member.address,
-          })),
+          // connect: membersData
+          connect: membersData,
         },
       },
-    });
-
-    // Fetch all members of the team after addition
-    const updatedTeam = await prisma.team.findUnique({
-      where: { id: Number(id) },
       include: { members: true },
     });
+
 
     // Return the updated members list
     return res
       .status(201)
-      .json({ members: updatedTeam?.members, success: true });
+      .json({ members: updatedTeam?.members});
   } catch (error: any) {
     return errorResponse(500, error.message || "Internal Server Error", res);
   }
