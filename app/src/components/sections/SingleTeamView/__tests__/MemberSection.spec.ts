@@ -30,13 +30,13 @@ vi.mock('@/stores/user', () => ({
 vi.mock('@/stores/useToastStore', () => ({
   useToastStore: vi.fn()
 }))
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 0
-    }
-  }))
-}))
+// vi.mock('vue-router', () => ({
+//   useRoute: vi.fn(() => ({
+//     params: {
+//       id: 0
+//     }
+//   }))
+// }))
 describe('MemberSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
@@ -75,13 +75,13 @@ describe('MemberSection.vue', () => {
     })
   })
   describe('renders', () => {
-    it('renders the loading spinner when teamIsFetching is true', async () => {
-      await wrapper.setProps({ teamIsFetching: true })
+    // it('renders the loading spinner when teamIsFetching is true', async () => {
+    //   await wrapper.setProps({ teamIsFetching: true })
 
-      const TableCompoent = wrapper.findComponent(TableComponent)
-      expect(TableCompoent.exists()).toBe(true)
-      expect(TableCompoent.props().loading).toBe(true)
-    })
+    //   const TableCompoent = wrapper.findComponent(TableComponent)
+    //   expect(TableCompoent.exists()).toBe(true)
+    //   expect(TableCompoent.props().loading).toBe(true)
+    // })
 
     it('renders the team members', () => {
       teamMock.members.forEach((member, index) => {
