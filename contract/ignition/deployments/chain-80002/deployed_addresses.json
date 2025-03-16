@@ -18,5 +18,6 @@
   "ExpenseAccountModule#FactoryBeacon": "0x1ea3821CDb38CA98AF701F5D78f0BaD9c0203C8A",
   "InvestorsV1BeaconModule#Beacon": "0x8f720b16D87aCB60F74197d21Df1E5a88d0BDFA0",
   "Officer#FactoryBeacon": "0xFA46dBCf2a645C1c11C8a8AB72a043cfc5A9ffBc",
-  "VotingBeaconModule#Beacon": "0x4945E9d1C35B5F45de63f5F796CFCdB20A3A8D2e"
+  "VotingBeaconModule#Beacon": "0x4945E9d1C35B5F45de63f5F796CFCdB20A3A8D2e",
+  "MockTokens#USDT": "0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD"
 }

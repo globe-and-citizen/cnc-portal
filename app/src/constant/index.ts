@@ -75,7 +75,7 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
   },
   80002: {
     USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
-    USDT: '' // Placeholder for Amoy USDT'
+    USDT: '0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD' // Amoy USDT
   },
   // Hardhat Local - only resolve mock addresses for local chain
   31337:
