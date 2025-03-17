@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: OfficerFactoryBeacon
-    network: sepolia
+    network: mainnet
     source:
-      address: '0x27BE236532d460c7402E5015318eEEB6913bde77'
+      address: '0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE'
       abi: OfficerFactoryBeacon
-      startBlock: 7495217
+      startBlock: 1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -24,10 +24,30 @@ dataSources:
         - event: BeaconProxyCreated(indexed address,indexed address)
           handler: handleBeaconProxyCreated
       file: ./src/officerFactoryBeacon.ts
+  - kind: ethereum
+    name: USDC
+    network: mainnet
+    source:
+      address: '0x59b670e9fA9D0A427751Af201D676719a970857b'
+      abi: ERC20
+      startBlock: 1
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Transaction
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/erc20.ts
 templates:
   - name: ExpenseAccountEIP712
     kind: ethereum/contract
-    network: sepolia
+    network: mainnet
     source:
       abi: ExpenseAccountEIP712
     mapping:
@@ -53,7 +73,7 @@ templates:
           handler: habdleTokenDeposited
   - name: Officer
     kind: ethereum
-    network: sepolia
+    network: mainnet
     source:
       abi: Officer
     mapping:
