@@ -82,15 +82,6 @@ model Wage {
   updatedAt           DateTime @updatedAt
 }
 
-// model wageRelated {
-//   nextWage       Wage @relation("nextWage", fields: [nextWageId], references: [id])
-//   nextWageId     Int
-//   previousWage   Wage @relation("previousWage", fields: [previousWageId], references: [id])
-//   previousWageId Int
-
-//   @@unique([previousWageId])
-// }
-
 model Claim {
   id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
   status      String
