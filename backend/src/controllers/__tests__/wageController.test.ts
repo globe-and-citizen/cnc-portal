@@ -52,9 +52,10 @@ describe("Wage Controller", () => {
 
     it("should return 400 if required parameters are missing", async () => {
       const response = await request(app)
-        .post("/wage")
+        .put("/wage")
         .send({ teamId: 1, userAddress: "0xMemberAddress" });
 
+      console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
         "Missing or invalid parameters: cashRatePerHour, tokenRatePerHour, maximumHoursPerWeek"
@@ -62,7 +63,7 @@ describe("Wage Controller", () => {
     });
 
     it("should return 400 if parameters are invalid", async () => {
-      const response = await request(app).post("/wage").send({
+      const response = await request(app).put("/wage").send({
         teamId: 1,
         userAddress: "0xMemberAddress",
         cashRatePerHour: -50,
@@ -79,7 +80,7 @@ describe("Wage Controller", () => {
     it("should return 404 if member is not part of the team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
 
-      const response = await request(app).post("/wage").send({
+      const response = await request(app).put("/wage").send({
         teamId: 1,
         userAddress: "0xMemberAddress",
         cashRatePerHour: 50,
@@ -92,19 +93,20 @@ describe("Wage Controller", () => {
     });
 
     it("should return 403 if caller is not the owner of the team", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(mockTeam);
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce({
+        ...mockTeam,
+        ownerAddress: "",
+      });
+      // vi.spyOn(prisma.team, "findFirst").mockRejectedValueOnce("Server error");
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
-
-      const response = await request(app)
-        .post("/wage")
-        .set("address", "0xNotOwnerAddress")
-        .send({
-          teamId: 1,
-          userAddress: "0xMemberAddress",
-          cashRatePerHour: 50,
-          tokenRatePerHour: 100,
-          maximumHoursPerWeek: 40,
-        });
+      const response = await request(app).put("/wage").send({
+        teamId: 1,
+        userAddress: "0xMemberAddress",
+        cashRatePerHour: 50,
+        tokenRatePerHour: 100,
+        maximumHoursPerWeek: 40,
+      });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Caller is not the owner of the team");
@@ -116,7 +118,7 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
       const response = await request(app)
-        .post("/wage")
+        .put("/wage")
         .set("address", "0xOwnerAddress")
         .send({
           teamId: 1,
@@ -136,7 +138,7 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
       const response = await request(app)
-        .post("/wage")
+        .put("/wage")
         .set("address", "0xOwnerAddress")
         .send({
           teamId: 1,
@@ -151,13 +153,11 @@ describe("Wage Controller", () => {
     });
 
     it("should return 500 if there is a server error", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockRejectedValue(
-        new Error("Server error")
-      );
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Server error");
 
       const response = await request(app)
-        .post("/wage")
-        .set("address", "0xOwnerAddress")
+        .put("/wage")
         .send({
           teamId: 1,
           userAddress: "0xMemberAddress",
@@ -166,8 +166,9 @@ describe("Wage Controller", () => {
           maximumHoursPerWeek: 40,
         });
 
+      console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Internal server error");
+      expect(response.body.message).toBe("Internal server error has occured");
     });
   });
 });
