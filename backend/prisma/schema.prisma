@@ -69,8 +69,6 @@ model Wage {
   id                  Int           @id @default(autoincrement())
   team                Team          @relation(fields: [teamId], references: [id])
   user                User          @relation(fields: [userAddress], references: [address])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   teamId              Int
   userAddress         String
   cashRatePerHour     Int
@@ -79,6 +77,8 @@ model Wage {
   nextWage            wageRelated[] @relation("nextWage")
   previousWage        wageRelated[] @relation("previousWage")
   claims              Claim[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model wageRelated {
@@ -92,13 +92,13 @@ model wageRelated {
 
 model Claim {
   id                        Int      @id @default(autoincrement()) // Add an ID for easy referencing
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   status                    String
   hoursWorked               Int?
   cashRemunerationSignature String?
   wageId                    Int
   wage                      Wage     @relation(fields: [wageId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Notification {
@@ -108,10 +108,10 @@ model Notification {
   isRead      Boolean  @default(false)
   userAddress String
   user        User     @relation(fields: [userAddress], references: [address])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   author      String?
   resource    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TeamContract {
