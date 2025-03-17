@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types/team'
+import { createRouter, createWebHistory } from 'vue-router'
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
 const mockIsFetching = ref(false)
@@ -53,24 +54,24 @@ describe('ShowIndex', () => {
     mockData.value = null
     mockStatus.value = 200
   })
-
-  vi.mock('vue-router', () => ({
-    useRoute: vi.fn(() => ({
-      params: {
-        id: 0
-      },
-      name: 'show-team',
-      meta: {
-        name: 'Team View'
-      }
-    }))
-  }))
+  const router = createRouter({
+    history: createWebHistory(),
+    routes: [
+      {
+        path: '/team/:id',
+        name: 'show-team',
+        meta: { name: 'Team View' },
+        component: { template: '<div>Home</div>' }
+      } // Basic route
+    ] // Define your routes here if needed
+  })
+  // TODO test navigation
 
   it('should render the team Breadcrumb', async () => {
     // Your test here
     const wrapper = mount(ShowIndex, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ContinueAddTeamForm: true,
           TeamMeta: true,
@@ -78,6 +79,8 @@ describe('ShowIndex', () => {
         }
       }
     })
+    await router.push({ name: 'show-team', params: { id: '1' } })
+    await wrapper.vm.$nextTick()
     expect(wrapper.html()).toContain('Team View')
     expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
 
