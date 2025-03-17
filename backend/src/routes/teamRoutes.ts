@@ -5,11 +5,8 @@ import {
   deleteTeam,
   getTeam,
   getAllTeams,
-  deleteMember,
-  addMembers,
   addExpenseAccountData,
   getExpenseAccountData,
-  addEmployeeWage,
   addClaim,
   // approveClaim,
   deleteClaim,
@@ -18,18 +15,30 @@ import {
   getClaim,
   addContracts,
 } from "../controllers/teamController";
+
+import {
+  deleteMember,
+  addMembers,
+  setEmployeeWage,
+} from "../controllers/memberController";
 const teamRoutes = express.Router();
 
+// Team CRUD routes
 teamRoutes.post("/", addTeam);
 teamRoutes.get("/", getAllTeams);
 teamRoutes.get("/:id", getTeam);
 teamRoutes.put("/:id", updateTeam);
 teamRoutes.delete("/:id", deleteTeam);
-teamRoutes.delete("/:id/member", deleteMember);
+
+// Team Members CRUD routes
 teamRoutes.post("/:id/member", addMembers);
+teamRoutes.delete("/:id/member/:memberAddress", deleteMember);
+
+// Team Member actions routes
+teamRoutes.put("/:id/member/:memberAddress/setWage", setEmployeeWage);
+
 teamRoutes.post("/:id/expense-data", addExpenseAccountData);
 teamRoutes.get("/:id/expense-data", getExpenseAccountData);
-teamRoutes.post("/:id/cash-remuneration/wage", addEmployeeWage);
 teamRoutes.post("/:id/cash-remuneration/claim", addClaim);
 teamRoutes.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
 // teamRoutes.put("/:id/cash-remuneration/claim/approve", approveClaim)

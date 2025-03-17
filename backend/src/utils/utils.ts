@@ -7,12 +7,10 @@ export const errorResponse = (code: number, error: any, res: Response) => {
   
   if (code !== 500 && typeof error === "string")
     return res.status(code).json({
-      success: false,
       message: error,
     });
   else if (code !== 500 && error instanceof Error) {
     return res.status(code).json({
-      success: false,
       message: error.message,
     });
   } else {
@@ -21,7 +19,6 @@ export const errorResponse = (code: number, error: any, res: Response) => {
       else console.log(error);*/
 
     return res.status(code).json({
-      success: false,
       message: "Internal server error has occured",
       error: error.message ? error.message : "",
     });

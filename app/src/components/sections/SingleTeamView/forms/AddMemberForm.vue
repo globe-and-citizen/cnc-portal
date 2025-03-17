@@ -24,27 +24,34 @@
   <div class="divider m-0"></div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
+import type { User } from '@/types'
 
 const emits = defineEmits(['memberAdded'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const props = defineProps<{
-  teamId: string
+  teamId: string | number
 }>()
 
-const formData = ref([])
+const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
+
+const membersAddress = computed(() =>
+  formData.value.map((member) => {
+    return { address: member.address }
+  })
+)
 const {
   execute: executeAddMembers,
   error: addMembersError,
   isFetching: addMembersLoading,
   statusCode
 } = useCustomFetch(`teams/${props.teamId}/member`, { immediate: false })
-  .post({ data: formData.value })
+  .post(membersAddress)
   .json<{ member: string }>()
 
 watch(addMembersError, () => {
