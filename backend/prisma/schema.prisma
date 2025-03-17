@@ -66,29 +66,30 @@ model MemberTeamsData {
 }
 
 model Wage {
-  id                  Int           @id @default(autoincrement())
-  team                Team          @relation(fields: [teamId], references: [id])
-  user                User          @relation(fields: [userAddress], references: [address])
+  id                  Int      @id @default(autoincrement())
+  team                Team     @relation(fields: [teamId], references: [id])
+  user                User     @relation(fields: [userAddress], references: [address])
   teamId              Int
   userAddress         String
   cashRatePerHour     Int
   tokenRatePerHour    Int
   maximumHoursPerWeek Int
-  nextWage            wageRelated[] @relation("nextWage")
-  previousWage        wageRelated[] @relation("previousWage")
+  nextWageId          Int?     @unique
+  nextWage            Wage?    @relation("wageRelated", fields: [nextWageId], references: [id])
+  previousWage        Wage?    @relation("wageRelated")
   claims              Claim[]
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
-model wageRelated {
-  nextWage       Wage @relation("nextWage", fields: [nextWageId], references: [id])
-  nextWageId     Int
-  previousWage   Wage @relation("previousWage", fields: [previousWageId], references: [id])
-  previousWageId Int
+// model wageRelated {
+//   nextWage       Wage @relation("nextWage", fields: [nextWageId], references: [id])
+//   nextWageId     Int
+//   previousWage   Wage @relation("previousWage", fields: [previousWageId], references: [id])
+//   previousWageId Int
 
-  @@unique([previousWageId])
-}
+//   @@unique([previousWageId])
+// }
 
 model Claim {
   id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
