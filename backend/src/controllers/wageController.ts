@@ -89,13 +89,11 @@ export const setWage = async (req: Request, res: Response) => {
 
   try {
     // Check if the user has a current wage
-    const wage = await prisma.wage.findUnique({
+    const wage = await prisma.wage.findFirst({
       where: {
-        teamId_userAddress_nextWageId: {
-          teamId: Number(teamId),
-          userAddress,
-          nextWageId: 0,
-        },
+        teamId: teamId,
+        userAddress,
+        nextWageId: null,
       },
     });
 
@@ -138,7 +136,7 @@ export const setWage = async (req: Request, res: Response) => {
           userAddress,
           cashRatePerHour,
           tokenRatePerHour,
-          maximumHoursPerWeek
+          maximumHoursPerWeek,
         },
       });
       res.status(201).json(wage);
