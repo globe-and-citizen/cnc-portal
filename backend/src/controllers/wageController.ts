@@ -26,23 +26,25 @@ export const setWage = async (req: Request, res: Response) => {
   // Validating the wage data
   // Checking required data
   if (
-    teamId === undefined ||
-    userAddress === undefined ||
-    cashRatePerHour === undefined ||
-    tokenRatePerHour === undefined ||
-    maximumHoursPerWeek === undefined
+    isNaN(teamId) ||
+    !userAddress ||
+    isNaN(cashRatePerHour) ||
+    isNaN(tokenRatePerHour) ||
+    isNaN(maximumHoursPerWeek)
   ) {
     let missingParameters = [];
-    if (teamId === undefined) missingParameters.push("teamId");
-    if (userAddress === undefined) missingParameters.push("userAddress");
-    if (cashRatePerHour === undefined)
-      missingParameters.push("cashRatePerHour");
-    if (tokenRatePerHour === undefined)
-      missingParameters.push("tokenRatePerHour");
-    if (maximumHoursPerWeek === undefined)
+    if (isNaN(teamId)) missingParameters.push("teamId");
+    if (!userAddress) missingParameters.push("userAddress");
+    if (isNaN(cashRatePerHour)) missingParameters.push("cashRatePerHour");
+    if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
+    if (isNaN(maximumHoursPerWeek))
       missingParameters.push("maximumHoursPerWeek");
 
-    return errorResponse(400, `Missing parameters: ${missingParameters.join(", ")}`, res);
+    return errorResponse(
+      400,
+      `Missing or invalid parameters: ${missingParameters.join(", ")}`,
+      res
+    );
   }
 
   // Checking if maximumHoursPerWeek is a number, is an integer and is greater than 0
@@ -52,26 +54,12 @@ export const setWage = async (req: Request, res: Response) => {
     errors.push("Invalid maximumHoursPerWeek");
   }
 
-  if (isNaN(cashRatePerHour) || cashRatePerHour <= 0) {
+  if (cashRatePerHour <= 0) {
     errors.push("Invalid cashRatePerHour");
-  }
-
-  if (isNaN(tokenRatePerHour)) {
-    errors.push("Invalid tokenRatePerHour");
   }
 
   if (errors.length > 0) {
     return errorResponse(400, `Errors: ${errors.join(", ")}`, res);
-  }
-
-  // Checking if cashRatePerHour is a number and is greater than 0
-  if (isNaN(cashRatePerHour) || cashRatePerHour <= 0) {
-    return errorResponse(400, "Invalid cashRatePerHour", res);
-  }
-
-  // Checking if tokenRatePerHour is a number and is greater than 0
-  if (isNaN(tokenRatePerHour)) {
-    return errorResponse(400, "Invalid tokenRatePerHour", res);
   }
 
   // check if the member is part of the provided team
