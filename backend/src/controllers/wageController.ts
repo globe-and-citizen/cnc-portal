@@ -24,14 +24,7 @@ export const setWage = async (req: Request, res: Response) => {
   const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
 
   // Validating the wage data
-  // Checking require data
-  console.log({
-    teamId,
-    userAddress,
-    cashRatePerHour,
-    tokenRatePerHour,
-    maximumHoursPerWeek,
-  });
+  // Checking required data
   if (
     teamId === undefined ||
     userAddress === undefined ||
@@ -39,7 +32,6 @@ export const setWage = async (req: Request, res: Response) => {
     tokenRatePerHour === undefined ||
     maximumHoursPerWeek === undefined
   ) {
-    // Check wich parameter is missing
     let missingParameters = [];
     if (teamId === undefined) missingParameters.push("teamId");
     if (userAddress === undefined) missingParameters.push("userAddress");
@@ -50,7 +42,7 @@ export const setWage = async (req: Request, res: Response) => {
     if (maximumHoursPerWeek === undefined)
       missingParameters.push("maximumHoursPerWeek");
 
-    return errorResponse(400, `Missing parameters ${missingParameters}`, res);
+    return errorResponse(400, `Missing parameters: ${missingParameters.join(", ")}`, res);
   }
 
   // Checking if maximumHoursPerWeek is a number, is an integer and is greater than 0
@@ -88,6 +80,18 @@ export const setWage = async (req: Request, res: Response) => {
   }
 
   try {
+    // Check if the caller is the owner of the team
+    const team = await prisma.team.findFirst({
+      where: {
+        id: teamId,
+        owner: callerAddress,
+      },
+    });
+
+    if (!team) {
+      return errorResponse(403, "Caller is not the owner of the team", res);
+    }
+
     // Check if the user has a current wage
     const wage = await prisma.wage.findFirst({
       where: {
