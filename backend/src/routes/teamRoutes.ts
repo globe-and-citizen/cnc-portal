@@ -19,7 +19,6 @@ import {
 import {
   deleteMember,
   addMembers,
-  setEmployeeWage,
 } from "../controllers/memberController";
 const teamRoutes = express.Router();
 
@@ -33,9 +32,6 @@ teamRoutes.delete("/:id", deleteTeam);
 // Team Members CRUD routes
 teamRoutes.post("/:id/member", addMembers);
 teamRoutes.delete("/:id/member/:memberAddress", deleteMember);
-
-// Team Member actions routes
-teamRoutes.put("/:id/member/:memberAddress/setWage", setEmployeeWage);
 
 teamRoutes.post("/:id/expense-data", addExpenseAccountData);
 teamRoutes.get("/:id/expense-data", getExpenseAccountData);
