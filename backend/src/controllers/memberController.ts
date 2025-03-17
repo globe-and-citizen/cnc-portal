@@ -79,7 +79,7 @@ export const deleteMember = async (req: Request, res: Response) => {
         },
       },
     });
-    res.status(200).json({ ...updatedTeam });
+    res.status(204).json({ ...updatedTeam });
   } catch (error: any) {
     // Handle errors
     return errorResponse(500, error.message || "Internal Server Error", res);
