@@ -15,6 +15,21 @@ import wageRoutes from "../routes/wageRoute";
 import { authorizeUser } from "../middleware/authMiddleware";
 import { errorMessages } from "../utils/serverConfigUtil";
 
+// Swagger import
+
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "API Documentation",
+      version: "1.0.0",
+    },
+  },
+  apis: ["./src/routes/*.ts"], // Point to route files containing JSDoc comments
+};
+const swaggerSpec = swaggerJsdoc(options);
 const path = require("path");
 
 class Server {
@@ -73,6 +88,7 @@ class Server {
     this.app.use(this.paths.auth, authRoutes);
     this.app.use(this.paths.notification, notificationRoutes);
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
+    this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.get(this.paths.apidocs, (req, res) => {
       res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
     });
@@ -81,6 +97,12 @@ class Server {
   public listen() {
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
+      console.log(
+        `Swagger docs available at http://localhost:${this.port}/api-docs`
+      );
+      console.log(
+        `Swagger docs V2 available at http://localhost:${this.port}/docs`
+      );
     });
   }
 
