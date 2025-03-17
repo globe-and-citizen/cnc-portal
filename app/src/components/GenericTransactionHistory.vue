@@ -75,7 +75,7 @@
         </template>
         <template v-else>
           <a
-            :href="getReceiptUrl(row as unknown as BaseTransaction)"
+            :href="getReceiptUrl(row.txHash)"
             target="_blank"
             class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
           >
@@ -87,8 +87,8 @@
 
       <!-- Dynamic currency amounts -->
       <template
-        v-for="currency in props.currencies"
-        :key="currency"
+        v-for="(currency, index) in currencies"
+        :key="index"
         #[`amount${currency}-data`]="{ row }"
       >
         {{ formatAmount(row as unknown as BaseTransaction, currency) }}
@@ -100,6 +100,8 @@
       <ReceiptComponent
         v-if="receiptModal && selectedTransaction"
         :receipt-data="formatReceiptData(selectedTransaction)"
+        @export-excel="handleReceiptExport"
+        @export-pdf="handleReceiptPdfExport"
       />
     </ModalComponent>
   </CardComponent>
@@ -118,7 +120,8 @@ import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptCo
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
-import xlsx from 'node-xlsx'
+import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
+import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
 
 interface Props {
@@ -145,10 +148,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'export'): void
-  (e: 'receipt-click', transaction: BaseTransaction): void
+  (e: 'receipt-click', data: ReceiptData): void
 }>()
 
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toastStore = useToastStore()
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -235,79 +238,92 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
 
 const handleExport = () => {
   try {
-    // Prepare headers based on columns
+    // Use the same columns as displayed in the table
     const headers = columns.value.map((col) => col.label)
 
-    // Prepare data rows
-    const rows = displayedTransactions.value.map((transaction) => {
+    const rows = displayedTransactions.value.map((tx) => {
+      // Map each column's data using the same formatting as the table
+      console.log(tx)
       return columns.value.map((col) => {
-        const key = col.key as keyof BaseTransaction
-        if (key === 'txHash') return transaction.txHash
-        if (key === 'date') return formatDate(transaction.date)
-        if (key === 'type') return transaction.type
-        if (key === 'from') return transaction.from
-        if (key === 'to') return transaction.to
-        if (key === 'receipt') return getReceiptUrl(transaction)
-        if (typeof key === 'string' && key.startsWith('amount')) {
-          const currency = key.replace('amount', '')
-          return formatAmount(transaction, currency)
+        switch (col.key) {
+          case 'date':
+            return formatDate(tx.date)
+          case 'txHash':
+            return tx.txHash
+          case 'type':
+            return tx.type
+          case 'from':
+            return tx.from
+          case 'to':
+            return tx.to
+          case 'receipt':
+            return getReceiptUrl(tx.txHash)
+          default:
+            if (col.key.startsWith('amount')) {
+              const currency = col.key.replace('amount', '')
+              return formatAmount(tx, currency)
+            }
+            return ''
         }
-        return ''
       })
     })
 
-    // Create worksheet
-    const worksheet = {
-      name: 'Transactions',
-      data: [headers, ...rows],
-      options: {}
+    const success = exportTransactionsToExcel(headers, rows, new Date().toISOString().split('T')[0])
+
+    if (success) {
+      toastStore.addSuccessToast('Transactions exported successfully')
+    } else {
+      toastStore.addErrorToast('Failed to export transactions')
     }
-
-    // Create buffer
-    const buffer = xlsx.build([worksheet])
-
-    // Create blob and download
-    const blob = new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `transactions-${new Date().toISOString().split('T')[0]}.xlsx`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-    addSuccessToast('Excel file downloaded successfully')
   } catch (error) {
-    console.error('Error generating Excel:', error)
-    addErrorToast('Failed to generate Excel file')
+    console.error('Error exporting transactions:', error)
+    toastStore.addErrorToast('Failed to export transactions')
   }
 }
 
 const handleReceiptClick = (transaction: BaseTransaction) => {
+  const receiptData = formatReceiptData(transaction)
   if (props.showReceiptModal) {
     selectedTransaction.value = transaction
     receiptModal.value = true
   }
-  emit('receipt-click', transaction)
+  emit('receipt-click', receiptData)
 }
 
-const getReceiptUrl = (transaction: BaseTransaction) => {
-  return transaction.receipt || `${NETWORK.blockExplorerUrl}/tx/${transaction.txHash}`
+const getReceiptUrl = (txHash: string) => {
+  return `${NETWORK.blockExplorerUrl}/tx/${txHash}`
 }
 
-const formatReceiptData = (transaction: BaseTransaction) => {
-  const token = transaction.token
+const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
+  console.log(transaction)
   return {
-    txHash: transaction.txHash,
+    txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
-    type: transaction.type,
-    from: transaction.from,
-    to: transaction.to,
-    amountUsd: transaction.amountUSD,
-    amount: String(transaction.amount || '0'),
-    token: typeof token === 'string' ? token : String(token || '')
+    type: String(transaction.type),
+    from: String(transaction.from),
+    to: String(transaction.to),
+    amount: String(transaction.amount || ''),
+    token: String(transaction.token),
+    amountUsd: Number(transaction.amountUsd || 0)
   }
+}
+
+const handleReceiptExport = (receiptData: ReceiptData) => {
+  try {
+    const success = exportReceiptToExcel(receiptData)
+    if (success) {
+      toastStore.addSuccessToast('Receipt exported successfully')
+    } else {
+      toastStore.addErrorToast('Failed to export receipt')
+    }
+  } catch (error) {
+    console.error('Error exporting receipt:', error)
+    toastStore.addErrorToast('Failed to export receipt')
+  }
+}
+
+const handleReceiptPdfExport = (receiptData: ReceiptData) => {
+  // TODO: Implement PDF export
+  console.log('PDF export not implemented yet', receiptData)
 }
 </script>
