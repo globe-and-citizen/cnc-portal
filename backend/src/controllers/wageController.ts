@@ -15,33 +15,61 @@ type wageBodyRequest = Pick<
 >;
 export const setWage = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
-  const {
+
+  const body = req.body as wageBodyRequest;
+  const teamId = Number(body.teamId);
+  const userAddress = body.userAddress as Address;
+  const cashRatePerHour = Number(body.cashRatePerHour);
+  const tokenRatePerHour = Number(body.tokenRatePerHour);
+  const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
+
+  // Validating the wage data
+  // Checking require data
+  console.log({
     teamId,
     userAddress,
     cashRatePerHour,
     tokenRatePerHour,
     maximumHoursPerWeek,
-  } = req.body as wageBodyRequest;
-
-  // Validating the wage data
-  // Checking require data
+  });
   if (
-    !teamId ||
-    !userAddress ||
-    !cashRatePerHour ||
-    !tokenRatePerHour ||
-    !maximumHoursPerWeek
+    teamId === undefined ||
+    userAddress === undefined ||
+    cashRatePerHour === undefined ||
+    tokenRatePerHour === undefined ||
+    maximumHoursPerWeek === undefined
   ) {
-    return errorResponse(400, "Missing parameters", res);
+    // Check wich parameter is missing
+    let missingParameters = [];
+    if (teamId === undefined) missingParameters.push("teamId");
+    if (userAddress === undefined) missingParameters.push("userAddress");
+    if (cashRatePerHour === undefined)
+      missingParameters.push("cashRatePerHour");
+    if (tokenRatePerHour === undefined)
+      missingParameters.push("tokenRatePerHour");
+    if (maximumHoursPerWeek === undefined)
+      missingParameters.push("maximumHoursPerWeek");
+
+    return errorResponse(400, `Missing parameters ${missingParameters}`, res);
   }
 
   // Checking if maximumHoursPerWeek is a number, is an integer and is greater than 0
-  if (
-    isNaN(maximumHoursPerWeek) ||
-    !Number.isInteger(maximumHoursPerWeek) ||
-    maximumHoursPerWeek <= 0
-  ) {
-    return errorResponse(400, "Invalid maximumHoursPerWeek", res);
+  let errors = [];
+
+  if (!Number.isInteger(maximumHoursPerWeek) || maximumHoursPerWeek <= 0) {
+    errors.push("Invalid maximumHoursPerWeek");
+  }
+
+  if (isNaN(cashRatePerHour) || cashRatePerHour <= 0) {
+    errors.push("Invalid cashRatePerHour");
+  }
+
+  if (isNaN(tokenRatePerHour)) {
+    errors.push("Invalid tokenRatePerHour");
+  }
+
+  if (errors.length > 0) {
+    return errorResponse(400, `Errors: ${errors.join(", ")}`, res);
   }
 
   // Checking if cashRatePerHour is a number and is greater than 0
@@ -55,28 +83,19 @@ export const setWage = async (req: Request, res: Response) => {
   }
 
   // check if the member is part of the provided team
-  try {
-    await prisma.memberTeamsData.findUniqueOrThrow({
-      where: {
-        userAddress_teamId: {
-          teamId: Number(teamId),
-          userAddress: userAddress,
-        },
-      },
-    });
-  } catch (error) {
+  if (!(await isUserMemberOfTeam(userAddress, teamId))) {
     return errorResponse(404, "Member not found in the team", res);
-  } finally {
-    await prisma.$disconnect();
   }
 
   try {
     // Check if the user has a current wage
     const wage = await prisma.wage.findUnique({
       where: {
-        teamId: Number(teamId),
-        userAddress,
-        nextWageId: undefined,
+        teamId_userAddress_nextWageId: {
+          teamId: Number(teamId),
+          userAddress,
+          nextWageId: 0,
+        },
       },
     });
 
@@ -119,15 +138,39 @@ export const setWage = async (req: Request, res: Response) => {
           userAddress,
           cashRatePerHour,
           tokenRatePerHour,
-          maximumHoursPerWeek,
-          nextWageId: undefined,
+          maximumHoursPerWeek
         },
       });
       res.status(201).json(wage);
     }
   } catch (error) {
+    console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
   } finally {
     await prisma.$disconnect();
   }
 };
+
+async function isUserMemberOfTeam(
+  userAddress: Address,
+  teamId: number
+): Promise<boolean> {
+  let team;
+  try {
+    team = await prisma.team.findFirst({
+      where: {
+        id: teamId,
+        members: {
+          some: {
+            address: userAddress,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.log("Error: ", error);
+    return false;
+  }
+
+  return team !== null;
+}
