@@ -1,90 +1,138 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
+import { ref } from 'vue'
+import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
-import { nextTick } from 'vue'
 
-interface AddMemberForm {
-  showDropdown: boolean
-  formData: Array<{ name: string; address: string; isValid: boolean }>
-  submitForm: () => void
-}
-describe('AddMemberForm.vue', () => {
-  let wrapper: VueWrapper<unknown>
-  beforeEach(() => {
-    wrapper = mount(AddMemberForm, {
-      props: {
-        formData: [{ name: '', address: '', isValid: false }],
-        users: [],
-        isLoading: false
-      }
-    })
-  })
+// Create mutable refs for reactive state outside the mock
+const mockError = ref<string | null>(null)
+const mockIsFetching = ref(false)
+const mockStatusCode = ref<number | null>(null)
 
-  describe('Dropdown functionality', () => {
-    it('shows dropdown when searching for users', async () => {
-      const input = wrapper.find('input[placeholder="Member Name 1"]')
-      await input.setValue('John')
-      await input.trigger('keyup')
-
-      expect(wrapper.emitted('searchUsers')).toBeTruthy()
-      expect((wrapper.vm as unknown as AddMemberForm).showDropdown).toBe(true)
-    })
-
-    it('selects user from dropdown', async () => {
-      await wrapper.setProps({
-        users: [{ name: 'John Doe', address: '0x1234567890123456789012345678901234567890' }]
+// Mock the modules BEFORE importing the component
+vi.mock('@/composables/useCustomFetch', () => {
+  // Inline the fake implementation to avoid hoisting issues
+  return {
+    useCustomFetch: () => ({
+      post: () => ({
+        json: () => ({
+          execute: vi.fn(),
+          error: mockError,
+          isFetching: mockIsFetching,
+          statusCode: mockStatusCode
+        })
+      }),
+      get: () => ({
+        json: () => ({
+          execute: vi.fn(),
+          error: mockError,
+          isFetching: mockIsFetching,
+          statusCode: mockStatusCode
+        })
       })
-      ;(wrapper.vm as unknown as AddMemberForm).showDropdown = true
-      await nextTick()
-
-      const dropdownItem = wrapper.find('.dropdown-content a')
-      await dropdownItem.trigger('click')
-
-      expect((wrapper.vm as unknown as AddMemberForm).formData[0].name).toBe('John Doe')
-      expect((wrapper.vm as unknown as AddMemberForm).formData[0].address).toBe(
-        '0x1234567890123456789012345678901234567890'
-      )
-      expect((wrapper.vm as unknown as AddMemberForm).showDropdown).toBe(false)
     })
+  }
+})
+
+vi.mock('@/stores', () => {
+  return {
+    useToastStore: () => ({
+      addSuccessToast: vi.fn(),
+      addErrorToast: vi.fn()
+    })
+  }
+})
+
+// Helper to mount the component
+const mountComponent = () => {
+  return mount(AddMemberForm, {
+    props: {
+      teamId: 'team-123'
+    }
+  })
+}
+
+describe('AddMemberForm.vue', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Reset refs between tests if needed
+    mockError.value = null
+    mockIsFetching.value = false
+    mockStatusCode.value = null
   })
 
-  describe('Form validation', () => {
-    it('shows validation error for no input', async () => {
-      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+  it('State 1: no error, not loading, no statusCode', async () => {
+    const wrapper = mountComponent()
 
-      expect(wrapper.find('.text-red-500').text()).toContain('Invalid wallet address')
-    })
+    // Set state after mount (simulate async change)
+    mockError.value = null
+    mockIsFetching.value = false
+    mockStatusCode.value = null
 
-    it('shows validation error when no members are added', async () => {
-      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+    // Wait for watchers to run
+    await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('.text-red-500').text()).toContain(
-        'Address is requiredInvalid wallet address'
-      )
-    })
-  })
-  describe('Snapshot', () => {
-    it('matches the snapshot', () => {
-      expect(wrapper.html()).toMatchSnapshot()
-    })
+    // There should be no alerts rendered
+    expect(wrapper.findAll('.alert').length).toBe(0)
   })
 
-  describe('Submit form', () => {
-    it('does not emit addMembers event when form is invalid', async () => {
-      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+  it('State 2: no error, loading, no statusCode', async () => {
+    const wrapper = mountComponent()
 
-      expect(wrapper.emitted('addMembers')).toBeFalsy()
-    })
+    // Simulate loading after mount
+    mockError.value = null
+    mockIsFetching.value = true
+    mockStatusCode.value = null
 
-    it('emits addMembers event when form is valid', async () => {
-      const nameInput = wrapper.find('input[placeholder="Member Name 1"]')
-      const addressInput = wrapper.find('input[placeholder="Wallet Address 1"]')
+    await wrapper.vm.$nextTick()
 
-      await nameInput.setValue('John Doe')
-      await addressInput.setValue('0x1234567890123456789012345678901234567890')
-      await (wrapper.vm as unknown as AddMemberForm).submitForm()
+    // Find ButtonUI (ensure you use correct selector if needed)
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    // Expect loading to be true
+    expect(button.props('loading')).toBe(true)
+    expect(button.props('disabled')).toBe(true)
+  })
 
-      expect(wrapper.emitted('addMembers')).toBeTruthy()
-    })
+  it('State 3: error exists, not loading, statusCode', async () => {
+    const wrapper = mountComponent()
+
+    // Simulate error state
+    mockError.value = 'Error'
+    mockIsFetching.value = false
+    mockStatusCode.value = 500
+
+    await wrapper.vm.$nextTick()
+
+    const alert = wrapper.find('.alert.alert-danger')
+    expect(alert.exists()).toBe(true)
+    expect(alert.text()).toContain('Something went wrong')
+
+    mockStatusCode.value = 401
+
+    await wrapper.vm.$nextTick()
+
+    const alert2 = wrapper.find('.alert.alert-warning')
+    expect(alert2.exists()).toBe(true)
+    expect(alert2.text()).toContain("You don't have the right for this")
+  })
+
+  it('State 4: no error, not loading, statusCode 201', async () => {
+    const wrapper = mountComponent()
+
+    // For a success state, you might need to simulate a transition from loading to not loading.
+    // For example, start with loading true, then set it to false with a success status:
+    mockError.value = null
+    mockIsFetching.value = true
+    mockStatusCode.value = null
+
+    await wrapper.vm.$nextTick()
+
+    // Now simulate that loading finished successfully:
+    mockIsFetching.value = false
+    mockStatusCode.value = 201
+
+    await wrapper.vm.$nextTick()
+
+    // The component's watcher should trigger and emit 'memberAdded'
+    expect(wrapper.emitted('memberAdded')).toBeTruthy()
   })
 })

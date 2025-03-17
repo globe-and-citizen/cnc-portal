@@ -12,6 +12,8 @@
     }
   ],
   "compilerOptions": {
-    "module": "NodeNext"
+    "module": "NodeNext",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true
   }
 }

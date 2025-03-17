@@ -34,37 +34,82 @@ vi.mock('viem', async (importOriginal) => {
   }
 })
 describe('DeployContractSection', () => {
+  const defaultProps = {
+    investorContractInput: {
+      name: 'Investor Contract',
+      symbol: 'INV'
+    },
+    createdTeamData: {
+      id: '1',
+      name: 'Team 1',
+      address: '0xTeamAddress'
+    }
+  }
+
+  const createWrapper = (props = {}) => {
+    return mount(DeployContractSection, {
+      props: {
+        ...defaultProps,
+        ...props
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
+    })
+  }
+
   describe('Rendering', () => {
     it('should render the form correctly', async () => {
-      const wrapper = mount(DeployContractSection, {
-        props: {
-          investorContractInput: {
-            name: 'Investor Contract',
-            symbol: 'INV'
-          },
-          createdTeamData: {
-            id: '1',
-            name: 'Team 1',
-            address: '0xTeamAddress'
-          }
-        },
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
+      const wrapper = createWrapper()
       const deployButton = wrapper
         .find('[data-test="deploy-contracts-button"]')
         .findComponent(ButtonUI)
 
       expect(deployButton.exists()).toBe(true)
-      console.log(deployButton.html())
-      deployButton.trigger('click')
-      // nexttick
+      await deployButton.trigger('click')
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalled()
+    })
 
+    it('should disable the deploy button when disable prop is true', () => {
+      const wrapper = createWrapper({ disable: true })
+      const deployButton = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
+
+      expect(deployButton.props('disabled')).toBe(true)
+    })
+
+    it('should disable the deploy button during loading states', async () => {
+      const wrapper = createWrapper()
+      const deployButton = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
+
+      mockUseWriteContract.isPending.value = true
       await wrapper.vm.$nextTick()
+      expect(deployButton.props('disabled')).toBe(true)
+
+      mockUseWriteContract.isPending.value = false
+      mockUseWaitForTransactionReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
-      console.log(wrapper.html())
+      expect(deployButton.props('disabled')).toBe(true)
+    })
+  })
+
+  describe('Contract Deployment', () => {
+    it('should handle successful contract deployment', async () => {
+      const wrapper = createWrapper()
+      const deployButton = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
+
+      await deployButton.trigger('click')
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith(
+        expect.objectContaining({
+          address: expect.any(String),
+          functionName: 'createBeaconProxy'
+        })
+      )
     })
   })
 })

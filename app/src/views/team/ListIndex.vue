@@ -35,7 +35,8 @@
 
     <div
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
-      v-if="(teams?.length ?? 0) != 0"
+      data-test="team-list"
+      v-if="teams?.length != 0"
     >
       <TeamCard
         v-for="team in teams"
@@ -55,34 +56,26 @@
     >
       <AddTeamCard
         data-test="add-team-card"
-        @openAddTeamModal="showAddTeamModal = !showAddTeamModal"
+        @openAddTeamModal="appStore.setShowAddTeamModal(true)"
         class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
       />
     </div>
-
-    <!-- Add Team Modal -->
-    <ModalComponent v-model="showAddTeamModal">
-      <!-- May be return an event that will trigger team reload -->
-      <AddTeamForm v-model="showAddTeamModal" />
-    </ModalComponent>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { Team } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useUserDataStore } from '@/stores/user'
-import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
+import { useUserDataStore } from '@/stores'
+import { useAppStore } from '@/stores/appStore'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 
 const route = useRoute()
 const userDataStore = useUserDataStore()
+const appStore = useAppStore()
 
-const showAddTeamModal = ref(false)
 const router = useRouter()
 
 /**
@@ -94,6 +87,7 @@ const {
   error: teamsError,
   data: teams
 } = useCustomFetch('teams').get().json<Array<Team>>()
+
 const navigateToTeam = (id: number | string) => {
   router.push(`/teams/${id}`)
 }

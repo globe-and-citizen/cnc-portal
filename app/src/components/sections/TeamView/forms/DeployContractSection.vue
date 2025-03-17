@@ -2,7 +2,7 @@
   <ButtonUI
     variant="primary"
     :loading="createOfficerLoading"
-    :disabled="createOfficerLoading"
+    :disabled="disable || createOfficerLoading"
     data-test="deploy-contracts-button"
     @click="deployOfficerContract()"
   >
@@ -46,12 +46,16 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { log } from '@/utils'
 
-// Props const { investorContractInput, createdTeamData }
-const props = defineProps<{
-  investorContractInput: { name: string; symbol: string }
-  createdTeamData: Partial<Team>
-}>()
-
+const props = withDefaults(
+  defineProps<{
+    investorContractInput: { name: string; symbol: string }
+    createdTeamData: Partial<Team>
+    disable?: boolean
+  }>(),
+  {
+    disable: false
+  }
+)
 const emits = defineEmits(['contractDeployed'])
 // Store
 const userDataStore = useUserDataStore()
@@ -234,7 +238,6 @@ watch([isConfirmingCreateOfficer, isConfirmedCreateOfficer], ([isConfirming, isC
   }
 })
 
-// TODO: This is not working, the value of team is always undefined
 useWatchContractEvent({
   address: OFFICER_BEACON as Address,
   abi: FACTORY_BEACON_ABI,
@@ -273,14 +276,26 @@ useWatchContractEvent({
       loading.value = false
       return
     }
+
     const { error: updateTeamError } = await useCustomFetch<string>(
       `teams/${props.createdTeamData.id}`
     )
-      .put({ officerAddress: proxyAddress })
+      .put({
+        officerAddress: proxyAddress
+      })
       .json()
     if (updateTeamError.value) {
       log.error('Error updating officer address')
       addErrorToast('Error updating officer address')
+      loading.value = false
+      return
+    }
+    const { error: updateContractsError } = await useCustomFetch<string>(
+      `teams/${props.createdTeamData.id}/add-contracts`
+    ).post()
+    if (updateContractsError.value) {
+      log.error('Error updating contracts')
+      addErrorToast('Error updating contracts')
       loading.value = false
       return
     }

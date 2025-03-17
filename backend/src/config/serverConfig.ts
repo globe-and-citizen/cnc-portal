@@ -9,6 +9,7 @@ import userRoutes from "../routes/userRoutes";
 import authRoutes from "../routes/authRoutes";
 import notificationRoutes from "../routes/notificationRoute";
 import actionRoutes from "../routes/actionsRoute";
+import wageRoutes from "../routes/wageRoute";
 //#endregion routing modules
 
 import { authorizeUser } from "../middleware/authMiddleware";
@@ -45,7 +46,8 @@ class Server {
       user: "/api/user/",
       auth: "/api/auth/",
       notification: "/api/notification/",
-      actions: "/api/actions/",
+      actions: '/api/actions/',
+      wage: "/api/wage/",
       apidocs: "/api-docs",
     };
     this.port = parseInt(process.env.PORT as string) || 3000;
@@ -81,6 +83,7 @@ class Server {
 
   private routes() {
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
+    this.app.use(this.paths.wage, authorizeUser, wageRoutes);
     this.app.use(this.paths.user, userRoutes);
     this.app.use(this.paths.auth, authRoutes);
     this.app.use(this.paths.notification, notificationRoutes);

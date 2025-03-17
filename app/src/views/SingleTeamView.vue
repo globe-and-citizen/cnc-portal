@@ -81,19 +81,16 @@
           />
         </template>
         <template #tab-4>
-          <ExpenseAccountSection v-if="activeTab == 4" :team="team" @get-team="getTeamAPI" />
-        </template>
-        <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 6" :team="team" />
         </template>
-        <template #tab-6>
+        <template #tab-5>
           <InvestorsSection v-if="activeTab == 7" :team="team" />
         </template>
-        <template #tab-7>
+        <template #tab-6>
           <ContractManagementSection></ContractManagementSection>
         </template>
 
-        <template #tab-8>
+        <template #tab-7>
           <TeamContracts
             :team-id="String(team.id)"
             :contracts="team.teamContracts"
@@ -125,8 +122,6 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
-// import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountSection.vue'
-import ExpenseAccountSection from '@/components/sections/SingleTeamView/ExpenseAccountEIP712Section.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
 import { type TeamContract, type Deployment, type User, SingleTeamTabs } from '@/types'
@@ -257,7 +252,6 @@ const setTabs = () => {
     team.value.bankAddress &&
     team.value.votingAddress &&
     team.value.boardOfDirectorsAddress &&
-    team.value.expenseAccountAddress &&
     team.value.investorsAddress
   )
     tabs.value = [
@@ -265,7 +259,6 @@ const setTabs = () => {
       SingleTeamTabs.Bank,
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
-      SingleTeamTabs.Expenses,
       SingleTeamTabs.BoardOfDirectors,
       SingleTeamTabs.Investors,
       SingleTeamTabs.Contract,

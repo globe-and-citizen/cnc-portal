@@ -3,12 +3,13 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
-import CashRemunerationView from '@/views/CashRemunerationView.vue'
+import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
+import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
 import ListIndex from '@/views/team/ListIndex.vue'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
 import BankView from '@/views/team/[id]/BankView.vue'
-
+import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -25,21 +26,6 @@ const router = createRouter({
       }
     },
     {
-      path: '/bank',
-      name: 'bank',
-      components: HomeView
-    },
-    {
-      path: '/admin',
-      name: 'admin',
-      components: HomeView
-    },
-    {
-      path: '/contracts',
-      name: 'contracts',
-      components: HomeView
-    },
-    {
       path: '/teams',
       name: 'teams',
       meta: { name: 'Teams List' },
@@ -53,25 +39,29 @@ const router = createRouter({
       name: 'show-team',
       meta: { name: 'Team View' },
       children: [
-        // {
-        //   path: '',
-        //   name: 'teams',
-        //   component: ListIndex
-        // },
-        // {
-        //   path: ':id',
-        //   name: 'show-team',
-        //   component: ShowIndex
-        // },
         {
           path: '/teams/:id/cash-remunerations',
           name: 'cash-remunerations',
+          meta: { name: 'Cash Remuneration' },
           component: CashRemunerationView
+        },
+        {
+          path: '/teams/:id/expense-account',
+          name: 'expense-account',
+          meta: { name: 'Expense Account' },
+          component: ExpenseAccountView
         },
         {
           path: '/teams/:id/bank',
           name: 'bank',
+          meta: { name: 'Team Bank' },
           component: BankView
+        },
+        {
+          path: '/teams/:id/administration',
+          name: 'administration',
+          meta: { name: 'Contract Administration' },
+          component: AdministrationView
         }
       ]
     },
@@ -82,11 +72,6 @@ const router = createRouter({
           path: ':id',
           name: 'singleteam',
           component: SingleTeamView
-        },
-        {
-          path: '/teams/:id/cash-remunerations',
-          name: 'cash-remunerations',
-          component: CashRemunerationView
         }
       ]
     },

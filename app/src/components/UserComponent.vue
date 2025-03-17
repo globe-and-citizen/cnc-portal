@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-row justify-start gap-4 transition-all duration-300 shadow-sm rounded-xl"
+    class="flex flex-row justify-start gap-4 transition-all duration-300"
     :class="{ 'justify-center': isCollapsed }"
   >
     <div role="button" class="relative group">
@@ -27,14 +27,11 @@
 </template>
 
 <script lang="ts" setup>
+import type { User } from '@/types'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user: {
-    name: string
-    address: string
-    avatarUrl?: string
-  }
+  user: Pick<User, 'address' | 'name' | 'avatarUrl'>
   isCollapsed?: boolean
 }>()
 
