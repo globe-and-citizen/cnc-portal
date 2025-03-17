@@ -243,24 +243,24 @@ export const setEmployeeWage = async (req: Request, res: Response) => {
     }
 
     //create or update wage data
-    await prisma.memberTeamsData.upsert({
-      where: {
-        userAddress_teamId: {
-          userAddress: memberAddress,
-          teamId: Number(id),
-        },
-      },
-      update: {
-        hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: Number(wageData.maxWeeklyHours),
-      },
-      create: {
-        userAddress: memberAddress,
-        teamId: Number(id),
-        hourlyRate: wageData.hourlyRate,
-        maxHoursPerWeek: Number(wageData.maxWeeklyHours),
-      },
-    });
+    // await prisma.memberTeamsData.upsert({
+    //   where: {
+    //     userAddress_teamId: {
+    //       userAddress: memberAddress,
+    //       teamId: Number(id),
+    //     },
+    //   },
+    //   update: {
+    //     hourlyRate: wageData.hourlyRate,
+    //     maxHoursPerWeek: Number(wageData.maxWeeklyHours),
+    //   },
+    //   create: {
+    //     userAddress: memberAddress,
+    //     teamId: Number(id),
+    //     hourlyRate: wageData.hourlyRate,
+    //     maxHoursPerWeek: Number(wageData.maxWeeklyHours),
+    //   },
+    // });
 
     res.status(200).json({});
   } catch (error) {
