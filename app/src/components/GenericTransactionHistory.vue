@@ -118,6 +118,8 @@ import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptCo
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
+import xlsx from 'node-xlsx'
+import { useToastStore } from '@/stores/useToastStore'
 
 interface Props {
   transactions: BaseTransaction[]
@@ -145,6 +147,8 @@ const emit = defineEmits<{
   (e: 'export'): void
   (e: 'receipt-click', transaction: BaseTransaction): void
 }>()
+
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -230,7 +234,55 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
 }
 
 const handleExport = () => {
-  emit('export')
+  try {
+    // Prepare headers based on columns
+    const headers = columns.value.map((col) => col.label)
+
+    // Prepare data rows
+    const rows = displayedTransactions.value.map((transaction) => {
+      return columns.value.map((col) => {
+        const key = col.key as keyof BaseTransaction
+        if (key === 'txHash') return transaction.txHash
+        if (key === 'date') return formatDate(transaction.date)
+        if (key === 'type') return transaction.type
+        if (key === 'from') return transaction.from
+        if (key === 'to') return transaction.to
+        if (key === 'receipt') return getReceiptUrl(transaction)
+        if (typeof key === 'string' && key.startsWith('amount')) {
+          const currency = key.replace('amount', '')
+          return formatAmount(transaction, currency)
+        }
+        return ''
+      })
+    })
+
+    // Create worksheet
+    const worksheet = {
+      name: 'Transactions',
+      data: [headers, ...rows],
+      options: {}
+    }
+
+    // Create buffer
+    const buffer = xlsx.build([worksheet])
+
+    // Create blob and download
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `transactions-${new Date().toISOString().split('T')[0]}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    addSuccessToast('Excel file downloaded successfully')
+  } catch (error) {
+    console.error('Error generating Excel:', error)
+    addErrorToast('Failed to generate Excel file')
+  }
 }
 
 const handleReceiptClick = (transaction: BaseTransaction) => {
