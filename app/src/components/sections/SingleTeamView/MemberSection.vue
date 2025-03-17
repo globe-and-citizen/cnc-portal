@@ -2,7 +2,7 @@
   <CardComponent title="Team Members List">
     <template #card-action>
       <ButtonUI
-        v-if="team.ownerAddress == userDataStore.address"
+        v-if="teamStore.currentTeam?.ownerAddress == userDataStore.address"
         @click="
           () => {
             showAddMemberForm = !showAddMemberForm
@@ -16,8 +16,8 @@
       </ButtonUI>
       <ModalComponent v-model="showAddMemberForm">
         <AddMemberForm
-          v-if="team.id && showAddMemberForm"
-          :teamId="team.id"
+          v-if="teamStore.currentTeam?.id && showAddMemberForm"
+          :teamId="teamStore.currentTeam?.id"
           @memberAdded="showAddMemberForm = false"
         />
       </ModalComponent>
@@ -27,10 +27,11 @@
       <div class="overflow-x-auto">
         <TableComponent
           :rows="
-            team.members.map((member: any, index: number) => {
+            teamStore.currentTeam?.members.map((member: any, index: number) => {
               return { index: index + 1, ...member }
             })
           "
+          :loading="teamStore.currentTeamMeta?.teamIsFetching"
           :columns="columns"
           data-test="members-table"
         >
@@ -40,10 +41,13 @@
             />
           </template>
           <template #wage-data=""> 20 h/week & 10 USD/h </template>
-          <template #action-data="{ row }" v-if="team.ownerAddress === userDataStore.address">
+          <template
+            #action-data="{ row }"
+            v-if="teamStore.currentTeam?.ownerAddress === userDataStore.address"
+          >
             <MemberAction
               :member="{ name: row.name, address: row.address }"
-              :team-id="team.id"
+              :team-id="teamStore.currentTeam?.id"
             ></MemberAction>
           </template>
         </TableComponent>
@@ -53,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -63,19 +67,22 @@ import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import MemberAction from './MemberAction.vue'
+import { useTeamStore } from '@/stores'
 
 const userDataStore = useUserDataStore()
 const showAddMemberForm = ref(false)
 
-const props = defineProps(['team'])
+const teamStore = useTeamStore()
 
-const columns = ref([
-  { key: 'index', label: '#' },
-  { key: 'member', label: 'Member' },
-  { key: 'wage', label: 'Wage' }
-])
-// v-if="team.ownerAddress == userDataStore.address"
-if (props.team?.ownerAddress == userDataStore.address) {
-  columns.value.push({ key: 'action', label: 'Action' })
-}
+const columns = computed(() => {
+  const columns = [
+    { key: 'index', label: '#' },
+    { key: 'member', label: 'Member' },
+    { key: 'wage', label: 'Wage' }
+  ]
+  if (teamStore.currentTeam?.ownerAddress == userDataStore.address) {
+    columns.push({ key: 'action', label: 'Action' })
+  }
+  return columns
+})
 </script>
