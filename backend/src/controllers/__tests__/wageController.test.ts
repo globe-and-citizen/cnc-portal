@@ -9,7 +9,8 @@ vi.mock("../../utils");
 
 const app = express();
 app.use(express.json());
-app.post("/wage", setWage);
+app.use(setAddressMiddleware("0xOwnerAddress"));
+app.put("/wage", setWage);
 
 function setAddressMiddleware(address: string) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -49,37 +50,55 @@ describe("Wage Controller", () => {
       vi.clearAllMocks();
     });
 
-    describe("POST: /wage", () => {
-      it("should return 400 if required parameters are missing", async () => {
-        const response = await request(app)
-          .post("/wage")
-          .send({ teamId: 1, userAddress: "0xMemberAddress" });
+    it("should return 400 if required parameters are missing", async () => {
+      const response = await request(app)
+        .post("/wage")
+        .send({ teamId: 1, userAddress: "0xMemberAddress" });
 
-        expect(response.status).toBe(400);
-        expect(response.body.message).toContain(
-          "Missing or invalid parameters: cashRatePerHour, tokenRatePerHour, maximumHoursPerWeek"
-        );
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        "Missing or invalid parameters: cashRatePerHour, tokenRatePerHour, maximumHoursPerWeek"
+      );
+    });
+
+    it("should return 400 if parameters are invalid", async () => {
+      const response = await request(app).post("/wage").send({
+        teamId: 1,
+        userAddress: "0xMemberAddress",
+        cashRatePerHour: -50,
+        tokenRatePerHour: 100,
+        maximumHoursPerWeek: "0.5",
       });
 
-      it("should return 400 if parameters are invalid", async () => {
-        const response = await request(app).post("/wage").send({
-          teamId: 1,
-          userAddress: "0xMemberAddress",
-          cashRatePerHour: -50,
-          tokenRatePerHour: 100,
-          maximumHoursPerWeek: "0.5",
-        });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        "Errors: Invalid maximumHoursPerWeek, Invalid cashRatePerHour"
+      );
+    });
 
-        expect(response.status).toBe(400);
-        expect(response.body.message).toContain(
-          "Errors: Invalid maximumHoursPerWeek, Invalid cashRatePerHour"
-        );
+    it("should return 404 if member is not part of the team", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
+
+      const response = await request(app).post("/wage").send({
+        teamId: 1,
+        userAddress: "0xMemberAddress",
+        cashRatePerHour: 50,
+        tokenRatePerHour: 100,
+        maximumHoursPerWeek: 40,
       });
 
-      it("should return 404 if member is not part of the team", async () => {
-        vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Member not found in the team");
+    });
 
-        const response = await request(app).post("/wage").send({
+    it("should return 403 if caller is not the owner of the team", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
+
+      const response = await request(app)
+        .post("/wage")
+        .set("address", "0xNotOwnerAddress")
+        .send({
           teamId: 1,
           userAddress: "0xMemberAddress",
           cashRatePerHour: 50,
@@ -87,90 +106,68 @@ describe("Wage Controller", () => {
           maximumHoursPerWeek: 40,
         });
 
-        expect(response.status).toBe(404);
-        expect(response.body.message).toBe("Member not found in the team");
-      });
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Caller is not the owner of the team");
+    });
 
-      it("should return 403 if caller is not the owner of the team", async () => {
-        vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-        vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
+    it("should create a new wage if no previous wage exists", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
-        const response = await request(app)
-          .post("/wage")
-          .set("address", "0xNotOwnerAddress")
-          .send({
-            teamId: 1,
-            userAddress: "0xMemberAddress",
-            cashRatePerHour: 50,
-            tokenRatePerHour: 100,
-            maximumHoursPerWeek: 40,
-          });
+      const response = await request(app)
+        .post("/wage")
+        .set("address", "0xOwnerAddress")
+        .send({
+          teamId: 1,
+          userAddress: "0xMemberAddress",
+          cashRatePerHour: 50,
+          tokenRatePerHour: 100,
+          maximumHoursPerWeek: 40,
+        });
 
-        expect(response.status).toBe(403);
-        expect(response.body.message).toBe(
-          "Caller is not the owner of the team"
-        );
-      });
+      expect(response.status).toBe(201);
+      expect(prisma.wage.create).toHaveBeenCalled();
+    });
 
-      it("should create a new wage if no previous wage exists", async () => {
-        vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-        vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
-        vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
+    it("should chain a new wage to the previous wage if it exists", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
-        const response = await request(app)
-          .post("/wage")
-          .set("address", "0xOwnerAddress")
-          .send({
-            teamId: 1,
-            userAddress: "0xMemberAddress",
-            cashRatePerHour: 50,
-            tokenRatePerHour: 100,
-            maximumHoursPerWeek: 40,
-          });
+      const response = await request(app)
+        .post("/wage")
+        .set("address", "0xOwnerAddress")
+        .send({
+          teamId: 1,
+          userAddress: "0xMemberAddress",
+          cashRatePerHour: 50,
+          tokenRatePerHour: 100,
+          maximumHoursPerWeek: 40,
+        });
 
-        expect(response.status).toBe(201);
-        expect(prisma.wage.create).toHaveBeenCalled();
-      });
+      expect(response.status).toBe(201);
+      expect(prisma.wage.create).toHaveBeenCalled();
+    });
 
-      it("should chain a new wage to the previous wage if it exists", async () => {
-        vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-        vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
-        vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
+    it("should return 500 if there is a server error", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockRejectedValue(
+        new Error("Server error")
+      );
 
-        const response = await request(app)
-          .post("/wage")
-          .set("address", "0xOwnerAddress")
-          .send({
-            teamId: 1,
-            userAddress: "0xMemberAddress",
-            cashRatePerHour: 50,
-            tokenRatePerHour: 100,
-            maximumHoursPerWeek: 40,
-          });
+      const response = await request(app)
+        .post("/wage")
+        .set("address", "0xOwnerAddress")
+        .send({
+          teamId: 1,
+          userAddress: "0xMemberAddress",
+          cashRatePerHour: 50,
+          tokenRatePerHour: 100,
+          maximumHoursPerWeek: 40,
+        });
 
-        expect(response.status).toBe(201);
-        expect(prisma.wage.create).toHaveBeenCalled();
-      });
-
-      it("should return 500 if there is a server error", async () => {
-        vi.spyOn(prisma.team, "findFirst").mockRejectedValue(
-          new Error("Server error")
-        );
-
-        const response = await request(app)
-          .post("/wage")
-          .set("address", "0xOwnerAddress")
-          .send({
-            teamId: 1,
-            userAddress: "0xMemberAddress",
-            cashRatePerHour: 50,
-            tokenRatePerHour: 100,
-            maximumHoursPerWeek: 40,
-          });
-
-        expect(response.status).toBe(500);
-        expect(response.body.message).toBe("Internal server error");
-      });
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error");
     });
   });
 });
