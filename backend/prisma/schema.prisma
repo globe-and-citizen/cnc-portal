@@ -54,10 +54,30 @@ model MemberTeamsData {
   expenseAccountData      String?
   expenseAccountSignature String?
   hourlyRate              String?
-  maxHoursPerWeek         Int?
+  maximumHoursPerWeek     Int?
   claims                  Claim[]
 
   @@unique([userAddress, teamId])
+}
+
+model Wage {
+  id                  Int           @id @default(autoincrement())
+  teamId              Int
+  userAddress         String
+  cashRatePerHour     Int
+  tokenRatePerHour    Int
+  maximumHoursPerWeek Int
+  nextWage            wageRelated[] @relation("nextWage")
+  previousWage        wageRelated[] @relation("previousWage")
+}
+
+model wageRelated {
+  nextWage       Wage @relation("nextWage", fields: [nextWageId], references: [id])
+  nextWageId     Int
+  previousWage   Wage @relation("previousWage", fields: [previousWageId], references: [id])
+  previousWageId Int
+
+  @@unique([previousWageId])
 }
 
 model Claim {
