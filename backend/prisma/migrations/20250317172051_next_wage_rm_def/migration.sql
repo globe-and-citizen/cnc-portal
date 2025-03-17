@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Wage" ALTER COLUMN "nextWageId" DROP DEFAULT;
