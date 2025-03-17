@@ -38,7 +38,7 @@
           :loading="memberIsDeleting"
           :disabled="memberIsDeleting"
           variant="error"
-          @click="executeDeleteMember()"
+          @click="deleteMember()"
           data-test="delete-member-confirm-button"
           >Delete</ButtonUI
         >
@@ -120,13 +120,14 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables'
-import { useToastStore } from '@/stores'
+import { useTeamStore, useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { TrashIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
 import { ref, watch } from 'vue'
+const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
 const props = defineProps<{
@@ -173,6 +174,14 @@ const {
   .delete()
   .json()
 
+const deleteMember = async (): Promise<void> => {
+  await executeDeleteMember()
+  if (deleteMemberStatusCode.value === 204) {
+    addSuccessToast('Member deleted successfully')
+    showDeleteMemberConfirmModal.value = false
+    teamStore.fetchTeam(String(props.teamId))
+  }
+}
 const {
   error: addMemberWageDataError,
   isFetching: isMemberWageSaving,
@@ -183,13 +192,6 @@ const {
 })
   .put(wageData)
   .json()
-
-watch(deleteMemberStatusCode, () => {
-  if (deleteMemberStatusCode.value === 204) {
-    addSuccessToast('Member deleted successfully')
-    showDeleteMemberConfirmModal.value = false
-  }
-})
 
 watch(addMemberWageDataStatusCode, () => {
   if (addMemberWageDataStatusCode.value === 200) {
