@@ -24,6 +24,8 @@ model User {
   BoardOfDirectorActions BoardOfDirectorActions[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Team {
@@ -45,6 +47,8 @@ model Team {
   teamContracts                 TeamContract[]
   memberTeamsData               MemberTeamsData[]
   Wage                          Wage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model MemberTeamsData {
@@ -55,6 +59,8 @@ model MemberTeamsData {
   teamId                  Int
   expenseAccountData      String?
   expenseAccountSignature String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userAddress, teamId])
 }
@@ -63,6 +69,8 @@ model Wage {
   id                  Int           @id @default(autoincrement())
   team                Team          @relation(fields: [teamId], references: [id])
   user                User          @relation(fields: [userAddress], references: [address])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   teamId              Int
   userAddress         String
   cashRatePerHour     Int
@@ -84,7 +92,8 @@ model wageRelated {
 
 model Claim {
   id                        Int      @id @default(autoincrement()) // Add an ID for easy referencing
-  createdAt                 DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   status                    String
   hoursWorked               Int?
   cashRemunerationSignature String?
@@ -99,7 +108,8 @@ model Notification {
   isRead      Boolean  @default(false)
   userAddress String
   user        User     @relation(fields: [userAddress], references: [address])
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   author      String?
   resource    String?
 }
@@ -112,6 +122,8 @@ model TeamContract {
   admins   String[]
   teamId   Int
   team     Team     @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([address])
 }
@@ -127,5 +139,6 @@ model BoardOfDirectorActions {
   createdBy     User     @relation(fields: [userAddress], references: [address])
   teamId        Int
   team          Team     @relation(fields: [teamId], references: [id])
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
