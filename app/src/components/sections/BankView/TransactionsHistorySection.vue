@@ -3,7 +3,7 @@
   <GenericTransactionHistory
     :transactions="transactions"
     title="Bank Transactions History"
-    :currencies="['USD', 'CAD', 'INR', 'EUR']"
+    :currencies="['USD']"
     :currency-rates="currencyRates"
     :show-receipt-modal="true"
     data-test="bank-transactions"

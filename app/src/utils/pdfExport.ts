@@ -3,15 +3,6 @@ import type { TDocumentDefinitions } from 'pdfmake/interfaces'
 import type { ReceiptData } from './excelExport'
 
 // Initialize default fonts
-pdfMake.fonts = {
-  Roboto: {
-    normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf',
-    bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Medium.ttf',
-    italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Italic.ttf',
-    bolditalics:
-      'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-MediumItalic.ttf'
-  }
-}
 
 interface PdfExportOptions {
   filename: string
@@ -20,17 +11,27 @@ interface PdfExportOptions {
 export const exportToPdf = (data: (string | number)[][], options: PdfExportOptions) => {
   try {
     const docDefinition: TDocumentDefinitions = {
+      pageSize: 'A4',
+      pageOrientation: 'landscape',
+      pageMargins: [5, 5, 5, 5], // Reduce page margins
       content: [
         {
           table: {
             headerRows: 1,
-            body: data
+            widths: Array(data[0].length).fill('auto'),
+            body: data.map((row, rowIndex) =>
+              row.map((cell) => ({
+                text: String(cell),
+                fontSize: rowIndex === 0 ? 6 : 5, // Smaller font size, headers slightly larger
+                margin: [2, 2], // Minimal cell padding
+                alignment: !isNaN(Number(cell)) ? 'right' : 'left', // Right-align numbers
+                noWrap: false,
+                wordBreak: 'break-all'
+              }))
+            )
           }
         }
-      ],
-      defaultStyle: {
-        font: 'Roboto'
-      }
+      ]
     }
 
     pdfMake.createPdf(docDefinition).download(options.filename)
