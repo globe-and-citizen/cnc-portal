@@ -23,6 +23,7 @@ model User {
   notifications          Notification[]
   BoardOfDirectorActions BoardOfDirectorActions[]
   memberTeamsData        MemberTeamsData[]
+  Wage                   Wage[]
 }
 
 model Team {
@@ -43,6 +44,7 @@ model Team {
   BoardOfDirectorActions        BoardOfDirectorActions[]
   teamContracts                 TeamContract[]
   memberTeamsData               MemberTeamsData[]
+  Wage                          Wage[]
 }
 
 model MemberTeamsData {
@@ -53,15 +55,14 @@ model MemberTeamsData {
   teamId                  Int
   expenseAccountData      String?
   expenseAccountSignature String?
-  hourlyRate              String?
-  maximumHoursPerWeek     Int?
-  claims                  Claim[]
 
   @@unique([userAddress, teamId])
 }
 
 model Wage {
   id                  Int           @id @default(autoincrement())
+  team                Team          @relation(fields: [teamId], references: [id])
+  user                User          @relation(fields: [userAddress], references: [address])
   teamId              Int
   userAddress         String
   cashRatePerHour     Int
@@ -69,6 +70,7 @@ model Wage {
   maximumHoursPerWeek Int
   nextWage            wageRelated[] @relation("nextWage")
   previousWage        wageRelated[] @relation("previousWage")
+  claims              Claim[]
 }
 
 model wageRelated {
@@ -81,13 +83,13 @@ model wageRelated {
 }
 
 model Claim {
-  id                        Int             @id @default(autoincrement()) // Add an ID for easy referencing
-  createdAt                 DateTime        @default(now())
+  id                        Int      @id @default(autoincrement()) // Add an ID for easy referencing
+  createdAt                 DateTime @default(now())
   status                    String
   hoursWorked               Int?
   cashRemunerationSignature String?
-  memberTeamsDataId         Int
-  memberTeamsData           MemberTeamsData @relation(fields: [memberTeamsDataId], references: [id])
+  wageId                    Int
+  wage                      Wage     @relation(fields: [wageId], references: [id])
 }
 
 model Notification {
