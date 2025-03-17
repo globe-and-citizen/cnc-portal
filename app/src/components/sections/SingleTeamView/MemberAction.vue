@@ -187,10 +187,16 @@ const {
   isFetching: isMemberWageSaving,
   statusCode: addMemberWageDataStatusCode,
   execute: addMemberWageDataAPI
-} = useCustomFetch(`teams/${props.teamId}/member/${props.member.address}/setWage`, {
+} = useCustomFetch('/wage/setWage', {
   immediate: false
 })
-  .put(wageData)
+  .put(() => ({
+    teamId: props.teamId,
+    userAddress: props.member.address,
+    cashRatePerHour: wageData.value.hourlyRate,
+    tokenRatePerHour: wageData.value.hourlyRate,
+    maximumHoursPerWeek: wageData.value.maxWeeklyHours
+  }))
   .json()
 
 watch(addMemberWageDataStatusCode, () => {
