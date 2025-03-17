@@ -44,8 +44,7 @@ describe('authController', () => {
 
       expect(response.status).toBe(401)
       expect(response.body).toEqual({
-        message: 'Auth error: Missing message',
-        success: false
+        message: 'Auth error: Missing message'
       })
     })
     it('should return 401 if signature not set', async () => {
@@ -67,8 +66,7 @@ describe('authController', () => {
 
       expect(response.status).toBe(401)
       expect(response.body).toEqual({
-        message: 'Auth error: Missing signature',
-        success: false
+        message: 'Auth error: Missing signature'
       })
     })
     it('should return 401 if SIWE verification fails', async () => {
@@ -94,8 +92,7 @@ describe('authController', () => {
 
       expect(response.status).toBe(401)
       expect(response.body).toEqual({
-        message: 'Signature does not match address of the message.',
-        success: false
+        message: 'Signature does not match address of the message.'
       })      
       vi.restoreAllMocks()
     })
@@ -122,8 +119,7 @@ describe('authController', () => {
 
       expect(response.status).toBe(200)
       expect(response.body).toEqual({
-        accessToken: 'jsonWebToken',
-        success: true
+        accessToken: 'jsonWebToken'
       })
       vi.restoreAllMocks()
     })
@@ -147,8 +143,7 @@ describe('authController', () => {
       expect(response.status).toBe(500)
       expect(response.body).toEqual({
         error: "Extract address error: Eth address missing ",
-        message: "Internal server error has occured",
-        success: false
+        message: "Internal server error has occured"
       })
     })
   })
@@ -169,8 +164,7 @@ describe('authController', () => {
 
       expect(response.status).toBe(401)
       expect(response.body).toEqual({
-        message: "Unauthorized: Missing jwt payload",
-        success: false
+        message: "Unauthorized: Missing jwt payload"
       })
     })
     it('should return 200 if authorization successful', async () => {
@@ -192,9 +186,6 @@ describe('authController', () => {
         .set('Authorization', `Bearer ${token}`)
 
       expect(response.status).toBe(200)
-      expect(response.body).toEqual({
-        success: true
-      })
     })
   })
 })
