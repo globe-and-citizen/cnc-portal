@@ -121,6 +121,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
+import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
 
@@ -238,12 +239,8 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
 
 const handleExport = () => {
   try {
-    // Use the same columns as displayed in the table
     const headers = columns.value.map((col) => col.label)
-
     const rows = displayedTransactions.value.map((tx) => {
-      // Map each column's data using the same formatting as the table
-      console.log(tx)
       return columns.value.map((col) => {
         switch (col.key) {
           case 'date':
@@ -268,12 +265,14 @@ const handleExport = () => {
       })
     })
 
-    const success = exportTransactionsToExcel(headers, rows, new Date().toISOString().split('T')[0])
+    const date = new Date().toISOString().split('T')[0]
+    const excelSuccess = exportTransactionsToExcel(headers, rows, date)
+    const pdfSuccess = exportTransactionsToPdf(headers, rows, date)
 
-    if (success) {
+    if (excelSuccess && pdfSuccess) {
       toastStore.addSuccessToast('Transactions exported successfully')
     } else {
-      toastStore.addErrorToast('Failed to export transactions')
+      toastStore.addErrorToast('Failed to export some transactions')
     }
   } catch (error) {
     console.error('Error exporting transactions:', error)
@@ -295,7 +294,6 @@ const getReceiptUrl = (txHash: string) => {
 }
 
 const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
-  console.log(transaction)
   return {
     txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
@@ -304,7 +302,7 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     to: String(transaction.to),
     amount: String(transaction.amount || ''),
     token: String(transaction.token),
-    amountUsd: Number(transaction.amountUsd || 0)
+    amountUSD: Number(transaction.amountUSD || 0)
   }
 }
 
@@ -323,7 +321,16 @@ const handleReceiptExport = (receiptData: ReceiptData) => {
 }
 
 const handleReceiptPdfExport = (receiptData: ReceiptData) => {
-  // TODO: Implement PDF export
-  console.log('PDF export not implemented yet', receiptData)
+  try {
+    const success = exportReceiptToPdf(receiptData)
+    if (success) {
+      toastStore.addSuccessToast('Receipt PDF exported successfully')
+    } else {
+      toastStore.addErrorToast('Failed to export receipt PDF')
+    }
+  } catch (error) {
+    console.error('Error exporting receipt PDF:', error)
+    toastStore.addErrorToast('Failed to export receipt PDF')
+  }
 }
 </script>

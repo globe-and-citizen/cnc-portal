@@ -11,7 +11,7 @@ export interface ReceiptData {
   type: string
   from: string
   to: string
-  amountUsd: number
+  amountUSD: number
   amount: string
   token: string
 }
@@ -59,7 +59,7 @@ export const exportReceiptToExcel = (receiptData: ReceiptData) => {
     ['To', receiptData.to],
     ['Amount', receiptData.amount],
     ['Token', receiptData.token],
-    ['Value (USD)', receiptData.amountUsd]
+    ['Value (USD)', receiptData.amountUSD]
   ]
 
   return exportToExcel([headers, ...rows], {

@@ -32,7 +32,7 @@ interface ReceiptData {
   type: string
   from: string
   to: string
-  amountUsd: number
+  amountUSD: number
   amount: string
   token: string
 }
@@ -50,13 +50,13 @@ const labels = {
   type: 'Type',
   from: 'Author',
   to: 'Recipient',
-  amountUsd: 'Value',
+  amountUSD: 'Value',
   amount: 'Amount',
   token: 'Token'
 }
 
 // Define the order of keys explicitly
-const orderedKeys = ['txHash', 'amount', 'token', 'amountUsd', 'date', 'from', 'to']
+const orderedKeys = ['txHash', 'amount', 'token', 'amountUSD', 'date', 'from', 'to']
 
 const formattedReceiptData = {
   ...receiptData,
