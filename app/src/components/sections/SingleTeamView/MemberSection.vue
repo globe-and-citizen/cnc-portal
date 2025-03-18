@@ -62,17 +62,17 @@ import { PlusCircleIcon } from '@heroicons/vue/24/outline'
 import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
+import { useTeamStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import MemberAction from './MemberAction.vue'
-import { useTeamStore } from '@/stores'
 
 const userDataStore = useUserDataStore()
+const teamStore = useTeamStore()
 const showAddMemberForm = ref(false)
 
-const teamStore = useTeamStore()
 
 const columns = computed(() => {
   const columns = [
