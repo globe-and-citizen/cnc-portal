@@ -186,7 +186,7 @@ async function isUserMemberOfTeam(
     },
   });
 
-  return team !== null;
+  return !!team;
 }
 
 async function isOwnerOfTeam(userAddress: Address, teamId: number) {
@@ -200,5 +200,5 @@ async function isOwnerOfTeam(userAddress: Address, teamId: number) {
     },
   });
 
-  return team !== null;
+  return !!team;
 }
