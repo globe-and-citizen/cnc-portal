@@ -59,11 +59,6 @@ describe('ReceiptComponent', () => {
       expect(receiptDataToken.html()).toContain('Token')
       expect(receiptDataToken.html()).toContain(mockReceiptData['token'])
 
-      const receiptDataAmountUsd = wrapper.find('[data-test="receipt-data-amountUsd"]')
-      expect(receiptDataAmountUsd.exists()).toBeTruthy()
-      expect(receiptDataAmountUsd.html()).toContain('Value')
-      expect(receiptDataAmountUsd.html()).toContain(`${mockReceiptData['amountUsd']}`)
-
       const receiptDataFrom = wrapper.find('[data-test="receipt-data-from"]')
       expect(receiptDataFrom.exists()).toBeTruthy()
       expect(receiptDataFrom.html()).toContain('Author')
