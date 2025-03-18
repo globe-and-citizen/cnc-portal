@@ -93,6 +93,79 @@ const wageRoutes = express.Router();
  *                 description: Error message indicating an internal server error
  */
 wageRoutes.put("/setWage", setWage);
+
+/**
+ * @openapi
+ * /wage:
+ *  get:
+ *   summary: Get Team members wages
+ *   parameters:
+ *     - in: query
+ *       name: teamId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         description: The ID of the team
+ *         minimum: 1
+ *   responses:
+ *     200:
+ *       description: Wages retrieved successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   description: The ID of the wage record
+ *                 teamId:
+ *                   type: integer
+ *                   description: The ID of the team
+ *                 userAddress:
+ *                   type: string
+ *                   description: The address of the user
+ *                 cashRatePerHour:
+ *                   type: number
+ *                   description: The cash rate per hour
+ *                 tokenRatePerHour:
+ *                   type: number
+ *                   description: The token rate per hour
+ *                 maximumHoursPerWeek:
+ *                   type: integer
+ *                   description: The maximum hours per week
+ *     400:
+ *       description: Bad request
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Error message detailing the bad request
+ *     404:
+ *       description: Team not found
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Error message indicating the team was not found
+ *     500:
+ *       description: Internal server error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Error message indicating an internal server error
+ */
 wageRoutes.get("/", getWages);
 
 export default wageRoutes;
