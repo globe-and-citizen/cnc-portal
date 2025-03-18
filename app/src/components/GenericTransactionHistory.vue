@@ -75,7 +75,7 @@
         </template>
         <template v-else>
           <a
-            :href="getReceiptUrl(row as unknown as BaseTransaction)"
+            :href="getReceiptUrl(row.txHash)"
             target="_blank"
             class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
           >
@@ -87,8 +87,8 @@
 
       <!-- Dynamic currency amounts -->
       <template
-        v-for="currency in props.currencies"
-        :key="currency"
+        v-for="(currency, index) in currencies"
+        :key="index"
         #[`amount${currency}-data`]="{ row }"
       >
         {{ formatAmount(row as unknown as BaseTransaction, currency) }}
@@ -100,6 +100,8 @@
       <ReceiptComponent
         v-if="receiptModal && selectedTransaction"
         :receipt-data="formatReceiptData(selectedTransaction)"
+        @export-excel="handleReceiptExport"
+        @export-pdf="handleReceiptPdfExport"
       />
     </ModalComponent>
   </CardComponent>
@@ -118,6 +120,10 @@ import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptCo
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
+import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
+import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
+import type { ReceiptData } from '@/utils/excelExport'
+import { useToastStore } from '@/stores/useToastStore'
 
 interface Props {
   transactions: BaseTransaction[]
@@ -143,8 +149,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'export'): void
-  (e: 'receipt-click', transaction: BaseTransaction): void
+  (e: 'receipt-click', data: ReceiptData): void
 }>()
+
+const toastStore = useToastStore()
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -230,32 +238,99 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
 }
 
 const handleExport = () => {
-  emit('export')
+  try {
+    const headers = columns.value.map((col) => col.label)
+    const rows = displayedTransactions.value.map((tx) => {
+      return columns.value.map((col) => {
+        switch (col.key) {
+          case 'date':
+            return formatDate(tx.date)
+          case 'txHash':
+            return tx.txHash
+          case 'type':
+            return tx.type
+          case 'from':
+            return tx.from
+          case 'to':
+            return tx.to
+          case 'receipt':
+            return getReceiptUrl(tx.txHash)
+          default:
+            if (col.key.startsWith('amount')) {
+              const currency = col.key.replace('amount', '')
+              return formatAmount(tx, currency)
+            }
+            return ''
+        }
+      })
+    })
+
+    const date = new Date().toISOString().split('T')[0]
+    const excelSuccess = exportTransactionsToExcel(headers, rows, date)
+    const pdfSuccess = exportTransactionsToPdf(headers, rows, date)
+
+    if (excelSuccess && pdfSuccess) {
+      toastStore.addSuccessToast('Transactions exported successfully')
+    } else {
+      toastStore.addErrorToast('Failed to export some transactions')
+    }
+  } catch (error) {
+    console.error('Error exporting transactions:', error)
+    toastStore.addErrorToast('Failed to export transactions')
+  }
 }
 
 const handleReceiptClick = (transaction: BaseTransaction) => {
+  const receiptData = formatReceiptData(transaction)
   if (props.showReceiptModal) {
     selectedTransaction.value = transaction
     receiptModal.value = true
   }
-  emit('receipt-click', transaction)
+  emit('receipt-click', receiptData)
 }
 
-const getReceiptUrl = (transaction: BaseTransaction) => {
-  return transaction.receipt || `${NETWORK.blockExplorerUrl}/tx/${transaction.txHash}`
+const getReceiptUrl = (txHash: string) => {
+  return `${NETWORK.blockExplorerUrl}/tx/${txHash}`
 }
 
-const formatReceiptData = (transaction: BaseTransaction) => {
-  const token = transaction.token
+const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
   return {
-    txHash: transaction.txHash,
+    txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
-    type: transaction.type,
-    from: transaction.from,
-    to: transaction.to,
-    amountUsd: transaction.amountUSD,
-    amount: String(transaction.amount || '0'),
-    token: typeof token === 'string' ? token : String(token || '')
+    type: String(transaction.type),
+    from: String(transaction.from),
+    to: String(transaction.to),
+    amount: String(transaction.amount || ''),
+    token: String(transaction.token),
+    amountUSD: Number(transaction.amountUSD || 0)
+  }
+}
+
+const handleReceiptExport = (receiptData: ReceiptData) => {
+  try {
+    const success = exportReceiptToExcel(receiptData)
+    if (success) {
+      toastStore.addSuccessToast('Receipt exported successfully')
+    } else {
+      toastStore.addErrorToast('Failed to export receipt')
+    }
+  } catch (error) {
+    console.error('Error exporting receipt:', error)
+    toastStore.addErrorToast('Failed to export receipt')
+  }
+}
+
+const handleReceiptPdfExport = (receiptData: ReceiptData) => {
+  try {
+    const success = exportReceiptToPdf(receiptData)
+    if (success) {
+      toastStore.addSuccessToast('Receipt PDF exported successfully')
+    } else {
+      toastStore.addErrorToast('Failed to export receipt PDF')
+    }
+  } catch (error) {
+    console.error('Error exporting receipt PDF:', error)
+    toastStore.addErrorToast('Failed to export receipt PDF')
   }
 }
 </script>

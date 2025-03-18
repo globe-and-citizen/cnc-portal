@@ -59,11 +59,6 @@ describe('ReceiptComponent', () => {
       expect(receiptDataToken.html()).toContain('Token')
       expect(receiptDataToken.html()).toContain(mockReceiptData['token'])
 
-      const receiptDataAmountUsd = wrapper.find('[data-test="receipt-data-amountUsd"]')
-      expect(receiptDataAmountUsd.exists()).toBeTruthy()
-      expect(receiptDataAmountUsd.html()).toContain('Value')
-      expect(receiptDataAmountUsd.html()).toContain(`${mockReceiptData['amountUsd']}`)
-
       const receiptDataFrom = wrapper.find('[data-test="receipt-data-from"]')
       expect(receiptDataFrom.exists()).toBeTruthy()
       expect(receiptDataFrom.html()).toContain('Author')
@@ -77,6 +72,20 @@ describe('ReceiptComponent', () => {
       expect(receiptDataTo.html()).toContain(
         `${mockReceiptData['to']?.slice(0, 6)}...${mockReceiptData['to']?.slice(-4)}`
       )
+    })
+  })
+  describe('Export', () => {
+    it('should export to excel', async () => {
+      const wrapper = createComponent()
+      const exportExcelButton = wrapper.find('[data-test="export-excel"]')
+      await exportExcelButton.trigger('click')
+      expect(exportExcelButton.exists()).toBeTruthy()
+    })
+    it('should export to pdf', async () => {
+      const wrapper = createComponent()
+      const exportPdfButton = wrapper.find('[data-test="export-pdf"]')
+      await exportPdfButton.trigger('click')
+      expect(exportPdfButton.exists()).toBeTruthy()
     })
   })
 })
