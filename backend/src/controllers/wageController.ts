@@ -4,6 +4,7 @@ import { Address, isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
 import { addNotification, prisma } from "../utils";
 import { Prisma, User, Wage } from "@prisma/client";
+import { R } from "vitest/dist/chunks/environment.LoooBwUu";
 
 type wageBodyRequest = Pick<
   Wage,
@@ -62,21 +63,14 @@ export const setWage = async (req: Request, res: Response) => {
     return errorResponse(400, `Errors: ${errors.join(", ")}`, res);
   }
 
-  // check if the member is part of the provided team
-  if (!(await isUserMemberOfTeam(userAddress, teamId))) {
-    return errorResponse(404, "Member not found in the team", res);
-  }
-
   try {
-    // Check if the caller is the owner of the team
-    const team = await prisma.team.findFirst({
-      where: {
-        id: teamId,
-        owner: callerAddress,
-      },
-    });
+    // check if the member is part of the provided team
+    if (!(await isUserMemberOfTeam(userAddress, teamId))) {
+      return errorResponse(404, "Member not found in the team", res);
+    }
 
-    if (!team) {
+    // Check if the caller is the owner of the team
+    if (!(await isOwnerOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
 
@@ -140,27 +134,71 @@ export const setWage = async (req: Request, res: Response) => {
     await prisma.$disconnect();
   }
 };
+// /wage/?teamId=teamId
+export const getWages = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address;
+  const teamId = Number(req.query.teamId);
+
+  // find the team and check if the caller is the owner
+  // TODO: in the future only the owner should be able to see the wages
+
+  // Find user wages
+  try {
+    // check if the member is part of the provided team
+    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
+      return errorResponse(403, "Member is not a team member", res);
+    }
+    const wages = await prisma.wage.findMany({
+      where: {
+        teamId: teamId,
+        nextWageId: null,
+      },
+      include: {
+        previousWage: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json(wages);
+  } catch (error) {
+    console.log("Error: ", error);
+    return errorResponse(500, "Internal server error", res);
+  }
+};
 
 async function isUserMemberOfTeam(
   userAddress: Address,
   teamId: number
 ): Promise<boolean> {
   let team;
-  try {
-    team = await prisma.team.findFirst({
-      where: {
-        id: teamId,
-        members: {
-          some: {
-            address: userAddress,
-          },
+
+  team = await prisma.team.findFirst({
+    where: {
+      id: teamId,
+      members: {
+        some: {
+          address: userAddress,
         },
       },
-    });
-  } catch (error) {
-    console.log("Error: ", error);
-    return false;
-  }
+    },
+  });
+
+  return team !== null;
+}
+
+async function isOwnerOfTeam(userAddress: Address, teamId: number) {
+  let team;
+  team = await prisma.team.findFirst({
+    where: {
+      id: teamId,
+      owner: {
+        address: userAddress,
+      },
+    },
+  });
 
   return team !== null;
 }

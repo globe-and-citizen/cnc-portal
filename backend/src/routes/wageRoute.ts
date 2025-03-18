@@ -1,7 +1,8 @@
 import express from "express";
-import { setWage } from "../controllers/wageController";
+import { getWages, setWage } from "../controllers/wageController";
 
 const wageRoutes = express.Router();
+
 /**
  * @openapi
  * /wage/setWage:
@@ -92,5 +93,6 @@ const wageRoutes = express.Router();
  *                 description: Error message indicating an internal server error
  */
 wageRoutes.put("/setWage", setWage);
+wageRoutes.get("/", getWages);
 
 export default wageRoutes;
