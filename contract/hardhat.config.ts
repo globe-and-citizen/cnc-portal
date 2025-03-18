@@ -29,6 +29,11 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
       accounts: [process.env.PRIVATE_KEY!],
       gasPrice: 'auto',
       chainId: 137
+    },
+    amoy: {
+      url: process.env.AMOY_URL,
+      accounts: [process.env.PRIVATE_KEY!],
+      chainId: 80002
     }
   }
 }

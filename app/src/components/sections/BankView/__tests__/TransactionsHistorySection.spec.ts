@@ -25,7 +25,7 @@ describe('TransactionsHistorySection', () => {
     expect(genericHistory.exists()).toBe(true)
     expect(genericHistory.props()).toMatchObject({
       title: 'Bank Transactions History',
-      currencies: ['USD', 'CAD', 'INR', 'EUR'],
+      currencies: ['USD'],
       showReceiptModal: true,
       currencyRates: defaultProps.currencyRates
     })

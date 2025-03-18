@@ -19,6 +19,7 @@
     <ApprovedExpensesSection />
 
     <TransactionHistorySection
+      :transactions="[]"
       :currency-rates="{
         loading: false,
         error: null,
