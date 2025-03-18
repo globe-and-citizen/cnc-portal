@@ -55,7 +55,6 @@ describe("Wage Controller", () => {
         .put("/wage")
         .send({ teamId: 1, userAddress: "0xMemberAddress" });
 
-      console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
         "Missing or invalid parameters: cashRatePerHour, tokenRatePerHour, maximumHoursPerWeek"
@@ -166,7 +165,7 @@ describe("Wage Controller", () => {
           maximumHoursPerWeek: 40,
         });
 
-      console.log({ body: response.body, status: response.status });
+      // console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(500);
       expect(response.body.message).toBe("Internal server error has occured");
     });
