@@ -126,7 +126,7 @@ import { TrashIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
@@ -199,18 +199,17 @@ const {
   }))
   .json()
 
-watch(addMemberWageDataStatusCode, () => {
-  if (addMemberWageDataStatusCode.value === 200) {
-    addSuccessToast('Member wage data set successfully')
-    showSetMemberWageModal.value = false
-  }
-})
 const addMemberWageData = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
   await addMemberWageDataAPI()
+  if (addMemberWageDataStatusCode.value === 201) {
+    addSuccessToast('Member wage data set successfully')
+    teamStore.fetchTeam(String(props.teamId))
+    showSetMemberWageModal.value = false
+  }
 }
 </script>
 
