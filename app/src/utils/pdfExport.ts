@@ -7,12 +7,25 @@ import type { ReceiptData } from './excelExport'
 interface PdfExportOptions {
   filename: string
 }
+pdfMake.fonts = {
+  Roboto: {
+    normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf',
+    bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Medium.ttf',
+    italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Italic.ttf',
+    bolditalics:
+      'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-MediumItalic.ttf'
+  }
+}
 
-export const exportToPdf = (data: (string | number)[][], options: PdfExportOptions) => {
+export const exportToPdf = (
+  data: (string | number)[][],
+  options: PdfExportOptions,
+  isLandscape = true
+) => {
   try {
     const docDefinition: TDocumentDefinitions = {
       pageSize: 'A4',
-      pageOrientation: 'landscape',
+      pageOrientation: isLandscape ? 'landscape' : 'portrait',
       pageMargins: [5, 5, 5, 5], // Reduce page margins
       content: [
         {
@@ -31,7 +44,10 @@ export const exportToPdf = (data: (string | number)[][], options: PdfExportOptio
             )
           }
         }
-      ]
+      ],
+      defaultStyle: {
+        font: 'Roboto'
+      }
     }
 
     pdfMake.createPdf(docDefinition).download(options.filename)
@@ -55,9 +71,13 @@ export const exportReceiptToPdf = (receiptData: ReceiptData) => {
     ['Value (USD)', receiptData.amountUSD.toString()]
   ]
 
-  return exportToPdf(rows, {
-    filename: `receipt-${receiptData.txHash.slice(0, 6)}.pdf`
-  })
+  return exportToPdf(
+    rows,
+    {
+      filename: `receipt-${receiptData.txHash.slice(0, 6)}.pdf`
+    },
+    false
+  )
 }
 
 export const exportTransactionsToPdf = (
