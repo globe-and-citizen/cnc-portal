@@ -165,13 +165,15 @@ export const getWages = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
-async function isUserMemberOfTeam(
+export const isUserMemberOfTeam = async (
   userAddress: Address,
   teamId: number
-): Promise<boolean> {
+): Promise<boolean> => {
   let team;
 
   team = await prisma.team.findFirst({
@@ -186,9 +188,9 @@ async function isUserMemberOfTeam(
   });
 
   return !!team;
-}
+};
 
-async function isOwnerOfTeam(userAddress: Address, teamId: number) {
+export async function isOwnerOfTeam(userAddress: Address, teamId: number) {
   let team;
   team = await prisma.team.findFirst({
     where: {
