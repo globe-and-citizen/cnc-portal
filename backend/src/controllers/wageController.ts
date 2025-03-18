@@ -116,7 +116,7 @@ export const setWage = async (req: Request, res: Response) => {
       }
 
       // Create first wage
-      await prisma.wage.create({
+      const createdWage = await prisma.wage.create({
         data: {
           teamId: Number(teamId),
           userAddress,
@@ -125,7 +125,7 @@ export const setWage = async (req: Request, res: Response) => {
           maximumHoursPerWeek,
         },
       });
-      res.status(201).json(wage);
+      res.status(201).json(createdWage);
     }
   } catch (error) {
     console.log("Error: ", error);
