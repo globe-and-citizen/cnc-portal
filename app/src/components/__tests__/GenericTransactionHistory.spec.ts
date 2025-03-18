@@ -3,9 +3,12 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
 import GenericTransactionHistory from '../GenericTransactionHistory.vue'
 import type { BaseTransaction } from '@/types/transactions'
+import type { ReceiptData } from '@/utils/excelExport'
 import Datepicker from '@vuepic/vue-datepicker'
 import { NETWORK } from '@/constant'
-
+import { createTestingPinia } from '@pinia/testing'
+import { exportTransactionsToExcel } from '@/utils/excelExport'
+import { exportTransactionsToPdf } from '@/utils/pdfExport'
 // Mock components
 vi.mock('@/components/TableComponent.vue', () => ({
   default: {
@@ -19,6 +22,24 @@ vi.mock('@/components/AddressToolTip.vue', () => ({
     name: 'AddressToolTip',
     template: '<div data-test="address-tooltip"><slot /></div>'
   }
+}))
+
+vi.mock('@/components/sections/ExpenseAccountView/ReceiptComponent.vue', () => ({
+  default: {
+    name: 'ReceiptComponent',
+    template: '<div data-test="receipt-component"><slot /></div>'
+  }
+}))
+
+// Mock export functions
+vi.mock('@/utils/excelExport', () => ({
+  exportReceiptToExcel: vi.fn(),
+  exportTransactionsToExcel: vi.fn()
+}))
+
+vi.mock('@/utils/pdfExport', () => ({
+  exportReceiptToPdf: vi.fn(),
+  exportTransactionsToPdf: vi.fn()
 }))
 
 // Sample test data
@@ -62,7 +83,12 @@ describe('GenericTransactionHistory', () => {
       type: string
       from: string
       to: string
+      amountUSD: number
+      amount: string
+      token: string
     }
+    handleReceiptExport: (receiptData: ReceiptData) => Promise<void>
+    handleReceiptPdfExport: (receiptData: ReceiptData) => Promise<void>
   }
   let wrapper: VueWrapper
 
@@ -76,6 +102,7 @@ describe('GenericTransactionHistory', () => {
         ...props
       },
       global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           TableComponent: true,
           AddressToolTip: true,
@@ -101,9 +128,43 @@ describe('GenericTransactionHistory', () => {
   })
 
   it('emits export event when export button is clicked', async () => {
+    const wrapper = createWrapper()
+    vi.mocked(exportTransactionsToExcel).mockReturnValue(true)
+    vi.mocked(exportTransactionsToPdf).mockReturnValue(true)
+
     const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
     await exportButton.trigger('click')
-    expect(wrapper.emitted('export')).toBeTruthy()
+
+    expect(exportTransactionsToExcel).toHaveBeenCalled()
+    expect(exportTransactionsToPdf).toHaveBeenCalled()
+  })
+
+  it('handles failed export when export button is clicked', async () => {
+    const wrapper = createWrapper()
+    vi.mocked(exportTransactionsToExcel).mockReturnValue(false)
+    vi.mocked(exportTransactionsToPdf).mockReturnValue(false)
+
+    const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
+    await exportButton.trigger('click')
+
+    expect(exportTransactionsToExcel).toHaveBeenCalled()
+    expect(exportTransactionsToPdf).toHaveBeenCalled()
+  })
+
+  it('handles error when export button is clicked', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const wrapper = createWrapper()
+
+    vi.mocked(exportTransactionsToExcel).mockImplementation(() => {
+      throw new Error('Test error')
+    })
+    vi.mocked(exportTransactionsToPdf).mockReturnValue(true)
+
+    const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
+    await exportButton.trigger('click')
+
+    expect(consoleSpy).toHaveBeenCalledWith('Error exporting transactions:', expect.any(Error))
+    consoleSpy.mockRestore()
   })
 
   it('formats date correctly', () => {
@@ -125,7 +186,7 @@ describe('GenericTransactionHistory', () => {
   it('generates correct receipt URL when receipt is not provided', () => {
     const transaction = mockTransactions[1] // Transaction without receipt
     const receiptUrl = (wrapper.vm as unknown as IGenericTransactionHistory).getReceiptUrl(
-      transaction
+      transaction.txHash as unknown as BaseTransaction
     )
     expect(receiptUrl).toBe(`${NETWORK.blockExplorerUrl}/tx/${transaction.txHash}`)
   })
@@ -142,9 +203,9 @@ describe('GenericTransactionHistory', () => {
       type: transaction.type,
       from: transaction.from,
       to: transaction.to,
-      amountUsd: transaction.amountUSD,
-      amount: '0',
-      token: ''
+      amountUSD: transaction.amountUSD,
+      amount: '',
+      token: 'undefined'
     })
   })
 

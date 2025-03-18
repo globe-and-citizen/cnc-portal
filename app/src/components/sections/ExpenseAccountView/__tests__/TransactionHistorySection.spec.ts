@@ -6,6 +6,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { ref, type ComponentPublicInstance } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
 
 const mockUseQuery = {
   result: ref({
@@ -38,14 +39,6 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
 })
 
 describe('TransactionHistorySection', () => {
-  const defaultProps = {
-    currencyRates: {
-      loading: false as const,
-      error: null as null,
-      getRate: () => 1
-    }
-  }
-
   const mockTransactions: ExpenseTransaction[] = [
     {
       txHash: '0x123',
@@ -59,13 +52,23 @@ describe('TransactionHistorySection', () => {
     }
   ]
 
+  const defaultProps = {
+    currencyRates: {
+      loading: false as const,
+      error: null as null,
+      getRate: () => 1
+    },
+    transactions: mockTransactions
+  }
+
   it('renders correctly', () => {
     const wrapper = mount(TransactionHistorySection, {
       props: defaultProps,
       global: {
         stubs: {
           GenericTransactionHistory: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
     expect(wrapper.exists()).toBe(true)

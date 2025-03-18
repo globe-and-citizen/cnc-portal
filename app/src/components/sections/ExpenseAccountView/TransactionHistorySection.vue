@@ -4,7 +4,11 @@
     :transactions="transactionData"
     title="Expense Account Transfer History"
     :currencies="['USD', 'CAD', 'INR', 'EUR']"
-    :currency-rates="currencyRates"
+    :currency-rates="{
+      loading: false,
+      error: null,
+      getRate: () => 1
+    }"
     :show-receipt-modal="true"
     data-test="expense-transactions"
     @receipt-click="handleReceiptClick"
@@ -12,23 +16,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
 import type { ExpenseTransaction, BaseTransaction } from '@/types/transactions'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useTeamStore } from '@/stores'
+import type { ReceiptData } from '@/utils/excelExport'
 
-interface Props {
-  currencyRates: {
-    loading: boolean
-    error: string | null
-    getRate: (currency: string) => number
-  }
-}
+// interface Props {
+//   transactions: ExpenseTransaction[]
+// }
 
-defineProps<Props>()
+// defineProps<Props>()
 
 // const transactions = ref<ExpenseTransaction[]>([
 //   {
@@ -93,9 +94,22 @@ const transactionData = computed<ExpenseTransaction[]>(() =>
     : []
 )
 
-const handleReceiptClick = (transaction: BaseTransaction) => {
-  // Handle receipt click if needed
-  console.log('Receipt clicked:', transaction as ExpenseTransaction)
+// const handleReceiptClick = (transaction: BaseTransaction) => {
+//   // Handle receipt click if needed
+//   console.log('Receipt clicked:', transaction as ExpenseTransaction)
+// }
+
+const selectedTransaction = ref<BaseTransaction | null>(null)
+
+const handleReceiptClick = (data: ReceiptData) => {
+  // If you need to do any processing with the receipt data
+  selectedTransaction.value = {
+    ...data,
+    amountUSD: data.amountUSD,
+    [data.token]: data.amount,
+    // Add any other required BaseTransaction properties
+    status: 'completed'
+  } as BaseTransaction
 }
 
 watch(error, (newError) => {
