@@ -74,4 +74,18 @@ describe('ReceiptComponent', () => {
       )
     })
   })
+  describe('Export', () => {
+    it('should export to excel', async () => {
+      const wrapper = createComponent()
+      const exportExcelButton = wrapper.find('[data-test="export-excel"]')
+      await exportExcelButton.trigger('click')
+      expect(exportExcelButton.exists()).toBeTruthy()
+    })
+    it('should export to pdf', async () => {
+      const wrapper = createComponent()
+      const exportPdfButton = wrapper.find('[data-test="export-pdf"]')
+      await exportPdfButton.trigger('click')
+      expect(exportPdfButton.exists()).toBeTruthy()
+    })
+  })
 })
