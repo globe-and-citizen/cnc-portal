@@ -61,6 +61,13 @@ const wageRoutes = express.Router();
  *               maximumHoursPerWeek:
  *                 type: integer
  *                 description: The maximum hours per week
+ *               previousWage:
+ *                 type: object
+ *                 description: The previous wage details
+ *                 properties:
+ *                   id:
+ *                     type: number
+ *                     description: The previous rate ID
  *     400:
  *       description: Bad request
  *       content:
@@ -135,6 +142,13 @@ wageRoutes.put("/setWage", setWage);
  *                 maximumHoursPerWeek:
  *                   type: integer
  *                   description: The maximum hours per week
+ *                 previousWage:
+ *                   type: object
+ *                   description: The previous wage details
+ *                   properties:
+ *                     id:
+ *                       type: number
+ *                       description: The previous wage ID
  *     400:
  *       description: Bad request
  *       content:
