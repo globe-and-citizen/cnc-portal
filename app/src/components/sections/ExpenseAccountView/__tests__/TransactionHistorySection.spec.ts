@@ -1,16 +1,16 @@
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import TransactionHistorySection from '../TransactionHistorySection.vue'
-import type { BaseTransaction, ExpenseTransaction } from '@/types/transactions'
+import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
+import type { ExpenseTransaction } from '@/types/transactions'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
-import { ref, type ComponentPublicInstance } from 'vue'
+import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 
 const mockUseQuery = {
   result: ref({
-    transfers: [
+    transactions: [
       {
         amount: '7000000',
         blockNumber: '33',
@@ -22,6 +22,7 @@ const mockUseQuery = {
         to: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
         tokenAddress: '0x59b670e9fa9d0a427751af201d676719a970857b',
         transactionHash: '0xe5a1940c7d5b338a4383fed25d08d338efe17a40cd94d66677f374a81c0d2d3a',
+        transactionType: 'deposit',
         __typename: 'Transfer'
       }
     ]
@@ -74,16 +75,11 @@ describe('TransactionHistorySection', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('displays transaction history component', () => {
-    const wrapper = mount(TransactionHistorySection, {
-      props: defaultProps,
-      global: {
-        stubs: {
-          GenericTransactionHistory: true
-        }
-      }
-    })
-    expect(wrapper.find('[data-test="expense-transactions"]').exists()).toBe(true)
+  it('displays transaction history component', async () => {
+    const wrapper = mount(TransactionHistorySection)
+    await flushPromises()
+    // expect(wrapper.find('[data-test="expense-transactions"]').exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'GenericTransactionHistory' }).exists()).toBe(true)
   })
 
   it('handles receipt click', async () => {
@@ -96,14 +92,14 @@ describe('TransactionHistorySection', () => {
       }
     })
 
-    interface TransactionHistorySection extends ComponentPublicInstance {
-      handleReceiptClick: (transaction: BaseTransaction) => void
-    }
-    const consoleSpy = vi.spyOn(console, 'log')
-    await (wrapper.vm as unknown as TransactionHistorySection).handleReceiptClick(
-      mockTransactions[0]
-    )
-    expect(consoleSpy).toHaveBeenCalledWith('Receipt clicked:', mockTransactions[0])
+    //@ts-expect-error: not visible on wrapper
+    wrapper.vm.handleReceiptClick(mockTransactions[0])
+    //@ts-expect-error: not visible on wrapper
+    expect(wrapper.vm.selectedTransaction).toEqual({
+      ...mockTransactions[0],
+      USDC: '100',
+      status: 'completed'
+    })
   })
 
   describe('Render', () => {
@@ -119,29 +115,13 @@ describe('TransactionHistorySection', () => {
       global = {}
     }: ComponentOptions = {}) =>
       mount(TransactionHistorySection, {
-        props: { ...props, currencyRates: defaultProps.currencyRates },
+        props: { ...props },
         data,
         global: { ...global }
       })
 
     it('should show receipt when receipt is clicked', async () => {
-      const wrapper =
-        createComponent(/*{
-        data: () => ({
-          transactions: [
-            {
-              txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
-              date: Date.now(),
-              type: 'deposit',
-              from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-              to: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-              amountUSD: 10,
-              amount: '0.01',
-              token: 'POL'
-            }
-          ]
-        })
-      }*/)
+      const wrapper = createComponent()
       await flushPromises()
 
       const transactionTable = wrapper.findComponent(TableComponent)
