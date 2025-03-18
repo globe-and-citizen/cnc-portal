@@ -7,6 +7,7 @@ import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptCo
 import TableComponent from '@/components/TableComponent.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import * as utils from '@/utils'
 
 const mockUseQuery = {
   result: ref({
@@ -136,6 +137,14 @@ describe('TransactionHistorySection', () => {
       await flushPromises()
       const receiptComponent = wrapper.findComponent(ReceiptComponent)
       expect(receiptComponent.exists()).toBeTruthy()
+    })
+
+    it('should log error if error querying: ', async () => {
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      const wrapper = createComponent()
+      wrapper.vm.error = new Error('Error querying subgraph')
+      await flushPromises()
+      expect(logErrorSpy).toBeCalledWith('useQueryError: ', new Error('Error querying subgraph'))
     })
   })
 })
