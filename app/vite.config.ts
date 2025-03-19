@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import inject from '@rollup/plugin-inject'
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
-const SUPPORTED_NETWORKS = ['ethereum', 'sepolia', 'hardhat', 'amoy']
+const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy']
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
