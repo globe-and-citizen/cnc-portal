@@ -40,7 +40,8 @@ const mockUseWaitForTransactionReceipt = {
 }
 
 const mockUseAccount = {
-  isDisconnected: ref(false)
+  isDisconnected: ref(false),
+  chainId: ref(11155111)
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -50,7 +51,12 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useReadContract: vi.fn(() => mockUseReadContract),
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useAccount: vi.fn(() => mockUseAccount)
+    useAccount: vi.fn(() => mockUseAccount),
+    useSwitchChain: vi.fn(() => {
+      return {
+        switchChain: vi.fn()
+      }
+    })
   }
 })
 

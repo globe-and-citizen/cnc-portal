@@ -21,7 +21,7 @@ export const useAppStore = defineStore('app', () => {
       console.log('here', val)
       toastStore.addErrorToast('Unsupported chain')
       switchChain({
-        chainId: SUPPORTED_CHAINS[0]
+        chainId: 11155111
       })
     }
   })
