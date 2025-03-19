@@ -27,14 +27,22 @@
           <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
         </template>
         <template #action-data="{ row }">
-          <ButtonUI
+          <CashRemunerationAction
+            :claim="
+              () => {
+                return row as ClaimResponse
+              }
+            "
+          />
+
+          <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
             variant="success"
             data-test="approve-button"
             :loading="loadingApprove[row.id]"
-            @click="async () => await approveClaim(row)"
-            >Approve</ButtonUI
-          >
+            @click="async () => await approveClaim(row as ClaimResponse)"
+            >Approve</ButtonUI> -->
+
           <!-- <ButtonUI
           v-if="row.status == 'approved' && ownerAddress == userDataStore.address"
           variant="error"
@@ -93,21 +101,18 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { useSignWageClaim, useWithdrawClaim } from '@/composables/useClaim'
+import { useWithdrawClaim } from '@/composables/useClaim'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
-import { log } from '@/utils'
-import type { Address } from 'viem'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
+import CashRemunerationAction from './CashRemunerationAction.vue'
 
 defineProps<{
   ownerAddress: string | undefined
 }>()
-const route = useRoute()
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
@@ -130,11 +135,7 @@ const {
 // Watch team ID update to fetch the team wage data
 watch(
   [teamId, teamIsLoading],
-  async ([newTeamId, newIsloading], [oldTeamId, oldIsLoading]) => {
-    // TODO: i leave this here to explain how the watch on team reload works
-    console.log('Test')
-    console.log('teamId', oldTeamId, newTeamId)
-    console.log('isLoading', oldIsLoading, newIsloading)
+  async ([newTeamId, newIsloading]) => {
     if (newTeamId && !newIsloading) await fetchTeamClaimData()
 
     if (teamClaimDataError.value) {
@@ -144,36 +145,35 @@ watch(
   { immediate: true }
 )
 
-
-const approvalData = ref<{
-  signature: Address | undefined
-  id: number
-}>({ signature: undefined, id: 0 })
-const loadingApprove = ref<{ [key: number]: boolean }>({})
+// const approvalData = ref<{
+//   signature: Address | undefined
+//   id: number
+// }>({ signature: undefined, id: 0 })
+// const loadingApprove = ref<{ [key: number]: boolean }>({})
 const withdrawLoading = ref<{ [key: number]: boolean }>({})
 const selectedWithdrawClaim = ref<number | undefined>(undefined)
 
-const { signature, execute: signClaim } = useSignWageClaim()
+// const { signature, execute: signClaim } = useSignWageClaim()
 const {
   execute: executeWithdrawClaim,
   isLoading: withdrawClaimLoading,
   isSuccess: withdrawClaimSuccess
 } = useWithdrawClaim()
 
-const approveClaim = async (claim: ClaimResponse) => {
-  loadingApprove.value[claim.id] = true
+// const approveClaim = async (claim: ClaimResponse) => {
+//   loadingApprove.value[claim.id] = true
 
-  await signClaim(claim)
-  approvalData.value = {
-    id: claim.id,
-    signature: signature.value
-  }
+//   await signClaim(claim)
+//   approvalData.value = {
+//     id: claim.id,
+//     signature: signature.value
+//   }
 
-  await addApprovalAPI()
+//   await addApprovalAPI()
 
-  await fetchTeamClaimData()
-  loadingApprove.value[claim.id] = false
-}
+//   await fetchTeamClaimData()
+//   loadingApprove.value[claim.id] = false
+// }
 
 const withdrawClaim = async (id: number) => {
   selectedWithdrawClaim.value = id
@@ -181,15 +181,15 @@ const withdrawClaim = async (id: number) => {
   await executeWithdrawClaim(id)
 }
 
-const {
-  error: addApprovalError,
-  execute: addApprovalAPI,
-  statusCode: addApprovalStatusCode
-} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/employer`, {
-  immediate: false
-})
-  .put(approvalData)
-  .json()
+// const {
+//   error: addApprovalError,
+//   execute: addApprovalAPI,
+//   statusCode: addApprovalStatusCode
+// } = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/employer`, {
+//   immediate: false
+// })
+//   .put(approvalData)
+//   .json()
 
 // const {
 //   data: claims,
@@ -204,16 +204,16 @@ const {
 //     toastStore.addErrorToast('Failed to fetch claims')
 //   }
 // })
-watch(addApprovalStatusCode, async (newVal) => {
-  if (newVal == 200) {
-    toastStore.addSuccessToast('Claim approved successfully')
-  }
-})
-watch(addApprovalError, (newVal) => {
-  if (newVal) {
-    toastStore.addErrorToast(addApprovalError.value)
-  }
-})
+// watch(addApprovalStatusCode, async (newVal) => {
+//   if (newVal == 200) {
+//     toastStore.addSuccessToast('Claim approved successfully')
+//   }
+// })
+// watch(addApprovalError, (newVal) => {
+//   if (newVal) {
+//     toastStore.addErrorToast(addApprovalError.value)
+//   }
+// })
 watch(selectedRadio, async () => {
   // await fetchClaims()
 })
