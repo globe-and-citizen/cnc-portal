@@ -28,7 +28,7 @@
         </template>
         <template #action-data="{ row }">
           <CashRemunerationAction :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
-
+          <CRWithdrawClaim :claim="formatRow(row)"></CRWithdrawClaim>
           <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
             variant="success"
@@ -51,15 +51,6 @@
           @click="() => {}"
           >Enable</ButtonUI
         > -->
-          <ButtonUI
-            v-if="row.status == 'approved'"
-            :disabled="userDataStore.address != row.address"
-            :loading="withdrawLoading[row.id]"
-            variant="warning"
-            data-test="withdraw-button"
-            @click="async () => await withdrawClaim(row.id as number)"
-            >Withdraw</ButtonUI
-          >
         </template>
         <template #member-data="{ row }">
           <UserComponent v-if="!!row.wage.user" :user="row.wage.user"></UserComponent>
@@ -93,18 +84,17 @@
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useWithdrawClaim } from '@/composables/useClaim'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useToastStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CashRemunerationAction from './CashRemunerationAction.vue'
+import CRWithdrawClaim from './CRWithdrawClaim.vue'
 
-const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const statusses = ['all', 'pending', 'approved', 'withdrawn']
