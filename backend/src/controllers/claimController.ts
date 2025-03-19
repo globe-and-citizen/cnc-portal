@@ -75,7 +75,16 @@ export const getClaims = async (req: Request, res: Response) => {
         },
       },
       include: {
-        wage: true,
+        wage: {
+          include:{
+            user: {
+              select: {
+                address: true,
+                name: true,
+              },
+            }
+          }
+        },
       },
     });
     return res.status(200).json(claims);
