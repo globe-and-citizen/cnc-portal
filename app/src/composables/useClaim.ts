@@ -20,7 +20,7 @@ export function useSignWageClaim() {
   const { signTypedDataAsync, data: signature } = useSignTypedData()
   const teamStore = useTeamStore()
   const toastStore = useToastStore()
-  const userStore = useUserDataStore()
+  // const userStore = useUserDataStore()
   const chainId = useChainId()
 
   const execute = async (claim: ClaimResponse) => {
@@ -43,9 +43,9 @@ export function useSignWageClaim() {
           ]
         },
         message: {
-          hourlyRate: parseEther(claim.hourlyRate),
+          hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
           hoursWorked: claim.hoursWorked,
-          employeeAddress: userStore.address as Address,
+          employeeAddress: claim.wage.userAddress as Address,
           date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
         },
         primaryType: 'WageClaim'
