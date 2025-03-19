@@ -1,5 +1,9 @@
 import express from "express";
-import { addClaim, getClaims } from "../controllers/claimController";
+import {
+  addClaim,
+  getClaims,
+  signeClaim,
+} from "../controllers/claimController";
 
 const claimRoutes = express.Router();
 
@@ -142,5 +146,78 @@ claimRoutes.post("/", addClaim);
  *                 description: Error message indicating an internal server error
  */
 claimRoutes.get("/", getClaims);
+
+/**
+ * @openapi
+ * /claim/{claimId}/signe:
+ *  put:
+ *   summary: Sign a claim
+ *   parameters:
+ *     - in: path
+ *       name: claimId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         description: The ID of the claim to sign
+ *         minimum: 1
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           properties:
+ *             signature:
+ *               type: string
+ *               description: The signature for the claim
+ *   responses:
+ *     200:
+ *       description: Claim signed successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *                 description: The ID of the claim
+ *               status:
+ *                 type: string
+ *                 description: The updated status of the claim
+ *               signature:
+ *                 type: string
+ *                 description: The signature of the claim
+ *     400:
+ *       description: Bad request
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Error message detailing the bad request
+ *     403:
+ *       description: Forbidden
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Error message indicating lack of permissions
+ *     500:
+ *       description: Internal server error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Error message indicating an internal server error
+ */
+claimRoutes.put("/:claimId/signe", signeClaim);
 
 export default claimRoutes;
