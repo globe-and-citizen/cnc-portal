@@ -27,7 +27,7 @@
           <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
         </template>
         <template #action-data="{ row }">
-          <CashRemunerationAction :claim="formatRow(row)" />
+          <CashRemunerationAction :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
 
           <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
@@ -104,9 +104,6 @@ import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CashRemunerationAction from './CashRemunerationAction.vue'
 
-defineProps<{
-  ownerAddress: string | undefined
-}>()
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
 const teamStore = useTeamStore()

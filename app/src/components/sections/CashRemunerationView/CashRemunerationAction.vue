@@ -26,6 +26,7 @@ const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
 
 const props = defineProps<{ claim: ClaimResponse }>()
+const emit = defineEmits(['claim-signed'])
 const teamOwner = computed(() => teamStore.currentTeam?.ownerAddress)
 
 const { signature, execute: signClaim } = useSignWageClaim()
@@ -36,9 +37,8 @@ const {
   // isFetching: isClaimUpdateing,
   error: claimError,
   execute: executeUpdateClaim
-} = useCustomFetch(`/claim/${props.claim.id}`, { immediate: false })
+} = useCustomFetch(`/claim/${props.claim.id}/signe`, { immediate: false })
   .put(() => ({
-    status: 'approved',
     signature: signature.value
   }))
   .json<Array<ClaimResponse>>()
@@ -50,7 +50,11 @@ const approveClaim = async (claim: ClaimResponse) => {
   await executeUpdateClaim()
   if (claimError.value) {
     toastStore.addErrorToast('Failed to approve claim')
+  } else {
+    toastStore.addSuccessToast('Claim approved')
   }
+  // Emit event to refresh table
+  emit('claim-signed')
 
   loading.value = true
 }
