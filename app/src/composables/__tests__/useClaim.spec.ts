@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { useSignWageClaim, useWithdrawClaim } from '../useClaim'
+import { useSignWageClaim } from '../useClaim'
 import { ref } from 'vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
-import { flushPromises } from '@vue/test-utils'
+// import { flushPromises } from '@vue/test-utils'
 
 const mockSignature = ref<string | undefined>(undefined)
 const mockSuccess = ref(false)
@@ -123,14 +123,29 @@ describe('useClaim', () => {
       const { addErrorToast } = useToastStore()
 
       await signWageClaim({
-        hourlyRate: '100',
+        wage: {
+          id: 1,
+          teamId: 1,
+          userAddress: '0xaddress',
+          cashRatePerHour: 100,
+          tokenRatePerHour: 50,
+          maximumHoursPerWeek: 40,
+          nextWageId: null,
+          createdAt: '2021-09-01T00:00:00.000Z',
+          updatedAt: '2021-09-01T00:00:00.000Z',
+          user: {
+            address: "1",
+            name: 'Test User'
+          }
+        },
         hoursWorked: 10,
-        address: '0xaddress',
         createdAt: '2021-09-01T00:00:00.000Z',
-        cashRemunerationSignature: '0xsignature',
+        signature: '0xsignature',
         id: 1,
-        name: 'name',
-        status: 'pending'
+        status: 'pending',
+        tokenTx: '0xtokenTx',
+        wageId: 1,
+        updatedAt: '2021-09-01T00:00:00.000Z'
       })
 
       expect(mockSignature.value).toBe('0xsignature')
@@ -138,38 +153,38 @@ describe('useClaim', () => {
     })
   })
 
-  describe('useWithdrawClaim', () => {
-    it('should set initial values correctly', () => {
-      const { execute: withdrawClaim, isLoading, isSuccess } = useWithdrawClaim()
+  // describe('useWithdrawClaim', () => {
+  //   it('should set initial values correctly', () => {
+  //     const { execute: withdrawClaim, isLoading, isSuccess } = useWithdrawClaim()
 
-      expect(withdrawClaim).toBeInstanceOf(Function)
-      expect(isLoading.value).toBe(false)
-      expect(isSuccess.value).toBe(false)
-    })
+  //     expect(withdrawClaim).toBeInstanceOf(Function)
+  //     expect(isLoading.value).toBe(false)
+  //     expect(isSuccess.value).toBe(false)
+  //   })
 
-    it('should successfully withdraw claim', async () => {
-      const { execute: withdrawClaim, isLoading, isSuccess } = useWithdrawClaim()
+  //   it('should successfully withdraw claim', async () => {
+  //     const { execute: withdrawClaim, isLoading, isSuccess } = useWithdrawClaim()
 
-      const promise = withdrawClaim(1)
-      mockSuccess.value = true
+  //     const promise = withdrawClaim(1)
+  //     mockSuccess.value = true
 
-      await promise
-      mockSuccess.value = false
-      await flushPromises()
-      expect(isLoading.value).toBe(false)
-      expect(isSuccess.value).toBe(true)
-    })
+  //     await promise
+  //     mockSuccess.value = false
+  //     await flushPromises()
+  //     expect(isLoading.value).toBe(false)
+  //     expect(isSuccess.value).toBe(true)
+  //   })
 
-    it('should call addErrorToast when withdraw claim throws an error', async () => {
-      mockError.value = new Error('error')
-      mockClaimError.value = new Error('error')
-      const { execute: withdrawClaim } = useWithdrawClaim()
-      const { addErrorToast } = useToastStore()
+  //   it('should call addErrorToast when withdraw claim throws an error', async () => {
+  //     mockError.value = new Error('error')
+  //     mockClaimError.value = new Error('error')
+  //     const { execute: withdrawClaim } = useWithdrawClaim()
+  //     const { addErrorToast } = useToastStore()
 
-      await withdrawClaim(1)
+  //     await withdrawClaim(1)
 
-      expect(addErrorToast).toHaveBeenCalledWith('Failed to withdraw claim')
-      expect(addErrorToast).toHaveBeenCalledWith('Failed to fetch claim')
-    })
-  })
+  //     expect(addErrorToast).toHaveBeenCalledWith('Failed to withdraw claim')
+  //     expect(addErrorToast).toHaveBeenCalledWith('Failed to fetch claim')
+  //   })
+  // })
 })

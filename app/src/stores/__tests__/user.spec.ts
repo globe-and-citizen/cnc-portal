@@ -1,8 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
 
-import { nextTick } from 'vue'
-import { useStorage } from '@vueuse/core'
+// import { nextTick } from 'vue'
+// import { useStorage } from '@vueuse/core'
 import { useUserDataStore } from '@/stores/user'
 
 describe('User Data Store', () => {
