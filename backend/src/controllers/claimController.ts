@@ -142,3 +142,44 @@ export const signeClaim = async (req: Request, res: Response) => {
     await prisma.$disconnect();
   }
 };
+
+export const withdrawClaim = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address;
+  const claimId = Number(req.params.claimId);
+
+  try {
+    const claim = await prisma.claim.findFirst({
+      where: {
+        id: claimId,
+        wage: {
+          userAddress: callerAddress,
+        },
+      },
+    });
+    if (!claim) {
+      return errorResponse(403, "Caller is not able to withdraw claim", res);
+    }
+
+    // Check in the blocchain if the claim is already signed
+    if (claim.status !== "signed") {
+      return errorResponse(403, "Claim not signed", res);
+    }
+    // TODO: use the signature and call the smart contract to check if the claim is withdrawn
+
+    // Update the claim status to withdrawn
+    const updatedClaim = await prisma.claim.update({
+      where: {
+        id: claimId,
+      },
+      data: {
+        status: "withdrawn",
+      },
+    });
+    return res.status(200).json(updatedClaim);
+  } catch (error) {
+    console.log("Error: ", error);
+    return errorResponse(500, "Internal server error", res);
+  } finally {
+    await prisma.$disconnect();
+  }
+};
