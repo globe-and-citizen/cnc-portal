@@ -134,7 +134,7 @@ describe('useClaim', () => {
           createdAt: '2021-09-01T00:00:00.000Z',
           updatedAt: '2021-09-01T00:00:00.000Z',
           user: {
-            address: "1",
+            address: '1',
             name: 'Test User'
           }
         },

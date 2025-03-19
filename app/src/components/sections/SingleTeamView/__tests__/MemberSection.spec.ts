@@ -125,7 +125,6 @@ describe.skip('MemberSection.vue', () => {
       nextTick()
       expect(wrapper.find('[data-test="action-header"]').exists()).toBe(false)
     })
-
   })
 
   // describe('Add Member Form', () => {

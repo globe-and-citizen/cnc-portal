@@ -14,10 +14,7 @@
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
 import { log } from '@/utils'
-import {
-  useWaitForTransactionReceipt,
-  useWriteContract
-} from '@wagmi/vue'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { formatEther, parseEther, type Address } from 'viem'
 import { ref } from 'vue'
 import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
