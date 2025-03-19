@@ -1,5 +1,4 @@
 <template>
-  <div>prosp {{ props }}</div>
   <div>
     <ButtonUI
       v-if="claim.status == 'pending' && teamOwner == userDataStore.address"
