@@ -13,15 +13,13 @@
 <script setup lang="ts">
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
-import { log, parseError } from '@/utils'
+import { log } from '@/utils'
 import {
-  useChainId,
-  useSignTypedData,
   useWaitForTransactionReceipt,
   useWriteContract
 } from '@wagmi/vue'
 import { formatEther, parseEther, type Address } from 'viem'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
@@ -29,6 +27,7 @@ import { useCustomFetch } from '@/composables'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{ claim: ClaimResponse }>()
+const emit = defineEmits(['claim-withdrawn'])
 
 const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
@@ -44,11 +43,11 @@ const { isSuccess: withdrawSuccess, error: withdrawTrxError } = useWaitForTransa
   hash: withdrawHash
 })
 
-// const { execute: updateClaimStatus } = useCustomFetch(`claim/${props.claim.id}/validate-withdraw`, {
-//   immediate: false
-// })
-//   .put()
-//   .json()
+const { execute: updateClaimStatus } = useCustomFetch(`/claim/${props.claim.id}/widrawn`, {
+  immediate: false
+})
+  .put()
+  .json()
 
 const isLoading = ref(false)
 
@@ -85,8 +84,6 @@ const withdrawClaim = async () => {
         props.claim.signature
       ]
     })
-
-    // await updateClaimStatus()
   } catch (error) {
     toastStore.addErrorToast('Failed to withdraw claim')
     log.info('Withdraw error', error)
@@ -95,16 +92,24 @@ const withdrawClaim = async () => {
 
   if (withdrawSuccess.value) {
     toastStore.addSuccessToast('Claim withdrawn')
-    return
   }
   if (withdrawError.value) {
     toastStore.addErrorToast('Failed to withdraw claim')
-    return
   }
   if (withdrawTrxError.value) {
     toastStore.addErrorToast('Trx failed: Failed to withdraw claim')
-    return
   }
+  await updateClaimStatus()
+
+  if (withdrawError.value) {
+    toastStore.addErrorToast('Failed to withdraw claim')
+  }
+
+  // chek if claim is updated
+  if (withdrawSuccess.value) {
+    emit('claim-withdrawn')
+  }
+  isLoading.value = false
 }
 </script>
 

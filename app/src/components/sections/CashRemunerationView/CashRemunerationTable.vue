@@ -28,7 +28,7 @@
         </template>
         <template #action-data="{ row }">
           <CashRemunerationAction :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
-          <CRWithdrawClaim :claim="formatRow(row)"></CRWithdrawClaim>
+          <CRWithdrawClaim :claim="formatRow(row)" @claim-widrawn="fetchTeamClaimData()" />
           <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
             variant="success"
@@ -85,7 +85,6 @@
 
 <script setup lang="ts">
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
-import { useWithdrawClaim } from '@/composables/useClaim'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore, useToastStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
@@ -102,34 +101,17 @@ const selectedRadio = ref('all')
 
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
+const claimURL = computed(() => `/claim/?teamId=${teamId.value}`)
 
 const {
   data: teamClaimData,
   isFetching: isTeamClaimDataFetching,
   error: teamClaimDataError,
   execute: fetchTeamClaimData
-} = useCustomFetch(
-  computed(() => `/claim/?teamId=${teamId.value}`),
-  { immediate: false }
-).json<Array<ClaimResponse>>()
-
-const withdrawLoading = ref<{ [key: number]: boolean }>({})
-const selectedWithdrawClaim = ref<number | undefined>(undefined)
-
-const {
-  execute: executeWithdrawClaim,
-  isLoading: withdrawClaimLoading,
-  isSuccess: withdrawClaimSuccess
-} = useWithdrawClaim()
+} = useCustomFetch(claimURL, { immediate: false }).json<Array<ClaimResponse>>()
 
 const formatRow = (row: TableRow) => {
   return row as ClaimResponse
-}
-
-const withdrawClaim = async (id: number) => {
-  selectedWithdrawClaim.value = id
-
-  await executeWithdrawClaim(id)
 }
 
 // Watch team ID update to fetch the team wage data
@@ -147,19 +129,8 @@ watch(
 
 watch(selectedRadio, async () => {
   // await fetchClaims()
+  // Watch and update claim URL normaly it should fetch it directly
 })
-watch(withdrawClaimLoading, (newVal) => {
-  withdrawLoading.value[selectedWithdrawClaim.value!] = newVal
-})
-watch(withdrawClaimSuccess, async (newVal) => {
-  if (newVal) {
-    // await fetchClaims()
-  }
-})
-
-// onMounted(async () => {
-//   await fetchClaims()
-// })
 
 const columns = [
   {
