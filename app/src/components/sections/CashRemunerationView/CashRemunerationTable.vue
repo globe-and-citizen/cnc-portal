@@ -27,13 +27,7 @@
           <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
         </template>
         <template #action-data="{ row }">
-          <CashRemunerationAction
-            :claim="
-              () => {
-                return row as ClaimResponse
-              }
-            "
-          />
+          <CashRemunerationAction :claim="formatRow(row)" />
 
           <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
@@ -100,7 +94,7 @@
 
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useWithdrawClaim } from '@/composables/useClaim'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
@@ -132,6 +126,25 @@ const {
   { immediate: false }
 ).json<Array<ClaimResponse>>()
 
+const withdrawLoading = ref<{ [key: number]: boolean }>({})
+const selectedWithdrawClaim = ref<number | undefined>(undefined)
+
+const {
+  execute: executeWithdrawClaim,
+  isLoading: withdrawClaimLoading,
+  isSuccess: withdrawClaimSuccess
+} = useWithdrawClaim()
+
+const formatRow = (row: TableRow) => {
+  return row as ClaimResponse
+}
+
+const withdrawClaim = async (id: number) => {
+  selectedWithdrawClaim.value = id
+
+  await executeWithdrawClaim(id)
+}
+
 // Watch team ID update to fetch the team wage data
 watch(
   [teamId, teamIsLoading],
@@ -144,24 +157,6 @@ watch(
   },
   { immediate: true }
 )
-
-const withdrawLoading = ref<{ [key: number]: boolean }>({})
-const selectedWithdrawClaim = ref<number | undefined>(undefined)
-
-const {
-  execute: executeWithdrawClaim,
-  isLoading: withdrawClaimLoading,
-  isSuccess: withdrawClaimSuccess
-} = useWithdrawClaim()
-
-
-
-const withdrawClaim = async (id: number) => {
-  selectedWithdrawClaim.value = id
-
-  await executeWithdrawClaim(id)
-}
-
 
 watch(selectedRadio, async () => {
   // await fetchClaims()
