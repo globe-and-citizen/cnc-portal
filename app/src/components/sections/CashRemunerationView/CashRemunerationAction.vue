@@ -6,12 +6,14 @@
       data-test="approve-button"
       :loading="loading"
       @click="async () => await approveClaim(claim as ClaimResponse)"
-      >Approve</ButtonUI
     >
+      Approve
+    </ButtonUI>
   </div>
 </template>
 
 <script setup lang="ts">
+import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables'
 import { useSignWageClaim } from '@/composables/useClaim'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
