@@ -145,35 +145,16 @@ watch(
   { immediate: true }
 )
 
-// const approvalData = ref<{
-//   signature: Address | undefined
-//   id: number
-// }>({ signature: undefined, id: 0 })
-// const loadingApprove = ref<{ [key: number]: boolean }>({})
 const withdrawLoading = ref<{ [key: number]: boolean }>({})
 const selectedWithdrawClaim = ref<number | undefined>(undefined)
 
-// const { signature, execute: signClaim } = useSignWageClaim()
 const {
   execute: executeWithdrawClaim,
   isLoading: withdrawClaimLoading,
   isSuccess: withdrawClaimSuccess
 } = useWithdrawClaim()
 
-// const approveClaim = async (claim: ClaimResponse) => {
-//   loadingApprove.value[claim.id] = true
 
-//   await signClaim(claim)
-//   approvalData.value = {
-//     id: claim.id,
-//     signature: signature.value
-//   }
-
-//   await addApprovalAPI()
-
-//   await fetchTeamClaimData()
-//   loadingApprove.value[claim.id] = false
-// }
 
 const withdrawClaim = async (id: number) => {
   selectedWithdrawClaim.value = id
@@ -181,39 +162,7 @@ const withdrawClaim = async (id: number) => {
   await executeWithdrawClaim(id)
 }
 
-// const {
-//   error: addApprovalError,
-//   execute: addApprovalAPI,
-//   statusCode: addApprovalStatusCode
-// } = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim/employer`, {
-//   immediate: false
-// })
-//   .put(approvalData)
-//   .json()
 
-// const {
-//   data: claims,
-//   error: claimsError,
-//   isFetching: claimsLoading,
-//   execute: fetchClaims
-// } = useCustomFetch(claimsUrl).get().json<ClaimResponse[]>()
-
-// watch(claimsError, (newVal) => {
-//   if (newVal) {
-//     log.error(newVal)
-//     toastStore.addErrorToast('Failed to fetch claims')
-//   }
-// })
-// watch(addApprovalStatusCode, async (newVal) => {
-//   if (newVal == 200) {
-//     toastStore.addSuccessToast('Claim approved successfully')
-//   }
-// })
-// watch(addApprovalError, (newVal) => {
-//   if (newVal) {
-//     toastStore.addErrorToast(addApprovalError.value)
-//   }
-// })
 watch(selectedRadio, async () => {
   // await fetchClaims()
 })
