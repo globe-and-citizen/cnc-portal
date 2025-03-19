@@ -190,7 +190,7 @@ export const isUserMemberOfTeam = async (
   return !!team;
 };
 
-export async function isOwnerOfTeam(userAddress: Address, teamId: number) {
+export const isOwnerOfTeam = async (userAddress: Address, teamId: number) => {
   let team;
   team = await prisma.team.findFirst({
     where: {
@@ -202,4 +202,4 @@ export async function isOwnerOfTeam(userAddress: Address, teamId: number) {
   });
 
   return !!team;
-}
+};
