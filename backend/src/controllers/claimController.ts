@@ -100,7 +100,7 @@ export const getClaims = async (req: Request, res: Response) => {
 
 export const signeClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
-  const claimId = Number(req.params.id);
+  const claimId = Number(req.params.claimId);
   const signature = req.body.signature as Claim["signature"];
 
   // Validating the claim data
@@ -134,6 +134,7 @@ export const signeClaim = async (req: Request, res: Response) => {
         signature,
       },
     });
+    return res.status(200).json(updatedClaim);
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
