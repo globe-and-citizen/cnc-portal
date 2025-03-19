@@ -1,6 +1,7 @@
 //#region networking modules
 import cors from "cors";
 import express, { Express } from "express";
+import rateLimit from "express-rate-limit";
 //#endregion networking modules
 
 //#region routing modules
@@ -52,6 +53,12 @@ class Server {
       claim: "/api/claim/",
       apidocs: "/api-docs",
     };
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // max 100 requests per windowMs
+    });
+
+    this.app.use(limiter);
     this.port = parseInt(process.env.PORT as string) || 3000;
 
     this.init();
