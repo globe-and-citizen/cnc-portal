@@ -2,7 +2,7 @@
   <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
     <div class="w-full flex justify-between">
       <span class="font-bold text-lg">Claims Table</span>
-      <SubmitClaims @refetch-claims="async () => await fetchClaims()" />
+      <SubmitClaims @refetch-claims="async () => await fetchTeamClaimData()" />
     </div>
     <div class="form-control flex flex-row gap-4">
       <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
@@ -17,17 +17,12 @@
         />
       </label>
     </div>
-    <div class="bg-base-100 w-full">
-      <TableComponent :rows="claims ?? undefined" :columns="columns" :loading="claimsLoading">
-        <template
-          v-for="header in columns.map((column) => column.key)"
-          #[`${header}-header`]="{ column }"
-          :key="header"
-        >
-          <span class="text-black text-base">
-            {{ column.label }}
-          </span>
-        </template>
+    <div class="bg-bae-100 w-full">
+      <TableComponent
+        :rows="teamClaimData ?? undefined"
+        :columns="columns"
+        :loading="isTeamClaimDataFetching"
+      >
         <template #createdAt-data="{ row }">
           <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
         </template>
@@ -37,7 +32,7 @@
             variant="success"
             data-test="approve-button"
             :loading="loadingApprove[row.id]"
-            @click="async () => await approveClaim(row as ClaimResponse)"
+            @click="async () => await approveClaim(row)"
             >Approve</ButtonUI
           >
           <!-- <ButtonUI
@@ -65,29 +60,14 @@
           >
         </template>
         <template #member-data="{ row }">
-          <div class="flex w-full gap-2">
-            <div class="w-8 sm:w-10">
-              <img
-                alt="User avatar"
-                class="rounded-full"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-              />
-            </div>
-            <div class="flex flex-col text-gray-600">
-              <p class="font-bold text-sm line-clamp-1" data-test="user-name">
-                {{ row.name ?? 'Unknown' }}
-              </p>
-              <p class="text-sm text-center" data-test="formatted-address">
-                {{ row.address?.slice(0, 6) }}...{{ row.address?.slice(-6) }}
-              </p>
-            </div>
-          </div>
+          <UserComponent v-if="!!row.wage.user" :user="row.wage.user"></UserComponent>
         </template>
         <template #hoursWorked-data="{ row }">
-          <span class="font-bold">{{ row.hoursWorked }}</span>
+          <span class="font-bold"> {{ row.hoursWorked }} h </span> <br />
+          <span>{{ row.wage.maximumHoursPerWeek }} h/week</span>
         </template>
         <template #hourlyRate-data="{ row }">
-          <span class="font-bold"> $ {{ row.hourlyRate }}</span>
+          <span class="font-bold"> $ {{ row.wage.cashRatePerHour }}</span>
         </template>
         <template #status-data="{ row }">
           <span
@@ -115,13 +95,14 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useSignWageClaim, useWithdrawClaim } from '@/composables/useClaim'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
 import { log } from '@/utils'
 import type { Address } from 'viem'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import SubmitClaims from './SubmitClaims.vue'
+import UserComponent from '@/components/UserComponent.vue'
 
 defineProps<{
   ownerAddress: string | undefined
@@ -129,11 +110,40 @@ defineProps<{
 const route = useRoute()
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
+const teamStore = useTeamStore()
 const statusses = ['all', 'pending', 'approved', 'withdrawn']
 const selectedRadio = ref('all')
-const claimsUrl = computed(
-  () => `/teams/${route.params.id}/cash-remuneration/claim/${selectedRadio.value}`
+
+const teamId = computed(() => teamStore.currentTeam?.id)
+const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
+
+const {
+  data: teamClaimData,
+  isFetching: isTeamClaimDataFetching,
+  error: teamClaimDataError,
+  execute: fetchTeamClaimData
+} = useCustomFetch(
+  computed(() => `/claim/?teamId=${teamId.value}`),
+  { immediate: false }
+).json<Array<ClaimResponse>>()
+
+// Watch team ID update to fetch the team wage data
+watch(
+  [teamId, teamIsLoading],
+  async ([newTeamId, newIsloading], [oldTeamId, oldIsLoading]) => {
+    // TODO: i leave this here to explain how the watch on team reload works
+    console.log('Test')
+    console.log('teamId', oldTeamId, newTeamId)
+    console.log('isLoading', oldIsLoading, newIsloading)
+    if (newTeamId && !newIsloading) await fetchTeamClaimData()
+
+    if (teamClaimDataError.value) {
+      toastStore.addErrorToast('Failed to fetch team wage data')
+    }
+  },
+  { immediate: true }
 )
+
 
 const approvalData = ref<{
   signature: Address | undefined
@@ -161,7 +171,7 @@ const approveClaim = async (claim: ClaimResponse) => {
 
   await addApprovalAPI()
 
-  await fetchClaims()
+  await fetchTeamClaimData()
   loadingApprove.value[claim.id] = false
 }
 
@@ -181,19 +191,19 @@ const {
   .put(approvalData)
   .json()
 
-const {
-  data: claims,
-  error: claimsError,
-  isFetching: claimsLoading,
-  execute: fetchClaims
-} = useCustomFetch(claimsUrl).get().json<ClaimResponse[]>()
+// const {
+//   data: claims,
+//   error: claimsError,
+//   isFetching: claimsLoading,
+//   execute: fetchClaims
+// } = useCustomFetch(claimsUrl).get().json<ClaimResponse[]>()
 
-watch(claimsError, (newVal) => {
-  if (newVal) {
-    log.error(newVal)
-    toastStore.addErrorToast('Failed to fetch claims')
-  }
-})
+// watch(claimsError, (newVal) => {
+//   if (newVal) {
+//     log.error(newVal)
+//     toastStore.addErrorToast('Failed to fetch claims')
+//   }
+// })
 watch(addApprovalStatusCode, async (newVal) => {
   if (newVal == 200) {
     toastStore.addSuccessToast('Claim approved successfully')
@@ -205,50 +215,56 @@ watch(addApprovalError, (newVal) => {
   }
 })
 watch(selectedRadio, async () => {
-  await fetchClaims()
+  // await fetchClaims()
 })
 watch(withdrawClaimLoading, (newVal) => {
   withdrawLoading.value[selectedWithdrawClaim.value!] = newVal
 })
 watch(withdrawClaimSuccess, async (newVal) => {
   if (newVal) {
-    await fetchClaims()
+    // await fetchClaims()
   }
 })
 
-onMounted(async () => {
-  await fetchClaims()
-})
+// onMounted(async () => {
+//   await fetchClaims()
+// })
 
 const columns = [
   {
     key: 'createdAt',
     label: 'Date',
-    sortable: true
+    sortable: true,
+    class: 'text-black text-base'
   },
   {
     key: 'member',
     label: 'Member',
-    sortable: false
+    sortable: false,
+    class: 'text-black text-base'
   },
   {
     key: 'hoursWorked',
     label: 'Hour',
-    sortable: false
+    sortable: false,
+    class: 'text-black text-base'
   },
   {
     key: 'hourlyRate',
     label: 'Rate',
-    sortable: false
+    sortable: false,
+    class: 'text-black text-base'
   },
   {
     key: 'status',
-    label: 'Status'
+    label: 'Status',
+    class: 'text-black text-base'
   },
   {
     key: 'action',
     label: 'Action',
-    sortable: false
+    sortable: false,
+    class: 'text-black text-base'
   }
 ] as TableColumn[]
 </script>
