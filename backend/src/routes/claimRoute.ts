@@ -220,4 +220,6 @@ claimRoutes.get("/", getClaims);
  */
 claimRoutes.put("/:claimId/signe", signeClaim);
 
+claimRoutes.put("/:claimId/widrawn", signeClaim);
+
 export default claimRoutes;
