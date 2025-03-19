@@ -53,7 +53,8 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
       event.params.contractType
     ])
 
-  let entity = new ContractDeployed(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  // let entity = new ContractDeployed(event.transaction.hash.concatI32(event.logIndex.toI32()))
+  let entity = new ContractDeployed(event.params.deployedAddress)
   const deployedAddress = event.params.deployedAddress
   const contractType = event.params.contractType
 
