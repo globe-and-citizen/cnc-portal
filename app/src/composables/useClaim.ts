@@ -1,19 +1,10 @@
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores/teamStore'
 import type { ClaimResponse } from '@/types'
 import { log, parseError } from '@/utils'
-import {
-  useChainId,
-  useSignTypedData,
-  useWaitForTransactionReceipt,
-  useWriteContract
-} from '@wagmi/vue'
-import { formatEther, parseEther, type Address } from 'viem'
-import { ref, watch } from 'vue'
-import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-import { useCustomFetch } from './useCustomFetch'
-import { getBalance } from 'viem/actions'
-import { config } from '@/wagmi.config'
+import { useChainId, useSignTypedData } from '@wagmi/vue'
+import { parseEther, type Address } from 'viem'
+import { ref } from 'vue'
 
 export function useSignWageClaim() {
   const isLoading = ref(false)
