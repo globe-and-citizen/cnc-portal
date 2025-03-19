@@ -7,7 +7,7 @@ export interface WageClaim {
 
 export interface ClaimResponse {
   id: number;
-  status: 'pending' | 'approved' | 'withdrawn' | 'disabled'; // Assuming these are the possible statuses
+  status: 'pending' | 'signed' | 'withdrawn' | 'disabled'; // Assuming these are the possible statuses
   hoursWorked: number;
   signature: string | null;
   tokenTx: string | null;
