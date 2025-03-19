@@ -45,16 +45,15 @@
 </template>
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { minValue, numeric, required } from '@vuelidate/validators'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useRoute } from 'vue-router'
-import { useToastStore } from '@/stores'
+import { useTeamStore, useToastStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 
-const route = useRoute()
 const toastStore = useToastStore()
+const teamStore = useTeamStore()
 const hoursWorked = ref<{ hoursWorked: string | undefined }>({ hoursWorked: undefined })
 const modal = ref(false)
 const emits = defineEmits(['refetchClaims'])
@@ -69,15 +68,19 @@ const rules = {
   }
 }
 const v$ = useVuelidate(rules, { hoursWorked })
+const teamId = computed(() => teamStore.currentTeam?.id)
 const {
   error: addWageClaimError,
   isFetching: isWageClaimAdding,
   execute: addWageClaimAPI,
   statusCode: addWageClaimStatusCode
-} = useCustomFetch(`teams/${String(route.params.id)}/cash-remuneration/claim`, {
+} = useCustomFetch('/claim', {
   immediate: false
 })
-  .post(hoursWorked)
+  .post(() => ({
+    teamId: teamId.value,
+    hoursWorked: hoursWorked.value.hoursWorked
+  }))
   .json()
 
 watch(addWageClaimStatusCode, async () => {
