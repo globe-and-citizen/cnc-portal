@@ -4,7 +4,7 @@ import { Address, isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
 import { addNotification, prisma } from "../utils";
 import { Prisma, Claim, User, Wage } from "@prisma/client";
-import { isUserMemberOfTeam } from "./wageController";
+import { isUserMemberOfTeam, isOwnerOfTeam } from "./wageController";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked"> & { teamId: string };
 export const addClaim = async (req: Request, res: Response) => {
@@ -49,6 +49,8 @@ export const addClaim = async (req: Request, res: Response) => {
     return res.status(201).json(claim);
   } catch (error) {
     return errorResponse(500, "Internal Server Error", res);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
@@ -76,18 +78,62 @@ export const getClaims = async (req: Request, res: Response) => {
       },
       include: {
         wage: {
-          include:{
+          include: {
             user: {
               select: {
                 address: true,
                 name: true,
               },
-            }
-          }
+            },
+          },
         },
       },
     });
     return res.status(200).json(claims);
+  } catch (error) {
+    console.log("Error: ", error);
+    return errorResponse(500, "Internal server error", res);
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+export const signeClaim = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address;
+  const claimId = Number(req.params.id);
+  const signature = req.body.signature as Claim["signature"];
+
+  // Validating the claim data
+  // Checking required data
+  let parametersError: string[] = [];
+  if (!signature) parametersError.push("Missing signature");
+
+  try {
+    // check if the callerAddress is the owner of the team
+    const claim = await prisma.claim.findFirst({
+      where: {
+        id: claimId,
+        wage: {
+          team: {
+            ownerAddress: callerAddress,
+          },
+        },
+      },
+    });
+    if (!claim) {
+      return errorResponse(403, "Caller is not the owner of the team", res);
+    }
+
+    // Update the claim status to signed
+    const updatedClaim = await prisma.claim.update({
+      where: {
+        id: claimId,
+      },
+      data: {
+        status: "signed",
+        signature,
+      },
+    });
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
