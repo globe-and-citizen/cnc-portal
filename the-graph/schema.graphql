@@ -1,3 +1,9 @@
+enum TransactionType {
+  transfer
+  deposit
+  withdraw
+}
+
 type BeaconProxyCreated @entity(immutable: true) {
   id: Bytes!
   officerAddress: Bytes! # address
@@ -86,6 +92,20 @@ type Deposited @entity(immutable: true) {
   contractType: String! # string
   amount: BigInt!
   contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Transaction @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  contractType: String! # string
+  tokenAddress: Bytes! # address
+  amount: BigInt!
+  contractAddress: Bytes! # address
+  transactionType: TransactionType! 
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

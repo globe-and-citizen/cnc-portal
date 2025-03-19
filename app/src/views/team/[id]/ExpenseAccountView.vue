@@ -18,14 +18,7 @@
 
     <ApprovedExpensesSection />
 
-    <TransactionHistorySection
-      :transactions="[]"
-      :currency-rates="{
-        loading: false,
-        error: null,
-        getRate: () => 1
-      }"
-    />
+    <TransactionHistorySection />
   </div>
 </template>
 
