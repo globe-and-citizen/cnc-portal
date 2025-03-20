@@ -12,5 +12,19 @@
       "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
       "startBlock": 1
     }
+  },
+  "sepolia": {
+    "OfficerFactoryBeacon": {
+      "address": "0x27BE236532d460c7402E5015318eEEB6913bde77",
+      "startBlock": 7495217
+    },
+    "USDC": {
+      "address": "0x165B4A414297693551e3372c3dF744361488066e",
+      "startBlock": 7495217
+    },
+    "USDT": {
+      "address": "0xC755875f30ceE081C384246E2952cC61378eE8Bc",
+      "startBlock": 7495217
+    }
   }
 }
