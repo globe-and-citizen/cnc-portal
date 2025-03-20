@@ -98,82 +98,129 @@ export const getClaims = async (req: Request, res: Response) => {
   }
 };
 
-export const signeClaim = async (req: Request, res: Response) => {
+export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const claimId = Number(req.params.claimId);
-  const signature = req.body.signature as Claim["signature"];
 
-  // Validating the claim data
-  // Checking required data
-  let parametersError: string[] = [];
-  if (!signature) parametersError.push("Missing signature");
+  // Action is only able to have this values: sign, withdraw, disable, enable, reject
+  const action = req.query.action as string;
+  const validActions = ["sign", "withdraw", "disable", "enable", "reject"];
+  if (!validActions.includes(action)) {
+    return errorResponse(
+      400,
+      `Invalid action. Allowed actions are: ${validActions.join(", ")}`,
+      res
+    );
+  }
+
+  // Prepare the data according to the action
+  let data: Prisma.ClaimUpdateInput = {};
+  switch (action) {
+    case "sign":
+      const signature = req.body.signature as Claim["signature"];
+
+      // validate the signature
+      if (!signature) {
+        return errorResponse(400, "Missing signature", res);
+      }
+      // TODO: validate the signature (in the blockchain)
+      data.status = "signed";
+      data.signature = req.body.signature;
+      break;
+    case "withdraw":
+      // TODO: check if the signature is used to withdraw the claim
+      data.status = "withdrawn";
+      break;
+    case "disable":
+      // TODO: Check if the signature is disabled in the blockchain
+      data.status = "disabled";
+      break;
+    case "enable":
+      data.status = "enabled";
+      break;
+    case "reject":
+      data.status = "rejected";
+      break;
+  }
 
   try {
-    // check if the callerAddress is the owner of the team
+    // Fetch the claim including the required data
     const claim = await prisma.claim.findFirst({
       where: {
         id: claimId,
+      },
+      include: {
         wage: {
-          team: {
-            ownerAddress: callerAddress,
+          include: {
+            team: true,
           },
         },
       },
     });
+
     if (!claim) {
-      return errorResponse(403, "Caller is not the owner of the team", res);
+      return errorResponse(404, "Claim not found", res);
     }
 
-    // Update the claim status to signed
+    // sign, disable, enable, reject actions are only able to be done by the owner of the team
+    if (["sign", "disable", "enable", "reject"].includes(action)) {
+      if (claim.wage.team.ownerAddress !== callerAddress) {
+        return errorResponse(403, "Caller is not the owner of the team", res);
+      }
+    }
+
+    // withdraw action is only able to be done by the user that created the claim
+    if (action === "withdraw") {
+      if (claim.wage.userAddress !== callerAddress) {
+        return errorResponse(403, "Caller is not the owner of the claim", res);
+      }
+    }
+
+    // special check on the claim according to the action
+
+    switch (action) {
+      case "sign":
+        //  sine only if the claim is pending, or rejected
+        if (claim.status !== "pending" && claim.status !== "rejected") {
+          return errorResponse(
+            403,
+            "Can't signe: Claim is not pending or rejected",
+            res
+          );
+        }
+        break;
+      case "withdraw":
+        // withdraw only if the claim is signed
+        if (claim.status !== "signed") {
+          return errorResponse(403, "Can't withdraw: Claim is not signed", res);
+        }
+        break;
+      case "disable":
+        // disable only if the claim is signed
+        if (claim.status !== "signed") {
+          return errorResponse(403, "Can't disable: Claim is not signed", res);
+        }
+        break;
+      case "enable":
+        // enable only if the claim is disabled
+        if (claim.status !== "disabled") {
+          return errorResponse(403, "Can't enable: Claim is not disabled", res);
+        }
+        break;
+      case "reject":
+        // reject only if the claim is pending
+        if (claim.status !== "pending") {
+          return errorResponse(403, "Can't reject: Claim is not pending", res);
+        }
+        break;
+    }
+
+    // Update the claim status
     const updatedClaim = await prisma.claim.update({
       where: {
         id: claimId,
       },
-      data: {
-        status: "signed",
-        signature,
-      },
-    });
-    return res.status(200).json(updatedClaim);
-  } catch (error) {
-    console.log("Error: ", error);
-    return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
-  }
-};
-
-export const withdrawClaim = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
-  const claimId = Number(req.params.claimId);
-
-  try {
-    const claim = await prisma.claim.findFirst({
-      where: {
-        id: claimId,
-        wage: {
-          userAddress: callerAddress,
-        },
-      },
-    });
-    if (!claim) {
-      return errorResponse(403, "Caller is not able to withdraw claim", res);
-    }
-
-    // Check in the blocchain if the claim is already signed
-    if (claim.status !== "signed") {
-      return errorResponse(403, "Claim not signed", res);
-    }
-    // TODO: use the signature and call the smart contract to check if the claim is withdrawn
-
-    // Update the claim status to withdrawn
-    const updatedClaim = await prisma.claim.update({
-      where: {
-        id: claimId,
-      },
-      data: {
-        status: "withdrawn",
-      },
+      data,
     });
     return res.status(200).json(updatedClaim);
   } catch (error) {

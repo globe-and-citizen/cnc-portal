@@ -2,8 +2,7 @@ import express from "express";
 import {
   addClaim,
   getClaims,
-  signeClaim,
-  withdrawClaim,
+  updateClaim,
 } from "../controllers/claimController";
 
 const claimRoutes = express.Router();
@@ -219,8 +218,18 @@ claimRoutes.get("/", getClaims);
  *                 type: string
  *                 description: Error message indicating an internal server error
  */
-claimRoutes.put("/:claimId/signe", signeClaim);
+// claimRoutes.put("/:claimId/signe", signeClaim);
 
-claimRoutes.put("/:claimId/withdrawn", withdrawClaim);
+claimRoutes.put("/:claimId", updateClaim); // withdraw a signed claim
+
+// claimRoutes.put("/:claimId/reject", withdrawClaim); // reject a not signed claim
+
+// claimRoutes.put("/:claimId/disable", withdrawClaim); // disable a signed claim
+
+// claimRoutes.put("/:claimId/enable", withdrawClaim); // enable a disabled claim
+
+// No need of delete route: let store all claims in the databases
+
+// claimRoutes.delete("/:claimId", withdrawClaim); // delete a claim: only disabled & withdrawn claims can be deleted
 
 export default claimRoutes;
