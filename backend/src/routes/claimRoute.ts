@@ -133,17 +133,24 @@ claimRoutes.get("/", getClaims);
 
 /**
  * @openapi
- * /claim/{claimId}/signe:
+ * /claim/{claimId}:
  *  put:
- *   summary: Sign a claim
+ *   summary: Update a claim's status or perform actions like signing, withdrawing, disabling, enabling, or rejecting
  *   parameters:
  *     - in: path
  *       name: claimId
  *       required: true
  *       schema:
  *         type: integer
- *         description: The ID of the claim to sign
+ *         description: The ID of the claim to update
  *         minimum: 1
+ *     - in: query
+ *       name: action
+ *       required: true
+ *       schema:
+ *         type: string
+ *         enum: [sign, withdraw, disable, enable, reject]
+ *         description: The action to perform on the claim
  *   requestBody:
  *     required: true
  *     content:
@@ -153,10 +160,10 @@ claimRoutes.get("/", getClaims);
  *           properties:
  *             signature:
  *               type: string
- *               description: The signature for the claim
+ *               description: The signature for signing the claim (required for 'sign' action)
  *   responses:
  *     200:
- *       description: Claim signed successfully
+ *       description: Claim updated successfully
  *       content:
  *         application/json:
  *           schema:
@@ -170,40 +177,32 @@ claimRoutes.get("/", getClaims);
  *                 description: The updated status of the claim
  *               signature:
  *                 type: string
- *                 description: The signature of the claim
+ *                 description: The signature of the claim (if applicable)
  *     400:
  *       description: Bad request
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message detailing the bad request
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     403:
  *       description: Forbidden
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating lack of permissions
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     404:
+ *       description: Claim not found
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating an internal server error
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
-// claimRoutes.put("/:claimId/signe", signeClaim);
-
-claimRoutes.put("/:claimId", updateClaim); // withdraw a signed claim
+claimRoutes.put("/:claimId", updateClaim);
 
 export default claimRoutes;
