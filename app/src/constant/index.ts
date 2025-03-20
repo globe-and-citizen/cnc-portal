@@ -55,11 +55,11 @@ const missingAddresses = new Set<string>()
 
 export function resolveAddress(key: keyof AddressMapping): string {
   const address = addresses[key]
-  if (!address) {
+  if (!address && (key !== 'MockTokens#USDT' && key !== 'MockTokens#USDC')) {
     missingAddresses.add(key)
     return ''
   }
-  return address
+  return address ?? ''
 }
 // Token addresses for different networks
 export const TOKEN_ADDRESSES: ChainTokenAddresses = {
@@ -69,16 +69,10 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
     USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // Polygon USDT
   },
   // Sepolia Testnet
-  11155111:
-    chainId === 11155111
-      ? {
-          USDC: resolveAddress('MockTokens#USDC'), // Placeholder for local testing
-          USDT: resolveAddress('MockTokens#USDT') // Placeholder for local testing
-        }
-      : {
-          USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Sepolia USDC
-          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06' // Sepolia USDT
-        },
+  11155111: {
+    USDC: resolveAddress('MockTokens#USDC'), // Mock contracts deployed on Sepolia
+    USDT: resolveAddress('MockTokens#USDT') // Mock contracts deployed on Sepolia
+  },
   80002: {
     USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
     USDT: '0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD' // Amoy USDT
