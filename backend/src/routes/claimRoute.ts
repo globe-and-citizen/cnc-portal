@@ -6,6 +6,41 @@ import {
 } from "../controllers/claimController";
 
 const claimRoutes = express.Router();
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Claim:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The ID of the claim
+ *         hoursWorked:
+ *           type: number
+ *           description: The number of hours worked
+ *         wageId:
+ *           type: integer
+ *           description: The ID of the associated wage
+ *         status:
+ *           type: string
+ *           description: The status of the claim
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Error message
+ *     Wage:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The ID of the wage
+ *         teamId:
+ *           type: integer
+ *           description: The ID of the team
+ */
 
 /**
  * @openapi
@@ -33,40 +68,19 @@ const claimRoutes = express.Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *                 description: The ID of the claim
- *               hoursWorked:
- *                 type: number
- *                 description: The number of hours worked
- *               wageId:
- *                 type: integer
- *                 description: The ID of the associated wage
- *               status:
- *                 type: string
- *                 description: The status of the claim
+ *             $ref: '#/components/schemas/Claim'
  *     400:
  *       description: Bad request
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message detailing the bad request
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating an internal server error
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
 claimRoutes.post("/", addClaim);
 
@@ -91,29 +105,7 @@ claimRoutes.post("/", addClaim);
  *           schema:
  *             type: array
  *             items:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   description: The ID of the claim
- *                 hoursWorked:
- *                   type: number
- *                   description: The number of hours worked
- *                 wageId:
- *                   type: integer
- *                   description: The ID of the associated wage
- *                 status:
- *                   type: string
- *                   description: The status of the claim
- *                 wage:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       description: The ID of the wage
- *                     teamId:
- *                       type: integer
- *                       description: The ID of the team
+ *               $ref: '#/components/schemas/Claim'
  *     400:
  *       description: Bad request
  *       content:
@@ -129,21 +121,13 @@ claimRoutes.post("/", addClaim);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating lack of permissions
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating an internal server error
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
 claimRoutes.get("/", getClaims);
 
@@ -221,15 +205,5 @@ claimRoutes.get("/", getClaims);
 // claimRoutes.put("/:claimId/signe", signeClaim);
 
 claimRoutes.put("/:claimId", updateClaim); // withdraw a signed claim
-
-// claimRoutes.put("/:claimId/reject", withdrawClaim); // reject a not signed claim
-
-// claimRoutes.put("/:claimId/disable", withdrawClaim); // disable a signed claim
-
-// claimRoutes.put("/:claimId/enable", withdrawClaim); // enable a disabled claim
-
-// No need of delete route: let store all claims in the databases
-
-// claimRoutes.delete("/:claimId", withdrawClaim); // delete a claim: only disabled & withdrawn claims can be deleted
 
 export default claimRoutes;
