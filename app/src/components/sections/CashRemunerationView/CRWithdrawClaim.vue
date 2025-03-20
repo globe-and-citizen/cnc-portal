@@ -5,6 +5,7 @@
     :loading="isLoading"
     variant="warning"
     data-test="withdraw-button"
+    size="sm"
     @click="async () => await withdrawClaim()"
     >Withdraw</ButtonUI
   >

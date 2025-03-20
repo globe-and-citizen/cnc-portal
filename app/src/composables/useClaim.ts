@@ -9,10 +9,10 @@ import { ref } from 'vue'
 export function useSignWageClaim() {
   const isLoading = ref(false)
   const { signTypedDataAsync, data: signature } = useSignTypedData()
+  const chainId = useChainId()
   const teamStore = useTeamStore()
   const toastStore = useToastStore()
   // const userStore = useUserDataStore()
-  const chainId = useChainId()
 
   const execute = async (claim: ClaimResponse) => {
     isLoading.value = true

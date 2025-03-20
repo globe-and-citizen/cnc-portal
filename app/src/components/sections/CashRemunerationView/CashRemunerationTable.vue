@@ -91,7 +91,7 @@ import type { ClaimResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import CRSigne from '@/components/CRSigne.vue'
+import CRSigne from './CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 
 const toastStore = useToastStore()
