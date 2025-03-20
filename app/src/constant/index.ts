@@ -55,7 +55,7 @@ const missingAddresses = new Set<string>()
 
 export function resolveAddress(key: keyof AddressMapping): string {
   const address = addresses[key]
-  if (!address && (key !== 'MockTokens#USDT' && key !== 'MockTokens#USDC')) {
+  if (!address && key !== 'MockTokens#USDT' && key !== 'MockTokens#USDC') {
     missingAddresses.add(key)
     return ''
   }
