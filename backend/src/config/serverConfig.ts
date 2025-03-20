@@ -83,6 +83,8 @@ class Server {
       throw new Error(errorMessages.secretKey);
     if (process.env.DATABASE_URL === undefined)
       throw new Error(errorMessages.databaseUrl);
+    if (process.env.CHAIN_ID === undefined)
+      throw new Error(errorMessages.chainId);
   }
 
   private middleware() {
