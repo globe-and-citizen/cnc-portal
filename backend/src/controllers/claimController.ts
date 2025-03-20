@@ -183,3 +183,10 @@ export const withdrawClaim = async (req: Request, res: Response) => {
     await prisma.$disconnect();
   }
 };
+
+// TODO: Implement the following functions
+export const disableClaim = async (req: Request, res: Response) => {};
+
+export const enableClaim = async (req: Request, res: Response) => {};
+
+export const rejectClaim = async (req: Request, res: Response) => {};

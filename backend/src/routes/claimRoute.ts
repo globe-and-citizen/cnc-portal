@@ -3,6 +3,7 @@ import {
   addClaim,
   getClaims,
   signeClaim,
+  withdrawClaim,
 } from "../controllers/claimController";
 
 const claimRoutes = express.Router();
@@ -220,6 +221,6 @@ claimRoutes.get("/", getClaims);
  */
 claimRoutes.put("/:claimId/signe", signeClaim);
 
-claimRoutes.put("/:claimId/widrawn", signeClaim);
+claimRoutes.put("/:claimId/withdrawn", withdrawClaim);
 
 export default claimRoutes;
