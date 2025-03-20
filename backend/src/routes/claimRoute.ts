@@ -16,15 +16,31 @@ const claimRoutes = express.Router();
  *         id:
  *           type: integer
  *           description: The ID of the claim
- *         hoursWorked:
- *           type: number
- *           description: The number of hours worked
- *         wageId:
- *           type: integer
- *           description: The ID of the associated wage
  *         status:
  *           type: string
  *           description: The status of the claim
+ *         hoursWorked:
+ *           type: integer
+ *           description: The number of hours worked
+ *         signature:
+ *           type: string
+ *           description: The signature of the claim
+ *           nullable: true
+ *         tokenTx:
+ *           type: string
+ *           description: The token transaction hash
+ *           nullable: true
+ *         wageId:
+ *           type: integer
+ *           description: The ID of the associated wage
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: The timestamp when the claim was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: The timestamp when the claim was last updated
  *     ErrorResponse:
  *       type: object
  *       properties:
@@ -167,17 +183,7 @@ claimRoutes.get("/", getClaims);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *                 description: The ID of the claim
- *               status:
- *                 type: string
- *                 description: The updated status of the claim
- *               signature:
- *                 type: string
- *                 description: The signature of the claim (if applicable)
+ *             $ref: '#/components/schemas/Claim'
  *     400:
  *       description: Bad request
  *       content:
