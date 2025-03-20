@@ -69,8 +69,8 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
     USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // Polygon USDT
   },
   // Sepolia Testnet
-  11155111: 
-    chainId === 11155111 
+  11155111:
+    chainId === 11155111
       ? {
           USDC: resolveAddress('MockTokens#USDC'), // Placeholder for local testing
           USDT: resolveAddress('MockTokens#USDT') // Placeholder for local testing
