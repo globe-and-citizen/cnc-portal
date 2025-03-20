@@ -3,6 +3,7 @@ import TheDrawer from '@/components/TheDrawer.vue'
 import { mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
 
 // Create a router instance with a basic route
 const router = createRouter({
@@ -40,6 +41,27 @@ const router = createRouter({
       component: { template: '<div>Transactions</div>' }
     }
   ]
+})
+
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => ({
+      addErrorToast: vi.fn(),
+      addSuccessToast: vi.fn()
+    })),
+    useAccount: vi.fn(() => {
+      return {
+        chainId: ref(11155111)
+      }
+    }),
+    useSwitchChain: vi.fn(() => {
+      return {
+        switchChain: vi.fn()
+      }
+    })
+  }
 })
 
 describe('TheDrawer', () => {
