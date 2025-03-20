@@ -1,24 +1,14 @@
 <template>
-  <div>
-    <ButtonUI
-      v-if="claim.status == 'pending' && teamOwner == userDataStore.address"
-      variant="success"
-      data-test="approve-button"
-      :disabled="loading"
-      size="sm"
-      @click="async () => await approveClaim(claim as ClaimResponse)"
-    >
-      Approve
-    </ButtonUI>
-    <!-- <ButtonUI
-      v-if="claim.status == 'pending' && teamOwner == userDataStore.address"
-      variant="warning"
-      :loading="loading"
-      size="xs"
-    >
-      Reject
-    </ButtonUI> -->
-  </div>
+  <ButtonUI
+    v-if="claim.status == 'pending' && teamOwner == userDataStore.address"
+    variant="success"
+    data-test="approve-button"
+    :disabled="loading"
+    size="sm"
+    @click="async () => await approveClaim(claim as ClaimResponse)"
+  >
+    Approve
+  </ButtonUI>
 </template>
 
 <script setup lang="ts">

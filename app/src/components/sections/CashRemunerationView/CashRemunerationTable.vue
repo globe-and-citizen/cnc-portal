@@ -27,7 +27,7 @@
           <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
         </template>
         <template #action-data="{ row }">
-          <CashRemunerationAction :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
+          <CRSigne :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
           <CRWithdrawClaim :claim="formatRow(row)" @claim-widrawn="fetchTeamClaimData()" />
           <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
@@ -91,7 +91,7 @@ import type { ClaimResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import CashRemunerationAction from './CashRemunerationAction.vue'
+import CRSigne from '@/components/CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 
 const toastStore = useToastStore()
