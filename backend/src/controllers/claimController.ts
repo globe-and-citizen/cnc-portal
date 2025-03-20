@@ -136,7 +136,7 @@ export const updateClaim = async (req: Request, res: Response) => {
       data.status = "disabled";
       break;
     case "enable":
-      data.status = "enabled";
+      data.status = "signed";
       break;
     case "reject":
       data.status = "rejected";
@@ -169,6 +169,7 @@ export const updateClaim = async (req: Request, res: Response) => {
       }
     }
 
+    console.log("1", action);
     // withdraw action is only able to be done by the user that created the claim
     if (action === "withdraw") {
       if (claim.wage.userAddress !== callerAddress) {

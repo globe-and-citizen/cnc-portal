@@ -124,6 +124,17 @@ describe("Claim Controller", () => {
       expect(response.body).toBeInstanceOf(Array);
       expect(response.body[0]).toHaveProperty("id");
     });
+
+    it("should return 500 if an error occurs", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
+
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5 });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error has occured");
+    });
   });
 
   describe("PUT: /claim/:claimId", () => {
@@ -161,6 +172,7 @@ describe("Claim Controller", () => {
       vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
         id: 1,
         status: "pending",
+        // @ts-ignore
         wage: { team: { ownerAddress: "0x456" } },
       });
 
@@ -177,6 +189,7 @@ describe("Claim Controller", () => {
       vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
         id: 1,
         status: "pending",
+        // @ts-ignore
         wage: { userAddress: "0x456" },
       });
 
@@ -228,6 +241,175 @@ describe("Claim Controller", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe("signed");
+    });
+
+    describe("Withdraw action", () => {
+      it("should return 403 if claim is not signed", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "pending",
+          // @ts-ignore
+          wage: { userAddress: "0x123" },
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "withdraw" });
+
+        expect(response.status).toBe(403);
+        expect(response.body.message).toContain("Can't withdraw");
+      });
+
+      it("should update claim status to withdrawn", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "signed",
+          // @ts-ignore
+          wage: { userAddress: "0x123" },
+        });
+        // @ts-ignore
+        vi.spyOn(prisma.claim, "update").mockResolvedValue({
+          id: 1,
+          status: "withdrawn",
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "withdraw" });
+
+        expect(response.status).toBe(200);
+        expect(response.body.status).toBe("withdrawn");
+      });
+    });
+
+    describe("Disable action", () => {
+      it("should return 403 if claim is not signed", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "pending",
+          // @ts-ignore
+          wage: { team: { ownerAddress: "0x123" } },
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "disable" });
+
+        console.log({ body: response.body, status: response.status });
+        expect(response.status).toBe(403);
+        expect(response.body.message).toContain("Can't disable");
+      });
+
+      it("should update claim status to disabled", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "signed",
+          // @ts-ignore
+          wage: { team: { ownerAddress: "0x123" } },
+        });
+        // @ts-ignore
+        vi.spyOn(prisma.claim, "update").mockResolvedValue({
+          id: 1,
+          status: "disabled",
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "disable" });
+
+        expect(response.status).toBe(200);
+        expect(response.body.status).toBe("disabled");
+      });
+    });
+
+    describe("Enable action", () => {
+      it("should return 403 if claim is not disabled", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "pending",
+          // @ts-ignore
+          wage: { team: { ownerAddress: "0x123" } },
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "enable" });
+
+        expect(response.status).toBe(403);
+        expect(response.body.message).toContain("Can't enable");
+      });
+
+      it("should update claim status to enabled", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "disabled",
+          // @ts-ignore
+          wage: { team: { ownerAddress: "0x123" } },
+        });
+        // @ts-ignore
+        vi.spyOn(prisma.claim, "update").mockResolvedValue({
+          id: 1,
+          status: "enabled",
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "enable" });
+
+        expect(response.status).toBe(200);
+        expect(response.body.status).toBe("enabled");
+      });
+    });
+
+    describe("Reject action", () => {
+      it("should return 403 if claim is not pending", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "signed",
+          // @ts-ignore
+          wage: { team: { ownerAddress: "0x123" } },
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "reject" });
+
+        expect(response.status).toBe(403);
+        expect(response.body.message).toContain("Can't reject");
+      });
+
+      it("should update claim status to rejected", async () => {
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+          id: 1,
+          status: "pending",
+          // @ts-ignore
+          wage: { team: { ownerAddress: "0x123" } },
+        });
+        // @ts-ignore
+        vi.spyOn(prisma.claim, "update").mockResolvedValue({
+          id: 1,
+          status: "rejected",
+        });
+
+        const response = await request(app)
+          .put("/claim/1")
+          .query({ action: "reject" });
+
+        expect(response.status).toBe(200);
+        expect(response.body.status).toBe("rejected");
+      });
+    });
+
+    it("should return 500 if an error occurs", async () => {
+      vi.spyOn(prisma.claim, "findFirst").mockRejectedValue("Test");
+
+      const response = await request(app)
+        .put("/claim/1")
+        .query({ action: "sign" })
+        .send({ signature: "0xabc" });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error has occured");
     });
   });
 });
