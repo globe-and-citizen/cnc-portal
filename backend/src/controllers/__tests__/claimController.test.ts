@@ -126,11 +126,9 @@ describe("Claim Controller", () => {
     });
 
     it("should return 500 if an error occurs", async () => {
-      vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
-
-      const response = await request(app)
-        .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5 });
+      // @ts-ignore
+      vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Test");
+      const response = await request(app).get("/claim").query({ teamId: 1 });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe("Internal server error has occured");
@@ -216,7 +214,6 @@ describe("Claim Controller", () => {
         .put("/claim/1")
         .query({ action: "sign" })
         .send({ signature: "0xabc" });
-      console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(403);
       expect(response.body.message).toContain("Can't signe");
     });
@@ -295,7 +292,6 @@ describe("Claim Controller", () => {
           .put("/claim/1")
           .query({ action: "disable" });
 
-        console.log({ body: response.body, status: response.status });
         expect(response.status).toBe(403);
         expect(response.body.message).toContain("Can't disable");
       });
