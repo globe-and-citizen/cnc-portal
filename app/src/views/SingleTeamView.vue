@@ -70,32 +70,34 @@
           <BankSection v-if="activeTab == 1" :team="team" />
         </template>
         <template #tab-2>
-          <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
+          <TeamContracts
+            v-if="activeTab == 2"
+            :team-id="String(team.id)"
+            :contracts="team.teamContracts"
+            @update-contract="handleUpdateContract"
+          />
         </template>
+
         <template #tab-3>
+          <BankTransactionsSection v-if="activeTab == 3" :bank-address="team.bankAddress" />
+        </template>
+        <template #tab-4>
           <ProposalSection
-            v-if="activeTab == 3"
+            v-if="activeTab == 4"
             :team="team"
             @getTeam="getTeamAPI"
             @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
           />
         </template>
-        <template #tab-4>
-          <BoardOfDirectorsSection v-if="activeTab == 6" :team="team" />
-        </template>
         <template #tab-5>
-          <InvestorsSection v-if="activeTab == 7" :team="team" />
+          <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
         <template #tab-6>
-          <ContractManagementSection></ContractManagementSection>
+          <InvestorsSection v-if="activeTab == 6" :team="team" />
         </template>
 
         <template #tab-7>
-          <TeamContracts
-            :team-id="String(team.id)"
-            :contracts="team.teamContracts"
-            @update-contract="handleUpdateContract"
-          />
+          <ContractManagementSection v-if="activeTab == 7"></ContractManagementSection>
         </template>
       </TabNavigation>
     </div>
@@ -137,7 +139,11 @@ import { useDeployAddCampaignContract } from '@/composables/addCampaign'
 import TeamContracts from '@/components/TeamContracts.vue'
 
 // Modal control states
-const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members, SingleTeamTabs.TeamContract])
+const tabs = ref<Array<SingleTeamTabs>>([
+  SingleTeamTabs.Members,
+  SingleTeamTabs.Bank,
+  SingleTeamTabs.TeamContract
+])
 const isOwner = ref(false)
 const officerModal = ref(false)
 
@@ -199,7 +205,6 @@ watch(getTeamError, () => {
 })
 const currentAddress = useUserDataStore().address as Address
 onMounted(async () => {
-  console.log(team.value)
   await getTeamAPI() //Call the execute function to get team details on mount
   if (team?.value?.ownerAddress == currentAddress) {
     isOwner.value = true
@@ -257,12 +262,12 @@ const setTabs = () => {
     tabs.value = [
       SingleTeamTabs.Members,
       SingleTeamTabs.Bank,
+      SingleTeamTabs.TeamContract,
       SingleTeamTabs.Transactions,
       SingleTeamTabs.Proposals,
       SingleTeamTabs.BoardOfDirectors,
       SingleTeamTabs.Investors,
-      SingleTeamTabs.Contract,
-      SingleTeamTabs.TeamContract
+      SingleTeamTabs.Contract
     ]
 }
 

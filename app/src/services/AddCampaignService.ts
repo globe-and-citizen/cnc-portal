@@ -23,6 +23,14 @@ export interface IAddCampaignService {
   getEventsGroupedByCampaignCode(
     addCampaignContractAddress: string
   ): Promise<GetEventsGroupedByCampaignCodeResult>
+  setCostPerClick(
+    campaignContractAddress: string,
+    costPerClick: string
+  ): Promise<TransactionReceipt>
+  setCostPerImpression(
+    campaignContractAddress: string,
+    costPerImpression: string
+  ): Promise<TransactionReceipt>
 }
 
 export interface PaymentReleasedEvent {
@@ -207,7 +215,9 @@ export class AddCampaignService implements IAddCampaignService {
             // Add to the array of key-value pairs
             datas.push({
               key: item.name,
-              value: result.toString() // Convert BigNumber or other types to string
+              value: item.name.startsWith('cost')
+                ? ethers.formatUnits(result.toString(), 'ether')
+                : result.toString() // Convert BigNumber or other types to string
             })
           }
         } catch (error) {
@@ -310,6 +320,28 @@ export class AddCampaignService implements IAddCampaignService {
     } catch (error) {
       return { status: 'error', error: error as { message: string } }
     }
+  }
+
+  async setCostPerClick(campaignContractAddress: string, costPerClick: string) {
+    const _costPerClickInWei = ethers.parseUnits(costPerClick, 'ether')
+    const contractService = this.getContractService(campaignContractAddress)
+    const contract = await contractService.getContract() // Retrieve contract instance
+    const tx = await contract.setCostPerClick(_costPerClickInWei)
+
+    const receipt = await tx.wait()
+
+    return receipt
+  }
+
+  async setCostPerImpression(campaignContractAddress: string, costPerImpression: string) {
+    const _costPerImpressionInWei = ethers.parseUnits(costPerImpression, 'ether')
+    const contractService = this.getContractService(campaignContractAddress)
+    const contract = await contractService.getContract() // Retrieve contract instance
+    const tx = await contract.setCostPerImpression(_costPerImpressionInWei)
+
+    const receipt = await tx.wait()
+
+    return receipt
   }
 
   async getEvents(addCampaignAddress: string, type: string): Promise<EventLog[] | Log[]> {

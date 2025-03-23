@@ -59,7 +59,10 @@
     <ModalComponent v-model="contractDataDialog.show">
       <div class="max-w-lg">
         <h3 class="text-lg font-bold">Contract Details</h3>
-        <TeamContractsDetail :datas="contractDataDialog.datas" />
+        <TeamContractsDetail
+          :contract-address="contractDataDialog.address"
+          :datas="contractDataDialog.datas"
+        />
       </div>
     </ModalComponent>
 
@@ -107,7 +110,8 @@ const contractAdminDialog = ref({
 // Modal for showing contract data details
 const contractDataDialog = ref({
   show: false,
-  datas: [] as Array<{ key: string; value: string }> // Properly define as an array of key-value pairs
+  datas: [] as Array<{ key: string; value: string }>, // Properly define as an array of key-value pairs
+  address: ''
 })
 
 const contractEventsDialog = ref({
@@ -152,6 +156,7 @@ const openEventsModal = async (contractAddress: string) => {
 // Open Contract Data Modal
 const openContractDataModal = async (contractAddress: string) => {
   contractDataDialog.value.datas = await addCamapaignService.getContractData(contractAddress)
+  contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
 }
 

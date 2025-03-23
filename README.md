@@ -132,7 +132,7 @@ In the root directory run
 docker compose up --build
 ```
 
-Then access the app at [http://localhost:5173](http://localhost:5173) and the backend endpoints at [http://localhost:3000](http://localhost:3000).
+Then access the app at [http://localhost:5173](http://localhost:5173) and the backend endpoints at [http://localhost:8000](http://localhost:8000).
 
 Note: This sets up the database at port 5432 with the container volume name as "db". While accessing the database make sure to reference this as the host. For example, the DATABASE_URL variable in the .env file, should be specified as db:5432 as shown below instead of 127.0.0.1:5432 or localhost:5432.
 
