@@ -51,26 +51,41 @@ const props = defineProps<{
   contractAddress: string
 }>()
 
-import { nextTick, onMounted } from 'vue'
+import { watch } from 'vue'
 
 //const originalDatas = ref([...props.datas])
-const originalCostPerClick = ref<number>(
-  parseFloat(props.datas.find((data) => data.key === 'costPerClick')?.value || '0')
-)
-const originalCostPerImpression = ref<number>(
-  parseFloat(props.datas.find((data) => data.key === 'costPerImpression')?.value || '0')
-)
-console.log('')
-onMounted(async () => {
-  await nextTick()
-  originalCostPerClick.value = parseFloat(
-    props.datas.find((data) => data.key === 'costPerClick')?.value || '0'
-  )
-  originalCostPerImpression.value = parseFloat(
-    props.datas.find((data) => data.key === 'costPerImpression')?.value || '0'
-  )
-})
+const originalCostPerClick = ref<number>(0)
+const originalCostPerImpression = ref<number>(0)
+
 const isLoading = ref(false)
+const originalValues = ref<Record<string, number>>({})
+
+const getOriginalValue = (key: string) => originalValues.value[key] ?? 0
+
+const initialized = ref<boolean>(false)
+//for test purpose
+defineExpose({
+  initialized,
+  originalValues,
+  originalCostPerClick,
+  originalCostPerImpression
+})
+
+watch(
+  () => props.datas,
+  (newDatas: Array<{ key: string; value: string }>) => {
+    if (!initialized.value && newDatas?.length) {
+      originalValues.value = Object.fromEntries(
+        newDatas.map((data) => [data.key, parseFloat(data.value || '0')])
+      )
+
+      originalCostPerClick.value = getOriginalValue('costPerClick')
+      originalCostPerImpression.value = getOriginalValue('costPerImpression')
+      initialized.value = true
+    }
+  },
+  { deep: true }
+)
 
 const addCamapaignService = new AddCampaignService()
 
@@ -88,7 +103,10 @@ async function setCostPerClick(campaignContractAddress: string, costPerClick: st
       addSuccessToast('cost per click updated successfully')
       isLoading.value = false
 
-      originalCostPerClick.value = parseFloat(costPerClick)
+      //originalCostPerClick.value = parseFloat(costPerClick)
+      originalValues.value = Object.fromEntries(
+        (props.datas ?? []).map((data) => [data.key, parseFloat(data.value || '0')])
+      )
     } else {
       addErrorToast('set costPerClick failed please try again')
       isLoading.value = false
@@ -99,6 +117,7 @@ async function setCostPerClick(campaignContractAddress: string, costPerClick: st
 async function setCostPerImpression(campaignContractAddress: string, costPerImpression: string) {
   if (!isAddress(campaignContractAddress)) {
     addErrorToast('please provide valid campaign address')
+    isLoading.value = false
   } else {
     isLoading.value = true
     const result = await addCamapaignService.setCostPerImpression(
@@ -110,7 +129,10 @@ async function setCostPerImpression(campaignContractAddress: string, costPerImpr
       addSuccessToast('cost per impression updated successfully')
       isLoading.value = false
 
-      originalCostPerImpression.value = parseFloat(costPerImpression)
+      //originalCostPerImpression.value = parseFloat(costPerImpression)
+      originalValues.value = Object.fromEntries(
+        (props.datas ?? []).map((data) => [data.key, parseFloat(data.value || '0')])
+      )
     } else {
       addErrorToast('set costPerImpression failed please try again')
       isLoading.value = false
@@ -119,22 +141,33 @@ async function setCostPerImpression(campaignContractAddress: string, costPerImpr
 }
 
 async function submit() {
-  const updatedDatas = [...props.datas]
-  const costPerClick = updatedDatas.find((data) => data.key === 'costPerClick')?.value
-  const costPerImpression = updatedDatas.find((data) => data.key === 'costPerImpression')?.value
+  try {
+    originalCostPerClick.value = getOriginalValue('costPerClick')
+    originalCostPerImpression.value = getOriginalValue('costPerImpression')
+    const updatedDatas = [...props.datas]
+    const costPerClick = updatedDatas.find((data) => data.key === 'costPerClick')?.value
+    const costPerImpression = updatedDatas.find((data) => data.key === 'costPerImpression')?.value
 
-  console.log('Cost Per Click:', costPerClick)
-  console.log('Original Cost Per Click:', originalCostPerClick.value)
-  console.log('Cost Per Impression:', costPerImpression)
-
-  console.log('Original Cost Per Impression:', originalCostPerImpression.value)
-  if (costPerClick && costPerImpression && originalCostPerClick && originalCostPerImpression) {
-    if (originalCostPerClick.value != parseFloat(costPerClick)) {
-      await setCostPerClick(props.contractAddress, costPerClick)
+    if (costPerClick && costPerImpression && originalCostPerClick && originalCostPerImpression) {
+      if (originalCostPerClick.value != parseFloat(costPerClick)) {
+        if (parseFloat(costPerClick) <= 0) {
+          addErrorToast('Cost per click should be greater than 0')
+          return
+        }
+        await setCostPerClick(props.contractAddress, costPerClick)
+      }
+      if (originalCostPerImpression.value != parseFloat(costPerImpression)) {
+        if (parseFloat(costPerImpression) <= 0) {
+          addErrorToast('Cost per impression should be greater than 0')
+          return
+        }
+        await setCostPerImpression(props.contractAddress, costPerImpression)
+      }
     }
-    if (originalCostPerImpression.value != parseFloat(costPerImpression)) {
-      await setCostPerImpression(props.contractAddress, costPerClick)
-    }
+  } catch (error) {
+    addErrorToast('An error occurred while updating the costs. Please try again.')
+    console.error('Error:', error)
+    isLoading.value = false
   }
 }
 

@@ -270,6 +270,7 @@ useWatchContractEvent({
       loading.value = false
       return
     }
+
     if (!props.createdTeamData.id) {
       log.error('No team data found')
       addErrorToast('No team data found')

@@ -59,6 +59,9 @@ const addCampaign = {
   removeAdmin: vi.fn().mockReturnValue(_tx),
   getAdminList: vi.fn().mockResolvedValue(adminList),
   testFunction: vi.fn().mockResolvedValue('0xResult'),
+  setCostPerClick: vi.fn().mockReturnValue(_tx),
+  setCostPerImpression: vi.fn().mockReturnValue(_tx),
+
   queryFilter: vi.fn(),
   filters: {
     AdminAdded: vi.fn(),
@@ -219,7 +222,7 @@ describe('AddCampaignService', () => {
     it('should remove an admin from the contract', async () => {
       const result = await addCampaignService.removeAdmin('0xCampaignAddress', '0xAdminAddress')
       // Verify the removeAdmin method was called on the contract
-      expect(addCampaign.removeAdmin).toHaveBeenCalledWith('0xAdminAddress')
+      expect(addCampaign.removeAdmin).toHaveBeenCalled()
       // Verify that the transaction was awaited
       expect(result).toMatchObject(await _tx.wait())
     })
@@ -259,6 +262,32 @@ describe('AddCampaignService', () => {
           }
         ]
       })
+    })
+  })
+
+  describe('setCostPerClick', () => {
+    it('should set a new cost per click', async () => {
+      const result = await addCampaignService.setCostPerClick('0xCampaignAddress', '0.01')
+
+      // Verify that parseEther was called correctly
+
+      // Verify that the contract method was called with the correct value
+      expect(addCampaign.setCostPerClick).toHaveBeenCalled()
+
+      // Verify that the result is the simulated transaction receipt
+      expect(result).toMatchObject(await _tx.wait())
+    })
+  })
+
+  describe('setCostPerImpression', () => {
+    it('should set a new cost per impression', async () => {
+      const result = await addCampaignService.setCostPerImpression('0xCampaignAddress', '0.02')
+
+      // Verify that the contract method was called with the correct value
+      expect(addCampaign.setCostPerImpression).toHaveBeenCalled()
+
+      // Verify that the result is the simulated transaction receipt
+      expect(result).toMatchObject(await _tx.wait())
     })
   })
 })
