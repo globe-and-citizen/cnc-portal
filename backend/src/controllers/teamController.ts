@@ -467,22 +467,6 @@ const buildFilterMember = (queryParams: Request["query"]) => {
   return filterQuery;
 };
 
-const handlePendingClaimUpdate = async (
-  claimId: number,
-  hoursWorked: string
-) => {
-  await prisma.claim.update({
-    where: { id: Number(claimId) },
-    data: { hoursWorked: Number(hoursWorked) },
-  });
-};
-
-const handleApprovedClaim = async (claimId: number) => {
-  await prisma.claim.update({
-    where: { id: Number(claimId) },
-    data: { status: "withdrawn" },
-  });
-};
 
 export const addContracts = async (req: Request, res: Response) => {
   const { id } = req.params;
