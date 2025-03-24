@@ -61,4 +61,6 @@ describe('NavBar', () => {
     })
   })
 
+  // TODO: click on logout 
+
 })
