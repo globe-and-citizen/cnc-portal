@@ -1,0 +1,19 @@
+meta {
+  name: Submit Claim
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:3000/api/claim/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "hoursWorked": 1,
+    "teamId": 1
+  }
+  
+}
