@@ -38,7 +38,7 @@
           :loading="memberIsDeleting"
           :disabled="memberIsDeleting"
           variant="error"
-          @click="executeDeleteMember()"
+          @click="deleteMember()"
           data-test="delete-member-confirm-button"
           >Delete</ButtonUI
         >
@@ -120,13 +120,14 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables'
-import { useToastStore } from '@/stores'
+import { useTeamStore, useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { TrashIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
+const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
 const props = defineProps<{
@@ -173,36 +174,42 @@ const {
   .delete()
   .json()
 
+const deleteMember = async (): Promise<void> => {
+  await executeDeleteMember()
+  if (deleteMemberStatusCode.value === 204) {
+    addSuccessToast('Member deleted successfully')
+    showDeleteMemberConfirmModal.value = false
+    teamStore.fetchTeam(String(props.teamId))
+  }
+}
 const {
   error: addMemberWageDataError,
   isFetching: isMemberWageSaving,
   statusCode: addMemberWageDataStatusCode,
   execute: addMemberWageDataAPI
-} = useCustomFetch(`teams/${props.teamId}/member/${props.member.address}/setWage`, {
+} = useCustomFetch('/wage/setWage', {
   immediate: false
 })
-  .put(wageData)
+  .put(() => ({
+    teamId: props.teamId,
+    userAddress: props.member.address,
+    cashRatePerHour: wageData.value.hourlyRate,
+    tokenRatePerHour: wageData.value.hourlyRate,
+    maximumHoursPerWeek: wageData.value.maxWeeklyHours
+  }))
   .json()
 
-watch(deleteMemberStatusCode, () => {
-  if (deleteMemberStatusCode.value === 204) {
-    addSuccessToast('Member deleted successfully')
-    showDeleteMemberConfirmModal.value = false
-  }
-})
-
-watch(addMemberWageDataStatusCode, () => {
-  if (addMemberWageDataStatusCode.value === 200) {
-    addSuccessToast('Member wage data set successfully')
-    showSetMemberWageModal.value = false
-  }
-})
 const addMemberWageData = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
   await addMemberWageDataAPI()
+  if (addMemberWageDataStatusCode.value === 201) {
+    addSuccessToast('Member wage data set successfully')
+    teamStore.fetchTeam(String(props.teamId))
+    showSetMemberWageModal.value = false
+  }
 }
 </script>
 
