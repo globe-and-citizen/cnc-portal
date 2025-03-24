@@ -101,16 +101,7 @@ templates:
       language: wasm/assemblyscript
       file: ./src/bank.ts
       entities:
-        - Transfer
-        - Deposited
-        - TokenTransfer
-        - TokenDeposited
-        - PushTip
-        - PushTokenTip
-        - SendTip
-        - SendTokenTip
-        - TipsAddressChanged
-        - TokenAddressChanged
+        - Transaction
       abis:
         - name: Bank
           file: ./abis/Bank.json
