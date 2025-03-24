@@ -67,6 +67,7 @@ dataSources:
 templates:
   - name: ExpenseAccountEIP712
     kind: ethereum/contract
+    network: localhost
     source:
       abi: ExpenseAccountEIP712
     mapping:
@@ -92,7 +93,7 @@ templates:
           handler: habdleTokenDeposited
   - name: Bank
     kind: ethereum
-    network: mainnet
+    network: localhost
     source:
       abi: Bank
     mapping:
