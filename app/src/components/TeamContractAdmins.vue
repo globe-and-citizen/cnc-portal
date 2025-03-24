@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { isAddress } from 'viem'
 import { useToastStore } from '@/stores/useToastStore'
 import { AddCampaignService } from '@/services/AddCampaignService'

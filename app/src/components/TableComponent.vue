@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits, ref } from 'vue'
+import { computed, defineEmits, ref } from 'vue'
 import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
 import type { PropType } from 'vue'
 

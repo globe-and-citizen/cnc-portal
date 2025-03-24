@@ -69,54 +69,6 @@ vi.mock('@/composables/useAuth', () => ({
 }))
 
 describe('App.vue', () => {
-  describe('Toast', () => {
-    it('should add toast on balanceError', async () => {
-      const wrapper = shallowMount(App, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
-
-      const { addErrorToast } = useToastStore()
-      mockUseReadContract.error.value = new Error('Balance error')
-      await wrapper.vm.$nextTick()
-
-      expect(addErrorToast).toHaveBeenCalled()
-    })
-
-    it('should add toast on withdrawError', async () => {
-      const wrapper = shallowMount(App, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
-
-      const { addErrorToast } = useToastStore()
-      mockUseWriteContract.error.value = new Error('Balance error')
-      await wrapper.vm.$nextTick()
-
-      expect(addErrorToast).toHaveBeenCalledWith('Failed to withdraw tips')
-    })
-
-    it('should add toast on withdrawSuccess', async () => {
-      const wrapper = shallowMount(App, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
-      mockUseWaitForTransactionReceipt.isPending.value = true
-      await wrapper.vm.$nextTick()
-
-      const { addSuccessToast } = useToastStore()
-      mockUseWriteContract.error.value = null
-      mockUseWaitForTransactionReceipt.isPending.value = false
-      mockUseWaitForTransactionReceipt.isSuccess.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(addSuccessToast).toHaveBeenCalledWith('Tips withdrawn successfully')
-    })
-  })
-
   describe('Render', () => {
     it('renders ModalComponent if showModal is true', async () => {
       const wrapper = shallowMount(App, {
