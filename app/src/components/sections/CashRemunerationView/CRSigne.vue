@@ -84,10 +84,11 @@ const approveClaim = async (claim: ClaimResponse) => {
     log.error('Failed to sign claim', typedError.message)
     let errorMessage = 'Failed to sign claim'
     if (typedError.message.includes('User rejected the request')) {
-    if (typedError.message.includes('User rejected the request')) {
-      errorMessage = 'User rejected the request'
+      if (typedError.message.includes('User rejected the request')) {
+        errorMessage = 'User rejected the request'
+      }
+      toastStore.addErrorToast(errorMessage)
     }
-    toastStore.addErrorToast(errorMessage)
   }
   if (signature.value) {
     await executeUpdateClaim()
