@@ -92,7 +92,6 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
 vi.mock('@/stores/user')
 vi.mock('@/stores/useToastStore')
 
-
 interface ComponentData {
   withdrawLoading: {
     [key: string]: boolean

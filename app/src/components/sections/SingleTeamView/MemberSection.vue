@@ -25,9 +25,11 @@
       <div class="divider m-0"></div>
       <div class="overflow-x-auto">
         <TableComponent
-          :rows="teamStore.currentTeam?.members.map((member: any, index: number) => {
+          :rows="
+            teamStore.currentTeam?.members.map((member: any, index: number) => {
               return { index: index + 1, ...member }
-            })"
+            })
+          "
           :loading="teamStore.currentTeamMeta?.teamIsFetching"
           :columns="columns"
           data-test="members-table"

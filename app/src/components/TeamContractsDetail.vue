@@ -21,7 +21,6 @@
 </template>
 
 <script setup lang="ts">
-
 defineProps<{
   datas: Array<{ key: string; value: string }>
 }>()
