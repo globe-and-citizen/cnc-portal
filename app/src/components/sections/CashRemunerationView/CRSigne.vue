@@ -80,9 +80,11 @@ const approveClaim = async (claim: ClaimResponse) => {
       primaryType: 'WageClaim'
     })
   } catch (error) {
-    log.error('Failed to sign claim', error.message)
+    const typedError = error as { message: string }
+    log.error('Failed to sign claim', typedError.message)
     let errorMessage = 'Failed to sign claim'
-    if (error.message.includes('User rejected the request')) {
+    if (typedError.message.includes('User rejected the request')) {
+    if (typedError.message.includes('User rejected the request')) {
       errorMessage = 'User rejected the request'
     }
     toastStore.addErrorToast(errorMessage)
