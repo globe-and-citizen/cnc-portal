@@ -16,7 +16,7 @@ import {
   Paused,
   Unpaused
 } from '../generated/schema'
-import { ExpenseAccountEIP712 } from '../generated/templates'
+import { CashRemunerationEIP712, ExpenseAccountEIP712 } from '../generated/templates'
 import { Bytes, log } from '@graphprotocol/graph-ts'
 
 export function handleBeaconConfigured(event: BeaconConfiguredEvent): void {
@@ -43,15 +43,21 @@ export function handleBeaconProxiesDeployed(event: BeaconProxiesDeployedEvent): 
 }
 
 export function handleContractDeployed(event: ContractDeployedEvent): void {
-  if (event.params.contractType == 'ExpenseAccountEIP712') {
-    log.info('Creating ExpenseAccountEIP712 template for address: {}', [
-      event.params.deployedAddress.toHexString()
+  if (event.params.contractType == "ExpenseAccountEIP712") {
+    log.info("Creating ExpenseAccountEIP712 template for address: {}", [
+      event.params.deployedAddress.toHexString(),
     ])
     ExpenseAccountEIP712.create(event.params.deployedAddress)
-  } else
-    log.info("Contract deployed is not 'ExpenseAccountEIP712' but, '{}'", [
-      event.params.contractType
+  } else if (event.params.contractType == "CashRemunerationEIP712") {
+    log.info("Creating CashRemunerationEIP712 template for address: {}", [
+      event.params.deployedAddress.toHexString(),
     ])
+    CashRemunerationEIP712.create(event.params.deployedAddress)
+  } else {
+    log.info("Contract deployed is not supported: {}", [
+      event.params.contractType.toString(),
+    ])
+  }  
 
   // let entity = new ContractDeployed(event.transaction.hash.concatI32(event.logIndex.toI32()))
   let entity = new ContractDeployed(event.params.deployedAddress)
