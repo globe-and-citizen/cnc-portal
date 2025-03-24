@@ -31,17 +31,6 @@
                 showModal = true
               }
             "
-            @withdraw="
-              withdraw({
-                abi: TIPS_ABI,
-                address: TIPS_ADDRESS as Address,
-                functionName: 'withdraw'
-              })
-            "
-            :withdrawLoading="withdrawLoading && isConfirmingWithdraw"
-            @getBalance="refetchBalance()"
-            :balance="balance ? formatEther(balance as bigint).toString() : '0'"
-            :balanceLoading="balanceLoading"
           />
           <div class="w-full p-5 md:p-10">
             <RouterView />
@@ -93,15 +82,7 @@ import EditUserForm from '@/components/forms/EditUserForm.vue'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
 import { useCustomFetch } from './composables/useCustomFetch'
-import {
-  useAccount,
-  useReadContract,
-  useWaitForTransactionReceipt,
-  useWriteContract
-} from '@wagmi/vue'
-import TIPS_ABI from '@/artifacts/abi/tips.json'
-import { TIPS_ADDRESS } from './constant'
-import { formatEther, type Address } from 'viem'
+import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
 
@@ -113,32 +94,8 @@ const { logout } = useAuth()
 const toggleSide = ref(false)
 const showModal = ref(false)
 
-const {
-  isPending: withdrawLoading,
-  error: withdrawError,
-  writeContract: withdraw,
-  data: withdrawHash
-} = useWriteContract()
-
-const { isPending: isConfirmingWithdraw, isSuccess: isSuccessConfirmed } =
-  useWaitForTransactionReceipt({
-    hash: withdrawHash
-  })
-
 const userStore = useUserDataStore()
 const { name, address } = storeToRefs(userStore)
-
-const {
-  data: balance,
-  isLoading: balanceLoading,
-  error: balanceError,
-  refetch: refetchBalance
-} = useReadContract({
-  abi: TIPS_ABI,
-  address: TIPS_ADDRESS as Address,
-  functionName: 'getBalance',
-  args: [address.value as Address]
-})
 
 const updateUserInput = ref({
   name: name.value,
@@ -179,20 +136,6 @@ watch([() => userIsUpdating.value, () => userUpdateError.value], () => {
   }
 })
 
-watch(balanceError, () => {
-  if (balanceError.value) {
-    addErrorToast('Failed to Get balance')
-  }
-})
-watch(withdrawError, () => {
-  addErrorToast('Failed to withdraw tips')
-})
-
-watch(isConfirmingWithdraw, (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isSuccessConfirmed.value) {
-    addSuccessToast('Tips withdrawn successfully')
-  }
-})
 watch(isDisconnected, (value) => {
   if (value && userStore.isAuth) {
     addErrorToast('Disconnected from wallet')
