@@ -15,6 +15,7 @@ import {
   // getClaim,
   addContracts,
 } from "../controllers/teamController";
+import { syncContracts } from "../controllers/contractController";
 
 import {
   deleteMember,
@@ -43,5 +44,7 @@ teamRoutes.get("/:id/expense-data", getExpenseAccountData);
 // teamRoutes.get("/:id/cash-remuneration/claim", getClaim);
 
 teamRoutes.post("/:id/add-contracts", addContracts);
+
+teamRoutes.put("/contract/sync", syncContracts)
 
 export default teamRoutes;
