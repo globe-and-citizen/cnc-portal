@@ -103,6 +103,7 @@ templates:
       entities:
         - Withdraw
         - Deposited
+        - Transaction
       abis:
         - name: CashRemunerationEIP712
           file: ./abis/CashRemunerationEIP712.json
