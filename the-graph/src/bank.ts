@@ -1,15 +1,6 @@
 import { BigInt, Bytes, Address } from "@graphprotocol/graph-ts";
 import {
-  Transfer,
-  Deposited,
-  TokenTransfer,
-  TokenDeposited,
-  PushTip,
-  PushTokenTip,
-  SendTip,
-  SendTokenTip,
-  TipsAddressChanged,
-  TokenAddressChanged,
+  Transaction
 } from "../generated/schema";
 import {
   Transfer as TransferEvent,
