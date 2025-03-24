@@ -85,7 +85,7 @@
         >
       </template>
       <template #maxAmountPerTx-data="{ row }">
-        <span>{{ row.budgetData[2].value }} {{ tokenSymbol(row.tokenAddress) }}</span>
+        <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
       <template #transactions-data="{ row }">
         <span>{{ row.balances[0] }}/{{ row.budgetData[0].value }}</span>
