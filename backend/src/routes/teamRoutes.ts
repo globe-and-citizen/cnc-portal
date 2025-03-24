@@ -7,19 +7,18 @@ import {
   getAllTeams,
   addExpenseAccountData,
   getExpenseAccountData,
-  addClaim,
+  // addClaim,
   // approveClaim,
-  deleteClaim,
-  updateClaim,
-  getClaims,
-  getClaim,
+  // deleteClaim,
+  // updateClaim,
+  // getClaims,
+  // getClaim,
   addContracts,
 } from "../controllers/teamController";
 
 import {
   deleteMember,
   addMembers,
-  setEmployeeWage,
 } from "../controllers/memberController";
 const teamRoutes = express.Router();
 
@@ -34,17 +33,14 @@ teamRoutes.delete("/:id", deleteTeam);
 teamRoutes.post("/:id/member", addMembers);
 teamRoutes.delete("/:id/member/:memberAddress", deleteMember);
 
-// Team Member actions routes
-teamRoutes.put("/:id/member/:memberAddress/setWage", setEmployeeWage);
-
 teamRoutes.post("/:id/expense-data", addExpenseAccountData);
 teamRoutes.get("/:id/expense-data", getExpenseAccountData);
-teamRoutes.post("/:id/cash-remuneration/claim", addClaim);
-teamRoutes.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
-// teamRoutes.put("/:id/cash-remuneration/claim/approve", approveClaim)
-teamRoutes.delete("/:id/cash-remuneration/claim", deleteClaim);
-teamRoutes.get("/:id/cash-remuneration/claim/:status", getClaims);
-teamRoutes.get("/:id/cash-remuneration/claim", getClaim);
+// teamRoutes.post("/:id/cash-remuneration/claim", addClaim);
+// teamRoutes.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
+// // teamRoutes.put("/:id/cash-remuneration/claim/approve", approveClaim)
+// teamRoutes.delete("/:id/cash-remuneration/claim", deleteClaim);
+// teamRoutes.get("/:id/cash-remuneration/claim/:status", getClaims);
+// teamRoutes.get("/:id/cash-remuneration/claim", getClaim);
 
 teamRoutes.post("/:id/add-contracts", addContracts);
 
