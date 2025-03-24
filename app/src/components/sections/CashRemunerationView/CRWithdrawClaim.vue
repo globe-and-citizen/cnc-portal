@@ -41,9 +41,12 @@ const { isSuccess: withdrawSuccess, error: withdrawTrxError } = useWaitForTransa
   hash: withdrawHash
 })
 
-const { execute: updateClaimStatus } = useCustomFetch(`/claim/${props.claim.id}/widrawn`, {
-  immediate: false
-})
+const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(
+  `/claim/${props.claim.id}/?action=withdraw`,
+  {
+    immediate: false
+  }
+)
   .put()
   .json()
 
@@ -99,8 +102,8 @@ const withdrawClaim = async () => {
   }
   await updateClaimStatus()
 
-  if (withdrawError.value) {
-    toastStore.addErrorToast('Failed to withdraw claim')
+  if (updateClaimError.value) {
+    toastStore.addErrorToast('Failed to update Claim status')
   }
 
   // chek if claim is updated
