@@ -1,8 +1,30 @@
 {
+  "localhost": {
+    "OfficerFactoryBeacon": {
+      "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+      "startBlock": 1
+    },
+    "USDC": {
+      "address": "0x59b670e9fA9D0A427751Af201D676719a970857b",
+      "startBlock": 1
+    },
+    "USDT": {
+      "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+      "startBlock": 1
+    }
+  },
   "sepolia": {
-    "Officer": {
-      "address": "0x850D9800196d0C71963814Dce2B96E85379A35DD",
-      "startBlock": 7762576
+    "OfficerFactoryBeacon": {
+      "address": "0x27BE236532d460c7402E5015318eEEB6913bde77",
+      "startBlock": 7495217
+    },
+    "USDC": {
+      "address": "0x165B4A414297693551e3372c3dF744361488066e",
+      "startBlock": 7495217
+    },
+    "USDT": {
+      "address": "0xC755875f30ceE081C384246E2952cC61378eE8Bc",
+      "startBlock": 7495217
     }
   }
 }
