@@ -21,7 +21,9 @@ vi.mock('@/artifacts/deployed_addresses/chain-11155111.json', () => ({
     'InvestorsV1BeaconModule#Beacon': '0xe567',
     'InvestorsV1BeaconModule#InvestorV1': '0xf678',
     'CashRemunerationEIP712Module#FactoryBeacon': '0xe567',
-    'CashRemunerationEIP712Module#CashRemunerationEIP712': '0xf678'
+    'CashRemunerationEIP712Module#CashRemunerationEIP712': '0xf678',
+    'MockTokens#USDC': '0xabcd',
+    'MockTokens#USDT': '0xbcde'
   }
 }))
 
@@ -85,7 +87,7 @@ describe('Contract Address Resolution', () => {
     })
 
     describe('TOKEN_ADDRESSES', () => {
-      it('should use hardcoded addresses for Sepolia network', () => {
+      it('should use mock addresses for Sepolia network', () => {
         // Mock network to return Sepolia chain ID
         vi.spyOn(networkModule, 'getNetwork').mockReturnValue({
           chainId: '0xaa36a7', // 11155111 in hex
@@ -95,8 +97,8 @@ describe('Contract Address Resolution', () => {
         })
 
         expect(TOKEN_ADDRESSES[11155111]).toEqual({
-          USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-          USDT: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06'
+          USDC: '0xabcd',
+          USDT: '0xbcde'
         })
       })
 
