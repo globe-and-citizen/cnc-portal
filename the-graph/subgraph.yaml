@@ -135,7 +135,6 @@ templates:
           handler: handleTipsAddressChanged
         - event: TokenAddressChanged(indexed address,string,indexed address,indexed address)
           handler: handleTokenAddressChanged
-    network: localhost
   - name: Officer
     kind: ethereum
     source:
