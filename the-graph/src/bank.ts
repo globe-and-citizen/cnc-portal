@@ -16,12 +16,6 @@ import {
   Deposited as DepositedEvent,
   TokenTransfer as TokenTransferEvent,
   TokenDeposited as TokenDepositedEvent,
-  PushTip as PushTipEvent,
-  PushTokenTip as PushTokenTipEvent,
-  SendTip as SendTipEvent,
-  SendTokenTip as SendTokenTipEvent,
-  TipsAddressChanged as TipsAddressChangedEvent,
-  TokenAddressChanged as TokenAddressChangedEvent,
 } from "../generated/templates/Bank/Bank";
 import { getOrCreateTransaction } from "./utils";
 
