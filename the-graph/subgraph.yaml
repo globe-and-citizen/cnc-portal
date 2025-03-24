@@ -6,10 +6,10 @@ schema:
 dataSources:
   - kind: ethereum
     name: OfficerFactoryBeacon
-    network: mainnet
+    network: localhost
     source:
-      address: '0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE'
       abi: OfficerFactoryBeacon
+      address: "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE"
       startBlock: 1
     mapping:
       kind: ethereum/events
@@ -26,10 +26,10 @@ dataSources:
       file: ./src/officerFactoryBeacon.ts
   - kind: ethereum
     name: USDC
-    network: mainnet
+    network: localhost
     source:
-      address: '0x59b670e9fA9D0A427751Af201D676719a970857b'
       abi: ERC20
+      address: "0x59b670e9fA9D0A427751Af201D676719a970857b"
       startBlock: 1
     mapping:
       kind: ethereum/events
@@ -46,10 +46,10 @@ dataSources:
       file: ./src/erc20.ts
   - kind: ethereum
     name: USDT
-    network: mainnet
+    network: localhost
     source:
-      address: '0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1'
       abi: ERC20
+      address: "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1"
       startBlock: 1
     mapping:
       kind: ethereum/events
@@ -67,7 +67,6 @@ dataSources:
 templates:
   - name: ExpenseAccountEIP712
     kind: ethereum/contract
-    network: mainnet
     source:
       abi: ExpenseAccountEIP712
     mapping:
@@ -91,9 +90,9 @@ templates:
           handler: handleTokenTransfer
         - event: TokenDeposited(indexed address,indexed address,uint256)
           handler: habdleTokenDeposited
+    network: localhost
   - name: Officer
     kind: ethereum
-    network: mainnet
     source:
       abi: Officer
     mapping:
@@ -128,3 +127,4 @@ templates:
         - event: Unpaused(address)
           handler: handleUnpaused
       file: ./src/officer.ts
+    network: localhost
