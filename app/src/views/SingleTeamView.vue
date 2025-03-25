@@ -69,7 +69,6 @@
         <template #tab-1>
         </template>
         <template #tab-2>
-          <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
         </template>
         <template #tab-3>
           <ProposalSection
@@ -118,7 +117,6 @@ import OfficerForm from '@/components/forms/OfficerForm.vue'
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
-import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
