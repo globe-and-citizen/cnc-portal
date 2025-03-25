@@ -15,16 +15,16 @@
   },
   "sepolia": {
     "OfficerFactoryBeacon": {
-      "address": "0x27BE236532d460c7402E5015318eEEB6913bde77",
-      "startBlock": 7495217
+      "address": "0xad154BF180D694050843Bd094af69e9d3bf7eA40",
+      "startBlock": 7970003
     },
     "USDC": {
-      "address": "0x165B4A414297693551e3372c3dF744361488066e",
-      "startBlock": 7495217
+      "address": "0x63E5b84cCE0cf6c1a1C78055bD8bb2Fc82B1Ff8e",
+      "startBlock": 7970003
     },
     "USDT": {
-      "address": "0xC755875f30ceE081C384246E2952cC61378eE8Bc",
-      "startBlock": 7495217
+      "address": "0xF1FbA289d63f563d5cbe2F122FE0126853758ffA",
+      "startBlock": 7970003
     }
   }
 }
