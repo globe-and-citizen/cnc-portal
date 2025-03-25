@@ -508,7 +508,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
           admins: []
         }
       ],
-      ownerAddress: '0xOwner',
+      ownerAddress: '0xOwner'
     }
     await flushPromises()
     wrapperVm.transferModal = true

@@ -81,7 +81,6 @@ describe.skip('VotingManagement', () => {
               type: 'BoardOfDirectors',
               deployer: '0xdeployeraddress'
             }
-          
           ]
         }
       },

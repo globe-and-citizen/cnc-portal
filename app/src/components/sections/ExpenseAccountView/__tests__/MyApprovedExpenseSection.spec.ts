@@ -269,8 +269,8 @@ describe('ExpenseAccountSection', () => {
         // @ts-expect-error: not declared in test interface but available in component
         team: {
           id: '1',
-          name: "Team Name",
-          description: "Team Description",
+          name: 'Team Name',
+          description: 'Team Description',
           members: [],
           teamContracts: [
             {

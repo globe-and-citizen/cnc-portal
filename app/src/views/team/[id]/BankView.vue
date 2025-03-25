@@ -23,7 +23,12 @@ import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useCurrencyRates } from '@/composables/useCurrencyRates'
 
 const teamStore = useTeamStore()
-const typedBankAddress = computed(() => teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Bank')?.address as Address | undefined)
+const typedBankAddress = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Bank')?.address as
+      | Address
+      | undefined
+)
 const bankBalanceSection = ref<InstanceType<typeof BankBalanceSection> | null>(null)
 
 // Map network currency symbol to CoinGecko ID - always use ethereum price for testnets

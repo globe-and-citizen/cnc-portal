@@ -41,7 +41,9 @@ export const useExpenseAccountDataCollection = () => {
       for (const expenseAccountData of manyExpenseAccountData.value) {
         const amountWithdrawn = await readContract(config, {
           functionName: 'balances',
-          address: team.value.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address as Address,
+          address: team.value.teamContracts.find(
+            (contract) => contract.type === 'ExpenseAccountEIP712'
+          )?.address as Address,
           abi: expenseAccountABI,
           args: [keccak256(expenseAccountData.signature)]
         })

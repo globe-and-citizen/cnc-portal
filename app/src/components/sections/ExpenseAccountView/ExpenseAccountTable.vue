@@ -120,7 +120,9 @@ const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 
 const expenseAccountEip712Address = computed(
-  () => team.teamContracts?.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address as Address
+  () =>
+    team.teamContracts?.find((contract) => contract.type === 'ExpenseAccountEIP712')
+      ?.address as Address
 )
 const columns = [
   {

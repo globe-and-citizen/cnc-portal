@@ -50,7 +50,7 @@ describe('InvestorsSection', () => {
             { id: '1', address: '0x123', name: 'John Doe', teamId: 1 },
             { id: '2', address: '0x456', name: 'Jane Doe', teamId: 1 }
           ],
-          description: '',
+          description: ''
         }
       },
       global: {

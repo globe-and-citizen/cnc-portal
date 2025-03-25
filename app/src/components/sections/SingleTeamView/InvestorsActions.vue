@@ -90,8 +90,7 @@ const props = defineProps<{
 
 const investorsAddress = computed(
   () =>
-    props.team.teamContracts.find((contract) => contract.type === 'InvestorsV1')
-      ?.address as Address
+    props.team.teamContracts.find((contract) => contract.type === 'InvestorsV1')?.address as Address
 )
 const {
   data: mintHash,
@@ -130,7 +129,8 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
 const executePayDividends = (value: bigint) => {
   payDividends({
     abi: BANK_ABI,
-    address: props.team.teamContracts.find((contract) => contract.type === 'Bank')?.address as Address,
+    address: props.team.teamContracts.find((contract) => contract.type === 'Bank')
+      ?.address as Address,
     functionName: 'transfer',
     args: [investorsAddress.value, value]
   })

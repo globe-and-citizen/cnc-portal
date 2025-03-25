@@ -29,7 +29,10 @@ import type { Address } from 'viem'
 const teamStore = useTeamStore()
 
 const contractAddress = computed(
-  () => teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address as Address
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
 )
 
 const { result, error } = useQuery(

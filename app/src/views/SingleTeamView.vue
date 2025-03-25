@@ -18,7 +18,6 @@
         </div>
       </div>
 
-
       <ModalComponent v-model="addCampaignModal">
         <CreateAddCamapaign
           @create-add-campaign="deployAddCampaignContract"
@@ -32,10 +31,8 @@
             <TeamSection :team="team" :teamIsFetching="teamIsFetching" @getTeam="getTeamAPI" />
           </div>
         </template>
-        <template #tab-1>
-        </template>
-        <template #tab-2>
-        </template>
+        <template #tab-1> </template>
+        <template #tab-2> </template>
         <template #tab-3>
           <ProposalSection
             v-if="activeTab == 3"
@@ -76,7 +73,6 @@ import { useUserDataStore } from '@/stores/user'
 // Composables
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
-
 //Components
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -84,7 +80,7 @@ import TabNavigation from '@/components/TabNavigation.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
-import { type TeamContract,  type User, SingleTeamTabs } from '@/types'
+import { type TeamContract, type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'

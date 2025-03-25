@@ -150,7 +150,9 @@ const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immedi
 //#endregion Computed Values
 
 const expenseAccountEip712Address = computed(
-  () => team.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address as Address
+  () =>
+    team.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+      ?.address as Address
 )
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')

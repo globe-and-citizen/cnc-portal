@@ -38,10 +38,7 @@
   <div class="flex sm:flex-row justify-end sm:items-start">
     <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
       <span class="text-sm">Expense Account Address </span>
-      <AddressToolTip
-        :address="expenseAccountEip712Address ?? ''"
-        class="text-xs"
-      />
+      <AddressToolTip :address="expenseAccountEip712Address ?? ''" class="text-xs" />
     </div>
   </div>
 </template>
@@ -64,7 +61,10 @@ import uptrendIcon from '@/assets/uptrend.svg'
 const teamStore = useTeamStore()
 const chainId = useChainId()
 const expenseAccountEip712Address = computed(
-  () => teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address as Address
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
 )
 const {
   data: networkCurrencyBalance,

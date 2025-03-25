@@ -123,7 +123,8 @@ const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForT
 const mintToken = (address: Address, amount: string) => {
   mint({
     abi: INVESTOR_ABI,
-    address: props.team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')?.address as Address,
+    address: props.team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
+      ?.address as Address,
     functionName: 'individualMint',
     args: [address, parseEther(amount)]
   })

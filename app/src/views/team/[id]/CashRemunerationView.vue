@@ -6,15 +6,27 @@
       <div class="flex flex-wrap gap-2 sm:gap-4">
         <span class="text-sm">Contract Address </span>
         <AddressToolTip
-          :address="teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address ?? ''"
+          :address="
+            teamStore.currentTeam?.teamContracts.find(
+              (contract) => contract.type === 'ExpenseAccountEIP712'
+            )?.address ?? ''
+          "
           class="text-sm font-bold"
         />
       </div>
     </div>
 
     <GenericTokenHoldingsSection
-      v-if="teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'CashRemunerationEIP712')"
-      :address="teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'CashRemunerationEIP712')?.address ?? ''"
+      v-if="
+        teamStore.currentTeam?.teamContracts.find(
+          (contract) => contract.type === 'CashRemunerationEIP712'
+        )
+      "
+      :address="
+        teamStore.currentTeam?.teamContracts.find(
+          (contract) => contract.type === 'CashRemunerationEIP712'
+        )?.address ?? ''
+      "
     />
 
     <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" />
