@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
-import { Address } from "viem";
+import { Address, getContract } from "viem";
 import { isOwnerOfTeam } from "./wageController";
 import { errorResponse, prisma } from "../utils";
 import publicClient from "../utils/viem.config";
@@ -33,17 +33,41 @@ export const syncContracts = async (req: Request, res: Response) => {
       functionName: "getTeam",
     })) as { contractType: string; contractAddress: string }[];
 
-    prisma.teamContract.createMany({
-      data: contracts.map((contract) => ({
+    // Format the contracts to be created
+    const contractsToCreate: Prisma.TeamContractCreateManyInput[] =
+      contracts.map((contract) => ({
         teamId: teamId,
         address: contract.contractAddress,
         type: contract.contractType,
         deployer: callerAddress,
-      })),
+      }));
+    const createdContract = await prisma.teamContract.createMany({
+      data: contractsToCreate,
       skipDuplicates: true,
     });
 
+    if (createdContract.count === 0) {
+      return errorResponse(400, "No new contracts Created", res);
+    }
     // TODO: manage geting the owner of the contract directly from the contract with other metadata
+    return res.status(200).json(createdContract);
+  } catch (error) {
+    console.log("Error: ", error);
+    return errorResponse(500, "Internal server error", res);
+  }
+};
+
+export const getContracts = async (req: Request, res: Response) => {
+  const teamId = Number(req.params.teamId);
+  try {
+    // TODO restrict access to the team members
+    const contracts = await prisma.teamContract.findMany({
+      where: { teamId: Number(teamId) },
+    });
+    // If no contracts are found, return a 404 error
+    if (contracts.length === 0) {
+      return errorResponse(404, "Team or contracts not found", res);
+    }
     return res.status(200).json(contracts);
   } catch (error) {
     console.log("Error: ", error);
