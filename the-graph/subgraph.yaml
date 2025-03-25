@@ -129,7 +129,6 @@ templates:
         - Withdraw
         - Deposited
         - Transaction
-        - Transafer
       abis:
         - name: CashRemunerationEIP712
           file: ./abis/CashRemunerationEIP712.json
