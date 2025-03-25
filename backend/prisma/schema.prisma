@@ -113,7 +113,6 @@ model TeamContract {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([teamId, type]) // This will prevent a team from having multiple contracts of the same type
   @@index([address])
 }
 
