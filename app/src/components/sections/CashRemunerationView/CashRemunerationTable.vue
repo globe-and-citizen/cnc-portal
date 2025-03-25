@@ -101,7 +101,9 @@ const selectedRadio = ref('all')
 
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
-const statusUrl = computed(() => selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`)
+const statusUrl = computed(() =>
+  selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`
+)
 const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
 
 const {
