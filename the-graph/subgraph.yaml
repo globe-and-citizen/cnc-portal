@@ -67,6 +67,7 @@ dataSources:
 templates:
   - name: ExpenseAccountEIP712
     kind: ethereum/contract
+    network: sepolia
     source:
       abi: ExpenseAccountEIP712
     mapping:
@@ -90,7 +91,30 @@ templates:
           handler: handleTokenTransfer
         - event: TokenDeposited(indexed address,indexed address,uint256)
           handler: habdleTokenDeposited
+  - name: Bank
+    kind: ethereum
     network: sepolia
+    source:
+      abi: Bank
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/bank.ts
+      entities:
+        - Transaction
+      abis:
+        - name: Bank
+          file: ./abis/Bank.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Deposited(indexed address,uint256)
+          handler: handleDeposited
+        - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
+          handler: handleTokenTransfer
+        - event: TokenDeposited(indexed address,indexed address,uint256)
+          handler: handleTokenDeposited
   - name: Officer
     kind: ethereum
     source:
