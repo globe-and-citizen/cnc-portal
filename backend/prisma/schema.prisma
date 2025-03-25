@@ -35,14 +35,7 @@ model Team {
   ownerAddress                  String
   description                   String?
   name                          String                   @unique
-  bankAddress                   String? // A team can have no bank contract
-  votingAddress                 String?
-  boardOfDirectorsAddress       String?
-  expenseAccountAddress         String?
   officerAddress                String?
-  investorsAddress              String?
-  expenseAccountEip712Address   String?
-  cashRemunerationEip712Address String?
   BoardOfDirectorActions        BoardOfDirectorActions[]
   teamContracts                 TeamContract[]
   memberTeamsData               MemberTeamsData[]
@@ -74,7 +67,7 @@ model Wage {
   cashRatePerHour     Float
   tokenRatePerHour    Float
   maximumHoursPerWeek Int
-  nextWageId          Int?     @unique 
+  nextWageId          Int?     @unique
   nextWage            Wage?    @relation("wageRelated", fields: [nextWageId], references: [id])
   previousWage        Wage?    @relation("wageRelated")
   claims              Claim[]

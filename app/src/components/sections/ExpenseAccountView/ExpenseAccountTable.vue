@@ -110,7 +110,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
 const { team /*, reload*/ } = defineProps<{
-  team: Partial<Team> | null
+  team: Partial<Team>
 }>()
 const reload = defineModel()
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -118,8 +118,12 @@ const userDataStore = useUserDataStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
-const expenseAccountEip712Address = ref('')
 
+const expenseAccountEip712Address = computed(
+  () =>
+    team.teamContracts?.find((contract) => contract.type === 'ExpenseAccountEIP712')
+      ?.address as Address
+)
 const columns = [
   {
     key: 'member',
@@ -212,7 +216,7 @@ const deactivateApproval = async (signature: `0x{string}`) => {
   const signatureHash = keccak256(signature)
 
   executeDeactivateApproval({
-    address: team?.expenseAccountEip712Address as Address,
+    address: expenseAccountEip712Address.value,
     args: [signatureHash],
     abi: expenseAccountABI,
     functionName: 'deactivateApproval'
@@ -223,7 +227,7 @@ const activateApproval = async (signature: `0x{string}`) => {
   const signatureHash = keccak256(signature)
 
   executeActivateApproval({
-    address: team?.expenseAccountEip712Address as Address,
+    address: expenseAccountEip712Address.value,
     args: [signatureHash],
     abi: expenseAccountABI,
     functionName: 'activateApproval'
@@ -242,15 +246,15 @@ watch(reload, async (newState) => {
     console.log(`manyExpenseAccountDataAll: `, manyExpenseAccountDataAll)
   }
 })
-watch(
-  () => team,
-  async (newTeam) => {
-    if (newTeam) {
-      expenseAccountEip712Address.value = newTeam.expenseAccountEip712Address as string
-      await fetchExpenseAccountOwner()
-    }
-  }
-)
+// watch(
+//   () => team,
+//   async (newTeam) => {
+//     if (newTeam) {
+//       expenseAccountEip712Address.value = newTeam.expenseAccountEip712Address as string
+//       await fetchExpenseAccountOwner()
+//     }
+//   }
+// )
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
     reload.value = true

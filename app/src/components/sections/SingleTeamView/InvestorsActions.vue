@@ -67,7 +67,7 @@ import type { Team } from '@/types'
 import { log } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { parseEther, type Address } from 'viem'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import MintForm from '@/components/sections/SingleTeamView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SingleTeamView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SingleTeamView/forms/PayDividendsForm.vue'
@@ -88,6 +88,10 @@ const props = defineProps<{
   shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }> | undefined
 }>()
 
+const investorsAddress = computed(
+  () =>
+    props.team.teamContracts.find((contract) => contract.type === 'InvestorsV1')?.address as Address
+)
 const {
   data: mintHash,
   writeContract: mint,
@@ -125,9 +129,10 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
 const executePayDividends = (value: bigint) => {
   payDividends({
     abi: BANK_ABI,
-    address: props.team.bankAddress as Address,
+    address: props.team.teamContracts.find((contract) => contract.type === 'Bank')
+      ?.address as Address,
     functionName: 'transfer',
-    args: [props.team.investorsAddress, value]
+    args: [investorsAddress.value, value]
   })
 }
 const executeDistributeMint = (
@@ -138,7 +143,7 @@ const executeDistributeMint = (
 ) => {
   distributeMint({
     abi: INVESTOR_ABI,
-    address: props.team.investorsAddress as Address,
+    address: investorsAddress.value as Address,
     functionName: 'distributeMint',
     args: [shareholders]
   })
@@ -147,7 +152,7 @@ const executeDistributeMint = (
 const mintToken = (address: Address, amount: string) => {
   mint({
     abi: INVESTOR_ABI,
-    address: props.team.investorsAddress as Address,
+    address: investorsAddress.value as Address,
     functionName: 'individualMint',
     args: [address, parseEther(amount)]
   })

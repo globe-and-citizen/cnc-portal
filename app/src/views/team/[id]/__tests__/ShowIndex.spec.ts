@@ -112,11 +112,8 @@ describe('ShowIndex', () => {
       id: '0x123',
       name: 'Team Name',
       description: 'Lorem',
-      bankAddress: null,
       members: [],
-      ownerAddress: '',
-      votingAddress: null,
-      boardOfDirectorsAddress: '',
+      ownerAddress: '0xDDDD',
       officerAddress: '0x123',
       teamContracts: []
     }

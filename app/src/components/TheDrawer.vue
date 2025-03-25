@@ -278,7 +278,7 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'cash-remunerations',
-    show: teamStore.currentTeam?.cashRemunerationEip712Address
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Expense Account ',
@@ -288,7 +288,7 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'expense-account',
-    show: teamStore.currentTeam?.expenseAccountEip712Address
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'SHER TOKEN',
@@ -322,7 +322,7 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'administration',
-    show: teamStore.currentTeam?.votingAddress && teamStore.currentTeam?.boardOfDirectorsAddress
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
 ])
 

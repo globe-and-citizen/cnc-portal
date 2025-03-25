@@ -31,13 +31,13 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -58,7 +58,6 @@ const { addErrorToast } = useToastStore()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
-const _team = useTeamStore()
 
 //#region useCustomfetch
 const {
@@ -69,6 +68,11 @@ const {
   .get()
   .json<Team>()
 
+const expenseAccountEip712Address = computed(
+  () =>
+    team.value?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+      ?.address as Address
+)
 const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.id}/expense-data`, {
   immediate: false
 })
@@ -82,7 +86,7 @@ const {
   error: errorGetOwner
 } = useReadContract({
   functionName: 'owner',
-  address: _team.currentTeam?.expenseAccountEip712Address as unknown as Address,
+  address: expenseAccountEip712Address.value,
   abi: expenseAccountABI
 })
 
@@ -95,7 +99,7 @@ const init = async () => {
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   expenseAccountData.value = data
-  const verifyingContract = team.value?.expenseAccountEip712Address
+  const verifyingContract = expenseAccountEip712Address.value
 
   const domain = {
     name: 'CNCExpenseAccount',
@@ -155,12 +159,12 @@ const isBodAction = () => false
 //#region
 
 //#region Watch
-watch(
-  () => team.value?.expenseAccountAddress,
-  async (newVal) => {
-    if (newVal) await init()
-  }
-)
+// watch(
+//   () => team.value?.expenseAccountAddress,
+//   async (newVal) => {
+//     if (newVal) await init()
+//   }
+// )
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })

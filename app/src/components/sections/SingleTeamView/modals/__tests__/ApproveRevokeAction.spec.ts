@@ -76,9 +76,26 @@ describe('ApproveRevokeAction', () => {
         ],
         team: {
           id: '1',
-          bankAddress: '0xBank',
-          expenseAccountAddress: '0xExp',
-          boardOfDirectorsAddress: '0xBoD',
+          teamContracts: [
+            {
+              address: '0xBank',
+              type: 'Bank',
+              deployer: '0x709979',
+              admins: []
+            },
+            {
+              address: '0xExp',
+              type: 'ExpenseAccount',
+              deployer: '0x709979',
+              admins: []
+            },
+            {
+              address: '0xBoD',
+              type: 'BoardOfDirectors',
+              deployer: '0x709979',
+              admins: []
+            }
+          ],
           members: [
             {
               id: '1',

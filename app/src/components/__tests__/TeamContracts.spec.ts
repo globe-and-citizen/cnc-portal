@@ -5,6 +5,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from '@/components/TeamContractAdmins.vue'
 import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
 import { createPinia, setActivePinia } from 'pinia'
+import type { TeamContract } from '@/types/teamContract'
 
 const getAdminListMock = vi.fn()
 const removeAdminMock = vi.fn()
@@ -33,7 +34,7 @@ describe('TeamContracts.vue', () => {
       admins: ['0xadmin3Address'],
       deployer: '0xdeployer1Address'
     }
-  ]
+  ] as TeamContract[]
 
   beforeEach(() => {
     const pinia = createPinia()

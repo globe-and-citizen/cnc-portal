@@ -50,7 +50,7 @@ import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import ShareholderList from '@/components/sections/SingleTeamView/ShareholderList.vue'
-import { watch } from 'vue'
+import { watch, computed } from 'vue'
 import { log } from '@/utils'
 import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
@@ -62,6 +62,13 @@ const props = defineProps<{
   team: Team
 }>()
 
+const investorsAddress = computed(() => {
+  const address = props.team.teamContracts?.find(
+    (contract) => contract.type === 'InvestorsV1'
+  )?.address
+  return address as Address
+})
+
 const {
   data: totalSupply,
   isLoading: totalSupplyLoading,
@@ -69,7 +76,7 @@ const {
   refetch: refetchTotalSupply
 } = useReadContract({
   abi: INVESTOR_ABI,
-  address: props.team.investorsAddress as Address,
+  address: investorsAddress,
   functionName: 'totalSupply'
 })
 
@@ -79,7 +86,7 @@ const {
   error: tokenSymbolError
 } = useReadContract({
   abi: INVESTOR_ABI,
-  address: props.team.investorsAddress as Address,
+  address: investorsAddress,
   functionName: 'symbol'
 })
 
@@ -90,7 +97,7 @@ const {
   refetch: refetchShareholders
 } = useReadContract({
   abi: INVESTOR_ABI,
-  address: props.team.investorsAddress as Address,
+  address: investorsAddress,
   functionName: 'getShareholders'
 })
 
@@ -101,7 +108,7 @@ const {
   refetch: refetchTokenBalance
 } = useReadContract({
   abi: INVESTOR_ABI,
-  address: props.team.investorsAddress as Address,
+  address: investorsAddress,
   functionName: 'balanceOf',
   args: [currentAddress as Address]
 })

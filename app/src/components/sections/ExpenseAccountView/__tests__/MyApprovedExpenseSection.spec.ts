@@ -266,13 +266,23 @@ describe('ExpenseAccountSection', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
+        // @ts-expect-error: not declared in test interface but available in component
         team: {
-          id: `1`,
-          expenseAccountEip712Address: '0xExpenseAccount',
+          id: '1',
+          name: 'Team Name',
+          description: 'Team Description',
+          members: [],
+          teamContracts: [
+            {
+              address: '0xcontractaddress',
+              admins: [],
+              type: 'ExpenseAccountEIP712',
+              deployer: '0xdeployeraddress'
+            }
+          ],
           ownerAddress: '0xOwner',
-          boardOfDirectorsAddress: null,
           ...props?.team
-        },
+        } as Team,
         isDisapprovedAddress: false,
         ...props
       },
@@ -297,9 +307,15 @@ describe('ExpenseAccountSection', () => {
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
       wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
       wrapperVm.team = {
-        expenseAccountEip712Address: '0xExpenseAccount',
-        ownerAddress: '0xOwner',
-        boardOfDirectorsAddress: null
+        teamContracts: [
+          {
+            address: '0xcontractaddress',
+            admins: [],
+            type: 'ExpenseAccountEIP712',
+            deployer: '0xdeployeraddress'
+          }
+        ],
+        ownerAddress: '0xOwner'
       }
       await flushPromises()
 
@@ -346,9 +362,15 @@ describe('ExpenseAccountSection', () => {
       wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
       mocks.mockReadContract.mockImplementation(() => [0, 1 * 10 ** 18, 2])
       wrapperVm.team = {
-        expenseAccountEip712Address: '0xExpenseAccount',
-        ownerAddress: '0xOwner',
-        boardOfDirectorsAddress: null
+        teamContracts: [
+          {
+            address: '0xcontractaddress',
+            admins: [],
+            type: 'ExpenseAccountEIP712',
+            deployer: '0xdeployeraddress'
+          }
+        ],
+        ownerAddress: '0xOwner'
       }
       await flushPromises()
 
@@ -405,9 +427,15 @@ describe('ExpenseAccountSection', () => {
       const wrapperVm = wrapper.vm as unknown as ComponentData
       ;(wrapper.vm as unknown as ComponentData).transferModal = true
       wrapperVm.team = {
-        expenseAccountEip712Address: '0xExpenseAccount',
-        ownerAddress: '0xOwner',
-        boardOfDirectorsAddress: null
+        teamContracts: [
+          {
+            address: '0xcontractaddress',
+            admins: [],
+            type: 'ExpenseAccountEIP712',
+            deployer: '0xdeployeraddress'
+          }
+        ],
+        ownerAddress: '0xOwner'
       }
 
       it('should pass corrent props to TransferFromBankForm', async () => {

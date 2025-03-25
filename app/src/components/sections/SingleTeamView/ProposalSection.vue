@@ -1,5 +1,5 @@
 <template>
-  <div v-if="team.votingAddress">
+  <div v-if="votingAddress">
     <div>
       <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
         <div class="flex justify-between">
@@ -23,7 +23,7 @@
             <ButtonUI
               variant="secondary"
               size="md"
-              v-if="team.boardOfDirectorsAddress"
+              v-if="boardOfDirectorsAddress"
               @click="
                 () => {
                   executeGetBoardOfDirectors()
@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
 import type { Proposal } from '@/types/index'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
@@ -128,13 +128,25 @@ const props = defineProps<{ team: Partial<Team> }>()
 const showVotingControlModal = ref(false)
 const emits = defineEmits(['getTeam', 'addBodTab'])
 const { addSuccessToast, addErrorToast } = useToastStore()
+
+const votingAddress = computed(() => {
+  const address = props.team.teamContracts?.find((contract) => contract.type === 'Voting')?.address
+  return address as Address
+})
+
+const boardOfDirectorsAddress = computed(() => {
+  const address = props.team.teamContracts?.find(
+    (contract) => contract.type === 'BoardOfDirectors'
+  )?.address
+  return address as Address
+})
 const {
   data: boardOfDirectors,
   refetch: executeGetBoardOfDirectors,
   error: errorGetBoardOfDirectors
 } = useReadContract({
   functionName: 'getBoardOfDirectors',
-  address: props.team.boardOfDirectorsAddress as Address,
+  address: boardOfDirectorsAddress.value,
   abi: BoDABI
 })
 
@@ -161,14 +173,14 @@ const fetchProposals = async () => {
   try {
     loadingGetProposals.value = true
     const proposalCount = (await readContract(config, {
-      address: props.team.votingAddress as Address,
+      address: votingAddress.value,
       abi: VotingABI,
       functionName: 'proposalCount'
     })) as number
     const proposalsList = []
     for (let i = 0; i < proposalCount; i++) {
       const proposal = await readContract(config, {
-        address: props.team.votingAddress as Address,
+        address: votingAddress.value,
         abi: VotingABI,
         functionName: 'getProposalById',
         args: [i]
@@ -217,9 +229,9 @@ const createProposal = () => {
       memberAddress: member.address
     }
   })
-  if (props.team.votingAddress) {
+  if (votingAddress.value) {
     addProposal({
-      address: props.team.votingAddress! as Address,
+      address: votingAddress.value! as Address,
       abi: VotingABI,
       functionName: 'addProposal',
       args: [
@@ -247,6 +259,6 @@ watch(isConfirmingAddProposal, (isConfirming, wasConfirming) => {
 })
 
 onMounted(() => {
-  if (props.team.votingAddress) fetchProposals()
+  if (votingAddress.value) fetchProposals()
 })
 </script>
