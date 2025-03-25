@@ -13,7 +13,7 @@ import {
   // updateClaim,
   // getClaims,
   // getClaim,
-  addContracts,
+  // addContracts,
 } from "../controllers/teamController";
 import { getContracts, syncContracts } from "../controllers/contractController";
 
@@ -43,7 +43,7 @@ teamRoutes.get("/:id/expense-data", getExpenseAccountData);
 // teamRoutes.get("/:id/cash-remuneration/claim/:status", getClaims);
 // teamRoutes.get("/:id/cash-remuneration/claim", getClaim);
 
-teamRoutes.post("/:id/add-contracts", addContracts);
+// teamRoutes.post("/:id/add-contracts", addContracts);
 teamRoutes.get("/contract/get", getContracts);
 
 teamRoutes.put("/contract/sync", syncContracts)
