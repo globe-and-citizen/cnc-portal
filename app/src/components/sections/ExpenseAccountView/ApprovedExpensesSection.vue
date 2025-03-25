@@ -58,7 +58,6 @@ const { addErrorToast } = useToastStore()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
-const _team = useTeamStore()
 
 //#region useCustomfetch
 const {
