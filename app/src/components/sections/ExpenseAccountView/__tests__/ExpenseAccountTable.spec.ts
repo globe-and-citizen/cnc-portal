@@ -198,7 +198,7 @@ describe('ExpenseAccountTable', () => {
     return mount(ExpenseAccountTable, {
       props: {
         team: {
-          expenseAccountEip712Address: '0xExpenseAccount'
+          teamContracts: []
         },
         ...props
       },

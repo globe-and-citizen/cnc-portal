@@ -253,8 +253,13 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
+        // @ts-expect-error: mocked
         team: {
-          id: `1`,
+          id: '1',
+          name: 'Default Team',
+          description: 'Default Description',
+          members: [],
+          ownerAddress: '0xDefaultOwner',
           teamContracts: [
             {
               type: 'ExpenseAccountEIP712',
@@ -263,7 +268,6 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
               admins: []
             }
           ],
-          ownerAddress: '0xOwner',
           ...props?.team
         },
         isDisapprovedAddress: false,

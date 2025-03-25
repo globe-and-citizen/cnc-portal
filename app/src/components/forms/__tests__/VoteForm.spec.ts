@@ -50,7 +50,7 @@ describe('VoteForm.vue', () => {
             id: '1',
             name: 'team1',
             description: 'team1',
-            bankAddress: '0x1',
+            teamContracts: [],
             members: [
               {
                 id: '1',
@@ -59,9 +59,7 @@ describe('VoteForm.vue', () => {
                 teamId: 0
               }
             ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            ownerAddress: '0x1'
           }
         }
       })
@@ -81,7 +79,7 @@ describe('VoteForm.vue', () => {
             id: '1',
             name: 'team1',
             description: 'team1',
-            bankAddress: '0x1',
+            teamContracts: [],
             members: [
               {
                 id: '1',
@@ -90,9 +88,7 @@ describe('VoteForm.vue', () => {
                 teamId: 0
               }
             ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            ownerAddress: '0x1'
           }
         }
       })
@@ -113,7 +109,7 @@ describe('VoteForm.vue', () => {
             id: '1',
             name: 'team1',
             description: 'team1',
-            bankAddress: '0x1',
+            teamContracts: [],
             members: [
               {
                 id: '1',
@@ -122,9 +118,7 @@ describe('VoteForm.vue', () => {
                 teamId: 0
               }
             ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            ownerAddress: '0x1'
           }
         }
       })
@@ -152,7 +146,7 @@ describe('VoteForm.vue', () => {
             id: '1',
             name: 'team1',
             description: 'team1',
-            bankAddress: '0x1',
+            teamContracts: [],
             members: [
               {
                 id: '1',
@@ -161,9 +155,7 @@ describe('VoteForm.vue', () => {
                 teamId: 0
               }
             ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            ownerAddress: '0x1'
           }
         }
       })
@@ -190,7 +182,7 @@ describe('VoteForm.vue', () => {
             id: '1',
             name: 'team1',
             description: 'team1',
-            bankAddress: '0x1',
+            teamContracts: [],
             members: [
               {
                 id: '1',
@@ -199,9 +191,7 @@ describe('VoteForm.vue', () => {
                 teamId: 0
               }
             ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            ownerAddress: '0x1'
           }
         }
       })
@@ -228,7 +218,6 @@ describe('VoteForm.vue', () => {
             id: '1',
             name: 'team1',
             description: 'team1',
-            bankAddress: '0x1',
             members: [
               {
                 id: '1',
@@ -237,9 +226,8 @@ describe('VoteForm.vue', () => {
                 teamId: 0
               }
             ],
-            ownerAddress: '0x1',
-            votingAddress: '0x1',
-            boardOfDirectorsAddress: '0x1'
+            teamContracts: [],
+            ownerAddress: '0x1'
           }
         }
       })

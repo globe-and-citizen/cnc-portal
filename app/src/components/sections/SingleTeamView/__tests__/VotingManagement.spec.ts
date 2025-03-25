@@ -68,8 +68,21 @@ describe.skip('VotingManagement', () => {
     return mount(VotingManagement, {
       props: {
         team: {
-          votingAddress: '0x1234567890123456789012345678901234567890',
-          boardOfDirectorsAddress: '0x0987654321098765432109876543210987654321'
+          teamContracts: [
+            {
+              address: '0xcontractaddress',
+              admins: [],
+              type: 'Voting',
+              deployer: '0xdeployeraddress'
+            },
+            {
+              address: '0xcontractaddress',
+              admins: [],
+              type: 'BoardOfDirectors',
+              deployer: '0xdeployeraddress'
+            }
+          
+          ]
         }
       },
       global: {

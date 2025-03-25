@@ -85,9 +85,20 @@ interface ComponentOptions {
 const createComponent = ({ props = {}, data = () => ({}), global = {} }: ComponentOptions = {}) => {
   return mount(BoardOfDirectorsSection, {
     props: {
+      // @ts-expect-error mock data
       team: {
-        expenseAccountAddress: '0xExpenseAccount',
-        boardOfDirectors: [],
+        id: '1',
+        name: 'Team Name',
+        description: 'Team Description',
+        members: [],
+        teamContracts: [
+          {
+            address: '0xcontractaddress',
+            admins: [],
+            type: 'ExpenseAccountEIP712',
+            deployer: '0xdeployeraddress'
+          }
+        ],
         ownerAddress: '0xOwner',
         ...props?.team
       },

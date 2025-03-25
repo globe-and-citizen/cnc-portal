@@ -39,7 +39,7 @@
     <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
       <span class="text-sm">Expense Account Address </span>
       <AddressToolTip
-        :address="teamStore.currentTeam?.expenseAccountEip712Address ?? ''"
+        :address="expenseAccountEip712Address ?? ''"
         class="text-xs"
       />
     </div>
@@ -63,14 +63,16 @@ import uptrendIcon from '@/assets/uptrend.svg'
 //#region  Composables
 const teamStore = useTeamStore()
 const chainId = useChainId()
-
+const expenseAccountEip712Address = computed(
+  () => teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address as Address
+)
 const {
   data: networkCurrencyBalance,
   // isLoading: isLoadingNetworkCurrencyBalance,
   error: networkCurrencyBalanceError,
   refetch: refetchNetworkCurrencyBalance
 } = useBalance({
-  address: teamStore.currentTeam?.expenseAccountEip712Address as unknown as Address,
+  address: expenseAccountEip712Address.value,
   chainId
 })
 //#endregion

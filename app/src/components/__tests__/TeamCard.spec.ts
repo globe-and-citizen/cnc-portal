@@ -3,18 +3,18 @@ import { mount } from '@vue/test-utils'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useUserDataStore } from '@/stores/user'
+import type { Team } from '@/types'
+
 describe('TeamCard', () => {
   const props = {
     team: {
       name: 'Team A',
       description: 'This is a description of Team A.',
-      bankAddress: null,
-      boardOfDirectorsAddress: null,
       id: '1',
       members: [],
       ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
-      votingAddress: null
-    }
+      teamContracts: []
+    } as Team
   }
 
   const wrapper = mount(TeamCard, {

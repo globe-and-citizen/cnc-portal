@@ -51,6 +51,12 @@ const {
   }))
   .json<Array<ClaimResponse>>()
 
+const cashRemunerationEip712Address = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'CashRemunerationEIP712'
+    )?.address as Address
+)
 const approveClaim = async (claim: ClaimResponse) => {
   loading.value = true
 
@@ -61,7 +67,7 @@ const approveClaim = async (claim: ClaimResponse) => {
         name: 'CashRemuneration',
         version: '1',
         chainId: chainId.value,
-        verifyingContract: teamStore.currentTeam?.cashRemunerationEip712Address as Address
+        verifyingContract: cashRemunerationEip712Address.value
       },
       types: {
         WageClaim: [

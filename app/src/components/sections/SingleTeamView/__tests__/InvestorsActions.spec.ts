@@ -6,6 +6,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { parseEther, type Address } from 'viem'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import type { Team } from '@/types/team'
 
 vi.mock('@/stores/useToastStore')
 vi.mock('@/stores/user')
@@ -74,13 +75,35 @@ describe('InvestorsActions.vue', () => {
       id: '1',
       name: 'Team 1',
       description: 'Team 1 Description',
-      bankAddress: '0x123',
+      teamContracts: [
+        {
+          address: '0xcontractaddress',
+          admins: [],
+          type: 'Bank',
+          deployer: '0xdeployeraddress'
+        },
+        {
+          address: '0xcontractaddress',
+          admins: [],
+          type: 'Voting',
+          deployer: '0xdeployeraddress'
+        },
+        {
+          address: '0xcontractaddress',
+          admins: [],
+          type: 'InvestorsV1',
+          deployer: '0xdeployeraddress'
+        },
+        {
+          address: '0xcontractaddress',
+          admins: [],
+          type: 'BoardOfDirectors',
+          deployer: '0xdeployeraddress'
+        }
+      ],
       members: [],
-      ownerAddress: '0xOwner',
-      votingAddress: '0x123',
-      investorsAddress: '0x123',
-      boardOfDirectorsAddress: '0x123'
-    },
+      ownerAddress: '0xOwner'
+    } as Team,
     tokenSymbol: 'ETH',
     tokenSymbolLoading: false,
     shareholders: [
