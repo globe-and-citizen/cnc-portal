@@ -112,7 +112,7 @@ templates:
           handler: handleDeposited
         - event: Withdraw(indexed address,uint256)
           handler: handleWithdraw
-      network: sepolia
+    network: sepolia
   - name: Officer
     kind: ethereum
     source:
