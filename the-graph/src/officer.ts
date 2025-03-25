@@ -16,7 +16,11 @@ import {
   Paused,
   Unpaused,
 } from "../generated/schema";
-import { ExpenseAccountEIP712, Bank } from "../generated/templates";
+import {
+  ExpenseAccountEIP712,
+  Bank,
+  CashRemunerationEIP712,
+} from "../generated/templates";
 import { Bytes, log } from "@graphprotocol/graph-ts";
 
 export function handleBeaconConfigured(event: BeaconConfiguredEvent): void {
@@ -59,6 +63,11 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
       event.params.deployedAddress.toHexString(),
     ]);
     Bank.create(event.params.deployedAddress);
+  } else if (event.params.contractType == "CashRemunerationEIP712") {
+    log.info("Creating CashRemunerationEIP712 template for address: {}", [
+      event.params.deployedAddress.toHexString(),
+    ]);
+    CashRemunerationEIP712.create(event.params.deployedAddress);
   } else {
     log.info(
       "Contract deployed is not 'ExpenseAccountEIP712' or 'Bank' but, '{}'",
