@@ -40,7 +40,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas: testData,
-        contractAddress: contractAddress
+        contractAddress: contractAddress,
+        reset: true
       }
     })
 
@@ -55,7 +56,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas: testData,
-        contractAddress: contractAddress
+        contractAddress: contractAddress,
+        reset: true
       }
     })
 
@@ -82,7 +84,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas: [],
-        contractAddress: contractAddress
+        contractAddress: contractAddress,
+        reset: true
       }
     })
 
@@ -95,14 +98,15 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas: getClonedTestData(), // ensure fresh data
-        contractAddress
+        contractAddress,
+        reset: true
       }
     })
 
     await flushPromises()
 
     //  simulate "already initialized" state
-    wrapper.vm.initialized = true
+    //wrapper.vm.initialized = true
     wrapper.vm.originalValues = {
       costPerClick: 0.1,
       costPerImpression: 0.5
@@ -128,6 +132,7 @@ describe('TeamContractsDetail.vue', () => {
       props: {
         datas: cloned,
         contractAddress,
+        reset: true,
         // Simulate two-way binding
         'onUpdate:datas': (newValue: typeof cloned) => {
           updatedDatas = newValue
@@ -160,7 +165,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas: testData,
-        contractAddress: contractAddress
+        contractAddress: contractAddress,
+        reset: true
       }
     })
 
@@ -181,7 +187,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas: null as unknown as { key: string; value: string }[],
-        contractAddress: contractAddress
+        contractAddress: contractAddress,
+        reset: true
       }
     })
 
@@ -197,7 +204,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas,
-        contractAddress
+        contractAddress,
+        reset: true
       }
     })
 
@@ -217,7 +225,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas,
-        contractAddress
+        contractAddress,
+        reset: true
       }
     })
 
@@ -239,7 +248,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas,
-        contractAddress
+        contractAddress,
+        reset: true
       }
     })
 
@@ -261,7 +271,8 @@ describe('TeamContractsDetail.vue', () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas,
-        contractAddress
+        contractAddress,
+        reset: true
       }
     })
 

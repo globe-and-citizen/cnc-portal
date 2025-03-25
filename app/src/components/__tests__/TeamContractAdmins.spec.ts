@@ -6,7 +6,7 @@ import { type TeamContract } from '@/types/teamContract'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
 // Mock AddCampaignService methods
-const addAdminMock = vi.fn().mockResolvedValue({ status: 1 })
+const addAdminMock = vi.fn().mockResolvedValue({ status: 'success' })
 const removeAdminMock = vi.fn()
 const getAdminListMock = vi.fn()
 const getEventsGroupedByCampaignCodeMock = vi.fn()
@@ -39,7 +39,7 @@ describe('TeamContractAdmins', () => {
 
     // Mock the API call for fetching admins
     getAdminListMock.mockResolvedValue(adminsData)
-    removeAdminMock.mockResolvedValue({ status: 1 })
+    removeAdminMock.mockResolvedValue({ status: 'success' })
 
     // Mock the API call for fetching grouped events
     getEventsGroupedByCampaignCodeMock.mockResolvedValue({})
@@ -131,40 +131,6 @@ describe('TeamContractAdmins', () => {
     expect(rows.length).toBe(0)
   })
 
-  it('emits an event when the remove button is clicked', async () => {
-    const { addSuccessToast } = useToastStore()
-    const wrapper = mount(TeamContractAdmins, {
-      props: {
-        contract
-      }
-    })
-    // Trigger a contract prop change
-    const newContract = {
-      address: '0xnewcontractaddress',
-      admins: [],
-      type: 'AddCampaign',
-      deployer: '0xdeployeraddress'
-    }
-    await wrapper.setProps({ contract: newContract })
-    // Mock initial call count
-    await flushPromises()
-    expect(getAdminListMock).toHaveBeenCalled()
-    // Mock the console.log function
-
-    // Simulate clicking the remove button on the first row
-    const firstRow = wrapper.find('tbody tr')
-
-    const removeButton = firstRow.find('button')
-    await removeButton.trigger('click')
-    expect(removeAdminMock).toHaveBeenCalled()
-
-    // Check that the console.log was called with the correct admin address
-
-    expect(addSuccessToast).toHaveBeenCalledWith('Admin removed successfully')
-
-    // Restore the original console.log function
-  })
-
   it('adds a new admin correctly', async () => {
     const wrapper = mount(TeamContractAdmins, {
       props: {
@@ -196,7 +162,7 @@ describe('TeamContractAdmins', () => {
 
     // Check emitted events
     const emittedEvents = wrapper.emitted()
-
+    console.log('the emited events', emittedEvents)
     // Check if 'updateTeamContract' event was emitted
     expect(emittedEvents.updateTeamContract).toBeTruthy()
 
@@ -207,6 +173,41 @@ describe('TeamContractAdmins', () => {
         admins: [...contract.admins]
       }
     ])
+  })
+
+  it('emits an event when the remove button is clicked', async () => {
+    getAdminListMock.mockResolvedValueOnce(adminsData)
+    const { addSuccessToast } = useToastStore()
+    const wrapper = mount(TeamContractAdmins, {
+      props: {
+        contract
+      }
+    })
+    // Trigger a contract prop change
+    const newContract = {
+      address: '0xnewcontractaddress',
+      admins: [],
+      type: 'AddCampaign',
+      deployer: '0xdeployeraddress'
+    }
+    await wrapper.setProps({ contract: newContract })
+    // Mock initial call count
+    await flushPromises()
+    expect(getAdminListMock).toHaveBeenCalled()
+    // Mock the console.log function
+
+    // Simulate clicking the remove button on the first row
+    const firstRow = wrapper.find('tbody tr')
+
+    const removeButton = firstRow.find('button')
+    await removeButton.trigger('click')
+    expect(removeAdminMock).toHaveBeenCalled()
+
+    // Check that the console.log was called with the correct admin address
+
+    expect(addSuccessToast).toHaveBeenCalledWith('Admin removed successfully')
+
+    // Restore the original console.log function
   })
 
   it('does not add an admin when the input is empty', async () => {

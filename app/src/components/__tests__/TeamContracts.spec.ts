@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import TeamContracts from '@/components/TeamContracts.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -121,7 +121,7 @@ describe('TeamContracts.vue', () => {
 
   it('opens the contract data modal with correct details', async () => {
     const wrapper = mount(TeamContracts, {
-      props: { contracts, teamId: 'team1' },
+      props: { contracts, teamId: 'team1', reset: true },
       global: {
         plugins: [createPinia()]
       }
@@ -131,6 +131,7 @@ describe('TeamContracts.vue', () => {
     const firstRow = wrapper.find('tbody tr')
     const detailButton = firstRow.findAll('button.btn-ghost')[1] // Assume second button is for details
     await detailButton.trigger('click')
+    await flushPromises()
 
     // Wait for the contract data to be fetched and modal to update
     await wrapper.vm.$nextTick() // Ensure the modal has re-rendered after async data fetching
@@ -140,6 +141,7 @@ describe('TeamContracts.vue', () => {
 
     // Check that the contract data was passed to the modal correctly
     expect(contractDataModal.props('datas')).toEqual([{ key: 'costPerClick', value: '10' }])
+    //expect(contractDataModal.props('datas')).toEqual([])
   })
 
   it('handles updating a contract correctly', async () => {

@@ -62,6 +62,7 @@
         <TeamContractsDetail
           :contract-address="contractDataDialog.address"
           :datas="contractDataDialog.datas"
+          :reset="contractDetailReset"
         />
       </div>
     </ModalComponent>
@@ -78,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { UsersIcon } from '@heroicons/vue/24/outline'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
@@ -111,8 +112,21 @@ const contractAdminDialog = ref({
 const contractDataDialog = ref({
   show: false,
   datas: [] as Array<{ key: string; value: string }>, // Properly define as an array of key-value pairs
-  address: ''
+  address: '',
+  key: 0
 })
+const contractDetailReset = ref(false)
+
+watch(
+  () => contractDataDialog.value.show,
+  (newVal) => {
+    if (!newVal) {
+      contractDetailReset.value = true
+    } else {
+      contractDetailReset.value = false
+    }
+  }
+)
 
 const contractEventsDialog = ref({
   show: false,
@@ -158,9 +172,10 @@ const openContractDataModal = async (contractAddress: string) => {
   contractDataDialog.value.datas = await addCamapaignService.getContractData(contractAddress)
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
+  contractDataDialog.value.key++
 }
 
-//update the current contract admin
+//update the current contract ad  min
 const handleUpdateTeamContract = async (updatedContractPayload: TeamContract) => {
   const response = await useCustomFetch<string>(`teams/${props.teamId}`)
     .put({ contract: updatedContractPayload })

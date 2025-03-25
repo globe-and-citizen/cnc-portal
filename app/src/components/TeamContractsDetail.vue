@@ -13,20 +13,33 @@
         <tr v-for="(data, index) in datas" :key="index" class="hover:bg-base-200">
           <th>{{ index + 1 }}</th>
           <td>{{ data['key'] }}</td>
+
           <td v-if="data['key'].startsWith('cost')">
             <input
               type="number"
               step="any"
               :value="data.value"
               @input="
-                updateValue(index, Math.abs(parseFloat(($event.target as HTMLInputElement).value)))
+                updateValue(
+                  index,
+                  Math.abs(parseFloat(($event.target as HTMLInputElement).value) || 0)
+                )
               "
               class="input input-bordered w-24 text-sm"
               required
             />
             ETH
           </td>
-          <td v-else>{{ data['value'] }}</td>
+          <td
+            v-else-if="
+              data['key'].includes('Address') || data['key'].toLowerCase().includes('owner')
+            "
+          >
+            <AddressToolTip :address="data['value']" class="text-xs" />
+          </td>
+          <td v-else>
+            {{ data['value'] }}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -41,7 +54,7 @@
 
 <script setup lang="ts">
 import { defineProps, ref } from 'vue'
-
+import AddressToolTip from './AddressToolTip.vue'
 import { isAddress } from 'viem'
 import { useToastStore } from '@/stores/useToastStore'
 import { AddCampaignService } from '@/services/AddCampaignService'
@@ -49,6 +62,7 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   datas: Array<{ key: string; value: string }>
   contractAddress: string
+  reset: boolean
 }>()
 
 import { watch } from 'vue'
@@ -63,13 +77,22 @@ const originalValues = ref<Record<string, number>>({})
 const getOriginalValue = (key: string) => originalValues.value[key] ?? 0
 
 const initialized = ref<boolean>(false)
-//for test purpose
+
 defineExpose({
   initialized,
   originalValues,
   originalCostPerClick,
   originalCostPerImpression
 })
+
+watch(
+  () => props.reset,
+  (resetValue) => {
+    if (resetValue) {
+      initialized.value = false
+    }
+  }
+)
 
 watch(
   () => props.datas,
@@ -99,7 +122,7 @@ async function setCostPerClick(campaignContractAddress: string, costPerClick: st
       costPerClick.toString()
     )
 
-    if (result.status === 1) {
+    if (result.status === 'success') {
       addSuccessToast('cost per click updated successfully')
       isLoading.value = false
 
@@ -125,7 +148,7 @@ async function setCostPerImpression(campaignContractAddress: string, costPerImpr
       costPerImpression.toString()
     )
 
-    if (result.status === 1) {
+    if (result.status === 'success') {
       addSuccessToast('cost per impression updated successfully')
       isLoading.value = false
 

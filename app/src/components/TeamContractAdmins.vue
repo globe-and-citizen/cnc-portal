@@ -74,7 +74,6 @@ const admins = ref([] as string[])
 watch(
   () => props.contract,
   async (newContract) => {
-    //const adminList= await addCamapaignService.getAdminList(newContract.address)
     isLoading.value = true
     admins.value = await addCamapaignService.getAdminList(newContract.address)
     isLoading.value = false
@@ -90,7 +89,7 @@ async function removeAdmin(adminAddress: string) {
     isLoading.value = true
     const result = await addCamapaignService.removeAdmin(props.contract.address, adminAddress)
 
-    if (result.status === 1) {
+    if (result.status === 'success') {
       addSuccessToast('Admin removed successfully')
       isLoading.value = false
       admins.value = await addCamapaignService.getAdminList(props.contract.address)
@@ -108,7 +107,8 @@ async function addAdmin() {
   } else {
     isLoading.value = true
     const result = await addCamapaignService.addAdmin(props.contract.address, newAdminAddress.value)
-    if (result.status === 1) {
+
+    if (result.status === 'success') {
       addSuccessToast('Admin added successfully')
 
       admins.value = await addCamapaignService.getAdminList(props.contract.address)
