@@ -101,14 +101,15 @@ const selectedRadio = ref('all')
 
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
-const claimURL = computed(() => `/claim/?teamId=${teamId.value}`)
+const statusUrl = computed(() => selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`)
+const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
 
 const {
   data: teamClaimData,
   isFetching: isTeamClaimDataFetching,
   error: teamClaimDataError,
   execute: fetchTeamClaimData
-} = useCustomFetch(claimURL, { immediate: false }).json<Array<ClaimResponse>>()
+} = useCustomFetch(claimURL, { immediate: false, refetch: true }).json<Array<ClaimResponse>>()
 
 const formatRow = (row: TableRow) => {
   return row as ClaimResponse
@@ -126,11 +127,6 @@ watch(
   },
   { immediate: true }
 )
-
-watch(selectedRadio, async () => {
-  // await fetchClaims()
-  // Watch and update claim URL normaly it should fetch it directly
-})
 
 const columns = [
   {

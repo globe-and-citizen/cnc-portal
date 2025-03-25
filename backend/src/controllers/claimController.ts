@@ -57,6 +57,7 @@ export const addClaim = async (req: Request, res: Response) => {
 export const getClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
+  const status = req.query.status as string;
 
   try {
     // Validate teamId
@@ -69,12 +70,17 @@ export const getClaims = async (req: Request, res: Response) => {
       return errorResponse(403, "Caller is not a member of the team", res);
     }
 
-    // Request all claims, that have a wage where the teamId is the provided teamId
+    let statusFilter: Prisma.ClaimWhereInput = {};
+    if (status) {
+      statusFilter = { status };
+    }
+    // Request all claims based on status, that have a wage where the teamId is the provided teamId
     const claims = await prisma.claim.findMany({
       where: {
         wage: {
           teamId: teamId,
         },
+        ...statusFilter,
       },
       include: {
         wage: {
