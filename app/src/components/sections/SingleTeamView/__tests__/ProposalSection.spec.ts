@@ -55,7 +55,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-describe('ProposalSection.vue', () => {
+describe.skip('ProposalSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {

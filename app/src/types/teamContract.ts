@@ -1,6 +1,15 @@
+import type { Address } from "viem"
+type ContractType = 
+  | "Bank"
+  | "InvestorsV1"
+  | "Voting"
+  | "BoardOfDirectors"
+  | "ExpenseAccount"
+  | "ExpenseAccountEIP712"
+  | "CashRemunerationEIP712";
 export interface TeamContract {
-  address: string
-  type: string
-  deployer: string
+  address: Address
+  type: ContractType 
+  deployer: Address
   admins: string[]
 }
