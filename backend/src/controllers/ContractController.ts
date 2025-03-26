@@ -29,6 +29,9 @@ export const syncContracts = async (req: Request, res: Response) => {
   const body = req.body as unknown as Pick<ContractBodyRequest, "teamId">;
 
   const teamId = Number(body.teamId);
+  if (isNaN(teamId))
+    return errorResponse(400, "Missing or invalid field: teamId", res);
+
   try {
     const team = await prisma.team.findUnique({
       where: { id: Number(teamId) },
