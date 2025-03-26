@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { Address, getContract, isAddress } from "viem";
-import { isOwnerOfTeam } from "./wageController";
 import { errorResponse, prisma } from "../utils";
 import publicClient from "../utils/viem.config";
 import OFFICER_ABI from "../artifacts/officer_abi.json";
