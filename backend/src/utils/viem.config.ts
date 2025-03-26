@@ -1,5 +1,5 @@
 import { createPublicClient, http } from "viem";
-import { mainnet, sepolia, polygon, hardhat } from "viem/chains";
+import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from "viem/chains";
 
 const chainId = process.env.CHAIN_ID;
 
@@ -19,6 +19,8 @@ export const getChain = (chainIdStr: string | undefined) => {
       return polygon;
     case hardhat.id:
       return hardhat;
+    case polygonAmoy.id:
+      return polygonAmoy;
     default:
       return sepolia;
   }
