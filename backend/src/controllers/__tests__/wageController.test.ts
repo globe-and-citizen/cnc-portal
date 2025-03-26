@@ -24,10 +24,6 @@ const mockTeam = {
   name: "TeamName",
   ownerAddress: "0xOwnerAddress",
   description: null,
-  bankAddress: null,
-  votingAddress: null,
-  boardOfDirectorsAddress: null,
-  expenseAccountAddress: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 } as Team;

@@ -59,7 +59,16 @@
     <!-- Add Team Modal -->
     <ModalComponent v-model="appStore.showAddTeamModal">
       <!-- May be return an event that will trigger team reload -->
-      <AddTeamForm @done="appStore.showAddTeamModal = false" v-if="appStore.showAddTeamModal" />
+      <AddTeamForm
+        @done="
+          () => {
+            appStore.showAddTeamModal = false
+            teamStore.teamsMeta.reloadTeams()
+            // TODO: Redirection depending on the current route
+          }
+        "
+        v-if="appStore.showAddTeamModal"
+      />
     </ModalComponent>
 
     <!-- Toast Notifications -->
@@ -84,8 +93,9 @@ import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
-import { useAppStore } from './stores'
+import { useAppStore, useTeamStore } from './stores'
 
+const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const appStore = useAppStore()
