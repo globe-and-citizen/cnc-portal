@@ -9,6 +9,7 @@ import ListIndex from '@/views/team/ListIndex.vue'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
 import BankView from '@/views/team/[id]/BankView.vue'
+import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,6 +57,12 @@ const router = createRouter({
           name: 'bank',
           meta: { name: 'Team Bank' },
           component: BankView
+        },
+        {
+          path: '/teams/:id/contract-management',
+          name: 'contract-management',
+          meta: { name: 'Contract Management' },
+          component: ContractManagementView
         },
         {
           path: '/teams/:id/administration',
