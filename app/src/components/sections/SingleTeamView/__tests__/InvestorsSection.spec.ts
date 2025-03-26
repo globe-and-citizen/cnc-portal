@@ -38,15 +38,19 @@ describe('InvestorsSection', () => {
           id: '1',
           name: 'Test Team',
           ownerAddress: '0xOwnerAddress',
-          investorsAddress: '0xInvestorAddress',
+          teamContracts: [
+            {
+              address: '0xcontractaddress',
+              admins: [],
+              type: 'InvestorsV1',
+              deployer: '0xdeployeraddress'
+            }
+          ],
           members: [
             { id: '1', address: '0x123', name: 'John Doe', teamId: 1 },
             { id: '2', address: '0x456', name: 'Jane Doe', teamId: 1 }
           ],
-          description: '',
-          bankAddress: null,
-          votingAddress: null,
-          boardOfDirectorsAddress: null
+          description: ''
         }
       },
       global: {
