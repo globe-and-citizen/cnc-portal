@@ -22,9 +22,12 @@ import type { ReceiptData } from '@/utils/excelExport'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed, ref, watch } from 'vue'
+import { type Address } from 'viem'
 
 const teamStore = useTeamStore()
-const contractAddress = teamStore.currentTeam?.cashRemunerationEip712Address
+const contractAddress = teamStore.currentTeam?.teamContracts.find(
+  (contract) => contract.type === 'CashRemunerationEIP712'
+)?.address as Address
 
 const { result, error } = useQuery(
   gql`
