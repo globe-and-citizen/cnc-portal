@@ -15,12 +15,9 @@ import {
   // getClaim,
   // addContracts,
 } from "../controllers/teamController";
-import { getContracts, syncContracts } from "../controllers/contractController";
+import { getContracts, syncContracts } from "../controllers/ContractController";
 
-import {
-  deleteMember,
-  addMembers,
-} from "../controllers/memberController";
+import { deleteMember, addMembers } from "../controllers/memberController";
 const teamRoutes = express.Router();
 
 // Team CRUD routes
@@ -46,6 +43,6 @@ teamRoutes.get("/:id/expense-data", getExpenseAccountData);
 // teamRoutes.post("/:id/add-contracts", addContracts);
 teamRoutes.get("/contract/get", getContracts);
 
-teamRoutes.put("/contract/sync", syncContracts)
+teamRoutes.put("/contract/sync", syncContracts);
 
 export default teamRoutes;
