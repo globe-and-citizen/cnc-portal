@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
 import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
@@ -85,7 +85,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 
 describe.skip('CashRemunerationView.vue', () => {
   const createComponent = () => {
-    return mount(CashRemunerationView, {
+    return shallowMount(CashRemunerationView, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
