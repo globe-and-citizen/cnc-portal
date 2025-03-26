@@ -5,8 +5,11 @@
     <ExpenseStatsSection />
 
     <GenericTokenHoldingsSection
-      v-if="team?.expenseAccountEip712Address"
-      :address="team.expenseAccountEip712Address"
+      v-if="team?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')"
+      :address="
+        team?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address ||
+        ''
+      "
     />
 
     <MyApprovedExpenseSection
@@ -80,12 +83,6 @@ watch(reload, async (newState) => {
     await init()
   }
 })
-watch(
-  () => team.value?.expenseAccountAddress,
-  async (newVal) => {
-    if (newVal) await init()
-  }
-)
 //#endregion
 
 onMounted(async () => {

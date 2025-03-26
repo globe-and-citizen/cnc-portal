@@ -23,13 +23,13 @@
                 functionName: 'unpause',
                 args: [],
                 abi: VotingABI,
-                address: props.team.votingAddress as Address
+                address: votingAddress
               })
             : pause({
                 functionName: 'pause',
                 args: [],
                 abi: VotingABI,
-                address: props.team.votingAddress as Address
+                address: votingAddress
               })
         "
       >
@@ -61,9 +61,9 @@
           @click="
             transferOwnership({
               functionName: 'transferOwnership',
-              args: [team.boardOfDirectorsAddress],
+              args: [boardOfDirectorsAddress],
               abi: VotingABI,
-              address: props.team.votingAddress as Address
+              address: votingAddress
             })
           "
         >
@@ -82,7 +82,7 @@
             functionName: 'transferOwnership',
             args: [newOwner],
             abi: VotingABI,
-            address: props.team.votingAddress as Address
+            address: votingAddress as Address
           })
         }
       "
@@ -94,7 +94,7 @@
 import { useToastStore } from '@/stores/useToastStore'
 import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
 import type { Team } from '@/types'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
@@ -108,6 +108,18 @@ const props = defineProps<{
   team: Partial<Team>
 }>()
 
+const votingAddress = computed(() => {
+  const address = props.team.teamContracts?.find((contract) => contract.type === 'Voting')?.address
+  return address as Address
+})
+
+const boardOfDirectorsAddress = computed(() => {
+  const address = props.team.teamContracts?.find(
+    (contract) => contract.type === 'BoardOfDirectors'
+  )?.address
+  return address as Address
+})
+
 const { addErrorToast, addSuccessToast } = useToastStore()
 const {
   data: isPaused,
@@ -115,7 +127,7 @@ const {
   refetch: getIsPaused,
   isLoading: loadingPaused
 } = useReadContract({
-  address: props.team.votingAddress! as Address,
+  address: votingAddress,
   functionName: 'paused',
   abi: VotingABI
 })
@@ -126,7 +138,7 @@ const {
   isLoading: loadingOwner,
   refetch: getOwner
 } = useReadContract({
-  address: props.team.votingAddress! as Address,
+  address: votingAddress,
   functionName: 'owner',
   abi: VotingABI
 })

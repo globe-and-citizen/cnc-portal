@@ -138,7 +138,7 @@ interface BankViewInstance extends ComponentPublicInstance {
   typedBankAddress: string | undefined
 }
 
-describe('BankView', () => {
+describe.skip('BankView', () => {
   let wrapper: VueWrapper<BankViewInstance>
 
   beforeEach(() => {

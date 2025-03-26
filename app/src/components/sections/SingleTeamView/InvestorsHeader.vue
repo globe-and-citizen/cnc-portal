@@ -25,7 +25,11 @@
       ></span>
       <div class="flex gap-x-1">
         <h4>Contract Address :</h4>
-        <AddressToolTip :address="team.investorsAddress!" />
+        <AddressToolTip
+          :address="
+            team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')?.address!
+          "
+        />
       </div>
     </div>
   </div>

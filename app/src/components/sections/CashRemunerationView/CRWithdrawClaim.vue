@@ -17,7 +17,7 @@ import type { ClaimResponse } from '@/types'
 import { log } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { formatEther, parseEther, type Address } from 'viem'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
@@ -31,6 +31,12 @@ const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 
+const cashRemunerationEip712Address = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'CashRemunerationEIP712'
+    )?.address as Address
+)
 const {
   writeContractAsync: withdraw,
   data: withdrawHash,
@@ -57,7 +63,7 @@ const withdrawClaim = async () => {
   // balance check
   const balance = formatEther(
     await getBalance(config.getClient(), {
-      address: teamStore.currentTeam?.cashRemunerationEip712Address as Address
+      address: cashRemunerationEip712Address.value
     })
   )
   if (
@@ -73,7 +79,7 @@ const withdrawClaim = async () => {
   try {
     await withdraw({
       abi: EIP712ABI,
-      address: teamStore.currentTeam?.cashRemunerationEip712Address as Address,
+      address: cashRemunerationEip712Address.value,
       functionName: 'withdraw',
       args: [
         {

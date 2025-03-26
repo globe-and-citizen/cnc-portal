@@ -49,8 +49,15 @@ describe('ShareholderList', () => {
         team: {
           id: '1',
           name: 'Test Team',
+          teamContracts: [
+            {
+              address: '0xcontractaddress',
+              admins: [],
+              type: 'InvestorsV1',
+              deployer: '0xdeployeraddress'
+            }
+          ],
           ownerAddress: '0xOwnerAddress',
-          investorsAddress: '0xInvestorAddress',
           members: [
             { id: '1', address: '0x123', name: 'John Doe', teamId: 1 },
             { id: '2', address: '0x456', name: 'Jane Doe', teamId: 1 }

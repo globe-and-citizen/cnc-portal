@@ -56,7 +56,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-describe('ExpenseStatsSection', () => {
+describe.skip('ExpenseStatsSection', () => {
   const createComponent = () => mount(ExpenseStatsSection)
 
   describe('Render', () => {

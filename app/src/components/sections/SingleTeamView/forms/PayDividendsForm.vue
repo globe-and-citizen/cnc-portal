@@ -48,7 +48,7 @@ import useVuelidate from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
 import { useBalance } from '@wagmi/vue'
 import { formatEther, parseEther, type Address } from 'viem'
-import { onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { ref } from 'vue'
 
 const amount = ref<number | null>(null)
@@ -60,13 +60,16 @@ const props = defineProps<{
   team: Team
 }>()
 
+const bankAddress = computed(
+  () => props.team.teamContracts.find((contract) => contract.type === 'Bank')?.address as Address
+)
 const {
   data: bankBalance,
   isLoading: balanceLoading,
   error: balanceError,
   refetch: fetchBalance
 } = useBalance({
-  address: props.team.bankAddress as Address
+  address: bankAddress.value as Address
 })
 
 const emits = defineEmits(['submit'])
