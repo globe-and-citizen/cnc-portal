@@ -303,7 +303,7 @@ const menuItems = computed(() => [
     label: 'Contract Management',
     icon: WrenchIcon,
     route: {
-      name: 'bank',
+      name: 'contract-management',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     show: true

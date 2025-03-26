@@ -48,7 +48,7 @@ describe('TeamContractEventList.vue', () => {
 
   beforeEach(() => {
     wrapper = mount(TeamContractEventList, {
-      props: { eventsByCampaignCode: eventsByCampaignCode as EventsByCampaignCode }
+      props: { eventsByCampaignCode: eventsByCampaignCode as unknown as EventsByCampaignCode }
     })
   })
 
