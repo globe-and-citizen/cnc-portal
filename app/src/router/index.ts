@@ -73,16 +73,6 @@ const router = createRouter({
       ]
     },
     {
-      path: '/teams-old',
-      children: [
-        {
-          path: ':id',
-          name: 'singleteam',
-          component: SingleTeamView
-        }
-      ]
-    },
-    {
       path: '/transactions',
       name: 'transactions',
       component: TransactionsView
