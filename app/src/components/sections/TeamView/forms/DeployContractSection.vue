@@ -290,9 +290,10 @@ useWatchContractEvent({
       loading.value = false
       return
     }
-    const { error: updateContractsError } = await useCustomFetch<string>(
-      `teams/${props.createdTeamData.id}/add-contracts`
-    ).post()
+    const { error: updateContractsError } = await useCustomFetch('teams/contract/sync')
+      .put({ teamId: props.createdTeamData.id })
+      .json()
+
     if (updateContractsError.value) {
       log.error('Error updating contracts')
       addErrorToast('Error updating contracts')

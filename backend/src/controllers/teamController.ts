@@ -183,19 +183,7 @@ const updateTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const {
-    name,
-    description,
-    bankAddress,
-    votingAddress,
-    boardOfDirectorsAddress,
-    expenseAccountAddress,
-    expenseAccountEip712Address,
-    officerAddress,
-    teamContract,
-    cashRemunerationEip712Address,
-    investorsAddress,
-  } = req.body;
+  const { name, description, officerAddress, teamContract } = req.body;
   const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({

@@ -1,20 +1,36 @@
 import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
-import { Address, getContract } from "viem";
-import { isOwnerOfTeam } from "./wageController";
+import { Address, getContract, isAddress } from "viem";
 import { errorResponse, prisma } from "../utils";
 import publicClient from "../utils/viem.config";
 import OFFICER_ABI from "../artifacts/officer_abi.json";
+const ContractType = {
+  Bank: "Bank",
+  InvestorsV1: "InvestorsV1",
+  Voting: "Voting",
+  BoardOfDirectors: "BoardOfDirectors",
+  ExpenseAccount: "ExpenseAccount",
+  ExpenseAccountEIP712: "ExpenseAccountEIP712",
+  CashRemunerationEIP712: "CashRemunerationEIP712",
+  Campain: "Campain",
+} as const;
+
+type ContractType = keyof typeof ContractType;
+
 interface ContractBodyRequest {
   teamId: number;
   contractAddress: string;
+  contractType: string;
 }
 
 export const syncContracts = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address as Address;
-  const body = req.body as unknown as ContractBodyRequest;
+  const body = req.body as unknown as Pick<ContractBodyRequest, "teamId">;
 
   const teamId = Number(body.teamId);
+  if (isNaN(teamId))
+    return errorResponse(400, "Missing or invalid field: teamId", res);
+
   try {
     const team = await prisma.team.findUnique({
       where: { id: Number(teamId) },
@@ -58,7 +74,11 @@ export const syncContracts = async (req: Request, res: Response) => {
 };
 
 export const getContracts = async (req: Request, res: Response) => {
-  const teamId = Number(req.params.teamId);
+  const teamId = Number(req.query.teamId);
+
+  if (isNaN(teamId))
+    return errorResponse(400, "Invalid or missing teamId", res);
+
   try {
     // TODO restrict access to the team members
     const contracts = await prisma.teamContract.findMany({
@@ -69,6 +89,54 @@ export const getContracts = async (req: Request, res: Response) => {
       return errorResponse(404, "Team or contracts not found", res);
     }
     return res.status(200).json(contracts);
+  } catch (error) {
+    console.log("Error: ", error);
+    return errorResponse(500, "Internal server error", res);
+  }
+};
+
+export const addContract = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address as Address;
+  const body = req.body as unknown as ContractBodyRequest;
+
+  const teamId = Number(body.teamId);
+  const contractAddress = body.contractAddress;
+  const contractType = body.contractType;
+
+  // validating the contract data
+  if (!contractAddress || !contractType) {
+    return errorResponse(400, "Contract address and type are required", res);
+  }
+
+  if (!isAddress(contractAddress)) {
+    return errorResponse(400, "Invalid contract address", res);
+  }
+
+  if (!Object.values(ContractType).includes(contractType as ContractType)) {
+    return errorResponse(400, "Invalid contract type", res);
+  }
+
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(teamId) },
+    });
+    if (!team) return errorResponse(404, "Team not found", res);
+    if (team.ownerAddress !== callerAddress)
+      return errorResponse(
+        403,
+        "Unauthorized: Caller is not the owner of the team",
+        res
+      );
+
+    const contract = await prisma.teamContract.create({
+      data: {
+        teamId: teamId,
+        address: contractAddress,
+        deployer: callerAddress,
+        type: contractType,
+      },
+    });
+    return res.status(200).json(contract);
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);

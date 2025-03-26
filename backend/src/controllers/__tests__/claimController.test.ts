@@ -125,6 +125,31 @@ describe("Claim Controller", () => {
       expect(response.body[0]).toHaveProperty("id");
     });
 
+    it("should return 200 and list claims based on status filter", async () => {
+      // mock on isUserMemberOfTeam
+
+      // @ts-ignore
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue({});
+      // @ts-ignore
+      vi.spyOn(prisma.claim, "findMany").mockResolvedValue([
+        {
+          id: 1,
+          hoursWorked: 5,
+          status: "pending",
+          // @ts-ignore
+          wage: { teamId: 1, user: { address: "0x123", name: "User1" } },
+        },
+      ]);
+
+      const response = await request(app)
+        .get("/claim")
+        .query({ teamId: 1, status: "pending" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body[0]).toHaveProperty("id");
+    });
+
     it("should return 500 if an error occurs", async () => {
       // @ts-ignore
       vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Test");

@@ -40,7 +40,12 @@
           <!-- May be return an event that will trigger team reload -->
           <ContinueAddTeamForm
             :team="teamStore.currentTeamMeta.team"
-            @done="showModal = false"
+            @done="
+              () => {
+                showModal = false
+                teamStore.fetchTeam(teamStore.currentTeamMeta.team?.id)
+              }
+            "
           ></ContinueAddTeamForm>
         </ModalComponent>
       </div>
