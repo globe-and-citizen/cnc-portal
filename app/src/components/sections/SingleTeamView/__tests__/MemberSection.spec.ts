@@ -50,16 +50,13 @@ describe('MemberSection.vue', () => {
     id: '1',
     name: 'Sample Team',
     description: 'Sample Description',
-    bankAddress: 'Sample Bank Address',
-    ownerAddress: 'owner123',
-    votingAddress: null,
-    boardOfDirectorsAddress: null,
+    ownerAddress: '0xowner123',
     members: [
       { id: '1', name: 'Alice', address: '1234', teamId: 1 },
       { id: '2', name: 'Bob', address: '5678', teamId: 1 }
     ],
     teamContracts: []
-  }
+  } as Team
 
   // const addSuccessToast = vi.fn()
   // const addErrorToast = vi.fn()

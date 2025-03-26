@@ -1,6 +1,6 @@
 <template>
   <CardComponent title="My Approved Expense">
-    <div v-if="team?.expenseAccountEip712Address">
+    <div v-if="expenseAccountEip712Address">
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
       <section class="stat flex flex-col justify-start">
@@ -107,7 +107,7 @@ import { useRoute } from 'vue-router'
 //#endregion
 
 const { team } = defineProps<{
-  team: Partial<Team>
+  team: Team
   isDisapprovedAddress: boolean
 }>()
 const reload = defineModel()
@@ -148,6 +148,12 @@ const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immedi
 //#endregion
 
 //#endregion Computed Values
+
+const expenseAccountEip712Address = computed(
+  () =>
+    team.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+      ?.address as Address
+)
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
     return formatEther(expenseAccountBalance.value.value)
@@ -221,7 +227,7 @@ const {
   error: isErrorExpenseAccountBalance,
   refetch: fetchExpenseAccountBalance
 } = useBalance({
-  address: team.expenseAccountEip712Address as unknown as Address,
+  address: expenseAccountEip712Address,
   chainId
 })
 
@@ -234,7 +240,7 @@ const {
   address: USDC_ADDRESS as Address,
   abi: ERC20ABI,
   functionName: 'balanceOf',
-  args: [team.expenseAccountEip712Address as unknown as Address]
+  args: [expenseAccountEip712Address]
 })
 
 const {
@@ -243,7 +249,7 @@ const {
   error: errorGetAmountWithdrawn
 } = useReadContract({
   functionName: 'balances',
-  address: team.expenseAccountEip712Address as unknown as Address,
+  address: expenseAccountEip712Address,
   abi: expenseAccountABI,
   args: [signatureHash]
 })
@@ -290,7 +296,7 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
   tokenRecipient.value = to
 
-  if (team.expenseAccountEip712Address && _expenseAccountData.value.data) {
+  if (expenseAccountEip712Address.value && _expenseAccountData.value.data) {
     const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
 
     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
@@ -300,7 +306,7 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
 
 const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimit) => {
   executeExpenseAccountTransfer({
-    address: team.expenseAccountEip712Address as Address,
+    address: expenseAccountEip712Address.value,
     args: [
       to,
       parseEther(amount),
@@ -326,7 +332,7 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
 // Token transfer function
 const transferErc20Token = async () => {
   if (
-    !team.expenseAccountEip712Address ||
+    !expenseAccountEip712Address.value ||
     !tokenAmount.value ||
     !tokenRecipient.value ||
     !_expenseAccountData.value?.data
@@ -342,7 +348,7 @@ const transferErc20Token = async () => {
     address: tokenAddress as Address,
     abi: ERC20ABI,
     functionName: 'allowance',
-    args: [currentUserAddress as Address, team.expenseAccountEip712Address as Address]
+    args: [currentUserAddress as Address, expenseAccountEip712Address.value]
   })
 
   const currentAllowance = allowance ? allowance.toString() : 0n
@@ -351,11 +357,11 @@ const transferErc20Token = async () => {
       address: tokenAddress as Address,
       abi: ERC20ABI,
       functionName: 'approve',
-      args: [team.expenseAccountEip712Address as Address, _amount]
+      args: [expenseAccountEip712Address, _amount]
     })
   } else {
     executeExpenseAccountTransfer({
-      address: team.expenseAccountEip712Address as Address,
+      address: expenseAccountEip712Address.value,
       abi: expenseAccountABI,
       functionName: 'transfer',
       args: [
@@ -375,7 +381,7 @@ const transferErc20Token = async () => {
 }
 
 const getAmountWithdrawnBalance = async () => {
-  if (team.expenseAccountEip712Address) {
+  if (expenseAccountEip712Address.value) {
     if (!_expenseAccountData?.value?.data) return
     signatureHash.value = keccak256(_expenseAccountData.value.signature)
     await executeGetAmountWithdrawn()

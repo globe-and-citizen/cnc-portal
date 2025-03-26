@@ -25,7 +25,7 @@ describe('TeamContractAdmins', () => {
   const contract: TeamContract = {
     address: '0xcontractaddress',
     admins: adminsData,
-    type: 'AddCampaign',
+    type: 'Campaign',
     deployer: '0xdeployeraddress'
   }
 
@@ -73,9 +73,9 @@ describe('TeamContractAdmins', () => {
     const newContract = {
       address: '0xnewcontractaddress',
       admins: [],
-      type: 'AddCampaign',
+      type: 'Campaign',
       deployer: '0xdeployeraddress'
-    }
+    } as TeamContract
     await wrapper.setProps({ contract: newContract })
     await flushPromises()
     // Debugging logs
@@ -103,7 +103,7 @@ describe('TeamContractAdmins', () => {
         contract: {
           address: '0xcontractaddress',
           admins: [] as string[],
-          type: 'AddCampaign',
+          type: 'Campaign',
           deployer: '0xdeployeraddress'
         } as TeamContract
       }
@@ -120,7 +120,7 @@ describe('TeamContractAdmins', () => {
         contract: {
           address: '0xcontractaddress',
           admins: null as unknown as string[],
-          type: 'AddCampaign',
+          type: 'Campaign',
           deployer: '0xdeployeraddress'
         } as TeamContract
       }
@@ -142,9 +142,9 @@ describe('TeamContractAdmins', () => {
     const newContract = {
       address: '0xnewcontractaddress',
       admins: [],
-      type: 'AddCampaign',
+      type: 'Campaign',
       deployer: '0xdeployeraddress'
-    }
+    } as TeamContract
     await wrapper.setProps({ contract: newContract })
     // Mock initial call count
     await flushPromises()

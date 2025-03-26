@@ -3,15 +3,19 @@ import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TeamDetails from '../sections/SingleTeamView/TeamDetails.vue'
 import { useUserDataStore } from '@/stores/user'
+import type { Team } from '@/types/team'
 
 vi.mock('@/stores/user')
 
 describe('TeamDetails.vue', () => {
   const mockTeam = {
+    id: '1',
     name: 'Test Team',
     description: 'Test description',
-    ownerAddress: '0xUserAddress'
-  }
+    ownerAddress: '0xUserAddress',
+    members: [],
+    teamContracts: []
+  } as Team
 
   const createWrapper = (userAddress: string) => {
     // @ts-expect-error: mocked

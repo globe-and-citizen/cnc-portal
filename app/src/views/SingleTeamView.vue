@@ -9,17 +9,6 @@
           <ButtonUI
             size="sm"
             variant="primary"
-            @click="officerModal = true"
-            v-if="team.ownerAddress == currentAddress"
-            data-test="manageOfficer"
-          >
-            Manage Deployments
-          </ButtonUI>
-        </div>
-        <div>
-          <ButtonUI
-            size="sm"
-            variant="primary"
             @click="addCampaignModal = true"
             v-if="!team.addCampaignAddress && team.ownerAddress == useUserDataStore().address"
             data-test="createAddCampaign"
@@ -28,30 +17,6 @@
           </ButtonUI>
         </div>
       </div>
-
-      <ModalComponent v-model="officerModal">
-        <OfficerForm
-          v-if="officerModal"
-          :team="team"
-          @getTeam="
-            () => {
-              officerModal = false
-              getTeamAPI()
-            }
-          "
-          @openInvestorContractModal="
-            (deploymentsData?: Deployment[]) => {
-              officerModal = false
-              investorModal = true
-
-              if ((deploymentsData ?? []).length > 0) {
-                deployments = deploymentsData!
-                isDeployAll = true
-              }
-            }
-          "
-        />
-      </ModalComponent>
 
       <ModalComponent v-model="addCampaignModal">
         <CreateAddCamapaign
@@ -66,12 +31,8 @@
             <TeamSection :team="team" :teamIsFetching="teamIsFetching" @getTeam="getTeamAPI" />
           </div>
         </template>
-        <template #tab-1>
-          <BankSection v-if="activeTab == 1" :team="team" />
-        </template>
-        <template #tab-2>
-          <BankTransactionsSection v-if="activeTab == 2" :bank-address="team.bankAddress" />
-        </template>
+        <template #tab-1> </template>
+        <template #tab-2> </template>
         <template #tab-3>
           <ProposalSection
             v-if="activeTab == 3"
@@ -112,19 +73,14 @@ import { useUserDataStore } from '@/stores/user'
 // Composables
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
-// Modals/Forms
-import OfficerForm from '@/components/forms/OfficerForm.vue'
-
 //Components
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
-import BankTransactionsSection from '@/components/sections/SingleTeamView/BankTransactionsSection.vue'
-import BankSection from '@/components/sections/SingleTeamView/BankSection.vue'
 import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
-import { type TeamContract, type Deployment, type User, SingleTeamTabs } from '@/types'
+import { type TeamContract, type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -139,11 +95,6 @@ import TeamContracts from '@/components/TeamContracts.vue'
 // Modal control states
 const tabs = ref<Array<SingleTeamTabs>>([SingleTeamTabs.Members, SingleTeamTabs.TeamContract])
 const isOwner = ref(false)
-const officerModal = ref(false)
-
-const investorModal = ref(false)
-const deployments = ref<Deployment[]>([])
-const isDeployAll = ref(false)
 
 const _teamBankContractAddress = ref('')
 

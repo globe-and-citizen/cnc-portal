@@ -20,9 +20,9 @@
           <span class="text-xs badge badge-sm badge-primary"
             >{{ action.targetAddress }}
             {{
-              action.targetAddress == team.bankAddress
+              action.targetAddress == bankAddress
                 ? '(Bank)'
-                : action.targetAddress == team.expenseAccountAddress
+                : action.targetAddress == expenseAccountAddress
                   ? '(Expense Account)'
                   : '(Unknown)'
             }}</span
@@ -31,9 +31,9 @@
         <p data-test="action-function-name">
           Function Name:
           {{
-            action.targetAddress == team.bankAddress
+            action.targetAddress == bankAddress
               ? bankFunctionName
-              : action.targetAddress == team.expenseAccountAddress
+              : action.targetAddress == expenseAccountAddress
                 ? expenseFunctionName
                 : 'Unknown'
           }}
@@ -41,13 +41,13 @@
         <p data-test="action-parameters-title">Parameters:</p>
         <ul
           data-test="action-parameters-expense"
-          v-if="action.targetAddress == team.expenseAccountAddress"
+          v-if="action.targetAddress == expenseAccountAddress"
         >
           <li data-test="expense-params" v-for="(arg, index) in expenseArgs" :key="index">
             {{ '  ' }} - {{ expenseInputs?.[index] }}: {{ arg }}
           </li>
         </ul>
-        <ul data-test="action-parameters-bank" v-if="action.targetAddress == team.bankAddress">
+        <ul data-test="action-parameters-bank" v-if="action.targetAddress == bankAddress">
           <li data-test="bank-params" v-for="(arg, index) in bankArgs" :key="index">
             {{ '  ' }} - {{ bankInputs?.[index] }}: {{ arg }}
           </li>
@@ -90,7 +90,7 @@ import type { Action, Team } from '@/types'
 import type { Address } from 'viem'
 import { useToastStore, useUserDataStore } from '@/stores'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useBankGetFunction } from '@/composables/bank'
 import { useExpenseGetFunction } from '@/composables/useExpenseAccount'
@@ -103,6 +103,31 @@ const props = defineProps<{
   team: Partial<Team>
   boardOfDirectors: Address[]
 }>()
+
+// const votingAddress = computed(() => {
+//   const address = props.team.teamContracts?.find((contract) => contract.type === 'Voting')?.address
+//   return address as Address
+// })
+
+const boardOfDirectorsAddress = computed(() => {
+  const address = props.team.teamContracts?.find(
+    (contract) => contract.type === 'BoardOfDirectors'
+  )?.address
+  return address as Address
+})
+
+const bankAddress = computed(() => {
+  const address = props.team.teamContracts?.find((contract) => contract.type === 'Bank')?.address
+  return address as Address
+})
+
+const expenseAccountAddress = computed(() => {
+  const address = props.team.teamContracts?.find(
+    (contract) => contract.type === 'ExpenseAccount'
+  )?.address
+  return address as Address
+})
+
 const emits = defineEmits(['closeModal', 'onExecuted'])
 
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -114,7 +139,7 @@ const {
   refetch: executeIsApproved
 } = useReadContract({
   functionName: 'isApproved',
-  address: props.team.boardOfDirectorsAddress as Address,
+  address: boardOfDirectorsAddress.value,
   abi: BoDABI,
   args: [props.action.actionId, currentAddress]
 })
@@ -168,13 +193,13 @@ const {
 } = useReadContract({
   functionName: 'approvalCount',
   abi: BoDABI,
-  address: props.team.boardOfDirectorsAddress as Address,
+  address: boardOfDirectorsAddress.value,
   args: [props.action.actionId]
 })
 const { data: isExecuted, refetch: executeIsExecuted } = useReadContract({
   functionName: 'isActionExecuted',
   abi: BoDABI,
-  address: props.team.boardOfDirectorsAddress as Address,
+  address: boardOfDirectorsAddress.value,
   args: [props.action.actionId]
 })
 
@@ -183,18 +208,18 @@ const {
   args: bankArgs,
   inputs: bankInputs,
   execute: getBankFunctionName
-} = useBankGetFunction(props.team.bankAddress!)
+} = useBankGetFunction(bankAddress.value)
 const {
   data: expenseFunctionName,
   args: expenseArgs,
   inputs: expenseInputs,
   execute: getExpenseFunctionName
-} = useExpenseGetFunction(props.team.expenseAccountAddress!)
+} = useExpenseGetFunction(expenseAccountAddress.value)
 const approveAction = async () => {
   approve({
     abi: BoDABI,
     functionName: 'approve',
-    address: props.team.boardOfDirectorsAddress as Address,
+    address: boardOfDirectorsAddress.value,
     args: [props.action.actionId]
   })
 }
@@ -203,7 +228,7 @@ const revokeAction = async () => {
   revoke({
     abi: BoDABI,
     functionName: 'revoke',
-    address: props.team.boardOfDirectorsAddress as Address,
+    address: boardOfDirectorsAddress.value,
     args: [props.action.actionId]
   })
 }
@@ -233,9 +258,9 @@ watch(errorApprovalCount, () => {
 onMounted(async () => {
   await executeIsApproved()
   await executeApprovalCount()
-  if (props.action.targetAddress == props.team.bankAddress) {
+  if (props.action.targetAddress == bankAddress.value) {
     await getBankFunctionName(props.action.data)
-  } else if (props.action.targetAddress == props.team.expenseAccountAddress) {
+  } else if (props.action.targetAddress == expenseAccountAddress.value) {
     await getExpenseFunctionName(props.action.data)
   }
 })

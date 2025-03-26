@@ -30,8 +30,11 @@ export function useAddAction() {
   async function addAction(teamData: Partial<Team>, actionData: Partial<Action>) {
     try {
       loadingContract.value = true
+      const boardOfDirectorsAddress = teamData.teamContracts?.find(
+        (contract) => contract.type === 'BoardOfDirectors'
+      )?.address as Address
       actionCount.value = (await readContract(config, {
-        address: teamData.boardOfDirectorsAddress as Address,
+        address: boardOfDirectorsAddress,
         functionName: 'actionCount',
         abi: BoDABI
       })) as bigint
@@ -39,7 +42,7 @@ export function useAddAction() {
       action.value = actionData
 
       executeAddAction({
-        address: teamData.boardOfDirectorsAddress as Address,
+        address: boardOfDirectorsAddress,
         functionName: 'addAction',
         abi: BoDABI,
         args: [actionData.targetAddress, actionData.description, actionData.data]

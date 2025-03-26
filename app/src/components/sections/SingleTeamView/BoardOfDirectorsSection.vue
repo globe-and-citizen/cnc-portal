@@ -60,7 +60,7 @@
                 <SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
                 <h4>
                   {{ bankOwner }} ({{
-                    bankOwner == team.boardOfDirectorsAddress
+                    bankOwner == boardOfDirectorsAddress
                       ? 'Board of Directors Contract'
                       : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ??
                         'Unknown')
@@ -72,13 +72,13 @@
                   data-test="transfer-expense-ownership-button"
                   :loading="
                     bankOwner == currentAddress &&
-                    bankOwner != team.boardOfDirectorsAddress &&
+                    bankOwner != boardOfDirectorsAddress &&
                     loadingTransferOwnership &&
                     !isConfirmingTransferOwnership
                   "
                   :disabled="
                     bankOwner == currentAddress &&
-                    bankOwner != team.boardOfDirectorsAddress &&
+                    bankOwner != boardOfDirectorsAddress &&
                     loadingTransferOwnership &&
                     !isConfirmingTransferOwnership
                   "
@@ -86,10 +86,10 @@
                   @click="
                     async () =>
                       transferBankOwnership({
-                        address: props.team.bankAddress! as Address,
+                        address: bankAddress,
                         abi: BankABI,
                         functionName: 'transferOwnership',
-                        args: [team.boardOfDirectorsAddress]
+                        args: [boardOfDirectorsAddress]
                       })
                   "
                 >
@@ -97,13 +97,13 @@
                 </ButtonUI>
               </td>
             </tr>
-            <tr v-if="team.expenseAccountAddress">
+            <tr v-if="expenseAccountAddress">
               <td>Expense A/c</td>
               <td>
                 <SkeletonLoading v-if="isLoadingExpenseOwner" class="w-full h-6" />
                 <h4>
                   {{ expenseOwner }} ({{
-                    expenseOwner == team.boardOfDirectorsAddress
+                    expenseOwner == boardOfDirectorsAddress
                       ? 'Board of Directors Contract'
                       : (team.members?.filter((member) => member.address == expenseOwner)[0]
                           ?.name ?? 'Unknown')
@@ -114,13 +114,11 @@
                 <ButtonUI
                   :loading="
                     expenseOwner == currentAddress &&
-                    expenseOwner != team.boardOfDirectorsAddress &&
                     loadingTransferExpenseOwnership &&
                     !isConfirmingExpenseTransferOwnership
                   "
                   :disabled="
                     expenseOwner == currentAddress &&
-                    expenseOwner != team.boardOfDirectorsAddress &&
                     loadingTransferExpenseOwnership &&
                     !isConfirmingExpenseTransferOwnership
                   "
@@ -128,10 +126,10 @@
                   @click="
                     async () =>
                       transferExpenseOwnership({
-                        address: props.team.expenseAccountAddress as Address,
+                        address: expenseAccountAddress,
                         abi: expenseAccountABI,
                         functionName: 'transferOwnership',
-                        args: [team.boardOfDirectorsAddress]
+                        args: [boardOfDirectorsAddress]
                       })
                   "
                 >
@@ -156,7 +154,7 @@ import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
-import { onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import type { Address } from 'viem'
 
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
@@ -166,9 +164,22 @@ import expenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps<{
-  team: Partial<Team>
+  team: Team
 }>()
 
+const bankAddress = computed(
+  () => props.team.teamContracts.find((contract) => contract.type === 'Bank')?.address as Address
+)
+const expenseAccountAddress = computed(
+  () =>
+    props.team.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+      ?.address as Address
+)
+const boardOfDirectorsAddress = computed(
+  () =>
+    props.team.teamContracts.find((contract) => contract.type === 'BoardOfDirectors')
+      ?.address as Address
+)
 const {
   data: bankOwner,
   isLoading: isLoadingBankOwner,
@@ -176,7 +187,7 @@ const {
   refetch: executeBankOwner
 } = useReadContract({
   functionName: 'owner',
-  address: props.team.bankAddress! as Address,
+  address: bankAddress.value,
   abi: BankABI
 })
 
@@ -187,7 +198,7 @@ const {
   refetch: executeGetExpenseOwner
 } = useReadContract({
   functionName: 'owner',
-  address: props.team.expenseAccountAddress as Address,
+  address: expenseAccountAddress.value as Address,
   abi: expenseAccountABI
 })
 
@@ -198,7 +209,7 @@ const {
   refetch: executeGetBoardOfDirectors
 } = useReadContract({
   functionName: 'getBoardOfDirectors',
-  address: props.team.boardOfDirectorsAddress as Address,
+  address: boardOfDirectorsAddress.value,
   abi: BoDABI
 })
 
@@ -273,6 +284,6 @@ watch(errorTransferExpenseOwnership, (newVal) => {
 onMounted(async () => {
   await executeGetBoardOfDirectors()
   await executeBankOwner()
-  if (props.team.expenseAccountAddress) await executeGetExpenseOwner()
+  if (expenseAccountAddress.value) await executeGetExpenseOwner()
 })
 </script>

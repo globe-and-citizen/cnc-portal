@@ -24,10 +24,16 @@ import gql from 'graphql-tag'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useTeamStore } from '@/stores'
 import type { ReceiptData } from '@/utils/excelExport'
+import type { Address } from 'viem'
 
 const teamStore = useTeamStore()
 
-const contractAddress = teamStore.currentTeam?.expenseAccountEip712Address
+const contractAddress = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
+)
 
 const { result, error } = useQuery(
   gql`
