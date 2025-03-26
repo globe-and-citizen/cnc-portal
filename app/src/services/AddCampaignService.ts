@@ -1,49 +1,32 @@
-import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
-import ADD_CAMPAIGN_ARTIFACT from '../artifacts/abi/AdCampaignManager.json'
-import { EventLog, Log, ethers, TransactionReceipt } from 'ethers'
-import { SmartContract } from './contractService'
+import { config } from '../wagmi.config.ts'
+import { getWalletClient, getPublicClient } from '@wagmi/core'
+import { getLogs } from 'viem/actions'
+import { parseAbiItem, type PublicClient, type Address } from 'viem'
 
+import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core'
+import { parseUnits, formatUnits } from 'viem/utils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import ADD_CAMPAIGN_ARTIFACT from '../artifacts/abi/AdCampaignManager.json'
 
-export interface IAddCampaignService {
-  web3Library: IWeb3Library
-  createAdCampaignManager(
-    _bankContractAddress: string,
-    _costPerClick: string,
-    _costPerImpression: string,
-    deployerAddress: string,
-    teamId: string
-  ): Promise<string>
-
-  getEvents(bankAddress: string, type: string): Promise<EventLog[] | Log[]>
-  getContractData(addCampaignContractAddress: string): Promise<{ key: string; value: string }[]> // Updated type for the return value
-  addAdmin(addCampaignContractAddress: string, adminAddress: string): Promise<TransactionReceipt>
-  removeAdmin(addCampaignContractAddress: string, adminAddress: string): Promise<TransactionReceipt>
-  getAdminList(addCampaignContractAddress: string): Promise<string[]>
-  getEventsGroupedByCampaignCode(
-    addCampaignContractAddress: string
-  ): Promise<GetEventsGroupedByCampaignCodeResult>
-}
-
-export interface PaymentReleasedEvent {
+export interface PaymentReleasedEvent extends Record<string, unknown> {
   campaignCode: string
-  paymentAmount: ethers.BigNumberish
+  paymentAmount: bigint
 }
 
-interface AdCampaignCreatedEvent {
+interface AdCampaignCreatedEvent extends Record<string, unknown> {
   campaignCode: string
-  budget: ethers.BigNumberish
+  budget: bigint
 }
 
-interface BudgetWithdrawnEvent {
+interface BudgetWithdrawnEvent extends Record<string, unknown> {
   campaignCode: string
   advertiser: string
-  amount: ethers.BigNumberish
+  amount: bigint
 }
 
-interface PaymentReleasedOnWithdrawApprovalEvent {
+interface PaymentReleasedOnWithdrawApprovalEvent extends Record<string, unknown> {
   campaignCode: string
-  paymentAmount: ethers.BigNumberish
+  paymentAmount: bigint
 }
 
 export interface EventsByCampaignCode {
@@ -79,246 +62,255 @@ export type ExtendedEvent =
   | ExtendedPaymentReleasedOnWithdrawApprovalEvent
   | ExtendedAdCampaignCreatedEvent
 
-export class AddCampaignService implements IAddCampaignService {
-  web3Library: IWeb3Library
-
-  constructor(web3Library: IWeb3Library = EthersJsAdapter.getInstance()) {
-    this.web3Library = web3Library
-  }
-
+export class AddCampaignService {
   private async deployAdCampaignManager(
-    _bankContractAddress: string,
-    _costPerClick: string,
-    _costPerImpression: string
+    bankAddress: string,
+    costPerClick: string,
+    costPerImpression: string
   ): Promise<string> {
-    const _costPerClickInWei = ethers.parseUnits(_costPerClick, 'ether')
-    const _costPerImpressionInWei = ethers.parseUnits(_costPerImpression, 'ether')
+    const click = parseUnits(costPerClick, 18)
+    const impression = parseUnits(costPerImpression, 18)
+    const walletClient = await getWalletClient(config)
 
-    const factory = await this.web3Library.getFactoryContract(
-      ADD_CAMPAIGN_ARTIFACT['abi'],
-      ADD_CAMPAIGN_ARTIFACT['bytecode']
-    )
+    const hash = await walletClient.deployContract({
+      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      bytecode: ADD_CAMPAIGN_ARTIFACT.bytecode as `0x${string}`,
+      args: [click, impression, bankAddress],
+      account: walletClient.account.address
+    })
 
-    const deployment = await factory.deploy(
-      _costPerClickInWei,
-      _costPerImpressionInWei,
-      _bankContractAddress
-    ) // Deploying the contract
-    const contractInstance = await deployment.waitForDeployment()
-
-    return await contractInstance.getAddress()
+    const receipt = await waitForTransactionReceipt(config, { hash })
+    if (!receipt.contractAddress) throw new Error('Deployment failed')
+    return receipt.contractAddress
   }
 
   async createAdCampaignManager(
-    _bankContractAddress: string,
-    _costPerClick: string,
-    _costPerImpression: string,
-    deployerAddress: string,
+    bankAddress: string,
+    costPerClick: string,
+    costPerImpression: string,
+    deployer: string,
     teamId: string
   ): Promise<string> {
-    const adCamapaignAddress = await this.deployAdCampaignManager(
-      _bankContractAddress,
-      _costPerClick,
-      _costPerImpression
-    )
+    const address = await this.deployAdCampaignManager(bankAddress, costPerClick, costPerImpression)
 
-    const contractPayload = {
-      address: adCamapaignAddress,
-      type: 'Campaign',
-      deployer: deployerAddress,
-      admins: [deployerAddress]
+    await useCustomFetch(`teams/${teamId}`)
+      .put({ teamContract: { address, type: 'Campaign', deployer, admins: [deployer] } })
+      .json()
+
+    return address
+  }
+
+  async addAdmin(address: string, admin: string) {
+    const hash = await writeContract(config, {
+      address: address as `0x${string}`,
+      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      functionName: 'addAdmin',
+      args: [admin]
+    })
+
+    return await waitForTransactionReceipt(config, { hash })
+  }
+
+  async removeAdmin(address: string, admin: string) {
+    const hash = await writeContract(config, {
+      address: address as `0x${string}`,
+      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      functionName: 'removeAdmin',
+      args: [admin]
+    })
+
+    return await waitForTransactionReceipt(config, { hash })
+  }
+
+  async getAdminList(address: string): Promise<string[]> {
+    const client = getPublicClient(config) as PublicClient
+    const latestBlock = await client.getBlockNumber()
+
+    const fromBlock = latestBlock > 9999n ? latestBlock - 9999n : 0n
+
+    const adminAddedEvent = parseAbiItem('event AdminAdded(address indexed admin)')
+    const adminRemovedEvent = parseAbiItem('event AdminRemoved(address indexed admin)')
+
+    const [addedLogs, removedLogs] = await Promise.all([
+      getLogs(client, {
+        address: address as Address,
+        event: adminAddedEvent,
+        fromBlock: fromBlock,
+        toBlock: latestBlock
+      }),
+      getLogs(client, {
+        address: address as Address,
+        event: adminRemovedEvent,
+        fromBlock: fromBlock,
+        toBlock: latestBlock
+      })
+    ])
+
+    const set = new Set<Address>()
+
+    for (const log of addedLogs) {
+      if (log.args.admin) {
+        set.add(log.args.admin as `0x${string}`)
+      }
     }
-    await useCustomFetch<string>(`teams/${teamId}`).put({ teamContract: contractPayload }).json()
 
-    return adCamapaignAddress
+    for (const log of removedLogs) {
+      if (log.args.admin) {
+        set.delete(log.args.admin as `0x${string}`)
+      }
+    }
+
+    return Array.from(set)
   }
 
-  async addAdmin(addCampaignContractAddress: string, adminAddress: string) {
-    const contractService = this.getContractService(addCampaignContractAddress)
-    const contract = await contractService.getContract() // Retrieve contract instance
-    const tx = await contract.addAdmin(adminAddress)
+  async getContractData(address: string): Promise<{ key: string; value: string }[]> {
+    const result: { key: string; value: string }[] = []
 
-    const receipt = await tx.wait()
-
-    return receipt
-  }
-
-  async removeAdmin(addCampaignContractAddress: string, adminAddress: string) {
-    const contractService = this.getContractService(addCampaignContractAddress)
-    const contract = await contractService.getContract() // Retrieve contract instance
-    const tx = await contract.removeAdmin(adminAddress)
-
-    const receipt = await tx.wait()
-
-    return receipt
-  }
-
-  async getAdminList(addCampaignContractAddress: string): Promise<string[]> {
-    const contractService = this.getContractService(addCampaignContractAddress)
-    const contract = await contractService.getContract() // Retrieve contract instance
-    const filterAdded = contract.filters.AdminAdded()
-    const filterRemoved = contract.filters.AdminRemoved()
-
-    // Get all AdminAdded events
-    const adminAddedEvents = await contract.queryFilter(filterAdded)
-    // Get all AdminRemoved events
-    const adminRemovedEvents = await contract.queryFilter(filterRemoved)
-
-    const adminSet = new Set<string>()
-
-    // Add all admins from AdminAdded events
-    // Add all admins from AdminAdded events
-    adminAddedEvents.forEach((event) => {
-      const adminAddress = (event as EventLog).args?.admin
-      if (adminAddress) adminSet.add(adminAddress)
-    })
-
-    // Remove admins from AdminRemoved events
-    adminRemovedEvents.forEach((event) => {
-      const adminAddress = (event as EventLog).args?.admin
-      if (adminAddress) adminSet.delete(adminAddress)
-    })
-
-    // Convert the Set to an array of unique admin addresses
-    return Array.from(adminSet)
-  }
-
-  // Updated getContractData method included in the interface
-  async getContractData(
-    addCampaignContractAddress: string
-  ): Promise<{ key: string; value: string }[]> {
-    const contractService = this.getContractService(addCampaignContractAddress)
-
-    const contract = await contractService.getContract() // Retrieve contract instance
-    const datas: Array<{ key: string; value: string }> = []
-
-    // Loop through ABI to find viewable or pure functions
-    for (const item of ADD_CAMPAIGN_ARTIFACT['abi']) {
+    for (const fn of ADD_CAMPAIGN_ARTIFACT.abi) {
       if (
-        item.type === 'function' &&
-        (item.stateMutability === 'view' || item.stateMutability === 'pure') &&
-        item.inputs?.length === 0
+        fn.type === 'function' &&
+        typeof fn.name === 'string' &&
+        ['view', 'pure'].includes(fn.stateMutability || '') &&
+        fn.inputs?.length === 0
       ) {
         try {
-          // Dynamically call the contract function using its name
-          if (item?.name) {
-            const result = await contract[item.name]()
+          const rawValue = (await readContract(config, {
+            address: address as `0x${string}`,
+            abi: ADD_CAMPAIGN_ARTIFACT.abi,
+            functionName: fn.name
+          })) as bigint | string
 
-            // Add to the array of key-value pairs
-            datas.push({
-              key: item.name,
-              value: result.toString() // Convert BigNumber or other types to string
-            })
-          }
-        } catch (error) {
-          console.error(`Error calling ${item.name}:`, error)
+          result.push({
+            key: fn.name,
+            value:
+              fn.name.startsWith('cost') && rawValue !== undefined
+                ? formatUnits(rawValue as bigint, 18)
+                : (rawValue?.toString() ?? '')
+          })
+        } catch (err) {
+          console.error(`Error calling ${fn.name}:`, err)
         }
       }
     }
-    return datas
+
+    return result
   }
 
   async getEventsGroupedByCampaignCode(
-    addCampaignContractAddress: string
+    contractAddress: string
   ): Promise<GetEventsGroupedByCampaignCodeResult> {
     try {
-      const contractService = new SmartContract(
-        addCampaignContractAddress,
-        ADD_CAMPAIGN_ARTIFACT.abi
-      )
+      const client = getPublicClient(config) as PublicClient
+      const latestBlock = await client.getBlockNumber()
 
-      // Get all logs for the relevant events
-      const adCampaignCreatedLogs = await contractService.getEvents('AdCampaignCreated')
-      const paymentReleasedLogs = await contractService.getEvents('PaymentReleased')
-      const paymentReleasedOnWithdrawApprovalLogs = await contractService.getEvents(
-        'PaymentReleasedOnWithdrawApproval'
-      )
+      const fromBlock = latestBlock > 9999n ? latestBlock - 9999n : 0n
+      const [adCreated, released, withdrawn, releasedOnApproval] = await Promise.all([
+        getLogs(client, {
+          address: contractAddress as `0x${string}`,
+          event: parseAbiItem('event AdCampaignCreated(string campaignCode, uint256 budget)'),
+          fromBlock: fromBlock,
+          toBlock: latestBlock
+        }),
+        getLogs(client, {
+          address: contractAddress as `0x${string}`,
+          event: parseAbiItem('event PaymentReleased(string campaignCode, uint256 paymentAmount)'),
+          fromBlock: fromBlock,
+          toBlock: latestBlock
+        }),
+        getLogs(client, {
+          address: contractAddress as `0x${string}`,
+          event: parseAbiItem(
+            'event BudgetWithdrawn(string campaignCode, address advertiser, uint256 amount)'
+          ),
+          fromBlock: fromBlock,
+          toBlock: latestBlock
+        }),
+        getLogs(client, {
+          address: contractAddress as `0x${string}`,
+          event: parseAbiItem(
+            'event PaymentReleasedOnWithdrawApproval(string campaignCode, uint256 paymentAmount)'
+          ),
+          fromBlock: fromBlock,
+          toBlock: latestBlock
+        })
+      ])
 
-      const budgetWithdrawnLogs = await contractService.getEvents('BudgetWithdrawn')
-
-      // Group events by campaignCode
       const eventsByCampaignCode: EventsByCampaignCode = {}
 
-      const processLogs = (logs: (EventLog | Log)[], eventName: string) => {
-        logs.forEach((log) => {
-          const currentLog = log as EventLog
-
-          const args = currentLog.args as unknown
-          let code: string
-          let eventArgs: ExtendedEvent
-
-          switch (eventName) {
-            case 'AdCampaignCreated': {
-              const eventArgsTuple = args as [string, ethers.BigNumberish] // Tuple: [campaignCode, budget]
-              eventArgs = {
-                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
-                budget: eventArgsTuple[1] as ethers.BigNumberish, // Index 1 corresponds to budget
-                eventName: 'AdCampaignCreated'
-              }
-
-              code = eventArgs.campaignCode
-              break
-            }
-            case 'PaymentReleased': {
-              const eventArgsTuple = args as [string, ethers.BigNumberish] // Tuple: [campaignCode, paymentAmount]
-              eventArgs = {
-                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
-                paymentAmount: eventArgsTuple[1] as ethers.BigNumberish, // Index 1 corresponds to paymentAmount
-                eventName: 'PaymentReleased'
-              }
-              code = eventArgs.campaignCode
-              break
-            }
-            case 'BudgetWithdrawn': {
-              const eventArgsTuple = args as [string, string, ethers.BigNumberish] // Tuple: [campaignCode, advertiser, amount]
-              eventArgs = {
-                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
-                advertiser: eventArgsTuple[1] as string, // Index 1 corresponds to advertiser
-                amount: eventArgsTuple[2] as ethers.BigNumberish, // Index 2 corresponds to amount
-                eventName: 'BudgetWithdrawn'
-              }
-              code = eventArgs.campaignCode
-              break
-            }
-            case 'PaymentReleasedOnWithdrawApproval': {
-              const eventArgsTuple = args as [string, ethers.BigNumberish] // Tuple: [campaignCode, paymentAmount]
-              eventArgs = {
-                campaignCode: eventArgsTuple[0] as string, // Index 0 corresponds to campaignCode
-                paymentAmount: eventArgsTuple[1] as ethers.BigNumberish, // Index 1 corresponds to paymentAmount
-                eventName: 'PaymentReleasedOnWithdrawApproval'
-              }
-              code = eventArgs.campaignCode
-              break
-            }
-            default:
-              return
-          }
-
-          if (!eventsByCampaignCode[code]) {
-            eventsByCampaignCode[code] = []
-          }
-          eventsByCampaignCode[code].push(eventArgs)
-        })
+      const group = <A extends Record<string, unknown>, T extends ExtendedEvent>(
+        logs: { args: A }[],
+        factory: (args: A) => T
+      ) => {
+        for (const log of logs) {
+          const event = factory(log.args)
+          const code = event.campaignCode
+          if (!eventsByCampaignCode[code]) eventsByCampaignCode[code] = []
+          eventsByCampaignCode[code].push(event)
+        }
       }
 
-      processLogs(adCampaignCreatedLogs, 'AdCampaignCreated')
-      processLogs(paymentReleasedLogs, 'PaymentReleased')
-      processLogs(paymentReleasedOnWithdrawApprovalLogs, 'PaymentReleasedOnWithdrawApproval')
-      processLogs(budgetWithdrawnLogs, 'BudgetWithdrawn')
+      group<{ campaignCode: string; budget: bigint }, ExtendedAdCampaignCreatedEvent>(
+        adCreated as { args: AdCampaignCreatedEvent }[],
+        (args) => ({
+          eventName: 'AdCampaignCreated',
+          campaignCode: args.campaignCode!,
+          budget: args.budget!
+        })
+      )
+
+      group<PaymentReleasedEvent, ExtendedPaymentReleasedEvent>(
+        released as { args: PaymentReleasedEvent }[],
+        (args) => ({
+          eventName: 'PaymentReleased',
+          campaignCode: args.campaignCode,
+          paymentAmount: args.paymentAmount
+        })
+      )
+
+      group<BudgetWithdrawnEvent, ExtendedBudgetWithdrawnEvent>(
+        withdrawn as { args: BudgetWithdrawnEvent }[],
+        (args) => ({
+          eventName: 'BudgetWithdrawn',
+          campaignCode: args.campaignCode,
+          advertiser: args.advertiser,
+          amount: args.amount
+        })
+      )
+
+      group<PaymentReleasedOnWithdrawApprovalEvent, ExtendedPaymentReleasedOnWithdrawApprovalEvent>(
+        releasedOnApproval as { args: PaymentReleasedOnWithdrawApprovalEvent }[],
+        (args) => ({
+          eventName: 'PaymentReleasedOnWithdrawApproval',
+          campaignCode: args.campaignCode,
+          paymentAmount: args.paymentAmount
+        })
+      )
 
       return { status: 'success', events: eventsByCampaignCode }
     } catch (error) {
-      return { status: 'error', error: error as { message: string } }
+      return { status: 'error', error: { message: (error as Error).message } }
     }
   }
 
-  async getEvents(addCampaignAddress: string, type: string): Promise<EventLog[] | Log[]> {
-    const contractService = this.getContractService(addCampaignAddress)
-
-    return await contractService.getEvents(type)
+  async setCostPerClick(address: string, value: string) {
+    const amount = parseUnits(value, 18)
+    const hash = await writeContract(config, {
+      address: address as `0x${string}`,
+      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      functionName: 'setCostPerClick',
+      args: [amount]
+    })
+    return await waitForTransactionReceipt(config, { hash })
   }
 
-  private getContractService(addCampaignContractAddress: string): SmartContract {
-    return new SmartContract(addCampaignContractAddress, ADD_CAMPAIGN_ARTIFACT['abi'])
+  async setCostPerImpression(address: string, value: string) {
+    const amount = parseUnits(value, 18)
+    const hash = await writeContract(config, {
+      address: address as `0x${string}`,
+      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      functionName: 'setCostPerImpression',
+      args: [amount]
+    })
+    return await waitForTransactionReceipt(config, { hash })
   }
 }

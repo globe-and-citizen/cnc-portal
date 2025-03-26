@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mainnet, sepolia, polygon, hardhat } from "viem/chains";
+import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from "viem/chains";
 import { createPublicClient, http } from "viem";
 
 // Mock the createPublicClient and http functions
@@ -9,7 +9,7 @@ vi.mock("viem", () => ({
 }));
 
 // Import the module after mocking
-import publicClient, { getChain } from "../viem.config";
+import { getChain } from "../viem.config";
 
 describe("viem.config", () => {
   beforeEach(() => {
@@ -42,6 +42,10 @@ describe("viem.config", () => {
 
     it("should correctly identify hardhat", () => {
       expect(getChain(hardhat.id.toString())).toBe(hardhat);
+    });
+
+    it("should correctly identify polygonAmoy", () => {
+      expect(getChain(polygonAmoy.id.toString())).toBe(polygonAmoy);
     });
 
     it("should handle hex chain IDs", () => {
