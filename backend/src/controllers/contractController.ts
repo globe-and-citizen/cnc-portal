@@ -28,11 +28,9 @@ export const syncContracts = async (req: Request, res: Response) => {
   const body = req.body as unknown as Pick<ContractBodyRequest, "teamId">;
 
   const teamId = Number(body.teamId);
-  if (isNaN(teamId)) {
-    console.log("here");
+  if (isNaN(teamId))
     return errorResponse(400, "Missing or invalid field: teamId", res);
-  }
-  console.log('not here')
+
   try {
     const team = await prisma.team.findUnique({
       where: { id: Number(teamId) },
@@ -76,7 +74,11 @@ export const syncContracts = async (req: Request, res: Response) => {
 };
 
 export const getContracts = async (req: Request, res: Response) => {
-  const teamId = Number(req.params.teamId);
+  const teamId = Number(req.query.teamId);
+
+  if (isNaN(teamId))
+    return errorResponse(400, "Invalid or missing teamId", res);
+
   try {
     // TODO restrict access to the team members
     const contracts = await prisma.teamContract.findMany({
