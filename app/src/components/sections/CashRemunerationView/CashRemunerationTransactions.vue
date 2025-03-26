@@ -2,6 +2,7 @@
   <GenericTransactionHistory
     v-if="transactionData.length > 0"
     :transactions="transactionData"
+    data-test="cash-remuneration-transactions"
     title="Cash Remuneration Transactions History"
     :currencies="['USD', 'CAD', 'INR', 'EUR']"
     :currency-rates="{
