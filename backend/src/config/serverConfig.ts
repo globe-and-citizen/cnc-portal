@@ -34,8 +34,6 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 const path = require("path");
 
-import morgan from "morgan";
-
 class Server {
   private static instance: Server | undefined;
   private app: Express;
@@ -92,7 +90,6 @@ class Server {
   private middleware() {
     this.app.use(express.json());
     this.app.use(cors({ origin: process.env.FRONTEND_URL as string }));
-    this.app.use(morgan("dev"));
   }
 
   private routes() {
