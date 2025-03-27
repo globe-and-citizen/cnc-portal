@@ -30,9 +30,8 @@ const teamStore = useTeamStore()
 
 const contractAddress = computed(
   () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'Bank'
-    )?.address as Address
+    teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Bank')
+      ?.address as Address
 )
 
 const { result, error } = useQuery(
