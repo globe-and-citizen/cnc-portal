@@ -8,7 +8,7 @@
         <AddressToolTip
           :address="
             teamStore.currentTeam?.teamContracts.find(
-              (contract) => contract.type === 'ExpenseAccountEIP712'
+              (contract) => contract.type === 'CashRemunerationEIP712'
             )?.address ?? ''
           "
           class="text-sm font-bold"
