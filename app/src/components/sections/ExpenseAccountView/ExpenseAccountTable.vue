@@ -88,10 +88,10 @@
         <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
       <template #transactions-data="{ row }">
-        <span>{{ row.balances[0] }}/{{ row.budgetData[0].value }}</span>
+        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }}</span>
       </template>
       <template #amountTransferred-data="{ row }">
-        <span>{{ row.balances[1] }}/{{ row.budgetData[1].value }}</span>
+        <span>{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}</span>
       </template>
     </TableComponent>
   </div>
