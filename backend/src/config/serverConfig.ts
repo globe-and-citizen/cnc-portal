@@ -34,6 +34,8 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 const path = require("path");
 
+import morgan from "morgan";
+
 class Server {
   private static instance: Server | undefined;
   private app: Express;
@@ -53,12 +55,12 @@ class Server {
       claim: "/api/claim/",
       apidocs: "/api-docs",
     };
-    const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100, // max 100 requests per windowMs
-    });
+    // const limiter = rateLimit({
+    //   windowMs: 15 * 60 * 1000, // 15 minutes
+    //   max: 100, // max 100 requests per windowMs
+    // });
 
-    this.app.use(limiter);
+    // this.app.use(limiter);
     this.port = parseInt(process.env.PORT as string) || 3000;
 
     this.init();
@@ -90,6 +92,7 @@ class Server {
   private middleware() {
     this.app.use(express.json());
     this.app.use(cors({ origin: process.env.FRONTEND_URL as string }));
+    this.app.use(morgan("dev"));
   }
 
   private routes() {
