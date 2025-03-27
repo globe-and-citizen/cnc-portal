@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: OfficerFactoryBeacon
-    network: localhost
+    network: sepolia
     source:
       abi: OfficerFactoryBeacon
-      address: "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE"
-      startBlock: 1
+      address: "0xad154BF180D694050843Bd094af69e9d3bf7eA40"
+      startBlock: 7970003
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -26,11 +26,11 @@ dataSources:
       file: ./src/officerFactoryBeacon.ts
   - kind: ethereum
     name: USDC
-    network: localhost
+    network: sepolia
     source:
       abi: ERC20
-      address: "0x59b670e9fA9D0A427751Af201D676719a970857b"
-      startBlock: 1
+      address: "0x63E5b84cCE0cf6c1a1C78055bD8bb2Fc82B1Ff8e"
+      startBlock: 7970003
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -46,11 +46,11 @@ dataSources:
       file: ./src/erc20.ts
   - kind: ethereum
     name: USDT
-    network: localhost
+    network: sepolia
     source:
       abi: ERC20
-      address: "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1"
-      startBlock: 1
+      address: "0xF1FbA289d63f563d5cbe2F122FE0126853758ffA"
+      startBlock: 7970003
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -67,7 +67,7 @@ dataSources:
 templates:
   - name: ExpenseAccountEIP712
     kind: ethereum/contract
-    network: localhost
+    network: sepolia
     source:
       abi: ExpenseAccountEIP712
     mapping:
@@ -93,7 +93,7 @@ templates:
           handler: habdleTokenDeposited
   - name: Bank
     kind: ethereum
-    network: localhost
+    network: sepolia
     source:
       abi: Bank
     mapping:
@@ -113,7 +113,7 @@ templates:
           handler: handleDeposited
   - name: CashRemunerationEIP712
     kind: ethereum/contract
-    network: localhost
+    network: sepolia
     source:
       abi: CashRemunerationEIP712
     mapping:
@@ -169,4 +169,4 @@ templates:
         - event: Unpaused(address)
           handler: handleUnpaused
       file: ./src/officer.ts
-    network: localhost
+    network: sepolia
