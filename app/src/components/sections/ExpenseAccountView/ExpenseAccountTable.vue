@@ -238,12 +238,9 @@ const activateApproval = async (signature: `0x{string}`) => {
 
 //#region Watch
 watch(reload, async (newState) => {
-  console.log(`reload state changed: `, newState)
   if (newState) {
-    console.log(`Reloading...`)
     await fetchExpenseAccountOwner()
     await initializeBalances()
-    console.log(`manyExpenseAccountDataAll: `, manyExpenseAccountDataAll)
   }
 })
 // watch(
