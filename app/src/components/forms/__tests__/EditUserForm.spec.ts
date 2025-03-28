@@ -5,6 +5,7 @@ import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicon
 import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
+import { createTestingPinia } from '@pinia/testing'
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -12,9 +13,23 @@ const mockClipboard = {
   copied: ref(false),
   isSupported: ref(true)
 }
-vi.mock('@vueuse/core', () => ({
-  useClipboard: vi.fn(() => mockClipboard)
-}))
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useClipboard: vi.fn(() => mockClipboard)
+  }
+})
+vi.mock('@/stores', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: () => ({
+      currency: ref('USD'),
+      setCurrency: vi.fn()
+    })
+  }
+})
 
 describe('EditUserForm', () => {
   const user = {
@@ -34,6 +49,9 @@ describe('EditUserForm', () => {
         isLoading: false,
         modelValue: user,
         ...props
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }
