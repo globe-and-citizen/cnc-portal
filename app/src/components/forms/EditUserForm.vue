@@ -48,6 +48,7 @@
       <span class="w-40" data-test="currency-label">Default Currency</span>
       <select
         v-model="selectedCurrency"
+        data-test="currency-select"
         class="select select-sm w-full focus:border-none focus:outline-none"
       >
         <option

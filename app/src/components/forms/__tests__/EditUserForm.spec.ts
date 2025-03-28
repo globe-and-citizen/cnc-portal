@@ -31,6 +31,10 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
+interface ComponentData {
+  selectedCurrency: string
+}
+
 describe('EditUserForm', () => {
   const user = {
     name: 'John Doe',
@@ -138,6 +142,14 @@ describe('EditUserForm', () => {
       await wrapper.findComponent(ClipboardDocumentListIcon).trigger('click')
 
       expect(mockCopy).toBeCalledWith(user.address)
+    })
+
+    it('triggers v-model when selectedcurrency is changed', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('select[data-test="currency-select"]').setValue('EUR')
+      await wrapper.vm.$nextTick()
+
+      expect((wrapper.vm as unknown as ComponentData).selectedCurrency).toBe('EUR')
     })
   })
   describe('Form Validation', () => {
