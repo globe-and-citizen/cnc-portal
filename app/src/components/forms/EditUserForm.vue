@@ -47,12 +47,8 @@
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-40" data-test="currency-label">Default Currency</span>
       <select
+        v-model="selectedCurrency"
         class="select select-sm w-full focus:border-none focus:outline-none"
-        @change="
-          (e) => {
-            selectedCurrency = (e.target as HTMLSelectElement)?.value
-          }
-        "
       >
         <option
           :key="currency"
