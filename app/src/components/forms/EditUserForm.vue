@@ -82,8 +82,8 @@ import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { useClipboard } from '@vueuse/core'
 import ButtonUI from '../ButtonUI.vue'
-import { LIST_CURRENCIES, useCurrencyStore } from '@/stores/currencyStore'
 import { ref } from 'vue'
+import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
 
 const currencyStore = useCurrencyStore()
 const selectedCurrency = ref<string>(currencyStore.currency)
