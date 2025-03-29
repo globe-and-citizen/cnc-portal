@@ -11,6 +11,7 @@ import { useStorage } from '@vueuse/core'
 import BankView from '@/views/team/[id]/BankView.vue'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
+import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -69,6 +70,12 @@ const router = createRouter({
           name: 'administration',
           meta: { name: 'Contract Administration' },
           component: AdministrationView
+        },
+        {
+          path: '/teams/:id/sher-token',
+          name: 'sher-token',
+          meta: { name: 'SHER Token' },
+          component: SherTokenView
         }
       ]
     },

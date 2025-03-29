@@ -16,7 +16,18 @@ describe('InvestorsHeader', () => {
   }) => {
     return shallowMount(InvestorsHeader, {
       props: {
-        team: { id: '1', name: 'Team 1' },
+        team: {
+          id: '1',
+          name: 'Team 1',
+          teamContracts: [
+            {
+              type: 'InvestorsV1',
+              address: '0x123',
+              deployer: '0x456',
+              admins: ['0x789']
+            }
+          ]
+        },
         tokenSymbol: 'BTC',
         tokenSymbolLoading: false,
         totalSupply: parseEther('1000000'),
@@ -24,6 +35,16 @@ describe('InvestorsHeader', () => {
         tokenBalance: parseEther('100'),
         loadingTokenBalance: false,
         ...props
+      },
+      global: {
+        stubs: {
+          CardComponent: {
+            template: '<div><slot /></div>'
+          },
+          AddressToolTip: {
+            template: '<div>0x123</div>'
+          }
+        }
       }
     })
   }
@@ -33,9 +54,9 @@ describe('InvestorsHeader', () => {
       loadingTokenBalance: false,
       tokenSymbolLoading: false
     })
-
-    expect(wrapper.find('h2').text()).toContain('Balance')
-    expect(wrapper.find('p[data-test="token-balance"]').text()).toContain('100 BTC')
+    const balanceElement = wrapper.find('[data-test="token-balance"]')
+    expect(balanceElement.exists()).toBeTruthy()
+    expect(balanceElement.text()).toContain('100 BTC')
   })
 
   it('should render loading dots if token balance and token symbol are loading', () => {
@@ -44,16 +65,19 @@ describe('InvestorsHeader', () => {
       tokenSymbolLoading: true
     })
 
-    expect(wrapper.find('span[data-test="token-balance-loading"]').exists()).toBeTruthy()
+    const loadingElement = wrapper.find('[data-test="token-balance-loading"]')
+    expect(loadingElement.exists()).toBeTruthy()
   })
 
   it('should render total supply if not loading', () => {
     const wrapper = createComponent({
-      totalSupplyLoading: false
+      totalSupplyLoading: false,
+      tokenSymbolLoading: false
     })
 
-    expect(wrapper.find('h3').text()).toContain('Total Supply')
-    expect(wrapper.find('p[data-test="total-supply"]').text()).toContain('1000000 BTC')
+    const supplyElement = wrapper.find('[data-test="total-supply"]')
+    expect(supplyElement.exists()).toBeTruthy()
+    expect(supplyElement.text()).toContain('1000000 BTC')
   })
 
   it('should render loading dots if total supply is loading', () => {
@@ -62,6 +86,27 @@ describe('InvestorsHeader', () => {
       tokenSymbolLoading: true
     })
 
-    expect(wrapper.find('span[data-test="total-supply-loading"]').exists()).toBeTruthy()
+    const loadingElement = wrapper.find('[data-test="total-supply-loading"]')
+    expect(loadingElement.exists()).toBeTruthy()
+  })
+
+  it('should not render token balance when token symbol is loading', () => {
+    const wrapper = createComponent({
+      loadingTokenBalance: false,
+      tokenSymbolLoading: true
+    })
+
+    const balanceElement = wrapper.find('[data-test="token-balance"]')
+    expect(balanceElement.exists()).toBeFalsy()
+  })
+
+  it('should not render total supply when token symbol is loading', () => {
+    const wrapper = createComponent({
+      totalSupplyLoading: false,
+      tokenSymbolLoading: true
+    })
+
+    const supplyElement = wrapper.find('[data-test="total-supply"]')
+    expect(supplyElement.exists()).toBeFalsy()
   })
 })
