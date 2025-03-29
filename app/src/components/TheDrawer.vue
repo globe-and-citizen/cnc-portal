@@ -294,9 +294,10 @@ const menuItems = computed(() => [
     label: 'SHER TOKEN',
     icon: ChartPieIcon,
     route: {
-      name: 'bank',
+      name: 'sher-token',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'sher-token',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
