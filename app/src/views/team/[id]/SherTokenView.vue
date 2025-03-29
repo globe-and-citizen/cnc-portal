@@ -1,5 +1,16 @@
 <template>
-  <div class="flex flex-col gap-6"></div>
+  <InvestorsSection :team="team!" />
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
+import { useTeamStore } from '@/stores/teamStore'
+import { ref, onMounted } from 'vue'
+
+const teamStore = useTeamStore()
+const team = ref(teamStore.currentTeam)
+
+onMounted(() => {
+  team.value = teamStore.currentTeam
+})
+</script>

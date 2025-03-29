@@ -291,7 +291,7 @@ const menuItems = computed(() => [
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
-    label: 'SHER TOKEN',
+    label: 'Investors',
     icon: ChartPieIcon,
     route: {
       name: 'sher-token',
