@@ -268,7 +268,7 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'bank',
-    show: true
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Cash Remuneration',
@@ -297,7 +297,7 @@ const menuItems = computed(() => [
       name: 'bank',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: true
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Contract Management',
@@ -306,13 +306,13 @@ const menuItems = computed(() => [
       name: 'contract-management',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: true
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Transactions',
     icon: ChartBarIcon,
     route: '/transactions',
-    show: true
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Administration',
