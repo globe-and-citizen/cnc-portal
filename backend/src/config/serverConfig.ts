@@ -53,10 +53,10 @@ class Server {
       claim: "/api/claim/",
       apidocs: "/api-docs",
     };
-    // const limiter = rateLimit({
-    //   windowMs: 15 * 60 * 1000, // 15 minutes
-    //   max: 100, // max 100 requests per windowMs
-    // });
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 1000, // max 1000 requests per windowMs
+    });
 
     // this.app.use(limiter);
     this.port = parseInt(process.env.PORT as string) || 3000;
