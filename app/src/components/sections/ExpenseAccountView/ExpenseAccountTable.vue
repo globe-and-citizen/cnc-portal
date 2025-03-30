@@ -88,10 +88,10 @@
         <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
       <template #transactions-data="{ row }">
-        <span>{{ row.balances[0] }}/{{ row.budgetData[0].value }}</span>
+        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }}</span>
       </template>
       <template #amountTransferred-data="{ row }">
-        <span>{{ row.balances[1] }}/{{ row.budgetData[1].value }}</span>
+        <span>{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}</span>
       </template>
     </TableComponent>
   </div>
@@ -238,12 +238,9 @@ const activateApproval = async (signature: `0x{string}`) => {
 
 //#region Watch
 watch(reload, async (newState) => {
-  console.log(`reload state changed: `, newState)
   if (newState) {
-    console.log(`Reloading...`)
     await fetchExpenseAccountOwner()
     await initializeBalances()
-    console.log(`manyExpenseAccountDataAll: `, manyExpenseAccountDataAll)
   }
 })
 // watch(
