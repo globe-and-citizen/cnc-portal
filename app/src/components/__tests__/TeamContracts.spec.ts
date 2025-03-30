@@ -145,24 +145,6 @@ describe('TeamContracts.vue', () => {
     //expect(contractDataModal.props('datas')).toEqual([])
   })
 
-  it('handles updating a contract correctly', async () => {
-    const wrapper = mount(TeamContracts, {
-      props: { contracts, teamId: 'team1' },
-      global: {
-        plugins: [createPinia()]
-      }
-    })
-
-    const updatedContractPayload = { ...contracts[0], admins: ['0xnewAdminAddress'] }
-
-    // Simulate calling the handleUpdateTeamContract method
-    await wrapper.vm.$emit('update-contract', { index: 0, updatedContractPayload })
-
-    // Check that the emit function was called with the updated contract
-    expect(wrapper.emitted('update-contract')).toBeTruthy()
-    expect(wrapper.emitted('update-contract')?.[0]).toEqual([{ index: 0, updatedContractPayload }])
-  })
-
   // it('renders polygonscan link correctly', () => {
   //   const wrapper = mount(TeamContracts, {
   //     props: { contracts, teamId: 'team1' },

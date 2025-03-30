@@ -32,7 +32,10 @@ const teamDataMock = ref({
   ownerAddress: '0xOwnerAddress',
   bankAddress: '0xBankAddress',
   addCampaignAddress: null,
-  teamContracts: []
+  teamContracts: [
+    { type: 'Bank', address: '0xBankAddress' },
+    { type: 'Campaign', address: '0xCampaignAddress' }
+  ]
 })
 
 vi.mock('@/composables/useCustomFetch', () => {
@@ -54,6 +57,35 @@ vi.mock('@/composables/useCustomFetch', () => {
     }))
   }
 })
+
+// Add mock for fetchTeam
+vi.mock('@/composables/fetchTeam', () => ({
+  fetchTeam: vi.fn(async (teamId: string) => {
+    if (teamId === '1') {
+      return {
+        teamIsFetching: ref(false),
+        teamError: ref(null),
+        team: teamDataMock
+      }
+    } else {
+      return {
+        teamIsFetching: ref(false),
+        teamError: ref('Team not found'),
+        team: ref(null)
+      }
+    }
+  })
+}))
+// Add mock for teamStore
+const mockTeamStore = {
+  currentTeam: teamDataMock.value,
+  currentTeamMeta: { isFetching: false, team: teamDataMock.value },
+  fetchTeam: vi.fn()
+}
+
+vi.mock('@/stores', () => ({
+  useTeamStore: vi.fn(() => mockTeamStore)
+}))
 
 vi.mock('@/composables/addCampaign', () => {
   return {
@@ -103,7 +135,6 @@ describe('ContractManagementView.vue', () => {
 
   it('calls deployAddCampaignContract when create-add-campaign is emitted', async () => {
     const wrapper = createComponent()
-    console.log('=========', wrapper.html())
     const button = wrapper.find('[data-test="createAddCampaign"]')
     await button.trigger('click')
     await wrapper.vm.$nextTick()
@@ -121,5 +152,27 @@ describe('ContractManagementView.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(executeMock).toHaveBeenCalledWith('0xBankAddress', 0.01, 0.02, '0xOwnerAddress', '1')
+  })
+
+  it('calls fetchTeam when component is mounted', async () => {
+    createComponent()
+    expect(mockTeamStore.fetchTeam).toHaveBeenCalledWith('1')
+  })
+
+  it('renders team data correctly from teamStore', async () => {
+    const wrapper = createComponent()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('Deploy advertise contract ✕close')
+  })
+
+  it('does not render deploy button if user is not the team owner', async () => {
+    mockTeamStore.currentTeam.ownerAddress = '0xAnotherAddress'
+
+    const wrapper = createComponent()
+    await wrapper.vm.$nextTick()
+
+    const button = wrapper.find('[data-test="createAddCampaign"]')
+    expect(button.exists()).toBe(false)
   })
 })
