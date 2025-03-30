@@ -8,7 +8,7 @@
         <AddressToolTip
           :address="
             teamStore.currentTeam?.teamContracts.find(
-              (contract) => contract.type === 'ExpenseAccountEIP712'
+              (contract) => contract.type === 'CashRemunerationEIP712'
             )?.address ?? ''
           "
           class="text-sm font-bold"
@@ -39,6 +39,7 @@
 import { useTeamStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
+import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 
