@@ -58,7 +58,7 @@ class Server {
       max: 1000, // max 1000 requests per windowMs
     });
 
-    // this.app.use(limiter);
+    this.app.use(limiter);
     this.port = parseInt(process.env.PORT as string) || 3000;
 
     this.init();
