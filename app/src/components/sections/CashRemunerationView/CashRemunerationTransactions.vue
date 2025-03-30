@@ -32,7 +32,7 @@ const contractAddress = teamStore.currentTeam?.teamContracts.find(
 
 const { result, error } = useQuery(
   gql`
-    query GetTransactions($contractAddress: Bytes!) {
+    query GetCashRemunerationTransactions($contractAddress: Bytes!) {
       transactions(where: { contractAddress: $contractAddress }) {
         id
         from

@@ -1,63 +1,64 @@
 <template>
-  <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
-    <h2>Owner Interaction</h2>
-    <div class="flex justify-end gap-2 w-full">
-      <ButtonUI
-        variant="primary"
-        data-test="distribute-mint-button"
-        :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
-        @click="distributeMintModal = true"
-      >
-        Distribute Mint {{ tokenSymbol }}
-      </ButtonUI>
-      <ButtonUI
-        variant="primary"
-        data-test="pay-dividends-button"
-        @click="payDividendsModal = true"
-        :disabled="
-          !tokenSymbol || currentAddress != team.ownerAddress || (shareholders?.length ?? 0) == 0
-        "
-      >
-        Pay Dividends
-      </ButtonUI>
-      <ButtonUI
-        variant="primary"
-        data-test="mint-button"
-        :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
-        @click="mintModal = true"
-      >
-        Mint {{ tokenSymbol }}
-      </ButtonUI>
+  <CardComponent title="Investor Actions">
+    <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
+      <div class="flex justify-end gap-2 w-full">
+        <ButtonUI
+          variant="primary"
+          data-test="distribute-mint-button"
+          :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
+          @click="distributeMintModal = true"
+        >
+          Distribute Mint {{ tokenSymbol }}
+        </ButtonUI>
+        <ButtonUI
+          variant="primary"
+          data-test="pay-dividends-button"
+          @click="payDividendsModal = true"
+          :disabled="
+            !tokenSymbol || currentAddress != team.ownerAddress || (shareholders?.length ?? 0) == 0
+          "
+        >
+          Pay Dividends
+        </ButtonUI>
+        <ButtonUI
+          variant="primary"
+          data-test="mint-button"
+          :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
+          @click="mintModal = true"
+        >
+          Mint {{ tokenSymbol }}
+        </ButtonUI>
+      </div>
+      <ModalComponent v-model="mintModal">
+        <MintForm
+          v-if="mintModal"
+          :loading="mintLoading || isConfirmingMint"
+          :token-symbol="tokenSymbol!"
+          @submit="(address: Address, amount: string) => mintToken(address, amount)"
+        ></MintForm>
+      </ModalComponent>
+      <ModalComponent v-model="distributeMintModal">
+        <DistributeMintForm
+          v-if="distributeMintModal"
+          :loading="distributeMintLoading || isConfirmingDistributeMint"
+          :token-symbol="tokenSymbol!"
+          @submit="
+            (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) =>
+              executeDistributeMint(shareholders)
+          "
+        ></DistributeMintForm>
+      </ModalComponent>
+      <ModalComponent v-model="payDividendsModal">
+        <PayDividendsForm
+          v-if="payDividendsModal"
+          :loading="payDividendsLoading || isConfirmingPayDividends"
+          :token-symbol="tokenSymbol!"
+          :team="team"
+          @submit="executePayDividends"
+        ></PayDividendsForm>
+      </ModalComponent>
     </div>
-    <ModalComponent v-model="mintModal">
-      <MintForm
-        v-if="mintModal"
-        :loading="mintLoading || isConfirmingMint"
-        :token-symbol="tokenSymbol!"
-        @submit="(address: Address, amount: string) => mintToken(address, amount)"
-      ></MintForm>
-    </ModalComponent>
-    <ModalComponent v-model="distributeMintModal">
-      <DistributeMintForm
-        v-if="distributeMintModal"
-        :loading="distributeMintLoading || isConfirmingDistributeMint"
-        :token-symbol="tokenSymbol!"
-        @submit="
-          (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) =>
-            executeDistributeMint(shareholders)
-        "
-      ></DistributeMintForm>
-    </ModalComponent>
-    <ModalComponent v-model="payDividendsModal">
-      <PayDividendsForm
-        v-if="payDividendsModal"
-        :loading="payDividendsLoading || isConfirmingPayDividends"
-        :token-symbol="tokenSymbol!"
-        :team="team"
-        @submit="executePayDividends"
-      ></PayDividendsForm>
-    </ModalComponent>
-  </div>
+  </CardComponent>
 </template>
 <script setup lang="ts">
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
@@ -73,6 +74,7 @@ import DistributeMintForm from '@/components/sections/SingleTeamView/forms/Distr
 import PayDividendsForm from '@/components/sections/SingleTeamView/forms/PayDividendsForm.vue'
 import BANK_ABI from '@/artifacts/abi/bank.json'
 import ButtonUI from '@/components/ButtonUI.vue'
+import CardComponent from '@/components/CardComponent.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const mintModal = ref(false)

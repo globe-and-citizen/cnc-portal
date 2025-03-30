@@ -86,7 +86,7 @@ const {
   error: errorGetOwner
 } = useReadContract({
   functionName: 'owner',
-  address: expenseAccountEip712Address.value,
+  address: expenseAccountEip712Address,
   abi: expenseAccountABI
 })
 

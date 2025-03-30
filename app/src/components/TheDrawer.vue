@@ -268,7 +268,7 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'bank',
-    show: true
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Cash Remuneration',
@@ -291,13 +291,14 @@ const menuItems = computed(() => [
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
-    label: 'SHER TOKEN',
+    label: 'Investors',
     icon: ChartPieIcon,
     route: {
-      name: 'bank',
+      name: 'sher-token',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: true
+    active: route.name === 'sher-token',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Contract Management',
@@ -306,13 +307,13 @@ const menuItems = computed(() => [
       name: 'contract-management',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    show: true
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Transactions',
     icon: ChartBarIcon,
     route: '/transactions',
-    show: true
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Administration',
