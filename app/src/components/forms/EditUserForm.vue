@@ -52,12 +52,12 @@
         class="select select-sm w-full focus:border-none focus:outline-none"
       >
         <option
-          :key="currency"
+          :key="currency.code"
           v-for="currency in LIST_CURRENCIES"
-          :selected="currencyStore.currency == currency"
-          :value="currency"
+          :selected="currencyStore.currency.code == currency.code"
+          :value="currency.code"
         >
-          {{ currency }}
+          {{ currency.code }}
         </option>
       </select>
     </label>
@@ -87,7 +87,7 @@ import { ref } from 'vue'
 import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
 
 const currencyStore = useCurrencyStore()
-const selectedCurrency = ref<string>(currencyStore.currency)
+const selectedCurrency = ref<string>(currencyStore.currency.code)
 
 // Define the user model and validation rules
 const user = defineModel({
