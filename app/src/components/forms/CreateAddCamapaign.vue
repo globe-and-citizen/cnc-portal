@@ -47,7 +47,13 @@
       size="sm"
       @click="emitCreateAddCampaign"
       :loading="loading"
-      :disabled="loading"
+      :disabled="
+        loading ||
+        !costPerClick ||
+        !costPerImpression ||
+        parseFloat(costPerClick) <= 0 ||
+        parseFloat(costPerImpression) <= 0
+      "
     >
       confirm
     </ButtonUI>

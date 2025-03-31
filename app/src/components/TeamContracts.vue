@@ -45,13 +45,7 @@
     <!-- Admin Modal -->
     <ModalComponent v-model="contractAdminDialog.show">
       <div class="max-w-lg">
-        <TeamContractAdmins
-          :contract="contractAdminDialog.contract"
-          @update-team-contract="
-            (updatedContractPayload: TeamContract) =>
-              handleUpdateTeamContract(updatedContractPayload)
-          "
-        />
+        <TeamContractAdmins :contract="contractAdminDialog.contract" />
       </div>
     </ModalComponent>
 
@@ -85,20 +79,19 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
+
 import type {
   GetEventsGroupedByCampaignCodeResult,
   ExtendedEvent
 } from '@/services/AddCampaignService'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
 const { addErrorToast } = useToastStore()
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from './AddressToolTip.vue'
-// Define props
-const props = defineProps<{ contracts: TeamContract[]; teamId: string }>()
-const emit = defineEmits(['update-contract'])
 
+// Define props
+defineProps<{ contracts: TeamContract[]; teamId: string }>()
 // Initialize AddCampaignService instance
 const addCamapaignService = new AddCampaignService()
 
@@ -108,7 +101,6 @@ const contractAdminDialog = ref({
   contract: {} as TeamContract
 })
 
-// Modal for showing contract data details
 const contractDataDialog = ref({
   show: false,
   datas: [] as Array<{ key: string; value: string }>, // Properly define as an array of key-value pairs
@@ -173,25 +165,5 @@ const openContractDataModal = async (contractAddress: string) => {
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
   contractDataDialog.value.key++
-}
-
-//update the current contract ad  min
-const handleUpdateTeamContract = async (updatedContractPayload: TeamContract) => {
-  const response = await useCustomFetch<string>(`teams/${props.teamId}`)
-    .put({ contract: updatedContractPayload })
-    .json()
-  if (response) {
-    const index = props.contracts.findIndex(
-      (contract) => contract.address === updatedContractPayload.address
-    )
-
-    if (index !== -1) {
-      emit('update-contract', { index, updatedContractPayload })
-    } else {
-      addErrorToast('fail to update team')
-    }
-  } else {
-    addErrorToast('fail to update team')
-  }
 }
 </script>
