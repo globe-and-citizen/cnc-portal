@@ -1,6 +1,6 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
+// import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { TeamInput, User } from '@/types'
@@ -123,11 +123,11 @@ describe('AddTeamForm.vue', () => {
   }
 
   // Helper function to navigate to investor contract step
-  const navigateToInvestorStep = async (w: VueWrapper) => {
-    await navigateToMembersStep(w)
-    await w.find('[data-test="create-team-button"]').trigger('click')
-    await w.vm.$nextTick()
-  }
+  // const navigateToInvestorStep = async (w: VueWrapper) => {
+  //   await navigateToMembersStep(w)
+  //   await w.find('[data-test="create-team-button"]').trigger('click')
+  //   await w.vm.$nextTick()
+  // }
 
   describe('Initial Render', () => {
     it('renders step 1 by default', () => {
