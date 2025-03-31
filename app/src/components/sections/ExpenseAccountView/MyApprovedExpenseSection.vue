@@ -104,12 +104,13 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { useRoute } from 'vue-router'
+import { useExpenseAccountDataCollection } from '@/composables'
 //#endregion
 
-/*const { team } = */defineProps<{
-  // team: Team
-  isDisapprovedAddress: boolean
-}>()
+// const { team } = defineProps<{
+//   team: Team
+//   isDisapprovedAddress: boolean
+// }>()
 const reload = defineModel()
 
 //#region refs
@@ -118,11 +119,20 @@ const url = ref('user/search')
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
 const signatureHash = ref<string | null>(null)
+const isDisapprovedAddress = computed(
+  () =>
+    manyExpenseAccountDataAll.findIndex(
+      (item) =>
+        item.approvedAddress === currentUserAddress &&
+        (item.status === 'disabled' || item.status === 'expired')
+    ) !== -1
+)
 //#endregion
 
 const route = useRoute()
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
+const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 
 //#region useCustomFetch
 const {
@@ -148,12 +158,12 @@ const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immedi
   .json()
 //#endregion
 
-//#endregion Computed Values
-
+//#region Computed Values
 const expenseAccountEip712Address = computed(
   () =>
-    teamStore.currentTeam?./* team.*/teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
-      ?.address as Address
+    teamStore.currentTeam?./* team.*/ teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
 )
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
@@ -283,6 +293,7 @@ const init = async () => {
   await getAmountWithdrawnBalance()
   await fetchUsdcBalance()
   await fetchExpenseAccountBalance()
+  await initializeBalances()
 }
 const searchUsers = async (input: { name: string; address: string }) => {
   if (input.address == '' && input.name) {
@@ -448,5 +459,6 @@ watch([usdcBalanceError], ([newUsdcError]) => {
 
 onMounted(async () => {
   await init()
+  console.log('teamStore.currentTeamMeta?.team', teamStore.currentTeamMeta?.team)
 })
 </script>
