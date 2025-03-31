@@ -111,10 +111,6 @@ templates:
           handler: handleTransfer
         - event: Deposited(indexed address,uint256)
           handler: handleDeposited
-        - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
-          handler: handleTokenTransfer
-        - event: TokenDeposited(indexed address,indexed address,uint256)
-          handler: handleTokenDeposited
   - name: CashRemunerationEIP712
     kind: ethereum/contract
     network: sepolia
