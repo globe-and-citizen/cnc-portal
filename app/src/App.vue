@@ -48,7 +48,7 @@
     </div>
 
     <!-- Modal for User Update -->
-    <ModalComponent v-model="showModal">
+    <ModalComponent v-model="showModal" v-if="showModal">
       <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
       <EditUserForm
         v-model="updateUserInput"
@@ -57,13 +57,12 @@
       />
     </ModalComponent>
     <!-- Add Team Modal -->
-    <ModalComponent v-model="appStore.showAddTeamModal">
+    <ModalComponent v-model="appStore.showAddTeamModal" v-if="appStore.showAddTeamModal">
       <!-- May be return an event that will trigger team reload -->
       <AddTeamForm
         @done="
           () => {
             appStore.showAddTeamModal = false
-            teamStore.teamsMeta.reloadTeams()
             // TODO: Redirection depending on the current route
           }
         "
@@ -93,9 +92,8 @@ import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
-import { useAppStore, useTeamStore } from './stores'
+import { useAppStore } from './stores'
 
-const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const appStore = useAppStore()
