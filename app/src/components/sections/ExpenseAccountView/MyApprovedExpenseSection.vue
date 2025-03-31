@@ -87,7 +87,7 @@ import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useUserDataStore, useToastStore } from '@/stores'
+import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log, tokenSymbol } from '@/utils'
 import {
@@ -106,8 +106,8 @@ import { config } from '@/wagmi.config'
 import { useRoute } from 'vue-router'
 //#endregion
 
-const { team } = defineProps<{
-  team: Team
+/*const { team } = */defineProps<{
+  // team: Team
   isDisapprovedAddress: boolean
 }>()
 const reload = defineModel()
@@ -121,6 +121,7 @@ const signatureHash = ref<string | null>(null)
 //#endregion
 
 const route = useRoute()
+const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 
 //#region useCustomFetch
@@ -151,7 +152,7 @@ const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immedi
 
 const expenseAccountEip712Address = computed(
   () =>
-    team.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+    teamStore.currentTeam?./* team.*/teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
       ?.address as Address
 )
 const expenseBalanceFormatted = computed(() => {
