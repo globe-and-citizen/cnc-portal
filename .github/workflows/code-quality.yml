@@ -33,5 +33,5 @@ jobs:
         working-directory: ./app
 
       - name: type check
-        run: npm run type-check
+        run: npm run build
         working-directory: ./app
