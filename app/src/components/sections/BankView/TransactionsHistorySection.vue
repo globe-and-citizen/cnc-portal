@@ -4,38 +4,88 @@
     :transactions="transactions"
     title="Bank Transactions History"
     :currencies="['USD']"
-    :currency-rates="currencyRates"
+    :currency-rates="{
+      loading: false,
+      error: null,
+      getRate: () => 1
+    }"
     :show-receipt-modal="true"
     data-test="bank-transactions"
+    @receipt-click="handleReceiptClick"
   />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { NETWORK } from '@/constant'
+import { computed, ref, watch } from 'vue'
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
-import type { BankTransaction } from '@/types/transactions'
+import type { BankTransaction, BaseTransaction } from '@/types/transactions'
+import { useTeamStore } from '@/stores'
+import type { Address } from 'viem'
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { formatEtherUtil, log, tokenSymbol } from '@/utils'
+import type { ReceiptData } from '@/utils/excelExport'
 
-interface Props {
-  currencyRates: {
-    loading: boolean
-    error: string | null
-    getRate: (currency: string) => number
-  }
+const teamStore = useTeamStore()
+
+const contractAddress = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Bank')
+      ?.address as Address
+)
+
+const { result, error } = useQuery(
+  gql`
+    query GetBankTransactions($contractAddress: Bytes!) {
+      transactions(where: { contractAddress: $contractAddress }) {
+        id
+        from
+        to
+        amount
+        contractType
+        tokenAddress
+        contractAddress
+        transactionHash
+        blockNumber
+        blockTimestamp
+        transactionType
+      }
+    }
+  `,
+  { contractAddress }
+)
+
+const transactions = computed<BankTransaction[]>(() =>
+  result.value?.transactions
+    ? result.value.transactions.map((transaction: Record<string, string>) => ({
+        txHash: transaction.transactionHash,
+        date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
+        from: transaction.from,
+        to: transaction.to,
+        amountUSD: 10,
+        amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
+        token: tokenSymbol(transaction.tokenAddress),
+        type: transaction.transactionType
+      }))
+    : []
+)
+
+const selectedTransaction = ref<BaseTransaction | null>(null)
+
+const handleReceiptClick = (data: ReceiptData) => {
+  // If you need to do any processing with the receipt data
+  selectedTransaction.value = {
+    ...data,
+    amountUSD: data.amountUSD,
+    [data.token]: data.amount,
+    // Add any other required BaseTransaction properties
+    status: 'completed'
+  } as BaseTransaction
 }
 
-defineProps<Props>()
-
-// Example transaction data
-const transactions = ref<BankTransaction[]>([
-  {
-    txHash: '0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e',
-    date: Date.now(),
-    type: 'Deposit',
-    from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-    to: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-    amountUSD: 10,
-    receipt: `${NETWORK.blockExplorerUrl}/tx/0xfc9fc4e2c32197c0868a96134b027755e5f7eacb88ffdb7c8e70a27f38d5b55e`
+watch(error, (newError) => {
+  if (newError) {
+    log.error('useQueryError: ', newError)
   }
-])
+})
 </script>

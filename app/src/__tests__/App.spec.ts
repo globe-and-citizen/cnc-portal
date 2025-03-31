@@ -77,7 +77,9 @@ describe('App.vue', () => {
         }
       })
 
-      await wrapper.setValue({ showModal: true })
+      // @ts-expect-error: showModal is not typed in the component's instance
+      wrapper.vm.showModal = true
+      await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
     })
