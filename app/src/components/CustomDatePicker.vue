@@ -10,6 +10,8 @@
         placeholder="Select Date Range"
         auto-apply
         :data-test="`${dataTestPrefix}-date-range-picker`"
+        class="!w-64"
+        input-class="input input-sm input-bordered w-full"
       />
       <div>
         <div
