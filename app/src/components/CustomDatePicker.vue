@@ -2,17 +2,6 @@
 <template>
   <div class="relative flex flex-col gap-2">
     <div class="flex items-center gap-2">
-      <Datepicker
-        v-if="selectedOption === 'custom'"
-        v-model="dateRange"
-        range
-        :format="'dd/MM/yyyy'"
-        placeholder="Select Date Range"
-        auto-apply
-        :data-test="`${dataTestPrefix}-date-range-picker`"
-        class="!w-64"
-        input-class="input input-sm input-bordered w-full"
-      />
       <div>
         <div
           role="button"
@@ -34,6 +23,22 @@
             @click="handleOptionSelect(option.value)"
           >
             <a>{{ option.label }}</a>
+          </li>
+          <li>
+            <Datepicker
+              v-model="dateRange"
+              range
+              :format="'dd/MM/yyyy'"
+              placeholder="Select Date Range"
+              auto-apply
+              :data-test="`${dataTestPrefix}-date-range-picker`"
+              class="!w-full"
+              input-class="input input-sm input-bordered w-full"
+            >
+              <template #trigger>
+                <p>Custom Range</p>
+              </template>
+            </Datepicker>
           </li>
         </ul>
       </div>
@@ -80,8 +85,7 @@ const getPreviousMonthName = () => {
 
 const options = computed(() => [
   { value: 'current', label: getCurrentMonthName() },
-  { value: 'previous', label: getPreviousMonthName() },
-  { value: 'custom', label: 'Custom Range' }
+  { value: 'previous', label: getPreviousMonthName() }
 ])
 
 // Get first and last day of current month
@@ -151,7 +155,9 @@ onClickOutside(target, () => {
 
 const handleOptionSelect = (value: string) => {
   selectedOption.value = value
-  isDropdownOpen.value = false
+  if (value !== 'custom') {
+    isDropdownOpen.value = false
+  }
 }
 
 // Format date for display
