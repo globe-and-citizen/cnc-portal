@@ -40,18 +40,6 @@
             @update-contract="handleUpdateContract"
           />
         </template>
-
-        <template #tab-3>
-          <BankTransactionsSection v-if="activeTab == 3" :bank-address="team.bankAddress" />
-        </template>
-
-        <template #tab-5>
-          <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
-        </template>
-
-        <template #tab-7>
-          <ContractManagementSection v-if="activeTab == 7"></ContractManagementSection>
-        </template>
       </TabNavigation>
     </div>
   </div>
@@ -71,11 +59,9 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
-import BoardOfDirectorsSection from '@/components/sections/AdministrationView/BoardOfDirectorsSection.vue'
 
 import { type TeamContract, type User, SingleTeamTabs } from '@/types'
 import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
-import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { type Address } from 'viem'
 
