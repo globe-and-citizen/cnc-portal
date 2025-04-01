@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach } from 'vitest'
-import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
+import CreateProposalForm from '@/components/sections/AdministrationView/forms/CreateProposalForm.vue'
 import { setActivePinia, createPinia } from 'pinia'
 interface ComponentData {
   newProposalInput: {

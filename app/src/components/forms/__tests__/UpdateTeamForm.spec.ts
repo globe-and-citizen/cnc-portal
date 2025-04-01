@@ -1,7 +1,7 @@
 // UpdateTeamForm.spec.ts
 import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import UpdateTeamForm from '@/components/sections/SingleTeamView/forms/UpdateTeamForm.vue'
+import UpdateTeamForm from '@/components/sections/AdministrationView/forms/UpdateTeamForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {

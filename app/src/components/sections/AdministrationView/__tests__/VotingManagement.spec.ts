@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
+import VotingManagement from '@/components/sections/AdministrationView/VotingManagement.vue'
 import { createTestingPinia } from '@pinia/testing'
 
 import ModalComponent from '@/components/ModalComponent.vue'

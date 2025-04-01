@@ -104,11 +104,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import ProposalCard from '@/components/sections/SingleTeamView/ProposalCard.vue'
+import ProposalCard from '@/components/sections/AdministrationView/ProposalCard.vue'
 import type { Proposal } from '@/types/index'
 import { computed, onMounted, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import CreateProposalForm from '@/components/sections/SingleTeamView/forms/CreateProposalForm.vue'
+import CreateProposalForm from '@/components/sections/AdministrationView/forms/CreateProposalForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 import { readContract } from '@wagmi/core'
@@ -116,7 +116,7 @@ import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Team } from '@/types/index'
 import { useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
-import VotingManagement from '@/components/sections/SingleTeamView/VotingManagement.vue'
+import VotingManagement from '@/components/sections/AdministrationView/VotingManagement.vue'
 import { useReadContract } from '@wagmi/vue'
 import BoDABI from '@/artifacts/abi/bod.json'
 import VotingABI from '@/artifacts/abi/voting.json'
