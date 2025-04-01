@@ -265,7 +265,7 @@ describe('BankView', () => {
           TransactionsHistorySection
         }
       }
-    }) as VueWrapper<BankViewInstance>
+    }) as unknown as VueWrapper<BankViewInstance>
   })
 
   describe('Component Rendering', () => {
