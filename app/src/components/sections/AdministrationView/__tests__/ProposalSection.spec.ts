@@ -2,7 +2,7 @@
 import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
+import ProposalSection from '@/components/sections/AdministrationView/ProposalSection.vue'
 import type { Proposal } from '@/types'
 
 vi.mock('vue-router', () => ({
