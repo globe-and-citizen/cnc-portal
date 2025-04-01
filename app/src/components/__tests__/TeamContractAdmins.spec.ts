@@ -159,20 +159,6 @@ describe('TeamContractAdmins', () => {
     await wrapper.vm.$nextTick() // Ensure all promises are resolved
     // Check if addAdmin method was called with correct arguments
     expect(addAdminMock).toHaveBeenCalledWith(contract.address, newAdminAddress)
-
-    // Check emitted events
-    const emittedEvents = wrapper.emitted()
-    console.log('the emited events', emittedEvents)
-    // Check if 'updateTeamContract' event was emitted
-    expect(emittedEvents.updateTeamContract).toBeTruthy()
-
-    // Ensure the event was emitted with the correct payload
-    expect(emittedEvents.updateTeamContract[0]).toEqual([
-      {
-        ...contract,
-        admins: [...contract.admins]
-      }
-    ])
   })
 
   it('emits an event when the remove button is clicked', async () => {

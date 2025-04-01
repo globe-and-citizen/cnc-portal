@@ -154,7 +154,12 @@
         :disabled="!canProceed"
         :investorContractInput="investorContractInput"
         :createdTeamData="createdTeamData"
-        @contractDeployed="$emit('done')"
+        @contractDeployed="
+          () => {
+            $emit('done')
+            teamStore.teamsMeta.reloadTeams()
+          }
+        "
       >
         Deploy Contracts
       </DeployContractSection>
@@ -175,9 +180,11 @@ import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vu
 import { onClickOutside } from '@vueuse/core'
 import type { TeamInput, Team } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
+import { useTeamStore } from '../../stores/teamStore'
 
 defineEmits(['done'])
 const { addSuccessToast, addErrorToast } = useToastStore()
+const teamStore = useTeamStore()
 
 // Refs
 const teamData = ref<TeamInput>({

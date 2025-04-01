@@ -61,9 +61,6 @@ const props = defineProps<{
 }>()
 
 const isLoading = ref(false)
-const emit = defineEmits<{
-  updateTeamContract: [updatedContractPayload: TeamContract] // named tuple syntax
-}>()
 
 // State for new admin address
 const newAdminAddress = ref('')
@@ -115,10 +112,6 @@ async function addAdmin() {
       isLoading.value = false
       newAdminAddress.value = ''
       // Emit the updated contract with the new admins list
-      emit('updateTeamContract', {
-        ...props.contract,
-        admins: admins.value
-      })
     } else {
       addErrorToast('Add admin failed')
       isLoading.value = false

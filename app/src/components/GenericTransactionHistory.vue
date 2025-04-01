@@ -3,16 +3,9 @@
   <CardComponent :title="title" class="w-full">
     <template #card-action>
       <div class="flex items-center gap-10">
-        <Datepicker
-          v-if="showDateFilter"
-          v-model="dateRange"
-          class="w-96"
-          range
-          :format="'dd/MM/yyyy'"
-          placeholder="Select Date Range"
-          auto-apply
-          :data-test="`${dataTestPrefix}-date-range-picker`"
-        />
+        <div v-if="showDateFilter">
+          <CustomDatePicker v-model="dateRange" :data-test-prefix="dataTestPrefix" />
+        </div>
         <ButtonUI
           v-if="showExport"
           variant="success"
@@ -113,11 +106,10 @@ import { DocumentTextIcon } from '@heroicons/vue/24/outline'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import Datepicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
+import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
@@ -334,3 +326,5 @@ const handleReceiptPdfExport = (receiptData: ReceiptData) => {
   }
 }
 </script>
+
+<style scoped></style>

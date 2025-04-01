@@ -44,6 +44,23 @@
         <ClipboardDocumentCheckIcon class="size-5" v-if="copied" />
       </ToolTip>
     </label>
+    <label class="input input-bordered flex items-center gap-2 input-md">
+      <span class="w-40" data-test="currency-label">Default Currency</span>
+      <select
+        v-model="selectedCurrency"
+        data-test="currency-select"
+        class="select select-sm w-full focus:border-none focus:outline-none"
+      >
+        <option
+          :key="currency.code"
+          v-for="currency in LIST_CURRENCIES"
+          :selected="currencyStore.currency.code == currency.code"
+          :value="currency.code"
+        >
+          {{ currency.code }}
+        </option>
+      </select>
+    </label>
   </div>
   <div class="modal-action justify-center">
     <ButtonUI
@@ -66,6 +83,11 @@ import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { useClipboard } from '@vueuse/core'
 import ButtonUI from '../ButtonUI.vue'
+import { ref } from 'vue'
+import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
+
+const currencyStore = useCurrencyStore()
+const selectedCurrency = ref<string>(currencyStore.currency.code)
 
 // Define the user model and validation rules
 const user = defineModel({
@@ -103,6 +125,7 @@ const submitForm = () => {
   if ($v.value.$invalid) {
     return
   }
+  currencyStore.setCurrency(selectedCurrency.value)
   emits('submitEditUser')
 }
 </script>
