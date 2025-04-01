@@ -110,14 +110,14 @@ watch(
   { deep: true }
 )
 
-const addCamapaignService = new AddCampaignService()
+const addCampaignService = new AddCampaignService()
 
 async function setCostPerClick(campaignContractAddress: string, costPerClick: string) {
   if (!isAddress(campaignContractAddress)) {
     addErrorToast('please provide valid campaign address')
   } else {
     isLoading.value = true
-    const result = await addCamapaignService.setCostPerClick(
+    const result = await addCampaignService.setCostPerClick(
       campaignContractAddress,
       costPerClick.toString()
     )
@@ -143,7 +143,7 @@ async function setCostPerImpression(campaignContractAddress: string, costPerImpr
     isLoading.value = false
   } else {
     isLoading.value = true
-    const result = await addCamapaignService.setCostPerImpression(
+    const result = await addCampaignService.setCostPerImpression(
       campaignContractAddress,
       costPerImpression.toString()
     )
