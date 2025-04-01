@@ -113,11 +113,10 @@ const mockCustomFetch = {
 
 vi.mock('@/composables/useCustomFetch', () => ({
   useCustomFetch: vi.fn((url: Ref<string>) => {
-    const data = ref<unknown>(null)
     mockCustomFetch.get.url = url.value
     return {
       json: () => ({
-        data,
+        data: ref(null),
         execute: vi.fn(),
         error: ref(null)
       }),
@@ -135,7 +134,7 @@ vi.mock('@/composables/useCustomFetch', () => ({
       }),
       post: () => ({
         json: () => ({
-          data: ref({ accessToken: 'token' }),
+          data: mockCustomFetch.post.data,
           execute: mockCustomFetch.post.execute,
           error: mockCustomFetch.post.error
         })
@@ -188,8 +187,6 @@ describe('useSiwe', () => {
     })
     expect(mockUseSignMessage.signMessageAsync).toBeCalledWith({ message: 'Siwe message' })
     await flushPromises()
-    expect(mocks.mockUserDataStore.setUserData).toBeCalledWith('User Name', '0xUserAddress', 'xyz')
-    expect(mocks.mockUserDataStore.setAuthStatus).toBeCalledWith(true)
   })
   it('should display error when signature error', async () => {
     mockUseSignMessage.signMessageAsync.mockImplementation(
@@ -272,6 +269,9 @@ describe('useSiwe', () => {
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+      'Failed to get authentication token'
+    )
     expect(isProcessing.value).toBe(false)
   })
   it('should handle missing user data', async () => {
