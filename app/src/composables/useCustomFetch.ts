@@ -11,14 +11,16 @@ export const useCustomFetch = createFetch({
   baseUrl: `${BACKEND_URL}/api/`,
   combination: 'chain',
   options: {
-    async beforeFetch({ options }) {
+    async beforeFetch({ options }: { options: RequestInit & { url?: string } }) {
       const token = useStorage('authToken', '')
-      // TODO : Validate token and log the status of the token we get from the storage.
+      // remove authorization header for nonce endpoint
+      const isNonceEndpoint = options.url?.includes('user/nonce/')
+
       options = {
         mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token.value}`
+          ...(isNonceEndpoint ? {} : { Authorization: `Bearer ${token.value}` })
         }
       }
       return { options }
@@ -27,16 +29,16 @@ export const useCustomFetch = createFetch({
       if (ctx.response?.status === 401 && !isRedirecting.value) {
         isRedirecting.value = true
         const { addErrorToast } = useToastStore()
-        addErrorToast('Your are Unauthorized')
+        addErrorToast('You are Unauthorized')
         log.info('Unauthorized, will check the token')
 
-        // TODO : Instead of logging out the user, we can recheck if the token is expired and refresh it.
         const { logout, validateToken } = useAuth()
         if (!(await validateToken())) {
           log.info('Token is not valid, will logout the user')
           logout()
         } else {
           log.warn('There is an **401 Error** but the Token is valid, try ')
+          isRedirecting.value = false
         }
       }
       return ctx
