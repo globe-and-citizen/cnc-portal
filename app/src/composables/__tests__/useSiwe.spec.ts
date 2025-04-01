@@ -100,7 +100,8 @@ vi.mock('@/composables', () => {
 const mockCustomFetch = {
   post: {
     error: ref<null | Error>(null),
-    execute: vi.fn()
+    execute: vi.fn(),
+    data: ref<{ accessToken: string | null }>({ accessToken: null })
   },
   get: {
     url: '',
@@ -255,6 +256,45 @@ describe('useSiwe', () => {
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
+    expect(isProcessing.value).toBe(false)
+  })
+  it('should handle missing authentication token', async () => {
+    mockCustomFetch.get.execute.mockImplementation(() => {
+      mockCustomFetch.get.data.value = { nonce: 'xyz' }
+    })
+    mockUseSignMessage.signMessageAsync.mockImplementation(
+      () => (mockUseSignMessage.data.value = '0xSignature')
+    )
+    // Mock failed token fetch
+    mockCustomFetch.post.execute.mockImplementation(() => {
+      mockCustomFetch.post.data.value = { accessToken: null }
+    })
+    const { isProcessing, siwe } = useSiwe()
+    await siwe()
+    await flushPromises()
+    expect(isProcessing.value).toBe(false)
+  })
+  it('should handle missing user data', async () => {
+    mockCustomFetch.get.execute.mockImplementation(() => {
+      mockCustomFetch.get.data.value = { nonce: 'xyz' }
+    })
+    mockUseSignMessage.signMessageAsync.mockImplementation(
+      () => (mockUseSignMessage.data.value = '0xSignature')
+    )
+    mockCustomFetch.post.execute.mockImplementation(() => {
+      mockCustomFetch.post.data.value = { accessToken: 'valid-token' }
+    })
+    mockCustomFetch.get.execute
+      .mockImplementationOnce(() => {
+        mockCustomFetch.get.data.value = { nonce: 'xyz' }
+      })
+      .mockImplementationOnce(() => {
+        mockCustomFetch.get.data.value = null
+      })
+    const { isProcessing, siwe } = useSiwe()
+    await siwe()
+    await flushPromises()
+    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to fetch user data')
     expect(isProcessing.value).toBe(false)
   })
 })
