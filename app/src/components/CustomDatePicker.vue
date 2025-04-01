@@ -4,9 +4,7 @@
     <div class="flex items-center gap-2">
       <div>
         <ButtonUI
-          outline
-          variant="primary"
-          class="flex items-center cursor-pointer gap-4"
+          class="flex items-center cursor-pointer gap-4 border border-gray-300"
           @click="() => (isDropdownOpen = !isDropdownOpen)"
           :data-test="`${dataTestPrefix}-date-select`"
         >
