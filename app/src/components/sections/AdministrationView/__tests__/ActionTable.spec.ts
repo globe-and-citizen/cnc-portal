@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ActionTable from '../ActionTable.vue'
+import ActionTable from '@/components/sections/AdministrationView/tables/ActionTable.vue'
 
 // Mock child components
 vi.mock('@/components/ModalComponent.vue', () => ({
