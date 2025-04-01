@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import ShareholderList from '../ShareholderList.vue'
+import ShareholderList from '../../SherTokenView/ShareholderList.vue'
 import { parseEther, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'

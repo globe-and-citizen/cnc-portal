@@ -44,12 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import InvestorsHeader from '@/components/sections/SingleTeamView/InvestorsHeader.vue'
-import InvestorsActions from '@/components/sections/SingleTeamView/InvestorsActions.vue'
+import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader.vue'
+import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import ShareholderList from '@/components/sections/SingleTeamView/ShareholderList.vue'
+import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
 import { watch, computed } from 'vue'
 import { log } from '@/utils'
 import { useToastStore, useUserDataStore } from '@/stores'
