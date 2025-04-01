@@ -15,7 +15,7 @@ const mockUseQuery = {
       {
         amount: '7000000',
         blockNumber: '33',
-        blockTimestamp: '1741077830',
+        blockTimestamp: Math.floor(Date.now() / 1000).toString(),
         contractAddress: '0x552a6b9d3c6ef286fb40eeae9e8cfecdab468c0a',
         contractType: 'ExpenseAccountEIP712',
         from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',

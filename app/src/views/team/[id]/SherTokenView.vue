@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
+import InvestorsSection from '@/components/sections/SherTokenView/InvestorsSection.vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { ref, onMounted } from 'vue'
 
