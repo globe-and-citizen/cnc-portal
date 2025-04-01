@@ -19,7 +19,7 @@
       </div>
 
       <ModalComponent v-model="addCampaignModal">
-        <CreateAddCamapaign
+        <CreateAddCampaign
           @create-add-campaign="deployAddCampaignContract"
           :loading="createAddCampaignLoading"
           :bankAddress="_teamBankContractAddress"
@@ -92,7 +92,7 @@ import { type Address } from 'viem'
 import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
 
 //imports for add campaign creation.
-import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
+import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
 import { useDeployAddCampaignContract } from '@/composables/addCampaign'
 import TeamContracts from '@/components/TeamContracts.vue'
 
@@ -112,8 +112,8 @@ const {
   contractAddress: addCampaignContractAddress,
   execute: createAddCampaign,
   isLoading: createAddCampaignLoading
-  //isSuccess: CreateAddCamapaignSuccess,
-  //error: CreateAddCamapaignError
+  //isSuccess: CreateAddCampaignSuccess,
+  //error: CreateAddCampaignError
 } = useDeployAddCampaignContract()
 
 // CRUD input refs
