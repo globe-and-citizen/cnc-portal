@@ -1,7 +1,7 @@
 // TeamDetails.spec.ts
 import { it, expect, describe, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import TeamDetails from '../sections/DashboardView/TeamDetails.vue'
+import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types/team'
 
