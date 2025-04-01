@@ -12,21 +12,64 @@ describe('Currency Store', () => {
 
   it('initializes with default currency USD', () => {
     const store = useCurrencyStore()
-    expect(store.currency).toBe('USD')
+    expect(store.currency).toStrictEqual({
+      code: 'USD',
+      name: 'US Dollar',
+      symbol: '$'
+    })
   })
 
   it('LIST_CURRENCIES contains expected values', () => {
-    expect(LIST_CURRENCIES).toEqual(['USD', 'EUR', 'CAD', 'XOF', 'IDR', 'INR'])
+    expect(LIST_CURRENCIES).toStrictEqual([
+      {
+        code: 'USD',
+        name: 'US Dollar',
+        symbol: '$'
+      },
+      {
+        code: 'EUR',
+        name: 'Euro',
+        symbol: '€'
+      },
+      {
+        code: 'CAD',
+        name: 'Canadian Dollar',
+        symbol: 'CA$'
+      },
+      {
+        code: 'XOF',
+        name: 'West African CFA franc',
+        symbol: 'CFA'
+      },
+      {
+        code: 'IDR',
+        name: 'Indonesian Rupiah',
+        symbol: 'Rp'
+      },
+      {
+        code: 'INR',
+        name: 'Indian Rupee',
+        symbol: '₹'
+      }
+    ])
   })
 
   it('setCurrency updates the currency value', () => {
     const store = useCurrencyStore()
 
     store.setCurrency('EUR')
-    expect(store.currency).toBe('EUR')
+    expect(store.currency).toStrictEqual({
+      code: 'EUR',
+      name: 'Euro',
+      symbol: '€'
+    })
 
     store.setCurrency('CAD')
-    expect(store.currency).toBe('CAD')
+    expect(store.currency).toStrictEqual({
+      code: 'CAD',
+      name: 'Canadian Dollar',
+      symbol: 'CA$'
+    })
   })
 
   it('maintains value across store instances', () => {
@@ -34,6 +77,10 @@ describe('Currency Store', () => {
     store1.setCurrency('XOF')
 
     const store2 = useCurrencyStore()
-    expect(store2.currency).toBe('XOF')
+    expect(store2.currency).toStrictEqual({
+      code: 'XOF',
+      name: 'West African CFA franc',
+      symbol: 'CFA'
+    })
   })
 })
