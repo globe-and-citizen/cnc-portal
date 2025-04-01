@@ -216,7 +216,6 @@ const updateTeam = async (req: Request, res: Response) => {
           data: {
             type: teamContract.type,
             deployer: teamContract.deployer,
-            admins: teamContract.admins,
           },
         });
       } else {
@@ -225,7 +224,6 @@ const updateTeam = async (req: Request, res: Response) => {
             address: teamContract.address,
             type: teamContract.type,
             deployer: teamContract.deployer,
-            admins: teamContract.admins,
             teamId: team.id,
           },
         });

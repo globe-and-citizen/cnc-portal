@@ -18,7 +18,7 @@
         <TeamContracts :team-id="String(team.id)" :contracts="team.teamContracts" />
       </CardComponent>
       <ModalComponent v-model="addCampaignModal">
-        <CreateAddCamapaign
+        <CreateAddCampaign
           @create-add-campaign="deployAddCampaignContract"
           :loading="createAddCampaignLoading"
           :bankAddress="_teamBankContractAddress"
@@ -35,7 +35,7 @@ import CardComponent from '@/components/CardComponent.vue'
 //import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-
+import { useToastStore } from '@/stores'
 // Composables
 //Components
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -45,11 +45,12 @@ import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 //imports for add campaign creation.
-import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
+import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
 import { useDeployAddCampaignContract } from '@/composables/addCampaign'
 import TeamContracts from '@/components/TeamContracts.vue'
 
 // Modal control states
+const { addErrorToast, addSuccessToast } = useToastStore()
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
@@ -61,14 +62,12 @@ const addCampaignModal = ref(false)
 const {
   contractAddress: addCampaignContractAddress,
   execute: createAddCampaign,
-  isLoading: createAddCampaignLoading
-  //isSuccess: CreateAddCamapaignSuccess,
-  //error: CreateAddCamapaignError
+  isLoading: createAddCampaignLoading,
+  isSuccess: CreateAddCampaignSuccess,
+  error: CreateAddCampaignError
 } = useDeployAddCampaignContract()
 
 const route = useRoute()
-
-//const { addSuccessToast } = useToastStore()
 
 const _teamBankContractAddress = computed(
   () =>
@@ -88,7 +87,12 @@ const deployAddCampaignContract = async (_costPerClick: number, _costPerImpressi
     useUserDataStore().address,
     String(id)
   )
-
+  if (CreateAddCampaignSuccess.value) {
+    addSuccessToast('Campaign contract depolyed successfully')
+  } else {
+    addErrorToast('Campaign contract deployment failed please retry')
+    console.error(CreateAddCampaignError)
+  }
   //optional default value for contract address
   if (addCampaignContractAddress.value) {
     addCampaignModal.value = false
