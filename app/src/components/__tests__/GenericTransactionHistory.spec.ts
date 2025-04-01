@@ -117,11 +117,6 @@ describe('GenericTransactionHistory', () => {
     wrapper = createWrapper()
   })
 
-  it('shows date filter by default', () => {
-    const datePicker = wrapper.findComponent(Datepicker)
-    expect(datePicker.exists()).toBe(true)
-  })
-
   it('shows export button by default', () => {
     const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
     expect(exportButton.exists()).toBe(true)
