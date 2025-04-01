@@ -75,13 +75,28 @@ export function useSiwe() {
     await executeAddAuthData()
     //get returned JWT authentication token and save to storage
     const token = siweData.value?.accessToken
-    const storageToken = useStorage('authToken', token)
+    if (!token) {
+      addErrorToast('Failed to get authentication token')
+      isProcessing.value = false
+      return
+    }
+
+    // save token and wait for it to be available
+    const storageToken = useStorage('authToken', '')
     storageToken.value = token
+
+    // add small delay to ensure token is saved
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
     //update API endpoint to call
     apiEndpoint.value = `user/${address.value}`
     //fetch user data from backend
     await executeFetchUser()
-    if (!user.value) return
+    if (!user.value) {
+      addErrorToast('Failed to fetch user data')
+      isProcessing.value = false
+      return
+    }
     //save user data to user store
     const userData: Partial<User> = user.value
     userDataStore.setUserData(userData.name || '', userData.address || '', userData.nonce || '')
