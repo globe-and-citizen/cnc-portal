@@ -31,8 +31,6 @@
               placeholder="Select Date Range"
               auto-apply
               :data-test="`${dataTestPrefix}-date-range-picker`"
-              class="!w-full"
-              input-class="input input-sm input-bordered w-full"
             >
               <template #trigger>
                 <p>Custom Range</p>
