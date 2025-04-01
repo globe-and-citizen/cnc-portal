@@ -89,19 +89,24 @@ export const useCurrencyStore = defineStore('currency', () => {
     currency.value = LIST_CURRENCIES.find((c) => c.code === value)
   }
 
+  type currencyType = keyof PriceResponse['market_data']['current_price']
+
   async function fetchNativeTokenPrice() {
     await fetchPrice()
-    const currencyCode =
-      currency.value.code.toLowerCase() as keyof PriceResponse['market_data']['current_price']
-    nativeTokenPrice.value = priceResponse.value?.market_data.current_price[currencyCode]
-  }
 
-  watch(error, (newVal) => {
-    if (newVal) {
-      toastStore.addErrorToast('Failed to fetch price')
-      log.error(newVal)
+    // Normaly there is no way to have undefined value for currency.value
+    if (!currency.value) {
+      toastStore.addErrorToast('Error: User currency not set')
+      return
     }
-  })
+    const currencyCode = currency.value.code.toLowerCase() as currencyType
+
+    if (!priceResponse.value || error.value) {
+      toastStore.addErrorToast('Failed to fetch price')
+      return
+    }
+    nativeTokenPrice.value = priceResponse.value.market_data.current_price[currencyCode]
+  }
 
   onMounted(async () => {
     await fetchNativeTokenPrice()
