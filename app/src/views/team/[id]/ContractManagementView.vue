@@ -40,7 +40,7 @@ import { useTeamStore } from '@/stores'
 //Components
 import ModalComponent from '@/components/ModalComponent.vue'
 
-import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 
 import ButtonUI from '@/components/ButtonUI.vue'
 
