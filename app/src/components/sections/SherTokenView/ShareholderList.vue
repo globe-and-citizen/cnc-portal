@@ -81,7 +81,7 @@
 <script setup lang="ts">
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { formatEther, parseEther, type Address } from 'viem'
-import MintForm from '@/components/sections/SingleTeamView/forms/MintForm.vue'
+import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { ref } from 'vue'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
