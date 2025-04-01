@@ -44,14 +44,7 @@
         <template #tab-3>
           <BankTransactionsSection v-if="activeTab == 3" :bank-address="team.bankAddress" />
         </template>
-        <template #tab-4>
-          <ProposalSection
-            v-if="activeTab == 4"
-            :team="team"
-            @getTeam="getTeamAPI"
-            @addBodTab="() => tabs.push(SingleTeamTabs.BoardOfDirectors)"
-          />
-        </template>
+
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
@@ -81,7 +74,6 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import TeamSection from '@/components/sections/SingleTeamView/MemberSection.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
-import ProposalSection from '@/components/sections/SingleTeamView/ProposalSection.vue'
 import BoardOfDirectorsSection from '@/components/sections/SingleTeamView/BoardOfDirectorsSection.vue'
 
 import { type TeamContract, type User, SingleTeamTabs } from '@/types'
