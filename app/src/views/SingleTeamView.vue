@@ -48,9 +48,6 @@
         <template #tab-5>
           <BoardOfDirectorsSection v-if="activeTab == 5" :team="team" />
         </template>
-        <template #tab-6>
-          <InvestorsSection v-if="activeTab == 6" :team="team" />
-        </template>
 
         <template #tab-7>
           <ContractManagementSection v-if="activeTab == 7"></ContractManagementSection>
@@ -81,7 +78,6 @@ import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
 import ContractManagementSection from '@/components/sections/SingleTeamView/ContractManagementSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { type Address } from 'viem'
-import InvestorsSection from '@/components/sections/SingleTeamView/InvestorsSection.vue'
 
 //imports for add campaign creation.
 import CreateAddCamapaign from '@/components/forms/CreateAddCamapaign.vue'
