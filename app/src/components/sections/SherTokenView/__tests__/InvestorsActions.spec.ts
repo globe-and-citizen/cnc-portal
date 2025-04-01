@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import InvestorsActions from '@/components/sections/SingleTeamView/InvestorsActions.vue'
+import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
