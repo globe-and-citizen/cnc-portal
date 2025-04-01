@@ -10,7 +10,7 @@ vi.mock('@/components/ModalComponent.vue', () => ({
   }
 }))
 
-vi.mock('@/components/sections/SingleTeamView/modals/ApproveRevokeAction.vue', () => ({
+vi.mock('@/components/sections/AdministrationView/forms/ApproveRevokeAction.vue', () => ({
   default: {
     name: 'ApproveRevokeAction',
     template: '<div>ApproveRevokeAction</div>'
