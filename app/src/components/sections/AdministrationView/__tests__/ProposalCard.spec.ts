@@ -37,7 +37,9 @@ interface ModalComponentData {
     $emit: (event: string, ...args: unknown[]) => void
   }
 }
-vi.mock('../PieChart.vue', () => ({ default: { template: '<span>Success PieChart</span>' } }))
+vi.mock('@/components/PieChart.vue', () => ({
+  default: { template: '<span>Success PieChart</span>' }
+}))
 
 vi.mock('@/stores/useToastStore')
 
