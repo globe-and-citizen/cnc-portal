@@ -2,11 +2,9 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import BoardOfDirectorsSection from '@/components/sections/AdministrationView/BoardOfDirectorsSection.vue'
 
-import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { TransactionResponse } from 'ethers'
-// import ButtonUI from '@/components/ButtonUI.vue'
 import type { Action, Team } from '@/types'
 
 // Mock implementations
@@ -118,7 +116,7 @@ const createComponent = ({ props = {}, data = () => ({}), global = {} }: Compone
     }
   })
 }
-describe.skip('BoardOfDirectorsSection', () => {
+describe('BoardOfDirectorsSection', () => {
   beforeEach(() => {
     // Reset mock data for each test case
     mockUseReadContract.data.value = null
@@ -128,40 +126,29 @@ describe.skip('BoardOfDirectorsSection', () => {
     mockUseWaitForTransactionReceipt.isSuccess.value = false
   })
 
-  it('should show loading skeleton when fetching bank owner', async () => {
-    mockUseReadContract.isLoading.value = true
-    const wrapper = createComponent({
-      props: {
-        team: { bankAddress: '0xBankAddress' }
-      }
-    })
+  it('should render board of directors table when data is available', async () => {
+    mockUseReadContract.data.value = ['0xDirector1', '0xDirector2']
+    const wrapper = createComponent()
 
     await wrapper.vm.$nextTick()
-    expect(wrapper.findComponent(SkeletonLoading).exists()).toBe(true)
+    expect(wrapper.find('#list-bod').exists()).toBe(true)
+    expect(wrapper.find('table').exists()).toBe(true)
   })
 
-  it('should display bank owner name when data is available', async () => {
-    mockUseReadContract.data.value = ['0xOwnerAddress']
-    const wrapper = createComponent({
-      props: {
-        team: { bankAddress: '0xBankAddress' }
-      }
-    })
+  it('should show error message when no board of directors', async () => {
+    mockUseReadContract.data.value = []
+    const wrapper = createComponent()
 
     await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('0xOwnerAddress')
+    expect(wrapper.text()).toContain(
+      'You must add board of directors by doing election voting from proposal'
+    )
   })
 
-  // it('should show loading button when transfer is pending', async () => {
-  //   mockUseWriteContract.isPending.value = true
-  //   const wrapper = createComponent({
-  //     props: {
-  //       team: { bankAddress: '0xBankAddress' }
-  //     }
-  //   })
+  it('should render transfer ownership table', () => {
+    const wrapper = createComponent()
 
-  //   await wrapper.vm.$nextTick()
-  //   expect(wrapper.findComponent(ButtonUI).exists()).toBeTruthy()
-  //   expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
-  // })
+    expect(wrapper.text()).toContain('Transfer Ownership (From Founders to Board of Directors)')
+    expect(wrapper.find('table').exists()).toBe(true)
+  })
 })
