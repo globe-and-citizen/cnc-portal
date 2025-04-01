@@ -3,15 +3,16 @@
   <div class="relative flex flex-col gap-2">
     <div class="flex items-center gap-2">
       <div>
-        <div
-          role="button"
-          class="flex items-center cursor-pointer gap-4 badge badge-3xl badge-outline"
+        <ButtonUI
+          outline
+          variant="primary"
+          class="flex items-center cursor-pointer gap-4"
           @click="() => (isDropdownOpen = !isDropdownOpen)"
           :data-test="`${dataTestPrefix}-date-select`"
         >
           <span>{{ displayDateRange }}</span>
           <ChevronDownIcon class="w-4 h-4" />
-        </div>
+        </ButtonUI>
         <ul
           class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
           ref="target"
@@ -52,6 +53,7 @@ import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { onClickOutside } from '@vueuse/core'
+import ButtonUI from './ButtonUI.vue'
 
 interface Props {
   modelValue: [Date, Date] | null
