@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
+import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)

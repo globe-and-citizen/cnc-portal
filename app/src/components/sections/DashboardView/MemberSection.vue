@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { PlusCircleIcon } from '@heroicons/vue/24/outline'
-import AddMemberForm from '@/components/sections/SingleTeamView/forms/AddMemberForm.vue'
+import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore, useToastStore } from '@/stores'
