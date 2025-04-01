@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import MemberSection from '@/components/sections/SingleTeamView/MemberSection.vue'
+import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types/team'
 import { ref } from 'vue'

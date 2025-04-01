@@ -1,5 +1,5 @@
 import ModalComponent from '@/components/ModalComponent.vue'
-import MemberAction from '@/components/sections/SingleTeamView/MemberAction.vue'
+import MemberAction from '@/components/sections/DashboardView/MemberAction.vue'
 import type { Member } from '@/types/member'
 import type { Team } from '@/types/team'
 import { createTestingPinia } from '@pinia/testing'
