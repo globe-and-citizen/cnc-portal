@@ -3,7 +3,7 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import SherTokenView from '../SherTokenView.vue'
 
-vi.mock('@/components/sections/SingleTeamView/InvestorsSection.vue', () => ({
+vi.mock('@/components/sections/AdministrationView/InvestorsSection.vue', () => ({
   default: {
     name: 'InvestorsSection',
     props: ['team'],
