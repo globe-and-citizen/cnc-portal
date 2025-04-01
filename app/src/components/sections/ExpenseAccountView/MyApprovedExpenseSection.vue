@@ -113,10 +113,6 @@ import { useRoute } from 'vue-router'
 import { useExpenseAccountDataCollection } from '@/composables'
 //#endregion
 
-// const { team } = defineProps<{
-//   team: Team
-//   isDisapprovedAddress: boolean
-// }>()
 const reload = defineModel()
 
 //#region refs
@@ -142,25 +138,6 @@ const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccoun
 const expenseDataStore = useExpenseDataStore()
 const _expenseAccountData = expenseDataStore.expenseData
 
-//#region useCustomFetch
-// const {
-//   error: fetchExpenseAccountDataError,
-//   execute: fetchExpenseAccountData,
-//   data: _expenseAccountData
-// } = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
-//   immediate: false,
-//   beforeFetch: async ({ options, url, cancel }) => {
-//     options.headers = {
-//       memberaddress: currentUserAddress,
-//       'Content-Type': 'application/json',
-//       ...options.headers
-//     }
-//     return { options, url, cancel }
-//   }
-// })
-//   .get()
-//   .json()
-
 const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
   .get()
   .json()
@@ -179,10 +156,8 @@ const expenseBalanceFormatted = computed(() => {
   else return '--'
 })
 const expiry = computed(() => {
-  if (/*_expenseAccountData?.value.data*/ expenseDataStore.expenseData?.data) {
-    const unixEpoch = JSON.parse(
-      /*_expenseAccountData.value*/ expenseDataStore.expenseData?.data
-    ).expiry
+  if (expenseDataStore.expenseData?.data) {
+    const unixEpoch = JSON.parse(expenseDataStore.expenseData?.data).expiry
     const date = new Date(Number(unixEpoch) * 1000)
     return date.toLocaleString('en-US')
   } else {
@@ -192,19 +167,13 @@ const expiry = computed(() => {
 const maxLimit = (budgetType: number) =>
   computed(() => {
     const budgetData =
-      /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data &&
-      Array.isArray(
-        JSON.parse(/*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data).budgetData
-      )
-        ? JSON.parse(
-            /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data
-          ).budgetData.find((item: BudgetData) => item.budgetType === budgetType)
+      expenseDataStore.expenseData?.data &&
+      Array.isArray(JSON.parse(expenseDataStore.expenseData?.data).budgetData)
+        ? JSON.parse(expenseDataStore.expenseData?.data).budgetData.find(
+            (item: BudgetData) => item.budgetType === budgetType
+          )
         : undefined
-    if (
-      /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data &&
-      budgetData &&
-      budgetData.budgetType === budgetType
-    )
+    if (expenseDataStore.expenseData?.data && budgetData && budgetData.budgetType === budgetType)
       return budgetData.value
     else return '--'
   })
@@ -215,7 +184,7 @@ const dynamicDisplayData = (budgetType: number) =>
   computed(() => {
     const data = {}
     if (
-      /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data &&
+      expenseDataStore.expenseData?.data &&
       amountWithdrawn.value &&
       Array.isArray(amountWithdrawn.value)
     ) {
@@ -225,9 +194,7 @@ const dynamicDisplayData = (budgetType: number) =>
           value: Number(amountWithdrawn.value[0])
         }
       } else {
-        const tokenAddress = JSON.parse(
-          /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data
-        ).tokenAddress
+        const tokenAddress = JSON.parse(expenseDataStore.expenseData?.data).tokenAddress
         return {
           ...data,
           value:
@@ -237,8 +204,6 @@ const dynamicDisplayData = (budgetType: number) =>
         }
       }
     } else {
-      console.log('expenseDataStore.expenseData?.data', expenseDataStore.expenseData?.data)
-      console.log('amountWithdrawn.value', amountWithdrawn.value)
       return {
         ...data,
         value: `--`
@@ -309,7 +274,6 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 
 //#region Functions
 const init = async () => {
-  // await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
   await fetchUsdcBalance()
   await fetchExpenseAccountBalance()
@@ -414,10 +378,7 @@ const transferErc20Token = async () => {
 
 const getAmountWithdrawnBalance = async () => {
   if (expenseAccountEip712Address.value && expenseDataStore.expenseData?.data) {
-    signatureHash.value = keccak256(
-      /*_expenseAccountData.value*/ expenseDataStore.expenseData.signature
-    )
-    console.log('expenseAccountEip712Address.value', expenseAccountEip712Address.value)
+    signatureHash.value = keccak256(expenseDataStore.expenseData.signature)
     await executeGetAmountWithdrawn()
   }
 }
@@ -470,9 +431,6 @@ watch(approveError, () => {
     addErrorToast('Failed to approve token spending')
   }
 })
-// watch(fetchExpenseAccountDataError, (newVal) => {
-//   if (newVal) addErrorToast('Error fetching expense account data')
-// })
 watch(isErrorExpenseAccountBalance, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
@@ -485,16 +443,9 @@ watch([usdcBalanceError], ([newUsdcError]) => {
     addErrorToast('Failed to fetch USDC balance')
   }
 })
-// watch(() => expenseDataStore.expenseData, (newVal) => {
-//   if (newVal) {
-//     console.log('_expenseAccountData[newVal]', newVal.data)
-//   }
-// })
 //#endregion
 
 onMounted(async () => {
   await init()
-  // console.log('teamStore.currentTeamMeta?.team', teamStore.currentTeamMeta?.team)
-  // console.log('_expenseAccountData', expenseDataStore.expenseData?.data)
 })
 </script>
