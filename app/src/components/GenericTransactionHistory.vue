@@ -3,31 +3,8 @@
   <CardComponent :title="title" class="w-full">
     <template #card-action>
       <div class="flex items-center gap-10">
-        <div v-if="showDateFilter" class="relative flex flex-col gap-2">
-          <div class="flex items-center gap-4">
-            <span class="text-sm font-medium" v-if="selectedOption !== 'custom'">
-              {{ displayDateRange }}
-            </span>
-            <Datepicker
-              v-if="selectedOption === 'custom'"
-              v-model="dateRange"
-              class="w-96"
-              range
-              :format="'dd/MM/yyyy'"
-              placeholder="Select Date Range"
-              auto-apply
-              :data-test="`${dataTestPrefix}-date-range-picker`"
-            />
-            <select
-              v-model="selectedOption"
-              class="select select-bordered w-48"
-              :data-test="`${dataTestPrefix}-date-select`"
-            >
-              <option value="current">Current Month</option>
-              <option value="previous">Previous Month</option>
-              <option value="custom">Custom Range</option>
-            </select>
-          </div>
+        <div v-if="showDateFilter">
+          <CustomDatePicker v-model="dateRange" :data-test-prefix="dataTestPrefix" />
         </div>
         <ButtonUI
           v-if="showExport"
@@ -124,16 +101,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { DocumentTextIcon } from '@heroicons/vue/24/outline'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import Datepicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
+import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
@@ -171,49 +147,9 @@ const emit = defineEmits<{
 const toastStore = useToastStore()
 
 // State
-const selectedOption = ref('current')
 const dateRange = ref<[Date, Date] | null>(null)
 const receiptModal = ref(false)
 const selectedTransaction = ref<BaseTransaction | null>(null)
-
-// Get first and last day of current month
-const getCurrentMonthRange = () => {
-  const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-  return [firstDay, lastDay] as [Date, Date]
-}
-
-// Get first and last day of previous month
-const getPreviousMonthRange = () => {
-  const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
-  return [firstDay, lastDay] as [Date, Date]
-}
-
-// Watch for changes in selectedOption
-watch(selectedOption, (newValue) => {
-  switch (newValue) {
-    case 'current':
-      dateRange.value = getCurrentMonthRange()
-      break
-    case 'previous':
-      dateRange.value = getPreviousMonthRange()
-      break
-    case 'custom':
-      // Keep existing date range if any, otherwise reset
-      if (!dateRange.value) {
-        dateRange.value = getCurrentMonthRange()
-      }
-      break
-  }
-})
-
-// Set default range to current month on mount
-onMounted(() => {
-  dateRange.value = getCurrentMonthRange()
-})
 
 // Computed columns based on currencies
 const columns = computed(() => {
@@ -389,26 +325,6 @@ const handleReceiptPdfExport = (receiptData: ReceiptData) => {
     toastStore.addErrorToast('Failed to export receipt PDF')
   }
 }
-
-// Format date for display
-const formatDisplayDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
-}
-
-// Computed property for displaying the date range
-const displayDateRange = computed(() => {
-  if (!dateRange.value) return ''
-
-  const [start, end] = dateRange.value
-  const startStr = formatDisplayDate(start)
-  const endStr = formatDisplayDate(end)
-
-  return ` ${startStr} - ${endStr}`
-})
 </script>
 
 <style scoped></style>
