@@ -25,8 +25,11 @@
                   <td>
                     {{ maxLimitAmountPerTx }}
                     {{
-                      _expenseAccountData?.data &&
-                      tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
+                      /*_expenseAccountData*/ expenseDataStore.expenseData?.data &&
+                      tokenSymbol(
+                        JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
+                          ?.tokenAddress
+                      )
                     }}
                   </td>
                   <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
@@ -34,7 +37,10 @@
                   <td class="flex justify-end" data-test="action-td">
                     <ButtonUI
                       variant="success"
-                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
+                      :disabled="
+                        !(/*_expenseAccountData?.data*/ expenseDataStore.expenseData?.data) ||
+                        isDisapprovedAddress
+                      "
                       v-if="true"
                       @click="transferModal = true"
                       data-test="transfer-button"
@@ -87,7 +93,7 @@ import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'
+import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log, tokenSymbol } from '@/utils'
 import {
@@ -133,25 +139,27 @@ const route = useRoute()
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
+const expenseDataStore = useExpenseDataStore()
+const _expenseAccountData = expenseDataStore.expenseData
 
 //#region useCustomFetch
-const {
-  error: fetchExpenseAccountDataError,
-  execute: fetchExpenseAccountData,
-  data: _expenseAccountData
-} = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    options.headers = {
-      memberaddress: currentUserAddress,
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
+// const {
+//   error: fetchExpenseAccountDataError,
+//   execute: fetchExpenseAccountData,
+//   data: _expenseAccountData
+// } = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
+//   immediate: false,
+//   beforeFetch: async ({ options, url, cancel }) => {
+//     options.headers = {
+//       memberaddress: currentUserAddress,
+//       'Content-Type': 'application/json',
+//       ...options.headers
+//     }
+//     return { options, url, cancel }
+//   }
+// })
+//   .get()
+//   .json()
 
 const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
   .get()
@@ -171,8 +179,10 @@ const expenseBalanceFormatted = computed(() => {
   else return '--'
 })
 const expiry = computed(() => {
-  if (_expenseAccountData.value?.data) {
-    const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
+  if (/*_expenseAccountData?.value.data*/ expenseDataStore.expenseData?.data) {
+    const unixEpoch = JSON.parse(
+      /*_expenseAccountData.value*/ expenseDataStore.expenseData?.data
+    ).expiry
     const date = new Date(Number(unixEpoch) * 1000)
     return date.toLocaleString('en-US')
   } else {
@@ -182,13 +192,19 @@ const expiry = computed(() => {
 const maxLimit = (budgetType: number) =>
   computed(() => {
     const budgetData =
-      _expenseAccountData.value?.data &&
-      Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)
-        ? JSON.parse(_expenseAccountData.value?.data).budgetData.find(
-            (item: BudgetData) => item.budgetType === budgetType
-          )
+      /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data &&
+      Array.isArray(
+        JSON.parse(/*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data).budgetData
+      )
+        ? JSON.parse(
+            /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data
+          ).budgetData.find((item: BudgetData) => item.budgetType === budgetType)
         : undefined
-    if (_expenseAccountData.value?.data && budgetData && budgetData.budgetType === budgetType)
+    if (
+      /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data &&
+      budgetData &&
+      budgetData.budgetType === budgetType
+    )
       return budgetData.value
     else return '--'
   })
@@ -199,7 +215,7 @@ const dynamicDisplayData = (budgetType: number) =>
   computed(() => {
     const data = {}
     if (
-      _expenseAccountData.value?.data &&
+      /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data &&
       amountWithdrawn.value &&
       Array.isArray(amountWithdrawn.value)
     ) {
@@ -209,7 +225,9 @@ const dynamicDisplayData = (budgetType: number) =>
           value: Number(amountWithdrawn.value[0])
         }
       } else {
-        const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
+        const tokenAddress = JSON.parse(
+          /*_expenseAccountData?.value*/ expenseDataStore.expenseData?.data
+        ).tokenAddress
         return {
           ...data,
           value:
@@ -219,6 +237,8 @@ const dynamicDisplayData = (budgetType: number) =>
         }
       }
     } else {
+      console.log('expenseDataStore.expenseData?.data', expenseDataStore.expenseData?.data)
+      console.log('amountWithdrawn.value', amountWithdrawn.value)
       return {
         ...data,
         value: `--`
@@ -289,7 +309,7 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 
 //#region Functions
 const init = async () => {
-  await fetchExpenseAccountData()
+  // await fetchExpenseAccountData()
   await getAmountWithdrawnBalance()
   await fetchUsdcBalance()
   await fetchExpenseAccountBalance()
@@ -393,9 +413,11 @@ const transferErc20Token = async () => {
 }
 
 const getAmountWithdrawnBalance = async () => {
-  if (expenseAccountEip712Address.value) {
-    if (!_expenseAccountData?.value?.data) return
-    signatureHash.value = keccak256(_expenseAccountData.value.signature)
+  if (expenseAccountEip712Address.value && expenseDataStore.expenseData?.data) {
+    signatureHash.value = keccak256(
+      /*_expenseAccountData.value*/ expenseDataStore.expenseData.signature
+    )
+    console.log('expenseAccountEip712Address.value', expenseAccountEip712Address.value)
     await executeGetAmountWithdrawn()
   }
 }
@@ -407,6 +429,14 @@ watch(reload, async (newState) => {
     await init()
   }
 })
+watch(
+  () => expenseDataStore.expenseData,
+  (newVal) => {
+    if (newVal) {
+      getAmountWithdrawnBalance()
+    }
+  }
+)
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     reload.value = true
@@ -418,7 +448,7 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
 })
 watch(errorGetAmountWithdrawn, (newVal) => {
   if (newVal) {
-    log.error(parseError(newVal))
+    log.error('errorGetAmountWithdrawn.value:\n', parseError(newVal))
     addErrorToast('Failed to fetch amount withdrawn')
   }
 })
@@ -440,9 +470,9 @@ watch(approveError, () => {
     addErrorToast('Failed to approve token spending')
   }
 })
-watch(fetchExpenseAccountDataError, (newVal) => {
-  if (newVal) addErrorToast('Error fetching expense account data')
-})
+// watch(fetchExpenseAccountDataError, (newVal) => {
+//   if (newVal) addErrorToast('Error fetching expense account data')
+// })
 watch(isErrorExpenseAccountBalance, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
@@ -455,10 +485,16 @@ watch([usdcBalanceError], ([newUsdcError]) => {
     addErrorToast('Failed to fetch USDC balance')
   }
 })
+// watch(() => expenseDataStore.expenseData, (newVal) => {
+//   if (newVal) {
+//     console.log('_expenseAccountData[newVal]', newVal.data)
+//   }
+// })
 //#endregion
 
 onMounted(async () => {
   await init()
-  console.log('teamStore.currentTeamMeta?.team', teamStore.currentTeamMeta?.team)
+  // console.log('teamStore.currentTeamMeta?.team', teamStore.currentTeamMeta?.team)
+  // console.log('_expenseAccountData', expenseDataStore.expenseData?.data)
 })
 </script>
