@@ -47,7 +47,7 @@
 </template>
 <script setup lang="ts">
 import TabNavigation from '@/components/TabNavigation.vue'
-import ActionTable from '@/components/sections/SingleTeamView/tables/ActionTable.vue'
+import ActionTable from '@/components/sections/AdministrationView/tables/ActionTable.vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import type { ActionResponse, Team } from '@/types'
 import type { Address } from 'viem'

@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
+import TransferOwnershipForm from '@/components/sections/AdministrationView/forms/TransferOwnershipForm.vue'
 
 interface ComponentData {
   transferOwnershipLoading: boolean

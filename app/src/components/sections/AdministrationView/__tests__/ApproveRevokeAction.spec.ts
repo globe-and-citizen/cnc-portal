@@ -1,6 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import ApproveRevokeAction from '../ApproveRevokeAction.vue'
+import ApproveRevokeAction from '@/components/sections/AdministrationView/forms/ApproveRevokeAction.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useApprovalCount, useApproveAction } from '@/composables/__mocks__/bod'
 import { useBankGetFunction } from '@/composables/__mocks__/bank'

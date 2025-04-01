@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import ModalComponent from '@/components/ModalComponent.vue'
-import ApproveRevokeAction from '@/components/sections/SingleTeamView/modals/ApproveRevokeAction.vue'
+import ApproveRevokeAction from '@/components/sections/AdministrationView/forms/ApproveRevokeAction.vue'
 import type { Action, Team } from '@/types'
 import type { Address } from 'viem'
 import { ref } from 'vue'

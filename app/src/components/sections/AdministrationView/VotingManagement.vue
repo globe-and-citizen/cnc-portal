@@ -92,7 +92,7 @@
 </template>
 <script setup lang="ts">
 import { useToastStore } from '@/stores/useToastStore'
-import TransferOwnershipForm from '@/components/sections/SingleTeamView/forms/TransferOwnershipForm.vue'
+import TransferOwnershipForm from '@/components/sections/AdministrationView/forms/TransferOwnershipForm.vue'
 import type { Team } from '@/types'
 import { computed, onMounted, ref, watch } from 'vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'

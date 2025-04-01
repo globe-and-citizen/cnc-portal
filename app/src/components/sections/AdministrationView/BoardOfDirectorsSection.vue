@@ -149,7 +149,7 @@
 <script setup lang="ts">
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ToolTip from '@/components/ToolTip.vue'
-import BoDAction from '@/components/sections/SingleTeamView/BoDActions.vue'
+import BoDAction from '@/components/sections/AdministrationView/BoDActions.vue'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
