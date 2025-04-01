@@ -14,6 +14,35 @@ const mockUseReadContract = {
   error: ref(null),
   refetch: mockUseReadContractRefetch
 }
+const mockUseQuery = {
+  result: ref({
+    transactions: [
+      {
+        amount: '7000000',
+        blockNumber: '33',
+        blockTimestamp: '1741077830',
+        contractAddress: '0x552a6b9d3c6ef286fb40eeae9e8cfecdab468c0a',
+        contractType: 'Bank',
+        from: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        id: '0xe5a1940c7d5b338a4383fed25d08d338efe17a40cd94d66677f374a81c0d2d3a01000000',
+        to: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+        tokenAddress: '0x59b670e9fa9d0a427751af201d676719a970857b',
+        transactionHash: '0xe5a1940c7d5b338a4383fed25d08d338efe17a40cd94d66677f374a81c0d2d3a',
+        transactionType: 'deposit',
+        __typename: 'Transaction'
+      }
+    ]
+  }),
+  error: ref<Error | null>(),
+  loading: ref(false)
+}
+vi.mock('@vue/apollo-composable', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useQuery: vi.fn(() => ({ ...mockUseQuery }))
+  }
+})
 
 const mockUseWriteContract = {
   writeContract: vi.fn(),
@@ -45,8 +74,8 @@ const mockUseSendTransaction = {
 const mockReadContract = vi.fn().mockResolvedValue(BigInt(0))
 
 // Mock external components and dependencies
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
+vi.mock('@wagmi/vue', async (importOriginal: () => Promise<Record<string, unknown>>) => {
+  const actual = await importOriginal()
   return {
     ...actual,
     useReadContract: vi.fn(() => {
@@ -65,6 +94,18 @@ interface ContractCallArgs {
   abi: Abi
   functionName: string
   args: unknown[]
+}
+
+interface TeamContract {
+  type: string
+  address: string
+}
+
+interface Team {
+  bankAddress: string
+  id: string
+  name: string
+  teamContracts: TeamContract[]
 }
 
 vi.mock('@wagmi/core', () => ({
@@ -102,12 +143,41 @@ vi.mock('@/composables/useCustomFetch', () => ({
   })
 }))
 
+vi.mock('@/composables/useCryptoPrice', () => ({
+  useCryptoPrice: () => ({
+    prices: ref({
+      ethereum: { usd: 2000 },
+      'usd-coin': { usd: 1 }
+    }),
+    loading: ref(false),
+    error: ref(null)
+  })
+}))
+
+vi.mock('@/composables/useCurrencyRates', () => ({
+  useCurrencyRates: () => ({
+    loading: ref(false),
+    error: ref(null),
+    getRate: vi.fn()
+  })
+}))
+
+interface TeamStore {
+  currentTeam: Team | null
+}
+
 // Add mock for teamStore
-const mockTeamStore = {
+const mockTeamStore: TeamStore = {
   currentTeam: {
     bankAddress: '0x123',
     id: '1',
-    name: 'Test Team'
+    name: 'Test Team',
+    teamContracts: [
+      {
+        type: 'Bank',
+        address: '0x123'
+      }
+    ]
   }
 }
 
@@ -136,9 +206,23 @@ const TransactionsHistorySection = {
 interface BankViewInstance extends ComponentPublicInstance {
   refetchBalances: () => Promise<void>
   typedBankAddress: string | undefined
+  priceData: {
+    networkCurrencyPrice: number
+    usdcPrice: number
+    loading: boolean
+    error: boolean | null
+  }
+  currencyRatesData: {
+    loading: boolean
+    error: Error | null
+    getRate: () => void
+  }
+  networkCurrencyId: string
+  networkCurrencyPrice: number
+  usdcPrice: number
 }
 
-describe.skip('BankView', () => {
+describe('BankView', () => {
   let wrapper: VueWrapper<BankViewInstance>
 
   beforeEach(() => {
@@ -181,28 +265,78 @@ describe.skip('BankView', () => {
           TransactionsHistorySection
         }
       }
-    }) as unknown as VueWrapper<BankViewInstance>
+    }) as VueWrapper<BankViewInstance>
   })
 
-  it('passes correct bank address to BankBalanceSection', () => {
-    const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
-    expect(bankBalanceSection.props('bankAddress')).toBe(mockTeamStore.currentTeam.bankAddress)
+  describe('Component Rendering', () => {
+    it('renders all required sections', () => {
+      expect(wrapper.findComponent({ name: 'BankBalanceSection' }).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'GenericTokenHoldingsSection' }).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'TransactionsHistorySection' }).exists()).toBe(true)
+    })
+
+    it('passes correct bank address to BankBalanceSection', () => {
+      const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
+      expect(bankBalanceSection.props('bankAddress')).toBe(mockTeamStore.currentTeam?.bankAddress)
+    })
+
+    it('passes bankBalanceSection ref to TokenHoldingsSection', () => {
+      const tokenHoldingsSection = wrapper.findComponent({ name: 'GenericTokenHoldingsSection' })
+      expect(tokenHoldingsSection.props('address')).toBe(mockTeamStore.currentTeam?.bankAddress)
+    })
+
+    it('renders BankBalanceSection with correct price data', () => {
+      const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
+      expect(bankBalanceSection.exists()).toBe(true)
+      expect(bankBalanceSection.props('priceData')).toEqual({
+        networkCurrencyPrice: 2000,
+        usdcPrice: 1,
+        loading: false,
+        error: null
+      })
+    })
   })
 
-  it('passes bankBalanceSection ref to TokenHoldingsSection', () => {
-    const tokenHoldingsSection = wrapper.findComponent({ name: 'GenericTokenHoldingsSection' })
-    expect(tokenHoldingsSection.props('address')).toBe(mockTeamStore.currentTeam.bankAddress)
+  describe('Computed Properties', () => {
+    it('computes typedBankAddress correctly from teamStore', () => {
+      expect(wrapper.vm.typedBankAddress).toBe(mockTeamStore.currentTeam?.teamContracts[0].address)
+    })
+
+    it('computes networkCurrencyId correctly', () => {
+      expect(wrapper.vm.networkCurrencyId).toBe('ethereum')
+    })
+
+    it('computes networkCurrencyPrice correctly', () => {
+      expect(wrapper.vm.networkCurrencyPrice).toBe(2000)
+    })
+
+    it('computes usdcPrice correctly', () => {
+      expect(wrapper.vm.usdcPrice).toBe(1)
+    })
   })
 
-  it('computes typedBankAddress correctly from teamStore', () => {
-    expect(wrapper.vm.typedBankAddress).toBe(mockTeamStore.currentTeam.bankAddress)
-  })
+  describe('Data Management', () => {
+    it('computes price data correctly', () => {
+      expect(wrapper.vm.priceData).toEqual({
+        networkCurrencyPrice: 2000,
+        usdcPrice: 1,
+        loading: false,
+        error: null
+      })
+    })
 
-  it('renders all required sections', () => {
-    expect(wrapper.findComponent({ name: 'BankBalanceSection' }).exists()).toBe(true)
+    it('computes currency rates data correctly', () => {
+      expect(wrapper.vm.currencyRatesData).toEqual({
+        loading: false,
+        error: null,
+        getRate: expect.any(Function)
+      })
+    })
 
-    expect(wrapper.findComponent({ name: 'GenericTokenHoldingsSection' }).exists()).toBe(true)
-
-    expect(wrapper.findComponent({ name: 'TransactionsHistorySection' }).exists()).toBe(true)
+    it('updates when balance is updated', async () => {
+      const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
+      await bankBalanceSection.vm.$emit('balance-updated')
+      expect(wrapper.emitted()).toBeTruthy()
+    })
   })
 })
