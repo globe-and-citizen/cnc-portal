@@ -37,7 +37,7 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import UpdateTeamForm from '@/components/sections/AdministrationView/forms/UpdateTeamForm.vue'
+import UpdateTeamForm from '@/components/sections/DashboardView/forms/UpdateTeamForm.vue'
 import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
