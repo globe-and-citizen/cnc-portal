@@ -53,7 +53,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
-    const accessToken = jwt.sign({ address }, secretKey, { expiresIn: "10s" });
+    const accessToken = jwt.sign({ address }, secretKey, { expiresIn: "24h" });
 
     return res.status(200).json({
       accessToken,
