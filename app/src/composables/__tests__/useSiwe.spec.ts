@@ -273,7 +273,7 @@ describe('useSiwe', () => {
     expect(isProcessing.value).toBe(false)
   })
   it.skip('should handle missing user data', async () => {
-    console.log("Mock Imple")
+    console.log('Mock Imple')
     mockCustomFetch.get.execute.mockImplementation(() => {
       mockCustomFetch.get.data.value = { nonce: 'xyz' }
     })
@@ -283,7 +283,7 @@ describe('useSiwe', () => {
     mockCustomFetch.post.execute.mockImplementation(() => {
       mockCustomFetch.post.data.value = { accessToken: 'valid-token' }
     })
-    console.log("Mock Imple 2")
+    console.log('Mock Imple 2')
     mockCustomFetch.get.execute
       .mockImplementationOnce(() => {
         mockCustomFetch.get.data.value = { nonce: 'xyz' }
@@ -292,7 +292,7 @@ describe('useSiwe', () => {
         mockCustomFetch.get.data.value = null
       })
     const { isProcessing, siwe } = useSiwe()
-    console.log("Mock Imple 3")
+    console.log('Mock Imple 3')
     await siwe()
     await flushPromises()
     console.log("Mock Imple '")
