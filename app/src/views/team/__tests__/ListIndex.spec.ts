@@ -35,19 +35,23 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 0
-    },
-    meta: {
-      name: 'Team List View'
-    }
-  })),
-  useRouter: vi.fn(() => ({
-    push: vi.fn()
-  }))
-}))
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRoute: vi.fn(() => ({
+      params: {
+        id: 0
+      },
+      meta: {
+        name: 'Team List View'
+      }
+    })),
+    useRouter: vi.fn(() => ({
+      push: vi.fn()
+    }))
+  }
+})
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()

@@ -1,6 +1,24 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { LIST_CURRENCIES, useCurrencyStore } from '../currencyStore'
+import { useToastStore } from '../__mocks__/useToastStore'
+import { ref } from 'vue'
+
+const priceResponse = ref<unknown>(null)
+vi.mock('@/composables', () => ({
+  useCustomFetch: vi.fn(() => ({
+    get: () => ({
+      json: () => ({
+        data: priceResponse,
+        execute: vi.fn(),
+        isFetching: { value: false },
+        error: { value: null }
+      })
+    })
+  }))
+}))
+
+vi.mock('@/stores/useToastStore')
 
 describe('Currency Store', () => {
   beforeEach(() => {
@@ -37,11 +55,6 @@ describe('Currency Store', () => {
         symbol: 'CA$'
       },
       {
-        code: 'XOF',
-        name: 'West African CFA franc',
-        symbol: 'CFA'
-      },
-      {
         code: 'IDR',
         name: 'Indonesian Rupiah',
         symbol: 'Rp'
@@ -74,13 +87,35 @@ describe('Currency Store', () => {
 
   it('maintains value across store instances', () => {
     const store1 = useCurrencyStore()
-    store1.setCurrency('XOF')
+    store1.setCurrency('IDR')
 
     const store2 = useCurrencyStore()
     expect(store2.currency).toStrictEqual({
-      code: 'XOF',
-      name: 'West African CFA franc',
-      symbol: 'CFA'
+      code: 'IDR',
+      name: 'Indonesian Rupiah',
+      symbol: 'Rp'
     })
+  })
+
+  it('should show an error if fetching price fails', async () => {
+    const store = useCurrencyStore()
+    await store.fetchNativeTokenPrice()
+
+    const toastStore = useToastStore()
+    expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch price')
+  })
+
+  it('should update nativeTokenPrice if fetching price succeeds', async () => {
+    const store = useCurrencyStore()
+    priceResponse.value = {
+      market_data: {
+        current_price: {
+          usd: 1
+        }
+      }
+    }
+    await store.fetchNativeTokenPrice()
+
+    expect(store.nativeTokenPrice).toBe(1)
   })
 })

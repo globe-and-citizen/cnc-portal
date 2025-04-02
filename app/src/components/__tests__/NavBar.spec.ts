@@ -27,14 +27,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 0
-    }
-  }))
-}))
-
 describe('NavBar', () => {
   const props = {
     isCollapsed: false
