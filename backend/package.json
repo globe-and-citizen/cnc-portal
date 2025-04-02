@@ -37,15 +37,15 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.11.30",
-    "@vitest/coverage-istanbul": "^2.0.5",
+    "@vitest/coverage-istanbul": "^3.1.1",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.0",
     "prisma": "^5.11.0",
     "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
-    "vite-tsconfig-paths": "^4.3.2",
-    "vitest": "^2.0.5"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.1.1"
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",
