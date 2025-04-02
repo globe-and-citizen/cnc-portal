@@ -9,6 +9,7 @@ import { mainnet } from '@wagmi/core/chains'
 import type * as wagmiVue from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { ComponentPublicInstance } from 'vue'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 
 // Create a test wagmi config
 const config = createConfig({
@@ -90,16 +91,15 @@ describe('BankBalanceSection', () => {
       transferModal: boolean
       depositAmount: string
       loadingText: string
-      totalValueUSD: number
-      totalValueLocal: number
+      totalValueUSD: string
+      totalValueLocal: string
       formattedUsdcBalance: string
-      depositToBank: (amount: string, token: string) => Promise<void>
-      transferFromBank: (
-        toAddress: string,
-        amount: string,
-        memo: string,
-        token: string
-      ) => Promise<void>
+      depositToBank: (data: { amount: string; token: string }) => Promise<void>
+      handleTransfer: (data: {
+        address: { address: string }
+        token: { symbol: string }
+        amount: string
+      }) => Promise<void>
     }
     return mount(BankBalanceSection, {
       props: defaultProps,
@@ -116,6 +116,8 @@ describe('BankBalanceSection', () => {
       vm: BankBalanceSectionInstance
       find: (selector: string) => VueWrapper
       findAll: (selector: string) => VueWrapper[]
+      emitted: () => Record<string, unknown[]>
+      setProps: (props: Partial<typeof defaultProps>) => Promise<void>
     }
   }
 
@@ -262,23 +264,6 @@ describe('BankBalanceSection', () => {
     })
   })
 
-  describe('Token Interactions', () => {
-    it('handles USDC transfer correctly', async () => {
-      const wrapper = createWrapper()
-      const toAddress = '0x456'
-      const amount = '50'
-
-      await wrapper.vm.transferFromBank(toAddress, amount, 'Test transfer', 'USDC')
-
-      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transferToken',
-          args: [expect.any(String), toAddress, BigInt(50000000)] // 50 * 1e6
-        })
-      )
-    })
-  })
-
   describe('Loading States', () => {
     it('shows loading spinner when fetching balances', async () => {
       const wrapper = createWrapper()
@@ -325,6 +310,138 @@ describe('BankBalanceSection', () => {
       expect(wrapper.vm.depositModal).toBe(true)
       const modal = wrapper.find('[data-test="deposit-modal"]')
       expect(modal.exists()).toBe(true)
+    })
+  })
+
+  describe('Transfer Functionality', () => {
+    it('handles ETH transfer correctly', async () => {
+      const wrapper = createWrapper()
+      const transferData = {
+        address: { address: '0x456' },
+        token: { symbol: NETWORK.currencySymbol },
+        amount: '1.0'
+      }
+
+      await wrapper.vm.handleTransfer(transferData)
+
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        address: defaultProps.bankAddress,
+        abi: expect.any(Array),
+        functionName: 'transfer',
+        args: [transferData.address.address, expect.any(BigInt)]
+      })
+    })
+
+    it('handles USDC transfer correctly', async () => {
+      const wrapper = createWrapper()
+      const transferData = {
+        address: { address: '0x456' },
+        token: { symbol: 'USDC' },
+        amount: '100'
+      }
+
+      await wrapper.vm.handleTransfer(transferData)
+
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        address: defaultProps.bankAddress,
+        abi: expect.any(Array),
+        functionName: 'transferToken',
+        args: [USDC_ADDRESS, transferData.address.address, expect.any(BigInt)]
+      })
+    })
+
+    it('shows error toast when transfer fails', async () => {
+      const wrapper = createWrapper()
+      const transferData = {
+        address: { address: '0x456' },
+        token: { symbol: NETWORK.currencySymbol },
+        amount: '1.0'
+      }
+
+      // Reset mock calls before the test
+      mockUseWriteContract.writeContract.mockReset()
+      mockUseWriteContract.writeContract.mockRejectedValueOnce(new Error('Transfer failed'))
+
+      await wrapper.vm.handleTransfer(transferData)
+
+      const toastStore = useToastStore()
+      expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch team balance')
+    })
+  })
+
+  describe('Balance Calculations', () => {
+    it('calculates total USD value correctly', async () => {
+      const wrapper = createWrapper()
+      mockUseBalance.data.value = { formatted: '1.5', value: BigInt(1500000) }
+      mockUseReadContract.data.value = BigInt(1000000) // 1 USDC
+
+      await wrapper.vm.$nextTick()
+
+      // 1.5 ETH * 2000 + 1 USDC * 1 = 3001 USD
+      expect(wrapper.vm.totalValueUSD).toBe('3001.00')
+    })
+
+    it('calculates local currency value correctly', async () => {
+      const wrapper = createWrapper()
+      mockUseBalance.data.value = { formatted: '1.5', value: BigInt(1500000) }
+      mockUseReadContract.data.value = BigInt(1000000) // 1 USDC
+
+      await wrapper.vm.$nextTick()
+
+      // (1.5 ETH * 2000 + 1 USDC * 1) * 1.28 = 3841.28 CAD
+      expect(wrapper.vm.totalValueLocal).toBe('3841.28')
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('handles USDC balance fetch error', async () => {
+      const wrapper = createWrapper()
+      mockUseReadContract.error.value = new Error('Failed to fetch USDC balance')
+      await wrapper.vm.$nextTick()
+
+      const toastStore = useToastStore()
+      expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch team balance')
+      expect(wrapper.emitted()).toBeTruthy()
+    })
+
+    it('handles missing bank address gracefully', async () => {
+      const wrapper = createWrapper()
+      // Reset mock calls before the test
+      mockUseWriteContract.writeContract.mockReset()
+
+      await wrapper.setProps({ bankAddress: undefined })
+
+      await wrapper.vm.handleTransfer({
+        address: { address: '0x456' },
+        token: { symbol: NETWORK.currencySymbol },
+        amount: '1.0'
+      })
+
+      expect(mockUseWriteContract.writeContract).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Modal State Management', () => {
+    it('closes deposit modal after successful deposit', async () => {
+      const wrapper = createWrapper()
+      wrapper.vm.depositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.vm.depositModal).toBe(false)
+    })
+
+    it('closes transfer modal after successful transfer', async () => {
+      const wrapper = createWrapper()
+      wrapper.vm.transferModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.vm.transferModal).toBe(false)
     })
   })
 })
