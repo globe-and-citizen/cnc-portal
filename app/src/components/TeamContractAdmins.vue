@@ -54,7 +54,7 @@ import AddressToolTip from './AddressToolTip.vue'
 import ButtonUI from './ButtonUI.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
-const addCamapaignService = new AddCampaignService()
+const addCampaignService = new AddCampaignService()
 
 const props = defineProps<{
   contract: TeamContract
@@ -72,9 +72,9 @@ watch(
   () => props.contract,
   async (newContract) => {
     isLoading.value = true
-    admins.value = await addCamapaignService.getAdminList(newContract.address)
+    admins.value = await addCampaignService.getAdminList(newContract.address)
     isLoading.value = false
-    await addCamapaignService.getEventsGroupedByCampaignCode(newContract.address)
+    await addCampaignService.getEventsGroupedByCampaignCode(newContract.address)
   }
 )
 
@@ -84,12 +84,12 @@ async function removeAdmin(adminAddress: string) {
     addErrorToast('please provide valid address')
   } else {
     isLoading.value = true
-    const result = await addCamapaignService.removeAdmin(props.contract.address, adminAddress)
+    const result = await addCampaignService.removeAdmin(props.contract.address, adminAddress)
 
     if (result.status === 'success') {
       addSuccessToast('Admin removed successfully')
       isLoading.value = false
-      admins.value = await addCamapaignService.getAdminList(props.contract.address)
+      admins.value = await addCampaignService.getAdminList(props.contract.address)
     } else {
       addErrorToast('remove  admin failed plese try again')
       isLoading.value = false
@@ -103,12 +103,12 @@ async function addAdmin() {
     addErrorToast('please provide valid address')
   } else {
     isLoading.value = true
-    const result = await addCamapaignService.addAdmin(props.contract.address, newAdminAddress.value)
+    const result = await addCampaignService.addAdmin(props.contract.address, newAdminAddress.value)
 
     if (result.status === 'success') {
       addSuccessToast('Admin added successfully')
 
-      admins.value = await addCamapaignService.getAdminList(props.contract.address)
+      admins.value = await addCampaignService.getAdminList(props.contract.address)
       isLoading.value = false
       newAdminAddress.value = ''
       // Emit the updated contract with the new admins list
