@@ -107,7 +107,6 @@ model TeamContract {
   address   String   @unique
   type      String
   deployer  String
-  admins    String[]
   teamId    Int
   team      Team     @relation(fields: [teamId], references: [id])
   createdAt DateTime @default(now())
