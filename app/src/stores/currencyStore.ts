@@ -2,9 +2,8 @@ import { useCustomFetch } from '@/composables'
 import { NETWORK } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useToastStore } from './useToastStore'
-import { log } from '@/utils'
 
 interface Currency {
   code: string
@@ -93,12 +92,6 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   async function fetchNativeTokenPrice() {
     await fetchPrice()
-
-    // Normaly there is no way to have undefined value for currency.value
-    if (!currency.value) {
-      toastStore.addErrorToast('Error: User currency not set')
-      return
-    }
     const currencyCode = currency.value.code.toLowerCase() as currencyType
 
     if (!priceResponse.value || error.value) {
