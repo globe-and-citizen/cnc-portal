@@ -72,7 +72,7 @@
     "dotenv": "^16.4.5",
     "eslint": "^9.17.0",
     "eslint-plugin-vue": "^9.17.0",
-    "jsdom": "^25.0.1",
+    "jsdom": "^26.0.0",
     "npm-run-all2": "^6.1.1",
     "postcss": "^8.4.35",
     "prettier": "^3.0.3",
