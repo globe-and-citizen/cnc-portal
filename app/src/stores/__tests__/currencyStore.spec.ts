@@ -55,11 +55,6 @@ describe('Currency Store', () => {
         symbol: 'CA$'
       },
       {
-        code: 'XOF',
-        name: 'West African CFA franc',
-        symbol: 'CFA'
-      },
-      {
         code: 'IDR',
         name: 'Indonesian Rupiah',
         symbol: 'Rp'
@@ -92,13 +87,13 @@ describe('Currency Store', () => {
 
   it('maintains value across store instances', () => {
     const store1 = useCurrencyStore()
-    store1.setCurrency('XOF')
+    store1.setCurrency('IDR')
 
     const store2 = useCurrencyStore()
     expect(store2.currency).toStrictEqual({
-      code: 'XOF',
-      name: 'West African CFA franc',
-      symbol: 'CFA'
+      code: 'IDR',
+      name: 'Indonesian Rupiah',
+      symbol: 'Rp'
     })
   })
 
