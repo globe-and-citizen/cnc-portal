@@ -61,7 +61,7 @@
                     : `${Number(usdcBalance) / 1e6}`
               }
             ]"
-            :loading="isLoadingTransfer || isConfirmingTransfer"
+            :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
             service="Expense Account"
             @transfer="
               async (data) => {
@@ -316,7 +316,7 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
     functionName: 'transfer'
   })
 }
-
+const transferERC20loading = ref(false)
 // Token transfer function
 const transferErc20Token = async () => {
   if (
@@ -328,6 +328,8 @@ const transferErc20Token = async () => {
     return
 
   const tokenAddress = USDC_ADDRESS
+
+  transferERC20loading.value = true
   const _amount = BigInt(Number(tokenAmount.value) * 1e6)
 
   const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
@@ -407,11 +409,13 @@ watch(errorTransfer, (newVal) => {
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
     addSuccessToast('Approval granted successfully')
+    transferERC20loading.value = false
     transferErc20Token()
   }
 })
 watch(approveError, () => {
   if (approveError.value) {
+    transferERC20loading.value = false
     log.error(parseError(approveError.value))
     addErrorToast('Failed to approve token spending')
   }
