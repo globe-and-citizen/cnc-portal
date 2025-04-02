@@ -56,13 +56,17 @@
 
         <ModalComponent v-model="transferModal">
           <TransferForm
-            v-if="transferModal && _expenseAccountData?.data"
+            v-if="transferModal && /*_expenseAccountData*/ expenseDataStore.expenseData?.data"
             v-model="transferData"
             :tokens="[
               {
-                symbol: tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress),
+                symbol: tokenSymbol(
+                  JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData.data)
+                    ?.tokenAddress
+                ),
                 balance:
-                  JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
+                  JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
+                    ?.tokenAddress === zeroAddress
                     ? expenseBalanceFormatted
                     : `${Number(usdcBalance) / 1e6}`
               }
@@ -281,8 +285,13 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
   tokenRecipient.value = to
 
-  if (expenseAccountEip712Address.value && _expenseAccountData.value.data) {
-    const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+  if (
+    expenseAccountEip712Address.value &&
+    /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
+  ) {
+    const budgetLimit: BudgetLimit = JSON.parse(
+      /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
+    )
 
     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
@@ -307,7 +316,7 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
                 : BigInt(Number(item.value) * 1e6)
         }))
       },
-      _expenseAccountData.value.signature
+      /*_expenseAccountData.value*/ expenseDataStore.expenseData.signature
     ],
     abi: expenseAccountABI,
     functionName: 'transfer'
@@ -320,7 +329,7 @@ const transferErc20Token = async () => {
     !expenseAccountEip712Address.value ||
     !tokenAmount.value ||
     !tokenRecipient.value ||
-    !_expenseAccountData.value?.data
+    !/*_expenseAccountData.value*/ expenseDataStore.expenseData?.data
   )
     return
 
@@ -329,7 +338,9 @@ const transferErc20Token = async () => {
   transferERC20loading.value = true
   const _amount = BigInt(Number(tokenAmount.value) * 1e6)
 
-  const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+  const budgetLimit: BudgetLimit = JSON.parse(
+    /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
+  )
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
@@ -361,7 +372,7 @@ const transferErc20Token = async () => {
             value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
           }))
         },
-        _expenseAccountData.value.signature
+        /*_expenseAccountData.value*/ expenseDataStore.expenseData.signature
       ]
     })
   }
