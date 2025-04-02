@@ -57,7 +57,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "jsonwebtoken": "^9.0.2",
-    "openapi2html": "^1.1.22",
+    "openapi2html": "^2.0.1",
     "siwe": "^2.1.4",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
