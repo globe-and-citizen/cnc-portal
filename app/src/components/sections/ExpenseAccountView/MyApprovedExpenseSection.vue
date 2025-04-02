@@ -49,29 +49,26 @@
         </div>
 
         <ModalComponent v-model="transferModal">
-          <TransferFromBankForm
+          <TransferForm
             v-if="transferModal && _expenseAccountData?.data"
-            @close-modal="() => (transferModal = false)"
+            v-model="transferData"
+            :tokens="[
+              {
+                symbol: tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress),
+                balance:
+                  JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
+                    ? expenseBalanceFormatted
+                    : `${Number(usdcBalance) / 1e6}`
+              }
+            ]"
+            :loading="isLoadingTransfer || isConfirmingTransfer"
+            service="Expense Account"
             @transfer="
-              async (to: string, amount: string) => {
-                await transferFromExpenseAccount(to, amount)
+              async (data) => {
+                await transferFromExpenseAccount(data.address.address, data.amount)
               }
             "
-            @searchMembers="(input) => searchUsers({ name: '', address: input })"
-            :filteredMembers="users?.users"
-            :loading="isLoadingTransfer || isConfirmingTransfer"
-            :bank-balance="
-              JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
-                ? expenseBalanceFormatted
-                : undefined
-            "
-            :usdc-balance="
-              JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
-                ? undefined
-                : `${Number(usdcBalance) / 1e6}`
-            "
-            :_token-symbol="tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)"
-            service="Expense Account"
+            @closeModal="() => (transferModal = false)"
           />
         </ModalComponent>
       </section>
@@ -85,7 +82,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { Team, BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import TransferForm from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -114,10 +111,14 @@ const reload = defineModel()
 
 //#region refs
 const transferModal = ref(false)
-const url = ref('user/search')
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
 const signatureHash = ref<string | null>(null)
+const transferData = ref({
+  address: { name: '', address: '' },
+  token: { symbol: '', balance: '0' },
+  amount: '0'
+})
 //#endregion
 
 const route = useRoute()
@@ -141,11 +142,6 @@ const {
 })
   .get()
   .json()
-
-const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
-  .get()
-  .json()
-//#endregion
 
 //#endregion Computed Values
 
@@ -283,15 +279,7 @@ const init = async () => {
   await fetchUsdcBalance()
   await fetchExpenseAccountBalance()
 }
-const searchUsers = async (input: { name: string; address: string }) => {
-  if (input.address == '' && input.name) {
-    url.value = 'user/search?name=' + input.name
-  } else if (input.name == '' && input.address) {
-    url.value = 'user/search?address=' + input.address
-  }
 
-  await executeSearchUser()
-}
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
   tokenRecipient.value = to

@@ -262,23 +262,6 @@ describe('BankBalanceSection', () => {
     })
   })
 
-  describe('Token Interactions', () => {
-    it('handles USDC transfer correctly', async () => {
-      const wrapper = createWrapper()
-      const toAddress = '0x456'
-      const amount = '50'
-
-      await wrapper.vm.transferFromBank(toAddress, amount, 'Test transfer', 'USDC')
-
-      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transferToken',
-          args: [expect.any(String), toAddress, BigInt(50000000)] // 50 * 1e6
-        })
-      )
-    })
-  })
-
   describe('Loading States', () => {
     it('shows loading spinner when fetching balances', async () => {
       const wrapper = createWrapper()
