@@ -194,13 +194,13 @@ import { onClickOutside } from '@vueuse/core'
 import {
   HomeIcon,
   BanknotesIcon,
-  ChartBarIcon,
-  UsersIcon,
+  // ChartBarIcon,
+  // UsersIcon,
   ArrowLeftStartOnRectangleIcon,
   ArrowRightStartOnRectangleIcon,
   ChevronUpDownIcon,
   BriefcaseIcon,
-  ChartPieIcon,
+  // ChartPieIcon,
   WrenchIcon,
   CurrencyDollarIcon
 } from '@heroicons/vue/24/outline'
@@ -290,16 +290,16 @@ const menuItems = computed(() => [
     active: route.name === 'expense-account',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
-  {
-    label: 'Investors',
-    icon: ChartPieIcon,
-    route: {
-      name: 'sher-token',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'sher-token',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  },
+  // {
+  //   label: 'Investors',
+  //   icon: ChartPieIcon,
+  //   route: {
+  //     name: 'sher-token',
+  //     params: { id: teamStore.currentTeam?.id || '1' }
+  //   },
+  //   active: route.name === 'sher-token',
+  //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  // },
   {
     label: 'Contract Management',
     icon: WrenchIcon,
@@ -308,23 +308,23 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  },
-  {
-    label: 'Transactions',
-    icon: ChartBarIcon,
-    route: '/transactions',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  },
-  {
-    label: 'Administration',
-    icon: UsersIcon,
-    route: {
-      name: 'administration',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'administration',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
+  // {
+  //   label: 'Transactions',
+  //   icon: ChartBarIcon,
+  //   route: '/transactions',
+  //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  // },
+  // {
+  //   label: 'Administration',
+  //   icon: UsersIcon,
+  //   route: {
+  //     name: 'administration',
+  //     params: { id: teamStore.currentTeam?.id || '1' }
+  //   },
+  //   active: route.name === 'administration',
+  //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  // }
 ])
 
 const toggleDropdown = () => {
