@@ -64,7 +64,7 @@ model Expense {
   id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
   userAddress String
   teamId      Int
-  singature   String
+  signature   String
   data        String
   status      String // e.g., "singed", "expired", "disabled"
   createdAt   DateTime @default(now())
