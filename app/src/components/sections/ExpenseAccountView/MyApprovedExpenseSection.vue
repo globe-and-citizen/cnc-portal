@@ -347,7 +347,7 @@ const transferErc20Token = async () => {
       address: tokenAddress as Address,
       abi: ERC20ABI,
       functionName: 'approve',
-      args: [expenseAccountEip712Address, _amount]
+      args: [expenseAccountEip712Address.value, _amount]
     })
   } else {
     executeExpenseAccountTransfer({
