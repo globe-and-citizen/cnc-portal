@@ -15,7 +15,7 @@
       </ButtonUI>
     </template>
 
-    <ExpenseAccountTable v-if="team" :team="team" v-model="reload" />
+    <ExpenseAccountTable v-model="reload" />
 
     <ModalComponent v-model="approveUsersModal">
       <ApproveUsersForm
@@ -37,7 +37,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useToastStore, useExpenseDataStore } from '@/stores'
+import { useUserDataStore, useToastStore, useExpenseDataStore, useTeamStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -53,6 +53,7 @@ const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
 
+const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const expenseDataStore = useExpenseDataStore()
 const { addErrorToast } = useToastStore()
@@ -61,18 +62,21 @@ const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
 
 //#region useCustomfetch
-const {
-  data: team,
-  // error: teamError,
-  execute: executeFetchTeam
-} = useCustomFetch(`teams/${String(route.params.id)}`)
-  .get()
-  .json<Team>()
+// const {
+//   data: team,
+//   // error: teamError,
+//   execute: executeFetchTeam
+// } = useCustomFetch(`teams/${String(route.params.id)}`)
+//   .get()
+//   .json<Team>()
 
 const expenseAccountEip712Address = computed(
   () =>
-    team.value?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
-      ?.address as Address
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
+  // team.value?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+  //   ?.address as Address
 )
 const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.id}/expense-data`, {
   immediate: false
@@ -94,7 +98,7 @@ const {
 //#region Funtions
 const init = async () => {
   await refetchExpenseAccountGetOwner()
-  await executeFetchTeam()
+  // await executeFetchTeam()
 }
 
 const approveUser = async (data: BudgetLimit) => {
