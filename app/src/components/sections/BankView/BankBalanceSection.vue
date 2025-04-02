@@ -67,16 +67,17 @@
 
     <!-- Transfer Modal -->
     <ModalComponent v-model="transferModal" data-test="transfer-modal">
-      <TransferFromBankForm
+      <TransferForm
         v-if="transferModal"
-        @close-modal="() => (transferModal = false)"
-        @transfer="transferFromBank"
-        @searchMembers="(input: string) => searchUsers({ name: '', address: input })"
-        :filteredMembers="foundUsers"
+        v-model="transferData"
+        :tokens="[
+          { symbol: NETWORK.currencySymbol, balance: teamBalance?.formatted || '0' },
+          { symbol: 'USDC', balance: formattedUsdcBalance || '0' }
+        ]"
         :loading="transferLoading || isConfirmingTransfer"
-        :bank-balance="teamBalance?.formatted || '0'"
-        :usdc-balance="formattedUsdcBalance || '0'"
         service="Bank"
+        @transfer="handleTransfer"
+        @closeModal="() => (transferModal = false)"
       />
     </ModalComponent>
   </CardComponent>
@@ -103,14 +104,12 @@ import { useToastStore } from '@/stores/useToastStore'
 import { log, parseError } from '@/utils'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import TransferForm from '@/components/forms/TransferForm.vue'
 import { useUserDataStore } from '@/stores/user'
 import BankABI from '@/artifacts/abi/bank.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther } from 'viem'
-import type { User } from '@/types'
 
 const props = defineProps<{
   bankAddress: Address | undefined
@@ -135,8 +134,12 @@ const chainId = useChainId()
 // Add refs for modals and form data
 const depositModal = ref(false)
 const transferModal = ref(false)
-const foundUsers = ref<User[]>([])
 const depositAmount = ref('')
+const transferData = ref({
+  address: { name: '', address: '' },
+  token: { symbol: NETWORK.currencySymbol, balance: '0' },
+  amount: '0'
+})
 
 // Contract interactions
 const { sendTransaction, isPending: depositLoading, data: depositHash } = useSendTransaction()
@@ -253,43 +256,33 @@ const handleUsdcDeposit = async (amount: string) => {
   })
 }
 
-const transferFromBank = async (to: string, amount: string, description: string, token: string) => {
+const handleTransfer = async (data: {
+  address: { address: string }
+  token: { symbol: string }
+  amount: string
+}) => {
   if (!props.bankAddress) return
 
   try {
-    if (token === NETWORK.currencySymbol) {
+    if (data.token.symbol === NETWORK.currencySymbol) {
       transfer({
         address: props.bankAddress,
         abi: BankABI,
         functionName: 'transfer',
-        args: [to, parseEther(amount)]
+        args: [data.address.address, parseEther(data.amount)]
       })
-    } else if (token === 'USDC') {
-      const tokenAmount = BigInt(Number(amount) * 1e6)
+    } else if (data.token.symbol === 'USDC') {
+      const tokenAmount = BigInt(Number(data.amount) * 1e6)
       transfer({
         address: props.bankAddress,
         abi: BankABI,
         functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, to, tokenAmount]
+        args: [USDC_ADDRESS as Address, data.address.address, tokenAmount]
       })
     }
   } catch (error) {
     console.error(error)
-    addErrorToast(`Failed to transfer ${token}`)
-  }
-}
-
-const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    if (input.address) {
-      const { data } = await useCustomFetch(`user/search?address=${input.address}`)
-        .get()
-        .json<{ users: User[] }>()
-      foundUsers.value = data.value?.users || []
-    }
-  } catch (error) {
-    console.error(error)
-    addErrorToast('Failed to search users')
+    addErrorToast(`Failed to transfer ${data.token.symbol}`)
   }
 }
 

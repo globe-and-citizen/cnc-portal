@@ -5,7 +5,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import TransferForm from '@/components/forms/TransferForm.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -422,7 +422,7 @@ describe('ExpenseAccountSection', () => {
       expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
     })
 
-    describe('TransferFromBankForm', async () => {
+    describe('TransferForm', async () => {
       const wrapper = createComponent()
       const wrapperVm = wrapper.vm as unknown as ComponentData
       ;(wrapper.vm as unknown as ComponentData).transferModal = true
@@ -438,7 +438,7 @@ describe('ExpenseAccountSection', () => {
         ownerAddress: '0xOwner'
       }
 
-      it('should pass corrent props to TransferFromBankForm', async () => {
+      it('should pass corrent props to TransferForm', async () => {
         //@ts-expect-error: not on wrapper but available on component
         wrapper.vm.users = {
           users: [{ name: 'John Doe', address: '0x1234' }]
@@ -450,23 +450,24 @@ describe('ExpenseAccountSection', () => {
         wrapper.vm.expenseAccountBalance = { value: viem.parseEther('5000') }
         await flushPromises()
 
-        const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
-        expect(transferFromBankForm.exists()).toBe(true)
-        expect(transferFromBankForm.props()).toEqual({
-          filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
+        const transferForm = wrapper.findComponent(TransferForm)
+        expect(transferForm.exists()).toBe(true)
+        expect(transferForm.props()).toEqual({
+          tokens: [{ symbol: 'SepoliaETH', balance: '5000' }],
           service: 'Expense Account',
-          bankBalance: '5000',
-          _tokenSymbol: NETWORK.currencySymbol,
           loading: false,
-          asBod: false,
-          usdcBalance: '0'
+          modelValue: {
+            address: { name: '', address: '' },
+            token: { symbol: 'SepoliaETH', balance: '--' },
+            amount: '0'
+          }
         })
         ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
           data: JSON.stringify(mockExpenseData[1])
         }
       })
-      it('should close the modal when TransferFromBankForm @close-modal is emitted', async () => {
-        const transferForm = wrapper.findComponent(TransferFromBankForm)
+      it('should close the modal when TransferForm @closeModal is emitted', async () => {
+        const transferForm = wrapper.findComponent(TransferForm)
 
         transferForm.vm.$emit('closeModal')
         expect((wrapper.vm as unknown as ComponentData).transferModal).toBe(false)
