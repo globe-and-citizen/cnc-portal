@@ -27,11 +27,6 @@ export const LIST_CURRENCIES: Currency[] = [
     symbol: 'CA$'
   },
   {
-    code: 'XOF',
-    name: 'West African CFA franc',
-    symbol: 'CFA'
-  },
-  {
     code: 'IDR',
     name: 'Indonesian Rupiah',
     symbol: 'Rp'
