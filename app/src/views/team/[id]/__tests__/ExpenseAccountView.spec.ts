@@ -6,7 +6,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import TransferForm from '@/components/forms/TransferForm.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
@@ -484,7 +484,7 @@ describe('ExpenseAccountSection', () => {
 
       await transferButton.trigger('click')
       await wrapper.vm.$nextTick()
-      wrapper.findComponent(TransferFromBankForm)
+      wrapper.findComponent(TransferForm)
     })
     it('should hide approve user form if not owner', async () => {
       const wrapper = createComponent()
