@@ -5,23 +5,22 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 
-interface ComponentData {
-  model: {
-    address: {
-      name: string
-      address: string
-    }
-    token: {
-      symbol: string
-      balance: string
-    }
-    amount: string
+interface Token {
+  symbol: string
+  balance: string
+}
+
+interface TransferModel {
+  address: {
+    name: string
+    address: string
   }
+  token: Token
+  amount: string
 }
 
 describe('TransferForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
-
   beforeEach(() => {
     wrapper = mount(TransferForm, {
       props: {
@@ -99,15 +98,86 @@ describe('TransferForm.vue', () => {
       await dropdownButton.trigger('click')
       expect(wrapper.find('[data-test="token-dropdown"]').exists()).toBe(false)
     })
+  })
 
-    it('selects a token from the dropdown', async () => {
-      const dropdownButton = wrapper.find('.badge-info')
-      await dropdownButton.trigger('click')
-      const tokenOption = wrapper.find('[data-test="token-dropdown"] li')
-      await tokenOption.trigger('click')
-      expect((wrapper.vm as unknown as ComponentData).model.token.symbol).toBe(
-        NETWORK.currencySymbol
+  describe('Validation', () => {
+    it('shows error when address is empty', async () => {
+      const transferButton = wrapper.find('[data-test="transferButton"]')
+      await transferButton.trigger('click')
+
+      const errorMessages = wrapper.findAll('.text-red-500')
+      expect(errorMessages.length).toBeGreaterThan(0)
+      expect(errorMessages.some((el) => el.text().includes('Invalid address'))).toBe(true)
+    })
+
+    it('shows error when address is invalid', async () => {
+      await wrapper.findComponent(SelectMemberInput).vm.$emit('update:modelValue', {
+        name: '',
+        address: 'invalid-address'
+      })
+
+      const transferButton = wrapper.find('[data-test="transferButton"]')
+      await transferButton.trigger('click')
+
+      const errorMessages = wrapper.findAll('.text-red-500')
+      expect(errorMessages.some((el) => el.text().includes('Invalid address'))).toBe(true)
+    })
+
+    it('shows error when amount is empty', async () => {
+      const amountInput = wrapper.find('[data-test="amount-input"]')
+      await amountInput.setValue('')
+
+      const transferButton = wrapper.find('[data-test="transferButton"]')
+      await transferButton.trigger('click')
+
+      const errorMessages = wrapper.findAll('.text-red-500')
+      expect(errorMessages.some((el) => el.text().includes('required'))).toBe(true)
+    })
+
+    it('shows error when amount is not numeric', async () => {
+      const amountInput = wrapper.find('[data-test="amount-input"]')
+      await amountInput.setValue('abc')
+
+      const transferButton = wrapper.find('[data-test="transferButton"]')
+      await transferButton.trigger('click')
+
+      const errorMessages = wrapper.findAll('.text-red-500')
+      expect(errorMessages.some((el) => el.text().includes('numeric'))).toBe(true)
+    })
+
+    it('shows error when amount is zero', async () => {
+      const amountInput = wrapper.find('[data-test="amount-input"]')
+      await amountInput.setValue('0')
+
+      const transferButton = wrapper.find('[data-test="transferButton"]')
+      await transferButton.trigger('click')
+
+      const errorMessages = wrapper.findAll('.text-red-500')
+      expect(errorMessages.some((el) => el.text().includes('Amount must be greater than 0'))).toBe(
+        true
       )
+    })
+
+    it('emits transfer event when form is valid', async () => {
+      await wrapper.findComponent(SelectMemberInput).vm.$emit('update:modelValue', {
+        name: 'Test',
+        address: '0x1234567890123456789012345678901234567890'
+      })
+
+      const amountInput = wrapper.find('[data-test="amount-input"]')
+      await amountInput.setValue('10')
+
+      const transferButton = wrapper.find('[data-test="transferButton"]')
+      await transferButton.trigger('click')
+
+      expect(wrapper.emitted('transfer')).toBeTruthy()
+      expect(wrapper.emitted('transfer')?.[0]).toEqual([
+        {
+          address: { name: 'Test', address: '0x1234567890123456789012345678901234567890' },
+          token: { symbol: NETWORK.currencySymbol, balance: '100' },
+          amount: '10'
+        }
+      ])
     })
   })
 })
