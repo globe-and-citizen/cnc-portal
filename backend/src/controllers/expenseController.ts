@@ -139,21 +139,3 @@ export const updateExpense = async (req: Request, res: Response) => {
     return errorResponse(500, "Failed to update expense", res);
   }
 };
-
-// Should not be able to delete expense
-// export const deleteExpense = async (req: Request, res: Response) => {
-//   const expenseId = Number(req.params.id);
-
-//   if (isNaN(expenseId)) {
-//     return errorResponse(400, "Invalid expense ID", res);
-//   }
-
-//   try {
-//     await prisma.expense.delete({
-//       where: { id: expenseId },
-//     });
-//     return res.status(204).send();
-//   } catch (error) {
-//     return errorResponse(500, "Failed to delete expense", res);
-//   }
-// };
