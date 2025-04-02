@@ -5,20 +5,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 
-interface Token {
-  symbol: string
-  balance: string
-}
-
-interface TransferModel {
-  address: {
-    name: string
-    address: string
-  }
-  token: Token
-  amount: string
-}
-
 describe('TransferForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
   beforeEach(() => {
