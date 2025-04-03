@@ -4,11 +4,6 @@
     :transactions="transactionData"
     title="Expense Account Transfer History"
     :currencies="['USD', 'CAD', 'INR', 'EUR']"
-    :currency-rates="{
-      loading: false,
-      error: null,
-      getRate: () => 1
-    }"
     :show-receipt-modal="true"
     data-test="expense-transactions"
     @receipt-click="handleReceiptClick"
