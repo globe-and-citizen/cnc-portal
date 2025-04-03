@@ -40,7 +40,7 @@ export const addExpense = async (req: Request, res: Response) => {
       data: {
         teamId,
         signature,
-        data,
+        data: JSON.stringify(data),
         userAddress: callerAddress,
         status: "signed",
       },
@@ -76,6 +76,8 @@ export const getExpenses = async (req: Request, res: Response) => {
     //     await synExpenseStatus(expense.id);
     //   }
     // });
+    console.log("Fetched expenses for teamId:", teamId);
+    console.log("Fetched expenses:", expenses);
     return res.status(200).json(expenses);
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
