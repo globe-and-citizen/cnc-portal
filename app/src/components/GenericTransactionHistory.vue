@@ -223,10 +223,7 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
   if (transaction.token === 'USDC') {
     usdAmount = tokenAmount
   } else {
-    const currentPrice = currencyStore.nativeTokenPrice
-    if (currentPrice) {
-      usdAmount = tokenAmount * currentPrice
-    }
+    usdAmount = tokenAmount * currencyStore.nativeTokenPriceInUSD!
   }
 
   if (usdAmount > 0) {
@@ -237,14 +234,10 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
       }).format(usdAmount)
     }
 
-    const targetRate = currencyStore.getRate(currency)
-    if (targetRate > 0) {
-      const convertedAmount = usdAmount * targetRate
-      return Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency
-      }).format(convertedAmount)
-    }
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency
+    }).format(currencyStore.nativeTokenPrice! * tokenAmount)
   }
 
   return '0.00'

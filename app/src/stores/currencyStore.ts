@@ -45,7 +45,7 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
   GO: 'ethereum'
 }
 
-interface PriceResponse {
+export interface PriceResponse {
   market_data: {
     current_price: {
       usd: number
@@ -63,6 +63,7 @@ export const useCurrencyStore = defineStore('currency', () => {
     symbol: '$'
   })
   const nativeTokenPrice = ref<number | undefined>(undefined)
+  const nativeTokenPriceInUSD = ref<number | undefined>(undefined)
   const toastStore = useToastStore()
 
   const {
@@ -94,18 +95,7 @@ export const useCurrencyStore = defineStore('currency', () => {
       return
     }
     nativeTokenPrice.value = priceResponse.value.market_data.current_price[currencyCode]
-  }
-
-  function getRate(targetCurrency: string): number {
-    if (!priceResponse.value) return 0
-
-    const prices = priceResponse.value.market_data.current_price
-    const usdPrice = prices.usd
-    const targetPrice = prices[targetCurrency.toLowerCase() as currencyType]
-
-    if (!usdPrice || !targetPrice) return 0
-
-    return targetPrice / usdPrice
+    nativeTokenPriceInUSD.value = priceResponse.value.market_data.current_price.usd
   }
 
   onMounted(async () => {
@@ -115,9 +105,9 @@ export const useCurrencyStore = defineStore('currency', () => {
   return {
     currency,
     nativeTokenPrice,
+    nativeTokenPriceInUSD,
     isLoading,
     setCurrency,
-    fetchNativeTokenPrice,
-    getRate
+    fetchNativeTokenPrice
   }
 })
