@@ -8,14 +8,16 @@ import * as utils from '@/utils'
 import { parseEther } from 'viem'
 
 const mockUseCryptoPrice = {
-  prices: ref({ ethereum: { usd: 2500 }, 'usd-coin': { usd: 1 } }),
+  price: ref(2500),
   loading: ref(false),
   error: ref<Error | null>(null)
 }
 
 const mockUseCurrencyStore = {
-  currency: ref({ code: 'USD', symbol: '$' }),
-  getRate: vi.fn(() => 1)
+  currency: {
+    code: `USD`,
+    symbol: `$`
+  }
 }
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
