@@ -30,7 +30,7 @@
               data-testid="sign-in"
               variant="primary"
               class="w-full"
-              @click="siwe"
+              @click="siwe()"
               :disabled="isProcessing"
             >
               <span v-if="isProcessing">Processing...</span>
