@@ -5,7 +5,7 @@
       <!-- Expense A/c Info Section -->
       <!-- New Header -->
       <TableComponent :rows="[expenseDataRow]" :columns="columns">
-        <template #action-data="{ row }">
+        <template #action-data="">
           <ButtonUI
             variant="success"
             :disabled="
@@ -85,7 +85,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { useRoute } from 'vue-router'
 import { useExpenseAccountDataCollection } from '@/composables'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 //#endregion
@@ -140,14 +139,12 @@ const isDisapprovedAddress = computed(
 )
 //#endregion
 
-const route = useRoute()
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 const expenseDataStore = useExpenseDataStore()
 
-//#endregion Computed Values
-
+//#region Computed Values
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?./* team.*/ teamContracts.find(
@@ -162,9 +159,10 @@ const expenseBalanceFormatted = computed(() => {
 const _tokenSymbol = computed(() => {
   if (expenseDataStore.expenseData?.data) {
     const tokenAddress = JSON.parse(expenseDataStore.expenseData?.data).tokenAddress
+    console.log('tokenAddress', tokenAddress)
     return tokenSymbol(tokenAddress)
   } else {
-    return ''
+    return '--'
   }
 })
 const expenseDataRow = computed(() => ({
@@ -228,8 +226,6 @@ const dynamicDisplayData = (budgetType: number) =>
       }
     }
   })
-const dynamicDisplayDataTx = dynamicDisplayData(0)
-const dynamicDisplayDataAmount = dynamicDisplayData(1)
 //#endregion
 
 //#region Composables

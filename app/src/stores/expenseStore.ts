@@ -3,7 +3,7 @@ import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 export const useExpenseDataStore = defineStore('expense', () => {
@@ -16,10 +16,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const route = useRoute()
   const { addErrorToast } = useToastStore()
 
-  // const teams = ref([])
-  const currentTeamId = ref<string | null>(null)
-  const teamsFetched = ref<Map<string, Team>>(new Map())
-  const teamURI = ref<string>(`teams/${route.params.id}/expense-data`)
   const expenseURI = ref<string>(`teams/${route.params.id}/expense-data`)
 
   /**
@@ -52,7 +48,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
    * @returns team, teamIsFetching, teamError, executeFetchTeam
    */
   const fetchExpenseData = async (teamId: string) => {
-    teamURI.value = `teams/${teamId}/expense-data`
+    expenseURI.value = `teams/${teamId}/expense-data`
     await executeFetchExpenseData()
     return {
       expenseDataIsFetching,
@@ -60,10 +56,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
       expenseData
     }
   }
-
-  const currentTeam = computed(() => {
-    return currentTeamId.value ? teamsFetched.value.get(String(currentTeamId.value)) : undefined
-  })
 
   watch(expenseDataError, (newError) => {
     if (newError) {

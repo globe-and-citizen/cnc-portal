@@ -43,7 +43,7 @@ import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import type { Team, User, BudgetLimit } from '@/types'
+import type { User, BudgetLimit } from '@/types'
 import { log, parseError } from '@/utils'
 
 const approveUsersModal = ref(false)

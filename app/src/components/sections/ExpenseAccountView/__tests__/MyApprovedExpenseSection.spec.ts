@@ -10,8 +10,6 @@ import * as viem from 'viem'
 import type { Team, User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as util from '@/utils'
-import { useExpenseDataStore, useTeamStore } from '@/stores'
-import { mock } from 'node:test'
 
 interface ComponentData {
   isDisapprovedAddress: boolean

@@ -101,7 +101,6 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team } from '@/types'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useExpenseAccountDataCollection } from '@/composables'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
