@@ -58,7 +58,6 @@ const transactionData = computed<ExpenseTransaction[]>(() =>
         date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
         to: transaction.to,
-        amountUSD: 10,
         amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
         token: tokenSymbol(transaction.tokenAddress),
         type: transaction.transactionType
