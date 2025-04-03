@@ -113,15 +113,10 @@ import BankABI from '@/artifacts/abi/bank.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther } from 'viem'
+import { useCryptoPrice } from '@/composables/useCryptoPrice'
 
 const props = defineProps<{
   bankAddress: Address | undefined
-  priceData: {
-    networkCurrencyPrice: number
-    usdcPrice: number
-    loading: boolean
-    error: boolean | null
-  }
 }>()
 
 const emit = defineEmits<{
@@ -132,6 +127,7 @@ const emit = defineEmits<{
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const currencyStore = useCurrencyStore()
+const { price: usdcPrice, priceInUSD: usdcInUSD } = useCryptoPrice('usd-coin')
 const currentAddress = userDataStore.address
 const chainId = useChainId()
 
@@ -305,19 +301,15 @@ const loadingText = computed(() => {
 
 const totalValueUSD = computed(() => {
   const ethValue = teamBalance.value
-    ? Number(teamBalance.value.formatted) * props.priceData.networkCurrencyPrice
+    ? Number(teamBalance.value.formatted) * (currencyStore.nativeTokenPriceInUSD || 0)
     : 0
-  const usdcValue = Number(formattedUsdcBalance.value) * props.priceData.usdcPrice
+  const usdcValue = Number(formattedUsdcBalance.value) * (usdcInUSD.value || 0)
   return (ethValue + usdcValue).toFixed(2)
 })
 
 const totalValueLocal = computed(() => {
   const usdValue = Number(totalValueUSD.value)
-  if (currencyStore.currency.code === 'USD') {
-    return usdValue.toFixed(2)
-  }
-  const rate = currencyStore.getRate(currencyStore.currency.code)
-  return (usdValue * rate).toFixed(2)
+  return (usdValue * (usdcPrice.value || 0)).toFixed(2)
 })
 
 // Watch handlers

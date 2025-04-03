@@ -44,7 +44,7 @@
     <div class="label">
       <!-- Estimated Price in selected currency -->
       <span class="label-text" v-if="amount && parseFloat(amount) > 0">
-        ≈ {{ currencyStore.currency.symbol }}{{ formattedEstimatedPrice }}
+        ≈ {{ estimatedPrice }}
       </span>
       <div class="pl-4 text-red-500 text-sm" v-for="error in $v.amount.$errors" :key="error.$uid">
         {{ error.$message }}
@@ -88,6 +88,7 @@ const amount = ref<string>('')
 const selectedTokenId = ref(0)
 const isDropdownOpen = ref<boolean>(false)
 const currencyStore = useCurrencyStore()
+const { price: usdcPrice } = useCryptoPrice('usd-coin')
 
 const tokenList = [
   { name: NETWORK.currencySymbol, symbol: 'ETH' },
@@ -104,14 +105,6 @@ onMounted(() => {
   // Fetch the current price when component mounts
   currencyStore.fetchNativeTokenPrice()
 })
-
-// Get crypto prices for conversion
-const networkCurrencyId = computed(() => {
-  // Always use ethereum price for testnets
-  return 'ethereum'
-})
-
-const { prices } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
@@ -132,32 +125,20 @@ const estimatedPrice = computed(() => {
   if (isNaN(amountValue) || amountValue <= 0) return 0
 
   if (selectedTokenId.value === 0) {
-    const usdValue = amountValue * (prices.value?.[networkCurrencyId.value]?.usd || 0)
-
-    if (currencyStore.currency.code === 'USD') {
-      return usdValue
-    }
-
-    const rate = currencyStore.getRate(currencyStore.currency.code)
-    return usdValue * rate
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyStore.currency.code,
+      minimumFractionDigits: 2
+    }).format((currencyStore.nativeTokenPrice || 0) * amountValue)
   }
 
-  if (currencyStore.currency.code === 'USD') {
-    return amountValue
-  }
-
-  const rate = currencyStore.getRate(currencyStore.currency.code)
-  return amountValue * rate
+  console.log('usdcPrice.value', usdcPrice.value)
+  return Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currencyStore.currency.code,
+    minimumFractionDigits: 2
+  }).format((usdcPrice.value || 0) * amountValue)
 })
-
-const formattedEstimatedPrice = computed(() => {
-  if (estimatedPrice.value === 0) {
-    return '0.00'
-  }
-
-  return estimatedPrice.value.toFixed(2)
-})
-
 const submitForm = async () => {
   await $v.value.$touch()
   if ($v.value.$invalid) return
