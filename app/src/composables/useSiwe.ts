@@ -81,12 +81,23 @@ export function useSiwe() {
     })
     authData.value.message = siweMessage.prepareMessage()
 
-    await signMessageAsync({ message: authData.value.message })
+    try {
+      await signMessageAsync({ message: authData.value.message })
+    } catch (error) {
+      if (signMessageError.value) {
+        addErrorToast(
+          signMessageError.value.name === 'UserRejectedRequestError'
+            ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
+            : 'Something went wrong: Unable to sign SIWE message'
+        )
+        log.error('signMessageError.value', error)
+        isProcessing.value = false
+      }
+    }
     if (!signature.value) {
       isProcessing.value = false
       return
     }
-
     //update authData payload signature field with user's signature
     authData.value.signature = signature.value
     //send authData payload to backend for authentication
@@ -127,19 +138,6 @@ export function useSiwe() {
     router.push('/teams')
   }
   //#endregion
-
-  //#region Watch
-  watch(signMessageError, (newError) => {
-    if (newError) {
-      addErrorToast(
-        newError.name === 'UserRejectedRequestError'
-          ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
-          : 'Something went wrong: Unable to sign SIWE message'
-      )
-      log.error('signMessageError.value', newError)
-      isProcessing.value = false
-    }
-  })
 
   return { isProcessing, siwe }
 }
