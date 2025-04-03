@@ -67,9 +67,4 @@ watch(error, (newError) => {
     log.error('useQueryError: ', newError)
   }
 })
-watch(transactionData, (newData) => {
-  if (newData) {
-    log.info('transactionData: ', newData)
-  }
-})
 </script>
