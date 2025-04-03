@@ -87,6 +87,7 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { useExpenseAccountDataCollection } from '@/composables'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import { useRoute } from 'vue-router'
 //#endregion
 
 const reload = defineModel()
@@ -143,6 +144,7 @@ const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 const expenseDataStore = useExpenseDataStore()
+const route = useRoute()
 
 //#region Computed Values
 const expenseAccountEip712Address = computed(
@@ -420,6 +422,9 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
     await init()
     transferModal.value = false
     reload.value = false
+    await expenseDataStore.fetchExpenseData(
+      Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+    )
   }
 })
 watch(errorGetAmountWithdrawn, (newVal) => {
