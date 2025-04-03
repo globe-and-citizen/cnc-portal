@@ -1,11 +1,8 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
-import { setWage } from "../wageController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
-import { Team, Wage } from "@prisma/client";
 import { addClaim, getClaims, updateClaim } from "../claimController";
-import { stat } from "fs";
 
 function setAddressMiddleware(address: string) {
   return (req: Request, res: Response, next: NextFunction) => {

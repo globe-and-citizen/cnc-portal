@@ -3,10 +3,9 @@ import { PrismaClient } from "@prisma/client";
 import { errorResponse } from "../utils/utils";
 import { isUserMemberOfTeam, isOwnerOfTeam } from "./wageController";
 
-const prisma = new PrismaClient();
+import { prisma } from "../utils";
 
 import { Expense, Prisma } from "@prisma/client";
-import exp from "constants";
 
 // type expenseBodyRequest = Pick<Expens
 type expenseBodyRequest = Pick<Expense, "signature" | "data"> & {
@@ -29,8 +28,13 @@ export const addExpense = async (req: Request, res: Response) => {
   if (parametersError.length > 0) {
     return errorResponse(400, parametersError.join(", "), res);
   }
-
   try {
+    // Check if the caller is the owner of the team
+    if (!(await isOwnerOfTeam(callerAddress, teamId))) {
+      return errorResponse(403, "Caller is not the owner of the team", res);
+    }
+
+    console.log("Creating expense for teamId:", teamId);
     // TODO: should be only one expense active for the user
     const expense = await prisma.expense.create({
       data: {
@@ -43,6 +47,7 @@ export const addExpense = async (req: Request, res: Response) => {
     });
     return res.status(201).json(expense);
   } catch (error) {
+    console.log(error);
     return errorResponse(500, "Failed to create expense", res);
   }
 };
@@ -110,26 +115,26 @@ export const updateExpense = async (req: Request, res: Response) => {
     return errorResponse(400, "Invalid status", res);
   }
 
-  // TODO: logic to check if the status is readly expired or limit reached
+  // TODO: logic to check if the status is already expired or limit reached
 
   // check if the user is the owner of the team
 
-  if (status === "disable") {
-    const expense = await prisma.expense.findUnique({
-      where: {
-        id: expenseId,
-        team: {
-          ownerAddress: callerAddress,
-        },
-      },
-    });
-
-    if (!expense) {
-      return errorResponse(403, "Caller is not the owner of the team", res);
-    }
-  }
 
   try {
+    if (status === "disable") {
+      const expense = await prisma.expense.findUnique({
+        where: {
+          id: expenseId,
+          team: {
+            ownerAddress: callerAddress,
+          },
+        },
+      });
+  
+      if (!expense) {
+        return errorResponse(403, "Caller is not the owner of the team", res);
+      }
+    }
     const updatedExpense = await prisma.expense.update({
       where: { id: expenseId },
       data: { status: status },
