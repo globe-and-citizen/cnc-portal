@@ -8,11 +8,11 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
 const mockWriteContract = vi.fn()
-vi.mock('@wagmi/vue', (importOriginal) => {
-  const original: object = importOriginal()
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
 
   return {
-    ...original,
+    ...actual,
     useWriteContract: vi.fn(() => ({
       writeContract: mockWriteContract,
       hash: ref(null),
