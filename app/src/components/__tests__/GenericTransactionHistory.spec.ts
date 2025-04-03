@@ -200,7 +200,8 @@ describe('GenericTransactionHistory', () => {
       to: transaction.to,
       amountUSD: transaction.amountUSD,
       amount: '',
-      token: 'undefined'
+      token: 'undefined',
+      amountEUR: expect.any(Number)
     })
   })
 

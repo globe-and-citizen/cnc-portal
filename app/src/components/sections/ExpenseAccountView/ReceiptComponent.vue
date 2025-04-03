@@ -25,17 +25,7 @@
 </template>
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-
-interface ReceiptData {
-  txHash: string
-  date: string
-  type: string
-  from: string
-  to: string
-  amountUSD: number
-  amount: string
-  token: string
-}
+import type { ReceiptData } from '@/utils/excelExport'
 
 const { receiptData } = defineProps<{ receiptData: Partial<ReceiptData> }>()
 

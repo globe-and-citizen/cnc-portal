@@ -137,7 +137,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'export'): void
-  (e: 'receipt-click', data: ReceiptData): void
+  (e: 'receipt-click', data: import('@/utils/excelExport').ReceiptData): void
 }>()
 
 const toastStore = useToastStore()
@@ -301,6 +301,16 @@ const getReceiptUrl = (txHash: string) => {
 }
 
 const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
+  // Format all currency amounts
+  const currencyAmounts = props.currencies.reduce(
+    (acc, currency) => {
+      const amount = formatAmount(transaction, currency)
+      acc[`amount${currency}`] = Number(amount)
+      return acc
+    },
+    {} as Record<string, number>
+  )
+
   return {
     txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
@@ -309,11 +319,12 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     to: String(transaction.to),
     amount: String(transaction.amount || ''),
     token: String(transaction.token),
-    amountUSD: Number(transaction.amountUSD || 0)
+    amountUSD: Number(transaction.amountUSD || 0),
+    ...currencyAmounts
   }
 }
 
-const handleReceiptExport = (receiptData: ReceiptData) => {
+const handleReceiptExport = (receiptData: import('@/utils/excelExport').ReceiptData) => {
   try {
     const success = exportReceiptToExcel(receiptData)
     if (success) {
@@ -327,7 +338,7 @@ const handleReceiptExport = (receiptData: ReceiptData) => {
   }
 }
 
-const handleReceiptPdfExport = (receiptData: ReceiptData) => {
+const handleReceiptPdfExport = (receiptData: import('@/utils/excelExport').ReceiptData) => {
   try {
     const success = exportReceiptToPdf(receiptData)
     if (success) {
