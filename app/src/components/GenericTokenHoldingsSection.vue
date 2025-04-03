@@ -154,7 +154,7 @@ const tokensWithRank = computed<TokenWithRank[]>(() =>
     ...token,
     price: token.price.toFixed(2),
     balance: token.balance.toFixed(2),
-    amount: token.amount.toFixed(2),
+    amount: token.amount.toFixed(3),
     rank: index + 1
   }))
 )
