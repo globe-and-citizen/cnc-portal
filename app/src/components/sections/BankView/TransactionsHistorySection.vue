@@ -3,7 +3,7 @@
   <GenericTransactionHistory
     :transactions="transactions"
     title="Bank Transactions History"
-    :currencies="['USD', 'CAD', 'INR', 'EUR']"
+    :currencies="currencies"
     :show-receipt-modal="true"
     data-test="bank-transactions"
   />
@@ -14,12 +14,20 @@ import { computed, watch } from 'vue'
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
 import type { BankTransaction } from '@/types/transactions'
 import { useTeamStore } from '@/stores'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import type { Address } from 'viem'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 
 const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
+
+// Computed property for currencies based on user preference
+const currencies = computed(() => {
+  const defaultCurrency = currencyStore.currency.code
+  return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
+})
 
 const contractAddress = computed(
   () =>
