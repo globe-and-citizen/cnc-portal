@@ -1,5 +1,5 @@
 import router from '@/router'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
 import { log } from '@/utils'
