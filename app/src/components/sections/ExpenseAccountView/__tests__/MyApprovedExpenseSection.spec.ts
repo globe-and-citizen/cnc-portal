@@ -51,7 +51,14 @@ vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
+    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast })),
+    useCryptoPrice: vi.fn(),
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      }
+    }))
   }
 })
 

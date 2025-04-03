@@ -8,7 +8,7 @@ import * as utils from '@/utils'
 import { parseEther } from 'viem'
 
 const mockUseCryptoPrice = {
-  price: ref(2500),
+  price: ref(1),
   loading: ref(false),
   error: ref<Error | null>(null)
 }
@@ -17,7 +17,9 @@ const mockUseCurrencyStore = {
   currency: {
     code: `USD`,
     symbol: `$`
-  }
+  },
+  nativeTokenPrice: 2500,
+  nativeTokenPriceInUSD: 2500
 }
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
@@ -85,23 +87,13 @@ describe('TransactionHistorySection', () => {
     const firstRow = tableComponent.find('[data-test="0-row"]')
     expect(firstRow.exists()).toBeTruthy()
     expect(firstRow.html()).toContain(`100`)
-    expect(firstRow.html()).toContain(`2500.00`)
-    expect(firstRow.html()).toContain(`250000.00`)
+    expect(firstRow.html()).toContain(`$2,500.00`)
+    expect(firstRow.html()).toContain(`$250,000.00`)
     const secondRow = tableComponent.find('[data-test="1-row"]')
     expect(secondRow.exists()).toBeTruthy()
-    expect(secondRow.html()).toContain(`20000.00`)
+    expect(secondRow.html()).toContain(`20,000.00`)
     expect(secondRow.html()).toContain(`1.00`)
-    expect(secondRow.html()).toContain(`20000.00`)
-  })
-
-  it('should log getting error', async () => {
-    mockUseCryptoPrice.error.value = new Error('Error getting price')
-    const logErrorSpy = vi.spyOn(utils.log, 'error')
-    mount(TokenHoldingSection, { props: defaultProps })
-
-    await flushPromises()
-
-    expect(logErrorSpy).toBeCalledWith('priceError.value', 'Error getting price')
+    expect(secondRow.html()).toContain(`$20,000.00`)
   })
 
   it('should log network currency balance error', async () => {
