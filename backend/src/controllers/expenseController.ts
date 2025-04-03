@@ -42,7 +42,7 @@ export const addExpense = async (req: Request, res: Response) => {
         signature,
         data,
         userAddress: callerAddress,
-        status: "singed",
+        status: "signed",
       },
     });
     return res.status(201).json(expense);
