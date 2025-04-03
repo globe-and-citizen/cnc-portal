@@ -5,7 +5,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { computed, ref } from 'vue'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+import TransferForm from '@/components/forms/TransferForm.vue'
 import * as viem from 'viem'
 import expenseABI from '../../../../artifacts/abi/expense-account-eip712.json'
 import erc20ABI from '../../../../artifacts/abi/erc20.json'
@@ -323,7 +323,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
       ownerAddress: '0xOwner'
     }
     await flushPromises() // wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    const transferForm = wrapper.findComponent(TransferForm)
     expect(transferForm.exists()).toBe(true)
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
     const mockAmount = '1.5'
@@ -373,7 +373,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
       ownerAddress: '0xOwner'
     }
     await flushPromises() // wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    const transferForm = wrapper.findComponent(TransferForm)
     expect(transferForm.exists()).toBe(true)
     await flushPromises()
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
@@ -423,7 +423,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
       ownerAddress: '0xOwner'
     }
     await wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    const transferForm = wrapper.findComponent(TransferForm)
     expect(transferForm.exists()).toBe(true)
     await flushPromises()
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
@@ -517,7 +517,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
       signature: '0xDummySignature'
     }
     await flushPromises()
-    const transferForm = wrapper.findComponent(TransferFromBankForm)
+    const transferForm = wrapper.findComponent(TransferForm)
     expect(transferForm.exists()).toBe(true)
     // await flushPromises()
     const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
