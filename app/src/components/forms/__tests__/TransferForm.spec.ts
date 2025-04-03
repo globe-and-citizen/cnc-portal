@@ -1,9 +1,10 @@
-import { it, expect, describe, beforeEach } from 'vitest'
+import { it, expect, describe, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TransferForm from '../TransferForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import { createTestingPinia } from '@pinia/testing'
 
 describe('TransferForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
@@ -25,7 +26,8 @@ describe('TransferForm.vue', () => {
       global: {
         stubs: {
           SelectMemberInput: true
-        }
+        },
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   })
