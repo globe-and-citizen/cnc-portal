@@ -132,7 +132,6 @@ const estimatedPrice = computed(() => {
     }).format((currencyStore.nativeTokenPrice || 0) * amountValue)
   }
 
-  console.log('usdcPrice.value', usdcPrice.value)
   return Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currencyStore.currency.code,

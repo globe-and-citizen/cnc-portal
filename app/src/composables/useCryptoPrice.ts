@@ -22,7 +22,6 @@ export function useCryptoPrice(tokenId: string) {
   const fetchPrice = async () => {
     const currencyCode = currencyStore.currency.code.toLowerCase() as currencyType
     price.value = priceResponse.value?.market_data.current_price[currencyCode] || null
-    console.log(priceResponse.value?.market_data.current_price.usd)
     priceInUSD.value = priceResponse.value?.market_data?.current_price?.usd || null
   }
 
