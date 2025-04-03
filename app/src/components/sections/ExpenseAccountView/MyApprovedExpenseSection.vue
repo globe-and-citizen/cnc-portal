@@ -3,85 +3,61 @@
     <div v-if="expenseAccountEip712Address">
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
-      <section class="stat flex flex-col justify-start">
-        <!-- New Header -->
-
-        <div class="flex flex-col gap-8">
-          <div class="overflow-x-auto" data-test="approval-table">
-            <table class="table">
-              <!-- head -->
-              <thead class="text-sm font-bold">
-                <tr>
-                  <th>Expiry Date</th>
-                  <th>Max Amount Per Tx</th>
-                  <th>Total Transactions</th>
-                  <th>Total Transfers</th>
-                  <th class="flex justify-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ expiry }}</td>
-                  <td>
-                    {{ maxLimitAmountPerTx }}
-                    {{
-                      /*_expenseAccountData*/ expenseDataStore.expenseData?.data &&
-                      tokenSymbol(
-                        JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
-                          ?.tokenAddress
-                      )
-                    }}
-                  </td>
-                  <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
-                  <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
-                  <td class="flex justify-end" data-test="action-td">
-                    <ButtonUI
-                      variant="success"
-                      :disabled="
-                        !(/*_expenseAccountData?.data*/ expenseDataStore.expenseData?.data) ||
-                        isDisapprovedAddress
-                      "
-                      v-if="true"
-                      @click="transferModal = true"
-                      data-test="transfer-button"
-                    >
-                      Spend
-                    </ButtonUI>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <ModalComponent v-model="transferModal">
-          <TransferForm
-            v-if="transferModal && /*_expenseAccountData*/ expenseDataStore.expenseData?.data"
-            v-model="transferData"
-            :tokens="[
-              {
-                symbol: tokenSymbol(
-                  JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData.data)
-                    ?.tokenAddress
-                ),
-                balance:
-                  JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
-                    ?.tokenAddress === zeroAddress
-                    ? expenseBalanceFormatted
-                    : `${Number(usdcBalance) / 1e6}`
-              }
-            ]"
-            :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
-            service="Expense Account"
-            @transfer="
-              async (data) => {
-                await transferFromExpenseAccount(data.address.address, data.amount)
-              }
+      <!-- New Header -->
+      <TableComponent :rows="[expenseDataRow]" :columns="columns">
+        <template #action-data="{ row }">
+          <ButtonUI
+            variant="success"
+            :disabled="
+              !(/*_expenseAccountData?.data*/ expenseDataStore.expenseData?.data) ||
+              isDisapprovedAddress
             "
-            @closeModal="() => (transferModal = false)"
-          />
-        </ModalComponent>
-      </section>
+            v-if="true"
+            @click="transferModal = true"
+            data-test="transfer-button"
+            >Spend</ButtonUI
+          >
+        </template>
+        <template #expiryDate="{ row }">
+          <span>{{ row.expiryDate }}</span>
+        </template>
+        <template #maxAmountPerTx="{ row }">
+          <span> {{ row.maxAmountPerTx }} {{ _tokenSymbol }} </span>
+        </template>
+        <template #transactions="{ row }">
+          <span>{{ row.transactions }}</span>
+        </template>
+        <template #amountTransferred="{ row }">
+          <span>{{ row.amountTransferred }}</span>
+        </template>
+      </TableComponent>
+
+      <ModalComponent v-model="transferModal">
+        <TransferForm
+          v-if="transferModal && /*_expenseAccountData*/ expenseDataStore.expenseData?.data"
+          v-model="transferData"
+          :tokens="[
+            {
+              symbol: tokenSymbol(
+                JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData.data)?.tokenAddress
+              ),
+              balance:
+                JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
+                  ?.tokenAddress === zeroAddress
+                  ? expenseBalanceFormatted
+                  : `${Number(usdcBalance) / 1e6}`
+            }
+          ]"
+          :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
+          service="Expense Account"
+          @transfer="
+            async (data) => {
+              await transferFromExpenseAccount(data.address.address, data.amount)
+            }
+          "
+          @closeModal="() => (transferModal = false)"
+        />
+      </ModalComponent>
     </div>
   </CardComponent>
 </template>
@@ -89,13 +65,12 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team, BudgetLimit, BudgetData } from '@/types'
+import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { parseError, log, tokenSymbol } from '@/utils'
 import {
   useReadContract,
@@ -112,9 +87,38 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { useRoute } from 'vue-router'
 import { useExpenseAccountDataCollection } from '@/composables'
+import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 //#endregion
 
 const reload = defineModel()
+
+const columns = [
+  {
+    key: 'expiryDate',
+    label: 'Expiry Date',
+    sortable: true
+  },
+  {
+    key: 'maxAmountPerTx',
+    label: 'Max Ammount Per Tx',
+    sortable: false
+  },
+  {
+    key: 'transactions',
+    label: 'Total Transactions',
+    sortable: false
+  },
+  {
+    key: 'amountTransferred',
+    label: 'Amount Transferred',
+    sortable: false
+  },
+  {
+    key: 'action',
+    label: 'Action',
+    sortable: false
+  }
+] as TableColumn[]
 
 //#region refs
 const transferModal = ref(false)
@@ -141,7 +145,6 @@ const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 const expenseDataStore = useExpenseDataStore()
-const _expenseAccountData = expenseDataStore.expenseData
 
 //#endregion Computed Values
 
@@ -156,6 +159,20 @@ const expenseBalanceFormatted = computed(() => {
     return formatEther(expenseAccountBalance.value.value)
   else return '--'
 })
+const _tokenSymbol = computed(() => {
+  if (expenseDataStore.expenseData?.data) {
+    const tokenAddress = JSON.parse(expenseDataStore.expenseData?.data).tokenAddress
+    return tokenSymbol(tokenAddress)
+  } else {
+    return ''
+  }
+})
+const expenseDataRow = computed(() => ({
+  expiryDate: expiry.value,
+  maxAmountPerTx: maxLimitAmountPerTx.value,
+  transactions: `${dynamicDisplayData(0).value.value}/${maxLimitTxsPerPeriod.value}`,
+  amountTransferred: `${dynamicDisplayData(1).value.value}/${maxLimitAmountPerPeriod.value}`
+}))
 const expiry = computed(() => {
   if (expenseDataStore.expenseData?.data) {
     const unixEpoch = JSON.parse(expenseDataStore.expenseData?.data).expiry
