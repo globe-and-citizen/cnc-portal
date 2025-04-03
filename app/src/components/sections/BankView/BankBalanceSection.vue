@@ -15,7 +15,9 @@
           </span>
           <span class="text-gray-600">USD</span>
         </div>
-        <div class="text-sm text-gray-500 mt-1">≈ {{ totalValueLocal }} CAD</div>
+        <div class="text-sm text-gray-500 mt-1">
+          ≈ {{ totalValueLocal }} {{ currencyStore.currency.code }}
+        </div>
       </div>
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
@@ -106,6 +108,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { useUserDataStore } from '@/stores/user'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import BankABI from '@/artifacts/abi/bank.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
@@ -128,6 +131,7 @@ const emit = defineEmits<{
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
+const currencyStore = useCurrencyStore()
 const currentAddress = userDataStore.address
 const chainId = useChainId()
 
@@ -201,8 +205,6 @@ const {
   functionName: 'balanceOf',
   args: [props.bankAddress as Address]
 })
-
-const USD_TO_LOCAL_RATE = 1.28 // Example conversion rate to local currency
 
 // Functions
 const depositToBank = async (data: { amount: string; token: string }) => {
@@ -310,7 +312,12 @@ const totalValueUSD = computed(() => {
 })
 
 const totalValueLocal = computed(() => {
-  return (Number(totalValueUSD.value) * USD_TO_LOCAL_RATE).toFixed(2)
+  const usdValue = Number(totalValueUSD.value)
+  if (currencyStore.currency.code === 'USD') {
+    return usdValue.toFixed(2)
+  }
+  const rate = currencyStore.getRate(currencyStore.currency.code)
+  return (usdValue * rate).toFixed(2)
 })
 
 // Watch handlers

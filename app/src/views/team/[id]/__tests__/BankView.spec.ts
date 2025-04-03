@@ -117,6 +117,22 @@ vi.mock('vue-router', () => ({
     params: {
       id: 0
     }
+  })),
+  createRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
+  })),
+  createWebHistory: vi.fn(),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
   }))
 }))
 

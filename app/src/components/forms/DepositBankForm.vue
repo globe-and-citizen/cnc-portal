@@ -42,8 +42,10 @@
       </div>
     </div>
     <div class="label">
-      <!-- Estimated Price in USD -->
-      <span class="label-text">$122</span>
+      <!-- Estimated Price in selected currency -->
+      <span class="label-text" v-if="amount && parseFloat(amount) > 0">
+        ≈ {{ currencyStore.currency.symbol }}{{ formattedEstimatedPrice }}
+      </span>
       <div class="pl-4 text-red-500 text-sm" v-for="error in $v.amount.$errors" :key="error.$uid">
         {{ error.$message }}
       </div>
@@ -68,12 +70,14 @@
 
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { onClickOutside } from '@vueuse/core'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { useCryptoPrice } from '@/composables/useCryptoPrice'
 
 const props = defineProps<{
   loading?: boolean
@@ -83,6 +87,7 @@ const props = defineProps<{
 const amount = ref<string>('')
 const selectedTokenId = ref(0)
 const isDropdownOpen = ref<boolean>(false)
+const currencyStore = useCurrencyStore()
 
 const tokenList = [
   { name: NETWORK.currencySymbol, symbol: 'ETH' },
@@ -96,7 +101,17 @@ onMounted(() => {
   onClickOutside(target, () => {
     isDropdownOpen.value = false
   })
+  // Fetch the current price when component mounts
+  currencyStore.fetchNativeTokenPrice()
 })
+
+// Get crypto prices for conversion
+const networkCurrencyId = computed(() => {
+  // Always use ethereum price for testnets
+  return 'ethereum'
+})
+
+const { prices } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
@@ -111,6 +126,37 @@ const rules = {
 }
 
 const $v = useVuelidate(rules, { amount })
+
+const estimatedPrice = computed(() => {
+  const amountValue = parseFloat(amount.value)
+  if (isNaN(amountValue) || amountValue <= 0) return 0
+
+  if (selectedTokenId.value === 0) {
+    const usdValue = amountValue * (prices.value?.[networkCurrencyId.value]?.usd || 0)
+
+    if (currencyStore.currency.code === 'USD') {
+      return usdValue
+    }
+
+    const rate = currencyStore.getRate(currencyStore.currency.code)
+    return usdValue * rate
+  }
+
+  if (currencyStore.currency.code === 'USD') {
+    return amountValue
+  }
+
+  const rate = currencyStore.getRate(currencyStore.currency.code)
+  return amountValue * rate
+})
+
+const formattedEstimatedPrice = computed(() => {
+  if (estimatedPrice.value === 0) {
+    return '0.00'
+  }
+
+  return estimatedPrice.value.toFixed(2)
+})
 
 const submitForm = async () => {
   await $v.value.$touch()
