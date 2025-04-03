@@ -155,6 +155,18 @@ describe("Expense Controller", () => {
       expect(response.body.message).toBe("Invalid status");
     });
 
+    it("should return 403 if caller is not the owner of the team and the status is disable", async () => {
+
+      vi.spyOn(prisma.expense, "findUnique").mockResolvedValue(null);
+
+      const response = await request(app)
+        .put("/expense/1")
+        .send({ status: "disable" });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Caller is not the owner of the team");
+    })
+
     it("should update the expense status", async () => {
       vi.spyOn(prisma.expense, "update").mockResolvedValue({
         ...mockExpense,
