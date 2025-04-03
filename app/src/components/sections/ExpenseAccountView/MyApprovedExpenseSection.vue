@@ -65,13 +65,13 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, onMounted, ref, watch } from 'vue'
-import type { BudgetLimit, BudgetData } from '@/types'
+import type { BudgetLimit, BudgetData, ManyExpenseResponse } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
-import { parseError, log, tokenSymbol } from '@/utils'
+import { parseError, log, tokenSymbol, formatEtherUtil } from '@/utils'
 import {
   useReadContract,
   useWriteContract,
@@ -88,7 +88,7 @@ import { config } from '@/wagmi.config'
 import { useExpenseAccountDataCollection } from '@/composables'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useRoute } from 'vue-router'
-import exp from 'constants'
+import { asyncComputed } from '@vueuse/core'
 //#endregion
 
 const reload = defineModel()
@@ -169,19 +169,24 @@ const _tokenSymbol = computed(() => {
   }
 })
 
-const myApprovedExpenseRows = computed(() => {
-  if (expenseDataStore.myApprovedExpenses) {
-    return expenseDataStore.myApprovedExpenses.map((item: BudgetLimit) =>   {
-      return {
-        expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
-        maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
-        transactions: `${item.budgetData[0].value}/${item.budgetData[0].value}`,
-        amountTransferred: `${item.budgetData[1].value}/${item.budgetData[1].value}`
-      }
+const myApprovedExpenseRows = asyncComputed(async () => {
+  if (!expenseDataStore.myApprovedExpenses) return []
+  return await Promise.all(expenseDataStore.myApprovedExpenses.map(async (item: ManyExpenseResponse) => {
+    // ... same async logic as above
+    const amountWithdrawn = await readContract(config, {
+      functionName: 'balances',
+      address: expenseAccountEip712Address.value,
+      abi: expenseAccountABI,
+      args: [keccak256(item.signature)]
     })
-  } else {
-    return []
-  }
+    console.log('amountWithdrawn', amountWithdrawn)
+    return {
+      expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
+      maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
+      transactions: `${formatEtherUtil(amountWithdrawn[0], item.tokenAddress)}/${item.budgetData[0].value}`,
+      amountTransferred: `${formatEtherUtil(amountWithdrawn[1], item.tokenAddress)}/${item.budgetData[1].value}`
+    }
+  }))
 })
 
 
