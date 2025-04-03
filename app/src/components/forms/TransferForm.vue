@@ -43,6 +43,10 @@
       </div>
     </div>
 
+    <div v-if="model.amount && parseFloat(model.amount) > 0" class="text-sm text-gray-500">
+      ≈ {{ currencyStore.currency.symbol }}{{ formattedTransferAmount }}
+    </div>
+
     <div
       class="pl-4 text-red-500 text-sm w-full text-left"
       v-for="error of $v.model.$errors"
@@ -75,6 +79,9 @@ import ButtonUI from '../ButtonUI.vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { onClickOutside } from '@vueuse/core'
 import SelectMemberInput from '../utils/SelectMemberInput.vue'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { NETWORK } from '@/constant'
+import { useCryptoPrice } from '@/composables/useCryptoPrice'
 
 interface Token {
   symbol: string
@@ -97,6 +104,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['transfer', 'closeModal'])
+const currencyStore = useCurrencyStore()
 
 const model = defineModel<TransferModel>({
   required: true,
@@ -112,6 +120,42 @@ const target = ref<HTMLElement | null>(null)
 
 const getSelectedTokenBalance = computed(() => {
   return model.value.token.balance
+})
+
+// Get crypto prices for conversion
+const networkCurrencyId = computed(() => {
+  // Always use ethereum price for testnets
+  return 'ethereum'
+})
+
+const { prices } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
+
+// New computed property for transfer amount in default currency
+const formattedTransferAmount = computed(() => {
+  const amount = parseFloat(model.value.amount)
+  if (isNaN(amount) || amount <= 0) return '0.00'
+
+  if (model.value.token.symbol === NETWORK.currencySymbol) {
+    const usdValue = amount * (prices.value?.[networkCurrencyId.value]?.usd || 0)
+
+    if (currencyStore.currency.code === 'USD') {
+      return usdValue.toFixed(2)
+    }
+    const rate = currencyStore.getRate(currencyStore.currency.code)
+    return (usdValue * rate).toFixed(2)
+  }
+  // If the selected token is USDC (stablecoin)
+  else if (model.value.token.symbol === 'USDC') {
+    // USDC is pegged to USD, so just use the currency store's rate
+    if (currencyStore.currency.code === 'USD') {
+      return amount.toFixed(2)
+    }
+    const rate = currencyStore.getRate(currencyStore.currency.code)
+    return (amount * rate).toFixed(2)
+  }
+
+  // Default case
+  return amount.toFixed(2)
 })
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {

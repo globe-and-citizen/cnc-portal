@@ -116,16 +116,12 @@ import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelEx
 import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 interface Props {
   transactions: BaseTransaction[]
   title: string
   currencies: string[] // Array of currency codes: ['USD', 'CAD', 'INR', 'EUR']
-  currencyRates: {
-    loading: boolean
-    error: string | null
-    getRate: (currency: string) => number
-  }
   showDateFilter?: boolean
   showExport?: boolean
   showReceiptModal?: boolean
@@ -141,10 +137,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'export'): void
-  (e: 'receipt-click', data: ReceiptData): void
+  (e: 'receipt-click', data: import('@/utils/excelExport').ReceiptData): void
 }>()
 
 const toastStore = useToastStore()
+const currencyStore = useCurrencyStore()
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -220,10 +217,28 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
   const amount = transaction[key]
   if (typeof amount === 'number') return amount.toFixed(2)
 
-  // If amount for this currency doesn't exist but we have USD amount and currency rates
-  if (transaction.amountUSD && props.currencyRates?.getRate) {
-    const rate = props.currencyRates.getRate(currency)
-    return (transaction.amountUSD * rate).toFixed(2)
+  let usdAmount = 0
+  const tokenAmount = Number(transaction.amount)
+
+  if (transaction.token === 'USDC') {
+    usdAmount = tokenAmount
+  } else {
+    const currentPrice = currencyStore.nativeTokenPrice
+    if (currentPrice) {
+      usdAmount = tokenAmount * currentPrice
+    }
+  }
+
+  if (usdAmount > 0) {
+    if (currency === 'USD') {
+      return usdAmount.toFixed(2)
+    }
+
+    const targetRate = currencyStore.getRate(currency)
+    if (targetRate > 0) {
+      const convertedAmount = usdAmount * targetRate
+      return convertedAmount.toFixed(2)
+    }
   }
 
   return '0.00'
@@ -286,6 +301,16 @@ const getReceiptUrl = (txHash: string) => {
 }
 
 const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
+  // Format all currency amounts
+  const currencyAmounts = props.currencies.reduce(
+    (acc, currency) => {
+      const amount = formatAmount(transaction, currency)
+      acc[`amount${currency}`] = Number(amount)
+      return acc
+    },
+    {} as Record<string, number>
+  )
+
   return {
     txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
@@ -294,11 +319,12 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     to: String(transaction.to),
     amount: String(transaction.amount || ''),
     token: String(transaction.token),
-    amountUSD: Number(transaction.amountUSD || 0)
+    amountUSD: Number(transaction.amountUSD || 0),
+    ...currencyAmounts
   }
 }
 
-const handleReceiptExport = (receiptData: ReceiptData) => {
+const handleReceiptExport = (receiptData: import('@/utils/excelExport').ReceiptData) => {
   try {
     const success = exportReceiptToExcel(receiptData)
     if (success) {
@@ -312,7 +338,7 @@ const handleReceiptExport = (receiptData: ReceiptData) => {
   }
 }
 
-const handleReceiptPdfExport = (receiptData: ReceiptData) => {
+const handleReceiptPdfExport = (receiptData: import('@/utils/excelExport').ReceiptData) => {
   try {
     const success = exportReceiptToPdf(receiptData)
     if (success) {

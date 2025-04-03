@@ -59,7 +59,7 @@ export const exportToPdf = (
 }
 
 export const exportReceiptToPdf = (receiptData: ReceiptData) => {
-  const rows = [
+  const baseRows = [
     ['Field', 'Value'],
     ['Transaction Hash', receiptData.txHash],
     ['Date', receiptData.date],
@@ -71,8 +71,16 @@ export const exportReceiptToPdf = (receiptData: ReceiptData) => {
     ['Value (USD)', receiptData.amountUSD.toString()]
   ]
 
+  // Add any additional currency amounts
+  const currencyRows = Object.entries(receiptData)
+    .filter(([key]) => key.startsWith('amount') && key !== 'amountUSD' && key !== 'amount')
+    .map(([key, value]) => {
+      const currency = key.replace('amount', '')
+      return [`Value (${currency})`, value.toString()]
+    })
+
   return exportToPdf(
-    rows,
+    [...baseRows, ...currencyRows],
     {
       filename: `receipt-${receiptData.txHash.slice(0, 6)}.pdf`
     },

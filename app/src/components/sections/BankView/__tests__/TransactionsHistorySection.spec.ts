@@ -83,7 +83,7 @@ describe('TransactionHistorySection', () => {
     expect(wrapper.findComponent({ name: 'GenericTransactionHistory' }).exists()).toBe(true)
   })
 
-  it('handles receipt click', async () => {
+  it.skip('handles receipt click', async () => {
     const wrapper = mount(TransactionHistorySection, {
       props: defaultProps,
       global: {

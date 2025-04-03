@@ -96,6 +96,18 @@ export const useCurrencyStore = defineStore('currency', () => {
     nativeTokenPrice.value = priceResponse.value.market_data.current_price[currencyCode]
   }
 
+  function getRate(targetCurrency: string): number {
+    if (!priceResponse.value) return 0
+
+    const prices = priceResponse.value.market_data.current_price
+    const usdPrice = prices.usd
+    const targetPrice = prices[targetCurrency.toLowerCase() as currencyType]
+
+    if (!usdPrice || !targetPrice) return 0
+
+    return targetPrice / usdPrice
+  }
+
   onMounted(async () => {
     await fetchNativeTokenPrice()
   })
@@ -105,6 +117,7 @@ export const useCurrencyStore = defineStore('currency', () => {
     nativeTokenPrice,
     isLoading,
     setCurrency,
-    fetchNativeTokenPrice
+    fetchNativeTokenPrice,
+    getRate
   }
 })

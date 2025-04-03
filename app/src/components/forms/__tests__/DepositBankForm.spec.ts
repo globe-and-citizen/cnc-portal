@@ -1,13 +1,17 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { createTestingPinia } from '@pinia/testing'
 
 describe('DepositBankModal.vue', () => {
   describe('render', () => {
     it('renders correctly', () => {
       const wrapper = mount(DepositBankForm, {
-        props: { loading: false }
+        props: { loading: false },
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
       })
 
       expect(wrapper.text()).toContain('Deposit to Team Bank Contract')

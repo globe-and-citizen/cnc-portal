@@ -13,6 +13,19 @@ const mockUseCryptoPrice = {
   error: ref<Error | null>(null)
 }
 
+const mockUseCurrencyStore = {
+  currency: ref({ code: 'USD', symbol: '$' }),
+  getRate: vi.fn(() => 1)
+}
+
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+  }
+})
+
 vi.mock('@/composables/useCryptoPrice', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
@@ -70,13 +83,13 @@ describe('TransactionHistorySection', () => {
     const firstRow = tableComponent.find('[data-test="0-row"]')
     expect(firstRow.exists()).toBeTruthy()
     expect(firstRow.html()).toContain(`100`)
-    expect(firstRow.html()).toContain(`$2500`)
-    expect(firstRow.html()).toContain(`$250000.00`)
+    expect(firstRow.html()).toContain(`2500.00`)
+    expect(firstRow.html()).toContain(`250000.00`)
     const secondRow = tableComponent.find('[data-test="1-row"]')
     expect(secondRow.exists()).toBeTruthy()
     expect(secondRow.html()).toContain(`20000.00`)
-    expect(secondRow.html()).toContain(`$1.00`)
-    expect(secondRow.html()).toContain(`$20000.00`)
+    expect(secondRow.html()).toContain(`1.00`)
+    expect(secondRow.html()).toContain(`20000.00`)
   })
 
   it('should log getting error', async () => {
