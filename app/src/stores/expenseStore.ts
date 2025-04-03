@@ -2,7 +2,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 export const useExpenseDataStore = defineStore('expense', () => {
@@ -16,6 +16,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const { addErrorToast } = useToastStore()
 
   const expenseURI = ref<string>(`teams/${route.params.id}/expense-data`)
+  const allExpenseURI = ref<string>(`/expense?teamId=${route.params.id}`)
 
   /**
    * @description Fetch expense data by id
@@ -41,6 +42,24 @@ export const useExpenseDataStore = defineStore('expense', () => {
     .get()
     .json()
 
+  const {
+    isFetching: allExpenseDataIsFetching,
+    error: allExpenseDataError,
+    data: allExpenseData,
+    execute: executeFetchAllExpenseData,
+    statusCode: allExpenseDataStatusCode
+  } = useCustomFetch(allExpenseURI, { immediate: false })
+    .get()
+    .json()
+
+  const myApprovedExpenses = computed(() => {
+    if (allExpenseData.value) {
+      const expenses = allExpenseData.value.map((expense: any) => JSON.parse(expense.data))
+      return expenses.filter((expense: any) => expense.approvedAddress === userDataStore.address)
+    }
+    return []
+  })
+
   /**
    * @description Fetch user dat by id and update the team cache
    * @param teamId
@@ -56,6 +75,16 @@ export const useExpenseDataStore = defineStore('expense', () => {
     }
   }
 
+  const fetchAllExpenseData = async (teamId: string) => {
+    allExpenseURI.value =`/expense?teamId=${teamId}`
+    await executeFetchAllExpenseData()
+    return {
+      allExpenseData,
+      allExpenseDataError,
+      allExpenseDataIsFetching
+    }
+  }
+
   watch(expenseDataError, (newError) => {
     if (newError) {
       log.error('Failed to load expense data \n', expenseDataError.value)
@@ -67,6 +96,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
     if (expenseDataIsFetching.value) return
     else {
       await executeFetchExpenseData()
+      await executeFetchAllExpenseData()
     }
   }
 
@@ -77,10 +107,14 @@ export const useExpenseDataStore = defineStore('expense', () => {
   })
 
   return {
+    myApprovedExpenses,
     fetchExpenseData,
+    fetchAllExpenseData,
     expenseData,
+    allExpenseData,
     expenseDataError,
     expenseDataIsFetching,
-    statusCode
+    statusCode,
+    allExpenseDataStatusCode
   }
 })
