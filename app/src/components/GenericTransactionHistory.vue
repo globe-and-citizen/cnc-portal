@@ -231,13 +231,19 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
 
   if (usdAmount > 0) {
     if (currency === 'USD') {
-      return usdAmount.toFixed(2)
+      return Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(usdAmount)
     }
 
     const targetRate = currencyStore.getRate(currency)
     if (targetRate > 0) {
       const convertedAmount = usdAmount * targetRate
-      return convertedAmount.toFixed(2)
+      return Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency
+      }).format(convertedAmount)
     }
   }
 
