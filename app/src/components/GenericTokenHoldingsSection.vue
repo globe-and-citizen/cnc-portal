@@ -24,8 +24,12 @@
       <template #rank-data="{ row }">
         {{ row.rank }}
       </template>
-      <template #price-data="{ row }"> ${{ row.price }} </template>
-      <template #balance-data="{ row }"> ${{ row.balance }} </template>
+      <template #price-data="{ row }">
+        {{ currencyStore.currency.symbol }}{{ row.price }}
+      </template>
+      <template #balance-data="{ row }">
+        {{ currencyStore.currency.symbol }}{{ row.balance }}
+      </template>
     </TableComponent>
   </CardComponent>
 </template>
@@ -42,6 +46,7 @@ import { log, parseError } from '@/utils'
 import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 interface Token {
   name: string
@@ -62,6 +67,8 @@ interface TokenWithRank extends Token {
 const props = defineProps<{
   address: string
 }>()
+
+const currencyStore = useCurrencyStore()
 
 // Map network currency symbol to CoinGecko ID - always use ethereum price for testnets
 const networkCurrencyId = computed(() => {
@@ -101,11 +108,19 @@ const {
 })
 
 // Computed properties for prices
-const networkCurrencyPrice = computed(() => prices.value[networkCurrencyId.value]?.usd || 0)
+const networkCurrencyPrice = computed(() => {
+  const usdPrice = prices.value[networkCurrencyId.value]?.usd || 0
+  if (currencyStore.currency.code === 'USD') return usdPrice
+  const rate = currencyStore.getRate(currencyStore.currency.code)
+  return usdPrice * rate
+})
 
-const usdcPrice = computed(
-  () => prices.value['usd-coin']?.usd || 1 // Default to 1 since USDC is a stablecoin
-)
+const usdcPrice = computed(() => {
+  const usdPrice = prices.value['usd-coin']?.usd || 1 // Default to 1 since USDC is a stablecoin
+  if (currencyStore.currency.code === 'USD') return usdPrice
+  const rate = currencyStore.getRate(currencyStore.currency.code)
+  return usdPrice * rate
+})
 
 const tokens = computed(() => [
   {
@@ -139,7 +154,7 @@ const tokensWithRank = computed<TokenWithRank[]>(() =>
     ...token,
     price: token.price.toFixed(2),
     balance: token.balance.toFixed(2),
-    amount: token.amount.toFixed(2),
+    amount: token.amount.toFixed(3),
     rank: index + 1
   }))
 )
