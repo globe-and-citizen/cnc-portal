@@ -4,7 +4,7 @@
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
       <!-- New Header -->
-      <TableComponent :rows="[expenseDataRow]" :columns="columns">
+      <TableComponent :rows="myApprovedExpenseRows" :columns="columns">
         <template #action-data="">
           <ButtonUI
             variant="success"
@@ -88,6 +88,7 @@ import { config } from '@/wagmi.config'
 import { useExpenseAccountDataCollection } from '@/composables'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useRoute } from 'vue-router'
+import exp from 'constants'
 //#endregion
 
 const reload = defineModel()
@@ -167,6 +168,23 @@ const _tokenSymbol = computed(() => {
     return '--'
   }
 })
+
+const myApprovedExpenseRows = computed(() => {
+  if (expenseDataStore.myApprovedExpenses) {
+    return expenseDataStore.myApprovedExpenses.map((item: BudgetLimit) =>   {
+      return {
+        expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
+        maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
+        transactions: `${item.budgetData[0].value}/${item.budgetData[0].value}`,
+        amountTransferred: `${item.budgetData[1].value}/${item.budgetData[1].value}`
+      }
+    })
+  } else {
+    return []
+  }
+})
+
+
 const expenseDataRow = computed(() => ({
   expiryDate: expiry.value,
   maxAmountPerTx: maxLimitAmountPerTx.value,
@@ -421,6 +439,7 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
     addSuccessToast('Transfer Successful')
     await init()
     transferModal.value = false
+    transferERC20loading.value = false
     reload.value = false
     await expenseDataStore.fetchExpenseData(
       Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
@@ -469,5 +488,9 @@ watch([usdcBalanceError], ([newUsdcError]) => {
 
 onMounted(async () => {
   await init()
+  // console.log('expenseDataStore.allExepenseData', expenseDataStore.allExpenseData)
+  // console.log('expenseDataStore.expenseData', expenseDataStore.expenseData)
+  // console.log('expenseDataStore.myApprovedExpenses', expenseDataStore.myApprovedExpenses)
+  console.log('myApprovedExpenseRows', myApprovedExpenseRows.value)
 })
 </script>
