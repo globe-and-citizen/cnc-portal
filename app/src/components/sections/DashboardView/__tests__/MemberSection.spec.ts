@@ -2,88 +2,89 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
 import { createTestingPinia } from '@pinia/testing'
-import type { Team } from '@/types/team'
 import { ref } from 'vue'
+import type { Address } from 'viem'
+
+interface WageData {
+  userAddress: Address
+  maximumHoursPerWeek: number
+  cashRatePerHour: number
+}
+
+interface MemberSectionInstance {
+  getMemberWage: (address: Address) => string
+}
 
 // Create mutable refs for reactive state outside the mock
-const mockError = ref<string | null>(null)
-const mockIsFetching = ref(false)
-const mockData = ref<Team | null>(null)
 const mockStatus = ref(200)
+const mockWageData = ref<WageData[]>([])
+const mockWageError = ref<string | null>(null)
+const mockWageIsFetching = ref(false)
+
 // Mock the modules BEFORE importing the component
 vi.mock('@/composables/useCustomFetch', () => {
-  // Inline the fake implementation to avoid hoisting issues
   return {
     useCustomFetch: () => ({
       json: () => ({
         execute: vi.fn(),
-        error: mockError,
-        isFetching: mockIsFetching,
-        data: mockData,
+        error: mockWageError,
+        isFetching: mockWageIsFetching,
+        data: mockWageData,
         status: mockStatus
-      }),
-      post: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          error: mockError,
-          isFetching: mockIsFetching,
-          data: mockData,
-          status: mockStatus
-        })
-      }),
-      get: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          error: mockError,
-          isFetching: mockIsFetching,
-          data: mockData,
-          status: mockStatus
-        })
       })
     })
   }
 })
+
 describe('MemberSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
+  let component: MemberSectionInstance
 
-  const teamMock = {
-    id: '1',
-    name: 'Sample Team',
-    description: 'Sample Description',
-    ownerAddress: '0xowner123',
-    members: [
-      { id: '1', name: 'Alice', address: '1234', teamId: 1 },
-      { id: '2', name: 'Bob', address: '5678', teamId: 1 }
-    ],
-    teamContracts: []
-  } as Team
-
-  // const addSuccessToast = vi.fn()
-  // const addErrorToast = vi.fn()
+  const wageDataMock: WageData[] = [
+    {
+      userAddress: '0x1234' as Address,
+      maximumHoursPerWeek: 40,
+      cashRatePerHour: 20
+    },
+    {
+      userAddress: '0x5678' as Address,
+      maximumHoursPerWeek: 30,
+      cashRatePerHour: 25
+    }
+  ]
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset refs between tests if needed
-    mockError.value = null
-    mockIsFetching.value = false
-    mockData.value = teamMock
-    mockStatus.value = 200
+    mockWageData.value = wageDataMock
+    mockWageError.value = null
+    mockWageIsFetching.value = false
 
     wrapper = mount(MemberSection, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
+    component = wrapper.vm as unknown as MemberSectionInstance
   })
-  describe('renders', () => {
-    it('renders the component', async () => {
-      expect(wrapper.exists()).toBe(true)
 
-      // Check that the card action don't have children
-      expect(wrapper.find('.card-actions').exists()).toBe(true)
-      expect(wrapper.find('.card-actions').html()).toBe(
-        '<div class="card-actions justify-end"></div>'
-      )
+  describe('getMemberWage', () => {
+    it('returns N/A when teamWageData is null', () => {
+      mockWageData.value = []
+      expect(component.getMemberWage('0x1234' as Address)).toBe('N/A')
+    })
+
+    it('returns N/A when member wage data is not found', () => {
+      expect(component.getMemberWage('0x9999' as Address)).toBe('N/A')
+    })
+
+    it('returns formatted wage string when member wage data is found', () => {
+      const result = component.getMemberWage('0x1234' as Address)
+      expect(result).toBe('40 h/week & 20 SepoliaETH/h')
+    })
+
+    it('returns formatted wage string for different member', () => {
+      const result = component.getMemberWage('0x5678' as Address)
+      expect(result).toBe('30 h/week & 25 SepoliaETH/h')
     })
   })
 })
