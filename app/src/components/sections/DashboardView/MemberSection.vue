@@ -72,6 +72,7 @@ import UserComponent from '@/components/UserComponent.vue'
 import MemberAction from './MemberAction.vue'
 import { useCustomFetch } from '@/composables'
 import type { Address } from 'viem'
+import { NETWORK } from '@/constant'
 
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
@@ -123,7 +124,7 @@ const getMemberWage = (memberAddress: Address) => {
   if (!teamWageData.value) return 'N/A'
   const memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
   return memberWage
-    ? `${memberWage.maximumHoursPerWeek} h/week & ${memberWage.cashRatePerHour} USD/h`
+    ? `${memberWage.maximumHoursPerWeek} h/week & ${memberWage.cashRatePerHour} ${NETWORK.currencySymbol}/h`
     : 'N/A'
 }
 
