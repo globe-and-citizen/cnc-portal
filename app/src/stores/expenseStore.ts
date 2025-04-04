@@ -48,13 +48,14 @@ export const useExpenseDataStore = defineStore('expense', () => {
     data: allExpenseData,
     execute: executeFetchAllExpenseData,
     statusCode: allExpenseDataStatusCode
-  } = useCustomFetch(allExpenseURI, { immediate: false })
-    .get()
-    .json()
+  } = useCustomFetch(allExpenseURI, { immediate: false }).get().json()
 
   const myApprovedExpenses = computed(() => {
     if (allExpenseData.value) {
-      const expenses = allExpenseData.value.map((expense: any) => ({...(JSON.parse(expense.data)), signature: expense.signature}))
+      const expenses = allExpenseData.value.map((expense: any) => ({
+        ...JSON.parse(expense.data),
+        signature: expense.signature
+      }))
       return expenses.filter((expense: any) => expense.approvedAddress === userDataStore.address)
     }
     return []
@@ -76,7 +77,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
   }
 
   const fetchAllExpenseData = async (teamId: string) => {
-    allExpenseURI.value =`/expense?teamId=${teamId}`
+    allExpenseURI.value = `/expense?teamId=${teamId}`
     await executeFetchAllExpenseData()
     return {
       allExpenseData,

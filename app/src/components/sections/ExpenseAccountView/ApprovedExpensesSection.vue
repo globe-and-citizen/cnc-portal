@@ -84,12 +84,9 @@ const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.
   .post(expenseAccountData)
   .json()
 
-const { execute: _executeAddExpenseData } = useCustomFetch(
-  `expense`,
-  {
-    immediate: false
-  }
-)
+const { execute: _executeAddExpenseData } = useCustomFetch(`expense`, {
+  immediate: false
+})
   .post(expenseAccountData)
   .json()
 //#region
@@ -161,7 +158,7 @@ const approveUser = async (data: BudgetLimit) => {
   await executeAddExpenseData()
   expenseAccountData.value = {
     data,
-    signature: signature.value, 
+    signature: signature.value,
     teamId: route.params.id
   }
   await _executeAddExpenseData()
