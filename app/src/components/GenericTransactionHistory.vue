@@ -219,30 +219,28 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
   const amount = transaction[key]
   if (typeof amount === 'number') return amount.toFixed(2)
 
-  let usdAmount = 0
   const tokenAmount = Number(transaction.amount)
+  if (tokenAmount <= 0) return '0.00'
 
+  let usdAmount = 0
   if (transaction.token === 'USDC') {
     usdAmount = tokenAmount
   } else {
     usdAmount = tokenAmount * nativeTokenPriceInUSD.value!
   }
 
-  if (usdAmount > 0) {
-    if (currency === 'USD') {
-      return Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-      }).format(usdAmount)
-    }
-
+  if (currency === 'USD') {
     return Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency
-    }).format(nativeTokenPrice.value! * tokenAmount)
+      currency: 'USD'
+    }).format(usdAmount)
   }
 
-  return '0.00'
+  const exchangeRate = nativeTokenPrice.value! / nativeTokenPriceInUSD.value!
+  return Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency
+  }).format(usdAmount * exchangeRate)
 }
 
 const handleExport = () => {
