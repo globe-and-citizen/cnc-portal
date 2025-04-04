@@ -46,6 +46,9 @@ import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
+
+import MaticIcon from '@/assets/matic-logo.png'
+import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { log, parseError } from '@/utils'
 import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
@@ -59,6 +62,12 @@ const props = defineProps<{
 
 const currencyStore = useCurrencyStore()
 const { price: usdcPrice, isLoading } = useCryptoPrice('usd-coin')
+
+// Map network currency symbol to CoinGecko ID - always use ethereum price for testnets
+const networkCurrencyId = computed(() => {
+  if (Number(NETWORK.chainId) === 137) return 'matic-network'
+  else return 'ethereum'
+})
 
 const chainId = useChainId()
 
@@ -90,6 +99,11 @@ const networkCurrencyPrice = computed(() => {
   return currencyStore.nativeTokenPrice || 1
 })
 
+const networkIcon = computed(() => {
+  if (Number(NETWORK.chainId) === 137) return MaticIcon
+  return EthereumIcon
+})
+
 const tokens = computed(() => [
   {
     name: NETWORK.currencySymbol,
@@ -108,6 +122,10 @@ const tokens = computed(() => [
       maximumFractionDigits: 3
     }).format(Number(formattedNetworkCurrencyBalance.value)),
     icon: EthereumIcon
+    price: networkCurrencyPrice.value,
+    balance: Number(formattedNetworkCurrencyBalance.value) * networkCurrencyPrice.value,
+    amount: Number(formattedNetworkCurrencyBalance.value),
+    icon: networkIcon.value
   },
   {
     name: 'USDC',

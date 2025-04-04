@@ -106,6 +106,16 @@ onMounted(() => {
   currencyStore.fetchNativeTokenPrice()
 })
 
+
+// Get crypto prices for conversion
+const networkCurrencyId = computed(() => {
+  // Always use ethereum price for testnets
+  if (Number(NETWORK.chainId) === 137) return 'matic-network'
+  else return 'ethereum'
+})
+
+const { prices } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
+
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })

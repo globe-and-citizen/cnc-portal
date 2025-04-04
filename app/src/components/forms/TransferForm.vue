@@ -123,6 +123,14 @@ const getSelectedTokenBalance = computed(() => {
 })
 const { price: usdcPrice } = useCryptoPrice('usd-coin')
 
+// Get crypto prices for conversion
+const networkCurrencyId = computed(() => {
+  if (Number(NETWORK.chainId) === 137) return 'matic-network'
+  else return 'ethereum'
+})
+
+const { prices } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
+
 // New computed property for transfer amount in default currency
 const formattedTransferAmount = computed(() => {
   const amount = parseFloat(model.value.amount)
