@@ -1,11 +1,14 @@
 import { onMounted, ref } from 'vue'
 import { useCustomFetch } from './useCustomFetch'
 import { useCurrencyStore, type PriceResponse } from '@/stores'
+import { watch } from 'vue'
+import { storeToRefs } from 'pinia'
 
 export function useCryptoPrice(tokenId: string) {
   const price = ref<number | null>(null)
   const priceInUSD = ref<number | null>(null)
   const currencyStore = useCurrencyStore()
+  const { currency } = storeToRefs(currencyStore)
   const {
     execute,
     data: priceResponse,
@@ -28,6 +31,12 @@ export function useCryptoPrice(tokenId: string) {
   onMounted(async () => {
     await execute()
     await fetchPrice()
+  })
+
+  watch(currency, async (newVal) => {
+    if (newVal) {
+      await fetchPrice()
+    }
   })
 
   return {

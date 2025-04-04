@@ -80,8 +80,9 @@ export const useCurrencyStore = defineStore('currency', () => {
     .get()
     .json<PriceResponse>()
 
-  function setCurrency(value: string) {
+  async function setCurrency(value: string) {
     currency.value = LIST_CURRENCIES.find((c) => c.code === value)
+    await fetchNativeTokenPrice()
   }
 
   type currencyType = keyof PriceResponse['market_data']['current_price']

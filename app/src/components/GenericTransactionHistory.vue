@@ -117,6 +117,7 @@ import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { storeToRefs } from 'pinia'
 
 interface Props {
   transactions: BaseTransaction[]
@@ -142,6 +143,7 @@ const emit = defineEmits<{
 
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
+const { nativeTokenPrice, nativeTokenPriceInUSD } = storeToRefs(currencyStore)
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -223,7 +225,7 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
   if (transaction.token === 'USDC') {
     usdAmount = tokenAmount
   } else {
-    usdAmount = tokenAmount * currencyStore.nativeTokenPriceInUSD!
+    usdAmount = tokenAmount * nativeTokenPriceInUSD.value!
   }
 
   if (usdAmount > 0) {
@@ -237,7 +239,7 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
     return Intl.NumberFormat('en-US', {
       style: 'currency',
       currency
-    }).format(currencyStore.nativeTokenPrice! * tokenAmount)
+    }).format(nativeTokenPrice.value! * tokenAmount)
   }
 
   return '0.00'
@@ -304,12 +306,16 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
   const currencyAmounts = props.currencies.reduce(
     (acc, currency) => {
       const amount = formatAmount(transaction, currency)
-      acc[`amount${currency}`] = Number(amount)
+      acc[`amount${currency}`] = amount
       return acc
     },
-    {} as Record<string, number>
+    {} as Record<string, string>
   )
 
+  console.log({
+    transaction,
+    currencyAmounts
+  })
   return {
     txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
