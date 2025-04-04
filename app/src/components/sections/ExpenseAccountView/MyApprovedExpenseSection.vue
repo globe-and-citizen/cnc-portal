@@ -24,7 +24,7 @@
           <span>{{ row.expiryDate }}</span>
         </template>
         <template #maxAmountPerTx="{ row }">
-          <span> {{ row.maxAmountPerTx }} {{ _tokenSymbol }} </span>
+          <span> {{ row.maxAmountPerTx }} {{ row.tokenSymbol }} </span>
         </template>
         <template #transactions="{ row }">
           <span>{{ row.transactions }}</span>
@@ -130,7 +130,6 @@ const columns = [
 const transferModal = ref(false)
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
-const signatureHash = ref<string | null>(null)
 const signatureToTransfer = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
@@ -165,15 +164,6 @@ const expenseBalanceFormatted = computed(() => {
     return formatEther(expenseAccountBalance.value.value)
   else return '--'
 })
-const _tokenSymbol = computed(() => {
-  if (expenseDataStore.expenseData?.data) {
-    const tokenAddress = JSON.parse(expenseDataStore.expenseData?.data).tokenAddress
-    console.log('tokenAddress', tokenAddress)
-    return tokenSymbol(tokenAddress)
-  } else {
-    return '--'
-  }
-})
 
 const myApprovedExpenseRows = asyncComputed(async () => {
   if (!expenseDataStore.myApprovedExpenses)
@@ -200,7 +190,8 @@ const myApprovedExpenseRows = asyncComputed(async () => {
             maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
             transactions: `${amountWithdrawn[0]}/${item.budgetData[0].value}`,
             amountTransferred: `${formatEtherUtil(amountWithdrawn[1], item.tokenAddress)}/${item.budgetData[1].value}`,
-            signature: item.signature
+            signature: item.signature,
+            tokenSymbol: tokenSymbol(item.tokenAddress)
           }
         : {
             expiryDate: '--/--/--, --:--:--',
@@ -238,17 +229,6 @@ const {
   args: [expenseAccountEip712Address]
 })
 
-const {
-  data: amountWithdrawn,
-  refetch: executeGetAmountWithdrawn,
-  error: errorGetAmountWithdrawn
-} = useReadContract({
-  functionName: 'balances',
-  address: expenseAccountEip712Address,
-  abi: expenseAccountABI,
-  args: [signatureHash]
-})
-
 //expense account transfer
 const {
   writeContract: executeExpenseAccountTransfer,
@@ -273,7 +253,6 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 
 //#region Functions
 const init = async () => {
-  await getAmountWithdrawnBalance()
   await fetchUsdcBalance()
   await fetchExpenseAccountBalance()
   await initializeBalances()
@@ -372,13 +351,6 @@ const transferErc20Token = async () => {
     })
   }
 }
-
-const getAmountWithdrawnBalance = async () => {
-  if (expenseAccountEip712Address.value && expenseDataStore.expenseData?.data) {
-    signatureHash.value = keccak256(expenseDataStore.expenseData.signature)
-    await executeGetAmountWithdrawn()
-  }
-}
 //#endregion
 
 //#region Watch
@@ -387,34 +359,15 @@ watch(reload, async (newState) => {
     await init()
   }
 })
-watch(
-  () => expenseDataStore.expenseData,
-  (newVal) => {
-    if (newVal) {
-      getAmountWithdrawnBalance()
-    }
-  }
-)
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
-    reload.value = true
     addSuccessToast('Transfer Successful')
     await init()
     transferModal.value = false
     transferERC20loading.value = false
-    reload.value = false
-    await expenseDataStore.fetchExpenseData(
-      Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
-    )
     await expenseDataStore.fetchAllExpenseData(
       Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
     )
-  }
-})
-watch(errorGetAmountWithdrawn, (newVal) => {
-  if (newVal) {
-    log.error('errorGetAmountWithdrawn.value:\n', parseError(newVal))
-    addErrorToast('Failed to fetch amount withdrawn')
   }
 })
 watch(errorTransfer, (newVal) => {

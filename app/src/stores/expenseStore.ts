@@ -15,32 +15,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const route = useRoute()
   const { addErrorToast } = useToastStore()
 
-  const expenseURI = ref<string>(`teams/${route.params.id}/expense-data`)
   const allExpenseURI = ref<string>(`/expense?teamId=${route.params.id}`)
-
-  /**
-   * @description Fetch expense data by id
-   * @returns team, teamIsFetching, teamError, executeFetchTeam
-   */
-  const {
-    isFetching: expenseDataIsFetching,
-    error: expenseDataError,
-    data: expenseData,
-    execute: executeFetchExpenseData,
-    statusCode
-  } = useCustomFetch(expenseURI, {
-    immediate: false,
-    beforeFetch: async ({ options, url, cancel }) => {
-      options.headers = {
-        memberaddress: userDataStore.address,
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-      return { options, url, cancel }
-    }
-  })
-    .get()
-    .json()
 
   const {
     isFetching: allExpenseDataIsFetching,
@@ -61,21 +36,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
     return []
   })
 
-  /**
-   * @description Fetch user dat by id and update the team cache
-   * @param teamId
-   * @returns team, teamIsFetching, teamError, executeFetchTeam
-   */
-  const fetchExpenseData = async (teamId: string) => {
-    expenseURI.value = `teams/${teamId}/expense-data`
-    await executeFetchExpenseData()
-    return {
-      expenseDataIsFetching,
-      expenseDataError,
-      expenseData
-    }
-  }
-
   const fetchAllExpenseData = async (teamId: string) => {
     allExpenseURI.value = `/expense?teamId=${teamId}`
     await executeFetchAllExpenseData()
@@ -86,17 +46,16 @@ export const useExpenseDataStore = defineStore('expense', () => {
     }
   }
 
-  watch(expenseDataError, (newError) => {
+  watch(allExpenseDataError, (newError) => {
     if (newError) {
-      log.error('Failed to load expense data \n', expenseDataError.value)
+      log.error('Failed to load expense data \n', allExpenseDataError.value)
       addErrorToast('Failed to load expense data')
     }
   })
 
   const reloadExpenseData = async () => {
-    if (expenseDataIsFetching.value) return
+    if (allExpenseDataIsFetching.value) return
     else {
-      await executeFetchExpenseData()
       await executeFetchAllExpenseData()
     }
   }
@@ -109,13 +68,10 @@ export const useExpenseDataStore = defineStore('expense', () => {
 
   return {
     myApprovedExpenses,
-    fetchExpenseData,
     fetchAllExpenseData,
-    expenseData,
     allExpenseData,
-    expenseDataError,
-    expenseDataIsFetching,
-    statusCode,
+    allExpenseDataError,
+    allExpenseDataIsFetching,
     allExpenseDataStatusCode
   }
 })

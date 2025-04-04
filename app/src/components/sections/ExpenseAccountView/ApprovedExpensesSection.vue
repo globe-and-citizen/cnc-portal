@@ -167,7 +167,7 @@ const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = false
   approveUsersModal.value = false
   reload.value = false
-  await expenseDataStore.fetchExpenseData(
+  await expenseDataStore.fetchAllExpenseData(
     Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
   )
 }
