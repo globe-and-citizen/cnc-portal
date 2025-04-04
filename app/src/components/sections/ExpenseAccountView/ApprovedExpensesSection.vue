@@ -61,22 +61,11 @@ const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
 
-//#region useCustomfetch
-// const {
-//   data: team,
-//   // error: teamError,
-//   execute: executeFetchTeam
-// } = useCustomFetch(`teams/${String(route.params.id)}`)
-//   .get()
-//   .json<Team>()
-
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
-  // team.value?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
-  //   ?.address as Address
 )
 const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.id}/expense-data`, {
   immediate: false
@@ -178,13 +167,7 @@ const errorMessage = (error: {}, message: string) =>
 const isBodAction = () => false
 //#region
 
-//#region Watch
-// watch(
-//   () => team.value?.expenseAccountAddress,
-//   async (newVal) => {
-//     if (newVal) await init()
-//   }
-// )
+//#region Watchers
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })
