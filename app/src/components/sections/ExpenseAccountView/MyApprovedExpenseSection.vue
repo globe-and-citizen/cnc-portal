@@ -8,15 +8,11 @@
         <template #action-data="{ row }">
           <ButtonUI
             variant="success"
-            :disabled="
-              !(/*_expenseAccountData?.data*/ expenseDataStore.expenseData?.data) ||
-              isDisapprovedAddress
-            "
+            :disabled="!expenseDataStore.myApprovedExpenses || isDisapprovedAddress"
             v-if="true"
             @click="
               () => {
                 signatureToTransfer = row.signature
-                console.log('signatureToTransfer', signatureToTransfer)
                 transferModal = true
               }
             "
@@ -40,21 +36,16 @@
 
       <ModalComponent v-model="transferModal">
         <TransferForm
-          v-if="
-            transferModal &&
-            /*expenseDataStore.expenseData?.data*/ expenseDataStore.myApprovedExpenses
-          "
+          v-if="transferModal && expenseDataStore.myApprovedExpenses"
           v-model="transferData"
           :tokens="[
             {
               symbol: tokenSymbol(
-                //JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData.data)?.tokenAddress
                 expenseDataStore.myApprovedExpenses.find(
                   (item: ManyExpenseResponse) => item.signature === signatureToTransfer
                 )?.tokenAddress
               ),
               balance:
-                // JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
                 expenseDataStore.myApprovedExpenses.find(
                   (item: ManyExpenseResponse) => item.signature === signatureToTransfer
                 )?.tokenAddress === zeroAddress
@@ -185,17 +176,24 @@ const _tokenSymbol = computed(() => {
 })
 
 const myApprovedExpenseRows = asyncComputed(async () => {
-  if (!expenseDataStore.myApprovedExpenses) return []
+  if (!expenseDataStore.myApprovedExpenses)
+    return [
+      {
+        expiryDate: '--/--/--, --:--:--',
+        maxAmountPerTx: '--',
+        transactions: `--`,
+        amountTransferred: `--`
+      }
+    ]
   return await Promise.all(
     expenseDataStore.myApprovedExpenses.map(async (item: ManyExpenseResponse) => {
-      // ... same async logic as above
       const amountWithdrawn = await readContract(config, {
         functionName: 'balances',
         address: expenseAccountEip712Address.value,
         abi: expenseAccountABI,
         args: [keccak256(item.signature)]
       })
-      console.log('amountWithdrawn', amountWithdrawn)
+
       return Array.isArray(amountWithdrawn)
         ? {
             expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
@@ -213,68 +211,6 @@ const myApprovedExpenseRows = asyncComputed(async () => {
     })
   )
 })
-
-const expenseDataRow = computed(() => ({
-  expiryDate: expiry.value,
-  maxAmountPerTx: maxLimitAmountPerTx.value,
-  transactions: `${dynamicDisplayData(0).value.value}/${maxLimitTxsPerPeriod.value}`,
-  amountTransferred: `${dynamicDisplayData(1).value.value}/${maxLimitAmountPerPeriod.value}`
-}))
-const expiry = computed(() => {
-  if (expenseDataStore.expenseData?.data) {
-    const unixEpoch = JSON.parse(expenseDataStore.expenseData?.data).expiry
-    const date = new Date(Number(unixEpoch) * 1000)
-    return date.toLocaleString('en-US')
-  } else {
-    return '--/--/--, --:--:--'
-  }
-})
-const maxLimit = (budgetType: number) =>
-  computed(() => {
-    const budgetData =
-      expenseDataStore.expenseData?.data &&
-      Array.isArray(JSON.parse(expenseDataStore.expenseData?.data).budgetData)
-        ? JSON.parse(expenseDataStore.expenseData?.data).budgetData.find(
-            (item: BudgetData) => item.budgetType === budgetType
-          )
-        : undefined
-    if (expenseDataStore.expenseData?.data && budgetData && budgetData.budgetType === budgetType)
-      return budgetData.value
-    else return '--'
-  })
-const maxLimitTxsPerPeriod = maxLimit(0)
-const maxLimitAmountPerPeriod = maxLimit(1)
-const maxLimitAmountPerTx = maxLimit(2)
-const dynamicDisplayData = (budgetType: number) =>
-  computed(() => {
-    const data = {}
-    if (
-      expenseDataStore.expenseData?.data &&
-      amountWithdrawn.value &&
-      Array.isArray(amountWithdrawn.value)
-    ) {
-      if (budgetType === 0) {
-        return {
-          ...data,
-          value: Number(amountWithdrawn.value[0])
-        }
-      } else {
-        const tokenAddress = JSON.parse(expenseDataStore.expenseData?.data).tokenAddress
-        return {
-          ...data,
-          value:
-            tokenAddress === zeroAddress
-              ? formatEther(amountWithdrawn.value[1])
-              : Number(amountWithdrawn.value[1]) / 1e6
-        }
-      }
-    } else {
-      return {
-        ...data,
-        value: `--`
-      }
-    }
-  })
 //#endregion
 
 //#region Composables
@@ -351,24 +287,8 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
   )
 
-  // delete budgetLimit?.signature
-  // delete budgetLimit?.name
-  // delete budgetLimit?.avatarUrl
-
-  const { signature, ..._budgetLimit } = budgetLimit
-
-  console.log('_budgetLimit', _budgetLimit)
-  console.log('expenseDataStore.mayApprovedExpenses', expenseDataStore.myApprovedExpenses)
-
-  if (
-    expenseAccountEip712Address.value &&
-    /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
-  ) {
-    // const budgetLimit: BudgetLimit = JSON.parse(
-    //   /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
-    // )
-
-    if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, _budgetLimit)
+  if (expenseAccountEip712Address.value && expenseDataStore.myApprovedExpenses) {
+    if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
   }
 }
@@ -391,7 +311,7 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
                 : BigInt(Number(item.value) * 1e6)
         }))
       },
-      /*expenseDataStore.expenseData.signature*/ signatureToTransfer.value
+      signatureToTransfer.value
     ],
     abi: expenseAccountABI,
     functionName: 'transfer'
@@ -400,15 +320,10 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
 const transferERC20loading = ref(false)
 // Token transfer function
 const transferErc20Token = async () => {
-  console.log('expenseAccountEip712Address.value', expenseAccountEip712Address.value)
-  console.log('tokenAmount.value', tokenAmount.value)
-  console.log('tokenRecipient.value', tokenRecipient.value)
-  console.log('expenseDataStore.mayApprovedExpenses[ERC20]', expenseDataStore.myApprovedExpenses)
   if (
     !expenseAccountEip712Address.value ||
     !tokenAmount.value ||
     !tokenRecipient.value ||
-    // !/*_expenseAccountData.value*/ expenseDataStore.expenseData?.data
     !expenseDataStore.myApprovedExpenses
   )
     return
@@ -421,8 +336,6 @@ const transferErc20Token = async () => {
   const budgetLimit = expenseDataStore.myApprovedExpenses.find(
     (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
   )
-
-  const { signature, ..._budgetLimit } = budgetLimit
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
@@ -454,7 +367,7 @@ const transferErc20Token = async () => {
             value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
           }))
         },
-        /*expenseDataStore.expenseData.signature*/ signatureToTransfer.value
+        signatureToTransfer.value
       ]
     })
   }
@@ -540,9 +453,5 @@ watch([usdcBalanceError], ([newUsdcError]) => {
 
 onMounted(async () => {
   await init()
-  // console.log('expenseDataStore.allExepenseData', expenseDataStore.allExpenseData)
-  // console.log('expenseDataStore.expenseData', expenseDataStore.expenseData)
-  // console.log('expenseDataStore.myApprovedExpenses', expenseDataStore.myApprovedExpenses)
-  console.log('myApprovedExpenseRows', myApprovedExpenseRows.value)
 })
 </script>
