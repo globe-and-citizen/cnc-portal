@@ -26,7 +26,7 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   }
 })
 
-vi.mock('@/stores/teamStore', async (importOriginal) => {
+vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
@@ -38,6 +38,11 @@ vi.mock('@/stores/teamStore', async (importOriginal) => {
             type: 'CashRemunerationEIP712'
           }
         ]
+      }
+    })),
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD'
       }
     }))
   }

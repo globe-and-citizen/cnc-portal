@@ -24,6 +24,33 @@ vi.mock('@/stores/useToastStore', () => ({
     addErrorToast: vi.fn()
   })
 }))
+vi.mock('@/composables/useCryptoPrice', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/composables/useCryptoPrice')
+  return {
+    ...actual,
+    useCryptoPrice: () => ({
+      price: ref(1),
+      priceInUSD: ref(1),
+      isLoading: ref(false),
+      error: ref<Error | null>(null)
+    })
+  }
+})
+
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/stores/currencyStore')
+  return {
+    ...actual,
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      },
+      nativeTokenPriceInUSD: 2000,
+      nativeTokenPrice: 2000
+    }))
+  }
+})
 
 // Mock hooks
 const mockUseBalance = {
@@ -76,13 +103,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 
 describe('BankBalanceSection', () => {
   const defaultProps = {
-    bankAddress: '0x123' as Address,
-    priceData: {
-      networkCurrencyPrice: 2000,
-      usdcPrice: 1,
-      loading: false,
-      error: null
-    }
+    bankAddress: '0x123' as Address
   }
 
   const createWrapper = () => {

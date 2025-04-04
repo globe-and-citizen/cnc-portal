@@ -107,6 +107,13 @@ vi.mock('@/stores', async (importOriginal) => {
         data: JSON.stringify(mockExpenseData[0]),
         signature: mockExpenseData[0].signature
       }
+    })),
+    useCryptoPrice: vi.fn(),
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      }
     }))
   }
 })
