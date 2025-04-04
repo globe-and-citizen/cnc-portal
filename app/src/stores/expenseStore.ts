@@ -1,5 +1,6 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore } from '@/stores'
+import type { ManyExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -27,11 +28,15 @@ export const useExpenseDataStore = defineStore('expense', () => {
 
   const myApprovedExpenses = computed(() => {
     if (allExpenseData.value) {
-      const expenses = allExpenseData.value.map((expense: any) => ({
-        ...JSON.parse(expense.data),
-        signature: expense.signature
-      }))
-      return expenses.filter((expense: any) => expense.approvedAddress === userDataStore.address)
+      const expenses = allExpenseData.value.map(
+        (expense: { data: string; signature: `0x${string}` }) => ({
+          ...JSON.parse(expense.data),
+          signature: expense.signature
+        })
+      )
+      return expenses.filter(
+        (expense: ManyExpenseResponse) => expense.approvedAddress === userDataStore.address
+      )
     }
     return []
   })
