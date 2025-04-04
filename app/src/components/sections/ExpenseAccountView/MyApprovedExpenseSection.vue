@@ -5,7 +5,7 @@
       <!-- Expense A/c Info Section -->
       <!-- New Header -->
       <TableComponent :rows="myApprovedExpenseRows" :columns="columns">
-        <template #action-data="">
+        <template #action-data="{ row }">
           <ButtonUI
             variant="success"
             :disabled="
@@ -13,7 +13,13 @@
               isDisapprovedAddress
             "
             v-if="true"
-            @click="transferModal = true"
+            @click="
+              () => {
+                signatureToTransfer = row.signature
+                console.log('signatureToTransfer', signatureToTransfer)
+                transferModal = true
+              }
+            "
             data-test="transfer-button"
             >Spend</ButtonUI
           >
@@ -34,16 +40,24 @@
 
       <ModalComponent v-model="transferModal">
         <TransferForm
-          v-if="transferModal && /*_expenseAccountData*/ expenseDataStore.expenseData?.data"
+          v-if="
+            transferModal &&
+            /*expenseDataStore.expenseData?.data*/ expenseDataStore.myApprovedExpenses
+          "
           v-model="transferData"
           :tokens="[
             {
               symbol: tokenSymbol(
-                JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData.data)?.tokenAddress
+                //JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData.data)?.tokenAddress
+                expenseDataStore.myApprovedExpenses.find(
+                  (item: ManyExpenseResponse) => item.signature === signatureToTransfer
+                )?.tokenAddress
               ),
               balance:
-                JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
-                  ?.tokenAddress === zeroAddress
+                // JSON.parse(/*_expenseAccountData*/ expenseDataStore.expenseData?.data)
+                expenseDataStore.myApprovedExpenses.find(
+                  (item: ManyExpenseResponse) => item.signature === signatureToTransfer
+                )?.tokenAddress === zeroAddress
                   ? expenseBalanceFormatted
                   : `${Number(usdcBalance) / 1e6}`
             }
@@ -126,6 +140,7 @@ const transferModal = ref(false)
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
 const signatureHash = ref<string | null>(null)
+const signatureToTransfer = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
   token: { symbol: '', balance: '0' },
@@ -171,24 +186,33 @@ const _tokenSymbol = computed(() => {
 
 const myApprovedExpenseRows = asyncComputed(async () => {
   if (!expenseDataStore.myApprovedExpenses) return []
-  return await Promise.all(expenseDataStore.myApprovedExpenses.map(async (item: ManyExpenseResponse) => {
-    // ... same async logic as above
-    const amountWithdrawn = await readContract(config, {
-      functionName: 'balances',
-      address: expenseAccountEip712Address.value,
-      abi: expenseAccountABI,
-      args: [keccak256(item.signature)]
+  return await Promise.all(
+    expenseDataStore.myApprovedExpenses.map(async (item: ManyExpenseResponse) => {
+      // ... same async logic as above
+      const amountWithdrawn = await readContract(config, {
+        functionName: 'balances',
+        address: expenseAccountEip712Address.value,
+        abi: expenseAccountABI,
+        args: [keccak256(item.signature)]
+      })
+      console.log('amountWithdrawn', amountWithdrawn)
+      return Array.isArray(amountWithdrawn)
+        ? {
+            expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
+            maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
+            transactions: `${amountWithdrawn[0]}/${item.budgetData[0].value}`,
+            amountTransferred: `${formatEtherUtil(amountWithdrawn[1], item.tokenAddress)}/${item.budgetData[1].value}`,
+            signature: item.signature
+          }
+        : {
+            expiryDate: '--/--/--, --:--:--',
+            maxAmountPerTx: '--',
+            transactions: `--`,
+            amountTransferred: `--`
+          }
     })
-    console.log('amountWithdrawn', amountWithdrawn)
-    return {
-      expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
-      maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
-      transactions: `${formatEtherUtil(amountWithdrawn[0], item.tokenAddress)}/${item.budgetData[0].value}`,
-      amountTransferred: `${formatEtherUtil(amountWithdrawn[1], item.tokenAddress)}/${item.budgetData[1].value}`
-    }
-  }))
+  )
 })
-
 
 const expenseDataRow = computed(() => ({
   expiryDate: expiry.value,
@@ -323,15 +347,28 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
   tokenRecipient.value = to
 
+  const budgetLimit = expenseDataStore.myApprovedExpenses.find(
+    (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
+  )
+
+  // delete budgetLimit?.signature
+  // delete budgetLimit?.name
+  // delete budgetLimit?.avatarUrl
+
+  const { signature, ..._budgetLimit } = budgetLimit
+
+  console.log('_budgetLimit', _budgetLimit)
+  console.log('expenseDataStore.mayApprovedExpenses', expenseDataStore.myApprovedExpenses)
+
   if (
     expenseAccountEip712Address.value &&
     /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
   ) {
-    const budgetLimit: BudgetLimit = JSON.parse(
-      /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
-    )
+    // const budgetLimit: BudgetLimit = JSON.parse(
+    //   /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
+    // )
 
-    if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
+    if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, _budgetLimit)
     else await transferErc20Token()
   }
 }
@@ -354,7 +391,7 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
                 : BigInt(Number(item.value) * 1e6)
         }))
       },
-      /*_expenseAccountData.value*/ expenseDataStore.expenseData.signature
+      /*expenseDataStore.expenseData.signature*/ signatureToTransfer.value
     ],
     abi: expenseAccountABI,
     functionName: 'transfer'
@@ -363,11 +400,16 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
 const transferERC20loading = ref(false)
 // Token transfer function
 const transferErc20Token = async () => {
+  console.log('expenseAccountEip712Address.value', expenseAccountEip712Address.value)
+  console.log('tokenAmount.value', tokenAmount.value)
+  console.log('tokenRecipient.value', tokenRecipient.value)
+  console.log('expenseDataStore.mayApprovedExpenses[ERC20]', expenseDataStore.myApprovedExpenses)
   if (
     !expenseAccountEip712Address.value ||
     !tokenAmount.value ||
     !tokenRecipient.value ||
-    !/*_expenseAccountData.value*/ expenseDataStore.expenseData?.data
+    // !/*_expenseAccountData.value*/ expenseDataStore.expenseData?.data
+    !expenseDataStore.myApprovedExpenses
   )
     return
 
@@ -376,9 +418,11 @@ const transferErc20Token = async () => {
   transferERC20loading.value = true
   const _amount = BigInt(Number(tokenAmount.value) * 1e6)
 
-  const budgetLimit: BudgetLimit = JSON.parse(
-    /*_expenseAccountData.value*/ expenseDataStore.expenseData.data
+  const budgetLimit = expenseDataStore.myApprovedExpenses.find(
+    (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
   )
+
+  const { signature, ..._budgetLimit } = budgetLimit
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
@@ -405,12 +449,12 @@ const transferErc20Token = async () => {
         _amount,
         {
           ...budgetLimit,
-          budgetData: budgetLimit.budgetData.map((item) => ({
+          budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
             ...item,
             value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
           }))
         },
-        /*_expenseAccountData.value*/ expenseDataStore.expenseData.signature
+        /*expenseDataStore.expenseData.signature*/ signatureToTransfer.value
       ]
     })
   }
@@ -447,6 +491,9 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
     transferERC20loading.value = false
     reload.value = false
     await expenseDataStore.fetchExpenseData(
+      Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+    )
+    await expenseDataStore.fetchAllExpenseData(
       Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
     )
   }
