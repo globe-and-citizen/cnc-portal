@@ -187,8 +187,23 @@ const mockTeamStore: TeamStore = {
   }
 }
 
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
+vi.mock('@/stores', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useTeamStore: vi.fn(() => mockTeamStore)
+  }
+})
+
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: vi.fn(() => ({
+    currency: {
+      code: 'USD',
+      symbol: '$'
+    },
+    nativeTokenPrice: 2000,
+    nativeTokenPriceInUSD: 2000
+  }))
 }))
 
 // Add mock components
