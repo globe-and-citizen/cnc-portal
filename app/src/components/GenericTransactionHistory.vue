@@ -310,10 +310,6 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     {} as Record<string, string>
   )
 
-  console.log({
-    transaction,
-    currencyAmounts
-  })
   return {
     txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
