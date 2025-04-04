@@ -15,7 +15,7 @@ export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
   const teamsFetched = ref<Map<string, Team>>(new Map())
   const teamURI = ref<string>('teams/id')
-  const { addErrorToast } = useToastStore()
+  const { addErrorToast, addSuccessToast } = useToastStore()
 
   /**
    * @description Fetch teams lists
@@ -39,6 +39,29 @@ export const useTeamStore = defineStore('team', () => {
     execute: executeFetchTeam,
     statusCode
   } = useCustomFetch(teamURI, { immediate: false }).json()
+
+  /**
+   * @description Add a contract to a team
+   * @param address
+   * @param deployer
+   * @returns Promise<void>
+   */
+  const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
+    try {
+      await useCustomFetch(`teams/contract/add`)
+        .post({
+          teamId,
+          contractAddress: address,
+          contractType: 'Campaign',
+          deployer
+        })
+        .json()
+      addSuccessToast(`Contract added to team  successfully`)
+    } catch (error) {
+      console.error(`Failed to add contract to team `, error)
+      addErrorToast('Failed to add contract to team')
+    }
+  }
 
   /**
    * @description Fetch team by id and update the team cache
@@ -123,6 +146,7 @@ export const useTeamStore = defineStore('team', () => {
       team,
       statusCode,
       executeFetchTeam
-    }
+    },
+    addContractToTeam
   }
 })
