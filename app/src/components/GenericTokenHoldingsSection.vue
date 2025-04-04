@@ -46,6 +46,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
+import MaticIcon from '@/assets/matic-logo.png'
 import { log, parseError } from '@/utils'
 import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
@@ -90,6 +91,10 @@ const networkCurrencyPrice = computed(() => {
   return currencyStore.nativeTokenPrice || 1
 })
 
+const networkIcon = computed(() => {
+  if (Number(NETWORK.chainId) === 137) return MaticIcon
+  return EthereumIcon
+})
 const tokens = computed(() => [
   {
     name: NETWORK.currencySymbol,
@@ -107,7 +112,7 @@ const tokens = computed(() => [
       minimumFractionDigits: 3,
       maximumFractionDigits: 3
     }).format(Number(formattedNetworkCurrencyBalance.value)),
-    icon: EthereumIcon
+    icon: networkIcon.value
   },
   {
     name: 'USDC',
