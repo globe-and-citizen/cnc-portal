@@ -72,8 +72,8 @@ const currencyStore = useCurrencyStore()
 
 // Map network currency symbol to CoinGecko ID - always use ethereum price for testnets
 const networkCurrencyId = computed(() => {
-  // Always use ethereum price for testnets
-  return 'ethereum'
+  if (Number(NETWORK.chainId) === 137) return 'matic-network'
+  else return 'ethereum'
 })
 
 const chainId = useChainId()

@@ -21,7 +21,7 @@ import TransactionsHistorySection from '@/components/sections/BankView/Transacti
 import { useTeamStore } from '@/stores'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useCurrencyRates } from '@/composables/useCurrencyRates'
-
+import { NETWORK } from '@/constant'
 const teamStore = useTeamStore()
 const typedBankAddress = computed(
   () =>
@@ -33,8 +33,8 @@ const bankBalanceSection = ref<InstanceType<typeof BankBalanceSection> | null>(n
 
 // Map network currency symbol to CoinGecko ID - always use ethereum price for testnets
 const networkCurrencyId = computed(() => {
-  // Always use ethereum price for testnets
-  return 'ethereum'
+  if (Number(NETWORK.chainId) === 137) return 'matic-network'
+  else return 'ethereum'
 })
 
 const {

@@ -124,8 +124,8 @@ const getSelectedTokenBalance = computed(() => {
 
 // Get crypto prices for conversion
 const networkCurrencyId = computed(() => {
-  // Always use ethereum price for testnets
-  return 'ethereum'
+  if (Number(NETWORK.chainId) === 137) return 'matic-network'
+  else return 'ethereum'
 })
 
 const { prices } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
