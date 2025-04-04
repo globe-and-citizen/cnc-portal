@@ -220,10 +220,10 @@ describe('GenericTransactionHistory', () => {
       type: transaction.type,
       from: transaction.from,
       to: transaction.to,
-      amountUSD: transaction.amountUSD,
+      amountUSD: '100.00',
       amount: transaction.amount,
       token: transaction.token,
-      amountEUR: expect.any(Number)
+      amountEUR: '92.00'
     })
   })
 
