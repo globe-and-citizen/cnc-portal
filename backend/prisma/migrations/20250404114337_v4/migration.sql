@@ -125,7 +125,9 @@ CREATE TABLE "BoardOfDirectorActions" (
 -- CreateTable
 CREATE TABLE "_MemberTeams" (
     "A" INTEGER NOT NULL,
-    "B" TEXT NOT NULL
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_MemberTeams_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -148,9 +150,6 @@ CREATE UNIQUE INDEX "TeamContract_address_key" ON "TeamContract"("address");
 
 -- CreateIndex
 CREATE INDEX "TeamContract_address_idx" ON "TeamContract"("address");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_MemberTeams_AB_unique" ON "_MemberTeams"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_MemberTeams_B_index" ON "_MemberTeams"("B");
