@@ -4,6 +4,19 @@ import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { createTestingPinia } from '@pinia/testing'
 
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      }
+    }))
+  }
+})
+
 describe('DepositBankModal.vue', () => {
   describe('render', () => {
     it('renders correctly', () => {

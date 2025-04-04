@@ -161,20 +161,10 @@ vi.mock('@/composables/useCustomFetch', () => ({
 
 vi.mock('@/composables/useCryptoPrice', () => ({
   useCryptoPrice: () => ({
-    prices: ref({
-      ethereum: { usd: 2000 },
-      'usd-coin': { usd: 1 }
-    }),
+    price: ref(2000),
+    priceInUSD: ref(2000),
     loading: ref(false),
     error: ref(null)
-  })
-}))
-
-vi.mock('@/composables/useCurrencyRates', () => ({
-  useCurrencyRates: () => ({
-    loading: ref(false),
-    error: ref(null),
-    getRate: vi.fn()
   })
 }))
 
@@ -197,8 +187,23 @@ const mockTeamStore: TeamStore = {
   }
 }
 
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
+vi.mock('@/stores', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useTeamStore: vi.fn(() => mockTeamStore)
+  }
+})
+
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: vi.fn(() => ({
+    currency: {
+      code: 'USD',
+      symbol: '$'
+    },
+    nativeTokenPrice: 2000,
+    nativeTokenPriceInUSD: 2000
+  }))
 }))
 
 // Add mock components
@@ -301,15 +306,9 @@ describe('BankView', () => {
       expect(tokenHoldingsSection.props('address')).toBe(mockTeamStore.currentTeam?.bankAddress)
     })
 
-    it('renders BankBalanceSection with correct price data', () => {
+    it('renders BankBalanceSection', () => {
       const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
       expect(bankBalanceSection.exists()).toBe(true)
-      expect(bankBalanceSection.props('priceData')).toEqual({
-        networkCurrencyPrice: 2000,
-        usdcPrice: 1,
-        loading: false,
-        error: null
-      })
     })
   })
 
@@ -317,38 +316,9 @@ describe('BankView', () => {
     it('computes typedBankAddress correctly from teamStore', () => {
       expect(wrapper.vm.typedBankAddress).toBe(mockTeamStore.currentTeam?.teamContracts[0].address)
     })
-
-    it('computes networkCurrencyId correctly', () => {
-      expect(wrapper.vm.networkCurrencyId).toBe('ethereum')
-    })
-
-    it('computes networkCurrencyPrice correctly', () => {
-      expect(wrapper.vm.networkCurrencyPrice).toBe(2000)
-    })
-
-    it('computes usdcPrice correctly', () => {
-      expect(wrapper.vm.usdcPrice).toBe(1)
-    })
   })
 
   describe('Data Management', () => {
-    it('computes price data correctly', () => {
-      expect(wrapper.vm.priceData).toEqual({
-        networkCurrencyPrice: 2000,
-        usdcPrice: 1,
-        loading: false,
-        error: null
-      })
-    })
-
-    it('computes currency rates data correctly', () => {
-      expect(wrapper.vm.currencyRatesData).toEqual({
-        loading: false,
-        error: null,
-        getRate: expect.any(Function)
-      })
-    })
-
     it('updates when balance is updated', async () => {
       const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
       await bankBalanceSection.vm.$emit('balance-updated')

@@ -44,7 +44,7 @@
     </div>
 
     <div v-if="model.amount && parseFloat(model.amount) > 0" class="text-sm text-gray-500">
-      ≈ {{ currencyStore.currency.symbol }}{{ formattedTransferAmount }}
+      ≈ {{ formattedTransferAmount }}
     </div>
 
     <div
@@ -121,14 +121,7 @@ const target = ref<HTMLElement | null>(null)
 const getSelectedTokenBalance = computed(() => {
   return model.value.token.balance
 })
-
-// Get crypto prices for conversion
-const networkCurrencyId = computed(() => {
-  if (Number(NETWORK.chainId) === 137) return 'matic-network'
-  else return 'ethereum'
-})
-
-const { prices } = useCryptoPrice([networkCurrencyId.value, 'usd-coin'])
+const { price: usdcPrice } = useCryptoPrice('usd-coin')
 
 // New computed property for transfer amount in default currency
 const formattedTransferAmount = computed(() => {
@@ -136,22 +129,20 @@ const formattedTransferAmount = computed(() => {
   if (isNaN(amount) || amount <= 0) return '0.00'
 
   if (model.value.token.symbol === NETWORK.currencySymbol) {
-    const usdValue = amount * (prices.value?.[networkCurrencyId.value]?.usd || 0)
-
-    if (currencyStore.currency.code === 'USD') {
-      return usdValue.toFixed(2)
-    }
-    const rate = currencyStore.getRate(currencyStore.currency.code)
-    return (usdValue * rate).toFixed(2)
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyStore.currency.code,
+      minimumFractionDigits: 2
+    }).format(amount * (currencyStore.nativeTokenPrice || 0))
   }
   // If the selected token is USDC (stablecoin)
   else if (model.value.token.symbol === 'USDC') {
     // USDC is pegged to USD, so just use the currency store's rate
-    if (currencyStore.currency.code === 'USD') {
-      return amount.toFixed(2)
-    }
-    const rate = currencyStore.getRate(currencyStore.currency.code)
-    return (amount * rate).toFixed(2)
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyStore.currency.code,
+      minimumFractionDigits: 2
+    }).format(amount * (usdcPrice.value || 0))
   }
 
   // Default case

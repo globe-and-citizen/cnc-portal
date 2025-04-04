@@ -117,6 +117,7 @@ import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { storeToRefs } from 'pinia'
 
 interface Props {
   transactions: BaseTransaction[]
@@ -142,6 +143,7 @@ const emit = defineEmits<{
 
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
+const { nativeTokenPrice, nativeTokenPriceInUSD } = storeToRefs(currencyStore)
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -217,31 +219,28 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
   const amount = transaction[key]
   if (typeof amount === 'number') return amount.toFixed(2)
 
-  let usdAmount = 0
   const tokenAmount = Number(transaction.amount)
+  if (tokenAmount <= 0) return '0.00'
 
+  let usdAmount = 0
   if (transaction.token === 'USDC') {
     usdAmount = tokenAmount
   } else {
-    const currentPrice = currencyStore.nativeTokenPrice
-    if (currentPrice) {
-      usdAmount = tokenAmount * currentPrice
-    }
+    usdAmount = tokenAmount * nativeTokenPriceInUSD.value!
   }
 
-  if (usdAmount > 0) {
-    if (currency === 'USD') {
-      return usdAmount.toFixed(2)
-    }
-
-    const targetRate = currencyStore.getRate(currency)
-    if (targetRate > 0) {
-      const convertedAmount = usdAmount * targetRate
-      return convertedAmount.toFixed(2)
-    }
+  if (currency === 'USD') {
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(usdAmount)
   }
 
-  return '0.00'
+  const exchangeRate = nativeTokenPrice.value! / nativeTokenPriceInUSD.value!
+  return Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency
+  }).format(usdAmount * exchangeRate)
 }
 
 const handleExport = () => {
@@ -305,10 +304,10 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
   const currencyAmounts = props.currencies.reduce(
     (acc, currency) => {
       const amount = formatAmount(transaction, currency)
-      acc[`amount${currency}`] = Number(amount)
+      acc[`amount${currency}`] = amount
       return acc
     },
-    {} as Record<string, number>
+    {} as Record<string, string>
   )
 
   return {

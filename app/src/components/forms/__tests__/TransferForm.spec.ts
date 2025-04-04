@@ -6,6 +6,19 @@ import { NETWORK } from '@/constant'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 
+vi.mock('@/stores', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      }
+    }))
+  }
+})
+
 describe('TransferForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
   beforeEach(() => {
