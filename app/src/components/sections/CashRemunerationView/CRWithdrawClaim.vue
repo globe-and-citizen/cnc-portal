@@ -48,7 +48,7 @@ const { isSuccess: withdrawSuccess, error: withdrawTrxError } = useWaitForTransa
 })
 
 const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(
-  `/claim/${props.claim.id}/?action=withdraw`,
+  computed(() => `/claim/${props.claim.id}/?action=withdraw`),
   {
     immediate: false
   }

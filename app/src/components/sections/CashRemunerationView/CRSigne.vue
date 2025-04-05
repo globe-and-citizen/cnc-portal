@@ -45,7 +45,10 @@ const {
   // isFetching: isClaimUpdateing,
   error: claimError,
   execute: executeUpdateClaim
-} = useCustomFetch(`/claim/${props.claim.id}/?action=sign`, { immediate: false })
+} = useCustomFetch(
+  computed(() => `/claim/${props.claim.id}/?action=sign`),
+  { immediate: false }
+)
   .put(() => ({
     signature: signature.value
   }))
