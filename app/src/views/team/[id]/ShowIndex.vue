@@ -36,7 +36,7 @@
           <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI>
           to proceed with the deployment.
         </p>
-        <ModalComponent v-model="showModal">
+        <ModalComponent v-model="showModal" v-if="showModal">
           <!-- May be return an event that will trigger team reload -->
           <ContinueAddTeamForm
             :team="teamStore.currentTeamMeta.team"
