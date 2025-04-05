@@ -16,7 +16,12 @@
       class="justify-center"
       :loading="addMembersLoading"
       :disabled="addMembersLoading"
-      @click="executeAddMembers"
+      @click="
+        async () => {
+          await executeAddMembers()
+          teamStore.fetchTeam(String(props.teamId))
+        }
+      "
       >Add Members</ButtonUI
     >
   </div>
@@ -28,11 +33,12 @@ import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore } from '@/stores'
+import { useToastStore, useTeamStore } from '@/stores'
 import type { User } from '@/types'
 
 const emits = defineEmits(['memberAdded'])
 const { addSuccessToast, addErrorToast } = useToastStore()
+const teamStore = useTeamStore()
 
 const props = defineProps<{
   teamId: string | number
