@@ -275,34 +275,16 @@ const deleteTeam = async (req: Request, res: Response) => {
       where: { teamId: Number(id) },
     });
 
-    //delete claims
-    // Step 1: Find all MemberTeamsData IDs associated with the Team
-    const memberTeamsDataIds = await prisma.memberTeamsData.findMany({
-      where: {
-        teamId: Number(id),
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    const idsToDelete = memberTeamsDataIds.map((record) => record.id);
-
-    // Step 2: Delete related Claim records
-    // if (idsToDelete.length > 0) {
-    //   await prisma.claim.deleteMany({
-    //     where: {
-    //       memberTeamsDataId: {
-    //         in: idsToDelete,
-    //       },
-    //     },
-    //   });
-    // }
-
     await prisma.memberTeamsData.deleteMany({
       where: { teamId: Number(id) },
     });
     await prisma.teamContract.deleteMany({
+      where: { teamId: Number(id) },
+    });
+    await prisma.claim.deleteMany({
+      where: { wage: { teamId: Number(id) } },
+    });
+    await prisma.wage.deleteMany({
       where: { teamId: Number(id) },
     });
     const teamD = await prisma.team.delete({
