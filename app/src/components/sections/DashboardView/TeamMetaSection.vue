@@ -16,7 +16,7 @@
       <div class="modal-action justify-center">
         <ButtonUI
           variant="error"
-          @click="deleteTeamAPI()"
+          @click="deleteTeam()"
           :loading="teamIsDeleting"
           :disabled="teamIsDeleting"
           >Delete
@@ -30,7 +30,7 @@
       <UpdateTeamForm
         :teamIsUpdating="teamIsUpdating"
         v-model="updateTeamInput"
-        @updateTeam="() => updateTeamAPI()"
+        @updateTeam="updateTeamAPI()"
       />
     </ModalComponent>
   </div>
@@ -42,17 +42,22 @@ import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { Member } from '@/types'
-import { useRoute, useRouter } from 'vue-router'
+import type { Member, Team } from '@/types'
+import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
+import { useTeamStore } from '@/stores'
 
-const props = defineProps(['team'])
+const { team } = defineProps<{
+  team: Team
+}>()
+// const props = defineProps(['team'])
 const emits = defineEmits(['getTeam'])
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
+const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-const route = useRoute()
+// const route = useRoute()
 const router = useRouter()
 const inputs = ref<Member[]>([])
 
@@ -60,22 +65,37 @@ const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
   description: ''
 })
+
 // useFetch instance for updating team details
 const {
   execute: updateTeamAPI,
   isFetching: teamIsUpdating,
   error: updateTeamError
-} = useCustomFetch(`teams/${String(route.params.id)}`, {
+} = useCustomFetch(`teams/${team.id}`, {
   immediate: false
 })
   .json()
   .put(updateTeamInput)
+
+// useFetch instance for deleting team
+const {
+  execute: deleteTeamAPI,
+  isFetching: teamIsDeleting,
+  error: deleteTeamError,
+  statusCode: deleteStatus
+} = useCustomFetch(`teams/${team.id}`, {
+  immediate: false
+})
+  .delete()
+  .json()
+
 // Watchers for updating team details
 watch(updateTeamError, () => {
   if (updateTeamError.value) {
     addErrorToast(updateTeamError.value || 'Failed to update team')
   }
 })
+
 watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
   if (!teamIsUpdating.value && !updateTeamError.value) {
     addSuccessToast('Team updated successfully')
@@ -83,33 +103,22 @@ watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
     emits('getTeam')
   }
 })
-// useFetch instance for deleting team
-const {
-  execute: deleteTeamAPI,
-  isFetching: teamIsDeleting,
-  error: deleteTeamError
-} = useCustomFetch(`teams/${String(route.params.id)}`, {
-  immediate: false
-})
-  .delete()
-  .json()
-// Watchers for deleting team
-watch(deleteTeamError, () => {
-  if (deleteTeamError.value) {
-    addErrorToast(deleteTeamError.value || 'Failed to delete team')
-  }
-})
-watch([() => teamIsDeleting.value, () => deleteTeamError.value], async () => {
-  if (!teamIsDeleting.value && !deleteTeamError.value) {
+
+const deleteTeam = async () => {
+  await deleteTeamAPI()
+  if (deleteStatus.value === 200) {
     addSuccessToast('Team deleted successfully')
-    showDeleteTeamConfirmModal.value = !showDeleteTeamConfirmModal.value
+    showDeleteTeamConfirmModal.value = false
+    teamStore.teamsMeta.reloadTeams()
     router.push('/teams')
+  } else if (deleteTeamError.value) {
+    addErrorToast('Failed to delete team')
   }
-})
+}
 const updateTeamModalOpen = async () => {
   showModal.value = true
-  updateTeamInput.value.name = props.team.name
-  updateTeamInput.value.description = props.team.description
-  inputs.value = props.team.members
+  updateTeamInput.value.name = team.name
+  updateTeamInput.value.description = team.description
+  inputs.value = team.members
 }
 </script>
