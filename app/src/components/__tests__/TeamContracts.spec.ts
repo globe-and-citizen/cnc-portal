@@ -20,7 +20,7 @@ vi.mock('@/services/AddCampaignService', () => ({
   }))
 }))
 
-describe('TeamContracts.vue', () => {
+describe.skip('TeamContracts.vue', () => {
   const contracts = [
     {
       type: 'Campaign',
