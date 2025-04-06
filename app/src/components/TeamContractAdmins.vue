@@ -1,8 +1,11 @@
 <template>
-  <h3 class="text-lg font-bold mb-4">Contract Admin List</h3>
+  <h3 class="text-lg font-bold mb-4">Contract Admin List {{ range }}</h3>
 
   <!-- Inline form to add new admin -->
-  <form @submit.prevent="addAdmin()" class="flex items-center space-x-2 mb-4">
+  <form
+    @submit.prevent="handleAdminAction(newAdminAddress, 'addAdmin')"
+    class="flex items-center space-x-2 mb-4"
+  >
     <input
       v-model="newAdminAddress"
       type="text"
@@ -11,7 +14,7 @@
       required
     />
     <div>
-      <ButtonUI type="submit" variant="primary" size="sm" v-if="!isLoading">Add Admin</ButtonUI>
+      <ButtonUI type="submit" variant="primary" size="sm"> Add Admin</ButtonUI>
     </div>
   </form>
 
@@ -32,35 +35,53 @@
           <th>{{ index + 1 }}</th>
           <td><AddressToolTip :address="admin" class="text-xs" /></td>
           <td>
-            <ButtonUI @click="removeAdmin(admin)" size="xs" variant="error">Remove</ButtonUI>
+            <ButtonUI @click="handleAdminAction(admin, 'removeAdmin')" size="xs" variant="error"
+              >Remove</ButtonUI
+            >
           </td>
         </tr>
       </tbody>
     </table>
-    <div
-      v-if="isLoading"
-      class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
-    ></div>
   </div>
+  <div
+    v-if="isLoading || isUpdating"
+    class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
+  ></div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { isAddress } from 'viem'
+import { ref, watch, computed } from 'vue'
+
 import { useToastStore } from '@/stores/useToastStore'
+import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+import { useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from '@wagmi/vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import AddressToolTip from './AddressToolTip.vue'
 import ButtonUI from './ButtonUI.vue'
+import { parseAbi } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCampaignService = new AddCampaignService()
 
 const props = defineProps<{
   contract: TeamContract
+  range: number
 }>()
 
-const isLoading = ref(false)
+const adminAbi = parseAbi([
+  'event AdminAdded(address indexed admin)',
+  'event AdminRemoved(address indexed admin)'
+])
+const isUpdating = ref(false)
+const campaignAbi = AdCampaignArtifact.abi
+const isLoading = computed(
+  () =>
+    loadingRemoveAdmin.value ||
+    (isConfirmingRemoveAdmin.value && !isConfirmedRemoveAdmin.value) ||
+    loadingAddAdmin.value ||
+    (isConfirmingAddAdmin.value && !isConfirmedAddAdmin.value)
+)
 
 // State for new admin address
 const newAdminAddress = ref('')
@@ -68,54 +89,113 @@ const newAdminAddress = ref('')
 // State for admins list
 const admins = ref([] as string[])
 
+const {
+  writeContract: addAdmin,
+  error: errorAddAdmin,
+  isPending: loadingAddAdmin,
+  data: hashAddAdmin
+} = useWriteContract()
+
+const { isLoading: isConfirmingAddAdmin, isSuccess: isConfirmedAddAdmin } =
+  useWaitForTransactionReceipt({
+    hash: hashAddAdmin
+  })
+watch(isConfirmingAddAdmin, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedAddAdmin.value) {
+    addSuccessToast('Admin added successfully')
+    newAdminAddress.value = ''
+  }
+})
+
+const {
+  writeContract: removeAdmin,
+  error: errorRemoveAdmin,
+  isPending: loadingRemoveAdmin,
+  data: hashRemoveAdmin
+} = useWriteContract()
+
+const { isLoading: isConfirmingRemoveAdmin, isSuccess: isConfirmedRemoveAdmin } =
+  useWaitForTransactionReceipt({
+    hash: hashRemoveAdmin
+  })
+watch(isConfirmingRemoveAdmin, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedRemoveAdmin.value) {
+    addSuccessToast('Admin removed successfully')
+  }
+})
+
 watch(
   () => props.contract,
   async (newContract) => {
-    isLoading.value = true
+    isUpdating.value = true
+    await new Promise((resolve) => setTimeout(resolve, 5000))
     admins.value = await addCampaignService.getAdminList(newContract.address)
-    isLoading.value = false
     await addCampaignService.getEventsGroupedByCampaignCode(newContract.address)
+    isUpdating.value = false
   }
 )
 
-// Remove admin handler
-async function removeAdmin(adminAddress: string) {
-  if (!isAddress(adminAddress)) {
-    addErrorToast('please provide valid address')
-  } else {
-    isLoading.value = true
-    const result = await addCampaignService.removeAdmin(props.contract.address, adminAddress)
+watch(errorAddAdmin, () => {
+  if (errorAddAdmin.value) {
+    addErrorToast('Add admin failed')
+  }
+})
 
-    if (result.status === 'success') {
-      addSuccessToast('Admin removed successfully')
-      isLoading.value = false
-      admins.value = await addCampaignService.getAdminList(props.contract.address)
-    } else {
-      addErrorToast('remove  admin failed plese try again')
-      isLoading.value = false
+watch(errorRemoveAdmin, () => {
+  if (errorRemoveAdmin.value) {
+    addErrorToast('Remove admin failed')
+  }
+})
+
+useWatchContractEvent({
+  address: props.contract.address,
+  abi: adminAbi,
+  eventName: 'AdminAdded',
+  strict: true,
+  onLogs: async (logs) => {
+    for (const log of logs) {
+      if (log?.args.admin) {
+        const addedAdmin = log.args.admin as `0x${string}`
+        if (!admins.value.includes(addedAdmin)) {
+          admins.value.push(addedAdmin)
+        }
+      }
     }
   }
-}
+})
 
-// Add admin directly without confirmation
-async function addAdmin() {
-  if (!isAddress(newAdminAddress.value)) {
-    addErrorToast('please provide valid address')
-  } else {
-    isLoading.value = true
-    const result = await addCampaignService.addAdmin(props.contract.address, newAdminAddress.value)
-
-    if (result.status === 'success') {
-      addSuccessToast('Admin added successfully')
-
-      admins.value = await addCampaignService.getAdminList(props.contract.address)
-      isLoading.value = false
-      newAdminAddress.value = ''
-      // Emit the updated contract with the new admins list
-    } else {
-      addErrorToast('Add admin failed')
-      isLoading.value = false
+useWatchContractEvent({
+  address: props.contract.address,
+  abi: adminAbi,
+  eventName: 'AdminRemoved',
+  strict: true,
+  onLogs: async (logs) => {
+    for (const log of logs) {
+      if (log?.args.admin) {
+        const removedAdmin = log.args.admin as `0x${string}`
+        if (admins.value.includes(removedAdmin)) {
+          admins.value = admins.value.filter((a) => a.toLowerCase() !== removedAdmin.toLowerCase())
+        }
+      }
     }
+  }
+})
+
+function handleAdminAction(adminAddress: string, action: string) {
+  if (action === 'removeAdmin') {
+    removeAdmin({
+      address: props.contract.address,
+      abi: campaignAbi,
+      functionName: 'removeAdmin',
+      args: [adminAddress]
+    })
+  } else {
+    addAdmin({
+      address: props.contract.address,
+      abi: campaignAbi,
+      functionName: 'addAdmin',
+      args: [adminAddress]
+    })
   }
 }
 </script>
