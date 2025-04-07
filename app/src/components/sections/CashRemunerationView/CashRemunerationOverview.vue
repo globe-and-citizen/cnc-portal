@@ -1,6 +1,12 @@
 <template>
   <div class="flex gap-10">
-    <OverviewCard title="73.9K USD" variant="success" subtitle="Total Balance" :card-icon="bagIcon">
+    <OverviewCard
+      :title="totalBalance"
+      variant="success"
+      subtitle="Total Balance"
+      :card-icon="bagIcon"
+      :loading="isLoadingBalance"
+    >
       <div class="flex flex-row gap-1 text-black">
         <img :src="uptrendIcon" alt="status-icon" />
         <div>
@@ -35,4 +41,21 @@ import cartIcon from '@/assets/cart.svg'
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useCurrencyStore, useTeamStore } from '@/stores'
+import { formatCurrencyShort } from '@/utils'
+import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
+
+const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
+const { currency } = storeToRefs(currencyStore)
+const { balances, isLoading: isLoadingBalance } = useContractBalance(
+  teamStore.currentTeam?.teamContracts.find(
+    (contract) => contract.type === 'CashRemunerationEIP712'
+  )?.address
+)
+const totalBalance = computed(() => {
+  return formatCurrencyShort(parseInt(balances.totalValueInLocalCurrency), currency.value.code)
+})
 </script>

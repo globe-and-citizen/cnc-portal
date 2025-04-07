@@ -27,6 +27,10 @@ const props = defineProps({
   cardIcon: {
     type: String,
     default: ''
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 })
 
