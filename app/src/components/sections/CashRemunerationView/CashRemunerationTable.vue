@@ -24,7 +24,7 @@
         :loading="isTeamClaimDataFetching"
       >
         <template #createdAt-data="{ row }">
-          <span>{{ new Date(row.createdAt).toLocaleDateString() }}</span>
+          <span>{{ new Date(row.createdAt).toLocaleString() }}</span>
         </template>
         <template #action-data="{ row }">
           <CRSigne :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
@@ -56,11 +56,21 @@
           <UserComponent v-if="!!row.wage.user" :user="row.wage.user"></UserComponent>
         </template>
         <template #hoursWorked-data="{ row }">
-          <span class="font-bold"> {{ row.hoursWorked }} h </span> <br />
+          <span class="font-bold">
+            {{ row.hoursWorked }} / {{ row.wage.maximumHoursPerWeek }} h
+          </span>
+          <br />
           <span>{{ row.wage.maximumHoursPerWeek }} h/week</span>
         </template>
         <template #hourlyRate-data="{ row }">
-          <span class="font-bold"> $ {{ row.wage.cashRatePerHour }}</span>
+          <span class="font-bold">
+            {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} / h</span
+          >
+          <br />
+          <span
+            >{{ getHoulyRateInUserCurrency(row.wage.cashRatePerHour) }}
+            {{ currencyStore.currency.code }} / h
+          </span>
         </template>
         <template #status-data="{ row }">
           <span
@@ -86,16 +96,18 @@
 <script setup lang="ts">
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CRSigne from './CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
+import { NETWORK } from '@/constant'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
 const statusses = ['all', 'pending', 'approved', 'withdrawn']
 const selectedRadio = ref('all')
 
@@ -105,7 +117,9 @@ const statusUrl = computed(() =>
   selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`
 )
 const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
-
+const getHoulyRateInUserCurrency = (rate: number) => {
+  return (currencyStore.nativeTokenPrice ? rate * currencyStore.nativeTokenPrice : 0).toFixed(2)
+}
 const {
   data: teamClaimData,
   isFetching: isTeamClaimDataFetching,
@@ -145,13 +159,13 @@ const columns = [
   },
   {
     key: 'hoursWorked',
-    label: 'Hour',
+    label: 'Hour Worked',
     sortable: false,
     class: 'text-black text-base'
   },
   {
     key: 'hourlyRate',
-    label: 'Rate',
+    label: 'Hourly Rate',
     sortable: false,
     class: 'text-black text-base'
   },
