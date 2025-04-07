@@ -80,6 +80,26 @@ describe('useContractBalance', () => {
     expect(balances.totalValueUSD).toBe('1050.00')
   })
 
+  it('should return correct native token raw balance and formatted value', () => {
+    const nativeBalance = BigInt('1500000000000000000') // 1.5 ETH
+    mockUseBalance.data.value = { value: nativeBalance }
+    mockUseReadContract.data.value = BigInt('0')
+
+    const { balances } = useContractBalance(mockAddress)
+    expect(balances.nativeToken.balance).toBe(nativeBalance)
+    expect(balances.nativeToken.formatted).toBe('1.5')
+  })
+
+  it('should return correct USDC raw balance and formatted value', () => {
+    const usdcBalance = BigInt('150000000') // 150 USDC
+    mockUseBalance.data.value = { value: BigInt('0') }
+    mockUseReadContract.data.value = usdcBalance
+
+    const { balances } = useContractBalance(mockAddress)
+    expect(balances.usdc.balance).toBe(usdcBalance)
+    expect(balances.usdc.formatted).toBe('150')
+  })
+
   it('should refetch both balances when refetch is called', async () => {
     const { refetch } = useContractBalance(mockAddress)
     await refetch()
