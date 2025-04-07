@@ -74,11 +74,11 @@ export function useContractBalance(address: Address | undefined) {
 
   const balances = reactive({
     nativeToken: {
-      balance: computed(() => formattedNativeBalance.value),
+      balance: computed(() => nativeBalance.value?.value),
       formatted: computed(() => formattedNativeBalance.value)
     },
     usdc: {
-      balance: computed(() => formattedUsdcBalance.value),
+      balance: computed(() => usdcBalance.value),
       formatted: computed(() => formattedUsdcBalance.value)
     },
     totalValueUSD: computed(() => totalValueUSD.value)
