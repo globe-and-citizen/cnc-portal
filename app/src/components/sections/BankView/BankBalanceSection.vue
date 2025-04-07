@@ -269,7 +269,7 @@ const totalValueLocal = computed(() => {
 })
 
 // Watch handlers
-watch([() => balances.nativeToken, () => balances.usdc], () => {
+watch([() => balances.nativeToken.formatted, () => balances.usdc.formatted], () => {
   emit('balance-updated')
 })
 
