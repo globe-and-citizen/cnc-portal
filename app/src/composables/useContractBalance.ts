@@ -1,9 +1,9 @@
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
-import { useCryptoPrice } from './useCryptoPrice'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 export interface ContractBalance {
   nativeToken: {
@@ -21,7 +21,7 @@ export interface ContractBalance {
 
 export function useContractBalance(address: Address | undefined) {
   const chainId = useChainId()
-  const { price: usdcPrice } = useCryptoPrice('usd-coin')
+  const currencyStore = useCurrencyStore()
 
   const {
     data: nativeBalance,
@@ -54,7 +54,8 @@ export function useContractBalance(address: Address | undefined) {
   )
 
   const totalValueUSD = computed(() => {
-    const nativeValue = Number(formattedNativeBalance.value) * (usdcPrice.value || 0)
+    const nativeValue =
+      Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPriceInUSD || 0)
     const usdcValue = Number(formattedUsdcBalance.value)
     return (nativeValue + usdcValue).toFixed(2)
   })
@@ -64,23 +65,29 @@ export function useContractBalance(address: Address | undefined) {
   const error = computed(() => nativeError.value || usdcError.value)
 
   const refetch = async () => {
-    await Promise.all([fetchNativeBalance(), fetchUsdcBalance()])
+    try {
+      await Promise.all([fetchNativeBalance(), fetchUsdcBalance()])
+    } catch (err) {
+      console.error('Error refetching balances:', err)
+    }
   }
 
-  return {
-    balances: {
-      nativeToken: {
-        balance: formattedNativeBalance.value,
-        formatted: formattedNativeBalance.value
-      },
-      usdc: {
-        balance: formattedUsdcBalance.value,
-        formatted: formattedUsdcBalance.value
-      },
-      totalValueUSD: totalValueUSD.value
+  const balances = reactive({
+    nativeToken: {
+      balance: computed(() => formattedNativeBalance.value),
+      formatted: computed(() => formattedNativeBalance.value)
     },
-    isLoading: isLoading.value,
-    error: error.value,
+    usdc: {
+      balance: computed(() => formattedUsdcBalance.value),
+      formatted: computed(() => formattedUsdcBalance.value)
+    },
+    totalValueUSD: computed(() => totalValueUSD.value)
+  })
+
+  return {
+    balances,
+    isLoading,
+    error,
     refetch
   }
 }
