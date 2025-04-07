@@ -1,58 +1,90 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useContractBalance } from '../useContractBalance'
-import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import type { Address } from 'viem'
 
-// Mock the dependencies
-vi.mock('@wagmi/vue', () => ({
-  useBalance: vi.fn(),
-  useReadContract: vi.fn(),
-  useChainId: vi.fn()
-}))
+import type { Address } from 'viem'
+import { ref } from 'vue'
+
+const mockUseBalance = {
+  data: ref<{ value: bigint } | null>(null),
+  isLoading: ref(false),
+  error: ref<unknown>(null),
+  refetch: vi.fn()
+}
+
+const mockUseReadContract = {
+  data: ref<bigint | null>(null),
+  isLoading: ref(false),
+  error: ref<unknown>(null),
+  refetch: vi.fn()
+}
+
+const mockUseChainId = ref(1)
+
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useBalance: vi.fn(() => mockUseBalance),
+    useReadContract: vi.fn(() => mockUseReadContract),
+    useChainId: vi.fn(() => mockUseChainId)
+  }
+})
+
+const mockCurrencyStore = {
+  nativeTokenPriceInUSD: 2000
+}
 
 vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: vi.fn()
+  useCurrencyStore: vi.fn(() => mockCurrencyStore)
 }))
 
 describe('useContractBalance', () => {
   const mockAddress = '0x1234567890123456789012345678901234567890' as Address
-  const mockChainId = 1
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseBalance.data.value = null
+    mockUseBalance.isLoading.value = false
+    mockUseBalance.error.value = null
+    mockUseReadContract.data.value = null
+    mockUseReadContract.isLoading.value = false
+    mockUseReadContract.error.value = null
+    mockUseChainId.value = 1
+  })
 
-    // Mock useChainId
-    ;(useChainId as ReturnType<typeof vi.fn>).mockReturnValue(mockChainId)
+  it('should return correct native token balance', () => {
+    mockUseBalance.data.value = { value: BigInt('1000000000000000000') }
+    mockUseReadContract.data.value = BigInt('0')
 
-    // Mock currency store
-    const mockCurrencyStore = {
-      nativeTokenPriceInUSD: 2000
-    }
-    ;(useCurrencyStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockCurrencyStore)
+    const { balances } = useContractBalance(mockAddress)
+    expect(balances.nativeToken.formatted).toBe('1')
+    expect(balances.totalValueUSD).toBe('2000.00')
+  })
+
+  it('should return correct USDC balance', () => {
+    mockUseBalance.data.value = { value: BigInt('0') }
+    mockUseReadContract.data.value = BigInt('100000000')
+
+    const { balances } = useContractBalance(mockAddress)
+    expect(balances.usdc.formatted).toBe('100')
+    expect(balances.totalValueUSD).toBe('100.00')
+  })
+
+  it('should return correct total value with both balances', () => {
+    mockUseBalance.data.value = { value: BigInt('500000000000000000') }
+    mockUseReadContract.data.value = BigInt('50000000')
+
+    const { balances } = useContractBalance(mockAddress)
+    expect(balances.nativeToken.formatted).toBe('0.5')
+    expect(balances.usdc.formatted).toBe('50')
+    expect(balances.totalValueUSD).toBe('1050.00')
   })
 
   it('should refetch both balances when refetch is called', async () => {
-    const mockRefetchNative = vi.fn()
-    const mockRefetchUsdc = vi.fn()
-
-    ;(useBalance as ReturnType<typeof vi.fn>).mockReturnValue({
-      data: null,
-      isLoading: false,
-      error: null,
-      refetch: mockRefetchNative
-    })
-    ;(useReadContract as ReturnType<typeof vi.fn>).mockReturnValue({
-      data: null,
-      isLoading: false,
-      error: null,
-      refetch: mockRefetchUsdc
-    })
-
     const { refetch } = useContractBalance(mockAddress)
     await refetch()
 
-    expect(mockRefetchNative).toHaveBeenCalled()
-    expect(mockRefetchUsdc).toHaveBeenCalled()
+    expect(mockUseBalance.refetch).toHaveBeenCalled()
+    expect(mockUseReadContract.refetch).toHaveBeenCalled()
   })
 })
