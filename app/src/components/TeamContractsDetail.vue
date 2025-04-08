@@ -53,11 +53,15 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref } from 'vue'
+import { defineProps, ref, computed } from 'vue'
 import AddressToolTip from './AddressToolTip.vue'
-import { isAddress } from 'viem'
+
+import { parseUnits } from 'viem/utils'
+
 import { useToastStore } from '@/stores/useToastStore'
-import { AddCampaignService } from '@/services/AddCampaignService'
+import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+const campaignAbi = AdCampaignArtifact.abi
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   datas: Array<{ key: string; value: string }>
@@ -67,16 +71,72 @@ const props = defineProps<{
 
 import { watch } from 'vue'
 
-//const originalDatas = ref([...props.datas])
 const originalCostPerClick = ref<number>(0)
 const originalCostPerImpression = ref<number>(0)
 
-const isLoading = ref(false)
+const isLoading = computed(
+  () =>
+    loadingSetCostPerClick.value ||
+    (isConfirmingSetCostPerClick.value && !isConfirmedSetCostPerClick.value) ||
+    loadingSetCostPerImpression.value ||
+    (isConfirmingSetCostPerImpression.value && !isConfirmedSetCostPerImpression.value)
+)
+
 const originalValues = ref<Record<string, number>>({})
 
 const getOriginalValue = (key: string) => originalValues.value[key] ?? 0
 
 const initialized = ref<boolean>(false)
+
+const {
+  writeContract: setCostPerClick,
+  error: errorSetCostPerClick,
+  isPending: loadingSetCostPerClick,
+  data: hashSetCostPerClick
+} = useWriteContract()
+
+const { isLoading: isConfirmingSetCostPerClick, isSuccess: isConfirmedSetCostPerClick } =
+  useWaitForTransactionReceipt({
+    hash: hashSetCostPerClick
+  })
+
+watch(isConfirmingSetCostPerClick, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedSetCostPerClick.value) {
+    addSuccessToast('Cost per click updated successfully')
+    originalCostPerClick.value = getOriginalValue('costPerClick')
+  }
+})
+
+const {
+  writeContract: setCostPerImpression,
+  error: errorSetCostPerImpression,
+  isPending: loadingSetCostPerImpression,
+  data: hashSetCostPerImpression
+} = useWriteContract()
+
+const { isLoading: isConfirmingSetCostPerImpression, isSuccess: isConfirmedSetCostPerImpression } =
+  useWaitForTransactionReceipt({
+    hash: hashSetCostPerImpression
+  })
+
+watch(isConfirmingSetCostPerImpression, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedSetCostPerImpression.value) {
+    addSuccessToast('Cost per impression updated successfully')
+    originalCostPerImpression.value = getOriginalValue('costPerImpression')
+  }
+})
+
+watch(errorSetCostPerClick, () => {
+  if (errorSetCostPerClick.value) {
+    addErrorToast('Set cost per click failed')
+  }
+})
+
+watch(errorSetCostPerImpression, () => {
+  if (errorSetCostPerImpression.value) {
+    addErrorToast('Set cost per impression failed')
+  }
+})
 
 defineExpose({
   initialized,
@@ -110,59 +170,6 @@ watch(
   { deep: true }
 )
 
-const addCampaignService = new AddCampaignService()
-
-async function setCostPerClick(campaignContractAddress: string, costPerClick: string) {
-  if (!isAddress(campaignContractAddress)) {
-    addErrorToast('please provide valid campaign address')
-  } else {
-    isLoading.value = true
-    const result = await addCampaignService.setCostPerClick(
-      campaignContractAddress,
-      costPerClick.toString()
-    )
-
-    if (result.status === 'success') {
-      addSuccessToast('cost per click updated successfully')
-      isLoading.value = false
-
-      //originalCostPerClick.value = parseFloat(costPerClick)
-      originalValues.value = Object.fromEntries(
-        (props.datas ?? []).map((data) => [data.key, parseFloat(data.value || '0')])
-      )
-    } else {
-      addErrorToast('set costPerClick failed please try again')
-      isLoading.value = false
-    }
-  }
-}
-
-async function setCostPerImpression(campaignContractAddress: string, costPerImpression: string) {
-  if (!isAddress(campaignContractAddress)) {
-    addErrorToast('please provide valid campaign address')
-    isLoading.value = false
-  } else {
-    isLoading.value = true
-    const result = await addCampaignService.setCostPerImpression(
-      campaignContractAddress,
-      costPerImpression.toString()
-    )
-
-    if (result.status === 'success') {
-      addSuccessToast('cost per impression updated successfully')
-      isLoading.value = false
-
-      //originalCostPerImpression.value = parseFloat(costPerImpression)
-      originalValues.value = Object.fromEntries(
-        (props.datas ?? []).map((data) => [data.key, parseFloat(data.value || '0')])
-      )
-    } else {
-      addErrorToast('set costPerImpression failed please try again')
-      isLoading.value = false
-    }
-  }
-}
-
 async function submit() {
   try {
     originalCostPerClick.value = getOriginalValue('costPerClick')
@@ -177,20 +184,29 @@ async function submit() {
           addErrorToast('Cost per click should be greater than 0')
           return
         }
-        await setCostPerClick(props.contractAddress, costPerClick)
+        setCostPerClick({
+          address: props.contractAddress as `0x${string}`,
+          abi: campaignAbi,
+          functionName: 'setCostPerClick',
+          args: [parseUnits(String(costPerClick), 18)]
+        })
       }
       if (originalCostPerImpression.value != parseFloat(costPerImpression)) {
         if (parseFloat(costPerImpression) <= 0) {
           addErrorToast('Cost per impression should be greater than 0')
           return
         }
-        await setCostPerImpression(props.contractAddress, costPerImpression)
+        setCostPerImpression({
+          address: props.contractAddress as `0x${string}`,
+          abi: campaignAbi,
+          functionName: 'setCostPerImpression',
+          args: [parseUnits(String(costPerImpression), 18)]
+        })
       }
     }
   } catch (error) {
     addErrorToast('An error occurred while updating the costs. Please try again.')
     console.error('Error:', error)
-    isLoading.value = false
   }
 }
 
@@ -204,7 +220,3 @@ function updateValue(index: number, value: number) {
   emit('update:datas', updatedDatas)
 }
 </script>
-
-<style scoped>
-/* Add any custom styles if necessary */
-</style>

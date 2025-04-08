@@ -72,6 +72,7 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   bankAddress: string
 }>()
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
@@ -97,11 +98,27 @@ watch(contractAddress, async (newAddress) => {
   if (newAddress && team.value) {
     addSuccessToast(`Contract deployed successfully`)
     emit('closeAddCampaignModal')
-    await teamStore.addContractToTeam(team.value.id, newAddress, user.value.address)
+    await addContractToTeam(team.value.id, newAddress, user.value.address)
     await teamStore.fetchTeam(team.value.id)
   }
 })
 
+const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
+  try {
+    await useCustomFetch(`teams/contract/add`)
+      .post({
+        teamId,
+        contractAddress: address,
+        contractType: 'Campaign',
+        deployer
+      })
+      .json()
+    addSuccessToast(`Contract added to team  successfully`)
+  } catch (error) {
+    console.error(`Failed to add contract to team `, error)
+    addErrorToast('Failed to add contract to team')
+  }
+}
 // Trigger deployment
 const deployAdCampaign = async () => {
   if (!costPerClick.value || !costPerImpression.value) {
