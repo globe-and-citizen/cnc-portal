@@ -197,9 +197,9 @@ describe('ExpenseAccountTable', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountTable, {
       props: {
-        team: {
-          teamContracts: []
-        },
+        // team: {
+        //   teamContracts: []
+        // },
         ...props
       },
       data,
@@ -253,7 +253,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusEnabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('enabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -274,7 +273,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusDisabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('disabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -295,7 +293,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusExpiredInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('expired')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -311,14 +308,12 @@ describe('ExpenseAccountTable', () => {
 
     it('should show loading button if enabling approval', async () => {
       const wrapper = createComponent()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.contractOwnerAddress = '0xInitialUser'
       const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
       expect(statusDisabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusDisabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('disabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -330,7 +325,6 @@ describe('ExpenseAccountTable', () => {
       expect(disableButton.exists()).toBeTruthy()
       expect(disableButton.props('disabled')).toBe(false)
       disableButton.trigger('click')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isLoadingDeactivateApproval = true
       await flushPromises()
       expect(disableButton.props('loading')).toBe(true)
@@ -343,7 +337,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusEnabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('enabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -375,12 +368,9 @@ describe('ExpenseAccountTable', () => {
 
     it('should notify success if activate successful', async () => {
       const wrapper = createComponent()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingActivate = true
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingActivate = false
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmedActivate = { value: true }
       await flushPromises()
       expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
@@ -388,12 +378,9 @@ describe('ExpenseAccountTable', () => {
     })
     it('should notify success if activate successful', async () => {
       const wrapper = createComponent()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingDeativate = true
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingDeactivate = false
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmedDeactivate = { value: true }
       await flushPromises()
       expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
@@ -402,7 +389,6 @@ describe('ExpenseAccountTable', () => {
     it('should notify error if error deactivate approval', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
       await flushPromises()
       expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
@@ -411,7 +397,6 @@ describe('ExpenseAccountTable', () => {
     it('should notify error if error activate approval', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
       await flushPromises()
       expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
@@ -420,7 +405,6 @@ describe('ExpenseAccountTable', () => {
     it('should notify error if error getting owner', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
       await flushPromises()
       expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')

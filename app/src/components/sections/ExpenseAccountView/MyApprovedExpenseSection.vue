@@ -3,75 +3,66 @@
     <div v-if="expenseAccountEip712Address">
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
-      <section class="stat flex flex-col justify-start">
-        <!-- New Header -->
-
-        <div class="flex flex-col gap-8">
-          <div class="overflow-x-auto" data-test="approval-table">
-            <table class="table">
-              <!-- head -->
-              <thead class="text-sm font-bold">
-                <tr>
-                  <th>Expiry Date</th>
-                  <th>Max Amount Per Tx</th>
-                  <th>Total Transactions</th>
-                  <th>Total Transfers</th>
-                  <th class="flex justify-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ expiry }}</td>
-                  <td>
-                    {{ maxLimitAmountPerTx }}
-                    {{
-                      _expenseAccountData?.data &&
-                      tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress)
-                    }}
-                  </td>
-                  <td>{{ `${dynamicDisplayDataTx.value}/${maxLimitTxsPerPeriod}` }}</td>
-                  <td>{{ `${dynamicDisplayDataAmount.value}/${maxLimitAmountPerPeriod}` }}</td>
-                  <td class="flex justify-end" data-test="action-td">
-                    <ButtonUI
-                      variant="success"
-                      :disabled="!_expenseAccountData?.data || isDisapprovedAddress"
-                      v-if="true"
-                      @click="transferModal = true"
-                      data-test="transfer-button"
-                    >
-                      Spend
-                    </ButtonUI>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <ModalComponent v-model="transferModal">
-          <TransferForm
-            v-if="transferModal && _expenseAccountData?.data"
-            v-model="transferData"
-            :tokens="[
-              {
-                symbol: tokenSymbol(JSON.parse(_expenseAccountData?.data)?.tokenAddress),
-                balance:
-                  JSON.parse(_expenseAccountData?.data)?.tokenAddress === zeroAddress
-                    ? expenseBalanceFormatted
-                    : `${Number(usdcBalance) / 1e6}`
-              }
-            ]"
-            :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
-            service="Expense Account"
-            @transfer="
-              async (data) => {
-                await transferFromExpenseAccount(data.address.address, data.amount)
+      <!-- New Header -->
+      <TableComponent :rows="myApprovedExpenseRows" :columns="columns">
+        <template #action-data="{ row }">
+          <ButtonUI
+            variant="success"
+            :disabled="!expenseDataStore.myApprovedExpenses || isDisapprovedAddress"
+            v-if="true"
+            @click="
+              () => {
+                signatureToTransfer = row.signature
+                transferModal = true
               }
             "
-            @closeModal="() => (transferModal = false)"
-          />
-        </ModalComponent>
-      </section>
+            data-test="transfer-button"
+            >Spend</ButtonUI
+          >
+        </template>
+        <template #expiryDate="{ row }">
+          <span>{{ row.expiryDate }}</span>
+        </template>
+        <template #maxAmountPerTx="{ row }">
+          <span> {{ row.maxAmountPerTx }} {{ row.tokenSymbol }} </span>
+        </template>
+        <template #transactions="{ row }">
+          <span>{{ row.transactions }}</span>
+        </template>
+        <template #amountTransferred="{ row }">
+          <span>{{ row.amountTransferred }}</span>
+        </template>
+      </TableComponent>
+
+      <ModalComponent v-model="transferModal">
+        <TransferForm
+          v-if="transferModal && expenseDataStore.myApprovedExpenses"
+          v-model="transferData"
+          :tokens="[
+            {
+              symbol: tokenSymbol(
+                expenseDataStore.myApprovedExpenses.find(
+                  (item: ManyExpenseResponse) => item.signature === signatureToTransfer
+                )?.tokenAddress
+              ),
+              balance:
+                expenseDataStore.myApprovedExpenses.find(
+                  (item: ManyExpenseResponse) => item.signature === signatureToTransfer
+                )?.tokenAddress === zeroAddress
+                  ? expenseBalanceFormatted
+                  : `${Number(usdcBalance) / 1e6}`
+            }
+          ]"
+          :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
+          service="Expense Account"
+          @transfer="
+            async (data) => {
+              await transferFromExpenseAccount(data.address.address, data.amount)
+            }
+          "
+          @closeModal="() => (transferModal = false)"
+        />
+      </ModalComponent>
     </div>
   </CardComponent>
 </template>
@@ -79,14 +70,13 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team, BudgetLimit, BudgetData } from '@/types'
+import type { BudgetLimit, BudgetData, ManyExpenseResponse } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useUserDataStore, useToastStore } from '@/stores'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { parseError, log, tokenSymbol } from '@/utils'
+import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
+import { parseError, log, tokenSymbol, formatEtherUtil } from '@/utils'
 import {
   useReadContract,
   useWriteContract,
@@ -100,118 +90,118 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
+import { useExpenseAccountDataCollection } from '@/composables'
+import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useRoute } from 'vue-router'
+import { asyncComputed } from '@vueuse/core'
 //#endregion
 
-const { team } = defineProps<{
-  team: Team
-  isDisapprovedAddress: boolean
-}>()
 const reload = defineModel()
+
+const columns = [
+  {
+    key: 'expiryDate',
+    label: 'Expiry Date',
+    sortable: true
+  },
+  {
+    key: 'maxAmountPerTx',
+    label: 'Max Ammount Per Tx',
+    sortable: false
+  },
+  {
+    key: 'transactions',
+    label: 'Total Transactions',
+    sortable: false
+  },
+  {
+    key: 'amountTransferred',
+    label: 'Amount Transferred',
+    sortable: false
+  },
+  {
+    key: 'action',
+    label: 'Action',
+    sortable: false
+  }
+] as TableColumn[]
 
 //#region refs
 const transferModal = ref(false)
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
-const signatureHash = ref<string | null>(null)
+const signatureToTransfer = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
   token: { symbol: '', balance: '0' },
   amount: '0'
 })
+const isDisapprovedAddress = computed(
+  () =>
+    manyExpenseAccountDataAll.findIndex(
+      (item) =>
+        item.approvedAddress === currentUserAddress &&
+        (item.status === 'disabled' || item.status === 'expired')
+    ) !== -1
+)
 //#endregion
 
-const route = useRoute()
+const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
+const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
+const expenseDataStore = useExpenseDataStore()
+const route = useRoute()
 
-//#region useCustomFetch
-const {
-  error: fetchExpenseAccountDataError,
-  execute: fetchExpenseAccountData,
-  data: _expenseAccountData
-} = useCustomFetch(`teams/${String(route.params.id)}/expense-data`, {
-  immediate: false,
-  beforeFetch: async ({ options, url, cancel }) => {
-    options.headers = {
-      memberaddress: currentUserAddress,
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-    return { options, url, cancel }
-  }
-})
-  .get()
-  .json()
-
-//#endregion Computed Values
-
+//#region Computed Values
 const expenseAccountEip712Address = computed(
   () =>
-    team.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
-      ?.address as Address
+    teamStore.currentTeam?./* team.*/ teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
 )
 const expenseBalanceFormatted = computed(() => {
   if (typeof expenseAccountBalance.value?.value === 'bigint')
     return formatEther(expenseAccountBalance.value.value)
   else return '--'
 })
-const expiry = computed(() => {
-  if (_expenseAccountData.value?.data) {
-    const unixEpoch = JSON.parse(_expenseAccountData.value.data).expiry
-    const date = new Date(Number(unixEpoch) * 1000)
-    return date.toLocaleString('en-US')
-  } else {
-    return '--/--/--, --:--:--'
-  }
+
+const myApprovedExpenseRows = asyncComputed(async () => {
+  if (!expenseDataStore.myApprovedExpenses)
+    return [
+      {
+        expiryDate: '--/--/--, --:--:--',
+        maxAmountPerTx: '--',
+        transactions: `--`,
+        amountTransferred: `--`
+      }
+    ]
+  return await Promise.all(
+    expenseDataStore.myApprovedExpenses.map(async (item: ManyExpenseResponse) => {
+      const amountWithdrawn = await readContract(config, {
+        functionName: 'balances',
+        address: expenseAccountEip712Address.value,
+        abi: expenseAccountABI,
+        args: [keccak256(item.signature)]
+      })
+
+      return Array.isArray(amountWithdrawn)
+        ? {
+            expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
+            maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
+            transactions: `${amountWithdrawn[0]}/${item.budgetData[0].value}`,
+            amountTransferred: `${formatEtherUtil(amountWithdrawn[1], item.tokenAddress)}/${item.budgetData[1].value}`,
+            signature: item.signature,
+            tokenSymbol: tokenSymbol(item.tokenAddress)
+          }
+        : {
+            expiryDate: '--/--/--, --:--:--',
+            maxAmountPerTx: '--',
+            transactions: `--`,
+            amountTransferred: `--`
+          }
+    })
+  )
 })
-const maxLimit = (budgetType: number) =>
-  computed(() => {
-    const budgetData =
-      _expenseAccountData.value?.data &&
-      Array.isArray(JSON.parse(_expenseAccountData.value?.data).budgetData)
-        ? JSON.parse(_expenseAccountData.value?.data).budgetData.find(
-            (item: BudgetData) => item.budgetType === budgetType
-          )
-        : undefined
-    if (_expenseAccountData.value?.data && budgetData && budgetData.budgetType === budgetType)
-      return budgetData.value
-    else return '--'
-  })
-const maxLimitTxsPerPeriod = maxLimit(0)
-const maxLimitAmountPerPeriod = maxLimit(1)
-const maxLimitAmountPerTx = maxLimit(2)
-const dynamicDisplayData = (budgetType: number) =>
-  computed(() => {
-    const data = {}
-    if (
-      _expenseAccountData.value?.data &&
-      amountWithdrawn.value &&
-      Array.isArray(amountWithdrawn.value)
-    ) {
-      if (budgetType === 0) {
-        return {
-          ...data,
-          value: Number(amountWithdrawn.value[0])
-        }
-      } else {
-        const tokenAddress = JSON.parse(_expenseAccountData.value.data).tokenAddress
-        return {
-          ...data,
-          value:
-            tokenAddress === zeroAddress
-              ? formatEther(amountWithdrawn.value[1])
-              : Number(amountWithdrawn.value[1]) / 1e6
-        }
-      }
-    } else {
-      return {
-        ...data,
-        value: `--`
-      }
-    }
-  })
-const dynamicDisplayDataTx = dynamicDisplayData(0)
-const dynamicDisplayDataAmount = dynamicDisplayData(1)
 //#endregion
 
 //#region Composables
@@ -239,17 +229,6 @@ const {
   args: [expenseAccountEip712Address]
 })
 
-const {
-  data: amountWithdrawn,
-  refetch: executeGetAmountWithdrawn,
-  error: errorGetAmountWithdrawn
-} = useReadContract({
-  functionName: 'balances',
-  address: expenseAccountEip712Address,
-  abi: expenseAccountABI,
-  args: [signatureHash]
-})
-
 //expense account transfer
 const {
   writeContract: executeExpenseAccountTransfer,
@@ -274,19 +253,20 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 
 //#region Functions
 const init = async () => {
-  await fetchExpenseAccountData()
-  await getAmountWithdrawnBalance()
   await fetchUsdcBalance()
   await fetchExpenseAccountBalance()
+  await initializeBalances()
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
   tokenRecipient.value = to
 
-  if (expenseAccountEip712Address.value && _expenseAccountData.value.data) {
-    const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+  const budgetLimit = expenseDataStore.myApprovedExpenses.find(
+    (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
+  )
 
+  if (expenseAccountEip712Address.value && expenseDataStore.myApprovedExpenses) {
     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
   }
@@ -310,7 +290,7 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
                 : BigInt(Number(item.value) * 1e6)
         }))
       },
-      _expenseAccountData.value.signature
+      signatureToTransfer.value
     ],
     abi: expenseAccountABI,
     functionName: 'transfer'
@@ -323,7 +303,7 @@ const transferErc20Token = async () => {
     !expenseAccountEip712Address.value ||
     !tokenAmount.value ||
     !tokenRecipient.value ||
-    !_expenseAccountData.value?.data
+    !expenseDataStore.myApprovedExpenses
   )
     return
 
@@ -332,7 +312,9 @@ const transferErc20Token = async () => {
   transferERC20loading.value = true
   const _amount = BigInt(Number(tokenAmount.value) * 1e6)
 
-  const budgetLimit: BudgetLimit = JSON.parse(_expenseAccountData.value.data)
+  const budgetLimit = expenseDataStore.myApprovedExpenses.find(
+    (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
+  )
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
@@ -359,22 +341,14 @@ const transferErc20Token = async () => {
         _amount,
         {
           ...budgetLimit,
-          budgetData: budgetLimit.budgetData.map((item) => ({
+          budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
             ...item,
             value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
           }))
         },
-        _expenseAccountData.value.signature
+        signatureToTransfer.value
       ]
     })
-  }
-}
-
-const getAmountWithdrawnBalance = async () => {
-  if (expenseAccountEip712Address.value) {
-    if (!_expenseAccountData?.value?.data) return
-    signatureHash.value = keccak256(_expenseAccountData.value.signature)
-    await executeGetAmountWithdrawn()
   }
 }
 //#endregion
@@ -387,17 +361,13 @@ watch(reload, async (newState) => {
 })
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
-    reload.value = true
     addSuccessToast('Transfer Successful')
     await init()
     transferModal.value = false
-    reload.value = false
-  }
-})
-watch(errorGetAmountWithdrawn, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to fetch amount withdrawn')
+    transferERC20loading.value = false
+    await expenseDataStore.fetchAllExpenseData(
+      Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+    )
   }
 })
 watch(errorTransfer, (newVal) => {
@@ -419,9 +389,6 @@ watch(approveError, () => {
     log.error(parseError(approveError.value))
     addErrorToast('Failed to approve token spending')
   }
-})
-watch(fetchExpenseAccountDataError, (newVal) => {
-  if (newVal) addErrorToast('Error fetching expense account data')
 })
 watch(isErrorExpenseAccountBalance, (newVal) => {
   if (newVal) {

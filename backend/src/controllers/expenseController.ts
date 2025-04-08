@@ -44,7 +44,7 @@ export const addExpense = async (req: Request, res: Response) => {
       data: {
         teamId,
         signature,
-        data,
+        data: JSON.stringify(data),
         userAddress: callerAddress,
         status: "signed",
       },
@@ -82,6 +82,8 @@ export const getExpenses = async (req: Request, res: Response) => {
     // });
 
     const expenses = await syncExpenseStatus(teamId);
+    console.log("Fetched expenses for teamId:", teamId);
+    console.log("Fetched expenses:", expenses);
     console.log("Fetched expenses for teamId:", teamId);
     console.log("Fetched expenses:", expenses);
     return res.status(200).json(expenses);

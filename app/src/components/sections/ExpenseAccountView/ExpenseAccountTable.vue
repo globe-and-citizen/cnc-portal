@@ -101,18 +101,18 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team } from '@/types'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useExpenseAccountDataCollection } from '@/composables'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 
-const { team /*, reload*/ } = defineProps<{
-  team: Partial<Team>
-}>()
+// const { team /*, reload*/ } = defineProps<{
+//   team: Partial<Team>
+// }>()
 const reload = defineModel()
+const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
@@ -121,8 +121,11 @@ const signatureToUpdate = ref('')
 
 const expenseAccountEip712Address = computed(
   () =>
-    team.teamContracts?.find((contract) => contract.type === 'ExpenseAccountEIP712')
-      ?.address as Address
+    teamStore.currentTeam?.teamContracts?.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
+  // team.teamContracts?.find((contract) => contract.type === 'ExpenseAccountEIP712')
+  //   ?.address as Address
 )
 const columns = [
   {

@@ -47,11 +47,67 @@ const mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
 }))
 
+const DATE = '2024-02-02T12:00:00Z'
+const budgetData = {
+  txsPerPeriod: 1,
+  amountPerPeriod: 100,
+  amountPerTransaction: 20
+}
+
+const mockExpenseData = [
+  {
+    approvedAddress: `0x0123456789012345678901234567890123456789`,
+    name: 'John Doe',
+    budgetData: [
+      { budgetType: 0, value: budgetData.txsPerPeriod },
+      { budgetType: 1, value: budgetData.amountPerPeriod },
+      { budgetType: 2, value: budgetData.amountPerTransaction }
+    ],
+    expiry: Math.floor(new Date(DATE).getTime() / 1000),
+    signature: '0xSignature',
+    tokenAddress: viem.zeroAddress
+  },
+  {
+    approvedAddress: `0xabcdef1234abcdef1234abcdef1234abcdef1234`,
+    budgetData: [
+      { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
+      { budgetType: 1, value: budgetData.amountPerPeriod * 2 },
+      { budgetType: 2, value: budgetData.amountPerTransaction * 2 }
+    ],
+    expiry: Math.floor(new Date(DATE).getTime() / 1000),
+    signature: '0xAnotherSignature',
+    tokenAddress: USDC_ADDRESS
+  }
+]
+
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
     useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast })),
+    useTeamStore: vi.fn(() => ({
+      currentTeam: {
+        id: '1',
+        name: 'Team Name',
+        description: 'Team Description',
+        members: [],
+        teamContracts: [
+          {
+            address: '0xcontractaddress',
+            admins: [],
+            type: 'ExpenseAccountEIP712',
+            deployer: '0xdeployeraddress'
+          }
+        ],
+        ownerAddress: '0xOwner'
+      }
+    })),
+    useExpenseDataStore: vi.fn(() => ({
+      expenseData: {
+        data: JSON.stringify(mockExpenseData[0]),
+        signature: mockExpenseData[0].signature
+      }
+    })),
     useCryptoPrice: vi.fn(),
     useCurrencyStore: vi.fn(() => ({
       currency: {
@@ -181,39 +237,6 @@ const mockUseCustomFetch = {
   data: ref<unknown>()
 }
 
-const DATE = '2024-02-02T12:00:00Z'
-const budgetData = {
-  txsPerPeriod: 1,
-  amountPerPeriod: 100,
-  amountPerTransaction: 20
-}
-
-const mockExpenseData = [
-  {
-    approvedAddress: `0x0123456789012345678901234567890123456789`,
-    name: 'John Doe',
-    budgetData: [
-      { budgetType: 0, value: budgetData.txsPerPeriod },
-      { budgetType: 1, value: budgetData.amountPerPeriod },
-      { budgetType: 2, value: budgetData.amountPerTransaction }
-    ],
-    expiry: Math.floor(new Date(DATE).getTime() / 1000),
-    signature: '0xSignature',
-    tokenAddress: viem.zeroAddress
-  },
-  {
-    approvedAddress: `0xabcdef1234abcdef1234abcdef1234abcdef1234`,
-    budgetData: [
-      { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
-      { budgetType: 1, value: budgetData.amountPerPeriod * 2 },
-      { budgetType: 2, value: budgetData.amountPerTransaction * 2 }
-    ],
-    expiry: Math.floor(new Date(DATE).getTime() / 1000),
-    signature: '0xAnotherSignature',
-    tokenAddress: USDC_ADDRESS
-  }
-]
-
 vi.mock('@/composables/useCustomFetch', () => {
   return {
     useCustomFetch: vi.fn((url, options) => {
@@ -273,7 +296,6 @@ describe('ExpenseAccountSection', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
-        // @ts-expect-error: not declared in test interface but available in component
         team: {
           id: '1',
           name: 'Team Name',
@@ -313,17 +335,6 @@ describe('ExpenseAccountSection', () => {
       const wrapper = createComponent()
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
       wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
-      wrapperVm.team = {
-        teamContracts: [
-          {
-            address: '0xcontractaddress',
-            admins: [],
-            type: 'ExpenseAccountEIP712',
-            deployer: '0xdeployeraddress'
-          }
-        ],
-        ownerAddress: '0xOwner'
-      }
       await flushPromises()
 
       const approvalTable = wrapper.find('[data-test="approval-table"]')
@@ -368,17 +379,18 @@ describe('ExpenseAccountSection', () => {
       const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
       wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
       mocks.mockReadContract.mockImplementation(() => [0, 1 * 10 ** 18, 2])
-      wrapperVm.team = {
-        teamContracts: [
-          {
-            address: '0xcontractaddress',
-            admins: [],
-            type: 'ExpenseAccountEIP712',
-            deployer: '0xdeployeraddress'
-          }
-        ],
-        ownerAddress: '0xOwner'
-      }
+
+      // wrapperVm.team = {
+      //   teamContracts: [
+      //     {
+      //       address: '0xcontractaddress',
+      //       admins: [],
+      //       type: 'ExpenseAccountEIP712',
+      //       deployer: '0xdeployeraddress'
+      //     }
+      //   ],
+      //   ownerAddress: '0xOwner'
+      // }
       await flushPromises()
 
       const approvalTable = wrapper.find('[data-test="approval-table"]')
