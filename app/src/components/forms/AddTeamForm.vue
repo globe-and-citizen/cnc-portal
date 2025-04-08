@@ -278,6 +278,7 @@ const saveTeamToDatabase = async () => {
     log.error('Failed to create team', createTeamError.value)
     return
   }
+  teamStore.teamsMeta.reloadTeams()
   addSuccessToast('Team created successfully')
   // Move to next step only after successful team creation
   nextStep()

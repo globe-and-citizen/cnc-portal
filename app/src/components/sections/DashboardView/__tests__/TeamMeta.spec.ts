@@ -5,6 +5,7 @@ import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { setActivePinia, createPinia } from 'pinia'
+import type { Team } from '@/types/team'
 
 interface ComponentData {
   updateTeamInput: {
@@ -13,10 +14,15 @@ interface ComponentData {
   }
   showDeleteTeamConfirmModal: boolean
 }
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(),
-  useRouter: vi.fn()
-}))
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRoute: vi.fn(),
+    useRouter: vi.fn()
+  }
+})
 
 vi.mock('@/stores/useToastStore', () => ({
   useToastStore: vi.fn()
@@ -25,11 +31,20 @@ vi.mock('@/stores/useToastStore', () => ({
 describe('TeamMeta.vue ', () => {
   let wrapper: ReturnType<typeof mount>
 
-  const teamMock = {
+  const teamMock: Team = {
     id: '1',
     name: 'Team',
     description: 'Description',
-    members: [{ name: 'Alice', address: '0x8238923' }]
+    members: [
+      {
+        name: 'Alice',
+        address: '0x8238923',
+        id: '',
+        teamId: 0
+      }
+    ],
+    ownerAddress: '0xOwnerAddress',
+    teamContracts: []
   }
 
   const mockRoute = {
