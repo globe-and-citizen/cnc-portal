@@ -6,11 +6,8 @@
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
-              <span
-                class="loading loading-spinner loading-lg"
-                v-if="balanceLoading || isLoadingUsdcBalance"
-              ></span>
-              <span v-else>{{ totalValueUSD }}</span>
+              <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
+              <span v-else>{{ balances.totalValueUSD }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
@@ -73,8 +70,8 @@
         v-if="transferModal"
         v-model="transferData"
         :tokens="[
-          { symbol: NETWORK.currencySymbol, balance: teamBalance?.formatted || '0' },
-          { symbol: 'USDC', balance: formattedUsdcBalance || '0' }
+          { symbol: NETWORK.currencySymbol, balance: balances.nativeToken.formatted || '0' },
+          { symbol: 'USDC', balance: balances.usdc.formatted || '0' }
         ]"
         :loading="transferLoading || isConfirmingTransfer"
         service="Bank"
@@ -91,19 +88,11 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import {
-  useBalance,
-  useReadContract,
-  useChainId,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-  useWriteContract
-} from '@wagmi/vue'
+import { useSendTransaction, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useToastStore } from '@/stores/useToastStore'
-import { log, parseError } from '@/utils'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
@@ -114,6 +103,7 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther } from 'viem'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
+import { useContractBalance } from '@/composables/useContractBalance'
 
 const props = defineProps<{
   bankAddress: Address | undefined
@@ -127,9 +117,11 @@ const emit = defineEmits<{
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const currencyStore = useCurrencyStore()
-const { price: usdcPrice, priceInUSD: usdcInUSD } = useCryptoPrice('usd-coin')
+const { price: usdcPrice } = useCryptoPrice('usd-coin')
 const currentAddress = userDataStore.address
-const chainId = useChainId()
+
+// Use the contract balance composable
+const { balances, isLoading, error, refetch } = useContractBalance(props.bankAddress)
 
 // Add refs for modals and form data
 const depositModal = ref(false)
@@ -176,30 +168,6 @@ const {
 
 const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
   hash: approveHash
-})
-
-// Balance fetching
-const {
-  data: teamBalance,
-  isLoading: balanceLoading,
-  error: balanceError,
-  refetch: fetchBalance
-} = useBalance({
-  address: props.bankAddress,
-  chainId
-})
-
-// USDC Balance
-const {
-  data: usdcBalance,
-  isLoading: isLoadingUsdcBalance,
-  refetch: fetchUsdcBalance,
-  error: usdcBalanceError
-} = useReadContract({
-  address: USDC_ADDRESS as Address,
-  abi: ERC20ABI,
-  functionName: 'balanceOf',
-  args: [props.bankAddress as Address]
 })
 
 // Functions
@@ -285,10 +253,6 @@ const handleTransfer = async (data: {
 }
 
 // Computed properties
-const formattedUsdcBalance = computed(() =>
-  usdcBalance.value ? (Number(usdcBalance.value) / 1e6).toString() : '0'
-)
-
 const loadingText = computed(() => {
   if (isPendingApprove.value) return 'Approving USDC...'
   if (isConfirmingApprove.value) return 'Confirming USDC approval...'
@@ -299,46 +263,21 @@ const loadingText = computed(() => {
   return 'Processing...'
 })
 
-const totalValueUSD = computed(() => {
-  const ethValue = teamBalance.value
-    ? Number(teamBalance.value.formatted) * (currencyStore.nativeTokenPriceInUSD || 0)
-    : 0
-  const usdcValue = Number(formattedUsdcBalance.value) * (usdcInUSD.value || 0)
-  return (ethValue + usdcValue).toFixed(2)
-})
-
 const totalValueLocal = computed(() => {
-  const usdValue = Number(totalValueUSD.value)
+  const usdValue = Number(balances.totalValueUSD)
   return (usdValue * (usdcPrice.value || 0)).toFixed(2)
 })
 
 // Watch handlers
-watch(balanceError, () => {
-  if (balanceError.value) {
-    addErrorToast('Failed to fetch team balance')
-    log.error('Failed to fetch team balance:', parseError(balanceError.value))
-    emit('error')
-  }
-})
-
-watch([teamBalance, usdcBalance], () => {
+watch([() => balances.nativeToken.formatted, () => balances.usdc.formatted], () => {
   emit('balance-updated')
 })
-
-watch(
-  () => props.bankAddress,
-  async (newAddress) => {
-    if (newAddress) {
-      await Promise.all([fetchBalance(), fetchUsdcBalance()])
-    }
-  }
-)
 
 watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('ETH deposited successfully')
     depositModal.value = false
-    fetchBalance()
+    refetch()
   }
 })
 
@@ -346,7 +285,7 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
     transferModal.value = false
-    Promise.all([fetchBalance(), fetchUsdcBalance()])
+    refetch()
   }
 })
 
@@ -354,7 +293,7 @@ watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('USDC deposited successfully')
     depositModal.value = false
-    fetchUsdcBalance()
+    refetch()
     depositAmount.value = '' // Clear stored amount
   }
 })
@@ -370,11 +309,8 @@ watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
 
 // Expose methods and data for parent component
 defineExpose({
-  teamBalance,
-  formattedUsdcBalance,
-  balanceError,
-  usdcBalanceError,
-  fetchBalance,
-  fetchUsdcBalance
+  balances,
+  error,
+  refetch
 })
 </script>
