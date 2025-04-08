@@ -6,7 +6,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
-import TransferForm from '@/components/forms/TransferForm.vue'
+// import TransferForm from '@/components/forms/TransferForm.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
@@ -450,41 +450,6 @@ describe('ExpenseAccountSection', () => {
 
       const button = wrapper.find('[data-test="transfer-button"]')
       expect(button.exists()).toBeTruthy()
-    })
-    it.skip('should show transfer modal', async () => {
-      const wrapper = createComponent({
-        global: {
-          plugins: [
-            createTestingPinia({
-              createSpy: vi.fn,
-              initialState: {
-                user: { address: '0xContractOwner' }
-              }
-            })
-          ]
-        }
-      })
-
-      const wrapperVm = wrapper.vm as unknown as ComponentData
-      wrapperVm.team = {
-        teamContracts: [
-          {
-            type: 'ExpenseAccountEIP712',
-            address: '0xExpenseAccount',
-            deployer: '0xDeployerAddress',
-            admins: []
-          }
-        ],
-        ownerAddress: '0xOwner'
-      }
-
-      await wrapper.vm.$nextTick()
-
-      const transferButton = wrapper.find('[data-test="transfer-button"]')
-
-      await transferButton.trigger('click')
-      await wrapper.vm.$nextTick()
-      wrapper.findComponent(TransferForm)
     })
     it('should hide approve user form if not owner', async () => {
       const wrapper = createComponent()
