@@ -168,9 +168,12 @@ const {
   isFetching: memberIsDeleting,
   statusCode: deleteMemberStatusCode,
   execute: executeDeleteMember
-} = useCustomFetch(computed(() => `teams/${props.teamId}/member/${props.member.address}`), {
-  immediate: false
-})
+} = useCustomFetch(
+  computed(() => `teams/${props.teamId}/member/${props.member.address}`),
+  {
+    immediate: false
+  }
+)
   .delete()
   .json()
 

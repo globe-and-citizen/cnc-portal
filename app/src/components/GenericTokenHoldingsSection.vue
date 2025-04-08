@@ -10,7 +10,7 @@
         isLoading
       "
       :columns="[
-        { key: 'rank', label: 'RANK'},
+        { key: 'rank', label: 'RANK' },
         { key: 'token', label: 'Token', sortable: true, class: 'min-w-32' },
         { key: 'amount', label: 'Amount', sortable: true, class: 'min-w-32' },
         { key: 'price', label: 'Coin Price', sortable: true, class: 'min-w-40' },
