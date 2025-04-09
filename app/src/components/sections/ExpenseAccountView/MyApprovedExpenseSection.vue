@@ -20,17 +20,17 @@
             >Spend</ButtonUI
           >
         </template>
-        <template #expiryDate="{ row }">
-          <span>{{ row.expiryDate }}</span>
+        <template #expiryDate-data="{ row }">
+          <span>{{ new Date(Number(row.expiry) * 1000).toLocaleString('en-US') }}</span>
         </template>
-        <template #maxAmountPerTx="{ row }">
-          <span> {{ row.maxAmountPerTx }} {{ row.tokenSymbol }} </span>
+        <template #maxAmountPerTx-data="{ row }">
+          <span> {{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }} </span>
         </template>
-        <template #transactions="{ row }">
-          <span>{{ row.transactions }}</span>
+        <template #transactions-data="{ row }">
+          <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }}</span>
         </template>
-        <template #amountTransferred="{ row }">
-          <span>{{ row.amountTransferred }}</span>
+        <template #amountTransferred-data="{ row }">
+          <span>{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}</span>
         </template>
       </TableComponent>
 
@@ -76,7 +76,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
-import { parseError, log, tokenSymbol, formatEtherUtil } from '@/utils'
+import { parseError, log, tokenSymbol } from '@/utils'
 import {
   useReadContract,
   useWriteContract,
@@ -85,14 +85,13 @@ import {
   useBalance
 } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, keccak256, zeroAddress } from 'viem'
+import { type Address, formatEther, parseEther, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useRoute } from 'vue-router'
-import { asyncComputed } from '@vueuse/core'
 //#endregion
 
 const reload = defineModel()
@@ -153,7 +152,7 @@ const route = useRoute()
 //#region Computed Values
 const expenseAccountEip712Address = computed(
   () =>
-    teamStore.currentTeam?./* team.*/ teamContracts.find(
+    teamStore.currentTeam?.teamContracts.find(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
 )
@@ -163,43 +162,11 @@ const expenseBalanceFormatted = computed(() => {
   else return '--'
 })
 
-const myApprovedExpenseRows = asyncComputed(async () => {
-  if (!expenseDataStore.myApprovedExpenses)
-    return [
-      {
-        expiryDate: '--/--/--, --:--:--',
-        maxAmountPerTx: '--',
-        transactions: `--`,
-        amountTransferred: `--`
-      }
-    ]
-  return await Promise.all(
-    expenseDataStore.myApprovedExpenses.map(async (item: ManyExpenseResponse) => {
-      const amountWithdrawn = await readContract(config, {
-        functionName: 'balances',
-        address: expenseAccountEip712Address.value,
-        abi: expenseAccountABI,
-        args: [keccak256(item.signature)]
-      })
-
-      return Array.isArray(amountWithdrawn)
-        ? {
-            expiryDate: new Date(Number(item.expiry) * 1000).toLocaleString('en-US'),
-            maxAmountPerTx: `${item.budgetData[2].value} ${tokenSymbol(item.tokenAddress)}`,
-            transactions: `${amountWithdrawn[0]}/${item.budgetData[0].value}`,
-            amountTransferred: `${formatEtherUtil(amountWithdrawn[1], item.tokenAddress)}/${item.budgetData[1].value}`,
-            signature: item.signature,
-            tokenSymbol: tokenSymbol(item.tokenAddress)
-          }
-        : {
-            expiryDate: '--/--/--, --:--:--',
-            maxAmountPerTx: '--',
-            transactions: `--`,
-            amountTransferred: `--`
-          }
-    })
+const myApprovedExpenseRows = computed(() =>
+  expenseDataStore.allExpenseDataParsed.filter(
+    (approval: ManyExpenseWithBalances) => approval.approvedAddress === currentUserAddress
   )
-})
+)
 //#endregion
 
 //#region Composables
@@ -351,6 +318,11 @@ const transferErc20Token = async () => {
 //#endregion
 
 //#region Watch
+watch(myApprovedExpenseRows, (newVal) => {
+  if (newVal.length > 0) {
+    console.log('My Approved Expense:', newVal)
+  }
+})
 watch(reload, async (newState) => {
   if (newState) {
     await init()
