@@ -2,7 +2,6 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore } from '@/stores'
 import type { ManyExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
-import exp from 'constants'
 import { defineStore } from 'pinia'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -80,7 +79,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
   // Todo count how many time it's called or mounted
   onMounted(async () => {
     await reloadExpenseData()
-    console.log("allExpenseData", allExpenseData.value)
+    console.log('allExpenseData', allExpenseData.value)
   })
 
   return {

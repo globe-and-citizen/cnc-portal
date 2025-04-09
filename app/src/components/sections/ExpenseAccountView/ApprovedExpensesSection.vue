@@ -67,13 +67,8 @@ const expenseAccountEip712Address = computed(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
 )
-const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.id}/expense-data`, {
-  immediate: false
-})
-  .post(expenseAccountData)
-  .json()
 
-const { execute: _executeAddExpenseData } = useCustomFetch(`expense`, {
+const { execute: executeAddExpenseData } = useCustomFetch(`expense`, {
   immediate: false
 })
   .post(expenseAccountData)
@@ -150,7 +145,7 @@ const approveUser = async (data: BudgetLimit) => {
     signature: signature.value,
     teamId: route.params.id
   }
-  await _executeAddExpenseData()
+  await executeAddExpenseData()
   reload.value = true
   await init()
   loadingApprove.value = false

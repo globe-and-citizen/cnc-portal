@@ -14,11 +14,7 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent
-      :rows="filteredApprovals"
-      :columns="columns"
-      :loading="isLoadingExpensewAccountData"
-    >
+    <TableComponent :rows="filteredApprovals" :columns="columns">
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
@@ -102,13 +98,12 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
-import { useExpenseAccountDataCollection } from '@/composables'
 import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import type { ManyExpenseWithBalances } from '@/types'
-import { useRoute } from 'vue-router' 
+import { useRoute } from 'vue-router'
 
 // const { team /*, reload*/ } = defineProps<{
 //   team: Partial<Team>
@@ -170,11 +165,6 @@ const columns = [
 
 //#endregion Composables
 const {
-  data: manyExpenseAccountDataAll,
-  isLoading: isLoadingExpensewAccountData,
-  initializeBalances
-} = useExpenseAccountDataCollection()
-const {
   data: contractOwnerAddress,
   refetch: fetchExpenseAccountOwner,
   error: errorGetOwner
@@ -212,11 +202,11 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return expenseDataStore.allExpenseDataParsed//manyExpenseAccountDataAll
+    return expenseDataStore.allExpenseDataParsed //manyExpenseAccountDataAll
   } else {
-    return /*manyExpenseAccountDataAll*/expenseDataStore
-      .allExpenseDataParsed
-      .filter((approval: ManyExpenseWithBalances) => approval.status === selectedRadio.value)
+    return /*manyExpenseAccountDataAll*/ expenseDataStore.allExpenseDataParsed.filter(
+      (approval: ManyExpenseWithBalances) => approval.status === selectedRadio.value
+    )
   }
 })
 
@@ -249,7 +239,6 @@ const activateApproval = async (signature: `0x{string}`) => {
 watch(reload, async (newState) => {
   if (newState) {
     await fetchExpenseAccountOwner()
-    await initializeBalances()
   }
 })
 // watch(
@@ -301,6 +290,5 @@ watch(errorGetOwner, (newVal) => {
 
 onMounted(async () => {
   await fetchExpenseAccountOwner()
-  await initializeBalances()
 })
 </script>

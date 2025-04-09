@@ -90,7 +90,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { useExpenseAccountDataCollection } from '@/composables'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useRoute } from 'vue-router'
 import { asyncComputed } from '@vueuse/core'
@@ -148,7 +147,6 @@ const isDisapprovedAddress = computed(
 
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
-const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
 const expenseDataStore = useExpenseDataStore()
 const route = useRoute()
 
@@ -255,7 +253,6 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 const init = async () => {
   await fetchUsdcBalance()
   await fetchExpenseAccountBalance()
-  await initializeBalances()
 }
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
