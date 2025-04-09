@@ -108,6 +108,7 @@ import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import type { ManyExpenseWithBalances } from '@/types'
+import { useRoute } from 'vue-router' 
 
 // const { team /*, reload*/ } = defineProps<{
 //   team: Partial<Team>
@@ -117,6 +118,7 @@ const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const expenseDataStore = useExpenseDataStore()
+const route = useRoute()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
@@ -263,7 +265,8 @@ watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
     reload.value = true
     addSuccessToast('Activate Successful')
-    await initializeBalances()
+    // await initializeBalances()
+    expenseDataStore.fetchAllExpenseData(route.params.id as string)
     reload.value = false
   }
 })
@@ -271,7 +274,8 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
     reload.value = true
     addSuccessToast('Deactivate Successful')
-    await initializeBalances()
+    // await initializeBalances()
+    expenseDataStore.fetchAllExpenseData(route.params.id as string)
     reload.value = false
   }
 })
