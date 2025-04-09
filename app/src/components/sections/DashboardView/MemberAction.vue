@@ -98,7 +98,10 @@
         </div>
       </div>
       <div v-if="addMemberWageDataError" data-test="error-state">
-        <div class="alert alert-warning" v-if="addMemberWageDataStatusCode === 403 || addMemberWageDataStatusCode === 404">
+        <div
+          class="alert alert-warning"
+          v-if="addMemberWageDataStatusCode === 403 || addMemberWageDataStatusCode === 404"
+        >
           {{ addMemberWageDataError.message }}
         </div>
         <div class="alert" v-else>Error! Something went wrong</div>

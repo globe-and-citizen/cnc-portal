@@ -153,8 +153,6 @@ describe('MemberAction', () => {
   })
 
   it('should render the component and test set wage feature', async () => {
-
-
     expect(wrapper.exists()).toBe(true)
     // click the set wage button
     expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
