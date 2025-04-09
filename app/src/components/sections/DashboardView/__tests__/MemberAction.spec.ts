@@ -5,7 +5,7 @@ import type { Team } from '@/types/team'
 import { createTestingPinia } from '@pinia/testing'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { ref } from 'vue'
 
 // 1. Create the reactive refs you want to control
 const mockPutError = ref<string | null>(null)
