@@ -3,7 +3,7 @@
     <div tabindex="0" role="button" class="">
       <div class="btn btn-ghost btn-circle m-1" data-test="notifications">
         <div class="indicator">
-          <BellIcon class="size-6" />
+          <IconComponent icon="heroicons:bell" class="size-6" />
           <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
         </div>
       </div>
@@ -39,7 +39,7 @@
           :class="currentPage === 1 ? 'btn-disabled' : ''"
           @click="currentPage > 1 ? currentPage-- : currentPage"
         >
-          <ChevronLeftIcon class="size-6" />
+          <IconComponent icon="heroicons:chevron-left" class="size-6" />
         </ButtonUI>
         <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
         <ButtonUI
@@ -49,7 +49,7 @@
           :class="currentPage == totalPages ? 'btn-disabled' : ''"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
         >
-          <ChevronRightIcon class="size-6" />
+          <IconComponent icon="heroicons:chevron-right" class="size-6" />
         </ButtonUI>
       </div>
     </ul>
@@ -64,10 +64,7 @@ import { log, parseError } from '@/utils'
 import { type Address, parseEther } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-
-import { BellIcon } from '@heroicons/vue/24/outline'
-import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
-import { ChevronRightIcon } from '@heroicons/vue/24/outline'
+import IconComponent from './IconComponent.vue'
 import ButtonUI from './ButtonUI.vue'
 
 const currentPage = ref(1)
