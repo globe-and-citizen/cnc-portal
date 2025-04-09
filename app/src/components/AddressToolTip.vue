@@ -21,17 +21,20 @@
       "
       v-if="isSupported"
     >
-      <ClipboardDocumentListIcon class="size-5 cursor-pointer" v-if="!copied" />
-      <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
+      <IconComponent
+        :icon="copied ? 'heroicons:clipboard-document-check' : 'heroicons:clipboard-document-list'"
+        class="size-5 cursor-pointer"
+      />
     </ToolTip>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import ToolTip from './ToolTip.vue'
+import IconComponent from '@/components/IconComponent.vue'
+
 const { type } = defineProps<{
   address: string
   slice?: boolean
