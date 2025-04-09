@@ -1,10 +1,8 @@
 import { Request, Response } from "express";
-
-import { Address, isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
-import { addNotification, prisma } from "../utils";
-import { Prisma, Claim, User, Wage } from "@prisma/client";
-import { isUserMemberOfTeam, isOwnerOfTeam } from "./wageController";
+import { prisma } from "../utils";
+import { Prisma, Claim } from "@prisma/client";
+import { isUserMemberOfTeam } from "./wageController";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked"> & { teamId: string };
 export const addClaim = async (req: Request, res: Response) => {
@@ -229,6 +227,56 @@ export const updateClaim = async (req: Request, res: Response) => {
       data,
     });
     return res.status(200).json(updatedClaim);
+  } catch (error) {
+    console.log("Error: ", error);
+    return errorResponse(500, "Internal server error", res);
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+export const monthlyPendingClaims = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address;
+  const teamId = Number(req.query.teamId);
+
+  try {
+    // Validate teamId
+    if (isNaN(teamId)) {
+      return errorResponse(400, "Invalid or missing teamId", res);
+    }
+
+    // Check if the user is a member of the provided team
+    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
+      return errorResponse(403, "Caller is not a member of the team", res);
+    }
+
+    var date = new Date();
+    var firstDayOfCurrentMonth = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      1
+    );
+    var lastDayOfCurrentMonth = new Date(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      0
+    );
+    const [result] = await prisma.$queryRaw<
+      {
+        totalAmount: number;
+      }[]
+    >` SELECT SUM("claims"."hoursWorked" * "wages"."tokenRatePerHour") AS "totalAmount"
+          FROM "Claim" AS "claims"
+        JOIN "Wage" AS "wages" ON "claims"."wageId" = "wages"."id"
+        WHERE "claims"."status" = 'pending'
+        AND "wages"."teamId" = ${teamId}
+        AND "claims"."updatedAt" >= ${firstDayOfCurrentMonth}
+        AND "claims"."updatedAt" <= ${lastDayOfCurrentMonth}
+        GROUP BY "wages"."teamId";`;
+
+    return res.status(200).json({
+      totalAmount: result?.totalAmount ?? 0,
+    });
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);

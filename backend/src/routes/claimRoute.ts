@@ -2,6 +2,7 @@ import express from "express";
 import {
   addClaim,
   getClaims,
+  monthlyPendingClaims,
   updateClaim,
 } from "../controllers/claimController";
 
@@ -210,5 +211,7 @@ claimRoutes.get("/", getClaims);
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 claimRoutes.put("/:claimId", updateClaim);
+
+claimRoutes.get("/monthly-pending-claims", monthlyPendingClaims);
 
 export default claimRoutes;
