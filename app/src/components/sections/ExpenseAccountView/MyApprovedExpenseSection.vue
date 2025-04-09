@@ -317,12 +317,7 @@ const transferErc20Token = async () => {
 }
 //#endregion
 
-//#region Watch
-watch(myApprovedExpenseRows, (newVal) => {
-  if (newVal.length > 0) {
-    console.log('My Approved Expense:', newVal)
-  }
-})
+//#region Watchers
 watch(reload, async (newState) => {
   if (newState) {
     await init()
