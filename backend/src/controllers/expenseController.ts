@@ -10,6 +10,7 @@ import publicClient from "../utils/viem.config";
 import { Expense, Prisma } from "@prisma/client";
 import ABI from "../artifacts/expense-account-eip712.json";
 import { BudgetLimit } from '../types'
+import exp from "constants";
 
 // type expenseBodyRequest = Pick<Expens
 type expenseBodyRequest = Pick<Expense, "signature" | "data"> & {
@@ -101,8 +102,10 @@ export const getExpenses = async (req: Request, res: Response) => {
       where: { teamId },
     });
 
-    const _expenses = await Promise.all(expenses.map(async (expense) => 
-      await syncExpenseStatus(expense)
+    const _expenses = await Promise.all(
+      expenses
+        .filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
+        .map(async (expense) => await syncExpenseStatus(expense)
     ))
     // TODO: for each expense, check the status and update it
     // expenses.forEach(async (expense) => {
@@ -153,7 +156,9 @@ const syncExpenseStatus = async (expense: Expense) => {
     ? `${formatEther(balances[1])}`
     : `${Number(balances[1]) / 1e6}`
 
-  const isLimitReached = data.budgetData[1].value <= amountTransferred
+  const isLimitReached = 
+    (data.budgetData[1].value <= amountTransferred) ||
+    (data.budgetData[0].value <= Number(balances[0]))
 
   const formattedExpense = {
     ...expense,
