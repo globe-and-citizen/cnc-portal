@@ -7,12 +7,12 @@
       <p class="min-w-max font-semibold">{{ team.name }}</p>
       <p class="min-w-max text-slate-400">{{ team._count.members }} Team Members</p>
     </div>
-    <CheckIcon class="size-6" v-if="isSelected" />
+    <IconComponent icon="heroicons-solid:check" class="size-6" v-if="isSelected" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { CheckIcon } from '@heroicons/vue/24/solid'
+import IconComponent from '@/components/IconComponent.vue'
 import type { Team } from '@/types'
 
 defineProps<{
