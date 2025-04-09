@@ -1,12 +1,12 @@
 import { ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useWaitForTransactionReceipt } from '@wagmi/vue'
-import { getWalletClient } from '@wagmi/core'
-import { parseUnits } from 'viem/utils'
-import type { Abi } from 'viem'
-import ADD_CAMPAIGN_ARTIFACT from '@/artifacts/abi/AdCampaignManager.json'
+import { getWalletClient, readContract } from '@wagmi/core'
+import { parseUnits, formatUnits } from 'viem/utils'
 
-export function useDeployAdCampaignManager() {
+import type { Abi } from 'viem'
+
+export function useDeployContract(contractAbi: Abi, contractByteCode: `0x${string}`) {
   const hash = ref<`0x${string}` | undefined>()
   const contractAddress = ref<string | null>(null)
   const error = ref<Error | null>(null)
@@ -35,8 +35,8 @@ export function useDeployAdCampaignManager() {
       const impression = parseUnits(String(costPerImpression), 18)
 
       const txHash = await walletClient.deployContract({
-        abi: ADD_CAMPAIGN_ARTIFACT.abi as Abi,
-        bytecode: ADD_CAMPAIGN_ARTIFACT.bytecode as `0x${string}`,
+        abi: contractAbi,
+        bytecode: contractByteCode,
         args: [click, impression, bankAddress],
         account: walletClient.account.address
       })
@@ -58,4 +58,38 @@ export function useDeployAdCampaignManager() {
     contractAddress,
     error
   }
+}
+
+export async function getContractData(
+  address: string,
+  contractAbi: Abi
+): Promise<{ key: string; value: string }[]> {
+  const result: { key: string; value: string }[] = []
+
+  for (const fn of contractAbi) {
+    if (
+      fn.type === 'function' &&
+      typeof fn.name === 'string' &&
+      ['view', 'pure'].includes(fn.stateMutability || '') &&
+      fn.inputs?.length === 0
+    ) {
+      try {
+        const rawValue = (await readContract(config, {
+          address: address as `0x${string}`,
+          abi: contractAbi,
+          functionName: fn.name
+        })) as bigint | string
+
+        result.push({
+          key: fn.name,
+          value:
+            typeof rawValue === 'bigint' ? formatUnits(rawValue, 18) : (rawValue?.toString() ?? '')
+        })
+      } catch (err) {
+        console.error(`Error calling ${fn.name}:`, err)
+      }
+    }
+  }
+
+  return result
 }

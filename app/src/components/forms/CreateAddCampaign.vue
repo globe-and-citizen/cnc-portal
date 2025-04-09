@@ -64,16 +64,19 @@
 import { ref, watch, computed } from 'vue'
 import ButtonUI from '../ButtonUI.vue'
 const emit = defineEmits(['closeAddCampaignModal'])
-import { useDeployAdCampaignManager } from '@/composables/addCampaignWagmi'
+import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
+import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+import type { Abi } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   bankAddress: string
 }>()
 import { useCustomFetch } from '@/composables/useCustomFetch'
-
+const campaignAbi = AdCampaignArtifact.abi as Abi
+const campaignBytecode = AdCampaignArtifact.bytecode as `0x${string}`
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const user = computed(() => userDataStore)
@@ -92,7 +95,12 @@ watch(
 
 //import composable..
 // Import composable
-const { deploy, isDeploying: loading, contractAddress, error } = useDeployAdCampaignManager()
+const {
+  deploy,
+  isDeploying: loading,
+  contractAddress,
+  error
+} = useDeployContract(campaignAbi, campaignBytecode)
 
 watch(contractAddress, async (newAddress) => {
   if (newAddress && team.value) {

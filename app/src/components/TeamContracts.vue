@@ -87,6 +87,8 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
+import { getContractData } from '@/composables/useContractFunctions'
+import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 
 import type {
   GetEventsGroupedByCampaignCodeResult,
@@ -94,6 +96,7 @@ import type {
 } from '@/services/AddCampaignService'
 import { useToastStore } from '@/stores/useToastStore'
 const { addErrorToast } = useToastStore()
+import type { Abi } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from './AddressToolTip.vue'
@@ -103,6 +106,7 @@ defineProps<{ contracts: TeamContract[]; teamId: string }>()
 // Initialize AddCampaignService instance
 const addCamapaignService = new AddCampaignService()
 
+const campaignAbi = AdCampaignArtifact.abi as Abi
 // Modal for showing contract admins
 const contractAdminDialog = ref({
   show: false,
@@ -171,7 +175,7 @@ const openEventsModal = async (contractAddress: string) => {
 
 // Open Contract Data Modal
 const openContractDataModal = async (contractAddress: string) => {
-  contractDataDialog.value.datas = await addCamapaignService.getContractData(contractAddress)
+  contractDataDialog.value.datas = await getContractData(contractAddress, campaignAbi)
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
   contractDataDialog.value.key++
