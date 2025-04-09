@@ -79,12 +79,12 @@ describe('MemberSection.vue', () => {
 
     it('returns formatted wage string when member wage data is found', () => {
       const result = component.getMemberWage('0x1234' as Address)
-      expect(result).toBe('40 h/week & 20 SepoliaETH/h')
+      expect(result).toBe('40 h/week & 20 ETH/h')
     })
 
     it('returns formatted wage string for different member', () => {
       const result = component.getMemberWage('0x5678' as Address)
-      expect(result).toBe('30 h/week & 25 SepoliaETH/h')
+      expect(result).toBe('30 h/week & 25 ETH/h')
     })
   })
 })

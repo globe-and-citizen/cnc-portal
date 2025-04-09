@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import IconComponent from '@/components/IconComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
@@ -55,7 +55,10 @@ describe('EditUserForm', () => {
         ...props
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        components: {
+          IconComponent
+        }
       }
     })
   }
@@ -82,7 +85,11 @@ describe('EditUserForm', () => {
 
     it('renders copy address icon correctly', () => {
       const wrapper = createComponent()
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBeTruthy()
+      const iconComponents = wrapper.findAllComponents(IconComponent)
+      const copyIcon = iconComponents.find(
+        (icon) => icon.props('icon') === 'heroicons:clipboard-document-list'
+      )
+      expect(copyIcon?.exists()).toBeTruthy()
 
       // Tooltip
       const copyIconTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
@@ -95,7 +102,12 @@ describe('EditUserForm', () => {
       const wrapper = createComponent()
       mockClipboard.copied.value = true
       await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent(ClipboardDocumentCheckIcon).exists()).toBeTruthy()
+
+      const iconComponents = wrapper.findAllComponents(IconComponent)
+      const copiedIcon = iconComponents.find(
+        (icon) => icon.props('icon') === 'heroicons:clipboard-document-check'
+      )
+      expect(copiedIcon?.exists()).toBeTruthy()
     })
 
     it('renders submit button correctly', () => {
@@ -139,7 +151,7 @@ describe('EditUserForm', () => {
       mockClipboard.copied.value = false
       await wrapper.vm.$nextTick()
 
-      await wrapper.findComponent(ClipboardDocumentListIcon).trigger('click')
+      await wrapper.findComponent(IconComponent).trigger('click')
 
       expect(mockCopy).toBeCalledWith(user.address)
     })

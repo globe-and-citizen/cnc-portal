@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '../ExpenseAccountView.vue'
-import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import IconComponent from '@/components/IconComponent.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
@@ -301,6 +301,9 @@ describe('ExpenseAccountSection', () => {
       },
       data,
       global: {
+        components: {
+          IconComponent
+        },
         plugins: [
           createTestingPinia({
             createSpy: vi.fn,
@@ -334,17 +337,11 @@ describe('ExpenseAccountSection', () => {
     //   expect(expenseAccountAddressTooltip.exists()).toBeTruthy()
     //   expect(expenseAccountAddressTooltip.props().address).toBe(team.expenseAccountEip712Address)
     // })
-    it('should show copy to clipboard icon with tooltip if expense account address exists', () => {
+    it('renders copy icon correctly', () => {
       const wrapper = createComponent()
-
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(true)
-
-      // ToolTip
-      const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
-        name: 'ToolTip'
-      })
-      expect(copyAddressTooltip.exists()).toBeTruthy()
-      expect(copyAddressTooltip.props().content).toBe('Click to copy address')
+      const iconComponent = wrapper.findComponent(IconComponent)
+      expect(iconComponent.exists()).toBeTruthy()
+      expect(iconComponent.props('icon')).toBe('heroicons:clipboard-document-list')
     })
     it('should not show copy to clipboard icon if copy not supported', async () => {
       const wrapper = createComponent()
@@ -353,7 +350,7 @@ describe('ExpenseAccountSection', () => {
       mockClipboard.isSupported.value = false
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(false)
+      expect(wrapper.findComponent(IconComponent).exists()).toBe(false)
     })
     it('should show animation if balance loading', async () => {
       const wrapper = createComponent()

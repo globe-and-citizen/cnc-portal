@@ -5,7 +5,7 @@ import * as networkModule from '../network'
 // Mock the imported JSON files
 vi.mock('@/artifacts/deployed_addresses/chain-11155111.json', () => ({
   default: {
-    'TipsModule#Tips': '0x1234',
+    'TipsModule#Tips': '0xbaC3A762bCB30046E04BdF8a9D65d99f483D9cBC',
     'BankBeaconModule#Beacon': '0x2345',
     'BankBeaconModule#Bank': '0x3456',
     'VotingBeaconModule#Beacon': '0x4567',
@@ -57,14 +57,14 @@ describe('Contract Address Resolution', () => {
     it('should resolve address correctly for existing key', () => {
       // Mock network to return Sepolia chain ID
       vi.spyOn(networkModule, 'getNetwork').mockReturnValue({
-        chainId: '0xaa36a7',
+        chainId: '0xaa36a7', // 11155111 in hex
         networkName: 'Sepolia',
         rpcUrl: 'https://sepolia.example.com',
         currencySymbol: 'ETH'
       })
 
       const address = resolveAddress('TipsModule#Tips')
-      expect(address).toBe('0x1234')
+      expect(address).toBe('0xbaC3A762bCB30046E04BdF8a9D65d99f483D9cBC')
     })
   })
 
