@@ -8,8 +8,8 @@ import { createTestingPinia } from '@pinia/testing'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import * as viem from 'viem'
 import expenseABI from '../../../../artifacts/abi/expense-account-eip712.json'
-import erc20ABI from '../../../../artifacts/abi/erc20.json'
-import * as utils from '@/utils'
+// import erc20ABI from '../../../../artifacts/abi/erc20.json'
+// import * as utils from '@/utils'
 import type { Team } from '@/types'
 import { zeroAddress } from 'viem'
 
@@ -299,7 +299,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
     })
   }
 
-  const logErrorSpy = vi.spyOn(utils.log, 'error')
+  // const logErrorSpy = vi.spyOn(utils.log, 'error')
 
   it('should transfer native token', async () => {
     const wrapper = createComponent()
@@ -350,180 +350,180 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
     mockUseWriteContract.writeContract.mockClear()
     wrapperVm._expenseAccountData = null
   })
-  it('should transfer erc20 token', async () => {
-    mockReadContract.mockImplementation(() => BigInt(2.5 * 1e6))
-    const wrapper = createComponent()
-    const wrapperVm = wrapper.vm as unknown as ComponentData
-    wrapperVm.transferModal = true
-    wrapperVm._expenseAccountData = {
-      data: JSON.stringify(mockExpenseData[1]),
-      signature: '0xDummySignature'
-    }
-    wrapperVm.team = {
-      id: `1`,
-      teamContracts: [
-        {
-          type: 'ExpenseAccountEIP712',
-          address: '0xExpenseAccount',
-          deployer: '0xDeployerAddress',
-          admins: []
-        }
-      ],
-      ownerAddress: '0xOwner'
-    }
-    await flushPromises() // wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferForm)
-    expect(transferForm.exists()).toBe(true)
-    await flushPromises()
-    const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const mockAmount = '2.5'
-    transferForm.vm.$emit('transfer', mockTo, mockAmount)
-    await wrapper.vm.$nextTick()
-    expect(wrapperVm.tokenAmount).toBe(mockAmount)
-    expect(wrapperVm.tokenRecipient).toBe(mockTo)
-    expect(mockUseWriteContract.writeContract).toBeCalledWith({
-      abi: expenseABI,
-      address: '0xExpenseAccount',
-      args: [
-        mockTo,
-        BigInt(Number(mockAmount) * 1e6),
-        {
-          ...mockExpenseData[1],
-          budgetData: mockExpenseData[1].budgetData.map((item) => ({
-            ...item,
-            value: item.budgetType === 0 ? item.value : BigInt(item.value * 1e6)
-          }))
-        },
-        '0xDummySignature'
-      ],
-      functionName: 'transfer'
-    })
-    mockUseWriteContract.writeContract.mockClear()
-    mockReadContract.mockReset()
-  })
-  it('should call allowance if allowance lower than amount', async () => {
-    const wrapper = createComponent()
-    const wrapperVm = wrapper.vm as unknown as ComponentData
-    wrapperVm.transferModal = true
-    wrapperVm._expenseAccountData = {
-      data: JSON.stringify(mockExpenseData[1]),
-      signature: '0xDummySignature'
-    }
-    wrapperVm.team = {
-      id: `1`,
-      teamContracts: [
-        {
-          type: 'ExpenseAccountEIP712',
-          address: '0xExpenseAccount',
-          deployer: '0xDeployerAddress',
-          admins: []
-        }
-      ],
-      ownerAddress: '0xOwner'
-    }
-    await wrapper.vm.$nextTick()
-    const transferForm = wrapper.findComponent(TransferForm)
-    expect(transferForm.exists()).toBe(true)
-    await flushPromises()
-    const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const mockAmount = '2.5'
-    transferForm.vm.$emit('transfer', mockTo, mockAmount)
-    await wrapper.vm.$nextTick()
-    expect(wrapperVm.tokenAmount).toBe(mockAmount)
-    expect(wrapperVm.tokenRecipient).toBe(mockTo)
-    expect(mockUseWriteContract.writeContract).toBeCalledWith({
-      abi: erc20ABI,
-      address: USDC_ADDRESS,
-      args: ['0xExpenseAccount', BigInt(Number(mockAmount) * 1e6)],
-      functionName: 'approve'
-    })
-    mockUseWriteContract.writeContract.mockClear()
-    wrapper.unmount()
-  })
-  it('should notify success if successfully approved', async () => {
-    mockUseWriteContract.writeContract.mockClear()
-    const wrapper = createComponent()
-    const wrapperVm = wrapper.vm as unknown as ComponentData
-    mockReadContract.mockImplementation(() => BigInt(3.5 * 1e6))
-    wrapperVm._expenseAccountData = {
-      data: JSON.stringify(mockExpenseData[1]),
-      signature: '0xDummySignature'
-    }
-    wrapperVm.isConfirmingApprove = true
-    wrapperVm.team = {
-      id: `1`,
-      teamContracts: [
-        {
-          type: 'ExpenseAccountEIP712',
-          address: '0xExpenseAccount',
-          deployer: '0xDeployerAddress',
-          admins: []
-        }
-      ],
-      ownerAddress: '0xOwner'
-    }
-    await flushPromises()
-    wrapperVm.isConfirmingApprove = false
-    wrapperVm.isConfirmedApprove = true
-    const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const mockAmount = '3.5'
-    wrapperVm.tokenRecipient = mockTo
-    wrapperVm.tokenAmount = mockAmount
-    await flushPromises()
-    expect(mockUseToastStore.addSuccessToast).toBeCalledWith('Approval granted successfully')
-    expect(mockUseWriteContract.writeContract).toBeCalledWith({
-      abi: expenseABI,
-      address: '0xExpenseAccount',
-      args: [
-        mockTo,
-        BigInt(Number(mockAmount) * 1e6),
-        {
-          ...mockExpenseData[1],
-          budgetData: mockExpenseData[1].budgetData.map((item) => ({
-            ...item,
-            value: item.budgetType === 0 ? item.value : BigInt(item.value * 1e6)
-          }))
-        },
-        '0xDummySignature'
-      ],
-      functionName: 'transfer'
-    })
-    wrapper.unmount()
-  })
-  it('should notify error if approve error', async () => {
-    mockUseToastStore.addErrorToast.mockClear()
-    mockUseWriteContract.writeContract.mockImplementation(
-      () => (mockUseWriteContract.error.value = new Error('Error approving allowance'))
-    )
-    const wrapper = createComponent()
-    const wrapperVm = wrapper.vm as unknown as ComponentData
-    wrapperVm.team = {
-      id: `1`,
-      teamContracts: [
-        {
-          type: 'ExpenseAccountEIP712',
-          address: '0xExpenseAccount',
-          deployer: '0xDeployerAddress',
-          admins: []
-        }
-      ],
-      ownerAddress: '0xOwner'
-    }
-    await flushPromises()
-    wrapperVm.transferModal = true
-    wrapperVm._expenseAccountData = {
-      data: JSON.stringify(mockExpenseData[1]),
-      signature: '0xDummySignature'
-    }
-    await flushPromises()
-    const transferForm = wrapper.findComponent(TransferForm)
-    expect(transferForm.exists()).toBe(true)
-    // await flushPromises()
-    const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    const mockAmount = '2.5'
-    transferForm.vm.$emit('transfer', mockTo, mockAmount)
-    await flushPromises()
-    expect(mockUseToastStore.addErrorToast).toBeCalledWith('Failed to approve token spending')
-    expect(logErrorSpy).toBeCalledWith('Error approving allowance')
-  })
+  // it('should transfer erc20 token', async () => {
+  //   mockReadContract.mockImplementation(() => BigInt(2.5 * 1e6))
+  //   const wrapper = createComponent()
+  //   const wrapperVm = wrapper.vm as unknown as ComponentData
+  //   wrapperVm.transferModal = true
+  //   wrapperVm._expenseAccountData = {
+  //     data: JSON.stringify(mockExpenseData[1]),
+  //     signature: '0xDummySignature'
+  //   }
+  //   wrapperVm.team = {
+  //     id: `1`,
+  //     teamContracts: [
+  //       {
+  //         type: 'ExpenseAccountEIP712',
+  //         address: '0xExpenseAccount',
+  //         deployer: '0xDeployerAddress',
+  //         admins: []
+  //       }
+  //     ],
+  //     ownerAddress: '0xOwner'
+  //   }
+  //   await flushPromises() // wrapper.vm.$nextTick()
+  //   const transferForm = wrapper.findComponent(TransferForm)
+  //   expect(transferForm.exists()).toBe(true)
+  //   await flushPromises()
+  //   const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+  //   const mockAmount = '2.5'
+  //   transferForm.vm.$emit('transfer', mockTo, mockAmount)
+  //   await wrapper.vm.$nextTick()
+  //   expect(wrapperVm.tokenAmount).toBe(mockAmount)
+  //   expect(wrapperVm.tokenRecipient).toBe(mockTo)
+  //   expect(mockUseWriteContract.writeContract).toBeCalledWith({
+  //     abi: expenseABI,
+  //     address: '0xExpenseAccount',
+  //     args: [
+  //       mockTo,
+  //       BigInt(Number(mockAmount) * 1e6),
+  //       {
+  //         ...mockExpenseData[1],
+  //         budgetData: mockExpenseData[1].budgetData.map((item) => ({
+  //           ...item,
+  //           value: item.budgetType === 0 ? item.value : BigInt(item.value * 1e6)
+  //         }))
+  //       },
+  //       '0xDummySignature'
+  //     ],
+  //     functionName: 'transfer'
+  //   })
+  //   mockUseWriteContract.writeContract.mockClear()
+  //   mockReadContract.mockReset()
+  // })
+  // it('should call allowance if allowance lower than amount', async () => {
+  //   const wrapper = createComponent()
+  //   const wrapperVm = wrapper.vm as unknown as ComponentData
+  //   wrapperVm.transferModal = true
+  //   wrapperVm._expenseAccountData = {
+  //     data: JSON.stringify(mockExpenseData[1]),
+  //     signature: '0xDummySignature'
+  //   }
+  //   wrapperVm.team = {
+  //     id: `1`,
+  //     teamContracts: [
+  //       {
+  //         type: 'ExpenseAccountEIP712',
+  //         address: '0xExpenseAccount',
+  //         deployer: '0xDeployerAddress',
+  //         admins: []
+  //       }
+  //     ],
+  //     ownerAddress: '0xOwner'
+  //   }
+  //   await wrapper.vm.$nextTick()
+  //   const transferForm = wrapper.findComponent(TransferForm)
+  //   expect(transferForm.exists()).toBe(true)
+  //   await flushPromises()
+  //   const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+  //   const mockAmount = '2.5'
+  //   transferForm.vm.$emit('transfer', mockTo, mockAmount)
+  //   await wrapper.vm.$nextTick()
+  //   expect(wrapperVm.tokenAmount).toBe(mockAmount)
+  //   expect(wrapperVm.tokenRecipient).toBe(mockTo)
+  //   expect(mockUseWriteContract.writeContract).toBeCalledWith({
+  //     abi: erc20ABI,
+  //     address: USDC_ADDRESS,
+  //     args: ['0xExpenseAccount', BigInt(Number(mockAmount) * 1e6)],
+  //     functionName: 'approve'
+  //   })
+  //   mockUseWriteContract.writeContract.mockClear()
+  //   wrapper.unmount()
+  // })
+  // it('should notify success if successfully approved', async () => {
+  //   mockUseWriteContract.writeContract.mockClear()
+  //   const wrapper = createComponent()
+  //   const wrapperVm = wrapper.vm as unknown as ComponentData
+  //   mockReadContract.mockImplementation(() => BigInt(3.5 * 1e6))
+  //   wrapperVm._expenseAccountData = {
+  //     data: JSON.stringify(mockExpenseData[1]),
+  //     signature: '0xDummySignature'
+  //   }
+  //   wrapperVm.isConfirmingApprove = true
+  //   wrapperVm.team = {
+  //     id: `1`,
+  //     teamContracts: [
+  //       {
+  //         type: 'ExpenseAccountEIP712',
+  //         address: '0xExpenseAccount',
+  //         deployer: '0xDeployerAddress',
+  //         admins: []
+  //       }
+  //     ],
+  //     ownerAddress: '0xOwner'
+  //   }
+  //   await flushPromises()
+  //   wrapperVm.isConfirmingApprove = false
+  //   wrapperVm.isConfirmedApprove = true
+  //   const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+  //   const mockAmount = '3.5'
+  //   wrapperVm.tokenRecipient = mockTo
+  //   wrapperVm.tokenAmount = mockAmount
+  //   await flushPromises()
+  //   expect(mockUseToastStore.addSuccessToast).toBeCalledWith('Approval granted successfully')
+  //   expect(mockUseWriteContract.writeContract).toBeCalledWith({
+  //     abi: expenseABI,
+  //     address: '0xExpenseAccount',
+  //     args: [
+  //       mockTo,
+  //       BigInt(Number(mockAmount) * 1e6),
+  //       {
+  //         ...mockExpenseData[1],
+  //         budgetData: mockExpenseData[1].budgetData.map((item) => ({
+  //           ...item,
+  //           value: item.budgetType === 0 ? item.value : BigInt(item.value * 1e6)
+  //         }))
+  //       },
+  //       '0xDummySignature'
+  //     ],
+  //     functionName: 'transfer'
+  //   })
+  //   wrapper.unmount()
+  // })
+  // it('should notify error if approve error', async () => {
+  //   mockUseToastStore.addErrorToast.mockClear()
+  //   mockUseWriteContract.writeContract.mockImplementation(
+  //     () => (mockUseWriteContract.error.value = new Error('Error approving allowance'))
+  //   )
+  //   const wrapper = createComponent()
+  //   const wrapperVm = wrapper.vm as unknown as ComponentData
+  //   wrapperVm.team = {
+  //     id: `1`,
+  //     teamContracts: [
+  //       {
+  //         type: 'ExpenseAccountEIP712',
+  //         address: '0xExpenseAccount',
+  //         deployer: '0xDeployerAddress',
+  //         admins: []
+  //       }
+  //     ],
+  //     ownerAddress: '0xOwner'
+  //   }
+  //   await flushPromises()
+  //   wrapperVm.transferModal = true
+  //   wrapperVm._expenseAccountData = {
+  //     data: JSON.stringify(mockExpenseData[1]),
+  //     signature: '0xDummySignature'
+  //   }
+  //   await flushPromises()
+  //   const transferForm = wrapper.findComponent(TransferForm)
+  //   expect(transferForm.exists()).toBe(true)
+  //   // await flushPromises()
+  //   const mockTo = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+  //   const mockAmount = '2.5'
+  //   transferForm.vm.$emit('transfer', mockTo, mockAmount)
+  //   await flushPromises()
+  //   expect(mockUseToastStore.addErrorToast).toBeCalledWith('Failed to approve token spending')
+  //   expect(logErrorSpy).toBeCalledWith('Error approving allowance')
+  // })
 })

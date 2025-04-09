@@ -25,7 +25,7 @@
             @click="depositModal = true"
             data-test="deposit-button"
           >
-            <PlusIcon class="w-5 h-5" />
+            <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
             Deposit
           </ButtonUI>
           <ButtonUI
@@ -35,7 +35,7 @@
             @click="transferModal = true"
             data-test="transfer-button"
           >
-            <ArrowsRightLeftIcon class="w-5 h-5" />
+            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
             Transfer
           </ButtonUI>
         </div>
@@ -83,7 +83,6 @@
 </template>
 
 <script setup lang="ts">
-import { PlusIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
@@ -104,6 +103,7 @@ import { config } from '@/wagmi.config'
 import { parseEther } from 'viem'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useContractBalance } from '@/composables/useContractBalance'
+import { Icon as IconifyIcon } from '@iconify/vue'
 
 const props = defineProps<{
   bankAddress: Address | undefined

@@ -11,7 +11,7 @@
         variant="primary"
         class="w-max"
       >
-        <PlusCircleIcon class="size-6" /> Add a new Member
+        <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> Add a new Member
       </ButtonUI>
       <ModalComponent v-model="showAddMemberForm">
         <AddMemberForm
@@ -60,7 +60,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { PlusCircleIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
@@ -100,11 +100,7 @@ const {
 // Watch team ID update to fetch the team wage data
 watch(
   [teamId, teamIsLoading],
-  ([newTeamId, newIsloading], [oldTeamId, oldIsLoading]) => {
-    // TODO: i leave this here to explain how the watch on team reload works
-    console.log('Test')
-    console.log('teamId', oldTeamId, newTeamId)
-    console.log('isLoading', oldIsLoading, newIsloading)
+  ([newTeamId, newIsloading]) => {
     if (newTeamId && !newIsloading) fetchTeamWageData()
   },
   { immediate: true }

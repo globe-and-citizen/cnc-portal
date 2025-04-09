@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
+import { createTestingPinia } from '@pinia/testing'
 
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
@@ -13,6 +14,12 @@ vi.mock('@/composables/useCustomFetch', () => {
   // Inline the fake implementation to avoid hoisting issues
   return {
     useCustomFetch: () => ({
+      json: () => ({
+        execute: vi.fn(),
+        error: mockError,
+        isFetching: mockIsFetching,
+        statusCode: mockStatusCode
+      }),
       post: () => ({
         json: () => ({
           execute: vi.fn(),
@@ -33,20 +40,14 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-vi.mock('@/stores', () => {
-  return {
-    useToastStore: () => ({
-      addSuccessToast: vi.fn(),
-      addErrorToast: vi.fn()
-    })
-  }
-})
-
 // Helper to mount the component
 const mountComponent = () => {
   return mount(AddMemberForm, {
     props: {
       teamId: 'team-123'
+    },
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
     }
   })
 }

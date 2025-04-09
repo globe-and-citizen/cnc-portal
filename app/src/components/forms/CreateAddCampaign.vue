@@ -45,7 +45,7 @@
     <ButtonUI
       variant="primary"
       size="sm"
-      @click="emitCreateAddCampaign"
+      @click="deployAdCampaign"
       :loading="loading"
       :disabled="
         loading ||
@@ -61,14 +61,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import ButtonUI from '../ButtonUI.vue'
-const emit = defineEmits(['createAddCampaign'])
+const emit = defineEmits(['closeAddCampaignModal'])
+import { useDeployAdCampaignManager } from '@/composables/addCampaignWagmi'
+import { useUserDataStore } from '@/stores/user'
+import { useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
+const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
-  loading: boolean
   bankAddress: string
 }>()
+import { useCustomFetch } from '@/composables/useCustomFetch'
 
+const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
+const user = computed(() => userDataStore)
+const team = computed(() => teamStore.currentTeam)
 const costPerClick = ref()
 const costPerImpression = ref()
 const _bankAddress = ref('')
@@ -81,21 +90,50 @@ watch(
   { immediate: true } // Ensure it runs the first time when the component is initialized
 )
 
+//import composable..
+// Import composable
+const { deploy, isDeploying: loading, contractAddress, error } = useDeployAdCampaignManager()
+
+watch(contractAddress, async (newAddress) => {
+  if (newAddress && team.value) {
+    addSuccessToast(`Contract deployed successfully`)
+    emit('closeAddCampaignModal')
+    await addContractToTeam(team.value.id, newAddress, user.value.address)
+    await teamStore.fetchTeam(team.value.id)
+  }
+})
+
+const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
+  try {
+    await useCustomFetch(`teams/contract/add`)
+      .post({
+        teamId,
+        contractAddress: address,
+        contractType: 'Campaign',
+        deployer
+      })
+      .json()
+    addSuccessToast(`Contract added to team  successfully`)
+  } catch (error) {
+    console.error(`Failed to add contract to team `, error)
+    addErrorToast('Failed to add contract to team')
+  }
+}
+// Trigger deployment
+const deployAdCampaign = async () => {
+  if (!costPerClick.value || !costPerImpression.value) {
+    addErrorToast('Please enter valid numeric values for both rates.')
+    return
+  }
+  await deploy(_bankAddress.value, costPerClick.value, costPerImpression.value)
+
+  if (error.value) {
+    addErrorToast(`Deployment failed: ${error.value?.message || 'deployment failed, please retry'}`)
+  }
+}
+
 const viewContractCode = () => {
   const url = 'https://polygonscan.com/address/0x30625FE0E430C3cCc27A60702B79dE7824BE7fD5#code' // Replace with your desired URL
   window.open(url, '_blank')
-}
-
-const emitCreateAddCampaign = () => {
-  if (
-    costPerClick.value !== null &&
-    costPerClick.value !== undefined &&
-    costPerImpression.value !== null &&
-    costPerImpression.value !== undefined
-  ) {
-    emit('createAddCampaign', costPerClick.value, costPerImpression.value)
-  } else {
-    alert('Please enter valid numeric values for both rates.')
-  }
 }
 </script>

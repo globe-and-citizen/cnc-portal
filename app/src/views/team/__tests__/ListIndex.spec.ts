@@ -15,6 +15,12 @@ vi.mock('@/composables/useCustomFetch', () => {
   // Inline the fake implementation to avoid hoisting issues
   return {
     useCustomFetch: () => ({
+      json: () => ({
+        execute: vi.fn(),
+        error: mockError,
+        isFetching: mockIsFetching,
+        data: mockData
+      }),
       post: () => ({
         json: () => ({
           execute: vi.fn(),

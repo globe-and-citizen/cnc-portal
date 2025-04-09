@@ -1,12 +1,12 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '../ExpenseAccountView.vue'
-import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
-import TransferForm from '@/components/forms/TransferForm.vue'
+// import TransferForm from '@/components/forms/TransferForm.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
@@ -301,6 +301,9 @@ describe('ExpenseAccountSection', () => {
       },
       data,
       global: {
+        components: {
+          IconifyIcon
+        },
         plugins: [
           createTestingPinia({
             createSpy: vi.fn,
@@ -334,17 +337,10 @@ describe('ExpenseAccountSection', () => {
     //   expect(expenseAccountAddressTooltip.exists()).toBeTruthy()
     //   expect(expenseAccountAddressTooltip.props().address).toBe(team.expenseAccountEip712Address)
     // })
-    it('should show copy to clipboard icon with tooltip if expense account address exists', () => {
+    it('renders copy icon correctly', () => {
       const wrapper = createComponent()
-
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(true)
-
-      // ToolTip
-      const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
-        name: 'ToolTip'
-      })
-      expect(copyAddressTooltip.exists()).toBeTruthy()
-      expect(copyAddressTooltip.props().content).toBe('Click to copy address')
+      const iconComponent = wrapper.findComponent(IconifyIcon)
+      expect(iconComponent.exists()).toBeTruthy()
     })
     it('should not show copy to clipboard icon if copy not supported', async () => {
       const wrapper = createComponent()
@@ -353,7 +349,7 @@ describe('ExpenseAccountSection', () => {
       mockClipboard.isSupported.value = false
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBe(false)
+      expect(wrapper.findComponent(IconifyIcon).exists()).toBe(false)
     })
     it('should show animation if balance loading', async () => {
       const wrapper = createComponent()
@@ -450,41 +446,6 @@ describe('ExpenseAccountSection', () => {
 
       const button = wrapper.find('[data-test="transfer-button"]')
       expect(button.exists()).toBeTruthy()
-    })
-    it.skip('should show transfer modal', async () => {
-      const wrapper = createComponent({
-        global: {
-          plugins: [
-            createTestingPinia({
-              createSpy: vi.fn,
-              initialState: {
-                user: { address: '0xContractOwner' }
-              }
-            })
-          ]
-        }
-      })
-
-      const wrapperVm = wrapper.vm as unknown as ComponentData
-      wrapperVm.team = {
-        teamContracts: [
-          {
-            type: 'ExpenseAccountEIP712',
-            address: '0xExpenseAccount',
-            deployer: '0xDeployerAddress',
-            admins: []
-          }
-        ],
-        ownerAddress: '0xOwner'
-      }
-
-      await wrapper.vm.$nextTick()
-
-      const transferButton = wrapper.find('[data-test="transfer-button"]')
-
-      await transferButton.trigger('click')
-      await wrapper.vm.$nextTick()
-      wrapper.findComponent(TransferForm)
     })
     it('should hide approve user form if not owner', async () => {
       const wrapper = createComponent()

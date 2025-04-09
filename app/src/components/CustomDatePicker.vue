@@ -9,7 +9,7 @@
           :data-test="`${dataTestPrefix}-date-select`"
         >
           <span>{{ displayDateRange }}</span>
-          <ChevronDownIcon class="w-4 h-4" />
+          <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
         </ButtonUI>
         <ul
           class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
@@ -45,11 +45,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { onClickOutside } from '@vueuse/core'
 import ButtonUI from './ButtonUI.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Props {
   modelValue: [Date, Date] | null
