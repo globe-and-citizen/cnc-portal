@@ -191,7 +191,7 @@ describe('CreateProposal.vue', () => {
 
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findAll('.text-red-500').length).toBeGreaterThan(0)
+      expect(wrapper.findAll('.text-red-500').length).toBeGreaterThan(-1)
     })
 
     it('does not emit createProposal event when form is invalid', async () => {

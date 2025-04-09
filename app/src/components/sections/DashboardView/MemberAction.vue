@@ -6,7 +6,7 @@
       @click="() => (showDeleteMemberConfirmModal = true)"
       data-test="delete-member-button"
     >
-      <TrashIcon class="size-4" />
+      <IconifyIcon icon="heroicons-outline:trash" class="size-4" />
     </ButtonUI>
     <ButtonUI
       size="sm"
@@ -122,11 +122,11 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables'
 import { useTeamStore, useToastStore } from '@/stores'
 import type { Member } from '@/types'
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
@@ -168,9 +168,12 @@ const {
   isFetching: memberIsDeleting,
   statusCode: deleteMemberStatusCode,
   execute: executeDeleteMember
-} = useCustomFetch(`teams/${props.teamId}/member/${props.member.address}`, {
-  immediate: false
-})
+} = useCustomFetch(
+  computed(() => `teams/${props.teamId}/member/${props.member.address}`),
+  {
+    immediate: false
+  }
+)
   .delete()
   .json()
 
@@ -207,6 +210,8 @@ const addMemberWageData = async () => {
   await addMemberWageDataAPI()
   if (addMemberWageDataStatusCode.value === 201) {
     addSuccessToast('Member wage data set successfully')
+
+    // TODO: instead of fetching the team again, we can update the team wage data in the store
     teamStore.fetchTeam(String(props.teamId))
     showSetMemberWageModal.value = false
   }

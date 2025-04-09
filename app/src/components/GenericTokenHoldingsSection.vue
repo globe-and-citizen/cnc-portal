@@ -11,14 +11,14 @@
       "
       :columns="[
         { key: 'rank', label: 'RANK' },
-        { key: 'token', label: 'Token', sortable: true },
-        { key: 'amount', label: 'Amount', sortable: true },
-        { key: 'price', label: 'Coin Price', sortable: true },
-        { key: 'balance', label: 'Balance', sortable: true }
+        { key: 'token', label: 'Token', sortable: true, class: 'min-w-32' },
+        { key: 'amount', label: 'Amount', sortable: true, class: 'min-w-32' },
+        { key: 'price', label: 'Coin Price', sortable: true, class: 'min-w-40' },
+        { key: 'balance', label: 'Balance', sortable: true, class: 'min-w-32' }
       ]"
     >
       <template #token-data="{ row }">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 lg:w-48">
           <img :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
           <div class="flex flex-col">
             <div class="font-medium">{{ row.name }}</div>
@@ -29,9 +29,8 @@
       <template #rank-data="{ row }">
         {{ row.rank }}
       </template>
-      <template #price-data="{ row }">
-        {{ row.price }}
-      </template>
+      <template #amount-data="{ row }"> {{ row.amount }} {{ row.network }} </template>
+      <template #price-data="{ row }"> {{ row.price }} / {{ row.network }} </template>
       <template #balance-data="{ row }">
         {{ row.balance }}
       </template>
