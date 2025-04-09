@@ -40,12 +40,29 @@ export const addExpense = async (req: Request, res: Response) => {
 
     console.log("Creating expense for teamId:", teamId);
     // TODO: should be only one expense active for the user
+    const existingExpenses = await prisma.expense.findMany({
+      where: {
+        teamId,
+        userAddress: callerAddress
+      },
+    })
+
+    const syncedExpenses = await Promise.all(existingExpenses.map(async (expense) => 
+      await syncExpenseStatus(expense)
+    ))
+
+    const activeExpenses = syncedExpenses.filter((expense) => expense.status !== "expired")
+
+    if (activeExpenses.length > 0) {
+      return errorResponse(400, "User already has an active expense", res);
+    }
+
     const expense = await prisma.expense.create({
       data: {
         teamId,
         signature,
         data: JSON.stringify(data),
-        userAddress: callerAddress,
+        userAddress: callerAddress, //I think this should be the user that is approved for the expense
         status: "signed",
       },
     });
@@ -70,10 +87,13 @@ export const getExpenses = async (req: Request, res: Response) => {
       return errorResponse(403, "Caller is not a member of the team", res);
     }
 
-    // const expenses = await prisma.expense.findMany({
-    //   where: { teamId },
-    // });
+    const expenses = await prisma.expense.findMany({
+      where: { teamId },
+    });
 
+    const _expenses = await Promise.all(expenses.map(async (expense) => 
+      await syncExpenseStatus(expense)
+    ))
     // TODO: for each expense, check the status and update it
     // expenses.forEach(async (expense) => {
     //   if (expense.status === "pending") {
@@ -81,68 +101,119 @@ export const getExpenses = async (req: Request, res: Response) => {
     //   }
     // });
 
-    const expenses = await syncExpenseStatus(teamId);
+    // const expenses = await syncExpenseStatus(teamId);
     console.log("Fetched expenses for teamId:", teamId);
-    console.log("Fetched expenses:", expenses);
-    console.log("Fetched expenses for teamId:", teamId);
-    console.log("Fetched expenses:", expenses);
+    console.log("Fetched expenses:", _expenses);
     return res.status(200).json(expenses);
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
   }
 };
 
-const syncExpenseStatus = async (teamId: number) => {
+const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
-  const expenses = await prisma.expense.findMany({
-    where: { teamId },
-  });
+  // const expenses = await prisma.expense.findMany({
+  //   where: { teamId },
+  // });
 
-  if (expenses.length === 0) return []
+  // if (expenses.length === 0) return []
 
   const expenseAccountEip712Address = await prisma.teamContract.findFirst({
     where: {
-      teamId,
+      teamId: expense.teamId,
       type: "ExpenseAccountEIP712"
     }
   });
 
-  if (!expenseAccountEip712Address) return []
+  // if (!expenseAccountEip712Address) return []
 
-  return await Promise.all(expenses.map(async (expense) => {
-      const data = JSON.parse(expense.data)
-      
-      const balances = await publicClient.readContract({
-        address: expenseAccountEip712Address?.address as Address,
-        abi: ABI,
-        functionName: "balances",
-        args: [keccak256(expense.signature as Address)]
-      }) as unknown as [bigint, bigint, 0 | 1 | 2];     
-      
-      const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
-      // if (expense.status === "pending") {
-      //   await synExpenseStatus(expense.id);
-      // }
-      const formattedExpense = {
-        ...expense,
-        balances: {
-          0: `${balances[0]}`,
-          1: data.tokenAddress === zeroAddress
-            ? `${formatEther(balances[1])}`
-            : `${Number(balances[1]) / 1e6}`
-          },
-        status: isExpired ? "expired" : balances[2] === 2 ? "disabled" : "enabled"
-      }
+  // return await Promise.all(expenses.map(async (expense) => {
+  const data = JSON.parse(expense.data)
+  
+  const balances = await publicClient.readContract({
+    address: expenseAccountEip712Address?.address as Address,
+    abi: ABI,
+    functionName: "balances",
+    args: [keccak256(expense.signature as Address)]
+  }) as unknown as [bigint, bigint, 0 | 1 | 2];     
+  
+  const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
+  // if (expense.status === "pending") {
+  //   await synExpenseStatus(expense.id);
+  // }
+  const formattedExpense = {
+    ...expense,
+    balances: {
+      0: `${balances[0]}`,
+      1: data.tokenAddress === zeroAddress
+        ? `${formatEther(balances[1])}`
+        : `${Number(balances[1]) / 1e6}`
+      },
+    status: isExpired ? "expired" : balances[2] === 2 ? "disabled" : "enabled"
+  }
 
-      await prisma.expense.update({
-        where: { id: expense.id },
-        data: { status: formattedExpense.status }
-      });
-      
-      return formattedExpense;
-    }
-  ));
+  await prisma.expense.update({
+    where: { id: expense.id },
+    data: { status: formattedExpense.status }
+  });
+  
+  return formattedExpense;
+    // }
+  // ));
 };
+
+
+// const syncExpenseStatus = async (teamId: number) => {
+//   // TODO: implement the logic to get the current status of the expense
+//   const expenses = await prisma.expense.findMany({
+//     where: { teamId },
+//   });
+
+//   if (expenses.length === 0) return []
+
+//   const expenseAccountEip712Address = await prisma.teamContract.findFirst({
+//     where: {
+//       teamId,
+//       type: "ExpenseAccountEIP712"
+//     }
+//   });
+
+//   if (!expenseAccountEip712Address) return []
+
+//   return await Promise.all(expenses.map(async (expense) => {
+//       const data = JSON.parse(expense.data)
+      
+//       const balances = await publicClient.readContract({
+//         address: expenseAccountEip712Address?.address as Address,
+//         abi: ABI,
+//         functionName: "balances",
+//         args: [keccak256(expense.signature as Address)]
+//       }) as unknown as [bigint, bigint, 0 | 1 | 2];     
+      
+//       const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
+//       // if (expense.status === "pending") {
+//       //   await synExpenseStatus(expense.id);
+//       // }
+//       const formattedExpense = {
+//         ...expense,
+//         balances: {
+//           0: `${balances[0]}`,
+//           1: data.tokenAddress === zeroAddress
+//             ? `${formatEther(balances[1])}`
+//             : `${Number(balances[1]) / 1e6}`
+//           },
+//         status: isExpired ? "expired" : balances[2] === 2 ? "disabled" : "enabled"
+//       }
+
+//       await prisma.expense.update({
+//         where: { id: expense.id },
+//         data: { status: formattedExpense.status }
+//       });
+      
+//       return formattedExpense;
+//     }
+//   ));
+// };
 
 export const updateExpense = async (req: Request, res: Response) => {
   const expenseId = Number(req.params.id);
