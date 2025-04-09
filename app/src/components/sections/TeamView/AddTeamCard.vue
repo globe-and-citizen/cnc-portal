@@ -12,5 +12,5 @@
 
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-const emits = defineEmits(['openAddTeamModal'])
+defineEmits(['openAddTeamModal'])
 </script>
