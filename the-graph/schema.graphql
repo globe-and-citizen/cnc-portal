@@ -202,3 +202,10 @@ type TokenAddressChanged @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
+type MonthlyWithdrawn @entity(immutable: true) {
+  id: ID!
+  totalAmount: BigInt!
+  contractAddress: Bytes! # address
+  contractType: String! # string
+}
