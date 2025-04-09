@@ -103,10 +103,11 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import { computed, onMounted, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useExpenseAccountDataCollection } from '@/composables'
-import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
+import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
+import type { ManyExpenseWithBalances } from '@/types'
 
 // const { team /*, reload*/ } = defineProps<{
 //   team: Partial<Team>
@@ -115,6 +116,7 @@ const reload = defineModel()
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
+const expenseDataStore = useExpenseDataStore()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
@@ -208,9 +210,11 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return manyExpenseAccountDataAll
+    return expenseDataStore.allExpenseDataParsed//manyExpenseAccountDataAll
   } else {
-    return manyExpenseAccountDataAll.filter((approval) => approval.status === selectedRadio.value)
+    return /*manyExpenseAccountDataAll*/expenseDataStore
+      .allExpenseDataParsed
+      .filter((approval: ManyExpenseWithBalances) => approval.status === selectedRadio.value)
   }
 })
 
