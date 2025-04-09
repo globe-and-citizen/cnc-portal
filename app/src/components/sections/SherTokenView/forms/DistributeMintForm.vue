@@ -85,7 +85,7 @@
         "
         data-test="plus-icon"
       >
-        <PlusCircleIcon class="size-6 text-green-700" />
+        <IconComponent icon="heroicons-outline:plus-circle" class="size-6 text-green-700" />
       </div>
       <div
         class="w-6 h-6 cursor-pointer"
@@ -97,7 +97,7 @@
         "
         data-test="minus-icon"
       >
-        <MinusCircleIcon class="size-6 text-red-700" />
+        <IconComponent icon="heroicons-outline:minus-circle" class="size-6 text-red-700" />
       </div>
     </div>
 
@@ -121,7 +121,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import { log } from '@/utils'
-import { MinusCircleIcon, PlusCircleIcon } from '@heroicons/vue/24/outline'
+import IconComponent from '@/components/IconComponent.vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { parseEther, isAddress } from 'viem'

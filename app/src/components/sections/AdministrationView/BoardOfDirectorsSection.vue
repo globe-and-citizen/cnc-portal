@@ -3,7 +3,11 @@
     <div class="flex flex-row items-center gap-2">
       <h2 class="text-2xl font-bold">Board of Directors</h2>
       <ToolTip content="To change the board of directors you need to do an election">
-        <InformationCircleIcon data-test="information-icon" class="size-6" />
+        <IconComponent
+          icon="heroicons-outline:information-circle"
+          class="size-6"
+          data-test="information-icon"
+        />
       </ToolTip>
     </div>
     <div class="flex flex-col gap-8 my-4">
@@ -150,7 +154,7 @@
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ToolTip from '@/components/ToolTip.vue'
 import BoDAction from '@/components/sections/AdministrationView/BoDActions.vue'
-import { InformationCircleIcon } from '@heroicons/vue/24/outline'
+import IconComponent from '@/components/IconComponent.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'

@@ -11,7 +11,7 @@
         variant="primary"
         class="w-max"
       >
-        <PlusCircleIcon class="size-6" /> Add a new Member
+        <IconComponent icon="heroicons-outline:plus-circle" class="size-6" /> Add a new Member
       </ButtonUI>
       <ModalComponent v-model="showAddMemberForm">
         <AddMemberForm
@@ -60,7 +60,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { PlusCircleIcon } from '@heroicons/vue/24/outline'
+import IconComponent from '@/components/IconComponent.vue'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'

@@ -38,11 +38,19 @@
 
                   <span v-if="isSortedAsc(column)" data-test="sort-asc">
                     {{ sortAscIcon }}
-                    <ArrowUpIcon class="size-5 cursor-pointer" v-if="!sortAscIcon"
-                  /></span>
+                    <IconComponent
+                      icon="heroicons-outline:arrow-up"
+                      class="size-5 cursor-pointer"
+                      v-if="!sortAscIcon"
+                    />
+                  </span>
                   <span v-if="isSortedDesc(column)" data-test="sort-desc">
                     {{ sortDescIcon }}
-                    <ArrowDownIcon class="size-5 cursor-pointer" v-if="!sortDescIcon" />
+                    <IconComponent
+                      icon="heroicons-outline:arrow-down"
+                      class="size-5 cursor-pointer"
+                      v-if="!sortDescIcon"
+                    />
                   </span>
                 </button>
               </div>
@@ -83,7 +91,7 @@
 
 <script setup lang="ts">
 import { computed, defineEmits, ref } from 'vue'
-import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/vue/24/outline'
+import IconComponent from '@/components/IconComponent.vue'
 import type { PropType } from 'vue'
 
 export interface TableRow {

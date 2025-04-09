@@ -19,7 +19,7 @@
           @click="() => (isDropdownOpen = !isDropdownOpen)"
         >
           <span>{{ model.token.symbol }}</span>
-          <ChevronDownIcon class="w-4 h-4" />
+          <IconComponent icon="heroicons-outline:chevron-down" class="w-4 h-4" />
         </div>
         <ul
           class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
@@ -76,7 +76,7 @@ import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import IconComponent from '@/components/IconComponent.vue'
 import { onClickOutside } from '@vueuse/core'
 import SelectMemberInput from '../utils/SelectMemberInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'

@@ -123,7 +123,8 @@
           <span>
             {{ candidate.candidateAddress }}
           </span>
-          <MinusCircleIcon
+          <IconComponent
+            icon="heroicons-solid:minus-circle"
             class="w-4 text-red-500 cursor-pointer"
             data-test="remove-candidate"
             @click="() => newProposalInput.candidates?.splice(index, 1)"
@@ -155,7 +156,7 @@
 <script setup lang="ts">
 import type { Proposal, Team } from '@/types/index'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { MinusCircleIcon } from '@heroicons/vue/24/solid'
+import IconComponent from '@/components/IconComponent.vue'
 import { required, minLength, requiredIf } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'
