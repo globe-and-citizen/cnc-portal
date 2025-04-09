@@ -1,0 +1,53 @@
+<template>
+  <OverviewCard
+    :title="totalMonthlyPendingAmount"
+    subtitle="Pending Claim"
+    variant="info"
+    :card-icon="personIcon"
+    :loading="isFetching"
+  >
+    <div class="flex flex-row gap-1 text-black">
+      <img :src="uptrendIcon" alt="status-icon" />
+      <div>
+        <span class="font-semibold text-sm" data-test="percentage-increase">+ 12.3% </span>
+        <span class="font-medium text-[#637381] text-xs">than last week</span>
+      </div>
+    </div>
+  </OverviewCard>
+</template>
+<script setup lang="ts">
+import personIcon from '@/assets/person.svg'
+import uptrendIcon from '@/assets/uptrend.svg'
+import OverviewCard from '@/components/OverviewCard.vue'
+import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
+import { formatCurrencyShort, log } from '@/utils'
+import { storeToRefs } from 'pinia'
+import { watch } from 'vue'
+import { computed } from 'vue'
+import { useCustomFetch } from '@/composables'
+
+const teamStore = useTeamStore()
+const toastStore = useToastStore()
+const currencyStore = useCurrencyStore()
+const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
+const { data, isFetching, error } = useCustomFetch(
+  `/claim/monthly-pending-claims?teamId=${teamStore.currentTeamId}`
+)
+  .get()
+  .json<{ totalAmount: number }>()
+const totalMonthlyPendingAmount = computed(() => {
+  return data.value?.totalAmount
+    ? formatCurrencyShort(
+        (data.value?.totalAmount || 0) * (nativeTokenPrice.value || 0),
+        currency.value.code
+      )
+    : '0'
+})
+
+watch(error, (err) => {
+  if (err) {
+    toastStore.addErrorToast('Failed to fetch monthly pending amount')
+    log.error('Failed to fetch monthly pending amount', err)
+  }
+})
+</script>

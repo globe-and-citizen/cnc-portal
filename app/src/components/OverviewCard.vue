@@ -2,7 +2,8 @@
   <div class="card w-full rounded-2xl py-6" :class="[bgColor, textColor]">
     <div class="flex flex-col gap-4 items-center">
       <img :src="cardIcon" alt="icon" class="w-16 h-16" data-test="card-icon" />
-      <span class="text-4xl font-bold" data-test="amount">{{ title }}</span>
+      <span v-if="!loading" class="text-4xl font-bold" data-test="amount">{{ title }}</span>
+      <SkeletonLoading v-else class="w-24 h-8 opacity-20" />
       <span class="text-sm font-semibold" data-test="subtitle">{{ subtitle }}</span>
       <slot></slot>
     </div>
@@ -10,6 +11,7 @@
 </template>
 <script lang="ts" setup>
 import { computed } from 'vue'
+import SkeletonLoading from './SkeletonLoading.vue'
 
 const props = defineProps({
   title: {
