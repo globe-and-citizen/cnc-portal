@@ -87,8 +87,9 @@ describe('EditUserForm', () => {
       const wrapper = createComponent()
       const iconComponents = wrapper.findAllComponents(IconComponent)
       const copyIcon = iconComponents.find(
-        (icon) => icon.props('icon') === 'heroicons:clipboard-document-list'
+        (icon) => icon.props('icon') === 'heroicons-outline:clipboard-document-list'
       )
+      expect(copyIcon).toBeTruthy()
       expect(copyIcon?.exists()).toBeTruthy()
 
       // Tooltip
@@ -105,8 +106,9 @@ describe('EditUserForm', () => {
 
       const iconComponents = wrapper.findAllComponents(IconComponent)
       const copiedIcon = iconComponents.find(
-        (icon) => icon.props('icon') === 'heroicons:clipboard-document-check'
+        (icon) => icon.props('icon') === 'heroicons-outline:clipboard-document-check'
       )
+      expect(copiedIcon).toBeTruthy()
       expect(copiedIcon?.exists()).toBeTruthy()
     })
 
