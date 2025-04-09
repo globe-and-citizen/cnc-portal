@@ -9,7 +9,8 @@ export default [
     name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
     rules: {
-      'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }]
+      'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['warn', { max: 300, skipBlankLines: true, skipComments: true }]
     }
   },
   {

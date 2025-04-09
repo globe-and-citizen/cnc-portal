@@ -100,11 +100,7 @@ const {
 // Watch team ID update to fetch the team wage data
 watch(
   [teamId, teamIsLoading],
-  ([newTeamId, newIsloading], [oldTeamId, oldIsLoading]) => {
-    // TODO: i leave this here to explain how the watch on team reload works
-    console.log('Test')
-    console.log('teamId', oldTeamId, newTeamId)
-    console.log('isLoading', oldIsLoading, newIsloading)
+  ([newTeamId, newIsloading]) => {
     if (newTeamId && !newIsloading) fetchTeamWageData()
   },
   { immediate: true }
