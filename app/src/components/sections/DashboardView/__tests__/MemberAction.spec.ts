@@ -188,7 +188,6 @@ describe('MemberAction', () => {
     // check if the modal is opened
     expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
 
-    
     // 2- Set empty input then trigger save, to check if the error message is displayed
     await wrapper.find('[data-test="hourly-rate-input"]').setValue('')
     await wrapper.find('[data-test="max-hours-input"]').setValue('')
@@ -248,10 +247,8 @@ describe('MemberAction', () => {
     wrapper.vm.$nextTick()
     expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
 
-
     // 9- trigger click again and resolve with 201
     await wrapper.find('[data-test="add-wage-button"]').trigger('click')
-
 
     mockPutError.value = null
     mockPutStatus.value = 201
@@ -259,7 +256,7 @@ describe('MemberAction', () => {
     resolveExecute({})
     await flushPromises()
 
-    // check if the modal is 
+    // check if the modal is
     expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
   })
 })
