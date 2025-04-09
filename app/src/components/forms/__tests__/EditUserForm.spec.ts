@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
@@ -57,7 +57,7 @@ describe('EditUserForm', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         components: {
-          IconComponent
+          IconifyIcon
         }
       }
     })
@@ -85,11 +85,8 @@ describe('EditUserForm', () => {
 
     it('renders copy address icon correctly', () => {
       const wrapper = createComponent()
-      const iconComponents = wrapper.findAllComponents(IconComponent)
-      const copyIcon = iconComponents.find(
-        (icon) => icon.props('icon') === 'heroicons-outline:clipboard-document-list'
-      )
-      expect(copyIcon).toBeTruthy()
+      const iconComponents = wrapper.findAllComponents(IconifyIcon)
+      const copyIcon = iconComponents[0]
       expect(copyIcon?.exists()).toBeTruthy()
 
       // Tooltip
@@ -104,10 +101,9 @@ describe('EditUserForm', () => {
       mockClipboard.copied.value = true
       await wrapper.vm.$nextTick()
 
-      const iconComponents = wrapper.findAllComponents(IconComponent)
-      const copiedIcon = iconComponents.find(
-        (icon) => icon.props('icon') === 'heroicons-outline:clipboard-document-check'
-      )
+      const iconComponents = wrapper.findAllComponents(IconifyIcon)
+      const copiedIcon = iconComponents[0]
+      await copiedIcon.trigger('click')
       expect(copiedIcon).toBeTruthy()
       expect(copiedIcon?.exists()).toBeTruthy()
     })
@@ -153,7 +149,7 @@ describe('EditUserForm', () => {
       mockClipboard.copied.value = false
       await wrapper.vm.$nextTick()
 
-      await wrapper.findComponent(IconComponent).trigger('click')
+      await wrapper.findComponent(IconifyIcon).trigger('click')
 
       expect(mockCopy).toBeCalledWith(user.address)
     })
