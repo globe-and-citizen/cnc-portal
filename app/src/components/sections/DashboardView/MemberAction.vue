@@ -71,7 +71,7 @@
         <div
           data-test="max-weekly-hours-error"
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.maxWeeklyHours?.$errors"
+          v-for="error of v$.wageData.maxWeeklyHours?.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -91,17 +91,14 @@
         <div
           data-test="hourly-rate-error"
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.hourlyRate?.$errors"
+          v-for="error of v$.wageData.hourlyRate?.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
         </div>
       </div>
       <div v-if="addMemberWageDataError" data-test="error-state">
-        <div class="alert alert-warning" v-if="addMemberWageDataStatusCode === 403">
-          {{ addMemberWageDataError.message }}
-        </div>
-        <div v-else-if="addMemberWageDataStatusCode === 404">
+        <div class="alert alert-warning" v-if="addMemberWageDataStatusCode === 403 || addMemberWageDataStatusCode === 404">
           {{ addMemberWageDataError.message }}
         </div>
         <div class="alert" v-else>Error! Something went wrong</div>
@@ -115,7 +112,20 @@
           data-test="add-wage-button"
           >Save</ButtonUI
         >
-        <ButtonUI variant="error" outline @click="showSetMemberWageModal = false">Cancel</ButtonUI>
+        <ButtonUI
+          variant="error"
+          outline
+          @click="
+            () => {
+              showSetMemberWageModal = false
+              v$.$reset()
+              wageData.maxWeeklyHours = 0
+              wageData.hourlyRate = 0
+            }
+          "
+          data-test="add-wage-cancel-button"
+          >Cancel</ButtonUI
+        >
       </div>
     </ModalComponent>
   </div>
@@ -131,7 +141,7 @@ import { TrashIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
@@ -184,14 +194,10 @@ const {
 
 const deleteMember = async (): Promise<void> => {
   await executeDeleteMember()
-  console.log('Deleting member...')
   if (deleteMemberStatusCode.value === 204) {
-    addSuccessToast('Member deleted successfully')
     showDeleteMemberConfirmModal.value = false
     teamStore.fetchTeam(String(props.teamId))
-    console.log('Member deleted successfully', showDeleteMemberConfirmModal.value)
   }
-  console.log('Delete member finished')
 }
 const {
   error: addMemberWageDataError,

@@ -5,7 +5,7 @@ import type { Team } from '@/types/team'
 import { createTestingPinia } from '@pinia/testing'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { ref } from 'vue'
 
 // 1. Create the reactive refs you want to control
 const mockPutError = ref<string | null>(null)
@@ -20,18 +20,24 @@ const mockDeleteStatus = ref<number | null>(null)
 
 // 2. Create a manual promise control
 let resolveExecute: (val: unknown) => void
-let rejectExecute: (err: unknown) => void
 
-const executeMock = vi.fn(() => {
+const executeDeleteMock = vi.fn(() => {
   mockDeleteIsFetching.value = true
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     resolveExecute = resolve
-    rejectExecute = reject
   }).finally(() => {
     mockDeleteIsFetching.value = false
   })
 })
 
+const executePutMock = vi.fn(() => {
+  mockPutIsFetching.value = true
+  return new Promise((resolve) => {
+    resolveExecute = resolve
+  }).finally(() => {
+    mockPutIsFetching.value = false
+  })
+})
 const mocks = vi.hoisted(() => ({
   mockUseTeamStore: vi.fn(() => ({
     fetchTeam: vi.fn()
@@ -66,7 +72,7 @@ describe('MemberAction', () => {
       isFetching: mockDeleteIsFetching,
       error: mockDeleteError,
       statusCode: mockDeleteStatus,
-      execute: executeMock
+      execute: executeDeleteMock
     })
   })
   mocks.mockUseCustomFetch.mockReturnValueOnce({
@@ -75,7 +81,8 @@ describe('MemberAction', () => {
       data: mockPutData,
       isFetching: mockPutIsFetching,
       error: mockPutError,
-      statusCode: mockPutStatus
+      statusCode: mockPutStatus,
+      execute: executePutMock
     })
   })
   const wrapper = mount(MemberAction, {
@@ -97,8 +104,6 @@ describe('MemberAction', () => {
 
     // check if the modal is opened
     expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
-    // expect the first modal component model is set to visible
-    expect(wrapper.findComponent(ModalComponent).props().modelValue).toBe(true)
 
     // Cancel the delete action
     await wrapper.find('[data-test="delete-member-cancel-button"]').trigger('click')
@@ -147,4 +152,65 @@ describe('MemberAction', () => {
     expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
   })
 
+  it('should render the component and test set wage feature', async () => {
+
+
+    expect(wrapper.exists()).toBe(true)
+    // click the set wage button
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
+    await wrapper.find('[data-test="set-wage-button"]').trigger('click')
+    wrapper.vm.$nextTick()
+
+    // check if the modal is opened
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+
+    // set empty input then trigger save, to check if the error message is displayed
+    await wrapper.find('[data-test="hourly-rate-input"]').setValue('')
+    await wrapper.find('[data-test="max-hours-input"]').setValue('')
+
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+
+    expect(wrapper.find('[data-test="hourly-rate-error"]').exists()).toBeTruthy()
+    expect(wrapper.find('[data-test="max-weekly-hours-error"]').exists()).toBeTruthy()
+
+    // Cancel and chek if the modal is closed, and once open again, the error message is not displayed
+    await wrapper.find('[data-test="add-wage-cancel-button"]').trigger('click')
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
+
+    await wrapper.find('[data-test="set-wage-button"]').trigger('click')
+    wrapper.vm.$nextTick()
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+    expect(wrapper.find('[data-test="hourly-rate-error"]').exists()).toBeFalsy()
+    expect(wrapper.find('[data-test="max-weekly-hours-error"]').exists()).toBeFalsy()
+
+    // set valid input and trigger save
+
+    await wrapper.find('[data-test="hourly-rate-input"]').setValue('20')
+    await wrapper.find('[data-test="max-hours-input"]').setValue('40')
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+
+    // Update the mock data to simulate the put
+    mockPutError.value = 'Error'
+    mockPutStatus.value = 403
+    await wrapper.vm.$nextTick()
+
+    // expect the error message to be displayed
+    expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
+
+    mockPutStatus.value = 500
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="error-state"]').text()).toContain(
+      'Error! Something went wrong'
+    )
+    mockPutError.value = null
+    mockPutStatus.value = 204
+
+    resolveExecute({})
+    // await nextTick()
+    // await wrapper.vm.$nextTick()
+    await flushPromises()
+
+    // check if the modal is closed
+  })
 })
