@@ -32,11 +32,16 @@
         data-test="toggle-collapse"
       >
         <!-- I adde is collapsed class because data-test is not working on the icone -->
-        <ArrowLeftStartOnRectangleIcon
+        <IconComponent
+          icon="heroicons:arrow-left-start-on-rectangle"
           class="is-collapsed w-5 h-5 text-gray-600"
           v-if="isCollapsed"
         />
-        <ArrowRightStartOnRectangleIcon class="not-collapsed w-5 h-5 text-gray-600" v-else />
+        <IconComponent
+          icon="heroicons:arrow-right-start-on-rectangle"
+          class="not-collapsed w-5 h-5 text-gray-600"
+          v-else
+        />
       </ButtonUI>
     </div>
     <!-- Team Display Group -->
@@ -63,7 +68,7 @@
           <button
             class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
           >
-            <ChevronUpDownIcon class="w-4 h-4 text-gray-600" />
+            <IconComponent icon="heroicons:chevron-up-down" class="w-4 h-4 text-gray-600" />
           </button>
           <transition
             enter-active-class="transition ease-out duration-200"
@@ -137,14 +142,7 @@
           }"
         >
           <div class="relative">
-            <component
-              :is="item.icon"
-              class="w-6 h-6 transition-all duration-300 ease-in-out"
-              :class="{
-                'text-emerald-500 scale-110': item.active,
-                'group-hover:scale-110 group-hover:text-emerald-500': !item.active
-              }"
-            />
+            <IconComponent :icon="item.icon" :class="getIconClass(item.active)" />
           </div>
           <span
             v-if="!isCollapsed"
@@ -191,23 +189,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
-import {
-  HomeIcon,
-  BanknotesIcon,
-  // ChartBarIcon,
-  // UsersIcon,
-  ArrowLeftStartOnRectangleIcon,
-  ArrowRightStartOnRectangleIcon,
-  ChevronUpDownIcon,
-  BriefcaseIcon,
-  // ChartPieIcon,
-  WrenchIcon,
-  CurrencyDollarIcon
-} from '@heroicons/vue/24/outline'
+import IconComponent from './IconComponent.vue'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore } from '@/stores'
 import { useRoute } from 'vue-router'
+
 const appStore = useAppStore()
 const route = useRoute()
 
@@ -227,6 +214,13 @@ const props = defineProps<{
 const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
+
+const getIconClass = (active: boolean | undefined) => {
+  return [
+    'w-6 h-6 transition-all duration-300 ease-in-out',
+    active ? 'text-emerald-500 scale-110' : 'group-hover:scale-110 group-hover:text-emerald-500'
+  ].join(' ')
+}
 
 onMounted(() => {
   onClickOutside(target, () => {
@@ -252,7 +246,7 @@ const formatedUserAddress = computed(() => {
 const menuItems = computed(() => [
   {
     label: 'Dashboard',
-    icon: HomeIcon,
+    icon: 'heroicons:home',
     route: {
       name: 'show-team',
       params: { id: teamStore.currentTeam?.id || '1' }
@@ -262,7 +256,7 @@ const menuItems = computed(() => [
   },
   {
     label: 'Bank',
-    icon: BanknotesIcon,
+    icon: 'heroicons:banknotes',
     route: {
       name: 'bank',
       params: { id: teamStore.currentTeam?.id || '1' }
@@ -272,7 +266,7 @@ const menuItems = computed(() => [
   },
   {
     label: 'Cash Remuneration',
-    icon: CurrencyDollarIcon,
+    icon: 'heroicons:currency-dollar',
     route: {
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
@@ -282,7 +276,7 @@ const menuItems = computed(() => [
   },
   {
     label: 'Expense Account ',
-    icon: BriefcaseIcon,
+    icon: 'heroicons:briefcase',
     route: {
       name: 'expense-account',
       params: { id: teamStore.currentTeam?.id || '1' }
@@ -290,41 +284,15 @@ const menuItems = computed(() => [
     active: route.name === 'expense-account',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
-  // {
-  //   label: 'Investors',
-  //   icon: ChartPieIcon,
-  //   route: {
-  //     name: 'sher-token',
-  //     params: { id: teamStore.currentTeam?.id || '1' }
-  //   },
-  //   active: route.name === 'sher-token',
-  //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  // },
   {
     label: 'Contract Management',
-    icon: WrenchIcon,
+    icon: 'heroicons:wrench',
     route: {
       name: 'contract-management',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
-  // {
-  //   label: 'Transactions',
-  //   icon: ChartBarIcon,
-  //   route: '/transactions',
-  //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  // },
-  // {
-  //   label: 'Administration',
-  //   icon: UsersIcon,
-  //   route: {
-  //     name: 'administration',
-  //     params: { id: teamStore.currentTeam?.id || '1' }
-  //   },
-  //   active: route.name === 'administration',
-  //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  // }
 ])
 
 const toggleDropdown = () => {
