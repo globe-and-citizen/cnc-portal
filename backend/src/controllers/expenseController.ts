@@ -54,7 +54,9 @@ export const addExpense = async (req: Request, res: Response) => {
       await syncExpenseStatus(expense)
     ))
 
-    const activeExpenses = syncedExpenses.filter((expense) => expense.status !== "expired")
+    const activeExpenses = syncedExpenses.filter((expense) => 
+      expense.status !== "expired" && expense.status !== "limit-reached"
+    )
 
     console.log("Active expenses for user:", activeExpenses);
     // Check if the user already has an active expense
@@ -146,18 +148,25 @@ const syncExpenseStatus = async (expense: Expense) => {
   }) as unknown as [bigint, bigint, 0 | 1 | 2];     
   
   const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
-  // if (expense.status === "pending") {
-  //   await synExpenseStatus(expense.id);
-  // }
+  
+  const amountTransferred = data.tokenAddress === zeroAddress
+    ? `${formatEther(balances[1])}`
+    : `${Number(balances[1]) / 1e6}`
+
+  const isLimitReached = data.budgetData[1].value <= amountTransferred
+
   const formattedExpense = {
     ...expense,
     balances: {
       0: `${balances[0]}`,
-      1: data.tokenAddress === zeroAddress
-        ? `${formatEther(balances[1])}`
-        : `${Number(balances[1]) / 1e6}`
-      },
-    status: isExpired ? "expired" : balances[2] === 2 ? "disabled" : "enabled"
+      1: amountTransferred
+    },
+    status: isExpired 
+     ? "expired" 
+     : isLimitReached 
+      ? "limit-reached"
+      : balances[2] === 2 
+       ? "disabled" : "enabled"
   }
 
   await prisma.expense.update({
