@@ -117,7 +117,9 @@ export const getExpenses = async (req: Request, res: Response) => {
     // const expenses = await syncExpenseStatus(teamId);
     console.log("Fetched expenses for teamId:", teamId);
     console.log("Fetched expenses:", _expenses);
-    return res.status(200).json(_expenses);
+    return res.status(200).json(
+      _expenses.filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
+    );
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
   }
