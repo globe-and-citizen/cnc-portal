@@ -3,75 +3,81 @@ import MemberAction from '@/components/sections/DashboardView/MemberAction.vue'
 import type { Member } from '@/types/member'
 import type { Team } from '@/types/team'
 import { createTestingPinia } from '@pinia/testing'
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { nextTick, ref } from 'vue'
 
-const mockError = ref<string | null>(null)
-const mockIsFetching = ref(false)
-const mockData = ref<Team | null>(null)
-const mockStatus = ref(200)
+// 1. Create the reactive refs you want to control
+const mockPutError = ref<string | null>(null)
+const mockPutIsFetching = ref(false)
+const mockPutData = ref<Team | null>(null)
+const mockPutStatus = ref<number | null>(null)
 
 const mockDeleteError = ref<string | null>(null)
 const mockDeleteIsFetching = ref(false)
 const mockDeleteData = ref<Member | null>(null)
-const mockDeleteStatus = ref(200)
+const mockDeleteStatus = ref<number | null>(null)
 
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: () => ({
-    json: () => ({
-      execute: vi.fn(),
-      error: mockError,
-      isFetching: mockIsFetching,
-      data: mockData,
-      status: mockStatus
-    }),
-    delete: () => ({
-      json: () => ({
-        execute: vi.fn(),
-        error: mockDeleteError,
-        isFetching: mockDeleteIsFetching,
-        data: mockDeleteData,
-        status: mockDeleteStatus
-      })
-    }),
-    put: () => ({
-      json: () => ({
-        data: {
-          bankAddress: '0x123',
-          id: '1',
-          name: 'Test Team'
-        },
-        error: null,
-        execute: vi.fn()
-      })
-    })
+// 2. Create a manual promise control
+let resolveExecute: (val: unknown) => void
+let rejectExecute: (err: unknown) => void
+
+const executeMock = vi.fn(() => {
+  mockDeleteIsFetching.value = true
+  return new Promise((resolve, reject) => {
+    resolveExecute = resolve
+    rejectExecute = reject
+  }).finally(() => {
+    mockDeleteIsFetching.value = false
   })
+})
+
+const mocks = vi.hoisted(() => ({
+  mockUseTeamStore: vi.fn(() => ({
+    fetchTeam: vi.fn()
+  })),
+  mockUseCustomFetch: vi.fn()
 }))
 
-// Add mock for teamStore
-// const mockTeamStore = {
-//   currentTeam: {
-//     id: '1',
-//     name: 'Sample Team',
-//     description: 'Sample Description',
-//     bankAddress: 'Sample Bank Address',
-//     ownerAddress: 'owner123',
-//     votingAddress: null,
-//     boardOfDirectorsAddress: null,
-//     members: [
-//       { id: '1', name: 'Alice', address: '1234', teamId: 1 },
-//       { id: '2', name: 'Bob', address: '5678', teamId: 1 }
-//     ],
-//     teamContracts: []
-//   }
-// }
+vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useCustomFetch: mocks.mockUseCustomFetch
+  }
+})
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useTeamStore: mocks.mockUseTeamStore
+  }
+})
 
-vi.mock('@/stores/team', () => ({
-  useTeamStore: vi.fn()
-}))
+afterEach(() => {
+  vi.clearAllMocks()
+})
 
 describe('MemberAction', () => {
+  mocks.mockUseCustomFetch.mockReturnValueOnce({
+    delete: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnValue({
+      data: mockDeleteData,
+      isFetching: mockDeleteIsFetching,
+      error: mockDeleteError,
+      statusCode: mockDeleteStatus,
+      execute: executeMock
+    })
+  })
+  mocks.mockUseCustomFetch.mockReturnValueOnce({
+    put: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnValue({
+      data: mockPutData,
+      isFetching: mockPutIsFetching,
+      error: mockPutError,
+      statusCode: mockPutStatus
+    })
+  })
   const wrapper = mount(MemberAction, {
     props: {
       teamId: '1',
@@ -81,42 +87,64 @@ describe('MemberAction', () => {
       plugins: [createTestingPinia({ createSpy: vi.fn })]
     }
   })
-  it('should render the component', async () => {
+
+  it('should render the component and test delet feature', async () => {
     expect(wrapper.exists()).toBe(true)
     // click the delete button
-    expect(wrapper.findComponent(ModalComponent).props().modelValue).toBe(false)
-    // await wrapper.find('[data-test="delete-member-button"]').trigger('click')
-    // // expect the first modal component model is set to visible
-    // expect(wrapper.findComponent(ModalComponent).props().modelValue).toBe(true)
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
+    await wrapper.find('[data-test="delete-member-button"]').trigger('click')
+    wrapper.vm.$nextTick()
 
-    // // click the confirm button
-    // await wrapper.find('[data-test="delete-member-confirm-button"]').trigger('click')
+    // check if the modal is opened
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+    // expect the first modal component model is set to visible
+    expect(wrapper.findComponent(ModalComponent).props().modelValue).toBe(true)
 
-    // mockDeleteError.value = null
-    // mockDeleteStatus.value = 204
-    // mockDeleteData.value = {
-    //   id: '1',
-    //   name: 'Alice',
-    //   address: '1234',
-    //   teamId: 1
-    // }
-    // await wrapper.vm.$nextTick()
-    // // check if the modal is closed
-    // expect(wrapper.findComponent(ModalComponent).props().modelValue).toBe(false)
+    // Cancel the delete action
+    await wrapper.find('[data-test="delete-member-cancel-button"]').trigger('click')
+
+    // check if the modal is closed
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
+
+    // Open the modal again
+    await wrapper.find('[data-test="delete-member-button"]').trigger('click')
+
+    // check if the modal is opened
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+
+    // click the confirm button
+    await wrapper.find('[data-test="delete-member-confirm-button"]').trigger('click')
+
     // Update the mock data to simulate the delete
 
-    // mockError.value = 'Error'
-    // mockStatus.value = 403
+    mockDeleteError.value = 'Error'
+    mockDeleteStatus.value = 403
+    await wrapper.vm.$nextTick()
+
+    // expect the error message to be displayed
+
+    expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
+    expect(wrapper.find('[data-test="error-state"]').text()).toBe(
+      "You don't have the permission to delete this member"
+    )
+
+    mockDeleteStatus.value = 500
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="error-state"]').text()).toContain(
+      'Error! Something went wrong'
+    )
+
+    mockDeleteError.value = null
+    mockDeleteStatus.value = 204
+
+    resolveExecute({})
+    // await nextTick()
     // await wrapper.vm.$nextTick()
+    await flushPromises()
 
-    // // expect the error message to be displayed
-
-    // expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
-    // expect(wrapper.find('[data-test="error-state"]').text()).toContain('permission')
-
-    // mockStatus.value = 500
-    // await wrapper.vm.$nextTick()
-
-    // expect(wrapper.find('[data-test="error-state"]').text()).toContain('Error')
+    // check if the modal is closed
+    expect(wrapper.findComponent(ModalComponent).exists()).toBeFalsy()
   })
+
 })

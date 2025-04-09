@@ -17,7 +17,7 @@
       Set Wage
     </ButtonUI>
 
-    <ModalComponent v-model="showDeleteMemberConfirmModal">
+    <ModalComponent v-model="showDeleteMemberConfirmModal" v-if="showDeleteMemberConfirmModal">
       <p class="font-bold text-lg">Confirmation</p>
       <hr class="" />
       <p class="py-4">
@@ -42,13 +42,18 @@
           data-test="delete-member-confirm-button"
           >Delete</ButtonUI
         >
-        <ButtonUI variant="primary" outline @click="showDeleteMemberConfirmModal = false">
+        <ButtonUI
+          variant="primary"
+          outline
+          @click="showDeleteMemberConfirmModal = false"
+          data-test="delete-member-cancel-button"
+        >
           Cancel
         </ButtonUI>
       </div>
     </ModalComponent>
 
-    <ModalComponent v-model="showSetMemberWageModal">
+    <ModalComponent v-model="showSetMemberWageModal" v-if="showSetMemberWageModal">
       <p class="font-bold text-lg">Set Member Wage</p>
       <hr class="" />
       <div class="input-group mt-3">
@@ -126,7 +131,7 @@ import { TrashIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
@@ -179,11 +184,14 @@ const {
 
 const deleteMember = async (): Promise<void> => {
   await executeDeleteMember()
+  console.log('Deleting member...')
   if (deleteMemberStatusCode.value === 204) {
     addSuccessToast('Member deleted successfully')
     showDeleteMemberConfirmModal.value = false
     teamStore.fetchTeam(String(props.teamId))
+    console.log('Member deleted successfully', showDeleteMemberConfirmModal.value)
   }
+  console.log('Delete member finished')
 }
 const {
   error: addMemberWageDataError,
