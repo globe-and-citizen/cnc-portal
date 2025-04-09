@@ -105,10 +105,6 @@ import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import type { ManyExpenseWithBalances } from '@/types'
 import { useRoute } from 'vue-router'
 
-// const { team /*, reload*/ } = defineProps<{
-//   team: Partial<Team>
-// }>()
-const reload = defineModel()
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
@@ -123,8 +119,6 @@ const expenseAccountEip712Address = computed(
     teamStore.currentTeam?.teamContracts?.find(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
-  // team.teamContracts?.find((contract) => contract.type === 'ExpenseAccountEIP712')
-  //   ?.address as Address
 )
 const columns = [
   {
@@ -202,9 +196,9 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return expenseDataStore.allExpenseDataParsed //manyExpenseAccountDataAll
+    return expenseDataStore.allExpenseDataParsed
   } else {
-    return /*manyExpenseAccountDataAll*/ expenseDataStore.allExpenseDataParsed.filter(
+    return expenseDataStore.allExpenseDataParsed.filter(
       (approval: ManyExpenseWithBalances) => approval.status === selectedRadio.value
     )
   }
@@ -236,36 +230,16 @@ const activateApproval = async (signature: `0x{string}`) => {
 //#endregion
 
 //#region Watch
-watch(reload, async (newState) => {
-  if (newState) {
-    await fetchExpenseAccountOwner()
-  }
-})
-// watch(
-//   () => team,
-//   async (newTeam) => {
-//     if (newTeam) {
-//       expenseAccountEip712Address.value = newTeam.expenseAccountEip712Address as string
-//       await fetchExpenseAccountOwner()
-//     }
-//   }
-// )
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
-    reload.value = true
     addSuccessToast('Activate Successful')
-    // await initializeBalances()
     expenseDataStore.fetchAllExpenseData(route.params.id as string)
-    reload.value = false
   }
 })
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
-    reload.value = true
     addSuccessToast('Deactivate Successful')
-    // await initializeBalances()
     expenseDataStore.fetchAllExpenseData(route.params.id as string)
-    reload.value = false
   }
 })
 watch(errorDeactivateApproval, (newVal) => {

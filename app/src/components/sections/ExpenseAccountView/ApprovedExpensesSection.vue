@@ -15,7 +15,7 @@
       </ButtonUI>
     </template>
 
-    <ExpenseAccountTable v-model="reload" />
+    <ExpenseAccountTable />
 
     <ModalComponent v-model="approveUsersModal">
       <ApproveUsersForm
@@ -47,7 +47,6 @@ import type { User, BudgetLimit } from '@/types'
 import { log, parseError } from '@/utils'
 
 const approveUsersModal = ref(false)
-const reload = ref(false)
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
@@ -146,11 +145,9 @@ const approveUser = async (data: BudgetLimit) => {
     teamId: route.params.id
   }
   await executeAddExpenseData()
-  reload.value = true
   await init()
   loadingApprove.value = false
   approveUsersModal.value = false
-  reload.value = false
   await expenseDataStore.fetchAllExpenseData(
     Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
   )
