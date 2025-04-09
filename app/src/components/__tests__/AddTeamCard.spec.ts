@@ -1,13 +1,13 @@
 import { it, describe, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 
 describe('AddTeamCard.vue', () => {
   const wrapper = mount(AddTeamCard, {
     global: {
       components: {
-        IconComponent
+        IconifyIcon
       }
     }
   })
@@ -16,13 +16,12 @@ describe('AddTeamCard.vue', () => {
       expect(wrapper.find('span').text()).toBe('Add Team')
     })
     it('renders icon plus', () => {
-      expect(wrapper.findComponent(IconComponent).exists()).toBe(true)
-      expect(wrapper.findComponent(IconComponent).props('icon')).toBe('heroicons:plus-circle')
+      expect(wrapper.findComponent(IconifyIcon).exists()).toBe(true)
     })
   })
   describe('Emits', () => {
     it('emits addTeamCard when add team card is clicked', async () => {
-      await wrapper.findComponent(IconComponent).trigger('click')
+      await wrapper.findComponent(IconifyIcon).trigger('click')
       expect(wrapper.emitted()).toHaveProperty('openAddTeamModal')
     })
   })

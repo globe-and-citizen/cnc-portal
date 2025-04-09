@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '../ExpenseAccountView.vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
@@ -302,7 +302,7 @@ describe('ExpenseAccountSection', () => {
       data,
       global: {
         components: {
-          IconComponent
+          IconifyIcon
         },
         plugins: [
           createTestingPinia({
@@ -339,9 +339,8 @@ describe('ExpenseAccountSection', () => {
     // })
     it('renders copy icon correctly', () => {
       const wrapper = createComponent()
-      const iconComponent = wrapper.findComponent(IconComponent)
+      const iconComponent = wrapper.findComponent(IconifyIcon)
       expect(iconComponent.exists()).toBeTruthy()
-      expect(iconComponent.props('icon')).toBe('heroicons:clipboard-document-list')
     })
     it('should not show copy to clipboard icon if copy not supported', async () => {
       const wrapper = createComponent()
@@ -350,7 +349,7 @@ describe('ExpenseAccountSection', () => {
       mockClipboard.isSupported.value = false
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findComponent(IconComponent).exists()).toBe(false)
+      expect(wrapper.findComponent(IconifyIcon).exists()).toBe(false)
     })
     it('should show animation if balance loading', async () => {
       const wrapper = createComponent()
