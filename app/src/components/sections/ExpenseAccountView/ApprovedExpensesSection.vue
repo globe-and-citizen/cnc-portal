@@ -68,7 +68,7 @@ const expenseAccountEip712Address = computed(
     )?.address as Address
 )
 
-const { execute: executeAddExpenseData } = useCustomFetch(`expense`, {
+const { execute: executeAddExpenseData, error: errorAddExpenseData } = useCustomFetch(`expense`, {
   immediate: false
 })
   .post(expenseAccountData)
@@ -163,6 +163,13 @@ const isBodAction = () => false
 //#region
 
 //#region Watchers
+watch(errorAddExpenseData, (newVal) => {
+  if (newVal) {
+    addErrorToast(errorMessage(newVal, 'Error Adding Expense Data'))
+    log.error('errorAddExpenseData.value', parseError(newVal))
+    loadingApprove.value = false
+  }
+})
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })
