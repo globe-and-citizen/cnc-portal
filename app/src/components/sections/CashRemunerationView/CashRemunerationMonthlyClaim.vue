@@ -4,6 +4,7 @@
     subtitle="Month Claimed"
     variant="warning"
     :card-icon="cartIcon"
+    :loading="loading"
   >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
@@ -37,7 +38,7 @@ const contractAddress = teamStore.currentTeam?.teamContracts.find(
 
 const year = new Date().getUTCFullYear().toString()
 const month = (new Date().getUTCMonth() + 1).toString().padStart(2, '0')
-const { result, error } = useQuery(
+const { result, error, loading } = useQuery(
   gql`
     query GetMonthlyWithdrawn($contractAddress: Bytes!, $date: String!) {
       monthlyWithdrawn(
