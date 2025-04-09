@@ -2,6 +2,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore } from '@/stores'
 import type { ManyExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
+import exp from 'constants'
 import { defineStore } from 'pinia'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -41,6 +42,16 @@ export const useExpenseDataStore = defineStore('expense', () => {
     return []
   })
 
+  const allExpenseDataParsed = computed(() => {
+    if (allExpenseData.value) {
+      return allExpenseData.value.map((expense: { data: string }) => ({
+        ...JSON.parse(expense.data),
+        ...expense
+      }))
+    }
+    return []
+  })
+
   const fetchAllExpenseData = async (teamId: string) => {
     allExpenseURI.value = `/expense?teamId=${teamId}`
     await executeFetchAllExpenseData()
@@ -69,12 +80,14 @@ export const useExpenseDataStore = defineStore('expense', () => {
   // Todo count how many time it's called or mounted
   onMounted(async () => {
     await reloadExpenseData()
+    console.log("allExpenseData", allExpenseData.value)
   })
 
   return {
     myApprovedExpenses,
     fetchAllExpenseData,
     allExpenseData,
+    allExpenseDataParsed,
     allExpenseDataError,
     allExpenseDataIsFetching,
     allExpenseDataStatusCode
