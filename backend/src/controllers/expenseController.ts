@@ -9,6 +9,7 @@ import publicClient from "../utils/viem.config";
 
 import { Expense, Prisma } from "@prisma/client";
 import ABI from "../artifacts/expense-account-eip712.json";
+import { BudgetLimit } from '../types'
 
 // type expenseBodyRequest = Pick<Expens
 type expenseBodyRequest = Pick<Expense, "signature" | "data"> & {
@@ -20,7 +21,7 @@ export const addExpense = async (req: Request, res: Response) => {
   const body = req.body as expenseBodyRequest;
   const teamId = Number(body.teamId);
   const signature = body.signature as string;
-  const data = body.data as string;
+  const data = body.data as BudgetLimit | string;
 
   // Validating the expense data
   let parametersError: string[] = [];
@@ -37,13 +38,15 @@ export const addExpense = async (req: Request, res: Response) => {
     if (!(await isOwnerOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
-
+    console.log("data", data);
     console.log("Creating expense for teamId:", teamId);
     // TODO: should be only one expense active for the user
     const existingExpenses = await prisma.expense.findMany({
       where: {
         teamId,
-        userAddress: callerAddress
+        userAddress: (typeof data === "string") 
+          ? JSON.parse(data).approvedAddress
+          : data.approvedAddress 
       },
     })
 
@@ -52,6 +55,9 @@ export const addExpense = async (req: Request, res: Response) => {
     ))
 
     const activeExpenses = syncedExpenses.filter((expense) => expense.status !== "expired")
+
+    console.log("Active expenses for user:", activeExpenses);
+    // Check if the user already has an active expense
 
     if (activeExpenses.length > 0) {
       return errorResponse(400, "User already has an active expense", res);
@@ -62,7 +68,9 @@ export const addExpense = async (req: Request, res: Response) => {
         teamId,
         signature,
         data: JSON.stringify(data),
-        userAddress: callerAddress, //I think this should be the user that is approved for the expense
+        userAddress: (typeof data === "string")
+         ? JSON.parse(data).approvedAddress
+         : data.approvedAddress, //I think this should be the user that is approved for the expense
         status: "signed",
       },
     });
@@ -104,7 +112,7 @@ export const getExpenses = async (req: Request, res: Response) => {
     // const expenses = await syncExpenseStatus(teamId);
     console.log("Fetched expenses for teamId:", teamId);
     console.log("Fetched expenses:", _expenses);
-    return res.status(200).json(expenses);
+    return res.status(200).json(_expenses);
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
   }
