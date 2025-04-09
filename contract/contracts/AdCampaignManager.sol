@@ -33,7 +33,9 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
     mapping(string => uint256) public campaignCodesToId;
     mapping(uint256 => AdCampaign) public adCampaigns;
+    address[] private adminList;
     mapping(address => bool) public admins;
+    mapping(address => uint256) private adminIndex;
     uint256 public adCampaignCount;
 
     event AdCampaignCreated(string campaignCode,uint256 budget);
@@ -131,14 +133,29 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
     // Admin management functions
     function addAdmin(address admin) external onlyOwner {
+        require(!admins[admin], "Already an admin");
         admins[admin] = true;
+        adminIndex[admin] = adminList.length;
+        adminList.push(admin);
         emit AdminAdded(admin);
     }
 
     function removeAdmin(address admin) external onlyOwner {
+        require(admins[admin], "Not an admin");
         admins[admin] = false;
+        
+        uint256 indexToRemove = adminIndex[admin];
+        uint256 lastIndex = adminList.length - 1;
+
+        if (indexToRemove != lastIndex) {
+            address lastAdmin = adminList[lastIndex];
+            adminList[indexToRemove] = lastAdmin;
+            adminIndex[lastAdmin] = indexToRemove;
+        }
+        adminList.pop();
+        delete adminIndex[admin];
         emit AdminRemoved(admin);
-    }
+    }   
 
     // Set the bank contract address (can be done by admins or owner)
     function setBankContractAddress(address _bankContractAddress) external onlyAdminOrOwner {
@@ -179,6 +196,11 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
         require(campaignId > 0, "Invalid campaign code");
         return adCampaigns[campaignId];
     }
+
+    function getAdminList() external view returns (address[] memory) {
+        return adminList;
+    }
+
 
     // Fallback function to receive MATIC payments
     receive() external payable {}
