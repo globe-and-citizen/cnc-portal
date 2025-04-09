@@ -140,11 +140,11 @@ const approveUser = async (data: BudgetLimit) => {
     domain
   })
 
-  expenseAccountData.value = {
-    expenseAccountData: expenseAccountData.value,
-    signature: signature.value
-  }
-  await executeAddExpenseData()
+  // expenseAccountData.value = {
+  //   expenseAccountData: expenseAccountData.value,
+  //   signature: signature.value
+  // }
+  // await executeAddExpenseData()
   expenseAccountData.value = {
     data,
     signature: signature.value,
