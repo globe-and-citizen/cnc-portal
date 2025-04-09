@@ -1,22 +1,18 @@
 <template>
   <div v-if="visible">
     <div :class="['alert', typeClass]">
-      <IconComponent
-        icon="heroicons:check-circle"
-        class="size-6"
-        v-if="type === ToastType.Success"
-      />
-      <IconComponent
+      <IconifyIcon icon="heroicons:check-circle" class="size-6" v-if="type === ToastType.Success" />
+      <IconifyIcon
         icon="heroicons:information-circle"
         class="size-6"
         v-if="type === ToastType.Info"
       />
-      <IconComponent
+      <IconifyIcon
         icon="heroicons:exclamation-circle"
         class="size-6"
         v-if="type === ToastType.Warning"
       />
-      <IconComponent icon="heroicons:x-circle" class="size-6" v-if="type === ToastType.Error" />
+      <IconifyIcon icon="heroicons:x-circle" class="size-6" v-if="type === ToastType.Error" />
       <span>{{ message }} - {{ timeLeft }}s</span>
     </div>
   </div>
@@ -25,7 +21,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { ToastType, type Toast } from '@/types'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 
 const props = defineProps<Toast>()
 

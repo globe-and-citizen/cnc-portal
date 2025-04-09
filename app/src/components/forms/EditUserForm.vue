@@ -35,17 +35,18 @@
         data-test="copy-address-tooltip"
         :content="copied ? 'Copied!' : 'Click to copy address'"
       >
-        <IconComponent
+        <IconifyIcon
           v-if="isSupported && !copied"
           data-test="copy-address-icon"
-          class="size-5 cursor-pointer"
+          class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
           @click="copy(user.address)"
-          icon="heroicons-outline:clipboard-document-list"
+          icon="heroicons:clipboard-document"
         />
-        <IconComponent
-          class="size-5"
+        <IconifyIcon
           v-if="copied"
-          icon="heroicons-outline:clipboard-document-check"
+          data-test="copied-icon"
+          class="w-5 h-5 text-emerald-500"
+          icon="heroicons:check"
         />
       </ToolTip>
     </label>
@@ -83,7 +84,7 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
 import ToolTip from '@/components/ToolTip.vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { useClipboard } from '@vueuse/core'

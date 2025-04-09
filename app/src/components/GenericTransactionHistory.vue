@@ -72,7 +72,7 @@
             target="_blank"
             class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
           >
-            <IconComponent icon="heroicons-outline:document-text" class="h-4 w-4" />
+            <IconifyIcon icon="heroicons-outline:document-text" class="h-4 w-4" />
             Receipt
           </a>
         </template>
@@ -102,7 +102,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'

@@ -25,7 +25,7 @@
               class="btn btn-ghost btn-xs"
               data-test="open-admin-modal-btn"
             >
-              <IconComponent icon="heroicons-outline:users" class="size-6" />
+              <IconifyIcon icon="heroicons-outline:users" class="size-6" />
             </button>
           </td>
           <td>
@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'

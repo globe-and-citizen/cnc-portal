@@ -38,19 +38,11 @@
 
                   <span v-if="isSortedAsc(column)" data-test="sort-asc">
                     {{ sortAscIcon }}
-                    <IconComponent
-                      icon="heroicons-outline:arrow-up"
-                      class="size-5 cursor-pointer"
-                      v-if="!sortAscIcon"
-                    />
+                    <IconifyIcon icon="heroicons:chevron-up" class="w-4 h-4 text-gray-400" />
                   </span>
                   <span v-if="isSortedDesc(column)" data-test="sort-desc">
                     {{ sortDescIcon }}
-                    <IconComponent
-                      icon="heroicons-outline:arrow-down"
-                      class="size-5 cursor-pointer"
-                      v-if="!sortDescIcon"
-                    />
+                    <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 text-gray-400" />
                   </span>
                 </button>
               </div>
@@ -91,7 +83,7 @@
 
 <script setup lang="ts">
 import { computed, defineEmits, ref } from 'vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import type { PropType } from 'vue'
 
 export interface TableRow {

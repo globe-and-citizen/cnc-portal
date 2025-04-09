@@ -6,7 +6,7 @@
       @click="() => (showDeleteMemberConfirmModal = true)"
       data-test="delete-member-button"
     >
-      <IconComponent icon="heroicons-outline:trash" class="size-4" />
+      <IconifyIcon icon="heroicons-outline:trash" class="size-4" />
     </ButtonUI>
     <ButtonUI
       size="sm"
@@ -122,7 +122,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables'
 import { useTeamStore, useToastStore } from '@/stores'
 import type { Member } from '@/types'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'

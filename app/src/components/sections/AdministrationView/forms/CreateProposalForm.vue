@@ -123,9 +123,9 @@
           <span>
             {{ candidate.candidateAddress }}
           </span>
-          <IconComponent
-            icon="heroicons-solid:minus-circle"
-            class="w-4 text-red-500 cursor-pointer"
+          <IconifyIcon
+            icon="heroicons:user-plus"
+            class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
             data-test="remove-candidate"
             @click="() => newProposalInput.candidates?.splice(index, 1)"
           />
@@ -156,7 +156,7 @@
 <script setup lang="ts">
 import type { Proposal, Team } from '@/types/index'
 import { ref, onMounted, onUnmounted } from 'vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { required, minLength, requiredIf } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'

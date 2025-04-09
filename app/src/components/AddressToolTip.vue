@@ -21,9 +21,9 @@
       "
       v-if="isSupported"
     >
-      <IconComponent
-        :icon="copied ? 'heroicons:clipboard-document-check' : 'heroicons:clipboard-document-list'"
-        class="size-5 cursor-pointer"
+      <IconifyIcon
+        icon="heroicons:clipboard-document"
+        class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
       />
     </ToolTip>
   </div>
@@ -33,7 +33,7 @@
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
 import ToolTip from './ToolTip.vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 
 const { type } = defineProps<{
   address: string

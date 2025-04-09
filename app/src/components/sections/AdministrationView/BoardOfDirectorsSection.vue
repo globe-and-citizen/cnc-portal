@@ -3,9 +3,9 @@
     <div class="flex flex-row items-center gap-2">
       <h2 class="text-2xl font-bold">Board of Directors</h2>
       <ToolTip content="To change the board of directors you need to do an election">
-        <IconComponent
-          icon="heroicons-outline:information-circle"
-          class="size-6"
+        <IconifyIcon
+          icon="heroicons:information-circle"
+          class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
           data-test="information-icon"
         />
       </ToolTip>
@@ -154,7 +154,7 @@
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ToolTip from '@/components/ToolTip.vue'
 import BoDAction from '@/components/sections/AdministrationView/BoDActions.vue'
-import IconComponent from '@/components/IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'

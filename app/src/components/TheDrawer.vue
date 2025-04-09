@@ -32,12 +32,12 @@
         data-test="toggle-collapse"
       >
         <!-- I adde is collapsed class because data-test is not working on the icone -->
-        <IconComponent
+        <IconifyIcon
           icon="heroicons:arrow-left-start-on-rectangle"
           class="is-collapsed w-5 h-5 text-gray-600"
           v-if="isCollapsed"
         />
-        <IconComponent
+        <IconifyIcon
           icon="heroicons:arrow-right-start-on-rectangle"
           class="not-collapsed w-5 h-5 text-gray-600"
           v-else
@@ -68,7 +68,7 @@
           <button
             class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
           >
-            <IconComponent icon="heroicons:chevron-up-down" class="w-4 h-4 text-gray-600" />
+            <IconifyIcon icon="heroicons:chevron-up-down" class="w-4 h-4 text-gray-600" />
           </button>
           <transition
             enter-active-class="transition ease-out duration-200"
@@ -142,7 +142,7 @@
           }"
         >
           <div class="relative">
-            <IconComponent :icon="item.icon" :class="getIconClass(item.active)" />
+            <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
           </div>
           <span
             v-if="!isCollapsed"
@@ -189,7 +189,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
-import IconComponent from './IconComponent.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore } from '@/stores'
