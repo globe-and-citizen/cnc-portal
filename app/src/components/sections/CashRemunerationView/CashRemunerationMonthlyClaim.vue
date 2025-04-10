@@ -36,36 +36,38 @@ const contractAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'CashRemunerationEIP712'
 )?.address
 
-const year = new Date().getUTCFullYear().toString()
-const month = (new Date().getUTCMonth() + 1).toString().padStart(2, '0')
-const { result, error, loading } = useQuery(
+const now = new Date()
+const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000
+const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime() / 1000
+const { result, loading, error } = useQuery(
   gql`
-    query GetMonthlyWithdrawn($contractAddress: Bytes!, $date: String!) {
-      monthlyWithdrawn(
-        id: $date
-        contractAddress: $contractAddress
-        type: "CashRemunerationEIP712"
+    query GetCashRemunerationTransactions(
+      $contractAddress: Bytes!
+      $startDate: BigInt!
+      $endDate: BigInt!
+    ) {
+      transactions(
+        where: {
+          contractAddress: $contractAddress
+          blockTimestamp_gte: $startDate
+          blockTimestamp_lte: $endDate
+          transactionType: "withdraw"
+        }
       ) {
-        id
-        totalAmount
-        contractType
-        contractAddress
+        amount
       }
     }
   `,
-  {
-    contractAddress,
-    date: `${year}-${month}`
-  }
+  { contractAddress, startDate: startOfMonth, endDate: endOfMonth }
 )
+
 const totalMonthlyWithdrawnAmount = computed(() => {
-  return result.value?.monthlyWithdrawn
-    ? formatCurrencyShort(
-        Number(formatEther(result.value.monthlyWithdrawn.totalAmount)) *
-          (nativeTokenPrice.value || 0),
-        currency.value.code
-      )
-    : '0'
+  const transactions = result.value?.transactions || []
+  const totalAmount = transactions.reduce((acc: number, transaction: { amount: number }) => {
+    return acc + parseFloat(formatEther(BigInt(transaction.amount)))
+  }, 0)
+
+  return formatCurrencyShort(totalAmount * (nativeTokenPrice.value || 0), currency.value.code)
 })
 
 watch(error, (err) => {
