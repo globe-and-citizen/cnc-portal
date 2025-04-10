@@ -79,7 +79,7 @@ const getBlockExplorerUrl = (hash: string, type: 'tx' | 'address' = 'tx') => {
 
 const formatHash = (hash: string | undefined) => {
   if (!hash) return ''
-  return `${hash.slice(0, 12)}...${hash.slice(-8)}`
+  return `${hash.slice(0, 16)}...${hash.slice(-8)}`
 }
 
 const formattedReceiptData = {
