@@ -52,7 +52,7 @@ import { NETWORK } from '@/constant'
 
 const { receiptData } = defineProps<{ receiptData: Partial<ReceiptData> }>()
 const currencyStore = useCurrencyStore()
-const { nativeTokenPriceInUSD } = storeToRefs(currencyStore)
+const { nativeTokenPrice, nativeTokenPriceInUSD } = storeToRefs(currencyStore)
 
 const emit = defineEmits<{
   (e: 'export-excel', data: ReceiptData): void
@@ -82,14 +82,21 @@ const formatHash = (hash: string | undefined) => {
   return `${hash.slice(0, 16)}...${hash.slice(-8)}`
 }
 
+const getUSDCConversionRate = () => {
+  if (currencyStore.currency.code === 'USD') return '1 USD'
+  if (!nativeTokenPrice.value || !nativeTokenPriceInUSD.value) return '1 USD'
+  const exchangeRate = nativeTokenPrice.value / nativeTokenPriceInUSD.value
+  return `${exchangeRate.toFixed(2)} ${currencyStore.currency.code} / 1 USD`
+}
+
 const formattedReceiptData = {
   ...receiptData,
   amount: `${receiptData['amount']} ${receiptData['token']}`,
   price:
     receiptData['token'] === 'USDC'
-      ? '1 USD / USDC'
-      : `${nativeTokenPriceInUSD.value} USD / ${receiptData['token']}`,
-  value: `${receiptData['valueUSD']} USD`
+      ? getUSDCConversionRate()
+      : `${nativeTokenPrice.value} ${currencyStore.currency.code} / ${receiptData['token']}`,
+  value: receiptData['valueLocal'] || receiptData['valueUSD']
 }
 
 const handleExportExcel = () => {

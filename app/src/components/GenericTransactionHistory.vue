@@ -171,6 +171,7 @@ const columns = computed(() => {
 
   // Add local currency column if it's not USD
   if (currencyStore.currency.code !== 'USD') {
+    baseColumns.pop()
     baseColumns.push({
       key: 'valueLocal',
       label: `Value (${currencyStore.currency.code})`,
