@@ -215,54 +215,57 @@ claimRoutes.put("/:claimId", updateClaim);
 /**
  * @openapi
  * /claim/monthly-pending-claims:
- *  get:
- *  summary: Retrieve the total number of pending claims in current month
- *  responses:
- *    200:
- *     description: Monthly pending claims retrieved successfully
- *    content:
- *      application/json:
- *       schema:
- *        type: object
- *       properties:
- *         totalAmount:
- *          type: number
- *         description: The total amount of pending claims in the current month
- *        example: 1000
- *        500:
+ *   get:
+ *     summary: Retrieve the total number of pending claims in current month
+ *     responses:
+ *       200:
+ *         description: Monthly pending claims retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalAmount:
+ *                   type: number
+ *                   description: The total amount of pending claims in the current month
+ *               example:
+ *                 totalAmount: 1000
+ *       500:
  *         description: Internal server error
- *        content:
- *         application/json:
- *          schema:
- *           type: object
- *          properties:
- *           message:
- *           type: string
- *          description: Error message detailing the internal server error
- *        example: "Internal server error"
- *        403:
- *        description: Forbidden
- * *        content:
- *        application/json:
- *         schema:
- *          type: object
- *        properties:
- *         message:
- *        type: string
- *        description: Error message detailing the forbidden access
- *        example: "Caller is not a member of the team"
- * *        400:
- *       description: Bad request
- *       content:
- *        application/json:
- *        schema:
- *        type: object
- *       properties:
- *        message:
- *       type: string
- *       description: Error message detailing the bad request
- *       example: "Invalid or missing teamId"
- *
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message detailing the internal server error
+ *             example:
+ *               message: "Internal server error"
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message detailing the forbidden access
+ *             example:
+ *               message: "Caller is not a member of the team"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message detailing the bad request
+ *             example:
+ *               message: "Invalid or missing teamId"
  */
 claimRoutes.get("/monthly-pending-claims", monthlyPendingClaims);
 
