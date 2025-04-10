@@ -31,7 +31,7 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
