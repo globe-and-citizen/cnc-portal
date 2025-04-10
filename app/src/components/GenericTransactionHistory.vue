@@ -78,13 +78,20 @@
         </template>
       </template>
 
-      <!-- Dynamic currency amounts -->
-      <template
-        v-for="(currency, index) in currencies"
-        :key="index"
-        #[`amount${currency}-data`]="{ row }"
-      >
-        {{ formatAmount(row as unknown as BaseTransaction, currency) }}
+      <!-- Amount with token -->
+      <template #amount-data="{ row }">
+        {{ Number((row as unknown as BaseTransaction).amount) }}
+        {{ (row as unknown as BaseTransaction).token }}
+      </template>
+
+      <!-- Value in USD -->
+      <template #valueUSD-data="{ row }">
+        {{ formatAmount(row as unknown as BaseTransaction, 'USD') }}
+      </template>
+
+      <!-- Value in local currency -->
+      <template #valueLocal-data="{ row }">
+        {{ formatAmount(row as unknown as BaseTransaction, currencyStore.currency.code) }}
       </template>
     </TableComponent>
 
@@ -107,7 +114,7 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
+import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { NETWORK } from '@/constant'
@@ -143,7 +150,7 @@ const emit = defineEmits<{
 
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { nativeTokenPrice, nativeTokenPriceInUSD } = storeToRefs(currencyStore)
+const { nativeTokenPriceInUSD, nativeTokenPrice } = storeToRefs(currencyStore)
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -157,20 +164,22 @@ const columns = computed(() => {
     { key: 'date', label: 'Date', sortable: true },
     { key: 'type', label: 'Type', sortable: false },
     { key: 'from', label: 'From', sortable: false },
-    { key: 'to', label: 'To', sortable: false }
-  ]
-
-  const currencyColumns = props.currencies.map((currency) => ({
-    key: `amount${currency}`,
-    label: `Amount (${currency})`,
-    sortable: false
-  }))
-
-  return [
-    ...baseColumns,
-    ...currencyColumns,
-    { key: 'receipt', label: 'Receipt', sortable: false }
+    { key: 'to', label: 'To', sortable: false },
+    { key: 'amount', label: 'Amount', sortable: false },
+    { key: 'valueUSD', label: 'Value (USD)', sortable: false }
   ] as TableColumn[]
+
+  // Add local currency column if it's not USD
+  if (currencyStore.currency.code !== 'USD') {
+    baseColumns.push({
+      key: 'valueLocal',
+      label: `Value (${currencyStore.currency.code})`,
+      sortable: false
+    })
+  }
+
+  baseColumns.push({ key: 'receipt', label: 'Receipt', sortable: false })
+  return baseColumns
 })
 
 // Filter transactions based on date range
@@ -215,12 +224,8 @@ const formatDate = (date: string | number) => {
 }
 
 const formatAmount = (transaction: BaseTransaction, currency: string) => {
-  const key = `amount${currency}` as keyof BaseTransaction
-  const amount = transaction[key]
-  if (typeof amount === 'number') return amount.toFixed(2)
-
   const tokenAmount = Number(transaction.amount)
-  if (tokenAmount <= 0) return '0.00'
+  if (tokenAmount <= 0) return currency === 'USD' ? '$0.00' : '0.00'
 
   let usdAmount = 0
   if (transaction.token === 'USDC') {
@@ -263,8 +268,7 @@ const handleExport = () => {
             return getReceiptUrl(tx.txHash)
           default:
             if (col.key.startsWith('amount')) {
-              const currency = col.key.replace('amount', '')
-              return formatAmount(tx, currency)
+              return formatAmount(tx, 'USD')
             }
             return ''
         }
@@ -300,15 +304,11 @@ const getReceiptUrl = (txHash: string) => {
 }
 
 const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
-  // Format all currency amounts
-  const currencyAmounts = props.currencies.reduce(
-    (acc, currency) => {
-      const amount = formatAmount(transaction, currency)
-      acc[`amount${currency}`] = amount
-      return acc
-    },
-    {} as Record<string, string>
-  )
+  const usdAmount = formatAmount(transaction, 'USD')
+  const localAmount =
+    currencyStore.currency.code !== 'USD'
+      ? formatAmount(transaction, currencyStore.currency.code)
+      : usdAmount
 
   return {
     txHash: String(transaction.txHash),
@@ -319,7 +319,8 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     amount: String(transaction.amount || ''),
     token: String(transaction.token),
     amountUSD: Number(transaction.amountUSD || 0),
-    ...currencyAmounts
+    valueUSD: usdAmount,
+    valueLocal: localAmount
   }
 }
 

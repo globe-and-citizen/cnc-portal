@@ -1,6 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
-import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
+import { describe, it, expect, vi } from 'vitest'
+import ReceiptComponent from '@/components/ReceiptComponent.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { NETWORK } from '@/constant'
 
 const DATE = new Date().toLocaleDateString()
 const mockReceiptData = {
@@ -30,7 +32,7 @@ describe('ReceiptComponent', () => {
         receiptData: mockReceiptData
       },
       data,
-      global: { ...global }
+      global: { ...global, plugins: [createTestingPinia({ createSpy: vi.fn })] }
     })
   describe('Render', () => {
     it('should show correct values and labels', async () => {
@@ -40,8 +42,9 @@ describe('ReceiptComponent', () => {
       const receiptDataTxHash = wrapper.find('[data-test="receipt-data-txHash"]')
       expect(receiptDataTxHash.exists()).toBeTruthy()
       expect(receiptDataTxHash.html()).toContain('Transaction Hash')
+
       expect(receiptDataTxHash.html()).toContain(
-        `${mockReceiptData['txHash']?.slice(0, 6)}...${mockReceiptData['txHash']?.slice(-4)}`
+        `${NETWORK.blockExplorerUrl}/tx/${mockReceiptData.txHash}`
       )
 
       const receiptDataDate = wrapper.find('[data-test="receipt-data-date"]')
@@ -52,28 +55,28 @@ describe('ReceiptComponent', () => {
       const receiptDataAmount = wrapper.find('[data-test="receipt-data-amount"]')
       expect(receiptDataAmount.exists()).toBeTruthy()
       expect(receiptDataAmount.html()).toContain('Amount')
-      expect(receiptDataAmount.html()).toContain(mockReceiptData['amount'])
-
-      const receiptDataToken = wrapper.find('[data-test="receipt-data-token"]')
-      expect(receiptDataToken.exists()).toBeTruthy()
-      expect(receiptDataToken.html()).toContain('Token')
-      expect(receiptDataToken.html()).toContain(mockReceiptData['token'])
+      expect(receiptDataAmount.html()).toContain(
+        `${mockReceiptData.amount} ${mockReceiptData.token}`
+      )
 
       const receiptDataFrom = wrapper.find('[data-test="receipt-data-from"]')
       expect(receiptDataFrom.exists()).toBeTruthy()
       expect(receiptDataFrom.html()).toContain('Author')
+
       expect(receiptDataFrom.html()).toContain(
-        `${mockReceiptData['from']?.slice(0, 6)}...${mockReceiptData['from']?.slice(-4)}`
+        `${NETWORK.blockExplorerUrl}/address/${mockReceiptData.from}`
       )
 
       const receiptDataTo = wrapper.find('[data-test="receipt-data-to"]')
       expect(receiptDataTo.exists()).toBeTruthy()
       expect(receiptDataTo.html()).toContain('Recipient')
+
       expect(receiptDataTo.html()).toContain(
-        `${mockReceiptData['to']?.slice(0, 6)}...${mockReceiptData['to']?.slice(-4)}`
+        `${NETWORK.blockExplorerUrl}/address/${mockReceiptData.to}`
       )
     })
   })
+
   describe('Export', () => {
     it('should export to excel', async () => {
       const wrapper = createComponent()
