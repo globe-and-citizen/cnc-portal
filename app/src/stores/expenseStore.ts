@@ -3,8 +3,7 @@ import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import type { ExpenseResponse, ManyExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
-import { computed, onMounted, ref, watch, type Ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
 
 export const useExpenseDataStore = defineStore('expense', () => {
   // TODO: fetch teams on mounted
