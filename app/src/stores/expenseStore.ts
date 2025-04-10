@@ -54,11 +54,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const fetchAllExpenseData = async (teamId = teamStore.currentTeamId) => {
     allExpenseURI.value = `/expense?teamId=${teamId}`
     await executeFetchAllExpenseData()
-    return {
-      allExpenseData,
-      allExpenseDataError,
-      allExpenseDataIsFetching
-    }
   }
 
   watch(allExpenseDataError, (newError) => {
