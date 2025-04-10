@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
+import ReceiptComponent from '@/components/ReceiptComponent.vue'
 
 const DATE = new Date().toLocaleDateString()
 const mockReceiptData = {

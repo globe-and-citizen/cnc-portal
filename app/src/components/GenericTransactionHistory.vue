@@ -107,7 +107,7 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
+import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { NETWORK } from '@/constant'

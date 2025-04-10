@@ -46,7 +46,7 @@ const labels = {
 }
 
 // Define the order of keys explicitly
-const orderedKeys = ['txHash', 'amount', 'token', 'amountUSD', 'date', 'from', 'to']
+const orderedKeys = ['txHash', 'token', 'amount', 'amountUSD', 'date', 'from', 'to']
 
 const formattedReceiptData = {
   ...receiptData,
