@@ -2,7 +2,12 @@ import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
-import { addClaim, getClaims, updateClaim } from "../claimController";
+import {
+  addClaim,
+  getClaims,
+  pendingClaims,
+  updateClaim,
+} from "../claimController";
 
 function setAddressMiddleware(address: string) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -16,6 +21,7 @@ app.use(express.json());
 app.post("/claim", setAddressMiddleware("0x123"), addClaim);
 app.get("/claim", setAddressMiddleware("0x123"), getClaims);
 app.put("/claim/:claimId", setAddressMiddleware("0x123"), updateClaim);
+app.get("/claim/pending-claims", setAddressMiddleware("0x123"), pendingClaims);
 
 describe("Claim Controller", () => {
   describe("POST: /claim", () => {
@@ -428,6 +434,67 @@ describe("Claim Controller", () => {
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe("Internal server error has occured");
+    });
+  });
+
+  describe("GET: /claim/pending-claims", () => {
+    describe("when there are pending claims", () => {
+      it("should return 200 and the pending claims", async () => {
+        vi.spyOn(prisma, "$queryRaw").mockResolvedValue([
+          {
+            totalAmount: 1000,
+          },
+        ]);
+        vi.spyOn(prisma.team, "findFirst").mockResolvedValue({
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ownerAddress: "0x123",
+          name: "Test Team",
+          description: "Test Description",
+          officerAddress: "0x123",
+        });
+
+        const response = await request(app).get("/claim/pending-claims").query({
+          teamId: 1,
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ totalAmount: 1000 });
+      });
+
+      it("should return 403 if the caller is not a member of the team", async () => {
+        vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
+
+        const response = await request(app).get("/claim/pending-claims").query({
+          teamId: 1,
+        });
+
+        expect(response.status).toBe(403);
+        expect(response.body.message).toBe(
+          "Caller is not a member of the team"
+        );
+      });
+
+      it("should return 400 if teamId is invalid", async () => {
+        const response = await request(app).get("/claim/pending-claims").query({
+          teamId: "invalid",
+        });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe("Invalid or missing teamId");
+      });
+
+      it("should return 500 if an error occurs", async () => {
+        vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Test");
+
+        const response = await request(app).get("/claim/pending-claims").query({
+          teamId: 1,
+        });
+
+        expect(response.status).toBe(500);
+        expect(response.body.message).toBe("Internal server error has occured");
+      });
     });
   });
 });

@@ -255,11 +255,11 @@ export const pendingClaims = async (req: Request, res: Response) => {
         totalAmount: number;
       }[]
     >` SELECT SUM("claims"."hoursWorked" * "wages"."tokenRatePerHour") AS "totalAmount"
-          FROM "Claim" AS "claims"
-        JOIN "Wage" AS "wages" ON "claims"."wageId" = "wages"."id"
-        WHERE "claims"."status" = 'pending'
-        AND "wages"."teamId" = ${teamId}
-        GROUP BY "wages"."teamId";`;
+       FROM "Claim" AS "claims"
+       JOIN "Wage" AS "wages" ON "claims"."wageId" = "wages"."id"
+       WHERE "claims"."status" = 'pending'
+       AND "wages"."teamId" = ${teamId}
+       GROUP BY "wages"."teamId";`;
 
     return res.status(200).json({
       totalAmount: result?.totalAmount ?? 0,
