@@ -257,7 +257,7 @@ export const pendingClaims = async (req: Request, res: Response) => {
     >` SELECT SUM("claims"."hoursWorked" * "wages"."tokenRatePerHour") AS "totalAmount"
        FROM "Claim" AS "claims"
        JOIN "Wage" AS "wages" ON "claims"."wageId" = "wages"."id"
-       WHERE "claims"."status" = 'pending'
+       WHERE "claims"."status" = 'signed'
        AND "wages"."teamId" = ${teamId}
        GROUP BY "wages"."teamId";`;
 
