@@ -2,7 +2,7 @@ import express from "express";
 import {
   addClaim,
   getClaims,
-  monthlyPendingClaims,
+  pendingClaims,
   updateClaim,
 } from "../controllers/claimController";
 
@@ -214,7 +214,7 @@ claimRoutes.put("/:claimId", updateClaim);
 
 /**
  * @openapi
- * /claim/monthly-pending-claims:
+ * /claim/pending-claims:
  *   get:
  *     summary: Retrieve the total number of pending claims in current month
  *     responses:
@@ -267,6 +267,6 @@ claimRoutes.put("/:claimId", updateClaim);
  *             example:
  *               message: "Invalid or missing teamId"
  */
-claimRoutes.get("/monthly-pending-claims", monthlyPendingClaims);
+claimRoutes.get("/pending-claims", pendingClaims);
 
 export default claimRoutes;

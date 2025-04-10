@@ -235,7 +235,7 @@ export const updateClaim = async (req: Request, res: Response) => {
   }
 };
 
-export const monthlyPendingClaims = async (req: Request, res: Response) => {
+export const pendingClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
 
@@ -250,17 +250,6 @@ export const monthlyPendingClaims = async (req: Request, res: Response) => {
       return errorResponse(403, "Caller is not a member of the team", res);
     }
 
-    var date = new Date();
-    var firstDayOfCurrentMonth = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      1
-    );
-    var lastDayOfCurrentMonth = new Date(
-      date.getFullYear(),
-      date.getMonth() + 1,
-      0
-    );
     const [result] = await prisma.$queryRaw<
       {
         totalAmount: number;
@@ -270,8 +259,6 @@ export const monthlyPendingClaims = async (req: Request, res: Response) => {
         JOIN "Wage" AS "wages" ON "claims"."wageId" = "wages"."id"
         WHERE "claims"."status" = 'pending'
         AND "wages"."teamId" = ${teamId}
-        AND "claims"."updatedAt" >= ${firstDayOfCurrentMonth}
-        AND "claims"."updatedAt" <= ${lastDayOfCurrentMonth}
         GROUP BY "wages"."teamId";`;
 
     return res.status(200).json({

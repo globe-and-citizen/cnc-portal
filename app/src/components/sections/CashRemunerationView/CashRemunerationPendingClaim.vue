@@ -1,6 +1,6 @@
 <template>
   <OverviewCard
-    :title="totalMonthlyPendingAmount"
+    :title="totalPendingAmount"
     subtitle="Pending Claim"
     variant="info"
     :card-icon="personIcon"
@@ -31,17 +31,15 @@ const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
 const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
 const { data, isFetching, error } = useCustomFetch(
-  `/claim/monthly-pending-claims?teamId=${teamStore.currentTeamId}`
+  `/claim/pending-claims?teamId=${teamStore.currentTeamId}`
 )
   .get()
   .json<{ totalAmount: number }>()
-const totalMonthlyPendingAmount = computed(() => {
-  return data.value?.totalAmount
-    ? formatCurrencyShort(
-        (data.value?.totalAmount || 0) * (nativeTokenPrice.value || 0),
-        currency.value.code
-      )
-    : '0'
+const totalPendingAmount = computed(() => {
+  return formatCurrencyShort(
+    (data.value?.totalAmount || 0) * (nativeTokenPrice.value || 0),
+    currency.value.code
+  )
 })
 
 watch(error, (err) => {
