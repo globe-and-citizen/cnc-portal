@@ -11,7 +11,27 @@
       :data-test="`receipt-data-${key}`"
     >
       <span class="font-medium text-gray-700">{{ labels[key as keyof typeof labels] }}:</span>
-      <span class="text-gray-900">{{ formattedReceiptData[key as keyof typeof labels] }}</span>
+      <span v-if="key === 'txHash'" class="text-gray-900">
+        <a
+          v-if="receiptData['txHash']"
+          :href="getBlockExplorerUrl(receiptData['txHash']!)"
+          target="_blank"
+        >
+          {{ formatHash(receiptData['txHash']) }}
+        </a>
+      </span>
+      <span v-else-if="key === 'from' || key === 'to'" class="text-gray-900">
+        <a
+          v-if="receiptData[key]"
+          :href="getBlockExplorerUrl(receiptData[key]!, 'address')"
+          target="_blank"
+        >
+          {{ formatHash(receiptData[key]) }}
+        </a>
+      </span>
+      <span v-else class="text-gray-900">{{
+        formattedReceiptData[key as keyof typeof labels]
+      }}</span>
     </div>
     <div class="modal-action justify-center">
       <ButtonUI variant="primary" @click="handleExportPdf" data-test="export-pdf">
@@ -28,6 +48,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { storeToRefs } from 'pinia'
+import { NETWORK } from '@/constant'
 
 const { receiptData } = defineProps<{ receiptData: Partial<ReceiptData> }>()
 const currencyStore = useCurrencyStore()
@@ -52,11 +73,17 @@ const labels = {
 // Define the order of keys explicitly
 const orderedKeys = ['txHash', 'token', 'amount', 'price', 'value', 'date', 'from', 'to']
 
+const getBlockExplorerUrl = (hash: string, type: 'tx' | 'address' = 'tx') => {
+  return `${NETWORK.blockExplorerUrl}/${type}/${hash}`
+}
+
+const formatHash = (hash: string | undefined) => {
+  if (!hash) return ''
+  return `${hash.slice(0, 12)}...${hash.slice(-8)}`
+}
+
 const formattedReceiptData = {
   ...receiptData,
-  txHash: `${receiptData['txHash']?.slice(0, 6)}...${receiptData['txHash']?.slice(-4)}`,
-  from: `${receiptData['from']?.slice(0, 6)}...${receiptData['from']?.slice(-4)}`,
-  to: `${receiptData['to']?.slice(0, 6)}...${receiptData['to']?.slice(-4)}`,
   amount: `${receiptData['amount']} ${receiptData['token']}`,
   price:
     receiptData['token'] === 'USDC'
