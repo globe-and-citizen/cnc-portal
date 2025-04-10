@@ -85,11 +85,6 @@ const {
 })
 
 //#region Funtions
-const init = async () => {
-  await refetchExpenseAccountGetOwner()
-  // await executeFetchTeam()
-}
-
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   expenseAccountData.value = data
@@ -134,18 +129,13 @@ const approveUser = async (data: BudgetLimit) => {
     domain
   })
 
-  // expenseAccountData.value = {
-  //   expenseAccountData: expenseAccountData.value,
-  //   signature: signature.value
-  // }
-  // await executeAddExpenseData()
   expenseAccountData.value = {
     data,
     signature: signature.value,
     teamId: route.params.id
   }
   await executeAddExpenseData()
-  await init()
+  await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
   approveUsersModal.value = false
   await expenseDataStore.fetchAllExpenseData(
@@ -179,7 +169,7 @@ watch(signTypedDataError, async (newVal) => {
 })
 //#endregion
 
-onMounted(async () => {
-  await init()
-})
+// onMounted(async () => {
+//   await init()
+// })
 </script>
