@@ -45,15 +45,15 @@ export interface ManyExpenseWithBalances {
 
 export interface ExpenseResponse {
   balances: {
-      0: string;
-      1: string;
-  };
-  status: string;
-  teamId: number;
-  id: number;
-  userAddress: string;
-  signature: string;
-  data: string;
-  createdAt: Date;
-  updatedAt: Date;
+    0: string
+    1: string
+  }
+  status: string
+  teamId: number
+  id: number
+  userAddress: string
+  signature: string
+  data: string
+  createdAt: Date
+  updatedAt: Date
 }
