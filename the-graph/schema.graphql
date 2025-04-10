@@ -203,7 +203,7 @@ type TokenAddressChanged @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type MonthlyWithdrawn @entity(immutable: true) {
+type MonthlyWithdrawn @entity {
   id: ID!
   totalAmount: BigInt!
   contractAddress: Bytes! # address
