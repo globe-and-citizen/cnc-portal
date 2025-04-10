@@ -2,43 +2,14 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 // import TransferForm from '@/components/forms/TransferForm.vue'
 import * as viem from 'viem'
-import type { Team, User } from '@/types'
+import type { Team } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as util from '@/utils'
-
-interface ComponentData {
-  isDisapprovedAddress: boolean
-  team: Partial<Team>
-  expiry: string
-  _expenseAccountData: unknown
-  expenseAccountData: unknown
-  isFetchingExpenseAccountData: boolean
-  transferModal: boolean
-  setLimitModal: boolean
-  approveUsersModal: boolean
-  approvedAddresses: Set<string>
-  unapprovedAddresses: Set<string>
-  foundUsers: User[]
-  action: string
-  manyExpenseAccountData: unknown
-  amountWithdrawn: [number, number, number | undefined]
-  transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
-  setExpenseAccountLimit: (amount: Ref) => Promise<void>
-  approveAddress: (address: string) => Promise<void>
-  disapproveAddress: (address: string) => Promise<void>
-  isBodAction: () => boolean
-  init: () => Promise<void>
-  deactivateIndex: number | null
-  isLoadingDeactivateApproval: boolean
-  isLoadingActivateApproval: boolean
-  signature: undefined | `0x${string}`
-  signTypedDataError: unknown
-}
 
 const mocks = vi.hoisted(() => ({
   mockUseToastStore: {
@@ -341,8 +312,6 @@ describe('ExpenseAccountSection', () => {
   describe('Render', () => {
     it("should show the current user's approval data in the approval table", async () => {
       const wrapper = createComponent()
-      // const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-      // wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
       await flushPromises()
 
       await flushPromises()
@@ -352,61 +321,14 @@ describe('ExpenseAccountSection', () => {
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
 
-      // const approvalTable = wrapper.find('[data-test="approval-table"]')
-      // expect(approvalTable.exists()).toBeTruthy()
-
-      // const headers = approvalTable.findAll('thead th')
-
-      // const expectedHeaders = [
-      //   'Expiry Date',
-      //   'Max Amount Per Tx',
-      //   'Total Transactions',
-      //   'Total Transfers',
-      //   'Action'
-      // ]
-      // headers.forEach((header, i) => {
-      //   expect(header.text()).toBe(expectedHeaders[i])
-      // })
-
-      expect(firstRow.html()).toContain('20')
-
-      // const rows = approvalTable.findAll('tbody tr')
-      // expect(rows).toHaveLength(1)
-
-      // const firstRowCells = rows[0].findAll('td')
-      // expect(firstRowCells[0].text()).toBe(
-      //   new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
-      // )
-      // expect(firstRowCells[1].text()).toBe(
-      //   `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
-      // )
-      // expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
-      // expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
-
-      // const transferButton = firstRowCells[4].find('button')
-      // expect(transferButton.exists()).toBe(true)
-      // expect(transferButton.text()).toBe('Spend')
+      expect(firstRow.html()).toContain(
+        `${budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
+      )
       expect(firstRow.html()).toContain('Spend')
     })
     it('should disable the transfer button if the approval is disapproved', async () => {
       mockExpenseData[0].status = 'disabled'
       const wrapper = createComponent()
-
-      // const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-      // wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
-      // mocks.mockReadContract.mockImplementation(() => [0, 1 * 10 ** 18, 2])
-
-      // wrapperVm.team = {
-      //   teamContracts: [
-      //     {
-      //       address: '0xcontractaddress',
-      //       admins: [],
-      //       type: 'ExpenseAccountEIP712',
-      //       deployer: '0xdeployeraddress'
-      //     }
-      //   ],
-      //   ownerAddress: '0xOwner'
-      // }
       await flushPromises()
 
       const expenseAccountTable = wrapper.findComponent({ name: 'TableComponent' })
