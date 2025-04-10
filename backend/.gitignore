@@ -31,4 +31,4 @@ src/utils/backend_specs.html
 
 *.tsbuildinfo
 
-.service-account.json
+service-account.json

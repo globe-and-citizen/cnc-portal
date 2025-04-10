@@ -67,6 +67,10 @@
         </option>
       </select>
     </label>
+
+    <label for="">
+      <input type="file" class="file-input file-input-bordered w-full max-w-xs" />
+    </label>
   </div>
   <div class="modal-action justify-center">
     <ButtonUI
@@ -91,6 +95,7 @@ import { useClipboard } from '@vueuse/core'
 import ButtonUI from '../ButtonUI.vue'
 import { ref } from 'vue'
 import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
+//import { useDropZone } from '@vueuse/core'
 
 const currencyStore = useCurrencyStore()
 const selectedCurrency = ref<string>(currencyStore.currency.code)
@@ -134,6 +139,8 @@ const submitForm = () => {
   currencyStore.setCurrency(selectedCurrency.value)
   emits('submitEditUser')
 }
+//image state
+
 </script>
 
 <style scoped></style>
