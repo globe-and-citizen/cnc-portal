@@ -1,9 +1,9 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import type { ManyExpenseResponse } from '@/types'
+import type { ExpenseResponse, ManyExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 export const useExpenseDataStore = defineStore('expense', () => {
@@ -24,12 +24,12 @@ export const useExpenseDataStore = defineStore('expense', () => {
     data: allExpenseData,
     execute: executeFetchAllExpenseData,
     statusCode: allExpenseDataStatusCode
-  } = useCustomFetch(allExpenseURI, { immediate: false }).get().json()
+  } = useCustomFetch(allExpenseURI, { immediate: false }).get().json<ExpenseResponse[]>()
 
   const myApprovedExpenses = computed(() => {
     if (allExpenseData.value) {
       const expenses = allExpenseData.value.map(
-        (expense: { data: string; signature: `0x${string}` }) => ({
+        (expense) => ({
           ...JSON.parse(expense.data),
           signature: expense.signature
         })
@@ -43,7 +43,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
 
   const allExpenseDataParsed = computed(() => {
     if (allExpenseData.value) {
-      return allExpenseData.value.map((expense: { data: string }) => ({
+      return allExpenseData.value.map((expense) => ({
         ...JSON.parse(expense.data),
         ...expense
       }))
