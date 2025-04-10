@@ -93,7 +93,7 @@ const getTeam = async (req: Request, res: Response) => {
         members: {
           select: {
             address: true,
-            name: true
+            name: true,
           },
         },
         teamContracts: true,
@@ -275,20 +275,6 @@ const deleteTeam = async (req: Request, res: Response) => {
       where: { teamId: Number(id) },
     });
 
-    const wages = await prisma.wage.findMany({ where: { teamId: Number(id) } });
-
-    const idsToDelete = wages.map((record) => record.id);
-
-    if (idsToDelete.length > 0) {
-      await prisma.claim.deleteMany({
-        where: {
-          wageId: {
-            in: idsToDelete,
-          },
-        },
-      });
-    }
-
     await prisma.memberTeamsData.deleteMany({
       where: { teamId: Number(id) },
     });
@@ -296,9 +282,19 @@ const deleteTeam = async (req: Request, res: Response) => {
     await prisma.teamContract.deleteMany({
       where: { teamId: Number(id) },
     });
-    await prisma.expense.deleteMany({
-      where: { teamId: Number(id) }
+
+    await prisma.claim.deleteMany({
+      where: { wage: { teamId: Number(id) } },
     });
+
+    await prisma.wage.deleteMany({
+      where: { teamId: Number(id) },
+    });
+
+    await prisma.expense.deleteMany({
+      where: { teamId: Number(id) },
+    });
+
     const teamD = await prisma.team.delete({
       where: {
         id: Number(id),
@@ -311,102 +307,6 @@ const deleteTeam = async (req: Request, res: Response) => {
   }
 };
 
-//Add Expense Account Data
-export const addExpenseAccountData = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const callerAddress = (req as any).address;
-  const expenseAccountData = req.body;
-
-  try {
-    const team = await prisma.team.findUnique({
-      where: { id: Number(id) },
-    });
-    const ownerAddress = team?.ownerAddress;
-    if (callerAddress !== ownerAddress) {
-      return errorResponse(403, `Forbidden`, res);
-    }
-
-    //create expense account data
-    await prisma.memberTeamsData.upsert({
-      where: {
-        userAddress_teamId: {
-          userAddress: expenseAccountData.expenseAccountData.approvedAddress,
-          teamId: Number(id),
-        },
-      },
-      update: {
-        expenseAccountData: JSON.stringify(
-          expenseAccountData.expenseAccountData
-        ),
-        expenseAccountSignature: expenseAccountData.signature,
-      },
-      create: {
-        userAddress: expenseAccountData.expenseAccountData.approvedAddress,
-        teamId: Number(id),
-        expenseAccountData: JSON.stringify(
-          expenseAccountData.expenseAccountData
-        ),
-        expenseAccountSignature: expenseAccountData.signature,
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-    });
-  } catch (error) {
-    return errorResponse(500, error, res);
-  }
-};
-
-export const getExpenseAccountData = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const memberAddress = req.headers.memberaddress;
-
-  try {
-    if (memberAddress) {
-      const memberTeamsData = await prisma.memberTeamsData.findUnique({
-        where: {
-          userAddress_teamId: {
-            userAddress: String(memberAddress),
-            teamId: Number(id),
-          },
-        },
-      });
-
-      res.status(201).json({
-        data: memberTeamsData?.expenseAccountData,
-        signature: memberTeamsData?.expenseAccountSignature,
-      });
-    } else {
-      let memberTeamsData = await prisma.memberTeamsData.findMany({
-        where: {
-          teamId: Number(id),
-        },
-        include: {
-          user: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      });
-      let expenseAccountData = memberTeamsData.map((item) => {
-        if (item.expenseAccountData)
-          return {
-            ...JSON.parse(item.expenseAccountData),
-            signature: item.expenseAccountSignature,
-            name: item?.user?.name,
-          };
-      });
-
-      res.status(201).json(expenseAccountData);
-    }
-  } catch (error) {
-    return errorResponse(500, error, res);
-  } finally {
-    await prisma.$disconnect();
-  }
-};
 
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
