@@ -1,5 +1,5 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import type { ManyExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
@@ -13,10 +13,10 @@ export const useExpenseDataStore = defineStore('expense', () => {
   // Update cache system.
 
   const userDataStore = useUserDataStore()
-  const route = useRoute()
+  const teamStore = useTeamStore()
   const { addErrorToast } = useToastStore()
 
-  const allExpenseURI = ref<string>(`/expense?teamId=${route.params.id}`)
+  const allExpenseURI = ref<string>(`/expense?teamId=${teamStore.currentTeamId}`)
 
   const {
     isFetching: allExpenseDataIsFetching,
@@ -51,7 +51,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
     return []
   })
 
-  const fetchAllExpenseData = async (teamId: string) => {
+  const fetchAllExpenseData = async (teamId = teamStore.currentTeamId) => {
     allExpenseURI.value = `/expense?teamId=${teamId}`
     await executeFetchAllExpenseData()
     return {
