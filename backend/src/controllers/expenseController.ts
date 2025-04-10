@@ -39,8 +39,6 @@ export const addExpense = async (req: Request, res: Response) => {
     if (!(await isOwnerOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
-    console.log("data", data);
-    console.log("Creating expense for teamId:", teamId);
     // TODO: should be only one expense active for the user
     const existingExpenses = await prisma.expense.findMany({
       where: {
@@ -107,8 +105,6 @@ export const getExpenses = async (req: Request, res: Response) => {
     ))
     // TODO: for each expense, check the status and update it
     
-    console.log("Fetched expenses for teamId:", teamId);
-    console.log("Fetched expenses:", _expenses);
     return res.status(200).json(
       _expenses.filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
     );
