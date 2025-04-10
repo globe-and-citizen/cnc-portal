@@ -26,8 +26,12 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { ReceiptData } from '@/utils/excelExport'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { storeToRefs } from 'pinia'
 
 const { receiptData } = defineProps<{ receiptData: Partial<ReceiptData> }>()
+const currencyStore = useCurrencyStore()
+const { nativeTokenPriceInUSD } = storeToRefs(currencyStore)
 
 const emit = defineEmits<{
   (e: 'export-excel', data: ReceiptData): void
@@ -36,23 +40,29 @@ const emit = defineEmits<{
 
 const labels = {
   txHash: 'Transaction Hash',
-  date: 'Date',
-  type: 'Type',
-  from: 'Author',
-  to: 'Recipient',
-  amountUSD: 'Value',
+  token: 'Token',
   amount: 'Amount',
-  token: 'Token'
+  price: 'Price',
+  value: 'Value',
+  date: 'Date',
+  from: 'Author',
+  to: 'Recipient'
 }
 
 // Define the order of keys explicitly
-const orderedKeys = ['txHash', 'token', 'amount', 'amountUSD', 'date', 'from', 'to']
+const orderedKeys = ['txHash', 'token', 'amount', 'price', 'value', 'date', 'from', 'to']
 
 const formattedReceiptData = {
   ...receiptData,
   txHash: `${receiptData['txHash']?.slice(0, 6)}...${receiptData['txHash']?.slice(-4)}`,
   from: `${receiptData['from']?.slice(0, 6)}...${receiptData['from']?.slice(-4)}`,
-  to: `${receiptData['to']?.slice(0, 6)}...${receiptData['to']?.slice(-4)}`
+  to: `${receiptData['to']?.slice(0, 6)}...${receiptData['to']?.slice(-4)}`,
+  amount: `${receiptData['amount']} ${receiptData['token']}`,
+  price:
+    receiptData['token'] === 'USDC'
+      ? '1 USD / USDC'
+      : `${nativeTokenPriceInUSD.value} USD / ${receiptData['token']}`,
+  value: `${receiptData['valueUSD']} USD`
 }
 
 const handleExportExcel = () => {
