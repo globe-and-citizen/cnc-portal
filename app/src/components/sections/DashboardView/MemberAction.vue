@@ -17,7 +17,7 @@
       Set Wage
     </ButtonUI>
 
-    <ModalComponent v-model="showDeleteMemberConfirmModal">
+    <ModalComponent v-model="showDeleteMemberConfirmModal" v-if="showDeleteMemberConfirmModal">
       <p class="font-bold text-lg">Confirmation</p>
       <hr class="" />
       <p class="py-4">
@@ -42,13 +42,18 @@
           data-test="delete-member-confirm-button"
           >Delete</ButtonUI
         >
-        <ButtonUI variant="primary" outline @click="showDeleteMemberConfirmModal = false">
+        <ButtonUI
+          variant="primary"
+          outline
+          @click="showDeleteMemberConfirmModal = false"
+          data-test="delete-member-cancel-button"
+        >
           Cancel
         </ButtonUI>
       </div>
     </ModalComponent>
 
-    <ModalComponent v-model="showSetMemberWageModal">
+    <ModalComponent v-model="showSetMemberWageModal" v-if="showSetMemberWageModal">
       <p class="font-bold text-lg">Set Member Wage</p>
       <hr class="" />
       <div class="input-group mt-3">
@@ -66,7 +71,7 @@
         <div
           data-test="max-weekly-hours-error"
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.maxWeeklyHours?.$errors"
+          v-for="error of v$.wageData.maxWeeklyHours?.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
@@ -86,17 +91,17 @@
         <div
           data-test="hourly-rate-error"
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.hourlyRate?.$errors"
+          v-for="error of v$.wageData.hourlyRate?.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
         </div>
       </div>
       <div v-if="addMemberWageDataError" data-test="error-state">
-        <div class="alert alert-warning" v-if="addMemberWageDataStatusCode === 403">
-          {{ addMemberWageDataError.message }}
-        </div>
-        <div v-else-if="addMemberWageDataStatusCode === 404">
+        <div
+          class="alert alert-warning"
+          v-if="addMemberWageDataStatusCode === 403 || addMemberWageDataStatusCode === 404"
+        >
           {{ addMemberWageDataError.message }}
         </div>
         <div class="alert" v-else>Error! Something went wrong</div>
@@ -110,7 +115,20 @@
           data-test="add-wage-button"
           >Save</ButtonUI
         >
-        <ButtonUI variant="error" outline @click="showSetMemberWageModal = false">Cancel</ButtonUI>
+        <ButtonUI
+          variant="error"
+          outline
+          @click="
+            () => {
+              showSetMemberWageModal = false
+              v$.$reset()
+              wageData.maxWeeklyHours = 0
+              wageData.hourlyRate = 0
+            }
+          "
+          data-test="add-wage-cancel-button"
+          >Cancel</ButtonUI
+        >
       </div>
     </ModalComponent>
   </div>
@@ -180,7 +198,6 @@ const {
 const deleteMember = async (): Promise<void> => {
   await executeDeleteMember()
   if (deleteMemberStatusCode.value === 204) {
-    addSuccessToast('Member deleted successfully')
     showDeleteMemberConfirmModal.value = false
     teamStore.fetchTeam(String(props.teamId))
   }
