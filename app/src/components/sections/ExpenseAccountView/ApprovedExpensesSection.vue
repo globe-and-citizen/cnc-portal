@@ -168,8 +168,4 @@ watch(signTypedDataError, async (newVal) => {
   }
 })
 //#endregion
-
-// onMounted(async () => {
-//   await init()
-// })
 </script>
