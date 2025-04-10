@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 const DATE = new Date().toLocaleDateString()
 const mockReceiptData = {
@@ -15,7 +16,7 @@ const mockReceiptData = {
   amountCad: 12,
   receipt: 'Receipt',
   amount: '0.01',
-  token: 'POL'
+  token: 'USDC'
 }
 
 describe('ReceiptComponent', () => {
@@ -34,6 +35,47 @@ describe('ReceiptComponent', () => {
       data,
       global: { ...global, plugins: [createTestingPinia({ createSpy: vi.fn })] }
     })
+
+  describe('USDC Conversion Rate', () => {
+    it('should return 1 USD when currency is USD', async () => {
+      const wrapper = createComponent()
+      const currencyStore = useCurrencyStore()
+      currencyStore.currency = { code: 'USD', name: 'US Dollar', symbol: '$' }
+      currencyStore.nativeTokenPrice = 1
+      currencyStore.nativeTokenPriceInUSD = 1
+      await flushPromises()
+
+      const priceElement = wrapper.find('[data-test="receipt-data-price"]')
+      expect(priceElement.exists()).toBeTruthy()
+      expect(priceElement.html()).toContain('1 USD')
+    })
+
+    it('should return 1 USD when prices are not available', async () => {
+      const wrapper = createComponent()
+      const currencyStore = useCurrencyStore()
+      currencyStore.currency = { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' }
+      currencyStore.nativeTokenPrice = undefined
+      currencyStore.nativeTokenPriceInUSD = undefined
+      await flushPromises()
+
+      const priceElement = wrapper.find('[data-test="receipt-data-price"]')
+      expect(priceElement.exists()).toBeTruthy()
+      expect(priceElement.html()).toContain('1 USD')
+    })
+
+    it('should calculate and return correct exchange rate when prices are available', async () => {
+      const wrapper = createComponent()
+      const currencyStore = useCurrencyStore()
+      currencyStore.currency = { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' }
+      currencyStore.nativeTokenPrice = 1.5
+      currencyStore.nativeTokenPriceInUSD = 1.0
+      await flushPromises()
+
+      const priceElement = wrapper.find('[data-test="receipt-data-price"]')
+      expect(priceElement.exists()).toBeTruthy()
+    })
+  })
+
   describe('Render', () => {
     it('should show correct values and labels', async () => {
       const wrapper = createComponent()
