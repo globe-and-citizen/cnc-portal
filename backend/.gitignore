@@ -30,3 +30,5 @@ src/utils/backend_specs.html
 *.sw?
 
 *.tsbuildinfo
+
+.service-account.json
