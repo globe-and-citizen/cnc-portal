@@ -1,5 +1,3 @@
-import { useContractBalance } from './useContractBalance'
-
 export * from './useSiwe'
 export * from './useWalletChecks'
 export * from './useCustomFetch'
