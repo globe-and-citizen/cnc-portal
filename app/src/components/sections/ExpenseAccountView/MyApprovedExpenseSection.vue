@@ -49,8 +49,8 @@
                 expenseDataStore.myApprovedExpenses.find(
                   (item: ManyExpenseResponse) => item.signature === signatureToTransfer
                 )?.tokenAddress === zeroAddress
-                  ? expenseBalanceFormatted
-                  : `${Number(usdcBalance) / 1e6}`
+                  ? balances.nativeToken.formatted //expenseBalanceFormatted
+                  : balances.usdc.formatted //`${Number(usdcBalance) / 1e6}`
             }
           ]"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
@@ -91,7 +91,8 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { useRoute } from 'vue-router'
+// import { useRoute } from 'vue-router'
+import { useContractBalance } from '@/composables'
 //#endregion
 
 const reload = defineModel()
@@ -147,7 +148,11 @@ const isDisapprovedAddress = computed(
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const expenseDataStore = useExpenseDataStore()
-const route = useRoute()
+// const route = useRoute()
+const { balances, isLoading, error, refetch: refetchBalances } = useContractBalance(
+  teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+    ?.address as Address
+)
 
 //#region Computed Values
 const expenseAccountEip712Address = computed(
@@ -318,19 +323,20 @@ const transferErc20Token = async () => {
 //#endregion
 
 //#region Watchers
-watch(reload, async (newState) => {
-  if (newState) {
-    await init()
-  }
-})
+// watch(reload, async (newState) => {
+//   if (newState) {
+//     await init()
+//   }
+// })
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    await init()
+    // await init()
+    await refetchBalances()
     transferModal.value = false
     transferERC20loading.value = false
     await expenseDataStore.fetchAllExpenseData(
-      Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+      // Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
     )
   }
 })
@@ -368,7 +374,7 @@ watch([usdcBalanceError], ([newUsdcError]) => {
 })
 //#endregion
 
-onMounted(async () => {
-  await init()
-})
+// onMounted(async () => {
+//   await init()
+// })
 </script>
