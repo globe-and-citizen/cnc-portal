@@ -16,8 +16,8 @@ vi.mock('@/utils/excelExport', () => ({
 }))
 
 vi.mock('@/utils/pdfExport', () => ({
-  exportReceiptToPdf: vi.fn(),
-  exportTransactionsToPdf: vi.fn()
+  exportReceiptToPdf: vi.fn().mockResolvedValue(true),
+  exportTransactionsToPdf: vi.fn().mockResolvedValue(true)
 }))
 
 vi.mock('@/stores/useToastStore', () => ({
@@ -150,7 +150,7 @@ describe('GenericTransactionHistory', () => {
     vi.mocked(exportTransactionsToExcel).mockImplementation(() => {
       throw new Error('Test error')
     })
-    vi.mocked(exportTransactionsToPdf).mockReturnValue(true)
+    vi.mocked(exportTransactionsToPdf).mockResolvedValue(true)
 
     const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
     await exportButton.trigger('click')
@@ -328,7 +328,7 @@ describe('GenericTransactionHistory', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as IGenericTransactionHistory
 
-    vi.mocked(exportReceiptToPdf).mockReturnValue(true)
+    vi.mocked(exportReceiptToPdf).mockResolvedValue(true)
 
     const receiptData = {
       txHash: '0x123',

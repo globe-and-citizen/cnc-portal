@@ -253,7 +253,6 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
-        // @ts-expect-error: mocked
         team: {
           id: '1',
           name: 'Default Team',

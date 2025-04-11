@@ -8,6 +8,32 @@ import * as utils from '@/utils'
 import { USDC_ADDRESS } from '@/constant'
 import { parseEther, zeroAddress } from 'viem'
 
+const DATE = new Date()
+
+const mockExpenseDataStore = {
+  allExpenseDataParsed: /*computed(() => (*/ [
+    {
+      signature: '0xSignature',
+      approvedAddress: '0x123',
+      budgetData: [
+        { budgetType: 0, value: 10 },
+        { budgetType: 1, value: 100 },
+        { budgetType: 2, value: 10 }
+      ],
+      tokenAddress: USDC_ADDRESS,
+      expiry: Math.floor(DATE.getTime() / 1000),
+      status: 'enabled',
+      id: 1,
+      balances: {
+        0: '0',
+        1: '0',
+        2: 0
+      }
+    }
+  ] /*))*/,
+  fetchAllExpenseData: vi.fn()
+}
+
 const mockUseWriteContract = {
   writeContract: vi.fn(),
   error: ref(null),
@@ -52,6 +78,24 @@ vi.mock('vue-router', async (importOriginal) => {
   }
 })
 
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useTeamStore: vi.fn(() => ({
+      team: {
+        expenseAccountEip712Address: '0xExpenseAccount',
+        ownerAddress: '0xOwner',
+        boardOfDirectorsAddress: null
+      },
+      getTeam: vi.fn()
+    })),
+    useExpenseDataStore: vi.fn(() => ({
+      ...mockExpenseDataStore
+    }))
+  }
+})
+
 vi.mock('@/composables/useCustomFetch', () => {
   return {
     useCustomFetch: vi.fn((url) => {
@@ -73,7 +117,7 @@ vi.mock('@/composables/useCustomFetch', () => {
           case 'user/search':
             console.log(`[GET] user-search`)
             break
-          case 'teams/1/expense-data':
+          case 'expense':
             console.log('[POST] expense-data')
             break
         }

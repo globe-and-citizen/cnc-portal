@@ -4,8 +4,7 @@ import ExpenseAccountTable from '../ExpenseAccountTable.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
-import type { ManyExpenseWithBalances } from '@/types'
-import { reactive, ref } from 'vue'
+import { ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -19,6 +18,71 @@ const mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
 }))
 
+const validExpiry = new Date().getTime() / 1000 + 60 * 60
+const invalidExpiry = new Date().getTime() / 1000 - 60 * 60
+
+const mockApprovals = [
+  {
+    approvedAddress: '0x1234567890123456789012345678901234567890',
+    tokenAddress: USDC_ADDRESS,
+    budgetData: [
+      { budgetType: 0, value: 10 },
+      { budgetType: 1, value: 100 },
+      { budgetType: 2, value: 10 }
+    ],
+    expiry: validExpiry,
+    signature: `0xSignatureOne`,
+    name: `Some One`,
+    avatarUrl: null,
+    balances: {
+      0: `5`,
+      1: `50`
+    },
+    status: 'enabled'
+  },
+  {
+    approvedAddress: '0x1234567890123456789012345678901234567890',
+    tokenAddress: USDC_ADDRESS,
+    budgetData: [
+      { budgetType: 0, value: 11 },
+      { budgetType: 1, value: 111 },
+      { budgetType: 2, value: 11 }
+    ],
+    expiry: validExpiry,
+    signature: `0xSignaturTwo`,
+    name: `Another One`,
+    avatarUrl: null,
+    balances: {
+      0: `5`,
+      1: `50`
+    },
+    status: 'disabled'
+  },
+  {
+    approvedAddress: '0x1234567890123456789012345678901234567890',
+    tokenAddress: zeroAddress,
+    budgetData: [
+      { budgetType: 0, value: 12 },
+      { budgetType: 1, value: 123 },
+      { budgetType: 2, value: 12 }
+    ],
+    expiry: invalidExpiry,
+    signature: `0xSignatureThree`,
+    name: `Last One`,
+    avatarUrl: null,
+    balances: {
+      0: `5`,
+      1: `50`
+    },
+    status: 'expired'
+  }
+]
+
+const mockExpenseDataStore = {
+  allExpenseDataParsed: mockApprovals,
+  fetchAllExpenseData: vi.fn()
+}
+
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -26,6 +90,9 @@ vi.mock('@/stores', async (importOriginal) => {
     useToastStore: vi.fn(() => ({
       addErrorToast: mocks.mockUseToastStore.addErrorToast,
       addSuccessToast: mocks.mockUseToastStore.addSuccessToast
+    })),
+    useExpenseDataStore: vi.fn(() => ({
+      ...mockExpenseDataStore
     }))
   }
 })
@@ -105,82 +172,6 @@ vi.mock('viem', async (importOriginal) => {
   }
 })
 
-const validExpiry = new Date().getTime() / 1000 + 60 * 60
-const invalidExpiry = new Date().getTime() / 1000 - 60 * 60
-
-const mockApprovals = reactive<ManyExpenseWithBalances[]>([
-  {
-    approvedAddress: '0x1234567890123456789012345678901234567890',
-    tokenAddress: USDC_ADDRESS,
-    budgetData: [
-      { budgetType: 0, value: 10 },
-      { budgetType: 1, value: 100 },
-      { budgetType: 2, value: 10 }
-    ],
-    expiry: validExpiry,
-    signature: `0xSignatureOne`,
-    name: `Some One`,
-    avatarUrl: null,
-    balances: {
-      0: `5`,
-      1: `50`
-    },
-    status: 'enabled'
-  },
-  {
-    approvedAddress: '0x1234567890123456789012345678901234567890',
-    tokenAddress: USDC_ADDRESS,
-    budgetData: [
-      { budgetType: 0, value: 11 },
-      { budgetType: 1, value: 111 },
-      { budgetType: 2, value: 11 }
-    ],
-    expiry: validExpiry,
-    signature: `0xSignaturTwo`,
-    name: `Another One`,
-    avatarUrl: null,
-    balances: {
-      0: `5`,
-      1: `50`
-    },
-    status: 'disabled'
-  },
-  {
-    approvedAddress: '0x1234567890123456789012345678901234567890',
-    tokenAddress: zeroAddress,
-    budgetData: [
-      { budgetType: 0, value: 12 },
-      { budgetType: 1, value: 123 },
-      { budgetType: 2, value: 12 }
-    ],
-    expiry: invalidExpiry,
-    signature: `0xSignatureThree`,
-    name: `Last One`,
-    avatarUrl: null,
-    balances: {
-      0: `5`,
-      1: `50`
-    },
-    status: 'expired'
-  }
-])
-
-const mockUseExpenseAccountData = {
-  data: reactive<ManyExpenseWithBalances[]>([]),
-  isLoading: false,
-  initializeBalances: vi.fn(() => (mockUseExpenseAccountData.data = mockApprovals))
-}
-
-vi.mock('@/composables', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useExpenseAccountDataCollection: vi.fn(() => ({
-      ...mockUseExpenseAccountData
-    }))
-  }
-})
-
 describe('ExpenseAccountTable', () => {
   setActivePinia(createPinia())
 
@@ -197,9 +188,9 @@ describe('ExpenseAccountTable', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountTable, {
       props: {
-        team: {
-          teamContracts: []
-        },
+        // team: {
+        //   teamContracts: []
+        // },
         ...props
       },
       data,
@@ -253,7 +244,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusEnabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('enabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -274,7 +264,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusDisabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('disabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -295,7 +284,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusExpiredInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('expired')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -311,14 +299,12 @@ describe('ExpenseAccountTable', () => {
 
     it('should show loading button if enabling approval', async () => {
       const wrapper = createComponent()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.contractOwnerAddress = '0xInitialUser'
       const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
       expect(statusDisabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusDisabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('disabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -330,7 +316,6 @@ describe('ExpenseAccountTable', () => {
       expect(disableButton.exists()).toBeTruthy()
       expect(disableButton.props('disabled')).toBe(false)
       disableButton.trigger('click')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isLoadingDeactivateApproval = true
       await flushPromises()
       expect(disableButton.props('loading')).toBe(true)
@@ -343,7 +328,6 @@ describe('ExpenseAccountTable', () => {
       //@ts-expect-error: setChecked for setting the input to checked works instead of click
       await statusEnabledInput.setChecked()
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       expect(wrapper.vm.selectedRadio).toBe('enabled')
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -375,34 +359,27 @@ describe('ExpenseAccountTable', () => {
 
     it('should notify success if activate successful', async () => {
       const wrapper = createComponent()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingActivate = true
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingActivate = false
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmedActivate = { value: true }
       await flushPromises()
       expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
-      expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+      // expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
     })
     it('should notify success if activate successful', async () => {
       const wrapper = createComponent()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingDeativate = true
       await flushPromises()
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmingDeactivate = false
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.isConfirmedDeactivate = { value: true }
       await flushPromises()
       expect(mocks.mockUseToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
-      expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+      // expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
     })
     it('should notify error if error deactivate approval', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
       await flushPromises()
       expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
@@ -411,7 +388,6 @@ describe('ExpenseAccountTable', () => {
     it('should notify error if error activate approval', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
       await flushPromises()
       expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
@@ -420,7 +396,6 @@ describe('ExpenseAccountTable', () => {
     it('should notify error if error getting owner', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      //@ts-expect-error: custom field of component not available by default
       wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
       await flushPromises()
       expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')

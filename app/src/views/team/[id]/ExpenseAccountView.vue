@@ -5,19 +5,19 @@
     <ExpenseStatsSection />
 
     <GenericTokenHoldingsSection
-      v-if="team?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')"
+      v-if="
+        teamStore.currentTeam?.teamContracts.find(
+          (contract) => contract.type === 'ExpenseAccountEIP712'
+        )
+      "
       :address="
-        team?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')?.address ||
-        ''
+        teamStore.currentTeam?.teamContracts.find(
+          (contract) => contract.type === 'ExpenseAccountEIP712'
+        )?.address || ''
       "
     />
 
-    <MyApprovedExpenseSection
-      v-if="team"
-      :team="team"
-      :is-disapproved-address="isDisapprovedAddress"
-      v-model="reload"
-    />
+    <MyApprovedExpenseSection />
 
     <ApprovedExpensesSection />
 
@@ -27,65 +27,12 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, onMounted, ref, watch } from 'vue'
-import type { Team } from '@/types'
 import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/ExpenseStatsSection.vue'
 import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
-import { useUserDataStore } from '@/stores'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useRoute } from 'vue-router'
-import { useExpenseAccountDataCollection } from '@/composables'
+import { useTeamStore } from '@/stores'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
-
 //#endregion
-
-//#region Refs
-const route = useRoute()
-const reload = ref(false)
-// Check if the current user is disapproved
-const isDisapprovedAddress = computed(
-  () =>
-    manyExpenseAccountDataAll.findIndex(
-      (item) =>
-        item.approvedAddress === currentUserAddress &&
-        (item.status === 'disabled' || item.status === 'expired')
-    ) !== -1
-)
-//#endregion
-
-//#region useCustomFetch
-const {
-  data: team,
-  // error: teamError,
-  execute: executeFetchTeam
-} = useCustomFetch(`teams/${String(route.params.id)}`)
-  .get()
-  .json<Team>()
-//#endregion
-
-//#region Composables
-const currentUserAddress = useUserDataStore().address
-const { data: manyExpenseAccountDataAll, initializeBalances } = useExpenseAccountDataCollection()
-//#endregion
-
-//#region Functions
-const init = async () => {
-  await executeFetchTeam()
-  await initializeBalances()
-}
-//#endregion
-
-//#region Watch
-watch(reload, async (newState) => {
-  if (newState) {
-    await init()
-  }
-})
-//#endregion
-
-onMounted(async () => {
-  await init()
-})
+const teamStore = useTeamStore()
 </script>
