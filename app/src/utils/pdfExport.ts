@@ -293,12 +293,12 @@ export const exportTransactionsToPdf = async (
 }
 
 function getColumnAlignment(header: string): 'left' | 'right' | 'center' {
-  const lowerHeader = header.toLowerCase()
-  if (lowerHeader.includes('amount') || lowerHeader.includes('value')) {
+  if (header.toLowerCase().includes('amount') || header.toLowerCase().includes('value')) {
     return 'right'
   }
-  if (lowerHeader.includes('type') || lowerHeader.includes('token')) {
+  if (header.toLowerCase().includes('date')) {
     return 'center'
   }
   return 'left'
 }
+export { createTableLayout, createHeader, createFooter, getColumnAlignment }
