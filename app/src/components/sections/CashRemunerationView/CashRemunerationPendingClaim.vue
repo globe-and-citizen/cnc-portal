@@ -32,7 +32,7 @@ const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
 const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
 const { data, isFetching, error } = useCustomFetch(
-  `/claim?teamId=${teamStore.currentTeamId}&?status=signed`
+  `/claim?teamId=${teamStore.currentTeamId}&status=signed`
 )
   .get()
   .json<ClaimResponse[]>()
