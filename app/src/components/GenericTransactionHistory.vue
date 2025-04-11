@@ -248,7 +248,7 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
   }).format(usdAmount * exchangeRate)
 }
 
-const handleExport = () => {
+const handleExport = async () => {
   try {
     const headers = columns.value.map((col) => col.label)
     const rows = displayedTransactions.value.map((tx) => {
@@ -277,7 +277,7 @@ const handleExport = () => {
 
     const date = new Date().toISOString().split('T')[0]
     const excelSuccess = exportTransactionsToExcel(headers, rows, date)
-    const pdfSuccess = exportTransactionsToPdf(headers, rows, date)
+    const pdfSuccess = await exportTransactionsToPdf(headers, rows, date)
 
     if (excelSuccess && pdfSuccess) {
       toastStore.addSuccessToast('Transactions exported successfully')
@@ -338,9 +338,9 @@ const handleReceiptExport = (receiptData: import('@/utils/excelExport').ReceiptD
   }
 }
 
-const handleReceiptPdfExport = (receiptData: import('@/utils/excelExport').ReceiptData) => {
+const handleReceiptPdfExport = async (receiptData: import('@/utils/excelExport').ReceiptData) => {
   try {
-    const success = exportReceiptToPdf(receiptData)
+    const success = await exportReceiptToPdf(receiptData)
     if (success) {
       toastStore.addSuccessToast('Receipt PDF exported successfully')
     } else {
