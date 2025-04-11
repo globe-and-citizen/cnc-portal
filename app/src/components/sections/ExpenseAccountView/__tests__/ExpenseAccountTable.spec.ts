@@ -93,6 +93,23 @@ vi.mock('@/stores', async (importOriginal) => {
     })),
     useExpenseDataStore: vi.fn(() => ({
       ...mockExpenseDataStore
+    })),
+    useTeamStore: vi.fn(() => ({
+      currentTeam: {
+        id: '1',
+        name: 'Team Name',
+        description: 'Team Description',
+        members: [],
+        teamContracts: [
+          {
+            address: '0xcontractaddress',
+            admins: [],
+            type: 'ExpenseAccountEIP712',
+            deployer: '0xdeployeraddress'
+          }
+        ],
+        ownerAddress: '0xOwner'
+      }
     }))
   }
 })
@@ -169,6 +186,12 @@ vi.mock('viem', async (importOriginal) => {
     parseSignature: vi.fn(),
     hashTypedData: vi.fn(),
     keccak256: vi.fn()
+  }
+})
+
+vi.mock('@/composables/useCustomFetch', () => {
+  return {
+    useCustomFetch: vi.fn()
   }
 })
 
