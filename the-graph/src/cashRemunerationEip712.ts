@@ -2,7 +2,7 @@ import {
   Deposited as DepositedEvent,
   Withdraw as WithdrawEvent,
 } from "../generated/templates/CashRemunerationEIP712/CashRemunerationEIP712";
-import { MonthlyWithdrawn, Transaction } from "../generated/schema";
+import { Transaction } from "../generated/schema";
 import { Address } from "@graphprotocol/graph-ts";
 
 export function handleDeposited(event: DepositedEvent): void {
