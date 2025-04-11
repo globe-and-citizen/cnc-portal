@@ -78,7 +78,6 @@ describe('pdfExport', () => {
 
       expect(result).toBe(false)
       expect(consoleSpy).toHaveBeenCalled()
-      consoleSpy.mockRestore()
     })
   })
 
@@ -152,7 +151,6 @@ describe('pdfExport', () => {
 
       expect(result).toBe(false)
       expect(consoleSpy).toHaveBeenCalled()
-      consoleSpy.mockRestore()
     })
   })
 })
