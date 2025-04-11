@@ -104,26 +104,29 @@
   },
   "exportReceiptToPdf": {
     "basicReceipt": {
-      "txHash": "0x1234567890abcdef",
-      "date": "2024-03-20",
-      "type": "Transfer",
-      "from": "0x123",
-      "to": "0x456",
-      "amountUSD": 100.5,
-      "amount": "1.5",
-      "token": "ETH"
+      "txHash": "0x123abc",
+      "date": "2024-03-20T10:00:00",
+      "type": "deposit",
+      "from": "0xabc123",
+      "to": "0xdef456",
+      "amount": "100",
+      "token": "USDC",
+      "amountUSD": 100,
+      "valueUSD": "$100.00",
+      "valueLocal": "$100.00"
     },
     "multiCurrencyReceipt": {
-      "txHash": "0x1234567890abcdef",
-      "date": "2024-03-20",
-      "type": "Transfer",
-      "from": "0x123",
-      "to": "0x456",
-      "amountUSD": 100.5,
-      "amount": "1.5",
+      "txHash": "0x456def",
+      "date": "2024-03-20T11:00:00",
+      "type": "transfer",
+      "from": "0xghi789",
+      "to": "0xjkl012",
+      "amount": "0.5",
       "token": "ETH",
-      "amountEUR": 95.2,
-      "amountGBP": 80.3
+      "amountUSD": 1000,
+      "valueUSD": "$1,000.00",
+      "valueLocal": "€920.00",
+      "amountEUR": 920
     },
     "expectedContent": {
       "basic": {
@@ -528,10 +531,28 @@
     }
   },
   "exportTransactionsToPdf": {
-    "headers": ["Date", "Amount", "Type"],
+    "headers": ["Tx Hash", "Date", "Type", "From", "To", "Amount", "Value (USD)", "Receipt"],
     "rows": [
-      ["2024-03-20", "1.5", "Transfer"],
-      ["2024-03-21", "2.0", "Swap"]
+      [
+        "0x123abc",
+        "2024-03-20 10:00:00",
+        "deposit",
+        "0xabc123",
+        "0xdef456",
+        "100 USDC",
+        "$100.00",
+        "https://explorer.com/tx/0x123abc"
+      ],
+      [
+        "0x456def",
+        "2024-03-20 11:00:00",
+        "transfer",
+        "0xghi789",
+        "0xjkl012",
+        "0.5 ETH",
+        "$1,000.00",
+        "https://explorer.com/tx/0x456def"
+      ]
     ],
     "date": "2024-03-20",
     "expectedContent": {
@@ -542,11 +563,43 @@
         {
           "table": {
             "headerRows": 1,
-            "widths": ["auto", "auto", "auto"],
+            "widths": ["auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
             "body": [
               [
                 {
+                  "text": "Tx Hash",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
                   "text": "Date",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "Type",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "From",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "To",
                   "fontSize": 6,
                   "margin": [2, 2],
                   "alignment": "left",
@@ -562,7 +615,15 @@
                   "wordBreak": "break-all"
                 },
                 {
-                  "text": "Type",
+                  "text": "Value (USD)",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "Receipt",
                   "fontSize": 6,
                   "margin": [2, 2],
                   "alignment": "left",
@@ -572,7 +633,7 @@
               ],
               [
                 {
-                  "text": "2024-03-20",
+                  "text": "0x123abc",
                   "fontSize": 5,
                   "margin": [2, 2],
                   "alignment": "left",
@@ -580,15 +641,55 @@
                   "wordBreak": "break-all"
                 },
                 {
-                  "text": "1.5",
+                  "text": "2024-03-20 10:00:00",
                   "fontSize": 5,
                   "margin": [2, 2],
-                  "alignment": "right",
+                  "alignment": "left",
                   "noWrap": false,
                   "wordBreak": "break-all"
                 },
                 {
-                  "text": "Transfer",
+                  "text": "deposit",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xabc123",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xdef456",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "100 USDC",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "$100.00",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "https://explorer.com/tx/0x123abc",
                   "fontSize": 5,
                   "margin": [2, 2],
                   "alignment": "left",
@@ -598,7 +699,7 @@
               ],
               [
                 {
-                  "text": "2024-03-21",
+                  "text": "0x456def",
                   "fontSize": 5,
                   "margin": [2, 2],
                   "alignment": "left",
@@ -606,15 +707,55 @@
                   "wordBreak": "break-all"
                 },
                 {
-                  "text": "2.0",
+                  "text": "2024-03-20 11:00:00",
                   "fontSize": 5,
                   "margin": [2, 2],
-                  "alignment": "right",
+                  "alignment": "left",
                   "noWrap": false,
                   "wordBreak": "break-all"
                 },
                 {
-                  "text": "Swap",
+                  "text": "transfer",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xghi789",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xjkl012",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0.5 ETH",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "$1,000.00",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "https://explorer.com/tx/0x456def",
                   "fontSize": 5,
                   "margin": [2, 2],
                   "alignment": "left",
