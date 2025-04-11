@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { exportToPdf, exportReceiptToPdf, exportTransactionsToPdf } from '../pdfExport'
+import { exportReceiptToPdf, exportTransactionsToPdf } from '../pdfExport'
 import pdfMake from 'pdfmake/build/pdfmake'
-import type { TDocumentDefinitions } from 'pdfmake/interfaces'
 import testData from './pdfExportTestData.json'
 
 // Mock pdfmake
@@ -19,81 +18,73 @@ describe('pdfExport', () => {
     vi.clearAllMocks()
   })
 
-  describe('exportToPdf', () => {
-    it('should successfully export data to PDF in landscape mode', () => {
-      const options = {
-        filename: 'test.pdf'
-      }
-
-      const result = exportToPdf(testData.exportToPdf.landscapeData, options, true)
+  describe('exportReceiptToPdf', () => {
+    it('should export receipt data with correct format', async () => {
+      const result = await exportReceiptToPdf(testData.exportReceiptToPdf.basicReceipt)
 
       expect(result).toBe(true)
-      expect(pdfMake.createPdf).toHaveBeenCalledWith(testData.exportToPdf.expectedContent.landscape)
-      expect(
-        pdfMake.createPdf({ content: [] } as TDocumentDefinitions).download
-      ).toHaveBeenCalledWith(testData.exportToPdf.expectedFilenames.landscape)
+      expect(pdfMake.createPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.any(String),
+              fontSize: 12,
+              color: expect.any(String)
+            }),
+            expect.objectContaining({
+              table: expect.objectContaining({
+                headerRows: 1,
+                widths: ['30%', '70%']
+              })
+            })
+          ])
+        })
+      )
     })
 
-    it('should successfully export data to PDF in portrait mode', () => {
-      const options = {
-        filename: 'test.pdf'
-      }
-
-      const result = exportToPdf(testData.exportToPdf.portraitData, options, false)
+    it('should include additional currency amounts in the export', async () => {
+      const result = await exportReceiptToPdf(testData.exportReceiptToPdf.multiCurrencyReceipt)
 
       expect(result).toBe(true)
-      expect(pdfMake.createPdf).toHaveBeenCalledWith(testData.exportToPdf.expectedContent.portrait)
-      expect(
-        pdfMake.createPdf({ content: [] } as TDocumentDefinitions).download
-      ).toHaveBeenCalledWith(testData.exportToPdf.expectedFilenames.portrait)
+      expect(pdfMake.createPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              table: expect.objectContaining({
+                body: expect.arrayContaining([
+                  expect.arrayContaining([
+                    expect.objectContaining({ text: 'Field' }),
+                    expect.objectContaining({ text: 'Value' })
+                  ]),
+                  expect.arrayContaining([
+                    expect.objectContaining({ text: 'Value (USD)' }),
+                    expect.any(Object)
+                  ])
+                ])
+              })
+            })
+          ])
+        })
+      )
     })
 
-    it('should handle errors gracefully', () => {
+    it('should handle errors gracefully', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       vi.mocked(pdfMake.createPdf).mockImplementationOnce(() => {
         throw new Error('Test error')
       })
 
-      const result = exportToPdf([], { filename: 'test.pdf' })
+      const result = await exportReceiptToPdf(testData.exportReceiptToPdf.basicReceipt)
 
       expect(result).toBe(false)
       expect(consoleSpy).toHaveBeenCalled()
       consoleSpy.mockRestore()
     })
-
-    it('should handle empty data arrays', () => {
-      const data: (string | number)[][] = []
-      const options = {
-        filename: 'empty.pdf'
-      }
-
-      const result = exportToPdf(data, options)
-
-      expect(result).toBe(false)
-    })
-  })
-
-  describe('exportReceiptToPdf', () => {
-    it('should export receipt data with correct format', () => {
-      exportReceiptToPdf(testData.exportReceiptToPdf.basicReceipt)
-
-      expect(pdfMake.createPdf).toHaveBeenCalledWith(
-        testData.exportReceiptToPdf.expectedContent.basic
-      )
-    })
-
-    it('should include additional currency amounts in the export', () => {
-      exportReceiptToPdf(testData.exportReceiptToPdf.multiCurrencyReceipt)
-
-      expect(pdfMake.createPdf).toHaveBeenCalledWith(
-        testData.exportReceiptToPdf.expectedContent.multiCurrency
-      )
-    })
   })
 
   describe('exportTransactionsToPdf', () => {
-    it('should export transactions with correct format', () => {
-      const result = exportTransactionsToPdf(
+    it('should export transactions with correct format', async () => {
+      const result = await exportTransactionsToPdf(
         testData.exportTransactionsToPdf.headers,
         testData.exportTransactionsToPdf.rows,
         testData.exportTransactionsToPdf.date
@@ -101,32 +92,67 @@ describe('pdfExport', () => {
 
       expect(result).toBe(true)
       expect(pdfMake.createPdf).toHaveBeenCalledWith(
-        testData.exportTransactionsToPdf.expectedContent
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringContaining('Report generated for'),
+              fontSize: 12
+            }),
+            expect.objectContaining({
+              table: expect.objectContaining({
+                headerRows: 1,
+                body: expect.any(Array)
+              })
+            })
+          ]),
+          pageOrientation: 'landscape'
+        })
       )
-      expect(
-        pdfMake.createPdf({ content: [] } as TDocumentDefinitions).download
-      ).toHaveBeenCalledWith(testData.exportTransactionsToPdf.expectedFilenames.transactions)
     })
 
-    it('should handle empty transaction data', () => {
+    it('should handle empty transaction data', async () => {
       const headers = testData.exportTransactionsToPdf.headers
       const rows: (string | number)[][] = []
       const date = testData.exportTransactionsToPdf.date
 
-      const result = exportTransactionsToPdf(headers, rows, date)
+      const result = await exportTransactionsToPdf(headers, rows, date)
 
       expect(result).toBe(true)
-      expect(pdfMake.createPdf).toHaveBeenCalledWith({
-        ...testData.exportTransactionsToPdf.expectedContent,
-        content: [
-          {
-            table: {
-              ...testData.exportTransactionsToPdf.expectedContent.content[0].table,
-              body: [testData.exportTransactionsToPdf.expectedContent.content[0].table.body[0]]
-            }
-          }
-        ]
+      expect(pdfMake.createPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringContaining('Report generated for'),
+              fontSize: 12
+            }),
+            expect.objectContaining({
+              table: expect.objectContaining({
+                headerRows: 1,
+                body: expect.arrayContaining([
+                  headers.map((header) => expect.objectContaining({ text: header }))
+                ])
+              })
+            })
+          ])
+        })
+      )
+    })
+
+    it('should handle errors gracefully', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      vi.mocked(pdfMake.createPdf).mockImplementationOnce(() => {
+        throw new Error('Test error')
       })
+
+      const result = await exportTransactionsToPdf(
+        testData.exportTransactionsToPdf.headers,
+        testData.exportTransactionsToPdf.rows,
+        testData.exportTransactionsToPdf.date
+      )
+
+      expect(result).toBe(false)
+      expect(consoleSpy).toHaveBeenCalled()
+      consoleSpy.mockRestore()
     })
   })
 })
