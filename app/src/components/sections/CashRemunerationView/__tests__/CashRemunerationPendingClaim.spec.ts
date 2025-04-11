@@ -12,9 +12,15 @@ vi.mock('@/composables', async (importOriginal) => {
     useCustomFetch: vi.fn(() => ({
       get: vi.fn(() => ({
         json: vi.fn(() => ({
-          data: ref({
-            totalAmount: 1000
-          }),
+          data: ref([
+            {
+              id: 1,
+              hoursWorked: 10,
+              wage: {
+                cashRatePerHour: 1
+              }
+            }
+          ]),
           error: mockError
         }))
       }))
