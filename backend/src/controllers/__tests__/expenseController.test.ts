@@ -4,6 +4,7 @@ import { addExpense, getExpenses, updateExpense } from "../expenseController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { Expense, Team } from "@prisma/client";
+import publicClient from "../../utils/viem.config";
 
 const app = express();
 app.use(express.json());
@@ -24,7 +25,16 @@ const mockExpense = {
   teamId: 1,
   userAddress: "0xCallerAddress",
   signature: "mockSignature",
-  data: "mockData",
+  data: JSON.stringify({
+    approvedAddress: '0x1234567890123456789012345678901234567890',
+    tokenAddress: '0xTiokenAddress',
+    budgetData: [
+      { budgetType: 0, value: 10 },
+      { budgetType: 1, value: 100 },
+      { budgetType: 2, value: 10 }
+    ],
+    expiry: new Date().getTime() / 1000 + 60 * 60
+  }),
   status: "signed",
 } as Expense;
 const mockTeam = {
@@ -68,8 +78,10 @@ describe("Expense Controller", () => {
  
       const response = await request(app).post("/expense").send({
         teamId: 1,
-        signature: "mockSignature",
-        data: "mockData",
+        signature: "0xmockSignature",
+        data: JSON.stringify({
+          approvedAddress: "0xApprovedAddress",
+        }),
       });
 
       expect(response.status).toBe(201);
@@ -112,11 +124,20 @@ describe("Expense Controller", () => {
     it("should return expenses for a valid team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
       vi.spyOn(prisma.expense, "findMany").mockResolvedValue([mockExpense]);
+      vi.spyOn(prisma.expense, "update")
+      vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1])
 
       const response = await request(app).get("/expenses").query({ teamId: 1 });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([mockExpense]);
+      expect(response.body).toEqual([{
+        ...mockExpense, 
+        status: "enabled",
+        balances: {
+          0: "0",
+          1: "0"
+        }
+      }]);
     });
 
     it("should return 500 if there is a server error", async () => {

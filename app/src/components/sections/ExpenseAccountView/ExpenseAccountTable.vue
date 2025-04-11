@@ -14,11 +14,7 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent
-      :rows="filteredApprovals"
-      :columns="columns"
-      :loading="isLoadingExpensewAccountData"
-    >
+    <TableComponent :rows="filteredApprovals" :columns="columns">
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
@@ -101,28 +97,28 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Team } from '@/types'
 import { log, parseError, tokenSymbol } from '@/utils'
-import { useExpenseAccountDataCollection } from '@/composables'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
+import type { ManyExpenseWithBalances } from '@/types'
+import { useRoute } from 'vue-router'
 
-const { team /*, reload*/ } = defineProps<{
-  team: Partial<Team>
-}>()
-const reload = defineModel()
+const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
+const expenseDataStore = useExpenseDataStore()
+const route = useRoute()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 
 const expenseAccountEip712Address = computed(
   () =>
-    team.teamContracts?.find((contract) => contract.type === 'ExpenseAccountEIP712')
-      ?.address as Address
+    teamStore.currentTeam?.teamContracts?.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
 )
 const columns = [
   {
@@ -163,11 +159,6 @@ const columns = [
 
 //#endregion Composables
 const {
-  data: manyExpenseAccountDataAll,
-  isLoading: isLoadingExpensewAccountData,
-  initializeBalances
-} = useExpenseAccountDataCollection()
-const {
   data: contractOwnerAddress,
   refetch: fetchExpenseAccountOwner,
   error: errorGetOwner
@@ -205,9 +196,11 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return manyExpenseAccountDataAll
+    return expenseDataStore.allExpenseDataParsed
   } else {
-    return manyExpenseAccountDataAll.filter((approval) => approval.status === selectedRadio.value)
+    return expenseDataStore.allExpenseDataParsed.filter(
+      (approval: ManyExpenseWithBalances) => approval.status === selectedRadio.value
+    )
   }
 })
 
@@ -237,35 +230,16 @@ const activateApproval = async (signature: `0x{string}`) => {
 //#endregion
 
 //#region Watch
-watch(reload, async (newState) => {
-  if (newState) {
-    await fetchExpenseAccountOwner()
-    await initializeBalances()
-  }
-})
-// watch(
-//   () => team,
-//   async (newTeam) => {
-//     if (newTeam) {
-//       expenseAccountEip712Address.value = newTeam.expenseAccountEip712Address as string
-//       await fetchExpenseAccountOwner()
-//     }
-//   }
-// )
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
-    reload.value = true
     addSuccessToast('Activate Successful')
-    await initializeBalances()
-    reload.value = false
+    expenseDataStore.fetchAllExpenseData(route.params.id as string)
   }
 })
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
-    reload.value = true
     addSuccessToast('Deactivate Successful')
-    await initializeBalances()
-    reload.value = false
+    expenseDataStore.fetchAllExpenseData(route.params.id as string)
   }
 })
 watch(errorDeactivateApproval, (newVal) => {
@@ -290,6 +264,5 @@ watch(errorGetOwner, (newVal) => {
 
 onMounted(async () => {
   await fetchExpenseAccountOwner()
-  await initializeBalances()
 })
 </script>
