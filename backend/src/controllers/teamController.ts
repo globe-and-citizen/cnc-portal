@@ -260,11 +260,7 @@ const deleteTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
   const callerAddress = (req as any).address;
   try {
-    const team = await prisma.team.findUnique({
-      where: {
-        id: Number(id),
-      },
-    });
+    const team = await prisma.team.findUnique({ where: { id: Number(id) } });
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
@@ -275,38 +271,23 @@ const deleteTeam = async (req: Request, res: Response) => {
       where: { teamId: Number(id) },
     });
 
-    await prisma.memberTeamsData.deleteMany({
-      where: { teamId: Number(id) },
-    });
+    await prisma.memberTeamsData.deleteMany({ where: { teamId: Number(id) } });
+
+    await prisma.teamContract.deleteMany({ where: { teamId: Number(id) } });
+
+    await prisma.claim.deleteMany({ where: { wage: { teamId: Number(id) } } });
+
     await prisma.wage.deleteMany({ where: { teamId: Number(id) } });
-    await prisma.teamContract.deleteMany({
-      where: { teamId: Number(id) },
-    });
 
-    await prisma.claim.deleteMany({
-      where: { wage: { teamId: Number(id) } },
-    });
+    await prisma.expense.deleteMany({ where: { teamId: Number(id) } });
 
-    await prisma.wage.deleteMany({
-      where: { teamId: Number(id) },
-    });
-
-    await prisma.expense.deleteMany({
-      where: { teamId: Number(id) },
-    });
-
-    const teamD = await prisma.team.delete({
-      where: {
-        id: Number(id),
-      },
-    });
+    const teamD = await prisma.team.delete({ where: { id: Number(id) } });
 
     res.status(200).json({ team: teamD, success: true });
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }
 };
-
 
 const isUserPartOfTheTeam = async (
   members: { address: string; name?: string | null }[],
@@ -319,18 +300,8 @@ const buildFilterMember = (queryParams: Request["query"]) => {
   const filterQuery: Prisma.UserWhereInput = {};
   if (queryParams.query) {
     filterQuery.OR = [
-      {
-        name: {
-          contains: String(queryParams.query),
-          mode: "insensitive",
-        },
-      },
-      {
-        address: {
-          contains: String(queryParams.query),
-          mode: "insensitive",
-        },
-      },
+      { name: { contains: String(queryParams.query), mode: "insensitive" } },
+      { address: { contains: String(queryParams.query), mode: "insensitive" } },
     ];
   }
 
