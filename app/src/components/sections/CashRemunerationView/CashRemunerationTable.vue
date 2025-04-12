@@ -6,7 +6,9 @@
     </div>
     <div class="form-control flex flex-row gap-4">
       <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
-        <span class="label-text">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</span>
+        <span class="label-text">{{
+          status == 'signed' ? 'Approved' : status.charAt(0).toUpperCase() + status.slice(1)
+        }}</span>
         <input
           type="radio"
           :name="status"
@@ -77,14 +79,16 @@
             class="badge"
             :class="{
               'badge-info': row.status === 'pending',
-              'badge-outline': row.status === 'approved',
+              'badge-outline': row.status === 'signed',
               'bg-error': row.status === 'disabled',
               'bg-neutral text-white': row.status === 'withdrawn'
             }"
             >{{
               row.status == 'pending'
                 ? 'Submitted'
-                : row.status.charAt(0).toUpperCase() + row.status.slice(1)
+                : row.status == 'signed'
+                  ? 'Approved'
+                  : row.status.charAt(0).toUpperCase() + row.status.slice(1)
             }}</span
           >
         </template>
@@ -108,7 +112,7 @@ import { NETWORK } from '@/constant'
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
-const statusses = ['all', 'pending', 'approved', 'withdrawn']
+const statusses = ['all', 'pending', 'signed', 'withdrawn']
 const selectedRadio = ref('all')
 
 const teamId = computed(() => teamStore.currentTeam?.id)
