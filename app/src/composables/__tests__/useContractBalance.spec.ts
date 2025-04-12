@@ -31,11 +31,19 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 const mockCurrencyStore = {
-  nativeTokenPriceInUSD: 2000
+  nativeTokenPriceInUSD: 2000,
+  nativeTokenPrice: 3000
 }
 
 vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: vi.fn(() => mockCurrencyStore)
+}))
+
+const mockUsdcRate = ref(1) // Mock USDC rate as $1 for simplicity
+vi.mock('@/composables/useCryptoPrice', () => ({
+  useCryptoPrice: vi.fn(() => ({
+    price: mockUsdcRate
+  }))
 }))
 
 describe('useContractBalance', () => {
@@ -106,5 +114,31 @@ describe('useContractBalance', () => {
 
     expect(mockUseBalance.refetch).toHaveBeenCalled()
     expect(mockUseReadContract.refetch).toHaveBeenCalled()
+  })
+
+  it('should compute total value in local currency correctly', () => {
+    mockUseBalance.data.value = { value: BigInt('1000000000000000000') } // 1 ETH
+    mockUseReadContract.data.value = BigInt('100000000') // 100 USDC
+    mockCurrencyStore.nativeTokenPrice = 3000
+    mockUsdcRate.value = 1 // $1 per USDC
+
+    const { balances } = useContractBalance(mockAddress)
+
+    // 1 ETH * 3000 + 100 USDC * 1 = 3100
+    expect(balances.totalValueInLocalCurrency).toBe('3100.00')
+  })
+
+  it('should log error if refetch throws', async () => {
+    const error = new Error('Refetch failed')
+    mockUseBalance.refetch.mockRejectedValueOnce(error)
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { refetch } = useContractBalance(mockAddress)
+    await refetch()
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error refetching balances:', error)
+
+    consoleErrorSpy.mockRestore()
   })
 })
