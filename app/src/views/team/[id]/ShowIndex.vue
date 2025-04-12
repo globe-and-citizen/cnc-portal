@@ -11,7 +11,9 @@
               data-test="loader"
               v-if="teamStore.currentTeamMeta?.teamIsFetching"
             ></div>
-            <a v-if="teamStore.currentTeamMeta?.team">{{ teamStore.currentTeamMeta.team?.name }}</a>
+            <a v-else-if="teamStore.currentTeamMeta?.team">{{
+              teamStore.currentTeamMeta.team?.name
+            }}</a>
           </li>
 
           <li>{{ route.meta.name }}</li>

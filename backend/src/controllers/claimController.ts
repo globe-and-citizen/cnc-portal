@@ -1,10 +1,8 @@
 import { Request, Response } from "express";
-
-import { Address, isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
-import { addNotification, prisma } from "../utils";
-import { Prisma, Claim, User, Wage } from "@prisma/client";
-import { isUserMemberOfTeam, isOwnerOfTeam } from "./wageController";
+import { prisma } from "../utils";
+import { Prisma, Claim } from "@prisma/client";
+import { isUserMemberOfTeam } from "./wageController";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked"> & { teamId: string };
 export const addClaim = async (req: Request, res: Response) => {
