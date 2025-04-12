@@ -49,8 +49,8 @@
                 expenseDataStore.myApprovedExpenses.find(
                   (item: ManyExpenseResponse) => item.signature === signatureToTransfer
                 )?.tokenAddress === zeroAddress
-                  ? expenseBalanceFormatted
-                  : `${Number(usdcBalance) / 1e6}`
+                  ? balances.nativeToken.formatted
+                  : balances.usdc.formatted
             }
           ]"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
@@ -77,24 +77,16 @@ import TransferForm from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { parseError, log, tokenSymbol } from '@/utils'
-import {
-  useReadContract,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useChainId,
-  useBalance
-} from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, formatEther, parseEther, zeroAddress } from 'viem'
+import { type Address, parseEther, zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { useRoute } from 'vue-router'
+import { useContractBalance } from '@/composables'
 //#endregion
-
-const reload = defineModel()
 
 const columns = [
   {
@@ -147,7 +139,10 @@ const isDisapprovedAddress = computed(
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const expenseDataStore = useExpenseDataStore()
-const route = useRoute()
+const { balances, refetch: refetchBalances } = useContractBalance(
+  teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
+    ?.address as Address
+)
 
 //#region Computed Values
 const expenseAccountEip712Address = computed(
@@ -156,12 +151,6 @@ const expenseAccountEip712Address = computed(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
 )
-const expenseBalanceFormatted = computed(() => {
-  if (typeof expenseAccountBalance.value?.value === 'bigint')
-    return formatEther(expenseAccountBalance.value.value)
-  else return '--'
-})
-
 const myApprovedExpenseRows = computed(() =>
   expenseDataStore.allExpenseDataParsed.filter(
     (approval: ManyExpenseWithBalances) => approval.approvedAddress === currentUserAddress
@@ -171,28 +160,6 @@ const myApprovedExpenseRows = computed(() =>
 
 //#region Composables
 const { addErrorToast, addSuccessToast } = useToastStore()
-const chainId = useChainId()
-
-const {
-  data: expenseAccountBalance,
-  error: isErrorExpenseAccountBalance,
-  refetch: fetchExpenseAccountBalance
-} = useBalance({
-  address: expenseAccountEip712Address,
-  chainId
-})
-
-// Token balances
-const {
-  data: usdcBalance,
-  refetch: fetchUsdcBalance,
-  error: usdcBalanceError
-} = useReadContract({
-  address: USDC_ADDRESS as Address,
-  abi: ERC20ABI,
-  functionName: 'balanceOf',
-  args: [expenseAccountEip712Address]
-})
 
 //expense account transfer
 const {
@@ -217,11 +184,6 @@ const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
 //#endregion
 
 //#region Functions
-const init = async () => {
-  await fetchUsdcBalance()
-  await fetchExpenseAccountBalance()
-}
-
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenAmount.value = amount
   tokenRecipient.value = to
@@ -307,7 +269,7 @@ const transferErc20Token = async () => {
           ...budgetLimit,
           budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
             ...item,
-            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6) //parseEther(`${item.value}`)
+            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
           }))
         },
         signatureToTransfer.value
@@ -318,20 +280,13 @@ const transferErc20Token = async () => {
 //#endregion
 
 //#region Watchers
-watch(reload, async (newState) => {
-  if (newState) {
-    await init()
-  }
-})
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    await init()
+    await refetchBalances()
     transferModal.value = false
     transferERC20loading.value = false
-    await expenseDataStore.fetchAllExpenseData(
-      Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
-    )
+    await expenseDataStore.fetchAllExpenseData()
   }
 })
 watch(errorTransfer, (newVal) => {
@@ -354,21 +309,5 @@ watch(approveError, () => {
     addErrorToast('Failed to approve token spending')
   }
 })
-watch(isErrorExpenseAccountBalance, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Error fetching expense account data')
-  }
-})
-watch([usdcBalanceError], ([newUsdcError]) => {
-  if (newUsdcError) {
-    log.error(parseError(newUsdcError))
-    addErrorToast('Failed to fetch USDC balance')
-  }
-})
 //#endregion
-
-onMounted(async () => {
-  await init()
-})
 </script>
