@@ -20,7 +20,7 @@ services:
       args:
         VITE_APP_BACKEND_URL: "https://api.cncportal.io"
         VITE_APP_NETWORK_ALIAS: polygon
-        VITE_APP_SUBGRAPH_ENDPOINT: https://api.studio.thegraph.com/query/106625/cnc-pol/v0.0.1
+        VITE_APP_SUBGRAPH_ENDPOINT: https://api.studio.thegraph.com/query/106625/cnc-pol/version/latest
     ports:
       - "80:80" # Adjust port as needed
     volumes:
