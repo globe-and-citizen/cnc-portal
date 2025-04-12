@@ -19,7 +19,7 @@
           "
         >
           <span class="">{{ tokenList[selectedTokenId].name }} </span>
-          <ChevronDownIcon class="w-4 h-4" />
+          <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
         </div>
         <ul
           class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
@@ -42,8 +42,10 @@
       </div>
     </div>
     <div class="label">
-      <!-- Estimated Price in USD -->
-      <span class="label-text">$122</span>
+      <!-- Estimated Price in selected currency -->
+      <span class="label-text" v-if="amount && parseFloat(amount) > 0">
+        ≈ {{ estimatedPrice }}
+      </span>
       <div class="pl-4 text-red-500 text-sm" v-for="error in $v.amount.$errors" :key="error.$uid">
         {{ error.$message }}
       </div>
@@ -68,12 +70,14 @@
 
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { useCryptoPrice } from '@/composables/useCryptoPrice'
 
 const props = defineProps<{
   loading?: boolean
@@ -83,6 +87,8 @@ const props = defineProps<{
 const amount = ref<string>('')
 const selectedTokenId = ref(0)
 const isDropdownOpen = ref<boolean>(false)
+const currencyStore = useCurrencyStore()
+const { price: usdcPrice } = useCryptoPrice('usd-coin')
 
 const tokenList = [
   { name: NETWORK.currencySymbol, symbol: 'ETH' },
@@ -96,6 +102,8 @@ onMounted(() => {
   onClickOutside(target, () => {
     isDropdownOpen.value = false
   })
+  // Fetch the current price when component mounts
+  currencyStore.fetchNativeTokenPrice()
 })
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
@@ -112,6 +120,24 @@ const rules = {
 
 const $v = useVuelidate(rules, { amount })
 
+const estimatedPrice = computed(() => {
+  const amountValue = parseFloat(amount.value)
+  if (isNaN(amountValue) || amountValue <= 0) return 0
+
+  if (selectedTokenId.value === 0) {
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyStore.currency.code,
+      minimumFractionDigits: 2
+    }).format((currencyStore.nativeTokenPrice || 0) * amountValue)
+  }
+
+  return Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currencyStore.currency.code,
+    minimumFractionDigits: 2
+  }).format((usdcPrice.value || 0) * amountValue)
+})
 const submitForm = async () => {
   await $v.value.$touch()
   if ($v.value.$invalid) return

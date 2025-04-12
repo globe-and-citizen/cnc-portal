@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
-import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
 import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
 import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
@@ -76,16 +75,6 @@ const router = createRouter({
           name: 'sher-token',
           meta: { name: 'SHER Token' },
           component: SherTokenView
-        }
-      ]
-    },
-    {
-      path: '/teams-old',
-      children: [
-        {
-          path: ':id',
-          name: 'singleteam',
-          component: SingleTeamView
         }
       ]
     },

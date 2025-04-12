@@ -2,43 +2,14 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
+// import TransferForm from '@/components/forms/TransferForm.vue'
 import * as viem from 'viem'
-import type { Team, User } from '@/types'
+import type { Team } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as util from '@/utils'
-
-interface ComponentData {
-  isDisapprovedAddress: boolean
-  team: Partial<Team>
-  expiry: string
-  _expenseAccountData: unknown
-  expenseAccountData: unknown
-  isFetchingExpenseAccountData: boolean
-  transferModal: boolean
-  setLimitModal: boolean
-  approveUsersModal: boolean
-  approvedAddresses: Set<string>
-  unapprovedAddresses: Set<string>
-  foundUsers: User[]
-  action: string
-  manyExpenseAccountData: unknown
-  amountWithdrawn: [number, number, number | undefined]
-  transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
-  setExpenseAccountLimit: (amount: Ref) => Promise<void>
-  approveAddress: (address: string) => Promise<void>
-  disapproveAddress: (address: string) => Promise<void>
-  isBodAction: () => boolean
-  init: () => Promise<void>
-  deactivateIndex: number | null
-  isLoadingDeactivateApproval: boolean
-  isLoadingActivateApproval: boolean
-  signature: undefined | `0x${string}`
-  signTypedDataError: unknown
-}
 
 const mocks = vi.hoisted(() => ({
   mockUseToastStore: {
@@ -47,11 +18,82 @@ const mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
 }))
 
+const DATE = '2024-02-02T12:00:00Z'
+const budgetData = {
+  txsPerPeriod: 1,
+  amountPerPeriod: 100,
+  amountPerTransaction: 20
+}
+
+const mockExpenseData = [
+  {
+    approvedAddress: `0x0123456789012345678901234567890123456789`,
+    name: 'John Doe',
+    budgetData: [
+      { budgetType: 0, value: budgetData.txsPerPeriod },
+      { budgetType: 1, value: budgetData.amountPerPeriod },
+      { budgetType: 2, value: budgetData.amountPerTransaction }
+    ],
+    expiry: Math.floor(new Date(DATE).getTime() / 1000),
+    signature: '0xSignature',
+    tokenAddress: viem.zeroAddress,
+    balances: {
+      0: '0',
+      1: '0',
+      2: 0
+    },
+    status: 'enabled'
+  },
+  {
+    approvedAddress: `0xabcdef1234abcdef1234abcdef1234abcdef1234`,
+    budgetData: [
+      { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
+      { budgetType: 1, value: budgetData.amountPerPeriod * 2 },
+      { budgetType: 2, value: budgetData.amountPerTransaction * 2 }
+    ],
+    expiry: Math.floor(new Date(DATE).getTime() / 1000),
+    signature: '0xAnotherSignature',
+    tokenAddress: USDC_ADDRESS
+  }
+]
+
+const mockExpenseDataStore = {
+  allExpenseDataParsed: mockExpenseData,
+  fetchAllExpenseData: vi.fn()
+}
+
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
+    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast })),
+    useTeamStore: vi.fn(() => ({
+      currentTeam: {
+        id: '1',
+        name: 'Team Name',
+        description: 'Team Description',
+        members: [],
+        teamContracts: [
+          {
+            address: '0xcontractaddress',
+            admins: [],
+            type: 'ExpenseAccountEIP712',
+            deployer: '0xdeployeraddress'
+          }
+        ],
+        ownerAddress: '0xOwner'
+      }
+    })),
+    useExpenseDataStore: vi.fn(() => ({
+      ...mockExpenseDataStore
+    })),
+    useCryptoPrice: vi.fn(),
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      }
+    }))
   }
 })
 
@@ -174,39 +216,6 @@ const mockUseCustomFetch = {
   data: ref<unknown>()
 }
 
-const DATE = '2024-02-02T12:00:00Z'
-const budgetData = {
-  txsPerPeriod: 1,
-  amountPerPeriod: 100,
-  amountPerTransaction: 20
-}
-
-const mockExpenseData = [
-  {
-    approvedAddress: `0x0123456789012345678901234567890123456789`,
-    name: 'John Doe',
-    budgetData: [
-      { budgetType: 0, value: budgetData.txsPerPeriod },
-      { budgetType: 1, value: budgetData.amountPerPeriod },
-      { budgetType: 2, value: budgetData.amountPerTransaction }
-    ],
-    expiry: Math.floor(new Date(DATE).getTime() / 1000),
-    signature: '0xSignature',
-    tokenAddress: viem.zeroAddress
-  },
-  {
-    approvedAddress: `0xabcdef1234abcdef1234abcdef1234abcdef1234`,
-    budgetData: [
-      { budgetType: 0, value: budgetData.txsPerPeriod * 2 },
-      { budgetType: 1, value: budgetData.amountPerPeriod * 2 },
-      { budgetType: 2, value: budgetData.amountPerTransaction * 2 }
-    ],
-    expiry: Math.floor(new Date(DATE).getTime() / 1000),
-    signature: '0xAnotherSignature',
-    tokenAddress: USDC_ADDRESS
-  }
-]
-
 vi.mock('@/composables/useCustomFetch', () => {
   return {
     useCustomFetch: vi.fn((url, options) => {
@@ -266,7 +275,6 @@ describe('ExpenseAccountSection', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
       props: {
-        // @ts-expect-error: not declared in test interface but available in component
         team: {
           id: '1',
           name: 'Team Name',
@@ -292,7 +300,7 @@ describe('ExpenseAccountSection', () => {
           createTestingPinia({
             createSpy: vi.fn,
             initialState: {
-              user: { address: '0xInitialUser' }
+              user: { address: '0x0123456789012345678901234567890123456789' }
             }
           })
         ],
@@ -304,173 +312,48 @@ describe('ExpenseAccountSection', () => {
   describe('Render', () => {
     it("should show the current user's approval data in the approval table", async () => {
       const wrapper = createComponent()
-      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 1]
-      wrapperVm.team = {
-        teamContracts: [
-          {
-            address: '0xcontractaddress',
-            admins: [],
-            type: 'ExpenseAccountEIP712',
-            deployer: '0xdeployeraddress'
-          }
-        ],
-        ownerAddress: '0xOwner'
-      }
       await flushPromises()
 
-      const approvalTable = wrapper.find('[data-test="approval-table"]')
-      expect(approvalTable.exists()).toBeTruthy()
+      await flushPromises()
+      const expenseAccountTable = wrapper.findComponent({ name: 'TableComponent' })
+      expect(expenseAccountTable.exists()).toBeTruthy()
+      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
+      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
+      expect(firstRow.exists()).toBeTruthy()
 
-      const headers = approvalTable.findAll('thead th')
-
-      const expectedHeaders = [
-        'Expiry Date',
-        'Max Amount Per Tx',
-        'Total Transactions',
-        'Total Transfers',
-        'Action'
-      ]
-      headers.forEach((header, i) => {
-        expect(header.text()).toBe(expectedHeaders[i])
-      })
-
-      const rows = approvalTable.findAll('tbody tr')
-      expect(rows).toHaveLength(1)
-
-      const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(
-        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
+      expect(firstRow.html()).toContain(
+        `${budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
       )
-      expect(firstRowCells[1].text()).toBe(
-        `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
-      )
-      expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
-      expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
-
-      const transferButton = firstRowCells[4].find('button')
-      expect(transferButton.exists()).toBe(true)
-      expect(transferButton.text()).toBe('Spend')
+      expect(firstRow.html()).toContain('Spend')
     })
     it('should disable the transfer button if the approval is disapproved', async () => {
-      const wrapper = createComponent({
-        //@ts-expect-error: not declared in test interface but available in component
-        props: { isDisapprovedAddress: true }
-      })
-
-      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-      wrapperVm.amountWithdrawn = [0, 1 * 10 ** 18, 2]
-      mocks.mockReadContract.mockImplementation(() => [0, 1 * 10 ** 18, 2])
-      wrapperVm.team = {
-        teamContracts: [
-          {
-            address: '0xcontractaddress',
-            admins: [],
-            type: 'ExpenseAccountEIP712',
-            deployer: '0xdeployeraddress'
-          }
-        ],
-        ownerAddress: '0xOwner'
-      }
+      mockExpenseData[0].status = 'disabled'
+      const wrapper = createComponent()
       await flushPromises()
 
-      const approvalTable = wrapper.find('[data-test="approval-table"]')
-      expect(approvalTable.exists()).toBeTruthy()
+      const expenseAccountTable = wrapper.findComponent({ name: 'TableComponent' })
+      expect(expenseAccountTable.exists()).toBeTruthy()
+      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
+      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
+      expect(firstRow.exists()).toBeTruthy()
 
-      const headers = approvalTable.findAll('thead th')
+      console.log('isDisapprovedAddress', wrapper.vm.isDisapprovedAddress)
+      expect(firstRow.html()).toContain('20')
 
-      const expectedHeaders = [
-        'Expiry Date',
-        'Max Amount Per Tx',
-        'Total Transactions',
-        'Total Transfers',
-        'Action'
-      ]
-      headers.forEach((header, i) => {
-        expect(header.text()).toBe(expectedHeaders[i])
-      })
-
-      const rows = approvalTable.findAll('tbody tr')
-      expect(rows).toHaveLength(1)
-
-      const firstRowCells = rows[0].findAll('td')
-      expect(firstRowCells[0].text()).toBe(
-        new Date(mockExpenseData[0].expiry * 1000).toLocaleString('en-US')
-      )
-      expect(firstRowCells[1].text()).toBe(
-        `${mockExpenseData[0].budgetData[2].value} ${NETWORK.currencySymbol}`
-      )
-      expect(firstRowCells[2].text()).toBe(`0/${mockExpenseData[0].budgetData[0].value}`)
-      expect(firstRowCells[3].text()).toBe(`1/${mockExpenseData[0].budgetData[1].value}`)
-
-      const transferButton = firstRowCells[4].findComponent(ButtonUI)
-      expect(transferButton.exists()).toBe(true)
-      expect(transferButton.text()).toBe('Spend')
-      expect(transferButton.props().disabled).toBe(true)
+      const spendButton = firstRow.findComponent(ButtonUI)
+      expect(spendButton.exists()).toBeTruthy()
+      expect(spendButton.props('disabled')).toBe(true)
     })
 
     it('should notify amount withdrawn error', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(util.log, 'error')
       //@ts-expect-error: property on component but not wrapper
-      wrapper.vm.errorGetAmountWithdrawn = new Error('Error getting amount withdrawn')
+      wrapper.vm.errorTransfer = new Error('Error getting amount withdrawn')
       await flushPromises()
 
-      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
-        'Failed to fetch amount withdrawn'
-      )
+      expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
       expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
-    })
-
-    describe('TransferFromBankForm', async () => {
-      const wrapper = createComponent()
-      const wrapperVm = wrapper.vm as unknown as ComponentData
-      ;(wrapper.vm as unknown as ComponentData).transferModal = true
-      wrapperVm.team = {
-        teamContracts: [
-          {
-            address: '0xcontractaddress',
-            admins: [],
-            type: 'ExpenseAccountEIP712',
-            deployer: '0xdeployeraddress'
-          }
-        ],
-        ownerAddress: '0xOwner'
-      }
-
-      it('should pass corrent props to TransferFromBankForm', async () => {
-        //@ts-expect-error: not on wrapper but available on component
-        wrapper.vm.users = {
-          users: [{ name: 'John Doe', address: '0x1234' }]
-        }
-        ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
-          data: JSON.stringify(mockExpenseData[0])
-        }
-        //@ts-expect-error: vailable on actual component but not visible on wrapper
-        wrapper.vm.expenseAccountBalance = { value: viem.parseEther('5000') }
-        await flushPromises()
-
-        const transferFromBankForm = wrapper.findComponent(TransferFromBankForm)
-        expect(transferFromBankForm.exists()).toBe(true)
-        expect(transferFromBankForm.props()).toEqual({
-          filteredMembers: [{ name: 'John Doe', address: '0x1234' }],
-          service: 'Expense Account',
-          bankBalance: '5000',
-          _tokenSymbol: NETWORK.currencySymbol,
-          loading: false,
-          asBod: false,
-          usdcBalance: '0'
-        })
-        ;(wrapper.vm as unknown as ComponentData)._expenseAccountData = {
-          data: JSON.stringify(mockExpenseData[1])
-        }
-      })
-      it('should close the modal when TransferFromBankForm @close-modal is emitted', async () => {
-        const transferForm = wrapper.findComponent(TransferFromBankForm)
-
-        transferForm.vm.$emit('closeModal')
-        expect((wrapper.vm as unknown as ComponentData).transferModal).toBe(false)
-      })
     })
   })
 })

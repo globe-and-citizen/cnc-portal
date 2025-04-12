@@ -11,7 +11,9 @@
               data-test="loader"
               v-if="teamStore.currentTeamMeta?.teamIsFetching"
             ></div>
-            <a v-if="teamStore.currentTeamMeta?.team">{{ teamStore.currentTeamMeta.team?.name }}</a>
+            <a v-else-if="teamStore.currentTeamMeta?.team">{{
+              teamStore.currentTeamMeta.team?.name
+            }}</a>
           </li>
 
           <li>{{ route.meta.name }}</li>
@@ -36,7 +38,7 @@
           <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI>
           to proceed with the deployment.
         </p>
-        <ModalComponent v-model="showModal">
+        <ModalComponent v-model="showModal" v-if="showModal">
           <!-- May be return an event that will trigger team reload -->
           <ContinueAddTeamForm
             :team="teamStore.currentTeamMeta.team"
@@ -67,8 +69,8 @@ import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import MemberSection from '@/components/sections/SingleTeamView/MemberSection.vue'
-import TeamMeta from '@/components/sections/SingleTeamView/TeamMetaSection.vue'
+import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
+import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'

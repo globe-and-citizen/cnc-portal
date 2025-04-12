@@ -14,6 +14,7 @@ export interface ReceiptData {
   amountUSD: number
   amount: string
   token: string
+  [key: string]: string | number // Allow for dynamic currency amounts
 }
 
 type ExcelData = (string | number)[][]
@@ -51,7 +52,7 @@ export const exportToExcel = (data: ExcelData, options: ExcelExportOptions) => {
 
 export const exportReceiptToExcel = (receiptData: ReceiptData) => {
   const headers = ['Field', 'Value']
-  const rows = [
+  const baseRows = [
     ['Transaction Hash', receiptData.txHash],
     ['Date', receiptData.date],
     ['Type', receiptData.type],
@@ -62,7 +63,15 @@ export const exportReceiptToExcel = (receiptData: ReceiptData) => {
     ['Value (USD)', receiptData.amountUSD]
   ]
 
-  return exportToExcel([headers, ...rows], {
+  // Add any additional currency amounts
+  const currencyRows = Object.entries(receiptData)
+    .filter(([key]) => key.startsWith('amount') && key !== 'amountUSD' && key !== 'amount')
+    .map(([key, value]) => {
+      const currency = key.replace('amount', '')
+      return [`Value (${currency})`, value]
+    })
+
+  return exportToExcel([headers, ...baseRows, ...currencyRows], {
     filename: `receipt-${receiptData.txHash.slice(0, 6)}.xlsx`,
     sheetName: 'Receipt'
   })

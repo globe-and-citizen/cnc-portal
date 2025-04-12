@@ -21,17 +21,20 @@
       "
       v-if="isSupported"
     >
-      <ClipboardDocumentListIcon class="size-5 cursor-pointer" v-if="!copied" />
-      <ClipboardDocumentCheckIcon v-if="copied" class="size-5" />
+      <IconifyIcon
+        icon="heroicons:clipboard-document"
+        class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+      />
     </ToolTip>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { NETWORK } from '@/constant'
 import ToolTip from './ToolTip.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
+
 const { type } = defineProps<{
   address: string
   slice?: boolean

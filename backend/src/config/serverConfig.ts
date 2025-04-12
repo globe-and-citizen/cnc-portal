@@ -12,6 +12,7 @@ import notificationRoutes from "../routes/notificationRoute";
 import actionRoutes from "../routes/actionsRoute";
 import wageRoutes from "../routes/wageRoute";
 import claimRoutes from "../routes/claimRoute";
+import expenseRoutes from "../routes/expenseRoute";
 //#endregion routing modules
 
 import { authorizeUser } from "../middleware/authMiddleware";
@@ -50,6 +51,7 @@ class Server {
       notification: "/api/notification/",
       actions: "/api/actions/",
       wage: "/api/wage/",
+      expense: "/api/expense/",
       claim: "/api/claim/",
       apidocs: "/api-docs",
     };
@@ -100,6 +102,7 @@ class Server {
     this.app.use(this.paths.notification, notificationRoutes);
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
+    this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.get(this.paths.apidocs, (req, res) => {
       res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));

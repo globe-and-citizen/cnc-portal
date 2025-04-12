@@ -5,8 +5,6 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { Team, Wage } from "@prisma/client";
 
-vi.mock("../../utils");
-
 const app = express();
 app.use(express.json());
 app.use(setAddressMiddleware("0xOwnerAddress"));
@@ -109,7 +107,7 @@ describe("Wage Controller", () => {
 
     it("should create a new wage if no previous wage exists", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
       const response = await request(app)

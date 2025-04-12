@@ -27,14 +27,6 @@ vi.mock('@/composables/useCustomFetch', (importOriginal) => {
   }
 })
 
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 1
-    }
-  }))
-}))
-
 vi.mock('@/stores/useToastStore')
 
 interface ComponentData {

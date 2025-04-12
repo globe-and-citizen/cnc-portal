@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { exportToPdf, exportReceiptToPdf, exportTransactionsToPdf } from '../pdfExport'
+import {
+  exportReceiptToPdf,
+  exportTransactionsToPdf,
+  createTableLayout,
+  createHeader,
+  createFooter,
+  getColumnAlignment
+} from '../pdfExport'
 import pdfMake from 'pdfmake/build/pdfmake'
-import type { TDocumentDefinitions } from 'pdfmake/interfaces'
+import testData from './pdfExportTestData.json'
 
 // Mock pdfmake
 vi.mock('pdfmake/build/pdfmake', () => ({
@@ -13,137 +20,162 @@ vi.mock('pdfmake/build/pdfmake', () => ({
   }
 }))
 
+// Mock fetch and FileReader
+global.fetch = vi.fn()
+const mockFileReader = {
+  readAsDataURL: vi.fn(),
+  onloadend: null,
+  onerror: null,
+  result: 'data:image/png;base64,test'
+}
+
+vi.stubGlobal(
+  'FileReader',
+  vi.fn(() => mockFileReader)
+)
+
 describe('pdfExport', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetch).mockReset()
+    mockFileReader.readAsDataURL.mockReset()
   })
 
-  describe('exportToPdf', () => {
-    it('should successfully export data to PDF in landscape mode', () => {
-      const data = [
-        ['Header1', 'Header2'],
-        ['Value1', '100']
-      ]
-      const options = {
-        filename: 'test.pdf'
-      }
+  describe('getBase64Image', () => {
+    it('should handle image loading error gracefully', async () => {
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'))
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const result = exportToPdf(data, options, true)
+      const result = await exportReceiptToPdf(testData.exportReceiptToPdf.basicReceipt)
 
       expect(result).toBe(true)
-      expect(pdfMake.createPdf).toHaveBeenCalledWith({
-        pageSize: 'A4',
-        pageOrientation: 'landscape',
-        pageMargins: [5, 5, 5, 5],
-        content: [
-          {
-            table: {
-              headerRows: 1,
-              widths: ['auto', 'auto'],
-              body: [
-                [
-                  {
-                    text: 'Header1',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Header2',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'Value1',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '100',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ]
-              ]
-            }
-          }
-        ],
-        defaultStyle: {
-          font: 'Roboto'
-        }
-      })
-      expect(
-        pdfMake.createPdf({ content: [] } as TDocumentDefinitions).download
-      ).toHaveBeenCalledWith('test.pdf')
+      expect(consoleSpy).toHaveBeenCalledWith('Error loading image:', expect.any(Error))
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('createTableLayout', () => {
+    it('should create correct table layout configuration', () => {
+      const layout = createTableLayout()
+      const mockNode = { table: { body: [1, 2, 3] } }
+
+      expect(layout.hLineWidth(0, mockNode)).toBe(1)
+      expect(layout.hLineWidth(1, mockNode)).toBe(1)
+      expect(layout.hLineWidth(2, mockNode)).toBe(0.5)
+      expect(layout.hLineWidth(3, mockNode)).toBe(1)
+
+      expect(layout.vLineWidth()).toBe(0)
+
+      expect(layout.hLineColor(0, mockNode)).toBe('#e5e7eb')
+      expect(layout.hLineColor(1, mockNode)).toBe('#e5e7eb')
+      expect(layout.hLineColor(2, mockNode)).toBe('#f3f4f6')
+      expect(layout.hLineColor(3, mockNode)).toBe('#e5e7eb')
+
+      expect(layout.fillColor(0)).toBe('#f9fafb')
+      expect(layout.fillColor(1)).toBe(null)
+
+      expect(layout.paddingLeft()).toBe(8)
+      expect(layout.paddingRight()).toBe(8)
+      expect(layout.paddingTop()).toBe(12)
+      expect(layout.paddingBottom()).toBe(12)
+    })
+  })
+
+  describe('createHeader', () => {
+    it('should create header with logo', () => {
+      const header = createHeader('base64logo', 'Test Title')
+
+      expect(header.columns).toHaveLength(2)
+      expect(header.columns[0]).toHaveProperty('image', 'base64logo')
+      expect(header.columns[1]).toHaveProperty('text', 'Test Title')
     })
 
-    it('should successfully export data to PDF in portrait mode', () => {
-      const data = [['Header1', 'Header2']]
-      const options = {
-        filename: 'test.pdf'
-      }
+    it('should create header without logo', () => {
+      const header = createHeader('', 'Test Title')
 
-      const result = exportToPdf(data, options, false)
+      expect(header.columns).toHaveLength(2)
+      expect(header.columns[0]).toHaveProperty('text', '')
+      expect(header.columns[1]).toHaveProperty('text', 'Test Title')
+    })
+  })
+
+  describe('createFooter', () => {
+    it('should create footer with correct content', () => {
+      const footer = createFooter()
+
+      expect(footer.columns).toHaveLength(2)
+      expect(footer.columns[0]).toHaveProperty('text', 'Generated by Globe & Citizen')
+      expect(footer.columns[1]).toHaveProperty('text', expect.any(String))
+    })
+  })
+
+  describe('getColumnAlignment', () => {
+    it('should return correct alignment for different column types', () => {
+      expect(getColumnAlignment('Amount')).toBe('right')
+      expect(getColumnAlignment('Value (USD)')).toBe('right')
+      expect(getColumnAlignment('Date')).toBe('center')
+      expect(getColumnAlignment('Transaction Hash')).toBe('left')
+      expect(getColumnAlignment('Type')).toBe('left')
+    })
+  })
+
+  describe('exportReceiptToPdf', () => {
+    it('should export receipt data with correct format', async () => {
+      const result = await exportReceiptToPdf(testData.exportReceiptToPdf.basicReceipt)
 
       expect(result).toBe(true)
-      expect(pdfMake.createPdf).toHaveBeenCalledWith({
-        pageSize: 'A4',
-        pageOrientation: 'portrait',
-        pageMargins: [5, 5, 5, 5],
-        content: [
-          {
-            table: {
-              headerRows: 1,
-              widths: ['auto', 'auto'],
-              body: [
-                [
-                  {
-                    text: 'Header1',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Header2',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ]
-              ]
-            }
-          }
-        ],
-        defaultStyle: {
-          font: 'Roboto'
-        }
-      })
+      expect(pdfMake.createPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.any(String),
+              fontSize: 12,
+              color: expect.any(String)
+            }),
+            expect.objectContaining({
+              table: expect.objectContaining({
+                headerRows: 1,
+                widths: ['30%', '70%']
+              })
+            })
+          ])
+        })
+      )
     })
 
-    it('should handle errors gracefully', () => {
+    it('should include additional currency amounts in the export', async () => {
+      const result = await exportReceiptToPdf(testData.exportReceiptToPdf.multiCurrencyReceipt)
+
+      expect(result).toBe(true)
+      expect(pdfMake.createPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              table: expect.objectContaining({
+                body: expect.arrayContaining([
+                  expect.arrayContaining([
+                    expect.objectContaining({ text: 'Field' }),
+                    expect.objectContaining({ text: 'Value' })
+                  ]),
+                  expect.arrayContaining([
+                    expect.objectContaining({ text: 'Value (USD)' }),
+                    expect.any(Object)
+                  ])
+                ])
+              })
+            })
+          ])
+        })
+      )
+    })
+
+    it('should handle errors gracefully', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       vi.mocked(pdfMake.createPdf).mockImplementationOnce(() => {
         throw new Error('Test error')
       })
 
-      const result = exportToPdf([], { filename: 'test.pdf' })
+      const result = await exportReceiptToPdf(testData.exportReceiptToPdf.basicReceipt)
 
       expect(result).toBe(false)
       expect(consoleSpy).toHaveBeenCalled()
@@ -151,315 +183,77 @@ describe('pdfExport', () => {
     })
   })
 
-  describe('exportReceiptToPdf', () => {
-    it('should export receipt data with correct format', () => {
-      const receiptData = {
-        txHash: '0x1234567890abcdef',
-        date: '2024-03-20',
-        type: 'Transfer',
-        from: '0x123',
-        to: '0x456',
-        amountUSD: 100.5,
-        amount: '1.5',
-        token: 'ETH'
-      }
-
-      exportReceiptToPdf(receiptData)
-
-      expect(pdfMake.createPdf).toHaveBeenCalledWith({
-        pageSize: 'A4',
-        pageOrientation: 'portrait',
-        pageMargins: [5, 5, 5, 5],
-        content: [
-          {
-            table: {
-              headerRows: 1,
-              widths: ['auto', 'auto'],
-              body: [
-                [
-                  {
-                    text: 'Field',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Value',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'Transaction Hash',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '0x1234567890abcdef',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'Date',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '2024-03-20',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'Type',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Transfer',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'From',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '0x123',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'To',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '0x456',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'Amount',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '1.5',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'Token',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'ETH',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: 'Value (USD)',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '100.5',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ]
-              ]
-            }
-          }
-        ],
-        defaultStyle: {
-          font: 'Roboto'
-        }
-      })
-    })
-  })
-
   describe('exportTransactionsToPdf', () => {
-    it('should export transactions with correct format', () => {
-      const headers = ['Date', 'Amount', 'Type']
-      const rows = [
-        ['2024-03-20', '1.5', 'Transfer'],
-        ['2024-03-21', '2.0', 'Swap']
-      ]
-      const date = '2024-03-20'
-
-      const result = exportTransactionsToPdf(headers, rows, date)
+    it('should export transactions with correct format', async () => {
+      const result = await exportTransactionsToPdf(
+        testData.exportTransactionsToPdf.headers,
+        testData.exportTransactionsToPdf.rows,
+        testData.exportTransactionsToPdf.date
+      )
 
       expect(result).toBe(true)
-      expect(pdfMake.createPdf).toHaveBeenCalledWith({
-        pageSize: 'A4',
-        pageOrientation: 'landscape',
-        pageMargins: [5, 5, 5, 5],
-        content: [
-          {
-            table: {
-              headerRows: 1,
-              widths: ['auto', 'auto', 'auto'],
-              body: [
-                [
-                  {
-                    text: 'Date',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Amount',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Type',
-                    fontSize: 6,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: '2024-03-20',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '1.5',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Transfer',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ],
-                [
-                  {
-                    text: '2024-03-21',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: '2.0',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'right',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  },
-                  {
-                    text: 'Swap',
-                    fontSize: 5,
-                    margin: [2, 2],
-                    alignment: 'left',
-                    noWrap: false,
-                    wordBreak: 'break-all'
-                  }
-                ]
-              ]
-            }
-          }
-        ],
-        defaultStyle: {
-          font: 'Roboto'
-        }
+      expect(pdfMake.createPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringContaining('Report generated for'),
+              fontSize: 12
+            }),
+            expect.objectContaining({
+              table: expect.objectContaining({
+                headerRows: 1,
+                body: expect.any(Array)
+              })
+            })
+          ]),
+          pageOrientation: 'landscape'
+        })
+      )
+    })
+
+    it('should handle empty transaction data', async () => {
+      const headers = testData.exportTransactionsToPdf.headers
+      const rows: (string | number)[][] = []
+      const date = testData.exportTransactionsToPdf.date
+
+      const result = await exportTransactionsToPdf(headers, rows, date)
+
+      expect(result).toBe(true)
+      expect(pdfMake.createPdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringContaining('Report generated for'),
+              fontSize: 12
+            }),
+            expect.objectContaining({
+              table: expect.objectContaining({
+                headerRows: 1,
+                body: expect.arrayContaining([
+                  headers.map((header) => expect.objectContaining({ text: header }))
+                ])
+              })
+            })
+          ])
+        })
+      )
+    })
+
+    it('should handle errors gracefully', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      vi.mocked(pdfMake.createPdf).mockImplementationOnce(() => {
+        throw new Error('Test error')
       })
-      expect(
-        pdfMake.createPdf({ content: [] } as TDocumentDefinitions).download
-      ).toHaveBeenCalledWith('transactions-2024-03-20.pdf')
+
+      const result = await exportTransactionsToPdf(
+        testData.exportTransactionsToPdf.headers,
+        testData.exportTransactionsToPdf.rows,
+        testData.exportTransactionsToPdf.date
+      )
+
+      expect(result).toBe(false)
+      expect(consoleSpy).toHaveBeenCalled()
+      consoleSpy.mockRestore()
     })
   })
 })

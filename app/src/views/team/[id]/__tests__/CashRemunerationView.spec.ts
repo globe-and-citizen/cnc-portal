@@ -35,10 +35,16 @@ vi.mock('@/composables/useClaim', () => {
     }))
   }
 })
-// Add mock for teamStore
+
 const mockTeamStore = {
   currentTeam: {
-    cashRemunerationEip712Address: '0x123',
+    teamContracts: [
+      {
+        type: 'CashRemunerationEIP712',
+        address: '0x123'
+      }
+    ],
+    ownerAddress: '0x456',
     id: '1',
     name: 'Test Team'
   },
@@ -83,7 +89,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-describe.skip('CashRemunerationView.vue', () => {
+describe('CashRemunerationView.vue', () => {
   const createComponent = () => {
     return shallowMount(CashRemunerationView, {
       global: {
@@ -99,8 +105,45 @@ describe.skip('CashRemunerationView.vue', () => {
     })
 
     expect(genericTokenHoldingSection.exists()).toBeTruthy()
-    expect(genericTokenHoldingSection.props('address')).toBe(
-      mockTeamStore.currentTeam.cashRemunerationEip712Address
-    )
+    expect(genericTokenHoldingSection.props('address')).toBe('0x123')
+  })
+
+  it('should display contract address correctly', () => {
+    const wrapper = createComponent()
+    const addressTooltip = wrapper.findComponent({ name: 'AddressToolTip' })
+
+    expect(addressTooltip.exists()).toBeTruthy()
+    expect(addressTooltip.props('address')).toBe('0x123')
+  })
+
+  it('should render CashRemunerationOverview component', () => {
+    const wrapper = createComponent()
+    const overview = wrapper.findComponent({ name: 'CashRemunerationOverview' })
+
+    expect(overview.exists()).toBeTruthy()
+  })
+
+  it('should render CashRemunerationTable with correct owner address', () => {
+    const wrapper = createComponent()
+    const table = wrapper.findComponent({ name: 'CashRemunerationTable' })
+
+    expect(table.exists()).toBeTruthy()
+  })
+
+  it('should render CashRemunerationTransactions component', () => {
+    const wrapper = createComponent()
+    const transactions = wrapper.findComponent({ name: 'CashRemunerationTransactions' })
+
+    expect(transactions.exists()).toBeTruthy()
+  })
+
+  it('should not render GenericTokenHoldingsSection when contract is not found', () => {
+    mockTeamStore.currentTeam.teamContracts = []
+    const wrapper = createComponent()
+    const genericTokenHoldingSection = wrapper.findComponent({
+      name: 'GenericTokenHoldingsSection'
+    })
+
+    expect(genericTokenHoldingSection.exists()).toBeFalsy()
   })
 })

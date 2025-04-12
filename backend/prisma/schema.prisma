@@ -24,24 +24,26 @@ model User {
   BoardOfDirectorActions BoardOfDirectorActions[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
+  Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
 }
 
 model Team {
-  id                            Int                      @id @default(autoincrement())
-  members                       User[]                   @relation("MemberTeams")
-  owner                         User                     @relation("OwnedTeams", fields: [ownerAddress], references: [address])
-  ownerAddress                  String
-  description                   String?
-  name                          String                   @unique
-  officerAddress                String?
-  BoardOfDirectorActions        BoardOfDirectorActions[]
-  teamContracts                 TeamContract[]
-  memberTeamsData               MemberTeamsData[]
-  Wage                          Wage[]
-  createdAt                     DateTime                 @default(now())
-  updatedAt                     DateTime                 @updatedAt
+  id                     Int                      @id @default(autoincrement())
+  members                User[]                   @relation("MemberTeams")
+  owner                  User                     @relation("OwnedTeams", fields: [ownerAddress], references: [address])
+  ownerAddress           String
+  description            String?
+  name                   String                   @unique
+  officerAddress         String?
+  BoardOfDirectorActions BoardOfDirectorActions[]
+  teamContracts          TeamContract[]
+  memberTeamsData        MemberTeamsData[]
+  Wage                   Wage[]
+  Expense                Expense[]
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
 }
 
 model MemberTeamsData {
@@ -56,6 +58,20 @@ model MemberTeamsData {
   updatedAt               DateTime @updatedAt
 
   @@unique([userAddress, teamId])
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
+  userAddress String
+  teamId      Int
+  signature   String
+  data        String
+  status      String // e.g., "singed", "expired", "disabled"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userAddress], references: [address])
+  team Team @relation(fields: [teamId], references: [id])
 }
 
 model Wage {
@@ -107,7 +123,6 @@ model TeamContract {
   address   String   @unique
   type      String
   deployer  String
-  admins    String[]
   teamId    Int
   team      Team     @relation(fields: [teamId], references: [id])
   createdAt DateTime @default(now())

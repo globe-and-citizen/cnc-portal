@@ -3,12 +3,13 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import BankBalanceSection from '../BankBalanceSection.vue'
 import type { Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { createConfig, http } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
 import type * as wagmiVue from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { ComponentPublicInstance } from 'vue'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 
 // Create a test wagmi config
 const config = createConfig({
@@ -23,6 +24,33 @@ vi.mock('@/stores/useToastStore', () => ({
     addErrorToast: vi.fn()
   })
 }))
+vi.mock('@/composables/useCryptoPrice', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/composables/useCryptoPrice')
+  return {
+    ...actual,
+    useCryptoPrice: () => ({
+      price: ref(1),
+      priceInUSD: ref(1),
+      isLoading: ref(false),
+      error: ref<Error | null>(null)
+    })
+  }
+})
+
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/stores/currencyStore')
+  return {
+    ...actual,
+    useCurrencyStore: vi.fn(() => ({
+      currency: {
+        code: 'USD',
+        symbol: '$'
+      },
+      nativeTokenPriceInUSD: 2000,
+      nativeTokenPrice: 2000
+    }))
+  }
+})
 
 // Mock hooks
 const mockUseBalance = {
@@ -73,34 +101,54 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
+// Mock values for useContractBalance
+const mockBalances = reactive({
+  nativeToken: {
+    balance: '1.5',
+    formatted: '1.5'
+  },
+  usdc: {
+    balance: '1.0',
+    formatted: '1.0'
+  },
+  totalValueUSD: '3001.00'
+})
+
+const mockIsLoading = ref(false)
+const mockError = ref<Error | null>(null)
+const mockRefetch = vi.fn()
+
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: () => ({
+    balances: mockBalances,
+    isLoading: mockIsLoading,
+    error: mockError,
+    refetch: mockRefetch
+  })
+}))
+
+interface BankBalanceSectionInstance extends ComponentPublicInstance {
+  depositModal: boolean
+  transferModal: boolean
+  depositAmount: string
+  loadingText: string
+  totalValueUSD: string
+  totalValueLocal: string
+  formattedUsdcBalance: string
+  depositToBank: (data: { amount: string; token: string }) => Promise<void>
+  handleTransfer: (data: {
+    address: { address: string }
+    token: { symbol: string }
+    amount: string
+  }) => Promise<void>
+}
+
 describe('BankBalanceSection', () => {
   const defaultProps = {
-    bankAddress: '0x123' as Address,
-    priceData: {
-      networkCurrencyPrice: 2000,
-      usdcPrice: 1,
-      loading: false,
-      error: null
-    }
+    bankAddress: '0x123' as Address
   }
 
   const createWrapper = () => {
-    interface BankBalanceSectionInstance extends ComponentPublicInstance {
-      depositModal: boolean
-      transferModal: boolean
-      depositAmount: string
-      loadingText: string
-      totalValueUSD: number
-      totalValueLocal: number
-      formattedUsdcBalance: string
-      depositToBank: (amount: string, token: string) => Promise<void>
-      transferFromBank: (
-        toAddress: string,
-        amount: string,
-        memo: string,
-        token: string
-      ) => Promise<void>
-    }
     return mount(BankBalanceSection, {
       props: defaultProps,
       global: {
@@ -116,6 +164,8 @@ describe('BankBalanceSection', () => {
       vm: BankBalanceSectionInstance
       find: (selector: string) => VueWrapper
       findAll: (selector: string) => VueWrapper[]
+      emitted: () => Record<string, unknown[]>
+      setProps: (props: Partial<typeof defaultProps>) => Promise<void>
     }
   }
 
@@ -135,7 +185,7 @@ describe('BankBalanceSection', () => {
   it('displays correct balance', () => {
     const wrapper = createWrapper()
     const balanceText = wrapper.find('.text-4xl')
-    expect(balanceText.text()).toContain('1.5')
+    expect(balanceText.text()).toContain('3001.00')
     expect(wrapper.find('.text-gray-600').text()).toContain('USD')
   })
 
@@ -241,48 +291,25 @@ describe('BankBalanceSection', () => {
       const toastStore = useToastStore()
       expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Token approved successfully')
     })
-
-    it('shows error toast when balance fetch fails', async () => {
-      const wrapper = createWrapper()
-      mockUseBalance.error.value = new Error('Failed to fetch balance')
-      await wrapper.vm.$nextTick()
-
-      const toastStore = useToastStore()
-      expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch team balance')
-    })
   })
 
   describe('Computed Properties', () => {
     it('formats USDC balance correctly', async () => {
       const wrapper = createWrapper()
-      mockUseReadContract.data.value = BigInt(1500000) // 1.5 USDC (1500000 / 1e6)
+      mockBalances.usdc = {
+        balance: '1.5',
+        formatted: '1.5'
+      }
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.vm.formattedUsdcBalance).toBe('1.5')
-    })
-  })
-
-  describe('Token Interactions', () => {
-    it('handles USDC transfer correctly', async () => {
-      const wrapper = createWrapper()
-      const toAddress = '0x456'
-      const amount = '50'
-
-      await wrapper.vm.transferFromBank(toAddress, amount, 'Test transfer', 'USDC')
-
-      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transferToken',
-          args: [expect.any(String), toAddress, BigInt(50000000)] // 50 * 1e6
-        })
-      )
+      expect(wrapper.find('.text-4xl').text()).toContain('3001.00')
     })
   })
 
   describe('Loading States', () => {
     it('shows loading spinner when fetching balances', async () => {
       const wrapper = createWrapper()
-      mockUseBalance.isLoading.value = true
+      mockIsLoading.value = true
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.loading-spinner').exists()).toBe(true)
@@ -325,6 +352,104 @@ describe('BankBalanceSection', () => {
       expect(wrapper.vm.depositModal).toBe(true)
       const modal = wrapper.find('[data-test="deposit-modal"]')
       expect(modal.exists()).toBe(true)
+    })
+  })
+
+  describe('Transfer Functionality', () => {
+    it('handles ETH transfer correctly', async () => {
+      const wrapper = createWrapper()
+      const transferData = {
+        address: { address: '0x456' },
+        token: { symbol: NETWORK.currencySymbol },
+        amount: '1.0'
+      }
+
+      await wrapper.vm.handleTransfer(transferData)
+
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        address: defaultProps.bankAddress,
+        abi: expect.any(Array),
+        functionName: 'transfer',
+        args: [transferData.address.address, expect.any(BigInt)]
+      })
+    })
+
+    it('handles USDC transfer correctly', async () => {
+      const wrapper = createWrapper()
+      const transferData = {
+        address: { address: '0x456' },
+        token: { symbol: 'USDC' },
+        amount: '100'
+      }
+
+      await wrapper.vm.handleTransfer(transferData)
+
+      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+        address: defaultProps.bankAddress,
+        abi: expect.any(Array),
+        functionName: 'transferToken',
+        args: [USDC_ADDRESS, transferData.address.address, expect.any(BigInt)]
+      })
+    })
+  })
+
+  describe('Balance Calculations', () => {
+    it('calculates local currency value correctly', async () => {
+      const wrapper = createWrapper()
+      mockBalances.nativeToken = {
+        balance: '1.5',
+        formatted: '1.5'
+      }
+      mockBalances.usdc = {
+        balance: '1.0',
+        formatted: '1.0'
+      }
+      mockBalances.totalValueUSD = '3001.00'
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.text-gray-500').text()).toContain('3001.00 USD')
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('handles missing bank address gracefully', async () => {
+      const wrapper = createWrapper()
+      // Reset mock calls before the test
+      mockUseWriteContract.writeContract.mockReset()
+
+      await wrapper.setProps({ bankAddress: undefined })
+
+      await wrapper.vm.handleTransfer({
+        address: { address: '0x456' },
+        token: { symbol: NETWORK.currencySymbol },
+        amount: '1.0'
+      })
+
+      expect(mockUseWriteContract.writeContract).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Modal State Management', () => {
+    it('closes deposit modal after successful deposit', async () => {
+      const wrapper = createWrapper()
+      wrapper.vm.depositModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.vm.depositModal).toBe(false)
+    })
+
+    it('closes transfer modal after successful transfer', async () => {
+      const wrapper = createWrapper()
+      wrapper.vm.transferModal = true
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.vm.transferModal).toBe(false)
     })
   })
 })

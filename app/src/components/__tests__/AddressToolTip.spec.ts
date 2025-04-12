@@ -3,6 +3,7 @@ import * as vueuse from '@vueuse/core'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import { NETWORK } from '@/constant'
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -77,10 +78,10 @@ describe('AddressToolTip.vue', () => {
     })
     it('should open the address in a new tab', async () => {
       const open = vi.fn()
-      global.open = open
+      window.open = open
       await wrapper.find('[data-test="address-tooltip"]').trigger('click')
       expect(open).toHaveBeenCalledWith(
-        `https://sepolia.etherscan.io/address/${props.address}`,
+        `${NETWORK.blockExplorerUrl}/address/${props.address}`,
         '_blank'
       )
     })
@@ -90,12 +91,9 @@ describe('AddressToolTip.vue', () => {
       })
 
       const open = vi.fn()
-      global.open = open
+      window.open = open
       await wrapper.find('[data-test="address-tooltip"]').trigger('click')
-      expect(open).toHaveBeenCalledWith(
-        `https://sepolia.etherscan.io/tx/${props.address}`,
-        '_blank'
-      )
+      expect(open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/${props.address}`, '_blank')
     })
   })
 })

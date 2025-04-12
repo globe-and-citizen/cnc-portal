@@ -93,8 +93,13 @@ export class AddCampaignService {
   ): Promise<string> {
     const address = await this.deployAdCampaignManager(bankAddress, costPerClick, costPerImpression)
 
-    await useCustomFetch(`teams/${teamId}`)
-      .put({ teamContract: { address, type: 'Campaign', deployer, admins: [deployer] } })
+    await useCustomFetch(`teams/contract/add`)
+      .post({
+        teamId: teamId,
+        contractAddress: address,
+        contractType: 'Campaign',
+        deployer
+      })
       .json()
 
     return address

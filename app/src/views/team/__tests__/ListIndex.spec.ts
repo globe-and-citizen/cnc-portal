@@ -15,6 +15,12 @@ vi.mock('@/composables/useCustomFetch', () => {
   // Inline the fake implementation to avoid hoisting issues
   return {
     useCustomFetch: () => ({
+      json: () => ({
+        execute: vi.fn(),
+        error: mockError,
+        isFetching: mockIsFetching,
+        data: mockData
+      }),
       post: () => ({
         json: () => ({
           execute: vi.fn(),
@@ -35,19 +41,23 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 0
-    },
-    meta: {
-      name: 'Team List View'
-    }
-  })),
-  useRouter: vi.fn(() => ({
-    push: vi.fn()
-  }))
-}))
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRoute: vi.fn(() => ({
+      params: {
+        id: 0
+      },
+      meta: {
+        name: 'Team List View'
+      }
+    })),
+    useRouter: vi.fn(() => ({
+      push: vi.fn()
+    }))
+  }
+})
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()

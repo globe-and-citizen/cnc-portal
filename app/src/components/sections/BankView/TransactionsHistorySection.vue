@@ -3,30 +3,31 @@
   <GenericTransactionHistory
     :transactions="transactions"
     title="Bank Transactions History"
-    :currencies="['USD']"
-    :currency-rates="{
-      loading: false,
-      error: null,
-      getRate: () => 1
-    }"
+    :currencies="currencies"
     :show-receipt-modal="true"
     data-test="bank-transactions"
-    @receipt-click="handleReceiptClick"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
-import type { BankTransaction, BaseTransaction } from '@/types/transactions'
+import type { BankTransaction } from '@/types/transactions'
 import { useTeamStore } from '@/stores'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import type { Address } from 'viem'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
-import type { ReceiptData } from '@/utils/excelExport'
 
 const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
+
+// Computed property for currencies based on user preference
+const currencies = computed(() => {
+  const defaultCurrency = currencyStore.currency.code
+  return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
+})
 
 const contractAddress = computed(
   () =>
@@ -62,26 +63,12 @@ const transactions = computed<BankTransaction[]>(() =>
         date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
         to: transaction.to,
-        amountUSD: 10,
         amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
         token: tokenSymbol(transaction.tokenAddress),
         type: transaction.transactionType
       }))
     : []
 )
-
-const selectedTransaction = ref<BaseTransaction | null>(null)
-
-const handleReceiptClick = (data: ReceiptData) => {
-  // If you need to do any processing with the receipt data
-  selectedTransaction.value = {
-    ...data,
-    amountUSD: data.amountUSD,
-    [data.token]: data.amount,
-    // Add any other required BaseTransaction properties
-    status: 'completed'
-  } as BaseTransaction
-}
 
 watch(error, (newError) => {
   if (newError) {

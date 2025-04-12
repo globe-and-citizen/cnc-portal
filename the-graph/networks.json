@@ -26,5 +26,19 @@
       "address": "0xF1FbA289d63f563d5cbe2F122FE0126853758ffA",
       "startBlock": 7970003
     }
+  },
+  "matic": {
+    "OfficerFactoryBeacon": {
+      "address": "0x3016e02B59954E6B6564a5F3Ff67bdc5a69F78E0",
+      "startBlock": 69852632
+    },
+    "USDC": {
+      "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "startBlock": 69852632
+    },
+    "USDT": {
+      "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "startBlock": 69852632
+    }
   }
 }

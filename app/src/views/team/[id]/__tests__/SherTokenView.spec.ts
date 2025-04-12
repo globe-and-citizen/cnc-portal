@@ -3,7 +3,7 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import SherTokenView from '../SherTokenView.vue'
 
-vi.mock('@/components/sections/SingleTeamView/InvestorsSection.vue', () => ({
+vi.mock('@/components/sections/SherTokenView/InvestorsSection.vue', () => ({
   default: {
     name: 'InvestorsSection',
     props: ['team'],
@@ -13,7 +13,16 @@ vi.mock('@/components/sections/SingleTeamView/InvestorsSection.vue', () => ({
 
 describe('SherTokenView', () => {
   let wrapper: VueWrapper
-  const mockTeam = { id: '1', name: 'Test Team' }
+  const mockTeam = {
+    id: '1',
+    name: 'Test Team',
+    teamContracts: [
+      {
+        type: 'InvestorsV1',
+        address: '0x1234567890123456789012345678901234567890'
+      }
+    ]
+  }
 
   beforeEach(() => {
     wrapper = mount(SherTokenView, {

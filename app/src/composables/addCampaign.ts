@@ -1,7 +1,7 @@
 import { AddCampaignService } from '@/services/AddCampaignService'
 import { ref } from 'vue'
 
-const addCamapaignService = new AddCampaignService()
+const addCampaignService = new AddCampaignService()
 
 export function useDeployAddCampaignContract() {
   const contractAddress = ref<string | null>(null)
@@ -21,7 +21,7 @@ export function useDeployAddCampaignContract() {
         throw new Error('Cost per click and cost per impression must be greater than zero.')
       }
       loading.value = true
-      contractAddress.value = await addCamapaignService.createAdCampaignManager(
+      contractAddress.value = await addCampaignService.createAdCampaignManager(
         bankContractAddress.toString(),
         costPerClick.toString(),
         costPerImpression.toString(),
@@ -30,6 +30,7 @@ export function useDeployAddCampaignContract() {
       )
       isSuccess.value = true
     } catch (err) {
+      isSuccess.value = false
       error.value = err
       console.error(err)
     } finally {

@@ -3,12 +3,7 @@
     v-if="transactionData.length > 0"
     :transactions="transactionData"
     title="Expense Account Transfer History"
-    :currencies="['USD', 'CAD', 'INR', 'EUR']"
-    :currency-rates="{
-      loading: false,
-      error: null,
-      getRate: () => 1
-    }"
+    :currencies="currencies"
     :show-receipt-modal="true"
     data-test="expense-transactions"
     @receipt-click="handleReceiptClick"
@@ -23,10 +18,12 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useTeamStore } from '@/stores'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import type { ReceiptData } from '@/utils/excelExport'
 import type { Address } from 'viem'
 
 const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
 
 const contractAddress = computed(
   () =>
@@ -63,7 +60,6 @@ const transactionData = computed<ExpenseTransaction[]>(() =>
         date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
         to: transaction.to,
-        amountUSD: 10,
         amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
         token: tokenSymbol(transaction.tokenAddress),
         type: transaction.transactionType
@@ -72,6 +68,12 @@ const transactionData = computed<ExpenseTransaction[]>(() =>
 )
 
 const selectedTransaction = ref<BaseTransaction | null>(null)
+
+// Computed property for currencies based on user preference
+const currencies = computed(() => {
+  const defaultCurrency = currencyStore.currency.code
+  return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
+})
 
 const handleReceiptClick = (data: ReceiptData) => {
   // If you need to do any processing with the receipt data

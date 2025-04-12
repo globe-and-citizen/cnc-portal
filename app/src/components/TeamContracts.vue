@@ -21,15 +21,20 @@
           <td><AddressToolTip :address="contract.address" class="text-xs" /></td>
           <td>
             <button
-              @click="openAdminsModal(contract)"
+              :disabled="contract.type !== 'Campaign'"
+              @click="openAdminsModal(contract, index + 1)"
               class="btn btn-ghost btn-xs"
               data-test="open-admin-modal-btn"
             >
-              <UsersIcon class="size-6" />
+              <IconifyIcon icon="heroicons-outline:users" class="size-6" />
             </button>
           </td>
           <td>
-            <button @click="openContractDataModal(contract.address)" class="btn btn-ghost btn-xs">
+            <button
+              :disabled="contract.type !== 'Campaign'"
+              @click="openContractDataModal(contract.address)"
+              class="btn btn-ghost btn-xs"
+            >
               View Details
             </button>
           </td>
@@ -45,7 +50,10 @@
     <!-- Admin Modal -->
     <ModalComponent v-model="contractAdminDialog.show">
       <div class="max-w-lg">
-        <TeamContractAdmins :contract="contractAdminDialog.contract" />
+        <TeamContractAdmins
+          :contract="contractAdminDialog.contract"
+          :range="contractAdminDialog.range"
+        />
       </div>
     </ModalComponent>
 
@@ -74,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { UsersIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
@@ -98,7 +106,8 @@ const addCamapaignService = new AddCampaignService()
 // Modal for showing contract admins
 const contractAdminDialog = ref({
   show: false,
-  contract: {} as TeamContract
+  contract: {} as TeamContract,
+  range: 0 as number
 })
 
 const contractDataDialog = ref({
@@ -140,9 +149,10 @@ const groupEventsByCampaignCode = (events: ExtendedEvent[]) => {
 }
 
 // Open Admins Modal
-const openAdminsModal = (contract: TeamContract) => {
+const openAdminsModal = (contract: TeamContract, range: number) => {
   contractAdminDialog.value.contract = contract
   contractAdminDialog.value.show = true
+  contractAdminDialog.value.range = range
 }
 
 // Open Events Modal

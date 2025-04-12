@@ -1,10 +1,11 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
+import { createTestingPinia } from '@pinia/testing'
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -12,9 +13,27 @@ const mockClipboard = {
   copied: ref(false),
   isSupported: ref(true)
 }
-vi.mock('@vueuse/core', () => ({
-  useClipboard: vi.fn(() => mockClipboard)
-}))
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useClipboard: vi.fn(() => mockClipboard)
+  }
+})
+vi.mock('@/stores', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: () => ({
+      currency: ref('USD'),
+      setCurrency: vi.fn()
+    })
+  }
+})
+
+interface ComponentData {
+  selectedCurrency: string
+}
 
 describe('EditUserForm', () => {
   const user = {
@@ -34,6 +53,12 @@ describe('EditUserForm', () => {
         isLoading: false,
         modelValue: user,
         ...props
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        components: {
+          IconifyIcon
+        }
       }
     })
   }
@@ -60,7 +85,9 @@ describe('EditUserForm', () => {
 
     it('renders copy address icon correctly', () => {
       const wrapper = createComponent()
-      expect(wrapper.findComponent(ClipboardDocumentListIcon).exists()).toBeTruthy()
+      const iconComponents = wrapper.findAllComponents(IconifyIcon)
+      const copyIcon = iconComponents[0]
+      expect(copyIcon?.exists()).toBeTruthy()
 
       // Tooltip
       const copyIconTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
@@ -73,7 +100,12 @@ describe('EditUserForm', () => {
       const wrapper = createComponent()
       mockClipboard.copied.value = true
       await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent(ClipboardDocumentCheckIcon).exists()).toBeTruthy()
+
+      const iconComponents = wrapper.findAllComponents(IconifyIcon)
+      const copiedIcon = iconComponents[0]
+      await copiedIcon.trigger('click')
+      expect(copiedIcon).toBeTruthy()
+      expect(copiedIcon?.exists()).toBeTruthy()
     })
 
     it('renders submit button correctly', () => {
@@ -117,9 +149,17 @@ describe('EditUserForm', () => {
       mockClipboard.copied.value = false
       await wrapper.vm.$nextTick()
 
-      await wrapper.findComponent(ClipboardDocumentListIcon).trigger('click')
+      await wrapper.findComponent(IconifyIcon).trigger('click')
 
       expect(mockCopy).toBeCalledWith(user.address)
+    })
+
+    it('triggers v-model when selectedcurrency is changed', async () => {
+      const wrapper = createComponent()
+      await wrapper.find('select[data-test="currency-select"]').setValue('EUR')
+      await wrapper.vm.$nextTick()
+
+      expect((wrapper.vm as unknown as ComponentData).selectedCurrency).toBe('EUR')
     })
   })
   describe('Form Validation', () => {

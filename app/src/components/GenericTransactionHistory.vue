@@ -3,16 +3,9 @@
   <CardComponent :title="title" class="w-full">
     <template #card-action>
       <div class="flex items-center gap-10">
-        <Datepicker
-          v-if="showDateFilter"
-          v-model="dateRange"
-          class="w-96"
-          range
-          :format="'dd/MM/yyyy'"
-          placeholder="Select Date Range"
-          auto-apply
-          :data-test="`${dataTestPrefix}-date-range-picker`"
-        />
+        <div v-if="showDateFilter">
+          <CustomDatePicker v-model="dateRange" :data-test-prefix="dataTestPrefix" />
+        </div>
         <ButtonUI
           v-if="showExport"
           variant="success"
@@ -79,19 +72,26 @@
             target="_blank"
             class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
           >
-            <DocumentTextIcon class="h-4 w-4" />
+            <IconifyIcon icon="heroicons-outline:document-text" class="h-4 w-4" />
             Receipt
           </a>
         </template>
       </template>
 
-      <!-- Dynamic currency amounts -->
-      <template
-        v-for="(currency, index) in currencies"
-        :key="index"
-        #[`amount${currency}-data`]="{ row }"
-      >
-        {{ formatAmount(row as unknown as BaseTransaction, currency) }}
+      <!-- Amount with token -->
+      <template #amount-data="{ row }">
+        {{ Number((row as unknown as BaseTransaction).amount) }}
+        {{ (row as unknown as BaseTransaction).token }}
+      </template>
+
+      <!-- Value in USD -->
+      <template #valueUSD-data="{ row }">
+        {{ formatAmount(row as unknown as BaseTransaction, 'USD') }}
+      </template>
+
+      <!-- Value in local currency -->
+      <template #valueLocal-data="{ row }">
+        {{ formatAmount(row as unknown as BaseTransaction, currencyStore.currency.code) }}
       </template>
     </TableComponent>
 
@@ -109,31 +109,27 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { DocumentTextIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import Datepicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ReceiptComponent from '@/components/sections/ExpenseAccountView/ReceiptComponent.vue'
+import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
+import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
 import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { storeToRefs } from 'pinia'
 
 interface Props {
   transactions: BaseTransaction[]
   title: string
   currencies: string[] // Array of currency codes: ['USD', 'CAD', 'INR', 'EUR']
-  currencyRates: {
-    loading: boolean
-    error: string | null
-    getRate: (currency: string) => number
-  }
   showDateFilter?: boolean
   showExport?: boolean
   showReceiptModal?: boolean
@@ -149,10 +145,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'export'): void
-  (e: 'receipt-click', data: ReceiptData): void
+  (e: 'receipt-click', data: import('@/utils/excelExport').ReceiptData): void
 }>()
 
 const toastStore = useToastStore()
+const currencyStore = useCurrencyStore()
+const { nativeTokenPriceInUSD, nativeTokenPrice } = storeToRefs(currencyStore)
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -166,20 +164,22 @@ const columns = computed(() => {
     { key: 'date', label: 'Date', sortable: true },
     { key: 'type', label: 'Type', sortable: false },
     { key: 'from', label: 'From', sortable: false },
-    { key: 'to', label: 'To', sortable: false }
-  ]
-
-  const currencyColumns = props.currencies.map((currency) => ({
-    key: `amount${currency}`,
-    label: `Amount (${currency})`,
-    sortable: false
-  }))
-
-  return [
-    ...baseColumns,
-    ...currencyColumns,
-    { key: 'receipt', label: 'Receipt', sortable: false }
+    { key: 'to', label: 'To', sortable: false },
+    { key: 'amount', label: 'Amount', sortable: false },
+    { key: 'valueUSD', label: 'Value (USD)', sortable: false }
   ] as TableColumn[]
+
+  // Add local currency column if it's not USD
+  if (currencyStore.currency.code !== 'USD') {
+    baseColumns.push({
+      key: 'valueLocal',
+      label: `Value (${currencyStore.currency.code})`,
+      sortable: false
+    })
+  }
+
+  baseColumns.push({ key: 'receipt', label: 'Receipt', sortable: false })
+  return baseColumns
 })
 
 // Filter transactions based on date range
@@ -224,20 +224,31 @@ const formatDate = (date: string | number) => {
 }
 
 const formatAmount = (transaction: BaseTransaction, currency: string) => {
-  const key = `amount${currency}` as keyof BaseTransaction
-  const amount = transaction[key]
-  if (typeof amount === 'number') return amount.toFixed(2)
+  const tokenAmount = Number(transaction.amount)
+  if (tokenAmount <= 0) return currency === 'USD' ? '$0.00' : '0.00'
 
-  // If amount for this currency doesn't exist but we have USD amount and currency rates
-  if (transaction.amountUSD && props.currencyRates?.getRate) {
-    const rate = props.currencyRates.getRate(currency)
-    return (transaction.amountUSD * rate).toFixed(2)
+  let usdAmount = 0
+  if (transaction.token === 'USDC') {
+    usdAmount = tokenAmount
+  } else {
+    usdAmount = tokenAmount * nativeTokenPriceInUSD.value!
   }
 
-  return '0.00'
+  if (currency === 'USD') {
+    return Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(usdAmount)
+  }
+
+  const exchangeRate = nativeTokenPrice.value! / nativeTokenPriceInUSD.value!
+  return Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency
+  }).format(usdAmount * exchangeRate)
 }
 
-const handleExport = () => {
+const handleExport = async () => {
   try {
     const headers = columns.value.map((col) => col.label)
     const rows = displayedTransactions.value.map((tx) => {
@@ -257,8 +268,7 @@ const handleExport = () => {
             return getReceiptUrl(tx.txHash)
           default:
             if (col.key.startsWith('amount')) {
-              const currency = col.key.replace('amount', '')
-              return formatAmount(tx, currency)
+              return formatAmount(tx, 'USD')
             }
             return ''
         }
@@ -267,7 +277,7 @@ const handleExport = () => {
 
     const date = new Date().toISOString().split('T')[0]
     const excelSuccess = exportTransactionsToExcel(headers, rows, date)
-    const pdfSuccess = exportTransactionsToPdf(headers, rows, date)
+    const pdfSuccess = await exportTransactionsToPdf(headers, rows, date)
 
     if (excelSuccess && pdfSuccess) {
       toastStore.addSuccessToast('Transactions exported successfully')
@@ -294,6 +304,12 @@ const getReceiptUrl = (txHash: string) => {
 }
 
 const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
+  const usdAmount = formatAmount(transaction, 'USD')
+  const localAmount =
+    currencyStore.currency.code !== 'USD'
+      ? formatAmount(transaction, currencyStore.currency.code)
+      : usdAmount
+
   return {
     txHash: String(transaction.txHash),
     date: formatDate(transaction.date),
@@ -302,11 +318,13 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     to: String(transaction.to),
     amount: String(transaction.amount || ''),
     token: String(transaction.token),
-    amountUSD: Number(transaction.amountUSD || 0)
+    amountUSD: Number(transaction.amountUSD || 0),
+    valueUSD: usdAmount,
+    valueLocal: localAmount
   }
 }
 
-const handleReceiptExport = (receiptData: ReceiptData) => {
+const handleReceiptExport = (receiptData: import('@/utils/excelExport').ReceiptData) => {
   try {
     const success = exportReceiptToExcel(receiptData)
     if (success) {
@@ -320,9 +338,9 @@ const handleReceiptExport = (receiptData: ReceiptData) => {
   }
 }
 
-const handleReceiptPdfExport = (receiptData: ReceiptData) => {
+const handleReceiptPdfExport = async (receiptData: import('@/utils/excelExport').ReceiptData) => {
   try {
-    const success = exportReceiptToPdf(receiptData)
+    const success = await exportReceiptToPdf(receiptData)
     if (success) {
       toastStore.addSuccessToast('Receipt PDF exported successfully')
     } else {
@@ -334,3 +352,5 @@ const handleReceiptPdfExport = (receiptData: ReceiptData) => {
   }
 }
 </script>
+
+<style scoped></style>

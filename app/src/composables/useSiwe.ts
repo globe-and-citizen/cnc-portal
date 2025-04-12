@@ -1,18 +1,18 @@
 import router from '@/router'
-import { ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
 import { log } from '@/utils'
-import { useCustomFetch } from './useCustomFetch'
-import { useStorage } from '@vueuse/core'
+import { useFetch, useStorage } from '@vueuse/core'
 import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
-import { useWalletChecks } from '@/composables'
+import { useCustomFetch, useWalletChecks } from '@/composables'
+import { BACKEND_URL } from '@/constant/index'
 
 export function useSiwe() {
   //#region Refs
   const authData = ref({ signature: '', message: '' })
-  const apiEndpoint = ref<string>('')
+  const isProcessing = ref(false)
   //#endregion
 
   //#region Composables
@@ -21,15 +21,19 @@ export function useSiwe() {
   const { address } = useAccount()
   const chainId = useChainId()
   const { data: signature, error: signMessageError, signMessageAsync } = useSignMessage()
-  const { performChecks, isProcessing, isSuccess: isSuccessWalletCheck } = useWalletChecks()
+  const { performChecks, isSuccess: isSuccessWalletCheck } = useWalletChecks()
+
   //#endregion
+
+  const fetchNonceEndpoint = computed(() => `${BACKEND_URL}/api/user/nonce/${address.value}`)
+  const userDataEndpoint = computed(() => `user/${address.value}`)
 
   //#region useCustomeFetch
   const {
     error: siweError,
     data: siweData,
     execute: executeAddAuthData
-  } = useCustomFetch('auth/siwe', { immediate: false })
+  } = useFetch(`${BACKEND_URL}/api/auth/siwe`, { immediate: false })
     .post(authData)
     .json<{ accessToken: string }>()
 
@@ -37,23 +41,34 @@ export function useSiwe() {
     error: fetchUserNonceError,
     data: nonce,
     execute: executeFetchUserNonce
-  } = useCustomFetch(apiEndpoint, { immediate: false }).get().json<Partial<User>>()
+  } = useFetch(fetchNonceEndpoint, { immediate: false }).get().json<Partial<User>>()
 
   const {
     error: fetchUserError,
     data: user,
     execute: executeFetchUser
-  } = useCustomFetch(apiEndpoint, { immediate: false }).get().json<Partial<User>>()
+  } = useCustomFetch(userDataEndpoint, { immediate: false }).get().json<Partial<User>>()
   //#endregion
 
   //#region Functions
   async function siwe() {
+    isProcessing.value = true
     await performChecks()
-    if (!isSuccessWalletCheck.value) return
+    if (!isSuccessWalletCheck.value) {
+      isProcessing.value = false
+      return
+    }
 
-    apiEndpoint.value = `user/nonce/${address.value}`
+    // Fetch user nonce from backend
     await executeFetchUserNonce()
-    if (!nonce.value) return
+
+    // Check if nonce is fetched successfully
+    if (!nonce.value || fetchUserNonceError.value) {
+      log.info('fetchError.value', fetchUserNonceError.value)
+      addErrorToast('Failed to fetch nonce')
+      isProcessing.value = false
+      return
+    }
 
     const siweMessage = new SiweMessage({
       address: address.value as string,
@@ -66,22 +81,53 @@ export function useSiwe() {
     })
     authData.value.message = siweMessage.prepareMessage()
 
-    await signMessageAsync({ message: authData.value.message })
-    if (!signature.value) return
-
+    try {
+      await signMessageAsync({ message: authData.value.message })
+    } catch (error) {
+      if (signMessageError.value) {
+        addErrorToast(
+          signMessageError.value.name === 'UserRejectedRequestError'
+            ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
+            : 'Something went wrong: Unable to sign SIWE message'
+        )
+        log.error('signMessageError.value', error)
+        isProcessing.value = false
+      }
+    }
+    if (!signature.value) {
+      isProcessing.value = false
+      return
+    }
     //update authData payload signature field with user's signature
     authData.value.signature = signature.value
     //send authData payload to backend for authentication
     await executeAddAuthData()
     //get returned JWT authentication token and save to storage
     const token = siweData.value?.accessToken
+    if (!token || siweError.value) {
+      log.info('siweError.value', siweError.value)
+      addErrorToast('Failed to get authentication token')
+
+      isProcessing.value = false
+      return
+    }
+
+    // save token and wait for it to be available
     const storageToken = useStorage('authToken', token)
     storageToken.value = token
-    //update API endpoint to call
-    apiEndpoint.value = `user/${address.value}`
+
+    // wait for token to be available in storage
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
     //fetch user data from backend
     await executeFetchUser()
-    if (!user.value) return
+    if (!user.value || fetchUserError.value) {
+      log.info('fetchUserError.value', fetchUserError.value)
+      addErrorToast('Failed to fetch user data')
+
+      isProcessing.value = false
+      return
+    }
     //save user data to user store
     const userData: Partial<User> = user.value
     userDataStore.setUserData(userData.name || '', userData.address || '', userData.nonce || '')
@@ -91,44 +137,6 @@ export function useSiwe() {
     //redirect user to teams page
     router.push('/teams')
   }
-  //#endregion
-
-  //#region Watch
-  watch(signMessageError, (newError) => {
-    if (newError) {
-      addErrorToast(
-        newError.name === 'UserRejectedRequestError'
-          ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
-          : 'Something went wrong: Unable to sign SIWE message'
-      )
-      log.error('signMessageError.value', newError)
-      isProcessing.value = false
-    }
-  })
-
-  watch(siweError, (newError) => {
-    if (newError) {
-      log.info('siweError.value', newError)
-      addErrorToast('Unable to authenticate with SIWE')
-      isProcessing.value = false
-    }
-  })
-
-  watch(fetchUserNonceError, (newError) => {
-    if (newError) {
-      log.info('fetchError.value', newError)
-      addErrorToast('Unable to fetch nonce')
-      isProcessing.value = false
-    }
-  })
-
-  watch(fetchUserError, (newError) => {
-    if (newError) {
-      log.info('fetchUserError.value', fetchUserError.value)
-      addErrorToast('Unable to fetch user data')
-      isProcessing.value = false
-    }
-  })
   //#endregion
 
   return { isProcessing, siwe }

@@ -1,4 +1,4 @@
-import { describe, it, vi, expect } from 'vitest'
+import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { createTestingPinia } from '@pinia/testing'
@@ -7,9 +7,9 @@ import DeployContractSection from '@/components/sections/TeamView/forms/DeployCo
 
 const mockUseWriteContract = {
   writeContract: vi.fn(),
-  error: ref(null),
+  error: ref<Error | null>(null),
   isPending: ref(false),
-  data: ref(null)
+  data: ref<string | null>(null)
 }
 
 const mockUseWaitForTransactionReceipt = {
@@ -17,15 +17,22 @@ const mockUseWaitForTransactionReceipt = {
   isSuccess: ref(false)
 }
 
+const mockUseWatchContractEvent = vi.fn().mockImplementation((config) => {
+  return {
+    onLogs: config.onLogs
+  }
+})
+
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useWatchContractEvent: vi.fn()
+    useWatchContractEvent: vi.fn(() => mockUseWatchContractEvent)
   }
 })
+
 vi.mock('viem', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -33,6 +40,31 @@ vi.mock('viem', async (importOriginal) => {
     encodeFunctionData: vi.fn(() => 'EncodedFunctionData')
   }
 })
+
+vi.mock('@/stores/user', () => ({
+  useUserDataStore: vi.fn(() => ({
+    address: '0xUserAddress'
+  }))
+}))
+
+const mockAddSuccessToast = vi.fn()
+const mockAddErrorToast = vi.fn()
+
+vi.mock('@/stores/useToastStore', () => ({
+  useToastStore: vi.fn(() => ({
+    addSuccessToast: mockAddSuccessToast,
+    addErrorToast: mockAddErrorToast
+  }))
+}))
+
+vi.mock('@/composables/useCustomFetch', () => ({
+  useCustomFetch: vi.fn(() => ({
+    put: vi.fn().mockReturnValue({
+      json: vi.fn().mockResolvedValue({ error: ref(null) })
+    })
+  }))
+}))
+
 describe('DeployContractSection', () => {
   const defaultProps = {
     investorContractInput: {
@@ -57,6 +89,16 @@ describe('DeployContractSection', () => {
       }
     })
   }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseWriteContract.error.value = null
+    mockUseWriteContract.isPending.value = false
+    mockUseWaitForTransactionReceipt.isLoading.value = false
+    mockUseWaitForTransactionReceipt.isSuccess.value = false
+    mockAddSuccessToast.mockClear()
+    mockAddErrorToast.mockClear()
+  })
 
   describe('Rendering', () => {
     it('should render the form correctly', async () => {
@@ -110,6 +152,19 @@ describe('DeployContractSection', () => {
           functionName: 'createBeaconProxy'
         })
       )
+    })
+
+    it('should handle contract deployment error', async () => {
+      const wrapper = createWrapper()
+      const deployButton = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
+
+      mockUseWriteContract.error.value = new Error('Deployment failed')
+      await deployButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
     })
   })
 })

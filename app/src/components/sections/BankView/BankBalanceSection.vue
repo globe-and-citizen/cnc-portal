@@ -6,16 +6,15 @@
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
-              <span
-                class="loading loading-spinner loading-lg"
-                v-if="balanceLoading || isLoadingUsdcBalance"
-              ></span>
-              <span v-else>{{ totalValueUSD }}</span>
+              <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
+              <span v-else>{{ balances.totalValueUSD }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
-        <div class="text-sm text-gray-500 mt-1">≈ {{ totalValueLocal }} CAD</div>
+        <div class="text-sm text-gray-500 mt-1">
+          ≈ {{ totalValueLocal }} {{ currencyStore.currency.code }}
+        </div>
       </div>
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
@@ -26,7 +25,7 @@
             @click="depositModal = true"
             data-test="deposit-button"
           >
-            <PlusIcon class="w-5 h-5" />
+            <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
             Deposit
           </ButtonUI>
           <ButtonUI
@@ -36,7 +35,7 @@
             @click="transferModal = true"
             data-test="transfer-button"
           >
-            <ArrowsRightLeftIcon class="w-5 h-5" />
+            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
             Transfer
           </ButtonUI>
         </div>
@@ -67,59 +66,47 @@
 
     <!-- Transfer Modal -->
     <ModalComponent v-model="transferModal" data-test="transfer-modal">
-      <TransferFromBankForm
+      <TransferForm
         v-if="transferModal"
-        @close-modal="() => (transferModal = false)"
-        @transfer="transferFromBank"
-        @searchMembers="(input: string) => searchUsers({ name: '', address: input })"
-        :filteredMembers="foundUsers"
+        v-model="transferData"
+        :tokens="[
+          { symbol: NETWORK.currencySymbol, balance: balances.nativeToken.formatted || '0' },
+          { symbol: 'USDC', balance: balances.usdc.formatted || '0' }
+        ]"
         :loading="transferLoading || isConfirmingTransfer"
-        :bank-balance="teamBalance?.formatted || '0'"
-        :usdc-balance="formattedUsdcBalance || '0'"
         service="Bank"
+        @transfer="handleTransfer"
+        @closeModal="() => (transferModal = false)"
       />
     </ModalComponent>
   </CardComponent>
 </template>
 
 <script setup lang="ts">
-import { PlusIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import {
-  useBalance,
-  useReadContract,
-  useChainId,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-  useWriteContract
-} from '@wagmi/vue'
+import { useSendTransaction, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useToastStore } from '@/stores/useToastStore'
-import { log, parseError } from '@/utils'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import TransferFromBankForm from '@/components/forms/TransferFromBankForm.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import TransferForm from '@/components/forms/TransferForm.vue'
 import { useUserDataStore } from '@/stores/user'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import BankABI from '@/artifacts/abi/bank.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther } from 'viem'
-import type { User } from '@/types'
+import { useCryptoPrice } from '@/composables/useCryptoPrice'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { Icon as IconifyIcon } from '@iconify/vue'
 
 const props = defineProps<{
   bankAddress: Address | undefined
-  priceData: {
-    networkCurrencyPrice: number
-    usdcPrice: number
-    loading: boolean
-    error: boolean | null
-  }
 }>()
 
 const emit = defineEmits<{
@@ -129,14 +116,22 @@ const emit = defineEmits<{
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
+const currencyStore = useCurrencyStore()
+const { price: usdcPrice } = useCryptoPrice('usd-coin')
 const currentAddress = userDataStore.address
-const chainId = useChainId()
+
+// Use the contract balance composable
+const { balances, isLoading, error, refetch } = useContractBalance(props.bankAddress)
 
 // Add refs for modals and form data
 const depositModal = ref(false)
 const transferModal = ref(false)
-const foundUsers = ref<User[]>([])
 const depositAmount = ref('')
+const transferData = ref({
+  address: { name: '', address: '' },
+  token: { symbol: NETWORK.currencySymbol, balance: '0' },
+  amount: '0'
+})
 
 // Contract interactions
 const { sendTransaction, isPending: depositLoading, data: depositHash } = useSendTransaction()
@@ -174,32 +169,6 @@ const {
 const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
   hash: approveHash
 })
-
-// Balance fetching
-const {
-  data: teamBalance,
-  isLoading: balanceLoading,
-  error: balanceError,
-  refetch: fetchBalance
-} = useBalance({
-  address: props.bankAddress,
-  chainId
-})
-
-// USDC Balance
-const {
-  data: usdcBalance,
-  isLoading: isLoadingUsdcBalance,
-  refetch: fetchUsdcBalance,
-  error: usdcBalanceError
-} = useReadContract({
-  address: USDC_ADDRESS as Address,
-  abi: ERC20ABI,
-  functionName: 'balanceOf',
-  args: [props.bankAddress as Address]
-})
-
-const USD_TO_LOCAL_RATE = 1.28 // Example conversion rate to local currency
 
 // Functions
 const depositToBank = async (data: { amount: string; token: string }) => {
@@ -253,51 +222,37 @@ const handleUsdcDeposit = async (amount: string) => {
   })
 }
 
-const transferFromBank = async (to: string, amount: string, description: string, token: string) => {
+const handleTransfer = async (data: {
+  address: { address: string }
+  token: { symbol: string }
+  amount: string
+}) => {
   if (!props.bankAddress) return
 
   try {
-    if (token === NETWORK.currencySymbol) {
+    if (data.token.symbol === NETWORK.currencySymbol) {
       transfer({
         address: props.bankAddress,
         abi: BankABI,
         functionName: 'transfer',
-        args: [to, parseEther(amount)]
+        args: [data.address.address, parseEther(data.amount)]
       })
-    } else if (token === 'USDC') {
-      const tokenAmount = BigInt(Number(amount) * 1e6)
+    } else if (data.token.symbol === 'USDC') {
+      const tokenAmount = BigInt(Number(data.amount) * 1e6)
       transfer({
         address: props.bankAddress,
         abi: BankABI,
         functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, to, tokenAmount]
+        args: [USDC_ADDRESS as Address, data.address.address, tokenAmount]
       })
     }
   } catch (error) {
     console.error(error)
-    addErrorToast(`Failed to transfer ${token}`)
-  }
-}
-
-const searchUsers = async (input: { name: string; address: string }) => {
-  try {
-    if (input.address) {
-      const { data } = await useCustomFetch(`user/search?address=${input.address}`)
-        .get()
-        .json<{ users: User[] }>()
-      foundUsers.value = data.value?.users || []
-    }
-  } catch (error) {
-    console.error(error)
-    addErrorToast('Failed to search users')
+    addErrorToast(`Failed to transfer ${data.token.symbol}`)
   }
 }
 
 // Computed properties
-const formattedUsdcBalance = computed(() =>
-  usdcBalance.value ? (Number(usdcBalance.value) / 1e6).toString() : '0'
-)
-
 const loadingText = computed(() => {
   if (isPendingApprove.value) return 'Approving USDC...'
   if (isConfirmingApprove.value) return 'Confirming USDC approval...'
@@ -308,45 +263,21 @@ const loadingText = computed(() => {
   return 'Processing...'
 })
 
-const totalValueUSD = computed(() => {
-  const ethValue = teamBalance.value
-    ? Number(teamBalance.value.formatted) * props.priceData.networkCurrencyPrice
-    : 0
-  const usdcValue = Number(formattedUsdcBalance.value) * props.priceData.usdcPrice
-  return (ethValue + usdcValue).toFixed(2)
-})
-
 const totalValueLocal = computed(() => {
-  return (Number(totalValueUSD.value) * USD_TO_LOCAL_RATE).toFixed(2)
+  const usdValue = Number(balances.totalValueUSD)
+  return (usdValue * (usdcPrice.value || 0)).toFixed(2)
 })
 
 // Watch handlers
-watch(balanceError, () => {
-  if (balanceError.value) {
-    addErrorToast('Failed to fetch team balance')
-    log.error('Failed to fetch team balance:', parseError(balanceError.value))
-    emit('error')
-  }
-})
-
-watch([teamBalance, usdcBalance], () => {
+watch([() => balances.nativeToken.formatted, () => balances.usdc.formatted], () => {
   emit('balance-updated')
 })
-
-watch(
-  () => props.bankAddress,
-  async (newAddress) => {
-    if (newAddress) {
-      await Promise.all([fetchBalance(), fetchUsdcBalance()])
-    }
-  }
-)
 
 watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('ETH deposited successfully')
     depositModal.value = false
-    fetchBalance()
+    refetch()
   }
 })
 
@@ -354,7 +285,7 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
     transferModal.value = false
-    Promise.all([fetchBalance(), fetchUsdcBalance()])
+    refetch()
   }
 })
 
@@ -362,7 +293,7 @@ watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('USDC deposited successfully')
     depositModal.value = false
-    fetchUsdcBalance()
+    refetch()
     depositAmount.value = '' // Clear stored amount
   }
 })
@@ -378,11 +309,8 @@ watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
 
 // Expose methods and data for parent component
 defineExpose({
-  teamBalance,
-  formattedUsdcBalance,
-  balanceError,
-  usdcBalanceError,
-  fetchBalance,
-  fetchUsdcBalance
+  balances,
+  error,
+  refetch
 })
 </script>

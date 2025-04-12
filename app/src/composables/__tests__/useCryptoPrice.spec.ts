@@ -1,28 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useCryptoPrice } from '../useCryptoPrice'
+import { setActivePinia, createPinia } from 'pinia'
+import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { flushPromises } from '@vue/test-utils'
-import { defineComponent } from 'vue'
+import { defineComponent, nextTick, ref } from 'vue'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+
+const mockPriceData = ref<unknown>(null)
+
+vi.mock('@/composables/useCustomFetch', () => ({
+  useCustomFetch: vi.fn(() => ({
+    get: () => ({
+      json: () => ({
+        data: mockPriceData,
+        execute: vi.fn(),
+        isFetching: { value: false },
+        error: { value: null }
+      })
+    })
+  }))
+}))
 
 describe('useCryptoPrice', () => {
-  const mockPriceData = {
-    bitcoin: {
-      usd: 50000,
-      usd_24h_change: 2.5
-    },
-    ethereum: {
-      usd: 3000,
-      usd_24h_change: 1.8
-    }
-  }
-
   beforeEach(() => {
-    // Reset all mocks before each test
+    setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.clearAllTimers()
-    // Mock the global fetch
-    global.fetch = vi.fn()
   })
 
   afterEach(() => {
@@ -30,57 +32,42 @@ describe('useCryptoPrice', () => {
   })
 
   it('should fetch prices successfully', async () => {
-    // Mock successful API response
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockPriceData)
-    })
+    mockPriceData.value = {
+      market_data: {
+        current_price: {
+          usd: 50000,
+          eur: 45000,
+          idr: 700000000
+        }
+      }
+    }
 
     const TestComponent = defineComponent({
       setup() {
-        const crypto = useCryptoPrice(['bitcoin', 'ethereum'])
+        const crypto = useCryptoPrice('bitcoin')
         return { crypto }
       }
     })
 
     const wrapper = mount(TestComponent)
     await nextTick()
-
-    const { crypto } = wrapper.vm
-    expect(crypto.loading.value).toBe(true)
-
     await flushPromises()
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true'
-    )
-    expect(crypto.prices.value).toEqual(mockPriceData)
-    expect(crypto.loading.value).toBe(false)
+    const { crypto } = wrapper.vm
+    expect(crypto.price.value).toBe(50000)
+    expect(crypto.priceInUSD.value).toBe(50000)
+    expect(crypto.isLoading.value).toBe(false)
     expect(crypto.error.value).toBeNull()
 
     wrapper.unmount()
   })
 
-  it('should update prices periodically', async () => {
-    vi.useFakeTimers()
-
-    const firstResponse = { bitcoin: { usd: 50000, usd_24h_change: 2.5 } }
-    const secondResponse = { bitcoin: { usd: 51000, usd_24h_change: 3.0 } }
-
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(firstResponse)
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(secondResponse)
-      })
+  it('should handle missing price data gracefully', async () => {
+    mockPriceData.value = null
 
     const TestComponent = defineComponent({
       setup() {
-        const crypto = useCryptoPrice(['bitcoin'])
+        const crypto = useCryptoPrice('bitcoin')
         return { crypto }
       }
     })
@@ -90,56 +77,22 @@ describe('useCryptoPrice', () => {
     await flushPromises()
 
     const { crypto } = wrapper.vm
-    expect(crypto.prices.value).toEqual(firstResponse)
+    expect(crypto.price.value).toBeNull()
+    expect(crypto.priceInUSD.value).toBeNull()
 
-    // Fast forward 1 minute
-    vi.advanceTimersByTime(60000)
-    await flushPromises()
-
-    expect(crypto.prices.value).toEqual(secondResponse)
-    expect(global.fetch).toHaveBeenCalledTimes(2)
-
-    vi.useRealTimers()
     wrapper.unmount()
   })
 
-  it('should cleanup interval on unmount', async () => {
-    vi.useFakeTimers()
-    const clearIntervalSpy = vi.spyOn(global, 'clearInterval')
-
-    const TestComponent = defineComponent({
-      setup() {
-        useCryptoPrice(['bitcoin'])
-        return {}
+  it('should expose fetchPrice method for manual updates', async () => {
+    mockPriceData.value = {
+      market_data: {
+        current_price: { usd: 50000 }
       }
-    })
-
-    const wrapper = mount(TestComponent)
-    await nextTick()
-    wrapper.unmount()
-
-    expect(clearIntervalSpy).toHaveBeenCalled()
-    vi.useRealTimers()
-  })
-
-  it('should expose fetchPrices method for manual updates', async () => {
-    const firstResponse = { bitcoin: { usd: 50000 } }
-    const secondResponse = { bitcoin: { usd: 51000 } }
-
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(firstResponse)
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(secondResponse)
-      })
+    }
 
     const TestComponent = defineComponent({
       setup() {
-        const crypto = useCryptoPrice(['bitcoin'])
+        const crypto = useCryptoPrice('bitcoin')
         return { crypto }
       }
     })
@@ -149,11 +102,15 @@ describe('useCryptoPrice', () => {
     await flushPromises()
 
     const { crypto } = wrapper.vm
-    expect(crypto.prices.value).toEqual(firstResponse)
+    expect(crypto.price.value).toBe(50000)
 
-    // Manually fetch prices
-    await crypto.fetchPrices()
-    expect(crypto.prices.value).toEqual(secondResponse)
+    mockPriceData.value = {
+      market_data: {
+        current_price: { usd: 51000 }
+      }
+    }
+    await crypto.fetchPrice()
+    expect(crypto.price.value).toBe(51000)
 
     wrapper.unmount()
   })

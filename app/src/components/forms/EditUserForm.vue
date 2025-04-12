@@ -35,14 +35,37 @@
         data-test="copy-address-tooltip"
         :content="copied ? 'Copied!' : 'Click to copy address'"
       >
-        <ClipboardDocumentListIcon
+        <IconifyIcon
           v-if="isSupported && !copied"
           data-test="copy-address-icon"
-          class="size-5 cursor-pointer"
+          class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
           @click="copy(user.address)"
+          icon="heroicons:clipboard-document"
         />
-        <ClipboardDocumentCheckIcon class="size-5" v-if="copied" />
+        <IconifyIcon
+          v-if="copied"
+          data-test="copied-icon"
+          class="w-5 h-5 text-emerald-500"
+          icon="heroicons:check"
+        />
       </ToolTip>
+    </label>
+    <label class="input input-bordered flex items-center gap-2 input-md">
+      <span class="w-40" data-test="currency-label">Default Currency</span>
+      <select
+        v-model="selectedCurrency"
+        data-test="currency-select"
+        class="select select-sm w-full focus:border-none focus:outline-none"
+      >
+        <option
+          :key="currency.code"
+          v-for="currency in LIST_CURRENCIES"
+          :selected="currencyStore.currency.code == currency.code"
+          :value="currency.code"
+        >
+          {{ currency.code }}
+        </option>
+      </select>
     </label>
   </div>
   <div class="modal-action justify-center">
@@ -61,11 +84,16 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
 import ToolTip from '@/components/ToolTip.vue'
-import { ClipboardDocumentListIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { Icon as IconifyIcon } from '@iconify/vue'
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { useClipboard } from '@vueuse/core'
 import ButtonUI from '../ButtonUI.vue'
+import { ref } from 'vue'
+import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
+
+const currencyStore = useCurrencyStore()
+const selectedCurrency = ref<string>(currencyStore.currency.code)
 
 // Define the user model and validation rules
 const user = defineModel({
@@ -103,6 +131,7 @@ const submitForm = () => {
   if ($v.value.$invalid) {
     return
   }
+  currencyStore.setCurrency(selectedCurrency.value)
   emits('submitEditUser')
 }
 </script>
