@@ -4,9 +4,9 @@ import { useWaitForTransactionReceipt } from '@wagmi/vue'
 import { getWalletClient, readContract } from '@wagmi/core'
 import { parseUnits, formatUnits } from 'viem/utils'
 
-import type { Abi } from 'viem'
+import type { Abi, Hex, Address } from 'viem'
 
-export function useDeployContract(contractAbi: Abi, contractByteCode: `0x${string}`) {
+export function useDeployContract(contractAbi: Abi, contractByteCode: Hex) {
   const hash = ref<`0x${string}` | undefined>()
   const contractAddress = ref<string | null>(null)
   const error = ref<Error | null>(null)
@@ -61,7 +61,7 @@ export function useDeployContract(contractAbi: Abi, contractByteCode: `0x${strin
 }
 
 export async function getContractData(
-  address: string,
+  address: Address,
   contractAbi: Abi
 ): Promise<{ key: string; value: string }[]> {
   const result: { key: string; value: string }[] = []
@@ -75,7 +75,7 @@ export async function getContractData(
     ) {
       try {
         const rawValue = (await readContract(config, {
-          address: address as `0x${string}`,
+          address: address,
           abi: contractAbi,
           functionName: fn.name
         })) as bigint | string

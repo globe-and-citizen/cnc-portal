@@ -69,14 +69,14 @@ import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
-import type { Abi } from 'viem'
+import type { Abi, Hex } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   bankAddress: string
 }>()
 import { useCustomFetch } from '@/composables/useCustomFetch'
 const campaignAbi = AdCampaignArtifact.abi as Abi
-const campaignBytecode = AdCampaignArtifact.bytecode as `0x${string}`
+const campaignBytecode = AdCampaignArtifact.bytecode as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const user = computed(() => userDataStore)
