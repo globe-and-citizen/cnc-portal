@@ -1,20 +1,6 @@
 <template>
   <div class="flex gap-6">
-    <OverviewCard
-      data-test="expense-account-balance"
-      :title="`${formattedNetworkCurrencyBalance} ${NETWORK.currencySymbol}`"
-      subtitle="Total Balance"
-      variant="success"
-      :card-icon="bagIcon"
-    >
-      <div class="flex flex-row gap-1 text-black">
-        <img :src="uptrendIcon" alt="status-icon" />
-        <div>
-          <span class="font-semibold text-sm" data-test="percentage-increase">+ 41.3% </span>
-          <span class="font-medium text-[#637381] text-xs">than last week</span>
-        </div>
-      </div>
-    </OverviewCard>
+    <ExpenseAccountBalance />
     <OverviewCard title="10.2K" subtitle="Month Spent" variant="warning" :card-icon="cartIcon">
       <div class="flex flex-row gap-1 text-black">
         <img :src="uptrendIcon" alt="status-icon" />
@@ -44,53 +30,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { NETWORK } from '@/constant'
 import { useTeamStore } from '@/stores'
-import { useBalance, useChainId } from '@wagmi/vue'
-import { formatEther, type Address } from 'viem'
-import { log, parseError } from '@/utils'
+import { type Address } from 'viem'
 import OverviewCard from '@/components/OverviewCard.vue'
-import bagIcon from '@/assets/bag.svg'
 import cartIcon from '@/assets/cart.svg'
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
+import ExpenseAccountBalance from '@/components/sections/ExpenseAccountView/ExpenseAccountBalance.vue'
 
 //#region  Composables
 const teamStore = useTeamStore()
-const chainId = useChainId()
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
 )
-const {
-  data: networkCurrencyBalance,
-  // isLoading: isLoadingNetworkCurrencyBalance,
-  error: networkCurrencyBalanceError,
-  refetch: refetchNetworkCurrencyBalance
-} = useBalance({
-  address: expenseAccountEip712Address.value,
-  chainId
-})
-//#endregion
-
-//Computed Values
-const formattedNetworkCurrencyBalance = computed(() =>
-  networkCurrencyBalance.value ? formatEther(networkCurrencyBalance.value.value) : '0'
-)
-
-//#region Watch
-watch(networkCurrencyBalanceError, (newError) => {
-  if (newError) {
-    log.error('networkCurrencyBalanceError.value: ', parseError(newError))
-  }
-})
-//#endregion
-
-onMounted(async () => {
-  await refetchNetworkCurrencyBalance()
-})
 </script>
