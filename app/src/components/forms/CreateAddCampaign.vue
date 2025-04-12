@@ -69,10 +69,10 @@ import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
-import type { Abi, Hex } from 'viem'
+import type { Abi, Hex, Address } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
-  bankAddress: string
+  bankAddress: Address
 }>()
 import { useCustomFetch } from '@/composables/useCustomFetch'
 const campaignAbi = AdCampaignArtifact.abi as Abi
@@ -83,7 +83,7 @@ const user = computed(() => userDataStore)
 const team = computed(() => teamStore.currentTeam)
 const costPerClick = ref()
 const costPerImpression = ref()
-const _bankAddress = ref('')
+const _bankAddress = ref<Address | null>(null)
 
 watch(
   () => props.bankAddress, // Watching the prop
@@ -131,6 +131,10 @@ const addContractToTeam = async (teamId: string, address: string, deployer: stri
 const deployAdCampaign = async () => {
   if (!costPerClick.value || !costPerImpression.value) {
     addErrorToast('Please enter valid numeric values for both rates.')
+    return
+  }
+  if (!_bankAddress.value) {
+    addErrorToast('Bank address is missing.')
     return
   }
   await deploy(_bankAddress.value, costPerClick.value, costPerImpression.value)

@@ -22,7 +22,7 @@ export function useDeployContract(contractAbi: Abi, contractByteCode: Hex) {
     }
   })
 
-  const deploy = async (bankAddress: string, costPerClick: string, costPerImpression: string) => {
+  const deploy = async (bankAddress: Address, costPerClick: string, costPerImpression: string) => {
     isDeploying.value = true
     error.value = null
     contractAddress.value = null

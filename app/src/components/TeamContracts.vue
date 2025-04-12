@@ -96,7 +96,7 @@ import type {
 } from '@/services/AddCampaignService'
 import { useToastStore } from '@/stores/useToastStore'
 const { addErrorToast } = useToastStore()
-import type { Abi } from 'viem'
+import type { Abi, Address } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from './AddressToolTip.vue'
@@ -160,7 +160,7 @@ const openAdminsModal = (contract: TeamContract, range: number) => {
 }
 
 // Open Events Modal
-const openEventsModal = async (contractAddress: string) => {
+const openEventsModal = async (contractAddress: Address) => {
   const result = (await addCamapaignService.getEventsGroupedByCampaignCode(
     contractAddress
   )) as GetEventsGroupedByCampaignCodeResult
@@ -174,7 +174,7 @@ const openEventsModal = async (contractAddress: string) => {
 }
 
 // Open Contract Data Modal
-const openContractDataModal = async (contractAddress: string) => {
+const openContractDataModal = async (contractAddress: Address) => {
   contractDataDialog.value.datas = await getContractData(contractAddress, campaignAbi)
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
