@@ -5,6 +5,7 @@
     subtitle="Total Balance"
     variant="success"
     :card-icon="bagIcon"
+    :loading="isLoading"
   >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
@@ -29,7 +30,7 @@ const teamStore = useTeamStore()
 const expenseAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'ExpenseAccountEIP712'
 )?.address
-const { balances } = useContractBalance(expenseAddress)
+const { balances, isLoading } = useContractBalance(expenseAddress)
 const currencyStore = useCurrencyStore()
 const { currency } = storeToRefs(currencyStore)
 const totalBalance = computed(() => {
