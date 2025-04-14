@@ -10,6 +10,44 @@ const contractRoutes = express.Router();
 
 /**
  * @openapi
+ * components:
+ *   schemas:
+ *     Contract:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The ID of the contract
+ *         address:
+ *           type: string
+ *           description: The address of the contract
+ *         type:
+ *           type: string
+ *           description: The type of the contract
+ *         deployer:
+ *           type: string
+ *           description: The address of the deployer
+ *         teamId:
+ *           type: integer
+ *           description: The ID of the associated team
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: The timestamp when the contract was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: The timestamp when the contract was last updated
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           description: Error message
+ */
+
+/**
+ * @openapi
  * /contract:
  *  post:
  *   summary: Add a new contract to a team
@@ -36,41 +74,25 @@ const contractRoutes = express.Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *                 description: The ID of the created contract
+ *             $ref: '#/components/schemas/Contract'
  *     400:
  *       description: Bad request
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     403:
  *       description: Forbidden
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
 contractRoutes.post("/contract", addContract);
 
@@ -95,47 +117,25 @@ contractRoutes.post("/contract", addContract);
  *           schema:
  *             type: array
  *             items:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   description: The ID of the contract
- *                 address:
- *                   type: string
- *                   description: The address of the contract
- *                 type:
- *                   type: string
- *                   description: The type of the contract
+ *               $ref: '#/components/schemas/Contract'
  *     400:
  *       description: Bad request
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     404:
  *       description: Not found
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
 contractRoutes.get("/contract", getContracts);
 
@@ -171,30 +171,18 @@ contractRoutes.get("/contract", getContracts);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     403:
  *       description: Forbidden
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
- *         application/json
+ *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
 contractRoutes.put("/contract/sync", syncContracts);
