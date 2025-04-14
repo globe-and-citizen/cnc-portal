@@ -3,10 +3,20 @@
     <!-- Input Name -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24" data-test="name-label">Name</span>
-      <input type="text" class="grow" data-test="name-input" placeholder="John Doe" v-model="user.name" />
+      <input
+        type="text"
+        class="grow"
+        data-test="name-input"
+        placeholder="John Doe"
+        v-model="user.name"
+      />
     </label>
-    <div class="pl-4 text-red-500 text-sm" v-for="error of $v.user.name.$errors" :key="error.$uid"
-      data-test="name-error">
+    <div
+      class="pl-4 text-red-500 text-sm"
+      v-for="error of $v.user.name.$errors"
+      :key="error.$uid"
+      data-test="name-error"
+    >
       {{ error.$message }}
     </div>
 
@@ -14,26 +24,50 @@
     <label class="input input-bordered flex items-center gap-2 input-md input-disabled">
       <span class="w-24 text-xs" data-test="address-label">Wallet Address</span>
       <ToolTip data-test="address-tooltip" content="Click to see address in block explorer">
-        <div type="text" class="w-full cursor-pointer" @click="openExplorer(user.address)" data-test="user-address"
-          readonly>
+        <div
+          type="text"
+          class="w-full cursor-pointer"
+          @click="openExplorer(user.address)"
+          data-test="user-address"
+          readonly
+        >
           {{ user.address }}
         </div>
       </ToolTip>
-      <ToolTip data-test="copy-address-tooltip" :content="copied ? 'Copied!' : 'Click to copy address'">
-        <IconifyIcon v-if="isSupported && !copied" data-test="copy-address-icon"
-          class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200" @click="copy(user.address)"
-          icon="heroicons:clipboard-document" />
-        <IconifyIcon v-if="copied" data-test="copied-icon" class="w-5 h-5 text-emerald-500" icon="heroicons:check" />
+      <ToolTip
+        data-test="copy-address-tooltip"
+        :content="copied ? 'Copied!' : 'Click to copy address'"
+      >
+        <IconifyIcon
+          v-if="isSupported && !copied"
+          data-test="copy-address-icon"
+          class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+          @click="copy(user.address)"
+          icon="heroicons:clipboard-document"
+        />
+        <IconifyIcon
+          v-if="copied"
+          data-test="copied-icon"
+          class="w-5 h-5 text-emerald-500"
+          icon="heroicons:check"
+        />
       </ToolTip>
     </label>
 
     <!-- Currency -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-40" data-test="currency-label">Default Currency</span>
-      <select v-model="selectedCurrency" data-test="currency-select"
-        class="select select-sm w-full focus:border-none focus:outline-none">
-        <option :key="currency.code" v-for="currency in LIST_CURRENCIES"
-          :selected="currencyStore.currency.code == currency.code" :value="currency.code">
+      <select
+        v-model="selectedCurrency"
+        data-test="currency-select"
+        class="select select-sm w-full focus:border-none focus:outline-none"
+      >
+        <option
+          :key="currency.code"
+          v-for="currency in LIST_CURRENCIES"
+          :selected="currencyStore.currency.code == currency.code"
+          :value="currency.code"
+        >
           {{ currency.code }}
         </option>
       </select>
@@ -41,24 +75,42 @@
 
     <!-- Upload -->
     <div class="flex items-center gap-4">
-      <div ref="uploadBox"
-        class="w-40 h-40 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center relative overflow-hidden bg-white transition-colors duration-300">
-        <input ref="fileInput" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10"
-          @change="onFileChange" />
-        <div ref="uploadLabel" class="absolute text-sm font-medium text-white bg-emerald-700 px-3 py-2 rounded z-0">
+      <div
+        ref="uploadBox"
+        class="w-40 h-40 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center relative overflow-hidden bg-white transition-colors duration-300"
+      >
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          class="absolute inset-0 opacity-0 cursor-pointer z-10"
+          @change="onFileChange"
+        />
+        <div
+          ref="uploadLabel"
+          class="absolute text-sm font-medium text-white bg-emerald-700 px-3 py-2 rounded z-0"
+        >
           Choisir l'image
         </div>
       </div>
 
-      <button @click="uploadImage" class="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600">
+      <button
+        @click="uploadImage"
+        class="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600"
+      >
         Uploader
       </button>
     </div>
   </div>
 
   <div class="modal-action justify-center">
-    <ButtonUI variant="primary" :loading="isLoading" :disabled="isLoading" data-test="submit-edit-user"
-      @click="submitForm">
+    <ButtonUI
+      variant="primary"
+      :loading="isLoading"
+      :disabled="isLoading"
+      data-test="submit-edit-user"
+      @click="submitForm"
+    >
       Save
     </ButtonUI>
   </div>
@@ -167,8 +219,8 @@ const uploadImage = async () => {
     console.log('Image URL:', data.imageUrl)
     alert('Image uploadée avec succès : ' + data.imageUrl)
   } catch (err) {
-    console.error('Erreur lors de l\'upload :', err)
-    alert('Erreur lors de l\'upload.')
+    console.error("Erreur lors de l'upload :", err)
+    alert("Erreur lors de l'upload.")
   }
 }
 </script>
