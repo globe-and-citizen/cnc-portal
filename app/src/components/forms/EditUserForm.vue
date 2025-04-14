@@ -101,6 +101,9 @@
         Uploader
       </button>
     </div>
+    Data: {{ uploadImageData }}
+    <br>
+    Loading: {{  uploadingImage}}
   </div>
 
   <div class="modal-action justify-center">
@@ -117,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { required, minLength } from '@vuelidate/validators'
 import ToolTip from '@/components/ToolTip.vue'
@@ -126,6 +129,7 @@ import ButtonUI from '../ButtonUI.vue'
 import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
+import { useCustomFetch } from '@/composables'
 
 // Props & emits
 defineProps<{ isLoading: boolean }>()
@@ -200,27 +204,28 @@ const onFileChange = (event: Event) => {
   reader.readAsDataURL(file)
 }
 
-const uploadImage = async () => {
+const getFormData = computed(() => {
   if (!selectedFile.value) {
-    alert("Veuillez sélectionner une image d'abord.")
     return
   }
-
   const formData = new FormData()
   formData.append('image', selectedFile.value)
+  console.log(formData)
+  return formData
+})
 
-  try {
-    const res = await fetch('http://localhost:3000/api/upload/upload', {
-      method: 'POST',
-      body: formData
-    })
+const {
+  isFetching: uploadingImage,
+  error: uploadImageError,
+  execute: executeUploadImage,
+  data: uploadImageData
+} = useCustomFetch('upload/upload', {
+  immediate: false
+})
+  .post(getFormData)
+  .json<{ imageUrl: string }>()
 
-    const data = await res.json()
-    console.log('Image URL:', data.imageUrl)
-    alert('Image uploadée avec succès : ' + data.imageUrl)
-  } catch (err) {
-    console.error("Erreur lors de l'upload :", err)
-    alert("Erreur lors de l'upload.")
-  }
+const uploadImage = async () => {
+  await executeUploadImage()
 }
 </script>
