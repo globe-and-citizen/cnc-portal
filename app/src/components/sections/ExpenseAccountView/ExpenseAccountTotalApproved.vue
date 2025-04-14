@@ -35,19 +35,7 @@ const {
   nativeTokenPrice
 } = storeToRefs(currencyStore)
 const totalApproved = computed(() => {
-  let usdcAmount = 0
-  let usdtAmount = 0
-  let nativeTokenAmount = 0
-  expenseDataStore.allExpenseDataParsed.forEach((limit: BudgetLimit) => {
-    if (limit.tokenAddress === USDC_ADDRESS) {
-      usdcAmount += minTotalApproved(limit.budgetData)
-    } else if (limit.tokenAddress === USDT_ADDRESS) {
-      usdtAmount += minTotalApproved(limit.budgetData)
-    } else {
-      nativeTokenAmount += minTotalApproved(limit.budgetData)
-    }
-  })
-
+  const { usdcAmount, usdtAmount, nativeTokenAmount } = calculateTokenAmounts()
   const total =
     (usdcAmount + usdtAmount) * (usdcPrice.value ?? 0) +
     nativeTokenAmount * (nativeTokenPrice.value ?? 0)
@@ -55,20 +43,34 @@ const totalApproved = computed(() => {
   return formatCurrencyShort(parseFloat(total.toString()), currency.value.code)
 })
 
-function minTotalApproved(budgets: BudgetData[]): number {
+function calculateTokenAmounts() {
+  return expenseDataStore.allExpenseDataParsed.reduce(
+    (acc, limit: BudgetLimit) => {
+      const approvedAmount = calculateMinApprovedAmount(limit.budgetData)
+      if (limit.tokenAddress === USDC_ADDRESS) {
+        acc.usdcAmount += approvedAmount
+      } else if (limit.tokenAddress === USDT_ADDRESS) {
+        acc.usdtAmount += approvedAmount
+      } else {
+        acc.nativeTokenAmount += approvedAmount
+      }
+      return acc
+    },
+    { usdcAmount: 0, usdtAmount: 0, nativeTokenAmount: 0 }
+  )
+}
+
+function calculateMinApprovedAmount(budgets: BudgetData[]): number {
   const transactionPerPeriod = budgets.find((budget) => budget.budgetType === 0)?.value
   const amountPerPeriod = budgets.find((budget) => budget.budgetType === 1)?.value
   const amountPerTransaction = budgets.find((budget) => budget.budgetType === 2)?.value
 
   if (transactionPerPeriod && amountPerPeriod && amountPerTransaction) {
-    return Math.min(
-      amountPerPeriod,
-      (transactionPerPeriod as number) * (amountPerTransaction as number)
-    )
+    return Math.min(amountPerPeriod, transactionPerPeriod * amountPerTransaction)
   }
 
   if (transactionPerPeriod && amountPerTransaction) {
-    return (transactionPerPeriod as number) * (amountPerTransaction as number)
+    return transactionPerPeriod * amountPerTransaction
   }
 
   if (amountPerPeriod && amountPerTransaction) {
