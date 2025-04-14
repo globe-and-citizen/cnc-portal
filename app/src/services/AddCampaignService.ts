@@ -93,7 +93,7 @@ export class AddCampaignService {
   ): Promise<string> {
     const address = await this.deployAdCampaignManager(bankAddress, costPerClick, costPerImpression)
 
-    await useCustomFetch(`teams/contract`)
+    await useCustomFetch(`contract`)
       .post({
         teamId: teamId,
         contractAddress: address,

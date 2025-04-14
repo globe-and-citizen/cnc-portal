@@ -94,7 +94,7 @@ const contractRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.post("/contract", addContract);
+contractRoutes.post("/", addContract);
 
 /**
  * @openapi
@@ -137,7 +137,7 @@ contractRoutes.post("/contract", addContract);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.get("/contract", getContracts);
+contractRoutes.get("/", getContracts);
 
 /**
  * @openapi
@@ -185,4 +185,6 @@ contractRoutes.get("/contract", getContracts);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.put("/contract/sync", syncContracts);
+contractRoutes.put("/sync", syncContracts);
+
+export default contractRoutes;
