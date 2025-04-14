@@ -113,7 +113,7 @@ watch(contractAddress, async (newAddress) => {
 
 const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
   try {
-    await useCustomFetch(`teams/contract/add`)
+    await useCustomFetch(`teams/contract`)
       .post({
         teamId,
         contractAddress: address,
