@@ -64,23 +64,26 @@
 import { ref, watch, computed } from 'vue'
 import ButtonUI from '../ButtonUI.vue'
 const emit = defineEmits(['closeAddCampaignModal'])
-import { useDeployAdCampaignManager } from '@/composables/addCampaignWagmi'
+import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
+import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+import type { Abi, Hex, Address } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
-  bankAddress: string
+  bankAddress: Address
 }>()
 import { useCustomFetch } from '@/composables/useCustomFetch'
-
+const campaignAbi = AdCampaignArtifact.abi as Abi
+const campaignBytecode = AdCampaignArtifact.bytecode as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const user = computed(() => userDataStore)
 const team = computed(() => teamStore.currentTeam)
 const costPerClick = ref()
 const costPerImpression = ref()
-const _bankAddress = ref('')
+const _bankAddress = ref<Address | null>(null)
 
 watch(
   () => props.bankAddress, // Watching the prop
@@ -92,7 +95,12 @@ watch(
 
 //import composable..
 // Import composable
-const { deploy, isDeploying: loading, contractAddress, error } = useDeployAdCampaignManager()
+const {
+  deploy,
+  isDeploying: loading,
+  contractAddress,
+  error
+} = useDeployContract(campaignAbi, campaignBytecode)
 
 watch(contractAddress, async (newAddress) => {
   if (newAddress && team.value) {
@@ -105,7 +113,7 @@ watch(contractAddress, async (newAddress) => {
 
 const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
   try {
-    await useCustomFetch(`teams/contract/add`)
+    await useCustomFetch(`contract`)
       .post({
         teamId,
         contractAddress: address,
@@ -123,6 +131,10 @@ const addContractToTeam = async (teamId: string, address: string, deployer: stri
 const deployAdCampaign = async () => {
   if (!costPerClick.value || !costPerImpression.value) {
     addErrorToast('Please enter valid numeric values for both rates.')
+    return
+  }
+  if (!_bankAddress.value) {
+    addErrorToast('Bank address is missing.')
     return
   }
   await deploy(_bankAddress.value, costPerClick.value, costPerImpression.value)
