@@ -291,6 +291,8 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
 })
 watch(errorTransfer, (newVal) => {
   if (newVal) {
+    transferERC20loading.value = false
+    isLoadingTransfer.value = false
     log.error(parseError(newVal))
     addErrorToast('Failed to transfer')
   }
