@@ -9,7 +9,7 @@ interface MulterRequest extends Request {
   file: Express.Multer.File;
 }
 
-uploadRouter.post('/upload', upload.single('image'), async (req: Request, res: Response) => {
+uploadRouter.post('/', upload.single('image'), async (req: Request, res: Response) => {
   try {
     const multerReq = req as MulterRequest;
 
