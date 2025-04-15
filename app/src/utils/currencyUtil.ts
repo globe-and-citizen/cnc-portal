@@ -18,7 +18,7 @@ export function formatCurrencyShort(number: number, currency = 'USD') {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 1
+    maximumFractionDigits: 2
   }).format(number / divisor)
 
   return short ? formatted.replace(/[\d,.]+/, (match) => match + short) : formatted
