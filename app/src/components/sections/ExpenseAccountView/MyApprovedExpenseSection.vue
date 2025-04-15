@@ -78,8 +78,9 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { parseError, log, tokenSymbol } from '@/utils'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { writeContract, estimateGas } from '@wagmi/core'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, parseEther, zeroAddress } from 'viem'
+import { type Address, parseEther, zeroAddress, encodeFunctionData, decodeErrorResult, type EstimateGasErrorType } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
@@ -193,15 +194,14 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   )
 
   if (expenseAccountEip712Address.value && expenseDataStore.myApprovedExpenses) {
-    if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
+    if (budgetLimit.tokenAddress === zeroAddress) await transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
   }
 }
 
-const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimit) => {
-  executeExpenseAccountTransfer({
-    address: expenseAccountEip712Address.value,
-    args: [
+const transferNativeToken = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
+  try {
+    const args = [
       to,
       parseEther(amount),
       {
@@ -217,10 +217,59 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
         }))
       },
       signatureToTransfer.value
-    ],
-    abi: expenseAccountABI,
-    functionName: 'transfer'
-  })
+    ]
+    const data = encodeFunctionData({
+      abi: expenseAccountABI,
+      functionName: 'transfer',
+      args
+    })
+    await estimateGas(config, {
+      to: expenseAccountEip712Address.value,
+      data
+    })
+    await writeContract(config, {
+      address: expenseAccountEip712Address.value,
+      abi: expenseAccountABI,
+      functionName: 'transfer',
+      args
+    })
+  } catch (error) {
+    // log.error('Error in transferNativeToken:', error)
+    // addErrorToast('Failed to transfer native token')
+    console.log('cause:', (error as EstimateGasErrorType).cause)
+    console.log('shortMessage:', (error as EstimateGasErrorType).shortMessage)
+    console.log('details:', (error as EstimateGasErrorType).metaMessages)
+    // if ("data" in (error as object)) {
+      const parsedError = decodeErrorResult({
+        abi: expenseAccountABI,
+        data: '0xcd786059000000000000000000000000552a6b9d3c6ef286fb40eeae9e8cfecdab468c0a'
+      })
+      log.info('Parsed Error:', parsedError)
+      // addErrorToast(parsedError)
+    // }
+  }
+  // executeExpenseAccountTransfer({
+  //   address: expenseAccountEip712Address.value,
+  //   args: [
+  //     to,
+  //     parseEther(amount),
+  //     {
+  //       ...budgetLimit,
+  //       budgetData: budgetLimit.budgetData.map((item) => ({
+  //         ...item,
+  //         value:
+  //           item.budgetType === 0
+  //             ? item.value
+  //             : budgetLimit.tokenAddress === zeroAddress
+  //               ? parseEther(`${item.value}`)
+  //               : BigInt(Number(item.value) * 1e6)
+  //       }))
+  //     },
+  //     signatureToTransfer.value
+  //   ],
+  //   abi: expenseAccountABI,
+  //   functionName: 'transfer'
+  // })
 }
 const transferERC20loading = ref(false)
 // Token transfer function
@@ -290,7 +339,7 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   }
 })
 watch(errorTransfer, (newVal) => {
-  if (newVal) {
+  if (errorTransfer.value) {
     transferERC20loading.value = false
     isLoadingTransfer.value = false
     log.error(parseError(newVal))
