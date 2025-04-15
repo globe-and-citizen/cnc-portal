@@ -13,6 +13,7 @@ import actionRoutes from "../routes/actionsRoute";
 import wageRoutes from "../routes/wageRoute";
 import claimRoutes from "../routes/claimRoute";
 import expenseRoutes from "../routes/expenseRoute";
+import contractRoutes from "../routes/contractRoutes";
 //#endregion routing modules
 
 import { authorizeUser } from "../middleware/authMiddleware";
@@ -53,6 +54,7 @@ class Server {
       wage: "/api/wage/",
       expense: "/api/expense/",
       claim: "/api/claim/",
+      constract: "/api/contract/",
       apidocs: "/api-docs",
     };
     const limiter = rateLimit({
@@ -103,6 +105,7 @@ class Server {
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
+    this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.get(this.paths.apidocs, (req, res) => {
       res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
