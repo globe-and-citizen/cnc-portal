@@ -30,7 +30,11 @@ const contractAddress = teamStore.currentTeam?.teamContracts.find(
 const { result, error } = useQuery(
   gql`
     query GetCashRemunerationTransactions($contractAddress: Bytes!) {
-      transactions(where: { contractAddress: $contractAddress }) {
+      transactions(
+        where: { contractAddress: $contractAddress }
+        orderBy: blockTimestamp
+        orderDirection: desc
+      ) {
         id
         from
         to
@@ -45,7 +49,11 @@ const { result, error } = useQuery(
       }
     }
   `,
-  { contractAddress }
+  { contractAddress },
+  {
+    pollInterval: 10000, // Poll every 10 seconds
+    fetchPolicy: 'cache-and-network'
+  }
 )
 
 const transactionData = computed<CashRemunerationTransaction[]>(() => {
