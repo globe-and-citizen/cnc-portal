@@ -105,7 +105,7 @@ class Server {
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
-    this.app.use(this.paths.upload, uploadRoute);
+    this.app.use(this.paths.upload,authorizeUser, uploadRoute);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.get(this.paths.apidocs, (req, res) => {
       res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));

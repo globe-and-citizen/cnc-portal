@@ -1,22 +1,22 @@
 <template>
   <!-- Upload -->
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-4 justify-between">
     <div
       ref="uploadBox"
-      class="w-40 h-40 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center relative overflow-hidden bg-white transition-colors duration-300"
+      class="w-40 h-40 border-2 border-dashed border-gray-400 rounded-full flex items-center justify-center relative overflow-hidden bg-white transition-colors duration-300"
     >
       <input
         ref="fileInput"
         type="file"
         accept="image/*"
-        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+        class="absolute inset-0  opacity-0 cursor-pointer z-10 "
         @change="onFileChange"
       />
       <div
         ref="uploadLabel"
         class="absolute text-sm font-medium text-white bg-emerald-700 px-3 py-2 rounded z-0"
       >
-        Choisir l'image
+        Upload image
       </div>
     </div>
 
@@ -59,8 +59,8 @@ const onFileChange = (event: Event) => {
       uploadBox.value.style.backgroundPosition = 'center'
       uploadBox.value.classList.remove('border-gray-400')
       uploadBox.value.classList.add('border-green-500')
-      uploadLabel.value.classList.add('bg-opacity-70', 'text-xs', 'px-2', 'py-1')
-      uploadLabel.value.innerText = 'Image sélectionnée'
+      uploadLabel.value.classList.add('bg-opacity-70', 'text-xs','px-2', 'py-1')
+      uploadLabel.value.innerText = ''
       uploadLabel.value.style.top = '5px'
       uploadLabel.value.style.left = '5px'
     }
