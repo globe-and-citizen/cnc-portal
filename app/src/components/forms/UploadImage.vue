@@ -35,8 +35,9 @@
 </template>
 
 <script setup lang="ts">
-import { useCustomFetch } from '@/composables'
+import { useFetch, useStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
+import { BACKEND_URL } from '@/constant/index'
 
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -59,7 +60,7 @@ const onFileChange = (event: Event) => {
       uploadBox.value.style.backgroundPosition = 'center'
       uploadBox.value.classList.remove('border-gray-400')
       uploadBox.value.classList.add('border-green-500')
-      uploadLabel.value.classList.add('bg-opacity-70', 'text-xs','px-2', 'py-1')
+      uploadLabel.value.classList.add('bg-opacity-70', 'text-xs', 'px-2', 'py-1')
       uploadLabel.value.innerText = ''
       uploadLabel.value.style.top = '5px'
       uploadLabel.value.style.left = '5px'
@@ -84,11 +85,19 @@ const {
   error: uploadImageError,
   execute: executeUploadImage,
   data: uploadImageData
-} = useCustomFetch('upload/upload', {
-  immediate: false
+} = useFetch(`${BACKEND_URL}/api/upload` , {
+  immediate: false,
+  async beforeFetch({ options }) {
+    const token = useStorage('authToken', '')
+
+    options.headers = {
+      ...options.headers,
+      Authorization: `Bearer ${token.value}`
+    }
+  }
 })
   .post(getFormData)
-  .json<{ imageUrl: string }>()
+  .formData().json()
 
 const uploadImage = async () => {
   await executeUploadImage()
