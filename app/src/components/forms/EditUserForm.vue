@@ -74,8 +74,7 @@
     </label>
 
     <!-- Upload -->
-    <UploadImage/> 
-
+    <UploadImage />
   </div>
   <div class="modal-action justify-center">
     <ButtonUI
@@ -144,5 +143,4 @@ const submitForm = () => {
 }
 
 // Upload image logic
-
 </script>

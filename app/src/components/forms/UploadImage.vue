@@ -9,7 +9,7 @@
         ref="fileInput"
         type="file"
         accept="image/*"
-        class="absolute inset-0  opacity-0 cursor-pointer z-10 "
+        class="absolute inset-0 opacity-0 cursor-pointer z-10"
         @change="onFileChange"
       />
       <div
@@ -85,7 +85,7 @@ const {
   error: uploadImageError,
   execute: executeUploadImage,
   data: uploadImageData
-} = useFetch(`${BACKEND_URL}/api/upload` , {
+} = useFetch(`${BACKEND_URL}/api/upload`, {
   immediate: false,
   async beforeFetch({ options }) {
     const token = useStorage('authToken', '')
@@ -97,7 +97,8 @@ const {
   }
 })
   .post(getFormData)
-  .formData().json()
+  .formData()
+  .json()
 
 const uploadImage = async () => {
   await executeUploadImage()
