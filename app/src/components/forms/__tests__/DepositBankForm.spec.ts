@@ -3,6 +3,8 @@ import { describe, it, expect, vi } from 'vitest'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
+import { parseEther } from 'viem'
 
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -16,7 +18,32 @@ vi.mock('@/stores', async (importOriginal) => {
     }))
   }
 })
-
+const mockUseBalance = {
+  data: ref({
+    decimals: 18,
+    formatted: `100`,
+    symbol: `SepoliaETH`,
+    value: parseEther(`100`)
+  }),
+  refetch: vi.fn(),
+  error: ref<Error | null>(null),
+  isLoading: ref(false)
+}
+const mockUseReadContract = {
+  data: ref(BigInt(20000 * 1e6)),
+  refetch: vi.fn(),
+  error: ref<Error | null>(null),
+  isLoading: ref(false)
+}
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useBalance: vi.fn(() => ({ ...mockUseBalance })),
+    useReadContract: vi.fn(() => ({ ...mockUseReadContract })),
+    useChainId: vi.fn(() => ref(1))
+  }
+})
 describe('DepositBankModal.vue', () => {
   describe('render', () => {
     it('renders correctly', () => {
