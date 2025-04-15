@@ -26,7 +26,7 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
     if ('info' in error && isMetaMaskErrorInfo(error.info as MetaMaskErrorInfo)) {
       message = `Metamask Error: ${parseErrorInfo(error.info as MetaMaskErrorInfo)}`
     } else if (abi && 'shortMessage' in error) {
-      return safeParse(error.shortMessage as string, abi) //parseCustomError(getCustomErrorCallData(error.shortMessage as string), abi)
+      return safeParse(error.shortMessage as string, abi)
     } else {
       message = error.message
     }
@@ -51,49 +51,6 @@ const parseCustomError = (callData: `0x${string}` | null, abi: Abi | undefined) 
     log.error('decodeErrorResult error: ', e)
     return 'Contract reverted'
   }
-}
-
-/**
- * Parses a raw error string to extract custom error call data.
- *
- * This function checks if the raw error string contains "custom error",
- * and if so, it splits the string by spaces, cleans up the last two
- * elements, and concatenates them into a single string.
- *
- * @param rawError - The raw error string to be parsed.
- * @returns A string containing the custom error call data or null if not found.
- */
-function getCustomErrorCallData(rawError: string | null): `0x${string}` | null {
-  if (!rawError) {
-    return null
-  }
-  // 1. Check if string contains "custom error"
-  if (!rawError.includes('custom error')) {
-    return null
-  }
-
-  // 2. Split the string by space
-  const parts = rawError.split(' ')
-
-  // Ensure we have enough parts
-  if (parts.length < 2) {
-    return null
-  }
-
-  // Get last 2 elements
-  const lastTwo = parts.slice(-2)
-
-  // 3. Remove colon from first element and period from second
-  const cleaned = lastTwo.map((part, index) => {
-    if (index === 0) {
-      return part.replace(':', '') // Remove colon
-    } else {
-      return part.replace('.', '') // Remove period
-    }
-  })
-
-  // 4. Concatenate the last 2 cleaned elements
-  return cleaned.join('') as `0x${string}`
 }
 
 function parseRevertReason(errorString: string): `0x${string}` | string {
