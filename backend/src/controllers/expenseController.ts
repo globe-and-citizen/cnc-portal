@@ -4,19 +4,25 @@ import { errorResponse } from "../utils/utils";
 import { isUserMemberOfTeam, isOwnerOfTeam } from "./wageController";
 
 import { prisma } from "../utils";
+import { Address, formatEther, keccak256, zeroAddress } from "viem";
+import publicClient from "../utils/viem.config";
 
 import { Expense, Prisma } from "@prisma/client";
+import ABI from "../artifacts/expense-account-eip712.json";
+import { BudgetLimit } from '../types'
+import exp from "constants";
 
 // type expenseBodyRequest = Pick<Expens
 type expenseBodyRequest = Pick<Expense, "signature" | "data"> & {
   teamId: string;
 };
+
 export const addExpense = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const body = req.body as expenseBodyRequest;
   const teamId = Number(body.teamId);
   const signature = body.signature as string;
-  const data = body.data as string;
+  const data = body.data as BudgetLimit | string;
 
   // Validating the expense data
   let parametersError: string[] = [];
@@ -33,15 +39,37 @@ export const addExpense = async (req: Request, res: Response) => {
     if (!(await isOwnerOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
-
-    console.log("Creating expense for teamId:", teamId);
     // TODO: should be only one expense active for the user
+    const existingExpenses = await prisma.expense.findMany({
+      where: {
+        teamId,
+        userAddress: (typeof data === "string") 
+          ? JSON.parse(data).approvedAddress
+          : data.approvedAddress 
+      },
+    })
+
+    const syncedExpenses = await Promise.all(existingExpenses.map(async (expense) => 
+      await syncExpenseStatus(expense)
+    ))
+
+    const activeExpenses = syncedExpenses.filter((expense) => 
+      expense.status !== "expired" && expense.status !== "limit-reached"
+    )
+
+    // Check if the user already has an active expense
+    if (activeExpenses.length > 0) {
+      return errorResponse(400, "User already has an active expense", res);
+    }
+
     const expense = await prisma.expense.create({
       data: {
         teamId,
         signature,
-        data,
-        userAddress: callerAddress,
+        data: JSON.stringify(data),
+        userAddress: (typeof data === "string")
+         ? JSON.parse(data).approvedAddress
+         : data.approvedAddress, //I think this should be the user that is approved for the expense
         status: "signed",
       },
     });
@@ -70,27 +98,71 @@ export const getExpenses = async (req: Request, res: Response) => {
       where: { teamId },
     });
 
+    const _expenses = await Promise.all(
+      expenses
+        .filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
+        .map(async (expense) => await syncExpenseStatus(expense)
+    ))
     // TODO: for each expense, check the status and update it
-    // expenses.forEach(async (expense) => {
-    //   if (expense.status === "pending") {
-    //     await synExpenseStatus(expense.id);
-    //   }
-    // });
-    return res.status(200).json(expenses);
+    
+    return res.status(200).json(
+      _expenses.filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
+    );
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
   }
 };
 
-const synExpenseStatus = async (expenseId: number) => {
+const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
 
-  const expenseStatus = "pending"; // update the status based on the logic
-  await prisma.expense.update({
-    where: { id: expenseId },
-    data: { status: expenseStatus },
+  const expenseAccountEip712Address = await prisma.teamContract.findFirst({
+    where: {
+      teamId: expense.teamId,
+      type: "ExpenseAccountEIP712"
+    }
   });
-};
+
+  const data = JSON.parse(expense.data)
+  
+  const balances = await publicClient.readContract({
+    address: expenseAccountEip712Address?.address as Address,
+    abi: ABI,
+    functionName: "balances",
+    args: [keccak256(expense.signature as Address)]
+  }) as unknown as [bigint, bigint, 0 | 1 | 2];     
+  
+  const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
+  
+  const amountTransferred = data.tokenAddress === zeroAddress
+    ? `${formatEther(balances[1])}`
+    : `${Number(balances[1]) / 1e6}`
+
+  const isLimitReached = 
+    (data.budgetData[1].value <= amountTransferred) ||
+    (data.budgetData[0].value <= Number(balances[0]))
+
+  const formattedExpense = {
+    ...expense,
+    balances: {
+      0: `${balances[0]}`,
+      1: amountTransferred
+    },
+    status: isExpired 
+     ? "expired" 
+     : isLimitReached 
+      ? "limit-reached"
+      : balances[2] === 2 
+       ? "disabled" : "enabled"
+  }
+
+  await prisma.expense.update({
+    where: { id: expense.id },
+    data: { status: formattedExpense.status }
+  });
+  
+  return formattedExpense;
+}
 
 export const updateExpense = async (req: Request, res: Response) => {
   const expenseId = Number(req.params.id);

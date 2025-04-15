@@ -15,7 +15,7 @@
       </ButtonUI>
     </template>
 
-    <ExpenseAccountTable v-if="team" :team="team" v-model="reload" />
+    <ExpenseAccountTable />
 
     <ModalComponent v-model="approveUsersModal">
       <ApproveUsersForm
@@ -31,49 +31,43 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useToastStore } from '@/stores'
+import { useUserDataStore, useToastStore, useExpenseDataStore, useTeamStore } from '@/stores'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import type { Team, User, BudgetLimit } from '@/types'
+import type { User, BudgetLimit } from '@/types'
 import { log, parseError } from '@/utils'
 
 const approveUsersModal = ref(false)
-const reload = ref(false)
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
 
+const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
+const expenseDataStore = useExpenseDataStore()
 const { addErrorToast } = useToastStore()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
 
-//#region useCustomfetch
-const {
-  data: team,
-  // error: teamError,
-  execute: executeFetchTeam
-} = useCustomFetch(`teams/${String(route.params.id)}`)
-  .get()
-  .json<Team>()
-
 const expenseAccountEip712Address = computed(
   () =>
-    team.value?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
-      ?.address as Address
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address as Address
 )
-const { execute: executeAddExpenseData } = useCustomFetch(`teams/${route.params.id}/expense-data`, {
+
+const { execute: executeAddExpenseData, error: errorAddExpenseData } = useCustomFetch(`expense`, {
   immediate: false
 })
   .post(expenseAccountData)
@@ -91,11 +85,6 @@ const {
 })
 
 //#region Funtions
-const init = async () => {
-  await refetchExpenseAccountGetOwner()
-  await executeFetchTeam()
-}
-
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   expenseAccountData.value = data
@@ -141,15 +130,17 @@ const approveUser = async (data: BudgetLimit) => {
   })
 
   expenseAccountData.value = {
-    expenseAccountData: expenseAccountData.value,
-    signature: signature.value
+    data,
+    signature: signature.value,
+    teamId: route.params.id
   }
   await executeAddExpenseData()
-  reload.value = true
-  await init()
+  await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
   approveUsersModal.value = false
-  reload.value = false
+  await expenseDataStore.fetchAllExpenseData(
+    Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+  )
 }
 
 const errorMessage = (error: {}, message: string) =>
@@ -158,13 +149,14 @@ const errorMessage = (error: {}, message: string) =>
 const isBodAction = () => false
 //#region
 
-//#region Watch
-// watch(
-//   () => team.value?.expenseAccountAddress,
-//   async (newVal) => {
-//     if (newVal) await init()
-//   }
-// )
+//#region Watchers
+watch(errorAddExpenseData, (newVal) => {
+  if (newVal) {
+    addErrorToast(errorMessage(newVal, 'Error Adding Expense Data'))
+    log.error('errorAddExpenseData.value', parseError(newVal))
+    loadingApprove.value = false
+  }
+})
 watch(errorGetOwner, (newVal) => {
   if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
 })
@@ -176,8 +168,4 @@ watch(signTypedDataError, async (newVal) => {
   }
 })
 //#endregion
-
-onMounted(async () => {
-  await init()
-})
 </script>

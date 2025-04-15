@@ -1,0 +1,778 @@
+{
+  "exportToPdf": {
+    "landscapeData": [
+      ["Header1", "Header2"],
+      ["Value1", "100"]
+    ],
+    "portraitData": [["Header1", "Header2"]],
+    "expectedContent": {
+      "landscape": {
+        "pageSize": "A4",
+        "pageOrientation": "landscape",
+        "pageMargins": [5, 5, 5, 5],
+        "content": [
+          {
+            "table": {
+              "headerRows": 1,
+              "widths": ["auto", "auto"],
+              "body": [
+                [
+                  {
+                    "text": "Header1",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "Header2",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Value1",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "100",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "defaultStyle": {
+          "font": "Roboto"
+        }
+      },
+      "portrait": {
+        "pageSize": "A4",
+        "pageOrientation": "portrait",
+        "pageMargins": [5, 5, 5, 5],
+        "content": [
+          {
+            "table": {
+              "headerRows": 1,
+              "widths": ["auto", "auto"],
+              "body": [
+                [
+                  {
+                    "text": "Header1",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "Header2",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "defaultStyle": {
+          "font": "Roboto"
+        }
+      }
+    },
+    "expectedFilenames": {
+      "landscape": "test.pdf",
+      "portrait": "test.pdf"
+    }
+  },
+  "exportReceiptToPdf": {
+    "basicReceipt": {
+      "txHash": "0x123abc",
+      "date": "2024-03-20T10:00:00",
+      "type": "deposit",
+      "from": "0xabc123",
+      "to": "0xdef456",
+      "amount": "100",
+      "token": "USDC",
+      "amountUSD": 100,
+      "valueUSD": "$100.00",
+      "valueLocal": "$100.00"
+    },
+    "multiCurrencyReceipt": {
+      "txHash": "0x456def",
+      "date": "2024-03-20T11:00:00",
+      "type": "transfer",
+      "from": "0xghi789",
+      "to": "0xjkl012",
+      "amount": "0.5",
+      "token": "ETH",
+      "amountUSD": 1000,
+      "valueUSD": "$1,000.00",
+      "valueLocal": "€920.00",
+      "amountEUR": 920
+    },
+    "expectedContent": {
+      "basic": {
+        "pageSize": "A4",
+        "pageOrientation": "portrait",
+        "pageMargins": [5, 5, 5, 5],
+        "content": [
+          {
+            "table": {
+              "headerRows": 1,
+              "widths": ["auto", "auto"],
+              "body": [
+                [
+                  {
+                    "text": "Field",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "Value",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Transaction Hash",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "0x1234567890abcdef",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Date",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "2024-03-20",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Type",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "Transfer",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "From",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "0x123",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "To",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "0x456",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Amount",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "1.5",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Token",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "ETH",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Value (USD)",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "100.5",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "defaultStyle": {
+          "font": "Roboto"
+        }
+      },
+      "multiCurrency": {
+        "pageSize": "A4",
+        "pageOrientation": "portrait",
+        "pageMargins": [5, 5, 5, 5],
+        "content": [
+          {
+            "table": {
+              "headerRows": 1,
+              "widths": ["auto", "auto"],
+              "body": [
+                [
+                  {
+                    "text": "Field",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "Value",
+                    "fontSize": 6,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Transaction Hash",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "0x1234567890abcdef",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Date",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "2024-03-20",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Type",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "Transfer",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "From",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "0x123",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "To",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "0x456",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Amount",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "1.5",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Token",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "ETH",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Value (USD)",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "100.5",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Value (EUR)",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "95.2",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ],
+                [
+                  {
+                    "text": "Value (GBP)",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "left",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  },
+                  {
+                    "text": "80.3",
+                    "fontSize": 5,
+                    "margin": [2, 2],
+                    "alignment": "right",
+                    "noWrap": false,
+                    "wordBreak": "break-all"
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "defaultStyle": {
+          "font": "Roboto"
+        }
+      }
+    },
+    "expectedFilenames": {
+      "basic": "receipt-0x1234.pdf"
+    }
+  },
+  "exportTransactionsToPdf": {
+    "headers": ["Tx Hash", "Date", "Type", "From", "To", "Amount", "Value (USD)", "Receipt"],
+    "rows": [
+      [
+        "0x123abc",
+        "2024-03-20 10:00:00",
+        "deposit",
+        "0xabc123",
+        "0xdef456",
+        "100 USDC",
+        "$100.00",
+        "https://explorer.com/tx/0x123abc"
+      ],
+      [
+        "0x456def",
+        "2024-03-20 11:00:00",
+        "transfer",
+        "0xghi789",
+        "0xjkl012",
+        "0.5 ETH",
+        "$1,000.00",
+        "https://explorer.com/tx/0x456def"
+      ]
+    ],
+    "date": "2024-03-20",
+    "expectedContent": {
+      "pageSize": "A4",
+      "pageOrientation": "landscape",
+      "pageMargins": [5, 5, 5, 5],
+      "content": [
+        {
+          "table": {
+            "headerRows": 1,
+            "widths": ["auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+            "body": [
+              [
+                {
+                  "text": "Tx Hash",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "Date",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "Type",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "From",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "To",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "Amount",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "Value (USD)",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "Receipt",
+                  "fontSize": 6,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                }
+              ],
+              [
+                {
+                  "text": "0x123abc",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "2024-03-20 10:00:00",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "deposit",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xabc123",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xdef456",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "100 USDC",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "$100.00",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "https://explorer.com/tx/0x123abc",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                }
+              ],
+              [
+                {
+                  "text": "0x456def",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "2024-03-20 11:00:00",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "transfer",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xghi789",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0xjkl012",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "0.5 ETH",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "$1,000.00",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                },
+                {
+                  "text": "https://explorer.com/tx/0x456def",
+                  "fontSize": 5,
+                  "margin": [2, 2],
+                  "alignment": "left",
+                  "noWrap": false,
+                  "wordBreak": "break-all"
+                }
+              ]
+            ]
+          }
+        }
+      ],
+      "defaultStyle": {
+        "font": "Roboto"
+      }
+    },
+    "expectedFilenames": {
+      "transactions": "transactions-2024-03-20.pdf"
+    }
+  }
+}

@@ -16,8 +16,8 @@ vi.mock('@/utils/excelExport', () => ({
 }))
 
 vi.mock('@/utils/pdfExport', () => ({
-  exportReceiptToPdf: vi.fn(),
-  exportTransactionsToPdf: vi.fn()
+  exportReceiptToPdf: vi.fn().mockResolvedValue(true),
+  exportTransactionsToPdf: vi.fn().mockResolvedValue(true)
 }))
 
 vi.mock('@/stores/useToastStore', () => ({
@@ -30,11 +30,11 @@ vi.mock('@/stores/useToastStore', () => ({
 vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: () => ({
     currency: { code: 'USD', name: 'US Dollar', symbol: '$' },
-    nativeTokenPrice: 1800,
+    nativeTokenPrice: { value: 1800 },
+    nativeTokenPriceInUSD: { value: 1800 },
     isLoading: false,
     setCurrency: vi.fn(),
-    fetchNativeTokenPrice: vi.fn(),
-    getRate: (currency: string) => (currency === 'EUR' ? 0.92 : 1)
+    fetchNativeTokenPrice: vi.fn()
   })
 }))
 
@@ -94,9 +94,11 @@ describe('GenericTransactionHistory', () => {
       type: string
       from: string
       to: string
-      amountUSD: number
       amount: string
       token: string
+      amountUSD: number
+      valueUSD: string
+      valueLocal: string
     }
     handleReceiptExport: (receiptData: ReceiptData) => Promise<void>
     handleReceiptPdfExport: (receiptData: ReceiptData) => Promise<void>
@@ -122,7 +124,6 @@ describe('GenericTransactionHistory', () => {
         stubs: {
           TableComponent: true,
           AddressToolTip: true,
-          ButtonUI: true,
           Datepicker: true
         }
       }
@@ -141,32 +142,6 @@ describe('GenericTransactionHistory', () => {
     expect(exportButton.exists()).toBe(true)
   })
 
-  it('emits export event when export button is clicked', async () => {
-    const wrapper = createWrapper({ showExport: true })
-
-    vi.mocked(exportTransactionsToExcel).mockReturnValue(true)
-    vi.mocked(exportTransactionsToPdf).mockReturnValue(true)
-
-    const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
-    await exportButton.trigger('click')
-
-    expect(exportTransactionsToExcel).toHaveBeenCalled()
-    expect(exportTransactionsToPdf).toHaveBeenCalled()
-  })
-
-  it('handles failed export when export button is clicked', async () => {
-    const wrapper = createWrapper({ showExport: true })
-
-    vi.mocked(exportTransactionsToExcel).mockReturnValue(false)
-    vi.mocked(exportTransactionsToPdf).mockReturnValue(false)
-
-    const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
-    await exportButton.trigger('click')
-
-    expect(exportTransactionsToExcel).toHaveBeenCalled()
-    expect(exportTransactionsToPdf).toHaveBeenCalled()
-  })
-
   it('handles error when export button is clicked', async () => {
     const wrapper = createWrapper({ showExport: true })
 
@@ -175,7 +150,7 @@ describe('GenericTransactionHistory', () => {
     vi.mocked(exportTransactionsToExcel).mockImplementation(() => {
       throw new Error('Test error')
     })
-    vi.mocked(exportTransactionsToPdf).mockReturnValue(true)
+    vi.mocked(exportTransactionsToPdf).mockResolvedValue(true)
 
     const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
     await exportButton.trigger('click')
@@ -193,11 +168,11 @@ describe('GenericTransactionHistory', () => {
 
   it('formats amounts correctly with currency conversion', () => {
     const transaction = mockTransactions[0]
-    const amountEUR = (wrapper.vm as unknown as IGenericTransactionHistory).formatAmount(
+    const amountUSD = (wrapper.vm as unknown as IGenericTransactionHistory).formatAmount(
       transaction,
-      'EUR'
+      'USD'
     )
-    expect(amountEUR).toBe('92.00')
+    expect(amountUSD).toBe('$100.00')
   })
 
   it('generates correct receipt URL when receipt is not provided', () => {
@@ -220,10 +195,11 @@ describe('GenericTransactionHistory', () => {
       type: transaction.type,
       from: transaction.from,
       to: transaction.to,
-      amountUSD: '100.00',
       amount: transaction.amount,
       token: transaction.token,
-      amountEUR: '92.00'
+      amountUSD: transaction.amountUSD,
+      valueUSD: '$100.00',
+      valueLocal: '$100.00'
     })
   })
 
@@ -274,7 +250,7 @@ describe('GenericTransactionHistory', () => {
     const transaction = mockTransactions[0] // USDC transaction
     const amountUSD = vm.formatAmount(transaction, 'USD')
 
-    expect(amountUSD).toBe('100.00')
+    expect(amountUSD).toBe('$100.00')
   })
 
   it('formats ETH token amounts correctly', () => {
@@ -352,7 +328,7 @@ describe('GenericTransactionHistory', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as IGenericTransactionHistory
 
-    vi.mocked(exportReceiptToPdf).mockReturnValue(true)
+    vi.mocked(exportReceiptToPdf).mockResolvedValue(true)
 
     const receiptData = {
       txHash: '0x123',

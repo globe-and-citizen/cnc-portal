@@ -8,7 +8,8 @@
     "create-local": "graph create --node http://localhost:8020/ test-the-graph",
     "remove-local": "graph remove --node http://localhost:8020/ test-the-graph",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 test-the-graph",
-    "test": "graph test"
+    "test": "graph test",
+    "git:ignore-locally": "git update-index --assume-unchanged subgraph.yaml"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.96.0",
