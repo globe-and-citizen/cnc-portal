@@ -159,6 +159,45 @@ describe('TransferForm.vue', () => {
       )
     })
 
+    it('shows error when amount exceeds contract balance', async () => {
+      const amountInput = wrapper.find('[data-test="amount-input"]')
+      await amountInput.setValue('150')
+
+      await wrapper.vm.$nextTick()
+      const errorMessages = wrapper.findAll('.text-red-500')
+      expect(
+        errorMessages.some((el) => el.text().includes('Amount exceeds contract balance'))
+      ).toBe(true)
+      const transferButton = wrapper.find('[data-test="transferButton"]')
+      expect(transferButton.exists()).toBe(true)
+    })
+
+    it('sets max amount when Max button is clicked', async () => {
+      const maxButton = wrapper.find('.btn-ghost')
+      await maxButton.trigger('click')
+
+      const amountInput = wrapper.find('[data-test="amount-input"]')
+      expect((amountInput.element as HTMLInputElement).value).toBe('100')
+    })
+
+    it('validates amount in real-time as it changes', async () => {
+      const amountInput = wrapper.find('[data-test="amount-input"]')
+
+      await amountInput.setValue('50')
+      await wrapper.vm.$nextTick()
+      const validTransferButton = wrapper.find('[data-test="transferButton"]')
+      expect(validTransferButton.exists()).toBe(true)
+      console.log(validTransferButton.attributes())
+
+      await amountInput.setValue('150')
+      await wrapper.vm.$nextTick()
+      const errorMessages = wrapper.findAll('.text-red-500')
+      expect(errorMessages.length).toBeGreaterThan(0)
+      expect(
+        errorMessages.some((el) => el.text().includes('Amount exceeds contract balance'))
+      ).toBe(true)
+    })
+
     it('emits transfer event when form is valid', async () => {
       await wrapper.findComponent(SelectMemberInput).vm.$emit('update:modelValue', {
         name: 'Test',
