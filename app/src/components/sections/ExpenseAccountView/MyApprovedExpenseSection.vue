@@ -78,9 +78,9 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { parseError, log, tokenSymbol } from '@/utils'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { writeContract, estimateGas } from '@wagmi/core'
+import { estimateGas } from '@wagmi/core'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, parseEther, zeroAddress, encodeFunctionData, decodeErrorResult, type EstimateGasErrorType, type Abi } from 'viem'
+import { type Address, parseEther, zeroAddress, encodeFunctionData, type Abi } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
@@ -305,33 +305,33 @@ const transferErc20Token = async () => {
     })
   } else {
     try {
-    const args = [
-      tokenRecipient.value,
-      _amount,
-      {
-        ...budgetLimit,
-        budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
-          ...item,
-          value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
-        }))
-      },
-      signatureToTransfer.value
-    ]
-    const data = encodeFunctionData({
-      abi: expenseAccountABI,
-      functionName: 'transfer',
-      args
-    })
-    await estimateGas(config, {
-      to: expenseAccountEip712Address.value,
-      data
-    })
-    executeExpenseAccountTransfer({
-      address: expenseAccountEip712Address.value,
-      abi: expenseAccountABI,
-      functionName: 'transfer',
-      args
-    })
+      const args = [
+        tokenRecipient.value,
+        _amount,
+        {
+          ...budgetLimit,
+          budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
+            ...item,
+            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
+          }))
+        },
+        signatureToTransfer.value
+      ]
+      const data = encodeFunctionData({
+        abi: expenseAccountABI,
+        functionName: 'transfer',
+        args
+      })
+      await estimateGas(config, {
+        to: expenseAccountEip712Address.value,
+        data
+      })
+      executeExpenseAccountTransfer({
+        address: expenseAccountEip712Address.value,
+        abi: expenseAccountABI,
+        functionName: 'transfer',
+        args
+      })
     } catch (error) {
       log.error('Error in transferErc20Token:', error)
       addErrorToast(parseError(error, expenseAccountABI as Abi))
