@@ -1,4 +1,5 @@
-import { decodeErrorResult, type Abi } from "viem";
+import { decodeErrorResult, type Abi } from 'viem'
+import { log } from './generalUtil'
 
 type MetaMaskErrorInfo = {
   error: { code: number; message: string }
@@ -29,7 +30,7 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
     } else {
       message = error.message
     }
-  } else{
+  } else {
     message = 'App Error: Looks like something went wrong.'
   }
 
@@ -38,13 +39,18 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
 
 const parseCustomError = (callData: `0x${string}` | null, abi: Abi) => {
   if (!callData) {
-    return "Contract reverted"
+    return 'Contract reverted'
   }
-  const parsedError = decodeErrorResult({
-    abi,
-    data: callData
-  })
-  return `${parsedError.errorName}: Contract reverted`
+  try {
+    const parsedError = decodeErrorResult({
+      abi,
+      data: callData
+    })
+    return `${parsedError.errorName}: Contract reverted`
+  } catch (e) {
+    log.error('decodeErrorResult error: ', e)
+    return 'Contract reverted'
+  }
 }
 
 /**
@@ -68,7 +74,7 @@ function getCustomErrorCallData(rawError: string | null): `0x${string}` | null {
 
   // 2. Split the string by space
   const parts = rawError.split(' ')
-  
+
   // Ensure we have enough parts
   if (parts.length < 2) {
     return null
@@ -76,13 +82,13 @@ function getCustomErrorCallData(rawError: string | null): `0x${string}` | null {
 
   // Get last 2 elements
   const lastTwo = parts.slice(-2)
-  
+
   // 3. Remove colon from first element and period from second
   const cleaned = lastTwo.map((part, index) => {
     if (index === 0) {
-      return part.replace(':', '')  // Remove colon
+      return part.replace(':', '') // Remove colon
     } else {
-      return part.replace('.', '')  // Remove period
+      return part.replace('.', '') // Remove period
     }
   })
 
