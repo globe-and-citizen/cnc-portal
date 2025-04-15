@@ -20,12 +20,12 @@
       </div>
     </div>
 
-    <button
+    <!-- <button
       @click="uploadImage"
       class="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600"
     >
       Uploader
-    </button>
+    </button> -->
   </div>
   Data: {{ uploadImageData }}
   <br />
@@ -44,7 +44,8 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const uploadBox = ref<HTMLDivElement | null>(null)
 const uploadLabel = ref<HTMLDivElement | null>(null)
 
-const onFileChange = (event: Event) => {
+const onFileChange = async (event: Event) => {
+  
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
@@ -52,10 +53,11 @@ const onFileChange = (event: Event) => {
   selectedFile.value = file
   const reader = new FileReader()
 
+  await executeUploadImage()
   reader.onload = (e: ProgressEvent<FileReader>) => {
     const result = e.target?.result
     if (typeof result === 'string' && uploadBox.value && uploadLabel.value) {
-      uploadBox.value.style.backgroundImage = `url(${result})`
+      uploadBox.value.style.backgroundImage = `url(${uploadImageData.value?.imageUrl ? uploadImageData.value?.imageUrl : result})`
       uploadBox.value.style.backgroundSize = 'cover'
       uploadBox.value.style.backgroundPosition = 'center'
       uploadBox.value.classList.remove('border-gray-400')
@@ -68,6 +70,7 @@ const onFileChange = (event: Event) => {
   }
 
   reader.readAsDataURL(file)
+  
 }
 
 const getFormData = computed(() => {
@@ -100,7 +103,7 @@ const {
   .formData()
   .json()
 
-const uploadImage = async () => {
-  await executeUploadImage()
-}
+// const uploadImage = async () => {
+//   await executeUploadImage()
+// }
 </script>

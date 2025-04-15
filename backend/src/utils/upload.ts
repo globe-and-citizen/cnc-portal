@@ -19,7 +19,7 @@ const upload: Multer = multer({ storage });
 
 const uploadImageToGCS = (file: MulterFile): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const blob = bucket.file(`${uuidv4()}-${file.originalname}`);
+    const blob = bucket.file(`${uuidv4()}`);
     const blobStream = blob.createWriteStream({
       resumable: false,
       contentType: file.mimetype,
