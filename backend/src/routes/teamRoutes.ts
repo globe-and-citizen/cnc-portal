@@ -7,12 +7,6 @@ import {
   getAllTeams,
 } from "../controllers/teamController";
 
-import {
-  getContracts,
-  syncContracts,
-  addContract,
-} from "../controllers/contractController";
-
 import { deleteMember, addMembers } from "../controllers/memberController";
 const teamRoutes = express.Router();
 
@@ -26,10 +20,5 @@ teamRoutes.delete("/:id", deleteTeam);
 // Team Members CRUD routes
 teamRoutes.post("/:id/member", addMembers);
 teamRoutes.delete("/:id/member/:memberAddress", deleteMember);
-
-teamRoutes.get("/contract/get", getContracts);
-teamRoutes.post("/contract/add", addContract);
-
-teamRoutes.put("/contract/sync", syncContracts);
 
 export default teamRoutes;
