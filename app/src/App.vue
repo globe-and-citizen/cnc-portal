@@ -7,12 +7,11 @@
         <!-- Drawer -->
         <div class="bg-base-100 transition-transform duration-300 ease-in-out z-10">
           <Drawer
-            :user="{ name, address }"
+            :user="{ name, address, imageUrl }"
             v-model="toggleSide"
             @openEditUserModal="
               () => {
                 showModal = true
-                updateUserInput = { name, address }
               }
             "
           />
@@ -27,7 +26,7 @@
             :isCollapsed="toggleSide"
             @toggleEditUserModal="
               () => {
-                updateUserInput = { name, address }
+                updateUserInput = { name, address, imageUrl: '' }
                 showModal = true
               }
             "
@@ -103,11 +102,12 @@ const toggleSide = ref(false)
 const showModal = ref(false)
 
 const userStore = useUserDataStore()
-const { name, address } = storeToRefs(userStore)
+const { name, address, imageUrl } = storeToRefs(userStore)
 
 const updateUserInput = ref({
   name: name.value,
-  address: address.value
+  address: address.value,
+  imageUrl: ''
 })
 const userUpdateEndpoint = ref('')
 const {
@@ -128,7 +128,8 @@ watch(updatedUser, () => {
     userStore.setUserData(
       updatedUser.value.name || '',
       updatedUser.value.address || '',
-      updatedUser.value.nonce || ''
+      updatedUser.value.nonce || '',
+      updatedUser.value.imageUrl || ''
     )
   }
 })

@@ -31,7 +31,7 @@ describe('TeamCard', () => {
 
     it('Should display team name and description', () => {
       const userStore = useUserDataStore()
-      userStore.setUserData('Alice', '0x4b6Bf5cD91446408290725879F5666dcd9785F62', '123')
+      userStore.setUserData('Alice', '0x4b6Bf5cD91446408290725879F5666dcd9785F62', '123', '')
       expect(wrapper.text()).toContain(props.team.name)
       expect(wrapper.text()).toContain(props.team.description)
     })
