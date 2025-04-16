@@ -20,7 +20,7 @@ vi.mock('@/stores', async (importOriginal) => {
 })
 
 describe('TransferForm.vue', () => {
-  let wrapper: ReturnType<typeof mount>
+  let wrapper: ReturnType<typeof mount<typeof TransferForm>>
   beforeEach(() => {
     wrapper = mount(TransferForm, {
       props: {
@@ -101,6 +101,43 @@ describe('TransferForm.vue', () => {
     })
   })
 
+  describe('Amount Input Handling', () => {
+    let amountInput: ReturnType<typeof wrapper.find>
+
+    beforeEach(() => {
+      amountInput = wrapper.find('[data-test="amount-input"]')
+    })
+
+    it('accepts valid numeric input', async () => {
+      await amountInput.setValue('42')
+      expect(wrapper.props('modelValue').amount).toBe('42')
+
+      await amountInput.setValue('42.5')
+      expect(wrapper.props('modelValue').amount).toBe('42.5')
+    })
+
+    it('handles multiple decimal points', async () => {
+      await amountInput.setValue('42.5.3')
+      expect(wrapper.props('modelValue').amount).toBe('42.53')
+    })
+
+    it('removes non-numeric characters', async () => {
+      await amountInput.setValue('abc123.45def')
+      expect(wrapper.props('modelValue').amount).toBe('123.45')
+
+      await amountInput.setValue('!@#50.75$%^')
+      expect(wrapper.props('modelValue').amount).toBe('50.75')
+    })
+
+    it('preserves decimal input correctly', async () => {
+      await amountInput.setValue('0.')
+      expect(wrapper.props('modelValue').amount).toBe('0.')
+
+      await amountInput.setValue('0.5')
+      expect(wrapper.props('modelValue').amount).toBe('0.5')
+    })
+  })
+
   describe('Validation', () => {
     it('shows error when address is empty', async () => {
       const transferButton = wrapper.find('[data-test="transferButton"]')
@@ -143,7 +180,10 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       const errorMessages = wrapper.findAll('.text-red-500')
-      expect(errorMessages.some((el) => el.text().includes('numeric'))).toBe(true)
+      console.log('errorMessages', errorMessages[3].text())
+      expect(
+        errorMessages.some((el) => el.text().includes('Amount exceeds contract balance'))
+      ).toBe(true)
     })
 
     it('shows error when amount is zero', async () => {

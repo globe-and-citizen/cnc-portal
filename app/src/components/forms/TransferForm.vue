@@ -11,7 +11,13 @@
       <p>Amount</p>
       |
       <div class="grow flex items-center gap-2">
-        <input type="text" class="grow" data-test="amount-input" v-model="model.amount" />
+        <input
+          type="text"
+          class="grow"
+          data-test="amount-input"
+          v-model="model.amount"
+          @input="handleAmountInput"
+        />
         <button class="btn btn-sm btn-ghost mr-2" @click="setMaxAmount" type="button">Max</button>
       </div>
       |
@@ -209,6 +215,17 @@ const setMaxAmount = () => {
 onClickOutside(target, () => {
   isDropdownOpen.value = false
 })
+
+const handleAmountInput = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const value = input.value.replace(/[^\d.]/g, '')
+  const parts = value.split('.')
+  if (parts.length > 2) {
+    model.value.amount = parts[0] + '.' + parts.slice(1).join('')
+  } else {
+    model.value.amount = value
+  }
+}
 
 onMounted(() => {
   if (props.tokens.length > 0) {
