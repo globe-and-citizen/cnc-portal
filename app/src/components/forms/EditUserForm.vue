@@ -74,7 +74,7 @@
     </label>
 
     <!-- Upload -->
-    <UploadImage />
+    <UploadImage :model-value="user.imageUrl" @update:model-value="$event => (user.imageUrl = $event)" />
   </div>
   <div class="modal-action justify-center">
     <ButtonUI
@@ -113,7 +113,8 @@ const selectedCurrency = ref<string>(currencyStore.currency.code)
 const user = defineModel({
   default: {
     name: '',
-    address: ''
+    address: '',
+    imageUrl:''
   }
 })
 

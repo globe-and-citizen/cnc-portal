@@ -27,25 +27,22 @@
       Uploader
     </button> -->
   </div>
-  Data: {{ uploadImageData }}
-  <br />
-  Loading: {{ uploadingImage }}
-
-  {{ uploadImageError }}
+ 
 </template>
 
 <script setup lang="ts">
 import { useFetch, useStorage } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { BACKEND_URL } from '@/constant/index'
 
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadBox = ref<HTMLDivElement | null>(null)
 const uploadLabel = ref<HTMLDivElement | null>(null)
+const imageUrl = defineModel({default: ""})
 
 const onFileChange = async (event: Event) => {
-  
+  console.log("file changed")
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
@@ -70,7 +67,6 @@ const onFileChange = async (event: Event) => {
   }
 
   reader.readAsDataURL(file)
-  
 }
 
 const getFormData = computed(() => {
@@ -84,8 +80,8 @@ const getFormData = computed(() => {
 })
 
 const {
-  isFetching: uploadingImage,
-  error: uploadImageError,
+  // isFetching: uploadingImage,
+  // error: uploadImageError,
   execute: executeUploadImage,
   data: uploadImageData
 } = useFetch(`${BACKEND_URL}/api/upload`, {
@@ -103,6 +99,11 @@ const {
   .formData()
   .json()
 
+watch(uploadImageData, () => {
+  console.log("in the watch")
+  imageUrl.value = uploadImageData.value?.imageUrl
+  console.log("update",imageUrl.value)
+})
 // const uploadImage = async () => {
 //   await executeUploadImage()
 // }
