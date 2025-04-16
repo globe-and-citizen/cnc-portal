@@ -8,7 +8,7 @@
         <img
           alt="User Avatar"
           :src="
-            user.avatarUrl ||
+            user.imageUrl ||
             'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
           "
           class="w-full h-full object-cover"
@@ -31,7 +31,7 @@ import type { User } from '@/types'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user: Pick<User, 'address' | 'name' | 'avatarUrl'>
+  user: Pick<User, 'address' | 'name' | 'imageUrl'>
   isCollapsed?: boolean
 }>()
 

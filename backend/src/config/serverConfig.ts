@@ -13,6 +13,7 @@ import actionRoutes from "../routes/actionsRoute";
 import wageRoutes from "../routes/wageRoute";
 import claimRoutes from "../routes/claimRoute";
 import expenseRoutes from "../routes/expenseRoute";
+import uploadRoute from "../routes/uploadRoute";
 import contractRoutes from "../routes/contractRoutes";
 //#endregion routing modules
 
@@ -54,6 +55,7 @@ class Server {
       wage: "/api/wage/",
       expense: "/api/expense/",
       claim: "/api/claim/",
+      upload:"/api/upload/",
       constract: "/api/contract/",
       apidocs: "/api-docs",
     };
@@ -105,6 +107,7 @@ class Server {
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
+    this.app.use(this.paths.upload,authorizeUser, uploadRoute);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.get(this.paths.apidocs, (req, res) => {

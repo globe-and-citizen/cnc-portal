@@ -167,7 +167,7 @@
           <img
             alt="User Avatar"
             :src="
-              user.avatarUrl ||
+              user.imageUrl ||
               'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
             "
             class="w-full h-full object-cover"
@@ -201,7 +201,7 @@ const route = useRoute()
 interface User {
   name: string
   address: string
-  avatarUrl?: string
+  imageUrl?: string
 }
 
 const isCollapsed = defineModel({
