@@ -1,4 +1,4 @@
-import { decodeErrorResult, type Abi } from 'viem'
+import { decodeErrorResult, type Abi, isHex } from 'viem'
 import { log } from './generalUtil'
 
 type MetaMaskErrorInfo = {
@@ -84,13 +84,13 @@ function safeParse(errorString: string, abi: Abi | undefined) {
 
   switch (validated.type) {
     case 'hex':
-      console.log('Custom error:', validated.data)
+      // console.log('Custom error:', validated.data)
       return parseCustomError(validated.data, abi)
-      break
+    // break
     case 'string':
-      console.log('Revert message:', validated.data)
+      // console.log('Revert message:', validated.data)
       return validated.data
-      break
+    // break
     default:
       return 'Contract reverted'
   }
@@ -112,7 +112,7 @@ function isRegularString(value: unknown): value is string {
 function validateReturnType(
   value: unknown
 ): { type: 'hex'; data: `0x${string}` } | { type: 'string'; data: string } | { type: 'invalid' } {
-  if (isHexPrefixedString(value)) {
+  if (isHex(/*PrefixedString*/ value)) {
     return { type: 'hex', data: value }
   } else if (isRegularString(value)) {
     return { type: 'string', data: value }
