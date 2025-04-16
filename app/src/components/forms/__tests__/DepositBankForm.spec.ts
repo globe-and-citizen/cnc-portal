@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { createTestingPinia } from '@pinia/testing'
@@ -179,6 +179,46 @@ describe('DepositBankModal.vue', () => {
       expect(wrapper.find('.text-red-500').text()).toContain(
         'Amount must have at most 4 decimal places'
       )
+    })
+  })
+  describe('Amount Input Handling', () => {
+    let wrapper: ReturnType<typeof mount>
+    let amountInput: ReturnType<typeof wrapper.find>
+
+    beforeEach(() => {
+      wrapper = mount(DepositBankForm, {
+        props: { loading: false }
+      })
+      amountInput = wrapper.find('[data-test="amountInput"]')
+    })
+
+    it('accepts valid numeric input', async () => {
+      await amountInput.setValue('42')
+      expect((amountInput.element as HTMLInputElement).value).toBe('42')
+
+      await amountInput.setValue('42.5')
+      expect((amountInput.element as HTMLInputElement).value).toBe('42.5')
+    })
+
+    it('handles multiple decimal points', async () => {
+      await amountInput.setValue('42.5.3')
+      expect((amountInput.element as HTMLInputElement).value).toBe('42.53')
+    })
+
+    it('removes non-numeric characters', async () => {
+      await amountInput.setValue('abc123.45def')
+      expect((amountInput.element as HTMLInputElement).value).toBe('123.45')
+
+      await amountInput.setValue('!@#50.75$%^')
+      expect((amountInput.element as HTMLInputElement).value).toBe('50.75')
+    })
+
+    it('preserves decimal input correctly', async () => {
+      await amountInput.setValue('0.')
+      expect((amountInput.element as HTMLInputElement).value).toBe('0.')
+
+      await amountInput.setValue('0.5')
+      expect((amountInput.element as HTMLInputElement).value).toBe('0.5')
     })
   })
   describe('max button functionality', () => {
