@@ -8,7 +8,6 @@
         type="text"
         class="w-24"
         v-model="input.name"
-        @keyup.stop="searchUsers({ name: input.name, address: '' })"
         :placeholder="'Member Name '"
         :data-test="`member-name-input`"
       />
@@ -17,7 +16,6 @@
         type="text"
         class="grow"
         v-model="input.address"
-        @keyup.stop="searchUsers({ name: '', address: input.address })"
         :data-test="`member-address-input`"
         :placeholder="`Member Address`"
       />
@@ -50,6 +48,7 @@
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { ref } from 'vue'
+import { debouncedWatch } from '@vueuse/core'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
@@ -75,6 +74,17 @@ const searchUsers = async (input: { name: string; address: string }) => {
   await executeSearchUser()
   showDropdown.value = true
 }
+
+debouncedWatch(
+  [() => input.value.name, () => input.value.address],
+  ([name, address]) => {
+    if (name || address) {
+      searchUsers({ name, address })
+    }
+  },
+  { debounce: 300, maxWait: 600 }
+)
+
 const selectMember = (member: { name: string; address: string }) => {
   input.value = member
   emit('selectMember', member)
