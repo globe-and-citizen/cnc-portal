@@ -74,7 +74,10 @@
     </label>
 
     <!-- Upload -->
-    <UploadImage :model-value="user.imageUrl" @update:model-value="$event => (user.imageUrl = $event)" />
+    <UploadImage
+      :model-value="user.imageUrl"
+      @update:model-value="($event) => (user.imageUrl = $event)"
+    />
   </div>
   <div class="modal-action justify-center">
     <ButtonUI
@@ -114,7 +117,7 @@ const user = defineModel({
   default: {
     name: '',
     address: '',
-    imageUrl:''
+    imageUrl: ''
   }
 })
 

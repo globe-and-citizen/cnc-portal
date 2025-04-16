@@ -27,7 +27,6 @@
       Uploader
     </button> -->
   </div>
- 
 </template>
 
 <script setup lang="ts">
@@ -39,10 +38,10 @@ const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadBox = ref<HTMLDivElement | null>(null)
 const uploadLabel = ref<HTMLDivElement | null>(null)
-const imageUrl = defineModel({default: ""})
+const imageUrl = defineModel({ default: '' })
 
 const onFileChange = async (event: Event) => {
-  console.log("file changed")
+  console.log('file changed')
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
@@ -100,9 +99,9 @@ const {
   .json()
 
 watch(uploadImageData, () => {
-  console.log("in the watch")
+  console.log('in the watch')
   imageUrl.value = uploadImageData.value?.imageUrl
-  console.log("update",imageUrl.value)
+  console.log('update', imageUrl.value)
 })
 // const uploadImage = async () => {
 //   await executeUploadImage()
