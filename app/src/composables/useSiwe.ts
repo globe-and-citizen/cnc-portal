@@ -130,7 +130,12 @@ export function useSiwe() {
     }
     //save user data to user store
     const userData: Partial<User> = user.value
-    userDataStore.setUserData(userData.name || '', userData.address || '', userData.nonce || '', userData.imageUrl || '')
+    userDataStore.setUserData(
+      userData.name || '',
+      userData.address || '',
+      userData.nonce || '',
+      userData.imageUrl || ''
+    )
     userDataStore.setAuthStatus(true)
 
     isProcessing.value = false
