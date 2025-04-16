@@ -2,48 +2,41 @@
   <h2>SendTip Transactions</h2>
   <SkeletonLoading v-if="loading" class="w-full h-96 p-5" />
   <div v-else class="overflow-x-auto bg-base-100 p-5" data-test="table-send-tip-transactions">
-    <table class="table table-zebra">
-      <!-- head -->
-      <thead>
-        <tr class="font-bold text-lg">
-          <th>N°</th>
-          <th>From</th>
-          <th>Team Addresses</th>
-          <th>Total Tip</th>
-          <th class="truncate max-w-12">Tip Per Address</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody v-if="(events?.length ?? 0) > 0">
-        <tr
-          v-for="(event, index) in events"
-          v-bind:key="event.transactionHash"
-          data-test="table-body-row"
-          class="cursor-pointer hover"
-          @click="showTxDetail(event.transactionHash)"
-        >
-          <td data-test="data-row-number">{{ index + 1 }}</td>
-          <td data-test="data-row-from" class="truncate max-w-48">{{ event.args.from }}</td>
-          <td>
-            <ul v-for="(address, index) in event.args.teamMembers" :key="index">
-              <li data-test="data-row-member">{{ address }}</li>
-            </ul>
-          </td>
-          <td data-test="data-row-total-amount">
-            {{ formatEther(event.args.totalAmount!) }} {{ NETWORK.currencySymbol }}
-          </td>
-          <td data-test="data-row-amount-per-address">
-            {{ formatEther(event.args.amountPerAddress!) }} {{ NETWORK.currencySymbol }}
-          </td>
-          <td data-test="data-row-date">{{ dates[index] }}</td>
-        </tr>
-      </tbody>
-      <tbody v-else>
-        <tr>
-          <td class="text-center font-bold text-lg" colspan="6">No SendTip Transactions</td>
-        </tr>
-      </tbody>
-    </table>
+    <TableComponent
+      :rows="
+        events?.map((event, index) => ({
+          index: index + 1,
+          from: event.args.from,
+          teamMembers: event.args.teamMembers,
+          totalAmount: `${formatEther(event.args.totalAmount!)} ${NETWORK.currencySymbol}`,
+          amountPerAddress: `${formatEther(event.args.amountPerAddress!)} ${NETWORK.currencySymbol}`,
+          date: dates[index],
+          transactionHash: event.transactionHash
+        })) ?? []
+      "
+      :columns="[
+        { key: 'index', label: 'N°' },
+        { key: 'from', label: 'From' },
+        { key: 'teamMembers', label: 'Team Addresses' },
+        { key: 'totalAmount', label: 'Total Tip' },
+        { key: 'amountPerAddress', label: 'Tip Per Address', class: 'truncate max-w-12' },
+        { key: 'date', label: 'Date' }
+      ]"
+      :loading="loading"
+      @row-click="(row) => showTxDetail(row.transactionHash)"
+    >
+      <template #from-data="{ row }">
+        <span class="truncate max-w-48" data-test="data-row-from">{{ row.from }}</span>
+      </template>
+
+      <template #teamMembers-data="{ row }">
+        <ul>
+          <li v-for="(address, index) in row.teamMembers" :key="index" data-test="data-row-member">
+            {{ address }}
+          </li>
+        </ul>
+      </template>
+    </TableComponent>
   </div>
 </template>
 
@@ -55,6 +48,7 @@ import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { formatEther, parseAbiItem, type Address, type GetLogsReturnType } from 'viem'
 import { config } from '@/wagmi.config'
 import { getBlock, getLogs } from 'viem/actions'
+import TableComponent from '@/components/TableComponent.vue'
 
 const client = config.getClient()
 const { addErrorToast } = useToastStore()
