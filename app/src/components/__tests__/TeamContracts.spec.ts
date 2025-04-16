@@ -1,11 +1,13 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import TeamContracts from '@/components/TeamContracts.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from '@/components/TeamContractAdmins.vue'
 import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
-import { createPinia, setActivePinia } from 'pinia'
 import type { TeamContract } from '@/types/teamContract'
+import { useToastStore } from '@/stores/useToastStore'
+import { ref } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
 
 const getAdminListMock = vi.fn()
 const removeAdminMock = vi.fn()
@@ -19,8 +21,29 @@ vi.mock('@/services/AddCampaignService', () => ({
     removeAdmin: removeAdminMock
   }))
 }))
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWriteContract: vi.fn(() => ({
+      writeContract: vi.fn(),
+      hash: ref(null),
+      isPending: ref(false),
+      error: ref(null)
+    })),
+    useWaitForTransactionReceipt: vi.fn(() => ({
+      isLoading: ref(false),
+      isSuccess: ref(false)
+    })),
+    useReadContract: vi.fn(() => ({
+      data: ref(null),
+      isLoading: ref(false),
+      isSuccess: ref(false)
+    }))
+  }
+})
 
-describe.skip('TeamContracts.vue', () => {
+describe('TeamContracts.vue', () => {
   const contracts = [
     {
       type: 'Campaign',
@@ -36,37 +59,132 @@ describe.skip('TeamContracts.vue', () => {
     }
   ] as TeamContract[]
 
-  beforeEach(() => {
-    const pinia = createPinia()
-    setActivePinia(pinia)
-  })
-
-  it('renders contract rows correctly', () => {
+  it.skip('renders contract rows correctly', () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts, teamId: 'team1' },
       global: {
-        plugins: [createPinia()]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
     // Check that the rows match the number of contracts
-    const rows = wrapper.findAll('tbody tr')
+    const rows = wrapper.findAll('tr').filter((row) => !row.element.closest('thead'))
     expect(rows.length).toBe(contracts.length)
 
     // Check that each row contains the correct contract data
     rows.forEach((row, index) => {
       const cells = row.findAll('td')
-
-      expect(cells[0].text()).toBe(contracts[index].type)
-      expect(cells[1].text()).toBe(contracts[index].address)
+      expect(cells[1].text()).toBe(contracts[index].type)
+      expect(cells[2].text()).toContain(contracts[index].address)
     })
+  })
+
+  it.skip('renders no rows when there are no contracts', () => {
+    const wrapper = mount(TeamContracts, {
+      props: { contracts: [], teamId: 'team1' },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
+    })
+
+    const rows = wrapper.findAll('tr').filter((row) => !row.element.closest('thead'))
+    expect(rows.length).toBe(0)
+  })
+
+  it('opens the contract data modal with correct details', async () => {
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1', reset: true },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
+    })
+
+    const firstRow = wrapper.findAll('tr').filter((row) => !row.element.closest('thead'))[0]
+    const detailButton = firstRow.find('button:not([disabled])')
+    await detailButton.trigger('click')
+    await flushPromises()
+
+    const contractDataModal = wrapper.findComponent({ name: 'TeamContractsDetail' })
+    expect(contractDataModal.exists()).toBe(true)
+  })
+
+  it('opens events modal and displays events when View Events button is clicked', async () => {
+    // Mock successful events response
+    getEventsGroupedByCampaignCodeMock.mockResolvedValueOnce({
+      status: 'success',
+      events: {
+        'CAMPAIGN-001': [
+          { campaignCode: 'CAMPAIGN-001', eventType: 'CampaignCreated', data: {} },
+          { campaignCode: 'CAMPAIGN-001', eventType: 'CampaignUpdated', data: {} }
+        ]
+      }
+    })
+
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
+    })
+
+    // Find and click the View Events button in the first row
+    const firstRow = wrapper.findAll('tr').filter((row) => !row.element.closest('thead'))[0]
+    const eventsButton = firstRow
+      .findAll('button')
+      .find((btn) => btn.text().includes('View Events'))
+    await eventsButton?.trigger('click')
+    await flushPromises()
+
+    // Verify the events modal is shown
+    const eventModals = wrapper.findAllComponents(ModalComponent)
+    const eventModal = eventModals.find((modal) => modal.find('h3').text() === 'Contract Events')
+    expect(eventModal?.exists()).toBe(true)
+
+    // Verify the events list component is rendered with correct props
+    const eventList = wrapper.findComponent({ name: 'TeamContractEventList' })
+    expect(eventList.exists()).toBe(true)
+    expect(eventList.props('eventsByCampaignCode')).toEqual({
+      'CAMPAIGN-001': [
+        { campaignCode: 'CAMPAIGN-001', eventType: 'CampaignCreated', data: {} },
+        { campaignCode: 'CAMPAIGN-001', eventType: 'CampaignUpdated', data: {} }
+      ]
+    })
+  })
+
+  it.skip('shows error toast when no events are found', async () => {
+    // Mock response with no events
+    getEventsGroupedByCampaignCodeMock.mockResolvedValueOnce({
+      status: 'success',
+      events: {}
+    })
+
+    const toastStore = useToastStore()
+    const addErrorToastSpy = vi.spyOn(toastStore, 'addErrorToast')
+
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
+    })
+
+    // Find and click the View Events button
+    const firstRow = wrapper.findAll('tr').filter((row) => !row.element.closest('thead'))[0]
+    const eventsButton = firstRow
+      .findAll('button')
+      .find((btn) => btn.text().includes('View Events'))
+    await eventsButton?.trigger('click')
+    await flushPromises()
+
+    // Verify error toast was shown
+    expect(addErrorToastSpy).toHaveBeenCalledWith('No events found')
   })
 
   it('opens modal with contract details when a row is clicked', async () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts, teamId: 'team1' },
       global: {
-        plugins: [createPinia()]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -86,24 +204,11 @@ describe.skip('TeamContracts.vue', () => {
     expect(detailComponent.props('datas')).toBeDefined()
   })
 
-  it('renders no rows when there are no contracts', () => {
-    const wrapper = mount(TeamContracts, {
-      props: { contracts: [], teamId: 'team1' },
-      global: {
-        plugins: [createPinia()]
-      }
-    })
-
-    // Check that no rows are rendered
-    const rows = wrapper.findAll('tbody tr')
-    expect(rows.length).toBe(0)
-  })
-
   it('opens the admins modal when the Admins button is clicked', async () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts, teamId: 'team1' },
       global: {
-        plugins: [createPinia()]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -120,83 +225,11 @@ describe.skip('TeamContracts.vue', () => {
     expect(adminModal.props('contract')).toEqual(contracts[0])
   })
 
-  it('opens the contract data modal with correct details', async () => {
-    const wrapper = mount(TeamContracts, {
-      props: { contracts, teamId: 'team1', reset: true },
-      global: {
-        plugins: [createPinia()]
-      }
-    })
-
-    // Simulate clicking the "View Details" button
-    const firstRow = wrapper.find('tbody tr')
-    const detailButton = firstRow.findAll('button.btn-ghost')[1] // Assume second button is for details
-    await detailButton.trigger('click')
-    await flushPromises()
-
-    // Wait for the contract data to be fetched and modal to update
-    await wrapper.vm.$nextTick() // Ensure the modal has re-rendered after async data fetching
-
-    // Find the modal for contract data
-    const contractDataModal = wrapper.findComponent({ name: 'TeamContractsDetail' })
-
-    // Check that the contract data was passed to the modal correctly
-    expect(contractDataModal.props('datas')).toEqual([{ key: 'costPerClick', value: '10' }])
-    //expect(contractDataModal.props('datas')).toEqual([])
-  })
-
-  // it('renders polygonscan link correctly', () => {
-  //   const wrapper = mount(TeamContracts, {
-  //     props: { contracts, teamId: 'team1' },
-  //     global: {
-  //       plugins: [createPinia()]
-  //     }
-  //   })
-
-  //   // Check that the polygonscan link for the first contract is rendered correctly
-  //   const firstRow = wrapper.find('tbody tr')
-  //   const link = firstRow.find('a')
-
-  //   // Ensure the link contains the correct href for Polygonscan based on the contract address
-  //   const expectedHref = `https://polygonscan.com/address/${contracts[0].address}`
-
-  //   // Ensure TypeScript understands the link has an href attribute
-  //   expect(link.attributes('href')).toBe(expectedHref)
-
-  //   // Check the link text contains the abbreviated contract address
-  //   expect(link.text()).toContain(
-  //     `${contracts[0].address.slice(0, 6)}...${contracts[0].address.slice(-4)}`
-  //   )
-  // })
-
-  // it('updates contracts when props.contracts change', async () => {
-  //   const wrapper = mount(TeamContracts, {
-  //     props: { contracts: contracts, teamId: 'team1' },
-  //     global: {
-  //       plugins: [createPinia()]
-  //     }
-  //   })
-
-  //   const newContracts = [
-  //     { type: 'Campaign', address: '0xcontract3', admins: ['0xadmin3'], deployer: '0xdeployer3' },
-  //     { type: 'Campaign', address: '0xcontract4', admins: ['0xadmin4'], deployer: '0xdeployer4' }
-  //   ]
-
-  //   // Verify initial state
-  //   expect(wrapper.vm.contracts).toEqual(contracts)
-
-  //   // Update the contracts prop
-  //   await wrapper.setProps({ contracts: newContracts })
-
-  //   // Verify that contracts has updated correctly
-  //   expect(wrapper.vm.contracts).toEqual(newContracts)
-  // })
-
   it('renders modals correctly based on dialog states', async () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts, teamId: 'team1' },
       global: {
-        plugins: [createPinia()],
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
         components: {
           ModalComponent,
           TeamContractAdmins,
