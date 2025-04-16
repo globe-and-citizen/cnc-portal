@@ -7,7 +7,7 @@
         <!-- Drawer -->
         <div class="bg-base-100 transition-transform duration-300 ease-in-out z-10">
           <Drawer
-            :user="{ name, address }"
+            :user="{ name, address, imageUrl }"
             v-model="toggleSide"
             @openEditUserModal="
               () => {
@@ -102,7 +102,8 @@ const toggleSide = ref(false)
 const showModal = ref(false)
 
 const userStore = useUserDataStore()
-const { name, address } = storeToRefs(userStore)
+const { name, address, imageUrl } = storeToRefs(userStore)
+
 
 const updateUserInput = ref({
   name: name.value,

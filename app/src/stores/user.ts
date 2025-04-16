@@ -30,6 +30,7 @@ export const useUserDataStore = defineStore('user', () => {
     name: userName,
     address: userAddress,
     nonce: userNonce,
+    imageUrl: userImageUrl,
     isAuth,
     setUserData,
     clearUserData,
