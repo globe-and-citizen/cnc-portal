@@ -94,6 +94,7 @@ const getTeam = async (req: Request, res: Response) => {
           select: {
             address: true,
             name: true,
+            imageUrl: true,
           },
         },
         teamContracts: true,
@@ -108,27 +109,6 @@ const getTeam = async (req: Request, res: Response) => {
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
-
-    if (!req.query) {
-      res.status(200).json({ team, success: true });
-    }
-
-    const filterQuery = buildFilterMember(req.query);
-    team = await prisma.team.findUnique({
-      where: {
-        id: Number(id),
-      },
-      include: {
-        members: {
-          where: filterQuery,
-          select: {
-            address: true,
-            name: true,
-          },
-        },
-        teamContracts: true,
-      },
-    });
     res.status(200).json(team);
   } catch (error: any) {
     return errorResponse(500, error.message, res);
