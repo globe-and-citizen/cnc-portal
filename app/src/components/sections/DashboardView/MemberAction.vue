@@ -153,6 +153,7 @@ const props = defineProps<{
   teamId: number | string
   // ownerAddress: string
 }>()
+const emits = defineEmits(['refetchWage'])
 
 const showDeleteMemberConfirmModal = ref(false)
 const showSetMemberWageModal = ref(false)
@@ -228,8 +229,7 @@ const addMemberWageData = async () => {
   if (addMemberWageDataStatusCode.value === 201) {
     addSuccessToast('Member wage data set successfully')
 
-    // TODO: instead of fetching the team again, we can update the team wage data in the store
-    teamStore.fetchTeam(String(props.teamId))
+    emits('refetchWage')
     showSetMemberWageModal.value = false
   }
 }
