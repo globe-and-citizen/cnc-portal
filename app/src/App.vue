@@ -128,7 +128,8 @@ watch(updatedUser, () => {
     userStore.setUserData(
       updatedUser.value.name || '',
       updatedUser.value.address || '',
-      updatedUser.value.nonce || ''
+      updatedUser.value.nonce || '',
+      updatedUser.value.imageUrl || ''
     )
   }
 })
