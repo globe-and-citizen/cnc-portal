@@ -4,6 +4,6 @@ export interface User {
   surname?: string
   nonce?: string
   address?: string
-  avatarUrl?: string
+  imageUrl?: string
   // Other user properties...
 }
