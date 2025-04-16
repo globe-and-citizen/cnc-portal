@@ -104,7 +104,6 @@ const showModal = ref(false)
 const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
-
 const updateUserInput = ref({
   name: name.value,
   address: address.value,
