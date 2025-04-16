@@ -8,6 +8,7 @@
         type="text"
         class="w-24"
         v-model="input.name"
+        ref="nameInput"
         :placeholder="'Member Name '"
         :data-test="`member-name-input`"
       />
@@ -15,6 +16,7 @@
       <input
         type="text"
         class="grow"
+        ref="addressInput"
         v-model="input.address"
         :data-test="`member-address-input`"
         :placeholder="`Member Address`"
@@ -47,8 +49,8 @@
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { ref } from 'vue'
-import { debouncedWatch } from '@vueuse/core'
+import { ref, useTemplateRef } from 'vue'
+import { debouncedWatch, useFocus } from '@vueuse/core'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
@@ -60,27 +62,26 @@ const input = defineModel({
 
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
+const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
+const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
+const { focused: nameInputFocus } = useFocus(nameInput)
+const { focused: addressInputFocus } = useFocus(addressInput)
+
 const url = ref('user/search')
 const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
   .get()
   .json()
 
-const searchUsers = async (input: { name: string; address: string }) => {
-  if (input.address == '' && input.name) {
-    url.value = 'user/search?name=' + input.name
-  } else if (input.name == '' && input.address) {
-    url.value = 'user/search?address=' + input.address
-  }
-  await executeSearchUser()
-  showDropdown.value = true
-}
-
 debouncedWatch(
-  [() => input.value.name, () => input.value.address],
-  ([name, address]) => {
-    if (name || address) {
-      searchUsers({ name, address })
+  input.value,
+  async () => {
+    if (nameInputFocus.value) {
+      url.value = 'user/search?name=' + input.value.name
     }
+    if (addressInputFocus.value) {
+      url.value = 'user/search?address=' + input.value.address
+    }
+    await executeSearchUser()
   },
   { debounce: 300, maxWait: 600 }
 )
