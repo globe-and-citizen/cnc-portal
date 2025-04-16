@@ -6,7 +6,14 @@
       <span class="label-text-alt">Balance: {{ formattedBalance }}</span>
     </div>
     <div class="input input-lg input-bordered flex items-center">
-      <input type="text" class="grow" placeholder="0" v-model="amount" data-test="amountInput" />
+      <input
+        type="text"
+        class="grow"
+        placeholder="0"
+        v-model="amount"
+        data-test="amountInput"
+        @input="handleAmountInput"
+      />
       <button class="btn btn-sm btn-ghost mr-2" @click="useMaxBalance" :disabled="isLoadingBalance">
         Max
       </button>
@@ -200,5 +207,16 @@ const submitForm = async () => {
     amount: amount.value,
     token: tokenList[selectedTokenId.value].symbol
   })
+}
+
+const handleAmountInput = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const value = input.value.replace(/[^\d.]/g, '')
+  const parts = value.split('.')
+  if (parts.length > 2) {
+    amount.value = parts[0] + '.' + parts.slice(1).join('')
+  } else {
+    amount.value = value
+  }
 }
 </script>
