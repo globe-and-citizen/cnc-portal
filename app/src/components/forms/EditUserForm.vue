@@ -1,5 +1,6 @@
 <template>
   <div class="flex flex-col gap-5 mt-4" data-test="edit-user-modal">
+    <!-- Input Name -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24" data-test="name-label">Name</span>
       <input
@@ -18,6 +19,8 @@
     >
       {{ error.$message }}
     </div>
+
+    <!-- Wallet Address -->
     <label class="input input-bordered flex items-center gap-2 input-md input-disabled">
       <span class="w-24 text-xs" data-test="address-label">Wallet Address</span>
       <ToolTip data-test="address-tooltip" content="Click to see address in block explorer">
@@ -50,6 +53,8 @@
         />
       </ToolTip>
     </label>
+
+    <!-- Currency -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-40" data-test="currency-label">Default Currency</span>
       <select
@@ -67,6 +72,9 @@
         </option>
       </select>
     </label>
+
+    <!-- Upload -->
+    <UploadImage :model-value="user.imageUrl" @update:model-value="$event => (user.imageUrl = $event)" />
   </div>
   <div class="modal-action justify-center">
     <ButtonUI
@@ -82,24 +90,31 @@
 </template>
 
 <script setup lang="ts">
-import { NETWORK } from '@/constant'
+import { useVuelidate } from '@vuelidate/core'
+import { required, minLength } from '@vuelidate/validators'
 import ToolTip from '@/components/ToolTip.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { required, minLength } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
-import { useClipboard } from '@vueuse/core'
 import ButtonUI from '../ButtonUI.vue'
-import { ref } from 'vue'
 import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
+import { useClipboard } from '@vueuse/core'
+import { NETWORK } from '@/constant'
+import { ref } from 'vue'
+import UploadImage from '@/components/forms/UploadImage.vue'
 
+// Props & emits
+defineProps<{ isLoading: boolean }>()
+const emits = defineEmits(['submitEditUser'])
+
+// Currency store
 const currencyStore = useCurrencyStore()
 const selectedCurrency = ref<string>(currencyStore.currency.code)
 
-// Define the user model and validation rules
+// User form
 const user = defineModel({
   default: {
     name: '',
-    address: ''
+    address: '',
+    imageUrl:''
   }
 })
 
@@ -111,29 +126,22 @@ const rules = {
     }
   }
 }
-
 const $v = useVuelidate(rules, { user })
 
-defineProps<{
-  isLoading: boolean
-}>()
-
-const emits = defineEmits(['submitEditUser'])
-
+// Clipboard
 const { copy, copied, isSupported } = useClipboard()
 
+// Explorer
 const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 
 const submitForm = () => {
   $v.value.$touch()
-  if ($v.value.$invalid) {
-    return
-  }
+  if ($v.value.$invalid) return
   currencyStore.setCurrency(selectedCurrency.value)
   emits('submitEditUser')
 }
-</script>
 
-<style scoped></style>
+// Upload image logic
+</script>

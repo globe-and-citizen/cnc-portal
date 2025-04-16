@@ -12,7 +12,6 @@
             @openEditUserModal="
               () => {
                 showModal = true
-                updateUserInput = { name, address }
               }
             "
           />
@@ -27,7 +26,7 @@
             :isCollapsed="toggleSide"
             @toggleEditUserModal="
               () => {
-                updateUserInput = { name, address }
+                updateUserInput = { name, address, imageUrl:'' }
                 showModal = true
               }
             "
@@ -107,7 +106,8 @@ const { name, address } = storeToRefs(userStore)
 
 const updateUserInput = ref({
   name: name.value,
-  address: address.value
+  address: address.value,
+  imageUrl: ''
 })
 const userUpdateEndpoint = ref('')
 const {
