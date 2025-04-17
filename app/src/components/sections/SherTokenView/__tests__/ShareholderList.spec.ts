@@ -1,11 +1,12 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
-import { parseEther, type Address } from 'viem'
+import { parseEther, formatEther, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import TableComponent from '@/components/TableComponent.vue'
 
 const mockWriteContract = vi.fn()
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -74,15 +75,33 @@ describe('ShareholderList', () => {
         loading: false
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          TableComponent: false
+        }
       }
     })
   }
 
   it('should render the shareholder name if exists in member list', () => {
     const wrapper = createComponent()
+    const tableComponent = wrapper.findComponent(TableComponent)
+    expect(tableComponent.exists()).toBeTruthy()
 
-    expect(wrapper.find('td[data-test="shareholder-name"]').text()).toBe('John Doe')
+    const expectedRows = wrapper.vm.$props.shareholders?.map((shareholder, index) => ({
+      index: index + 1,
+      name: wrapper.vm.$props.team.members!.filter(
+        (member) => member.address == shareholder.shareholder
+      )[0].name,
+      address: shareholder.shareholder,
+      balance: `${formatEther(shareholder.amount)} TEST`,
+      percentage: `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(parseEther('300'))).toString()}%`,
+      shareholder: shareholder.shareholder,
+      amount: shareholder.amount
+    }))
+
+    expect(tableComponent.props('rows')).toEqual(expectedRows)
+    expect(expectedRows![0].name).toBe('John Doe')
   })
 
   it('should open mint individual modal if mint individual button is clicked', async () => {

@@ -2,38 +2,29 @@
   <h2>TipWithdrawal Transactions</h2>
   <SkeletonLoading v-if="loading" class="w-full h-96 p-5" />
   <div v-else class="overflow-x-auto bg-base-100 p-5" data-test="table-tip-withdrawal-transactions">
-    <table class="table table-zebra">
-      <!-- head -->
-      <thead>
-        <tr class="font-bold text-lg">
-          <th>N°</th>
-          <th>To</th>
-          <th>Amount</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody v-if="(events?.length ?? 0) > 0">
-        <tr
-          v-for="(event, index) in events"
-          v-bind:key="event.transactionHash"
-          data-test="table-body-row"
-          class="cursor-pointer hover"
-          @click="showTxDetail(event.transactionHash)"
-        >
-          <td data-test="data-row-number">{{ index + 1 }}</td>
-          <td data-test="data-row-to" class="truncate max-w-48">{{ event.args.to }}</td>
-          <td data-test="data-row-amount">
-            {{ formatEther(event.args.amount!) }} {{ NETWORK.currencySymbol }}
-          </td>
-          <td data-test="data-row-date">{{ dates[index] }}</td>
-        </tr>
-      </tbody>
-      <tbody v-else>
-        <tr>
-          <td class="text-center font-bold text-lg" colspan="4">No TipWithdrawal Transactions</td>
-        </tr>
-      </tbody>
-    </table>
+    <TableComponent
+      :rows="
+        events?.map((event, index) => ({
+          index: index + 1,
+          to: event.args.to,
+          amount: `${formatEther(event.args.amount!)} ${NETWORK.currencySymbol}`,
+          date: dates[index],
+          transactionHash: event.transactionHash
+        })) ?? []
+      "
+      :columns="[
+        { key: 'index', label: 'N°' },
+        { key: 'to', label: 'To' },
+        { key: 'amount', label: 'Amount' },
+        { key: 'date', label: 'Date' }
+      ]"
+      :loading="loading"
+      @row-click="(row) => showTxDetail(row.transactionHash)"
+    >
+      <template #to-data="{ row }">
+        <span class="truncate max-w-48" data-test="data-row-to">{{ row.to }}</span>
+      </template>
+    </TableComponent>
   </div>
 </template>
 
@@ -45,6 +36,7 @@ import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { formatEther, parseAbiItem, type Address, type GetLogsReturnType } from 'viem'
 import { getBlock, getLogs } from 'viem/actions'
 import { config } from '@/wagmi.config'
+import TableComponent from '@/components/TableComponent.vue'
 
 const client = config.getClient()
 const { addErrorToast } = useToastStore()

@@ -54,7 +54,7 @@ describe('TeamContractEventList.vue', () => {
 
   it('renders the campaign list correctly', () => {
     // Verify the number of campaigns rendered
-    const rows = wrapper.findAll('tbody tr.campaign-item')
+    const rows = wrapper.findAll('[data-test^="0-row"], [data-test^="1-row"]')
     expect(rows.length).toBe(Object.keys(eventsByCampaignCode).length)
 
     // Verify campaign codes and budgets
@@ -113,7 +113,6 @@ describe('TeamContractEventList.vue', () => {
     })
 
     // Verify no rows are rendered
-    const rows = emptyWrapper.findAll('tbody tr.campaign-item')
-    expect(rows.length).toBe(0)
+    expect(emptyWrapper.find('[data-test="empty-state"]').exists()).toBe(true)
   })
 })
