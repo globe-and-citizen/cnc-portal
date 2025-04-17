@@ -28,29 +28,22 @@ describe('SelectMemberInput.vue', () => {
     return {
       useCustomFetch: vi.fn(() => ({
         get: () => ({
-          json: () => ({
-            execute: vi.fn(),
-            data: {
+          json: () => {
+            const data = ref({
               users: [
                 { address: '0x123', name: 'John Doe' },
                 { address: '0x456', name: 'Jane DoeV2' }
               ]
-            },
-            loading: ref(false),
-            error: ref<unknown>(null)
-          })
-        }),
-        post: () => ({
-          json: () => ({
-            execute: vi.fn(),
-            data: {
-              id: 1,
-              name: 'Team Name',
-              description: 'Team Description'
-            },
-            loading: ref(false),
-            error: ref<unknown>(null)
-          })
+            })
+            return {
+              execute: vi.fn().mockImplementation(() => {
+                return Promise.resolve(data.value)
+              }),
+              data,
+              loading: ref(false),
+              error: ref<unknown>(null)
+            }
+          }
         })
       }))
     }
@@ -63,7 +56,10 @@ describe('SelectMemberInput.vue', () => {
     expect(addressInput.exists()).toBe(true)
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(false)
 
+    // Focus the name input and type
+    await nameInput.trigger('focus')
     await nameInput.setValue('John')
+    await wrapper.vm.$nextTick()
     // Wait for debounce
     await vi.advanceTimersByTime(300)
     await wrapper.vm.$nextTick()
@@ -74,7 +70,10 @@ describe('SelectMemberInput.vue', () => {
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('John Doe')
 
+    // Focus the address input and type
+    await addressInput.trigger('focus')
     await addressInput.setValue('0x1')
+    await wrapper.vm.$nextTick()
     // Wait for debounce
     await vi.advanceTimersByTime(300)
     await wrapper.vm.$nextTick()

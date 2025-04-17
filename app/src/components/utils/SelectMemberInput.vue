@@ -49,7 +49,7 @@
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { ref, useTemplateRef } from 'vue'
+import { ref, useTemplateRef, watch } from 'vue'
 import { debouncedWatch, useFocus } from '@vueuse/core'
 
 const emit = defineEmits(['selectMember'])
@@ -71,6 +71,13 @@ const url = ref('user/search')
 const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
   .get()
   .json()
+
+watch(
+  [nameInputFocus, addressInputFocus, () => input.value.name, () => input.value.address],
+  ([nameFocused, addressFocused, name, address]) => {
+    showDropdown.value = (nameFocused && name.length > 0) || (addressFocused && address.length > 0)
+  }
+)
 
 debouncedWatch(
   input.value,
