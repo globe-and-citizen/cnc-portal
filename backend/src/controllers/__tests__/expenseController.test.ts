@@ -176,6 +176,15 @@ describe("Expense Controller", () => {
       ]);
     });
 
+    it("should filter return 400 if invalid status", async () => {
+      const response = await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "invalidStatus" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("Invalid status parameter")
+    }); 
+
     it("should return 500 if there is a server error", async () => {
       vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Server error");
 
