@@ -5,6 +5,7 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { Expense, Team } from "@prisma/client";
 import publicClient from "../../utils/viem.config";
+import { telcoinTestnet } from "viem/chains";
 
 const app = express();
 app.use(express.json());
@@ -123,7 +124,7 @@ describe("Expense Controller", () => {
 
     it("should return expenses for a valid team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
+      const findManySpy = vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
         mockExpense,
         {
           ...mockExpense,
@@ -174,6 +175,8 @@ describe("Expense Controller", () => {
           } 
         }
       ]);
+
+      findManySpy.mockReset();
     });
 
     it("should filter return 400 if invalid status", async () => {
@@ -183,6 +186,30 @@ describe("Expense Controller", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("Invalid status parameter")
+    }); 
+
+    it("should set correct status", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      const findManySpy = vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
+        mockExpense
+      ]);
+      vi.spyOn(prisma.expense, "update")
+      vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1])
+
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "all" });
+
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: undefined,
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+
+      findManySpy.mockRestore();
     }); 
 
     it("should return 500 if there is a server error", async () => {
