@@ -100,13 +100,13 @@ export const getExpenses = async (req: Request, res: Response) => {
 
     const _expenses = await Promise.all(
       expenses
-        .filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
+        // .filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
         .map(async (expense) => await syncExpenseStatus(expense)
     ))
     // TODO: for each expense, check the status and update it
     
     return res.status(200).json(
-      _expenses.filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
+      _expenses// .filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
     );
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
@@ -115,6 +115,16 @@ export const getExpenses = async (req: Request, res: Response) => {
 
 const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
+  if (expense.status === "expired" || expense.status === "limit-reached") {
+    return {
+      ...expense,
+      status: expense.status,
+      balances: {
+        0: "N/A",
+        1: "N/A"
+      }
+    };
+  }
 
   const expenseAccountEip712Address = await prisma.teamContract.findFirst({
     where: {
