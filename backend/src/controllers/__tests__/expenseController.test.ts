@@ -5,7 +5,6 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { Expense, Team } from "@prisma/client";
 import publicClient from "../../utils/viem.config";
-import { telcoinTestnet } from "viem/chains";
 
 const app = express();
 app.use(express.json());
@@ -209,7 +208,83 @@ describe("Expense Controller", () => {
         orderBy: { createdAt: "desc" },
       });
 
-      findManySpy.mockRestore();
+      findManySpy.mockClear();
+
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "expired" });
+
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "expired",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+
+      findManySpy.mockClear();
+
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "limit-reached" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "limit-reached",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "enabled" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "enabled",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "signed" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "signed",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "disabled" });
+      // Assert the value of whereClause 
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "disabled",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: undefined,
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
     }); 
 
     it("should return 500 if there is a server error", async () => {
