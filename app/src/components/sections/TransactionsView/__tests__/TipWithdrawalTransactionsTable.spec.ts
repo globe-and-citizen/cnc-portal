@@ -5,6 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import { NETWORK } from '@/constant'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import TableComponent from '@/components/TableComponent.vue'
 
 let tipWithdrawalEvents = [
   {
@@ -43,7 +44,10 @@ describe('TipWithdrawalTransactionsTable', () => {
           createTestingPinia({
             createSpy: vi.fn
           })
-        ]
+        ],
+        stubs: {
+          TableComponent: false
+        }
       }
     })
   }
@@ -51,9 +55,11 @@ describe('TipWithdrawalTransactionsTable', () => {
   describe('Actions', () => {
     it('should open transaction detail when click on a transaction', async () => {
       const wrapper = createComponent()
-
       await flushPromises()
-      await wrapper.find('tr[data-test="table-body-row"]').trigger('click')
+
+      const tableComponent = wrapper.findComponent(TableComponent)
+      tableComponent.vm.$emit('row-click', { transactionHash: '0x1' })
+
       expect(window.open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
     })
 
@@ -94,38 +100,36 @@ describe('TipWithdrawalTransactionsTable', () => {
 
     it('should show data in the correct format', async () => {
       const wrapper = createComponent()
-
       await flushPromises()
 
-      const numberElements = wrapper.findAll('td[data-test="data-row-number"]')
-      const toElements = wrapper.findAll('td[data-test="data-row-to"]')
-      const amountElements = wrapper.findAll('td[data-test="data-row-amount"]')
+      const tableComponent = wrapper.findComponent(TableComponent)
+      expect(tableComponent.exists()).toBeTruthy()
 
-      const dateElements = wrapper.findAll('td[data-test="data-row-date"]')
+      const expectedRows = tipWithdrawalEvents.map((event, index) => ({
+        index: index + 1,
+        to: event.args.to,
+        amount: `2 ${NETWORK.currencySymbol}`,
+        date: '1/1/2022, 12:00:00 AM',
+        transactionHash: event.transactionHash
+      }))
 
-      expect(wrapper.findAll('tr[data-test="table-body-row"]')).toHaveLength(
-        tipWithdrawalEvents.length
-      )
-      expect(numberElements).toHaveLength(tipWithdrawalEvents.length)
-      expect(toElements).toHaveLength(tipWithdrawalEvents.length)
-      expect(amountElements).toHaveLength(tipWithdrawalEvents.length)
-      expect(dateElements).toHaveLength(tipWithdrawalEvents.length)
-
-      tipWithdrawalEvents.forEach((event, index) => {
-        expect(numberElements[index].text()).toBe((index + 1).toString())
-        expect(toElements[index].text()).toBe(event.args.to)
-        expect(amountElements[index].text()).toBe(`2 ${NETWORK.currencySymbol}`)
-        expect(dateElements[index].text()).toBe('1/1/2022, 12:00:00 AM')
-      })
+      expect(tableComponent.props('rows')).toEqual(expectedRows)
+      expect(tableComponent.props('columns')).toEqual([
+        { key: 'index', label: 'N°' },
+        { key: 'to', label: 'To' },
+        { key: 'amount', label: 'Amount' },
+        { key: 'date', label: 'Date' }
+      ])
     })
 
     it('should show no tip withdrawal transactions when events are empty', async () => {
       tipWithdrawalEvents = []
       const wrapper = createComponent()
-
       await flushPromises()
-      expect(wrapper.find('tbody').findAll('tr')).toHaveLength(1)
-      expect(wrapper.findAll('td')[0].text()).toBe('No TipWithdrawal Transactions')
+
+      const tableComponent = wrapper.findComponent(TableComponent)
+      expect(tableComponent.exists()).toBeTruthy()
+      expect(tableComponent.props('rows')).toEqual([])
     })
   })
 })
