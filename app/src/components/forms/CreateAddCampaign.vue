@@ -140,7 +140,11 @@ const deployAdCampaign = async () => {
   await deploy(_bankAddress.value, costPerClick.value, costPerImpression.value)
 
   if (error.value) {
-    addErrorToast(`Deployment failed: ${error.value?.message || 'deployment failed, please retry'}`)
+    let errorMessage = error.value?.message || 'deployment failed, please retry'
+    if (errorMessage.includes('User rejected the request')) {
+      errorMessage = 'User rejected the request'
+    }
+    addErrorToast(`${errorMessage}`)
   }
 }
 
