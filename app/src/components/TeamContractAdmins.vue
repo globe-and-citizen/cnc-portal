@@ -20,28 +20,30 @@
 
   <!-- Admin Table -->
   <div id="admins-table" class="overflow-x-auto">
-    <table class="table w-full">
-      <!-- Table Header -->
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Admin Address</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Admin Rows -->
-        <tr v-for="(admin, index) in admins" :key="index" class="hover:bg-base-200">
-          <th>{{ index + 1 }}</th>
-          <td><AddressToolTip :address="admin" class="text-xs" /></td>
-          <td>
-            <ButtonUI @click="handleAdminAction(admin, 'removeAdmin')" size="xs" variant="error"
-              >Remove</ButtonUI
-            >
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <TableComponent
+      :rows="
+        (admins as `0x${string}`[])?.map((admin: `0x${string}`, index: number) => ({
+          index: index + 1,
+          address: admin,
+          admin: admin
+        })) ?? []
+      "
+      :columns="[
+        { key: 'index', label: '#' },
+        { key: 'address', label: 'Admin Address' },
+        { key: 'action', label: 'Action' }
+      ]"
+    >
+      <template #address-data="{ row }">
+        <AddressToolTip :address="row.address" class="text-xs" />
+      </template>
+
+      <template #action-data="{ row }">
+        <ButtonUI @click="handleAdminAction(row.admin, 'removeAdmin')" size="xs" variant="error"
+          >Remove</ButtonUI
+        >
+      </template>
+    </TableComponent>
   </div>
   <div
     v-if="isLoading || isUpdating"
@@ -59,6 +61,7 @@ import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import AddressToolTip from './AddressToolTip.vue'
 import ButtonUI from './ButtonUI.vue'
+import TableComponent from '@/components/TableComponent.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCampaignService = new AddCampaignService()
