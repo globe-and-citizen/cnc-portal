@@ -88,7 +88,7 @@ watchDebounced(
 )
 
 const selectMember = (member: { name: string; address: string }) => {
-  input.value = { name: '', address: '' }
+  input.value = member
   emit('selectMember', member)
   showDropdown.value = false
 }
