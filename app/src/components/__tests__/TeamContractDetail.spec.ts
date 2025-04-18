@@ -1,19 +1,48 @@
 import { mount, flushPromises } from '@vue/test-utils'
+//import type { ComponentPublicInstance } from 'vue'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
+import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+const campaignAbi = AdCampaignArtifact.abi
+//import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { ref } from 'vue'
 
 const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
 const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })
+
+const mockUseWaitForTransactionReceipt = {
+  data: ref({ contractAddress: '0xDEADBEEF' }),
+  isSuccess: ref(true),
+  isLoading: ref(false)
+}
+
+let useWriteCallCount = 0
+
+//mock wagmi vue
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWriteContract: vi.fn(() => {
+      const current = useWriteCallCount++
+      return {
+        writeContract: current === 0 ? setCostPerClickMock : setCostPerImpressionMock,
+        error: ref(null),
+        isPending: ref(false),
+        data: ref(null)
+      }
+    }),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+  }
+})
+
 vi.mock('@/stores/useToastStore')
 vi.mock('@/services/AddCampaignService', () => ({
-  AddCampaignService: vi.fn().mockImplementation(() => ({
-    setCostPerClick: setCostPerClickMock,
-    setCostPerImpression: setCostPerImpressionMock
-  }))
+  AddCampaignService: vi.fn().mockImplementation(() => ({}))
 }))
 
-describe.skip('TeamContractsDetail.vue', () => {
+describe('TeamContractsDetail.vue', () => {
   const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
   const testData = [
     { key: 'costPerClick', value: '0.1' },
@@ -32,8 +61,11 @@ describe.skip('TeamContractsDetail.vue', () => {
   beforeEach(() => {
     const pinia = createPinia()
     setActivePinia(pinia)
-    setCostPerClickMock.mockClear()
-    setCostPerImpressionMock.mockClear()
+    useWriteCallCount = 0
+    vi.clearAllMocks()
+    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' }
+    mockUseWaitForTransactionReceipt.isSuccess.value = true
+    mockUseWaitForTransactionReceipt.isLoading.value = false
   })
 
   it('renders table headers correctly', () => {
@@ -157,8 +189,21 @@ describe.skip('TeamContractsDetail.vue', () => {
     await flushPromises()
 
     // Check that the correct functions were called
-    expect(setCostPerClickMock).toHaveBeenCalledWith(contractAddress, '0.2')
-    expect(setCostPerImpressionMock).toHaveBeenCalledWith(contractAddress, '0.4')
+    expect(setCostPerClickMock).toHaveBeenCalledWith({
+      address: contractAddress,
+      abi: campaignAbi,
+      functionName: 'setCostPerClick',
+      args: [200000000000000000n]
+    })
+
+    expect(setCostPerImpressionMock).toHaveBeenCalledWith({
+      address: contractAddress,
+      abi: campaignAbi,
+      functionName: 'setCostPerImpression',
+      args: [400000000000000000n]
+    })
+    // expect(setCostPerClickMock).toHaveBeenCalledWith(contractAddress, '0.2')
+    // expect(setCostPerImpressionMock).toHaveBeenCalledWith(contractAddress, '0.4')
   })
 
   it('updates value correctly when input event is triggered', async () => {
@@ -284,4 +329,48 @@ describe.skip('TeamContractsDetail.vue', () => {
 
     expect(setCostPerClickMock).toHaveBeenCalled()
   })
+
+  // it('executes success logic after confirming costPerClick update', async () => {
+  //   const datas = getClonedTestData()
+  //   datas[0].value = '0.2'
+  //   const { addSuccessToast } = useToastStore()
+
+  //   const wrapper = mount(TeamContractsDetail, {
+  //     props: {
+  //       datas,
+  //       contractAddress,
+  //       reset: true
+  //     }
+  //   })
+
+  //   await flushPromises()
+
+  //   const vm = wrapper.vm as ComponentPublicInstance<typeof TeamContractsDetail>
+  //   vm.pendingTransactions = 0
+  //   vm.initialized = true
+  //   vm.pendingTransactions = 1
+  //   vm.originalValues = { costPerClick: 0.2 }
+
+  //   // simulate clicking the button to trigger writeContract
+  //   await wrapper.find('input[type="number"]').setValue('0.2')
+  //   await wrapper.find('button').trigger('click')
+  //   await flushPromises()
+
+  //   // manually simulate watch state transition
+  //   vm.isConfirmedSetCostPerClick = true
+
+  //   // simulate the watcher callback logic
+  //   const wasConfirming = true
+  //   const isConfirming = false
+
+  //   if (wasConfirming && !isConfirming && vm.isConfirmedSetCostPerClick) {
+  //     vm.pendingTransactions--
+
+  //     expect(vm.pendingTransactions).toBe(0)
+
+  //     expect(addSuccessToast).toHaveBeenCalledWith('Cost per click updated successfully')
+  //     expect(vm.originalCostPerClick).toBe(0.2)
+  //     expect(wrapper.emitted('closeContractDataDialog')).toBeTruthy()
+  //   }
+  // })
 })

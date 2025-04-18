@@ -147,7 +147,8 @@ defineExpose({
   initialized,
   originalValues,
   originalCostPerClick,
-  originalCostPerImpression
+  originalCostPerImpression,
+  pendingTransactions
 })
 
 watch(

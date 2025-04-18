@@ -41,6 +41,25 @@ describe('TeamContractEventList.vue', () => {
         amount: '300',
         advertiser: '0xAdvertiser1'
       }
+    ],
+    '0xCampaign3': [
+      {
+        eventName: 'AdCampaignCreated',
+        campaignCode: '0xCampaign3',
+        budget: '3000'
+      },
+      {
+        eventName: 'PaymentReleasedOnWithdrawApproval',
+        campaignCode: '0xCampaign3',
+        paymentAmount: '1500'
+      }
+    ],
+    '0xCampaign4': [
+      {
+        eventName: 'PaymentReleasedOnWithdrawApproval',
+        campaignCode: '0xCampaign3',
+        paymentAmount: '1500'
+      }
     ]
   }
 
@@ -104,6 +123,22 @@ describe('TeamContractEventList.vue', () => {
     // Verify BudgetWithdrawn details
     const detailItems = wrapper.findAll('ul li')
     expect(detailItems.at(0)?.text()).toContain('Budget Withdrawn: 300 POL by 0xAdvertiser1')
+  })
+
+  it('displays correct event details for PaymentReleasedOnWithdrawApproval', async () => {
+    const toggleButtons = wrapper.findAll('input[type="checkbox"]')
+    await toggleButtons.at(2)?.setValue(true)
+
+    const detailItem = wrapper.findAll('ul li')
+    expect(detailItem.at(0)?.text()).toContain('Payment Released on Approval: 1500 POL')
+  })
+
+  it('returns N/A when AdCampaignCreated event is missing', async () => {
+    const toggleButtons = wrapper.findAll('input[type="checkbox"]')
+    await toggleButtons.at(3)?.setValue(true)
+
+    const budgetCell = wrapper.findAll('.campaign-budget')[3]
+    expect(budgetCell.text()).toBe('N/A POL')
   })
 
   it('handles empty events gracefully', async () => {
