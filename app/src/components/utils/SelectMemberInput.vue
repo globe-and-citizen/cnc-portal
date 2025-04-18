@@ -1,5 +1,10 @@
 <template>
-  <div class="input-group relative" ref="formRef" data-test="member-input">
+  <div
+    class="input-group relative"
+    :class="isFetching ? 'animate-pulse' : ''"
+    ref="formRef"
+    data-test="member-input"
+  >
     <label
       class="input input-bordered flex items-center gap-2 input-md"
       :data-test="`member-input`"
@@ -30,14 +35,9 @@
     >
       <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
         <li v-for="user in users.users" :key="user.address">
-          <button
-            type="button"
-            :data-test="`user-dropdown-${user.address}`"
-            @click="selectMember(user)"
-            class="w-full text-left px-4 py-2 hover:bg-base-200 active:bg-base-300"
-          >
+          <a :data-test="`user-dropdown-${user.address}`" @click="selectMember(user)">
             {{ user.name }} | {{ user.address }}
-          </button>
+          </a>
         </li>
       </ul>
     </div>
@@ -65,33 +65,30 @@ const { focused: nameInputFocus } = useFocus(nameInput)
 const { focused: addressInputFocus } = useFocus(addressInput)
 
 const url = ref('user/search')
-const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
-  .get()
-  .json()
+const {
+  execute: executeSearchUser,
+  data: users,
+  isFetching
+} = useCustomFetch(url, { immediate: false }).get().json()
 
 watchDebounced(
-  () => [input.value.name, input.value.address, nameInputFocus.value, addressInputFocus.value],
-  async ([name, address, isNameFocused, isAddressFocused]) => {
-    if (!name && !address) {
-      showDropdown.value = false
-      return
-    }
-
-    if (isNameFocused && name) {
+  () => [input.value.name, input.value.address],
+  async ([name, address]) => {
+    if (nameInputFocus.value && name) {
       url.value = 'user/search?name=' + name
       await executeSearchUser()
       showDropdown.value = true
-    } else if (isAddressFocused && address) {
+    } else if (addressInputFocus.value && address) {
       url.value = 'user/search?address=' + address
       await executeSearchUser()
       showDropdown.value = true
     }
   },
-  { debounce: 300, maxWait: 600 }
+  { debounce: 500, maxWait: 5000 }
 )
 
 const selectMember = (member: { name: string; address: string }) => {
-  input.value = member
+  input.value = { name: '', address: '' }
   emit('selectMember', member)
   showDropdown.value = false
 }
