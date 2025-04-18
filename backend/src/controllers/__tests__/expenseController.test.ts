@@ -123,22 +123,169 @@ describe("Expense Controller", () => {
 
     it("should return expenses for a valid team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([mockExpense]);
+      const findManySpy = vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
+        mockExpense,
+        {
+          ...mockExpense,
+          id: 2,
+          userAddress: "0xAnotherAddress",
+          status: "expired",
+        },
+        {
+          ...mockExpense,
+          id: 3,
+          userAddress: "0xYetAnotherAddress",
+          status: "limit-reached",
+        },
+      ]);
       vi.spyOn(prisma.expense, "update")
       vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1])
 
       const response = await request(app).get("/expenses").query({ teamId: 1 });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([{
-        ...mockExpense, 
-        status: "enabled",
-        balances: {
-          0: "0",
-          1: "0"
+      expect(response.body).toEqual([
+        {
+          ...mockExpense, 
+          status: "enabled",
+          balances: {
+            0: "0",
+            1: "0"
+          }
+        },
+        {
+          ...mockExpense,
+          userAddress: "0xAnotherAddress",
+          id: 2,
+          status: "expired",
+          balances: {
+            0: "N/A",
+            1: "N/A"
+          }
+        },
+        {
+          ...mockExpense,
+          userAddress: "0xYetAnotherAddress",
+          id: 3,
+          status: "limit-reached",
+          balances: {
+            0: "N/A",
+            1: "N/A"
+          } 
         }
-      }]);
+      ]);
+
+      findManySpy.mockReset();
     });
+
+    it("should filter return 400 if invalid status", async () => {
+      const response = await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "invalidStatus" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("Invalid status parameter")
+    }); 
+
+    it("should set correct status", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      const findManySpy = vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
+        mockExpense
+      ]);
+      vi.spyOn(prisma.expense, "update")
+      vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1])
+
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "all" });
+
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: undefined,
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+
+      findManySpy.mockClear();
+
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "expired" });
+
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "expired",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+
+      findManySpy.mockClear();
+
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "limit-reached" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "limit-reached",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "enabled" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "enabled",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "signed" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "signed",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1", status: "disabled" });
+      // Assert the value of whereClause 
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: "disabled",
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+      await request(app)
+        .get("/expenses")
+        .query({ teamId: "1" });
+      // Assert the value of whereClause
+      expect(findManySpy).toBeCalledWith({
+        where: {
+          teamId: 1,
+          status: undefined,
+        }, // Example expected value
+        orderBy: { createdAt: "desc" },
+      });
+      findManySpy.mockClear();
+    }); 
 
     it("should return 500 if there is a server error", async () => {
       vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Server error");
