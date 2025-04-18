@@ -38,7 +38,11 @@ const contractAddress = computed(
 const { result, error } = useQuery(
   gql`
     query GetBankTransactions($contractAddress: Bytes!) {
-      transactions(where: { contractAddress: $contractAddress }) {
+      transactions(
+        where: { contractAddress: $contractAddress }
+        orderBy: blockTimestamp
+        orderDirection: desc
+      ) {
         id
         from
         to
@@ -53,7 +57,11 @@ const { result, error } = useQuery(
       }
     }
   `,
-  { contractAddress }
+  { contractAddress },
+  {
+    pollInterval: 10000, // Poll every 10 seconds
+    fetchPolicy: 'cache-and-network'
+  }
 )
 
 const transactions = computed<BankTransaction[]>(() =>

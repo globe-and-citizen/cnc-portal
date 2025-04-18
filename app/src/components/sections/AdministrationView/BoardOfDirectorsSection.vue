@@ -21,27 +21,23 @@
       <div id="list-bod">
         <div v-if="((boardOfDirectors as Array<string>)?.length ?? 0) > 0 && !isLoading">
           <div class="overflow-x-auto">
-            <table class="table table-zebra text-center">
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Name</th>
-                  <th>Address</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(boardOfDirector, index) in boardOfDirectors" :key="index" class="hover">
-                  <th>{{ index + 1 }}</th>
-                  <td :data-test="`bod-member-name${index + 1}`">
-                    {{
-                      team.members?.filter((member) => member.address == boardOfDirector)[0]
-                        ?.name ?? 'Unknown'
-                    }}
-                  </td>
-                  <td>{{ boardOfDirector }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <TableComponent
+              :rows="
+                (boardOfDirectors as Array<string>)?.map((director, index) => ({
+                  index: index + 1,
+                  name:
+                    team.members?.filter((member) => member.address == director)[0]?.name ??
+                    'Unknown',
+                  address: director
+                }))
+              "
+              :columns="[
+                { key: 'index', label: 'No' },
+                { key: 'name', label: 'Name' },
+                { key: 'address', label: 'Address' }
+              ]"
+              :loading="isLoading"
+            />
           </div>
         </div>
       </div>
@@ -49,100 +45,102 @@
       <!-- Start Contract Owners Table -->
       <div class="overflow-x-auto">
         <h2 class="mb-5 text-center">Transfer Ownership (From Founders to Board of Directors)</h2>
-        <table class="table table-zebra text-center">
-          <thead>
-            <tr>
-              <th>Contract Name</th>
-              <th>Contract Owner</th>
-              <th>Transfer Ownership</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Bank</td>
-              <td>
-                <SkeletonLoading v-if="isLoadingBankOwner" class="w-full h-6" />
-                <h4>
-                  {{ bankOwner }} ({{
-                    bankOwner == boardOfDirectorsAddress
-                      ? 'Board of Directors Contract'
-                      : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ??
-                        'Unknown')
-                  }})
-                </h4>
-              </td>
-              <td class="flex justify-end">
-                <ButtonUI
-                  data-test="transfer-expense-ownership-button"
-                  :loading="
-                    bankOwner == currentAddress &&
-                    bankOwner != boardOfDirectorsAddress &&
-                    loadingTransferOwnership &&
-                    !isConfirmingTransferOwnership
-                  "
-                  :disabled="
-                    bankOwner == currentAddress &&
-                    bankOwner != boardOfDirectorsAddress &&
-                    loadingTransferOwnership &&
-                    !isConfirmingTransferOwnership
-                  "
-                  variant="primary"
-                  @click="
-                    async () =>
-                      transferBankOwnership({
-                        address: bankAddress,
-                        abi: BankABI,
-                        functionName: 'transferOwnership',
-                        args: [boardOfDirectorsAddress]
-                      })
-                  "
-                >
-                  Transfer bank ownership
-                </ButtonUI>
-              </td>
-            </tr>
-            <tr v-if="expenseAccountAddress">
-              <td>Expense A/c</td>
-              <td>
-                <SkeletonLoading v-if="isLoadingExpenseOwner" class="w-full h-6" />
-                <h4>
-                  {{ expenseOwner }} ({{
-                    expenseOwner == boardOfDirectorsAddress
-                      ? 'Board of Directors Contract'
-                      : (team.members?.filter((member) => member.address == expenseOwner)[0]
-                          ?.name ?? 'Unknown')
-                  }})
-                </h4>
-              </td>
-              <td class="flex justify-end">
-                <ButtonUI
-                  :loading="
-                    expenseOwner == currentAddress &&
-                    loadingTransferExpenseOwnership &&
-                    !isConfirmingExpenseTransferOwnership
-                  "
-                  :disabled="
-                    expenseOwner == currentAddress &&
-                    loadingTransferExpenseOwnership &&
-                    !isConfirmingExpenseTransferOwnership
-                  "
-                  class="btn btn-primary"
-                  @click="
-                    async () =>
-                      transferExpenseOwnership({
-                        address: expenseAccountAddress,
-                        abi: expenseAccountABI,
-                        functionName: 'transferOwnership',
-                        args: [boardOfDirectorsAddress]
-                      })
-                  "
-                >
-                  Transfer expense ownership
-                </ButtonUI>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <TableComponent
+          :rows="
+            [
+              {
+                name: 'Bank',
+                owner: bankOwner
+                  ? `${bankOwner} (${bankOwner == boardOfDirectorsAddress ? 'Board of Directors Contract' : (team.members?.filter((member) => member.address == bankOwner)[0]?.name ?? 'Unknown')})`
+                  : '',
+                action: 'bank'
+              },
+              expenseAccountAddress
+                ? {
+                    name: 'Expense A/c',
+                    owner: expenseOwner
+                      ? `${expenseOwner} (${expenseOwner == boardOfDirectorsAddress ? 'Board of Directors Contract' : (team.members?.filter((member) => member.address == expenseOwner)[0]?.name ?? 'Unknown')})`
+                      : '',
+                    action: 'expense'
+                  }
+                : undefined
+            ].filter((row): row is NonNullable<typeof row> => row !== undefined)
+          "
+          :columns="[
+            { key: 'name', label: 'Contract Name' },
+            { key: 'owner', label: 'Contract Owner' },
+            { key: 'action', label: 'Transfer Ownership' }
+          ]"
+          :loading="isLoadingBankOwner || isLoadingExpenseOwner"
+        >
+          <template #owner-data="{ row }">
+            <SkeletonLoading
+              v-if="isLoadingBankOwner && row.action === 'bank'"
+              class="w-full h-6"
+            />
+            <SkeletonLoading
+              v-if="isLoadingExpenseOwner && row.action === 'expense'"
+              class="w-full h-6"
+            />
+            <h4 v-else>{{ row.owner }}</h4>
+          </template>
+
+          <template #action-data="{ row }">
+            <ButtonUI
+              v-if="row.action === 'bank'"
+              data-test="transfer-expense-ownership-button"
+              :loading="
+                bankOwner == currentAddress &&
+                bankOwner != boardOfDirectorsAddress &&
+                loadingTransferOwnership &&
+                !isConfirmingTransferOwnership
+              "
+              :disabled="
+                bankOwner == currentAddress &&
+                bankOwner != boardOfDirectorsAddress &&
+                loadingTransferOwnership &&
+                !isConfirmingTransferOwnership
+              "
+              variant="primary"
+              @click="
+                async () =>
+                  transferBankOwnership({
+                    address: bankAddress,
+                    abi: BankABI,
+                    functionName: 'transferOwnership',
+                    args: [boardOfDirectorsAddress]
+                  })
+              "
+            >
+              Transfer bank ownership
+            </ButtonUI>
+            <ButtonUI
+              v-else
+              :loading="
+                expenseOwner == currentAddress &&
+                loadingTransferExpenseOwnership &&
+                !isConfirmingExpenseTransferOwnership
+              "
+              :disabled="
+                expenseOwner == currentAddress &&
+                loadingTransferExpenseOwnership &&
+                !isConfirmingExpenseTransferOwnership
+              "
+              class="btn btn-primary"
+              @click="
+                async () =>
+                  transferExpenseOwnership({
+                    address: expenseAccountAddress,
+                    abi: expenseAccountABI,
+                    functionName: 'transferOwnership',
+                    args: [boardOfDirectorsAddress]
+                  })
+              "
+            >
+              Transfer expense ownership
+            </ButtonUI>
+          </template>
+        </TableComponent>
       </div>
       <!-- End Contract Owners Table -->
       <BoDAction :team="team" :board-of-directors="(boardOfDirectors as Address[]) ?? []" />
@@ -166,6 +164,7 @@ import BankABI from '@/artifacts/abi/bank.json'
 import BoDABI from '@/artifacts/abi/bod.json'
 import expenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ButtonUI from '@/components/ButtonUI.vue'
+import TableComponent from '@/components/TableComponent.vue'
 
 const props = defineProps<{
   team: Team

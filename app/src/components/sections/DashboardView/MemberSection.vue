@@ -36,7 +36,7 @@
         >
           <template #member-data="{ row }">
             <UserComponent
-              :user="{ name: row.name, address: row.address, avatarUrl: row.avatarUrl }"
+              :user="{ name: row.name, address: row.address, imageUrl: row.imageUrl }"
             />
           </template>
           <template #wage-data="{ row }">

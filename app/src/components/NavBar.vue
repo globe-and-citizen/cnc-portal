@@ -27,7 +27,10 @@
             <div class="w-8 sm:w-10 rounded-full ring ring-white ring-opacity-30 ring-offset-2">
               <img
                 alt="User avatar"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                :src="
+                  imageUrl ||
+                  'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+                "
                 class="transform transition duration-300 ease-in-out hover:scale-110"
               />
             </div>
@@ -71,9 +74,13 @@
 import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import { useUserDataStore } from '@/stores'
+import { storeToRefs } from 'pinia'
 
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { logout } = useAuth()
+const userStore = useUserDataStore()
+const { imageUrl } = storeToRefs(userStore)
 
 defineProps<{
   isCollapsed: boolean
