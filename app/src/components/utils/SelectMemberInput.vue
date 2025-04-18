@@ -30,17 +30,14 @@
     >
       <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
         <li v-for="user in users.users" :key="user.address">
-          <a
+          <button
+            type="button"
             :data-test="`user-dropdown-${user.address}`"
-            @click="
-              () => {
-                selectMember(user)
-                showDropdown = false
-              }
-            "
+            @click="selectMember(user)"
+            class="w-full text-left px-4 py-2 hover:bg-base-200 active:bg-base-300"
           >
             {{ user.name }} | {{ user.address }}
-          </a>
+          </button>
         </li>
       </ul>
     </div>
@@ -49,8 +46,8 @@
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { ref, useTemplateRef, watch } from 'vue'
-import { debouncedWatch, useFocus } from '@vueuse/core'
+import { ref, useTemplateRef } from 'vue'
+import { useFocus, watchDebounced } from '@vueuse/core'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
@@ -72,23 +69,23 @@ const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immedi
   .get()
   .json()
 
-watch(
-  [nameInputFocus, addressInputFocus, () => input.value.name, () => input.value.address],
-  ([nameFocused, addressFocused, name, address]) => {
-    showDropdown.value = (nameFocused && name.length > 0) || (addressFocused && address.length > 0)
-  }
-)
+watchDebounced(
+  () => [input.value.name, input.value.address, nameInputFocus.value, addressInputFocus.value],
+  async ([name, address, isNameFocused, isAddressFocused]) => {
+    if (!name && !address) {
+      showDropdown.value = false
+      return
+    }
 
-debouncedWatch(
-  input.value,
-  async () => {
-    if (nameInputFocus.value) {
-      url.value = 'user/search?name=' + input.value.name
+    if (isNameFocused && name) {
+      url.value = 'user/search?name=' + name
+      await executeSearchUser()
+      showDropdown.value = true
+    } else if (isAddressFocused && address) {
+      url.value = 'user/search?address=' + address
+      await executeSearchUser()
+      showDropdown.value = true
     }
-    if (addressInputFocus.value) {
-      url.value = 'user/search?address=' + input.value.address
-    }
-    await executeSearchUser()
   },
   { debounce: 300, maxWait: 600 }
 )
@@ -96,5 +93,6 @@ debouncedWatch(
 const selectMember = (member: { name: string; address: string }) => {
   input.value = member
   emit('selectMember', member)
+  showDropdown.value = false
 }
 </script>
