@@ -61,7 +61,7 @@ describe('SelectMemberInput.vue', () => {
     await nameInput.setValue('John')
     await wrapper.vm.$nextTick()
     // Wait for debounce
-    await vi.advanceTimersByTime(300)
+    await vi.advanceTimersByTime(500)
     await wrapper.vm.$nextTick()
 
     expect(
