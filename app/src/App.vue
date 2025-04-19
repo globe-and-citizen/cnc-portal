@@ -62,6 +62,7 @@
         @done="
           () => {
             appStore.showAddTeamModal = false
+            teamStore.teamsMeta.reloadTeams()
             // TODO: Redirection depending on the current route
           }
         "
@@ -91,13 +92,14 @@ import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
-import { useAppStore } from './stores'
+import { useAppStore, useTeamStore } from './stores'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const appStore = useAppStore()
 const { isDisconnected } = useAccount()
 const { logout } = useAuth()
+const teamStore = useTeamStore()
 const toggleSide = ref(false)
 const showModal = ref(false)
 
