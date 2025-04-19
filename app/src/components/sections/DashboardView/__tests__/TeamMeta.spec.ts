@@ -2,8 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useToastStore } from '@/stores/useToastStore'
 import { setActivePinia, createPinia } from 'pinia'
 import type { Team } from '@/types/team'
 
@@ -19,14 +17,9 @@ vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useRoute: vi.fn(),
     useRouter: vi.fn()
   }
 })
-
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: vi.fn()
-}))
 
 describe('TeamMeta.vue ', () => {
   let wrapper: ReturnType<typeof mount>
@@ -47,31 +40,9 @@ describe('TeamMeta.vue ', () => {
     teamContracts: []
   }
 
-  const mockRoute = {
-    params: {
-      id: '1'
-    }
-  }
-
-  const mockRouter = {
-    push: vi.fn()
-  }
-
-  const addSuccessToast = vi.fn()
-  const addErrorToast = vi.fn()
-
   // Setup before each test
   beforeEach(() => {
-    interface mockReturn {
-      mockReturnValue: (address: object) => {}
-    }
     setActivePinia(createPinia())
-    ;(useRoute as unknown as mockReturn).mockReturnValue(mockRoute)
-    ;(useRouter as unknown as mockReturn).mockReturnValue(mockRouter)
-    ;(useToastStore as unknown as mockReturn).mockReturnValue({
-      addSuccessToast,
-      addErrorToast
-    })
 
     wrapper = mount(TeamMeta, {
       props: {
