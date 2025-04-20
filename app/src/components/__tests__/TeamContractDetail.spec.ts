@@ -5,11 +5,13 @@ import { createPinia, setActivePinia } from 'pinia'
 import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
 import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 const campaignAbi = AdCampaignArtifact.abi
-//import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
 
 const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
 const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })
+export const mockErrorSetCostPerClick = ref<Error | null>(null)
+export const mockErrorSetCostPerImpression = ref<Error | null>(null)
 
 const mockUseWaitForTransactionReceipt = {
   data: ref({ contractAddress: '0xDEADBEEF' }),
@@ -28,7 +30,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
       const current = useWriteCallCount++
       return {
         writeContract: current === 0 ? setCostPerClickMock : setCostPerImpressionMock,
-        error: ref(null),
+        error: current === 0 ? mockErrorSetCostPerClick : mockErrorSetCostPerImpression,
         isPending: ref(false),
         data: ref(null)
       }
@@ -68,20 +70,51 @@ describe('TeamContractsDetail.vue', () => {
     mockUseWaitForTransactionReceipt.isLoading.value = false
   })
 
-  it('renders table headers correctly', () => {
+  it('renders table headers and  rows correctly based on key types', () => {
+    const datas = [
+      { key: 'costPerClick', value: '0.1' }, // should render input
+      { key: 'bankAddress', value: '0xABC' }, // should render AddressToolTip
+      { key: 'status', value: 'active' } // should render plain text
+    ]
     const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: testData,
-        contractAddress: contractAddress,
-        reset: true
-      }
+      props: { datas, contractAddress, reset: true }
     })
-
     // Check that table headers exist and are correct
     const headers = wrapper.findAll('th')
     expect(headers[0].text()).toBe('#')
     expect(headers[1].text()).toBe('Name')
     expect(headers[2].text()).toBe('Value')
+    const rows = wrapper.findAll('tbody tr')
+    // Ligne costPerClick
+    const inputCell = rows[0].find('input')
+    expect(inputCell.exists()).toBe(true)
+    expect(rows[0].text()).toContain('ETH')
+    // Ligne bankAddress
+    const addressCell = rows[1].findComponent({ name: 'AddressToolTip' })
+    expect(addressCell.exists()).toBe(true)
+    // Ligne status
+    expect(rows[2].text()).toContain('active')
+  })
+
+  it('calls submit and reads props.datas', async () => {
+    const datas = [
+      { key: 'costPerClick', value: '0.2' },
+      { key: 'costPerImpression', value: '0.4' }
+    ]
+    const wrapper = mount(TeamContractsDetail, {
+      props: {
+        datas,
+        contractAddress,
+        reset: true
+      }
+    })
+    wrapper.vm.initialized = true
+    await flushPromises()
+    const button = wrapper.find('button')
+    await button.trigger('click')
+    await flushPromises()
+    expect(setCostPerClickMock).toHaveBeenCalled()
+    expect(setCostPerImpressionMock).toHaveBeenCalled()
   })
 
   it('renders table rows based on props', () => {
@@ -92,18 +125,15 @@ describe('TeamContractsDetail.vue', () => {
         reset: true
       }
     })
-
     // Ensure that the number of rows matches the testData length
     const rows = wrapper.findAll('tbody tr')
     expect(rows.length).toBe(testData.length)
-
     // Check first row values
     expect(rows[0].find('th').text()).toBe('1') // Index
     expect(rows[0].findAll('td')[0].text()).toBe('costPerClick') // Name
     const firstRowInput = rows[0].findAll('td')[1].find('input')
     expect(firstRowInput.element.value).toBe('0.1') // Value
     expect(rows[0].findAll('td')[1].text()).toContain('ETH') // Currency
-
     // Check second row values
     expect(rows[1].find('th').text()).toBe('2') // Index
     expect(rows[1].findAll('td')[0].text()).toBe('costPerImpression') // Name
@@ -112,49 +142,42 @@ describe('TeamContractsDetail.vue', () => {
     expect(rows[1].findAll('td')[1].text()).toContain('ETH') // Currency
   })
 
-  it('renders table rows correctly when no data is passed', () => {
-    const wrapper = mount(TeamContractsDetail, {
+  it('renders table rows correctly for valid, empty, and null data', async () => {
+    const wrapperValid = mount(TeamContractsDetail, {
       props: {
-        datas: [],
-        contractAddress: contractAddress,
-        reset: true
-      }
-    })
-
-    // Ensure that no rows are rendered
-    const rows = wrapper.findAll('tbody tr')
-    expect(rows.length).toBe(0)
-  })
-
-  it('does not call update functions if values have not changed', async () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: getClonedTestData(), // ensure fresh data
+        datas: [
+          { key: 'costPerClick', value: '0.1' },
+          { key: 'costPerImpression', value: '0.5' }
+        ],
         contractAddress,
         reset: true
       }
     })
+    const rowsValid = wrapperValid.findAll('tbody tr')
+    expect(rowsValid.length).toBe(2)
+    expect(rowsValid[0].find('th').text()).toBe('1')
+    expect(rowsValid[0].text()).toContain('costPerClick')
+    expect(rowsValid[1].text()).toContain('costPerImpression')
+    const wrapperEmpty = mount(TeamContractsDetail, {
+      props: {
+        datas: [],
+        contractAddress,
+        reset: true
+      }
+    })
+    const rowsEmpty = wrapperEmpty.findAll('tbody tr')
+    expect(rowsEmpty.length).toBe(0)
 
-    await flushPromises()
-
-    //  simulate "already initialized" state
-    //wrapper.vm.initialized = true
-    wrapper.vm.originalValues = {
-      costPerClick: 0.1,
-      costPerImpression: 0.5
-    }
-    wrapper.vm.originalCostPerClick = 0.1
-    wrapper.vm.originalCostPerImpression = 0.5
-
-    // Submit without any change
-    await wrapper.find('button').trigger('click')
-    await flushPromises()
-
-    //  Expect no update functions were called
-    expect(setCostPerClickMock).not.toHaveBeenCalled()
-    expect(setCostPerImpressionMock).not.toHaveBeenCalled()
+    const wrapperNull = mount(TeamContractsDetail, {
+      props: {
+        datas: null as unknown as { key: string; value: string }[],
+        contractAddress,
+        reset: true
+      }
+    })
+    const rowsNull = wrapperNull.findAll('tbody tr')
+    expect(rowsNull.length).toBe(0)
   })
-
   it('calls setCostPerClick and setCostPerImpression when save button is clicked with changed values', async () => {
     const cloned = getClonedTestData()
 
@@ -172,22 +195,17 @@ describe('TeamContractsDetail.vue', () => {
         }
       }
     })
-
     await flushPromises()
     wrapper.vm.initialized = true
-
     // Modify input values to simulate user editing them
     const inputCostPerClick = wrapper.findAll('input')[0]
     await inputCostPerClick.setValue('0.2')
     const inputCostPerImpression = wrapper.findAll('input')[1]
     await inputCostPerImpression.setValue('0.4')
-
     // Click the save button
     await wrapper.find('button').trigger('click')
-
     // Wait for Vue to process updates
     await flushPromises()
-
     // Check that the correct functions were called
     expect(setCostPerClickMock).toHaveBeenCalledWith({
       address: contractAddress,
@@ -195,7 +213,6 @@ describe('TeamContractsDetail.vue', () => {
       functionName: 'setCostPerClick',
       args: [200000000000000000n]
     })
-
     expect(setCostPerImpressionMock).toHaveBeenCalledWith({
       address: contractAddress,
       abi: campaignAbi,
@@ -206,67 +223,37 @@ describe('TeamContractsDetail.vue', () => {
     // expect(setCostPerImpressionMock).toHaveBeenCalledWith(contractAddress, '0.4')
   })
 
-  it('updates value correctly when input event is triggered', async () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: testData,
-        contractAddress: contractAddress,
-        reset: true
-      }
-    })
-
-    // Simulate user input to trigger updateValue method
-    const inputCostPerClick = wrapper.findAll('input')[0]
-    await inputCostPerClick.setValue('0.2')
-
-    await wrapper.vm.$nextTick()
-    const emittedEvents = wrapper.emitted('update:datas')
-    expect(emittedEvents).toBeTruthy()
-    const firstEvent = emittedEvents?.[0] as unknown[]
-    expect(firstEvent).toBeTruthy()
-    const firstEventData = firstEvent[0] as { key: string; value: string }[]
-    expect(firstEventData[0].value).toBe('0.2')
-  })
-
-  it('renders table rows correctly when data is null', () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: null as unknown as { key: string; value: string }[],
-        contractAddress: contractAddress,
-        reset: true
-      }
-    })
-
-    // Ensure that no rows are rendered
-    const rows = wrapper.findAll('tbody tr')
-    expect(rows.length).toBe(0)
-  })
-
   it('shows error toast and does not call setCostPerClick if costPerClick is zero or negative', async () => {
+    const { addErrorToast } = useToastStore()
     const datas = getClonedTestData()
-    datas[0].value = '0' // costPerClick = 0
-
+    datas[0].value = '2' // costPerClick = 0
     const wrapper = mount(TeamContractsDetail, {
       props: {
-        datas,
+        datas: [], // empty at mount
         contractAddress,
         reset: true
       }
     })
 
     await flushPromises()
-    wrapper.vm.initialized = true
 
+    // now simulate reactive update to trigger the watcher
+    await wrapper.setProps({ datas })
+    const inputCostPerClick = wrapper.findAll('input')[0]
+    await inputCostPerClick.setValue('0')
+    await flushPromises()
+    wrapper.vm.initialized = true
     await wrapper.find('button').trigger('click')
     await flushPromises()
-
+    expect(addErrorToast).toHaveBeenCalledWith('Cost per click should be greater than 0')
     expect(setCostPerClickMock).not.toHaveBeenCalled()
   })
 
-  it('shows error toast and does not call setCostPerImpression if costPerImpression is zero or negative', async () => {
-    const datas = getClonedTestData()
-    datas[1].value = '0' // costPerImpression = 0
-
+  it('does not call update functions when values have not changed', async () => {
+    const datas = [
+      { key: 'costPerClick', value: '0.1' },
+      { key: 'costPerImpression', value: '0.5' }
+    ]
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas,
@@ -274,22 +261,71 @@ describe('TeamContractsDetail.vue', () => {
         reset: true
       }
     })
-
     await flushPromises()
     wrapper.vm.initialized = true
-
+    wrapper.vm.originalValues = {
+      costPerClick: 0.1,
+      costPerImpression: 0.5
+    }
+    wrapper.vm.originalCostPerClick = 0.1
+    wrapper.vm.originalCostPerImpression = 0.5
+    // Submit sans modification
     await wrapper.find('button').trigger('click')
     await flushPromises()
-
+    expect(setCostPerClickMock).not.toHaveBeenCalled()
     expect(setCostPerImpressionMock).not.toHaveBeenCalled()
+  })
+
+  it('emits update:datas when inputs are changed', async () => {
+    const wrapper = mount(TeamContractsDetail, {
+      props: {
+        datas: testData,
+        contractAddress,
+        reset: true
+      }
+    })
+    const inputs = wrapper.findAll('input')
+    // Change first input
+    await inputs[0].setValue('0.2')
+    await flushPromises()
+    // Change second input
+    await inputs[1].setValue('0.6')
+    await flushPromises()
+    const emitted = wrapper.emitted('update:datas')
+    expect(emitted).toBeTruthy()
+    const firstEventData = emitted![0][0] as { key: string; value: string }[]
+    const secondEventData = emitted![1][0] as { key: string; value: string }[]
+    expect(firstEventData[0].value).toBe('0.2')
+    expect(secondEventData[1].value).toBe('0.6')
+  })
+
+  it('shows error toast and does not call setCostPerImpression if costPerImpression is zero or negative', async () => {
+    const { addErrorToast } = useToastStore()
+    const datas = getClonedTestData()
+    datas[1].value = '1' // costPerImpression = 0
+    const wrapper = mount(TeamContractsDetail, {
+      props: {
+        datas: [],
+        contractAddress,
+        reset: true
+      }
+    })
+    await flushPromises()
+    await wrapper.setProps({ datas })
+    const inputCostPerImpression = wrapper.findAll('input')[1]
+    await inputCostPerImpression.setValue('0')
+    await flushPromises()
+    wrapper.vm.initialized = true
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    expect(setCostPerImpressionMock).not.toHaveBeenCalled()
+    expect(addErrorToast).toHaveBeenCalledWith('Cost per impression should be greater than 0')
   })
 
   it('shows error toast if setCostPerClick returns failure status', async () => {
     setCostPerClickMock.mockResolvedValueOnce({ status: 0 }) // simulate failure
-
     const datas = getClonedTestData()
     datas[0].value = '0.2'
-
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas,
@@ -297,80 +333,10 @@ describe('TeamContractsDetail.vue', () => {
         reset: true
       }
     })
-
     await flushPromises()
     wrapper.vm.initialized = true
-
     await wrapper.find('button').trigger('click')
     await flushPromises()
-
     expect(setCostPerClickMock).toHaveBeenCalled()
   })
-
-  it('shows error toast if submit throws error', async () => {
-    setCostPerClickMock.mockRejectedValueOnce(new Error('fail'))
-
-    const datas = getClonedTestData()
-    datas[0].value = '0.2'
-
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas,
-        contractAddress,
-        reset: true
-      }
-    })
-
-    await flushPromises()
-    wrapper.vm.initialized = true
-
-    await wrapper.find('button').trigger('click')
-    await flushPromises()
-
-    expect(setCostPerClickMock).toHaveBeenCalled()
-  })
-
-  // it('executes success logic after confirming costPerClick update', async () => {
-  //   const datas = getClonedTestData()
-  //   datas[0].value = '0.2'
-  //   const { addSuccessToast } = useToastStore()
-
-  //   const wrapper = mount(TeamContractsDetail, {
-  //     props: {
-  //       datas,
-  //       contractAddress,
-  //       reset: true
-  //     }
-  //   })
-
-  //   await flushPromises()
-
-  //   const vm = wrapper.vm as ComponentPublicInstance<typeof TeamContractsDetail>
-  //   vm.pendingTransactions = 0
-  //   vm.initialized = true
-  //   vm.pendingTransactions = 1
-  //   vm.originalValues = { costPerClick: 0.2 }
-
-  //   // simulate clicking the button to trigger writeContract
-  //   await wrapper.find('input[type="number"]').setValue('0.2')
-  //   await wrapper.find('button').trigger('click')
-  //   await flushPromises()
-
-  //   // manually simulate watch state transition
-  //   vm.isConfirmedSetCostPerClick = true
-
-  //   // simulate the watcher callback logic
-  //   const wasConfirming = true
-  //   const isConfirming = false
-
-  //   if (wasConfirming && !isConfirming && vm.isConfirmedSetCostPerClick) {
-  //     vm.pendingTransactions--
-
-  //     expect(vm.pendingTransactions).toBe(0)
-
-  //     expect(addSuccessToast).toHaveBeenCalledWith('Cost per click updated successfully')
-  //     expect(vm.originalCostPerClick).toBe(0.2)
-  //     expect(wrapper.emitted('closeContractDataDialog')).toBeTruthy()
-  //   }
-  // })
 })
