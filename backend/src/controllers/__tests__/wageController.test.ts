@@ -89,7 +89,6 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "findMany").mockResolvedValue([]);
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
-      User has a wage not chained
       const response = await request(app)
         .put("/wage")
         .set("address", "0xOwnerAddress")
