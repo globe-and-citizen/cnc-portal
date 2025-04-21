@@ -70,28 +70,10 @@ describe("Wage Controller", () => {
       );
     });
 
-    it("should return 404 if member is not part of the team", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
-
-      const response = await request(app).put("/wage").send({
-        teamId: 1,
-        userAddress: "0xMemberAddress",
-        cashRatePerHour: 50,
-        tokenRatePerHour: 100,
-        maximumHoursPerWeek: 40,
-      });
-
-      expect(response.status).toBe(404);
-      expect(response.body.message).toBe("Member not found in the team");
-    });
 
     it("should return 403 if caller is not the owner of the team", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(mockTeam);
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce({
-        ...mockTeam,
-        ownerAddress: "",
-      });
-      // vi.spyOn(prisma.team, "findFirst").mockRejectedValueOnce("Server error");
+
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(null);
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
       const response = await request(app).put("/wage").send({
         teamId: 1,

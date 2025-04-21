@@ -58,11 +58,6 @@ export const setWage = async (req: Request, res: Response) => {
   }
 
   try {
-    // check if the member is part of the provided team
-    if (!(await isUserMemberOfTeam(userAddress, teamId))) {
-      return errorResponse(404, "Member not found in the team", res);
-    }
-
     // Check if the caller is the owner of the team
     if (!(await isOwnerOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not the owner of the team", res);
@@ -106,7 +101,7 @@ export const setWage = async (req: Request, res: Response) => {
 
       // This should not be possible, but if it is, return an error
       if (wages.length > 0) {
-        return errorResponse(400, "User has a wage not chained", res);
+        return errorResponse(500, "User has a wage not chained", res);
       }
 
       // Create first wage
@@ -186,8 +181,7 @@ export const isUserMemberOfTeam = async (
 };
 
 export const isOwnerOfTeam = async (userAddress: Address, teamId: number) => {
-  let team;
-  team = await prisma.team.findFirst({
+  const team = await prisma.team.findFirst({
     where: {
       id: teamId,
       owner: {
