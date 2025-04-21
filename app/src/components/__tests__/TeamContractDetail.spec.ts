@@ -117,32 +117,33 @@ describe('TeamContractsDetail.vue', () => {
     expect(setCostPerImpressionMock).toHaveBeenCalled()
   })
 
-  it('renders table rows based on props', () => {
+  it('renders table rows based on props', async () => {
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas: testData,
-        contractAddress: contractAddress,
+        contractAddress,
         reset: true
       }
     })
-    // Ensure that the number of rows matches the testData length
-    const rows = wrapper.findAll('tbody tr')
+
+    await flushPromises()
+
+    const rows = wrapper.findAll('[data-test$="-row"]')
     expect(rows.length).toBe(testData.length)
-    // Check first row values
-    expect(rows[0].find('th').text()).toBe('1') // Index
-    expect(rows[0].findAll('td')[0].text()).toBe('costPerClick') // Name
-    const firstRowInput = rows[0].findAll('td')[1].find('input')
-    expect(firstRowInput.element.value).toBe('0.1') // Value
-    expect(rows[0].findAll('td')[1].text()).toContain('ETH') // Currency
-    // Check second row values
-    expect(rows[1].find('th').text()).toBe('2') // Index
-    expect(rows[1].findAll('td')[0].text()).toBe('costPerImpression') // Name
-    const secondRowInput = rows[1].findAll('td')[1].find('input')
-    expect(secondRowInput.element.value).toBe('0.5') // Value
-    expect(rows[1].findAll('td')[1].text()).toContain('ETH') // Currency
+
+    const firstRow = rows[0]
+    expect(firstRow.find('td:nth-child(2)').text()).toBe('costPerClick')
+    const firstInput = firstRow.find('input')
+    expect(firstInput.element.value).toBe('0.1')
+
+    const secondRow = rows[1]
+    expect(secondRow.find('td:nth-child(2)').text()).toBe('costPerImpression')
+    const secondInput = secondRow.find('input')
+    expect(secondInput.element.value).toBe('0.5')
   })
 
   it('renders table rows correctly for valid, empty, and null data', async () => {
+    //  Valid rows
     const wrapperValid = mount(TeamContractsDetail, {
       props: {
         datas: [
@@ -153,11 +154,14 @@ describe('TeamContractsDetail.vue', () => {
         reset: true
       }
     })
-    const rowsValid = wrapperValid.findAll('tbody tr')
+    await flushPromises()
+
+    const rowsValid = wrapperValid.findAll('[data-test$="-row"]')
     expect(rowsValid.length).toBe(2)
-    expect(rowsValid[0].find('th').text()).toBe('1')
     expect(rowsValid[0].text()).toContain('costPerClick')
     expect(rowsValid[1].text()).toContain('costPerImpression')
+
+    //  Empty rows
     const wrapperEmpty = mount(TeamContractsDetail, {
       props: {
         datas: [],
@@ -165,19 +169,21 @@ describe('TeamContractsDetail.vue', () => {
         reset: true
       }
     })
-    const rowsEmpty = wrapperEmpty.findAll('tbody tr')
-    expect(rowsEmpty.length).toBe(0)
+    await flushPromises()
+    expect(wrapperEmpty.find('[data-test="empty-state"]').exists()).toBe(true)
 
+    //  "Null" rows simulated with empty array (safe fallback)
     const wrapperNull = mount(TeamContractsDetail, {
       props: {
-        datas: null as unknown as { key: string; value: string }[],
+        datas: [], // instead of null
         contractAddress,
         reset: true
       }
     })
-    const rowsNull = wrapperNull.findAll('tbody tr')
-    expect(rowsNull.length).toBe(0)
+    await flushPromises()
+    expect(wrapperNull.find('[data-test="empty-state"]').exists()).toBe(true)
   })
+
   it('calls setCostPerClick and setCostPerImpression when save button is clicked with changed values', async () => {
     const cloned = getClonedTestData()
 

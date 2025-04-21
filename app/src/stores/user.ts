@@ -5,12 +5,14 @@ export const useUserDataStore = defineStore('user', () => {
   const userName = useStorage('name', '')
   const userAddress = useStorage('ownerAddress', '')
   const userNonce = useStorage('nonce', '')
+  const userImageUrl = useStorage('imageUrl', '')
   const isAuth = useStorage('isAuth', false)
 
-  function setUserData(name: string, address: string, nonce: string) {
+  function setUserData(name: string, address: string, nonce: string, imageUrl: string) {
     userName.value = name
     userAddress.value = address
     userNonce.value = nonce
+    userImageUrl.value = imageUrl
   }
 
   function clearUserData() {
@@ -28,6 +30,7 @@ export const useUserDataStore = defineStore('user', () => {
     name: userName,
     address: userAddress,
     nonce: userNonce,
+    imageUrl: userImageUrl,
     isAuth,
     setUserData,
     clearUserData,

@@ -38,7 +38,8 @@ interface ComponentData {
 describe('EditUserForm', () => {
   const user = {
     name: 'John Doe',
-    address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+    address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+    imageUrl: 'https://example.com/image.jpg'
   }
 
   const createComponent = (props?: {
@@ -46,6 +47,7 @@ describe('EditUserForm', () => {
     modelValue?: {
       name: string
       address: string
+      imageUrl: string
     }
   }) => {
     return mount(EditUserForm, {

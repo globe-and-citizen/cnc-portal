@@ -13,7 +13,7 @@ describe('User Data Store', () => {
     const address = '0x123456789'
     const nonce = '123'
 
-    userStore.setUserData(name, address, nonce)
+    userStore.setUserData(name, address, nonce, '')
 
     expect(userStore.name).toBe(name)
     expect(userStore.address).toBe(address)
@@ -26,7 +26,7 @@ describe('User Data Store', () => {
     const address = '0x123456789'
     const nonce = '123'
 
-    userStore.setUserData(name, address, nonce)
+    userStore.setUserData(name, address, nonce, '')
     userStore.clearUserData()
 
     expect(userStore.name).toBe('')

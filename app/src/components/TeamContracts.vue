@@ -1,51 +1,62 @@
 <template>
   <div id="team-contracts" class="overflow-x-auto">
-    <table class="table">
-      <!-- head -->
-      <thead>
-        <tr>
-          <th></th>
-          <th>Type</th>
-          <th>Contract Address</th>
-          <th>Admins</th>
-          <th>Details</th>
-          <th>Events</th>
-          <!-- Added a new column for contract details -->
-        </tr>
-      </thead>
-      <tbody>
-        <!-- row 1 -->
-        <tr v-for="(contract, index) in contracts" :key="index" class="bg-base-200">
-          <th>{{ index + 1 }}</th>
-          <td>{{ contract.type }}</td>
-          <td><AddressToolTip :address="contract.address" class="text-xs" /></td>
-          <td>
-            <button
-              :disabled="contract.type !== 'Campaign'"
-              @click="openAdminsModal(contract, index + 1)"
-              class="btn btn-ghost btn-xs"
-              data-test="open-admin-modal-btn"
-            >
-              <IconifyIcon icon="heroicons-outline:users" class="size-6" />
-            </button>
-          </td>
-          <td>
-            <button
-              :disabled="contract.type !== 'Campaign'"
-              @click="openContractDataModal(contract.address)"
-              class="btn btn-ghost btn-xs"
-            >
-              View Details
-            </button>
-          </td>
-          <td>
-            <button @click="openEventsModal(contract.address)" class="btn btn-ghost btn-xs">
-              View Events
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <TableComponent
+      :rows="
+        contracts.map((contract, index) => ({
+          ...contract,
+          index: index + 1
+        }))
+      "
+      :columns="[
+        { key: 'index', label: '#' },
+        { key: 'type', label: 'Type' },
+        { key: 'address', label: 'Contract Address' },
+        { key: 'admins', label: 'Admins' },
+        { key: 'details', label: 'Details' },
+        { key: 'events', label: 'Events' }
+      ]"
+    >
+      <template #address-data="{ row }">
+        <AddressToolTip :address="row.address" class="text-xs" />
+      </template>
+
+      <template #admins-data="{ row }">
+        <button
+          :disabled="row.type !== 'Campaign'"
+          @click="
+            openAdminsModal(
+              {
+                address: row.address,
+                type: row.type,
+                deployer: row.deployer,
+                admins: row.admins
+              },
+              row.index
+            )
+          "
+          class="btn btn-ghost btn-xs"
+          data-test="open-admin-modal-btn"
+        >
+          <IconifyIcon icon="heroicons-outline:users" class="size-6" />
+        </button>
+      </template>
+
+      <template #details-data="{ row }">
+        <button
+          :disabled="row.type !== 'Campaign'"
+          @click="openContractDataModal(row.address)"
+          class="btn btn-ghost btn-xs"
+        >
+          View Details
+        </button>
+      </template>
+
+      <template #events-data="{ row }">
+        <button @click="openEventsModal(row.address)" class="btn btn-ghost btn-xs">
+          View Events
+        </button>
+      </template>
+    </TableComponent>
 
     <!-- Admin Modal -->
     <ModalComponent v-model="contractAdminDialog.show">
@@ -88,6 +99,9 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
+import { getContractData } from '@/composables/useContractFunctions'
+import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+import TableComponent from '@/components/TableComponent.vue'
 
 import type {
   GetEventsGroupedByCampaignCodeResult,
@@ -95,6 +109,7 @@ import type {
 } from '@/services/AddCampaignService'
 import { useToastStore } from '@/stores/useToastStore'
 const { addErrorToast } = useToastStore()
+import type { Abi, Address } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from './AddressToolTip.vue'
@@ -104,6 +119,7 @@ defineProps<{ contracts: TeamContract[]; teamId: string }>()
 // Initialize AddCampaignService instance
 const addCamapaignService = new AddCampaignService()
 
+const campaignAbi = AdCampaignArtifact.abi as Abi
 // Modal for showing contract admins
 const contractAdminDialog = ref({
   show: false,
@@ -157,7 +173,7 @@ const openAdminsModal = (contract: TeamContract, range: number) => {
 }
 
 // Open Events Modal
-const openEventsModal = async (contractAddress: string) => {
+const openEventsModal = async (contractAddress: Address) => {
   const result = (await addCamapaignService.getEventsGroupedByCampaignCode(
     contractAddress
   )) as GetEventsGroupedByCampaignCodeResult
@@ -175,8 +191,8 @@ const openEventsModal = async (contractAddress: string) => {
 }
 
 // Open Contract Data Modal
-const openContractDataModal = async (contractAddress: string) => {
-  contractDataDialog.value.datas = await addCamapaignService.getContractData(contractAddress)
+const openContractDataModal = async (contractAddress: Address) => {
+  contractDataDialog.value.datas = await getContractData(contractAddress, campaignAbi)
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
   contractDataDialog.value.key++

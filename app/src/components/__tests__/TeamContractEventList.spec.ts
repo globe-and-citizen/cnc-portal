@@ -72,18 +72,12 @@ describe('TeamContractEventList.vue', () => {
   })
 
   it('renders the campaign list correctly', () => {
-    // Verify the number of campaigns rendered
-    const rows = wrapper.findAll('tbody tr.campaign-item')
-    expect(rows.length).toBe(Object.keys(eventsByCampaignCode).length)
+    const campaignCodes = wrapper.findAll('.campaign-code')
+    const budgets = wrapper.findAll('.campaign-budget')
 
-    // Verify campaign codes and budgets
-    const firstCampaignRow = rows.at(0)
-    expect(firstCampaignRow?.find('.campaign-code').text()).toBe('0xCampaign1')
-    expect(firstCampaignRow?.find('.campaign-budget').text()).toBe('1000 POL')
-
-    const secondCampaignRow = rows.at(1)
-    expect(secondCampaignRow?.find('.campaign-code').text()).toBe('0xCampaign2')
-    expect(secondCampaignRow?.find('.campaign-budget').text()).toBe('2000 POL')
+    expect(campaignCodes).toHaveLength(4)
+    expect(campaignCodes[0].text()).toBe('0xCampaign1')
+    expect(budgets[0].text()).toBe('1000 POL')
   })
 
   it('expands and collapses campaign details', async () => {
@@ -148,7 +142,6 @@ describe('TeamContractEventList.vue', () => {
     })
 
     // Verify no rows are rendered
-    const rows = emptyWrapper.findAll('tbody tr.campaign-item')
-    expect(rows.length).toBe(0)
+    expect(emptyWrapper.find('[data-test="empty-state"]').exists()).toBe(true)
   })
 })

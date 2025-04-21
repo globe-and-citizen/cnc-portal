@@ -68,7 +68,7 @@ export const getUser = async (req: Request, res: Response) => {
 };
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
-  const { name } = req.body;
+  const { name, imageUrl } = req.body;
   const callerAddress = (req as any).address;
 
   try {
@@ -97,10 +97,12 @@ export const updateUser = async (req: Request, res: Response) => {
       },
       data: {
         name,
+        imageUrl,
       },
       select: {
         address: true,
         name: true,
+        imageUrl: true,
       },
     });
 

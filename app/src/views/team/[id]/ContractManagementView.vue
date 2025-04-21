@@ -64,6 +64,6 @@ const _teamBankContractAddress = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find((c) => c.type === 'Bank')?.address ||
     teamStore.currentTeam?.ownerAddress ||
-    ''
+    `0x`
 )
 </script>

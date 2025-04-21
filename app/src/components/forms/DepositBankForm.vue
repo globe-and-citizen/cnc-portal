@@ -3,10 +3,20 @@
   <label class="form-control w-full mt-4">
     <div class="label">
       <span class="label-text">Deposit</span>
+      <span class="label-text-alt">Balance: {{ formattedBalance }}</span>
     </div>
     <div class="input input-lg input-bordered flex items-center">
-      <input type="text" class="grow" placeholder="0" v-model="amount" data-test="amountInput" />
-
+      <input
+        type="text"
+        class="grow"
+        placeholder="0"
+        v-model="amount"
+        data-test="amountInput"
+        @input="handleAmountInput"
+      />
+      <button class="btn btn-sm btn-ghost mr-2" @click="useMaxBalance" :disabled="isLoadingBalance">
+        Max
+      </button>
       <div>
         <div
           role="button"
@@ -57,7 +67,7 @@
       variant="primary"
       @click="submitForm"
       :loading="props.loading"
-      :disabled="props.loading"
+      :disabled="props.loading || $v.amount.$invalid"
     >
       <template v-if="props.loading">
         {{ props.loadingText }}
@@ -69,8 +79,8 @@
 </template>
 
 <script setup lang="ts">
-import { NETWORK } from '@/constant'
-import { ref, onMounted, computed } from 'vue'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { ref, onMounted, computed, watch } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
@@ -78,6 +88,10 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
+import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
+import { useUserDataStore } from '@/stores/user'
+import { formatEther, type Address } from 'viem'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
 
 const props = defineProps<{
   loading?: boolean
@@ -89,6 +103,24 @@ const selectedTokenId = ref(0)
 const isDropdownOpen = ref<boolean>(false)
 const currencyStore = useCurrencyStore()
 const { price: usdcPrice } = useCryptoPrice('usd-coin')
+const userDataStore = useUserDataStore()
+const chainId = useChainId()
+
+watch(amount, () => {
+  $v.value.$touch()
+})
+
+const { data: nativeBalance, isLoading: isLoadingNativeBalance } = useBalance({
+  address: userDataStore.address as Address,
+  chainId
+})
+
+const { data: usdcBalance, isLoading: isLoadingUsdcBalance } = useReadContract({
+  address: USDC_ADDRESS as Address,
+  abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [userDataStore.address as Address]
+})
 
 const tokenList = [
   { name: NETWORK.currencySymbol, symbol: 'ETH' },
@@ -106,15 +138,44 @@ onMounted(() => {
   currencyStore.fetchNativeTokenPrice()
 })
 
+const formattedBalance = computed(() => {
+  if (selectedTokenId.value === 0) {
+    return nativeBalance.value ? Number(formatEther(nativeBalance.value.value)).toFixed(4) : '0.00'
+  }
+  return usdcBalance.value ? (Number(usdcBalance.value) / 1e6).toFixed(4) : '0.00'
+})
+
+const isLoadingBalance = computed(() => isLoadingNativeBalance.value || isLoadingUsdcBalance.value)
+
+const useMaxBalance = () => {
+  amount.value = formattedBalance.value
+}
+
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
+
+const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
+  if (!value || parseFloat(value) <= 0) return true
+  return parseFloat(value) <= parseFloat(formattedBalance.value)
+})
+
+const validDecimals = helpers.withMessage(
+  'Amount must have at most 4 decimal places',
+  (value: string) => {
+    if (!value) return true
+    const parts = value.split('.')
+    return parts.length === 1 || parts[1].length <= 4
+  }
+)
 
 const rules = {
   amount: {
     required,
     numeric,
-    notZero
+    notZero,
+    notExceedingBalance,
+    validDecimals
   }
 }
 
@@ -138,6 +199,7 @@ const estimatedPrice = computed(() => {
     minimumFractionDigits: 2
   }).format((usdcPrice.value || 0) * amountValue)
 })
+
 const submitForm = async () => {
   await $v.value.$touch()
   if ($v.value.$invalid) return
@@ -145,5 +207,16 @@ const submitForm = async () => {
     amount: amount.value,
     token: tokenList[selectedTokenId.value].symbol
   })
+}
+
+const handleAmountInput = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const value = input.value.replace(/[^\d.]/g, '')
+  const parts = value.split('.')
+  if (parts.length > 2) {
+    amount.value = parts[0] + '.' + parts.slice(1).join('')
+  } else {
+    amount.value = value
+  }
 }
 </script>

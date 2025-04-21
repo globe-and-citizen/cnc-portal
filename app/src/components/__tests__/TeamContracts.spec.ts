@@ -5,6 +5,7 @@ import TeamContracts from '@/components/TeamContracts.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from '@/components/TeamContractAdmins.vue'
 import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
+import TeamContractEventList from '@/components/TeamContractEventList.vue'
 import { createConfig, http } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
 import { createPinia, setActivePinia } from 'pinia'
@@ -77,6 +78,27 @@ vi.mock('@/services/AddCampaignService', () => ({
     getEventsGroupedByCampaignCode: getEventsGroupedByCampaignCodeMock
   }))
 }))
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWriteContract: vi.fn(() => ({
+      writeContract: vi.fn(),
+      hash: ref(null),
+      isPending: ref(false),
+      error: ref(null)
+    })),
+    useWaitForTransactionReceipt: vi.fn(() => ({
+      isLoading: ref(false),
+      isSuccess: ref(false)
+    })),
+    useReadContract: vi.fn(() => ({
+      data: ref(null),
+      isLoading: ref(false),
+      isSuccess: ref(false)
+    }))
+  }
+})
 
 describe('TeamContracts.vue', () => {
   const contracts: TeamContract[] = [
@@ -106,23 +128,27 @@ describe('TeamContracts.vue', () => {
       global: { plugins: [createPinia()] }
     })
 
-    const rows = wrapper.findAll('tbody tr')
-    expect(rows.length).toBe(contracts.length + 2)
+    const contractRows = wrapper.findAll('[data-test$="-row"]')
+    expect(contractRows.length).toBe(contracts.length)
 
-    const adminButton = wrapper.findAll('button.btn-ghost')[0]
-    const detailButton = wrapper.findAll('button.btn-ghost')[1]
-    const eventButton = wrapper.findAll('button.btn-ghost')[2]
+    const adminButton = wrapper.find('[data-test="open-admin-modal-btn"]')
+    const detailButton = wrapper
+      .findAll('button.btn-ghost')
+      .find((btn) => btn.text().includes('View Details'))
+    const eventButton = wrapper
+      .findAll('button.btn-ghost')
+      .find((btn) => btn.text().includes('View Events'))
 
-    await adminButton.trigger('click')
+    await adminButton?.trigger('click')
     expect(wrapper.findComponent(TeamContractAdmins).exists()).toBe(true)
 
-    await detailButton.trigger('click')
+    await detailButton?.trigger('click')
     await flushPromises()
     expect(wrapper.findComponent(TeamContractsDetail).exists()).toBe(true)
 
-    await eventButton.trigger('click')
+    await eventButton?.trigger('click')
     await flushPromises()
-    expect(wrapper.findComponent({ name: 'TeamContractEventList' }).exists()).toBe(true)
+    expect(wrapper.findComponent(TeamContractEventList).exists()).toBe(true)
   })
 
   it('renders empty contract state properly', () => {
@@ -131,14 +157,8 @@ describe('TeamContracts.vue', () => {
       global: { plugins: [createPinia()] }
     })
 
-    const allRows = wrapper.findAll('tbody tr')
-
-    // Check that the expected empty message row is present
-    const emptyMessageRow = allRows.find((row) =>
-      row.text().toLowerCase().includes('no events available')
-    )
-
-    expect(emptyMessageRow).toBeDefined()
+    const emptyRow = wrapper.find('[data-test="empty-state"]')
+    expect(emptyRow.exists()).toBe(true)
   })
 
   it('groups events by campaignCode correctly', () => {

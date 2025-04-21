@@ -10,7 +10,16 @@
     <div class="input input-bordered flex items-center gap-2 input-md">
       <p>Amount</p>
       |
-      <input type="text" class="grow" data-test="amount-input" v-model="model.amount" />
+      <div class="grow flex items-center gap-2">
+        <input
+          type="text"
+          class="grow"
+          data-test="amount-input"
+          v-model="model.amount"
+          @input="handleAmountInput"
+        />
+        <button class="btn btn-sm btn-ghost mr-2" @click="setMaxAmount" type="button">Max</button>
+      </div>
       |
       <div>
         <div
@@ -61,7 +70,7 @@
       variant="primary"
       @click="submitForm"
       :loading="loading"
-      :disabled="loading"
+      :disabled="loading || $v.model.amount.$invalid"
       data-test="transferButton"
     >
       Transfer
@@ -71,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
@@ -153,6 +162,12 @@ const notZero = helpers.withMessage('Amount must be greater than 0', (value: str
   return parseFloat(value) > 0
 })
 
+const notExceedBalance = helpers.withMessage('Amount exceeds contract balance', (value: string) => {
+  const amount = parseFloat(value)
+  const balance = parseFloat(model.value.token.balance)
+  return amount <= balance
+})
+
 const rules = {
   model: {
     address: {
@@ -164,7 +179,8 @@ const rules = {
     amount: {
       required,
       numeric,
-      notZero
+      notZero,
+      notExceedBalance
     },
     token: {
       required
@@ -174,6 +190,15 @@ const rules = {
 
 const $v = useVuelidate(rules, { model })
 
+watch(
+  () => model.value.amount,
+  (newAmount) => {
+    if (newAmount) {
+      $v.value.model.amount.$touch()
+    }
+  }
+)
+
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) {
@@ -182,10 +207,25 @@ const submitForm = () => {
   emit('transfer', model.value)
 }
 
+const setMaxAmount = () => {
+  model.value.amount = model.value.token.balance
+}
+
 // Handle clicking outside of dropdown
 onClickOutside(target, () => {
   isDropdownOpen.value = false
 })
+
+const handleAmountInput = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const value = input.value.replace(/[^\d.]/g, '')
+  const parts = value.split('.')
+  if (parts.length > 2) {
+    model.value.amount = parts[0] + '.' + parts.slice(1).join('')
+  } else {
+    model.value.amount = value
+  }
+}
 
 onMounted(() => {
   if (props.tokens.length > 0) {

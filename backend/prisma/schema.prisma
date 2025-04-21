@@ -18,6 +18,7 @@ model User {
   address                String                   @id @unique
   name                   String?
   nonce                  String
+  imageUrl               String?
   teams                  Team[]                   @relation("MemberTeams")
   ownedTeams             Team[]                   @relation("OwnedTeams")
   notifications          Notification[]
@@ -52,8 +53,6 @@ model MemberTeamsData {
   team                    Team     @relation(fields: [teamId], references: [id])
   userAddress             String
   teamId                  Int
-  expenseAccountData      String?
-  expenseAccountSignature String?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
