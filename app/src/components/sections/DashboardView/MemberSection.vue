@@ -50,6 +50,7 @@
             <MemberAction
               :member="{ name: row.name, address: row.address }"
               :team-id="teamStore.currentTeam?.id"
+              @refetch-wage="fetchTeamWageData"
             ></MemberAction>
           </template>
         </TableComponent>
