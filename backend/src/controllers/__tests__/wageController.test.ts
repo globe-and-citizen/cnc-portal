@@ -45,9 +45,7 @@ describe("Wage Controller", () => {
     });
 
     it("should return 400 if required parameters are missing", async () => {
-      const response = await request(app)
-        .put("/wage")
-        .send({});
+      const response = await request(app).put("/wage").send({});
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
@@ -70,9 +68,7 @@ describe("Wage Controller", () => {
       );
     });
 
-
     it("should return 403 if caller is not the owner of the team", async () => {
-
       vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(null);
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
       const response = await request(app).put("/wage").send({
@@ -89,9 +85,11 @@ describe("Wage Controller", () => {
 
     it("should create a new wage if no previous wage exists", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.wage, "findMany").mockResolvedValue([]);
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
+      User has a wage not chained
       const response = await request(app)
         .put("/wage")
         .set("address", "0xOwnerAddress")
@@ -105,6 +103,29 @@ describe("Wage Controller", () => {
 
       expect(response.status).toBe(201);
       expect(prisma.wage.create).toHaveBeenCalled();
+    });
+
+    it("should return 500 if all wage have a next wage", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.wage, "findMany").mockResolvedValue([mockWage]);
+      vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
+
+      const response = await request(app)
+        .put("/wage")
+        .set("address", "0xOwnerAddress")
+        .send({
+          teamId: 1,
+          userAddress: "0xMemberAddress",
+          cashRatePerHour: 50,
+          tokenRatePerHour: 100,
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toContain(
+        "Internal server error has occured"
+      );
     });
 
     it("should chain a new wage to the previous wage if it exists", async () => {
@@ -131,15 +152,13 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Server error");
 
-      const response = await request(app)
-        .put("/wage")
-        .send({
-          teamId: 1,
-          userAddress: "0xMemberAddress",
-          cashRatePerHour: 50,
-          tokenRatePerHour: 100,
-          maximumHoursPerWeek: 40,
-        });
+      const response = await request(app).put("/wage").send({
+        teamId: 1,
+        userAddress: "0xMemberAddress",
+        cashRatePerHour: 50,
+        tokenRatePerHour: 100,
+        maximumHoursPerWeek: 40,
+      });
 
       // console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(500);
