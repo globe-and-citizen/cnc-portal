@@ -47,11 +47,11 @@ describe("Wage Controller", () => {
     it("should return 400 if required parameters are missing", async () => {
       const response = await request(app)
         .put("/wage")
-        .send({ teamId: 1, userAddress: "0xMemberAddress" });
+        .send({});
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
-        "Missing or invalid parameters: cashRatePerHour, tokenRatePerHour, maximumHoursPerWeek"
+        "Missing or invalid parameters: teamId, userAddress, cashRatePerHour, tokenRatePerHour, maximumHoursPerWeek"
       );
     });
 

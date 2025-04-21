@@ -25,21 +25,16 @@ export const setWage = async (req: Request, res: Response) => {
 
   // Validating the wage data
   // Checking required data
-  if (
-    isNaN(teamId) ||
-    !userAddress ||
-    isNaN(cashRatePerHour) ||
-    isNaN(tokenRatePerHour) ||
-    isNaN(maximumHoursPerWeek)
-  ) {
-    let missingParameters = [];
-    if (isNaN(teamId)) missingParameters.push("teamId");
-    if (!userAddress) missingParameters.push("userAddress");
-    if (isNaN(cashRatePerHour)) missingParameters.push("cashRatePerHour");
-    if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
-    if (isNaN(maximumHoursPerWeek))
-      missingParameters.push("maximumHoursPerWeek");
 
+  let missingParameters = [];
+  if (isNaN(teamId)) missingParameters.push("teamId");
+  if (!userAddress) missingParameters.push("userAddress");
+  if (isNaN(cashRatePerHour)) missingParameters.push("cashRatePerHour");
+  if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
+  if (isNaN(maximumHoursPerWeek)) missingParameters.push("maximumHoursPerWeek");
+
+  // Checking if the parameters are empty
+  if (missingParameters.length > 0) {
     return errorResponse(
       400,
       `Missing or invalid parameters: ${missingParameters.join(", ")}`,
