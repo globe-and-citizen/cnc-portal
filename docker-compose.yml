@@ -43,6 +43,16 @@ services:
       FRONTEND_URL: http://localhost
       NODE_ENV: prod
       SECRET_KEY: "secret-key"
+  coverage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend/coverage:/var/www/html/backend
+      - ./app/coverage:/var/www/html/app
+      - ./contract/coverage:/var/www/html/contract
 
 volumes:
   db:
