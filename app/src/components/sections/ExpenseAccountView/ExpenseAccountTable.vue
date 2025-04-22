@@ -102,7 +102,7 @@ import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } fr
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import type { ManyExpenseWithBalances } from '@/types'
+import type { ExpenseResponse, ManyExpenseWithBalances } from '@/types'
 import { useRoute } from 'vue-router'
 
 const teamStore = useTeamStore()
@@ -199,7 +199,7 @@ const filteredApprovals = computed(() => {
     return expenseDataStore.allExpenseDataParsed
   } else {
     return expenseDataStore.allExpenseDataParsed.filter(
-      (approval: ManyExpenseWithBalances) => approval.status === selectedRadio.value
+      (approval) => approval.status === selectedRadio.value
     )
   }
 })

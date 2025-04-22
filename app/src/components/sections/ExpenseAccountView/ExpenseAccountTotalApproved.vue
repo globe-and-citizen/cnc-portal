@@ -45,7 +45,7 @@ const totalApproved = computed(() => {
 
 function calculateTokenAmounts() {
   return expenseDataStore.allExpenseDataParsed.reduce(
-    (acc, limit: ManyExpenseWithBalances) => {
+    (acc, limit) => {
       if (limit.status !== 'enabled') {
         return acc
       }
