@@ -66,7 +66,7 @@ describe("Expense Controller", () => {
       const response = await request(app).post("/expense").send({
         teamId: 1,
         signature: "mockSignature",
-        data: "mockData",
+        data: mockExpense.data,
       });
 
       expect(response.status).toBe(403);
@@ -94,7 +94,7 @@ describe("Expense Controller", () => {
       const response = await request(app).post("/expense").send({
         teamId: 1,
         signature: "mockSignature",
-        data: "mockData",
+        data: mockExpense.data,
       });
 
       expect(response.status).toBe(500);
@@ -123,7 +123,7 @@ describe("Expense Controller", () => {
 
     it("should return expenses for a valid team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([mockExpense]);
+      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([{...mockExpense, data: JSON.parse(mockExpense.data as string)}]);
       vi.spyOn(prisma.expense, "update")
       vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1])
 
@@ -131,7 +131,8 @@ describe("Expense Controller", () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([{
-        ...mockExpense, 
+        ...mockExpense,
+        data: JSON.parse(mockExpense.data as string),
         status: "enabled",
         balances: {
           0: "0",
