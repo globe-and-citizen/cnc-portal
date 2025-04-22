@@ -28,11 +28,12 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const myApprovedExpenses = computed(() => {
     if (allExpenseData.value) {
       const expenses = allExpenseData.value.map((expense) => ({
-        ...JSON.parse(expense.data),
+        // ...JSON.parse(expense.data),
+        ...expense.data,
         signature: expense.signature
       }))
       return expenses.filter(
-        (expense: ManyExpenseResponse) => expense.approvedAddress === userDataStore.address
+        expense => expense.approvedAddress === userDataStore.address
       )
     }
     return []
@@ -41,7 +42,8 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const allExpenseDataParsed = computed(() => {
     if (allExpenseData.value) {
       return allExpenseData.value.map((expense) => ({
-        ...JSON.parse(expense.data),
+        // ...JSON.parse(expense.data),
+        ...expense.data,
         ...expense
       }))
     }

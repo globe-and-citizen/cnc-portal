@@ -53,7 +53,7 @@ export interface ExpenseResponse {
   id: number
   userAddress: string
   signature: string
-  data: string
+  data: BudgetLimit
   createdAt: Date
   updatedAt: Date
 }
