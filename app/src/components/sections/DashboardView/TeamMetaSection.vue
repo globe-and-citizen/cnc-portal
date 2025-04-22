@@ -1,7 +1,6 @@
 <template>
   <div class="flex justify-between gap-5 w-full">
     <TeamDetails
-      :team="team"
       @updateTeamModalOpen="updateTeamModalOpen"
       @deleteTeam="showDeleteTeamConfirmModal = true"
     />
@@ -10,7 +9,7 @@
       <hr class="" />
       <p class="py-4">
         Are you sure you want to delete the team
-        <span class="font-bold">{{ team.name }}</span
+        <span class="font-bold">{{ currentTeam?.name }}</span
         >?
       </p>
       <div class="modal-action justify-center">
@@ -36,22 +35,18 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import UpdateTeamForm from '@/components/sections/DashboardView/forms/UpdateTeamForm.vue'
 import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { Member, Team } from '@/types'
+import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
+import { storeToRefs } from 'pinia'
 
-const { team } = defineProps<{
-  team: Team
-}>()
-// const props = defineProps(['team'])
-const emits = defineEmits(['getTeam'])
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const teamStore = useTeamStore()
@@ -60,6 +55,8 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 // const route = useRoute()
 const router = useRouter()
 const inputs = ref<Member[]>([])
+const { currentTeam } = storeToRefs(teamStore)
+const teamUrl = computed(() => `/teams/${currentTeam.value?.id}` || '')
 
 const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
@@ -71,7 +68,7 @@ const {
   execute: updateTeamAPI,
   isFetching: teamIsUpdating,
   error: updateTeamError
-} = useCustomFetch(`teams/${team.id}`, {
+} = useCustomFetch(teamUrl, {
   immediate: false
 })
   .json()
@@ -83,7 +80,7 @@ const {
   isFetching: teamIsDeleting,
   error: deleteTeamError,
   statusCode: deleteStatus
-} = useCustomFetch(`teams/${team.id}`, {
+} = useCustomFetch(teamUrl, {
   immediate: false
 })
   .delete()
@@ -100,7 +97,7 @@ watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
   if (!teamIsUpdating.value && !updateTeamError.value) {
     addSuccessToast('Team updated successfully')
     showModal.value = false
-    emits('getTeam')
+    await teamStore.currentTeamMeta.executeFetchTeam()
   }
 })
 
@@ -117,8 +114,8 @@ const deleteTeam = async () => {
 }
 const updateTeamModalOpen = async () => {
   showModal.value = true
-  updateTeamInput.value.name = team.name
-  updateTeamInput.value.description = team.description
-  inputs.value = team.members
+  updateTeamInput.value.name = currentTeam.value?.name || ''
+  updateTeamInput.value.description = currentTeam.value?.description || ''
+  inputs.value = currentTeam.value?.members || []
 }
 </script>
