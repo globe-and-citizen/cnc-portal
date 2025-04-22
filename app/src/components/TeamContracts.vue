@@ -76,6 +76,7 @@
           :contract-address="contractDataDialog.address"
           :datas="contractDataDialog.datas"
           :reset="contractDetailReset"
+          @closeContractDataDialog="contractDataDialog.show = false"
         />
       </div>
     </ModalComponent>
@@ -177,11 +178,15 @@ const openEventsModal = async (contractAddress: Address) => {
     contractAddress
   )) as GetEventsGroupedByCampaignCodeResult
 
-  if (result.status === 'success' && result.events && Object.keys(result.events).length > 0) {
-    contractEventsDialog.value.events = Object.values(result.events).flat()
-    contractEventsDialog.value.show = true
+  if (result.status === 'success') {
+    if (result.events && Object.keys(result.events).length > 0) {
+      contractEventsDialog.value.events = Object.values(result.events).flat()
+      contractEventsDialog.value.show = true
+    } else {
+      contractEventsDialog.value.show = true
+    }
   } else {
-    addErrorToast('No events found')
+    addErrorToast('Failed to fetch events')
   }
 }
 
