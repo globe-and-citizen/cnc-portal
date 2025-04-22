@@ -1,86 +1,72 @@
-import { mount } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import SubmitClaims from '../SubmitClaims.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
-const statusCodeMock = ref<number | undefined>(undefined)
-const errorMock = ref<unknown>(undefined)
-vi.mock('@/composables/useCustomFetch', (importOriginal) => {
-  const original = importOriginal()
+const errorToastMock = vi.fn()
+const successToastMock = vi.fn()
+vi.mock('@/stores', async (importOriginal) => {
+  const original: object = await importOriginal()
   return {
     ...original,
-    useCustomFetch: vi.fn(() => ({
-      post: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          data: {
-            success: true
-          },
-          loading: ref(false),
-          error: errorMock,
-          statusCode: statusCodeMock
-        })
-      })
+    useTeamStore: vi.fn(() => ({
+      currentTeam: {
+        id: 1
+      }
+    })),
+    useToastStore: vi.fn(() => ({
+      addErrorToast: errorToastMock,
+      addSuccessToast: successToastMock
     }))
   }
 })
 
-vi.mock('@/stores/useToastStore')
+const statusCodeMock = ref(200)
+const errorMock = ref<unknown>(null)
+vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCustomFetch: vi.fn(() => ({
+      post: vi.fn(() => ({
+        json: vi.fn(() => ({
+          statusCode: statusCodeMock,
+          error: errorMock
+        }))
+      }))
+    }))
+  }
+})
 
-interface ComponentData {
-  hoursWorked: { hoursWorked: string }
-}
-
-describe.skip('SubmitClaims', () => {
+describe('SubmitClaims', () => {
   const createComponent = () => {
-    return mount(SubmitClaims, {
+    return shallowMount(SubmitClaims, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }
-  it('should input hours worked correctly', async () => {
-    const wrapper = createComponent()
 
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
-    expect((wrapper.vm as unknown as ComponentData).hoursWorked.hoursWorked).toBe('20')
+  it('should render correctly', () => {
+    const wrapper = createComponent()
+    expect(wrapper.exists()).toBeTruthy()
   })
 
-  it('shows error when hours worked is invalid', async () => {
+  it('should show success toast on successful claim submission', async () => {
     const wrapper = createComponent()
-
-    // case 1: hours worked is empty
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    expect(wrapper.find('[data-test="hours-worked-error"]').exists()).toBe(true)
-
-    // case 2: hours worked is not a number
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('a')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    expect(wrapper.find('[data-test="hours-worked-error"]').exists()).toBe(true)
-  })
-
-  it('shows success toast when submit hours worked successfully', async () => {
-    const wrapper = createComponent()
-    const { addSuccessToast } = useToastStore()
-
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
     statusCodeMock.value = 201
     await wrapper.vm.$nextTick()
-    expect(addSuccessToast).toHaveBeenCalledWith('Wage claim added successfully')
+
+    expect(successToastMock).toHaveBeenCalled()
   })
 
-  it('shows error toast when submit worked failed', async () => {
+  it('should show error toast on failed claim submission', async () => {
     const wrapper = createComponent()
-    const { addErrorToast } = useToastStore()
-
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    errorMock.value = new Error('Error')
+    statusCodeMock.value = 400
+    errorMock.value = { message: 'Error' }
     await wrapper.vm.$nextTick()
-    expect(addErrorToast).toHaveBeenCalledWith(errorMock.value)
+
+    expect(errorToastMock).toHaveBeenCalled()
   })
 })
