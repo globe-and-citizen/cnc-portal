@@ -1,6 +1,6 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import type { ExpenseResponse, ManyExpenseResponse } from '@/types'
+import type { ExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import { computed, onMounted, ref, watch } from 'vue'
