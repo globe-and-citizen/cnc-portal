@@ -102,7 +102,6 @@ import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } fr
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import type { ExpenseResponse, ManyExpenseWithBalances } from '@/types'
 import { useRoute } from 'vue-router'
 
 const teamStore = useTeamStore()

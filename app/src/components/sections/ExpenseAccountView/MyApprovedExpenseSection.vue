@@ -70,7 +70,7 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, ref, watch } from 'vue'
-import type { BudgetLimit, BudgetData, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
+import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
