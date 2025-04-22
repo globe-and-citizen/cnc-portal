@@ -1,38 +1,31 @@
 <template>
-  <table class="table table-zebra text-center border border-solid">
-    <thead>
-      <tr class="table-row-border">
-        <th>No</th>
-        <th>Target</th>
-        <th>Description</th>
-        <th>Executed</th>
-        <th>Function Signature</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-if="actionCount == 0">
-        <td class="text-center font-bold text-lg h-96" colspan="6" rowspan="10">No actions</td>
-      </tr>
-      <tr
-        v-else
-        class="hover cursor-pointer"
-        v-for="(action, index) in actions"
-        :key="index"
-        @click="
-          () => {
-            selectedAction = action
-            approveModal = true
-          }
-        "
-      >
-        <th>{{ index + 1 }}</th>
-        <td>{{ action.targetAddress }}</td>
-        <td>{{ action.description }}</td>
-        <td>{{ action.isExecuted }}</td>
-        <td>{{ action.data.slice(0, 10) }}...</td>
-      </tr>
-    </tbody>
-  </table>
+  <TableComponent
+    :rows="
+      actions.map((action, index) => ({
+        ...action,
+        index: index + 1,
+        functionSignature: action.data.slice(0, 10) + '...'
+      }))
+    "
+    :columns="[
+      { key: 'index', label: 'No' },
+      { key: 'targetAddress', label: 'Target' },
+      { key: 'description', label: 'Description' },
+      { key: 'isExecuted', label: 'Executed' },
+      { key: 'functionSignature', label: 'Function Signature' }
+    ]"
+    :loading="false"
+    :emptyState="{
+      label: 'No actions',
+      icon: 'text-center font-bold text-lg h-96'
+    }"
+    @row-click="
+      (row) => {
+        selectedAction = row
+        approveModal = true
+      }
+    "
+  />
   <ModalComponent v-model="approveModal" v-if="approveModal">
     <ApproveRevokeAction
       :action="selectedAction!"
@@ -50,6 +43,7 @@ import ApproveRevokeAction from '@/components/sections/AdministrationView/forms/
 import type { Action, Team } from '@/types'
 import type { Address } from 'viem'
 import { ref } from 'vue'
+import TableComponent from '@/components/TableComponent.vue'
 
 const selectedAction = ref<Action | null>(null)
 const approveModal = ref(false)

@@ -1,5 +1,10 @@
 <template>
-  <div class="input-group relative" ref="formRef" data-test="member-input">
+  <div
+    class="input-group relative"
+    :class="isFetching ? 'animate-pulse' : ''"
+    ref="formRef"
+    data-test="member-input"
+  >
     <label
       class="input input-bordered flex items-center gap-2 input-md"
       :data-test="`member-input`"
@@ -8,7 +13,7 @@
         type="text"
         class="w-24"
         v-model="input.name"
-        @keyup.stop="searchUsers({ name: input.name, address: '' })"
+        ref="nameInput"
         :placeholder="'Member Name '"
         :data-test="`member-name-input`"
       />
@@ -16,8 +21,8 @@
       <input
         type="text"
         class="grow"
+        ref="addressInput"
         v-model="input.address"
-        @keyup.stop="searchUsers({ name: '', address: input.address })"
         :data-test="`member-address-input`"
         :placeholder="`Member Address`"
       />
@@ -30,15 +35,7 @@
     >
       <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
         <li v-for="user in users.users" :key="user.address">
-          <a
-            :data-test="`user-dropdown-${user.address}`"
-            @click="
-              () => {
-                selectMember(user)
-                showDropdown = false
-              }
-            "
-          >
+          <a :data-test="`user-dropdown-${user.address}`" @click="selectMember(user)">
             {{ user.name }} | {{ user.address }}
           </a>
         </li>
@@ -49,7 +46,8 @@
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
+import { useFocus, watchDebounced } from '@vueuse/core'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
@@ -61,22 +59,37 @@ const input = defineModel({
 
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
-const url = ref('user/search')
-const { execute: executeSearchUser, data: users } = useCustomFetch(url, { immediate: false })
-  .get()
-  .json()
+const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
+const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
+const { focused: nameInputFocus } = useFocus(nameInput)
+const { focused: addressInputFocus } = useFocus(addressInput)
 
-const searchUsers = async (input: { name: string; address: string }) => {
-  if (input.address == '' && input.name) {
-    url.value = 'user/search?name=' + input.name
-  } else if (input.name == '' && input.address) {
-    url.value = 'user/search?address=' + input.address
-  }
-  await executeSearchUser()
-  showDropdown.value = true
-}
+const url = ref('user/search')
+const {
+  execute: executeSearchUser,
+  data: users,
+  isFetching
+} = useCustomFetch(url, { immediate: false }).get().json()
+
+watchDebounced(
+  () => [input.value.name, input.value.address],
+  async ([name, address]) => {
+    if (nameInputFocus.value && name) {
+      url.value = 'user/search?name=' + name
+      await executeSearchUser()
+      showDropdown.value = true
+    } else if (addressInputFocus.value && address) {
+      url.value = 'user/search?address=' + address
+      await executeSearchUser()
+      showDropdown.value = true
+    }
+  },
+  { debounce: 500, maxWait: 5000 }
+)
+
 const selectMember = (member: { name: string; address: string }) => {
   input.value = member
   emit('selectMember', member)
+  showDropdown.value = false
 }
 </script>

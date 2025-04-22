@@ -41,6 +41,25 @@ describe('TeamContractEventList.vue', () => {
         amount: '300',
         advertiser: '0xAdvertiser1'
       }
+    ],
+    '0xCampaign3': [
+      {
+        eventName: 'AdCampaignCreated',
+        campaignCode: '0xCampaign3',
+        budget: '3000'
+      },
+      {
+        eventName: 'PaymentReleasedOnWithdrawApproval',
+        campaignCode: '0xCampaign3',
+        paymentAmount: '1500'
+      }
+    ],
+    '0xCampaign4': [
+      {
+        eventName: 'PaymentReleasedOnWithdrawApproval',
+        campaignCode: '0xCampaign3',
+        paymentAmount: '1500'
+      }
     ]
   }
 
@@ -53,18 +72,12 @@ describe('TeamContractEventList.vue', () => {
   })
 
   it('renders the campaign list correctly', () => {
-    // Verify the number of campaigns rendered
-    const rows = wrapper.findAll('tbody tr.campaign-item')
-    expect(rows.length).toBe(Object.keys(eventsByCampaignCode).length)
+    const campaignCodes = wrapper.findAll('.campaign-code')
+    const budgets = wrapper.findAll('.campaign-budget')
 
-    // Verify campaign codes and budgets
-    const firstCampaignRow = rows.at(0)
-    expect(firstCampaignRow?.find('.campaign-code').text()).toBe('0xCampaign1')
-    expect(firstCampaignRow?.find('.campaign-budget').text()).toBe('1000 POL')
-
-    const secondCampaignRow = rows.at(1)
-    expect(secondCampaignRow?.find('.campaign-code').text()).toBe('0xCampaign2')
-    expect(secondCampaignRow?.find('.campaign-budget').text()).toBe('2000 POL')
+    expect(campaignCodes).toHaveLength(4)
+    expect(campaignCodes[0].text()).toBe('0xCampaign1')
+    expect(budgets[0].text()).toBe('1000 POL')
   })
 
   it('expands and collapses campaign details', async () => {
@@ -106,6 +119,22 @@ describe('TeamContractEventList.vue', () => {
     expect(detailItems.at(0)?.text()).toContain('Budget Withdrawn: 300 POL by 0xAdvertiser1')
   })
 
+  it('displays correct event details for PaymentReleasedOnWithdrawApproval', async () => {
+    const toggleButtons = wrapper.findAll('input[type="checkbox"]')
+    await toggleButtons.at(2)?.setValue(true)
+
+    const detailItem = wrapper.findAll('ul li')
+    expect(detailItem.at(0)?.text()).toContain('Payment Released on Approval: 1500 POL')
+  })
+
+  it('returns N/A when AdCampaignCreated event is missing', async () => {
+    const toggleButtons = wrapper.findAll('input[type="checkbox"]')
+    await toggleButtons.at(3)?.setValue(true)
+
+    const budgetCell = wrapper.findAll('.campaign-budget')[3]
+    expect(budgetCell.text()).toBe('N/A POL')
+  })
+
   it('handles empty events gracefully', async () => {
     // Mount the component with no events
     const emptyWrapper = mount(TeamContractEventList, {
@@ -113,7 +142,6 @@ describe('TeamContractEventList.vue', () => {
     })
 
     // Verify no rows are rendered
-    const rows = emptyWrapper.findAll('tbody tr.campaign-item')
-    expect(rows.length).toBe(0)
+    expect(emptyWrapper.find('[data-test="empty-state"]').exists()).toBe(true)
   })
 })

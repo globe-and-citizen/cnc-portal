@@ -1,71 +1,86 @@
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import { it, describe, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mount, VueWrapper } from '@vue/test-utils'
 import { ref } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 
 describe('SelectMemberInput.vue', () => {
-  const input = ref({
-    name: '',
-    address: ''
+  let wrapper: VueWrapper<ComponentPublicInstance>
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    const input = ref({
+      name: '',
+      address: ''
+    })
+    wrapper = mount(SelectMemberInput, {
+      props: {
+        modelValue: input.value
+      }
+    })
   })
-  const wrapper = mount(SelectMemberInput, {
-    props: {
-      modelValue: input.value
-    }
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   vi.mock('@/composables/useCustomFetch', () => {
     return {
       useCustomFetch: vi.fn(() => ({
         get: () => ({
-          json: () => ({
-            execute: vi.fn(),
-            data: {
+          json: () => {
+            const data = ref({
               users: [
                 { address: '0x123', name: 'John Doe' },
                 { address: '0x456', name: 'Jane DoeV2' }
               ]
-            },
-            loading: ref(false),
-            error: ref<unknown>(null)
-          })
-        }),
-        post: () => ({
-          json: () => ({
-            execute: vi.fn(),
-            data: {
-              id: 1,
-              name: 'Team Name',
-              description: 'Team Description'
-            },
-            loading: ref(false),
-            error: ref<unknown>(null)
-          })
+            })
+            return {
+              execute: vi.fn().mockImplementation(() => {
+                return Promise.resolve(data.value)
+              }),
+              data,
+              loading: ref(false),
+              error: ref<unknown>(null)
+            }
+          }
         })
       }))
     }
   })
 
-  it('shloud renders correctly, open dropdown when typing and emit event on select', async () => {
-    console.log('wrapper', wrapper.html())
+  it('should render correctly, open dropdown when typing and emit event on select', async () => {
     const nameInput = wrapper.find('[data-test="member-name-input"]')
     const addressInput = wrapper.find('[data-test="member-address-input"]')
     expect(nameInput.exists()).toBe(true)
     expect(addressInput.exists()).toBe(true)
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(false)
-    // Test name search
-    nameInput.setValue('John')
-    await nameInput.trigger('keyup')
 
-    expect(wrapper.props().modelValue?.name).toBe('John')
+    // Focus the name input and type
+    await nameInput.trigger('focus')
+    await nameInput.setValue('John')
+    await wrapper.vm.$nextTick()
+    // Wait for debounce
+    await vi.advanceTimersByTime(500)
+    await wrapper.vm.$nextTick()
+
+    expect(
+      (wrapper.props() as { modelValue: { name: string; address: string } }).modelValue.name
+    ).toBe('John')
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('John Doe')
 
-    // Test address search
-    addressInput.setValue('0x1')
-    await addressInput.trigger('keyup')
+    // Focus the address input and type
+    await addressInput.trigger('focus')
+    await addressInput.setValue('0x1')
+    await wrapper.vm.$nextTick()
+    // Wait for debounce
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
 
-    expect(wrapper.props().modelValue?.address).toBe('0x1')
+    expect(
+      (wrapper.props() as { modelValue: { name: string; address: string } }).modelValue.address
+    ).toBe('0x1')
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('0x123')
 
@@ -79,10 +94,5 @@ describe('SelectMemberInput.vue', () => {
       Array<{ address: string; name: string }>
     >
     expect(emittedEvents[0][0]).toEqual({ address: '0x123', name: 'John Doe' })
-    console.log('wrapper.emitted()', wrapper.emitted().selectMember)
-    console.log('Modele Value', wrapper.props().modelValue)
-
-    console.log('wrapper', wrapper.html())
-    console.log('input', input.value)
   })
 })

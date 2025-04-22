@@ -1,27 +1,107 @@
+import { ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import TeamContracts from '@/components/TeamContracts.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from '@/components/TeamContractAdmins.vue'
 import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
+import TeamContractEventList from '@/components/TeamContractEventList.vue'
+import { createConfig, http } from '@wagmi/core'
+import { mainnet } from '@wagmi/core/chains'
 import { createPinia, setActivePinia } from 'pinia'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import type { TeamContract } from '@/types/teamContract'
 
-const getAdminListMock = vi.fn()
-const removeAdminMock = vi.fn()
-const getEventsGroupedByCampaignCodeMock = vi.fn()
-// Mock AddCampaignService methods
+createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
+
+const getEventsGroupedByCampaignCodeMock = vi.fn().mockResolvedValue({
+  status: 'success',
+  events: {}
+})
+
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+
+  const writeContractVueMock = vi.fn()
+
+  return {
+    ...actual,
+    useWriteContract: () => ({
+      writeContract: writeContractVueMock,
+      isPending: ref(false),
+      data: ref(null),
+      error: ref(null)
+    }),
+    useWaitForTransactionReceipt: () => ({
+      isLoading: ref(false),
+      isSuccess: ref(true),
+      isError: ref(false),
+      error: ref(null)
+    }),
+    useReadContract: () => ({
+      data: ref(['0xAdmin1']),
+      refetch: vi.fn(),
+      error: ref(null)
+    }),
+    useAccount: () => ({ address: ref('0xMockedAddress') }),
+    useConfig: () => ({})
+  }
+})
+
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+
+  return {
+    ...actual,
+    writeContract: vi.fn().mockResolvedValue('0xMOCK_TX'),
+    readContract: vi.fn().mockResolvedValue(BigInt('1000000000000000000')),
+    waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: 'success' }),
+    getWalletClient: vi.fn().mockResolvedValue({
+      deployContract: vi.fn().mockResolvedValue('0xMOCK_DEPLOYED'),
+      account: { address: '0xMOCK_ACCOUNT' }
+    }),
+    getPublicClient: vi.fn().mockReturnValue({
+      getBlockNumber: vi.fn().mockResolvedValue(100n)
+    })
+  }
+})
+
+vi.mock('@/stores/useToastStore')
 vi.mock('@/services/AddCampaignService', () => ({
   AddCampaignService: vi.fn().mockImplementation(() => ({
     getContractData: vi.fn().mockResolvedValue([{ key: 'costPerClick', value: '10' }]),
-    getAdminList: getAdminListMock,
-    getEventsGroupedByCampaignCode: getEventsGroupedByCampaignCodeMock,
-    removeAdmin: removeAdminMock
+    getEventsGroupedByCampaignCode: getEventsGroupedByCampaignCodeMock
   }))
 }))
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWriteContract: vi.fn(() => ({
+      writeContract: vi.fn(),
+      hash: ref(null),
+      isPending: ref(false),
+      error: ref(null)
+    })),
+    useWaitForTransactionReceipt: vi.fn(() => ({
+      isLoading: ref(false),
+      isSuccess: ref(false)
+    })),
+    useReadContract: vi.fn(() => ({
+      data: ref(null),
+      isLoading: ref(false),
+      isSuccess: ref(false)
+    }))
+  }
+})
 
-describe.skip('TeamContracts.vue', () => {
-  const contracts = [
+describe('TeamContracts.vue', () => {
+  const contracts: TeamContract[] = [
     {
       type: 'Campaign',
       address: '0x1234567890abcdef1234567890abcdef12345678',
@@ -34,227 +114,258 @@ describe.skip('TeamContracts.vue', () => {
       admins: ['0xadmin3Address'],
       deployer: '0xdeployer1Address'
     }
-  ] as TeamContract[]
+  ]
 
   beforeEach(() => {
     const pinia = createPinia()
     setActivePinia(pinia)
+    vi.clearAllMocks()
   })
 
-  it('renders contract rows correctly', () => {
+  it('renders and opens modals correctly', async () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts, teamId: 'team1' },
-      global: {
-        plugins: [createPinia()]
-      }
+      global: { plugins: [createPinia()] }
     })
 
-    // Check that the rows match the number of contracts
-    const rows = wrapper.findAll('tbody tr')
-    expect(rows.length).toBe(contracts.length)
+    const contractRows = wrapper.findAll('[data-test$="-row"]')
+    expect(contractRows.length).toBe(contracts.length)
 
-    // Check that each row contains the correct contract data
-    rows.forEach((row, index) => {
-      const cells = row.findAll('td')
+    const adminButton = wrapper.find('[data-test="open-admin-modal-btn"]')
+    const detailButton = wrapper
+      .findAll('button.btn-ghost')
+      .find((btn) => btn.text().includes('View Details'))
+    const eventButton = wrapper
+      .findAll('button.btn-ghost')
+      .find((btn) => btn.text().includes('View Events'))
 
-      expect(cells[0].text()).toBe(contracts[index].type)
-      expect(cells[1].text()).toBe(contracts[index].address)
-    })
+    await adminButton?.trigger('click')
+    expect(wrapper.findComponent(TeamContractAdmins).exists()).toBe(true)
+
+    await detailButton?.trigger('click')
+    await flushPromises()
+    expect(wrapper.findComponent(TeamContractsDetail).exists()).toBe(true)
+
+    await eventButton?.trigger('click')
+    await flushPromises()
+    expect(wrapper.findComponent(TeamContractEventList).exists()).toBe(true)
   })
 
-  it('opens modal with contract details when a row is clicked', async () => {
-    const wrapper = mount(TeamContracts, {
-      props: { contracts, teamId: 'team1' },
-      global: {
-        plugins: [createPinia()]
-      }
-    })
-
-    // Simulate clicking the first row
-    const firstRow = wrapper.find('tbody tr')
-    const firstRowCells = firstRow.findAll('td')
-    await firstRowCells[4].trigger('click')
-
-    // Check that the modal is visible
-    const modal = wrapper.findComponent(ModalComponent)
-    expect(modal.exists()).toBe(true)
-
-    // Check that the modal contains the correct contract details
-    const detailComponent = wrapper.findComponent({ name: 'TeamContractsDetail' })
-
-    expect(detailComponent.exists()).toBe(true)
-    expect(detailComponent.props('datas')).toBeDefined()
-  })
-
-  it('renders no rows when there are no contracts', () => {
+  it('renders empty contract state properly', () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts: [], teamId: 'team1' },
-      global: {
-        plugins: [createPinia()]
-      }
+      global: { plugins: [createPinia()] }
     })
 
-    // Check that no rows are rendered
-    const rows = wrapper.findAll('tbody tr')
-    expect(rows.length).toBe(0)
+    const emptyRow = wrapper.find('[data-test="empty-state"]')
+    expect(emptyRow.exists()).toBe(true)
   })
 
-  it('opens the admins modal when the Admins button is clicked', async () => {
+  it('groups events by campaignCode correctly', () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts, teamId: 'team1' },
-      global: {
-        plugins: [createPinia()]
-      }
+      global: { plugins: [createPinia()] }
     })
 
-    // Simulate clicking the "Admins" button of the first row
-    const firstRow = wrapper.find('tbody tr')
-    const adminButton = firstRow.find('button.btn-ghost')
-    await adminButton.trigger('click')
+    const vm = wrapper.vm as unknown as {
+      groupEventsByCampaignCode: (events: { campaignCode: string }[]) => Record<string, unknown[]>
+    }
 
-    // Check that the Admins modal is opened
-    const adminModal = wrapper.findComponent({ name: 'TeamContractAdmins' })
-    expect(adminModal.exists()).toBe(true)
-
-    // Check that the correct contract was passed to the modal
-    expect(adminModal.props('contract')).toEqual(contracts[0])
+    const events = [{ campaignCode: 'A' }, { campaignCode: 'B' }, { campaignCode: 'A' }]
+    const grouped = vm.groupEventsByCampaignCode(events)
+    expect(grouped['A'].length).toBe(2)
+    expect(grouped['B'].length).toBe(1)
   })
 
-  it('opens the contract data modal with correct details', async () => {
+  it('opens contract data modal and resets correctly', async () => {
     const wrapper = mount(TeamContracts, {
-      props: { contracts, teamId: 'team1', reset: true },
-      global: {
-        plugins: [createPinia()]
-      }
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
     })
 
-    // Simulate clicking the "View Details" button
-    const firstRow = wrapper.find('tbody tr')
-    const detailButton = firstRow.findAll('button.btn-ghost')[1] // Assume second button is for details
-    await detailButton.trigger('click')
+    const detailBtn = wrapper.findAll('button.btn-ghost')[1]
+    await detailBtn.trigger('click')
     await flushPromises()
 
-    // Wait for the contract data to be fetched and modal to update
-    await wrapper.vm.$nextTick() // Ensure the modal has re-rendered after async data fetching
+    const detailModal = wrapper.findComponent(TeamContractsDetail)
+    await detailModal.vm.$emit('closeContractDataDialog')
+    await wrapper.vm.$nextTick()
 
-    // Find the modal for contract data
-    const contractDataModal = wrapper.findComponent({ name: 'TeamContractsDetail' })
-
-    // Check that the contract data was passed to the modal correctly
-    expect(contractDataModal.props('datas')).toEqual([{ key: 'costPerClick', value: '10' }])
-    //expect(contractDataModal.props('datas')).toEqual([])
+    await detailBtn.trigger('click')
+    await flushPromises()
+    expect(detailModal.exists()).toBe(true)
   })
 
-  // it('renders polygonscan link correctly', () => {
-  //   const wrapper = mount(TeamContracts, {
-  //     props: { contracts, teamId: 'team1' },
-  //     global: {
-  //       plugins: [createPinia()]
-  //     }
-  //   })
-
-  //   // Check that the polygonscan link for the first contract is rendered correctly
-  //   const firstRow = wrapper.find('tbody tr')
-  //   const link = firstRow.find('a')
-
-  //   // Ensure the link contains the correct href for Polygonscan based on the contract address
-  //   const expectedHref = `https://polygonscan.com/address/${contracts[0].address}`
-
-  //   // Ensure TypeScript understands the link has an href attribute
-  //   expect(link.attributes('href')).toBe(expectedHref)
-
-  //   // Check the link text contains the abbreviated contract address
-  //   expect(link.text()).toContain(
-  //     `${contracts[0].address.slice(0, 6)}...${contracts[0].address.slice(-4)}`
-  //   )
-  // })
-
-  // it('updates contracts when props.contracts change', async () => {
-  //   const wrapper = mount(TeamContracts, {
-  //     props: { contracts: contracts, teamId: 'team1' },
-  //     global: {
-  //       plugins: [createPinia()]
-  //     }
-  //   })
-
-  //   const newContracts = [
-  //     { type: 'Campaign', address: '0xcontract3', admins: ['0xadmin3'], deployer: '0xdeployer3' },
-  //     { type: 'Campaign', address: '0xcontract4', admins: ['0xadmin4'], deployer: '0xdeployer4' }
-  //   ]
-
-  //   // Verify initial state
-  //   expect(wrapper.vm.contracts).toEqual(contracts)
-
-  //   // Update the contracts prop
-  //   await wrapper.setProps({ contracts: newContracts })
-
-  //   // Verify that contracts has updated correctly
-  //   expect(wrapper.vm.contracts).toEqual(newContracts)
-  // })
-
-  it('renders modals correctly based on dialog states', async () => {
+  it('sets admin modal data via openAdminsModal()', async () => {
     const wrapper = mount(TeamContracts, {
       props: { contracts, teamId: 'team1' },
-      global: {
-        plugins: [createPinia()],
-        components: {
-          ModalComponent,
-          TeamContractAdmins,
-          TeamContractsDetail
-        }
+      global: { plugins: [createPinia()] }
+    })
+
+    const vm = wrapper.vm as unknown as {
+      openAdminsModal: (c: TeamContract, r: number) => void
+      contractAdminDialog: { show: boolean; contract: TeamContract; range: number }
+    }
+
+    vm.openAdminsModal(contracts[1], 99)
+    await wrapper.vm.$nextTick()
+
+    expect(vm.contractAdminDialog.show).toBe(true)
+    expect(vm.contractAdminDialog.contract).toEqual(contracts[1])
+    expect(vm.contractAdminDialog.range).toBe(99)
+  })
+
+  it('calls addErrorToast when events fail to load', async () => {
+    const { addErrorToast } = useToastStore()
+    getEventsGroupedByCampaignCodeMock.mockResolvedValueOnce({ status: 'error' })
+
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
+    })
+
+    const vm = wrapper.vm as unknown as { openEventsModal: (addr: string) => Promise<void> }
+    await vm.openEventsModal('0xBAD')
+
+    expect(addErrorToast).toHaveBeenCalledWith('Failed to fetch events')
+  })
+
+  it('shows event modal even if empty list is returned', async () => {
+    getEventsGroupedByCampaignCodeMock.mockResolvedValueOnce({ status: 'success', events: {} })
+
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
+    })
+
+    const vm = wrapper.vm as unknown as {
+      openEventsModal: (addr: string) => Promise<void>
+      contractEventsDialog: { show: boolean }
+    }
+
+    await vm.openEventsModal('0x000')
+    expect(vm.contractEventsDialog.show).toBe(true)
+  })
+
+  it('opens all modals and triggers their visibility', async () => {
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
+    })
+
+    const vm = wrapper.vm as unknown as {
+      openAdminsModal: (contract: TeamContract, range: number) => void
+      openContractDataModal: (address: string) => Promise<void>
+      openEventsModal: (address: string) => Promise<void>
+      contractAdminDialog: { show: boolean }
+      contractDataDialog: { show: boolean }
+      contractEventsDialog: { show: boolean }
+    }
+
+    // Admins
+    vm.openAdminsModal(contracts[0], 1)
+    await wrapper.vm.$nextTick()
+    expect(vm.contractAdminDialog.show).toBe(true)
+
+    // Details
+    await vm.openContractDataModal(contracts[0].address)
+    expect(vm.contractDataDialog.show).toBe(true)
+
+    // Events
+    await vm.openEventsModal(contracts[0].address)
+    expect(vm.contractEventsDialog.show).toBe(true)
+  })
+
+  it('toggles all modal visibility (admin, data, events)', async () => {
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
+    })
+
+    const vm = wrapper.vm as unknown as {
+      contractAdminDialog: { show: boolean }
+      contractDataDialog: { show: boolean; key: number }
+      contractEventsDialog: { show: boolean }
+    }
+
+    vm.contractAdminDialog.show = true
+    vm.contractDataDialog.show = true
+    vm.contractEventsDialog.show = true
+    await wrapper.vm.$nextTick()
+
+    const modalComponents = wrapper.findAllComponents(ModalComponent)
+    expect(modalComponents.length).toBeGreaterThanOrEqual(3)
+
+    modalComponents.forEach((modal) => {
+      expect(modal.props('modelValue')).toBe(true)
+    })
+  })
+
+  it('increments contractDataDialog.key when opening contract data modal', async () => {
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
+    })
+
+    const vm = wrapper.vm as unknown as {
+      contractDataDialog: { key: number }
+      openContractDataModal: (addr: string) => Promise<void>
+    }
+
+    const oldKey = vm.contractDataDialog.key
+    await vm.openContractDataModal(contracts[0].address)
+    expect(vm.contractDataDialog.key).toBe(oldKey + 1)
+  })
+
+  it('opens all modals correctly via user actions', async () => {
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
+    })
+
+    const buttons = wrapper.findAll('button.btn-ghost')
+
+    // 1. Admins modal
+    await buttons[0].trigger('click')
+    expect(wrapper.findComponent(TeamContractAdmins).exists()).toBe(true)
+
+    // 2. Details modal
+    await buttons[1].trigger('click')
+    await flushPromises()
+    expect(wrapper.findComponent(TeamContractsDetail).exists()).toBe(true)
+
+    // 3. Events modal
+    await buttons[2].trigger('click')
+    await flushPromises()
+    const modalEvents = wrapper.findComponent({ name: 'TeamContractEventList' })
+    expect(modalEvents.exists()).toBe(true)
+  })
+
+  it('flattens and assigns events correctly when events are present', async () => {
+    getEventsGroupedByCampaignCodeMock.mockResolvedValueOnce({
+      status: 'success',
+      events: {
+        CAMPAIGN1: [
+          { campaignCode: 'CAMPAIGN1', eventName: 'E1' },
+          { campaignCode: 'CAMPAIGN1', eventName: 'E2' }
+        ],
+        CAMPAIGN2: [{ campaignCode: 'CAMPAIGN2', eventName: 'E3' }]
       }
     })
 
-    // Verify that the initial dialog states are false
-    const contractAdminDialog = (
-      wrapper.vm as unknown as {
-        contractAdminDialog: {
-          show: boolean
-          contract: { type: string; address: string; admins: string[]; deployer: string } | null
-        }
-      }
-    ).contractAdminDialog
+    const wrapper = mount(TeamContracts, {
+      props: { contracts, teamId: 'team1' },
+      global: { plugins: [createPinia()] }
+    })
 
-    const contractDataDialog = (
-      wrapper.vm as unknown as {
-        contractDataDialog: { show: boolean; datas: Array<{ key: string; value: string }> | null }
-      }
-    ).contractDataDialog
-
-    expect(contractAdminDialog.show).toBe(false)
-    expect(contractDataDialog.show).toBe(false)
-
-    // Check if the ModalComponent is rendered but hidden
-    const adminModal = wrapper.findComponent(ModalComponent)
-    expect(adminModal.exists()).toBe(true)
-    expect(adminModal.props('modelValue')).toBe(false) // Modal should be closed
-
-    // Open the contract admin dialog
-    contractAdminDialog.show = true
-    contractAdminDialog.contract = contracts[0] // Set the contract data
-    await wrapper.vm.$nextTick() // Wait for the DOM to update
-
-    // Check that the contract admin modal is rendered
-    expect(adminModal.props('modelValue')).toBe(true) // Check that the modal is open
-    expect(wrapper.findComponent(TeamContractAdmins).props('contract')).toEqual(contracts[0])
-
-    // Open the contract data dialog
-    contractDataDialog.show = true
-    contractDataDialog.datas = [{ key: 'Address', value: contracts[0].address }] // Set the data for the contract
-    await wrapper.vm.$nextTick() // Wait for the DOM to update
-
-    // Check that the contract data modal is rendered
-    const dataModals = wrapper.findAllComponents(ModalComponent) // Get all ModalComponents
-    const dataModal = dataModals.length > 1 ? dataModals.at(1) : undefined // Safely access the second ModalComponent
-
-    // Ensure dataModal exists before making assertions
-    if (dataModal) {
-      expect(dataModal.props('modelValue')).toBe(true) // Check that the modal is open
-      expect(wrapper.findComponent(TeamContractsDetail).props('datas')).toEqual(
-        contractDataDialog.datas
-      )
-    } else {
-      throw new Error('Data modal is not rendered as expected.')
+    const vm = wrapper.vm as unknown as {
+      openEventsModal: (addr: string) => Promise<void>
+      contractEventsDialog: { events: unknown[]; show: boolean }
     }
+
+    await vm.openEventsModal(contracts[0].address)
+
+    expect(vm.contractEventsDialog.events.length).toBe(3)
+    expect(vm.contractEventsDialog.show).toBe(true)
   })
 })
