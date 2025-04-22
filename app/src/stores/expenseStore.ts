@@ -32,9 +32,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
         ...expense.data,
         signature: expense.signature
       }))
-      return expenses.filter(
-        expense => expense.approvedAddress === userDataStore.address
-      )
+      return expenses.filter((expense) => expense.approvedAddress === userDataStore.address)
     }
     return []
   })
