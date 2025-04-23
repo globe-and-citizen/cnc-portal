@@ -15,6 +15,7 @@
       <div class="modal-action justify-center">
         <ButtonUI
           variant="error"
+          data-test="delete-team-button"
           @click="deleteTeam()"
           :loading="teamIsDeleting"
           :disabled="teamIsDeleting"
