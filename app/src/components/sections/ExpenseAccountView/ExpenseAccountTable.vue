@@ -96,7 +96,7 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
