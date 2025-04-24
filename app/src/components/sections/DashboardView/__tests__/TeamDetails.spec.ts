@@ -4,24 +4,37 @@ import { mount } from '@vue/test-utils'
 import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types/team'
+import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
 
 vi.mock('@/stores/user')
 
-describe('TeamDetails.vue', () => {
-  const mockTeam = {
-    id: '1',
-    name: 'Test Team',
-    description: 'Test description',
-    ownerAddress: '0xUserAddress',
-    members: [],
-    teamContracts: []
-  } as Team
+const mockTeam = {
+  id: '1',
+  name: 'Test Team',
+  description: 'Test description',
+  ownerAddress: '0xUserAddress',
+  members: [],
+  teamContracts: []
+} as Team
+vi.mock('@/stores', async (imporOriginal) => {
+  const original: object = await imporOriginal()
+  return {
+    ...original,
+    useTeamStore: vi.fn(() => ({
+      currentTeam: ref(mockTeam)
+    }))
+  }
+})
 
+describe('TeamDetails.vue', () => {
   const createWrapper = (userAddress: string) => {
     // @ts-expect-error: mocked
     vi.mocked(useUserDataStore).mockReturnValue({ address: userAddress })
     return mount(TeamDetails, {
-      props: { team: mockTeam }
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
     })
   }
 
