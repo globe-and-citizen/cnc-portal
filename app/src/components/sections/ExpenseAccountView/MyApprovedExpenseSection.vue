@@ -36,23 +36,28 @@
 
       <ModalComponent v-model="transferModal">
         <TransferForm
-          v-if="transferModal && expenseDataStore.myApprovedExpenses"
+          v-if="transferModal && tokens.length > 0 /*expenseDataStore.myApprovedExpenses*/"
           v-model="transferData"
-          :tokens="[
+          :tokens="
+            /*[
             {
               symbol: tokenSymbol(
-                expenseDataStore.myApprovedExpenses.find(
+                /*expenseDataStore.myApprovedExpenses.find(
+                  (item) => item.signature === signatureToTransfer
+                )?.tokenAddress ?? ''
+                myApprovedExpenseRows.find(
                   (item) => item.signature === signatureToTransfer
                 )?.tokenAddress ?? ''
               ),
               balance:
-                expenseDataStore.myApprovedExpenses.find(
+                /*expenseDataStore.myApprovedExpensesmyApprovedExpenseRows.find(
                   (item) => item.signature === signatureToTransfer
                 )?.tokenAddress === zeroAddress
                   ? balances.nativeToken.formatted
                   : balances.usdc.formatted
             }
-          ]"
+          ]*/ tokens
+          "
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
           service="Expense Account"
           @transfer="
@@ -69,7 +74,7 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
@@ -126,14 +131,6 @@ const transferData = ref({
   token: { symbol: '', balance: '0' },
   amount: '0'
 })
-const isDisapprovedAddress = computed(
-  () =>
-    expenseDataStore.allExpenseDataParsed.findIndex(
-      (item) =>
-        item.approvedAddress === currentUserAddress &&
-        (item.status === 'disabled' || item.status === 'expired')
-    ) !== -1
-)
 //#endregion
 
 const teamStore = useTeamStore()
@@ -145,6 +142,14 @@ const { balances, refetch: refetchBalances } = useContractBalance(
 )
 
 //#region Computed Values
+const isDisapprovedAddress = computed(
+  () =>
+    expenseDataStore.allExpenseDataParsed.findIndex(
+      (item) =>
+        item.approvedAddress === currentUserAddress &&
+        (item.status === 'disabled' || item.status === 'expired')
+    ) !== -1
+)
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
@@ -156,6 +161,17 @@ const myApprovedExpenseRows = computed(() =>
     (approval) => approval.approvedAddress === currentUserAddress
   )
 )
+const tokens = computed(() => {
+  const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
+    (item) => item.signature === signatureToTransfer.value
+  )?.tokenAddress
+
+  const symbol = tokenSymbol(tokenAddress ?? '')
+  const balance =
+    tokenAddress === zeroAddress ? balances.nativeToken.formatted : balances.usdc.formatted
+
+  return symbol && !isNaN(Number(balance)) ? [{ symbol, balance }] : []
+})
 //#endregion
 
 //#region Composables
@@ -322,4 +338,7 @@ watch(approveError, () => {
   }
 })
 //#endregion
+onMounted(() => {
+  console.log('tokens: ', tokens.value)
+})
 </script>
