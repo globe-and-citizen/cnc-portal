@@ -99,7 +99,7 @@ const {
   deploy,
   isDeploying: loading,
   contractAddress,
-  error
+  error: deployError
 } = useDeployContract(campaignAbi, campaignBytecode)
 
 watch(contractAddress, async (newAddress) => {
@@ -109,6 +109,10 @@ watch(contractAddress, async (newAddress) => {
     await addContractToTeam(team.value.id, newAddress, user.value.address)
     await teamStore.fetchTeam(team.value.id)
   }
+})
+
+defineExpose({
+  deployError
 })
 
 const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
@@ -139,12 +143,10 @@ const deployAdCampaign = async () => {
   }
   await deploy(_bankAddress.value, costPerClick.value, costPerImpression.value)
 
-  if (error.value) {
-    let errorMessage = error.value?.message || 'deployment failed, please retry'
-    if (errorMessage.includes('User rejected the request')) {
-      errorMessage = 'User rejected the request'
-    }
-    addErrorToast(`${errorMessage}`)
+  if (deployError.value) {
+    addErrorToast(
+      `Deployment failed: ${deployError.value?.message || 'deployment failed, please retry'}`
+    )
   }
 }
 

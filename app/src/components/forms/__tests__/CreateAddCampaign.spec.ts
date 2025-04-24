@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
@@ -7,9 +7,21 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 //import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 //import type { Abi } from 'viem'
-
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
+const mocks = vi.hoisted(() => {
+  return {
+    deployMock: vi.fn(),
+    mockUseDeployContract: vi.fn().mockImplementation(() => ({
+      deploy: mocks.deployMock,
+      isDeploying: ref(false),
+      contractAddress: ref(null),
+      error: ref(null)
+    }))
+  }
+})
 vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()
+
   return {
     ...actual,
     writeContract: vi.fn().mockResolvedValue('0xMOCK_TX'),
@@ -24,19 +36,17 @@ vi.mock('@wagmi/core', async (importOriginal) => {
     })
   }
 })
+vi.mock('@/stores/useToastStore')
 //const campaignAbi = AdCampaignArtifact.abi as Abi
 vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
   const actual: object = await importOriginal()
+
   return {
     ...actual,
-    useDeployContract: vi.fn().mockImplementation(() => ({
-      deploy: vi.fn(),
-      isDeploying: ref(false),
-      contractAddress: ref(null),
-      error: ref(null)
-    }))
+    useDeployContract: mocks.mockUseDeployContract
   }
 })
+
 describe('CreateAddCampaign.vue', () => {
   beforeEach(() => {
     const pinia = createPinia()
@@ -119,6 +129,25 @@ describe('CreateAddCampaign.vue', () => {
       expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
 
       alertMock.mockRestore()
+    })
+
+    it('shows an error toast with the correct message when there is an error', async () => {
+      const wrapper = mount(CreateAddCampaign, {
+        props: { bankAddress: '0x123456' }
+      })
+      const { addErrorToast } = useToastStore()
+      await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.1)
+      await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
+      wrapper.vm.deployError = new Error('User rejected the request')
+
+      await wrapper.find('.btn-primary').trigger('click')
+      await flushPromises()
+
+      // Trigger the logic again
+      await wrapper.vm.$nextTick()
+
+      // Check that the toast was called with the updated message
+      expect(addErrorToast).toHaveBeenCalledWith('Deployment failed: User rejected the request')
     })
   })
 
