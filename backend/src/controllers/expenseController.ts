@@ -41,27 +41,27 @@ export const addExpense = async (req: Request, res: Response) => {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
     // TODO: should be only one expense active for the user
-    const existingExpenses = await prisma.expense.findMany({
-      where: {
-        teamId,
-        userAddress: /*(typeof data === "string") 
-          ? JSON.parse(data).approvedAddress
-          : */data.approvedAddress 
-      },
-    })
+    // const existingExpenses = await prisma.expense.findMany({
+    //   where: {
+    //     teamId,
+    //     userAddress: /*(typeof data === "string") 
+    //       ? JSON.parse(data).approvedAddress
+    //       : */data.approvedAddress 
+    //   },
+    // })
 
-    const syncedExpenses = await Promise.all(existingExpenses.map(async (expense) => 
-      await syncExpenseStatus(expense)
-    ))
+    // const syncedExpenses = await Promise.all(existingExpenses.map(async (expense) => 
+    //   await syncExpenseStatus(expense)
+    // ))
 
-    const activeExpenses = syncedExpenses.filter((expense) => 
-      expense.status !== "expired" && expense.status !== "limit-reached"
-    )
+    // const activeExpenses = syncedExpenses.filter((expense) => 
+    //   expense.status !== "expired" && expense.status !== "limit-reached"
+    // )
 
-    // Check if the user already has an active expense
-    if (activeExpenses.length > 0) {
-      return errorResponse(400, "User already has an active expense", res);
-    }
+    // // Check if the user already has an active expense
+    // if (activeExpenses.length > 0) {
+    //   return errorResponse(400, "User already has an active expense", res);
+    // }
 
     const expense = await prisma.expense.create({
       data: {
