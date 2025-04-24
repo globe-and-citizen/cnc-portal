@@ -1,13 +1,53 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
-describe.skip('CreateAddCampaign.vue', () => {
+import { ref } from 'vue'
+//import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+//import type { Abi } from 'viem'
+
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    writeContract: vi.fn().mockResolvedValue('0xMOCK_TX'),
+    readContract: vi.fn().mockResolvedValue(BigInt('1000000000000000000')),
+    waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: 'success' }),
+    getWalletClient: vi.fn().mockResolvedValue({
+      deployContract: vi.fn().mockResolvedValue('0xMOCK_DEPLOYED'),
+      account: { address: '0xMOCK_ACCOUNT' }
+    }),
+    getPublicClient: vi.fn().mockReturnValue({
+      getBlockNumber: vi.fn().mockResolvedValue(100n)
+    })
+  }
+})
+//const campaignAbi = AdCampaignArtifact.abi as Abi
+vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useDeployContract: vi.fn().mockImplementation(() => ({
+      deploy: vi.fn(),
+      isDeploying: ref(false),
+      contractAddress: ref(null),
+      error: ref(null)
+    }))
+  }
+})
+describe('CreateAddCampaign.vue', () => {
+  beforeEach(() => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+  })
+
   describe('render', () => {
     it('renders correctly', () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { bankAddress: '0x123456' }
       })
 
       expect(wrapper.find('h4').text()).toBe('Deploy Advertisement Campaign contract')
@@ -16,7 +56,7 @@ describe.skip('CreateAddCampaign.vue', () => {
 
     it('shows the bank address input and is disabled', () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { bankAddress: '0x123456' }
       })
 
       const bankAddressInput = wrapper.find('input[data-testid="bank-address-input"]')
@@ -24,9 +64,9 @@ describe.skip('CreateAddCampaign.vue', () => {
       expect(bankAddressInput.attributes('disabled')).toBeDefined()
     })
 
-    it('shows loading button when loading is true', () => {
+    it.skip('shows loading button when loading is true', () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: true, bankAddress: '0x123456' }
+        props: { bankAddress: '0x123456' }
       })
 
       const allButtonComponentsWrapper = wrapper.findAllComponents(ButtonUI)
@@ -35,9 +75,9 @@ describe.skip('CreateAddCampaign.vue', () => {
   })
 
   describe('emits', () => {
-    it('emits createAddCampaign with correct values when the confirm button is clicked', async () => {
+    it.skip('emits createAddCampaign with correct values when the confirm button is clicked', async () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { bankAddress: '0x123456' }
       })
 
       // Directly set the ref values
@@ -61,7 +101,7 @@ describe.skip('CreateAddCampaign.vue', () => {
       expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
     })
 
-    it('shows an alert if costPerClick or costPerImpression is invalid', async () => {
+    it.skip('shows an alert if costPerClick or costPerImpression is invalid', async () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { loading: false, bankAddress: '0x123456' }
       })
