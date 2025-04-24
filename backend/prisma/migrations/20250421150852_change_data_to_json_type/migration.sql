@@ -5,9 +5,6 @@
   - Changed the type of `data` on the `Expense` table. No cast exists, the column would be dropped and recreated, which cannot be done if there is data, since the column is required.
 
 */
--- AlterTable
-ALTER TABLE "Expense" DROP COLUMN IF EXISTS "expiry";
-
 -- Single-step conversion (only if all data is valid JSON)
 ALTER TABLE "Expense" 
 ALTER COLUMN "data" TYPE JSONB 
