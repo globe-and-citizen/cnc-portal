@@ -159,7 +159,7 @@ const columns = [
 //#endregion Composables
 const {
   data: contractOwnerAddress,
-  refetch: fetchExpenseAccountOwner,
+  // refetch: fetchExpenseAccountOwner,
   error: errorGetOwner
 } = useReadContract({
   functionName: 'owner',
@@ -260,8 +260,4 @@ watch(errorGetOwner, (newVal) => {
   }
 })
 //#endregion
-
-onMounted(async () => {
-  await fetchExpenseAccountOwner()
-})
 </script>
