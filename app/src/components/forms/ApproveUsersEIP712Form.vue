@@ -80,7 +80,12 @@
           :data-test="`limit-input-${budgetType}`"
           @input="updateValue(budgetType)"
         />
-        <select v-model="selectedToken" class="bg-white grow" :class="{ hidden: budgetType == 0 }">
+        <select
+          v-model="selectedToken"
+          class="bg-white grow"
+          data-test="select-token"
+          :class="{ hidden: budgetType == 0 }"
+        >
           <option disabled :value="null">-- Select a token --</option>
           <option v-for="(address, symbol) of tokens" :value="address" :key="address">
             {{ symbol }}

@@ -23,10 +23,18 @@
       :loading="loading"
       variant="primary"
       @click="$emit('submit', budgetLimit)"
+      data-test="approve-button"
       >Confirm Approval</ButtonUI
     >
 
-    <ButtonUI outline variant="error" :disabled="loading" @click="$emit('close')">Cancel</ButtonUI>
+    <ButtonUI
+      outline
+      variant="error"
+      :disabled="loading"
+      @click="$emit('close')"
+      data-test="cancel-button"
+      >Cancel</ButtonUI
+    >
   </div>
 </template>
 <script setup lang="ts">
