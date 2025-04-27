@@ -46,28 +46,6 @@
     </div>
   </div>
 
-  <div class="mt-2">
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-24">Token</span>
-      |
-      <select v-model="selectedToken" class="bg-white grow">
-        <option disabled :value="null">-- Select a token --</option>
-        <option v-for="(address, symbol) of tokens" :value="address" :key="address">
-          {{ symbol }}
-        </option>
-      </select>
-    </label>
-  </div>
-
-  <div
-    data-test="limit-value-error"
-    class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.selectedToken.$errors"
-    :key="error.$uid"
-  >
-    {{ error.$message }}
-  </div>
-
   <!-- #region Multi Limit Inputs-->
   <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
     <h3 class="text-lg font-semibold">Budget Limits:</h3>
@@ -79,7 +57,7 @@
     >
       <label
         :for="'checkbox-' + budgetType"
-        class="input input-bordered flex items-center gap-2 input-md mt-2"
+        class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs"
       >
         <!-- Checkbox -->
         <input
@@ -96,13 +74,29 @@
         <input
           :disabled="!selectedOptions[budgetType]"
           type="number"
-          class="grow pl-4"
+          class="grow"
           v-model.number="values[budgetType]"
           placeholder="Enter value"
           :data-test="`limit-input-${budgetType}`"
           @input="updateValue(budgetType)"
         />
+        <select v-model="selectedToken" class="bg-white grow" :class="{ hidden: budgetType == 0 }">
+          <option disabled :value="null">-- Select a token --</option>
+          <option v-for="(address, symbol) of tokens" :value="address" :key="address">
+            {{ symbol }}
+          </option>
+        </select>
       </label>
+
+      <div
+        data-test="limit-value-error"
+        class="pl-4 text-red-500 text-sm w-full text-right"
+        :class="{ hidden: budgetType == 0 }"
+        v-for="error of v$.selectedToken.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
     </div>
   </div>
   <!-- #endregion Multi Limit Inputs -->
@@ -209,7 +203,7 @@ const rules = {
       $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
     }
   },
-  selectedToken: { required },
+  selectedToken: { required: helpers.withMessage('Token is required', required) },
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
