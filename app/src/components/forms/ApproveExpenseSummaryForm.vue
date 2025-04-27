@@ -1,12 +1,7 @@
 <template>
   <h3 class="font-bold mb-4">
     You are about to approve
-    {{
-      teamStore.currentTeam?.members.find((member) => {
-        console.log(teamStore.currentTeam?.members, budgetLimit.approvedAddress)
-        member.address == budgetLimit.approvedAddress
-      })?.name || budgetLimit.approvedAddress
-    }}
+    {{ budgetLimit.approvedAddress }}
     with the following limits:
   </h3>
 
@@ -39,7 +34,6 @@ import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { BudgetLimit } from '@/types'
-import { useTeamStore } from '@/stores'
 
 defineEmits(['submit', 'close'])
 
@@ -48,7 +42,6 @@ const props = defineProps<{
   loading: boolean
 }>()
 
-const teamStore = useTeamStore()
 function limitType(type: 0 | 1 | 2): string {
   const budgetTypes = {
     0: 'Max Transaction per Period',
