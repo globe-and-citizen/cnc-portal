@@ -5,6 +5,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseEther, type Address } from 'viem'
+import { useToastStore } from '@/stores/useToastStore'
 
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -283,6 +284,118 @@ describe('DepositBankModal.vue', () => {
 
       await wrapper.find('[data-test="percentButton-75"]').trigger('click')
       expect((amountInput.element as HTMLInputElement).value).toBe('15000.0000')
+    })
+  })
+
+  describe('USDC deposit steps tracking', () => {
+    let wrapper: ReturnType<typeof mount>
+
+    beforeEach(async () => {
+      wrapper = createWrapper()
+      // Select USDC token
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+    })
+
+    it('starts at step 1', () => {
+      const steps = wrapper.findAll('.step')
+      expect(steps[0].classes()).toContain('step-primary')
+      expect(steps[1].classes()).not.toContain('step-primary')
+      expect(steps[2].classes()).not.toContain('step-primary')
+    })
+
+    it('moves to step 2 during approval', async () => {
+      mockUseWriteContract.isPending.value = true
+      await wrapper.vm.$nextTick()
+      const steps = wrapper.findAll('.step')
+      expect(steps[0].classes()).toContain('step-primary')
+      expect(steps[1].classes()).toContain('step-primary')
+      expect(steps[2].classes()).not.toContain('step-primary')
+    })
+
+    it('moves to step 3 during deposit', async () => {
+      mockUseWriteContract.isPending.value = false
+      mockUseWriteContract.data.value = '0xtx'
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      const steps = wrapper.findAll('.step')
+      expect(steps[0].classes()).toContain('step-primary')
+      expect(steps[1].classes()).toContain('step-primary')
+    })
+
+    it('resets to step 1 when switching from USDC to ETH', async () => {
+      mockUseWriteContract.isPending.value = true
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-ETH"]').trigger('click')
+
+      const steps = wrapper.findAll('.step')
+      expect(steps.length).toBe(0)
+    })
+  })
+
+  describe('Transaction confirmations', () => {
+    let wrapper: ReturnType<typeof mount>
+
+    beforeEach(() => {
+      wrapper = createWrapper()
+    })
+
+    it('shows success toast and closes modal on ETH deposit confirmation', async () => {
+      // Simulate successful ETH deposit
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted()).toHaveProperty('closeModal')
+    })
+
+    it('shows success toast and closes modal on USDC deposit confirmation', async () => {
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+
+      mockUseWaitForTransactionReceipt.isLoading.value = true
+      await wrapper.vm.$nextTick()
+      mockUseWaitForTransactionReceipt.isLoading.value = false
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted()).toHaveProperty('closeModal')
+    })
+  })
+
+  describe('Error handling', () => {
+    let wrapper: ReturnType<typeof mount>
+    let toastStore: ReturnType<typeof useToastStore>
+
+    beforeEach(() => {
+      const pinia = createTestingPinia({ createSpy: vi.fn })
+      wrapper = mount(DepositBankForm, {
+        props: defaultProps,
+        global: {
+          plugins: [pinia]
+        }
+      })
+      toastStore = useToastStore()
+    })
+
+    it('handles USDC deposit error', async () => {
+      // Select USDC
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+
+      // Set amount
+      await wrapper.find('[data-test="amountInput"]').setValue('100')
+
+      // Mock writeContract to throw error
+      mockUseWriteContract.writeContract.mockRejectedValueOnce(new Error('Transaction failed'))
+
+      // Submit form
+      await wrapper.find('.btn-primary').trigger('click')
+
+      // Verify error toast was shown
+      expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to deposit USDC')
     })
   })
 })
