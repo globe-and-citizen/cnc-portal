@@ -61,8 +61,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, useTemplateRef, computed, watch } from 'vue'
+import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
+import { watchDebounced } from '@vueuse/core'
 
 const emit = defineEmits(['selectItem'])
 const input = defineModel({
@@ -80,34 +81,43 @@ const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
 
 const isFetching = computed(() => teamStore.currentTeamMeta.teamIsFetching)
 
-// Filter members and contracts based on input
 const filteredMembers = computed(() => {
   if (!teamStore.currentTeam?.members) return []
-  const searchTerm = input.value.name.toLowerCase()
-  return teamStore.currentTeam.members.filter(
-    (member) =>
-      member.name.toLowerCase().includes(searchTerm) ||
-      member.address.toLowerCase().includes(input.value.address.toLowerCase())
-  )
+  const nameSearch = input.value.name.toLowerCase().trim()
+  const addressSearch = input.value.address.toLowerCase().trim()
+
+  return teamStore.currentTeam.members.filter((member) => {
+    const nameMatch = nameSearch ? member.name.toLowerCase().includes(nameSearch) : true
+    const addressMatch = addressSearch ? member.address.toLowerCase().includes(addressSearch) : true
+    return nameMatch && addressMatch
+  })
 })
 
 const filteredContracts = computed(() => {
   if (!teamStore.currentTeam?.teamContracts) return []
-  const searchTerm = input.value.name.toLowerCase()
-  return teamStore.currentTeam.teamContracts.filter(
-    (contract) =>
-      contract.type.toLowerCase().includes(searchTerm) ||
-      contract.address.toLowerCase().includes(input.value.address.toLowerCase())
-  )
+  const nameSearch = input.value.name.toLowerCase().trim()
+  const addressSearch = input.value.address.toLowerCase().trim()
+
+  return teamStore.currentTeam.teamContracts.filter((contract) => {
+    const nameMatch = nameSearch ? contract.type.toLowerCase().includes(nameSearch) : true
+    const addressMatch = addressSearch
+      ? contract.address.toLowerCase().includes(addressSearch)
+      : true
+    return nameMatch && addressMatch
+  })
 })
 
-watch([() => input.value.name, () => input.value.address], () => {
-  if (input.value.name || input.value.address) {
-    showDropdown.value = true
-  } else {
-    showDropdown.value = false
-  }
-})
+watchDebounced(
+  [() => input.value.name, () => input.value.address],
+  ([name, address]) => {
+    if (name || address) {
+      showDropdown.value = true
+    } else {
+      showDropdown.value = false
+    }
+  },
+  { debounce: 300, maxWait: 1000 }
+)
 
 const selectItem = (item: { name: string; address: string }, type: 'member' | 'contract') => {
   input.value = item
