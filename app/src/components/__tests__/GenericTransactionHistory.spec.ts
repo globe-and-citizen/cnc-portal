@@ -45,6 +45,24 @@ vi.mock('@/stores/currencyStore', () => ({
   })
 }))
 
+const mockTeamData = {
+  currentTeam: {
+    members: [
+      { address: '0xabc', name: 'John Doe', imageUrl: 'https://example.com/john.jpg' },
+      { address: '0xdef', name: 'Jane Smith', imageUrl: 'https://example.com/jane.jpg' }
+    ],
+    teamContracts: [
+      { address: '0xghi', type: 'CashRemunerationEIP712' },
+      { address: '0xjkl', type: 'Bank' },
+      { address: '0xmno', type: 'ExpenseAccountEIP712' }
+    ]
+  }
+}
+
+vi.mock('@/stores', () => ({
+  useTeamStore: () => mockTeamData
+}))
+
 const mockTransactions = [
   {
     txHash: '0x123',
@@ -114,6 +132,12 @@ describe('GenericTransactionHistory', () => {
     dateRange: [Date, Date] | null
     receiptModal: boolean
     selectedTransaction: BaseTransaction | null
+    getContractType: (address: string) => { type: string; icon: string }
+    isContract: (address: string) => boolean
+    getExplorerUrl: (address: string) => string
+    getUserData: (address: string) => { name: string; imageUrl: string; address: string }
+    getMemberImage: (address: string) => string
+    getMemberName: (address: string) => string
   }
   let wrapper: VueWrapper
 
@@ -127,7 +151,14 @@ describe('GenericTransactionHistory', () => {
         ...props
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              team: mockTeamData
+            }
+          })
+        ],
         stubs: {
           TableComponent: true,
           AddressToolTip: true,
@@ -414,5 +445,33 @@ describe('GenericTransactionHistory', () => {
 
     const receiptButton = testWrapper.find('[data-test="transaction-history-receipt-button"]')
     expect(receiptButton.exists()).toBe(true)
+  })
+
+  describe('Contract Display', () => {
+    it('generates correct explorer URL for contracts', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const explorerUrl = vm.getExplorerUrl('0xghi')
+      expect(explorerUrl).toBe(`${NETWORK.blockExplorerUrl}/address/0xghi`)
+    })
+  })
+
+  describe('Member Display', () => {
+    it('gets member image URL correctly', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const imageUrl = vm.getMemberImage('0xabc')
+      expect(imageUrl).toBe('https://example.com/john.jpg')
+    })
+
+    it('returns empty string for image URL when member not found', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const imageUrl = vm.getMemberImage('0xunknown')
+      expect(imageUrl).toBe('')
+    })
   })
 })
