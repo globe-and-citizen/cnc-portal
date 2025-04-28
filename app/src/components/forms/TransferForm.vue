@@ -5,7 +5,7 @@
   </h3>
 
   <div class="flex flex-col gap-4 mt-4">
-    <SelectMemberInput v-model="model.address" />
+    <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <div class="input input-bordered flex items-center gap-2 input-md">
       <div class="grow flex items-center gap-2">
@@ -102,7 +102,7 @@ import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
-import SelectMemberInput from '../utils/SelectMemberInput.vue'
+import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { NETWORK } from '@/constant'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
@@ -116,6 +116,7 @@ interface TransferModel {
   address: {
     name: string
     address: string
+    type?: 'member' | 'contract'
   }
   token: Token
   amount: string
@@ -250,6 +251,10 @@ const handleAmountInput = (event: Event) => {
   } else {
     model.value.amount = value
   }
+}
+
+const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
+  model.value.address = item
 }
 
 onMounted(() => {
