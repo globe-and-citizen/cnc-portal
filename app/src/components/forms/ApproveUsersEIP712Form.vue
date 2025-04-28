@@ -26,7 +26,7 @@
     </div>
   </div>
 
-  <SelectMemberInput v-model="input" />
+  <SelectMemberWithTokenInput v-model="input" />
 
   <div
     class="pl-4 text-red-500 text-sm w-full text-left"
@@ -80,28 +80,7 @@
           :data-test="`limit-input-${budgetType}`"
           @input="updateValue(budgetType)"
         />
-        <select
-          v-model="selectedToken"
-          class="bg-white grow"
-          data-test="select-token"
-          :class="{ hidden: budgetType == 0 }"
-        >
-          <option disabled :value="null">-- Select a token --</option>
-          <option v-for="(address, symbol) of tokens" :value="address" :key="address">
-            {{ symbol }}
-          </option>
-        </select>
       </label>
-
-      <div
-        data-test="limit-value-error"
-        class="pl-4 text-red-500 text-sm w-full text-right"
-        :class="{ hidden: budgetType == 0 }"
-        v-for="error of v$.selectedToken.$errors"
-        :key="error.$uid"
-      >
-        {{ error.$message }}
-      </div>
     </div>
   </div>
   <!-- #endregion Multi Limit Inputs -->
@@ -132,15 +111,14 @@
 </template>
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { isAddress, zeroAddress } from 'viem'
+import { isAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -149,24 +127,18 @@ const props = defineProps<{
   users: User[]
 }>()
 
-const input = ref({ name: '', address: '' })
+const input = ref({ name: '', address: '', token: null })
 const limitValue = ref('')
 const date = ref<Date | string>('')
 const description = ref<string>('')
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
-const selectedToken = ref<string | null>(null)
-const tokens = ref({
-  [NETWORK.currencySymbol]: zeroAddress,
-  USDC: USDC_ADDRESS,
-  USDT: USDT_ADDRESS
-})
 
 //#region multi limit
 // Labels for budget types
 const budgetTypes = {
-  0: 'Transactions Per Period',
-  1: 'Amount Per Period',
-  2: 'Amount Per Transaction'
+  0: 'Max Transactions',
+  1: 'Maximum Amount',
+  2: 'Max Amount per Transaction'
 }
 
 // Reactive states
@@ -206,9 +178,11 @@ const rules = {
     address: {
       required: helpers.withMessage('Address is required', required),
       $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
+    },
+    token: {
+      required: helpers.withMessage('Token is required', required)
     }
   },
-  selectedToken: { required: helpers.withMessage('Token is required', required) },
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
@@ -218,8 +192,7 @@ const rules = {
 
 const v$ = useVuelidate(rules, {
   description,
-  input,
-  selectedToken
+  input
 })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
@@ -240,7 +213,7 @@ const submitApprove = () => {
   emit('approveUser', {
     approvedAddress: input.value.address,
     budgetData: resultArray.value,
-    tokenAddress: selectedToken.value,
+    tokenAddress: input.value.token,
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }

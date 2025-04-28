@@ -52,8 +52,8 @@ const props = defineProps<{
 
 function limitType(type: 0 | 1 | 2): string {
   const budgetTypes = {
-    0: 'Max Transaction per Period',
-    1: 'Max Amount per Period',
+    0: 'Max Transactions',
+    1: 'Maximum Amount',
     2: 'Max Amount per Transaction'
   }
   return budgetTypes[type]
