@@ -71,13 +71,19 @@
       <!-- From Address -->
       <template #from-data="{ row }">
         <template v-if="isContract((row as unknown as BaseTransaction).from)">
-          <div class="flex items-center gap-2">
-            <IconifyIcon icon="heroicons-outline:cube" class="w-5 h-5 text-primary" />
-            <span class="text-primary font-medium">{{
-              getContractType((row as unknown as BaseTransaction).from)
+          <a
+            :href="`${NETWORK.blockExplorerUrl}/address/${(row as unknown as BaseTransaction).from}`"
+            target="_blank"
+            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+          >
+            <IconifyIcon
+              :icon="getContractType((row as unknown as BaseTransaction).from).icon"
+              class="w-5 h-5"
+            />
+            <span class="font-medium">{{
+              getContractType((row as unknown as BaseTransaction).from).type
             }}</span>
-            <AddressToolTip :address="(row as unknown as BaseTransaction).from" :slice="true" />
-          </div>
+          </a>
         </template>
         <UserComponent
           v-else
@@ -92,13 +98,19 @@
       <!-- To Address -->
       <template #to-data="{ row }">
         <template v-if="isContract((row as unknown as BaseTransaction).to)">
-          <div class="flex items-center gap-2">
-            <IconifyIcon icon="heroicons-outline:cube" class="w-5 h-5 text-primary" />
-            <span class="text-primary font-medium">{{
-              getContractType((row as unknown as BaseTransaction).to)
+          <a
+            :href="`${NETWORK.blockExplorerUrl}/address/${(row as unknown as BaseTransaction).to}`"
+            target="_blank"
+            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+          >
+            <IconifyIcon
+              :icon="getContractType((row as unknown as BaseTransaction).to).icon"
+              class="w-5 h-5"
+            />
+            <span class="font-medium">{{
+              getContractType((row as unknown as BaseTransaction).to).type
             }}</span>
-            <AddressToolTip :address="(row as unknown as BaseTransaction).to" :slice="true" />
-          </div>
+          </a>
         </template>
         <UserComponent
           v-else
@@ -448,7 +460,20 @@ const getContractType = (address: string) => {
   const contract = currentTeam.value?.teamContracts.find(
     (c) => c.address.toLowerCase() === address.toLowerCase()
   )
-  return contract ? `${contract.type} Contract` : address
+  if (!contract) return { type: address, icon: 'heroicons-outline:cube' }
+
+  const typeMap: Record<string, { type: string; icon: string }> = {
+    CashRemunerationEIP712: {
+      type: 'Cash Remuneration Contract',
+      icon: 'heroicons-outline:currency-dollar'
+    },
+    Bank: { type: 'Bank Contract', icon: 'heroicons-outline:banknotes' },
+    ExpenseAccountEIP712: { type: 'Expense Account Contract', icon: 'heroicons-outline:briefcase' }
+  }
+
+  return (
+    typeMap[contract.type] || { type: `${contract.type} Contract`, icon: 'heroicons-outline:cube' }
+  )
 }
 
 const getMemberName = (address: string) => {
