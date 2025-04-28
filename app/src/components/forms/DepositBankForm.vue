@@ -56,7 +56,7 @@
           "
           data-test="tokenSelector"
         >
-          <span class="">{{ formattedTokenName }} </span>
+          <span>{{ formattedTokenName }} </span>
           <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
         </div>
         <ul
