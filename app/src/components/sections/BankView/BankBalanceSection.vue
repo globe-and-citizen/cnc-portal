@@ -51,16 +51,7 @@
       <DepositBankForm
         v-if="depositModal"
         @close-modal="() => (depositModal = false)"
-        @deposit="depositToBank"
-        :loading="
-          depositLoading ||
-          isConfirmingDeposit ||
-          isPendingApprove ||
-          isConfirmingApprove ||
-          tokenDepositLoading ||
-          isConfirmingTokenDeposit
-        "
-        :loading-text="loadingText"
+        :bank-address="bankAddress"
       />
     </ModalComponent>
 
@@ -87,26 +78,21 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { useSendTransaction, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { computed, ref, watch } from 'vue'
-import type { Address } from 'viem'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { type Address, parseEther } from 'viem'
 import { useToastStore } from '@/stores/useToastStore'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
-import { useUserDataStore } from '@/stores/user'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import BankABI from '@/artifacts/abi/bank.json'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
-import { parseEther } from 'viem'
 import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 const props = defineProps<{
-  bankAddress: Address | undefined
+  bankAddress: Address
 }>()
 
 const emit = defineEmits<{
@@ -115,10 +101,8 @@ const emit = defineEmits<{
 }>()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
-const userDataStore = useUserDataStore()
 const currencyStore = useCurrencyStore()
 const { price: usdcPrice } = useCryptoPrice('usd-coin')
-const currentAddress = userDataStore.address
 
 // Use the contract balance composable
 const { balances, isLoading, error, refetch } = useContractBalance(props.bankAddress)
@@ -126,20 +110,13 @@ const { balances, isLoading, error, refetch } = useContractBalance(props.bankAdd
 // Add refs for modals and form data
 const depositModal = ref(false)
 const transferModal = ref(false)
-const depositAmount = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
   token: { symbol: NETWORK.currencySymbol, balance: '0' },
   amount: '0'
 })
 
-// Contract interactions
-const { sendTransaction, isPending: depositLoading, data: depositHash } = useSendTransaction()
-
-const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
-  hash: depositHash
-})
-
+// Contract interactions for transfer
 const {
   data: transferHash,
   isPending: transferLoading,
@@ -149,78 +126,6 @@ const {
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash
 })
-
-const {
-  writeContract: writeTokenDeposit,
-  isPending: tokenDepositLoading,
-  data: tokenDepositHash
-} = useWriteContract()
-
-const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
-  hash: tokenDepositHash
-})
-
-const {
-  writeContract: approve,
-  isPending: isPendingApprove,
-  data: approveHash
-} = useWriteContract()
-
-const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
-  hash: approveHash
-})
-
-// Functions
-const depositToBank = async (data: { amount: string; token: string }) => {
-  if (!props.bankAddress) return
-
-  try {
-    if (data.token === 'ETH') {
-      sendTransaction({
-        to: props.bankAddress,
-        value: parseEther(data.amount)
-      })
-    } else if (data.token === 'USDC') {
-      const amount = BigInt(Number(data.amount) * 1e6)
-      depositAmount.value = data.amount // Store amount for after approval
-
-      const allowance = await readContract(config, {
-        address: USDC_ADDRESS as Address,
-        abi: ERC20ABI,
-        functionName: 'allowance',
-        args: [currentAddress as Address, props.bankAddress]
-      })
-
-      const currentAllowance = allowance ? allowance.toString() : 0n
-      if (Number(currentAllowance) < Number(amount)) {
-        approve({
-          address: USDC_ADDRESS as Address,
-          abi: ERC20ABI,
-          functionName: 'approve',
-          args: [props.bankAddress, amount]
-        })
-      } else {
-        // If already approved, deposit directly
-        await handleUsdcDeposit(data.amount)
-      }
-    }
-  } catch (error) {
-    console.error(error)
-    addErrorToast(`Failed to deposit ${data.token}`)
-  }
-}
-
-const handleUsdcDeposit = async (amount: string) => {
-  if (!props.bankAddress) return
-  const tokenAmount = BigInt(Number(amount) * 1e6)
-
-  writeTokenDeposit({
-    address: props.bankAddress,
-    abi: BankABI,
-    functionName: 'depositToken',
-    args: [USDC_ADDRESS as Address, tokenAmount]
-  })
-}
 
 const handleTransfer = async (data: {
   address: { address: string }
@@ -253,16 +158,6 @@ const handleTransfer = async (data: {
 }
 
 // Computed properties
-const loadingText = computed(() => {
-  if (isPendingApprove.value) return 'Approving USDC...'
-  if (isConfirmingApprove.value) return 'Confirming USDC approval...'
-  if (tokenDepositLoading.value) return 'Depositing USDC...'
-  if (isConfirmingTokenDeposit.value) return 'Confirming USDC deposit...'
-  if (depositLoading.value) return 'Depositing ETH...'
-  if (isConfirmingDeposit.value) return 'Confirming ETH deposit...'
-  return 'Processing...'
-})
-
 const totalValueLocal = computed(() => {
   const usdValue = Number(balances.totalValueUSD)
   return (usdValue * (usdcPrice.value || 0)).toFixed(2)
@@ -273,37 +168,11 @@ watch([() => balances.nativeToken.formatted, () => balances.usdc.formatted], () 
   emit('balance-updated')
 })
 
-watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('ETH deposited successfully')
-    depositModal.value = false
-    refetch()
-  }
-})
-
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
     transferModal.value = false
     refetch()
-  }
-})
-
-watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('USDC deposited successfully')
-    depositModal.value = false
-    refetch()
-    depositAmount.value = '' // Clear stored amount
-  }
-})
-
-watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Token approved successfully')
-    if (depositAmount.value) {
-      await handleUsdcDeposit(depositAmount.value)
-    }
   }
 })
 
