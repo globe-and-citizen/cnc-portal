@@ -9,6 +9,7 @@ import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
 import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
+import { ref } from 'vue'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({
@@ -80,7 +81,9 @@ const mockTeamData = {
 }
 
 vi.mock('@/stores', () => ({
-  useTeamStore: () => mockTeamData
+  useTeamStore: () => ({
+    currentTeam: ref(mockTeamData.currentTeam)
+  })
 }))
 
 const mockTransactions = [
@@ -468,6 +471,58 @@ describe('GenericTransactionHistory', () => {
   })
 
   describe('Contract Display', () => {
+    it('displays contract with correct icon and type', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const contractType = vm.getContractType('0xghi')
+      expect(contractType).toEqual({
+        type: 'Cash Remuneration Contract',
+        icon: 'heroicons-outline:currency-dollar'
+      })
+    })
+
+    it('displays bank contract with correct icon', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const contractType = vm.getContractType('0xjkl')
+      expect(contractType).toEqual({
+        type: 'Bank Contract',
+        icon: 'heroicons-outline:banknotes'
+      })
+    })
+
+    it('displays expense account contract with correct icon', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const contractType = vm.getContractType('0xmno')
+      expect(contractType).toEqual({
+        type: 'Expense Account Contract',
+        icon: 'heroicons-outline:briefcase'
+      })
+    })
+
+    it('displays default cube icon for unknown contract types', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const contractType = vm.getContractType('0xunknown')
+      expect(contractType).toEqual({
+        type: '0xunknown',
+        icon: 'heroicons-outline:cube'
+      })
+    })
+
+    it('correctly identifies contract addresses', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      expect(vm.isContract('0xghi')).toBe(true)
+      expect(vm.isContract('0xabc')).toBe(false)
+    })
+
     it('generates correct explorer URL for contracts', () => {
       const wrapper = createWrapper()
       const vm = wrapper.vm as unknown as IGenericTransactionHistory
@@ -478,6 +533,30 @@ describe('GenericTransactionHistory', () => {
   })
 
   describe('Member Display', () => {
+    it('displays member data correctly', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const userData = vm.getUserData('0xabc')
+      expect(userData).toEqual({
+        name: 'John Doe',
+        imageUrl: 'https://example.com/john.jpg',
+        address: '0xabc'
+      })
+    })
+
+    it('returns address as name when member not found', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const userData = vm.getUserData('0xunknown')
+      expect(userData).toEqual({
+        name: '0xunknown',
+        imageUrl: '',
+        address: '0xunknown'
+      })
+    })
+
     it('gets member image URL correctly', () => {
       const wrapper = createWrapper()
       const vm = wrapper.vm as unknown as IGenericTransactionHistory
@@ -492,6 +571,22 @@ describe('GenericTransactionHistory', () => {
 
       const imageUrl = vm.getMemberImage('0xunknown')
       expect(imageUrl).toBe('')
+    })
+
+    it('gets member name correctly', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const name = vm.getMemberName('0xabc')
+      expect(name).toBe('John Doe')
+    })
+
+    it('returns address as name when member not found', () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      const name = vm.getMemberName('0xunknown')
+      expect(name).toBe('0xunknown')
     })
   })
 })
