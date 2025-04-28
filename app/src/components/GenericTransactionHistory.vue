@@ -369,7 +369,7 @@ const getUserData = (address: string) => ({
 })
 
 const getMemberImage = (address: string) => {
-  const member = teamStore.currentTeam?.members.find(
+  const member = currentTeam.value?.members.find(
     (m) => m.address.toLowerCase() === address.toLowerCase()
   )
   return member?.imageUrl || ''
