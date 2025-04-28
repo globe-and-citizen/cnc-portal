@@ -66,6 +66,7 @@ export const useCurrencyStore = defineStore(
     })
     const nativeTokenPrice = ref<number | undefined>(undefined)
     const nativeTokenPriceInUSD = ref<number | undefined>(undefined)
+    const usdPriceInLocal = ref<number | undefined>(undefined)
     const toastStore = useToastStore()
 
     const {
@@ -79,6 +80,17 @@ export const useCurrencyStore = defineStore(
         immediate: false
       }
     )
+      .get()
+      .json<PriceResponse>()
+
+    const {
+      data: usdPriceResponse,
+      execute: fetchUSDPrice,
+      isFetching: isLoadingUSDPrice,
+      error: errorUSDPrice
+    } = useCustomFetch(`https://api.coingecko.com/api/v3/usd-coin`, {
+      immediate: false
+    })
       .get()
       .json<PriceResponse>()
 
@@ -101,9 +113,24 @@ export const useCurrencyStore = defineStore(
       nativeTokenPriceInUSD.value = priceResponse.value.market_data.current_price.usd
     }
 
+    async function fetchUSDPriceInLocal() {
+      await fetchUSDPrice()
+
+      const currencyCode = currency.value.code.toLowerCase() as currencyType
+      if (!usdPriceResponse.value || errorUSDPrice.value) {
+        toastStore.addErrorToast('Failed to fetch price')
+        return
+      }
+      usdPriceInLocal.value = usdPriceResponse.value.market_data.current_price[currencyCode]
+    }
+
     onMounted(async () => {
       if (nativeTokenPrice.value === undefined || nativeTokenPriceInUSD.value === undefined) {
         await fetchNativeTokenPrice()
+      }
+
+      if (usdPriceInLocal.value === undefined) {
+        await fetchUSDPriceInLocal()
       }
     })
 
@@ -111,7 +138,9 @@ export const useCurrencyStore = defineStore(
       currency,
       nativeTokenPrice,
       nativeTokenPriceInUSD,
+      usdPriceInLocal,
       isLoading,
+      isLoadingUSDPrice,
       setCurrency,
       fetchNativeTokenPrice
     }

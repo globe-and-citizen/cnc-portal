@@ -90,7 +90,6 @@ import { onClickOutside } from '@vueuse/core'
 import SelectMemberInput from '../utils/SelectMemberInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { NETWORK } from '@/constant'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
 
 interface Token {
   symbol: string
@@ -130,7 +129,6 @@ const target = ref<HTMLElement | null>(null)
 const getSelectedTokenBalance = computed(() => {
   return model.value.token.balance
 })
-const { price: usdcPrice } = useCryptoPrice('usd-coin')
 
 // New computed property for transfer amount in default currency
 const formattedTransferAmount = computed(() => {
@@ -151,7 +149,7 @@ const formattedTransferAmount = computed(() => {
       style: 'currency',
       currency: currencyStore.currency.code,
       minimumFractionDigits: 2
-    }).format(amount * (usdcPrice.value || 0))
+    }).format(amount * (currencyStore.usdPriceInLocal || 0))
   }
 
   // Default case

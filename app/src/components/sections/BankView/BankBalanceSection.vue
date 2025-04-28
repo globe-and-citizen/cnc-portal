@@ -101,7 +101,6 @@ import BankABI from '@/artifacts/abi/bank.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther } from 'viem'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
@@ -117,7 +116,6 @@ const emit = defineEmits<{
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const currencyStore = useCurrencyStore()
-const { price: usdcPrice } = useCryptoPrice('usd-coin')
 const currentAddress = userDataStore.address
 
 // Use the contract balance composable
@@ -265,7 +263,7 @@ const loadingText = computed(() => {
 
 const totalValueLocal = computed(() => {
   const usdValue = Number(balances.totalValueUSD)
-  return (usdValue * (usdcPrice.value || 0)).toFixed(2)
+  return (usdValue * (currencyStore.usdPriceInLocal || 0)).toFixed(2)
 })
 
 // Watch handlers

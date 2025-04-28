@@ -87,7 +87,6 @@ import ButtonUI from '../ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
 import { useUserDataStore } from '@/stores/user'
 import { formatEther, type Address } from 'viem'
@@ -102,7 +101,6 @@ const amount = ref<string>('')
 const selectedTokenId = ref(0)
 const isDropdownOpen = ref<boolean>(false)
 const currencyStore = useCurrencyStore()
-const { price: usdcPrice } = useCryptoPrice('usd-coin')
 const userDataStore = useUserDataStore()
 const chainId = useChainId()
 
@@ -197,7 +195,7 @@ const estimatedPrice = computed(() => {
     style: 'currency',
     currency: currencyStore.currency.code,
     minimumFractionDigits: 2
-  }).format((usdcPrice.value || 0) * amountValue)
+  }).format((currencyStore.usdPriceInLocal || 0) * amountValue)
 })
 
 const submitForm = async () => {
