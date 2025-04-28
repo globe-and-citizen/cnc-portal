@@ -64,6 +64,9 @@ export const mockTeamStore = {
       }
     ],
     ownerAddress: '0xOwner'
+  },
+  currentTeamMeta: {
+    teamIsFetching: false
   }
 }
 
