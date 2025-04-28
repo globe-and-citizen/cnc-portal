@@ -59,7 +59,7 @@
           </td>
         </tr>
         <tr
-          v-for="(row, rowIndex) in sortedRows"
+          v-for="(row, rowIndex) in paginatedRows"
           :key="rowIndex"
           @click="$emit('row-click', row)"
           :data-test="`${rowIndex}-row`"
@@ -78,11 +78,81 @@
         </tr>
       </tbody>
     </table>
+
+    <div
+      v-if="showPagination && totalPages > 1"
+      class="flex justify-between items-center mt-4 px-2"
+    >
+      <div class="flex items-center space-x-2">
+        <slot
+          name="pagination-info"
+          :start-index="startIndex"
+          :end-index="endIndex"
+          :total-items="totalItems"
+        >
+          <span class="text-sm text-gray-600">
+            Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ totalItems }} entries
+          </span>
+        </slot>
+      </div>
+      <div class="flex items-center space-x-2">
+        <slot
+          name="pagination-controls"
+          :current-page="currentPage"
+          :total-pages="totalPages"
+          :go-to-page="goToPage"
+          :previous-page="previousPage"
+          :next-page="nextPage"
+        >
+          <div class="join">
+            <button
+              class="join-item btn btn-sm"
+              :disabled="currentPage === 1"
+              @click="previousPage"
+              data-test="previous-page"
+            >
+              <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
+            </button>
+            <button
+              v-for="page in displayedPages"
+              :key="page"
+              class="join-item btn btn-sm"
+              :class="{ 'btn-active btn-primary': page === currentPage }"
+              @click="goToPage(page)"
+              :data-test="`page-${page}`"
+            >
+              {{ page }}
+            </button>
+            <button
+              class="join-item btn btn-sm"
+              :disabled="currentPage === totalPages"
+              @click="nextPage"
+              data-test="next-page"
+            >
+              <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
+            </button>
+          </div>
+        </slot>
+      </div>
+      <div class="flex items-center space-x-2">
+        <slot name="items-per-page">
+          <select
+            v-model="itemsPerPage"
+            class="select select-sm select-bordered"
+            data-test="items-per-page"
+          >
+            <option v-for="size in pageSizeOptions" :key="size" :value="size">
+              {{ size }} per page
+            </option>
+          </select>
+        </slot>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, ref } from 'vue'
+import { computed, defineEmits, ref, watch } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { PropType } from 'vue'
 
@@ -152,10 +222,31 @@ const props = defineProps({
   emptyState: {
     type: Object as PropType<EmptyState>,
     default: () => ({})
+  },
+  showPagination: {
+    type: Boolean,
+    default: true
+  },
+  currentPageProp: {
+    type: Number,
+    default: 1
+  },
+  itemsPerPageProp: {
+    type: Number,
+    default: 10,
+    validator: (value: number) => value <= 20 // Ensure value doesn't exceed 20
+  },
+  pageSizeOptions: {
+    type: Array as PropType<number[]>,
+    default: () => [5, 10, 15, 20]
+  },
+  maxDisplayedPages: {
+    type: Number,
+    default: 5
   }
 })
 
-const emit = defineEmits(['update:sort', 'row-click'])
+const emit = defineEmits(['update:sort', 'row-click', 'update:currentPage', 'update:itemsPerPage'])
 
 // Sort function
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -243,6 +334,78 @@ const isSortedAsc = (column: TableColumn) => {
 
 const isSortedDesc = (column: TableColumn) => {
   return currentSort.value === column.key && currentDirection.value === 'desc'
+}
+
+// Pagination state
+const currentPage = ref(props.currentPageProp)
+const itemsPerPage = ref(props.itemsPerPageProp)
+
+// Watch for prop changes
+watch(
+  () => props.currentPageProp,
+  (newVal) => {
+    currentPage.value = newVal
+  }
+)
+
+watch(
+  () => props.itemsPerPageProp,
+  (newVal) => {
+    itemsPerPage.value = newVal
+  }
+)
+
+// Watch for internal changes
+watch(currentPage, (newVal) => {
+  emit('update:currentPage', newVal)
+})
+
+watch(itemsPerPage, (newVal) => {
+  emit('update:itemsPerPage', newVal)
+  // Reset to first page when changing items per page
+  currentPage.value = 1
+})
+
+// Pagination computed properties
+const totalItems = computed(() => sortedRows.value.length)
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value)
+const endIndex = computed(() => Math.min(startIndex.value + itemsPerPage.value, totalItems.value))
+
+const paginatedRows = computed(() => {
+  return sortedRows.value.slice(startIndex.value, endIndex.value)
+})
+
+const displayedPages = computed(() => {
+  const maxPages = props.maxDisplayedPages
+  const halfMax = Math.floor(maxPages / 2)
+  let start = Math.max(currentPage.value - halfMax, 1)
+  const end = Math.min(start + maxPages - 1, totalPages.value)
+
+  if (end - start + 1 < maxPages) {
+    start = Math.max(end - maxPages + 1, 1)
+  }
+
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+})
+
+// Pagination methods
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
 }
 </script>
 
