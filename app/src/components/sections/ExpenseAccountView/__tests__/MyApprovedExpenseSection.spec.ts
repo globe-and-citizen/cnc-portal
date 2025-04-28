@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
@@ -11,6 +11,7 @@ import * as util from '@/utils'
 import * as mocks from './mock/MyApprovedExpenseSection.mock'
 import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
 import * as viem from 'viem'
+import { useExpenseDataStore, useTeamStore, useToastStore } from '@/stores'
 
 const _mocks = vi.hoisted(() => ({
   mockUseToastStore: {
@@ -19,22 +20,22 @@ const _mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
 }))
 
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: vi.fn(() => ({ addErrorToast: _mocks.mockUseToastStore.addErrorToast })),
-    useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
-    useExpenseDataStore: vi.fn(() => ({ ...mocks.mockExpenseDataStore })),
-    useCryptoPrice: vi.fn(),
-    useCurrencyStore: vi.fn(() => ({
-      currency: {
-        code: 'USD',
-        symbol: '$'
-      }
-    }))
-  }
-})
+// vi.mock('@/stores', async (importOriginal) => {
+//   const actual: object = await importOriginal()
+//   return {
+//     ...actual,
+//     useToastStore: vi.fn(() => ({ addErrorToast: _mocks.mockUseToastStore.addErrorToast })),
+//     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
+//     useExpenseDataStore: vi.fn(() => ({ ...mocks.mockExpenseDataStore })),
+//     useCryptoPrice: vi.fn(),
+//     useCurrencyStore: vi.fn(() => ({
+//       currency: {
+//         code: 'USD',
+//         symbol: '$'
+//       }
+//     }))
+//   }
+// })
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -95,6 +96,12 @@ describe('ExpenseAccountSection', () => {
   }
 
   describe('Render', () => {
+    beforeEach(() => {
+      //@ts-expect-error: TypeScript expects exact return type as original
+      vi.mocked(useExpenseDataStore).mockReturnValue({ ...mocks.mockExpenseDataStore })
+      //@ts-expect-error: TypeScript expects exact return type as original
+      vi.mocked(useTeamStore).mockReturnValue({ ...mocks.mockTeamStore })
+    })
     it("should show the current user's approval data in the approval table", async () => {
       const wrapper = createComponent()
       await flushPromises()
@@ -183,6 +190,8 @@ describe('ExpenseAccountSection', () => {
       expect(spendButton.props('disabled')).toBe(true)
     })
     it('should notify amount withdrawn error', async () => {
+      //@ts-expect-error: TypeScript expects exact return type as original
+      vi.mocked(useToastStore).mockReturnValue({ ..._mocks.mockUseToastStore })
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(util.log, 'error')
       //@ts-expect-error: not visible from vm
