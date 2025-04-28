@@ -7,19 +7,14 @@ import CardComponent from '@/components/CardComponent.vue'
 import * as utils from '@/utils'
 import { parseEther } from 'viem'
 
-const mockUseCryptoPrice = {
-  price: ref(1),
-  loading: ref(false),
-  error: ref<Error | null>(null)
-}
-
 const mockUseCurrencyStore = {
   currency: {
     code: `USD`,
     symbol: `$`
   },
   nativeTokenPrice: 2500,
-  nativeTokenPriceInUSD: 2500
+  nativeTokenPriceInUSD: 2500,
+  usdPriceInLocal: 1
 }
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
@@ -27,14 +22,6 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   return {
     ...original,
     useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
-  }
-})
-
-vi.mock('@/composables/useCryptoPrice', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCryptoPrice: vi.fn(() => ({ ...mockUseCryptoPrice }))
   }
 })
 

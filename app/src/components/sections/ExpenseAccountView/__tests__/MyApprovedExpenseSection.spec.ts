@@ -87,7 +87,6 @@ vi.mock('@/stores', async (importOriginal) => {
     useExpenseDataStore: vi.fn(() => ({
       ...mockExpenseDataStore
     })),
-    useCryptoPrice: vi.fn(),
     useCurrencyStore: vi.fn(() => ({
       currency: {
         code: 'USD',
