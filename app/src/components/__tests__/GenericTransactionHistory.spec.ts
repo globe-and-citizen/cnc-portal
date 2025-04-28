@@ -10,6 +10,13 @@ import { createTestingPinia } from '@pinia/testing'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
 import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  }))
+}))
 vi.mock('@/utils/excelExport', () => ({
   exportReceiptToExcel: vi.fn(),
   exportTransactionsToExcel: vi.fn()
