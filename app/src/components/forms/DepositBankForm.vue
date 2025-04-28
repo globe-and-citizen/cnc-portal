@@ -1,6 +1,16 @@
 <template>
   <span class="font-bold text-2xl">Deposit to Team Bank Contract</span>
-  <label class="form-control w-full mt-4">
+
+  <div v-if="tokenList[selectedTokenId].symbol === 'USDC'" class="steps w-full my-4">
+    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
+    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
+    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
+  </div>
+
+  <label
+    class="form-control w-full"
+    :class="{ 'mt-4': tokenList[selectedTokenId].symbol !== 'USDC' }"
+  >
     <div class="label">
       <span class="label-text">Deposit</span>
       <span class="label-text-alt">Balance: {{ formattedBalance }}</span>
@@ -69,10 +79,7 @@
       :loading="isLoading"
       :disabled="isLoading || $v.amount.$invalid"
     >
-      <template v-if="isLoading">
-        {{ loadingText }}
-      </template>
-      <template v-else> Deposit </template>
+      Deposit
     </ButtonUI>
     <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
   </div>
@@ -243,6 +250,65 @@ const estimatedPrice = computed(() => {
   }).format((usdcPrice.value || 0) * amountValue)
 })
 
+// Add currentStep ref
+const currentStep = ref(1)
+
+watch(
+  [
+    () => tokenList[selectedTokenId.value].symbol,
+    isPendingApprove,
+    isConfirmingApprove,
+    tokenDepositLoading,
+    isConfirmingTokenDeposit
+  ],
+  ([
+    symbol,
+    isPendingApprove,
+    isConfirmingApprove,
+    tokenDepositLoading,
+    isConfirmingTokenDeposit
+  ]) => {
+    // Reset step when switching tokens
+    if (symbol !== 'USDC') {
+      currentStep.value = 1
+      return
+    }
+
+    // Update steps for USDC
+    if (isPendingApprove || isConfirmingApprove) {
+      currentStep.value = 2
+    } else if (tokenDepositLoading || isConfirmingTokenDeposit) {
+      currentStep.value = 3
+    } else {
+      currentStep.value = 1
+    }
+  }
+)
+
+watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('ETH deposited successfully')
+    emits('closeModal')
+  }
+})
+
+watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('USDC deposited successfully')
+    emits('closeModal')
+    depositAmount.value = '' // Clear stored amount
+  }
+})
+
+watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Token approved successfully')
+    if (depositAmount.value) {
+      await handleUsdcDeposit(depositAmount.value)
+    }
+  }
+})
+
 const submitForm = async () => {
   await $v.value.$touch()
   if ($v.value.$invalid) return
@@ -294,32 +360,6 @@ const handleUsdcDeposit = async (amount: string) => {
   })
 }
 
-// Add watchers for transaction states
-watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('ETH deposited successfully')
-    emits('closeModal')
-  }
-})
-
-watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('USDC deposited successfully')
-    emits('closeModal')
-    depositAmount.value = '' // Clear stored amount
-  }
-})
-
-watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Token approved successfully')
-    if (depositAmount.value) {
-      await handleUsdcDeposit(depositAmount.value)
-    }
-  }
-})
-
-// Update loading computed property
 const isLoading = computed(() => {
   return Boolean(
     props.loading ||
@@ -330,16 +370,6 @@ const isLoading = computed(() => {
       tokenDepositLoading.value ||
       isConfirmingTokenDeposit.value
   )
-})
-
-const loadingText = computed(() => {
-  if (isPendingApprove.value) return 'Approving USDC...'
-  if (isConfirmingApprove.value) return 'Confirming USDC approval...'
-  if (tokenDepositLoading.value) return 'Depositing USDC...'
-  if (isConfirmingTokenDeposit.value) return 'Confirming USDC deposit...'
-  if (depositLoading.value) return 'Depositing ETH...'
-  if (isConfirmingDeposit.value) return 'Confirming ETH deposit...'
-  return props.loadingText || 'Processing...'
 })
 
 const handleAmountInput = (event: Event) => {
