@@ -17,7 +17,30 @@
       </div>
     </template>
 
-    <TableComponent :rows="displayedTransactions" :columns="columns">
+    <TableComponent
+      :rows="displayedTransactions"
+      :columns="columns"
+      v-model:current-page="currentPage"
+      v-model:items-per-page="itemsPerPage"
+      :page-size-options="[5, 10, 15, 20]"
+      :max-displayed-pages="5"
+    >
+      <template
+        #pagination-info="{
+          startIndex,
+          endIndex,
+          totalItems
+        }: {
+          startIndex: number
+          endIndex: number
+          totalItems: number
+        }"
+      >
+        <div class="text-sm text-gray-600">
+          Showing transactions {{ startIndex + 1 }} to {{ endIndex }} of {{ totalItems }}
+        </div>
+      </template>
+
       <!-- Transaction Hash -->
       <template #txHash-data="{ row }">
         <AddressToolTip
@@ -156,6 +179,10 @@ const { nativeTokenPriceInUSD, nativeTokenPrice } = storeToRefs(currencyStore)
 const dateRange = ref<[Date, Date] | null>(null)
 const receiptModal = ref(false)
 const selectedTransaction = ref<BaseTransaction | null>(null)
+
+// Add pagination state
+const currentPage = ref(1)
+const itemsPerPage = ref(10) // Default to 10 items per page
 
 // Computed columns based on currencies
 const columns = computed(() => {
