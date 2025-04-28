@@ -36,28 +36,9 @@
 
       <ModalComponent v-model="transferModal">
         <TransferForm
-          v-if="transferModal && tokens.length > 0 /*expenseDataStore.myApprovedExpenses*/"
+          v-if="transferModal && tokens.length > 0"
           v-model="transferData"
-          :tokens="
-            /*[
-            {
-              symbol: tokenSymbol(
-                /*expenseDataStore.myApprovedExpenses.find(
-                  (item) => item.signature === signatureToTransfer
-                )?.tokenAddress ?? ''
-                myApprovedExpenseRows.find(
-                  (item) => item.signature === signatureToTransfer
-                )?.tokenAddress ?? ''
-              ),
-              balance:
-                /*expenseDataStore.myApprovedExpensesmyApprovedExpenseRows.find(
-                  (item) => item.signature === signatureToTransfer
-                )?.tokenAddress === zeroAddress
-                  ? balances.nativeToken.formatted
-                  : balances.usdc.formatted
-            }
-          ]*/ tokens
-          "
+          :tokens="tokens"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
           service="Expense Account"
           @transfer="
@@ -74,7 +55,7 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
@@ -208,11 +189,6 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     (item) => item.signature === signatureToTransfer.value
   ) as BudgetLimit
 
-  // if (!budgetLimit) {
-  //   addErrorToast('No budget limit found')
-  //   return
-  // }
-
   if (expenseAccountEip712Address.value && expenseDataStore.myApprovedExpenses) {
     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
@@ -262,11 +238,6 @@ const transferErc20Token = async () => {
   const budgetLimit = expenseDataStore.myApprovedExpenses.find(
     (item) => item.signature === signatureToTransfer.value
   ) as BudgetLimit
-
-  // if (!budgetLimit) {
-  //   addErrorToast('No budget limit found')
-  //   return
-  // }
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
@@ -338,7 +309,4 @@ watch(approveError, () => {
   }
 })
 //#endregion
-onMounted(() => {
-  console.log('tokens: ', tokens.value)
-})
 </script>
