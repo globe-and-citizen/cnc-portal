@@ -70,12 +70,44 @@
 
       <!-- From Address -->
       <template #from-data="{ row }">
-        <AddressToolTip :address="(row as unknown as BaseTransaction).from" :slice="true" />
+        <template v-if="isContract((row as unknown as BaseTransaction).from)">
+          <div class="flex items-center gap-2">
+            <IconifyIcon icon="heroicons-outline:cube" class="w-5 h-5 text-primary" />
+            <span class="text-primary font-medium">{{
+              getContractType((row as unknown as BaseTransaction).from)
+            }}</span>
+            <AddressToolTip :address="(row as unknown as BaseTransaction).from" :slice="true" />
+          </div>
+        </template>
+        <UserComponent
+          v-else
+          :user="{
+            name: getMemberName((row as unknown as BaseTransaction).from),
+            imageUrl: getMemberImage((row as unknown as BaseTransaction).from),
+            address: (row as unknown as BaseTransaction).from
+          }"
+        />
       </template>
 
       <!-- To Address -->
       <template #to-data="{ row }">
-        <AddressToolTip :address="(row as unknown as BaseTransaction).to" :slice="true" />
+        <template v-if="isContract((row as unknown as BaseTransaction).to)">
+          <div class="flex items-center gap-2">
+            <IconifyIcon icon="heroicons-outline:cube" class="w-5 h-5 text-primary" />
+            <span class="text-primary font-medium">{{
+              getContractType((row as unknown as BaseTransaction).to)
+            }}</span>
+            <AddressToolTip :address="(row as unknown as BaseTransaction).to" :slice="true" />
+          </div>
+        </template>
+        <UserComponent
+          v-else
+          :user="{
+            name: getMemberName((row as unknown as BaseTransaction).to),
+            imageUrl: getMemberImage((row as unknown as BaseTransaction).to),
+            address: (row as unknown as BaseTransaction).to
+          }"
+        />
       </template>
 
       <!-- Receipt -->
@@ -131,7 +163,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -140,14 +172,18 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
+import type { Member } from '@/types'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
 import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { useTeamStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
 
 interface Props {
   transactions: BaseTransaction[]
@@ -173,7 +209,10 @@ const emit = defineEmits<{
 
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
+const teamStore = useTeamStore()
+const route = useRoute()
 const { nativeTokenPriceInUSD, nativeTokenPrice } = storeToRefs(currencyStore)
+const { currentTeam } = storeToRefs(teamStore)
 
 // State
 const dateRange = ref<[Date, Date] | null>(null)
@@ -183,6 +222,14 @@ const selectedTransaction = ref<BaseTransaction | null>(null)
 // Add pagination state
 const currentPage = ref(1)
 const itemsPerPage = ref(10) // Default to 10 items per page
+
+// Load team data when component mounts
+onMounted(async () => {
+  const teamId = route.params.id as string
+  if (teamId && (!currentTeam.value || currentTeam.value.id !== teamId)) {
+    await teamStore.setCurrentTeamId(teamId)
+  }
+})
 
 // Computed columns based on currencies
 const columns = computed(() => {
@@ -377,6 +424,38 @@ const handleReceiptPdfExport = async (receiptData: import('@/utils/excelExport')
     console.error('Error exporting receipt PDF:', error)
     toastStore.addErrorToast('Failed to export receipt PDF')
   }
+}
+
+interface ExtendedMember extends Member {
+  imageUrl?: string
+}
+
+const getMemberImage = (address: string): string => {
+  const member = teamStore.currentTeam?.members.find(
+    (m: ExtendedMember) => m.address.toLowerCase() === address.toLowerCase()
+  )
+  return member?.imageUrl || ''
+}
+
+// Add new helper functions
+const isContract = (address: string) => {
+  return currentTeam.value?.teamContracts.some(
+    (c) => c.address.toLowerCase() === address.toLowerCase()
+  )
+}
+
+const getContractType = (address: string) => {
+  const contract = currentTeam.value?.teamContracts.find(
+    (c) => c.address.toLowerCase() === address.toLowerCase()
+  )
+  return contract ? `${contract.type} Contract` : address
+}
+
+const getMemberName = (address: string) => {
+  const member = currentTeam.value?.members.find(
+    (m) => m.address.toLowerCase() === address.toLowerCase()
+  )
+  return member?.name || address
 }
 </script>
 
