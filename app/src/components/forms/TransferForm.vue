@@ -16,7 +16,7 @@
           v-model="model.amount"
           @input="handleAmountInput"
         />
-        <div class="flex gap-1">
+        <div class="flex gap-1" data-test="percentage-buttons">
           <button
             v-for="percent in [25, 50, 75]"
             :key="percent"
@@ -27,12 +27,20 @@
             {{ percent }}%
           </button>
         </div>
-        <button class="btn btn-xs btn-ghost mr-2" @click="setMaxAmount" type="button">Max</button>
+        <button
+          class="btn btn-xs btn-ghost mr-2"
+          @click="setMaxAmount"
+          type="button"
+          data-test="max-button"
+        >
+          Max
+        </button>
 
         <div
           role="button"
           class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
           @click="() => (isDropdownOpen = !isDropdownOpen)"
+          data-test="token-selector"
         >
           <span>{{ formattedTokenSymbol }}</span>
           <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
