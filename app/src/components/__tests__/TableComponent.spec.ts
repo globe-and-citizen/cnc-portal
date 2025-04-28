@@ -163,4 +163,85 @@ describe('TableComponent.vue', () => {
       expect(wrapper.find('[data-test="0-row"]').html()).toContain(people[3].name) // assert sorted row
     })
   })
+
+  describe('Pagination', () => {
+    beforeEach(async () => {
+      wrapper.setProps({
+        rows: people,
+        columns,
+        showPagination: true,
+        itemsPerPageProp: 5
+      })
+      await wrapper.vm.$nextTick()
+    })
+
+    it('should not show pagination when showPagination is false', async () => {
+      wrapper.setProps({ showPagination: false })
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('[data-test="previous-page"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="next-page"]').exists()).toBe(false)
+    })
+
+    it('should show pagination controls when there are enough items', async () => {
+      await wrapper.setProps({
+        itemsPerPageProp: 2,
+        showPagination: true
+      })
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="previous-page"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="next-page"]').exists()).toBe(true)
+      expect(wrapper.find('select[data-test="items-per-page"]').exists()).toBe(true)
+    })
+
+    it('should handle items per page change', async () => {
+      const select = wrapper.find('select[data-test="items-per-page"]')
+      expect(select.exists()).toBe(true)
+
+      await select.setValue(5)
+      await wrapper.vm.$nextTick()
+
+      // Should show 5 items since we have 6 total items
+      expect(wrapper.findAll('tbody tr').length).toBe(5)
+
+      // Should update pagination info
+      const paginationText = wrapper.text()
+      expect(paginationText).toContain('Showing 1 to 5 of 6 entries')
+    })
+
+    it('should navigate between pages', async () => {
+      // Set 2 items per page to have multiple pages
+      await wrapper.setProps({ itemsPerPageProp: 2 })
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="previous-page"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.findAll('tbody tr').length).toBe(2)
+      expect(wrapper.text()).toContain('Showing 1 to 2 of 6 entries')
+
+      await wrapper.find('[data-test="next-page"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect(wrapper.text()).toContain('Showing 3 to 4 of 6 entries')
+
+      expect(wrapper.find('[data-test="previous-page"]').attributes('disabled')).toBeUndefined()
+
+      await wrapper.find('[data-test="previous-page"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect(wrapper.text()).toContain('Showing 1 to 2 of 6 entries')
+    })
+
+    it('should display correct page numbers', async () => {
+      await wrapper.setProps({ itemsPerPageProp: 2 })
+      await wrapper.vm.$nextTick()
+
+      const pageButtons = wrapper.findAll('.join-item.btn')
+      expect(pageButtons.length).toBeGreaterThan(2)
+
+      expect(wrapper.find('[data-test="page-1"]').classes()).toContain('btn-active')
+
+      await wrapper.find('[data-test="page-2"]').trigger('click')
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('[data-test="page-2"]').classes()).toContain('btn-active')
+      expect(wrapper.text()).toContain('Showing 3 to 4 of 6 entries')
+    })
+  })
 })

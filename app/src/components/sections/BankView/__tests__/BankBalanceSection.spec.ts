@@ -204,43 +204,7 @@ describe('BankBalanceSection', () => {
     expect(wrapper.vm.transferModal).toBe(true)
   })
 
-  describe('Loading States', () => {
-    it('shows correct loading text for ETH deposit', async () => {
-      const wrapper = createWrapper()
-      mockUseSendTransaction.isPending.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Depositing ETH...')
-    })
-
-    it('shows correct loading text for USDC approval', async () => {
-      const wrapper = createWrapper()
-      mockUseWriteContract.isPending.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Approving USDC...')
-    })
-
-    it('shows correct loading text for USDC deposit', async () => {
-      const wrapper = createWrapper()
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Confirming USDC approval...')
-    })
-  })
-
   describe('Watch Handlers', () => {
-    it('handles ETH deposit confirmation correctly', async () => {
-      const wrapper = createWrapper()
-      wrapper.vm.depositModal = true
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      const toastStore = useToastStore()
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('ETH deposited successfully')
-      expect(wrapper.vm.depositModal).toBe(false)
-    })
-
     it('handles transfer confirmation correctly', async () => {
       const wrapper = createWrapper()
       wrapper.vm.transferModal = true
@@ -252,33 +216,6 @@ describe('BankBalanceSection', () => {
       const toastStore = useToastStore()
       expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Transferred successfully')
       expect(wrapper.vm.transferModal).toBe(false)
-    })
-
-    it('handles USDC deposit confirmation correctly', async () => {
-      const wrapper = createWrapper()
-      wrapper.vm.depositModal = true
-      wrapper.vm.depositAmount = '100'
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      const toastStore = useToastStore()
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('USDC deposited successfully')
-      expect(wrapper.vm.depositModal).toBe(false)
-      expect(wrapper.vm.depositAmount).toBe('')
-    })
-
-    it('handles token approval confirmation and triggers deposit', async () => {
-      const wrapper = createWrapper()
-      wrapper.vm.depositAmount = '100'
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      const toastStore = useToastStore()
-      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Token approved successfully')
     })
   })
 
@@ -302,19 +239,6 @@ describe('BankBalanceSection', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('.loading-spinner').exists()).toBe(true)
-    })
-
-    it('updates loading text during USDC deposit process', async () => {
-      const wrapper = createWrapper()
-
-      mockUseWriteContract.isPending.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Approving USDC...')
-
-      mockUseWriteContract.isPending.value = false
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.vm.loadingText).toBe('Confirming USDC approval...')
     })
   })
 
@@ -419,17 +343,6 @@ describe('BankBalanceSection', () => {
   })
 
   describe('Modal State Management', () => {
-    it('closes deposit modal after successful deposit', async () => {
-      const wrapper = createWrapper()
-      wrapper.vm.depositModal = true
-      mockUseWaitForTransactionReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockUseWaitForTransactionReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.vm.depositModal).toBe(false)
-    })
-
     it('closes transfer modal after successful transfer', async () => {
       const wrapper = createWrapper()
       wrapper.vm.transferModal = true

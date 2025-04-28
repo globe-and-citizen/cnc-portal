@@ -5,11 +5,9 @@
   </h3>
 
   <div class="flex flex-col gap-4 mt-4">
-    <SelectMemberInput v-model="model.address" />
+    <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <div class="input input-bordered flex items-center gap-2 input-md">
-      <p>Amount</p>
-      |
       <div class="grow flex items-center gap-2">
         <input
           type="text"
@@ -18,20 +16,37 @@
           v-model="model.amount"
           @input="handleAmountInput"
         />
-        <button class="btn btn-sm btn-ghost mr-2" @click="setMaxAmount" type="button">Max</button>
-      </div>
-      |
-      <div>
+        <div class="flex gap-1" data-test="percentage-buttons">
+          <button
+            v-for="percent in [25, 50, 75]"
+            :key="percent"
+            class="btn btn-xs btn-ghost cursor-pointer"
+            @click="usePercentageOfBalance(percent)"
+            :data-test="`percentButton-${percent}`"
+          >
+            {{ percent }}%
+          </button>
+        </div>
+        <button
+          class="btn btn-xs btn-ghost mr-2"
+          @click="setMaxAmount"
+          type="button"
+          data-test="max-button"
+        >
+          Max
+        </button>
+
         <div
           role="button"
-          class="flex items-center cursor-pointer gap-4 badge badge-lg badge-info"
+          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
           @click="() => (isDropdownOpen = !isDropdownOpen)"
+          data-test="token-selector"
         >
-          <span>{{ model.token.symbol }}</span>
+          <span>{{ formattedTokenSymbol }}</span>
           <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
         </div>
         <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
+          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
           ref="target"
           data-test="token-dropdown"
           v-if="isDropdownOpen"
@@ -87,7 +102,7 @@ import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
-import SelectMemberInput from '../utils/SelectMemberInput.vue'
+import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { NETWORK } from '@/constant'
 
@@ -100,6 +115,7 @@ interface TransferModel {
   address: {
     name: string
     address: string
+    type?: 'member' | 'contract'
   }
   token: Token
   amount: string
@@ -123,8 +139,18 @@ const model = defineModel<TransferModel>({
   })
 })
 
+const usePercentageOfBalance = (percentage: number) => {
+  const balance = parseFloat(model.value.token.balance)
+  model.value.amount = ((balance * percentage) / 100).toFixed(4)
+}
+
 const isDropdownOpen = ref(false)
 const target = ref<HTMLElement | null>(null)
+
+const formattedTokenSymbol = computed(() => {
+  const symbol = model.value.token.symbol
+  return symbol === 'SepoliaETH' ? 'SepETH' : symbol
+})
 
 const getSelectedTokenBalance = computed(() => {
   return model.value.token.balance
@@ -223,6 +249,10 @@ const handleAmountInput = (event: Event) => {
   } else {
     model.value.amount = value
   }
+}
+
+const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
+  model.value.address = item
 }
 
 onMounted(() => {
