@@ -64,7 +64,14 @@
             }}</span>
           </a>
         </template>
-        <UserComponent v-else :user="getUserData((row as BaseTransaction).from)" />
+        <template
+          v-else-if="getMemberName((row as BaseTransaction).from) !== (row as BaseTransaction).from"
+        >
+          <UserComponent :user="getUserData((row as BaseTransaction).from)" />
+        </template>
+        <template v-else>
+          <AddressToolTip :address="(row as BaseTransaction).from" :slice="true" type="address" />
+        </template>
       </template>
 
       <template #to-data="{ row }">
@@ -81,7 +88,14 @@
             <span class="font-medium">{{ getContractType((row as BaseTransaction).to).type }}</span>
           </a>
         </template>
-        <UserComponent v-else :user="getUserData((row as BaseTransaction).to)" />
+        <template
+          v-else-if="getMemberName((row as BaseTransaction).to) !== (row as BaseTransaction).to"
+        >
+          <UserComponent :user="getUserData((row as BaseTransaction).to)" />
+        </template>
+        <template v-else>
+          <AddressToolTip :address="(row as BaseTransaction).to" :slice="true" type="address" />
+        </template>
       </template>
 
       <template #receipt-data="{ row }">
