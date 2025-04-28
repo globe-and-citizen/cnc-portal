@@ -122,12 +122,10 @@ describe('ExpenseAccountSection', () => {
     })
     it('should transfer from expense account', async () => {
       const executeExpenseAccountTransfer = vi.fn()
-      //@ts-expect-error: TypeScript expects exact type as original
+      //@ts-expect-error: TypeScript expects exact return type as original
       vi.mocked(useWriteContract).mockReturnValue({
-        writeContract: executeExpenseAccountTransfer,
-        error: ref(null),
-        data: ref(undefined),
-        isPending: ref(false)
+        ...mocks.mockUseWriteContract,
+        writeContract: executeExpenseAccountTransfer
       })
 
       // Mount the component
@@ -152,7 +150,7 @@ describe('ExpenseAccountSection', () => {
         address: vm.expenseAccountEip712Address,
         args: [
           '0xRecipientAddress',
-          BigInt(1e18), // Parsed amount
+          viem.parseEther('1'), // Parsed amount
           {
             ...mocks.mockExpenseDataStore.myApprovedExpenses[0],
             budgetData: [
