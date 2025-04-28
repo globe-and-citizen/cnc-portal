@@ -21,7 +21,7 @@ export const mockExpenseData = [
       { budgetType: 2, value: budgetData.amountPerTransaction }
     ],
     expiry: Math.floor(new Date(DATE).getTime() / 1000),
-    signature: '0xSignature',
+    signature: '0xNativeTokenSignature',
     tokenAddress: viem.zeroAddress,
     balances: {
       0: '0',
@@ -45,7 +45,7 @@ export const mockExpenseData = [
 
 export const mockExpenseDataStore = {
   allExpenseDataParsed: mockExpenseData,
-  myApprovedExpenses: mockExpenseData[0],
+  myApprovedExpenses: [mockExpenseData[0]],
   fetchAllExpenseData: vi.fn()
 }
 
@@ -57,7 +57,7 @@ export const mockTeamStore = {
     members: [],
     teamContracts: [
       {
-        address: '0xcontractaddress',
+        address: '0xExpenseAccountAddress',
         admins: [],
         type: 'ExpenseAccountEIP712',
         deployer: '0xdeployeraddress'
@@ -97,6 +97,6 @@ export const mockUseWaitForTransactionReceipt = {
 
 export const mockUseSignTypedData = {
   error: ref<Error | null>(null),
-  data: ref<string | undefined>(/*'0xExpenseDataSignature'*/),
+  data: ref<string | undefined>(),
   signTypedData: vi.fn()
 }

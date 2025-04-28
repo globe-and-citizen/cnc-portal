@@ -3,13 +3,14 @@ import { describe, it, expect, vi } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
-import { NETWORK /*, USDC_ADDRESS*/ } from '@/constant'
+import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
-// import TransferForm from '@/components/forms/TransferForm.vue'
-// import * as viem from 'viem'
+import { useWriteContract } from '@wagmi/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as util from '@/utils'
 import * as mocks from './mock/MyApprovedExpenseSection.mock'
+import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
+import * as viem from 'viem'
 
 const _mocks = vi.hoisted(() => ({
   mockUseToastStore: {
@@ -109,6 +110,62 @@ describe('ExpenseAccountSection', () => {
         `${mocks.budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
       )
       expect(firstRow.html()).toContain('Spend')
+      const spendButton = firstRow.findComponent(ButtonUI)
+      expect(spendButton.exists()).toBeTruthy()
+      expect(spendButton.props('disabled')).toBe(false)
+      spendButton.trigger('click')
+      await flushPromises()
+      //@ts-expect-error: not visible from vm
+      expect(wrapper.vm.signatureToTransfer).toBe('0xNativeTokenSignature')
+      //@ts-expect-error: not visible from vm
+      expect(wrapper.vm.tokens).toEqual([{ balance: '0', symbol: `${NETWORK.currencySymbol}` }])
+    })
+    it('should transfer from expense account', async () => {
+      const executeExpenseAccountTransfer = vi.fn()
+      //@ts-expect-error: TypeScript expects exact type as original
+      vi.mocked(useWriteContract).mockReturnValue({
+        writeContract: executeExpenseAccountTransfer,
+        error: ref(null),
+        data: ref(undefined),
+        isPending: ref(false)
+      })
+
+      // Mount the component
+      const wrapper = createComponent()
+
+      // Set up refs
+      const vm = wrapper.vm
+      //@ts-expect-error: not visible from vm
+      vm.signatureToTransfer = '0xNativeTokenSignature'
+
+      //@ts-expect-error: not visible from vm
+      await vm.transferFromExpenseAccount('0xRecipientAddress', '1')
+
+      //@ts-expect-error: not visible from vm
+      expect(vm.tokenAmount).toBe('1')
+      //@ts-expect-error: not visible from vm
+      expect(vm.tokenRecipient).toBe('0xRecipientAddress')
+
+      // Assert that executeExpenseAccountTransfer is called with correct arguments
+      expect(executeExpenseAccountTransfer).toHaveBeenCalledWith({
+        //@ts-expect-error: not visible from vm
+        address: vm.expenseAccountEip712Address,
+        args: [
+          '0xRecipientAddress',
+          BigInt(1e18), // Parsed amount
+          {
+            ...mocks.mockExpenseDataStore.myApprovedExpenses[0],
+            budgetData: [
+              { budgetType: 0, value: mocks.budgetData.txsPerPeriod },
+              { budgetType: 1, value: viem.parseEther(`${mocks.budgetData.amountPerPeriod}`) },
+              { budgetType: 2, value: viem.parseEther(`${mocks.budgetData.amountPerTransaction}`) }
+            ]
+          },
+          '0xNativeTokenSignature'
+        ],
+        abi: expenseAccountAbi,
+        functionName: 'transfer'
+      })
     })
     it('should disable the transfer button if the approval is disapproved', async () => {
       mocks.mockExpenseData[0].status = 'disabled'
