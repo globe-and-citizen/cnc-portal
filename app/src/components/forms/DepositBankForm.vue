@@ -15,7 +15,7 @@
       <span class="label-text">Deposit</span>
       <span class="label-text-alt">Balance: {{ formattedBalance }}</span>
     </div>
-    <div class="input input-lg input-bordered flex items-center">
+    <div class="input input-bordered flex items-center">
       <input
         type="text"
         class="grow"
@@ -24,13 +24,24 @@
         data-test="amountInput"
         @input="handleAmountInput"
       />
-      <button class="btn btn-sm btn-ghost mr-2" @click="useMaxBalance" :disabled="isLoadingBalance">
+
+      <div class="flex gap-1">
+        <button
+          v-for="percent in [25, 50, 75]"
+          :key="percent"
+          class="btn btn-xs btn-ghost cursor-pointer"
+          @click="usePercentageOfBalance(percent)"
+        >
+          {{ percent }}%
+        </button>
+      </div>
+      <button class="btn btn-xs btn-ghost mr-2" @click="useMaxBalance" :disabled="isLoadingBalance">
         Max
       </button>
       <div>
         <div
           role="button"
-          class="flex items-center cursor-pointer gap-4 badge badge-lg badge-info"
+          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
           @click="
             () => {
               isDropdownOpen = !isDropdownOpen
@@ -38,11 +49,11 @@
             }
           "
         >
-          <span class="">{{ tokenList[selectedTokenId].name }} </span>
+          <span class="">{{ formattedTokenName }} </span>
           <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
         </div>
         <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
+          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
           ref="target"
           v-if="isDropdownOpen"
         >
@@ -199,6 +210,11 @@ const isLoadingBalance = computed(() => isLoadingNativeBalance.value || isLoadin
 
 const useMaxBalance = () => {
   amount.value = formattedBalance.value
+}
+
+const usePercentageOfBalance = (percentage: number) => {
+  const balance = parseFloat(formattedBalance.value)
+  amount.value = ((balance * percentage) / 100).toFixed(4)
 }
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
@@ -382,4 +398,9 @@ const handleAmountInput = (event: Event) => {
     amount.value = value
   }
 }
+
+const formattedTokenName = computed(() => {
+  const name = tokenList[selectedTokenId.value].name
+  return name === 'SepoliaETH' ? 'SepETH' : name
+})
 </script>
