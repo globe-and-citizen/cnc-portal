@@ -31,11 +31,17 @@
           :key="percent"
           class="btn btn-xs btn-ghost cursor-pointer"
           @click="usePercentageOfBalance(percent)"
+          :data-test="`percentButton-${percent}`"
         >
           {{ percent }}%
         </button>
       </div>
-      <button class="btn btn-xs btn-ghost mr-2" @click="useMaxBalance" :disabled="isLoadingBalance">
+      <button
+        class="btn btn-xs btn-ghost mr-2"
+        @click="useMaxBalance"
+        :disabled="isLoadingBalance"
+        data-test="maxButton"
+      >
         Max
       </button>
       <div>
@@ -48,6 +54,7 @@
               console.log(`Dropdown open: ${isDropdownOpen}`)
             }
           "
+          data-test="tokenSelector"
         >
           <span class="">{{ formattedTokenName }} </span>
           <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
@@ -56,6 +63,7 @@
           class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
           ref="target"
           v-if="isDropdownOpen"
+          data-test="tokenDropdown"
         >
           <li
             v-for="(token, id) in tokenList"
@@ -66,6 +74,7 @@
                 isDropdownOpen = false
               }
             "
+            :data-test="`tokenOption-${token.symbol}`"
           >
             <a>{{ token.name }}</a>
           </li>

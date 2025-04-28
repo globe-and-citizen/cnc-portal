@@ -113,17 +113,30 @@ describe('DepositBankModal.vue', () => {
       expect(wrapper.find('.label-text-alt').text()).toBe('Balance: 100.0000')
     })
 
+    it('displays shortened token name for SepoliaETH', () => {
+      const wrapper = createWrapper()
+      expect(wrapper.find('[data-test="tokenSelector"]').text()).toContain('SepETH')
+    })
+
+    it('displays original token name for other tokens', async () => {
+      const wrapper = createWrapper()
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      expect(wrapper.find('[data-test="tokenSelector"]').text()).toContain('USDC')
+    })
+
     it('displays USDC balance with 4 decimal places when USDC is selected', async () => {
       const wrapper = createWrapper()
-      await wrapper.find('[role="button"]').trigger('click')
-      await wrapper.findAll('li')[1].trigger('click')
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
       expect(wrapper.find('.label-text-alt').text()).toBe('Balance: 20000.0000')
     })
 
     it('disables max button when balance is loading', async () => {
       mockUseBalance.isLoading.value = true
       const wrapper = createWrapper()
-      expect(wrapper.find('.btn-ghost').attributes('disabled')).toBeDefined()
+      const maxButton = wrapper.find('[data-test="maxButton"]')
+      expect(maxButton.attributes('disabled')).toBe('')
       mockUseBalance.isLoading.value = false
     })
   })
@@ -217,20 +230,59 @@ describe('DepositBankModal.vue', () => {
   describe('max button functionality', () => {
     it('fills input with max ETH balance when max button is clicked', async () => {
       const wrapper = createWrapper()
-      await wrapper.find('.btn-ghost').trigger('click')
-      expect(
-        (wrapper.find('input[data-test="amountInput"]').element as HTMLInputElement).value
-      ).toBe('100.0000')
+      await wrapper.find('[data-test="maxButton"]').trigger('click')
+      expect((wrapper.find('[data-test="amountInput"]').element as HTMLInputElement).value).toBe(
+        '100.0000'
+      )
     })
 
     it('fills input with max USDC balance when max button is clicked with USDC selected', async () => {
       const wrapper = createWrapper()
-      await wrapper.find('[role="button"]').trigger('click')
-      await wrapper.findAll('li')[1].trigger('click')
-      await wrapper.find('.btn-ghost').trigger('click')
-      expect(
-        (wrapper.find('input[data-test="amountInput"]').element as HTMLInputElement).value
-      ).toBe('20000.0000')
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      await wrapper.find('[data-test="maxButton"]').trigger('click')
+      expect((wrapper.find('[data-test="amountInput"]').element as HTMLInputElement).value).toBe(
+        '20000.0000'
+      )
+    })
+  })
+
+  describe('percentage buttons functionality', () => {
+    let wrapper: ReturnType<typeof mount>
+    let amountInput: ReturnType<typeof wrapper.find>
+
+    beforeEach(() => {
+      wrapper = createWrapper()
+      amountInput = wrapper.find('[data-test="amountInput"]')
+    })
+
+    it('fills input with 25% of ETH balance when 25% button is clicked', async () => {
+      await wrapper.find('[data-test="percentButton-25"]').trigger('click')
+      expect((amountInput.element as HTMLInputElement).value).toBe('25.0000')
+    })
+
+    it('fills input with 50% of ETH balance when 50% button is clicked', async () => {
+      await wrapper.find('[data-test="percentButton-50"]').trigger('click')
+      expect((amountInput.element as HTMLInputElement).value).toBe('50.0000')
+    })
+
+    it('fills input with 75% of ETH balance when 75% button is clicked', async () => {
+      await wrapper.find('[data-test="percentButton-75"]').trigger('click')
+      expect((amountInput.element as HTMLInputElement).value).toBe('75.0000')
+    })
+
+    it('fills input with correct percentage of USDC balance when buttons are clicked', async () => {
+      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
+      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+
+      await wrapper.find('[data-test="percentButton-25"]').trigger('click')
+      expect((amountInput.element as HTMLInputElement).value).toBe('5000.0000')
+
+      await wrapper.find('[data-test="percentButton-50"]').trigger('click')
+      expect((amountInput.element as HTMLInputElement).value).toBe('10000.0000')
+
+      await wrapper.find('[data-test="percentButton-75"]').trigger('click')
+      expect((amountInput.element as HTMLInputElement).value).toBe('15000.0000')
     })
   })
 })
