@@ -3,17 +3,18 @@
   <CardComponent :title="title" class="w-full">
     <template #card-action>
       <div class="flex items-center gap-10">
-        <div v-if="showDateFilter">
-          <CustomDatePicker v-model="dateRange" :data-test-prefix="dataTestPrefix" />
-        </div>
+        <CustomDatePicker
+          v-if="showDateFilter"
+          v-model="dateRange"
+          :data-test-prefix="dataTestPrefix"
+        />
         <ButtonUI
           v-if="showExport"
           variant="success"
           @click="handleExport"
           :data-test="`${dataTestPrefix}-export-button`"
+          >Export</ButtonUI
         >
-          Export
-        </ButtonUI>
       </div>
     </template>
 
@@ -25,100 +26,109 @@
       :page-size-options="[5, 10, 15, 20]"
       :max-displayed-pages="5"
     >
-      <template
-        #pagination-info="{
-          startIndex,
-          endIndex,
-          totalItems
-        }: {
-          startIndex: number
-          endIndex: number
-          totalItems: number
-        }"
-      >
+      <template #pagination-info="{ startIndex, endIndex, totalItems }">
         <div class="text-sm text-gray-600">
           Showing transactions {{ startIndex + 1 }} to {{ endIndex }} of {{ totalItems }}
         </div>
       </template>
 
-      <!-- Transaction Hash -->
       <template #txHash-data="{ row }">
         <AddressToolTip
-          :address="(row as unknown as BaseTransaction).txHash"
+          :address="(row as BaseTransaction).txHash"
           :slice="true"
           type="transaction"
         />
       </template>
 
-      <!-- Date -->
-      <template #date-data="{ row }">
-        {{ formatDate((row as unknown as BaseTransaction).date) }}
-      </template>
+      <template #date-data="{ row }">{{ formatDate((row as BaseTransaction).date) }}</template>
 
-      <!-- Type -->
       <template #type-data="{ row }">
-        <span
-          class="badge"
-          :class="{
-            'badge-success': (row as unknown as BaseTransaction).type.toLowerCase() === 'deposit',
-            'badge-info': (row as unknown as BaseTransaction).type.toLowerCase() === 'transfer'
-          }"
-        >
-          {{ (row as unknown as BaseTransaction).type }}
-        </span>
+        <span class="badge" :class="getTypeClass((row as BaseTransaction).type)">{{
+          (row as BaseTransaction).type
+        }}</span>
       </template>
 
-      <!-- From Address -->
       <template #from-data="{ row }">
-        <AddressToolTip :address="(row as unknown as BaseTransaction).from" :slice="true" />
+        <template v-if="isContract((row as BaseTransaction).from)">
+          <a
+            :href="getExplorerUrl((row as BaseTransaction).from)"
+            target="_blank"
+            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+          >
+            <IconifyIcon
+              :icon="getContractType((row as BaseTransaction).from).icon"
+              class="w-5 h-5"
+            />
+            <span class="font-medium">{{
+              getContractType((row as BaseTransaction).from).type
+            }}</span>
+          </a>
+        </template>
+        <template
+          v-else-if="getMemberName((row as BaseTransaction).from) !== (row as BaseTransaction).from"
+        >
+          <UserComponent :user="getUserData((row as BaseTransaction).from)" />
+        </template>
+        <template v-else>
+          <AddressToolTip :address="(row as BaseTransaction).from" :slice="true" type="address" />
+        </template>
       </template>
 
-      <!-- To Address -->
       <template #to-data="{ row }">
-        <AddressToolTip :address="(row as unknown as BaseTransaction).to" :slice="true" />
+        <template v-if="isContract((row as BaseTransaction).to)">
+          <a
+            :href="getExplorerUrl((row as BaseTransaction).to)"
+            target="_blank"
+            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+          >
+            <IconifyIcon
+              :icon="getContractType((row as BaseTransaction).to).icon"
+              class="w-5 h-5"
+            />
+            <span class="font-medium">{{ getContractType((row as BaseTransaction).to).type }}</span>
+          </a>
+        </template>
+        <template
+          v-else-if="getMemberName((row as BaseTransaction).to) !== (row as BaseTransaction).to"
+        >
+          <UserComponent :user="getUserData((row as BaseTransaction).to)" />
+        </template>
+        <template v-else>
+          <AddressToolTip :address="(row as BaseTransaction).to" :slice="true" type="address" />
+        </template>
       </template>
 
-      <!-- Receipt -->
       <template #receipt-data="{ row }">
         <template v-if="showReceiptModal">
           <ButtonUI
             size="sm"
-            @click="handleReceiptClick(row as unknown as BaseTransaction)"
+            @click="handleReceiptClick(row as BaseTransaction)"
             :data-test="`${dataTestPrefix}-receipt-button`"
+            >Receipt</ButtonUI
           >
-            Receipt
-          </ButtonUI>
         </template>
-        <template v-else>
-          <a
-            :href="getReceiptUrl(row.txHash)"
-            target="_blank"
-            class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
-          >
-            <IconifyIcon icon="heroicons-outline:document-text" class="h-4 w-4" />
-            Receipt
-          </a>
-        </template>
+        <a
+          v-else
+          :href="getReceiptUrl((row as BaseTransaction).txHash)"
+          target="_blank"
+          class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
+        >
+          <IconifyIcon icon="heroicons-outline:document-text" class="h-4 w-4" />Receipt
+        </a>
       </template>
 
-      <!-- Amount with token -->
-      <template #amount-data="{ row }">
-        {{ Number((row as unknown as BaseTransaction).amount) }}
-        {{ (row as unknown as BaseTransaction).token }}
-      </template>
-
-      <!-- Value in USD -->
-      <template #valueUSD-data="{ row }">
-        {{ formatAmount(row as unknown as BaseTransaction, 'USD') }}
-      </template>
-
-      <!-- Value in local currency -->
-      <template #valueLocal-data="{ row }">
-        {{ formatAmount(row as unknown as BaseTransaction, currencyStore.currency.code) }}
-      </template>
+      <template #amount-data="{ row }"
+        >{{ Number((row as BaseTransaction).amount) }}
+        {{ (row as BaseTransaction).token }}</template
+      >
+      <template #valueUSD-data="{ row }">{{
+        formatAmount(row as BaseTransaction, 'USD')
+      }}</template>
+      <template #valueLocal-data="{ row }">{{
+        formatAmount(row as BaseTransaction, currencyStore.currency.code)
+      }}</template>
     </TableComponent>
 
-    <!-- Receipt Modal -->
     <ModalComponent v-if="showReceiptModal" v-model="receiptModal">
       <ReceiptComponent
         v-if="receiptModal && selectedTransaction"
@@ -131,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -140,6 +150,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
@@ -147,12 +158,14 @@ import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useToastStore } from '@/stores/useToastStore'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { useTeamStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
 
 interface Props {
   transactions: BaseTransaction[]
   title: string
-  currencies: string[] // Array of currency codes: ['USD', 'CAD', 'INR', 'EUR']
+  currencies: string[]
   showDateFilter?: boolean
   showExport?: boolean
   showReceiptModal?: boolean
@@ -168,23 +181,29 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'export'): void
-  (e: 'receipt-click', data: import('@/utils/excelExport').ReceiptData): void
+  (e: 'receipt-click', data: ReceiptData): void
 }>()
 
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
+const teamStore = useTeamStore()
+const route = useRoute()
 const { nativeTokenPriceInUSD, nativeTokenPrice } = storeToRefs(currencyStore)
+const { currentTeam } = storeToRefs(teamStore)
 
-// State
 const dateRange = ref<[Date, Date] | null>(null)
 const receiptModal = ref(false)
 const selectedTransaction = ref<BaseTransaction | null>(null)
-
-// Add pagination state
 const currentPage = ref(1)
-const itemsPerPage = ref(10) // Default to 10 items per page
+const itemsPerPage = ref(10)
 
-// Computed columns based on currencies
+onMounted(async () => {
+  const teamId = route.params.id as string
+  if (teamId && (!currentTeam.value || currentTeam.value.id !== teamId)) {
+    await teamStore.setCurrentTeamId(teamId)
+  }
+})
+
 const columns = computed(() => {
   const baseColumns = [
     { key: 'txHash', label: 'Tx Hash', sortable: false },
@@ -196,7 +215,6 @@ const columns = computed(() => {
     { key: 'valueUSD', label: 'Value (USD)', sortable: false }
   ] as TableColumn[]
 
-  // Add local currency column if it's not USD
   if (currencyStore.currency.code !== 'USD') {
     baseColumns.push({
       key: 'valueLocal',
@@ -204,46 +222,26 @@ const columns = computed(() => {
       sortable: false
     })
   }
-
   baseColumns.push({ key: 'receipt', label: 'Receipt', sortable: false })
   return baseColumns
 })
 
-// Filter transactions based on date range
 const displayedTransactions = computed(() => {
   if (!dateRange.value) return props.transactions
-
   const [startDate, endDate] = dateRange.value
-  return props.transactions.filter((transaction) => {
-    const txDate = new Date(transaction.date)
+  return props.transactions.filter((tx) => {
+    const txDate = new Date(tx.date)
     return txDate >= startDate && txDate <= endDate
   })
 })
 
 const formatDate = (date: string | number) => {
   try {
-    if (typeof date === 'number') {
-      const dateObj = new Date(date)
-      if (!isNaN(dateObj.getTime())) {
-        return dateObj.toLocaleString()
-      }
-    }
-
-    if (typeof date === 'string') {
-      const dateObj = new Date(date)
-      if (!isNaN(dateObj.getTime())) {
-        return dateObj.toLocaleString()
-      }
-
-      const timestamp = parseInt(date) * 1000
-      const timestampDate = new Date(timestamp)
-      if (!isNaN(timestampDate.getTime())) {
-        return timestampDate.toLocaleString()
-      }
-    }
-
-    console.error('Invalid date format:', date)
-    return 'Invalid Date'
+    const dateObj = typeof date === 'number' ? new Date(date) : new Date(date)
+    if (!isNaN(dateObj.getTime())) return dateObj.toLocaleString()
+    const timestamp = parseInt(date as string) * 1000
+    const timestampDate = new Date(timestamp)
+    return !isNaN(timestampDate.getTime()) ? timestampDate.toLocaleString() : 'Invalid Date'
   } catch (error) {
     console.error('Error formatting date:', error)
     return 'Invalid Date'
@@ -253,33 +251,19 @@ const formatDate = (date: string | number) => {
 const formatAmount = (transaction: BaseTransaction, currency: string) => {
   const tokenAmount = Number(transaction.amount)
   if (tokenAmount <= 0) return currency === 'USD' ? '$0.00' : '0.00'
-
-  let usdAmount = 0
-  if (transaction.token === 'USDC') {
-    usdAmount = tokenAmount
-  } else {
-    usdAmount = tokenAmount * nativeTokenPriceInUSD.value!
-  }
-
-  if (currency === 'USD') {
-    return Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(usdAmount)
-  }
-
-  const exchangeRate = nativeTokenPrice.value! / nativeTokenPriceInUSD.value!
-  return Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency
-  }).format(usdAmount * exchangeRate)
+  const usdAmount =
+    transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeTokenPriceInUSD.value!
+  const formatter = Intl.NumberFormat('en-US', { style: 'currency', currency })
+  return currency === 'USD'
+    ? formatter.format(usdAmount)
+    : formatter.format(usdAmount * (nativeTokenPrice.value! / nativeTokenPriceInUSD.value!))
 }
 
 const handleExport = async () => {
   try {
     const headers = columns.value.map((col) => col.label)
-    const rows = displayedTransactions.value.map((tx) => {
-      return columns.value.map((col) => {
+    const rows = displayedTransactions.value.map((tx) =>
+      columns.value.map((col) => {
         switch (col.key) {
           case 'date':
             return formatDate(tx.date)
@@ -294,23 +278,22 @@ const handleExport = async () => {
           case 'receipt':
             return getReceiptUrl(tx.txHash)
           default:
-            if (col.key.startsWith('amount')) {
-              return formatAmount(tx, 'USD')
-            }
-            return ''
+            return col.key.startsWith('amount') ? formatAmount(tx, 'USD') : ''
         }
       })
-    })
+    )
 
     const date = new Date().toISOString().split('T')[0]
-    const excelSuccess = exportTransactionsToExcel(headers, rows, date)
-    const pdfSuccess = await exportTransactionsToPdf(headers, rows, date)
+    const [excelSuccess, pdfSuccess] = await Promise.all([
+      exportTransactionsToExcel(headers, rows, date),
+      exportTransactionsToPdf(headers, rows, date)
+    ])
 
-    if (excelSuccess && pdfSuccess) {
-      toastStore.addSuccessToast('Transactions exported successfully')
-    } else {
-      toastStore.addErrorToast('Failed to export some transactions')
-    }
+    toastStore.addSuccessToast(
+      excelSuccess && pdfSuccess
+        ? 'Transactions exported successfully'
+        : 'Failed to export some transactions'
+    )
   } catch (error) {
     console.error('Error exporting transactions:', error)
     toastStore.addErrorToast('Failed to export transactions')
@@ -326,58 +309,90 @@ const handleReceiptClick = (transaction: BaseTransaction) => {
   emit('receipt-click', receiptData)
 }
 
-const getReceiptUrl = (txHash: string) => {
-  return `${NETWORK.blockExplorerUrl}/tx/${txHash}`
-}
+const getReceiptUrl = (txHash: string) => `${NETWORK.blockExplorerUrl}/tx/${txHash}`
+const getExplorerUrl = (address: string) => `${NETWORK.blockExplorerUrl}/address/${address}`
 
-const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
-  const usdAmount = formatAmount(transaction, 'USD')
-  const localAmount =
-    currencyStore.currency.code !== 'USD'
-      ? formatAmount(transaction, currencyStore.currency.code)
-      : usdAmount
+const formatReceiptData = (transaction: BaseTransaction): ReceiptData => ({
+  txHash: String(transaction.txHash),
+  date: formatDate(transaction.date),
+  type: String(transaction.type),
+  from: String(transaction.from),
+  to: String(transaction.to),
+  amount: String(transaction.amount || ''),
+  token: String(transaction.token),
+  amountUSD: Number(transaction.amountUSD || 0),
+  valueUSD: formatAmount(transaction, 'USD'),
+  valueLocal: formatAmount(transaction, currencyStore.currency.code)
+})
 
-  return {
-    txHash: String(transaction.txHash),
-    date: formatDate(transaction.date),
-    type: String(transaction.type),
-    from: String(transaction.from),
-    to: String(transaction.to),
-    amount: String(transaction.amount || ''),
-    token: String(transaction.token),
-    amountUSD: Number(transaction.amountUSD || 0),
-    valueUSD: usdAmount,
-    valueLocal: localAmount
-  }
-}
-
-const handleReceiptExport = (receiptData: import('@/utils/excelExport').ReceiptData) => {
+const handleReceiptExport = (receiptData: ReceiptData) => {
   try {
     const success = exportReceiptToExcel(receiptData)
-    if (success) {
-      toastStore.addSuccessToast('Receipt exported successfully')
-    } else {
-      toastStore.addErrorToast('Failed to export receipt')
-    }
+    toastStore.addSuccessToast(
+      success ? 'Receipt exported successfully' : 'Failed to export receipt'
+    )
   } catch (error) {
     console.error('Error exporting receipt:', error)
     toastStore.addErrorToast('Failed to export receipt')
   }
 }
 
-const handleReceiptPdfExport = async (receiptData: import('@/utils/excelExport').ReceiptData) => {
+const handleReceiptPdfExport = async (receiptData: ReceiptData) => {
   try {
     const success = await exportReceiptToPdf(receiptData)
-    if (success) {
-      toastStore.addSuccessToast('Receipt PDF exported successfully')
-    } else {
-      toastStore.addErrorToast('Failed to export receipt PDF')
-    }
+    toastStore.addSuccessToast(
+      success ? 'Receipt PDF exported successfully' : 'Failed to export receipt PDF'
+    )
   } catch (error) {
     console.error('Error exporting receipt PDF:', error)
     toastStore.addErrorToast('Failed to export receipt PDF')
   }
 }
-</script>
 
-<style scoped></style>
+const getTypeClass = (type: string) => ({
+  'badge-success': type.toLowerCase() === 'deposit',
+  'badge-info': type.toLowerCase() === 'transfer'
+})
+
+const typeMap: Record<string, { type: string; icon: string }> = {
+  CashRemunerationEIP712: {
+    type: 'Cash Remuneration Contract',
+    icon: 'heroicons-outline:currency-dollar'
+  },
+  Bank: { type: 'Bank Contract', icon: 'heroicons-outline:banknotes' },
+  ExpenseAccountEIP712: { type: 'Expense Account Contract', icon: 'heroicons-outline:briefcase' }
+}
+
+const getContractType = (address: string) => {
+  const contract = currentTeam.value?.teamContracts.find(
+    (c) => c.address.toLowerCase() === address.toLowerCase()
+  )
+  if (!contract) return { type: address, icon: 'heroicons-outline:cube' }
+  return (
+    typeMap[contract.type] || { type: `${contract.type} Contract`, icon: 'heroicons-outline:cube' }
+  )
+}
+
+const isContract = (address: string) =>
+  currentTeam.value?.teamContracts.some((c) => c.address.toLowerCase() === address.toLowerCase())
+
+const getUserData = (address: string) => ({
+  name: getMemberName(address),
+  imageUrl: getMemberImage(address),
+  address
+})
+
+const getMemberImage = (address: string) => {
+  const member = currentTeam.value?.members.find(
+    (m) => m.address.toLowerCase() === address.toLowerCase()
+  )
+  return member?.imageUrl || ''
+}
+
+const getMemberName = (address: string) => {
+  const member = currentTeam.value?.members.find(
+    (m) => m.address.toLowerCase() === address.toLowerCase()
+  )
+  return member?.name || address
+}
+</script>

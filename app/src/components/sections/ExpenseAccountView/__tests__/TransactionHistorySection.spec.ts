@@ -9,6 +9,33 @@ import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import * as utils from '@/utils'
 
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  })),
+  createRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
+  })),
+  createWebHistory: vi.fn(),
+  useRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
+  }))
+}))
+
 const mockUseQuery = {
   result: ref({
     transactions: [

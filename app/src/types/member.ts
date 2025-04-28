@@ -3,6 +3,7 @@ export interface Member {
   name: string
   address: string
   teamId: number
+  imageUrl?: string
 }
 export interface MemberResponse {
   members: Member

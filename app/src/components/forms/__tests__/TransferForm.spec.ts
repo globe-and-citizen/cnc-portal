@@ -3,8 +3,8 @@ import { mount } from '@vue/test-utils'
 import TransferForm from '../TransferForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
+import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
@@ -78,7 +78,7 @@ describe('TransferForm.vue', () => {
     })
 
     it('renders SelectMemberInput component', () => {
-      expect(wrapper.findComponent(SelectMemberInput).exists()).toBe(true)
+      expect(wrapper.findComponent(SelectMemberContractsInput).exists()).toBe(true)
     })
   })
 
@@ -149,7 +149,7 @@ describe('TransferForm.vue', () => {
     })
 
     it('shows error when address is invalid', async () => {
-      await wrapper.findComponent(SelectMemberInput).vm.$emit('update:modelValue', {
+      await wrapper.findComponent(SelectMemberContractsInput).vm.$emit('update:modelValue', {
         name: '',
         address: 'invalid-address'
       })
@@ -158,6 +158,7 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       const errorMessages = wrapper.findAll('.text-red-500')
+      console.log('errorMessages', errorMessages)
       expect(errorMessages.some((el) => el.text().includes('Invalid address'))).toBe(true)
     })
 
@@ -279,9 +280,8 @@ describe('TransferForm.vue', () => {
         expect(formattedAmount.exists()).toBe(true)
       })
     })
-
     it('emits transfer event when form is valid', async () => {
-      await wrapper.findComponent(SelectMemberInput).vm.$emit('update:modelValue', {
+      await wrapper.findComponent(SelectMemberContractsInput).vm.$emit('update:modelValue', {
         name: 'Test',
         address: '0x1234567890123456789012345678901234567890'
       })
