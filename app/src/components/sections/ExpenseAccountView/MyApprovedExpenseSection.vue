@@ -206,12 +206,12 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
 
   const budgetLimit = expenseDataStore.myApprovedExpenses.find(
     (item) => item.signature === signatureToTransfer.value
-  )
+  ) as BudgetLimit
 
-  if (!budgetLimit) {
-    addErrorToast('No budget limit found')
-    return
-  }
+  // if (!budgetLimit) {
+  //   addErrorToast('No budget limit found')
+  //   return
+  // }
 
   if (expenseAccountEip712Address.value && expenseDataStore.myApprovedExpenses) {
     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
@@ -261,12 +261,12 @@ const transferErc20Token = async () => {
 
   const budgetLimit = expenseDataStore.myApprovedExpenses.find(
     (item) => item.signature === signatureToTransfer.value
-  )
+  ) as BudgetLimit
 
-  if (!budgetLimit) {
-    addErrorToast('No budget limit found')
-    return
-  }
+  // if (!budgetLimit) {
+  //   addErrorToast('No budget limit found')
+  //   return
+  // }
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
