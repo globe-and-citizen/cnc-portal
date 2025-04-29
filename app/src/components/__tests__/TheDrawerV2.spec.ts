@@ -273,9 +273,8 @@ describe('TheDrawer', () => {
     })
 
     it('should show/hide conditional menu items based on team properties', async () => {
-      const wrapper =
-        createWrapper()
-        /*{},
+      const wrapper = createWrapper()
+      /*{},
         {
           currentTeam: {
             name: 'Team A',
