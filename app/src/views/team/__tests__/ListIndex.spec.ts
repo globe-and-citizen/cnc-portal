@@ -4,8 +4,6 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 // import { createPinia, setActivePinia } from 'pinia'
-import { useTeamStore } from '@/stores'
-import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
@@ -85,6 +83,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 describe('ListIndex', () => {
   // Define interface for component instance
   beforeEach(() => {
+    // Use original stores
+    vi.unmock('@/stores')
     vi.clearAllMocks()
     // Reset refs between tests if needed
     mockError.value = null
@@ -93,17 +93,6 @@ describe('ListIndex', () => {
   })
 
   it('should render the team List and switch from loading, to error , empty data or somes data', async () => {
-    const teamsAreFetching = false
-    //@ts-expect-error: mock not exact as original
-    vi.mocked(useTeamStore).mockReturnValue({
-      ...mockTeamStore,
-      teamsMeta: {
-        ...mockTeamStore.teamsMeta,
-        teams: [],
-        teamsAreFetching,
-        teamsError: null
-      }
-    })
     const wrapper = mount(ListIndex, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
@@ -157,8 +146,6 @@ describe('ListIndex', () => {
   it('Should open the modal on click ', async () => {
     // setActivePinia(createPinia())
     // const appStore = useAppStore()
-    //@ts-expect-error: Mocking the store
-    vi.mocked(useTeamStore).mockReturnValue(mockTeamStore)
     const wrapper = mount(ListIndex, {
       global: {
         stubs: ['AddTeamForm']
