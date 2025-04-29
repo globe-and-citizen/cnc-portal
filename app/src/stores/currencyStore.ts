@@ -88,7 +88,7 @@ export const useCurrencyStore = defineStore(
       execute: fetchUSDPrice,
       isFetching: isLoadingUSDPrice,
       error: errorUSDPrice
-    } = useCustomFetch(`https://api.coingecko.com/api/v3/usd-coin`, {
+    } = useCustomFetch(`https://api.coingecko.com/api/v3/coins/usd-coin`, {
       immediate: false
     })
       .get()
