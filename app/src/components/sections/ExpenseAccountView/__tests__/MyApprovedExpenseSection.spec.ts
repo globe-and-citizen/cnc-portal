@@ -11,7 +11,7 @@ import * as util from '@/utils'
 import * as mocks from './mock/MyApprovedExpenseSection.mock'
 import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
 import * as viem from 'viem'
-import { useExpenseDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useExpenseDataStore, useTeamStore } from '@/stores'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const _mocks = vi.hoisted(() => ({

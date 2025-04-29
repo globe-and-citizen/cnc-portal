@@ -70,7 +70,7 @@ describe('TheDrawer', () => {
   const name = 'John Doe'
   const address = '0xc0ffee254729296a45a3885639AC7E10F9d54979'
 
-  const createWrapper = (props = {}, initialState = {}) => {
+  const createWrapper = (props = {} /*, initialState = {}*/) => {
     return mount(TheDrawer, {
       props: {
         user: { name, address },
@@ -236,9 +236,8 @@ describe('TheDrawer', () => {
         }
       })
 
-      const wrapper =
-        createWrapper()
-        /*{},
+      const wrapper = createWrapper()
+      /*{},
         {
           teamsMeta: {
             teams: [],
@@ -274,16 +273,16 @@ describe('TheDrawer', () => {
     })
 
     it('should show/hide conditional menu items based on team properties', async () => {
-      const wrapper = createWrapper(
-        {},
+      const wrapper =
+        createWrapper()
+        /*{},
         {
           currentTeam: {
             name: 'Team A',
             cashRemunerationEip712Address: null,
             expenseAccountEip712Address: null
           }
-        }
-      )
+        }*/
 
       await wrapper.vm.$nextTick()
       const menuItems = wrapper.findAll('nav a:not(.hidden)')
