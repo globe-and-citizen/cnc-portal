@@ -1,9 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import TheDrawer from '@/components/TheDrawer.vue'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { useTeamStore } from '@/stores'
+// import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 // Create a router instance with a basic route
 const router = createRouter({
@@ -79,8 +81,8 @@ describe('TheDrawer', () => {
         plugins: [
           router,
           createTestingPinia({
-            createSpy: vi.fn,
-            initialState: {
+            createSpy: vi.fn
+            /*initialState: {
               team: {
                 currentTeam: {
                   id: '1',
@@ -98,7 +100,7 @@ describe('TheDrawer', () => {
                 },
                 ...initialState
               }
-            }
+            }*/
           })
         ],
         stubs: {
@@ -124,6 +126,29 @@ describe('TheDrawer', () => {
       }
     })
   }
+
+  const mockTeamStore = {
+    currentTeam: {
+      id: '1',
+      name: 'Team A',
+      cashRemunerationEip712Address: 'address1',
+      expenseAccountEip712Address: 'address2'
+    },
+    teamsMeta: {
+      teams: [
+        { id: '1', name: 'Team A', members: [] },
+        { id: '2', name: 'Team B', members: [1, 2] }
+      ],
+      teamsAreFetching: false,
+      teamsError: null,
+      reloadTeams: vi.fn()
+    }
+  }
+  beforeEach(() => {
+    //@ts-expect-error: Mocking the store
+    vi.mocked(useTeamStore).mockReturnValue({ ...mockTeamStore })
+    vi.clearAllMocks()
+  })
 
   describe('Component Rendering', () => {
     it('should render basic component structure', () => {
@@ -191,7 +216,7 @@ describe('TheDrawer', () => {
 
       expect(teamSelector.exists()).toBe(true)
       const teamName = teamSelector.find('.text-sm.font-medium.text-gray-700')
-      expect(teamName.text()).toBe('Select Team')
+      expect(teamName.text()).toBe('Team A')
       expect(teamSelector.find('[data-test="team-dropdown"]').exists()).toBe(false)
 
       await teamSelector.trigger('click')
@@ -200,20 +225,32 @@ describe('TheDrawer', () => {
     })
 
     it('should show loading state when fetching teams', async () => {
-      const wrapper = createWrapper(
-        {},
+      //@ts-expect-error: Mocking the store
+      vi.mocked(useTeamStore).mockReturnValue({
+        ...mockTeamStore,
+        teamsMeta: {
+          teams: [],
+          teamsAreFetching: true,
+          teamsError: null,
+          reloadTeams: vi.fn()
+        }
+      })
+
+      const wrapper =
+        createWrapper()
+        /*{},
         {
           teamsMeta: {
             teams: [],
             teamsAreFetching: true,
             teamsError: null
           }
-        }
-      )
+        }*/
 
       const teamSelector = wrapper.find('[data-test="team-display"]')
       await teamSelector.trigger('click')
-      await wrapper.vm.$nextTick()
+      // await wrapper.vm.$nextTick()
+      await flushPromises()
 
       expect(wrapper.find('.skeleton').exists()).toBe(true)
     })

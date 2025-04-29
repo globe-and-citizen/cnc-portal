@@ -2,11 +2,12 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import DistributeMintForm from '../../../SherTokenView/forms/DistributeMintForm.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
+// import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
-vi.mock('@/stores/useToastStore')
+// vi.mock('@/stores/useToastStore')
 vi.mock('@/composables/useCustomFetch', () => {
   return {
     useCustomFetch: vi.fn(() => ({
@@ -160,12 +161,12 @@ describe('DistributeMintForm', () => {
   })
 
   it('should add error toast if there is an error when searching users', async () => {
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).errorSearchUser = 'error'
     await wrapper.vm.$nextTick()
 
-    expect(addErrorToast).toHaveBeenCalled()
+    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
   })
 })

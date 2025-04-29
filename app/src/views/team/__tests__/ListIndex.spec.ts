@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ListIndex from '@/views/team/ListIndex.vue'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { createPinia, setActivePinia } from 'pinia'
+import { useTeamStore } from '@/stores'
+import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<string | null>(null)
@@ -91,6 +93,16 @@ describe('ListIndex', () => {
   })
 
   it('should render the team List and switch from loading, to error , empty data or somes data', async () => {
+    const teamsAreFetching = false
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...mockTeamStore,
+      teamsMeta: {
+        ...mockTeamStore.teamsMeta,
+        teams: [],
+        teamsAreFetching,
+        teamsError: null
+      }
+    })
     const wrapper = mount(ListIndex, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
@@ -98,7 +110,7 @@ describe('ListIndex', () => {
       }
     })
 
-    // Set state after mount (simulate async change)
+    // Set state after mount (simulate async change)...
     mockError.value = null
     mockIsFetching.value = true
     mockData.value = null
@@ -110,8 +122,10 @@ describe('ListIndex', () => {
     // Set state after mount (simulate async change)
     // set is fetching to false & data to empty array
     mockIsFetching.value = false
+    // teamsAreFetching.value = false
     mockData.value = []
     await wrapper.vm.$nextTick()
+    await flushPromises()
 
     expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
     expect(wrapper.find('[data-test="empty-state"]').exists()).toBeTruthy()
@@ -140,8 +154,10 @@ describe('ListIndex', () => {
   })
 
   it('Should open the modal on click ', async () => {
-    setActivePinia(createPinia())
+    // setActivePinia(createPinia())
     // const appStore = useAppStore()
+    //@ts-expect-error: Mocking the store
+    vi.mocked(useTeamStore).mockReturnValue(mockTeamStore)
     const wrapper = mount(ListIndex, {
       global: {
         stubs: ['AddTeamForm']

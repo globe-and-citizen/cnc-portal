@@ -5,7 +5,10 @@ import InvestorsSection from '../InvestorsSection.vue'
 import { ref } from 'vue'
 import InvestorsActions from '../InvestorsActions.vue'
 import ShareholderList from '../ShareholderList.vue'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
+// import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { mockToastStore } from '@/tests/mocks/store.mock'
+
+const { addErrorToast } = mockToastStore
 
 const mockUseReadContract = {
   data: ref<string | null>(null),
@@ -21,7 +24,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useReadContract: vi.fn(() => mockUseReadContract)
   }
 })
-vi.mock('@/stores/useToastStore')
+// vi.mock('@/stores/useToastStore')
 
 interface ComponentData {
   tokenBalanceError: unknown
@@ -82,7 +85,7 @@ describe('InvestorsSection', () => {
     ;(wrapper.vm as unknown as ComponentData).tokenBalanceError = new Error('Token balance error')
     await wrapper.vm.$nextTick()
 
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     expect(addErrorToast).toHaveBeenCalled()
   })
 
@@ -92,7 +95,7 @@ describe('InvestorsSection', () => {
     ;(wrapper.vm as unknown as ComponentData).totalSupplyError = new Error('Total supply error')
     await wrapper.vm.$nextTick()
 
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     expect(addErrorToast).toHaveBeenCalled()
   })
 
@@ -102,7 +105,7 @@ describe('InvestorsSection', () => {
     ;(wrapper.vm as unknown as ComponentData).tokenSymbolError = new Error('Total supply error')
     await wrapper.vm.$nextTick()
 
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     expect(addErrorToast).toHaveBeenCalled()
   })
 
@@ -112,7 +115,7 @@ describe('InvestorsSection', () => {
     ;(wrapper.vm as unknown as ComponentData).shareholderError = new Error('Shareholder error')
     await wrapper.vm.$nextTick()
 
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     expect(addErrorToast).toHaveBeenCalled()
   })
 })
