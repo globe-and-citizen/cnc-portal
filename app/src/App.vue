@@ -80,6 +80,9 @@ import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
+import { createAppKit } from '@reown/appkit/vue'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { config } from './wagmi.config'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -92,6 +95,31 @@ import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
+
+const projectId = 'b6d605abbfa37ee56f6357c3e23d6b4b'
+
+const metadata = {
+  name: 'CNC Portal',
+  description: 'AppKit Example',
+  url: 'https://reown.com/appkit',
+  icons: ['https://assets.reown.com/reown-profile-pic.png']
+}
+
+const wagmiAdapter = new WagmiAdapter({
+  ssr: true,
+  projectId,
+  networks: [...config.chains]
+})
+
+createAppKit({
+  adapters: [wagmiAdapter],
+  networks: [...config.chains],
+  metadata,
+  projectId,
+  features: {
+    analytics: true
+  }
+})
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
