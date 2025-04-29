@@ -12,11 +12,12 @@ import * as mocks from './mock/MyApprovedExpenseSection.mock'
 import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
 import * as viem from 'viem'
 import { useExpenseDataStore, useTeamStore, useToastStore } from '@/stores'
+import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const _mocks = vi.hoisted(() => ({
-  mockUseToastStore: {
-    addErrorToast: vi.fn()
-  },
+  // mockUseToastStore: {
+  //   addErrorToast: vi.fn()
+  // },
   mockReadContract: vi.fn()
 }))
 
@@ -190,15 +191,16 @@ describe('ExpenseAccountSection', () => {
       expect(spendButton.props('disabled')).toBe(true)
     })
     it('should notify amount withdrawn error', async () => {
-      //@ts-expect-error: TypeScript expects exact return type as original
-      vi.mocked(useToastStore).mockReturnValue({ ..._mocks.mockUseToastStore })
+      // vi.mocked(useToastStore).mockReturnValue({ ..._mocks.mockUseToastStore })
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(util.log, 'error')
       //@ts-expect-error: not visible from vm
       wrapper.vm.errorTransfer = new Error('Error getting amount withdrawn')
       await flushPromises()
 
-      expect(_mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
+      expect(/*_mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
+        'Failed to transfer'
+      )
       expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
     })
   })
