@@ -95,7 +95,7 @@ import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
-
+import { injected, metaMask } from '@wagmi/vue/connectors'
 const projectId = 'b6d605abbfa37ee56f6357c3e23d6b4b'
 
 const metadata = {
@@ -108,6 +108,7 @@ const metadata = {
 const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   projectId,
+  connectors: [injected(), metaMask()],
   networks: [...config.chains]
 })
 
