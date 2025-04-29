@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 export const mockTeamStore = {
   currentTeam: {
     id: '1',
@@ -16,5 +17,13 @@ export const mockTeamStore = {
   },
   currentTeamMeta: {
     teamIsFetching: false
+  },
+  teamsMeta: {
+    reloadTeams: vi.fn()
   }
+}
+
+export const mockToastStore = {
+  addErrorToast: vi.fn(),
+  addSuccessToast: vi.fn()
 }
