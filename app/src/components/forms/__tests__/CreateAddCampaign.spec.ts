@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -7,8 +7,8 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 //import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 //import type { Abi } from 'viem'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
-
+import { mockToastStore } from '@/tests/mocks/store.mock'
+//vi.mock('@/stores/useToastStore')
 const deployState = {
   isDeploying: ref(false),
   contractAddress: ref(null),
@@ -40,7 +40,7 @@ vi.mock('@wagmi/core', async (importOriginal) => {
     })
   }
 })
-vi.mock('@/stores/useToastStore')
+
 //const campaignAbi = AdCampaignArtifact.abi as Abi
 vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -140,19 +140,23 @@ describe('CreateAddCampaign.vue', () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { bankAddress: '0x123456' }
       })
-      const { addErrorToast } = useToastStore()
+
       await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.1)
       await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
       //wrapper.vm.deployError = new Error('User rejected the request')
 
       await flushPromises()
       await wrapper.find('.btn-primary').trigger('click')
+      console.log('calls ===>', (mockToastStore.addErrorToast as Mock).mock?.calls)
+
       await flushPromises()
 
       // Trigger the logic again
       await wrapper.vm.$nextTick()
       // Check that the toast was called with the updated message
-      expect(addErrorToast).toHaveBeenCalledWith('Deployment failed: User rejected the request')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        'Deployment failed: User rejected the request'
+      )
     })
   })
 
