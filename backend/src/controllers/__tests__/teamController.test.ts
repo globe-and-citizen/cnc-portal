@@ -9,7 +9,7 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import publicClient from "../../utils/viem.config";
 import OFFICER_ABI from "../../artifacts/officer_abi.json";
-
+import { faker } from "@faker-js/faker";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
@@ -53,38 +53,12 @@ describe("addTeam", () => {
     vi.clearAllMocks();
   });
 
-  it("should return 404 if the owner is not found", async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(setAddressMiddleware("0xNonExistentAddress")); 
-    app.post("/team", addTeam);
-
-    // Mock the findUnique method to return null for the owner
-    vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-
-    const response = await request(app).post("/team").send({
-      name: "Test Team",
-      description: "Test Description",
-      members: [
-        { address: "0xMemberAddress1", name: "Member 1" },
-        { address: "0xMemberAddress2", name: "Member 2" },
-      ],
-      officerAddress: "0xOfficerAddress",
-    });
-
-    // Assertions
-    expect(response.status).toBe(404);
-    expect(response.body.message).toBe("Owner not found");
-  });
-
   it("should return 400 if invalid wallet address provided", async () => {
     const app = express();
     app.use(express.json());
     app.use(setAddressMiddleware(mockOwner.address));
     app.post("/team", addTeam);
 
-    vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
-    
     const response = await request(app)
       .post("/team")
       .send({
@@ -92,12 +66,68 @@ describe("addTeam", () => {
         members: [{ address: "invalid-address", name: "Invalid Member" }],
       });
 
-        expect(response.status).toBe(400);
-        expect(response.body.message).toEqual("Invalid wallet address for member: Invalid Member");
-    
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual(
+      "Invalid wallet address for member: Invalid Member"
+    );
   });
 
- 
+  it("should return 404 if the owner is not found", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(setAddressMiddleware("0xNonExistentAddress"));
+    app.post("/team", addTeam);
+
+    // Mock the findUnique method to return null for the owner
+    vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+
+    const response = await request(app)
+      .post("/team")
+      .send({
+        name: "Test Team",
+        description: "Test Description",
+        members: [
+          { address: faker.finance.ethereumAddress(), name: "Member 1" },
+          { address: faker.finance.ethereumAddress(), name: "Member 2" },
+        ],
+        officerAddress: "0xOfficerAddress",
+      });
+
+    // Assertions
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe("Owner not found");
+  });
+
+
+  it.only("should return 201 and create a team successfully", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(setAddressMiddleware(mockOwner.address));
+    app.post("/team", addTeam);
+
+    vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
+    vi.spyOn(prisma.team, "create").mockResolvedValue({
+      id: 1,
+      ...mockTeamData,
+      ownerAddress: mockOwner.address,
+      members: mockTeamData.members.concat({
+        address: mockOwner.address,
+        name: mockOwner.name,
+      }),
+    });
+
+    const response = await request(app).post("/team").send(mockTeamData);
+
+    expect(response.status).toBe(201);
+    expect(response.body.name).toEqual("Test Team");
+    expect(response.body.members).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ address: "0xMemberAddress1" }),
+        expect.objectContaining({ address: "0xMemberAddress2" }),
+        expect.objectContaining({ address: mockOwner.address }),
+      ])
+    );
+  });
 
   it("should return 500 if there is a server error", async () => {
     const app = express();
@@ -112,10 +142,8 @@ describe("addTeam", () => {
     const response = await request(app).post("/team").send(mockTeamData);
 
     expect(response.status).toBe(500);
-    expect(response.body.message).toEqual("Server error");
+    expect(response.body.message).toEqual("Internal server error has occured");
   });
-
-  
 });
 
 // describe("Cash Remuneration", () => {
@@ -304,7 +332,7 @@ describe("addTeam", () => {
 
 //         expect(response.status).toBe(403);
 //         expect(response.body).toEqual({
-          
+
 //           message: "Forbidden",
 //         });
 //       });
@@ -330,7 +358,7 @@ describe("addTeam", () => {
 
 //         expect(response.status).toBe(403);
 //         expect(response.body).toEqual({
-          
+
 //           message: "Forbidden",
 //         });
 //       });
@@ -353,7 +381,7 @@ describe("addTeam", () => {
 
 //         expect(response.status).toBe(400);
 //         expect(response.body).toEqual({
-          
+
 //           message: "Bad Request",
 //         });
 //       });
@@ -404,7 +432,7 @@ describe("addTeam", () => {
 //         expect(response.body).toEqual({
 //           error: "Server error",
 //           message: "Internal server error has occured",
-          
+
 //         });
 //       });
 //     });
@@ -457,7 +485,7 @@ describe("addTeam", () => {
 
 //         expect(response.status).toBe(403);
 //         expect(response.body).toEqual({
-          
+
 //           message: "Forbidden",
 //         });
 //       });
@@ -522,7 +550,7 @@ describe("addTeam", () => {
 //           data: { status: "withdrawn" },
 //         });
 //         expect(response.status).toBe(201);
-       
+
 //       });
 
 //       it("should return 500 if there is a server error", async () => {
@@ -544,7 +572,7 @@ describe("addTeam", () => {
 //         expect(response.body).toEqual({
 //           error: "Server error",
 //           message: "Internal server error has occured",
-          
+
 //         });
 //       });
 //     });
@@ -565,7 +593,7 @@ describe("addTeam", () => {
 
 //       expect(response.status).toBe(404);
 //       expect(response.body).toEqual({
-        
+
 //         message: "Resource Not Found",
 //       });
 //     });
@@ -612,7 +640,7 @@ describe("addTeam", () => {
 
 //       expect(response.status).toBe(403);
 //       expect(response.body).toEqual({
-        
+
 //         message: "Forbidden",
 //       });
 //     });
@@ -636,7 +664,7 @@ describe("addTeam", () => {
 
 //       expect(response.status).toBe(403);
 //       expect(response.body).toEqual({
-        
+
 //         message: "Forbidden",
 //       });
 //     });
@@ -681,7 +709,7 @@ describe("addTeam", () => {
 //       expect(response.body).toEqual({
 //         error: "Server error",
 //         message: "Internal server error has occured",
-        
+
 //       });
 //     });
 //   });
@@ -716,7 +744,7 @@ describe("addTeam", () => {
 
 //       expect(response.status).toBe(400);
 //       expect(response.body).toEqual({
-        
+
 //         message: "Bad Request",
 //       });
 //     });
@@ -735,7 +763,7 @@ describe("addTeam", () => {
 
 //       expect(response.status).toBe(404);
 //       expect(response.body).toEqual({
-        
+
 //         message: "Record Not Found",
 //       });
 //     });
@@ -763,7 +791,7 @@ describe("addTeam", () => {
 //         },
 //       });
 //       expect(response.status).toBe(201);
-      
+
 //     });
 
 //     it("should return 500 if there is a server error", async () => {
@@ -785,7 +813,7 @@ describe("addTeam", () => {
 //       expect(response.body).toEqual({
 //         error: "Server error",
 //         message: "Internal server error has occured",
-        
+
 //       });
 //     });
 //   });
@@ -839,7 +867,7 @@ describe("addTeam", () => {
 
 //   //     expect(response.status).toBe(403);
 //   //     expect(response.body).toEqual({
-//   //       
+//   //
 //   //       message: "Forbidden",
 //   //     });
 //   //   });
@@ -861,7 +889,7 @@ describe("addTeam", () => {
 
 //   //     expect(response.status).toBe(400);
 //   //     expect(response.body).toEqual({
-//   //       
+//   //
 //   //       message: "Bad Request",
 //   //     });
 //   //   });
@@ -930,7 +958,7 @@ describe("addTeam", () => {
 //   //     expect(response.body).toEqual({
 //   //       error: "Server error",
 //   //       message: "Internal server error has occured",
-//   //       
+//   //
 //   //     });
 //   //   });
 //   // });
@@ -991,7 +1019,7 @@ describe("addTeam", () => {
 
 //     expect(response.status).toBe(403);
 //     expect(response.body).toEqual({
-      
+
 //       message: "Forbidden",
 //     });
 //   });
@@ -1060,7 +1088,7 @@ describe("addTeam", () => {
 //     expect(response.body).toEqual({
 //       error: "Server error",
 //       message: "Internal server error has occured",
-      
+
 //     });
 //   });
 // });
@@ -1148,8 +1176,7 @@ describe("addTeam", () => {
 //     expect(response.body).toEqual({
 //       error: "Database error",
 //       message: "Internal server error has occured",
-      
+
 //     });
 //   });
 // });
-

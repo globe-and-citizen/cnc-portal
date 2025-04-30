@@ -14,8 +14,14 @@ const addTeam = async (req: Request, res: Response) => {
   const { name, members, description, officerAddress } = req.body;
   const callerAddress = (req as any).address;
   try {
+    // Validate all members' wallet addresses
+    for (const member of members) {
+      if (!isAddress(member.address)) {
+        return errorResponse(400, `Invalid wallet address for member: ${member.name}`, res);
+      } 
+    }
+
     // Find the owner (user) by their address
-    // check if the owener exists
     const owner = await prisma.user.findUnique({
       where: {
         address: String(callerAddress),
@@ -32,17 +38,6 @@ const addTeam = async (req: Request, res: Response) => {
         name: owner.name || "User",
         address: owner.address,
       });
-    }
-
-    // Validate all members' wallet addresses
-    for (const member of members) {
-      if (!isAddress(member.address)) {
-        return errorResponse(
-          400,
-          `Invalid wallet address for member: ${member.name}`,
-          res
-        );
-      }
     }
 
     // Create the team with the members connected
