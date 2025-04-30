@@ -12,7 +12,6 @@ import OFFICER_ABI from "../../artifacts/officer_abi.json";
 import { faker } from "@faker-js/faker";
 import { User } from "@prisma/client";
 
-
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
 
@@ -24,7 +23,7 @@ function setAddressMiddleware(address: string) {
 }
 
 describe("addTeam", () => {
-  const mockOwner:User = {
+  const mockOwner: User = {
     address: "0xOwnerAddress",
     name: "Test Owner",
     nonce: "123456",
@@ -53,16 +52,17 @@ describe("addTeam", () => {
       { address: mockOwner.address, name: mockOwner.name },
     ],
   };
+  const app = express();
+    app.use(express.json());
+    app.use(setAddressMiddleware(mockOwner.address));
+    app.post("/team", addTeam);
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("should return 400 if invalid wallet address provided", async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(setAddressMiddleware(mockOwner.address));
-    app.post("/team", addTeam);
+    
 
     const response = await request(app)
       .post("/team")
@@ -78,10 +78,7 @@ describe("addTeam", () => {
   });
 
   it("should return 404 if the owner is not found", async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(setAddressMiddleware("0xNonExistentAddress"));
-    app.post("/team", addTeam);
+  
 
     // Mock the findUnique method to return null for the owner
     vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
@@ -103,12 +100,8 @@ describe("addTeam", () => {
     expect(response.body.message).toBe("Owner not found");
   });
 
-
   it("should return 201 and create a team successfully", async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(setAddressMiddleware(mockOwner.address));
-    app.post("/team", addTeam);
+   
 
     vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
     vi.spyOn(prisma.team, "create").mockResolvedValue({
@@ -125,14 +118,10 @@ describe("addTeam", () => {
 
     expect(response.status).toBe(201);
     expect(response.body.name).toEqual("Test Team");
-   
   });
 
   it("should return 500 if there is a server error", async () => {
-    const app = express();
-    app.use(express.json());
-    app.use(setAddressMiddleware(mockOwner.address));
-    app.post("/team", addTeam);
+    
 
     vi.spyOn(prisma.user, "findUnique").mockRejectedValue(
       new Error("Server error")

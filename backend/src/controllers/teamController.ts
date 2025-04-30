@@ -35,7 +35,7 @@ const addTeam = async (req: Request, res: Response) => {
     // Ensure the owner's wallet address is in the members list
     if (!members.some((member: User) => member.address === callerAddress)) {
       members.push({
-        name: owner.name || "User",
+        name: owner.name,
         address: owner.address,
       });
     }
