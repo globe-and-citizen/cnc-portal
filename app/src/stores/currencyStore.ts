@@ -97,6 +97,7 @@ export const useCurrencyStore = defineStore(
     async function setCurrency(value: string) {
       currency.value = LIST_CURRENCIES.find((c) => c.code === value)
       await fetchNativeTokenPrice()
+      await fetchUSDPriceInLocal()
     }
 
     type currencyType = keyof PriceResponse['market_data']['current_price']
