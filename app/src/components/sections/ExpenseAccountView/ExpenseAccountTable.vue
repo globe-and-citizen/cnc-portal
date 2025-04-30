@@ -96,13 +96,12 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import type { ManyExpenseWithBalances } from '@/types'
 import { useRoute } from 'vue-router'
 
 const teamStore = useTeamStore()
@@ -160,7 +159,7 @@ const columns = [
 //#endregion Composables
 const {
   data: contractOwnerAddress,
-  refetch: fetchExpenseAccountOwner,
+  // refetch: fetchExpenseAccountOwner,
   error: errorGetOwner
 } = useReadContract({
   functionName: 'owner',
@@ -199,7 +198,7 @@ const filteredApprovals = computed(() => {
     return expenseDataStore.allExpenseDataParsed
   } else {
     return expenseDataStore.allExpenseDataParsed.filter(
-      (approval: ManyExpenseWithBalances) => approval.status === selectedRadio.value
+      (approval) => approval.status === selectedRadio.value
     )
   }
 })
@@ -261,8 +260,4 @@ watch(errorGetOwner, (newVal) => {
   }
 })
 //#endregion
-
-onMounted(async () => {
-  await fetchExpenseAccountOwner()
-})
 </script>

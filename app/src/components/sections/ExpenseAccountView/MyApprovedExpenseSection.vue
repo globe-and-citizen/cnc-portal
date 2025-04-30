@@ -36,23 +36,9 @@
 
       <ModalComponent v-model="transferModal">
         <TransferForm
-          v-if="transferModal && expenseDataStore.myApprovedExpenses"
+          v-if="transferModal && tokens.length > 0"
           v-model="transferData"
-          :tokens="[
-            {
-              symbol: tokenSymbol(
-                expenseDataStore.myApprovedExpenses.find(
-                  (item: ManyExpenseResponse) => item.signature === signatureToTransfer
-                )?.tokenAddress
-              ),
-              balance:
-                expenseDataStore.myApprovedExpenses.find(
-                  (item: ManyExpenseResponse) => item.signature === signatureToTransfer
-                )?.tokenAddress === zeroAddress
-                  ? balances.nativeToken.formatted
-                  : balances.usdc.formatted
-            }
-          ]"
+          :tokens="tokens"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
           service="Expense Account"
           @transfer="
@@ -70,7 +56,7 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, ref, watch } from 'vue'
-import type { BudgetLimit, BudgetData, ManyExpenseResponse, ManyExpenseWithBalances } from '@/types'
+import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
@@ -126,14 +112,6 @@ const transferData = ref({
   token: { symbol: '', balance: '0' },
   amount: '0'
 })
-const isDisapprovedAddress = computed(
-  () =>
-    expenseDataStore.allExpenseDataParsed.findIndex(
-      (item: ManyExpenseWithBalances) =>
-        item.approvedAddress === currentUserAddress &&
-        (item.status === 'disabled' || item.status === 'expired')
-    ) !== -1
-)
 //#endregion
 
 const teamStore = useTeamStore()
@@ -145,6 +123,14 @@ const { balances, refetch: refetchBalances } = useContractBalance(
 )
 
 //#region Computed Values
+const isDisapprovedAddress = computed(
+  () =>
+    expenseDataStore.allExpenseDataParsed.findIndex(
+      (item) =>
+        item.approvedAddress === currentUserAddress &&
+        (item.status === 'disabled' || item.status === 'expired')
+    ) !== -1
+)
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
@@ -153,9 +139,20 @@ const expenseAccountEip712Address = computed(
 )
 const myApprovedExpenseRows = computed(() =>
   expenseDataStore.allExpenseDataParsed.filter(
-    (approval: ManyExpenseWithBalances) => approval.approvedAddress === currentUserAddress
+    (approval) => approval.approvedAddress === currentUserAddress
   )
 )
+const tokens = computed(() => {
+  const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
+    (item) => item.signature === signatureToTransfer.value
+  )?.tokenAddress
+
+  const symbol = tokenSymbol(tokenAddress ?? '')
+  const balance =
+    tokenAddress === zeroAddress ? balances.nativeToken.formatted : balances.usdc.formatted
+
+  return symbol && !isNaN(Number(balance)) ? [{ symbol, balance }] : []
+})
 //#endregion
 
 //#region Composables
@@ -189,8 +186,8 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   tokenRecipient.value = to
 
   const budgetLimit = expenseDataStore.myApprovedExpenses.find(
-    (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
-  )
+    (item) => item.signature === signatureToTransfer.value
+  ) as BudgetLimit
 
   if (expenseAccountEip712Address.value && expenseDataStore.myApprovedExpenses) {
     if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
@@ -239,8 +236,8 @@ const transferErc20Token = async () => {
   const _amount = BigInt(Number(tokenAmount.value) * 1e6)
 
   const budgetLimit = expenseDataStore.myApprovedExpenses.find(
-    (item: ManyExpenseResponse) => item.signature === signatureToTransfer.value
-  )
+    (item) => item.signature === signatureToTransfer.value
+  ) as BudgetLimit
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
