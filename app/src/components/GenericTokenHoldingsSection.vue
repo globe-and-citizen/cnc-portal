@@ -87,6 +87,9 @@ const {
 const networkCurrencyPrice = computed(() => {
   return currencyStore.nativeToken.priceInLocal || 1
 })
+const usdcPrice = computed(() => {
+  return currencyStore.usdc.priceInLocal || 1
+})
 
 const networkIcon = computed(() => {
   if (Number(NETWORK.chainId) === 137) return MaticIcon
@@ -117,11 +120,11 @@ const tokens = computed(() => [
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currencyStore.localCurrency.code
-    }).format(currencyStore.usdc.priceInLocal || 0),
+    }).format(usdcPrice.value || 0),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currencyStore.localCurrency.code
-    }).format(Number(formattedUsdcBalance.value) * (currencyStore.usdc.priceInLocal || 0)),
+    }).format(Number(formattedUsdcBalance.value) * (usdcPrice.value || 0)),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 3,
