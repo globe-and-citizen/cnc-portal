@@ -1,12 +1,12 @@
 <template>
   <div class="flex flex-col gap-6">
     <BankBalanceSection
-      v-if="teamStore.currentTeam"
+      v-if="teamStore.currentTeam && typedBankAddress"
       ref="bankBalanceSection"
-      :bank-address="typedBankAddress"
+      :bank-address="typedBankAddress as Address"
       @balance-updated="$forceUpdate()"
     />
-    <GenericTokenHoldingsSection v-if="typedBankAddress" :address="typedBankAddress" />
+    <GenericTokenHoldingsSection v-if="typedBankAddress" :address="typedBankAddress as Address" />
     <TransactionsHistorySection />
   </div>
 </template>
@@ -20,11 +20,11 @@ import TransactionsHistorySection from '@/components/sections/BankView/Transacti
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
-const typedBankAddress = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Bank')?.address as
-      | Address
-      | undefined
-)
+const typedBankAddress = computed<Address | undefined>(() => {
+  const bankContract = teamStore.currentTeam?.teamContracts.find(
+    (contract) => contract.type === 'Bank'
+  )
+  return bankContract?.address as Address | undefined
+})
 const bankBalanceSection = ref<InstanceType<typeof BankBalanceSection> | null>(null)
 </script>

@@ -51,10 +51,7 @@
           ></ContinueAddTeamForm>
         </ModalComponent>
       </div>
-      <TeamMeta
-        :team="teamStore.currentTeamMeta.team"
-        @getTeam="teamStore.currentTeamMeta.executeFetchTeam"
-      />
+      <TeamMeta />
 
       <MemberSection
         :team="teamStore.currentTeamMeta.team"
