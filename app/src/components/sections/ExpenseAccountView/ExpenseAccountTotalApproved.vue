@@ -20,7 +20,7 @@ import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { useCurrencyStore, useExpenseDataStore } from '@/stores'
-import type { BudgetData, ManyExpenseWithBalances } from '@/types'
+import type { BudgetData } from '@/types'
 import { formatCurrencyShort } from '@/utils'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted } from 'vue'
@@ -39,7 +39,7 @@ const totalApproved = computed(() => {
 
 function calculateTokenAmounts() {
   return expenseDataStore.allExpenseDataParsed.reduce(
-    (acc, limit: ManyExpenseWithBalances) => {
+    (acc, limit) => {
       if (limit.status !== 'enabled') {
         return acc
       }

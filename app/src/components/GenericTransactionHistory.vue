@@ -376,7 +376,7 @@ const getContractType = (address: string) => {
 }
 
 const isContract = (address: string) =>
-  currentTeam.value?.teamContracts.some((c) => c.address.toLowerCase() === address.toLowerCase())
+  currentTeam?.value?.teamContracts.some((c) => c.address.toLowerCase() === address.toLowerCase())
 
 const getUserData = (address: string) => ({
   name: getMemberName(address),
@@ -385,14 +385,14 @@ const getUserData = (address: string) => ({
 })
 
 const getMemberImage = (address: string) => {
-  const member = currentTeam.value?.members.find(
+  const member = currentTeam?.value?.members.find(
     (m) => m.address.toLowerCase() === address.toLowerCase()
   )
   return member?.imageUrl || ''
 }
 
 const getMemberName = (address: string) => {
-  const member = currentTeam.value?.members.find(
+  const member = currentTeam?.value?.members.find(
     (m) => m.address.toLowerCase() === address.toLowerCase()
   )
   return member?.name || address
