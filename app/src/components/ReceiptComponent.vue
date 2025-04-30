@@ -88,7 +88,7 @@ const formattedReceiptData = {
   price:
     receiptData['token'] === 'USDC'
       ? '1 USD / USDC'
-      : `${nativeToken.value.priceInUSD.value} USD / ${receiptData['token']}`,
+      : `${nativeToken.value.priceInUSD} USD / ${receiptData['token']}`,
   value: `${receiptData['valueUSD']} USD`
 }
 

@@ -68,7 +68,7 @@ const totalMonthlyWithdrawnAmount = computed(() => {
   }, 0)
 
   return formatCurrencyShort(
-    totalAmount * (nativeToken.value.priceInLocal.value || 0),
+    totalAmount * (nativeToken.value.priceInLocal || 0),
     localCurrency.value.code
   )
 })

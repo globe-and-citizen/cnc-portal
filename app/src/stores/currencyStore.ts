@@ -2,7 +2,7 @@ import { useCustomFetch } from '@/composables'
 import { NETWORK } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useToastStore } from './useToastStore'
 
 interface Currency {
@@ -135,24 +135,29 @@ export const useCurrencyStore = defineStore(
       }
     })
 
-    return {
-      localCurrency: currency,
+    const prices = reactive({
       nativeToken: {
         id: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
         name: NETWORK.currencySymbol,
         symbol: NETWORK.currencySymbol,
-        priceInUSD: nativeTokenPriceInUSD,
-        priceInLocal: nativeTokenPrice,
-        isLoading: isLoadingUSDPrice
+        priceInLocal: computed(() => nativeTokenPrice.value),
+        priceInUSD: computed(() => nativeTokenPriceInUSD.value),
+        isLoading: computed(() => isLoading.value)
       },
       usdc: {
         id: 'usd-coin',
         name: 'USD Coin',
         symbol: 'USDC',
-        priceInUSD: nativeTokenPriceInUSD,
-        priceInLocal: nativeTokenPrice,
-        isLoading: isLoading
-      },
+        priceInLocal: computed(() => usdPriceInLocal.value),
+        priceInUSD: computed(() => usdPriceInLocal.value),
+        isLoading: computed(() => isLoadingUSDPrice.value)
+      }
+    })
+
+    return {
+      localCurrency: currency,
+      nativeToken: prices.nativeToken,
+      usdc: prices.usdc,
       setCurrency,
       fetchNativeTokenPrice
     }

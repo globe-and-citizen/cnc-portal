@@ -41,7 +41,7 @@ const totalPendingAmount = computed(() => {
     return acc + (claim.hoursWorked || 0) * (claim.wage.cashRatePerHour || 0)
   }, 0)
   return formatCurrencyShort(
-    (totalAmount || 0) * (nativeToken.value.priceInLocal.value || 0),
+    (totalAmount || 0) * (nativeToken.value.priceInLocal || 0),
     localCurrency.value.code
   )
 })

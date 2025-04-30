@@ -4,7 +4,7 @@
     subtitle="Total Approved"
     variant="info"
     :card-icon="personIcon"
-    :loading="nativeToken.isLoading.value || usdc.isLoading.value"
+    :loading="nativeToken.isLoading || usdc.isLoading"
     ><div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
@@ -31,8 +31,8 @@ const { localCurrency, nativeToken, usdc } = storeToRefs(currencyStore)
 const totalApproved = computed(() => {
   const { usdcAmount, usdtAmount, nativeTokenAmount } = calculateTokenAmounts()
   const total =
-    (usdcAmount + usdtAmount) * (usdc.value.priceInLocal.value ?? 0) +
-    nativeTokenAmount * (nativeToken.value.priceInLocal.value ?? 0)
+    (usdcAmount + usdtAmount) * (usdc.value.priceInLocal ?? 0) +
+    nativeTokenAmount * (nativeToken.value.priceInLocal ?? 0)
 
   return formatCurrencyShort(parseFloat(total.toString()), localCurrency.value.code)
 })

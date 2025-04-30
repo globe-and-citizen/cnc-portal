@@ -70,7 +70,7 @@
           >
           <br />
           <span
-            >{{ getHoulyRateInUserCurrency(row.wage.cashRatePerHour) }}
+            >{{ getHourlyRateInUserCurrency(row.wage.cashRatePerHour) }}
             {{ currencyStore.localCurrency.code }} / h
           </span>
         </template>
@@ -121,7 +121,7 @@ const statusUrl = computed(() =>
   selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`
 )
 const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
-const getHoulyRateInUserCurrency = (rate: number) => {
+const getHourlyRateInUserCurrency = (rate: number) => {
   return (
     currencyStore.nativeToken.priceInLocal ? rate * currencyStore.nativeToken.priceInLocal : 0
   ).toFixed(2)

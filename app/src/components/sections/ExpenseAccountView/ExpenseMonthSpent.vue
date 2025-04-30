@@ -70,8 +70,8 @@ const totalMonthlySpentAmount = computed(() => {
     }
   })
   const totalNetworkInLocalCurrency =
-    totalAmountInNetworkCurrency * (nativeToken.value.priceInLocal.value || 0)
-  const totalUSDCInLocalCurrency = totalAmountInUSDC * (usdc.value.priceInLocal.value || 0)
+    totalAmountInNetworkCurrency * (nativeToken.value.priceInLocal || 0)
+  const totalUSDCInLocalCurrency = totalAmountInUSDC * (usdc.value.priceInLocal || 0)
 
   return formatCurrencyShort(
     totalNetworkInLocalCurrency + totalUSDCInLocalCurrency,
