@@ -53,17 +53,15 @@ describe("addTeam", () => {
     ],
   };
   const app = express();
-    app.use(express.json());
-    app.use(setAddressMiddleware(mockOwner.address));
-    app.post("/team", addTeam);
+  app.use(express.json());
+  app.use(setAddressMiddleware(mockOwner.address));
+  app.post("/team", addTeam);
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("should return 400 if invalid wallet address provided", async () => {
-    
-
     const response = await request(app)
       .post("/team")
       .send({
@@ -78,8 +76,6 @@ describe("addTeam", () => {
   });
 
   it("should return 404 if the owner is not found", async () => {
-  
-
     // Mock the findUnique method to return null for the owner
     vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
@@ -101,8 +97,6 @@ describe("addTeam", () => {
   });
 
   it("should return 201 and create a team successfully", async () => {
-   
-
     vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
     vi.spyOn(prisma.team, "create").mockResolvedValue({
       id: 1,
@@ -121,8 +115,6 @@ describe("addTeam", () => {
   });
 
   it("should return 500 if there is a server error", async () => {
-    
-
     vi.spyOn(prisma.user, "findUnique").mockRejectedValue(
       new Error("Server error")
     );
