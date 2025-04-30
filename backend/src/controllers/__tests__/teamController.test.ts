@@ -1,14 +1,15 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
 import {
-  addExpenseAccountData,
-  getExpenseAccountData,
+  //addExpenseAccountData,
+  //getExpenseAccountData,
   addTeam,
 } from "../teamController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import publicClient from "../../utils/viem.config";
 import OFFICER_ABI from "../../artifacts/officer_abi.json";
+
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
@@ -52,26 +53,38 @@ describe("addTeam", () => {
     vi.clearAllMocks();
   });
 
-  it("should return 404 if owner not found", async () => {
+  it("should return 404 if the owner is not found", async () => {
     const app = express();
     app.use(express.json());
-    app.use(setAddressMiddleware(mockOwner.address));
+    app.use(setAddressMiddleware("0xNonExistentAddress")); 
     app.post("/team", addTeam);
+
+    // Mock the findUnique method to return null for the owner
     vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-    const response = await request(app).post("/team").send(mockTeamData);
+    const response = await request(app).post("/team").send({
+      name: "Test Team",
+      description: "Test Description",
+      members: [
+        { address: "0xMemberAddress1", name: "Member 1" },
+        { address: "0xMemberAddress2", name: "Member 2" },
+      ],
+      officerAddress: "0xOfficerAddress",
+    });
 
-    expect(response.status).toBe(500);
-    expect(response.body.message).toEqual("Internal server error has occured");
+    // Assertions
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe("Owner not found");
   });
 
-  it("should return 500 if invalid wallet address provided", async () => {
+  it("should return 400 if invalid wallet address provided", async () => {
     const app = express();
     app.use(express.json());
     app.use(setAddressMiddleware(mockOwner.address));
     app.post("/team", addTeam);
-    vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
 
+    vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
+    
     const response = await request(app)
       .post("/team")
       .send({
@@ -79,15 +92,19 @@ describe("addTeam", () => {
         members: [{ address: "invalid-address", name: "Invalid Member" }],
       });
 
-    expect(response.status).toBe(500);
-    expect(response.body.message).toEqual("Internal server error has occured");
+        expect(response.status).toBe(400);
+        expect(response.body.message).toEqual("Invalid wallet address for member: Invalid Member");
+    
   });
+
+ 
 
   it("should return 500 if there is a server error", async () => {
     const app = express();
     app.use(express.json());
     app.use(setAddressMiddleware(mockOwner.address));
     app.post("/team", addTeam);
+
     vi.spyOn(prisma.user, "findUnique").mockRejectedValue(
       new Error("Server error")
     );
@@ -95,8 +112,10 @@ describe("addTeam", () => {
     const response = await request(app).post("/team").send(mockTeamData);
 
     expect(response.status).toBe(500);
-    expect(response.body.message).toEqual("Internal server error has occured");
+    expect(response.body.message).toEqual("Server error");
   });
+
+  
 });
 
 // describe("Cash Remuneration", () => {
@@ -476,7 +495,7 @@ describe("addTeam", () => {
 //         const app = express();
 //         app.use(express.json());
 //         app.use(setAddressMiddleware("0xOwnerAddress"));
-//         app.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
+//         app.put("/:id/cash-remuneration/claim/employee", updateClaim);
 //         vi.spyOn(prisma.memberTeamsData, "findUnique").mockResolvedValue(
 //           mockMemberTeamsData
 //         );
@@ -510,7 +529,7 @@ describe("addTeam", () => {
 //         const app = express();
 //         app.use(express.json());
 //         app.use(setAddressMiddleware("0xOwnerAddress"));
-//         app.put("/:id/cash-remuneration/claim/:callerRole", updateClaim);
+//         app.put("/:id/cash-remuneration/claim/employee", updateClaim);
 
 //         vi.spyOn(prisma.memberTeamsData, "findUnique").mockRejectedValue(
 //           new Error("Server error")
