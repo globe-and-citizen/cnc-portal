@@ -3,8 +3,8 @@ import { mount } from '@vue/test-utils'
 import TransferForm from '../TransferForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
+import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
@@ -78,7 +78,7 @@ describe('TransferForm.vue', () => {
     })
 
     it('renders SelectMemberInput component', () => {
-      expect(wrapper.findComponent(SelectMemberInput).exists()).toBe(true)
+      expect(wrapper.findComponent(SelectMemberContractsInput).exists()).toBe(true)
     })
   })
 
@@ -149,7 +149,7 @@ describe('TransferForm.vue', () => {
     })
 
     it('shows error when address is invalid', async () => {
-      await wrapper.findComponent(SelectMemberInput).vm.$emit('update:modelValue', {
+      await wrapper.findComponent(SelectMemberContractsInput).vm.$emit('update:modelValue', {
         name: '',
         address: 'invalid-address'
       })
@@ -158,6 +158,7 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       const errorMessages = wrapper.findAll('.text-red-500')
+      console.log('errorMessages', errorMessages)
       expect(errorMessages.some((el) => el.text().includes('Invalid address'))).toBe(true)
     })
 
@@ -213,8 +214,9 @@ describe('TransferForm.vue', () => {
     })
 
     it('sets max amount when Max button is clicked', async () => {
-      const maxButton = wrapper.find('.btn-ghost')
+      const maxButton = wrapper.find('[data-test="max-button"]')
       await maxButton.trigger('click')
+      await wrapper.vm.$nextTick()
 
       const amountInput = wrapper.find('[data-test="amount-input"]')
       expect((amountInput.element as HTMLInputElement).value).toBe('100')
@@ -238,8 +240,48 @@ describe('TransferForm.vue', () => {
       ).toBe(true)
     })
 
+    describe('Percentage Buttons', () => {
+      it('correctly sets 25% of balance when clicking 25% button', async () => {
+        const percentButton = wrapper.find('[data-test="percentButton-25"]')
+        await percentButton.trigger('click')
+        const amountInput = wrapper.find('[data-test="amount-input"]')
+        expect((amountInput.element as HTMLInputElement).value).toBe('25.0000')
+      })
+
+      it('correctly sets 50% of balance when clicking 50% button', async () => {
+        const percentButton = wrapper.find('[data-test="percentButton-50"]')
+        await percentButton.trigger('click')
+        const amountInput = wrapper.find('[data-test="amount-input"]')
+        expect((amountInput.element as HTMLInputElement).value).toBe('50.0000')
+      })
+
+      it('correctly sets 75% of balance when clicking 75% button', async () => {
+        const percentButton = wrapper.find('[data-test="percentButton-75"]')
+        await percentButton.trigger('click')
+        const amountInput = wrapper.find('[data-test="amount-input"]')
+        expect((amountInput.element as HTMLInputElement).value).toBe('75.0000')
+      })
+
+      it('validates percentage amounts correctly', async () => {
+        const percentButton = wrapper.find('[data-test="percentButton-50"]')
+        await percentButton.trigger('click')
+        await wrapper.vm.$nextTick()
+
+        const errorMessages = wrapper.findAll('.text-red-500')
+        expect(errorMessages.length).toBe(0) // Should be valid as 50% of 100 is within balance
+      })
+
+      it('updates formatted amount when using percentage buttons', async () => {
+        const percentButton = wrapper.find('[data-test="percentButton-50"]')
+        await percentButton.trigger('click')
+        await wrapper.vm.$nextTick()
+
+        const formattedAmount = wrapper.find('.text-sm.text-gray-500')
+        expect(formattedAmount.exists()).toBe(true)
+      })
+    })
     it('emits transfer event when form is valid', async () => {
-      await wrapper.findComponent(SelectMemberInput).vm.$emit('update:modelValue', {
+      await wrapper.findComponent(SelectMemberContractsInput).vm.$emit('update:modelValue', {
         name: 'Test',
         address: '0x1234567890123456789012345678901234567890'
       })

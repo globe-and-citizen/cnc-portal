@@ -1,15 +1,18 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { parseEther, type Address } from 'viem'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
+// import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { mockToastStore } from '@/tests/mocks/store.mock'
 import type { Team } from '@/types/team'
 
-vi.mock('@/stores/useToastStore')
+// vi.mock('@/stores/useToastStore')
 vi.mock('@/stores/user')
+
+const { addErrorToast, addSuccessToast } = mockToastStore
 
 const mockUseReadContract = {
   data: ref<string | null>(null),
@@ -122,6 +125,10 @@ describe('InvestorsActions.vue', () => {
     })
   }
 
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('should open distributeMintModal if distribute mint button clicked', async () => {
     const wrapper = createComponent()
 
@@ -229,7 +236,7 @@ describe('InvestorsActions.vue', () => {
   })
 
   it('should add error toast when mintToken failed', async () => {
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).mintError = 'Mint failed'
@@ -239,7 +246,7 @@ describe('InvestorsActions.vue', () => {
   })
 
   it('should add error toast when distributeMint failed', async () => {
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).distributeMintError = 'Distribute mint failed'
@@ -249,7 +256,7 @@ describe('InvestorsActions.vue', () => {
   })
 
   it('should add error toast when payDividends failed', async () => {
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).payDividendsError = 'Pay dividends failed'
@@ -259,7 +266,7 @@ describe('InvestorsActions.vue', () => {
   })
 
   it('should add success toast when mintToken success', async () => {
-    const { addSuccessToast } = useToastStore()
+    // const { addSuccessToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).isConfirmingMint = true
@@ -274,7 +281,7 @@ describe('InvestorsActions.vue', () => {
   })
 
   it('should add success toast when distributeMint success', async () => {
-    const { addSuccessToast } = useToastStore()
+    // const { addSuccessToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).isConfirmingDistributeMint = true
@@ -289,7 +296,7 @@ describe('InvestorsActions.vue', () => {
   })
 
   it('should add success toast when payDividends success', async () => {
-    const { addSuccessToast } = useToastStore()
+    // const { addSuccessToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).isConfirmingPayDividends = true
