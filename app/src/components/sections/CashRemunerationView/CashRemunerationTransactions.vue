@@ -20,7 +20,7 @@ import { type Address } from 'viem'
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
 const currencies = computed(() => {
-  const defaultCurrency = currencyStore.currency.code
+  const defaultCurrency = currencyStore.localCurrency.code
   return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
 })
 const contractAddress = teamStore.currentTeam?.teamContracts.find(

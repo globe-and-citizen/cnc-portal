@@ -55,14 +55,15 @@ export function useContractBalance(address: Address | undefined) {
 
   const totalValueUSD = computed(() => {
     const nativeValue =
-      Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPriceInUSD || 0)
+      Number(formattedNativeBalance.value) * (currencyStore.nativeToken.priceInUSD || 0)
     const usdcValue = Number(formattedUsdcBalance.value)
     return (nativeValue + usdcValue).toFixed(2)
   })
 
   const totalValueInLocalCurrency = computed(() => {
-    const nativeValue = Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPrice || 0)
-    const usdcValue = Number(formattedUsdcBalance.value) * (currencyStore.usdPriceInLocal || 0)
+    const nativeValue =
+      Number(formattedNativeBalance.value) * (currencyStore.nativeToken.priceInLocal || 0)
+    const usdcValue = Number(formattedUsdcBalance.value) * (currencyStore.usdc.priceInLocal || 0)
     return (nativeValue + usdcValue).toFixed(2)
   })
 

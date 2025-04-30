@@ -27,12 +27,15 @@ import { computed } from 'vue'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
-const { currency } = storeToRefs(currencyStore)
+const { localCurrency } = storeToRefs(currencyStore)
 const contractAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'CashRemunerationEIP712'
 )?.address
 const { balances, isLoading: isLoadingBalance } = useContractBalance(contractAddress)
 const totalBalance = computed(() => {
-  return formatCurrencyShort(parseFloat(balances.totalValueInLocalCurrency), currency.value.code)
+  return formatCurrencyShort(
+    parseFloat(balances.totalValueInLocalCurrency),
+    localCurrency.value.code
+  )
 })
 </script>

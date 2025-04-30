@@ -192,9 +192,13 @@ vi.mock('@/stores/currencyStore', () => ({
       code: 'USD',
       symbol: '$'
     },
-    nativeTokenPrice: 2000,
-    nativeTokenPriceInUSD: 2000,
-    usdPriceInLocal: 2000
+    nativeToken: {
+      priceInLocal: 2000,
+      priceInUSD: 2000
+    },
+    usdc: {
+      priceInLocal: 2000
+    }
   }))
 }))
 

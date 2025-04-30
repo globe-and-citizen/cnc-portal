@@ -16,7 +16,10 @@ vi.mock('@/stores', async (importOriginal) => {
         code: 'USD',
         symbol: '$'
       },
-      nativeTokenPrice: 2000,
+      nativeToken: {
+        priceInLocal: 2500,
+        priceInUSD: 2500
+      },
       fetchNativeTokenPrice: vi.fn()
     }))
   }

@@ -261,16 +261,16 @@ const estimatedPrice = computed(() => {
   if (selectedTokenId.value === 0) {
     return Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code,
+      currency: currencyStore.localCurrency.code,
       minimumFractionDigits: 2
-    }).format((currencyStore.nativeTokenPrice || 0) * amountValue)
+    }).format((currencyStore.nativeToken.priceInLocal || 0) * amountValue)
   }
 
   return Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currencyStore.currency.code,
+    currency: currencyStore.localCurrency.code,
     minimumFractionDigits: 2
-  }).format((currencyStore.usdPriceInLocal || 0) * amountValue)
+  }).format((currencyStore.usdc.priceInLocal || 0) * amountValue)
 })
 
 // Add currentStep ref

@@ -4,10 +4,10 @@
     <TableComponent
       :rows="tokensWithRank"
       :loading="
-        currencyStore.isLoading ||
+        currencyStore.usdc.isLoading ||
         isLoadingNetworkCuerrencyBalance ||
         isLoadingUsdcBalance ||
-        currencyStore.isLoadingUSDPrice
+        currencyStore.nativeToken.isLoading
       "
       :columns="[
         { key: 'rank', label: 'RANK' },
@@ -85,7 +85,7 @@ const {
 
 // Computed properties for prices
 const networkCurrencyPrice = computed(() => {
-  return currencyStore.nativeTokenPrice || 1
+  return currencyStore.nativeToken.priceInLocal || 1
 })
 
 const networkIcon = computed(() => {
@@ -98,11 +98,11 @@ const tokens = computed(() => [
     network: NETWORK.currencySymbol,
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
+      currency: currencyStore.localCurrency.code
     }).format(networkCurrencyPrice.value),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
+      currency: currencyStore.localCurrency.code
     }).format(Number(formattedNetworkCurrencyBalance.value) * networkCurrencyPrice.value),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',
@@ -116,12 +116,12 @@ const tokens = computed(() => [
     network: 'USDC',
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
-    }).format(currencyStore.usdPriceInLocal || 0),
+      currency: currencyStore.localCurrency.code
+    }).format(currencyStore.usdc.priceInLocal || 0),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
-    }).format(Number(formattedUsdcBalance.value) * (currencyStore.usdPriceInLocal || 0)),
+      currency: currencyStore.localCurrency.code
+    }).format(Number(formattedUsdcBalance.value) * (currencyStore.usdc.priceInLocal || 0)),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 3,

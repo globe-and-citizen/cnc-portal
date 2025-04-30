@@ -13,7 +13,7 @@
           <span class="text-gray-600">USD</span>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          ≈ {{ totalValueLocal }} {{ currencyStore.currency.code }}
+          ≈ {{ totalValueLocal }} {{ currencyStore.localCurrency.code }}
         </div>
       </div>
       <div class="flex flex-col items-end gap-4">
@@ -158,7 +158,7 @@ const handleTransfer = async (data: {
 // Computed properties
 const totalValueLocal = computed(() => {
   const usdValue = Number(balances.totalValueUSD)
-  return (usdValue * (currencyStore.usdPriceInLocal || 0)).toFixed(2)
+  return (usdValue * (currencyStore.usdc.priceInLocal || 0)).toFixed(2)
 })
 
 // Watch handlers

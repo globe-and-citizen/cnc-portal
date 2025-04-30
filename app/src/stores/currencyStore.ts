@@ -135,12 +135,23 @@ export const useCurrencyStore = defineStore(
     })
 
     return {
-      currency,
-      nativeTokenPrice,
-      nativeTokenPriceInUSD,
-      usdPriceInLocal,
-      isLoading,
-      isLoadingUSDPrice,
+      localCurrency: currency,
+      nativeToken: {
+        id: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
+        name: NETWORK.currencySymbol,
+        symbol: NETWORK.currencySymbol,
+        priceInUSD: nativeTokenPriceInUSD,
+        priceInLocal: nativeTokenPrice,
+        isLoading: isLoadingUSDPrice
+      },
+      usdc: {
+        id: 'usd-coin',
+        name: 'USD Coin',
+        symbol: 'USDC',
+        priceInUSD: nativeTokenPriceInUSD,
+        priceInLocal: nativeTokenPrice,
+        isLoading: isLoading
+      },
       setCurrency,
       fetchNativeTokenPrice
     }
