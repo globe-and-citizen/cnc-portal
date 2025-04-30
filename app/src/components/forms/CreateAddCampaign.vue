@@ -111,10 +111,6 @@ watch(contractAddress, async (newAddress) => {
   }
 })
 
-defineExpose({
-  deployError
-})
-
 const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
   try {
     await useCustomFetch(`contract`)

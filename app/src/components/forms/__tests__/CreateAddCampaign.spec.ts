@@ -8,14 +8,18 @@ import { ref } from 'vue'
 //import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 //import type { Abi } from 'viem'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
+
+const deployState = {
+  isDeploying: ref(false),
+  contractAddress: ref(null),
+  error: ref<Error | null>(null)
+}
+
 const mocks = vi.hoisted(() => {
   return {
-    deployMock: vi.fn(),
     mockUseDeployContract: vi.fn().mockImplementation(() => ({
-      deploy: mocks.deployMock,
-      isDeploying: ref(false),
-      contractAddress: ref(null),
-      error: ref(null)
+      ...deployState,
+      deploy: vi.fn()
     }))
   }
 })
@@ -132,20 +136,21 @@ describe('CreateAddCampaign.vue', () => {
     })
 
     it('shows an error toast with the correct message when there is an error', async () => {
+      deployState.error.value = new Error('User rejected the request')
       const wrapper = mount(CreateAddCampaign, {
         props: { bankAddress: '0x123456' }
       })
       const { addErrorToast } = useToastStore()
       await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.1)
       await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
-      wrapper.vm.deployError = new Error('User rejected the request')
+      //wrapper.vm.deployError = new Error('User rejected the request')
 
+      await flushPromises()
       await wrapper.find('.btn-primary').trigger('click')
       await flushPromises()
 
       // Trigger the logic again
       await wrapper.vm.$nextTick()
-
       // Check that the toast was called with the updated message
       expect(addErrorToast).toHaveBeenCalledWith('Deployment failed: User rejected the request')
     })
