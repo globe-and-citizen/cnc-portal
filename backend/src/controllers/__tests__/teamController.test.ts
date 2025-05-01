@@ -125,12 +125,17 @@ describe("Team Controller", () => {
       vi.clearAllMocks();
     });
 
-    it("should return 403 if user is not part of the team", async () => {
+    it.only("should return 403 if user is not part of the team", async () => {
 
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
         id: 1,
-        members: [{ address: faker.finance.ethereumAddress(), name: "Member 1" }],
-        teamContracts: [],
+        members: [
+          {
+            address: faker.finance.ethereumAddress(),
+            name: " Member 1",
+            imageUrl: "image.png",
+          },
+        ],
       });
 
       const response = await request(app)
@@ -142,8 +147,9 @@ describe("Team Controller", () => {
       expect(response.body.message).toBe("Unauthorized");
     });
 
-    it.only("should return 404 if team is not found", async () => {
+    it("should return 404 if team is not found", async () => {
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+
       const response = await request(app)
       .get("/team")
       .query({ teamId: 1 })
