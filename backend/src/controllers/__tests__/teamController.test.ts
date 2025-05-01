@@ -124,6 +124,17 @@ describe("Team Controller", () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
+
+    it("should return 500 if there is a server error", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
+
+      const response = await request(app)
+        .get("/team")
+        .query({ teamId: 1 });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error has occured");
+    });
   });
 });
 
