@@ -125,6 +125,23 @@ describe("Team Controller", () => {
       vi.clearAllMocks();
     });
 
+    it.only("should return 403 if user is not part of the team", async () => {
+
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
+        id: 1,
+        members: [{ address: faker.finance.ethereumAddress(), name: "Member 1" }],
+        teamContracts: [],
+      });
+
+      const response = await request(app)
+        .get("/team")
+        .query({ teamId: 1 })
+        .set("address", "0xDEF");
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Unauthorized");
+    });
+
     it("should return 200 and team data if user is part of the team", async () => {
       const mockTeam = {
         id: 1,

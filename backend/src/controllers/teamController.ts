@@ -17,8 +17,12 @@ const addTeam = async (req: Request, res: Response) => {
     // Validate all members' wallet addresses
     for (const member of members) {
       if (!isAddress(member.address)) {
-        return errorResponse(400, `Invalid wallet address for member: ${member.name}`, res);
-      } 
+        return errorResponse(
+          400,
+          `Invalid wallet address for member: ${member.name}`,
+          res
+        );
+      }
     }
 
     // Find the owner (user) by their address
