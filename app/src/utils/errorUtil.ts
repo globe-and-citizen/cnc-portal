@@ -61,7 +61,7 @@ function parseRevertReason(errorString: string): `0x${string}` | string {
     const errorData = errorString.split('custom error')[1].trim()
     const [selector, args] = errorData.split(' ').map((part) => part.replace(/[:.]/g, ''))
     const combined = `${selector}${args}` as `0x${string}`
-    if (!isHexPrefixedString(combined)) {
+    if (!isHex(/*PrefixedString*/ combined)) {
       throw new Error('Invalid custom error format')
     }
     return combined
@@ -96,11 +96,6 @@ function safeParse(errorString: string, abi: Abi | undefined) {
   }
 
   // return validated
-}
-
-// Type guard for 0x-prefixed strings
-function isHexPrefixedString(value: unknown): value is `0x${string}` {
-  return typeof value === 'string' && value.startsWith('0x') && /^0x[0-9a-fA-F]+$/.test(value)
 }
 
 // Type guard for regular strings (excluding 0x-prefixed)
