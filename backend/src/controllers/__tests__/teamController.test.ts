@@ -40,18 +40,7 @@ describe("addTeam", () => {
     ],
     officerAddress: "0xOfficerAddress",
   };
-  const mockCreatedTeam = {
-    id: 1,
-    name: mockTeamData.name,
-    description: mockTeamData.description,
-    ownerAddress: mockOwner.address,
-    officerAddress: mockTeamData.officerAddress,
-    members: [
-      { address: "0xMemberAddress1", name: "Member 1" },
-      { address: "0xMemberAddress2", name: "Member 2" },
-      { address: mockOwner.address, name: mockOwner.name },
-    ],
-  };
+
   const app = express();
   app.use(express.json());
   app.use(setAddressMiddleware(mockOwner.address));
