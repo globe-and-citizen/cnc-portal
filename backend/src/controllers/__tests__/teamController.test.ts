@@ -125,35 +125,43 @@ describe("Team Controller", () => {
       vi.clearAllMocks();
     });
 
-    it("should return 500 if an exception si thrown", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockRejectedValue(
-        new Error("DB failure")
-      );
-
-      const response = await request(app).get("/team").query({ teamId: 1 });
-
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Internal server error has occured");
-    });
-    
     it("should return 200 and team data if user is part of the team", async () => {
       const mockTeam = {
         id: 1,
-        members: [{ address: faker.finance.ethereumAddress(), name: "Member 1", imageUrl: "image.png" }],
+        members: [
+          {
+            address: faker.finance.ethereumAddress(),
+            name: "Member 1",
+            imageUrl: "image.png",
+          },
+        ],
         teamContracts: [],
       };
-    
+
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
-    
+
       const response = await request(app)
-        .get("/team").query({ teamId: 1 })
+        .get("/team")
+        .query({ teamId: 1 })
         .set("address", "0xABC");
-    
+
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeam);
     });
 
-  
+    it("should return 500 if an exception is thrown", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockRejectedValue(
+        new Error("DB failure")
+      );
+
+      const response = await request(app)
+        .get("/team")
+        .query({ teamId: 1 })
+        .set("address", "0xABC");
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error has occured");
+    });
   });
 });
 
