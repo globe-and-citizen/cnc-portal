@@ -58,7 +58,8 @@ vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    readContract: _mocks.mockReadContract
+    readContract: _mocks.mockReadContract,
+    estimateGas: vi.fn()
   }
 })
 
@@ -68,7 +69,8 @@ vi.mock('viem', async (importOriginal) => {
     ...actual,
     parseSignature: vi.fn(),
     hashTypedData: vi.fn(),
-    keccak256: vi.fn()
+    keccak256: vi.fn(),
+    encodeFunctionData: vi.fn()
   }
 })
 

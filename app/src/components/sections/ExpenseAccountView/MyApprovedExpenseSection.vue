@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
@@ -237,6 +237,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
       functionName: 'transfer'
     })
   } catch (error) {
+    console.error('Error in transferNativeToken:', parseError(error, expenseAccountABI as Abi))
     log.error('Error in transferNativeToken:', parseError(error, expenseAccountABI as Abi))
     addErrorToast(parseError(error, expenseAccountABI as Abi))
     transferERC20loading.value = false
@@ -372,8 +373,4 @@ watch(approveError, () => {
   }
 })
 //#endregion
-onMounted(() => {
-  console.log('expenseDataStore.allExpenseDataParsed', expenseDataStore.allExpenseDataParsed)
-  console.log('expenseDataStore.myApprovedExpenses', expenseDataStore.myApprovedExpenses)
-})
 </script>
