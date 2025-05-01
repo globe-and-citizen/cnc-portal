@@ -8,7 +8,7 @@
         <template #action-data="{ row }">
           <ButtonUI
             variant="success"
-            :disabled="!expenseDataStore.myApprovedExpenses || isDisapprovedAddress"
+            :disabled="!expenseDataStore.myApprovedExpenses || row.status !== 'enabled'"
             v-if="true"
             @click="
               () => {
@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
@@ -124,14 +124,14 @@ const { balances, refetch: refetchBalances } = useContractBalance(
 )
 
 //#region Computed Values
-const isDisapprovedAddress = computed(
-  () =>
-    expenseDataStore.allExpenseDataParsed.findIndex(
-      (item) =>
-        item.approvedAddress === currentUserAddress &&
-        (item.status === 'disabled' || item.status === 'expired')
-    ) !== -1
-)
+// const isDisapprovedAddress = computed(
+//   () =>
+//     expenseDataStore.allExpenseDataParsed.findIndex(
+//       (item) =>
+//         item.approvedAddress === currentUserAddress &&
+//         (item.status === 'disabled' || item.status === 'expired')
+//     ) !== -1
+// )
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
@@ -372,4 +372,8 @@ watch(approveError, () => {
   }
 })
 //#endregion
+onMounted(() => {
+  console.log('expenseDataStore.allExpenseDataParsed', expenseDataStore.allExpenseDataParsed)
+  console.log('expenseDataStore.myApprovedExpenses', expenseDataStore.myApprovedExpenses)
+})
 </script>
