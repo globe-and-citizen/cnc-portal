@@ -64,7 +64,7 @@ model Expense {
   userAddress String
   teamId      Int
   signature   String
-  data        String
+  data        Json
   status      String // e.g., "singed", "expired", "disabled"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
