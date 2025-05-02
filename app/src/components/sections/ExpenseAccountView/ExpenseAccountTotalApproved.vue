@@ -4,7 +4,7 @@
     subtitle="Total Approved"
     variant="info"
     :card-icon="personIcon"
-    :loading="isLoadingNativeTokenPrice || isLoadingUsdcPrice"
+    :loading="isLoadingNativeTokenPrice || isLoadingUSDPrice"
     ><div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
@@ -18,7 +18,6 @@
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { useCurrencyStore, useExpenseDataStore } from '@/stores'
 import type { BudgetData } from '@/types'
@@ -27,17 +26,18 @@ import { storeToRefs } from 'pinia'
 import { computed, onMounted } from 'vue'
 
 const expenseDataStore = useExpenseDataStore()
-const { price: usdcPrice, isLoading: isLoadingUsdcPrice } = useCryptoPrice('usd-coin')
 const currencyStore = useCurrencyStore()
 const {
   currency,
   isLoading: isLoadingNativeTokenPrice,
-  nativeTokenPrice
+  isLoadingUSDPrice: isLoadingUSDPrice,
+  nativeTokenPrice,
+  usdPriceInLocal
 } = storeToRefs(currencyStore)
 const totalApproved = computed(() => {
   const { usdcAmount, usdtAmount, nativeTokenAmount } = calculateTokenAmounts()
   const total =
-    (usdcAmount + usdtAmount) * (usdcPrice.value ?? 0) +
+    (usdcAmount + usdtAmount) * (usdPriceInLocal.value ?? 0) +
     nativeTokenAmount * (nativeTokenPrice.value ?? 0)
 
   return formatCurrencyShort(parseFloat(total.toString()), currency.value.code)
