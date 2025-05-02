@@ -28,6 +28,7 @@ model User {
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
+  deletedAt              DateTime? // Soft delete functionality
 }
 
 model Team {
@@ -45,6 +46,7 @@ model Team {
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
+  deletedAt              DateTime? // Soft delete functionality
 }
 
 model MemberTeamsData {
@@ -55,6 +57,7 @@ model MemberTeamsData {
   teamId                  Int
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
+  deletedAt               DateTime? // Soft delete functionality
 
   @@unique([userAddress, teamId])
 }
@@ -65,12 +68,16 @@ model Expense {
   teamId      Int
   signature   String
   data        Json
-  status      String // e.g., "singed", "expired", "disabled"
+  status      ExpenseStatus // Replace string with enum
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?     // Soft delete functionality
 
-  user User @relation(fields: [userAddress], references: [address])
-  team Team @relation(fields: [teamId], references: [id])
+  // Relationships
+  user User @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([userAddress, teamId])
 }
 
 model Wage {
@@ -88,20 +95,23 @@ model Wage {
   claims              Claim[]
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  deletedAt           DateTime? // Soft delete functionality
 
   @@unique([teamId, userAddress, nextWageId]) // Need to be checked
+  @@index([teamId, userAddress])
 }
 
 model Claim {
   id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
-  status      String
+  status      ClaimStatus // Replace string with enum
   hoursWorked Int?
   signature   String?
   tokenTx     String?
   wageId      Int
   wage        Wage     @relation(fields: [wageId], references: [id])
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
+  deletedAt   DateTime?   // Soft delete functionality
 }
 
 model Notification {
@@ -114,7 +124,10 @@ model Notification {
   author      String?
   resource    String?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
+  deletedAt   DateTime? // Soft delete functionality
+
+  @@index([userAddress, isRead])
 }
 
 model TeamContract {
@@ -125,7 +138,8 @@ model TeamContract {
   teamId    Int
   team      Team     @relation(fields: [teamId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
+  deletedAt DateTime? // Soft delete functionality
 
   @@index([address])
 }
@@ -142,5 +156,19 @@ model BoardOfDirectorActions {
   teamId        Int
   team          Team     @relation(fields: [teamId], references: [id])
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now())
+  deletedAt     DateTime? // Soft delete functionality
+}
+
+// Enums for normalized status fields
+enum ExpenseStatus {
+  SIGNED
+  EXPIRED
+  DISABLED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
