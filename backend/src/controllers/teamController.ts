@@ -104,15 +104,16 @@ const getTeam = async (req: Request, res: Response) => {
         teamContracts: true,
       },
     });
-    
-    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
-      return errorResponse(403, "Unauthorized", res);
-    }
 
     // Handle 404
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
+
+    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
+      return errorResponse(403, "Unauthorized", res);
+    }
+
     res.status(200).json(team);
   } catch (error: any) {
     return errorResponse(500, error.message, res);

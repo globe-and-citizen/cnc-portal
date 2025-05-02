@@ -125,7 +125,7 @@ describe("Team Controller", () => {
       vi.clearAllMocks();
     });
 
-    it.only("should return 403 if user is not part of the team", async () => {
+    it("should return 403 if user is not part of the team", async () => {
 
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
         id: 1,
