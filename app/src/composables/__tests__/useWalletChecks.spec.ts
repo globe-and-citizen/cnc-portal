@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import * as utils from '@/utils'
 import { NETWORK } from '@/constant'
+import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const mocks = vi.hoisted(() => ({
   mockUseToastStore: {
@@ -41,13 +42,13 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('@/stores/user', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
-  }
-})
+// vi.mock('@/stores/user', async (importOriginal) => {
+//   const actual: object = await importOriginal()
+//   return {
+//     ...actual,
+//     useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
+//   }
+// })
 
 describe('useWalletChecks', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
@@ -72,7 +73,7 @@ describe('useWalletChecks', () => {
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+    expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
       'Something went wrong: Failed to connect wallet'
     )
     expect(isProcessing.value).toBe(false)
@@ -113,7 +114,7 @@ describe('useWalletChecks', () => {
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+    expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
       'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
     )
     expect(logErrorSpy).toBeCalledWith('switchChainError.value', error)
@@ -127,7 +128,7 @@ describe('useWalletChecks', () => {
     )
     await performChecks()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+    expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
       'Something went wrong: Failed switch network'
     )
     expect(logErrorSpy).toBeCalledWith('switchChainError.value', error)
@@ -144,7 +145,7 @@ describe('useWalletChecks', () => {
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+    expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
       'Wallet connection rejected: You need to connect your wallet to use the CNC Portal.'
     )
     expect(logErrorSpy).toBeCalledWith('connectError.value', error)
@@ -162,7 +163,7 @@ describe('useWalletChecks', () => {
     await performChecks()
     await flushPromises()
 
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+    expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
       'No wallet detected: You need to install a wallet like metamask to use the CNC Portal'
     )
     expect(logErrorSpy).toBeCalledWith('connectError.value', error)
