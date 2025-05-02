@@ -4,7 +4,6 @@ import { formatEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useCryptoPrice } from './useCryptoPrice'
 
 export interface ContractBalance {
   nativeToken: {
@@ -46,8 +45,6 @@ export function useContractBalance(address: Address | undefined) {
     args: [address as Address]
   })
 
-  const { price: usdcRate } = useCryptoPrice('usd-coin')
-
   const formattedNativeBalance = computed(() =>
     nativeBalance.value ? formatEther(nativeBalance.value.value) : '0'
   )
@@ -65,7 +62,7 @@ export function useContractBalance(address: Address | undefined) {
 
   const totalValueInLocalCurrency = computed(() => {
     const nativeValue = Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPrice || 0)
-    const usdcValue = Number(formattedUsdcBalance.value) * (usdcRate.value || 0)
+    const usdcValue = Number(formattedUsdcBalance.value) * (currencyStore.usdPriceInLocal || 0)
     return (nativeValue + usdcValue).toFixed(2)
   })
 
