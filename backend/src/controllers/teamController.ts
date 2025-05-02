@@ -104,7 +104,7 @@ const getTeam = async (req: Request, res: Response) => {
         teamContracts: true,
       },
     });
-
+    
     if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
       return errorResponse(403, "Unauthorized", res);
     }
@@ -267,7 +267,7 @@ const deleteTeam = async (req: Request, res: Response) => {
   }
 };
 
-const isUserPartOfTheTeam = async (
+const isUserPartOfTheTeam = (
   members: { address: string; name?: string | null }[],
   callerAddress: string
 ) => {
