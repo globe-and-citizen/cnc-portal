@@ -164,7 +164,7 @@ describe("Team Controller", () => {
         id: 1,
         members: [
           {
-            address: faker.finance.ethereumAddress(),
+            address: "0xOwnerAddress",
             name: "Member 1",
             imageUrl: "image.png",
           },
