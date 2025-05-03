@@ -134,13 +134,12 @@ describe("Team Controller", () => {
     it("should return 403 if user is not part of the team", async () => {
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
         id: 1,
-        members: [
-          {
-            address: faker.finance.ethereumAddress(),
-            name: " Member 1",
-            imageUrl: "image.png",
-          },
-        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Test Team",
+        ownerAddress: "0xOwnerAddress",
+        description: "Test Description",
+        officerAddress: "0xOfficerAddress",
       });
 
       const response = await request(app)
@@ -345,7 +344,7 @@ describe("Team Controller", () => {
       expect(response.body.name).toEqual("Updated Team");
     });
 
-    it("should return 500 if there is a server error", async () => { 
+    it("should return 500 if there is a server error", async () => {
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
         id: 1,
         ownerAddress: mockOwner.address,
