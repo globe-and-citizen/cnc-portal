@@ -404,28 +404,56 @@ describe("Team Controller", () => {
       expect(response.body.message).toBe("Unauthorized");
     });
 
-    // it("should return 200 and delete the team successfully", async () => {
-    //   const mockTeam = {
-    //     id: 1,
-    //     ownerAddress: "0xOwnerAddress",
-    //     name: "Test Team",
-    //     description: "Test Description",
-    //     officerAddress: "0xOfficerAddress",
-    //     createdAt: new Date(),
-    //     updatedAt: new Date(),
-    //   };
+    it("should return 200 and delete the team successfully", async () => {
+      const mockTeam = {
+        id: 1,
+        ownerAddress: "0xOwnerAddress",
+        name: "Test Team",
+        description: "Test Description",
+        officerAddress: "0xOfficerAddress",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-    //   vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
-    //   vi.spyOn(prisma.team, "delete").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, "delete").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.boardOfDirectorActions, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
+      vi.spyOn(prisma.memberTeamsData, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
+      vi.spyOn(prisma.teamContract, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
+      vi.spyOn(prisma.claim, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
+      vi.spyOn(prisma.wage, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
+      vi.spyOn(prisma.expense, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
 
-    //   const response = await request(app)
-    //     .delete("/team")
-    //     .send({ id: 1 })
-    //     .set("address", "0xOwnerAddress");
+      const response = await request(app)
+        .delete("/team")
+        .set("address", "0xOwnerAddress");
 
-    //   expect(response.status).toBe(200);
-    //   expect(response.body).toEqual(mockTeam);
-    // });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        success: true,
+        team: {
+          id: 1,
+          ownerAddress: "0xOwnerAddress",
+          name: "Test Team",
+          description: "Test Description",
+          officerAddress: "0xOfficerAddress",
+          createdAt: mockTeam.createdAt.toISOString(),
+          updatedAt: mockTeam.updatedAt.toISOString(),
+        },
+      });
+    });
 
     it("should return 500 if there is a server error", async () => {
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
