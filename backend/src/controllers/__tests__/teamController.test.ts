@@ -211,16 +211,14 @@ describe("Team Controller", () => {
           name: "Team 1",
           description: "Description 1",
           owenrAddress: mockOwner.address,
-          _count: { member: 3}
-          
+          _count: { member: 3 },
         },
         {
           id: 2,
           name: "Team 2",
           description: "Description 2",
           ownerAddress: mockOwner.address,
-          _count: {memebers: 5}
-         
+          _count: { memebers: 5 },
         },
       ];
 
@@ -231,12 +229,20 @@ describe("Team Controller", () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeams);
     });
+
+    it.only("should return 500 if an error occurs", async () => {
+      vi.spyOn(prisma.team, "findMany").mockRejectedValue(
+        new Error("Database failure")
+      );
+    
+      const response = await request(app).get("/team");
+    
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error has occured");
+    });
+    
   });
 });
-
-
- 
-
 
 // describe("Cash Remuneration", () => {
 //   describe("GET /:id/cash-remuneration/claim", () => {
