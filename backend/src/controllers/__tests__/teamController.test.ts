@@ -4,6 +4,7 @@ import {
   //addExpenseAccountData,
   //getExpenseAccountData,
   addTeam,
+  deleteTeam,
   getAllTeams,
   getTeam,
   updateTeam,
@@ -50,6 +51,7 @@ app.post("/team", addTeam);
 app.get("/team/1", getTeam);
 app.get("/team", getAllTeams);
 app.put("/team", updateTeam);
+app.delete("/team", deleteTeam);
 
 describe("Team Controller", () => {
   describe("addTeam", () => {
@@ -364,6 +366,12 @@ describe("Team Controller", () => {
         "Internal server error has occured"
       );
     });
+
+    describe("deleteTeam", () => {
+      beforeEach(() => {
+        vi.clearAllMocks();
+      });
+
   });
 });
 
