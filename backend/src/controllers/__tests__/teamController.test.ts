@@ -268,7 +268,32 @@ describe("Team Controller", () => {
       expect(response.body.message).toBe("Team not found");
     });
 
+    it("should return 403 if user is not the team owner", async () => {
+      const mockTeam = {
+        id: 1,
+        ownerAddress: faker.finance.ethereumAddress(),
+        name: "Test Team",
+        description: "Test Description",
+        officerAddress: "0xOfficerAddress",
+      };
+
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
+
+      const response = await request(app)
+        .put("/team")
+        .send({
+          id: 1,
+          name: "Updated Team",
+          description: "Updated Description",
+          officerAddress: "0xNewOfficerAddress",
+        });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Unauthorized");
+    });
+
   })
+
 });
 
 // describe("Cash Remuneration", () => {
