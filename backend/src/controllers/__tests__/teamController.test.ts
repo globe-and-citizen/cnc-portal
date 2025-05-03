@@ -426,6 +426,30 @@ describe("Team Controller", () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeam);
     });
+
+    it.only("should return 500 if there is a server error", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
+        id: 1,
+        ownerAddress: "0xOwnerAddress",
+        name: "Test Team",
+        description: "Test Description",
+        officerAddress: "0xOfficerAddress",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      vi.spyOn(prisma.team, "delete").mockRejectedValue(
+        new Error("Server error")
+      );
+
+      const response = await request(app)
+        .delete("/team")
+        .set("address", "0xOwnerAddress");
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual(
+        "Internal server error has occured"
+      );
+    });
   });
 });
 
