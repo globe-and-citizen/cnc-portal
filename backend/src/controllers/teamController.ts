@@ -178,6 +178,7 @@ const updateTeam = async (req: Request, res: Response) => {
 
     if (teamContract) {
       if (!isAddress(teamContract.address)) {
+        console.log("Invalid address", teamContract.address);
         return errorResponse(400, "Invalid contract address", res);
       }
 
