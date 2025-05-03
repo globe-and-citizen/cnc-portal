@@ -46,7 +46,7 @@ const app = express();
 app.use(express.json());
 app.use(setAddressMiddleware(mockOwner.address));
 app.post("/team", addTeam);
-app.get("/team", getTeam);
+app.get("/team/1", getTeam);
 app.get("/team", getAllTeams);
 
 describe("Team Controller", () => {
@@ -140,7 +140,7 @@ describe("Team Controller", () => {
       });
 
       const response = await request(app)
-        .get("/team")
+        .get("/team/1")
         .query({ teamId: 1 })
         .set("address", "0xDEF");
 
@@ -152,7 +152,7 @@ describe("Team Controller", () => {
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
 
       const response = await request(app)
-        .get("/team")
+        .get("/team/1")
         .query({ teamId: 1 })
         .set("address", "0xABC");
 
@@ -176,7 +176,7 @@ describe("Team Controller", () => {
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
 
       const response = await request(app)
-        .get("/team")
+        .get("/team/1")
         .query({ teamId: 1 })
         .set("address", "0xABC");
 
@@ -190,7 +190,7 @@ describe("Team Controller", () => {
       );
 
       const response = await request(app)
-        .get("/team")
+        .get("/team/1")
         .query({ teamId: 1 })
         .set("address", "0xABC");
 
@@ -224,13 +224,15 @@ describe("Team Controller", () => {
 
       vi.spyOn(prisma.team, "findMany").mockResolvedValue(mockTeams);
 
-      const response = await request(app).get("/team/1");
+      const response = await request(app)
+      .get('/team')
+      .set('address', '0xABC123');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeams);
     });
 
-    it.only("should return 500 if an error occurs", async () => {
+    it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.team, "findMany").mockRejectedValue(
         new Error("Database failure")
       );
