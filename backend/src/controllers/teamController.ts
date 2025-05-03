@@ -276,18 +276,18 @@ const isUserPartOfTheTeam = (
   return members.some((member) => member.address === callerAddress);
 };
 
-const buildFilterMember = (queryParams: Request["query"]) => {
-  const filterQuery: Prisma.UserWhereInput = {};
-  if (queryParams.query) {
-    filterQuery.OR = [
-      { name: { contains: String(queryParams.query), mode: "insensitive" } },
-      { address: { contains: String(queryParams.query), mode: "insensitive" } },
-    ];
-  }
+// const buildFilterMember = (queryParams: Request["query"]) => {
+//   const filterQuery: Prisma.UserWhereInput = {};
+//   if (queryParams.query) {
+//     filterQuery.OR = [
+//       { name: { contains: String(queryParams.query), mode: "insensitive" } },
+//       { address: { contains: String(queryParams.query), mode: "insensitive" } },
+//     ];
+//   }
 
-  // can add others filter
+//   // can add others filter
 
-  return filterQuery;
-};
+//   return filterQuery;
+// };
 
 export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams };
