@@ -6,6 +6,7 @@ import {
   addTeam,
   getAllTeams,
   getTeam,
+  updateTeam,
 } from "../teamController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
@@ -48,6 +49,7 @@ app.use(setAddressMiddleware(mockOwner.address));
 app.post("/team", addTeam);
 app.get("/team/1", getTeam);
 app.get("/team", getAllTeams);
+app.set("/team", updateTeam)
 
 describe("Team Controller", () => {
   describe("addTeam", () => {
@@ -244,6 +246,13 @@ describe("Team Controller", () => {
     });
     
   });
+
+  describe("updateTeam", () =>{
+    beforeEach(() =>{
+      vi.clearAllMocks();
+    });
+
+  })
 });
 
 // describe("Cash Remuneration", () => {
