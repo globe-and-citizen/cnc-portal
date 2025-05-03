@@ -366,12 +366,23 @@ describe("Team Controller", () => {
         "Internal server error has occured"
       );
     });
+  });
 
-    describe("deleteTeam", () => {
-      beforeEach(() => {
-        vi.clearAllMocks();
-      });
+  describe("deleteTeam", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
 
+    it("should return 404 if team not found", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+
+      const response = await request(app)
+        .delete("/team")
+        .set("address", "0xOwnerAddress");
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Team not found");
+    });
   });
 });
 
