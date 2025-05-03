@@ -49,7 +49,7 @@ app.use(setAddressMiddleware(mockOwner.address));
 app.post("/team", addTeam);
 app.get("/team/1", getTeam);
 app.get("/team", getAllTeams);
-app.set("/team", updateTeam)
+app.put("/team", updateTeam)
 
 describe("Team Controller", () => {
   describe("addTeam", () => {
@@ -250,6 +250,22 @@ describe("Team Controller", () => {
   describe("updateTeam", () =>{
     beforeEach(() =>{
       vi.clearAllMocks();
+    });
+
+    it("should return 404 if team not found", async () => {
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+
+      const response = await request(app)
+        .put("/team")
+        .send({
+          id: 1,
+          name: "Updated Team",
+          description: "Updated Description",
+          officerAddress: "0xNewOfficerAddress",
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Team not found");
     });
 
   })
