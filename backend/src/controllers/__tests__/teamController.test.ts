@@ -203,7 +203,34 @@ describe("Team Controller", () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
-    
+
+    it("should return 200 and a lsit of teams the user is a member of", async () => {
+      const mockTeams = [
+        {
+          id: 1,
+          name: "Team 1",
+          description: "Description 1",
+          owenrAddress: mockOwner.address,
+          _count: { member: 3}
+          
+        },
+        {
+          id: 2,
+          name: "Team 2",
+          description: "Description 2",
+          ownerAddress: mockOwner.address,
+          _count: {memebers: 5}
+         
+        },
+      ];
+
+      vi.spyOn(prisma.team, "findMany").mockResolvedValue(mockTeams);
+
+      const response = await request(app).get("/team/1");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockTeams);
+    });
   });
 });
 
