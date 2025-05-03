@@ -4,13 +4,14 @@ import {
   //addExpenseAccountData,
   //getExpenseAccountData,
   addTeam,
+  getAllTeams,
   getTeam,
 } from "../teamController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import publicClient from "../../utils/viem.config";
 import OFFICER_ABI from "../../artifacts/officer_abi.json";
-import { de, faker } from "@faker-js/faker";
+import { de, faker, id_ID } from "@faker-js/faker";
 import { User } from "@prisma/client";
 
 vi.mock("../../utils");
@@ -46,6 +47,7 @@ app.use(express.json());
 app.use(setAddressMiddleware(mockOwner.address));
 app.post("/team", addTeam);
 app.get("/team", getTeam);
+app.get("/team", getAllTeams);
 
 describe("Team Controller", () => {
   describe("addTeam", () => {
@@ -126,7 +128,6 @@ describe("Team Controller", () => {
     });
 
     it("should return 403 if user is not part of the team", async () => {
-
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
         id: 1,
         members: [
@@ -151,12 +152,12 @@ describe("Team Controller", () => {
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
 
       const response = await request(app)
-      .get("/team")
-      .query({ teamId: 1 })
-      .set("address", "0xABC");
+        .get("/team")
+        .query({ teamId: 1 })
+        .set("address", "0xABC");
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe("Team not found"); 
+      expect(response.body.message).toBe("Team not found");
     });
 
     it("should return 200 and team data if user is part of the team", async () => {
@@ -197,7 +198,18 @@ describe("Team Controller", () => {
       expect(response.body.message).toBe("Internal server error has occured");
     });
   });
+
+  describe("getAllTeams", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+    
+  });
 });
+
+
+ 
+
 
 // describe("Cash Remuneration", () => {
 //   describe("GET /:id/cash-remuneration/claim", () => {
