@@ -1,11 +1,21 @@
 <template>
   <span class="font-bold text-2xl">Deposit to Team Bank Contract</span>
-  <label class="form-control w-full mt-4">
+
+  <div v-if="tokenList[selectedTokenId].symbol === 'USDC'" class="steps w-full my-4">
+    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
+    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
+    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
+  </div>
+
+  <label
+    class="form-control w-full"
+    :class="{ 'mt-4': tokenList[selectedTokenId].symbol !== 'USDC' }"
+  >
     <div class="label">
       <span class="label-text">Deposit</span>
       <span class="label-text-alt">Balance: {{ formattedBalance }}</span>
     </div>
-    <div class="input input-lg input-bordered flex items-center">
+    <div class="input input-bordered flex items-center">
       <input
         type="text"
         class="grow"
@@ -14,27 +24,46 @@
         data-test="amountInput"
         @input="handleAmountInput"
       />
-      <button class="btn btn-sm btn-ghost mr-2" @click="useMaxBalance" :disabled="isLoadingBalance">
+
+      <div class="flex gap-1">
+        <button
+          v-for="percent in [25, 50, 75]"
+          :key="percent"
+          class="btn btn-xs btn-ghost cursor-pointer"
+          @click="usePercentageOfBalance(percent)"
+          :data-test="`percentButton-${percent}`"
+        >
+          {{ percent }}%
+        </button>
+      </div>
+      <button
+        class="btn btn-xs btn-ghost mr-2"
+        @click="useMaxBalance"
+        :disabled="isLoadingBalance"
+        data-test="maxButton"
+      >
         Max
       </button>
       <div>
         <div
           role="button"
-          class="flex items-center cursor-pointer gap-4 badge badge-lg badge-info"
+          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
           @click="
             () => {
               isDropdownOpen = !isDropdownOpen
               console.log(`Dropdown open: ${isDropdownOpen}`)
             }
           "
+          data-test="tokenSelector"
         >
-          <span class="">{{ tokenList[selectedTokenId].name }} </span>
+          <span>{{ formattedTokenName }} </span>
           <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
         </div>
         <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
+          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
           ref="target"
           v-if="isDropdownOpen"
+          data-test="tokenDropdown"
         >
           <li
             v-for="(token, id) in tokenList"
@@ -45,6 +74,7 @@
                 isDropdownOpen = false
               }
             "
+            :data-test="`tokenOption-${token.symbol}`"
           >
             <a>{{ token.name }}</a>
           </li>
@@ -66,13 +96,10 @@
     <ButtonUI
       variant="primary"
       @click="submitForm"
-      :loading="props.loading"
-      :disabled="props.loading || $v.amount.$invalid"
+      :loading="isLoading"
+      :disabled="isLoading || $v.amount.$invalid"
     >
-      <template v-if="props.loading">
-        {{ props.loadingText }}
-      </template>
-      <template v-else> Deposit </template>
+      Deposit
     </ButtonUI>
     <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
   </div>
@@ -87,24 +114,65 @@ import ButtonUI from '../ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
-import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
+import {
+  useBalance,
+  useChainId,
+  useReadContract,
+  useSendTransaction,
+  useWriteContract,
+  useWaitForTransactionReceipt
+} from '@wagmi/vue'
 import { useUserDataStore } from '@/stores/user'
-import { formatEther, type Address } from 'viem'
+import { formatEther, type Address, parseEther } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
+import BankABI from '@/artifacts/abi/bank.json'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import { useToastStore } from '@/stores/useToastStore'
 
 const props = defineProps<{
   loading?: boolean
   loadingText?: string
+  bankAddress: Address
 }>()
 
+const { addErrorToast, addSuccessToast } = useToastStore()
+
+// Component state
 const amount = ref<string>('')
 const selectedTokenId = ref(0)
 const isDropdownOpen = ref<boolean>(false)
+const depositAmount = ref<string>('')
 const currencyStore = useCurrencyStore()
-const { price: usdcPrice } = useCryptoPrice('usd-coin')
 const userDataStore = useUserDataStore()
 const chainId = useChainId()
+
+// Contract interactions
+const { sendTransaction, isPending: depositLoading, data: depositHash } = useSendTransaction()
+
+const { isLoading: isConfirmingDeposit } = useWaitForTransactionReceipt({
+  hash: depositHash
+})
+
+const {
+  writeContract: writeTokenDeposit,
+  isPending: tokenDepositLoading,
+  data: tokenDepositHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingTokenDeposit } = useWaitForTransactionReceipt({
+  hash: tokenDepositHash
+})
+
+const {
+  writeContract: approve,
+  isPending: isPendingApprove,
+  data: approveHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingApprove } = useWaitForTransactionReceipt({
+  hash: approveHash
+})
 
 watch(amount, () => {
   $v.value.$touch()
@@ -149,6 +217,11 @@ const isLoadingBalance = computed(() => isLoadingNativeBalance.value || isLoadin
 
 const useMaxBalance = () => {
   amount.value = formattedBalance.value
+}
+
+const usePercentageOfBalance = (percentage: number) => {
+  const balance = parseFloat(formattedBalance.value)
+  amount.value = ((balance * percentage) / 100).toFixed(4)
 }
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
@@ -197,17 +270,130 @@ const estimatedPrice = computed(() => {
     style: 'currency',
     currency: currencyStore.currency.code,
     minimumFractionDigits: 2
-  }).format((usdcPrice.value || 0) * amountValue)
+  }).format((currencyStore.usdPriceInLocal || 0) * amountValue)
+})
+
+// Add currentStep ref
+const currentStep = ref(1)
+
+watch(
+  [
+    () => tokenList[selectedTokenId.value].symbol,
+    isPendingApprove,
+    isConfirmingApprove,
+    tokenDepositLoading,
+    isConfirmingTokenDeposit
+  ],
+  ([
+    symbol,
+    isPendingApprove,
+    isConfirmingApprove,
+    tokenDepositLoading,
+    isConfirmingTokenDeposit
+  ]) => {
+    // Reset step when switching tokens
+    if (symbol !== 'USDC') {
+      currentStep.value = 1
+      return
+    }
+
+    // Update steps for USDC
+    if (isPendingApprove || isConfirmingApprove) {
+      currentStep.value = 2
+    } else if (tokenDepositLoading || isConfirmingTokenDeposit) {
+      currentStep.value = 3
+    } else {
+      currentStep.value = 1
+    }
+  }
+)
+
+watch(isConfirmingDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('ETH deposited successfully')
+    emits('closeModal')
+  }
+})
+
+watch(isConfirmingTokenDeposit, (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('USDC deposited successfully')
+    emits('closeModal')
+    depositAmount.value = '' // Clear stored amount
+  }
+})
+
+watch(isConfirmingApprove, async (newIsConfirming, oldIsConfirming) => {
+  if (!newIsConfirming && oldIsConfirming) {
+    addSuccessToast('Token approved successfully')
+    if (depositAmount.value) {
+      await handleUsdcDeposit(depositAmount.value)
+    }
+  }
 })
 
 const submitForm = async () => {
   await $v.value.$touch()
   if ($v.value.$invalid) return
-  emits('deposit', {
-    amount: amount.value,
-    token: tokenList[selectedTokenId.value].symbol
+
+  try {
+    if (tokenList[selectedTokenId.value].symbol === 'ETH') {
+      sendTransaction({
+        to: props.bankAddress,
+        value: parseEther(amount.value)
+      })
+    } else if (tokenList[selectedTokenId.value].symbol === 'USDC') {
+      const tokenAmount = BigInt(Number(amount.value) * 1e6)
+      depositAmount.value = amount.value // Store amount for after approval
+
+      const allowance = await readContract(config, {
+        address: USDC_ADDRESS as Address,
+        abi: ERC20ABI,
+        functionName: 'allowance',
+        args: [userDataStore.address as Address, props.bankAddress]
+      })
+
+      const currentAllowance = allowance ? allowance.toString() : 0n
+      if (Number(currentAllowance) < Number(tokenAmount)) {
+        approve({
+          address: USDC_ADDRESS as Address,
+          abi: ERC20ABI,
+          functionName: 'approve',
+          args: [props.bankAddress, tokenAmount]
+        })
+      } else {
+        // If already approved, deposit directly
+        await handleUsdcDeposit(amount.value)
+      }
+    }
+  } catch (error) {
+    console.error(error)
+    addErrorToast(`Failed to deposit ${tokenList[selectedTokenId.value].symbol}`)
+  }
+}
+
+const handleUsdcDeposit = async (amount: string) => {
+  const tokenAmount = BigInt(Number(amount) * 1e6)
+
+  writeTokenDeposit({
+    address: props.bankAddress,
+    abi: BankABI,
+    functionName: 'depositToken',
+    args: [USDC_ADDRESS as Address, tokenAmount]
   })
 }
+
+const isLoading = computed(() => {
+  return Boolean(
+    props.loading ||
+      depositLoading.value ||
+      isConfirmingDeposit.value ||
+      isPendingApprove.value ||
+      isConfirmingApprove.value ||
+      tokenDepositLoading.value ||
+      isConfirmingTokenDeposit.value
+  )
+})
 
 const handleAmountInput = (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -219,4 +405,9 @@ const handleAmountInput = (event: Event) => {
     amount.value = value
   }
 }
+
+const formattedTokenName = computed(() => {
+  const name = tokenList[selectedTokenId.value].name
+  return name === 'SepoliaETH' ? 'SepETH' : name
+})
 </script>

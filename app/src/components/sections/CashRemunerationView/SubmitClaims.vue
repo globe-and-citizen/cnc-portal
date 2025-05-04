@@ -34,6 +34,7 @@
         <ButtonUI
           variant="success"
           class="w-32"
+          :disabled="isWageClaimAdding"
           :loading="isWageClaimAdding"
           data-test="submit-claim-button"
           @click="async () => await addWageClaim()"

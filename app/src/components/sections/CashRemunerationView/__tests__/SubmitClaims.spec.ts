@@ -1,39 +1,80 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SubmitClaims from '../SubmitClaims.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
-const statusCodeMock = ref<number | undefined>(undefined)
-const errorMock = ref<unknown>(undefined)
-vi.mock('@/composables/useCustomFetch', (importOriginal) => {
-  const original = importOriginal()
+// Mock refs for reactive states
+const mockPostStatus = ref<number | null>(null)
+const mockPostError = ref<unknown>(null)
+const mockPostIsFetching = ref(false)
+const mockPostData = ref(null)
+
+let resolveExecute: (val: unknown) => void
+
+const executePostMock = vi.fn(async () => {
+  mockPostIsFetching.value = true
+  return new Promise((resolve) => {
+    resolveExecute = resolve
+  }).finally(() => {
+    mockPostIsFetching.value = false
+  })
+})
+
+// Toast mocks
+const successToastMock = vi.fn()
+const errorToastMock = vi.fn()
+
+// Hoist and structure mocks
+const mocks = vi.hoisted(() => ({
+  mockUseCustomFetch: vi.fn(),
+  mockUseTeamStore: vi.fn(() => ({
+    currentTeam: {
+      id: 1
+    }
+  })),
+  mockUseToastStore: vi.fn(() => ({
+    addErrorToast: errorToastMock,
+    addSuccessToast: successToastMock
+  }))
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
   return {
-    ...original,
-    useCustomFetch: vi.fn(() => ({
-      post: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          data: {
-            success: true
-          },
-          loading: ref(false),
-          error: errorMock,
-          statusCode: statusCodeMock
-        })
-      })
-    }))
+    ...actual,
+    useTeamStore: mocks.mockUseTeamStore,
+    useToastStore: mocks.mockUseToastStore
   }
 })
 
-vi.mock('@/stores/useToastStore')
+vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useCustomFetch: mocks.mockUseCustomFetch
+  }
+})
 
-interface ComponentData {
-  hoursWorked: { hoursWorked: string }
-}
+afterEach(() => {
+  vi.clearAllMocks()
+})
 
-describe.skip('SubmitClaims', () => {
+describe('SubmitClaims', () => {
+  beforeEach(() => {
+    mocks.mockUseCustomFetch.mockReturnValueOnce({
+      post: vi.fn().mockImplementation(() => ({
+        json: vi.fn().mockReturnValue({
+          data: mockPostData,
+          error: mockPostError,
+          statusCode: mockPostStatus,
+          isFetching: mockPostIsFetching,
+          execute: executePostMock
+        })
+      }))
+    })
+  })
+
   const createComponent = () => {
     return mount(SubmitClaims, {
       global: {
@@ -41,46 +82,54 @@ describe.skip('SubmitClaims', () => {
       }
     })
   }
-  it('should input hours worked correctly', async () => {
-    const wrapper = createComponent()
 
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
-    expect((wrapper.vm as unknown as ComponentData).hoursWorked.hoursWorked).toBe('20')
+  it('should render correctly', () => {
+    const wrapper = createComponent()
+    expect(wrapper.exists()).toBeTruthy()
   })
 
-  it('shows error when hours worked is invalid', async () => {
+  it('should show success toast on successful claim submission', async () => {
     const wrapper = createComponent()
 
-    // case 1: hours worked is empty
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    expect(wrapper.find('[data-test="hours-worked-error"]').exists()).toBe(true)
+    // Open modal
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
 
-    // case 2: hours worked is not a number
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('a')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    expect(wrapper.find('[data-test="hours-worked-error"]').exists()).toBe(true)
-  })
+    // Add input
+    await wrapper.find('input[data-test="hours-worked-input"]').setValue('10')
 
-  it('shows success toast when submit hours worked successfully', async () => {
-    const wrapper = createComponent()
-    const { addSuccessToast } = useToastStore()
+    // Submit
+    await wrapper.find('[data-test="submit-claim-button"').trigger('click')
 
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    statusCodeMock.value = 201
+    // Mock the post status to simulate a successful submission
+    mockPostStatus.value = 201
+
+    // Resolve the promise to simulate the completion of the request
     await wrapper.vm.$nextTick()
-    expect(addSuccessToast).toHaveBeenCalledWith('Wage claim added successfully')
+    resolveExecute({})
+
+    expect(successToastMock).toHaveBeenCalled()
   })
 
-  it('shows error toast when submit worked failed', async () => {
+  it('should show error toast on failed claim submission', async () => {
     const wrapper = createComponent()
-    const { addErrorToast } = useToastStore()
 
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('20')
+    // Open modal
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+
+    // Add input
+    await wrapper.find('input[data-test="hours-worked-input"]').setValue('10')
+
+    // Submit
     await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    errorMock.value = new Error('Error')
+
+    // Mock the post status to simulate a failed submission
+    mockPostStatus.value = 400
+    mockPostError.value = 'Error'
+
+    // Resolve the promise to simulate the completion of the request
     await wrapper.vm.$nextTick()
-    expect(addErrorToast).toHaveBeenCalledWith(errorMock.value)
+    resolveExecute({})
+
+    expect(errorToastMock).toHaveBeenCalled()
   })
 })

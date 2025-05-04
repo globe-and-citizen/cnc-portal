@@ -1,9 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import TheDrawer from '@/components/TheDrawer.vue'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { useTeamStore } from '@/stores'
+// import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 // Create a router instance with a basic route
 const router = createRouter({
@@ -68,7 +70,7 @@ describe('TheDrawer', () => {
   const name = 'John Doe'
   const address = '0xc0ffee254729296a45a3885639AC7E10F9d54979'
 
-  const createWrapper = (props = {}, initialState = {}) => {
+  const createWrapper = (props = {} /*, initialState = {}*/) => {
     return mount(TheDrawer, {
       props: {
         user: { name, address },
@@ -79,8 +81,8 @@ describe('TheDrawer', () => {
         plugins: [
           router,
           createTestingPinia({
-            createSpy: vi.fn,
-            initialState: {
+            createSpy: vi.fn
+            /*initialState: {
               team: {
                 currentTeam: {
                   id: '1',
@@ -98,7 +100,7 @@ describe('TheDrawer', () => {
                 },
                 ...initialState
               }
-            }
+            }*/
           })
         ],
         stubs: {
@@ -124,6 +126,29 @@ describe('TheDrawer', () => {
       }
     })
   }
+
+  const mockTeamStore = {
+    currentTeam: {
+      id: '1',
+      name: 'Team A',
+      cashRemunerationEip712Address: 'address1',
+      expenseAccountEip712Address: 'address2'
+    },
+    teamsMeta: {
+      teams: [
+        { id: '1', name: 'Team A', members: [] },
+        { id: '2', name: 'Team B', members: [1, 2] }
+      ],
+      teamsAreFetching: false,
+      teamsError: null,
+      reloadTeams: vi.fn()
+    }
+  }
+  beforeEach(() => {
+    //@ts-expect-error: Mocking the store
+    vi.mocked(useTeamStore).mockReturnValue({ ...mockTeamStore })
+    vi.clearAllMocks()
+  })
 
   describe('Component Rendering', () => {
     it('should render basic component structure', () => {
@@ -191,7 +216,7 @@ describe('TheDrawer', () => {
 
       expect(teamSelector.exists()).toBe(true)
       const teamName = teamSelector.find('.text-sm.font-medium.text-gray-700')
-      expect(teamName.text()).toBe('Select Team')
+      expect(teamName.text()).toBe('Team A')
       expect(teamSelector.find('[data-test="team-dropdown"]').exists()).toBe(false)
 
       await teamSelector.trigger('click')
@@ -200,20 +225,31 @@ describe('TheDrawer', () => {
     })
 
     it('should show loading state when fetching teams', async () => {
-      const wrapper = createWrapper(
-        {},
+      //@ts-expect-error: Mocking the store
+      vi.mocked(useTeamStore).mockReturnValue({
+        ...mockTeamStore,
+        teamsMeta: {
+          teams: [],
+          teamsAreFetching: true,
+          teamsError: null,
+          reloadTeams: vi.fn()
+        }
+      })
+
+      const wrapper = createWrapper()
+      /*{},
         {
           teamsMeta: {
             teams: [],
             teamsAreFetching: true,
             teamsError: null
           }
-        }
-      )
+        }*/
 
       const teamSelector = wrapper.find('[data-test="team-display"]')
       await teamSelector.trigger('click')
-      await wrapper.vm.$nextTick()
+      // await wrapper.vm.$nextTick()
+      await flushPromises()
 
       expect(wrapper.find('.skeleton').exists()).toBe(true)
     })
@@ -237,16 +273,15 @@ describe('TheDrawer', () => {
     })
 
     it('should show/hide conditional menu items based on team properties', async () => {
-      const wrapper = createWrapper(
-        {},
+      const wrapper = createWrapper()
+      /*{},
         {
           currentTeam: {
             name: 'Team A',
             cashRemunerationEip712Address: null,
             expenseAccountEip712Address: null
           }
-        }
-      )
+        }*/
 
       await wrapper.vm.$nextTick()
       const menuItems = wrapper.findAll('nav a:not(.hidden)')

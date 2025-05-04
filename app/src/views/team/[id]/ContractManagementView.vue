@@ -2,10 +2,7 @@
   <div class="flex flex-col gap-6">
     <span v-if="teamIsFetching" class="loading loading-spinner loading-lg"></span>
     <div v-if="!teamIsFetching && team" class="flex flex-col gap-5 w-full items-center">
-      <TeamMeta
-        :team="teamStore.currentTeamMeta.team"
-        @getTeam="teamStore.currentTeamMeta.executeFetchTeam"
-      />
+      <TeamMeta />
       <div>
         <ButtonUI
           size="sm"

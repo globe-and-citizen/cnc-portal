@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, computed } from 'vue'
+import { defineProps, ref, computed, watch } from 'vue'
 import AddressToolTip from './AddressToolTip.vue'
 import TableComponent from '@/components/TableComponent.vue'
 
@@ -58,6 +58,7 @@ import { parseUnits } from 'viem/utils'
 
 import { useToastStore } from '@/stores/useToastStore'
 import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 const campaignAbi = AdCampaignArtifact.abi
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -67,7 +68,7 @@ const props = defineProps<{
   reset: boolean
 }>()
 
-import { watch } from 'vue'
+const pendingTransactions = ref(0)
 
 const originalCostPerClick = ref<number>(0)
 const originalCostPerImpression = ref<number>(0)
@@ -100,8 +101,10 @@ const { isLoading: isConfirmingSetCostPerClick, isSuccess: isConfirmedSetCostPer
 
 watch(isConfirmingSetCostPerClick, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedSetCostPerClick.value) {
+    pendingTransactions.value--
     addSuccessToast('Cost per click updated successfully')
     originalCostPerClick.value = getOriginalValue('costPerClick')
+    if (pendingTransactions.value === 0) emit('closeContractDataDialog')
   }
 })
 
@@ -119,8 +122,10 @@ const { isLoading: isConfirmingSetCostPerImpression, isSuccess: isConfirmedSetCo
 
 watch(isConfirmingSetCostPerImpression, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedSetCostPerImpression.value) {
+    pendingTransactions.value--
     addSuccessToast('Cost per impression updated successfully')
     originalCostPerImpression.value = getOriginalValue('costPerImpression')
+    if (pendingTransactions.value === 0) emit('closeContractDataDialog')
   }
 })
 
@@ -140,7 +145,8 @@ defineExpose({
   initialized,
   originalValues,
   originalCostPerClick,
-  originalCostPerImpression
+  originalCostPerImpression,
+  pendingTransactions
 })
 
 watch(
@@ -182,6 +188,7 @@ async function submit() {
           addErrorToast('Cost per click should be greater than 0')
           return
         }
+        pendingTransactions.value++
         setCostPerClick({
           address: props.contractAddress as `0x${string}`,
           abi: campaignAbi,
@@ -194,6 +201,7 @@ async function submit() {
           addErrorToast('Cost per impression should be greater than 0')
           return
         }
+        pendingTransactions.value++
         setCostPerImpression({
           address: props.contractAddress as `0x${string}`,
           abi: campaignAbi,
@@ -210,6 +218,7 @@ async function submit() {
 
 const emit = defineEmits<{
   (e: 'update:datas', value: Array<{ key: string; value: string }>): void
+  (e: 'closeContractDataDialog'): void
 }>()
 
 function updateValue(index: number, value: number) {
