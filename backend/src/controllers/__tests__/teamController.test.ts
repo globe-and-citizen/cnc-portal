@@ -288,31 +288,6 @@ describe("Team Controller", () => {
       expect(response.body.message).toBe("Unauthorized");
     });
 
-    // it.only("shoud return 400 if invalid officer address provided", async () => {
-    //   const mockTeam = {
-    //     id: 1,
-    //     ownerAddress: "0xABC123",
-    //     name: "Test Team",
-    //     description: "Test Description",
-    //     officerAddress: faker.finance.ethereumAddress(),
-    //   };
-
-    //   vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
-
-    //   const response = await request(app)
-    //     .put("/team")
-    //     .set("address", "0xABC123")
-    //     .send({
-    //       id: 1,
-    //       name: "Updated Team",
-    //       description: "Updated Description",
-    //       officerAddress: "invalid-officer-address",
-    //     });
-
-    //   expect(response.status).toBe(400);
-    //   expect(response.body.message).toBe("Invalid officer address");
-    // });
-
     it("should return 200 and update the team successfully", async () => {
       const mockTeam = {
         id: 1,

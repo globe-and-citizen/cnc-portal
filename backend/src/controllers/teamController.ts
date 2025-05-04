@@ -156,12 +156,10 @@ const getAllTeams = async (req: Request, res: Response) => {
 };
 
 // Update team
+
 const updateTeam = async (req: Request, res: Response) => {
-  /*
-  #swagger.tags = ['Teams']
-  */
   const { id } = req.params;
-  const { name, description, officerAddress, teamContract } = req.body;
+  const { name, description, officerAddress } = req.body;
   const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
@@ -174,39 +172,6 @@ const updateTeam = async (req: Request, res: Response) => {
     }
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, "Unauthorized", res);
-    }
-
-    if (teamContract) {
-      if (!isAddress(teamContract.address)) {
-        console.log("Invalid address", teamContract.address);
-        return errorResponse(400, "Invalid contract address", res);
-      }
-
-      const existingContract = await prisma.teamContract.findUnique({
-        where: {
-          address: teamContract.address,
-        },
-      });
-
-      if (existingContract) {
-        //update the existing contract if found
-        await prisma.teamContract.update({
-          where: { address: teamContract.address },
-          data: {
-            type: teamContract.type,
-            deployer: teamContract.deployer,
-          },
-        });
-      } else {
-        await prisma.teamContract.create({
-          data: {
-            address: teamContract.address,
-            type: teamContract.type,
-            deployer: teamContract.deployer,
-            teamId: team.id,
-          },
-        });
-      }
     }
 
     const teamU = await prisma.team.update({
