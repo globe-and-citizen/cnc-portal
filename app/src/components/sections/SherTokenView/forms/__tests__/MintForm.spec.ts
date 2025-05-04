@@ -4,7 +4,8 @@ import MintForm from '../../../SherTokenView/forms/MintForm.vue'
 import type { Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
+// import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { mockToastStore } from '@/tests/mocks/store.mock'
 
 interface Props {
   address: Address | undefined
@@ -39,7 +40,7 @@ vi.mock('@/composables/useCustomFetch', () => {
     }))
   }
 })
-vi.mock('@/stores/useToastStore')
+// vi.mock('@/stores/useToastStore')
 
 describe('MintForm', () => {
   const createComponent = (props?: Partial<Props>) => {
@@ -149,12 +150,12 @@ describe('MintForm', () => {
   })
 
   it('should add error toast if there is an error when searching users', async () => {
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).searchError = 'error'
     await wrapper.vm.$nextTick()
 
-    expect(addErrorToast).toHaveBeenCalled()
+    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
   })
 })

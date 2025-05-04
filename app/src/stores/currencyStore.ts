@@ -56,59 +56,99 @@ export interface PriceResponse {
     }
   }
 }
-export const useCurrencyStore = defineStore('currency', () => {
-  const currency = useStorage('currency', {
-    code: 'USD',
-    name: 'US Dollar',
-    symbol: '$'
-  })
-  const nativeTokenPrice = ref<number | undefined>(undefined)
-  const nativeTokenPriceInUSD = ref<number | undefined>(undefined)
-  const toastStore = useToastStore()
+export const useCurrencyStore = defineStore(
+  'currency',
+  () => {
+    const currency = useStorage('currency', {
+      code: 'USD',
+      name: 'US Dollar',
+      symbol: '$'
+    })
+    const nativeTokenPrice = ref<number | undefined>(undefined)
+    const nativeTokenPriceInUSD = ref<number | undefined>(undefined)
+    const usdPriceInLocal = ref<number | undefined>(undefined)
+    const toastStore = useToastStore()
 
-  const {
-    data: priceResponse,
-    execute: fetchPrice,
-    isFetching: isLoading,
-    error: error
-  } = useCustomFetch(
-    `https://api.coingecko.com/api/v3/coins/${NETWORK_TO_COIN_ID[NETWORK.currencySymbol]}`,
-    {
+    const {
+      data: priceResponse,
+      execute: fetchPrice,
+      isFetching: isLoading,
+      error: error
+    } = useCustomFetch(
+      `https://api.coingecko.com/api/v3/coins/${NETWORK_TO_COIN_ID[NETWORK.currencySymbol]}`,
+      {
+        immediate: false
+      }
+    )
+      .get()
+      .json<PriceResponse>()
+
+    const {
+      data: usdPriceResponse,
+      execute: fetchUSDPrice,
+      isFetching: isLoadingUSDPrice,
+      error: errorUSDPrice
+    } = useCustomFetch(`https://api.coingecko.com/api/v3/coins/usd-coin`, {
       immediate: false
+    })
+      .get()
+      .json<PriceResponse>()
+
+    async function setCurrency(value: string) {
+      currency.value = LIST_CURRENCIES.find((c) => c.code === value)
+      await fetchNativeTokenPrice()
+      await fetchUSDPriceInLocal()
     }
-  )
-    .get()
-    .json<PriceResponse>()
 
-  async function setCurrency(value: string) {
-    currency.value = LIST_CURRENCIES.find((c) => c.code === value)
-    await fetchNativeTokenPrice()
-  }
+    type currencyType = keyof PriceResponse['market_data']['current_price']
 
-  type currencyType = keyof PriceResponse['market_data']['current_price']
+    async function fetchNativeTokenPrice() {
+      await fetchPrice()
+      const currencyCode = currency.value.code.toLowerCase() as currencyType
 
-  async function fetchNativeTokenPrice() {
-    await fetchPrice()
-    const currencyCode = currency.value.code.toLowerCase() as currencyType
-
-    if (!priceResponse.value || error.value) {
-      toastStore.addErrorToast('Failed to fetch price')
-      return
+      if (!priceResponse.value || error.value) {
+        toastStore.addErrorToast('Failed to fetch price')
+        return
+      }
+      nativeTokenPrice.value = priceResponse.value.market_data.current_price[currencyCode]
+      nativeTokenPriceInUSD.value = priceResponse.value.market_data.current_price.usd
     }
-    nativeTokenPrice.value = priceResponse.value.market_data.current_price[currencyCode]
-    nativeTokenPriceInUSD.value = priceResponse.value.market_data.current_price.usd
-  }
 
-  onMounted(async () => {
-    await fetchNativeTokenPrice()
-  })
+    async function fetchUSDPriceInLocal() {
+      await fetchUSDPrice()
 
-  return {
-    currency,
-    nativeTokenPrice,
-    nativeTokenPriceInUSD,
-    isLoading,
-    setCurrency,
-    fetchNativeTokenPrice
+      const currencyCode = currency.value.code.toLowerCase() as currencyType
+      if (!usdPriceResponse.value || errorUSDPrice.value) {
+        toastStore.addErrorToast('Failed to fetch price')
+        return
+      }
+      usdPriceInLocal.value = usdPriceResponse.value.market_data.current_price[currencyCode]
+    }
+
+    onMounted(async () => {
+      if (nativeTokenPrice.value === undefined || nativeTokenPriceInUSD.value === undefined) {
+        await fetchNativeTokenPrice()
+      }
+
+      if (usdPriceInLocal.value === undefined) {
+        await fetchUSDPriceInLocal()
+      }
+    })
+
+    return {
+      currency,
+      nativeTokenPrice,
+      nativeTokenPriceInUSD,
+      usdPriceInLocal,
+      isLoading,
+      isLoadingUSDPrice,
+      setCurrency,
+      fetchNativeTokenPrice
+    }
+  },
+  {
+    persist: {
+      storage: sessionStorage // Persist for the current browser tab session
+    }
   }
-})
+)

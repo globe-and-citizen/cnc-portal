@@ -87,7 +87,6 @@ import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import BankABI from '@/artifacts/abi/bank.json'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
@@ -102,7 +101,6 @@ const emit = defineEmits<{
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const currencyStore = useCurrencyStore()
-const { price: usdcPrice } = useCryptoPrice('usd-coin')
 
 // Use the contract balance composable
 const { balances, isLoading, error, refetch } = useContractBalance(props.bankAddress)
@@ -160,7 +158,7 @@ const handleTransfer = async (data: {
 // Computed properties
 const totalValueLocal = computed(() => {
   const usdValue = Number(balances.totalValueUSD)
-  return (usdValue * (usdcPrice.value || 0)).toFixed(2)
+  return (usdValue * (currencyStore.usdPriceInLocal || 0)).toFixed(2)
 })
 
 // Watch handlers

@@ -159,15 +159,6 @@ vi.mock('@/composables/useCustomFetch', () => ({
   })
 }))
 
-vi.mock('@/composables/useCryptoPrice', () => ({
-  useCryptoPrice: () => ({
-    price: ref(2000),
-    priceInUSD: ref(2000),
-    loading: ref(false),
-    error: ref(null)
-  })
-}))
-
 interface TeamStore {
   currentTeam: Team | null
 }
@@ -202,7 +193,8 @@ vi.mock('@/stores/currencyStore', () => ({
       symbol: '$'
     },
     nativeTokenPrice: 2000,
-    nativeTokenPriceInUSD: 2000
+    nativeTokenPriceInUSD: 2000,
+    usdPriceInLocal: 2000
   }))
 }))
 

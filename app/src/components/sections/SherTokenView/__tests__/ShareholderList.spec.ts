@@ -5,7 +5,8 @@ import { parseEther, formatEther, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
+// import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { mockToastStore } from '@/tests/mocks/store.mock'
 import TableComponent from '@/components/TableComponent.vue'
 
 const mockWriteContract = vi.fn()
@@ -142,17 +143,17 @@ describe('ShareholderList', () => {
   })
 
   it('should add error toast when mint failed', async () => {
-    const { addErrorToast } = useToastStore()
+    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).mintError = 'Mint failed'
     await wrapper.vm.$nextTick()
 
-    expect(addErrorToast).toHaveBeenCalled()
+    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
   })
 
   it('should emit refetchShareholders, add success toast and set modal to false when mint success', async () => {
-    const { addSuccessToast } = useToastStore()
+    // const { addSuccessToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).isSuccessMinting = true
@@ -161,7 +162,7 @@ describe('ShareholderList', () => {
     ;(wrapper.vm as unknown as ComponentData).isConfirmingMint = false
     await wrapper.vm.$nextTick()
 
-    expect(addSuccessToast).toHaveBeenCalled()
+    expect(mockToastStore.addSuccessToast).toHaveBeenCalled()
     expect(wrapper.emitted('refetchShareholders')).toBeTruthy()
     expect((wrapper.vm as unknown as ComponentData).mintIndividualModal).toBeFalsy()
   })

@@ -19,7 +19,6 @@
 import cartIcon from '@/assets/cart.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
@@ -32,8 +31,7 @@ import { computed } from 'vue'
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
-const { price } = useCryptoPrice('usd-coin')
+const { currency, nativeTokenPrice, usdPriceInLocal } = storeToRefs(currencyStore)
 const contractAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'ExpenseAccountEIP712'
 )?.address
@@ -72,7 +70,7 @@ const totalMonthlySpentAmount = computed(() => {
     }
   })
   const totalNetworkInLocalCurrency = totalAmountInNetworkCurrency * (nativeTokenPrice.value || 0)
-  const totalUSDCInLocalCurrency = totalAmountInUSDC * (price.value || 0)
+  const totalUSDCInLocalCurrency = totalAmountInUSDC * (usdPriceInLocal.value || 0)
 
   return formatCurrencyShort(
     totalNetworkInLocalCurrency + totalUSDCInLocalCurrency,

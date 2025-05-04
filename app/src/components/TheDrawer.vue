@@ -291,6 +291,7 @@ const menuItems = computed(() => [
       name: 'contract-management',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
+    active: route.name === 'contract-management',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
 ])
