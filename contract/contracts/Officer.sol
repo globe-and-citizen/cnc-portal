@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ISafeProxyFactory} from "./interfaces/ISafeProxyFactory.sol";
+import {ISafeProxy} from "./interfaces/ISafeProxy.sol";
+import {ISafe} from "./interfaces/ISafe.sol";
 
 interface IBodContract {    
     function initialize(address[] memory votingAddress) external;
@@ -59,6 +62,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     /// @notice Array to store deployed contract information
     DeployedContract[] private deployedContracts;
 
+    /// @notice Address of the Safe factory contract
+    address SAFE_FACTORY_ADDRESS;
+
     /**
      * @notice Initializes the contract with owner and optional beacon configurations
      * @param _owner Address of the contract owner
@@ -68,7 +74,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         address _owner,
         BeaconConfig[] memory beaconConfigs,
         DeploymentData[] calldata _deployments,
-        bool _isDeployAllContracts
+        bool _isDeployAllContracts,
+        uint256 _nonce
     ) public initializer {
         __Ownable_init(_owner);
         __ReentrancyGuard_init();
@@ -86,12 +93,16 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
                     "Duplicate beacon type"
                 );
             }
+            if (keccak256(bytes(beaconConfigs[i].beaconType)) == keccak256(bytes("SafeWallet"))) {
+                SAFE_FACTORY_ADDRESS = beaconConfigs[i].beaconAddress;
+                continue;
+            }
 
             contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
             emit BeaconConfigured(beaconConfigs[i].beaconType, beaconConfigs[i].beaconAddress);
         }
         if(_isDeployAllContracts){
-            deployAllContracts(_deployments);
+            deployAllContracts(_deployments, _nonce);
         }
     }
 
@@ -191,7 +202,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      * @return deployedAddresses Array of deployed proxy addresses
      */
     function deployAllContracts(
-        DeploymentData[] calldata deployments
+        DeploymentData[] calldata deployments,
+        uint256 _nonce
     ) public whenNotPaused onlyInitializingOrOwners returns (address[] memory) {
         address[] memory deployedAddresses = new address[](deployments.length);
         
@@ -202,8 +214,46 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             require(keccak256(bytes(deployments[i].contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");      
             deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
         }
+        // Deploy Safe Wallet
+        deployedAddresses[deployments.length] = deploySafeWallet(_nonce);
+
         emit BeaconProxiesDeployed(deployedAddresses);
         return deployedAddresses;
+    }
+
+    /**
+     * @notice Deploys a new Safe wallet using safe proxy factory
+     * @return Address of the deployed Safe wallet
+     */
+    function deploySafeWallet(uint256 _nonce) public whenNotPaused onlyInitializingOrOwners returns (address) {
+        require(SAFE_FACTORY_ADDRESS != address(0), "Safe factory address not set");
+
+        ISafeProxy safeProxy = ISafeProxyFactory(SAFE_FACTORY_ADDRESS).createProxyWithNonceL2(
+            SAFE_FACTORY_ADDRESS,
+            generateSafeWalletInitializeData(),
+            _nonce
+        );
+        deployedContracts.push(DeployedContract("SafeWallet", address(safeProxy)));
+
+        return address(safeProxy);
+    }
+
+    /**
+     * @notice Generates initialization data for the Safe wallet
+     * @return Encoded initialization data for the Safe wallet
+     */
+    function generateSafeWalletInitializeData() public view returns (bytes memory) {
+        return abi.encodeWithSelector(
+            ISafe.setup.selector,
+            [msg.sender],
+            1,
+            address(0),
+            bytes(""),
+            address(0),
+            address(0),
+            0,
+            address(0)
+        );
     }
 
     /**
