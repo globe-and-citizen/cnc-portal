@@ -20,6 +20,19 @@ vi.mock('@/composables/useCustomFetch', () => ({
   }))
 }))
 
+vi.mock('@/stores', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({
+      localCurrency: {
+        code: 'USD',
+        symbol: '$'
+      }
+    }))
+  }
+})
+
 describe('useCryptoPrice', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

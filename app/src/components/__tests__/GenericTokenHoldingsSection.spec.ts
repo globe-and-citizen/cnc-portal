@@ -8,7 +8,7 @@ import * as utils from '@/utils'
 import { parseEther } from 'viem'
 
 const mockUseCurrencyStore = {
-  currency: {
+  localCurrency: {
     code: `USD`,
     symbol: `$`
   },

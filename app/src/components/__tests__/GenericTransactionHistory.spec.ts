@@ -57,7 +57,7 @@ vi.mock('@/stores/useToastStore', () => ({
 
 vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: () => ({
-    currency: { code: 'USD', name: 'US Dollar', symbol: '$' },
+    localCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
     nativeToken: {
       priceInLocal: 1800,
       priceInUSD: 1800,
