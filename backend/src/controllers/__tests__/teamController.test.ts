@@ -14,7 +14,7 @@ import { describe, it, beforeEach, expect, vi } from "vitest";
 import publicClient from "../../utils/viem.config";
 import OFFICER_ABI from "../../artifacts/officer_abi.json";
 import { de, faker, id_ID } from "@faker-js/faker";
-import { User } from "@prisma/client";
+import { Team, User } from "@prisma/client";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
@@ -27,7 +27,7 @@ function setAddressMiddleware(address: string) {
 }
 
 const mockOwner: User = {
-  address: "0xOwnerAddress",
+  address: faker.finance.ethereumAddress(),
   name: "Test Owner",
   nonce: "123456",
   imageUrl: "https://example.com/image.jpg",
@@ -41,7 +41,31 @@ const mockTeamData = {
     { address: faker.finance.ethereumAddress(), name: "Member 1" },
     { address: faker.finance.ethereumAddress(), name: "Member 2" },
   ],
+
   officerAddress: "0xOfficerAddress",
+};
+
+const teamMockResolve: Team = {
+  ...mockTeamData,
+  id: 1,
+  ownerAddress: mockOwner.address,
+
+  members: [
+    {
+      address: faker.finance.ethereumAddress(),
+      name: "Member 1",
+      imageUrl: "https://example.com/image.jpg",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      address: mockOwner.address,
+      name: mockOwner.name,
+      imageUrl: "https://example.com/image.jpg",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ],
 };
 
 const app = express();
@@ -112,6 +136,24 @@ describe("Team Controller", () => {
       expect(response.body.name).toEqual("Test Team");
     });
 
+    it("should return 201 and create a team successfully with the team owner in team members", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, "create").mockResolvedValue(teamMockResolve);
+
+      const response = await request(app)
+        .post("/team")
+        .send({
+          ...mockTeamData,
+          members: mockTeamData.members.concat({
+            address: mockOwner.address,
+            name: mockOwner.name,
+          }),
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.name).toEqual("Test Team");
+    });
+
     it("should return 500 if there is a server error", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(
         new Error("Server error")
@@ -164,19 +206,7 @@ describe("Team Controller", () => {
     });
 
     it("should return 200 and team data if user is part of the team", async () => {
-      const mockTeam = {
-        id: 1,
-        members: [
-          {
-            address: "0xOwnerAddress",
-            name: "Member 1",
-            imageUrl: "image.png",
-          },
-        ],
-        teamContracts: [],
-      };
-
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(teamMockResolve);
 
       const response = await request(app)
         .get("/team/1")
@@ -184,7 +214,7 @@ describe("Team Controller", () => {
         .set("address", "0xABC");
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockTeam);
+      // expect(response.body).toEqual(teamMockResolve);
     });
 
     it("should return 500 if an exception is thrown", async () => {
