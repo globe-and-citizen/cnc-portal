@@ -120,15 +120,7 @@ describe("Team Controller", () => {
 
     it("should return 201 and create a team successfully", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
-      vi.spyOn(prisma.team, "create").mockResolvedValue({
-        id: 1,
-        ...mockTeamData,
-        ownerAddress: mockOwner.address,
-        members: mockTeamData.members.concat({
-          address: mockOwner.address,
-          name: mockOwner.name,
-        }),
-      });
+      vi.spyOn(prisma.team, "create").mockResolvedValue(teamMockResolve);
 
       const response = await request(app).post("/team").send(mockTeamData);
 
