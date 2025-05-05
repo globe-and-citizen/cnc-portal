@@ -1,3 +1,6 @@
+import { decodeErrorResult, type Abi, isHex } from 'viem'
+import { log } from './generalUtil'
+
 type MetaMaskErrorInfo = {
   error: { code: number; message: string }
   payload: { method: string; params: string[]; jsonrpc: string }
@@ -16,12 +19,14 @@ type MetaMaskErrorInfo = {
  * @param error - The error object to be parsed. It can be of any type.
  * @returns A string containing the error message.
  */
-export const parseError = (error: unknown) => {
+export const parseError = (error: unknown, abi: Abi | undefined = undefined) => {
   let message: string
 
   if (error instanceof Error) {
     if ('info' in error && isMetaMaskErrorInfo(error.info as MetaMaskErrorInfo)) {
       message = `Metamask Error: ${parseErrorInfo(error.info as MetaMaskErrorInfo)}`
+    } else if (abi && 'shortMessage' in error) {
+      return safeParse(error.shortMessage as string, abi)
     } else {
       message = error.message
     }
@@ -30,6 +35,84 @@ export const parseError = (error: unknown) => {
   }
 
   return message
+}
+
+const parseCustomError = (callData: `0x${string}` | null, abi: Abi | undefined) => {
+  if (!callData || !abi) {
+    return 'Contract reverted'
+  }
+  try {
+    const parsedError = decodeErrorResult({
+      abi,
+      data: callData
+    })
+    return `${parsedError.errorName}: Contract reverted`
+  } catch (e) {
+    log.error('decodeErrorResult error: ', e)
+    return 'Contract reverted'
+  }
+}
+
+function parseRevertReason(errorString: string): `0x${string}` | string {
+  const parts = errorString.split(':').map((part) => part.trim())
+
+  // Custom error handling
+  if (parts.some((part) => part.includes('custom error'))) {
+    const errorData = errorString.split('custom error')[1].trim()
+    const [selector, args] = errorData.split(' ').map((part) => part.replace(/[:.]/g, ''))
+    const combined = `${selector}${args}` as `0x${string}`
+    if (!isHex(/*PrefixedString*/ combined)) {
+      throw new Error('Invalid custom error format')
+    }
+    return combined
+  }
+
+  // Revert message handling
+  if (parts.some((part) => part.includes('revert'))) {
+    const message = errorString.split('revert:')[1].trim().replace(/\.$/, '')
+    return message
+  }
+
+  // Fallback
+  return errorString
+}
+
+// Usage with type validation
+function safeParse(errorString: string, abi: Abi | undefined) {
+  const result = parseRevertReason(errorString)
+  const validated = validateReturnType(result)
+
+  switch (validated.type) {
+    case 'hex':
+      // console.log('Custom error:', validated.data)
+      return parseCustomError(validated.data, abi)
+    // break
+    case 'string':
+      // console.log('Revert message:', validated.data)
+      return validated.data
+    // break
+    default:
+      return 'Contract reverted'
+  }
+
+  // return validated
+}
+
+// Type guard for regular strings (excluding 0x-prefixed)
+function isRegularString(value: unknown): value is string {
+  return typeof value === 'string' && !value.startsWith('0x')
+}
+
+// Combined type checker
+function validateReturnType(
+  value: unknown
+): { type: 'hex'; data: `0x${string}` } | { type: 'string'; data: string } | { type: 'invalid' } {
+  if (isHex(/*PrefixedString*/ value)) {
+    return { type: 'hex', data: value }
+  } else if (isRegularString(value)) {
+    return { type: 'string', data: value }
+  }
+  return { type: 'invalid' }
 }
 
 /**
