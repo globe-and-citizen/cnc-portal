@@ -12,9 +12,9 @@ The description of the issue (in the kanban board) that this PR addresses. Pleas
 > If no issue exists, please create one and link it here.
 Fixes # (issue)
 
-## Issues introduced and fixed
+## Issues introduced and fixed (Optional)
 
-The description of issues you find and fix in this PR.
+If exit: The description of issues you find and fix in this PR.
 
 ## Contribution
 
