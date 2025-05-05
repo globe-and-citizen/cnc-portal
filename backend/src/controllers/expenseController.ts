@@ -113,16 +113,12 @@ export const getExpenses = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
     });
 
-    console.log("Expenses: ", expenses);
-
     const _expenses = await Promise.all(
       expenses
         // .filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
         .map(async (expense) => await syncExpenseStatus(expense)
     ))
     // TODO: for each expense, check the status and update it
-
-    console.log("Expenses after sync: ", _expenses);
     
     return res.status(200).json(
       _expenses//.filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")

@@ -24,8 +24,23 @@
         :users="foundUsers"
         :loading-approve="loadingApprove"
         :is-bod-action="isBodAction()"
-        @approve-user="approveUser"
+        @approve-user="
+          (data: BudgetLimit) => {
+            approveData = data
+            confirmationModal = true
+          }
+        "
         @close-modal="approveUsersModal = false"
+      />
+    </ModalComponent>
+
+    <ModalComponent v-model="confirmationModal">
+      <ApproveExpenseSummaryForm
+        v-if="confirmationModal"
+        :budget-limit="approveData!"
+        :loading="loadingApprove"
+        @submit="approveUser"
+        @close="confirmationModal = false"
       />
     </ModalComponent>
   </CardComponent>
@@ -45,12 +60,15 @@ import { parseEther, zeroAddress, type Address } from 'viem'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import type { User, BudgetLimit } from '@/types'
 import { log, parseError } from '@/utils'
+import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
 
+const confirmationModal = ref(false)
 const approveUsersModal = ref(false)
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
 const expenseAccountData = ref<{}>()
+const approveData = ref<BudgetLimit>()
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
@@ -138,6 +156,7 @@ const approveUser = async (data: BudgetLimit) => {
   await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
   approveUsersModal.value = false
+  confirmationModal.value = false
   await expenseDataStore.fetchAllExpenseData(
     Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
   )
