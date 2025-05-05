@@ -84,7 +84,14 @@ export const addExpense = async (req: Request, res: Response) => {
 export const getExpenses = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
+  const status = String(req.query.status || 'all');
 
+  // Validate status parameter
+  const validStatuses = ['all', 'expired', 'limit-reached', 'disabled', 'enabled', 'signed'];
+  if (!validStatuses.includes(status)) {
+    return errorResponse(400, "Invalid status parameter", res);
+  }
+  
   if (isNaN(teamId)) {
     return errorResponse(400, "Invalid teamId", res);
   }
@@ -95,8 +102,15 @@ export const getExpenses = async (req: Request, res: Response) => {
       return errorResponse(403, "Caller is not a member of the team", res);
     }
 
+    // Build where clause based on status
+    const whereClause: { teamId: number; status?: string } = { teamId };
+    if (status !== 'all') {
+      whereClause.status = status;
+    }
+
     const expenses = await prisma.expense.findMany({
-      where: { teamId },
+      where: whereClause,
+      orderBy: { createdAt: "desc" },
     });
 
     const _expenses = await Promise.all(
@@ -116,6 +130,16 @@ export const getExpenses = async (req: Request, res: Response) => {
 
 const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
+  if (expense.status === "expired" || expense.status === "limit-reached") {
+    return {
+      ...expense,
+      status: expense.status,
+      balances: {
+        0: "N/A",
+        1: "N/A"
+      }
+    };
+  }
 
   const expenseAccountEip712Address = await prisma.teamContract.findFirst({
     where: {
