@@ -1,5 +1,5 @@
 <template>
-  <div :class="['toast', positionClass]">
+  <div :class="['toast', positionClass]" data-test="toast-container">
     <Toast
       v-for="toast in toastStore.toasts"
       :key="toast.id"
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps } from 'vue'
+import { computed } from 'vue'
 import { useToastStore } from '@/stores/useToastStore'
 import Toast from '@/components/TestToast.vue'
 

@@ -1,0 +1,16 @@
+meta {
+  name: Wage
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:3000/api/wage/?teamId=1
+  body: none
+  auth: none
+}
+
+params:query {
+  teamId: 1
+}
+

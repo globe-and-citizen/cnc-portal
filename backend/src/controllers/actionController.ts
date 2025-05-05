@@ -31,7 +31,6 @@ const getActions = async (req: Request, res: Response) => {
     });
 
     res.status(200).json({
-      success: true,
       data: actions,
       total: totalActions,
     });
@@ -59,7 +58,6 @@ const addAction = async (req: Request, res: Response) => {
     });
 
     res.status(201).json({
-      success: true,
       data: newAction,
     });
   } catch (error) {
@@ -89,9 +87,7 @@ const executeAction = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(200).json({
-      success: true,
-    });
+    res.status(200).json({});
   } catch (error) {
     return errorResponse(500, error, res);
   }

@@ -1,16 +1,15 @@
+import type { Address } from 'viem'
 import type { Member } from './member'
+import type { TeamContract } from './teamContract'
 
 export interface Team {
   id: string
   name: string
   description: string
-  bankAddress: string | null
   members: Member[]
-  ownerAddress: string
-  votingAddress: string | null
-  boardOfDirectorsAddress: string | null
-  expenseAccountAddress?: string | null
-  officerAddress?: string | null
+  ownerAddress: Address
+  officerAddress?: Address
+  teamContracts: TeamContract[]
 }
 export interface TeamsResponse {
   teams: Team[]

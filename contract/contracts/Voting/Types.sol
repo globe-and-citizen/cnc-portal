@@ -2,6 +2,13 @@
 pragma solidity ^0.8.24;
 
 library Types {
+    enum TieBreakOption {
+        RANDOM_SELECTION,
+        RUNOFF_ELECTION,
+        FOUNDER_CHOICE,
+        INCREASE_WINNER_COUNT
+    }
+
     struct DirectiveVotes {
         uint256 yes;
         uint256 no;
@@ -30,5 +37,8 @@ library Types {
         DirectiveVotes votes;
         Candidate[] candidates;
         Member[] voters;
+        bool hasTie;
+        address[] tiedCandidates;
+        TieBreakOption selectedTieBreakOption;
     }
 }

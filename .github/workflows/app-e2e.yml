@@ -38,11 +38,33 @@ jobs:
           sudo apt-get install --no-install-recommends -y \
           xvfb
 
+      - name: ⛓️ Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: 🌎 Run App for cache
+        run: |
+          VITE_APP_NETWORK_ALIAS=hardhat npm run dev &
+          echo $! > pid.txt
+        working-directory: ./app
+
+      - name: ⛓️ Run Local Node (Anvil)
+        run: anvil --load-state ./local-node-state.json &
+        working-directory: ./app
+
       - name: 💾 Build Cache
         run: xvfb-run npm run test:build:cache
         working-directory: ./app
 
       - name: 💻 Run E2E
         run: |
-          xvfb-run npm run test
+          kill $(cat pid.txt)
+          xvfb-run npm run test:headless
         working-directory: ./app
+
+      - name: ✅ Upload coverage to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: app-E2E-tests

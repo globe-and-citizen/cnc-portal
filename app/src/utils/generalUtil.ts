@@ -3,7 +3,7 @@ const isDevelopment = import.meta.env.MODE === 'development'
 
 export const getTimestamp = (): string => {
   const now = new Date()
-  return `${now.toISOString()}`
+  return `${now.toLocaleString()}`
 }
 
 export const log = {

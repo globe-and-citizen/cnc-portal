@@ -1,18 +1,43 @@
-import { shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import PushTipTransactionsTable from '@/components/sections/TransactionsView/tables/PushTipTransactionsTable.vue'
 import { createTestingPinia } from '@pinia/testing'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import { useTipEvents } from '@/composables/__mocks__/tips'
-import type { Result } from 'ethers'
 import { NETWORK } from '@/constant'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
-vi.mock('@/composables/tips')
-vi.mock('@/stores/useToastStore')
+let pushTipEvents = [
+  {
+    transactionHash: '0x1',
+    args: {
+      from: '0xDepositor1',
+      teamMembers: ['0xDepositor2', '0xDepositor3'],
+      totalAmount: '2000000000000000000', // 2 ETH
+      amountPerAddress: '1000000000000000000' // 1 ETH
+    }
+  },
+  {
+    transactionHash: '0x2',
+    args: {
+      from: '0xDepositor4',
+      teamMembers: ['0xDepositor5', '0xDepositor6'],
+      totalAmount: '2000000000000000000', // 2 ETH
+      amountPerAddress: '1000000000000000000' // 1 ETH
+    }
+  }
+]
 
-const mockWindowOpen = vi.fn()
-window.open = mockWindowOpen
+vi.mock('@/stores/useToastStore')
+vi.mock('viem/actions', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    getLogs: vi.fn(() => pushTipEvents),
+    getBlock: vi.fn(() => ({ timestamp: 1640995200 }))
+  }
+})
+
+window.open = vi.fn()
 
 describe('PushTipTransactionsTable', () => {
   const createComponent = () => {
@@ -27,128 +52,91 @@ describe('PushTipTransactionsTable', () => {
     })
   }
 
-  describe('Render', () => {
-    it('should show table when loading is false', () => {
+  describe('Actions', () => {
+    it('should open transaction detail when click on a transaction', async () => {
       const wrapper = createComponent()
-      expect(wrapper.find('[data-test="table-push-tip-transactions"]').exists()).toBeTruthy()
+
+      await flushPromises()
+      await wrapper.find('tr[data-test="table-body-row"]').trigger('click')
+      expect(window.open).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
     })
 
-    it('should not show SkeletonLoading when loading is false', () => {
+    it('should show error toast when get events failed', async () => {
+      shallowMount(PushTipTransactionsTable, {
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn
+            })
+          ],
+          mocks: {
+            error: Error('Failed to get push tip events')
+          }
+        }
+      })
+      const { addErrorToast } = useToastStore()
+
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to get push tip events')
+    })
+  })
+
+  describe('Render', () => {
+    it('should show table when loading is false', async () => {
       const wrapper = createComponent()
-      expect(wrapper.findComponent(SkeletonLoading).exists()).toBeFalsy()
+
+      await flushPromises()
+      expect(wrapper.find('[data-test="table-push-tip-transactions"]').exists()).toBeTruthy()
     })
 
     it('should show SkeletonLoading when loading is true', async () => {
       const wrapper = createComponent()
-      const { loading } = useTipEvents()
-      loading.value = true
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent(SkeletonLoading).exists()).toBeTruthy()
-    })
 
-    it('should not show table when loading is true', async () => {
-      const wrapper = createComponent()
-      const { loading } = useTipEvents()
-      loading.value = true
-      await wrapper.vm.$nextTick()
+      await wrapper.setValue({ loading: true })
       expect(wrapper.find('[data-test="table-push-tip-transactions"]').exists()).toBeFalsy()
-    })
-
-    it('should show table data when events are not empty', async () => {
-      const wrapper = createComponent()
-      const { events, loading } = useTipEvents()
-      loading.value = false
-      events.value = [
-        {
-          txHash: '0x1',
-          data: [
-            '0xDepositor1',
-            ['0xDepositor2', '0xDepositor3'],
-            '1000000000000000000',
-            '2000000000000000000'
-          ] as Result,
-          date: '01/01/2022 00:00'
-        }
-      ]
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find('tbody').exists()).toBeTruthy()
-      expect(wrapper.find('tbody').findAll('tr')).toHaveLength(1)
+      expect(wrapper.findComponent(SkeletonLoading).exists()).toBeTruthy()
     })
 
     it('should show data in the correct format', async () => {
       const wrapper = createComponent()
-      const { events, loading } = useTipEvents()
-      loading.value = false
-      events.value = [
-        {
-          txHash: '0x1',
-          data: [
-            '0xDepositor1',
-            ['0xDepositor2', '0xDepositor3'],
-            '1000000000000000000',
-            '2000000000000000000'
-          ] as Result,
-          date: '01/01/2022 00:00'
-        }
-      ]
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find('tbody').findAll('tr')).toHaveLength(1)
-      expect(wrapper.findAll('td')[0].text()).toBe('1')
-      expect(wrapper.findAll('td')[1].text()).toBe('0xDepositor1')
-      expect(wrapper.findAll('td')[2].text()).toBe('0xDepositor20xDepositor3')
-      expect(wrapper.findAll('td')[3].text()).toBe(`1.0 ${NETWORK.currencySymbol}`)
-      expect(wrapper.findAll('td')[4].text()).toBe(`2.0 ${NETWORK.currencySymbol}`)
-      expect(wrapper.findAll('td')[5].text()).toBe('01/01/2022 00:00')
+
+      await flushPromises()
+
+      const numberElements = wrapper.findAll('td[data-test="data-row-number"]')
+      const fromElements = wrapper.findAll('td[data-test="data-row-from"]')
+      const teamMembersElements = wrapper.findAll('td[data-test="data-row-member"]')
+      const totalAmountElements = wrapper.findAll('td[data-test="data-row-total-amount"]')
+      const amountPerAddressElements = wrapper.findAll(
+        'td[data-test="data-row-amount-per-address"]'
+      )
+      const dateElements = wrapper.findAll('td[data-test="data-row-date"]')
+
+      expect(wrapper.findAll('tr[data-test="table-body-row"]')).toHaveLength(pushTipEvents.length)
+      expect(numberElements).toHaveLength(pushTipEvents.length)
+      expect(fromElements).toHaveLength(pushTipEvents.length)
+      expect(totalAmountElements).toHaveLength(pushTipEvents.length)
+      expect(amountPerAddressElements).toHaveLength(pushTipEvents.length)
+      expect(dateElements).toHaveLength(pushTipEvents.length)
+
+      pushTipEvents.forEach((event, index) => {
+        expect(numberElements[index].text()).toBe((index + 1).toString())
+        expect(fromElements[index].text()).toBe(event.args.from)
+        expect(totalAmountElements[index].text()).toBe(`2 ${NETWORK.currencySymbol}`)
+        expect(amountPerAddressElements[index].text()).toBe(`1 ${NETWORK.currencySymbol}`)
+        expect(dateElements[index].text()).toBe('1/1/2022, 12:00:00 AM')
+
+        teamMembersElements.forEach((teamMemberElement, teamMemberIndex) => {
+          expect(teamMemberElement.text()).toBe(event.args.teamMembers[teamMemberIndex])
+        })
+      })
     })
 
     it('should show no push tip transactions when events are empty', async () => {
+      pushTipEvents = []
       const wrapper = createComponent()
-      const { events, loading } = useTipEvents()
-      loading.value = false
-      events.value = []
-      await wrapper.vm.$nextTick()
+
+      await flushPromises()
       expect(wrapper.find('tbody').findAll('tr')).toHaveLength(1)
       expect(wrapper.findAll('td')[0].text()).toBe('No PushTip Transactions')
-    })
-  })
-
-  describe('Events', () => {
-    it('should get events when mounted', () => {
-      createComponent()
-      const { getEvents } = useTipEvents()
-      getEvents()
-      expect(getEvents).toHaveBeenCalled()
-    })
-
-    it('should open transaction detail when click on a transaction', async () => {
-      const wrapper = createComponent()
-      const { events, loading } = useTipEvents()
-      loading.value = false
-      events.value = [
-        {
-          txHash: '0x1',
-          data: [
-            '0xDepositor1',
-            ['0xDepositor2', '0xDepositor3'],
-            '1000000000000000000',
-            '2000000000000000000'
-          ] as Result,
-          date: '01/01/2022 00:00'
-        }
-      ]
-      await wrapper.vm.$nextTick()
-      await wrapper.find('tbody').find('tr').trigger('click')
-      expect(mockWindowOpen).toHaveBeenCalledWith(`${NETWORK.blockExplorerUrl}/tx/0x1`, '_blank')
-    })
-
-    it('should show error toast when get events failed', async () => {
-      const wrapper = createComponent()
-      const { error } = useTipEvents()
-      const { addErrorToast } = useToastStore()
-      error.value = Error('Failed to get push tip events')
-
-      await wrapper.vm.$nextTick()
-      expect(addErrorToast).toHaveBeenCalledWith('Failed to get push tip events')
     })
   })
 })

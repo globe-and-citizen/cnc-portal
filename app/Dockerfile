@@ -1,5 +1,5 @@
 # Use Node.js 18 AS the base image
-FROM node:18-alpine AS development  
+FROM node:22-alpine AS development  
 
 
 # Set the working directory inside the container
@@ -18,9 +18,11 @@ COPY . .
 # Arguments and environment variables for the build stage
 ARG VITE_APP_BACKEND_URL
 ARG VITE_APP_NETWORK_ALIAS
+ARG VITE_APP_SUBGRAPH_ENDPOINT
 
 ENV VITE_APP_BACKEND_URL=$VITE_APP_BACKEND_URL
 ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
+ENV VITE_APP_SUBGRAPH_ENDPOINT=$VITE_APP_SUBGRAPH_ENDPOINT
 
 # Expose the port the app runs on
 EXPOSE 5173
@@ -28,7 +30,7 @@ EXPOSE 5173
 # Command to run the application in development mode
 CMD ["npm", "run", "dev"]
 
-FROM node:18-alpine AS build
+FROM node:22-alpine AS build
 
 # Set the working directory in the container
 WORKDIR /app
@@ -39,11 +41,13 @@ COPY --from=development /app .
 # Arguments and environment variables for the build stage
 ARG VITE_APP_BACKEND_URL
 ARG VITE_APP_NETWORK_ALIAS
+ARG VITE_APP_SUBGRAPH_ENDPOINT
 
 ENV VITE_APP_BACKEND_URL=$VITE_APP_BACKEND_URL
 ENV VITE_APP_NETWORK_ALIAS=$VITE_APP_NETWORK_ALIAS
+ENV VITE_APP_SUBGRAPH_ENDPOINT=$VITE_APP_SUBGRAPH_ENDPOINT
 
-RUN npm run build
+RUN npm run build-only
 
 # Use nginx base image for serving Vue app
 FROM nginx:latest AS production

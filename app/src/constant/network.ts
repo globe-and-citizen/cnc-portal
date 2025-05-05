@@ -1,5 +1,6 @@
 import type { Networks, Network } from '@/types'
 import networks from '@/networks/networks.json'
+import { log } from '@/utils/generalUtil'
 
 const checkNetwork = (network: Network) => {
   if (!network) return false
@@ -17,6 +18,7 @@ export const getNetwork = (): Network => {
   const NETWORK_ALIAS: Networks = import.meta.env.VITE_APP_NETWORK_ALIAS
   let network: Network
 
+  log.info('Current NETWORK_ALIAS', NETWORK_ALIAS)
   if (NETWORK_ALIAS) {
     network = networks[NETWORK_ALIAS]
   } else {

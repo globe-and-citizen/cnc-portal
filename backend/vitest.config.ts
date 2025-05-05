@@ -5,7 +5,8 @@ export default defineConfig({
   test: {
     globals: true,
     coverage: {
-      provider: 'istanbul'
+      provider: 'istanbul',
+      enabled: true
     }
   },
   plugins: [tsconfigPaths()], // only if you are using custom tsconfig paths

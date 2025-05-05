@@ -2,8 +2,19 @@ import { getNetwork } from './network'
 import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
+import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
 
 export const NETWORK = getNetwork()
+
+interface TokenAddresses {
+  USDC: string
+  USDT: string
+}
+
+type ChainTokenAddresses = {
+  [key in 137 | 11155111 | 31337 | 80002]: TokenAddresses
+}
+
 interface AddressMapping {
   'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
@@ -16,27 +27,135 @@ interface AddressMapping {
   'ExpenseAccountModule#FactoryBeacon'?: string
   'Officer#Officer'?: string
   'Officer#FactoryBeacon'?: string
+  'ExpenseAccountEIP712Module#ExpenseAccountEIP712'?: string
+  'ExpenseAccountEIP712Module#FactoryBeacon'?: string
+  'CashRemunerationEIP712Module#FactoryBeacon': string
+  'CashRemunerationEIP712Module#CashRemunerationEIP712': string
+  'InvestorsV1BeaconModule#Beacon'?: string
+  'InvestorsV1BeaconModule#InvestorV1'?: string
+  'MockTokens#USDT'?: string
+  'MockTokens#USDC'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
   11155111: sepolia as AddressMapping,
   31337: hardhat as AddressMapping,
+  80002: amoy as AddressMapping,
   137: polygon as AddressMapping
 }
 
 const chainId = parseInt(NETWORK.chainId, 16)
 const addresses = addressesMap[chainId] || ({} as AddressMapping)
 
-export const TIPS_ADDRESS = addresses['TipsModule#Tips'] || ''
-export const BANK_BEACON_ADDRESS = addresses['BankBeaconModule#Beacon'] || ''
-export const BANK_IMPL_ADDRESS = addresses['BankBeaconModule#Bank'] || ''
-export const VOTING_BEACON_ADDRESS = addresses['VotingBeaconModule#Beacon'] || ''
-export const VOTING_IMPL_ADDRESS = addresses['VotingBeaconModule#Voting'] || ''
-export const BOD_BEACON_ADDRESS = addresses['BoardOfDirectorsModule#Beacon'] || ''
-export const BOD_IMPL_ADDRESS = addresses['BoardOfDirectorsModule#BoardOfDirectors'] || ''
-export const EXPENSE_ACCOUNT_BEACON_ADDRESS = addresses['ExpenseAccountModule#FactoryBeacon'] || ''
-export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = addresses['ExpenseAccountModule#ExpenseAccount'] || ''
-export const OFFICER_ADDRESS = addresses['Officer#Officer'] || ''
-export const OFFICER_BEACON = addresses['Officer#FactoryBeacon'] || ''
+interface AddressValidationError extends Error {
+  missingAddresses: string[]
+}
+
+const missingAddresses = new Set<string>()
+
+export function resolveAddress(key: keyof AddressMapping): string {
+  const address = addresses[key]
+  if (!address && key !== 'MockTokens#USDT' && key !== 'MockTokens#USDC') {
+    missingAddresses.add(key)
+    return ''
+  }
+  return address ?? ''
+}
+// Token addresses for different networks
+export const TOKEN_ADDRESSES: ChainTokenAddresses = {
+  // Polygon Mainnet
+  137: {
+    USDC: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Polygon USDC
+    USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // Polygon USDT
+  },
+  // Sepolia Testnet
+  11155111: {
+    USDC: resolveAddress('MockTokens#USDC'), // Mock contracts deployed on Sepolia
+    USDT: resolveAddress('MockTokens#USDT') // Mock contracts deployed on Sepolia
+  },
+  80002: {
+    USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
+    USDT: '0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD' // Amoy USDT
+  },
+  // Hardhat Local - only resolve mock addresses for local chain
+  31337:
+    chainId === 31337
+      ? {
+          USDC: resolveAddress('MockTokens#USDC'), // Placeholder for local testing
+          USDT: resolveAddress('MockTokens#USDT') // Placeholder for local testing
+        }
+      : {
+          USDC: '',
+          USDT: ''
+        }
+}
+
+export function validateAddresses() {
+  const requiredKeys: (keyof AddressMapping)[] = [
+    'TipsModule#Tips',
+    'BankBeaconModule#Beacon',
+    'BankBeaconModule#Bank',
+    'VotingBeaconModule#Beacon',
+    'VotingBeaconModule#Voting',
+    'BoardOfDirectorsModule#Beacon',
+    'BoardOfDirectorsModule#BoardOfDirectors',
+    'Officer#Officer',
+    'Officer#FactoryBeacon',
+    'ExpenseAccountModule#FactoryBeacon',
+    'ExpenseAccountModule#ExpenseAccount',
+    'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
+    'ExpenseAccountEIP712Module#FactoryBeacon',
+    'InvestorsV1BeaconModule#Beacon',
+    'InvestorsV1BeaconModule#InvestorV1',
+    'CashRemunerationEIP712Module#FactoryBeacon',
+    'CashRemunerationEIP712Module#CashRemunerationEIP712'
+  ]
+
+  requiredKeys.forEach(resolveAddress)
+
+  if (missingAddresses.size > 0) {
+    const error = new Error(
+      `The following addresses are not defined in the current network configuration (chainId: ${chainId}):\n${Array.from(missingAddresses).join('\n')}`
+    ) as AddressValidationError
+    error.missingAddresses = Array.from(missingAddresses)
+    missingAddresses.clear()
+    throw error
+  }
+}
+try {
+  validateAddresses()
+} catch (error) {
+  console.error(error)
+}
+export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
+export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
+export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
+export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
+export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
+export const BOD_BEACON_ADDRESS = resolveAddress('BoardOfDirectorsModule#Beacon')
+export const BOD_IMPL_ADDRESS = resolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
+export const EXPENSE_ACCOUNT_BEACON_ADDRESS = resolveAddress('ExpenseAccountModule#FactoryBeacon')
+export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = resolveAddress('ExpenseAccountModule#ExpenseAccount')
+export const EXPENSE_ACCOUNT_EIP712_IMPL_ADDRESS = resolveAddress(
+  'ExpenseAccountEIP712Module#ExpenseAccountEIP712'
+)
+export const EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS = resolveAddress(
+  'ExpenseAccountEIP712Module#FactoryBeacon'
+)
+export const CASH_REMUNERATION_EIP712_IMPL_ADDRESS = resolveAddress(
+  'CashRemunerationEIP712Module#CashRemunerationEIP712'
+)
+export const CASH_REMUNERATION_EIP712_BEACON_ADDRESS = resolveAddress(
+  'CashRemunerationEIP712Module#FactoryBeacon'
+)
+export const OFFICER_ADDRESS = resolveAddress('Officer#Officer')
+export const OFFICER_BEACON = resolveAddress('Officer#FactoryBeacon')
+export const INVESTOR_V1_BEACON_ADDRESS = resolveAddress('InvestorsV1BeaconModule#Beacon')
+export const INVESTOR_V1_IMPL_ADDRESS = resolveAddress('InvestorsV1BeaconModule#InvestorV1')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
+
+// Export token addresses for current network
+const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
+export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
+export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''

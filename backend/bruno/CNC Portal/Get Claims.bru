@@ -1,0 +1,25 @@
+meta {
+  name: Get Claims
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/claim/?teamId=1
+  body: none
+  auth: none
+}
+
+params:query {
+  teamId: 1
+}
+
+
+
+body:json {
+  {
+    "hoursWorked": 1,
+    "teamId": 1
+  }
+  
+}

@@ -1,0 +1,172 @@
+specVersion: 1.2.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: OfficerFactoryBeacon
+    network: matic
+    source:
+      abi: OfficerFactoryBeacon
+      address: "0x3016e02B59954E6B6564a5F3Ff67bdc5a69F78E0"
+      startBlock: 69852632
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - BeaconProxyCreated
+      abis:
+        - name: OfficerFactoryBeacon
+          file: ./abis/OfficerFactoryBeacon.json
+      eventHandlers:
+        - event: BeaconProxyCreated(indexed address,indexed address)
+          handler: handleBeaconProxyCreated
+      file: ./src/officerFactoryBeacon.ts
+  - kind: ethereum
+    name: USDC
+    network: matic
+    source:
+      abi: ERC20
+      address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+      startBlock: 69852632
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Transaction
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransferUsdc
+      file: ./src/erc20.ts
+  - kind: ethereum
+    name: USDT
+    network: matic
+    source:
+      abi: ERC20
+      address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+      startBlock: 69852632
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Transaction
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransferUsdt
+      file: ./src/erc20.ts
+templates:
+  - name: ExpenseAccountEIP712
+    kind: ethereum/contract
+    network: matic
+    source:
+      abi: ExpenseAccountEIP712
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/expenseAccountEip712.ts
+      entities:
+        - Transfer
+        - Deposited
+        - Transaction
+      abis:
+        - name: ExpenseAccountEIP712
+          file: ./abis/ExpenseAccountEIP712.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Deposited(indexed address,uint256)
+          handler: handleDeposited
+        - event: TokenTransfer(indexed address,indexed address,indexed address,uint256)
+          handler: handleTokenTransfer
+        - event: TokenDeposited(indexed address,indexed address,uint256)
+          handler: habdleTokenDeposited
+  - name: Bank
+    kind: ethereum
+    network: matic
+    source:
+      abi: Bank
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/bank.ts
+      entities:
+        - Transaction
+      abis:
+        - name: Bank
+          file: ./abis/Bank.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Deposited(indexed address,uint256)
+          handler: handleDeposited
+  - name: CashRemunerationEIP712
+    kind: ethereum/contract
+    network: matic
+    source:
+      abi: CashRemunerationEIP712
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/cashRemunerationEip712.ts
+      entities:
+        - Withdraw
+        - Deposited
+        - Transaction
+      abis:
+        - name: CashRemunerationEIP712
+          file: ./abis/CashRemunerationEIP712.json
+      eventHandlers:
+        - event: Deposited(indexed address,uint256)
+          handler: handleDeposited
+        - event: Withdraw(indexed address,uint256)
+          handler: handleWithdraw
+  - name: Officer
+    kind: ethereum
+    source:
+      abi: Officer
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - BeaconConfigured
+        - BeaconProxiesDeployed
+        - BeaconProxyDeployed
+        - ContractDeployed
+        - Initialized
+        - OwnershipTransferred
+        - Paused
+        - Unpaused
+      abis:
+        - name: Officer
+          file: ./abis/Officer.json
+      eventHandlers:
+        - event: BeaconConfigured(string,address)
+          handler: handleBeaconConfigured
+        - event: BeaconProxiesDeployed(address[])
+          handler: handleBeaconProxiesDeployed
+        - event: ContractDeployed(string,address)
+          handler: handleContractDeployed
+        - event: Initialized(uint64)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(address)
+          handler: handlePaused
+        - event: Unpaused(address)
+          handler: handleUnpaused
+      file: ./src/officer.ts
+    network: matic

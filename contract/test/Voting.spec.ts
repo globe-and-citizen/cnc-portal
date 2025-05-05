@@ -13,6 +13,7 @@ describe('Voting Contract', () => {
   let member4: SignerWithAddress
   let member5: SignerWithAddress
   let member6: SignerWithAddress
+  let unknownAddress: SignerWithAddress
   async function deployFixture() {
     const proposal = {
       id: 0,
@@ -95,7 +96,8 @@ describe('Voting Contract', () => {
 
   context('Deploying Voting Contract', () => {
     before(async () => {
-      ;[owner, member1, member2, member3, member4, member5, member6] = await ethers.getSigners()
+      ;[owner, member1, member2, member3, member4, member5, member6, unknownAddress] =
+        await ethers.getSigners()
       await deployFixture()
     })
 
@@ -179,6 +181,12 @@ describe('Voting Contract', () => {
         const votingAsMember6 = voting.connect(member6)
 
         await expect(votingAsMember6.voteDirective(0, 4)).to.be.revertedWith('Invalid vote')
+      })
+      it('should not allow a non-member to vote on a proposal', async () => {
+        const votingAsUnknown = voting.connect(unknownAddress)
+        await expect(votingAsUnknown.voteDirective(0, 1)).to.be.revertedWith(
+          'You are not registered to vote in this proposal'
+        )
       })
       it('should not allow a member to vote twice on a proposal', async () => {
         const votingAsMember1 = voting.connect(member1)
@@ -296,6 +304,269 @@ describe('Voting Contract', () => {
         await voting.unpause()
 
         expect(await voting.paused()).to.be.false
+      })
+    })
+    describe('Board of Directors Management', () => {
+      it('should set board of directors contract address', async () => {
+        const { voting } = await deployFixture()
+        const newAddress = ethers.Wallet.createRandom().address
+
+        await voting.setBoardOfDirectorsContractAddress(newAddress)
+        expect(await voting.boardOfDirectorsContractAddress()).to.equal(newAddress)
+      })
+
+      it('should allow owner to set board of directors', async () => {
+        const { voting, boardOfDirectorsProxy } = await deployFixture()
+        const newBoard = [
+          ethers.Wallet.createRandom().address,
+          ethers.Wallet.createRandom().address
+        ]
+
+        await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
+        await expect(voting.setBoardOfDirectors(newBoard))
+          .to.emit(boardOfDirectorsProxy, 'BoardOfDirectorsChanged')
+          .withArgs(newBoard)
+      })
+
+      it('should not allow non-owner to set board of directors', async () => {
+        const { voting, boardOfDirectorsProxy } = await deployFixture()
+        const newBoard = [
+          ethers.Wallet.createRandom().address,
+          ethers.Wallet.createRandom().address
+        ]
+
+        await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
+        const votingAsMember = voting.connect(member1)
+        await expect(votingAsMember.setBoardOfDirectors(newBoard))
+          .to.be.revertedWithCustomError(voting, 'OwnableUnauthorizedAccount')
+          .withArgs(await member1.getAddress())
+      })
+    })
+    describe('Tie Breaking Functionality', () => {
+      it('should detect a tie and emit TieDetected event', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create election with 3 candidates and 2 winner positions
+        const threeWayTieCandidates = [...candidates, ethers.Wallet.createRandom().address]
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          2,
+          proposalElection.voters,
+          threeWayTieCandidates
+        )
+
+        // Create a tie by having equal votes
+        await voting.connect(member1).voteElection(0, threeWayTieCandidates[0])
+        await voting.connect(member2).voteElection(0, threeWayTieCandidates[1])
+        await voting.connect(member3).voteElection(0, threeWayTieCandidates[2])
+
+        // Conclude proposal should detect tie
+        await expect(voting.concludeProposal(0))
+          .to.emit(voting, 'TieDetected')
+          .withArgs(0, threeWayTieCandidates)
+
+        const proposal = await voting.getProposalById(0)
+        expect(proposal.hasTie).to.be.true
+        expect(proposal.tiedCandidates).to.have.lengthOf(3)
+      })
+
+      it('should resolve tie using random selection', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create and setup tied election
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          1,
+          proposalElection.voters,
+          candidates
+        )
+
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+
+        // Resolve tie with random selection
+        await expect(voting.resolveTie(0, 0)) // 0 = RANDOM_SELECTION
+          .to.emit(voting, 'TieBreakOptionSelected')
+          .withArgs(0, 0)
+          .to.emit(voting, 'BoardOfDirectorsSet')
+
+        const proposal = await voting.getProposalById(0)
+        expect(proposal.hasTie).to.be.false
+      })
+
+      it('should resolve tie by increasing winner count', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create and setup tied election
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          1,
+          proposalElection.voters,
+          candidates
+        )
+
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+
+        // Resolve tie by increasing winner count
+        await expect(voting.resolveTie(0, 3)) // 3 = INCREASE_WINNER_COUNT
+          .to.emit(voting, 'TieBreakOptionSelected')
+          .withArgs(0, 3)
+          .to.emit(voting, 'BoardOfDirectorsSet')
+
+        const proposal = await voting.getProposalById(0)
+        expect(proposal.hasTie).to.be.false
+        expect(proposal.winnerCount).to.equal(2)
+      })
+
+      it('should create runoff election for tied candidates', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create and setup tied election
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          1,
+          proposalElection.voters,
+          candidates
+        )
+
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+
+        // Resolve tie with runoff election
+        await expect(voting.resolveTie(0, 1)) // 1 = RUNOFF_ELECTION
+          .to.emit(voting, 'TieBreakOptionSelected')
+          .withArgs(0, 1)
+          .to.emit(voting, 'RunoffElectionStarted')
+          .withArgs(1, candidates)
+
+        const proposal = await voting.getProposalById(0)
+        expect(proposal.hasTie).to.be.false
+
+        // Verify runoff election was created
+        const runoffProposal = await voting.getProposalById(1)
+        expect(runoffProposal.isElection).to.be.true
+        expect(runoffProposal.candidates).to.have.lengthOf(2)
+        expect(runoffProposal.title).to.include('Runoff:')
+      })
+
+      it('should allow founder to select winner from tied candidates', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create and setup tied election
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          1,
+          proposalElection.voters,
+          candidates
+        )
+
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+
+        // Set tie break option to founder choice
+        await expect(voting.resolveTie(0, 2)) // 2 = FOUNDER_CHOICE
+          .to.emit(voting, 'TieBreakOptionSelected')
+          .withArgs(0, 2)
+
+        // Select winner
+        await expect(voting.selectWinner(0, candidates[0])).to.emit(voting, 'BoardOfDirectorsSet')
+
+        const proposal = await voting.getProposalById(0)
+        expect(proposal.hasTie).to.be.false
+      })
+
+      it('should only allow founder to resolve ties', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create and setup tied election
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          1,
+          proposalElection.voters,
+          candidates
+        )
+
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+
+        // Try to resolve tie as non-founder
+        const votingAsMember = voting.connect(member1)
+        await expect(votingAsMember.resolveTie(0, 0)).to.be.revertedWith(
+          'Only the founder can resolve ties'
+        )
+      })
+
+      it('should only allow selecting winner after setting FOUNDER_CHOICE option', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create and setup tied election
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          1,
+          proposalElection.voters,
+          candidates
+        )
+
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+
+        // Try to select winner without setting FOUNDER_CHOICE
+        await expect(voting.selectWinner(0, candidates[0])).to.be.revertedWith(
+          'Tie break option must be FOUNDER_CHOICE'
+        )
+      })
+
+      it('should only allow selecting from tied candidates', async () => {
+        const { voting, proposalElection } = await deployFixture()
+
+        // Create and setup tied election
+        await voting.addProposal(
+          proposalElection.title,
+          proposalElection.description,
+          true,
+          1,
+          proposalElection.voters,
+          candidates
+        )
+
+        await voting.connect(member1).voteElection(0, candidates[0])
+        await voting.connect(member2).voteElection(0, candidates[1])
+
+        await voting.concludeProposal(0)
+        await voting.resolveTie(0, 2) // 2 = FOUNDER_CHOICE
+
+        // Try to select non-tied candidate
+        const invalidAddress = ethers.Wallet.createRandom().address
+        await expect(voting.selectWinner(0, invalidAddress)).to.be.revertedWith(
+          'Selected winner must be one of the tied candidates'
+        )
       })
     })
   })

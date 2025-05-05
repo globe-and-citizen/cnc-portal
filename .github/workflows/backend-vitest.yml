@@ -57,6 +57,7 @@ jobs:
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CHAIN_ID: ${{ secrets.CHAIN_ID }}
 
       - name: ✅ Upload coverage to Codecov
         uses: codecov/codecov-action@v3

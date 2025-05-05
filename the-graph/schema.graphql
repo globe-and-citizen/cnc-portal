@@ -1,0 +1,204 @@
+enum TransactionType {
+  transfer
+  deposit
+  withdraw
+}
+
+type BeaconProxyCreated @entity(immutable: true) {
+  id: Bytes!
+  officerAddress: Bytes! # address
+  deployer: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BeaconConfigured @entity(immutable: true) {
+  id: Bytes!
+  contractType: String! # string
+  beaconAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BeaconProxiesDeployed @entity(immutable: true) {
+  id: Bytes!
+  beaconProxies: [Bytes!]! # address[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ContractDeployed @entity(immutable: true) {
+  id: Bytes!
+  contractType: String! # string
+  deployedAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Initialized @entity(immutable: true) {
+  id: Bytes!
+  version: BigInt! # uint64
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Paused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Unpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Transfer @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  contractType: String! # string
+  tokenAddress: Bytes! # address
+  amount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Deposited @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  contractType: String! # string
+  amount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Transaction @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  contractType: String! # string
+  tokenAddress: Bytes! # address
+  amount: BigInt!
+  contractAddress: Bytes! # address
+  transactionType: TransactionType!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokenTransfer @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  token: Bytes! # address
+  amount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokenDeposited @entity(immutable: true) {
+  id: Bytes!
+  depositor: Bytes! # address
+  token: Bytes! # address
+  amount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PushTip @entity(immutable: true) {
+  id: Bytes!
+  addressWhoPushes: Bytes! # address
+  teamMembers: [Bytes!]! # address[]
+  totalAmount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PushTokenTip @entity(immutable: true) {
+  id: Bytes!
+  addressWhoPushes: Bytes! # address
+  teamMembers: [Bytes!]! # address[]
+  token: Bytes! # address
+  totalAmount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SendTip @entity(immutable: true) {
+  id: Bytes!
+  addressWhoSends: Bytes! # address
+  teamMembers: [Bytes!]! # address[]
+  totalAmount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SendTokenTip @entity(immutable: true) {
+  id: Bytes!
+  addressWhoSends: Bytes! # address
+  teamMembers: [Bytes!]! # address[]
+  token: Bytes! # address
+  totalAmount: BigInt!
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TipsAddressChanged @entity(immutable: true) {
+  id: Bytes!
+  addressWhoChanged: Bytes! # address
+  oldAddress: Bytes! # address
+  newAddress: Bytes! # address
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokenAddressChanged @entity(immutable: true) {
+  id: Bytes!
+  addressWhoChanged: Bytes! # address
+  tokenSymbol: String! # string
+  oldAddress: Bytes! # address
+  newAddress: Bytes! # address
+  contractAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

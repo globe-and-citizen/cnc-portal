@@ -1,0 +1,44 @@
+{
+  "localhost": {
+    "OfficerFactoryBeacon": {
+      "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+      "startBlock": 1
+    },
+    "USDC": {
+      "address": "0x59b670e9fA9D0A427751Af201D676719a970857b",
+      "startBlock": 1
+    },
+    "USDT": {
+      "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+      "startBlock": 1
+    }
+  },
+  "sepolia": {
+    "OfficerFactoryBeacon": {
+      "address": "0xad154BF180D694050843Bd094af69e9d3bf7eA40",
+      "startBlock": 7970003
+    },
+    "USDC": {
+      "address": "0x63E5b84cCE0cf6c1a1C78055bD8bb2Fc82B1Ff8e",
+      "startBlock": 7970003
+    },
+    "USDT": {
+      "address": "0xF1FbA289d63f563d5cbe2F122FE0126853758ffA",
+      "startBlock": 7970003
+    }
+  },
+  "matic": {
+    "OfficerFactoryBeacon": {
+      "address": "0x3016e02B59954E6B6564a5F3Ff67bdc5a69F78E0",
+      "startBlock": 69852632
+    },
+    "USDC": {
+      "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "startBlock": 69852632
+    },
+    "USDT": {
+      "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "startBlock": 69852632
+    }
+  }
+}

@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import { generateNonce, SiweMessage } from "siwe";
 import jwt from "jsonwebtoken";
 import { errorResponse, extractAddressAndNonce } from "../utils/utils";
-
-const prisma = new PrismaClient();
+import { prisma } from "../utils";
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -56,14 +54,14 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
     const accessToken = jwt.sign({ address }, secretKey, { expiresIn: "24h" });
+
     return res.status(200).json({
-      success: true,
       accessToken,
     });
   } catch (error) {
-    await prisma.$disconnect();
-
     return errorResponse(500, error, res);
+  } finally {
+    await prisma.$disconnect();
   }
 };
 
@@ -73,7 +71,7 @@ export const authenticateToken = (req: Request, res: Response) => {
       return errorResponse(401, "Unauthorized: Missing jwt payload", res);
     }
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({});
   } catch (error) {
     return errorResponse(500, error, res);
   }

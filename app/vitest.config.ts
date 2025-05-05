@@ -6,12 +6,14 @@ import viteConfig from './vite.config'
 import dotenv from 'dotenv'
 
 dotenv.config()
-
+process.env.TZ = 'UTC'
+const mockFiles = ['store'].map((name) => `./src/tests/setup/${name}.setup.ts`)
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {
+      setupFiles: mockFiles,
       environment: 'jsdom',
-      exclude: [...configDefaults.exclude, 'test/e2e/*'],
+      exclude: [...configDefaults.exclude, 'test/e2e/*', 'constant/*'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
         provider: 'istanbul',

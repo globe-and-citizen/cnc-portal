@@ -1,19 +1,15 @@
-import { test as login } from '../fixtures/login.fixture'
+import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
 import { testWithSynpress } from '@synthetixio/synpress'
+import connectedSetup from 'test/wallet-setup/connected.setup'
 
-const test = testWithSynpress(login)
+const test = testWithSynpress(metaMaskFixtures(connectedSetup))
 
-const { expect, describe, beforeEach } = test
+const { expect, describe } = test
 
 describe('Dashboard', () => {
-  beforeEach(async ({ page, login }) => {
-    await login()
-    await page.goto('http://localhost:5173')
-  })
-
   test('should be able to access the dashboard', async ({ page }) => {
-    await page.locator('data-test=tip-button').click()
-    await page.waitForURL('http://localhost:5173/teams')
-    expect(page.url()).toContain('http://localhost:5173/teams')
+    expect(await page.locator('h1[data-test="title"]').textContent()).toBe(
+      'Welcome To the CNC portal'
+    )
   })
 })

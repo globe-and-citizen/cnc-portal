@@ -1,11 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
-import TeamView from '../views/TeamView.vue'
-import SingleTeamView from '../views/SingleTeamView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
+import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
+import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
+import ListIndex from '@/views/team/ListIndex.vue'
+import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
-
+import BankView from '@/views/team/[id]/BankView.vue'
+import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
+import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
+import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -23,16 +28,53 @@ const router = createRouter({
     },
     {
       path: '/teams',
+      name: 'teams',
+      meta: { name: 'Teams List' },
+      components: {
+        default: ListIndex
+      }
+    },
+    {
+      path: '/teams/:id',
+      component: ShowIndex,
+      name: 'show-team',
+      meta: { name: 'Team View' },
       children: [
         {
-          path: ':id',
-          name: 'singleteam',
-          component: SingleTeamView
+          path: '/teams/:id/cash-remunerations',
+          name: 'cash-remunerations',
+          meta: { name: 'Cash Remuneration' },
+          component: CashRemunerationView
         },
         {
-          path: '',
-          name: 'teams',
-          component: TeamView
+          path: '/teams/:id/expense-account',
+          name: 'expense-account',
+          meta: { name: 'Expense Account' },
+          component: ExpenseAccountView
+        },
+        {
+          path: '/teams/:id/bank',
+          name: 'bank',
+          meta: { name: 'Team Bank' },
+          component: BankView
+        },
+        {
+          path: '/teams/:id/contract-management',
+          name: 'contract-management',
+          meta: { name: 'Contract Management' },
+          component: ContractManagementView
+        },
+        {
+          path: '/teams/:id/administration',
+          name: 'administration',
+          meta: { name: 'Contract Administration' },
+          component: AdministrationView
+        },
+        {
+          path: '/teams/:id/sher-token',
+          name: 'sher-token',
+          meta: { name: 'SHER Token' },
+          component: SherTokenView
         }
       ]
     },

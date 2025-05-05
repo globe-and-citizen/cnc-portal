@@ -1,13 +1,9 @@
 import { prisma, errorResponse } from "../utils";
 import { Request, Response } from "express";
-//import { isAddress } from "ethers";
 
 const getNotification = async (req: Request, res: Response) => {
   //check if userAddress property is set
-  //const { userAddress } = req.query;
   const callerAddress = (req as any).address;
-
-  //if (!userAddress) return errorResponse(401, "ID empty or not set", res);
 
   try {
     //retrieve notification
@@ -56,7 +52,7 @@ const updateNotification = async (req: Request, res: Response) => {
   try {
     let notification = await prisma.notification.findUnique({
       where: {
-        id: _id /*as unknown as number*/
+        id: _id
       }
     })
 
@@ -65,7 +61,7 @@ const updateNotification = async (req: Request, res: Response) => {
     ) {
       notification = await prisma.notification.update({
         where: {id: _id},
-        data: { isRead: notification?.isRead? false: true }
+        data: { isRead: true }
       })
 
       res.status(201).json({

@@ -1,5 +1,5 @@
 <template>
-  <div role="tablist" class="tabs tabs-lifted">
+  <div role="tablist" class="tabs tabs-lifted overflow-x-auto">
     <template v-for="(tab, index) in tabs" :key="index">
       <a
         class="whitespace-nowrap tab"

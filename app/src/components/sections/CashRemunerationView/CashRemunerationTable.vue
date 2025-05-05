@@ -1,0 +1,188 @@
+<template>
+  <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
+    <div class="w-full flex justify-between">
+      <span class="font-bold text-lg">Claims Table</span>
+      <SubmitClaims @refetch-claims="async () => await fetchTeamClaimData()" />
+    </div>
+    <div class="form-control flex flex-row gap-4">
+      <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
+        <span class="label-text">{{
+          status == 'signed' ? 'Approved' : status.charAt(0).toUpperCase() + status.slice(1)
+        }}</span>
+        <input
+          type="radio"
+          :name="status"
+          :data-test="`radio-${status}`"
+          class="radio checked:bg-primary"
+          :checked="selectedRadio === status"
+          @change="() => (selectedRadio = status)"
+        />
+      </label>
+    </div>
+    <div class="bg-bae-100 w-full">
+      <TableComponent
+        :rows="teamClaimData ?? undefined"
+        :columns="columns"
+        :loading="isTeamClaimDataFetching"
+      >
+        <template #createdAt-data="{ row }">
+          <span>{{ new Date(row.createdAt).toLocaleString() }}</span>
+        </template>
+        <template #action-data="{ row }">
+          <CRSigne :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
+          <CRWithdrawClaim :claim="formatRow(row)" @claim-withdrawn="fetchTeamClaimData()" />
+          <!-- <ButtonUI
+            v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
+            variant="success"
+            data-test="approve-button"
+            :loading="loadingApprove[row.id]"
+            @click="async () => await approveClaim(row as ClaimResponse)"
+            >Approve</ButtonUI> -->
+
+          <!-- <ButtonUI
+          v-if="row.status == 'approved' && ownerAddress == userDataStore.address"
+          variant="error"
+          data-test="disable-button"
+          @click="() => {}"
+          >Disable</ButtonUI
+        > -->
+          <!-- <ButtonUI
+          v-if="row.status == 'disabled'"
+          variant="info"
+          data-test="enable-button"
+          @click="() => {}"
+          >Enable</ButtonUI
+        > -->
+        </template>
+        <template #member-data="{ row }">
+          <UserComponent v-if="!!row.wage.user" :user="row.wage.user"></UserComponent>
+        </template>
+        <template #hoursWorked-data="{ row }">
+          <span class="font-bold">
+            {{ row.hoursWorked }} / {{ row.wage.maximumHoursPerWeek }} h
+          </span>
+          <br />
+          <span>{{ row.wage.maximumHoursPerWeek }} h/week</span>
+        </template>
+        <template #hourlyRate-data="{ row }">
+          <span class="font-bold">
+            {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} / h</span
+          >
+          <br />
+          <span
+            >{{ getHoulyRateInUserCurrency(row.wage.cashRatePerHour) }}
+            {{ currencyStore.currency.code }} / h
+          </span>
+        </template>
+        <template #status-data="{ row }">
+          <span
+            class="badge"
+            :class="{
+              'badge-info': row.status === 'pending',
+              'badge-outline': row.status === 'signed',
+              'bg-error': row.status === 'disabled',
+              'bg-neutral text-white': row.status === 'withdrawn'
+            }"
+            >{{
+              row.status == 'pending'
+                ? 'Submitted'
+                : row.status == 'signed'
+                  ? 'Approved'
+                  : row.status.charAt(0).toUpperCase() + row.status.slice(1)
+            }}</span
+          >
+        </template>
+      </TableComponent>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
+import type { ClaimResponse } from '@/types'
+import { computed, ref, watch } from 'vue'
+import SubmitClaims from './SubmitClaims.vue'
+import UserComponent from '@/components/UserComponent.vue'
+import CRSigne from './CRSigne.vue'
+import CRWithdrawClaim from './CRWithdrawClaim.vue'
+import { NETWORK } from '@/constant'
+
+const toastStore = useToastStore()
+const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
+const statusses = ['all', 'pending', 'signed', 'withdrawn']
+const selectedRadio = ref('all')
+
+const teamId = computed(() => teamStore.currentTeam?.id)
+const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
+const statusUrl = computed(() =>
+  selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`
+)
+const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
+const getHoulyRateInUserCurrency = (rate: number) => {
+  return (currencyStore.nativeTokenPrice ? rate * currencyStore.nativeTokenPrice : 0).toFixed(2)
+}
+const {
+  data: teamClaimData,
+  isFetching: isTeamClaimDataFetching,
+  error: teamClaimDataError,
+  execute: fetchTeamClaimData
+} = useCustomFetch(claimURL, { immediate: false, refetch: true }).json<Array<ClaimResponse>>()
+
+const formatRow = (row: TableRow) => {
+  return row as ClaimResponse
+}
+
+// Watch team ID update to fetch the team wage data
+watch(
+  [teamId, teamIsLoading],
+  async ([newTeamId, newIsloading]) => {
+    if (newTeamId && !newIsloading) await fetchTeamClaimData()
+
+    if (teamClaimDataError.value) {
+      toastStore.addErrorToast('Failed to fetch team wage data')
+    }
+  },
+  { immediate: true }
+)
+
+const columns = [
+  {
+    key: 'createdAt',
+    label: 'Date',
+    sortable: true,
+    class: 'text-black text-base'
+  },
+  {
+    key: 'member',
+    label: 'Member',
+    sortable: false,
+    class: 'text-black text-base'
+  },
+  {
+    key: 'hoursWorked',
+    label: 'Hour Worked',
+    sortable: false,
+    class: 'text-black text-base'
+  },
+  {
+    key: 'hourlyRate',
+    label: 'Hourly Rate',
+    sortable: false,
+    class: 'text-black text-base'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    class: 'text-black text-base'
+  },
+  {
+    key: 'action',
+    label: 'Action',
+    sortable: false,
+    class: 'text-black text-base'
+  }
+] as TableColumn[]
+</script>

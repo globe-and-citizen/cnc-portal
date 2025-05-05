@@ -1,8 +1,6 @@
 import { EthersJsAdapter, type IWeb3Library } from '@/adapters/web3LibraryAdapter'
-import type { Log } from 'ethers'
 import type { InterfaceAbi } from 'ethers'
-import type { EventLog } from 'ethers'
-import type { Contract } from 'ethers'
+import type { EventLog, Log, Contract } from 'ethers'
 
 interface ISmartContract {
   contract: Contract | undefined
@@ -40,7 +38,7 @@ export class SmartContract implements ISmartContract {
     if (!this.contract) {
       this.contract = await this.web3Library.getContract(this.contractAddress, this.contractAbi)
     }
-
-    return this.contract.queryFilter(type)
+    const logs = (await this.contract.queryFilter(type)) as EventLog[]
+    return logs
   }
 }

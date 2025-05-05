@@ -20,6 +20,7 @@ services:
       args:
         VITE_APP_BACKEND_URL: "https://api.cncportal.io"
         VITE_APP_NETWORK_ALIAS: polygon
+        VITE_APP_SUBGRAPH_ENDPOINT: https://api.studio.thegraph.com/query/110443/cnc-prod/version/latest
     ports:
       - "80:80" # Adjust port as needed
     volumes:
@@ -42,6 +43,16 @@ services:
       FRONTEND_URL: http://localhost
       NODE_ENV: prod
       SECRET_KEY: "secret-key"
+  coverage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend/coverage:/var/www/html/backend
+      - ./app/coverage:/var/www/html/app
+      - ./contract/coverage:/var/www/html/contract
 
 volumes:
   db:

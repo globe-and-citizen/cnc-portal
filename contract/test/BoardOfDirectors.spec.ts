@@ -42,7 +42,12 @@ describe('BoardOfDirectors', async () => {
 
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
-    await bank.initialize(mockTipsAddress, await founder.getAddress())
+    await bank.initialize(
+      mockTipsAddress,
+      ethers.ZeroAddress, // USDT address
+      ethers.ZeroAddress, // USDC address
+      await founder.getAddress()
+    )
 
     // transfer ownership of bank to boardOfDirectors
     // so that only boardOfDirectors can call bank functions

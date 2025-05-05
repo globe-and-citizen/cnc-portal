@@ -36,3 +36,4 @@ coverage
 # Synpress
 .cache-synpress
 test-results
+playwright-report

@@ -4,8 +4,15 @@
     class="modal modal-bottom sm:modal-middle"
     :class="{ 'modal-open': toggleOpen }"
   >
-    <div class="modal-box overflow-y-visible">
-      <button class="btn btn-sm absolute right-4 top-4" @click="toggleOpen = false">✕</button>
+    <div class="modal-box h-auto overflow-y-auto">
+      <ButtonUI
+        class="absolute right-4 top-4"
+        size="sm"
+        variant="primary"
+        outline
+        @click="toggleOpen = false"
+        >✕</ButtonUI
+      >
       <slot></slot>
     </div>
 
@@ -17,6 +24,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const toggleOpen = defineModel({ default: false })
 

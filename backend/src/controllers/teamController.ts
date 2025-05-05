@@ -1,22 +1,27 @@
-import { Prisma, PrismaClient, User } from "@prisma/client";
+import { Prisma, /*PrismaClient,*/ User } from "@prisma/client";
 import { Request, Response } from "express";
-import { isAddress } from "ethers";
+import { isAddress } from "viem";
 import { errorResponse } from "../utils/utils";
-import { addNotification } from "../utils";
-
-const prisma = new PrismaClient();
+import { addNotification, prisma } from "../utils";
+import publicClient from "../utils/viem.config";
+import OFFICER_ABI from "../artifacts/officer_abi.json";
+//const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const { name, members, description } = req.body;
+  const { name, members, description, officerAddress } = req.body;
   const callerAddress = (req as any).address;
   try {
     // Validate all members' wallet addresses
     for (const member of members) {
       if (!isAddress(member.address)) {
-        throw new Error(`Invalid wallet address for member: ${member.name}`);
+        return errorResponse(
+          400,
+          `Invalid wallet address for member: ${member.name}`,
+          res
+        );
       }
     }
 
@@ -34,7 +39,7 @@ const addTeam = async (req: Request, res: Response) => {
     // Ensure the owner's wallet address is in the members list
     if (!members.some((member: User) => member.address === callerAddress)) {
       members.push({
-        name: owner.name || "User",
+        name: owner.name,
         address: owner.address,
       });
     }
@@ -50,6 +55,7 @@ const addTeam = async (req: Request, res: Response) => {
             address: member.address,
           })),
         },
+        officerAddress: officerAddress,
       },
       include: {
         members: {
@@ -92,39 +98,22 @@ const getTeam = async (req: Request, res: Response) => {
           select: {
             address: true,
             name: true,
+            imageUrl: true,
           },
         },
+        teamContracts: true,
       },
     });
-
-    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
-      return errorResponse(403, "Unauthorized", res);
-    }
 
     // Handle 404
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
 
-    if (!req.query) {
-      res.status(200).json({ team, success: true });
+    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
+      return errorResponse(403, "Unauthorized", res);
     }
 
-    const filterQuery = buildFilterMember(req.query);
-    team = await prisma.team.findUnique({
-      where: {
-        id: Number(id),
-      },
-      include: {
-        members: {
-          where: filterQuery,
-          select: {
-            address: true,
-            name: true,
-          },
-        },
-      },
-    });
     res.status(200).json(team);
   } catch (error: any) {
     return errorResponse(500, error.message, res);
@@ -149,14 +138,13 @@ const getAllTeams = async (req: Request, res: Response) => {
           },
         },
       },
-      // include: {
-      //   members: {
-      //     select: {
-      //       address: true,
-      //       name: true,
-      //     },
-      //   },
-      // },
+      include: {
+        _count: {
+          select: {
+            members: true,
+          },
+        },
+      },
     });
 
     // Combine owned and member teams
@@ -168,20 +156,10 @@ const getAllTeams = async (req: Request, res: Response) => {
 };
 
 // Update team
+
 const updateTeam = async (req: Request, res: Response) => {
-  /*
-  #swagger.tags = ['Teams']
-  */
   const { id } = req.params;
-  const {
-    name,
-    description,
-    bankAddress,
-    votingAddress,
-    boardOfDirectorsAddress,
-    expenseAccountAddress,
-    officerAddress,
-  } = req.body;
+  const { name, description, officerAddress } = req.body;
   const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
@@ -195,15 +173,12 @@ const updateTeam = async (req: Request, res: Response) => {
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, "Unauthorized", res);
     }
+
     const teamU = await prisma.team.update({
       where: { id: Number(id) },
       data: {
         name,
         description,
-        bankAddress,
-        votingAddress,
-        boardOfDirectorsAddress,
-        expenseAccountAddress,
         officerAddress,
       },
       include: {
@@ -213,6 +188,7 @@ const updateTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
+        teamContracts: true,
       },
     });
     res.status(200).json(teamU);
@@ -229,11 +205,7 @@ const deleteTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
   const callerAddress = (req as any).address;
   try {
-    const team = await prisma.team.findUnique({
-      where: {
-        id: Number(id),
-      },
-    });
+    const team = await prisma.team.findUnique({ where: { id: Number(id) } });
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
@@ -241,13 +213,20 @@ const deleteTeam = async (req: Request, res: Response) => {
       return errorResponse(403, "Unauthorized", res);
     }
     await prisma.boardOfDirectorActions.deleteMany({
-      where: { teamId: Number(id) }
-    })
-    const teamD = await prisma.team.delete({
-      where: {
-        id: Number(id),
-      },
+      where: { teamId: Number(id) },
     });
+
+    await prisma.memberTeamsData.deleteMany({ where: { teamId: Number(id) } });
+
+    await prisma.teamContract.deleteMany({ where: { teamId: Number(id) } });
+
+    await prisma.claim.deleteMany({ where: { wage: { teamId: Number(id) } } });
+
+    await prisma.wage.deleteMany({ where: { teamId: Number(id) } });
+
+    await prisma.expense.deleteMany({ where: { teamId: Number(id) } });
+
+    const teamD = await prisma.team.delete({ where: { id: Number(id) } });
 
     res.status(200).json({ team: teamD, success: true });
   } catch (error: any) {
@@ -255,143 +234,25 @@ const deleteTeam = async (req: Request, res: Response) => {
   }
 };
 
-const deleteMember = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const memberAddress = req.headers.memberaddress;
-  const callerAddress = (req as any).address;
-  try {
-    // Find the team
-    const team = await prisma.team.findUnique({
-      where: { id: Number(id) },
-      include: { members: true },
-    });
-
-    // Check if the team exists
-    if (!team) {
-      throw new Error("Team not found");
-    }
-    if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, "Unauthorized", res);
-    }
-    if (team.ownerAddress === memberAddress) {
-      return errorResponse(401, "Owner cannot be removed", res);
-    }
-
-    // Find the index of the member in the team
-    const memberIndex = team.members.findIndex(
-      (member) => member.address === memberAddress
-    );
-
-    // If member not found in the team, throw an error
-    if (memberIndex === -1) {
-      throw new Error("Member not found in the team");
-    }
-
-    // Update the team to disconnect the specified member
-    const name = team.name;
-    const description = team.description;
-
-    const updatedTeam = await prisma.team.update({
-      where: { id: Number(id) },
-      data: {
-        name,
-        description,
-        members: {
-          disconnect: { address: String(memberAddress) },
-        },
-      },
-      include: {
-        members: {
-          select: {
-            address: true,
-            name: true,
-          },
-        },
-      },
-    });
-    res.status(200).json({ success: true, team: updatedTeam });
-  } catch (error: any) {
-    // Handle errors
-    return errorResponse(500, error.message || "Internal Server Error", res);
-  }
-};
-const addMembers = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const membersData = req.body.data;
-  try {
-    // Fetch the team and its current members
-    const team = await prisma.team.findUnique({
-      where: { id: Number(id) },
-      include: { members: true },
-    });
-
-    if (!team) {
-      throw new Error("Team not found");
-    }
-
-    await prisma.team.update({
-      where: { id: Number(id) },
-      data: {
-        members: {
-          connect: membersData.map((member: User) => ({
-            address: member.address,
-          })),
-        },
-      },
-    });
-
-    // Fetch all members of the team after addition
-    const updatedTeam = await prisma.team.findUnique({
-      where: { id: Number(id) },
-      include: { members: true },
-    });
-
-    // Return the updated members list
-    return res
-      .status(201)
-      .json({ members: updatedTeam?.members, success: true });
-  } catch (error: any) {
-    return errorResponse(500, error.message || "Internal Server Error", res);
-  }
-};
-
-const isUserPartOfTheTeam = async (
+const isUserPartOfTheTeam = (
   members: { address: string; name?: string | null }[],
   callerAddress: string
 ) => {
   return members.some((member) => member.address === callerAddress);
 };
 
-const buildFilterMember = (queryParams: Request["query"]) => {
-  const filterQuery: Prisma.UserWhereInput = {};
-  if (queryParams.query) {
-    filterQuery.OR = [
-      {
-        name: {
-          contains: String(queryParams.query),
-          mode: "insensitive",
-        },
-      },
-      {
-        address: {
-          contains: String(queryParams.query),
-          mode: "insensitive",
-        },
-      },
-    ];
-  }
+// const buildFilterMember = (queryParams: Request["query"]) => {
+//   const filterQuery: Prisma.UserWhereInput = {};
+//   if (queryParams.query) {
+//     filterQuery.OR = [
+//       { name: { contains: String(queryParams.query), mode: "insensitive" } },
+//       { address: { contains: String(queryParams.query), mode: "insensitive" } },
+//     ];
+//   }
 
-  // can add others filter
+//   // can add others filter
 
-  return filterQuery;
-};
+//   return filterQuery;
+// };
 
-export {
-  addTeam,
-  updateTeam,
-  deleteTeam,
-  getTeam,
-  getAllTeams,
-  deleteMember,
-  addMembers,
-};
+export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams };
