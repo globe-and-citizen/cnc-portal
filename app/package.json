@@ -48,6 +48,7 @@
     "node-xlsx": "^0.24.0",
     "pdfmake": "^0.2.18",
     "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^4.2.0",
     "siwe": "^2.1.4",
     "viem": "^2.21.2",
     "vue": "^3.4.15",
