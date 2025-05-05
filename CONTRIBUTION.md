@@ -14,3 +14,33 @@
 10. Sync your fork
 11. Delete your branch
 12. Update your fork
+
+## Command line to run for each folder
+
+- /app
+
+```bash
+npm run build
+npm run test:unit
+npm run type-check
+npm run lint
+npm run format
+```
+
+- /backend
+
+```bash
+npm run build
+npm run test
+npm run lint
+npm run format
+```
+
+- /contract
+
+```bash
+npm run test
+npm run lint
+npm run format
+```
+

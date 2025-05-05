@@ -17,7 +17,11 @@ const addTeam = async (req: Request, res: Response) => {
     // Validate all members' wallet addresses
     for (const member of members) {
       if (!isAddress(member.address)) {
-        throw new Error(`Invalid wallet address for member: ${member.name}`);
+        return errorResponse(
+          400,
+          `Invalid wallet address for member: ${member.name}`,
+          res
+        );
       }
     }
 
@@ -35,7 +39,7 @@ const addTeam = async (req: Request, res: Response) => {
     // Ensure the owner's wallet address is in the members list
     if (!members.some((member: User) => member.address === callerAddress)) {
       members.push({
-        name: owner.name || "User",
+        name: owner.name,
         address: owner.address,
       });
     }
@@ -101,14 +105,15 @@ const getTeam = async (req: Request, res: Response) => {
       },
     });
 
-    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
-      return errorResponse(403, "Unauthorized", res);
-    }
-
     // Handle 404
     if (!team) {
       return errorResponse(404, "Team not found", res);
     }
+
+    if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
+      return errorResponse(403, "Unauthorized", res);
+    }
+
     res.status(200).json(team);
   } catch (error: any) {
     return errorResponse(500, error.message, res);
@@ -151,12 +156,10 @@ const getAllTeams = async (req: Request, res: Response) => {
 };
 
 // Update team
+
 const updateTeam = async (req: Request, res: Response) => {
-  /*
-  #swagger.tags = ['Teams']
-  */
   const { id } = req.params;
-  const { name, description, officerAddress, teamContract } = req.body;
+  const { name, description, officerAddress } = req.body;
   const callerAddress = (req as any).address;
   try {
     const team = await prisma.team.findUnique({
@@ -169,38 +172,6 @@ const updateTeam = async (req: Request, res: Response) => {
     }
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, "Unauthorized", res);
-    }
-
-    if (teamContract) {
-      if (!isAddress(teamContract.address)) {
-        return errorResponse(400, "Invalid contract address", res);
-      }
-
-      const existingContract = await prisma.teamContract.findUnique({
-        where: {
-          address: teamContract.address,
-        },
-      });
-
-      if (existingContract) {
-        //update the existing contract if found
-        await prisma.teamContract.update({
-          where: { address: teamContract.address },
-          data: {
-            type: teamContract.type,
-            deployer: teamContract.deployer,
-          },
-        });
-      } else {
-        await prisma.teamContract.create({
-          data: {
-            address: teamContract.address,
-            type: teamContract.type,
-            deployer: teamContract.deployer,
-            teamId: team.id,
-          },
-        });
-      }
     }
 
     const teamU = await prisma.team.update({
@@ -263,25 +234,25 @@ const deleteTeam = async (req: Request, res: Response) => {
   }
 };
 
-const isUserPartOfTheTeam = async (
+const isUserPartOfTheTeam = (
   members: { address: string; name?: string | null }[],
   callerAddress: string
 ) => {
   return members.some((member) => member.address === callerAddress);
 };
 
-const buildFilterMember = (queryParams: Request["query"]) => {
-  const filterQuery: Prisma.UserWhereInput = {};
-  if (queryParams.query) {
-    filterQuery.OR = [
-      { name: { contains: String(queryParams.query), mode: "insensitive" } },
-      { address: { contains: String(queryParams.query), mode: "insensitive" } },
-    ];
-  }
+// const buildFilterMember = (queryParams: Request["query"]) => {
+//   const filterQuery: Prisma.UserWhereInput = {};
+//   if (queryParams.query) {
+//     filterQuery.OR = [
+//       { name: { contains: String(queryParams.query), mode: "insensitive" } },
+//       { address: { contains: String(queryParams.query), mode: "insensitive" } },
+//     ];
+//   }
 
-  // can add others filter
+//   // can add others filter
 
-  return filterQuery;
-};
+//   return filterQuery;
+// };
 
 export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams };
