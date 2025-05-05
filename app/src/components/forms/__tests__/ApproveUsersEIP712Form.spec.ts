@@ -112,12 +112,12 @@ describe('ApproveUsersForm', () => {
     it('should show the user name and address inputs', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.findComponent({ name: 'SelectMemberInput' }).exists()).toBeTruthy()
+      expect(wrapper.findComponent({ name: 'SelectMemberWithTokenInput' }).exists()).toBeTruthy()
     })
     it('should show address error when no address is entered', async () => {
       const wrapper = createComponent()
 
-      expect(wrapper.findComponent({ name: 'SelectMemberInput' }).exists()).toBeTruthy()
+      expect(wrapper.findComponent({ name: 'SelectMemberWithTokenInput' }).exists()).toBeTruthy()
       const approveButton = wrapper.find('[data-test="approve-button"]')
       expect(approveButton.exists()).toBeTruthy()
       approveButton.trigger('click')
@@ -182,7 +182,7 @@ describe('ApproveUsersForm', () => {
     })
     it('should update user address when address is entered in name input', async () => {
       const wrapper = createComponent()
-      const selectMemberInput = wrapper.findComponent({ name: 'SelectMemberInput' })
+      const selectMemberInput = wrapper.findComponent({ name: 'SelectMemberWithTokenInput' })
       expect(selectMemberInput.exists()).toBeTruthy()
       const memberAddressInput = selectMemberInput.find('[data-test="member-address-input"]')
       expect(memberAddressInput.exists()).toBeTruthy()
@@ -194,7 +194,8 @@ describe('ApproveUsersForm', () => {
       //@ts-expect-error: not visible on wrapper
       expect(wrapper.vm.input).toEqual({
         name: 'Test Name',
-        address: '0xAddressToApprove'
+        address: '0xAddressToApprove',
+        token: null
       })
     })
     it('should update date when expiry date is selected', async () => {
@@ -223,16 +224,18 @@ describe('ApproveUsersForm', () => {
       const limitValue = '100'
       const date = new Date()
       const formData = [
-        { name: 'Test User', address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' }
+        {
+          name: 'Test User',
+          address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+          token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+        }
       ]
-      const tokenAddress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
 
       ;(wrapper.vm as unknown as ComponentData).budgetLimitType = budgetLimitType
       ;(wrapper.vm as unknown as ComponentData).limitValue = limitValue
       ;(wrapper.vm as unknown as ComponentData).date = date
       ;(wrapper.vm as unknown as ComponentData).input = formData[0]
       ;(wrapper.vm as unknown as ComponentData).description = 'description'
-      ;(wrapper.vm as unknown as ComponentData).selectedToken = tokenAddress
 
       await wrapper.vm.$nextTick()
 
