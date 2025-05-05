@@ -1,8 +1,20 @@
 # Description
 
-Please include a summary of the changes and the related issue. Please also include relevant motivation and context. List any dependencies that are required for this change.
+## PR description / Summary
 
+The summary should be a short description of the change. Please include the motivation for the change and how it was implemented. If applicable, please include screenshots or code snippets to illustrate the changes.
+
+## Intial Issue Description
+
+The description of the issue (in the kanban board) that this PR addresses. Please include the issue number in the title of the PR.
+
+> Link to the issue in the kanban board
+> If no issue exists, please create one and link it here.
 Fixes # (issue)
+
+## Issues introduced and fixed
+
+The description of issues you find and fix in this PR.
 
 ## Contribution
 
@@ -23,31 +35,6 @@ Please delete options that are not relevant.
 - [ ] Tests for the changes have been added (for bug fixes/features)
 - [ ] Docs have been added / updated (for bug fixes / features)
 
-## Checklist
+## Contribution checklist
 
-- /app
-
-```bash
-npm run build
-npm run test:unit
-npm run type-check
-npm run lint
-npm run format
-```
-
-- /backend
-
-```bash
-npm run build
-npm run test
-npm run lint
-npm run format
-```
-
-- /contract
-
-```bash
-npm run test
-npm run lint
-npm run format
-```
+Before submitting the PR, please make sure you have applied the rules in [CONTRIBUTION.md](./../CONTRIBUTION.md)
