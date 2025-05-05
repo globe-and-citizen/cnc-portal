@@ -8,12 +8,16 @@ import App from './App.vue'
 import router from './router'
 import apolloClient from './apollo-client'
 import { DefaultApolloClient } from '@vue/apollo-composable'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 export function setupApp() {
   const app = createApp(App)
   const queryClient = new QueryClient()
+  const pinia = createPinia()
 
-  app.use(createPinia())
+  app.use(pinia)
+  pinia.use(piniaPluginPersistedstate)
+
   app.use(router)
   app.use(WagmiPlugin, { config })
   app.use(VueQueryPlugin, { queryClient })

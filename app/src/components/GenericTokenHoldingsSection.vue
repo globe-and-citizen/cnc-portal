@@ -7,7 +7,7 @@
         currencyStore.isLoading ||
         isLoadingNetworkCuerrencyBalance ||
         isLoadingUsdcBalance ||
-        isLoading
+        currencyStore.isLoadingUSDPrice
       "
       :columns="[
         { key: 'rank', label: 'RANK' },
@@ -51,14 +51,12 @@ import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useCryptoPrice } from '@/composables/useCryptoPrice'
 
 const props = defineProps<{
   address: string
 }>()
 
 const currencyStore = useCurrencyStore()
-const { price: usdcPrice, isLoading } = useCryptoPrice('usd-coin')
 
 const chainId = useChainId()
 
@@ -88,6 +86,9 @@ const {
 // Computed properties for prices
 const networkCurrencyPrice = computed(() => {
   return currencyStore.nativeTokenPrice || 1
+})
+const usdcPrice = computed(() => {
+  return currencyStore.usdPriceInLocal || 1
 })
 
 const networkIcon = computed(() => {
