@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -11,7 +11,7 @@ import { mockToastStore } from '@/tests/mocks/store.mock'
 //vi.mock('@/stores/useToastStore')
 const deployState = {
   isDeploying: ref(false),
-  contractAddress: ref(null),
+  contractAddress: ref<string | null>(null),
   error: ref<Error | null>(null)
 }
 
@@ -78,10 +78,18 @@ describe('CreateAddCampaign.vue', () => {
       expect(bankAddressInput.attributes('disabled')).toBeDefined()
     })
 
-    it.skip('shows loading button when loading is true', () => {
+    it('shows loading button when contract is deploying', async () => {
+      deployState.isDeploying.value = true
       const wrapper = mount(CreateAddCampaign, {
         props: { bankAddress: '0x123456' }
       })
+      await flushPromises()
+      // Directly set the ref values
+      await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.4)
+      await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.6)
+
+      await flushPromises()
+      await wrapper.find('.btn-primary').trigger('click')
 
       const allButtonComponentsWrapper = wrapper.findAllComponents(ButtonUI)
       expect(allButtonComponentsWrapper[1].props().loading).toBe(true)
@@ -89,21 +97,6 @@ describe('CreateAddCampaign.vue', () => {
   })
 
   describe('emits', () => {
-    it.skip('emits createAddCampaign with correct values when the confirm button is clicked', async () => {
-      const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0x123456' }
-      })
-
-      // Directly set the ref values
-      await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.1)
-      await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
-
-      await wrapper.find('.btn-primary').trigger('click')
-
-      expect(wrapper.emitted()).toHaveProperty('createAddCampaign')
-      expect(wrapper.emitted('createAddCampaign')?.[0]).toEqual([0.1, 0.2])
-    })
-
     it('does not emit createAddCampaign if costPerClick or costPerImpression is null', async () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { loading: false, bankAddress: '0x123456' }
@@ -115,7 +108,7 @@ describe('CreateAddCampaign.vue', () => {
       expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
     })
 
-    it.skip('shows an alert if costPerClick or costPerImpression is invalid', async () => {
+    it('shows an alert if costPerClick or costPerImpression is invalid', async () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { loading: false, bankAddress: '0x123456' }
       })
@@ -124,15 +117,18 @@ describe('CreateAddCampaign.vue', () => {
       await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
 
       // Mock the alert function
-      const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
+      //const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
       await wrapper.find('.btn-primary').trigger('click')
 
       // Check that the alert was called and the event was not emitted
-      expect(alertMock).toHaveBeenCalledWith('Please enter valid numeric values for both rates.')
-      expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
+      //expect(alertMock).toHaveBeenCalledWith('Please enter valid numeric values for both rates.')
+      //expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
 
-      alertMock.mockRestore()
+      //alertMock.mockRestore()
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        'Please enter valid numeric values for both rates.'
+      )
     })
 
     it('shows an error toast with the correct message when there is an error', async () => {
@@ -147,7 +143,6 @@ describe('CreateAddCampaign.vue', () => {
 
       await flushPromises()
       await wrapper.find('.btn-primary').trigger('click')
-      console.log('calls ===>', (mockToastStore.addErrorToast as Mock).mock?.calls)
 
       await flushPromises()
 
@@ -176,6 +171,21 @@ describe('CreateAddCampaign.vue', () => {
       )
 
       openMock.mockRestore()
+    })
+  })
+
+  describe('watchers', () => {
+    it('handles contractAddress watcher correctly when newAddress and team are defined', async () => {
+      const wrapper = mount(CreateAddCampaign, {
+        props: { bankAddress: '0x123456' }
+      })
+      await flushPromises()
+      deployState.contractAddress.value = '0x_contract_address'
+      await flushPromises()
+      // Simulate the watexpect(wrapper.emitted()).toHaveProperty('openAddTeamModal')cher logic
+
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Contract deployed successfully')
+      expect(wrapper.emitted()).toHaveProperty('closeAddCampaignModal')
     })
   })
 })
