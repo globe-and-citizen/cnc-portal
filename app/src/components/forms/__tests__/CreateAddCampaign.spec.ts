@@ -154,9 +154,7 @@ describe('CreateAddCampaign.vue', () => {
       // Trigger the logic again
       await wrapper.vm.$nextTick()
       // Check that the toast was called with the updated message
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        'Deployment failed: User rejected the request'
-      )
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('User rejected the request')
     })
   })
 
