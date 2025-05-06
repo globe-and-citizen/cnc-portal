@@ -151,4 +151,23 @@ describe("User Controller", () => {
       );
     });
   });
+
+  describe("updateUser", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return 401 if address is missing", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+
+      const response = await request(app).put("/user/1").send({
+        address: "",
+      });
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toEqual(
+        "Update user error: Missing user address"
+      );
+    });
+  });
 });
