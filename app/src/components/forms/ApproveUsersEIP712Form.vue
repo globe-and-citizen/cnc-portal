@@ -107,9 +107,18 @@
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
-        <VueDatePicker v-model="date" />
+        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply />
       </div>
     </label>
+  </div>
+
+  <div
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.date.$errors"
+    :key="error.$uid"
+    data-test="date-error"
+  >
+    {{ error.$message }}
   </div>
 
   <div class="modal-action justify-center">
@@ -219,6 +228,15 @@ const rules = {
           }
         )
       }
+    })
+  },
+  // Add date validation
+  date: {
+    required: helpers.withMessage('Expiry date is required', required),
+    futureDate: helpers.withMessage('Expiry date must be in the future', (value: Date | string) => {
+      if (!value) return false
+      const date = typeof value === 'string' ? new Date(value) : value
+      return date > new Date()
     })
   }
 }
