@@ -10,7 +10,7 @@ import {
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { User } from "@prisma/client";
-import { de } from "@faker-js/faker";
+import { de, faker } from "@faker-js/faker";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
@@ -48,7 +48,7 @@ describe("User Controller", () => {
 
     it("should return 401 if address is missing", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-      
+
       const response = await request(app).get("/nonce").send({});
 
       expect(response.status).toBe(401);
@@ -56,5 +56,34 @@ describe("User Controller", () => {
         "Get nonce error: Missing user address"
       );
     });
+
+    it.skip("should return a nonce if user does not exist", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+
+      const response = await request(app)
+        .get("/nonce")
+        .set("address", faker.finance.ethereumAddress())
+        .send();
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        success: true,
+        nonce: expect.any(String),
+      });
+    });
+
+    it.skip("should return the user's nonce if user exists", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+      const response = await request(app)
+        .get("/nonce")
+        .set("address", "0xMemberAddress")
+        .send();
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.nonce).toBe(mockUser.nonce);
+    });
+
+    
   });
 });
