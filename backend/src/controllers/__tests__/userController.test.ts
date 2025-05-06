@@ -59,10 +59,10 @@ describe("User Controller", () => {
 
     it.skip("should return a nonce if user does not exist", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-
+      const mockAddress = faker.finance.ethereumAddress();
       const response = await request(app)
         .get("/nonce")
-        .set("address", faker.finance.ethereumAddress())
+        .set("address", mockAddress)
         .send();
 
       expect(response.status).toBe(200);
@@ -84,6 +84,18 @@ describe("User Controller", () => {
       expect(response.body.nonce).toBe(mockUser.nonce);
     });
 
-    
+    it("should return 500 if an error occurs", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
+
+      const response = await request(app)
+        .get("/nonce")
+        .set("address", "0xMemberAddress")
+        .send();
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual(
+        "Internal server error has occured"
+      );
+    });
   });
 });
