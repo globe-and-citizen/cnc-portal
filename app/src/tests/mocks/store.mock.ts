@@ -20,7 +20,8 @@ export const mockTeamStore = {
   },
   teamsMeta: {
     reloadTeams: vi.fn()
-  }
+  },
+  fetchTeam: vi.fn()
 }
 
 export const mockToastStore = {
