@@ -39,10 +39,3 @@ const mockUser = {
   updatedAt: new Date(),
 } as User;
 
-describe("User Controller", () => {
-  describe("GET: /nonce", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-  });
-});
