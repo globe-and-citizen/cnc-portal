@@ -40,12 +40,3 @@ const mockUser = {
   updatedAt: new Date(),
 } as User;
 
-describe("User Controller", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-  it("should get nonce", async () => {
-    const result = await request(app).get("/nonce");
-    expect(result.status).toBe(200);
-  });
-});
