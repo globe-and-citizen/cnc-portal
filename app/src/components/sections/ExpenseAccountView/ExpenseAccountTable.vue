@@ -88,10 +88,13 @@
         <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
       <template #transactions-data="{ row }">
-        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }}</span>
+        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
       </template>
       <template #amountTransferred-data="{ row }">
-        <span>{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}</span>
+        <span
+          >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
+          {{ tokenSymbol(row.tokenAddress) }}</span
+        >
       </template>
     </TableComponent>
   </div>
@@ -142,12 +145,12 @@ const columns = [
   },
   {
     key: 'transactions',
-    label: 'Total Transactions',
+    label: 'Max Transactions',
     sortable: false
   },
   {
     key: 'amountTransferred',
-    label: 'Amount Transferred',
+    label: 'Max Amount',
     sortable: false
   },
   {
@@ -174,7 +177,7 @@ const {
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
-  isPending: isLoadingDeactivateApproval,
+  // isPending: isLoadingDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -187,7 +190,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 //activate approval
 const {
   writeContract: executeActivateApproval,
-  isPending: isLoadingActivateApproval,
+  // isPending: isLoadingActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()
