@@ -11,6 +11,7 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { User } from "@prisma/client";
 import { de, faker } from "@faker-js/faker";
+import { U } from "vitest/dist/chunks/environment.LoooBwUu.js";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
@@ -30,7 +31,7 @@ app.put("/user/1", updateUser);
 app.get("/users", getAllUsers);
 app.get("/search", searchUser);
 
-const mockUser = {
+const mockUser: User = {
   id: 1,
   address: "0xMemberAddress",
   name: "MemberName",
@@ -126,6 +127,28 @@ describe("User Controller", () => {
 
       expect(response.status).toBe(404);
       expect(response.body.message).toEqual(undefined);
+    });
+
+    it.skip("should return 200 and the user if found", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+
+      const response = await request(app).get(`/user/0xMemberAddress`).send();
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockUser);
+    });
+
+    it.skip("should return 500 if an error occurs", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
+
+      const response = await request(app).get("/user/1").send({
+        address: "0xMemberAddress",
+      });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual(
+        "Internal server error has occured"
+      );
     });
   });
 });
