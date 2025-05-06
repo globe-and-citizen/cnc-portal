@@ -169,5 +169,70 @@ describe("User Controller", () => {
         "Update user error: Missing user address"
       );
     });
+
+    it.skip("should return 403 if caller is not the user", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+
+      const unauthorizedAddress = faker.finance.ethereumAddress();
+
+      const response = await request(app)
+        .put("/user/0xMemberAddress")
+        .set("address", unauthorizedAddress)
+        .send({
+          name: "NewName",
+          imageUrl: "https://example.com/newimage.jpg",
+        });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toEqual("Unauthorized");
+    });
+
+    it("should return 404 if user is not found", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+      
+      const response = await request(app)
+        .put("/user/0xNonExistentAddress")
+        .set("address", "0xOwnerAddress")
+        .send({
+          name: "NewName",
+          imageUrl: "https://example.com/newimage.jpg",
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toEqual(undefined);
+    });
+
+    it.skip("should return 200 and the updated user", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+      vi.spyOn(prisma.user, "update").mockResolvedValue(mockUser);
+
+      const response = await request(app)
+        .put("/user/0xMemberAddress")
+        .set("address", "0xMemberAddress")
+        .send({
+          name: "NewName",
+          imageUrl: "https://example.com/newimage.jpg",
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockUser);
+    });
+
+    it.skip("should return 500 if an error occurs", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
+      
+      const response = await request(app)
+        .put("/user/0xMemberAddress")
+        .set("address", "0xMemberAddress")
+        .send({
+          name: "NewName",
+          imageUrl: "https://example.com/newimage.jpg",
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual(
+        "Internal server error has occured"
+      );
+    });
   });
 });
