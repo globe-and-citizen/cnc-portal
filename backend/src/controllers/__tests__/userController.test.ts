@@ -282,4 +282,49 @@ describe("User Controller", () => {
       );
     });
   });
+
+  describe("searchUser", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return 401 if address is missing", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+
+      const response = await request(app).get("/search").send({
+        address: "",
+      });
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toEqual(
+        "Search error: Missing name and address"
+      );
+    });
+
+    it.skip("should return 200 and all users", async () => {
+      const mockUsers = [mockUser, { ...mockUser, id: 1 }];
+      vi.spyOn(prisma.user, "findMany").mockResolvedValue(mockUsers);
+
+      const response = await request(app)
+        .get("/search")
+        .query({ address: "0xMemberAddress" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockUsers);
+    });
+
+    it("should rerturn 500 if an error occurs", async () => {
+      vi.spyOn(prisma.user, "findMany").mockRejectedValue(new Error("Error"));
+
+      const response = await request(app)
+        .get("/search")
+        .query({ address: "0xMemberAddress" });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual(
+        "Internal server error has occured"
+      );
+    });
+  });
+  
 });
