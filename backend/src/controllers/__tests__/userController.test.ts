@@ -10,6 +10,7 @@ import {
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { User } from "@prisma/client";
+import { de } from "@faker-js/faker";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
@@ -39,3 +40,12 @@ const mockUser = {
   updatedAt: new Date(),
 } as User;
 
+describe("User Controller", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  it("should get nonce", async () => {
+    const result = await request(app).get("/nonce");
+    expect(result.status).toBe(200);
+  });
+});
