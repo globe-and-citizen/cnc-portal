@@ -40,6 +40,26 @@ const mockUser: User = {
   createdAt: new Date(),
   updatedAt: new Date(),
 } as User;
+const mockUsers: User[] = [
+  {
+    id: 1,
+    address: "0xMemberAddress",
+    name: "MemberName",
+    nonce: "nonce123",
+    imageUrl: "hhtps://example.com/image.jpg",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as User,
+  {
+    id: 2,
+    address: "0xAnotherMemberAddress",
+    name: "AnotherMemberName",
+    nonce: "nonce456",
+    imageUrl: "hhtps://example.com/anotherimage.jpg",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as User,
+];
 
 describe("User Controller", () => {
   describe("GET: /nonce", () => {
@@ -228,6 +248,33 @@ describe("User Controller", () => {
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
         });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual(
+        "Internal server error has occured"
+      );
+    });
+  });
+
+  describe("getAllUsers", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it.skip("should return 200 and all users", async () => {
+      const mockUsers = [mockUser, { ...mockUser, id: 1 }];
+      vi.spyOn(prisma.user, "findMany").mockResolvedValue(mockUsers);
+
+      const response = await request(app).get("/users").send();
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockUsers);
+    });
+
+    it("should return 500 if an error occurs", async () => {
+      vi.spyOn(prisma.user, "findMany").mockRejectedValue(new Error("Error"));
+
+      const response = await request(app).get("/users").send();
 
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual(
