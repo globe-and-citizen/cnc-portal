@@ -206,15 +206,18 @@ const rules = {
   },
   // Add validation for budget limits
   resultArray: {
-    required: helpers.withMessage('At least one budget limit must be set', (value: any[]) => {
+    required: helpers.withMessage('At least one budget limit must be set', (value: unknown[]) => {
       return value.length > 0
     }),
     $each: helpers.forEach({
       value: {
         required: helpers.withMessage('Value is required', required),
-        numeric: helpers.withMessage('Value must be a positive number', (value: string | number) => {
-          return !isNaN(Number(value)) && Number(value) > 0
-        })
+        numeric: helpers.withMessage(
+          'Value must be a positive number',
+          (value: string | number) => {
+            return !isNaN(Number(value)) && Number(value) > 0
+          }
+        )
       }
     })
   }
