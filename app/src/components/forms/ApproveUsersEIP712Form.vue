@@ -82,6 +82,22 @@
         />
       </label>
     </div>
+
+    <!-- Budget Limit Validation Errors -->
+    <div class="pl-4 text-red-500 text-sm w-full text-left">
+      <div v-for="error of v$.resultArray.$errors" :key="error.$uid" data-test="budget-limit-error">
+        <div v-if="error.$validator === 'required'">
+          {{ error.$message }}
+        </div>
+        <div v-else-if="error.$validator === '$each'">
+          <div v-for="(subError, index) in error.$message" :key="index">
+            <div v-for="(msg, key) in subError" :key="key">
+              Budget limit {{ resultArray[index].budgetType }}: {{ msg }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <!-- #endregion Multi Limit Inputs -->
 
@@ -187,12 +203,28 @@ const rules = {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
     })
+  },
+  // Add validation for budget limits
+  resultArray: {
+    required: helpers.withMessage('At least one budget limit must be set', (value: any[]) => {
+      return value.length > 0
+    }),
+    $each: helpers.forEach({
+      value: {
+        required: helpers.withMessage('Value is required', required),
+        numeric: helpers.withMessage('Value must be a positive number', (value: string | number) => {
+          return !isNaN(Number(value)) && Number(value) > 0
+        })
+      }
+    })
   }
 }
 
 const v$ = useVuelidate(rules, {
   description,
-  input
+  input,
+  resultArray,
+  date
 })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
