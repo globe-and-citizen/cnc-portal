@@ -59,6 +59,7 @@ export const getUser = async (req: Request, res: Response) => {
 
     await prisma.$disconnect();
 
+    //console.log("user", user);
     if (!user) return errorResponse(404, "User not found", res);
 
     return res.status(200).json(user);

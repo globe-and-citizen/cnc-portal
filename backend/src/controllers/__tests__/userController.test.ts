@@ -116,5 +116,16 @@ describe("User Controller", () => {
         "Get user error: Missing user address"
       );
     });
+
+    it("should return 404 if user is not found", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+
+      const mockAddress = "0xNonExistentAddress";
+
+      const response = await request(app).get(`/user/${mockAddress}`).send();
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toEqual(undefined);
+    });
   });
 });
