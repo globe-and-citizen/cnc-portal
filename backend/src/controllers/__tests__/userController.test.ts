@@ -11,7 +11,6 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { User } from "@prisma/client";
 import { de, faker } from "@faker-js/faker";
-import { U } from "vitest/dist/chunks/environment.LoooBwUu.js";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
