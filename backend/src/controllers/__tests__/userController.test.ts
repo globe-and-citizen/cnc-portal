@@ -35,8 +35,26 @@ const mockUser = {
   address: "0xMemberAddress",
   name: "MemberName",
   nonce: "nonce123",
-  imageUrl: "hhtps://example.com/image.jpg", 
+  imageUrl: "hhtps://example.com/image.jpg",
   createdAt: new Date(),
   updatedAt: new Date(),
 } as User;
 
+describe("User Controller", () => {
+  describe("GET: /nonce", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return 401 if address is missing", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+      
+      const response = await request(app).get("/nonce").send({});
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toEqual(
+        "Get nonce error: Missing user address"
+      );
+    });
+  });
+});
