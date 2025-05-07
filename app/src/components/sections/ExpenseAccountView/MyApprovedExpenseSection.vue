@@ -127,14 +127,6 @@ const { balances, refetch: refetchBalances } = useContractBalance(
 )
 
 //#region Computed Values
-// const isDisapprovedAddress = computed(
-//   () =>
-//     expenseDataStore.allExpenseDataParsed.findIndex(
-//       (item) =>
-//         item.approvedAddress === currentUserAddress &&
-//         (item.status === 'disabled' || item.status === 'expired')
-//     ) !== -1
-// )
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
@@ -227,12 +219,6 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
       to: expenseAccountEip712Address.value,
       data
     })
-    // await writeContract(config, {
-    //   address: expenseAccountEip712Address.value,
-    //   abi: expenseAccountABI,
-    //   functionName: 'transfer',
-    //   args
-    // })
     executeExpenseAccountTransfer({
       address: expenseAccountEip712Address.value,
       args,
@@ -246,28 +232,6 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     transferERC20loading.value = false
     isLoadingTransfer.value = false
   }
-  // executeExpenseAccountTransfer({
-  //   address: expenseAccountEip712Address.value,
-  //   args: [
-  //     to,
-  //     parseEther(amount),
-  //     {
-  //       ...budgetLimit,
-  //       budgetData: budgetLimit.budgetData.map((item) => ({
-  //         ...item,
-  //         value:
-  //           item.budgetType === 0
-  //             ? item.value
-  //             : budgetLimit.tokenAddress === zeroAddress
-  //               ? parseEther(`${item.value}`)
-  //               : BigInt(Number(item.value) * 1e6)
-  //       }))
-  //     },
-  //     signatureToTransfer.value
-  //   ],
-  //   abi: expenseAccountABI,
-  //   functionName: 'transfer'
-  // })
 }
 const transferERC20loading = ref(false)
 // Token transfer function
