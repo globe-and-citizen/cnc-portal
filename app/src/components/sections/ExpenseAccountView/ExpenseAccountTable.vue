@@ -14,18 +14,22 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent :rows="filteredApprovals" :columns="columns">
+    <TableComponent
+      :rows="filteredApprovals"
+      :columns="columns"
+      :loading="expenseDataStore.allExpenseDataIsFetching"
+    >
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
           variant="error"
           data-test="disable-button"
           size="sm"
-          :loading="isLoadingDeactivateApproval && signatureToUpdate === row.signature"
+          :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
           :disabled="!(contractOwnerAddress === userDataStore.address)"
           @click="
             () => {
-              //emits('disableApproval', row.signature)
+              isLoadingSetStatus = true
               signatureToUpdate = row.signature
               deactivateApproval(row.signature)
             }
@@ -37,11 +41,11 @@
           variant="info"
           data-test="enable-button"
           size="sm"
-          :loading="isLoadingActivateApproval && signatureToUpdate === row.signature"
+          :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
           :disabled="!(contractOwnerAddress === userDataStore.address)"
           @click="
             () => {
-              //emits('enableApproval', row.signature)
+              isLoadingSetStatus = true
               signatureToUpdate = row.signature
               activateApproval(row.signature)
             }
@@ -84,10 +88,13 @@
         <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
       <template #transactions-data="{ row }">
-        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }}</span>
+        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
       </template>
       <template #amountTransferred-data="{ row }">
-        <span>{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}</span>
+        <span
+          >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
+          {{ tokenSymbol(row.tokenAddress) }}</span
+        >
       </template>
     </TableComponent>
   </div>
@@ -112,6 +119,7 @@ const route = useRoute()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
+const isLoadingSetStatus = ref(false)
 
 const expenseAccountEip712Address = computed(
   () =>
@@ -137,12 +145,12 @@ const columns = [
   },
   {
     key: 'transactions',
-    label: 'Total Transactions',
+    label: 'Max Transactions',
     sortable: false
   },
   {
     key: 'amountTransferred',
-    label: 'Amount Transferred',
+    label: 'Max Amount',
     sortable: false
   },
   {
@@ -169,7 +177,7 @@ const {
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
-  isPending: isLoadingDeactivateApproval,
+  // isPending: isLoadingDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -182,7 +190,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 //activate approval
 const {
   writeContract: executeActivateApproval,
-  isPending: isLoadingActivateApproval,
+  // isPending: isLoadingActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()
@@ -231,14 +239,18 @@ const activateApproval = async (signature: `0x{string}`) => {
 //#region Watch
 watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
-    addSuccessToast('Activate Successful')
+    signatureToUpdate.value = ''
+    isLoadingSetStatus.value = false
     expenseDataStore.fetchAllExpenseData(route.params.id as string)
+    addSuccessToast('Activate Successful')
   }
 })
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
-    addSuccessToast('Deactivate Successful')
+    signatureToUpdate.value = ''
+    isLoadingSetStatus.value = false
     expenseDataStore.fetchAllExpenseData(route.params.id as string)
+    addSuccessToast('Deactivate Successful')
   }
 })
 watch(errorDeactivateApproval, (newVal) => {

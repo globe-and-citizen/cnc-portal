@@ -71,7 +71,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
   // Todo count how many time it's called or mounted
   onMounted(async () => {
     await reloadExpenseData()
-    console.log('allExpenseData', allExpenseData.value)
+    // console.log('allExpenseData', allExpenseData.value)
   })
 
   return {
