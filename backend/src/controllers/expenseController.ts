@@ -111,6 +111,15 @@ export const getExpenses = async (req: Request, res: Response) => {
     const expenses = await prisma.expense.findMany({
       where: whereClause,
       orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: {
+            name: true,
+            address: true,
+            imageUrl: true
+          }
+        }
+      }
     });
 
     const _expenses = await Promise.all(
