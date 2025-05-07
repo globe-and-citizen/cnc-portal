@@ -214,7 +214,7 @@ describe('ApproveUsersForm', () => {
       await wrapper.find('button[data-test="approve-button"]').trigger('click')
       await wrapper.vm.$nextTick()
       // TODO: this check is not valid
-      // expect(wrapper.vm.v$.$invalid).toBe(true)
+      expect(wrapper.vm.v$.$invalid).toBe(true)
       expect(wrapper.emitted('approveUser')).toBeFalsy()
     })
     it('should emit approve address with correct arguments', async () => {
@@ -222,7 +222,7 @@ describe('ApproveUsersForm', () => {
 
       const budgetLimitType = 1
       const limitValue = '100'
-      const date = new Date()
+      const date = new Date(Date.now() + 60 * 60 * 1000)
       const formData = [
         {
           name: 'Test User',
@@ -230,21 +230,46 @@ describe('ApproveUsersForm', () => {
           token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
         }
       ]
+      const selectedOptions = {
+        0: true,
+        1: false,
+        2: false
+      }
+      const values = {
+        0: 100,
+        1: null,
+        2: null
+      }
 
+      wrapper.vm.selectedOptions['0'] = true
+      wrapper.vm.values['0'] = 100
       ;(wrapper.vm as unknown as ComponentData).budgetLimitType = budgetLimitType
       ;(wrapper.vm as unknown as ComponentData).limitValue = limitValue
       ;(wrapper.vm as unknown as ComponentData).date = date
       ;(wrapper.vm as unknown as ComponentData).input = formData[0]
       ;(wrapper.vm as unknown as ComponentData).description = 'description'
 
+      wrapper.vm.$forceUpdate()
       await wrapper.vm.$nextTick()
+      // await flushPromises()
 
-      await wrapper.find('button[data-test="approve-button"]').trigger('click')
+      // await wrapper.find('button[data-test="approve-button"]').trigger('click')
       await wrapper.vm.$nextTick()
+      // await flushPromises()
+
+      console.log('wrapper.vm.selectedOptions', wrapper.vm.selectedOptions)
+      console.log('wrapper.vm.values', wrapper.vm.values)
+      console.log('wrapper.vm.resultArray', wrapper.vm.resultArray) 
+
+      wrapper.vm.submitApprove()
 
       // @ts-expect-error: mocked
       expect(wrapper.vm.v$.$invalid).toBe(false)
       expect(wrapper.emitted('approveUser')).toBeTruthy()
+      console.log('wrapper.vm.v$.input.$errors', wrapper.vm.v$.input.$errors)
+      console.log('wrapper.vm.v$.description.$errors', wrapper.vm.v$.description.$errors)
+      console.log('wrapper.vm.v$.resultArray.$errors', wrapper.vm.v$.resultArray.$errors)
+      console.log('wrapper.vm.v$.date.$errors', wrapper.vm.v$.date.$errors)
     })
   })
   describe('Methods', () => {
