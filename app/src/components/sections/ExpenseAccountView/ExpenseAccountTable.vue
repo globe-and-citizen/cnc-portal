@@ -54,21 +54,7 @@
         >
       </template>
       <template #member-data="{ row }">
-        <div class="flex w-full gap-2">
-          <div class="w-8 sm:w-10">
-            <img
-              alt="User avatar"
-              class="rounded-full"
-              src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-            />
-          </div>
-          <div class="flex flex-col text-gray-600">
-            <p class="font-bold text-sm line-clamp-1" data-test="user-name">{{ row.name }}</p>
-            <p class="text-sm" data-test="formatted-address">
-              {{ row.approvedAddress?.slice(0, 6) }}...{{ row.approvedAddress?.slice(-4) }}
-            </p>
-          </div>
-        </div>
+        <UserComponent v-if="!!row.user" :user="row.user"></UserComponent>
       </template>
       <template #expiryDate-data="{ row }">
         <span>{{ new Date(Number(row.expiry) * 1000).toLocaleString('en-US') }}</span>
@@ -103,13 +89,14 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { useRoute } from 'vue-router'
+import UserComponent from '@/components/UserComponent.vue'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -270,6 +257,9 @@ watch(errorGetOwner, (newVal) => {
     log.error(parseError(newVal))
     addErrorToast('Error Getting Contract Owner')
   }
+})
+onMounted(() => {
+  console.log('expenseDataStore.allExpenseDataParsed', expenseDataStore.allExpenseDataParsed)
 })
 //#endregion
 </script>
