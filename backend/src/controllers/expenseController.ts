@@ -41,36 +41,12 @@ export const addExpense = async (req: Request, res: Response) => {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
     // TODO: should be only one expense active for the user
-    // const existingExpenses = await prisma.expense.findMany({
-    //   where: {
-    //     teamId,
-    //     userAddress: /*(typeof data === "string") 
-    //       ? JSON.parse(data).approvedAddress
-    //       : */data.approvedAddress 
-    //   },
-    // })
-
-    // const syncedExpenses = await Promise.all(existingExpenses.map(async (expense) => 
-    //   await syncExpenseStatus(expense)
-    // ))
-
-    // const activeExpenses = syncedExpenses.filter((expense) => 
-    //   expense.status !== "expired" && expense.status !== "limit-reached"
-    // )
-
-    // // Check if the user already has an active expense
-    // if (activeExpenses.length > 0) {
-    //   return errorResponse(400, "User already has an active expense", res);
-    // }
-
     const expense = await prisma.expense.create({
       data: {
         teamId,
         signature,
-        data: data,//JSON.stringify(data),
-        userAddress: /*(typeof data === "string")
-         ? JSON.parse(data).approvedAddress
-         : */data.approvedAddress, //I think this should be the user that is approved for the expense
+        data: data,
+        userAddress: data.approvedAddress,
         status: "signed",
       },
     });
@@ -111,17 +87,25 @@ export const getExpenses = async (req: Request, res: Response) => {
     const expenses = await prisma.expense.findMany({
       where: whereClause,
       orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: {
+            name: true,
+            address: true,
+            imageUrl: true
+          }
+        }
+      }
     });
 
     const _expenses = await Promise.all(
       expenses
-        // .filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
         .map(async (expense) => await syncExpenseStatus(expense)
     ))
     // TODO: for each expense, check the status and update it
     
     return res.status(200).json(
-      _expenses//.filter(expense => expense.status !== "expired" && expense.status !== "limit-reached")
+      _expenses
     );
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
@@ -148,7 +132,7 @@ const syncExpenseStatus = async (expense: Expense) => {
     }
   });
 
-  const data = expense.data as BudgetLimit//JSON.parse(expense.data)
+  const data = expense.data as BudgetLimit
   
   const balances = await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
