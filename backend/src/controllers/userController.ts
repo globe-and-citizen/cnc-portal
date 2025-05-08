@@ -14,7 +14,6 @@ import { isAddress } from "viem";
 export const getNonce = async (req: Request, res: Response) => {
   const { address } = req.params;
 
-  console.log("getNonce", address);
   try {
     if (!isAddress(address))
       return errorResponse(401, "Get nonce error: Invalid user address", res);

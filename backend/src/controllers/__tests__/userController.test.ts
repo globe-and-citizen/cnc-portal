@@ -76,7 +76,7 @@ describe("User Controller", () => {
         "Get nonce error: Invalid user address"
       );
     });
-  
+
     it("should return a nonce if user does not exist", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
       const mockAddress = faker.finance.ethereumAddress();
@@ -89,16 +89,20 @@ describe("User Controller", () => {
       });
     });
 
-    it.skip("should return the user's nonce if user exists", async () => {
+    it("should return the user's nonce if user exists", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+      const mockAddress = faker.finance.ethereumAddress();
+
       const response = await request(app)
-        .get("/nonce")
-        .set("address", "0xMemberAddress")
+        .get(`/nonce/${mockAddress}`)
         .send();
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.nonce).toBe(mockUser.nonce);
+      expect(response.body).toEqual({
+        success: true,
+        nonce: mockUser.nonce,
+      });
+     
     });
 
     it.skip("should return 500 if an error occurs", async () => {
