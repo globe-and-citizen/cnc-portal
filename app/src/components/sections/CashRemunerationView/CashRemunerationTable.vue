@@ -163,7 +163,7 @@ watch(
 )
 watch(teamWageDataError, (newVal) => {
   if (newVal) {
-    toastStore.addErrorToast('Failed to fetch team wage data')
+    toastStore.addErrorToast('Failed to fetch user wage data')
   }
 })
 

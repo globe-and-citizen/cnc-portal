@@ -54,7 +54,8 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
             {
               userAddress: '0x123'
             }
-          ])
+          ]),
+          error: errorMock
         }))
       }))
     }))
@@ -62,6 +63,7 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
 })
 
 const mockErrorToast = vi.fn()
+let mockCurrentAddress = '0x123'
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
@@ -77,7 +79,7 @@ vi.mock('@/stores', async (importOriginal) => {
       addErrorToast: mockErrorToast
     })),
     useUserDataStore: vi.fn(() => ({
-      address: '0x123'
+      address: mockCurrentAddress
     }))
   }
 })
@@ -137,11 +139,19 @@ describe('CashRemunerationTable', () => {
     expect((wrapper.vm as unknown as ComponentData).statusUrl).toBe('&status=pending')
   })
 
+  it('should not show the submit claim if user has no wage', () => {
+    mockCurrentAddress = '0x321'
+    const wrapper = createComponent()
+    const submitClaim = wrapper.findComponent({ name: 'SubmitClaims' })
+    expect(submitClaim.exists()).toBeFalsy()
+  })
+
   it('shows error toast when error occurs', async () => {
     errorMock.value = new Error('Test error')
     const wrapper = createComponent()
 
     await wrapper.vm.$nextTick()
     expect(mockErrorToast).toHaveBeenCalledWith('Failed to fetch team wage data')
+    expect(mockErrorToast).toHaveBeenCalledWith('Failed to fetch user wage data')
   })
 })
