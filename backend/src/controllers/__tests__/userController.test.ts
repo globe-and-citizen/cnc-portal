@@ -24,7 +24,7 @@ function setAddressMiddleware(address: string) {
 const app = express();
 app.use(express.json());
 app.use(setAddressMiddleware("0xOwnerAddress"));
-app.get("/nonce", getNonce);
+app.get("/nonce/:address", getNonce);
 app.get("/user/1", getUser);
 app.put("/user/1", updateUser);
 app.get("/users", getAllUsers);
@@ -61,7 +61,7 @@ const mockUsers: User[] = [
 ];
 
 describe("User Controller", () => {
-  describe("GET: /nonce", () => {
+  describe("GET: /nonce/:address", () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
@@ -69,21 +69,18 @@ describe("User Controller", () => {
     it("should return 401 if address is missing", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const response = await request(app).get("/nonce").send({});
+      const response = await request(app).get("/nonce/bla").send({});
 
       expect(response.status).toBe(401);
       expect(response.body.message).toEqual(
         "Get nonce error: Missing user address"
       );
     });
-
-    it.skip("should return a nonce if user does not exist", async () => {
+  
+    it("should return a nonce if user does not exist", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
       const mockAddress = faker.finance.ethereumAddress();
-      const response = await request(app)
-        .get("/nonce")
-        .set("address", mockAddress)
-        .send();
+      const response = await request(app).get(`/nonce/${mockAddress}`).send();
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -208,7 +205,7 @@ describe("User Controller", () => {
 
     it("should return 404 if user is not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-      
+
       const response = await request(app)
         .put("/user/0xNonExistentAddress")
         .set("address", "0xOwnerAddress")
@@ -239,7 +236,7 @@ describe("User Controller", () => {
 
     it.skip("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
-      
+
       const response = await request(app)
         .put("/user/0xMemberAddress")
         .set("address", "0xMemberAddress")
@@ -325,5 +322,4 @@ describe("User Controller", () => {
       );
     });
   });
-  
 });

@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../utils";
 import { Request, Response } from "express";
 import { generateNonce, SiweMessage } from "siwe";
 import { errorResponse } from "../utils/utils";
-
-const prisma = new PrismaClient();
+import { log } from "console";
+import { isAddress } from "viem";
 
 /**
  *
@@ -14,17 +14,16 @@ const prisma = new PrismaClient();
 export const getNonce = async (req: Request, res: Response) => {
   const { address } = req.params;
 
+  console.log("getNonce", address);
   try {
-    if (!address)
-      return errorResponse(401, "Get nonce error: Missing user address", res);
+    if (!isAddress(address))
+      return errorResponse(401, "Get nonce error: Invalid user address", res);
 
     const user = await prisma.user.findUnique({
       where: {
         address: address,
       },
     });
-
-    await prisma.$disconnect();
 
     //console.log("user", user);
     if (!user)
