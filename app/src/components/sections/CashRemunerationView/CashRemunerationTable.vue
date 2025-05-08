@@ -134,7 +134,9 @@ const {
 
 const { data: teamWageData, error: teamWageDataError } = useCustomFetch(
   computed(() => `/wage/?teamId=${teamId.value}`)
-).json<Array<WageResponse>>()
+)
+  .get()
+  .json<Array<WageResponse>>()
 
 const hasWage = computed(() => {
   const userWage = teamWageData.value?.find((wage) => wage.userAddress === currentAddress)

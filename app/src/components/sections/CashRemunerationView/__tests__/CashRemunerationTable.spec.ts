@@ -47,6 +47,15 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
         error: errorMock,
         execute: mockFetch,
         isFetching: ref(false)
+      })),
+      get: vi.fn(() => ({
+        json: vi.fn(() => ({
+          data: ref([
+            {
+              userAddress: '0x123'
+            }
+          ])
+        }))
       }))
     }))
   }
@@ -66,6 +75,9 @@ vi.mock('@/stores', async (importOriginal) => {
     })),
     useToastStore: vi.fn(() => ({
       addErrorToast: mockErrorToast
+    })),
+    useUserDataStore: vi.fn(() => ({
+      address: '0x123'
     }))
   }
 })
