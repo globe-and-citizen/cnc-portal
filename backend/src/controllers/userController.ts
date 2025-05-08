@@ -24,6 +24,7 @@ export const getNonce = async (req: Request, res: Response) => {
       },
     });
 
+    
     if (!user)
       return res.status(200).json({
         success: true,
@@ -31,7 +32,7 @@ export const getNonce = async (req: Request, res: Response) => {
       });
 
     const nonce = user.nonce;
-
+    
     return res.status(200).json({
       success: true,
       nonce,
@@ -52,6 +53,7 @@ export const getUser = async (req: Request, res: Response) => {
         address: address,
       },
     });
+
 
     if (!user) return errorResponse(404, "User not found", res);
 

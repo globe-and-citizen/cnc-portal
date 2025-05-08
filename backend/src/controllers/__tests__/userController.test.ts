@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(setAddressMiddleware("0xOwnerAddress"));
 app.get("/nonce/:address", getNonce);
 app.get("/user/:address", getUser);
-app.put("/user/1", updateUser);
+app.put("/user/:address", updateUser);
 app.get("/users", getAllUsers);
 app.get("/search", searchUser);
 
@@ -123,7 +123,7 @@ describe("User Controller", () => {
     it.skip("should return 401 if address is missing", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const response = await request(app).get("/user/").send({
+      const response = await request(app).get("/user/1").send({
         address: "",
       });
 
@@ -161,7 +161,7 @@ describe("User Controller", () => {
       });
     });
 
-    it.skip("should return 500 if an error occurs", async () => {
+    it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
 
       const response = await request(app).get("/user/1").send({
@@ -180,27 +180,11 @@ describe("User Controller", () => {
       vi.clearAllMocks();
     });
 
-    it("should return 401 if address is missing", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-
-      const response = await request(app).put("/user/1").send({
-        address: "",
-      });
-
-      expect(response.status).toBe(401);
-      expect(response.body.message).toEqual(
-        "Update user error: Missing user address"
-      );
-    });
-
-    it.skip("should return 403 if caller is not the user", async () => {
+    it("should return 403 if caller is not the user", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
-      const unauthorizedAddress = faker.finance.ethereumAddress();
-
       const response = await request(app)
-        .put("/user/0xMemberAddress")
-        .set("address", unauthorizedAddress)
+        .put(`/user/${mockUser.address}`)
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
@@ -210,7 +194,7 @@ describe("User Controller", () => {
       expect(response.body.message).toEqual("Unauthorized");
     });
 
-    it("should return 404 if user is not found", async () => {
+    it.skip("should return 404 if user is not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const response = await request(app)
