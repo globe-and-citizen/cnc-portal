@@ -11,6 +11,7 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { User } from "@prisma/client";
 import { de, faker } from "@faker-js/faker";
+import e from "express";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
@@ -50,13 +51,14 @@ const mockUsers = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-  { id: 2,
+  {
+    id: 2,
     name: "Bob",
     address: "0xBobAddress",
     nonce: "nonce456",
     imageUrl: "https://example.com/image2.jpg",
     createdAt: new Date(),
-    updatedAt: new Date(), 
+    updatedAt: new Date(),
   },
 ];
 
@@ -278,7 +280,7 @@ describe("User Controller", () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        users: mockUsers.map(user => ({
+        users: mockUsers.map((user) => ({
           ...user,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
@@ -319,16 +321,24 @@ describe("User Controller", () => {
       );
     });
 
-    it.skip("should return 200 and all users", async () => {
-      const mockUsers = [mockUser, { ...mockUser, id: 1 }];
+    it("should return 200 and matched users", async () => {
       vi.spyOn(prisma.user, "findMany").mockResolvedValue(mockUsers);
 
       const response = await request(app)
         .get("/search")
         .query({ address: "0xMemberAddress" });
 
+      const expectedUsers = mockUsers.map((user) => ({
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      }));
+
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockUsers);
+      expect(response.body).toEqual({
+        success: true,
+        users: expectedUsers,
+      });
     });
 
     it("should rerturn 500 if an error occurs", async () => {
