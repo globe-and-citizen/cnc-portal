@@ -35,7 +35,7 @@ vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    readContract: vi.fn(), // _mocks.mockReadContract,
+    readContract: vi.fn(),
     estimateGas: vi.fn()
   }
 })
@@ -60,7 +60,6 @@ describe('ExpenseAccountSection', () => {
 
   const createComponent = ({ global = {} }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
-      // data,
       global: {
         plugins: [
           createTestingPinia({
@@ -170,16 +169,13 @@ describe('ExpenseAccountSection', () => {
       expect(spendButton.props('disabled')).toBe(true)
     })
     it('should notify amount withdrawn error', async () => {
-      // vi.mocked(useToastStore).mockReturnValue({ ..._mocks.mockUseToastStore })
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(util.log, 'error')
       //@ts-expect-error: not visible from vm
       wrapper.vm.errorTransfer = new Error('Error getting amount withdrawn')
       await flushPromises()
 
-      expect(/*_mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
-        'Failed to transfer'
-      )
+      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
       expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
     })
     it('should call correct logs when transferNativeToken fails', async () => {
