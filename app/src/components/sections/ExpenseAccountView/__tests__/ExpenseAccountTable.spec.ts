@@ -38,7 +38,12 @@ const mockApprovals = [
       0: `5`,
       1: `50`
     },
-    status: 'enabled'
+    status: 'enabled',
+    user: {
+      address: '0x1234567890123456789012345678901234567890',
+      name: 'User One',
+      avatarUrl: null
+    }
   },
   {
     approvedAddress: '0x1234567890123456789012345678901234567890',
@@ -56,7 +61,12 @@ const mockApprovals = [
       0: `5`,
       1: `50`
     },
-    status: 'disabled'
+    status: 'disabled',
+    user: {
+      address: '0x1234567890123456789012345678901234567890',
+      name: 'User Two',
+      avatarUrl: null
+    }
   },
   {
     approvedAddress: '0x1234567890123456789012345678901234567890',
@@ -74,7 +84,12 @@ const mockApprovals = [
       0: `5`,
       1: `50`
     },
-    status: 'expired'
+    status: 'expired',
+    user: {
+      address: '0x1234567890123456789012345678901234567890',
+      name: 'User Three',
+      avatarUrl: null
+    }
   }
 ]
 
@@ -249,13 +264,14 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[0].budgetData[0].value)
+      expect(firstRow.findComponent({ name: 'UserComponent' })).toBeTruthy()
+      expect(firstRow.html()).toContain(mockApprovals[0].user.name)
       const secondRow = expenseAccountTable.find('[data-test="1-row"]')
       expect(secondRow.exists()).toBeTruthy()
-      expect(secondRow.html()).toContain(mockApprovals[1].budgetData[0].value)
+      expect(secondRow.html()).toContain(mockApprovals[1].user.name)
       const thirdRow = expenseAccountTable.find('[data-test="2-row"]')
       expect(thirdRow.exists()).toBeTruthy()
-      expect(thirdRow.html()).toContain(mockApprovals[2].budgetData[0].value)
+      expect(thirdRow.html()).toContain(mockApprovals[2].user.name)
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeTruthy()
       expect(expenseAccountTable.find('[data-test="enable-button"]').exists()).toBeTruthy()
     })
