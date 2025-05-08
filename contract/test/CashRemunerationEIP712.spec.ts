@@ -55,7 +55,7 @@ describe('CashRemuneration (EIP712)', () => {
 
         types = {
           Wage: [
-            { name: 'hourlyRate', type: 'uint256'},
+            { name: 'hourlyRate', type: 'uint256' },
             { name: 'tokenAddress', type: 'address' }
           ],
           WageClaim: [
@@ -250,21 +250,21 @@ describe('CashRemuneration (EIP712)', () => {
             .to.emit(cashRemunerationProxy, 'Paused')
             .withArgs(employer.address)
 
-            const wageClaim = {
-              employeeAddress: employee.address,
-              hoursWorked: 5,
-              wages: [
-                {
-                  hourlyRate: ethers.parseEther('10'),
-                  tokenAddress: ethers.ZeroAddress
-                },
-                {
-                  hourlyRate: BigInt(20 * 1e6),
-                  tokenAddress: await mockUSDC.getAddress()
-                }
-              ],
-              date: Math.floor(Date.now() / 1000) + 3
-            }
+          const wageClaim = {
+            employeeAddress: employee.address,
+            hoursWorked: 5,
+            wages: [
+              {
+                hourlyRate: ethers.parseEther('10'),
+                tokenAddress: ethers.ZeroAddress
+              },
+              {
+                hourlyRate: BigInt(20 * 1e6),
+                tokenAddress: await mockUSDC.getAddress()
+              }
+            ],
+            date: Math.floor(Date.now() / 1000) + 3
+          }
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
 
