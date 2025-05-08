@@ -30,7 +30,7 @@ describe('Currency Store', () => {
 
   it('initializes with default currency USD', () => {
     const store = useCurrencyStore()
-    expect(store.currency).toStrictEqual({
+    expect(store.localCurrency).toStrictEqual({
       code: 'USD',
       name: 'US Dollar',
       symbol: '$'
@@ -71,14 +71,14 @@ describe('Currency Store', () => {
     const store = useCurrencyStore()
 
     store.setCurrency('EUR')
-    expect(store.currency).toStrictEqual({
+    expect(store.localCurrency).toStrictEqual({
       code: 'EUR',
       name: 'Euro',
       symbol: '€'
     })
 
     store.setCurrency('CAD')
-    expect(store.currency).toStrictEqual({
+    expect(store.localCurrency).toStrictEqual({
       code: 'CAD',
       name: 'Canadian Dollar',
       symbol: 'CA$'
@@ -90,7 +90,7 @@ describe('Currency Store', () => {
     store1.setCurrency('IDR')
 
     const store2 = useCurrencyStore()
-    expect(store2.currency).toStrictEqual({
+    expect(store2.localCurrency).toStrictEqual({
       code: 'IDR',
       name: 'Indonesian Rupiah',
       symbol: 'Rp'
@@ -116,6 +116,6 @@ describe('Currency Store', () => {
     }
     await store.fetchNativeTokenPrice()
 
-    expect(store.nativeTokenPrice).toBe(1)
+    expect(store.nativeToken.priceInLocal).toBe(1)
   })
 })

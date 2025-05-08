@@ -70,8 +70,8 @@
           >
           <br />
           <span
-            >{{ getHoulyRateInUserCurrency(row.wage.cashRatePerHour) }}
-            {{ currencyStore.currency.code }} / h
+            >{{ getHourlyRateInUserCurrency(row.wage.cashRatePerHour) }}
+            {{ currencyStore.localCurrency.code }} / h
           </span>
         </template>
         <template #status-data="{ row }">
@@ -121,8 +121,10 @@ const statusUrl = computed(() =>
   selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`
 )
 const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
-const getHoulyRateInUserCurrency = (rate: number) => {
-  return (currencyStore.nativeTokenPrice ? rate * currencyStore.nativeTokenPrice : 0).toFixed(2)
+const getHourlyRateInUserCurrency = (rate: number) => {
+  return (
+    currencyStore.nativeToken.priceInLocal ? rate * currencyStore.nativeToken.priceInLocal : 0
+  ).toFixed(2)
 }
 const {
   data: teamClaimData,

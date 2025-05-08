@@ -8,7 +8,7 @@ export function useCryptoPrice(tokenId: string) {
   const price = ref<number | null>(null)
   const priceInUSD = ref<number | null>(null)
   const currencyStore = useCurrencyStore()
-  const { currency } = storeToRefs(currencyStore)
+  const { localCurrency } = storeToRefs(currencyStore)
   const {
     execute,
     data: priceResponse,
@@ -23,7 +23,7 @@ export function useCryptoPrice(tokenId: string) {
   type currencyType = keyof PriceResponse['market_data']['current_price']
 
   const fetchPrice = async () => {
-    const currencyCode = currencyStore.currency.code.toLowerCase() as currencyType
+    const currencyCode = currencyStore.localCurrency.code.toLowerCase() as currencyType
     price.value = priceResponse.value?.market_data.current_price[currencyCode] || null
     priceInUSD.value = priceResponse.value?.market_data?.current_price?.usd || null
   }
@@ -33,7 +33,7 @@ export function useCryptoPrice(tokenId: string) {
     await fetchPrice()
   })
 
-  watch(currency, async (newVal) => {
+  watch(localCurrency, async (newVal) => {
     if (newVal) {
       await fetchPrice()
     }

@@ -8,13 +8,18 @@ import * as utils from '@/utils'
 import { parseEther } from 'viem'
 
 const mockUseCurrencyStore = {
-  currency: {
+  localCurrency: {
     code: `USD`,
     symbol: `$`
   },
-  nativeTokenPrice: 2500,
-  nativeTokenPriceInUSD: 2500,
-  usdPriceInLocal: 1
+  nativeToken: {
+    priceInLocal: 2500,
+    priceInUSD: 2500
+  },
+  usdc: {
+    priceInLocal: 1,
+    priceInUSD: 1
+  }
 }
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {

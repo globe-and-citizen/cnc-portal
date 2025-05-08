@@ -31,9 +31,14 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 const mockCurrencyStore = {
-  nativeTokenPriceInUSD: 2000,
-  nativeTokenPrice: 3000,
-  usdPriceInLocal: 1
+  nativeToken: {
+    priceInLocal: 3000,
+    priceInUSD: 2000
+  },
+  usdc: {
+    priceInLocal: 1,
+    priceInUSD: 1
+  }
 }
 
 vi.mock('@/stores/currencyStore', () => ({
@@ -113,8 +118,8 @@ describe('useContractBalance', () => {
   it('should compute total value in local currency correctly', () => {
     mockUseBalance.data.value = { value: BigInt('1000000000000000000') } // 1 ETH
     mockUseReadContract.data.value = BigInt('100000000') // 100 USDC
-    mockCurrencyStore.nativeTokenPrice = 3000
-    mockCurrencyStore.usdPriceInLocal = 1 // $1 per USDC
+    mockCurrencyStore.nativeToken.priceInLocal = 3000
+    mockCurrencyStore.usdc.priceInLocal = 1 // $1 per USDC
 
     const { balances } = useContractBalance(mockAddress)
 

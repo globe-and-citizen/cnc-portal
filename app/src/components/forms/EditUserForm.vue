@@ -65,7 +65,7 @@
         <option
           :key="currency.code"
           v-for="currency in LIST_CURRENCIES"
-          :selected="currencyStore.currency.code == currency.code"
+          :selected="currencyStore.localCurrency.code == currency.code"
           :value="currency.code"
         >
           {{ currency.code }}
@@ -110,7 +110,7 @@ const emits = defineEmits(['submitEditUser'])
 
 // Currency store
 const currencyStore = useCurrencyStore()
-const selectedCurrency = ref<string>(currencyStore.currency.code)
+const selectedCurrency = ref<string>(currencyStore.localCurrency.code)
 
 // User form
 const user = defineModel({
