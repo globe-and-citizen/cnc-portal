@@ -168,7 +168,16 @@ describe('CashRemuneration (EIP712)', () => {
           const wageClaim = {
             employeeAddress: employee.address,
             hoursWorked: 5,
-            hourlyRate: 10,
+            wages: [
+              {
+                hourlyRate: ethers.parseEther('10'),
+                tokenAddress: ethers.ZeroAddress
+              },
+              {
+                hourlyRate: BigInt(20 * 1e6),
+                tokenAddress: await mockUSDC.getAddress()
+              }
+            ],
             date: Math.floor(Date.now() / 1000)
           }
 
