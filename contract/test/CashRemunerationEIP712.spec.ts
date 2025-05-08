@@ -2,15 +2,21 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { CashRemunerationEIP712 } from '../typechain-types'
+import { MockERC20 } from '../typechain-types'
 
 describe('CashRemuneration (EIP712)', () => {
   let cashRemunerationProxy: CashRemunerationEIP712
+  let mockUSDC: MockERC20
 
   const deployContract = async (employer: SignerWithAddress) => {
+    // Deploy mock tokens first
+    const MockToken = await ethers.getContractFactory('MockERC20')
+    mockUSDC = await MockToken.deploy('USDC', 'USDC')
+
     const CashRemunerationImplementation = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationProxy = (await upgrades.deployProxy(
       CashRemunerationImplementation,
-      [employer.address],
+      [employer.address, await mockUSDC.getAddress()],
       { initializer: 'initialize' }
     )) as unknown as CashRemunerationEIP712
   }
@@ -48,13 +54,20 @@ describe('CashRemuneration (EIP712)', () => {
         }
 
         types = {
+          Wage: [
+            { name: 'hourlyRate', type: 'uint256'},
+            { name: 'tokenAddress', type: 'address' }
+          ],
           WageClaim: [
             { name: 'employeeAddress', type: 'address' },
             { name: 'hoursWorked', type: 'uint8' },
-            { name: 'hourlyRate', type: 'uint256' },
+            // { name: 'hourlyRate', type: 'uint256' },
+            { name: 'wages', type: 'Wage[]' },
             { name: 'date', type: 'uint256' }
           ]
         }
+
+        mockUSDC.mint(verifyingContract, ethers.parseUnits('1000000', 6))
       })
 
       it('Then I become the employer of the contract', async () => {
@@ -83,7 +96,16 @@ describe('CashRemuneration (EIP712)', () => {
         const wageClaim = {
           employeeAddress: employee.address,
           hoursWorked: 5,
-          hourlyRate: ethers.parseEther('20'),
+          wages: [
+            {
+              hourlyRate: ethers.parseEther('10'),
+              tokenAddress: ethers.ZeroAddress
+            },
+            {
+              hourlyRate: BigInt(20 * 1e6),
+              tokenAddress: await mockUSDC.getAddress()
+            }
+          ],
           date: Math.floor(Date.now() / 1000)
         }
 
@@ -97,12 +119,17 @@ describe('CashRemuneration (EIP712)', () => {
 
         console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
-        const amount = BigInt(wageClaim.hoursWorked) * wageClaim.hourlyRate
+        const amount = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+
+        const amountUSDC = BigInt(wageClaim.hoursWorked) * wageClaim.wages[1].hourlyRate
 
         await expect(tx).to.changeEtherBalance(employee, amount)
         await expect(tx)
           .to.emit(cashRemunerationProxy, 'Withdraw')
           .withArgs(employee.address, amount)
+        await expect(tx)
+          .to.emit(cashRemunerationProxy, 'WithdrawToken')
+          .withArgs(employee.address, await mockUSDC.getAddress(), amountUSDC)
         const paidWageClaim = await cashRemunerationProxy.paidWageClaims(sigHash)
         expect(paidWageClaim).to.be.equal(true)
       })
