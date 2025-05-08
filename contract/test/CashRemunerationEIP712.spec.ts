@@ -190,9 +190,18 @@ describe('CashRemuneration (EIP712)', () => {
         it('the wage has already been paid', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 5,
-            hourlyRate: ethers.parseEther('20'),
-            date: Math.floor(Date.now() / 1000) + 1
+            hoursWorked: 8,
+            wages: [
+              {
+                hourlyRate: ethers.parseEther('10'),
+                tokenAddress: ethers.ZeroAddress
+              },
+              {
+                hourlyRate: BigInt(20 * 1e6),
+                tokenAddress: await mockUSDC.getAddress()
+              }
+            ],
+            date: Math.floor(Date.now() / 1000)
           }
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
@@ -201,7 +210,7 @@ describe('CashRemuneration (EIP712)', () => {
 
           const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
 
-          const amount = BigInt(wageClaim.hoursWorked) * wageClaim.hourlyRate
+          const amount = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
 
           await expect(tx).to.changeEtherBalance(employee, amount)
           await expect(tx)
