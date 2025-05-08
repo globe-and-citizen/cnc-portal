@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
@@ -152,11 +152,7 @@ const columns = [
 ] as TableColumn[]
 
 //#endregion Composables
-const {
-  data: contractOwnerAddress,
-  // refetch: fetchExpenseAccountOwner,
-  error: errorGetOwner
-} = useReadContract({
+const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address as unknown as Address,
   abi: expenseAccountABI
@@ -164,7 +160,6 @@ const {
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
-  // isPending: isLoadingDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -177,7 +172,6 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 //activate approval
 const {
   writeContract: executeActivateApproval,
-  // isPending: isLoadingActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()
@@ -257,9 +251,6 @@ watch(errorGetOwner, (newVal) => {
     log.error(parseError(newVal))
     addErrorToast('Error Getting Contract Owner')
   }
-})
-onMounted(() => {
-  console.log('expenseDataStore.allExpenseDataParsed', expenseDataStore.allExpenseDataParsed)
 })
 //#endregion
 </script>
