@@ -27,7 +27,7 @@ app.use(setAddressMiddleware("0xOwnerAddress"));
 app.get("/nonce/:address", getNonce);
 app.get("/user/:address", getUser);
 app.put("/user/:address", updateUser);
-app.get("/users", getAllUsers);
+app.get("/", getAllUsers);
 app.get("/search", searchUser);
 
 const mockUser: User = {
@@ -39,25 +39,25 @@ const mockUser: User = {
   createdAt: new Date(),
   updatedAt: new Date(),
 } as User;
-const mockUsers: User[] = [
+
+const mockUsers = [
   {
     id: 1,
-    address: "0xMemberAddress",
-    name: "MemberName",
+    name: "Alice",
+    address: "0xAliceAddress",
     nonce: "nonce123",
-    imageUrl: "hhtps://example.com/image.jpg",
+    imageUrl: "https://example.com/image.jpg",
     createdAt: new Date(),
     updatedAt: new Date(),
-  } as User,
-  {
-    id: 2,
-    address: "0xAnotherMemberAddress",
-    name: "AnotherMemberName",
+  },
+  { id: 2,
+    name: "Bob",
+    address: "0xBobAddress",
     nonce: "nonce456",
-    imageUrl: "hhtps://example.com/anotherimage.jpg",
+    imageUrl: "https://example.com/image2.jpg",
     createdAt: new Date(),
-    updatedAt: new Date(),
-  } as User,
+    updatedAt: new Date(), 
+  },
 ];
 
 const mockAddress = faker.finance.ethereumAddress();
@@ -210,12 +210,10 @@ describe("User Controller", () => {
     it.skip("should return 404 if user is not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
-      const response = await request(app)
-        .put("/user/0xMemberAddress") 
-        .send({
-          name: "NewName",
-          imageUrl: "https://example.com/newimage.jpg",
-        });
+      const response = await request(app).put("/user/0xMemberAddress").send({
+        name: "NewName",
+        imageUrl: "https://example.com/newimage.jpg",
+      });
 
       expect(response.status).toBe(404);
       expect(response.body.message).toEqual("User not found");
@@ -266,20 +264,35 @@ describe("User Controller", () => {
       vi.clearAllMocks();
     });
 
-    it.skip("should return 200 and all users", async () => {
-      const mockUsers = [mockUser, { ...mockUser, id: 1 }];
-      vi.spyOn(prisma.user, "findMany").mockResolvedValue(mockUsers);
+    it("should return 200 and paginated users data", async () => {
+      const totalUsers = 20;
+      const page = 1;
+      const limit = 10;
 
-      const response = await request(app).get("/users").send();
+      vi.spyOn(prisma.user, "findMany").mockResolvedValue(mockUsers);
+      vi.spyOn(prisma.user, "count").mockResolvedValue(totalUsers);
+
+      const response = await request(app)
+        .get(`/?page=${page}&limit=${limit}`)
+        .send();
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockUsers);
+      expect(response.body).toEqual({
+        users: mockUsers.map(user => ({
+          ...user,
+          createdAt: user.createdAt.toISOString(),
+          updatedAt: user.updatedAt.toISOString(),
+        })),
+        totalUsers,
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+      });
     });
 
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findMany").mockRejectedValue(new Error("Error"));
 
-      const response = await request(app).get("/users").send();
+      const response = await request(app).get("/").send();
 
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual(
