@@ -73,7 +73,7 @@ describe("User Controller", () => {
 
       expect(response.status).toBe(401);
       expect(response.body.message).toEqual(
-        "Get nonce error: Missing user address"
+        "Get nonce error: Invalid user address"
       );
     });
   
