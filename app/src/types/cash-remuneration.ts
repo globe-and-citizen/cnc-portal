@@ -1,3 +1,5 @@
+import type { Address } from 'viem'
+
 export interface WageClaim {
   hoursWorked: number
   hourlyRate: number | bigint
@@ -38,4 +40,10 @@ export interface ClaimResponse {
   // name: string | null
   // status: string
   // cashRemunerationSignature: string | null
+}
+
+export interface WageResponse {
+  userAddress: Address
+  maximumHoursPerWeek: number
+  cashRatePerHour: number
 }

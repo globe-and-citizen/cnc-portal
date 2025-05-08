@@ -74,6 +74,7 @@ import MemberAction from './MemberAction.vue'
 import { useCustomFetch } from '@/composables'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
+import type { WageResponse } from '@/types'
 
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
@@ -83,11 +84,6 @@ const showAddMemberForm = ref(false)
 // Create a computed property for team ID
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
-interface WageData {
-  userAddress: Address
-  maximumHoursPerWeek: number
-  cashRatePerHour: number
-}
 const {
   data: teamWageData,
   isFetching: isTeamWageDataFetching,
@@ -96,7 +92,7 @@ const {
 } = useCustomFetch(
   computed(() => `/wage/?teamId=${teamId.value}`),
   { immediate: false }
-).json<Array<WageData>>()
+).json<Array<WageResponse>>()
 
 // Watch team ID update to fetch the team wage data
 watch(
