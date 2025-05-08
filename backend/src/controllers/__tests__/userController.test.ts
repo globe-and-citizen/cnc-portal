@@ -180,6 +180,19 @@ describe("User Controller", () => {
       vi.clearAllMocks();
     });
 
+    it.skip("should return 401 if address is missing", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+      const response = await request(app).put("/user/1").send({
+        address: "",
+        name: "NewName",
+        imageUrl: "https://example.com/newimage.jpg",
+      });
+      expect(response.status).toBe(401);
+      expect(response.body.message).toEqual(
+        "Update user error: Missing user address"
+      );
+    });
+
     it("should return 403 if caller is not the user", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
@@ -195,34 +208,39 @@ describe("User Controller", () => {
     });
 
     it.skip("should return 404 if user is not found", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
       const response = await request(app)
-        .put("/user/0xNonExistentAddress")
-        .set("address", "0xOwnerAddress")
+        .put("/user/0xMemberAddress") 
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
         });
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toEqual(undefined);
+      expect(response.body.message).toEqual("User not found");
     });
 
-    it.skip("should return 200 and the updated user", async () => {
+    it.skip("should return 200 and the user if found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
-      vi.spyOn(prisma.user, "update").mockResolvedValue(mockUser);
 
       const response = await request(app)
-        .put("/user/0xMemberAddress")
-        .set("address", "0xMemberAddress")
+        .put(`/user/${mockUser.address}`)
+        .set("address", mockUser.address)
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
         });
-
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockUser);
+      expect(response.body).toEqual({
+        id: mockUser.id,
+        address: mockUser.address,
+        name: "NewName",
+        nonce: mockUser.nonce,
+        imageUrl: "https://example.com/newimage.jpg",
+        createdAt: mockUser.createdAt.toISOString(),
+        updatedAt: mockUser.updatedAt.toISOString(),
+      });
     });
 
     it.skip("should return 500 if an error occurs", async () => {

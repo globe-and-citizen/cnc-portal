@@ -83,7 +83,7 @@ export const updateUser = async (req: Request, res: Response) => {
       },
     });
 
-    await prisma.$disconnect();
+    //await prisma.$disconnect();
 
     if (!user) return errorResponse(404, "User not found", res);
 
