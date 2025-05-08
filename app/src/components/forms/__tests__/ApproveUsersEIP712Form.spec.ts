@@ -214,15 +214,41 @@ describe('ApproveUsersForm', () => {
       await wrapper.find('button[data-test="approve-button"]').trigger('click')
       await wrapper.vm.$nextTick()
       // TODO: this check is not valid
-      // expect(wrapper.vm.v$.$invalid).toBe(true)
+      // @ts-expect-error: mocked
+      expect(wrapper.vm.v$.$invalid).toBe(true)
       expect(wrapper.emitted('approveUser')).toBeFalsy()
     })
     it('should emit approve address with correct arguments', async () => {
       const wrapper = createComponent()
 
-      const budgetLimitType = 1
-      const limitValue = '100'
-      const date = new Date()
+      const date = new Date(Date.now() + 60 * 60 * 1000)
+      const formData = [
+        {
+          name: 'Test User',
+          address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+          token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+        }
+      ]
+      //@ts-expect-error: not visible on wrapper
+      wrapper.vm.selectedOptions['0'] = true
+      //@ts-expect-error: not visible on wrapper
+      wrapper.vm.values['0'] = 100
+      ;(wrapper.vm as unknown as ComponentData).date = date
+      ;(wrapper.vm as unknown as ComponentData).input = formData[0]
+      ;(wrapper.vm as unknown as ComponentData).description = 'description'
+
+      await wrapper.vm.$nextTick()
+      //@ts-expect-error: not visible on wrapper
+      wrapper.vm.submitApprove()
+
+      // @ts-expect-error: mocked
+      expect(wrapper.vm.v$.$invalid).toBe(false)
+      expect(wrapper.emitted('approveUser')).toBeTruthy()
+    })
+    it('should show budget limit errors', async () => {
+      const wrapper = createComponent()
+
+      const date = new Date(Date.now() + 60 * 60 * 1000)
       const formData = [
         {
           name: 'Test User',
@@ -231,20 +257,19 @@ describe('ApproveUsersForm', () => {
         }
       ]
 
-      ;(wrapper.vm as unknown as ComponentData).budgetLimitType = budgetLimitType
-      ;(wrapper.vm as unknown as ComponentData).limitValue = limitValue
       ;(wrapper.vm as unknown as ComponentData).date = date
       ;(wrapper.vm as unknown as ComponentData).input = formData[0]
       ;(wrapper.vm as unknown as ComponentData).description = 'description'
 
       await wrapper.vm.$nextTick()
-
-      await wrapper.find('button[data-test="approve-button"]').trigger('click')
+      //@ts-expect-error: not visible on wrapper
+      wrapper.vm.submitApprove()
       await wrapper.vm.$nextTick()
-
       // @ts-expect-error: mocked
-      expect(wrapper.vm.v$.$invalid).toBe(false)
-      expect(wrapper.emitted('approveUser')).toBeTruthy()
+      expect(wrapper.vm.v$.$invalid).toBe(true)
+      const budgetLimitError = wrapper.find('[data-test="budget-limit-error"]')
+      expect(budgetLimitError.exists()).toBeTruthy()
+      expect(budgetLimitError.html()).toContain('At least one budget limit must be set')
     })
   })
   describe('Methods', () => {
