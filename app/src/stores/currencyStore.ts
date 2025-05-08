@@ -4,6 +4,7 @@ import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useToastStore } from './useToastStore'
+import { dailyLocalStorage } from '@/utils/storageWithExpiration'
 
 interface Currency {
   code: string
@@ -164,7 +165,7 @@ export const useCurrencyStore = defineStore(
   },
   {
     persist: {
-      storage: sessionStorage // Persist for the current browser tab session
+      storage: dailyLocalStorage
     }
   }
 )
