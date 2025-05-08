@@ -2,7 +2,7 @@
   <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
     <div class="w-full flex justify-between">
       <span class="font-bold text-lg">Claims Table</span>
-      <SubmitClaims v-if="haveWage" @refetch-claims="async () => await fetchTeamClaimData()" />
+      <SubmitClaims v-if="hasWage" @refetch-claims="async () => await fetchTeamClaimData()" />
     </div>
     <div class="form-control flex flex-row gap-4">
       <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
@@ -136,7 +136,7 @@ const { data: teamWageData, error: teamWageDataError } = useCustomFetch(
   computed(() => `/wage/?teamId=${teamId.value}`)
 ).json<Array<WageResponse>>()
 
-const haveWage = computed(() => {
+const hasWage = computed(() => {
   const userWage = teamWageData.value?.find((wage) => wage.userAddress === currentAddress)
   if (!userWage) return false
 
