@@ -24,7 +24,7 @@ export const getNonce = async (req: Request, res: Response) => {
       },
     });
 
-    //console.log("user", user);
+    console.log("user", user);
     if (!user)
       return res.status(200).json({
         success: true,
@@ -32,13 +32,12 @@ export const getNonce = async (req: Request, res: Response) => {
       });
 
     const nonce = user.nonce;
-    //console.log("nonce", nonce);
+    
     return res.status(200).json({
       success: true,
       nonce,
     });
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };

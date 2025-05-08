@@ -60,6 +60,8 @@ const mockUsers: User[] = [
   } as User,
 ];
 
+const mockAddress = faker.finance.ethereumAddress();
+
 describe("User Controller", () => {
   describe("GET: /nonce/:address", () => {
     beforeEach(() => {
@@ -79,7 +81,7 @@ describe("User Controller", () => {
 
     it("should return a nonce if user does not exist", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-      const mockAddress = faker.finance.ethereumAddress();
+
       const response = await request(app).get(`/nonce/${mockAddress}`).send();
 
       expect(response.status).toBe(200);
@@ -91,31 +93,26 @@ describe("User Controller", () => {
 
     it("should return the user's nonce if user exists", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
-      const mockAddress = faker.finance.ethereumAddress();
 
-      const response = await request(app)
-        .get(`/nonce/${mockAddress}`)
-        .send();
+      const response = await request(app).get(`/nonce/${mockAddress}`).send();
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         success: true,
         nonce: mockUser.nonce,
       });
-     
     });
 
-    it.skip("should return 500 if an error occurs", async () => {
+    it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
 
       const response = await request(app)
-        .get("/nonce")
-        .set("address", "0xMemberAddress")
+        .get(`/nonce/${mockAddress}`)
         .send();
 
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual(
-        "Internal server error has occured"
+        "Internal server error has occured" 
       );
     });
   });
