@@ -24,7 +24,6 @@ export const getNonce = async (req: Request, res: Response) => {
       },
     });
 
-    console.log("user", user);
     if (!user)
       return res.status(200).json({
         success: true,
@@ -32,7 +31,7 @@ export const getNonce = async (req: Request, res: Response) => {
       });
 
     const nonce = user.nonce;
-    
+
     return res.status(200).json({
       success: true,
       nonce,
@@ -54,14 +53,10 @@ export const getUser = async (req: Request, res: Response) => {
       },
     });
 
-    await prisma.$disconnect();
-
-    //console.log("user", user);
     if (!user) return errorResponse(404, "User not found", res);
 
     return res.status(200).json(user);
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };
