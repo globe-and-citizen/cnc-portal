@@ -7,11 +7,13 @@ import { MockERC20 } from '../typechain-types'
 describe('CashRemuneration (EIP712)', () => {
   let cashRemunerationProxy: CashRemunerationEIP712
   let mockUSDC: MockERC20
+  let mockUSDT: MockERC20
 
   const deployContract = async (employer: SignerWithAddress) => {
     // Deploy mock tokens first
     const MockToken = await ethers.getContractFactory('MockERC20')
     mockUSDC = await MockToken.deploy('USDC', 'USDC')
+    mockUSDT = await MockToken.deploy('USDT', 'USDT')
 
     const CashRemunerationImplementation = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationProxy = (await upgrades.deployProxy(
@@ -90,6 +92,21 @@ describe('CashRemuneration (EIP712)', () => {
       it('Then I can get the contract balance', async () => {
         const balance = await cashRemunerationProxy.getBalance()
         expect(balance).to.be.equal(ethers.parseEther('5000'))
+      })
+
+      it('Then I can add and remove supported tokens', async () => {
+        await expect(cashRemunerationProxy.addTokenSupport(await mockUSDT.getAddress()))
+          .to.emit(cashRemunerationProxy, 'TokenSupportAdded')
+          .withArgs(await mockUSDT.getAddress())
+        expect(
+          await cashRemunerationProxy.supportedTokens(await mockUSDT.getAddress())
+        ).to.be.equal(true)
+        await expect(cashRemunerationProxy.removeTokenSupport(await mockUSDT.getAddress()))
+          .to.emit(cashRemunerationProxy, 'TokenSupportRemoved')
+          .withArgs(await mockUSDT.getAddress())
+        expect(
+          await cashRemunerationProxy.supportedTokens(await mockUSDT.getAddress())
+        ).to.be.equal(false)
       })
 
       it('Then I can authorise an employee to withdraw their wage', async () => {
