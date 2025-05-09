@@ -53,24 +53,21 @@ contract CashRemunerationEIP712 is
         uint256 date;
     }
 
+    /// @dev String representations of the Wage and WageClaim structs, used in EIP-712 encoding.
     string private constant WAGE_TYPE = "Wage(uint256 hourlyRate,address tokenAddress)";
     string private constant WAGE_CLAIM_TYPE = "WageClaim(address employeeAddress,uint8 hoursWorked,Wage[] wages,uint256 date)";
 
+    /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
     bytes32 constant WAGE_TYPEHASH = 
         keccak256(
             abi.encodePacked(WAGE_TYPE)
         );
 
+    /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
     bytes32 constant WAGE_CLAIM_TYPEHASH =
         keccak256(
             abi.encodePacked(WAGE_CLAIM_TYPE, WAGE_TYPE)
         );
-
-    /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
-    // bytes32 constant WAGE_CLAIM_TYPEHASH = 
-    //     keccak256(
-    //         "WageClaim(address employeeAddress,uint8 hoursWorked,uint256 hourlyRate,uint256 date)"
-    //     );
 
     /// @dev Mapping to track wage claims that have already been paid.
     mapping(bytes32 => bool) public paidWageClaims;
@@ -89,7 +86,25 @@ contract CashRemunerationEIP712 is
      */
     event Withdraw(address indexed withdrawer, uint256 amount);
 
-    event WithdrawToken(address indexed withdrawer, address indexed token, uint256 amount);
+    /**
+     * @dev Emitted when an employee withdraws their wages in a specific token.
+     * @param withdrawer The address of the employee withdrawing the wages.
+     * @param tokenAddress The address of the token contract.
+     * @param amount The amount of tokens withdrawn.
+     */
+    event WithdrawToken(address indexed withdrawer, address indexed tokenAddress, uint256 amount);
+
+    /**
+     * @dev Emitted when a new token is added to the supported tokens list.
+     * @param tokenAddress The address of the token contract.
+     */
+    event TokenSupportAdded(address indexed tokenAddress);
+
+    /**
+     * @dev Emitted when a token is removed from the supported tokens list.
+     * @param tokenAddress The address of the token contract.
+     */
+    event TokenSupportRemoved(address indexed tokenAddress);
 
     /**
      * @dev Error thrown when an unauthorized address attempts to perform an action.
@@ -115,6 +130,12 @@ contract CashRemunerationEIP712 is
         supportedTokens[_usdcAddress] = true;
     }
 
+    /**
+     * @dev Computes the hash of a given Wage struct.
+     * @param wage A single wage struct to hash.
+     * @return The hash of the Wage struct.
+     * The hash is used for signature verification in EIP-712.
+     */
     function wageHash(Wage calldata wage) private pure returns (bytes32) {
         return keccak256(abi.encode(
             WAGE_TYPEHASH,
@@ -124,9 +145,9 @@ contract CashRemunerationEIP712 is
     }
 
     /**
-     * @dev Computes the hash of a given Wage struct.
-     * @param wages The Wage struct to hash.
-     * @return The hash of the Wage struct.
+     * @dev Computes the hash of a given collection of Wage structs.
+     * @param wages The Wage structs to hash.
+     * @return The hash of the Wage structs.
      */
     function wageHashes(Wage[] calldata wages) private pure returns (bytes32) {
         bytes32[] memory hashes = new bytes32[](wages.length);
@@ -151,15 +172,6 @@ contract CashRemunerationEIP712 is
             wageClaim.date
         ));
     }
-    // function wageClaimHash(WageClaim calldata wageClaim) private pure returns (bytes32) {
-    //     return keccak256(abi.encode(
-    //         WAGE_CLAIM_TYPEHASH,
-    //         wageClaim.employeeAddress,
-    //         wageClaim.hoursWorked,
-    //         wageClaim.hourlyRate,
-    //         wageClaim.date
-    //     ));
-    // }
 
     /**
      * @notice Allows an employee to withdraw their wages.
@@ -231,11 +243,12 @@ contract CashRemunerationEIP712 is
      * @param tokenAddress The address of the token contract.
      * @dev Can only be called by the contract owner.
      */
-    function addSupportedToken(address tokenAddress) external onlyOwner {
+    function addTokenSupport(address tokenAddress) external onlyOwner {
         require(tokenAddress != address(0), "Token address cannot be zero");
         require(!supportedTokens[tokenAddress], "Token already supported");
 
         supportedTokens[tokenAddress] = true;
+        emit TokenSupportAdded(tokenAddress);
     }
 
     /**
@@ -243,11 +256,12 @@ contract CashRemunerationEIP712 is
      * @param tokenAddress The address of the token contract.
      * @dev Can only be called by the contract owner.
      */
-    function removeSupportedToken(address tokenAddress) external onlyOwner {
+    function removeTokenSupport(address tokenAddress) external onlyOwner {
         require(tokenAddress != address(0), "Token address cannot be zero");
         require(supportedTokens[tokenAddress], "Token not supported");
 
         supportedTokens[tokenAddress] = false;
+        emit TokenSupportRemoved(tokenAddress);
     }
 
     /**
