@@ -157,11 +157,6 @@ describe("authController", () => {
 
     it("should return 200 if authorization successful", async () => {
       const app = express();
-      app.use(express.json());
-      const limiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 100, // limit each IP to 100 requests per windowMs
-      });
       app.use(limiter);
       const token = "token";
       app.use(setAuthorizationMiddleware(token));
