@@ -64,8 +64,8 @@ export const getUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
-  const callerAddress = (req as any).address;
-  //const callerAddress = req.headers["address"] as string;
+  //const callerAddress = (req as any).address;
+  const callerAddress = req.headers["address"] as string;
 
   try {
     if (!address)

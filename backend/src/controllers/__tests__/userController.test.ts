@@ -229,7 +229,7 @@ describe("User Controller", () => {
         ...mockUser,
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
-        updatedAt: new Date(),
+        updatedAt: new Date(), // simulate update timestamp
       };
 
       vi.spyOn(prisma.user, "update").mockResolvedValue(updatedUser);
@@ -254,7 +254,7 @@ describe("User Controller", () => {
       });
     });
 
-    it.skip("should return 500 if an error occurs", async () => {
+    it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
 
       const response = await request(app)
