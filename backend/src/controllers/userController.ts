@@ -68,7 +68,7 @@ export const updateUser = async (req: Request, res: Response) => {
   const callerAddress = req.headers["address"] as string;
 
   try {
-    if (!address)
+    if (!callerAddress)
       return errorResponse(401, "Update user error: Missing user address", res);
     if (callerAddress !== address) {
       return errorResponse(403, "Unauthorized", res);

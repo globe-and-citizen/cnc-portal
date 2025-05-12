@@ -180,8 +180,8 @@ describe("User Controller", () => {
       vi.clearAllMocks();
     });
 
-    it.skip("should return 401 if address is missing", async () => {
-      const response = await request(app).put("/user/").send({
+    it("should return 401 if address is missing", async () => {
+      const response = await request(app).put("/user/One").send({
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
       });
@@ -192,7 +192,7 @@ describe("User Controller", () => {
       );
     });
 
-    it.skip("should return 403 if caller is not the user", async () => {
+    it("should return 403 if caller is not the user", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
       const response = await request(app)
