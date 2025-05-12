@@ -122,12 +122,10 @@ describe("User Controller", () => {
       vi.clearAllMocks();
     });
 
-    it.skip("should return 401 if address is missing", async () => {
+    it("should return 401 if address is missing", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const response = await request(app).get("/user/1").send({
-        address: "",
-      });
+      const response = await request(app).get("/user/%20").send();
 
       expect(response.status).toBe(401);
       expect(response.body.message).toEqual(

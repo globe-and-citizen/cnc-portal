@@ -45,8 +45,9 @@ export const getNonce = async (req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   try {
-    if (!address)
+    if (!address || address.trim() === "") {
       return errorResponse(401, "Get user error: Missing user address", res);
+    }
 
     const user = await prisma.user.findUnique({
       where: {
@@ -128,7 +129,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
       totalPages: Math.ceil(totalUsers / pageSize),
     });
   } catch (error) {
-    await prisma.$disconnect();
+   
     return errorResponse(500, error, res);
   }
 };
