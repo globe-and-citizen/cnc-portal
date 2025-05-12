@@ -24,7 +24,6 @@ export const getNonce = async (req: Request, res: Response) => {
       },
     });
 
-    
     if (!user)
       return res.status(200).json({
         success: true,
@@ -32,7 +31,7 @@ export const getNonce = async (req: Request, res: Response) => {
       });
 
     const nonce = user.nonce;
-    
+
     return res.status(200).json({
       success: true,
       nonce,
@@ -54,7 +53,6 @@ export const getUser = async (req: Request, res: Response) => {
         address: address,
       },
     });
-
 
     if (!user) return errorResponse(404, "User not found", res);
 
@@ -84,8 +82,6 @@ export const updateUser = async (req: Request, res: Response) => {
       },
     });
 
-    //await prisma.$disconnect();
-
     if (!user) return errorResponse(404, "User not found", res);
 
     const updatedUser = await prisma.user.update({
@@ -105,7 +101,6 @@ export const updateUser = async (req: Request, res: Response) => {
 
     return res.status(200).json(updatedUser);
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };
@@ -129,7 +124,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
       totalPages: Math.ceil(totalUsers / pageSize),
     });
   } catch (error) {
-   
     return errorResponse(500, error, res);
   }
 };

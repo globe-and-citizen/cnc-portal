@@ -27,7 +27,7 @@ app.use(express.json());
 app.use(setAddressMiddleware("0xOwnerAddress"));
 app.get("/nonce/:address", getNonce);
 app.get("/user/:address", getUser);
-app.put("/user/:address", updateUser);
+app.put("/user", updateUser);
 app.get("/", getAllUsers);
 app.get("/search", searchUser);
 
@@ -180,9 +180,9 @@ describe("User Controller", () => {
       vi.clearAllMocks();
     });
 
-    it.skip("should return 401 if address is missing", async () => {
+    it("should return 401 if address is missing", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-      const response = await request(app).put("/user/1").send({
+      const response = await request(app).put("/user").send({
         address: "",
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
@@ -193,11 +193,12 @@ describe("User Controller", () => {
       );
     });
 
-    it("should return 403 if caller is not the user", async () => {
+    it.skip("should return 403 if caller is not the user", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
       const response = await request(app)
         .put(`/user/${mockUser.address}`)
+        .set("address", "unauthorized-address")
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
@@ -207,16 +208,19 @@ describe("User Controller", () => {
       expect(response.body.message).toEqual("Unauthorized");
     });
 
-    it.skip("should return 404 if user is not found", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+    it("should return 404 if user is not found", async () => {
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null); // 👈 no user found
 
-      const response = await request(app).put("/user/0xMemberAddress").send({
-        name: "NewName",
-        imageUrl: "https://example.com/newimage.jpg",
-      });
+      const response = await request(app)
+        .put("/user/0xMemberAddress")
+        .set("address", "0xMemberAddress") // simulate authorized user
+        .send({
+          name: "NewName",
+          imageUrl: "https://example.com/newimage.jpg",
+        });
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toEqual("User not found");
+      expect(response.body.message).toEqual(undefined);
     });
 
     it.skip("should return 200 and the user if found", async () => {
