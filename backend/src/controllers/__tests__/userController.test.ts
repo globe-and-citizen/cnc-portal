@@ -201,7 +201,7 @@ describe("User Controller", () => {
 
       const response = await request(app)
         .put(`/user/${mockUser.address}`)
-        .set("address", "unauthorized-address")
+        .set("address", "0xOwnerAddress")
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
@@ -211,16 +211,13 @@ describe("User Controller", () => {
       expect(response.body.message).toEqual("Unauthorized");
     });
 
-    it.only("should return 404 if user is not found", async () => {
+    it("should return 404 if user is not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const response = await request(app)
-        .put("/user/0xMemberAddress")
-        .set("address", "0xMemberAddress")
-        .send({
-          name: "NewName",
-          imageUrl: "https://example.com/newimage.jpg",
-        });
+      const response = await request(app).put("/user/0xOwnerAddress").send({
+        name: "NewName",
+        imageUrl: "https://example.com/newimage.jpg",
+      });
 
       expect(response.status).toBe(404);
       expect(response.body.message).toEqual("User not found");
@@ -238,13 +235,10 @@ describe("User Controller", () => {
 
       vi.spyOn(prisma.user, "update").mockResolvedValue(updatedUser);
 
-      const response = await request(app)
-        .put(`/user/${mockUser.address}`)
-        .set("address", mockUser.address)
-        .send({
-          name: "NewName",
-          imageUrl: "https://example.com/newimage.jpg",
-        });
+      const response = await request(app).put("/user/0xOwnerAddress").send({
+        name: "NewName",
+        imageUrl: "https://example.com/newimage.jpg",
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -262,8 +256,7 @@ describe("User Controller", () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
 
       const response = await request(app)
-        .put("/user/0xMemberAddress")
-        .set("address", "0xMemberAddress")
+        .put("/user/0xOwnerAddress")
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
