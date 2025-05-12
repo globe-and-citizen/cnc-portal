@@ -1,7 +1,7 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction, response } from "express";
 import rateLimit from "express-rate-limit";
-import { authenticateSiwe, authenticateToken } from "../authController";
+import authController, { authenticateSiwe, authenticateToken } from "../authController";
 import { authorizeUser } from "../../middleware/authMiddleware";
 import { prisma } from "../../utils";
 import { errorResponse, extractAddressAndNonce } from "../../utils/utils";
@@ -172,15 +172,18 @@ describe("authController", () => {
     });
 
     it.skip("should return 500 if internal server error occurs", async () => {
-      app.use(limiter);
-      app.get("/token", authenticateToken);
-
+      const errorMessage = "Internal server error has occured";
+      const error = new Error(errorMessage);
+    
+      vi.spyOn(authController, "authenticateToken").mockImplementation(() => {
+        throw error;
+      });
+    
       const response = await request(app).get("/token");
-
+    
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        error: "Extract address error: Eth address missing ",
-        message: "Internal server error has occured",
+        message: errorMessage,
       });
     });
   });
