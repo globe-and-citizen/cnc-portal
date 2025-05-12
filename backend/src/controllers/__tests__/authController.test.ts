@@ -175,5 +175,18 @@ describe("authController", () => {
 
       expect(response.status).toBe(200);
     });
+
+    it.skip("should return 500 if internal server error occurs", async () => {
+      app.use(limiter);
+      app.get("/token", authenticateToken);
+
+      const response = await request(app).get("/token");
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: "Extract address error: Eth address missing ",
+        message: "Internal server error has occured",
+      });
+    });
   });
 });
