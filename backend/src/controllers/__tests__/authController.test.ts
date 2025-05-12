@@ -1,10 +1,9 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction, response } from "express";
 import rateLimit from "express-rate-limit";
-import authController, { authenticateSiwe, authenticateToken } from "../authController";
+import  { authenticateSiwe, authenticateToken } from "../authController";
 import { authorizeUser } from "../../middleware/authMiddleware";
 import { prisma } from "../../utils";
-import { errorResponse, extractAddressAndNonce } from "../../utils/utils";
 import jwt from "jsonwebtoken";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 
