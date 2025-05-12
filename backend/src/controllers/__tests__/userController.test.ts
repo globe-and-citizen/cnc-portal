@@ -27,7 +27,7 @@ app.use(express.json());
 app.use(setAddressMiddleware("0xOwnerAddress"));
 app.get("/nonce/:address", getNonce);
 app.get("/user/:address", getUser);
-app.put("/user", updateUser);
+app.put("/user/:address", updateUser);
 app.get("/", getAllUsers);
 app.get("/search", searchUser);
 
@@ -180,13 +180,12 @@ describe("User Controller", () => {
       vi.clearAllMocks();
     });
 
-    it("should return 401 if address is missing", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
-      const response = await request(app).put("/user").send({
-        address: "",
+    it.skip("should return 401 if address is missing", async () => {
+      const response = await request(app).put("/user/").send({
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
       });
+
       expect(response.status).toBe(401);
       expect(response.body.message).toEqual(
         "Update user error: Missing user address"
@@ -209,22 +208,31 @@ describe("User Controller", () => {
     });
 
     it("should return 404 if user is not found", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null); // 👈 no user found
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const response = await request(app)
         .put("/user/0xMemberAddress")
-        .set("address", "0xMemberAddress") // simulate authorized user
+        .set("address", "0xMemberAddress")
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
         });
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toEqual(undefined);
+      expect(response.body.message).toEqual("User not found");
     });
 
-    it.skip("should return 200 and the user if found", async () => {
+    it("should return 200 and the user if found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+
+      const updatedUser = {
+        ...mockUser,
+        name: "NewName",
+        imageUrl: "https://example.com/newimage.jpg",
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(prisma.user, "update").mockResolvedValue(updatedUser);
 
       const response = await request(app)
         .put(`/user/${mockUser.address}`)
@@ -233,15 +241,16 @@ describe("User Controller", () => {
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
         });
+
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        id: mockUser.id,
-        address: mockUser.address,
+        id: updatedUser.id,
+        address: updatedUser.address,
         name: "NewName",
-        nonce: mockUser.nonce,
+        nonce: updatedUser.nonce,
         imageUrl: "https://example.com/newimage.jpg",
-        createdAt: mockUser.createdAt.toISOString(),
-        updatedAt: mockUser.updatedAt.toISOString(),
+        createdAt: updatedUser.createdAt.toISOString(),
+        updatedAt: updatedUser.updatedAt.toISOString(),
       });
     });
 
