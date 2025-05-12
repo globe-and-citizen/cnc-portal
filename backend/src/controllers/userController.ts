@@ -64,10 +64,11 @@ export const getUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
-  //const callerAddress = (req as any).address;
-  const callerAddress = req.headers["address"] as string;
+  const callerAddress = (req as any).address;
 
   try {
+    console.log("callerAddress", callerAddress);
+    console.log("address", address);
     if (!callerAddress)
       return errorResponse(401, "Update user error: Missing user address", res);
     if (callerAddress !== address) {

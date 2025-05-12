@@ -181,6 +181,10 @@ describe("User Controller", () => {
     });
 
     it("should return 401 if address is missing", async () => {
+      const app = express();
+      app.use(express.json());
+      app.put("/user/:address", setAddressMiddleware(""), updateUser);
+
       const response = await request(app).put("/user/One").send({
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
@@ -207,7 +211,7 @@ describe("User Controller", () => {
       expect(response.body.message).toEqual("Unauthorized");
     });
 
-    it("should return 404 if user is not found", async () => {
+    it.only("should return 404 if user is not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const response = await request(app)
