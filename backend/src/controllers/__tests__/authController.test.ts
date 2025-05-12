@@ -98,6 +98,33 @@ describe("authController", () => {
     it("should return 200 if authentication successful", async () => {
       app.use(limiter);
       app.post("/siwe", authenticateSiwe);
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+      vi.spyOn(prisma.user, "update").mockResolvedValue({
+        ...mockUser,
+        nonce: "123abc",
+        imageUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      vi.spyOn(prisma.user, "create");
+      vi.spyOn(jwt, "sign").mockImplementation(() => "jsonWebToken");
+
+      const response = await request(app).post("/siwe").send({
+        message: `localhost:5173 wants you to sign in with your Ethereum account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\nSign in with Ethereum to the app.\n\nURI: http://localhost:5173\nVersion: 1\nChain ID: 1\nNonce: BuEqovAcm4cRvRHlx\nIssued At: 2024-12-18T11:57:47.715Z`,
+        signature:
+          "0x162ef821f3a9fbd0d38fcad0d6f19014d031767944fe8d686166f08ce4328eda3eace9c0d57fbb0fcdb276005a3429ed54e75f67f1b0049f55ba71b646775f9f1b",
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        accessToken: "jsonWebToken",
+      });
+      vi.restoreAllMocks();
+    });
+
+    it("should return 200 if authentication successful", async () => {
+      app.use(limiter);
+      app.post("/siwe", authenticateSiwe);
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
       vi.spyOn(prisma.user, "update").mockResolvedValue({
         ...mockUser,
@@ -171,20 +198,6 @@ describe("authController", () => {
       expect(response.status).toBe(200);
     });
 
-    it.skip("should return 500 if internal server error occurs", async () => {
-      const errorMessage = "Internal server error has occured";
-      const error = new Error(errorMessage);
-    
-      vi.spyOn(authController, "authenticateToken").mockImplementation(() => {
-        throw error;
-      });
-    
-      const response = await request(app).get("/token");
-    
-      expect(response.status).toBe(500);
-      expect(response.body).toEqual({
-        message: errorMessage,
-      });
-    });
+   
   });
 });
