@@ -6,6 +6,7 @@ import { authorizeUser } from "../../middleware/authMiddleware";
 import { prisma } from "../../utils";
 import jwt from "jsonwebtoken";
 import { describe, it, beforeEach, expect, vi } from "vitest";
+import { faker } from "@faker-js/faker";
 
 function setAuthorizationMiddleware(token: string) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -24,7 +25,7 @@ const limiter = rateLimit({
 app.use(limiter);
 app.post("/siwe", authenticateSiwe);
 app.get("/token", authenticateToken);
-app.use(setAuthorizationMiddleware("token"));
+app.use(setAuthorizationMiddleware(faker.finance.ethereumAddress()));
 app.use(authorizeUser);
 
 const mockUser = {
@@ -184,7 +185,7 @@ describe("authController", () => {
     it("should return 200 if authorization successful", async () => {
       const app = express();
       app.use(limiter);
-      const token = "token";
+      const token = faker.finance.ethereumAddress();
       app.use(setAuthorizationMiddleware(token));
       app.get("/token", authorizeUser, authenticateToken);
 
