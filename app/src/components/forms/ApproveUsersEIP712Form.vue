@@ -26,7 +26,7 @@
     </div>
   </div>
 
-  <SelectMemberInput v-model="input" />
+  <SelectMemberWithTokenInput v-model="input" />
 
   <div
     class="pl-4 text-red-500 text-sm w-full text-left"
@@ -46,28 +46,6 @@
     </div>
   </div>
 
-  <div class="mt-2">
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-24">Token</span>
-      |
-      <select v-model="selectedToken" class="bg-white grow">
-        <option disabled :value="null">-- Select a token --</option>
-        <option v-for="(address, symbol) of tokens" :value="address" :key="address">
-          {{ symbol }}
-        </option>
-      </select>
-    </label>
-  </div>
-
-  <div
-    data-test="limit-value-error"
-    class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.selectedToken.$errors"
-    :key="error.$uid"
-  >
-    {{ error.$message }}
-  </div>
-
   <!-- #region Multi Limit Inputs-->
   <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
     <h3 class="text-lg font-semibold">Budget Limits:</h3>
@@ -79,7 +57,7 @@
     >
       <label
         :for="'checkbox-' + budgetType"
-        class="input input-bordered flex items-center gap-2 input-md mt-2"
+        class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs"
       >
         <!-- Checkbox -->
         <input
@@ -96,13 +74,29 @@
         <input
           :disabled="!selectedOptions[budgetType]"
           type="number"
-          class="grow pl-4"
+          class="grow"
           v-model.number="values[budgetType]"
           placeholder="Enter value"
           :data-test="`limit-input-${budgetType}`"
           @input="updateValue(budgetType)"
         />
       </label>
+    </div>
+
+    <!-- Budget Limit Validation Errors -->
+    <div class="pl-4 text-red-500 text-sm w-full text-left">
+      <div v-for="error of v$.resultArray.$errors" :key="error.$uid" data-test="budget-limit-error">
+        <div v-if="error.$validator === 'required'">
+          {{ error.$message }}
+        </div>
+        <div v-else-if="error.$validator === '$each'">
+          <div v-for="(subError, index) in error.$message" :key="index">
+            <div v-for="(msg, key) in subError" :key="key">
+              Budget limit {{ resultArray[index].budgetType }}: {{ msg }}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <!-- #endregion Multi Limit Inputs -->
@@ -113,9 +107,18 @@
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
-        <VueDatePicker v-model="date" />
+        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply />
       </div>
     </label>
+  </div>
+
+  <div
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.date.$errors"
+    :key="error.$uid"
+    data-test="date-error"
+  >
+    {{ error.$message }}
   </div>
 
   <div class="modal-action justify-center">
@@ -133,15 +136,14 @@
 </template>
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { isAddress, zeroAddress } from 'viem'
+import { isAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -150,24 +152,18 @@ const props = defineProps<{
   users: User[]
 }>()
 
-const input = ref({ name: '', address: '' })
+const input = ref({ name: '', address: '', token: null })
 const limitValue = ref('')
 const date = ref<Date | string>('')
 const description = ref<string>('')
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
-const selectedToken = ref<string | null>(null)
-const tokens = ref({
-  [NETWORK.currencySymbol]: zeroAddress,
-  USDC: USDC_ADDRESS,
-  USDT: USDT_ADDRESS
-})
 
 //#region multi limit
 // Labels for budget types
 const budgetTypes = {
-  0: 'Transactions Per Period',
-  1: 'Amount Per Period',
-  2: 'Amount Per Transaction'
+  0: 'Max Transactions',
+  1: 'Maximum Amount',
+  2: 'Max Amount per Transaction'
 }
 
 // Reactive states
@@ -207,12 +203,40 @@ const rules = {
     address: {
       required: helpers.withMessage('Address is required', required),
       $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
+    },
+    token: {
+      required: helpers.withMessage('Token is required', required)
     }
   },
-  selectedToken: { required },
   description: {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
+    })
+  },
+  // Add validation for budget limits
+  resultArray: {
+    required: helpers.withMessage('At least one budget limit must be set', (value: unknown[]) => {
+      return value.length > 0
+    }),
+    $each: helpers.forEach({
+      value: {
+        required: helpers.withMessage('Value is required', required),
+        numeric: helpers.withMessage(
+          'Value must be a positive number',
+          (value: string | number) => {
+            return !isNaN(Number(value)) && Number(value) > 0
+          }
+        )
+      }
+    })
+  },
+  // Add date validation
+  date: {
+    required: helpers.withMessage('Expiry date is required', required),
+    futureDate: helpers.withMessage('Expiry date must be in the future', (value: Date | string) => {
+      if (!value) return false
+      const date = typeof value === 'string' ? new Date(value) : value
+      return date > new Date()
     })
   }
 }
@@ -220,7 +244,8 @@ const rules = {
 const v$ = useVuelidate(rules, {
   description,
   input,
-  selectedToken
+  resultArray,
+  date
 })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
@@ -241,7 +266,7 @@ const submitApprove = () => {
   emit('approveUser', {
     approvedAddress: input.value.address,
     budgetData: resultArray.value,
-    tokenAddress: selectedToken.value,
+    tokenAddress: input.value.token,
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }

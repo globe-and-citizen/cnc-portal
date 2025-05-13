@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
-import { NETWORK } from '@/constant'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import { useWriteContract } from '@wagmi/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -11,32 +11,9 @@ import * as util from '@/utils'
 import * as mocks from './mock/MyApprovedExpenseSection.mock'
 import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
 import * as viem from 'viem'
+import { estimateGas, readContract } from '@wagmi/core'
 import { useExpenseDataStore, useTeamStore } from '@/stores'
 import { mockToastStore } from '@/tests/mocks/store.mock'
-
-const _mocks = vi.hoisted(() => ({
-  // mockUseToastStore: {
-  //   addErrorToast: vi.fn()
-  // },
-  mockReadContract: vi.fn()
-}))
-
-// vi.mock('@/stores', async (importOriginal) => {
-//   const actual: object = await importOriginal()
-//   return {
-//     ...actual,
-//     useToastStore: vi.fn(() => ({ addErrorToast: _mocks.mockUseToastStore.addErrorToast })),
-//     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
-//     useExpenseDataStore: vi.fn(() => ({ ...mocks.mockExpenseDataStore })),
-//     useCryptoPrice: vi.fn(),
-//     useCurrencyStore: vi.fn(() => ({
-//       currency: {
-//         code: 'USD',
-//         symbol: '$'
-//       }
-//     }))
-//   }
-// })
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -58,7 +35,8 @@ vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    readContract: _mocks.mockReadContract
+    readContract: vi.fn(),
+    estimateGas: vi.fn()
   }
 })
 
@@ -68,7 +46,8 @@ vi.mock('viem', async (importOriginal) => {
     ...actual,
     parseSignature: vi.fn(),
     hashTypedData: vi.fn(),
-    keccak256: vi.fn()
+    keccak256: vi.fn(),
+    encodeFunctionData: vi.fn()
   }
 })
 
@@ -81,7 +60,6 @@ describe('ExpenseAccountSection', () => {
 
   const createComponent = ({ global = {} }: ComponentOptions = {}) => {
     return mount(ExpenseAccountSection, {
-      // data,
       global: {
         plugins: [
           createTestingPinia({
@@ -191,17 +169,71 @@ describe('ExpenseAccountSection', () => {
       expect(spendButton.props('disabled')).toBe(true)
     })
     it('should notify amount withdrawn error', async () => {
-      // vi.mocked(useToastStore).mockReturnValue({ ..._mocks.mockUseToastStore })
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(util.log, 'error')
       //@ts-expect-error: not visible from vm
       wrapper.vm.errorTransfer = new Error('Error getting amount withdrawn')
       await flushPromises()
 
-      expect(/*_mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
-        'Failed to transfer'
-      )
+      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
       expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
+    })
+    it('should call correct logs when transferNativeToken fails', async () => {
+      vi.mocked(estimateGas).mockRejectedValue(new Error('Error getting amount withdrawn'))
+      const logErrorSpy = vi.spyOn(util.log, 'error')
+      //@ts-expect-error: not visible from vm
+      vi.mocked(useWriteContract).mockReturnValue(mocks.mockUseWriteContract)
+
+      // Mount the component
+      const wrapper = createComponent()
+
+      // Set up refs
+      const vm = wrapper.vm
+      //@ts-expect-error: not visible from vm
+      vm.signatureToTransfer = '0xNativeTokenSignature'
+      //@ts-expect-error: not visible from vm
+      await vm.transferFromExpenseAccount('0xRecipientAddress', '1')
+
+      await flushPromises()
+      expect(logErrorSpy).toBeCalledWith(
+        'Error in transferNativeToken:',
+        'Error getting amount withdrawn'
+      )
+      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
+      //@ts-expect-error: not visible from vm
+      expect(vm.transferERC20loading).toBe(false)
+      //@ts-expect-error: not visible from vm
+      expect(vm.isLoadingTransfer).toBe(false)
+    })
+    it('should call correct logs when transferErc20Token fails', async () => {
+      mocks.mockExpenseData[0].status = 'enabled'
+      mocks.mockExpenseData[0].tokenAddress = USDC_ADDRESS
+      vi.mocked(readContract).mockImplementation(async () => BigInt(2 * 1e6))
+      vi.mocked(estimateGas).mockRejectedValue(new Error('Error getting erc20 allowance'))
+      const logErrorSpy = vi.spyOn(util.log, 'error')
+      //@ts-expect-error: not visible from vm
+      vi.mocked(useWriteContract).mockReturnValue(mocks.mockUseWriteContract)
+
+      // Mount the component
+      const wrapper = createComponent()
+
+      // Set up refs
+      const vm = wrapper.vm
+      //@ts-expect-error: not visible from vm
+      vm.signatureToTransfer = '0xNativeTokenSignature'
+      //@ts-expect-error: not visible from vm
+      await vm.transferFromExpenseAccount('0xRecipientAddress', '1')
+
+      await flushPromises()
+      expect(logErrorSpy).toBeCalledWith(
+        'Error in transferErc20Token:',
+        new Error('Error getting erc20 allowance')
+      )
+      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
+      //@ts-expect-error: not visible from vm
+      expect(vm.transferERC20loading).toBe(false)
+      //@ts-expect-error: not visible from vm
+      expect(vm.isLoadingTransfer).toBe(false)
     })
   })
 })

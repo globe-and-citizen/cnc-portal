@@ -8,7 +8,7 @@
         <template #action-data="{ row }">
           <ButtonUI
             variant="success"
-            :disabled="!expenseDataStore.myApprovedExpenses || isDisapprovedAddress"
+            :disabled="!expenseDataStore.myApprovedExpenses || row.status !== 'enabled'"
             v-if="true"
             @click="
               () => {
@@ -27,10 +27,13 @@
           <span> {{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }} </span>
         </template>
         <template #transactions-data="{ row }">
-          <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }}</span>
+          <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
         </template>
         <template #amountTransferred-data="{ row }">
-          <span>{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}</span>
+          <span
+            >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
+            {{ tokenSymbol(row.tokenAddress) }}</span
+          >
         </template>
       </TableComponent>
 
@@ -64,8 +67,9 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { parseError, log, tokenSymbol } from '@/utils'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { estimateGas } from '@wagmi/core'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { type Address, parseEther, zeroAddress } from 'viem'
+import { type Address, parseEther, zeroAddress, encodeFunctionData, type Abi } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
@@ -87,12 +91,12 @@ const columns = [
   },
   {
     key: 'transactions',
-    label: 'Total Transactions',
+    label: 'Max Transactions',
     sortable: false
   },
   {
     key: 'amountTransferred',
-    label: 'Amount Transferred',
+    label: 'Max Amount',
     sortable: false
   },
   {
@@ -123,14 +127,6 @@ const { balances, refetch: refetchBalances } = useContractBalance(
 )
 
 //#region Computed Values
-const isDisapprovedAddress = computed(
-  () =>
-    expenseDataStore.allExpenseDataParsed.findIndex(
-      (item) =>
-        item.approvedAddress === currentUserAddress &&
-        (item.status === 'disabled' || item.status === 'expired')
-    ) !== -1
-)
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
@@ -190,15 +186,14 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   ) as BudgetLimit
 
   if (expenseAccountEip712Address.value && expenseDataStore.myApprovedExpenses) {
-    if (budgetLimit.tokenAddress === zeroAddress) transferNativeToken(to, amount, budgetLimit)
+    if (budgetLimit.tokenAddress === zeroAddress) await transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
   }
 }
 
-const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimit) => {
-  executeExpenseAccountTransfer({
-    address: expenseAccountEip712Address.value,
-    args: [
+const transferNativeToken = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
+  try {
+    const args = [
       to,
       parseEther(amount),
       {
@@ -214,10 +209,29 @@ const transferNativeToken = (to: string, amount: string, budgetLimit: BudgetLimi
         }))
       },
       signatureToTransfer.value
-    ],
-    abi: expenseAccountABI,
-    functionName: 'transfer'
-  })
+    ]
+    const data = encodeFunctionData({
+      abi: expenseAccountABI,
+      functionName: 'transfer',
+      args
+    })
+    await estimateGas(config, {
+      to: expenseAccountEip712Address.value,
+      data
+    })
+    executeExpenseAccountTransfer({
+      address: expenseAccountEip712Address.value,
+      args,
+      abi: expenseAccountABI,
+      functionName: 'transfer'
+    })
+  } catch (error) {
+    console.error('Error in transferNativeToken:', parseError(error, expenseAccountABI as Abi))
+    log.error('Error in transferNativeToken:', parseError(error, expenseAccountABI as Abi))
+    addErrorToast(parseError(error, expenseAccountABI as Abi))
+    transferERC20loading.value = false
+    isLoadingTransfer.value = false
+  }
 }
 const transferERC20loading = ref(false)
 // Token transfer function
@@ -255,12 +269,9 @@ const transferErc20Token = async () => {
       args: [expenseAccountEip712Address.value, _amount]
     })
   } else {
-    executeExpenseAccountTransfer({
-      address: expenseAccountEip712Address.value,
-      abi: expenseAccountABI,
-      functionName: 'transfer',
-      args: [
-        tokenRecipient.value as Address,
+    try {
+      const args = [
+        tokenRecipient.value,
         _amount,
         {
           ...budgetLimit,
@@ -271,7 +282,27 @@ const transferErc20Token = async () => {
         },
         signatureToTransfer.value
       ]
-    })
+      const data = encodeFunctionData({
+        abi: expenseAccountABI,
+        functionName: 'transfer',
+        args
+      })
+      await estimateGas(config, {
+        to: expenseAccountEip712Address.value,
+        data
+      })
+      executeExpenseAccountTransfer({
+        address: expenseAccountEip712Address.value,
+        abi: expenseAccountABI,
+        functionName: 'transfer',
+        args
+      })
+    } catch (error) {
+      log.error('Error in transferErc20Token:', error)
+      addErrorToast(parseError(error, expenseAccountABI as Abi))
+      transferERC20loading.value = false
+      isLoadingTransfer.value = false
+    }
   }
 }
 //#endregion
@@ -287,7 +318,7 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   }
 })
 watch(errorTransfer, (newVal) => {
-  if (newVal) {
+  if (errorTransfer.value) {
     transferERC20loading.value = false
     isLoadingTransfer.value = false
     log.error(parseError(newVal))
