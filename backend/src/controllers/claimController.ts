@@ -24,7 +24,7 @@ export const addClaim = async (req: Request, res: Response) => {
   if (!body.description) parametersError.push("Missing description");
   if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
   if (typeof description !== "string" || description.trim().length === 0) {
-    parametersError.push("Invalid or empty description");
+   return res.status(400).json({ error: "Description is required" });
   }
   if (description.length > 100){
     parametersError.push("Description is too long, max 100 characters");
