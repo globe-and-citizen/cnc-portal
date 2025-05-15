@@ -54,21 +54,7 @@
         >
       </template>
       <template #member-data="{ row }">
-        <div class="flex w-full gap-2">
-          <div class="w-8 sm:w-10">
-            <img
-              alt="User avatar"
-              class="rounded-full"
-              src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-            />
-          </div>
-          <div class="flex flex-col text-gray-600">
-            <p class="font-bold text-sm line-clamp-1" data-test="user-name">{{ row.name }}</p>
-            <p class="text-sm" data-test="formatted-address">
-              {{ row.approvedAddress?.slice(0, 6) }}...{{ row.approvedAddress?.slice(-4) }}
-            </p>
-          </div>
-        </div>
+        <UserComponent v-if="!!row.user" :user="row.user"></UserComponent>
       </template>
       <template #expiryDate-data="{ row }">
         <span>{{ new Date(Number(row.expiry) * 1000).toLocaleString('en-US') }}</span>
@@ -110,6 +96,7 @@ import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { useRoute } from 'vue-router'
+import UserComponent from '@/components/UserComponent.vue'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -165,11 +152,7 @@ const columns = [
 ] as TableColumn[]
 
 //#endregion Composables
-const {
-  data: contractOwnerAddress,
-  // refetch: fetchExpenseAccountOwner,
-  error: errorGetOwner
-} = useReadContract({
+const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address as unknown as Address,
   abi: expenseAccountABI
@@ -177,7 +160,6 @@ const {
 //deactivate approval
 const {
   writeContract: executeDeactivateApproval,
-  // isPending: isLoadingDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -190,7 +172,6 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 //activate approval
 const {
   writeContract: executeActivateApproval,
-  // isPending: isLoadingActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()

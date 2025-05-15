@@ -5,10 +5,12 @@ on:
     branches: "**"
     paths:
       - "backend/**"
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 jobs:
   api-unit-test:
+    if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
     container: node:20.10.0-alpine
     services:
