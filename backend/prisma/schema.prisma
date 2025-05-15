@@ -96,6 +96,7 @@ model Claim {
   id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
   status      String
   hoursWorked Int?
+  description String @db.VarChar(100)
   signature   String?
   tokenTx     String?
   wageId      Int

@@ -4,12 +4,16 @@ import { prisma } from "../utils";
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
 
-type claimBodyRequest = Pick<Claim, "hoursWorked"> & { teamId: string };
+type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
+  description: string;
+  teamId: string;
+};
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
+  const description = body.description as string;
   const teamId = Number(body.teamId);
 
   // Validating the claim data
@@ -17,7 +21,14 @@ export const addClaim = async (req: Request, res: Response) => {
   let parametersError: string[] = [];
   if (!body.teamId) parametersError.push("Missing teamId");
   if (!body.hoursWorked) parametersError.push("Missing hoursWorked");
+  if (!body.description) parametersError.push("Missing description");
   if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
+  if (typeof description !== "string" || description.trim().length === 0) {
+    parametersError.push("Invalid or empty description");
+  }
+  if (description.length > 100){
+    parametersError.push("Description is too long, max 100 characters");
+  }
   if (isNaN(teamId)) parametersError.push("Invalid teamId");
   if (hoursWorked <= 0)
     parametersError.push(
@@ -39,6 +50,7 @@ export const addClaim = async (req: Request, res: Response) => {
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
+        description,
         wageId: wage.id,
         status: "pending",
       },
