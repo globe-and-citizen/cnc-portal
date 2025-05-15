@@ -21,6 +21,16 @@
           v-model="hoursWorked.hoursWorked"
         />
       </label>
+
+      <textarea
+        type="text"
+        class="grow w-full textarea input-bordered flex items-start"
+        data-test="what-did-you-do-textarea-input"
+        placeholder="I worked on the ...."
+        v-model="hoursWorked.description"
+      >
+      </textarea>
+
       <div
         class="pl-4 text-red-500 text-sm"
         v-for="error of v$.hoursWorked.hoursWorked.$errors"
@@ -55,7 +65,10 @@ import ModalComponent from '@/components/ModalComponent.vue'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
-const hoursWorked = ref<{ hoursWorked: string | undefined }>({ hoursWorked: undefined })
+const hoursWorked = ref<{ hoursWorked: string | undefined }>({
+  hoursWorked: undefined,
+  description: undefined
+})
 const modal = ref(false)
 const emits = defineEmits(['refetchClaims'])
 
@@ -66,6 +79,9 @@ const rules = {
       numeric,
       minValue: minValue(1)
     }
+  },
+  description: {
+    required
   }
 }
 const v$ = useVuelidate(rules, { hoursWorked })
@@ -80,7 +96,8 @@ const {
 })
   .post(() => ({
     teamId: teamId.value,
-    hoursWorked: hoursWorked.value.hoursWorked
+    hoursWorked: hoursWorked.value.hoursWorked,
+    description: hoursWorked.value.description
   }))
   .json()
 
