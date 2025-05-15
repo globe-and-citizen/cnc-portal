@@ -167,6 +167,12 @@ const columns = [
     sortable: false,
     class: 'text-black text-base'
   },
+   {
+    key: 'claimDescription',
+    label: 'Description',
+    sortable: false,
+    class: 'text-black text-base'
+  },
   {
     key: 'hourlyRate',
     label: 'Hourly Rate',
