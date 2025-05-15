@@ -2,15 +2,17 @@ name: Frontend Vitest Unit Tests
 
 on:
   pull_request_target:
-    types: [assigned]
+    types: [assigned, labeled]
   pull_request:
     branches: "**"
     paths:
       - "app/**"
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 jobs:
   app-unit-test:
+    if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
     steps:
       - name: 🛫 Checkout
