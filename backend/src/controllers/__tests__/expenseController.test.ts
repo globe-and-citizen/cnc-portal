@@ -124,7 +124,8 @@ describe("Expense Controller", () => {
     it("should return expenses for a valid team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
       vi.spyOn(prisma.expense, "findMany").mockResolvedValue([{...mockExpense, data: JSON.parse(mockExpense.data as string)}]);
-      vi.spyOn(prisma.expense, "update")
+      vi.spyOn(prisma.teamContract, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.expense, "update").mockResolvedValue({})
       vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1])
 
       const response = await request(app).get("/expenses").query({ teamId: 1 });
