@@ -26,9 +26,9 @@ export const addClaim = async (req: Request, res: Response) => {
   if (typeof description !== "string" || description.trim().length === 0) {
    return res.status(400).json({ error: "Description is required" });
   }
-  if (description.length > 100){
-    parametersError.push("Description is too long, max 100 characters");
-  }
+  if (description.trim().split(/\s+/).length > 200) {
+    parametersError.push("Description is too long, max 200 words");
+  }  
   if (isNaN(teamId)) parametersError.push("Invalid teamId");
   if (hoursWorked <= 0)
     parametersError.push(
