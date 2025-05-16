@@ -2,8 +2,9 @@ import { useCustomFetch } from '@/composables'
 import { NETWORK } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useToastStore } from './useToastStore'
+import { dailyLocalStorage } from '@/utils/storageWithExpiration'
 
 interface Currency {
   code: string
@@ -135,20 +136,36 @@ export const useCurrencyStore = defineStore(
       }
     })
 
+    const prices = reactive({
+      nativeToken: {
+        id: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
+        name: NETWORK.currencySymbol,
+        symbol: NETWORK.currencySymbol,
+        priceInLocal: computed(() => nativeTokenPrice.value),
+        priceInUSD: computed(() => nativeTokenPriceInUSD.value),
+        isLoading: computed(() => isLoading.value)
+      },
+      usdc: {
+        id: 'usd-coin',
+        name: 'USD Coin',
+        symbol: 'USDC',
+        priceInLocal: computed(() => usdPriceInLocal.value),
+        priceInUSD: computed(() => usdPriceInLocal.value),
+        isLoading: computed(() => isLoadingUSDPrice.value)
+      }
+    })
+
     return {
-      currency,
-      nativeTokenPrice,
-      nativeTokenPriceInUSD,
-      usdPriceInLocal,
-      isLoading,
-      isLoadingUSDPrice,
+      localCurrency: currency,
+      nativeToken: prices.nativeToken,
+      usdc: prices.usdc,
       setCurrency,
       fetchNativeTokenPrice
     }
   },
   {
     persist: {
-      storage: sessionStorage // Persist for the current browser tab session
+      storage: dailyLocalStorage
     }
   }
 )

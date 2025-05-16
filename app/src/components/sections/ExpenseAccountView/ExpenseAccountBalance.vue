@@ -32,8 +32,11 @@ const expenseAddress = teamStore.currentTeam?.teamContracts.find(
 )?.address
 const { balances, isLoading } = useContractBalance(expenseAddress)
 const currencyStore = useCurrencyStore()
-const { currency } = storeToRefs(currencyStore)
+const { localCurrency } = storeToRefs(currencyStore)
 const totalBalance = computed(() => {
-  return formatCurrencyShort(parseFloat(balances.totalValueInLocalCurrency), currency.value.code)
+  return formatCurrencyShort(
+    parseFloat(balances.totalValueInLocalCurrency),
+    localCurrency.value.code
+  )
 })
 </script>

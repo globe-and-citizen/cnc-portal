@@ -164,18 +164,18 @@ const formattedTransferAmount = computed(() => {
   if (model.value.token.symbol === NETWORK.currencySymbol) {
     return Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code,
+      currency: currencyStore.localCurrency.code,
       minimumFractionDigits: 2
-    }).format(amount * (currencyStore.nativeTokenPrice || 0))
+    }).format(amount * (currencyStore.nativeToken.priceInLocal || 0))
   }
   // If the selected token is USDC (stablecoin)
   else if (model.value.token.symbol === 'USDC') {
     // USDC is pegged to USD, so just use the currency store's rate
     return Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code,
+      currency: currencyStore.localCurrency.code,
       minimumFractionDigits: 2
-    }).format(amount * (currencyStore.usdPriceInLocal || 0))
+    }).format(amount * (currencyStore.usdc.priceInLocal || 0))
   }
 
   // Default case
