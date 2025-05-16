@@ -1,12 +1,13 @@
-<template>
+```<template>
   <ButtonUI
     :loading="isWageClaimAdding"
     variant="success"
     data-test="modal-submit-hours-button"
-    @click="modal = true"
+    @click="openModal"
   >
     Submit Claim
   </ButtonUI>
+
   <ModalComponent v-model="modal">
     <div class="flex flex-col gap-4">
       <h3 class="text-xl font-bold">Submit Claim</h3>
@@ -54,31 +55,38 @@
           :disabled="isWageClaimAdding"
           :loading="isWageClaimAdding"
           data-test="submit-claim-button"
-          @click="async () => await addWageClaim()"
-          >Submit</ButtonUI
+          @click="addWageClaim"
         >
+          Submit
+        </ButtonUI>
       </div>
     </div>
   </ModalComponent>
 </template>
+
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import { computed, ref, watch } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { minValue, numeric, required } from '@vuelidate/validators'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useTeamStore, useToastStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
+import { ref, computed } from 'vue'
+import { useVuelidate } from '@vuelidate/core'
+import { required, numeric, minValue } from '@vuelidate/validators'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useToastStore, useTeamStore } from '@/stores'
 import { maxLength } from '@vuelidate/validators'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
+const emits = defineEmits(['refetchClaims'])
+
+const modal = ref(false)
 const hoursWorked = ref<{ hoursWorked: string | undefined; description: string | undefined }>({
   hoursWorked: undefined,
   description: undefined
 })
-const modal = ref(false)
-const emits = defineEmits(['refetchClaims'])
+
+const openModal = () => {
+  modal.value = true
+}
 
 const rules = {
   hoursWorked: {
@@ -87,22 +95,22 @@ const rules = {
       numeric,
       minValue: minValue(1)
     },
-     description: {
-      required,
+    description: {
+      required, 
       maxLength: maxLength(200)
     }
   }
 }
 const v$ = useVuelidate(rules, { hoursWorked })
+
 const teamId = computed(() => teamStore.currentTeam?.id)
+
 const {
   error: addWageClaimError,
   isFetching: isWageClaimAdding,
   execute: addWageClaimAPI,
   statusCode: addWageClaimStatusCode
-} = useCustomFetch('/claim', {
-  immediate: false
-})
+} = useCustomFetch('/claim', { immediate: false })
   .post(() => ({
     teamId: teamId.value,
     hoursWorked: hoursWorked.value.hoursWorked,
@@ -110,24 +118,25 @@ const {
   }))
   .json()
 
-watch(addWageClaimStatusCode, async () => {
-  if (addWageClaimStatusCode.value === 201) {
-    modal.value = false
-    toastStore.addSuccessToast('Wage claim added successfully')
-  }
-})
-watch(addWageClaimError, (newVal) => {
-  if (newVal) {
-    toastStore.addErrorToast(addWageClaimError.value)
-  }
-})
-
 const addWageClaim = async () => {
   v$.value.$touch()
-  if (v$.value.$invalid) {
-    return
+  if (v$.value.$invalid) return
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const res = await addWageClaimAPI()
+
+  if (addWageClaimStatusCode.value === 201) {
+    toastStore.addSuccessToast('Wage claim added successfully')
+    emits('refetchClaims')
+    modal.value = false
+
+    // 🔁 Reset champs et validation après succès
+    hoursWorked.value.hoursWorked = undefined
+    hoursWorked.value.description = undefined
+    v$.value.$reset()
+  } else if (addWageClaimError.value) {
+    toastStore.addErrorToast(addWageClaimError.value)
   }
-  await addWageClaimAPI()
-  emits('refetchClaims')
 }
 </script>
+``
