@@ -5,22 +5,13 @@ on:
     branches: "**"
     paths:
       - "backend/**"
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 jobs:
   api-unit-test:
+    if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
-    container: node:20.10.0-alpine
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: root
-          POSTGRES_DB: cnc-db
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: 🛫 Checkout
@@ -37,18 +28,10 @@ jobs:
         run: npm ci
         working-directory: ./backend
 
-      - name: 🏗 Set up PostgreSQL
+      - name: 🏗 Prisma Generate
         run: |
-          npm run prisma:migrate
+          npm run prisma:generate
         working-directory: ./backend
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Seed PostgreSQL
-        run: npx prisma db seed
-        working-directory: ./backend
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: 💻 Run Vitest
         run: npm run test:unit:coverage

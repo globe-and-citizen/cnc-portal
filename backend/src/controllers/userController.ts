@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../utils";
 import { Request, Response } from "express";
 import { generateNonce, SiweMessage } from "siwe";
 import { errorResponse } from "../utils/utils";
-
-const prisma = new PrismaClient();
+import { log } from "console";
+import { isAddress } from "viem";
 
 /**
  *
@@ -15,16 +15,14 @@ export const getNonce = async (req: Request, res: Response) => {
   const { address } = req.params;
 
   try {
-    if (!address)
-      return errorResponse(401, "Get nonce error: Missing user address", res);
+    if (!isAddress(address))
+      return errorResponse(401, "Get nonce error: Invalid user address", res);
 
     const user = await prisma.user.findUnique({
       where: {
         address: address,
       },
     });
-
-    await prisma.$disconnect();
 
     if (!user)
       return res.status(200).json({
@@ -39,7 +37,6 @@ export const getNonce = async (req: Request, res: Response) => {
       nonce,
     });
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };
@@ -47,8 +44,9 @@ export const getNonce = async (req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   try {
-    if (!address)
+    if (!address || address.trim() === "") {
       return errorResponse(401, "Get user error: Missing user address", res);
+    }
 
     const user = await prisma.user.findUnique({
       where: {
@@ -56,13 +54,10 @@ export const getUser = async (req: Request, res: Response) => {
       },
     });
 
-    await prisma.$disconnect();
-
     if (!user) return errorResponse(404, "User not found", res);
 
     return res.status(200).json(user);
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };
@@ -72,8 +67,9 @@ export const updateUser = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   try {
-    if (!address)
+    if (!callerAddress)
       return errorResponse(401, "Update user error: Missing user address", res);
+
     if (callerAddress !== address) {
       return errorResponse(403, "Unauthorized", res);
     }
@@ -86,8 +82,6 @@ export const updateUser = async (req: Request, res: Response) => {
         name: true,
       },
     });
-
-    await prisma.$disconnect();
 
     if (!user) return errorResponse(404, "User not found", res);
 
@@ -108,7 +102,6 @@ export const updateUser = async (req: Request, res: Response) => {
 
     return res.status(200).json(updatedUser);
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };
@@ -132,7 +125,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
       totalPages: Math.ceil(totalUsers / pageSize),
     });
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };

@@ -36,6 +36,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     //Update nonce for user and persist in database
     nonce = generateNonce();
 
+    console.log("user: ", user);
     if (user)
       await prisma.user.update({
         where: { address },
@@ -66,13 +67,9 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 };
 
 export const authenticateToken = (req: Request, res: Response) => {
-  try {
-    if (!(req as any).address) {
-      return errorResponse(401, "Unauthorized: Missing jwt payload", res);
-    }
-
-    return res.status(200).json({});
-  } catch (error) {
-    return errorResponse(500, error, res);
+  if (!(req as any).address) {
+    return errorResponse(401, "Unauthorized: Missing jwt payload", res);
   }
+
+  return res.status(200).json({});
 };

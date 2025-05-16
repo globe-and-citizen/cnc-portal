@@ -28,7 +28,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const myApprovedExpenses = computed(() => {
     if (allExpenseData.value) {
       const expenses = allExpenseData.value.map((expense) => ({
-        // ...JSON.parse(expense.data),
         ...expense.data,
         signature: expense.signature
       }))
@@ -40,7 +39,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const allExpenseDataParsed = computed(() => {
     if (allExpenseData.value) {
       return allExpenseData.value.map((expense) => ({
-        // ...JSON.parse(expense.data),
         ...expense.data,
         ...expense
       }))
@@ -71,7 +69,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
   // Todo count how many time it's called or mounted
   onMounted(async () => {
     await reloadExpenseData()
-    console.log('allExpenseData', allExpenseData.value)
   })
 
   return {

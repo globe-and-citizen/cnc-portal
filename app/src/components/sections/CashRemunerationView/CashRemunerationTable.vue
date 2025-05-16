@@ -2,7 +2,7 @@
   <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
     <div class="w-full flex justify-between">
       <span class="font-bold text-lg">Claims Table</span>
-      <SubmitClaims @refetch-claims="async () => await fetchTeamClaimData()" />
+      <SubmitClaims v-if="hasWage" @refetch-claims="async () => await fetchTeamClaimData()" />
     </div>
     <div class="form-control flex flex-row gap-4">
       <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
@@ -100,8 +100,8 @@
 <script setup lang="ts">
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
-import type { ClaimResponse } from '@/types'
+import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import type { ClaimResponse, WageResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
@@ -115,6 +115,7 @@ const currencyStore = useCurrencyStore()
 const statusses = ['all', 'pending', 'signed', 'withdrawn']
 const selectedRadio = ref('all')
 
+const { address: currentAddress } = useUserDataStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
 const statusUrl = computed(() =>
@@ -133,6 +134,19 @@ const {
   execute: fetchTeamClaimData
 } = useCustomFetch(claimURL, { immediate: false, refetch: true }).json<Array<ClaimResponse>>()
 
+const { data: teamWageData, error: teamWageDataError } = useCustomFetch(
+  computed(() => `/wage/?teamId=${teamId.value}`)
+)
+  .get()
+  .json<Array<WageResponse>>()
+
+const hasWage = computed(() => {
+  const userWage = teamWageData.value?.find((wage) => wage.userAddress === currentAddress)
+  if (!userWage) return false
+
+  return true
+})
+
 const formatRow = (row: TableRow) => {
   return row as ClaimResponse
 }
@@ -149,6 +163,11 @@ watch(
   },
   { immediate: true }
 )
+watch(teamWageDataError, (newVal) => {
+  if (newVal) {
+    toastStore.addErrorToast('Failed to fetch user wage data')
+  }
+})
 
 const columns = [
   {
