@@ -25,6 +25,10 @@
         :columns="columns"
         :loading="isTeamClaimDataFetching"
       >
+        <template #description-data="{ row }">
+          <span class="font-bold">{{ row.description }}</span>
+        </template>
+
         <template #createdAt-data="{ row }">
           <span>{{ new Date(row.createdAt).toLocaleString() }}</span>
         </template>
@@ -114,7 +118,6 @@ const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
 const statusses = ['all', 'pending', 'signed', 'withdrawn']
 const selectedRadio = ref('all')
-
 const { address: currentAddress } = useUserDataStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
@@ -183,6 +186,12 @@ const columns = [
   {
     key: 'hoursWorked',
     label: 'Hour Worked',
+    sortable: false,
+    class: 'text-black text-base'
+  },
+  {
+    key: 'description',
+    label: 'Description',
     sortable: false,
     class: 'text-black text-base'
   },
