@@ -104,8 +104,8 @@
 <script setup lang="ts">
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
-import type { ClaimResponse } from '@/types'
+import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import type { ClaimResponse, WageResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
@@ -113,12 +113,12 @@ import CRSigne from './CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { NETWORK } from '@/constant'
 
+
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
 const statusses = ['all', 'pending', 'signed', 'withdrawn']
 const selectedRadio = ref('all')
-
 const { address: currentAddress } = useUserDataStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
