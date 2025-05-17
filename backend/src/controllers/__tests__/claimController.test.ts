@@ -31,6 +31,14 @@ describe("Claim Controller", () => {
       expect(response.body.message).toEqual("Missing hoursWorked, Missing description, Invalid hoursWorked");
     });
 
+    it("should return 400 if invalid description", async () => {
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, description: "" });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toEqual("Missing description");
+    });
+
     it("should return 400 if required fields are missing", async () => {
       const response = await request(app).post("/claim").send({});
       expect(response.status).toBe(400);
@@ -47,42 +55,44 @@ describe("Claim Controller", () => {
       );
     });
 
-    it.only("should return 400 if no wage is found for the user", async () => {
+    it("should return 400 if no wage is found for the user", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
 
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5 });
+        .send({ teamId: 1, hoursWorked: 5, description: "test" });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("No wage found for the user");
     });
 
-    it.skip("should return 201 and create a claim successfully", async () => {
+    it("should return 201 and create a claim successfully", async () => {
       // @ts-ignore
       vi.spyOn(prisma.wage, "findFirst").mockResolvedValue({ id: 1 });
       // @ts-ignore
       vi.spyOn(prisma.claim, "create").mockResolvedValue({
         id: 1,
         hoursWorked: 5,
+        description: "",
         status: "pending",
         wageId: 1,
       });
 
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5 });
+        .send({ teamId: 1, hoursWorked: 5, description: "test" });
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty("id");
       expect(response.body.status).toBe("pending");
     });
-    it.skip("should return 500 if an error occurs", async () => {
+
+    it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
 
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5 });
+        .send({ teamId: 1, hoursWorked: 5, description: "test" });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe("Internal server error has occured");
