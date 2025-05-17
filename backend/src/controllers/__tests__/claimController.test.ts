@@ -28,15 +28,31 @@ describe("Claim Controller", () => {
         .post("/claim")
         .send({ teamId: 1, descpription: "" });
       expect(response.status).toBe(400);
-      expect(response.body.message).toEqual("Missing hoursWorked, Missing description, Invalid hoursWorked");
+      expect(response.body.message).toEqual(
+        "Missing hoursWorked, Missing description, Invalid hoursWorked"
+      );
     });
 
-    it("should return 400 if invalid description", async () => {
+    it("should return 400 if description is only spaces", async () => {
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, description: "" });
+        .send({ teamId: 1, hoursWorked: 5, description: " " });
+
       expect(response.status).toBe(400);
-      expect(response.body.message).toEqual("Missing description");
+      expect(response.body.message).toContain("Invalid description");
+    });
+
+    it("should return 400 if description exceeds 200 words", async () => {
+      const longDescription = Array(201).fill("word").join(" ");
+
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, description: longDescription });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        "Description is too long, max 200 words"
+      );
     });
 
     it("should return 400 if required fields are missing", async () => {
