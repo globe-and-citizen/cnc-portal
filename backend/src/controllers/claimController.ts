@@ -99,6 +99,7 @@ export const getClaims = async (req: Request, res: Response) => {
               select: {
                 address: true,
                 name: true,
+                imageUrl: true,
               },
             },
           },
