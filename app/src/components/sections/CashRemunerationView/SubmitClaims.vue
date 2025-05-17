@@ -1,4 +1,5 @@
-```<template>
+```
+<template>
   <ButtonUI
     :loading="isWageClaimAdding"
     variant="success"
@@ -96,7 +97,7 @@ const rules = {
       minValue: minValue(1)
     },
     description: {
-      required, 
+      required,
       maxLength: maxLength(200)
     }
   }

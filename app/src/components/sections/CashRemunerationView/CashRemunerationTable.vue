@@ -25,10 +25,9 @@
         :columns="columns"
         :loading="isTeamClaimDataFetching"
       >
-
-      <template #description-data="{ row }">
-        <span class="font-bold">{{ row.description }}</span>
-      </template>
+        <template #description-data="{ row }">
+          <span class="font-bold">{{ row.description }}</span>
+        </template>
 
         <template #createdAt-data="{ row }">
           <span>{{ new Date(row.createdAt).toLocaleString() }}</span>
@@ -105,10 +104,8 @@
 <script setup lang="ts">
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
-import type { ClaimResponse } from '@/types'  
-
+import type { ClaimResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
@@ -193,7 +190,7 @@ const columns = [
     sortable: false,
     class: 'text-black text-base'
   },
-   {
+  {
     key: 'description',
     label: 'Description',
     sortable: false,

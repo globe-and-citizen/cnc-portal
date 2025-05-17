@@ -48,13 +48,13 @@ model Team {
 }
 
 model MemberTeamsData {
-  id                      Int      @id @default(autoincrement()) // Add an ID for easy referencing
-  user                    User     @relation(fields: [userAddress], references: [address])
-  team                    Team     @relation(fields: [teamId], references: [id])
-  userAddress             String
-  teamId                  Int
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
+  user        User     @relation(fields: [userAddress], references: [address])
+  team        Team     @relation(fields: [teamId], references: [id])
+  userAddress String
+  teamId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([userAddress, teamId])
 }

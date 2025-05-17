@@ -24,11 +24,11 @@ export const addClaim = async (req: Request, res: Response) => {
   if (!body.description) parametersError.push("Missing description");
   if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
   if (typeof description !== "string" || description.trim().length === 0) {
-   return res.status(400).json({ error: "Description is required" });
+    return res.status(400).json({ error: "Description is required" });
   }
   if (description.trim().split(/\s+/).length > 200) {
     parametersError.push("Description is too long, max 200 words");
-  }  
+  }
   if (isNaN(teamId)) parametersError.push("Invalid teamId");
   if (hoursWorked <= 0)
     parametersError.push(
