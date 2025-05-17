@@ -113,7 +113,6 @@ import CRSigne from './CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { NETWORK } from '@/constant'
 
-
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
