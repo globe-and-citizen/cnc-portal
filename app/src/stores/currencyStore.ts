@@ -5,39 +5,8 @@ import { defineStore } from 'pinia'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useToastStore } from './useToastStore'
 import { dailyLocalStorage } from '@/utils/storageWithExpiration'
+import { LIST_CURRENCIES } from '@/constant'
 
-interface Currency {
-  code: string
-  name: string
-  symbol: string
-}
-export const LIST_CURRENCIES: Currency[] = [
-  {
-    code: 'USD',
-    name: 'US Dollar',
-    symbol: '$'
-  },
-  {
-    code: 'EUR',
-    name: 'Euro',
-    symbol: '€'
-  },
-  {
-    code: 'CAD',
-    name: 'Canadian Dollar',
-    symbol: 'CA$'
-  },
-  {
-    code: 'IDR',
-    name: 'Indonesian Rupiah',
-    symbol: 'Rp'
-  },
-  {
-    code: 'INR',
-    name: 'Indian Rupee',
-    symbol: '₹'
-  }
-]
 const NETWORK_TO_COIN_ID: Record<string, string> = {
   POL: 'matic-network',
   ETH: 'ethereum',

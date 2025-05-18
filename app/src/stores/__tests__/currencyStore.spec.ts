@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { LIST_CURRENCIES, useCurrencyStore } from '../currencyStore'
+import { useCurrencyStore } from '../currencyStore'
+import { LIST_CURRENCIES } from '@/constant'
 import { useToastStore } from '../__mocks__/useToastStore'
 import { ref } from 'vue'
 

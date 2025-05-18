@@ -159,3 +159,37 @@ export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
 export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
 export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''
+
+
+interface Currency {
+  code: string
+  name: string
+  symbol: string
+}
+export const LIST_CURRENCIES: Currency[] = [
+  {
+    code: 'USD',
+    name: 'US Dollar',
+    symbol: '$'
+  },
+  {
+    code: 'EUR',
+    name: 'Euro',
+    symbol: '€'
+  },
+  {
+    code: 'CAD',
+    name: 'Canadian Dollar',
+    symbol: 'CA$'
+  },
+  {
+    code: 'IDR',
+    name: 'Indonesian Rupiah',
+    symbol: 'Rp'
+  },
+  {
+    code: 'INR',
+    name: 'Indian Rupee',
+    symbol: '₹'
+  }
+]
