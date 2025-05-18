@@ -1,49 +1,78 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import request from "supertest";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  vi,
+  beforeEach,
+} from "vitest";
 import { prisma, errorResponse } from "../../utils";
 import { Request, Response } from "express";
 import { getNotification, updateNotification } from "../notificationController";
+import express, { NextFunction } from "express";
+import { authorizeUser } from "../../middleware/authMiddleware";
 
-describe.skip("Get Notification", () => {
-  it("should return notifications if user is authorized", async () => {
-    const req = {
-      address: "0x123",
-    } as unknown as Request;
+function setAddressMiddleware(address: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = address;
+    next();
+  };
+}
 
-    const res: any = {
-      status: (code: number) => {
-        res.statusCode = code;
-        return res;
-      },
-      json: (data: any) => {
-        res.data = data;
-        return res;
-      },
-      data: undefined,
-    } as unknown as Response;
+const app = express();
+app.use(express.json());
+app.get("/", getNotification, authorizeUser);
+app.put("/:id", updateNotification, authorizeUser);
 
-    await getNotification(req, res);
+describe("Notification Controller", () => {
+  describe("GET /", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return notifications if user is authorized", async () => {
+      const req = {
+        address: "0x123",
+      } as unknown as Request;
+
+      const res: any = {
+        status: (code: number) => {
+          res.statusCode = code;
+          return res;
+        },
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
+      await getNotification(req, res);
+
+      expect(res.data.message).toBe("Internal server error has occured");
+    });
+
+    it("should handle errors gracefully", async () => {
+      const req = {
+        address: 1,
+      } as unknown as Request;
+
+      const res: any = {
+        status: () => res,
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
+      await getNotification(req, res);
+    });
   });
 
-  it("should handle errors gracefully", async () => {
-    const req = {
-      address: 1,
-    } as unknown as Request;
-
-    const res: any = {
-      status: () => res,
-      json: (data: any) => {
-        res.data = data;
-        return res;
-      },
-      data: undefined,
-    } as unknown as Response;
-
-    await getNotification(req, res);
-
-  });
-});
-
-describe.skip("Update Notification", () => {
+  describe("Update Notification", () => {
   it("should update notification if user is authorized", async () => {
     const req = {
       params: {
@@ -72,6 +101,7 @@ describe.skip("Update Notification", () => {
       author: "0x345",
       createdAt: new Date(Date.now()),
       resource: null,
+      updatedAt: new Date(Date.now())
     });
     vi.spyOn(prisma.notification, "update").mockResolvedValue({
       id: 1,
@@ -82,6 +112,7 @@ describe.skip("Update Notification", () => {
       author: "0x345",
       createdAt: new Date(Date.now()),
       resource: null,
+      updatedAt: new Date(Date.now())
     });
 
     await updateNotification(req, res);
@@ -142,6 +173,7 @@ describe.skip("Update Notification", () => {
       author: "0x345",
       createdAt: new Date(Date.now()),
       resource: null,
+      updatedAt: new Date(Date.now())
     });
 
     await updateNotification(req, res);
@@ -177,3 +209,45 @@ describe.skip("Update Notification", () => {
     vi.restoreAllMocks();
   });
 });
+});
+
+describe.skip("Get Notification", () => {
+  it("should return notifications if user is authorized", async () => {
+    const req = {
+      address: "0x123",
+    } as unknown as Request;
+
+    const res: any = {
+      status: (code: number) => {
+        res.statusCode = code;
+        return res;
+      },
+      json: (data: any) => {
+        res.data = data;
+        return res;
+      },
+      data: undefined,
+    } as unknown as Response;
+
+    await getNotification(req, res);
+  });
+
+  it("should handle errors gracefully", async () => {
+    const req = {
+      address: 1,
+    } as unknown as Request;
+
+    const res: any = {
+      status: () => res,
+      json: (data: any) => {
+        res.data = data;
+        return res;
+      },
+      data: undefined,
+    } as unknown as Response;
+
+    await getNotification(req, res);
+  });
+});
+
+
