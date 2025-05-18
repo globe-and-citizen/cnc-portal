@@ -54,9 +54,9 @@ describe("Notification Controller", () => {
       expect(res.data.message).toBe("Internal server error has occured");
     });
 
-    it("should return 403 if user is not authorized", async () => {
+    it("should return notifications if user is authorized", async () => {
       const req = {
-        address: "0x999", 
+        address: "0x123",
       } as unknown as Request;
 
       const res: any = {
@@ -74,7 +74,50 @@ describe("Notification Controller", () => {
       vi.spyOn(prisma.notification, "findMany").mockResolvedValue([
         {
           id: 1,
-          userAddress: "0x123", 
+          userAddress: "0x123",
+          isRead: false,
+          message: "Hello",
+          subject: "Test",
+          author: "0x345",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          resource: null,
+        },
+      ]);
+      vi.spyOn(prisma, "$disconnect").mockResolvedValue();
+
+      await getNotification(req, res);
+
+      expect(res.statusCode).toBe(201);
+      expect(res.data.success).toBe(true);
+      expect(Array.isArray(res.data.data)).toBe(true);
+
+      vi.restoreAllMocks();
+    });
+
+    
+
+    it("should return 403 if user is not authorized", async () => {
+      const req = {
+        address: "0x999",
+      } as unknown as Request;
+
+      const res: any = {
+        status: (code: number) => {
+          res.statusCode = code;
+          return res;
+        },
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
+      vi.spyOn(prisma.notification, "findMany").mockResolvedValue([
+        {
+          id: 1,
+          userAddress: "0x123",
           isRead: false,
           message: "Not your notification",
           subject: "Private",
