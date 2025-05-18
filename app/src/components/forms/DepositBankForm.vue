@@ -203,7 +203,7 @@ onMounted(() => {
     isDropdownOpen.value = false
   })
   // Fetch the current price when component mounts
-  currencyStore.fetchNativeTokenPrice()
+  // currencyStore.fetchNativeTokenPrice()
 })
 
 const formattedBalance = computed(() => {

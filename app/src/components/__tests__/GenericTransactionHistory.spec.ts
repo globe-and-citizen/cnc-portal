@@ -64,7 +64,7 @@ vi.mock('@/stores/currencyStore', () => ({
       isLoading: false
     },
     setCurrency: vi.fn(),
-    fetchNativeTokenPrice: vi.fn()
+    // fetchNativeTokenPrice: vi.fn()
   })
 }))
 
