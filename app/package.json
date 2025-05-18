@@ -76,7 +76,7 @@
     "eslint": "^9.17.0",
     "eslint-plugin-vue": "^10.1.0",
     "jsdom": "^26.1.0",
-    "npm-run-all2": "^6.1.1",
+    "npm-run-all2": "^8.0.2",
     "postcss": "^8.4.35",
     "prettier": "^3.0.3",
     "sass": "^1.75.0",
