@@ -49,28 +49,6 @@ describe("Notification Controller", () => {
         data: undefined,
       } as unknown as Response;
 
-      await getNotification(req, res);
-
-      expect(res.data.message).toBe("Internal server error has occured");
-    });
-
-    it("should return notifications if user is authorized", async () => {
-      const req = {
-        address: "0x123",
-      } as unknown as Request;
-
-      const res: any = {
-        status: (code: number) => {
-          res.statusCode = code;
-          return res;
-        },
-        json: (data: any) => {
-          res.data = data;
-          return res;
-        },
-        data: undefined,
-      } as unknown as Response;
-
       vi.spyOn(prisma.notification, "findMany").mockResolvedValue([
         {
           id: 1,
@@ -94,8 +72,6 @@ describe("Notification Controller", () => {
 
       vi.restoreAllMocks();
     });
-
-    
 
     it("should return 403 if user is not authorized", async () => {
       const req = {
@@ -135,6 +111,28 @@ describe("Notification Controller", () => {
       expect(res.data.message).toBe("Unauthorized access");
 
       vi.restoreAllMocks();
+    });
+
+    it("should return notifications if user is authorized", async () => {
+      const req = {
+        address: "0x123",
+      } as unknown as Request;
+
+      const res: any = {
+        status: (code: number) => {
+          res.statusCode = code;
+          return res;
+        },
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
+      await getNotification(req, res);
+
+      expect(res.data.message).toBe("Internal server error has occured");
     });
   });
 
