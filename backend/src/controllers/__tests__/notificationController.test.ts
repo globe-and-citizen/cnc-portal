@@ -73,6 +73,35 @@ describe("Notification Controller", () => {
       vi.restoreAllMocks();
     });
 
+    it("should return empty notifications if none are found", async () => {
+      const req = {
+        address: "0x123",
+      } as unknown as Request;
+
+      const res: any = {
+        status: (code: number) => {
+          res.statusCode = code;
+          return res;
+        },
+        json: (data: any) => {
+          res.data = data;
+          return res;
+        },
+        data: undefined,
+      } as unknown as Response;
+
+      vi.spyOn(prisma.notification, "findMany").mockResolvedValue([]);
+      vi.spyOn(prisma, "$disconnect").mockResolvedValue();
+
+      await getNotification(req, res);
+
+      expect(res.statusCode).toBe(201);
+      expect(res.data.success).toBe(true);
+      expect(res.data.data).toEqual([]);
+
+      vi.restoreAllMocks();
+    });
+
     it("should return 403 if user is not authorized", async () => {
       const req = {
         address: "0x999",
