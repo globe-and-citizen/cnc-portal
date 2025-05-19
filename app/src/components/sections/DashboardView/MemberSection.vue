@@ -135,13 +135,13 @@ watch(
   }
 )
 
-const _getMemberWage = (memberAddress: Address) => {
-  if (!teamWageData.value) return 'N/A'
-  const memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
-  return memberWage
-    ? `${memberWage.maximumHoursPerWeek} h/week & ${memberWage.cashRatePerHour} ${NETWORK.currencySymbol}/h`
-    : 'N/A'
-}
+// const _getMemberWage = (memberAddress: Address) => {
+//   if (!teamWageData.value) return 'N/A'
+//   const memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
+//   return memberWage
+//     ? `${memberWage.maximumHoursPerWeek} h/week & ${memberWage.cashRatePerHour} ${NETWORK.currencySymbol}/h`
+//     : 'N/A'
+// }
 
 const getMemberWage = (memberAddress: Address) => {
   let memberWage
