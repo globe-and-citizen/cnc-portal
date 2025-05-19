@@ -2,9 +2,7 @@
 import { NETWORK } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useToastStore } from './useToastStore'
-import { dailyLocalStorage } from '@/utils/storageWithExpiration'
+import { computed, reactive } from 'vue'
 import { LIST_CURRENCIES } from '@/constant'
 import { useQuery } from '@tanstack/vue-query'
 
@@ -111,9 +109,7 @@ export const useCurrencyStore = defineStore('currency', () => {
           : null
       ),
       priceInUSD: computed(() =>
-        usdPriceResponse.value
-          ? usdPriceResponse.value.market_data.current_price[currencyCode.value]
-          : null
+        usdPriceResponse.value ? usdPriceResponse.value.market_data.current_price['usd'] : 1
       ),
       isLoading: computed(() => isLoadingUSDPrice.value)
     }
