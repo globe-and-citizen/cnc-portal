@@ -318,8 +318,14 @@ const handleExport = async () => {
             return tx.to
           case 'receipt':
             return getReceiptUrl(tx.txHash)
+          case 'amount':
+            return `${Number(tx.amount)} ${tx.token}`
+          case 'valueUSD':
+            return formatAmount(tx, 'USD')
+          case 'valueLocal':
+            return formatAmount(tx, currencyStore.currency.code)
           default:
-            return col.key.startsWith('amount') ? formatAmount(tx, 'USD') : ''
+            return ''
         }
       })
     )
@@ -353,18 +359,24 @@ const handleReceiptClick = (transaction: BaseTransaction) => {
 const getReceiptUrl = (txHash: string) => `${NETWORK.blockExplorerUrl}/tx/${txHash}`
 const getExplorerUrl = (address: string) => `${NETWORK.blockExplorerUrl}/address/${address}`
 
-const formatReceiptData = (transaction: BaseTransaction): ReceiptData => ({
-  txHash: String(transaction.txHash),
-  date: formatDate(transaction.date),
-  type: String(transaction.type),
-  from: String(transaction.from),
-  to: String(transaction.to),
-  amount: String(transaction.amount || ''),
-  token: String(transaction.token),
-  amountUSD: Number(transaction.amountUSD || 0),
-  valueUSD: formatAmount(transaction, 'USD'),
-  valueLocal: formatAmount(transaction, currencyStore.currency.code)
-})
+const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
+  const tokenAmount = Number(transaction.amount)
+  const usdAmount =
+    transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeTokenPriceInUSD.value!
+
+  return {
+    txHash: String(transaction.txHash),
+    date: formatDate(transaction.date),
+    type: String(transaction.type),
+    from: String(transaction.from),
+    to: String(transaction.to),
+    amount: String(transaction.amount || ''),
+    token: String(transaction.token),
+    amountUSD: usdAmount,
+    valueUSD: formatAmount(transaction, 'USD'),
+    valueLocal: formatAmount(transaction, currencyStore.currency.code)
+  }
+}
 
 const handleReceiptExport = (receiptData: ReceiptData) => {
   try {
