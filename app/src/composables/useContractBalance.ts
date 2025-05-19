@@ -1,4 +1,4 @@
-import { computed, reactive, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
@@ -21,9 +21,9 @@ export interface ContractBalance {
 
 interface Balance {
   code: string
-  amount?: number
-  valueInUSD?: number
-  valueInLocalCurrency?: number
+  amount: number
+  valueInUSD: number
+  valueInLocalCurrency: number
 }
 
 export function useContractBalance(address: Address | undefined) {
@@ -37,7 +37,10 @@ export function useContractBalance(address: Address | undefined) {
     // refetch: fetchNativeBalance
   } = useBalance({
     address,
-    chainId
+    chainId,
+    query: {
+      refetchInterval: 60000
+    }
   })
 
   const {
@@ -49,7 +52,10 @@ export function useContractBalance(address: Address | undefined) {
     address: USDC_ADDRESS as Address,
     abi: ERC20ABI,
     functionName: 'balanceOf',
-    args: [address as Address]
+    args: [address as Address],
+    query: {
+      refetchInterval: 60000
+    }
   })
 
   // const formattedNativeBalance = computed(() =>
@@ -106,11 +112,25 @@ export function useContractBalance(address: Address | undefined) {
         )
       }
     ]
-    console.log('comuted newBalance')
-    console.log('newBalance', tab)
+    // console.log('comuted newBalance')
+    // console.log('newBalance', tab)
     return tab
   })
 
+  // watch(
+  //   newBalance,
+  //   () => {
+  //     console.log('newBalance Value', newBalance.value)
+  //   },
+  //   { deep: true }
+  // )
+  // watch(usdcBalance, () => {
+  //   console.log('usdcBalance Value', usdcBalance.value)
+  // })
+
+  // watch(nativeBalance, () => {
+  //   console.log('nativeBalance Value', nativeBalance.value)
+  // })
   // const balances = reactive({
   //   nativeToken: {
   //     balance: computed(() => nativeBalance.value?.value),
