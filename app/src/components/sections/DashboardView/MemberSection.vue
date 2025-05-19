@@ -39,10 +39,22 @@
               :user="{ name: row.name, address: row.address, imageUrl: row.imageUrl }"
             />
           </template>
+          <template #maxWeeklyHours-data="{ row }">
+            {{ !isTeamWageDataFetching ? getMemberWage(row.address).maximumHoursPerWeek : '' }}
+            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
+          </template>
           <template #wage-data="{ row }">
-            {{ !isTeamWageDataFetching ? getMemberWage(row.address) : '' }}
+            {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div
           ></template>
+          <template #usdcHourlyRate-data="{ row }">
+            {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
+            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
+          </template>
+          <template #sherHourlyRate-data="{ row }">
+            {{ !isTeamWageDataFetching ? getMemberWage(row.address).sherRatePerHour : '' }}
+            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
+          </template>
           <template
             #action-data="{ row }"
             v-if="teamStore.currentTeam?.ownerAddress === userDataStore.address"
@@ -113,7 +125,17 @@ watch(
   }
 )
 
-const getMemberWage = (memberAddress: Address) => {
+// Watch for changes in the team wage data
+watch(
+  () => teamWageData.value,
+  (data) => {
+    if (data) {
+      console.log('Team wage data:', data)
+    }
+  }
+)
+
+const _getMemberWage = (memberAddress: Address) => {
   if (!teamWageData.value) return 'N/A'
   const memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
   return memberWage
@@ -121,11 +143,27 @@ const getMemberWage = (memberAddress: Address) => {
     : 'N/A'
 }
 
+const getMemberWage = (memberAddress: Address) => {
+  let memberWage
+  if (teamWageData.value)
+    // return 'N/A'
+    memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
+  return {
+    maximumHoursPerWeek: memberWage ? memberWage.maximumHoursPerWeek : 'N/A',
+    cashRatePerHour: memberWage ? memberWage.cashRatePerHour : 'N/A',
+    usdcRatePerHour: memberWage ? memberWage.usdcRatePerHour : 'N/A',
+    sherRatePerHour: memberWage ? memberWage.sherRatePerHour : 'N/A'
+  }
+}
+
 const columns = computed(() => {
   const columns = [
     { key: 'index', label: '#' },
     { key: 'member', label: 'Member' },
-    { key: 'wage', label: 'Wage' }
+    { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
+    { key: 'wage', label: `Hourly Rate (${NETWORK.currencySymbol})` },
+    { key: 'usdcHourlyRate', label: 'Hourly Rate (USDC)' },
+    { key: 'sherHourlyRate', label: 'Hourly Rate (SHER)' }
   ]
   if (teamStore.currentTeam?.ownerAddress == userDataStore.address) {
     columns.push({ key: 'action', label: 'Action' })
