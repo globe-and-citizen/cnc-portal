@@ -269,7 +269,9 @@ const {
     userAddress: props.member.address,
     cashRatePerHour: wageData.value.hourlyRate,
     tokenRatePerHour: wageData.value.hourlyRate,
-    maximumHoursPerWeek: wageData.value.maxWeeklyHours
+    maximumHoursPerWeek: wageData.value.maxWeeklyHours,
+    usdcRatePerHour: wageData.value.hourlyRateUsdc,
+    sherRatePerHour: wageData.value.hourlyRateSher
   }))
   .json()
 
