@@ -161,6 +161,10 @@ describe('GenericTransactionHistory', () => {
     getUserData: (address: string) => { name: string; imageUrl: string; address: string }
     getMemberImage: (address: string) => string
     getMemberName: (address: string) => string
+    itemsPerPage: number
+    currentPage: number
+    selectedType: string
+    typeDropdownOpen: boolean
   }
   let wrapper: VueWrapper
 
@@ -587,6 +591,39 @@ describe('GenericTransactionHistory', () => {
 
       const name = vm.getMemberName('0xunknown')
       expect(name).toBe('0xunknown')
+    })
+  })
+
+  describe('Type Filtering', () => {
+    it('closes type dropdown when clicking outside', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      // Open dropdown
+      vm.typeDropdownOpen = true
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('ul').exists()).toBe(true)
+
+      // Click outside
+      vm.typeDropdownOpen = false
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('ul').exists()).toBe(false)
+    })
+
+    it('displays correct type label in filter button', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      expect(wrapper.find('[data-test="transaction-history-type-filter"] span').text()).toBe(
+        'All Types'
+      )
+
+      vm.selectedType = 'deposit'
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="transaction-history-type-filter"] span').text()).toBe(
+        'deposit'
+      )
     })
   })
 })
