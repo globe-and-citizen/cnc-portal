@@ -88,6 +88,8 @@ model Wage {
   claims              Claim[]
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  usdcRatePerHour     Float
+  sherRatePerHour     Float
 
   @@unique([teamId, userAddress, nextWageId]) // Need to be checked
 }
