@@ -81,22 +81,16 @@ import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { computed, ref, watch } from 'vue'
 import { type Address, parseEther } from 'viem'
-import { useToastStore } from '@/stores/useToastStore'
+import { useToastStore, useCurrencyStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
 import BankABI from '@/artifacts/abi/bank.json'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 const props = defineProps<{
   bankAddress: Address
-}>()
-
-const emit = defineEmits<{
-  (e: 'error'): void
-  (e: 'balance-updated'): void
 }>()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -159,11 +153,6 @@ const handleTransfer = async (data: {
 const totalValueLocal = computed(() => {
   const usdValue = Number(balances.totalValueUSD)
   return (usdValue * (currencyStore.usdc.priceInLocal || 0)).toFixed(2)
-})
-
-// Watch handlers
-watch([() => balances.nativeToken.formatted, () => balances.usdc.formatted], () => {
-  emit('balance-updated')
 })
 
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
