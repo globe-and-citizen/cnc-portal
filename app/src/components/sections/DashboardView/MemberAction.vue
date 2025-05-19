@@ -86,7 +86,58 @@
             placeholder="Enter hourly rate..."
             data-test="hourly-rate-input"
           />
-          | {{ `${NETWORK.currencySymbol} ` }}
+          <!-- dropdown -->
+          <TokenDropdown
+            @token-selected="(token) => console.log('selectedToken: ', token)"
+            :disabled="true"
+          />
+          <!-- end dropdown -->
+        </label>
+        <div
+          data-test="hourly-rate-error"
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-for="error of v$.wageData.hourlyRate?.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
+
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+          <span class="w-32">Hourly Rate</span>
+          |
+          <input
+            type="text"
+            class="grow"
+            v-model="wageData.hourlyRateUsdc"
+            placeholder="Enter hourly rate..."
+            data-test="hourly-rate-input"
+          />
+          <!-- dropdown -->
+          <TokenDropdown :disabled="true" token-symbol="USDC" />
+          <!-- end dropdown -->
+        </label>
+        <div
+          data-test="hourly-rate-error"
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-for="error of v$.wageData.hourlyRate?.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
+
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+          <span class="w-32">Hourly Rate</span>
+          |
+          <input
+            type="text"
+            class="grow"
+            v-model="wageData.hourlyRateSher"
+            placeholder="Enter hourly rate..."
+            data-test="hourly-rate-input"
+          />
+          <!-- dropdown -->
+          <TokenDropdown :disabled="true" token-symbol="SHER" />
+          <!-- end dropdown -->
         </label>
         <div
           data-test="hourly-rate-error"
@@ -141,10 +192,10 @@ import { useCustomFetch } from '@/composables'
 import { useTeamStore, useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
 import { computed, ref } from 'vue'
+import TokenDropdown from '@/components/TokenDropdown.vue'
 const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
@@ -159,7 +210,9 @@ const showDeleteMemberConfirmModal = ref(false)
 const showSetMemberWageModal = ref(false)
 const wageData = ref({
   maxWeeklyHours: 0,
-  hourlyRate: 0
+  hourlyRate: 0,
+  hourlyRateUsdc: 0,
+  hourlyRateSher: 0
 })
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
