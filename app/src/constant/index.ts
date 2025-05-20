@@ -155,6 +155,9 @@ export const INVESTOR_V1_IMPL_ADDRESS = resolveAddress('InvestorsV1BeaconModule#
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 
+// GraphQL poll interval for transaction queries (in milliseconds)
+export const GRAPHQL_POLL_INTERVAL = 12000
+
 // Export token addresses for current network
 const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
 export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''

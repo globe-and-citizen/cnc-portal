@@ -21,6 +21,7 @@ import { useTeamStore } from '@/stores'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import type { ReceiptData } from '@/utils/excelExport'
 import type { Address } from 'viem'
+import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
@@ -56,7 +57,7 @@ const { result, error } = useQuery(
   `,
   { contractAddress },
   {
-    pollInterval: 10000, // Poll every 10 seconds
+    pollInterval: GRAPHQL_POLL_INTERVAL, // Use constant
     fetchPolicy: 'cache-and-network'
   }
 )
