@@ -11,7 +11,7 @@ vi.mock('@/constant', () => ({
 }))
 
 describe('TokenSelector', () => {
-  let wrapper: any
+  let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
     wrapper = mount(TokenSelector, {
