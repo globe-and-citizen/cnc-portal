@@ -94,6 +94,7 @@ const columns = [
       <div class="card-body">
         <h2 class="card-title">Table With data</h2>
       </div>
+    
       <TableComponent :rows="people" :columns="columns">
         <template #title-header="{ column }">
           <span>Custom label: {{ column.label }}</span>
