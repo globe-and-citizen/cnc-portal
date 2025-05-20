@@ -60,7 +60,7 @@ const { result, error } = useQuery(
   `,
   { contractAddress },
   {
-    pollInterval: GRAPHQL_POLL_INTERVAL, // Use constant
+    pollInterval: GRAPHQL_POLL_INTERVAL, // Poll using GRAPHQL_POLL_INTERVAL (<value> ms)
     fetchPolicy: 'cache-and-network'
   }
 )
