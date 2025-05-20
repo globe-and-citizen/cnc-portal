@@ -2,17 +2,39 @@
 <template>
   <CardComponent :title="title" class="w-full">
     <template #card-action>
-      <div class="flex items-center gap-10">
+      <div class="flex items-center gap-2">
         <CustomDatePicker
           v-if="showDateFilter"
           v-model="dateRange"
+          class="min-w-[140px]"
           :data-test-prefix="dataTestPrefix"
         />
+        <div class="relative">
+          <ButtonUI
+            class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
+            @click="typeDropdownOpen = !typeDropdownOpen"
+            :data-test="`${dataTestPrefix}-type-filter`"
+          >
+            <span>{{ selectedTypeLabel }}</span>
+            <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+          </ButtonUI>
+          <ul
+            class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-40 p-2 shadow"
+            ref="typeDropdownTarget"
+            v-if="typeDropdownOpen"
+          >
+            <li @click="selectType('')"><a>All Types</a></li>
+            <li v-for="type in uniqueTypes" :key="type" @click="selectType(type)">
+              <a>{{ type }}</a>
+            </li>
+          </ul>
+        </div>
         <ButtonUI
           v-if="showExport"
           variant="success"
           @click="handleExport"
           :data-test="`${dataTestPrefix}-export-button`"
+          class="!ml-0 !px-4"
           >Export</ButtonUI
         >
       </div>
@@ -161,6 +183,7 @@ import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTeamStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
+import { onClickOutside } from '@vueuse/core'
 
 interface Props {
   transactions: BaseTransaction[]
@@ -192,10 +215,14 @@ const { nativeToken } = storeToRefs(currencyStore)
 const { currentTeam } = storeToRefs(teamStore)
 
 const dateRange = ref<[Date, Date] | null>(null)
+const selectedType = ref('')
 const receiptModal = ref(false)
 const selectedTransaction = ref<BaseTransaction | null>(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const typeDropdownOpen = ref(false)
+const typeDropdownTarget = ref<HTMLElement | null>(null)
+const selectedTypeLabel = computed(() => (selectedType.value ? selectedType.value : 'All Types'))
 
 onMounted(async () => {
   const teamId = route.params.id as string
@@ -226,13 +253,27 @@ const columns = computed(() => {
   return baseColumns
 })
 
+const uniqueTypes = computed(() => {
+  const types = new Set(props.transactions.map((tx) => tx.type))
+  return Array.from(types).sort()
+})
+
 const displayedTransactions = computed(() => {
-  if (!dateRange.value) return props.transactions
-  const [startDate, endDate] = dateRange.value
-  return props.transactions.filter((tx) => {
-    const txDate = new Date(tx.date)
-    return txDate >= startDate && txDate <= endDate
-  })
+  let filtered = props.transactions
+
+  if (dateRange.value) {
+    const [startDate, endDate] = dateRange.value
+    filtered = filtered.filter((tx) => {
+      const txDate = new Date(tx.date)
+      return txDate >= startDate && txDate <= endDate
+    })
+  }
+
+  if (selectedType.value) {
+    filtered = filtered.filter((tx) => tx.type === selectedType.value)
+  }
+
+  return filtered
 })
 
 const formatDate = (date: string | number) => {
@@ -279,8 +320,14 @@ const handleExport = async () => {
             return tx.to
           case 'receipt':
             return getReceiptUrl(tx.txHash)
+          case 'amount':
+            return `${Number(tx.amount)} ${tx.token}`
+          case 'valueUSD':
+            return formatAmount(tx, 'USD')
+          case 'valueLocal':
+            return formatAmount(tx, currencyStore.currency.code)
           default:
-            return col.key.startsWith('amount') ? formatAmount(tx, 'USD') : ''
+            return ''
         }
       })
     )
@@ -314,18 +361,24 @@ const handleReceiptClick = (transaction: BaseTransaction) => {
 const getReceiptUrl = (txHash: string) => `${NETWORK.blockExplorerUrl}/tx/${txHash}`
 const getExplorerUrl = (address: string) => `${NETWORK.blockExplorerUrl}/address/${address}`
 
-const formatReceiptData = (transaction: BaseTransaction): ReceiptData => ({
-  txHash: String(transaction.txHash),
-  date: formatDate(transaction.date),
-  type: String(transaction.type),
-  from: String(transaction.from),
-  to: String(transaction.to),
-  amount: String(transaction.amount || ''),
-  token: String(transaction.token),
-  amountUSD: Number(transaction.amountUSD || 0),
-  valueUSD: formatAmount(transaction, 'USD'),
-  valueLocal: formatAmount(transaction, currencyStore.localCurrency.code)
-})
+const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
+  const tokenAmount = Number(transaction.amount)
+  const usdAmount =
+    transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeTokenPriceInUSD.value!
+
+  return {
+    txHash: String(transaction.txHash),
+    date: formatDate(transaction.date),
+    type: String(transaction.type),
+    from: String(transaction.from),
+    to: String(transaction.to),
+    amount: String(transaction.amount || ''),
+    token: String(transaction.token),
+    amountUSD: usdAmount,
+    valueUSD: formatAmount(transaction, 'USD'),
+    valueLocal: formatAmount(transaction, currencyStore.currency.code)
+  }
+}
 
 const handleReceiptExport = (receiptData: ReceiptData) => {
   try {
@@ -397,4 +450,13 @@ const getMemberName = (address: string) => {
   )
   return member?.name || address
 }
+
+const selectType = (type: string) => {
+  selectedType.value = type
+  typeDropdownOpen.value = false
+}
+
+onClickOutside(typeDropdownTarget, () => {
+  typeDropdownOpen.value = false
+})
 </script>
