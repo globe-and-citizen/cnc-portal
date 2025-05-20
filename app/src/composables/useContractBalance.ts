@@ -53,7 +53,6 @@ export function useContractBalance(address: Address | undefined) {
     data: usdcBalance,
     isLoading: isLoadingUsdc,
     error: usdcError
-    // refetch: fetchUsdcBalance
   } = useReadContract({
     address: USDC_ADDRESS as Address,
     abi: ERC20ABI,
@@ -64,50 +63,41 @@ export function useContractBalance(address: Address | undefined) {
     }
   })
 
+  // Combined loading and error states
   const isLoading = computed(() => isLoadingNative.value || isLoadingUsdc.value)
-
   const error = computed(() => nativeError.value || usdcError.value)
 
+  // Computed balances with formatted values
   const newBalance = computed<Array<Balance>>(() => {
     const nativeAmount = nativeBalance.value ? Number(formatEther(nativeBalance.value.value)) : 0
     const usdcAmount = usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0
-    const tab = [
+
+    const getValue = (amount: number, price: number, local: boolean = false) => {
+      const value = Number((amount * (price || 0)).toFixed(2))
+      return {
+        value,
+        formated: formatCurrencyShort(value, local ? currencyStore.localCurrency.code : undefined)
+      }
+    }
+
+    return [
       {
         amount: nativeAmount,
         code: nativeBalance.value?.symbol || 'ETH',
-        valueInUSD: {
-          value: Number((nativeAmount * (currencyStore.nativeToken.priceInUSD || 0)).toFixed(2)),
-          formated: formatCurrencyShort(
-            Number((nativeAmount * (currencyStore.nativeToken.priceInUSD || 0)).toFixed(2))
-          )
-        },
-        valueInLocalCurrency: {
-          value: Number((nativeAmount * (currencyStore.nativeToken.priceInLocal || 0)).toFixed(2)),
-          formated: formatCurrencyShort(
-            Number((nativeAmount * (currencyStore.nativeToken.priceInLocal || 0)).toFixed(2)),
-            currencyStore.localCurrency.code
-          )
-        }
+        valueInUSD: getValue(nativeAmount, currencyStore.nativeToken.priceInUSD ?? 0),
+        valueInLocalCurrency: getValue(
+          nativeAmount,
+          currencyStore.nativeToken.priceInLocal ?? 0,
+          true
+        )
       },
       {
         amount: usdcAmount,
         code: 'USDC',
-        valueInUSD: {
-          value: Number((usdcAmount * (currencyStore.usdc.priceInUSD || 0)).toFixed(2)),
-          formated: formatCurrencyShort(
-            Number((usdcAmount * (currencyStore.usdc.priceInUSD || 0)).toFixed(2))
-          )
-        },
-        valueInLocalCurrency: {
-          value: Number((usdcAmount * (currencyStore.usdc.priceInLocal || 0)).toFixed(2)),
-          formated: formatCurrencyShort(
-            Number((usdcAmount * (currencyStore.usdc.priceInLocal || 0)).toFixed(2)),
-            currencyStore.localCurrency.code
-          )
-        }
+        valueInUSD: getValue(usdcAmount, currencyStore.usdc.priceInUSD ?? 0),
+        valueInLocalCurrency: getValue(usdcAmount, currencyStore.usdc.priceInLocal ?? 0, true)
       }
     ]
-    return tab
   })
 
   return {
