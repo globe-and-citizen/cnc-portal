@@ -121,7 +121,7 @@ const transferData = ref({
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const expenseDataStore = useExpenseDataStore()
-const { balances, refetch: refetchBalances } = useContractBalance(
+const { balances, total } = useContractBalance(
   teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
     ?.address as Address
 )
@@ -144,8 +144,7 @@ const tokens = computed(() => {
   )?.tokenAddress
 
   const symbol = tokenSymbol(tokenAddress ?? '')
-  const balance =
-    tokenAddress === zeroAddress ? balances.nativeToken.formatted : balances.usdc.formatted
+  const balance = tokenAddress === zeroAddress ? balances.value[0].amount : balances.value[1].amount
 
   return symbol && !isNaN(Number(balance)) ? [{ symbol, balance }] : []
 })
@@ -311,7 +310,7 @@ const transferErc20Token = async () => {
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    await refetchBalances()
+    // await refetchBalances()
     transferModal.value = false
     transferERC20loading.value = false
     await expenseDataStore.fetchAllExpenseData()
