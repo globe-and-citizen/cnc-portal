@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths"; // only if you are using custom tsconfig paths
+// import tsconfigPaths from "vite-tsconfig-paths"; // only if you are using custom tsconfig paths
 
 export default defineConfig({
   test: {
@@ -9,5 +9,5 @@ export default defineConfig({
       enabled: true
     }
   },
-  plugins: [tsconfigPaths()], // only if you are using custom tsconfig paths
+  // plugins: [tsconfigPaths()], // only if you are using custom tsconfig paths
 });
