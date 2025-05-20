@@ -7,13 +7,13 @@
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
-              <span v-else>{{ total.usdBalance }}</span>
+              <span v-else>{{ total.usdBalance.value }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          ≈ {{ total.localCurrencyBalance }} {{ currencyStore.localCurrency.code }}
+          ≈ {{ total.localCurrencyBalance.value }} {{ currencyStore.localCurrency.code }}
         </div>
       </div>
       <div class="flex flex-col items-end gap-4">
@@ -97,7 +97,7 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const currencyStore = useCurrencyStore()
 
 // Use the contract balance composable
-const { total, balances, isLoading, error } = useContractBalance(props.bankAddress)
+const { total, balances, isLoading } = useContractBalance(props.bankAddress)
 
 // Add refs for modals and form data
 const depositModal = ref(false)
