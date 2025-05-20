@@ -7,13 +7,13 @@
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
-              <span v-else>{{ balances.totalValueUSD }}</span>
+              <span v-else>{{ total.usdBalance }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          ≈ {{ totalValueLocal }} {{ currencyStore.localCurrency.code }}
+          ≈ {{ total.localCurrencyBalance }} {{ currencyStore.localCurrency.code }}
         </div>
       </div>
       <div class="flex flex-col items-end gap-4">
@@ -61,8 +61,8 @@
         v-if="transferModal"
         v-model="transferData"
         :tokens="[
-          { symbol: NETWORK.currencySymbol, balance: balances.nativeToken.formatted || '0' },
-          { symbol: 'USDC', balance: balances.usdc.formatted || '0' }
+          { symbol: NETWORK.currencySymbol, balance: (balances[0].amount || '0').toString() },
+          { symbol: 'USDC', balance: (balances[1].amount || '0').toString() }
         ]"
         :loading="transferLoading || isConfirmingTransfer"
         service="Bank"
@@ -79,7 +79,7 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { type Address, parseEther } from 'viem'
 import { useToastStore, useCurrencyStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -97,7 +97,7 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const currencyStore = useCurrencyStore()
 
 // Use the contract balance composable
-const { balances, isLoading, error, refetch } = useContractBalance(props.bankAddress)
+const { total, balances, isLoading, error } = useContractBalance(props.bankAddress)
 
 // Add refs for modals and form data
 const depositModal = ref(false)
@@ -149,24 +149,10 @@ const handleTransfer = async (data: {
   }
 }
 
-// Computed properties
-const totalValueLocal = computed(() => {
-  const usdValue = Number(balances.totalValueUSD)
-  return (usdValue * (currencyStore.usdc.priceInLocal || 0)).toFixed(2)
-})
-
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
     transferModal.value = false
-    refetch()
   }
-})
-
-// Expose methods and data for parent component
-defineExpose({
-  balances,
-  error,
-  refetch
 })
 </script>
