@@ -72,6 +72,7 @@ export function useContractBalance(address: Address | undefined) {
     const nativeAmount = nativeBalance.value ? Number(formatEther(nativeBalance.value.value)) : 0
     const usdcAmount = usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0
 
+    // Function to calculate value in USD and format it in a short printable way
     const getValue = (amount: number, price: number, local: boolean = false) => {
       const value = Number((amount * (price || 0)).toFixed(2))
       return {
