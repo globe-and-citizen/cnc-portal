@@ -122,7 +122,7 @@ describe('SubmitClaims', () => {
     // Submit
     await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
 
-    console.log('wlog du wra^er html',wrapper.html())
+    console.log('wlog du wra^er html', wrapper.html())
 
     // Mock the post status to simulate a failed submission
     mockPostStatus.value = 400
