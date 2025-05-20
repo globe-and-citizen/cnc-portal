@@ -9,6 +9,8 @@ interface WageData {
   userAddress: Address
   maximumHoursPerWeek: number
   cashRatePerHour: number
+  usdcRatePerHour?: number
+  sherRatePerHour?: number
 }
 
 interface MemberSectionInstance {
@@ -44,12 +46,16 @@ describe('MemberSection.vue', () => {
     {
       userAddress: '0x1234' as Address,
       maximumHoursPerWeek: 40,
-      cashRatePerHour: 20
+      cashRatePerHour: 20,
+      usdcRatePerHour: 50,
+      sherRatePerHour: 10
     },
     {
       userAddress: '0x5678' as Address,
       maximumHoursPerWeek: 30,
-      cashRatePerHour: 25
+      cashRatePerHour: 25,
+      usdcRatePerHour: 45,
+      sherRatePerHour: 15
     }
   ]
 
@@ -70,21 +76,41 @@ describe('MemberSection.vue', () => {
   describe('getMemberWage', () => {
     it('returns N/A when teamWageData is null', () => {
       mockWageData.value = []
-      expect(component.getMemberWage('0x1234' as Address)).toBe('N/A')
+      expect(component.getMemberWage('0x1234' as Address)).toEqual({
+        cashRatePerHour: 'N/A',
+        maximumHoursPerWeek: 'N/A',
+        sherRatePerHour: 'N/A',
+        usdcRatePerHour: 'N/A'
+      })
     })
 
     it('returns N/A when member wage data is not found', () => {
-      expect(component.getMemberWage('0x9999' as Address)).toBe('N/A')
+      expect(component.getMemberWage('0x9999' as Address)).toEqual({
+        cashRatePerHour: 'N/A',
+        maximumHoursPerWeek: 'N/A',
+        sherRatePerHour: 'N/A',
+        usdcRatePerHour: 'N/A'
+      })
     })
 
     it('returns formatted wage string when member wage data is found', () => {
       const result = component.getMemberWage('0x1234' as Address)
-      expect(result).toBe('40 h/week & 20 SepoliaETH/h')
+      expect(result).toEqual({
+        maximumHoursPerWeek: 40,
+        cashRatePerHour: 20,
+        usdcRatePerHour: 50,
+        sherRatePerHour: 10
+      })
     })
 
     it('returns formatted wage string for different member', () => {
       const result = component.getMemberWage('0x5678' as Address)
-      expect(result).toBe('30 h/week & 25 SepoliaETH/h')
+      expect(result).toEqual({
+        maximumHoursPerWeek: 30,
+        cashRatePerHour: 25,
+        usdcRatePerHour: 45,
+        sherRatePerHour: 15
+      })
     })
   })
 })
