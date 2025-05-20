@@ -1,21 +1,13 @@
 <template>
   <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
-  <h3 class="pt-4">
-    Current contract balance: {{ getSelectedTokenBalance }} {{ model.token.symbol }}
-  </h3>
+  <h3 class="pt-4">Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}</h3>
 
   <div class="flex flex-col gap-4 mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <div class="input input-bordered flex items-center gap-2 input-md">
       <div class="grow flex items-center gap-2">
-        <input
-          type="text"
-          class="grow"
-          data-test="amount-input"
-          v-model="model.amount"
-          @input="handleAmountInput"
-        />
+        <input type="number" class="grow" data-test="amount-input" v-model="model.amount" />
         <div class="flex gap-1" data-test="percentage-buttons">
           <button
             v-for="percent in [25, 50, 75]"
@@ -39,11 +31,21 @@
         <div
           role="button"
           class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
-          @click="() => (isDropdownOpen = !isDropdownOpen)"
+          @click="
+            () => {
+              if (tokens.length > 1) {
+                isDropdownOpen = !isDropdownOpen
+              }
+            }
+          "
           data-test="token-selector"
         >
-          <span>{{ formattedTokenSymbol }}</span>
-          <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
+          <span>{{ model.token.symbol }}</span>
+          <IconifyIcon
+            v-if="tokens.length > 1"
+            icon="heroicons-outline:chevron-down"
+            class="w-4 h-4"
+          />
         </div>
         <ul
           class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
@@ -104,11 +106,11 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { NETWORK } from '@/constant'
+import { formatCurrencyShort } from '@/utils'
 
-interface Token {
+export interface Token {
   symbol: string
-  balance: string
+  balance: number
 }
 
 interface TransferModel {
@@ -127,59 +129,30 @@ const props = defineProps<{
   service: string
 }>()
 
-const emit = defineEmits(['transfer', 'closeModal'])
-const currencyStore = useCurrencyStore()
-
 const model = defineModel<TransferModel>({
   required: true,
   default: () => ({
     address: { name: '', address: '' },
-    token: { symbol: '', balance: '0' },
+    token: { symbol: '', balance: 0 },
     amount: '0'
   })
 })
 
-const usePercentageOfBalance = (percentage: number) => {
-  const balance = parseFloat(model.value.token.balance)
-  model.value.amount = ((balance * percentage) / 100).toFixed(4)
-}
-
 const isDropdownOpen = ref(false)
 const target = ref<HTMLElement | null>(null)
 
-const formattedTokenSymbol = computed(() => {
-  const symbol = model.value.token.symbol
-  return symbol === 'SepoliaETH' ? 'SepETH' : symbol
-})
+const emit = defineEmits(['transfer', 'closeModal'])
+const currencyStore = useCurrencyStore()
 
-const getSelectedTokenBalance = computed(() => {
-  return model.value.token.balance
-})
+const usePercentageOfBalance = (percentage: number) => {
+  model.value.amount = ((model.value.token.balance * percentage) / 100).toFixed(4)
+}
 
 // New computed property for transfer amount in default currency
 const formattedTransferAmount = computed(() => {
-  const amount = parseFloat(model.value.amount)
-  if (isNaN(amount) || amount <= 0) return '0.00'
-
-  if (model.value.token.symbol === NETWORK.currencySymbol) {
-    return Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyStore.localCurrency.code,
-      minimumFractionDigits: 2
-    }).format(amount * (currencyStore.nativeToken.priceInLocal || 0))
-  }
-  // If the selected token is USDC (stablecoin)
-  else if (model.value.token.symbol === 'USDC') {
-    // USDC is pegged to USD, so just use the currency store's rate
-    return Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyStore.localCurrency.code,
-      minimumFractionDigits: 2
-    }).format(amount * (currencyStore.usdc.priceInLocal || 0))
-  }
-
-  // Default case
-  return amount.toFixed(2)
+  // Price in local currency
+  const value = (Number(model.value.amount) || 0) * (currencyStore.nativeToken.priceInLocal || 0)
+  return formatCurrencyShort(value, currencyStore.localCurrency.code)
 })
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
@@ -188,7 +161,7 @@ const notZero = helpers.withMessage('Amount must be greater than 0', (value: str
 
 const notExceedBalance = helpers.withMessage('Amount exceeds contract balance', (value: string) => {
   const amount = parseFloat(value)
-  const balance = parseFloat(model.value.token.balance)
+  const balance = model.value.token.balance
   return amount <= balance
 })
 
@@ -232,24 +205,13 @@ const submitForm = () => {
 }
 
 const setMaxAmount = () => {
-  model.value.amount = model.value.token.balance
+  model.value.amount = model.value.token.balance.toString()
 }
 
 // Handle clicking outside of dropdown
 onClickOutside(target, () => {
   isDropdownOpen.value = false
 })
-
-const handleAmountInput = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const value = input.value.replace(/[^\d.]/g, '')
-  const parts = value.split('.')
-  if (parts.length > 2) {
-    model.value.amount = parts[0] + '.' + parts.slice(1).join('')
-  } else {
-    model.value.amount = value
-  }
-}
 
 const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
   model.value.address = item
