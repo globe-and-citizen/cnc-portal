@@ -6,7 +6,6 @@ import { ref } from 'vue'
 import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
-import { mock } from 'node:test'
 
 interface WageData {
   userAddress: Address
