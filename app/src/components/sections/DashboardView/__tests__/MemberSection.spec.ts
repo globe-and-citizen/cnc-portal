@@ -4,6 +4,9 @@ import MemberSection from '@/components/sections/DashboardView/MemberSection.vue
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Address } from 'viem'
+import { useTeamStore } from '@/stores'
+import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { mock } from 'node:test'
 
 interface WageData {
   userAddress: Address
@@ -71,6 +74,26 @@ describe('MemberSection.vue', () => {
       }
     })
     component = wrapper.vm as unknown as MemberSectionInstance
+    vi.mocked(useTeamStore).mockReturnValue({
+      //@ts-expect-error: TypeScript expects exact return type as original
+      currentTeam: {
+        ...mockTeamStore,
+        members: [
+          {
+            address: '0x1234' as Address,
+            name: 'Member 1',
+            id: '1',
+            teamId: 1
+          },
+          {
+            address: '0x5678' as Address,
+            name: 'Member 2',
+            id: '2',
+            teamId: 1
+          }
+        ]
+      }
+    })
   })
 
   describe('getMemberWage', () => {
@@ -101,6 +124,13 @@ describe('MemberSection.vue', () => {
         usdcRatePerHour: 50,
         sherRatePerHour: 10
       })
+      const memberListTable = wrapper.findComponent({ name: 'TableComponent' })
+      expect(memberListTable.exists()).toBe(true)
+      expect(memberListTable.find('[data-test="table"]').exists()).toBe(true)
+      const firstRow = memberListTable.find('[data-test="0-row"]')
+      expect(firstRow.exists()).toBe(true)
+      expect(firstRow.html()).toContain('Member 1')
+      expect(firstRow.html()).toContain('40')
     })
 
     it('returns formatted wage string for different member', () => {
