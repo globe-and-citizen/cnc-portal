@@ -113,7 +113,7 @@ export interface Token {
   balance: number
 }
 
-interface TransferModel {
+export interface TransferModel {
   address: {
     name: string
     address: string
