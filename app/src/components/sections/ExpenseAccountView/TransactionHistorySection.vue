@@ -57,7 +57,7 @@ const { result, error } = useQuery(
   `,
   { contractAddress },
   {
-    pollInterval: GRAPHQL_POLL_INTERVAL, // Use constant
+    pollInterval: GRAPHQL_POLL_INTERVAL, // Poll interval for GraphQL queries, set to 12000 ms
     fetchPolicy: 'cache-and-network'
   }
 )
