@@ -125,16 +125,6 @@ watch(
   }
 )
 
-// Watch for changes in the team wage data
-watch(
-  () => teamWageData.value,
-  (data) => {
-    if (data) {
-      console.log('Team wage data:', data)
-    }
-  }
-)
-
 // const _getMemberWage = (memberAddress: Address) => {
 //   if (!teamWageData.value) return 'N/A'
 //   const memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
