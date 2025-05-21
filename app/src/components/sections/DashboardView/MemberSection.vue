@@ -34,6 +34,18 @@
           :columns="columns"
           data-test="members-table"
         >
+          <template #wage-header="">
+            <div class="flex flex-col gap-2">
+              <div class="text-center">
+                <span>Hourly Rates</span>
+              </div>
+              <div class="flex flex-row justify-between">
+                <span class="w-24">{{ NETWORK.currencySymbol }}</span>
+                <span class="w-24">USDC</span>
+                <span class="w-24">SHER</span>
+              </div>
+            </div>
+          </template>
           <template #member-data="{ row }">
             <UserComponent
               :user="{ name: row.name, address: row.address, imageUrl: row.imageUrl }"
@@ -44,17 +56,27 @@
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
           </template>
           <template #wage-data="{ row }">
-            {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
+            <div class="flex flex-row gap-2 justify-between">
+              <span class="w-24">
+                {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
+              </span>
+              <span class="w-24">
+                {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
+              </span>
+              <span class="w-24">
+                {{ !isTeamWageDataFetching ? getMemberWage(row.address).sherRatePerHour : '' }}
+              </span>
+            </div>
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div
           ></template>
-          <template #usdcHourlyRate-data="{ row }">
+          <!--<template #usdcHourlyRate-data="{ row }">
             {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
           </template>
           <template #sherHourlyRate-data="{ row }">
             {{ !isTeamWageDataFetching ? getMemberWage(row.address).sherRatePerHour : '' }}
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
-          </template>
+          </template>-->
           <template
             #action-data="{ row }"
             v-if="teamStore.currentTeam?.ownerAddress === userDataStore.address"
@@ -151,9 +173,7 @@ const columns = computed(() => {
     { key: 'index', label: '#' },
     { key: 'member', label: 'Member' },
     { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
-    { key: 'wage', label: `Hourly Rate (${NETWORK.currencySymbol})` },
-    { key: 'usdcHourlyRate', label: 'Hourly Rate (USDC)' },
-    { key: 'sherHourlyRate', label: 'Hourly Rate (SHER)' }
+    { key: 'wage', label: `Hourly Rate` }
   ]
   if (teamStore.currentTeam?.ownerAddress == userDataStore.address) {
     columns.push({ key: 'action', label: 'Action' })
