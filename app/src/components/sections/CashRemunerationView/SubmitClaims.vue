@@ -28,7 +28,7 @@
         class="textarea input-bordered"
         placeholder="I worked on the ...."
         data-test="what-did-you-do-textarea-input"
-        v-model="hoursWorked.description"
+        v-model="hoursWorked.memo"
       ></textarea>
 
       <div
@@ -42,9 +42,9 @@
 
       <div
         class="pl-4 text-red-500 text-sm"
-        v-for="error of v$.hoursWorked.description.$errors"
+        v-for="error of v$.hoursWorked.memo.$errors"
         :key="error.$uid"
-        data-test="description-worked-error"
+        data-test="memo-worked-error"
       >
         {{ error.$message }}
       </div>
@@ -80,9 +80,9 @@ const teamStore = useTeamStore()
 const emits = defineEmits(['refetchClaims'])
 
 const modal = ref(false)
-const hoursWorked = ref<{ hoursWorked: string | undefined; description: string | undefined }>({
+const hoursWorked = ref<{ hoursWorked: string | undefined; memo: string | undefined }>({
   hoursWorked: undefined,
-  description: undefined
+  memo: undefined
 })
 
 const openModal = () => {
@@ -96,7 +96,7 @@ const rules = {
       numeric,
       minValue: minValue(1)
     },
-    description: {
+    memo: {
       required,
       maxLength: maxLength(200)
     }
@@ -115,7 +115,7 @@ const {
   .post(() => ({
     teamId: teamId.value,
     hoursWorked: hoursWorked.value.hoursWorked,
-    description: hoursWorked.value.description
+    memo: hoursWorked.value.memo
   }))
   .json()
 
@@ -133,7 +133,7 @@ const addWageClaim = async () => {
 
     // 🔁 Reset champs et validation après succès
     hoursWorked.value.hoursWorked = undefined
-    hoursWorked.value.description = undefined
+    hoursWorked.value.memo = undefined
     v$.value.$reset()
   } else if (addWageClaimError.value) {
     toastStore.addErrorToast(addWageClaimError.value)

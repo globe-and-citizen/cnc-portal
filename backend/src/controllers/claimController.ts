@@ -5,7 +5,7 @@ import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
-  description: string;
+  memo: string;
   teamId: string;
 };
 export const addClaim = async (req: Request, res: Response) => {
@@ -13,7 +13,7 @@ export const addClaim = async (req: Request, res: Response) => {
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
-  const description = body.description as string;
+  const memo = body.memo as string;
   const teamId = Number(body.teamId);
 
   // Validating the claim data
@@ -21,13 +21,13 @@ export const addClaim = async (req: Request, res: Response) => {
   let parametersError: string[] = [];
   if (!body.teamId) parametersError.push("Missing teamId");
   if (!body.hoursWorked) parametersError.push("Missing hoursWorked");
-  if (!body.description) parametersError.push("Missing description");
+  if (!body.memo) parametersError.push("Missing memo");
   if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
-  if ( description && description.trim().length === 0) {
-    parametersError.push("Invalid description");
+  if (memo && memo.trim().length === 0) {
+    parametersError.push("Invalid memo");
   }
-  if (description && description.trim().split(/\s+/).length > 200) {
-    parametersError.push("Description is too long, max 200 words");
+  if (memo && memo.trim().split(/\s+/).length > 200) {
+    parametersError.push("memo is too long, max 200 words");
   }
   if (isNaN(teamId)) parametersError.push("Invalid teamId");
   if (hoursWorked <= 0)
@@ -50,7 +50,7 @@ export const addClaim = async (req: Request, res: Response) => {
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
-        description,
+        memo,
         wageId: wage.id,
         status: "pending",
       },

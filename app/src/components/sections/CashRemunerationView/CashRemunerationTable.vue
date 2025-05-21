@@ -25,8 +25,8 @@
         :columns="columns"
         :loading="isTeamClaimDataFetching"
       >
-        <template #description-data="{ row }">
-          <span class="font-bold">{{ row.description }}</span>
+        <template #memo-data="{ row }">
+          <span class="font-bold">{{ row.memo }}</span>
         </template>
 
         <template #createdAt-data="{ row }">
@@ -190,8 +190,8 @@ const columns = [
     class: 'text-black text-base'
   },
   {
-    key: 'description',
-    label: 'Description',
+    key: 'memo',
+    label: 'Memo',
     sortable: false,
     class: 'text-black text-base'
   },
