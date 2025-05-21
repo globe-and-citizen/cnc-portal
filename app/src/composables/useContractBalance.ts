@@ -63,7 +63,7 @@ export function useContractBalance(address: Address | undefined) {
     }
   })
 
-  // Function to calculate value in USD and format it in a short printable way
+  // Function to calculate value in USD / Local and format it in a short printable way
   const getValue = (amount: number, price: number, local: boolean = false) => {
     const value = Number((amount * (price || 0)).toFixed(2))
     return {
@@ -106,14 +106,14 @@ export function useContractBalance(address: Address | undefined) {
     const usdValue = Number(
       balances.value
         .reduce((acc, balance) => {
-          return acc + (balance.valueInUSD.value || 0)
+          return acc + balance.valueInUSD.value
         }, 0)
         .toFixed(2)
     )
     const localValue = Number(
       balances.value
         .reduce((acc, balance) => {
-          return acc + (balance.valueInLocalCurrency.value || 0)
+          return acc + balance.valueInLocalCurrency.value
         }, 0)
         .toFixed(2)
     )
