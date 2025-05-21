@@ -110,7 +110,7 @@ model WeeklyClaim {
   id        Int      @id @default(autoincrement())
   weekStart DateTime
   signature String?
-  claims Claim[] @relation("WeeklyClaimToClaims")
+  claims    Claim[]  @relation("WeeklyClaimToClaims")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

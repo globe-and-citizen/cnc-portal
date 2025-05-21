@@ -1,6 +1,6 @@
 <template>
-  <CardComponent title="Token Holding">
-    <div class="relative card-stack-container">
+  <CardComponent title="Weekly Claim" class="w-full">
+    <div class="relative h-60">
       <transition-group name="slide" tag="div">
         <div
           v-for="(notif, idx) in notifications"
@@ -13,12 +13,10 @@
           }"
           @click="moveToBack(idx)"
         >
-          <CardComponent>
-            <div class="card-body">
-              <h2 class="card-title">{{ notif.title }}</h2>
-              <p>{{ notif.text }}</p>
-            </div>
-          </CardComponent>
+          <div class="card-body flex flex-col items-center justify-center h-full">
+            <h2 class="card-title text-center w-full">{{ notif.title }}</h2>
+            <p class="text-center">{{ notif.text }}</p>
+          </div>
         </div>
       </transition-group>
     </div>
@@ -27,6 +25,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import CardComponent from '@/components/CardComponent.vue'
 
 const notifications = ref([
   {
@@ -56,12 +55,6 @@ function moveToBack(index: number) {
 </script>
 
 <style scoped>
-.card-stack-container {
-  position: relative;
-  height: 180px; 
-  overflow: hidden;
-}
-
 .slide-move {
   transition: top 0.3s cubic-bezier(0.55, 0, 0.1, 1);
 }
