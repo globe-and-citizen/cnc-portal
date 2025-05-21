@@ -121,6 +121,8 @@ contract CashRemunerationEIP712 is
         address owner,
         address _usdcAddress
     ) public initializer {
+        require(owner != address(0), "Owner address cannot be zero");
+        require(_usdcAddress != address(0), "USDC address cannot be zero");
         __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
