@@ -69,14 +69,6 @@
             </div>
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div
           ></template>
-          <!--<template #usdcHourlyRate-data="{ row }">
-            {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
-            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
-          </template>
-          <template #sherHourlyRate-data="{ row }">
-            {{ !isTeamWageDataFetching ? getMemberWage(row.address).sherRatePerHour : '' }}
-            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
-          </template>-->
           <template
             #action-data="{ row }"
             v-if="teamStore.currentTeam?.ownerAddress === userDataStore.address"
@@ -147,18 +139,9 @@ watch(
   }
 )
 
-// const _getMemberWage = (memberAddress: Address) => {
-//   if (!teamWageData.value) return 'N/A'
-//   const memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
-//   return memberWage
-//     ? `${memberWage.maximumHoursPerWeek} h/week & ${memberWage.cashRatePerHour} ${NETWORK.currencySymbol}/h`
-//     : 'N/A'
-// }
-
 const getMemberWage = (memberAddress: Address) => {
   let memberWage
   if (teamWageData.value)
-    // return 'N/A'
     memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
   return {
     maximumHoursPerWeek: memberWage ? memberWage.maximumHoursPerWeek : 'N/A',
