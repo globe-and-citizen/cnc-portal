@@ -13,7 +13,7 @@ type wageBodyRequest = Pick<
   | "tokenRatePerHour"
   | "maximumHoursPerWeek"
   | "usdcRatePerHour"
-  | "sherRatePerHour"
+  //| "sherRatePerHour"
 >;
 export const setWage = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
@@ -27,7 +27,7 @@ export const setWage = async (req: Request, res: Response) => {
   const tokenRatePerHour = Number(body.tokenRatePerHour);
   const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
   const usdcRatePerHour = Number(body.usdcRatePerHour);
-  const sherRatePerHour = Number(body.sherRatePerHour);
+  //const sherRatePerHour = Number(body.sherRatePerHour);
 
   // Validating the wage data
   // Checking required data
@@ -87,8 +87,8 @@ export const setWage = async (req: Request, res: Response) => {
           cashRatePerHour,
           tokenRatePerHour,
           maximumHoursPerWeek,
-          usdcRatePerHour,
-          sherRatePerHour,
+          usdcRatePerHour,/*,
+          sherRatePerHour,*/
           previousWage: {
             connect: {
               id: wage.id,
@@ -120,8 +120,8 @@ export const setWage = async (req: Request, res: Response) => {
           cashRatePerHour,
           tokenRatePerHour,
           maximumHoursPerWeek,
-          usdcRatePerHour,
-          sherRatePerHour
+          usdcRatePerHour/*,
+          sherRatePerHour*/
         },
       });
       res.status(201).json(createdWage);
