@@ -6,13 +6,14 @@ import { ref } from 'vue'
 import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { NETWORK } from '@/constant'
 
 interface WageData {
   userAddress: Address
   maximumHoursPerWeek: number
   cashRatePerHour: number
   usdcRatePerHour?: number
-  sherRatePerHour?: number
+  tokenRatePerHour?: number
 }
 
 interface MemberSectionInstance {
@@ -50,14 +51,14 @@ describe('MemberSection.vue', () => {
       maximumHoursPerWeek: 40,
       cashRatePerHour: 20,
       usdcRatePerHour: 50,
-      sherRatePerHour: 10
+      tokenRatePerHour: 10
     },
     {
       userAddress: '0x5678' as Address,
       maximumHoursPerWeek: 30,
       cashRatePerHour: 25,
       usdcRatePerHour: 45,
-      sherRatePerHour: 15
+      tokenRatePerHour: 15
     }
   ]
 
@@ -101,7 +102,7 @@ describe('MemberSection.vue', () => {
       expect(component.getMemberWage('0x1234' as Address)).toEqual({
         cashRatePerHour: 'N/A',
         maximumHoursPerWeek: 'N/A',
-        sherRatePerHour: 'N/A',
+        tokenRatePerHour: 'N/A',
         usdcRatePerHour: 'N/A'
       })
     })
@@ -110,7 +111,7 @@ describe('MemberSection.vue', () => {
       expect(component.getMemberWage('0x9999' as Address)).toEqual({
         cashRatePerHour: 'N/A',
         maximumHoursPerWeek: 'N/A',
-        sherRatePerHour: 'N/A',
+        tokenRatePerHour: 'N/A',
         usdcRatePerHour: 'N/A'
       })
     })
@@ -118,10 +119,10 @@ describe('MemberSection.vue', () => {
     it('returns formatted wage string when member wage data is found', () => {
       const result = component.getMemberWage('0x1234' as Address)
       expect(result).toEqual({
-        maximumHoursPerWeek: 40,
-        cashRatePerHour: 20,
-        usdcRatePerHour: 50,
-        sherRatePerHour: 10
+        maximumHoursPerWeek: `${40} hrs/wk`,
+        cashRatePerHour: `${20} ${NETWORK.currencySymbol}/hr`,
+        usdcRatePerHour: `${50} USDC/hr`,
+        tokenRatePerHour: `${10} SHER/hr`
       })
       const memberListTable = wrapper.findComponent({ name: 'TableComponent' })
       expect(memberListTable.exists()).toBe(true)
@@ -135,10 +136,10 @@ describe('MemberSection.vue', () => {
     it('returns formatted wage string for different member', () => {
       const result = component.getMemberWage('0x5678' as Address)
       expect(result).toEqual({
-        maximumHoursPerWeek: 30,
-        cashRatePerHour: 25,
-        usdcRatePerHour: 45,
-        sherRatePerHour: 15
+        maximumHoursPerWeek: `${30} hrs/wk`,
+        cashRatePerHour: `${25} ${NETWORK.currencySymbol}/hr`,
+        usdcRatePerHour: `${45} USDC/hr`,
+        tokenRatePerHour: `${15} SHER/hr`
       })
     })
   })
