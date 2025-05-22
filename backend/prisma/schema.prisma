@@ -81,6 +81,7 @@ model Wage {
   userAddress         String
   cashRatePerHour     Float
   tokenRatePerHour    Float
+  usdcRatePerHour     Float
   maximumHoursPerWeek Int
   nextWageId          Int?     @unique
   nextWage            Wage?    @relation("wageRelated", fields: [nextWageId], references: [id])
@@ -88,8 +89,6 @@ model Wage {
   claims              Claim[]
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  usdcRatePerHour     Float
-  sherRatePerHour     Float
 
   @@unique([teamId, userAddress, nextWageId]) // Need to be checked
 }
