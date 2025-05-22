@@ -19,6 +19,7 @@ import type { Address } from 'viem'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
+import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
@@ -59,7 +60,7 @@ const { result, error } = useQuery(
   `,
   { contractAddress },
   {
-    pollInterval: 10000, // Poll every 10 seconds
+    pollInterval: GRAPHQL_POLL_INTERVAL, // Poll using GRAPHQL_POLL_INTERVAL (<value> ms)
     fetchPolicy: 'cache-and-network'
   }
 )

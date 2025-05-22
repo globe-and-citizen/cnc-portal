@@ -96,11 +96,12 @@ model Claim {
   id            Int          @id @default(autoincrement()) // Add an ID for easy referencing
   status        String
   hoursWorked   Int?
+  memo          String?     
   signature     String?
   tokenTx       String?
   wageId        Int
   wage          Wage         @relation(fields: [wageId], references: [id])
-  weeklyClaimId Int?
+  weeklyClaimId Int?        
   weeklyClaim   WeeklyClaim? @relation("WeeklyClaimToClaims", fields: [weeklyClaimId], references: [id])
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -114,6 +115,7 @@ model WeeklyClaim {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 
 model Notification {
   id          Int      @id @default(autoincrement())
