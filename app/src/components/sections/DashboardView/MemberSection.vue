@@ -35,14 +35,14 @@
           data-test="members-table"
         >
           <template #wage-header="">
-            <div class="flex flex-col gap-2">
-              <div class="text-center">
+            <div class="flex flex-col gap-0 w-full pt-7">
+              <div class="text-center pb-1">
                 <span>Hourly Rates</span>
               </div>
-              <div class="flex flex-row justify-between">
-                <span class="w-24">{{ NETWORK.currencySymbol }}</span>
-                <span class="w-24">USDC</span>
-                <span class="w-24">SHER</span>
+              <div class="flex flex-row justify-between border-t border-base-400">
+                <span class="w-1/3 text-xs p-1 text-center bg-[#C8FACD]">{{ NETWORK.currencySymbol }}</span>
+                <span class="w-1/3 text-xs p-1 text-center bg-[#FEF3DE]">USDC</span>
+                <span class="w-1/3 text-xs p-1 text-center bg-[#D9F1F6]">SHER</span>
               </div>
             </div>
           </template>
@@ -57,13 +57,13 @@
           </template>
           <template #wage-data="{ row }">
             <div class="flex flex-row gap-2 justify-between">
-              <span class="w-24">
+              <span class="w-1/3 text-right pr-4">
                 {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
               </span>
-              <span class="w-24">
+              <span class="w-1/3 text-right pr-4">
                 {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
               </span>
-              <span class="w-24">
+              <span class="w-1/3 text-right pr-4">
                 {{ !isTeamWageDataFetching ? getMemberWage(row.address).sherRatePerHour : '' }}
               </span>
             </div>
@@ -144,10 +144,18 @@ const getMemberWage = (memberAddress: Address) => {
   if (teamWageData.value)
     memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
   return {
-    maximumHoursPerWeek: memberWage ? memberWage.maximumHoursPerWeek : 'N/A',
-    cashRatePerHour: memberWage ? memberWage.cashRatePerHour : 'N/A',
-    usdcRatePerHour: memberWage ? memberWage.usdcRatePerHour : 'N/A',
-    sherRatePerHour: memberWage ? memberWage.sherRatePerHour : 'N/A'
+    maximumHoursPerWeek: memberWage 
+      ? `${memberWage.maximumHoursPerWeek} hrs/wk`
+      : 'N/A',
+    cashRatePerHour: memberWage 
+      ? `${memberWage.cashRatePerHour} ${NETWORK.currencySymbol}/hr` 
+      : 'N/A',
+    usdcRatePerHour: memberWage 
+      ? `${memberWage.usdcRatePerHour} USDC/hr` 
+      : 'N/A',
+    sherRatePerHour: memberWage 
+      ? `${memberWage.sherRatePerHour} SHER/hr`
+      : 'N/A'
   }
 }
 
