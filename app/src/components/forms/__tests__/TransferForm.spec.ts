@@ -27,12 +27,12 @@ describe('TransferForm.vue', () => {
         loading: false,
         service: 'Test Service',
         tokens: [
-          { symbol: NETWORK.currencySymbol, balance: '100' },
-          { symbol: 'USDC', balance: '50' }
+          { symbol: NETWORK.currencySymbol, balance: 100 },
+          { symbol: 'USDC', balance: 50 }
         ],
         modelValue: {
           address: { name: '', address: '' },
-          token: { symbol: NETWORK.currencySymbol, balance: '100' },
+          token: { symbol: NETWORK.currencySymbol, balance: 100 },
           amount: '0'
         }
       },
@@ -52,12 +52,12 @@ describe('TransferForm.vue', () => {
           loading: true,
           service: 'Test Service',
           tokens: [
-            { symbol: NETWORK.currencySymbol, balance: '100' },
-            { symbol: 'USDC', balance: '50' }
+            { symbol: NETWORK.currencySymbol, balance: 100 },
+            { symbol: 'USDC', balance: 50 }
           ],
           modelValue: {
             address: { name: '', address: '' },
-            token: { symbol: NETWORK.currencySymbol, balance: '100' },
+            token: { symbol: NETWORK.currencySymbol, balance: 100 },
             amount: '0'
           }
         },
