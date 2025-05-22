@@ -113,7 +113,7 @@ const tokenRecipient = ref('')
 const signatureToTransfer = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
-  token: { symbol: '', balance: '0' },
+  token: { symbol: '', balance: 0 },
   amount: '0'
 })
 //#endregion
