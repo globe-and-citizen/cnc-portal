@@ -139,7 +139,7 @@
                 <input
                   type="text"
                   class="input input-bordered join-item w-full"
-                  v-model="wageData.hourlyRateSher"
+                  v-model="wageData.hourlyRateToken"
                   placeholder="SHER rate..."
                   data-test="hourly-rate-sher-input"
                 />
@@ -229,7 +229,7 @@ const wageData = ref({
   maxWeeklyHours: 0,
   hourlyRate: 0,
   hourlyRateUsdc: 0,
-  hourlyRateSher: 0
+  hourlyRateToken: 0
 })
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
@@ -285,10 +285,10 @@ const {
     teamId: props.teamId,
     userAddress: props.member.address,
     cashRatePerHour: wageData.value.hourlyRate,
-    tokenRatePerHour: wageData.value.hourlyRate,
+    tokenRatePerHour: wageData.value.hourlyRateToken,
     maximumHoursPerWeek: wageData.value.maxWeeklyHours,
-    usdcRatePerHour: wageData.value.hourlyRateUsdc,
-    sherRatePerHour: wageData.value.hourlyRateSher
+    usdcRatePerHour: wageData.value.hourlyRateUsdc
+    // sherRatePerHour: wageData.value.hourlyRateSher
   }))
   .json()
 
