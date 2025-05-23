@@ -3,12 +3,12 @@
     <div class="card-body overflow-x-auto">
       <table class="table w-full text-sm">
         <!-- En-tête -->
-        <thead class="bg-gray-100 text-gray-700 text-xs font-semibold">
+        <thead class="text-gray-700 text-lg font-semibold">
           <tr>
             <th>Date</th>
             <th>Member</th>
             <th>Hour Worked</th>
-            <th>Memo</th>
+            <!-- <th>Memo</th> -->
             <th>Hourly Rate</th>
             <th class="text-center">Action</th>
           </tr>
@@ -19,13 +19,13 @@
           <tr
             v-for="(notif, idx) in notifications"
             :key="notif.id"
-            class="bg-white text-gray-800 hover:bg-gray-50 transition-all cursor-pointer"
+            class="bg-white text-gray-800 hover:bg-gray-100 transition-all cursor-pointer"
             :style="{ zIndex: notifications.length - idx }"
             @click="moveToBack(idx)"
           >
             <!-- Date -->
-            <td class="py-2 px-4">
-              {{ new Date(notif.createdAt).toLocaleString() }}
+            <td class="py-2 px-4">  
+              {{ (notif.createdAt) }}
             </td>
 
             <!-- Member -->
@@ -40,14 +40,14 @@
             </td>
 
             <!-- Memo -->
-            <td class="py-2 px-4">
+            <!-- <td class="py-2 px-4">
               {{ notif.memo }}
-            </td>
+            </td> -->
 
             <!-- Hourly Rate -->
             <td class="py-2 px-4">
               <div class="font-semibold">{{ notif.hourlyRate }} SepoliaETH / h</div>
-              <div class="text-xs text-gray-500">{{ notif.usdRate }} USD / h</div>
+              <div class="text-xs text-gray-500">{{ notif.usdRate }} USD </div>
             </td>
 
             <!-- Action -->
@@ -78,18 +78,18 @@ import ButtonUI from '@/components/ButtonUI.vue'
 const notifications = ref([
   {
     id: 1,
-    createdAt: new Date().toISOString(),
+    createdAt: 'lundi 12 juin - dimanche 18 juin',
     user: {
       name: 'georges',
       address: '0x098C1234ABCD9DFB',
       imageUrl: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
     },
     hourlyRate: 5,
-    usdRate: 12623.25,
+    usdRate: 100.25,
     hoursWorked: 10,
     totalHours: 10,
     weeklyLimit: 10,
-    memo: 'georges',
+    // memo: 'georges',
     // status: 'Submitted',
     action: 'Approve',
     shadow: 'shadow-lg'
