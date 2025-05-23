@@ -227,7 +227,7 @@ const selectedTypeLabel = computed(() => (selectedType.value ? selectedType.valu
 onMounted(async () => {
   const teamId = route.params.id as string
   if (teamId && (!currentTeam.value || currentTeam.value.id !== teamId)) {
-    await teamStore.setCurrentTeamId(teamId)
+    // await teamStore.setCurrentTeamId(teamId)
   }
 })
 
@@ -325,7 +325,7 @@ const handleExport = async () => {
           case 'valueUSD':
             return formatAmount(tx, 'USD')
           case 'valueLocal':
-            return formatAmount(tx, currencyStore.currency.code)
+            return formatAmount(tx, currencyStore.localCurrency.code)
           default:
             return ''
         }
@@ -364,7 +364,9 @@ const getExplorerUrl = (address: string) => `${NETWORK.blockExplorerUrl}/address
 const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
   const tokenAmount = Number(transaction.amount)
   const usdAmount =
-    transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeTokenPriceInUSD.value!
+    transaction.token === 'USDC'
+      ? tokenAmount
+      : tokenAmount * (currencyStore.nativeToken.priceInUSD ?? 0)
 
   return {
     txHash: String(transaction.txHash),
@@ -376,7 +378,7 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     token: String(transaction.token),
     amountUSD: usdAmount,
     valueUSD: formatAmount(transaction, 'USD'),
-    valueLocal: formatAmount(transaction, currencyStore.currency.code)
+    valueLocal: formatAmount(transaction, currencyStore.localCurrency.code)
   }
 }
 
