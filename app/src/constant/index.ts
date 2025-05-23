@@ -163,7 +163,6 @@ const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresse
 export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
 export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''
 
-
 interface Currency {
   code: string
   name: string

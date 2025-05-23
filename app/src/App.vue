@@ -72,7 +72,7 @@
     <!-- Toast Notifications -->
     <ToastContainer position="bottom-right" />
   </div>
-  
+
   <VueQueryDevtools />
 </template>
 

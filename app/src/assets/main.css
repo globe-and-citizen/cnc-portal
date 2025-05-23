@@ -34,13 +34,12 @@ h2 {
   /* 150% */
 }
 /* src/assets/main.css */
-input[type="number"] {
+input[type='number'] {
   appearance: textfield;
 }
 
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
   appearance: none;
   margin: 0;
 }
-

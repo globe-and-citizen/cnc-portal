@@ -243,7 +243,7 @@ describe.skip('BankBalanceSection', () => {
     it('formats USDC balance correctly', async () => {
       const wrapper = createWrapper()
       // Find the USDC balance in the array and update its amount
-      const usdcBalance = mockBalances.find(b => b.code === 'USDC')
+      const usdcBalance = mockBalances.find((b) => b.code === 'USDC')
       if (usdcBalance) {
         usdcBalance.amount = 1.5
         usdcBalance.valueInUSD = { value: 1.5, formated: '$1.50' }
@@ -332,13 +332,13 @@ describe.skip('BankBalanceSection', () => {
   describe('Balance Calculations', () => {
     it('calculates local currency value correctly', async () => {
       const wrapper = createWrapper()
-      const nativeToken = mockBalances.find(b => b.code === 'POL')
+      const nativeToken = mockBalances.find((b) => b.code === 'POL')
       if (nativeToken) {
         nativeToken.amount = 1.5
         nativeToken.valueInUSD = { value: 3000, formated: '$3000.00' }
         nativeToken.valueInLocalCurrency = { value: 2700, formated: '€2700.00' }
       }
-      const usdcToken = mockBalances.find(b => b.code === 'USDC')
+      const usdcToken = mockBalances.find((b) => b.code === 'USDC')
       if (usdcToken) {
         usdcToken.amount = 1.0
         usdcToken.valueInUSD = { value: 1.0, formated: '$1.00' }
