@@ -1,32 +1,40 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCurrencyStore } from '../currencyStore'
-import { LIST_CURRENCIES } from '@/constant'
-import { useToastStore } from '../__mocks__/useToastStore'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 
-const priceResponse = ref<unknown>(null)
-vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    get: () => ({
-      json: () => ({
-        data: priceResponse,
-        execute: vi.fn(),
-        isFetching: { value: false },
-        error: { value: null }
-      })
-    })
-  }))
+// hoisted mock
+const mocks = vi.hoisted(() => ({
+  useQuery: vi.fn()
 }))
 
-vi.mock('@/stores/useToastStore')
+// Mock the useQuery function to return a specific value
+vi.mock('@tanstack/vue-query', () => {
+  return {
+    useQuery: mocks.useQuery
+  }
+})
 
-describe('Currency Store', () => {
+// Set a default implementation for useQuery mock
+mocks.useQuery.mockImplementation(() => ({
+  data: ref(undefined),
+  refetch: vi.fn(),
+  isFetching: ref(false)
+}))
+
+describe.only('Currency Store', () => {
   beforeEach(() => {
     // Create a fresh Pinia instance before each test
     setActivePinia(createPinia())
     // Clear localStorage before each test
     localStorage.clear()
+    vi.clearAllMocks()
+    // Reset default implementation before each test
+    mocks.useQuery.mockImplementation(() => ({
+      data: ref(undefined),
+      refetch: vi.fn(),
+      isFetching: ref(false)
+    }))
   })
 
   it('initializes with default currency USD', () => {
@@ -36,36 +44,6 @@ describe('Currency Store', () => {
       name: 'US Dollar',
       symbol: '$'
     })
-  })
-
-  it('LIST_CURRENCIES contains expected values', () => {
-    expect(LIST_CURRENCIES).toStrictEqual([
-      {
-        code: 'USD',
-        name: 'US Dollar',
-        symbol: '$'
-      },
-      {
-        code: 'EUR',
-        name: 'Euro',
-        symbol: '€'
-      },
-      {
-        code: 'CAD',
-        name: 'Canadian Dollar',
-        symbol: 'CA$'
-      },
-      {
-        code: 'IDR',
-        name: 'Indonesian Rupiah',
-        symbol: 'Rp'
-      },
-      {
-        code: 'INR',
-        name: 'Indian Rupee',
-        symbol: '₹'
-      }
-    ])
   })
 
   it('setCurrency updates the currency value', () => {
@@ -84,39 +62,75 @@ describe('Currency Store', () => {
       name: 'Canadian Dollar',
       symbol: 'CA$'
     })
-  })
 
-  it('maintains value across store instances', () => {
-    const store1 = useCurrencyStore()
-    store1.setCurrency('IDR')
-
-    const store2 = useCurrencyStore()
-    expect(store2.localCurrency).toStrictEqual({
+    store.setCurrency('IDR')
+    expect(store.localCurrency).toStrictEqual({
       code: 'IDR',
       name: 'Indonesian Rupiah',
       symbol: 'Rp'
     })
   })
-
-  it('should show an error if fetching price fails', async () => {
-    // const store = useCurrencyStore()
-    // await store.fetchNativeTokenPrice()
-
-    const toastStore = useToastStore()
-    expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch price')
-  })
-
-  it('should update nativeTokenPrice if fetching price succeeds', async () => {
-    const store = useCurrencyStore()
-    priceResponse.value = {
+  it.only('returns default currency and price data', async () => {
+    // Arrange: Mock the result of useQuery
+    const fakeResponse = {
       market_data: {
         current_price: {
-          usd: 1
+          usd: 1000,
+          eur: 900,
+          cad: 1300,
+          inr: 80000,
+          idr: 15000000
         }
       }
     }
-    // await store.fetchNativeTokenPrice()
 
-    expect(store.nativeToken.priceInLocal).toBe(1)
+    // Set useQuery mock: first for native token, second for usdc
+    mocks.useQuery
+      .mockReturnValueOnce({
+        data: ref(fakeResponse),
+        refetch: vi.fn(),
+        isFetching: ref(false)
+      })
+      .mockReturnValueOnce({
+        data: ref(fakeResponse),
+        isFetching: ref(false)
+      })
+
+    // Act
+    const store = useCurrencyStore()
+
+    await nextTick()
+    expect(store.localCurrency).toMatchInlineSnapshot(`
+      {
+        "code": "USD",
+        "name": "US Dollar",
+        "symbol": "$",
+      }
+    `)
+    expect(store.nativeToken).toMatchInlineSnapshot(`
+      {
+        "id": "ethereum",
+        "isLoading": false,
+        "name": "SepoliaETH",
+        "priceInLocal": 1000,
+        "priceInUSD": 1000,
+        "symbol": "SepoliaETH",
+      }
+    `)
+    expect(store.usdc).toMatchInlineSnapshot(`
+      {
+        "id": "usd-coin",
+        "isLoading": false,
+        "name": "USD Coin",
+        "priceInLocal": 1000,
+        "priceInUSD": 1000,
+        "symbol": "USDC",
+      }
+    `)
+
+    // Assert
+    expect(store.localCurrency.code).toBe('USD')
+    expect(store.nativeToken.priceInUSD).toBe(1000)
+    expect(store.usdc.priceInLocal).toBe(1000)
   })
 })

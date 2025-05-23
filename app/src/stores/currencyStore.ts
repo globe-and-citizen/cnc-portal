@@ -120,6 +120,5 @@ export const useCurrencyStore = defineStore('currency', () => {
     nativeToken: prices.nativeToken,
     usdc: prices.usdc,
     setCurrency
-    // fetchNativeTokenPrice
   }
 })
