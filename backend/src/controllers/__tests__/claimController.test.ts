@@ -23,6 +23,38 @@ describe("Claim Controller", () => {
       vi.clearAllMocks();
     });
 
+    it("should return 400 if memo is missing", async () => {
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, descpription: "" });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toEqual(
+        "Missing hoursWorked, Missing memo, Invalid hoursWorked"
+      );
+    });
+
+    it("should return 400 if memo is only spaces", async () => {
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: " " });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain("Invalid memo");
+    });
+
+    it("should return 400 if memo exceeds 200 words", async () => {
+      const longmemo = Array(201).fill("word").join(" ");
+
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: longmemo });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        "memo is too long, max 200 words"
+      );
+    });
+
     it("should return 400 if required fields are missing", async () => {
       const response = await request(app).post("/claim").send({});
       expect(response.status).toBe(400);
@@ -32,7 +64,7 @@ describe("Claim Controller", () => {
     it("should return 400 if hoursWorked is invalid", async () => {
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: -5 });
+        .send({ teamId: 1, hoursWorked: -5, memo: "" });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
         "Invalid hoursWorked, hoursWorked must be greater than 0"
@@ -44,7 +76,7 @@ describe("Claim Controller", () => {
 
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5 });
+        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("No wage found for the user");
@@ -57,24 +89,26 @@ describe("Claim Controller", () => {
       vi.spyOn(prisma.claim, "create").mockResolvedValue({
         id: 1,
         hoursWorked: 5,
+        memo: "",
         status: "pending",
         wageId: 1,
       });
 
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5 });
+        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty("id");
       expect(response.body.status).toBe("pending");
     });
+
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
 
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5 });
+        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe("Internal server error has occured");
