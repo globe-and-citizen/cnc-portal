@@ -1,37 +1,104 @@
 <template>
-  <transition-group name="slide" tag="div" class="relative h-36">
-    <div
-      v-for="(notif, idx) in notifications"
-      :key="notif.id"
-      class="card bg-primary text-primary-content cursor-pointer transition-all duration-300 absolute left-0 w-full"
-      :class="notif.shadow"
-      :style="{ top: `${idx * 10}px`, zIndex: notifications.length - idx }"
-      @click="onMoveToBack(idx)"
-    >
-      <div class="card-body flex flex-col items-center justify-center">
-        <h2 class="card-title text-center w-full">{{ notif.title }}</h2>
-        <p class="text-center">{{ notif.text }}</p>
-      </div>
+  <div class="card bg-base-100 shadow-xl w-full pb-7">
+    <div class="card-body overflow-x-auto">
+      <table class="table w-full text-sm">
+        <!-- En-tête -->
+        <thead class="bg-gray-100 text-gray-700 text-xs font-semibold">
+          <tr>
+            <th>Date</th>
+            <th>Member</th>
+            <th>Hour Worked</th>
+            <th>Memo</th>
+            <th>Hourly Rate</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+
+        <!-- Corps du tableau -->
+        <transition-group tag="tbody" name="slide" class="relative">
+          <tr
+            v-for="(notif, idx) in notifications"
+            :key="notif.id"
+            class="bg-white text-gray-800 hover:bg-gray-50 transition-all cursor-pointer"
+            :style="{ zIndex: notifications.length - idx }"
+            @click="moveToBack(idx)"
+          >
+            <!-- Date -->
+            <td class="py-2 px-4">
+              {{ new Date(notif.createdAt).toLocaleString() }}
+            </td>
+
+            <!-- Member -->
+            <td class="py-2 px-4">
+              <UserComponent :user="notif.user" />
+            </td>
+
+            <!-- Hour Worked -->
+            <td class="py-2 px-4">
+              <div class="font-semibold">{{ notif.hoursWorked }} / {{ notif.totalHours }} h</div>
+              <div class="text-xs text-gray-500">{{ notif.weeklyLimit }} h/week</div>
+            </td>
+
+            <!-- Memo -->
+            <td class="py-2 px-4">
+              {{ notif.memo }}
+            </td>
+
+            <!-- Hourly Rate -->
+            <td class="py-2 px-4">
+              <div class="font-semibold">{{ notif.hourlyRate }} SepoliaETH / h</div>
+              <div class="text-xs text-gray-500">{{ notif.usdRate }} USD / h</div>
+            </td>
+
+            <!-- Action -->
+            <td class="py-2 px-4 text-center">
+              <ButtonUI
+                class="btn btn-sm btn-primary"
+                :data-test="`approve-button-${notif.id}`"
+                variant="success"
+                :disabled="loading"
+                size="sm"
+                @click.stop="async () => await approveClaim(notif)"
+              >
+                {{ notif.action }}
+              </ButtonUI>
+            </td>
+          </tr>
+        </transition-group>
+      </table>
     </div>
-  </transition-group>
+  </div>
 </template>
 
 <script setup lang="ts">
- defineProps<{
-  notifications: {
-    id: number
-    title: string
-    text: string
-    shadow: string
-  }[]
-}>()
+import { ref } from 'vue'
+import UserComponent from '@/components/UserComponent.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
-const emit = defineEmits<{
-  (e: 'moveToBack', index: number): void
-}>()
+const notifications = ref([
+  {
+    id: 1,
+    createdAt: new Date().toISOString(),
+    user: {
+      name: 'georges',
+      address: '0x098C1234ABCD9DFB',
+      imageUrl: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+    },
+    hourlyRate: 5,
+    usdRate: 12623.25,
+    hoursWorked: 10,
+    totalHours: 10,
+    weeklyLimit: 10,
+    memo: 'georges',
+    // status: 'Submitted',
+    action: 'Approve',
+    shadow: 'shadow-lg'
+  }
+])
 
-function onMoveToBack(index: number) {
-  emit('moveToBack', index)
+function moveToBack(index: number) {
+  const notif = notifications.value.splice(index, 1)[0]
+  notifications.value.push(notif)
 }
 </script>
 
