@@ -81,6 +81,7 @@ model Wage {
   userAddress         String
   cashRatePerHour     Float
   tokenRatePerHour    Float
+  usdcRatePerHour     Float
   maximumHoursPerWeek Int
   nextWageId          Int?     @unique
   nextWage            Wage?    @relation("wageRelated", fields: [nextWageId], references: [id])

@@ -46,4 +46,7 @@ export interface WageResponse {
   userAddress: Address
   maximumHoursPerWeek: number
   cashRatePerHour: number
+  tokenRatePerHour?: number
+  usdcRatePerHour?: number
+  sherRatePerHour?: number
 }
