@@ -61,8 +61,8 @@
         v-if="transferModal"
         v-model="transferData"
         :tokens="[
-          { symbol: NETWORK.currencySymbol, balance: (balances[0].amount || '0').toString() },
-          { symbol: 'USDC', balance: (balances[1].amount || '0').toString() }
+          { symbol: NETWORK.currencySymbol, balance: balances[0].amount || 0 },
+          { symbol: 'USDC', balance: balances[1].amount || 0 }
         ]"
         :loading="transferLoading || isConfirmingTransfer"
         service="Bank"
@@ -104,7 +104,7 @@ const depositModal = ref(false)
 const transferModal = ref(false)
 const transferData = ref({
   address: { name: '', address: '' },
-  token: { symbol: NETWORK.currencySymbol, balance: '0' },
+  token: { symbol: NETWORK.currencySymbol, balance: 0 },
   amount: '0'
 })
 
