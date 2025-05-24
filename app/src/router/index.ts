@@ -11,6 +11,7 @@ import BankView from '@/views/team/[id]/BankView.vue'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
+import SafeWalletView from '@/views/team/[id]/SafeWalletView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -57,6 +58,12 @@ const router = createRouter({
           name: 'bank',
           meta: { name: 'Team Bank' },
           component: BankView
+        },
+        {
+          path: '/teams/:id/safe-wallet',
+          name: 'safe-wallet',
+          meta: { name: 'Safe Wallet' },
+          component: SafeWalletView
         },
         {
           path: '/teams/:id/contract-management',

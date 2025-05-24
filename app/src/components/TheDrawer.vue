@@ -265,6 +265,16 @@ const menuItems = computed(() => [
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
+    label: 'Safe Wallet',
+    icon: 'heroicons:wallet',
+    route: {
+      name: 'safe-wallet',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name == 'safe-wallet',
+    show: teamStore.currentTeam?.id
+  },
+  {
     label: 'Cash Remuneration',
     icon: 'heroicons:currency-dollar',
     route: {

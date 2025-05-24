@@ -8,6 +8,7 @@ type ContractType =
   | 'ExpenseAccountEIP712'
   | 'CashRemunerationEIP712'
   | 'Campaign'
+  | 'SafeWallet'
 export interface TeamContract {
   address: Address
   type: ContractType
