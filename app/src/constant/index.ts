@@ -159,6 +159,10 @@ export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 export const GRAPHQL_POLL_INTERVAL = 12000
 
 // Export token addresses for current network
-const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
+export const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
 export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
 export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''
+
+// Safe wallet
+export const MULTI_SEND_ADDRESS = '0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526'
+export const MULTI_SEND_CALL_ONLY_ADDRESS = '0x9641d764fc13c8B624c04430C7356C1C7C8102e2'
