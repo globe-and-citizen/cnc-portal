@@ -62,7 +62,7 @@ import { computed, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
-import TransferForm from '@/components/forms/TransferForm.vue'
+import TransferForm, { type Token } from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { parseError, log, tokenSymbol } from '@/utils'
@@ -113,7 +113,7 @@ const tokenRecipient = ref('')
 const signatureToTransfer = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
-  token: { symbol: '', balance: '0' },
+  token: { symbol: '', balance: 0 },
   amount: '0'
 })
 //#endregion
@@ -121,7 +121,7 @@ const transferData = ref({
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const expenseDataStore = useExpenseDataStore()
-const { balances, refetch: refetchBalances } = useContractBalance(
+const { balances } = useContractBalance(
   teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
     ?.address as Address
 )
@@ -138,16 +138,15 @@ const myApprovedExpenseRows = computed(() =>
     (approval) => approval.approvedAddress === currentUserAddress
   )
 )
-const tokens = computed(() => {
+const tokens = computed<Token[]>(() => {
   const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
     (item) => item.signature === signatureToTransfer.value
   )?.tokenAddress
 
   const symbol = tokenSymbol(tokenAddress ?? '')
-  const balance =
-    tokenAddress === zeroAddress ? balances.nativeToken.formatted : balances.usdc.formatted
+  const balance = tokenAddress === zeroAddress ? balances.value[0].amount : balances.value[1].amount
 
-  return symbol && !isNaN(Number(balance)) ? [{ symbol, balance }] : []
+  return symbol && !isNaN(Number(balance)) ? [{ symbol, balance: Number(balance) }] : []
 })
 //#endregion
 
@@ -311,7 +310,7 @@ const transferErc20Token = async () => {
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    await refetchBalances()
+    // await refetchBalances()
     transferModal.value = false
     transferERC20loading.value = false
     await expenseDataStore.fetchAllExpenseData()

@@ -37,11 +37,13 @@ vi.mock('@/stores', async (importOriginal) => {
       addErrorToast: mockErrorToast
     })),
     useCurrencyStore: vi.fn(() => ({
-      currency: ref({
+      localCurrency: ref({
         code: 'USD',
         symbol: '$'
       }),
-      nativeTokenPrice: ref(1000)
+      nativeToken: ref({
+        priceInLocal: 1000
+      })
     }))
   }
 })

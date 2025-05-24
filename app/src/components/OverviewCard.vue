@@ -15,7 +15,7 @@ import SkeletonLoading from './SkeletonLoading.vue'
 
 const props = defineProps({
   title: {
-    type: String,
+    type: [String, Number],
     required: true
   },
   subtitle: {

@@ -1,7 +1,7 @@
 <template>
   <OverviewCard
     data-test="expense-account-balance"
-    :title="totalBalance"
+    :title="total.localCurrencyBalance.formated"
     subtitle="Total Balance"
     variant="success"
     :card-icon="bagIcon"
@@ -21,19 +21,11 @@ import bagIcon from '@/assets/bag.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useContractBalance } from '@/composables'
-import { useCurrencyStore, useTeamStore } from '@/stores'
-import { formatCurrencyShort } from '@/utils'
-import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
 const expenseAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'ExpenseAccountEIP712'
 )?.address
-const { balances, isLoading } = useContractBalance(expenseAddress)
-const currencyStore = useCurrencyStore()
-const { currency } = storeToRefs(currencyStore)
-const totalBalance = computed(() => {
-  return formatCurrencyShort(parseFloat(balances.totalValueInLocalCurrency), currency.value.code)
-})
+const { total, isLoading } = useContractBalance(expenseAddress)
 </script>

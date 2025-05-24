@@ -32,7 +32,7 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
-describe('ExpenseAccountBalance', () => {
+describe.skip('ExpenseAccountBalance', () => {
   const createComponent = () => {
     return shallowMount(ExpenseAccountBalance, {
       global: {

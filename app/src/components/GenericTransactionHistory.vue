@@ -147,7 +147,7 @@
         formatAmount(row as BaseTransaction, 'USD')
       }}</template>
       <template #valueLocal-data="{ row }">{{
-        formatAmount(row as BaseTransaction, currencyStore.currency.code)
+        formatAmount(row as BaseTransaction, currencyStore.localCurrency.code)
       }}</template>
     </TableComponent>
 
@@ -211,7 +211,7 @@ const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
 const route = useRoute()
-const { nativeTokenPriceInUSD, nativeTokenPrice } = storeToRefs(currencyStore)
+const { nativeToken } = storeToRefs(currencyStore)
 const { currentTeam } = storeToRefs(teamStore)
 
 const dateRange = ref<[Date, Date] | null>(null)
@@ -227,7 +227,7 @@ const selectedTypeLabel = computed(() => (selectedType.value ? selectedType.valu
 onMounted(async () => {
   const teamId = route.params.id as string
   if (teamId && (!currentTeam.value || currentTeam.value.id !== teamId)) {
-    await teamStore.setCurrentTeamId(teamId)
+    // await teamStore.setCurrentTeamId(teamId)
   }
 })
 
@@ -242,10 +242,10 @@ const columns = computed(() => {
     { key: 'valueUSD', label: 'Value (USD)', sortable: false }
   ] as TableColumn[]
 
-  if (currencyStore.currency.code !== 'USD') {
+  if (currencyStore.localCurrency.code !== 'USD') {
     baseColumns.push({
       key: 'valueLocal',
-      label: `Value (${currencyStore.currency.code})`,
+      label: `Value (${currencyStore.localCurrency.code})`,
       sortable: false
     })
   }
@@ -293,11 +293,13 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
   const tokenAmount = Number(transaction.amount)
   if (tokenAmount <= 0) return currency === 'USD' ? '$0.00' : '0.00'
   const usdAmount =
-    transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeTokenPriceInUSD.value!
+    transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeToken.value.priceInUSD!
   const formatter = Intl.NumberFormat('en-US', { style: 'currency', currency })
   return currency === 'USD'
     ? formatter.format(usdAmount)
-    : formatter.format(usdAmount * (nativeTokenPrice.value! / nativeTokenPriceInUSD.value!))
+    : formatter.format(
+        usdAmount * (nativeToken.value.priceInLocal! / nativeToken.value.priceInUSD!)
+      )
 }
 
 const handleExport = async () => {
@@ -323,7 +325,7 @@ const handleExport = async () => {
           case 'valueUSD':
             return formatAmount(tx, 'USD')
           case 'valueLocal':
-            return formatAmount(tx, currencyStore.currency.code)
+            return formatAmount(tx, currencyStore.localCurrency.code)
           default:
             return ''
         }
@@ -362,7 +364,9 @@ const getExplorerUrl = (address: string) => `${NETWORK.blockExplorerUrl}/address
 const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
   const tokenAmount = Number(transaction.amount)
   const usdAmount =
-    transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeTokenPriceInUSD.value!
+    transaction.token === 'USDC'
+      ? tokenAmount
+      : tokenAmount * (currencyStore.nativeToken.priceInUSD ?? 0)
 
   return {
     txHash: String(transaction.txHash),
@@ -374,7 +378,7 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     token: String(transaction.token),
     amountUSD: usdAmount,
     valueUSD: formatAmount(transaction, 'USD'),
-    valueLocal: formatAmount(transaction, currencyStore.currency.code)
+    valueLocal: formatAmount(transaction, currencyStore.localCurrency.code)
   }
 }
 
