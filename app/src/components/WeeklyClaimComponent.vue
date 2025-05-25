@@ -1,4 +1,8 @@
 <template>
+<pre>
+{{data}}
+{{error}}
+</pre>
   <div class="card bg-base-100 shadow-xl w-full pb-7">
     <div class="card-body overflow-x-auto">
       <table class="table w-full text-sm">
@@ -24,8 +28,8 @@
             @click="moveToBack(idx)"
           >
             <!-- Date -->
-            <td class="py-2 px-4">  
-              {{ (notif.createdAt) }}
+            <td class="py-2 px-4">
+              {{ notif.createdAt }}
             </td>
 
             <!-- Member -->
@@ -47,7 +51,7 @@
             <!-- Hourly Rate -->
             <td class="py-2 px-4">
               <div class="font-semibold">{{ notif.hourlyRate }} SepoliaETH / h</div>
-              <div class="text-xs text-gray-500">{{ notif.usdRate }} USD </div>
+              <div class="text-xs text-gray-500">{{ notif.usdRate }} USD</div>
             </td>
 
             <!-- Action -->
@@ -74,6 +78,7 @@
 import { ref } from 'vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import {useCustomFetch} from '@/composables'
 
 const notifications = ref([
   {
@@ -95,6 +100,10 @@ const notifications = ref([
     shadow: 'shadow-lg'
   }
 ])
+
+const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1')
+  .get()
+  .json()
 
 function moveToBack(index: number) {
   const notif = notifications.value.splice(index, 1)[0]
