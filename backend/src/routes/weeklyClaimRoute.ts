@@ -1,9 +1,8 @@
 import express from "express";
-import { addWeeklyClaim, getWeeklyClaims  } from "../controllers/weeklyClaimController";
+import {  getTeamWeeklyClaims  } from "../controllers/weeklyClaimController";
 
 const weeklyClaimRoutes = express.Router();
 
-weeklyClaimRoutes.post("/", addWeeklyClaim);
-weeklyClaimRoutes.get("/", getWeeklyClaims);
+weeklyClaimRoutes.get("/", getTeamWeeklyClaims);
 
 export default weeklyClaimRoutes;

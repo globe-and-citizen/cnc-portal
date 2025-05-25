@@ -4,6 +4,7 @@ import { Address } from "viem";
 import { errorResponse } from "../utils/utils";
 import { prisma } from "../utils";
 import { Wage } from "@prisma/client";
+import { S } from "vitest/dist/chunks/config.Cy0C388Z";
 
 type wageBodyRequest = Pick<
   Wage,
