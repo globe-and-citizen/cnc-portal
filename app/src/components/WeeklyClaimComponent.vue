@@ -1,8 +1,9 @@
 <template>
-<pre>
-{{data}}
-{{error}}
-</pre>
+  <pre>
+    {{ data }}
+    {{ error }}
+</pre
+  >
   <div class="card bg-base-100 shadow-xl w-full pb-7">
     <div class="card-body overflow-x-auto">
       <table class="table w-full text-sm">
@@ -78,7 +79,7 @@
 import { ref } from 'vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import {useCustomFetch} from '@/composables'
+import { useCustomFetch } from '@/composables'
 
 const notifications = ref([
   {
@@ -101,9 +102,7 @@ const notifications = ref([
   }
 ])
 
-const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1')
-  .get()
-  .json()
+const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
 
 function moveToBack(index: number) {
   const notif = notifications.value.splice(index, 1)[0]
