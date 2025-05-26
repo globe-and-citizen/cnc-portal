@@ -25,6 +25,7 @@ model User {
   BoardOfDirectorActions BoardOfDirectorActions[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
+  weeklyClaims           WeeklyClaim[]
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
@@ -42,6 +43,7 @@ model Team {
   teamContracts          TeamContract[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
+  weeklyClaims           WeeklyClaim[]
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
@@ -97,27 +99,30 @@ model Claim {
   id            Int          @id @default(autoincrement()) // Add an ID for easy referencing
   status        String
   hoursWorked   Int?
-  memo          String?     
+  memo          String?
   signature     String?
   tokenTx       String?
   wageId        Int
   wage          Wage         @relation(fields: [wageId], references: [id])
-  weeklyClaimId Int?        
+  weeklyClaimId Int?
   weeklyClaim   WeeklyClaim? @relation("WeeklyClaimToClaims", fields: [weeklyClaimId], references: [id])
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
 
 model WeeklyClaim {
-  id        Int      @id @default(autoincrement())
-  weekStart DateTime
-  data      Json
-  signature String?
-  claims    Claim[]  @relation("WeeklyClaimToClaims")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  weekStart     DateTime
+  data          Json
+  memberAddress String
+  member        User     @relation(fields: [memberAddress], references: [address])
+  teamId        Int
+  team          Team     @relation(fields: [teamId], references: [id])
+  signature     String?
+  claims        Claim[]  @relation("WeeklyClaimToClaims")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
-
 
 model Notification {
   id          Int      @id @default(autoincrement())
