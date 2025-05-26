@@ -14,11 +14,7 @@
     data-test="options-dropdown"
     v-if="isDropdown"
   >
-    <li
-      v-for="option in options"
-      :key="option.value"
-      @click="selectOption(option)"
-    >
+    <li v-for="option in options" :key="option.value" @click="selectOption(option)">
       <a>{{ option.label || option.value }}</a>
     </li>
   </ul>
@@ -29,8 +25,8 @@ import { ref, computed, watch } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Option {
-  value: string;
-  label?: string;
+  value: string
+  label?: string
 }
 
 const props = defineProps({
@@ -55,7 +51,9 @@ const props = defineProps({
 const emits = defineEmits(['update:modelValue', 'change'])
 
 const isDropdown = ref(false)
-const selectedValue = ref(props.modelValue || (props.options.length > 0 ? props.options[0].value : ''))
+const selectedValue = ref(
+  props.modelValue || (props.options.length > 0 ? props.options[0].value : '')
+)
 
 const toggleDropdown = () => {
   if (!props.disabled) {
@@ -71,15 +69,18 @@ const selectOption = (option: Option) => {
 }
 
 const formattedSelectedValue = computed(() => {
-  const selectedOption = props.options.find(opt => opt.value === selectedValue.value)
+  const selectedOption = props.options.find((opt) => opt.value === selectedValue.value)
   const displayValue = selectedOption?.label || selectedOption?.value || ''
   return props.formatValue(displayValue)
 })
 
 // Watch for external modelValue changes
-watch(() => props.modelValue, (newValue) => {
-  if (newValue !== undefined && newValue !== selectedValue.value) {
-    selectedValue.value = newValue
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue !== undefined && newValue !== selectedValue.value) {
+      selectedValue.value = newValue
+    }
   }
-})
+)
 </script>

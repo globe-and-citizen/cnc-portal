@@ -49,7 +49,7 @@ describe('GenericSelect', () => {
     })
 
     await wrapper.find('[data-test="generic-selector"]').trigger('click')
-		await nextTick() // Ensure dropdown is rendered
+    await nextTick() // Ensure dropdown is rendered
     expect(wrapper.find('[data-test="options-dropdown"]').exists()).toBe(true)
   })
 
@@ -106,25 +106,25 @@ describe('GenericSelect', () => {
     expect(wrapper.text()).not.toContain('undefined')
   })
 
-	it('reacts to external modelValue changes', async () => {
-		const wrapper = mount(GenericSelect, {
-			props: {
-				options: [
-					{ value: 'ETH', label: 'Ethereum' },
-					{ value: 'BTC', label: 'Bitcoin' }
-				],
-				modelValue: 'ETH'
-			}
-		})
-	
-		// Initial state
-		expect(wrapper.text()).toContain('Ethereum')
-		
-		// Change the value from parent
-		wrapper.setProps({ modelValue: 'BTC' })
-		await nextTick()
-	
-		// Verify component updated
-		expect(wrapper.text()).toContain('Bitcoin')
-	})
+  it('reacts to external modelValue changes', async () => {
+    const wrapper = mount(GenericSelect, {
+      props: {
+        options: [
+          { value: 'ETH', label: 'Ethereum' },
+          { value: 'BTC', label: 'Bitcoin' }
+        ],
+        modelValue: 'ETH'
+      }
+    })
+
+    // Initial state
+    expect(wrapper.text()).toContain('Ethereum')
+
+    // Change the value from parent
+    wrapper.setProps({ modelValue: 'BTC' })
+    await nextTick()
+
+    // Verify component updated
+    expect(wrapper.text()).toContain('Bitcoin')
+  })
 })
