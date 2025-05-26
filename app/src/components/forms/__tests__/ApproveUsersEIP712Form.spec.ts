@@ -195,7 +195,7 @@ describe('ApproveUsersForm', () => {
       expect(wrapper.vm.input).toEqual({
         name: 'Test Name',
         address: '0xAddressToApprove',
-        token: null
+        token: ''
       })
     })
     it('should update date when expiry date is selected', async () => {
