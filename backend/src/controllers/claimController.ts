@@ -3,6 +3,7 @@ import { errorResponse } from "../utils/utils";
 import { prisma } from "../utils";
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
+import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
   memo: string;
@@ -15,6 +16,28 @@ export const addClaim = async (req: Request, res: Response) => {
   const hoursWorked = Number(body.hoursWorked);
   const memo = body.memo as string;
   const teamId = Number(body.teamId);
+
+  const weekStart = getMondayStart(new Date());
+  const dayWorked = todayMidnight(new Date());
+
+  let weeklyClaim = await prisma.weeklyClaim.findFirst({
+    where: {
+      weekStart: weekStart,
+      memberAddress: callerAddress,
+      teamId: teamId,
+    },
+  });
+
+  if (!weeklyClaim) {
+    weeklyClaim = await prisma.weeklyClaim.create({
+      data: {
+        weekStart: weekStart,
+        memberAddress: callerAddress,
+        teamId: teamId,
+        data: {},
+      },
+    });
+  }
 
   // Validating the claim data
   // Checking required data
@@ -53,6 +76,8 @@ export const addClaim = async (req: Request, res: Response) => {
         memo,
         wageId: wage.id,
         status: "pending",
+        weeklyClaimId: weeklyClaim.id,
+        dayWorked: dayWorked,
       },
     });
 
