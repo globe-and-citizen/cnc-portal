@@ -12,7 +12,7 @@ describe('SelectMemberWithTokenInput.vue', () => {
     const input = ref({
       name: '',
       address: '',
-      token: null
+      token: ''
     })
     wrapper = mount(SelectMemberWithTokenInput, {
       props: {
