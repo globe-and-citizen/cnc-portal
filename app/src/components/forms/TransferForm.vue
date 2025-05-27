@@ -36,7 +36,7 @@
           Max
         </button>
 
-        <div
+        <!--<div
           role="button"
           class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
           @click="() => (isDropdownOpen = !isDropdownOpen)"
@@ -63,7 +63,21 @@
           >
             <a>{{ token.symbol }}</a>
           </li>
-        </ul>
+        </ul>-->
+        <SelectComponent
+          :options="props.tokens.map((token) => ({ value: token.symbol, label: token.symbol }))"
+          :disabled="props.loading"
+          :format-value="
+            (value: string) => {
+              return value === 'SepoliaETH' ? 'SepETH' : value
+            }
+          "
+          @change="
+            (value: string) => {
+              model.token = props.tokens.find((token) => token.symbol === value) || model.token
+            }
+          "
+        />
       </div>
     </div>
 
@@ -105,6 +119,7 @@ import { onClickOutside } from '@vueuse/core'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { NETWORK } from '@/constant'
+import SelectComponent from '../SelectComponent.vue'
 
 interface Token {
   symbol: string
