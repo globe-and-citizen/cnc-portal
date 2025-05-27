@@ -7,50 +7,57 @@
   <div class="flex flex-col gap-4 mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
-    <div class="input input-bordered flex items-center gap-2 input-md">
-      <div class="grow flex items-center gap-2">
+    <div class="input-group relative">
+      <label class="input input-bordered flex items-center gap-2 input-md">
         <input
           type="text"
-          class="grow"
+          class="grow min-w-0 h-full"
           data-test="amount-input"
           v-model="model.amount"
           @input="handleAmountInput"
         />
-        <div class="flex gap-1" data-test="percentage-buttons">
+        <div class="flex flex-nowrap min-w-0 items-center h-full">
+          <!-- Added flex-nowrap and min-w-0 -->
+          <div class="flex gap-1 shrink-0 items-center" data-test="percentage-buttons">
+            <!-- Added shrink-0 -->
+            <button
+              v-for="percent in [25, 50, 75]"
+              :key="percent"
+              class="btn btn-xs btn-ghost cursor-pointer"
+              @click="usePercentageOfBalance(percent)"
+              :data-test="`percentButton-${percent}`"
+            >
+              {{ percent }}%
+            </button>
+          </div>
           <button
-            v-for="percent in [25, 50, 75]"
-            :key="percent"
-            class="btn btn-xs btn-ghost cursor-pointer"
-            @click="usePercentageOfBalance(percent)"
-            :data-test="`percentButton-${percent}`"
+            class="btn btn-xs btn-ghost mr-2 shrink-0"
+            @click="setMaxAmount"
+            type="button"
+            data-test="max-button"
           >
-            {{ percent }}%
+            Max
           </button>
-        </div>
-        <button
-          class="btn btn-xs btn-ghost mr-2"
-          @click="setMaxAmount"
-          type="button"
-          data-test="max-button"
-        >
-          Max
-        </button>
 
-        <SelectComponent
-          :options="props.tokens.map((token) => ({ value: token.symbol, label: token.symbol }))"
-          :disabled="props.loading"
-          :format-value="
-            (value: string) => {
-              return value === 'SepoliaETH' ? 'SepETH' : value
-            }
-          "
-          @change="
-            (value: string) => {
-              model.token = props.tokens.find((token) => token.symbol === value) || model.token
-            }
-          "
-        />
-      </div>
+          <div class="min-w-[100px] items-center">
+            <!-- Wrapped Select in container with min-width -->
+            <SelectComponent
+              :options="props.tokens.map((token) => ({ value: token.symbol, label: token.symbol }))"
+              :disabled="props.loading"
+              :format-value="
+                (value: string) => {
+                  return value === 'SepoliaETH' ? 'SepETH' : value
+                }
+              "
+              @change="
+                (value: string) => {
+                  model.token = props.tokens.find((token) => token.symbol === value) || model.token
+                }
+              "
+            />
+          </div>
+        </div>
+      </label>
     </div>
 
     <div v-if="model.amount && parseFloat(model.amount) > 0" class="text-sm text-gray-500">
