@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Option {
@@ -83,4 +83,14 @@ watch(
     }
   }
 )
+
+// Emit initial value if no modelValue is provided
+onMounted(() => {
+  if (!props.modelValue && props.options.length > 0) {
+    const initialValue = props.options[0].value
+    selectedValue.value = initialValue
+    emits('update:modelValue', initialValue)
+    emits('change', initialValue)
+  }
+})
 </script>
