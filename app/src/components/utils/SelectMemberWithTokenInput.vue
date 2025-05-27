@@ -33,7 +33,16 @@
           {{ symbol }}
         </option>
       </select>-->
-      <SelectComponent v-model="input.token" :options="options" :disabled="isFetching" />
+      <SelectComponent
+        v-model="input.token"
+        :options="options"
+        :disabled="isFetching"
+        :format-value="
+          (value: string) => {
+            return value === `SepoliaETH` ? `SepETH` : value
+          }
+        "
+      />
     </label>
     <!-- Dropdown positioned relative to the input -->
     <div
