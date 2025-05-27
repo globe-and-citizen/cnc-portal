@@ -133,11 +133,6 @@ const usePercentageOfBalance = (percentage: number) => {
 const isDropdownOpen = ref(false)
 const target = ref<HTMLElement | null>(null)
 
-const formattedTokenSymbol = computed(() => {
-  const symbol = model.value.token.symbol
-  return symbol === 'SepoliaETH' ? 'SepETH' : symbol
-})
-
 const getSelectedTokenBalance = computed(() => {
   return model.value.token.balance
 })
