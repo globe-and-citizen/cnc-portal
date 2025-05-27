@@ -15,33 +15,33 @@ describe('GenericSelect', () => {
     //   { value: 'ETH', label: 'Ethereum' },
     //   { value: 'BTC', label: 'Bitcoin' }
     // ]
-    
+
     const wrapper = mount(GenericSelect, {
       props: { options }
     })
-    
+
     await nextTick()
-    
+
     expect(wrapper.emitted('update:modelValue')).toBeTruthy()
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['ETH'])
     expect(wrapper.text()).toContain('Ethereum')
   })
-  
+
   it('does not emit initial value when modelValue is provided', async () => {
     // const options = [
     //   { value: 'ETH', label: 'Ethereum' },
     //   { value: 'BTC', label: 'Bitcoin' }
     // ]
-    
+
     const wrapper = mount(GenericSelect, {
-      props: { 
+      props: {
         options,
-        modelValue: 'BTC' 
+        modelValue: 'BTC'
       }
     })
-    
+
     await nextTick()
-    
+
     expect(wrapper.emitted('update:modelValue')).toBeFalsy()
     expect(wrapper.text()).toContain('Bitcoin')
   })
@@ -101,22 +101,52 @@ describe('GenericSelect', () => {
     expect(wrapper.find('[data-test="options-dropdown"]').exists()).toBe(false)
   })
 
+  // it('emits update:modelValue when option is selected', async () => {
+  //   const wrapper = mount(GenericSelect, {
+  //     props: { options }
+  //   })
+
+  //   await nextTick() // Ensure initial render is complete
+
+  //   await wrapper.find('[data-test="generic-selector"]').trigger('click')
+  //   await wrapper.findAll('li')[1].trigger('click') // Select USDC
+
+  //   await nextTick() // Wait for reactivity
+
+  //   expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+  //   expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['USDC'])
+  //   expect(wrapper.emitted('change')).toBeTruthy()
+  //   expect(wrapper.emitted('change')?.[0]).toEqual(['USDC'])
+  // })
   it('emits update:modelValue when option is selected', async () => {
+    const options = [
+      { value: 'ETH', label: 'Ethereum' },
+      { value: 'USDC', label: 'USD Coin' }
+    ]
+
+    // Start with no modelValue
     const wrapper = mount(GenericSelect, {
-      props: { options }
+      props: {
+        options,
+        modelValue: undefined // Explicitly undefined
+      }
     })
 
-    await nextTick() // Ensure initial render is complete
+    // Wait for initial emission if any
+    await nextTick()
 
+    // Perform selection
     await wrapper.find('[data-test="generic-selector"]').trigger('click')
     await wrapper.findAll('li')[1].trigger('click') // Select USDC
 
-    await nextTick() // Wait for reactivity
-
+    // Verify emissions
     expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['USDC'])
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(2)
+    expect(wrapper.emitted('update:modelValue')?.[1]).toEqual(['USDC'])
+
     expect(wrapper.emitted('change')).toBeTruthy()
-    expect(wrapper.emitted('change')?.[0]).toEqual(['USDC'])
+    expect(wrapper.emitted('change')).toHaveLength(2)
+    expect(wrapper.emitted('change')?.[1]).toEqual(['USDC'])
   })
 
   it('closes dropdown after selection', async () => {
