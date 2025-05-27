@@ -33,12 +33,7 @@
           {{ symbol }}
         </option>
       </select>-->
-      <SelectComponent
-        v-model="input.token"
-        :options="options"
-        :disabled="isFetching"
-        data-test="select-token-component"
-      />
+      <SelectComponent v-model="input.token" :options="options" :disabled="isFetching" />
     </label>
     <!-- Dropdown positioned relative to the input -->
     <div
