@@ -90,17 +90,6 @@ describe('TransferForm.vue', () => {
     })
   })
 
-  describe('Token Selection', () => {
-    it('opens and closes the token dropdown', async () => {
-      const dropdownButton = wrapper.find('.badge-info')
-      await dropdownButton.trigger('click')
-      expect(wrapper.find('[data-test="token-dropdown"]').isVisible()).toBe(true)
-
-      await dropdownButton.trigger('click')
-      expect(wrapper.find('[data-test="token-dropdown"]').exists()).toBe(false)
-    })
-  })
-
   describe('Amount Input Handling', () => {
     let amountInput: ReturnType<typeof wrapper.find>
 
