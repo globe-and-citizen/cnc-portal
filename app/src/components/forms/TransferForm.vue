@@ -36,34 +36,6 @@
           Max
         </button>
 
-        <!--<div
-          role="button"
-          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
-          @click="() => (isDropdownOpen = !isDropdownOpen)"
-          data-test="token-selector"
-        >
-          <span>{{ formattedTokenSymbol }}</span>
-          <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
-        </div>
-        <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
-          ref="target"
-          data-test="token-dropdown"
-          v-if="isDropdownOpen"
-        >
-          <li
-            v-for="token in tokens"
-            :key="token.symbol"
-            @click="
-              () => {
-                model.token = token
-                isDropdownOpen = false
-              }
-            "
-          >
-            <a>{{ token.symbol }}</a>
-          </li>
-        </ul>-->
         <SelectComponent
           :options="props.tokens.map((token) => ({ value: token.symbol, label: token.symbol }))"
           :disabled="props.loading"
@@ -114,7 +86,6 @@ import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
