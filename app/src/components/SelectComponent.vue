@@ -1,7 +1,7 @@
 <template>
   <div
     role="button"
-    class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
+    class="flex items-center cursor-pointer badge badge-md badge-info text-xs"
     @click="toggleDropdown"
     data-test="generic-selector"
   >
