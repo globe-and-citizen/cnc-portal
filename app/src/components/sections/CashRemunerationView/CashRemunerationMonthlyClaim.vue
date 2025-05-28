@@ -41,7 +41,7 @@ const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 
 const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime() / 1000
 const { result, loading, error } = useQuery(
   gql`
-    query GetCashRemunerationTransactions(
+    query GetCashRemunerationMonthlyTransactions(
       $contractAddress: Bytes!
       $startDate: BigInt!
       $endDate: BigInt!
@@ -51,7 +51,7 @@ const { result, loading, error } = useQuery(
           contractAddress: $contractAddress
           blockTimestamp_gte: $startDate
           blockTimestamp_lte: $endDate
-          transactionType: "withdraw"
+          transactionType: withdraw
         }
       ) {
         amount
