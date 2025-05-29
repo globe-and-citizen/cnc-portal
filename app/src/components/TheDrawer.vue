@@ -293,6 +293,16 @@ const menuItems = computed(() => [
     },
     active: route.name === 'contract-management',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'SHER Token',
+    icon: 'heroicons:chart-pie',
+    route: {
+      name: 'sher-token',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'sher-token',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
 ])
 
@@ -303,9 +313,6 @@ const toggleDropdown = () => {
 </script>
 
 <style scoped>
-* {
-  /* border: 1px solid; */
-}
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
