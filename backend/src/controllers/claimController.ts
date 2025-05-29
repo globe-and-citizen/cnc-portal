@@ -20,25 +20,6 @@ export const addClaim = async (req: Request, res: Response) => {
   const weekStart = getMondayStart(new Date());
   const dayWorked = todayMidnight(new Date());
 
-  let weeklyClaim = await prisma.weeklyClaim.findFirst({
-    where: {
-      weekStart: weekStart,
-      memberAddress: callerAddress,
-      teamId: teamId,
-    },
-  });
-
-  if (!weeklyClaim) {
-    weeklyClaim = await prisma.weeklyClaim.create({
-      data: {
-        weekStart: weekStart,
-        memberAddress: callerAddress,
-        teamId: teamId,
-        data: {},
-      },
-    });
-  }
-
   // Validating the claim data
   // Checking required data
   let parametersError: string[] = [];
@@ -62,6 +43,24 @@ export const addClaim = async (req: Request, res: Response) => {
   }
 
   try {
+    let weeklyClaim = await prisma.weeklyClaim.findFirst({
+      where: {
+        weekStart: weekStart,
+        memberAddress: callerAddress,
+        teamId: teamId,
+      },
+    });
+
+    if (!weeklyClaim) {
+      weeklyClaim = await prisma.weeklyClaim.create({
+        data: {
+          weekStart: weekStart,
+          memberAddress: callerAddress,
+          teamId: teamId,
+          data: {},
+        },
+      });
+    }
     // Get user current
     const wage = await prisma.wage.findFirst({
       where: { userAddress: callerAddress, nextWageId: null, teamId: teamId },
