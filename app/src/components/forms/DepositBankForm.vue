@@ -45,40 +45,6 @@
         Max
       </button>
       <div>
-        <!--<div
-          role="button"
-          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
-          @click="
-            () => {
-              isDropdownOpen = !isDropdownOpen
-              console.log(`Dropdown open: ${isDropdownOpen}`)
-            }
-          "
-          data-test="tokenSelector"
-        >
-          <span>{{ formattedTokenName }} </span>
-          <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
-        </div>
-        <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
-          ref="target"
-          v-if="isDropdownOpen"
-          data-test="tokenDropdown"
-        >
-          <li
-            v-for="(token, id) in tokenList"
-            :key="id"
-            @click="
-              () => {
-                selectedTokenId = id
-                isDropdownOpen = false
-              }
-            "
-            :data-test="`tokenOption-${token.symbol}`"
-          >
-            <a>{{ token.name }}</a>
-          </li>
-        </ul> end old select -->
         <SelectComponent
           :options="
             tokenList.map((token, id) => ({
