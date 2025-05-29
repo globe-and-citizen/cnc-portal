@@ -1,8 +1,5 @@
 <template>
-  <!-- <pre>
-    {{ data }}
-    {{ error }}
-</pre> -->
+ 
   <div class="card bg-base-100 shadow-xl w-full pb-7">
     <div class="card-body overflow-x-auto">
       <slot />
@@ -49,10 +46,10 @@
 
 // const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
 
-function moveToBack(index: number) {
-  const notif = notifications.value.splice(index, 1)[0]
-  notifications.value.push(notif)
-}
+// function moveToBack(index: number) {
+//   const notif = notifications.value.splice(index, 1)[0]
+//   notifications.value.push(notif)
+// }
 </script>
 
 <style scoped>
