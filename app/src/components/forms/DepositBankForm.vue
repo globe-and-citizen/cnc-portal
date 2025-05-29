@@ -45,7 +45,7 @@
         Max
       </button>
       <div>
-        <div
+        <!--<div
           role="button"
           class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
           @click="
@@ -78,7 +78,26 @@
           >
             <a>{{ token.name }}</a>
           </li>
-        </ul>
+        </ul> end old select -->
+        <SelectComponent
+          :options="
+            tokenList.map((token, id) => ({
+              label: token.name,
+              value: `${id}`
+            }))
+          "
+          :disabled="isLoadingBalance"
+          @change="
+            (value) => {
+              selectedTokenId = parseInt(value)
+            }
+          "
+          :format-value="
+            (value: string) => {
+              return value === 'SepoliaETH' ? 'SepETH' : value
+            }
+          "
+        />
       </div>
     </div>
     <div class="label">
@@ -111,9 +130,9 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import SelectComponent from '@/components/SelectComponent.vue'
 import {
   useBalance,
   useChainId,
@@ -405,9 +424,4 @@ const handleAmountInput = (event: Event) => {
     amount.value = value
   }
 }
-
-const formattedTokenName = computed(() => {
-  const name = tokenList[selectedTokenId.value].name
-  return name === 'SepoliaETH' ? 'SepETH' : name
-})
 </script>
