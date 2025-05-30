@@ -60,19 +60,32 @@ describe("getTeamWeeklyClaims", () => {
       vi.spyOn(prisma.weeklyClaim, "findMany").mockResolvedValue(
         mockWeeklyClaims
       );
-      
+
       const response = await request(app).get("/?teamId=1");
       expect(response.status).toBe(200);
-      
+
       // Correction: comparer avec les dates sérialisées en JSON
-      const expectedResponse = mockWeeklyClaims.map(claim => ({
+      const expectedResponse = mockWeeklyClaims.map((claim) => ({
         ...claim,
         weekStart: claim.weekStart.toISOString(),
         createdAt: claim.createdAt.toISOString(),
         updatedAt: claim.updatedAt.toISOString(),
       }));
-      
+
       expect(response.body).toEqual(expectedResponse);
+    });
+
+    it("should return 500 on database error", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findMany").mockRejectedValue(
+        new Error("Database error")
+      );
+
+      const response = await request(app).get("/?teamId=1");
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        message: "Internal server error has occured",
+        error: expect.any(String),
+      });
     });
   });
 });
