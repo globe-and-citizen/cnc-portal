@@ -21,12 +21,7 @@ vi.mock('@/stores', async (importOriginal) => {
         ]
       }
     })),
-    useCurrencyStore: vi.fn(() => ({
-      localCurrency: ref({
-        code: 'USD',
-        symbol: '$'
-      })
-    }))
+    useCurrencyStore: vi.fn()
   }
 })
 

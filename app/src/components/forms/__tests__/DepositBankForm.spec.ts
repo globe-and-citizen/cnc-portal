@@ -6,6 +6,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseEther, type Address } from 'viem'
 import { useToastStore } from '@/stores/useToastStore'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -76,29 +77,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWaitForTransactionReceipt: vi.fn(() => ({ ...mockUseWaitForTransactionReceipt }))
   }
 })
-const mockUseCurrencyStore = {
-  localCurrency: {
-    code: 'USD',
-    name: 'US Dollar',
-    symbol: '$'
-  },
-  nativeToken: {
-    id: 'ethereum',
-    isLoading: false,
-    name: 'SepoliaETH',
-    priceInLocal: 1000,
-    priceInUSD: 1000,
-    symbol: 'SepoliaETH'
-  },
-  usdc: {
-    id: 'usd-coin',
-    isLoading: false,
-    name: 'USD Coin',
-    priceInLocal: 1000,
-    priceInUSD: 1000,
-    symbol: 'USDC'
-  }
-}
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
@@ -263,7 +241,7 @@ describe('DepositBankModal.vue', () => {
   })
 
   describe('max button functionality', () => {
-    // 
+    //
     it('fills input with max ETH balance when max button is clicked', async () => {
       const wrapper = createWrapper()
       await wrapper.find('[data-test="maxButton"]').trigger('click')
@@ -307,14 +285,12 @@ describe('DepositBankModal.vue', () => {
       expect((amountInput.element as HTMLInputElement).value).toBe('75.0000')
     })
 
-    // 
+    //
     it.skip('fills input with correct percentage of USDC balance when buttons are clicked', async () => {
-      console.log("Html", wrapper.find('[data-test="tokenSelector"]').html())
+      console.log('Html', wrapper.find('[data-test="tokenSelector"]').html())
       await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      console.log("tokenOption", wrapper.find('[data-test="tokenDropdown"]').html())
+      console.log('tokenOption', wrapper.find('[data-test="tokenDropdown"]').html())
       await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
-
-
 
       await wrapper.find('[data-test="percentButton-25"]').trigger('click')
       expect((amountInput.element as HTMLInputElement).value).toBe('5000.0000')
@@ -420,7 +396,7 @@ describe('DepositBankModal.vue', () => {
       toastStore = useToastStore()
     })
 
-    // 
+    //
     it.skip('handles USDC deposit error', async () => {
       // Select USDC
       await wrapper.find('[data-test="tokenSelector"]').trigger('click')

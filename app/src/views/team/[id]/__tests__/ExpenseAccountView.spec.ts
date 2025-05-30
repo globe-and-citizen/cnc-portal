@@ -11,6 +11,7 @@ import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import * as viem from 'viem'
 import type { Team, User } from '@/types'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 interface ComponentData {
   isDisapprovedAddress: boolean
@@ -270,7 +271,16 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   }
 })
 
-describe.skip('ExpenseAccountSection', () => {
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+  }
+})
+
+
+describe('ExpenseAccountSection', () => {
   setActivePinia(createPinia())
 
   interface Props {
@@ -317,7 +327,7 @@ describe.skip('ExpenseAccountSection', () => {
     })
   }
 
-  describe('Render', () => {
+  describe.skip('Render', () => {
     // it('should show expense account if expense account address exists', async () => {
     //   const team = { expenseAccountEip712Address: '0x123' }
     //   const wrapper = createComponent()

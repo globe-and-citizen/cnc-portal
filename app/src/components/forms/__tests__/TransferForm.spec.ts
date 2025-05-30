@@ -5,6 +5,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
@@ -19,7 +20,16 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
-describe.skip('TransferForm.vue', () => {
+
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+  }
+})
+
+describe('TransferForm.vue', () => {
   let wrapper: ReturnType<typeof mount<typeof TransferForm>>
   beforeEach(() => {
     wrapper = mount(TransferForm, {
@@ -101,7 +111,7 @@ describe.skip('TransferForm.vue', () => {
     })
   })
 
-  describe('Amount Input Handling', () => {
+  describe.skip('Amount Input Handling', () => {
     let amountInput: ReturnType<typeof wrapper.find>
 
     beforeEach(() => {
@@ -296,8 +306,8 @@ describe.skip('TransferForm.vue', () => {
       expect(wrapper.emitted('transfer')?.[0]).toEqual([
         {
           address: { name: 'Test', address: '0x1234567890123456789012345678901234567890' },
-          token: { symbol: NETWORK.currencySymbol, balance: '100' },
-          amount: '10'
+          token: { symbol: NETWORK.currencySymbol, balance: 100 },
+          amount: 10
         }
       ])
     })

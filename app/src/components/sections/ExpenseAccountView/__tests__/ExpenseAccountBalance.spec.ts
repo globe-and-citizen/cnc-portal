@@ -28,7 +28,8 @@ vi.mock('@/stores', async (importOriginal) => {
           }
         ]
       }
-    }))
+    })),
+    useCurrencyStore: vi.fn
   }
 })
 

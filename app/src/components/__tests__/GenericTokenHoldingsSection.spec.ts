@@ -6,21 +6,7 @@ import { ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
 import * as utils from '@/utils'
 import { parseEther } from 'viem'
-
-const mockUseCurrencyStore = {
-  localCurrency: {
-    code: `USD`,
-    symbol: `$`
-  },
-  nativeToken: {
-    priceInLocal: 2500,
-    priceInUSD: 2500
-  },
-  usdc: {
-    priceInLocal: 1,
-    priceInUSD: 1
-  }
-}
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()

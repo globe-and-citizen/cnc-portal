@@ -3,6 +3,7 @@ import CashRemunerationPendingClaim from '../CashRemunerationPendingClaim.vue'
 import { shallowMount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 const mockError = ref<unknown>(null)
 vi.mock('@/composables', async (importOriginal) => {
@@ -36,15 +37,8 @@ vi.mock('@/stores', async (importOriginal) => {
     useToastStore: vi.fn(() => ({
       addErrorToast: mockErrorToast
     })),
-    useCurrencyStore: vi.fn(() => ({
-      localCurrency: ref({
-        code: 'USD',
-        symbol: '$'
-      }),
-      nativeToken: ref({
-        priceInLocal: 1000
-      })
-    }))
+    
+        useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
   }
 })
 

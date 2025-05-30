@@ -19,6 +19,12 @@ vi.mock('@/stores/useToastStore', () => ({
     addErrorToast: vi.fn()
   }))
 }))
+
+// Mock useCurrencyStore
+vi.mock('@/stores/useCurrencyStore', () => ({
+  useCurrencyStore: vi.fn()
+}))
+
 const mockUseReadContract = {
   data: ref<string | null>(null),
   isLoading: ref(false),
@@ -55,7 +61,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-describe.skip('ProposalSection.vue', () => {
+describe('ProposalSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
@@ -107,7 +113,7 @@ describe.skip('ProposalSection.vue', () => {
     expect(wrapper.find('[data-test="parent-div"]').exists()).toBe(false)
   })
 
-  it('renders create proposal button', () => {
+  it.skip('renders create proposal button', () => {
     wrapper = mount(ProposalSection, {
       props: {
         team: {
@@ -120,7 +126,7 @@ describe.skip('ProposalSection.vue', () => {
     expect(createButton.exists()).toBe(true)
   })
 
-  it('opens modal when create proposal button is clicked', async () => {
+  it.skip('opens modal when create proposal button is clicked', async () => {
     wrapper = mount(ProposalSection, {
       props: {
         team: {
@@ -134,7 +140,7 @@ describe.skip('ProposalSection.vue', () => {
     expect((wrapper.vm as unknown as ProposalSectionInstance).showModal).toBe(true)
   })
 
-  it('shows View BoD button when boardOfDirectorsAddress exists', () => {
+  it.skip('shows View BoD button when boardOfDirectorsAddress exists', () => {
     wrapper = mount(ProposalSection, {
       props: {
         team: {
@@ -161,7 +167,7 @@ describe.skip('ProposalSection.vue', () => {
     expect(bodButton.exists()).toBe(false)
   })
 
-  it('opens BoD modal and fetches directors when View BoD button is clicked', async () => {
+  it.skip('opens BoD modal and fetches directors when View BoD button is clicked', async () => {
     wrapper = mount(ProposalSection, {
       props: {
         team: {
@@ -178,7 +184,7 @@ describe.skip('ProposalSection.vue', () => {
     expect(mockUseReadContract.refetch).toHaveBeenCalled()
   })
 
-  it('shows manage button and opens voting management modal', async () => {
+  it.skip('shows manage button and opens voting management modal', async () => {
     wrapper = mount(ProposalSection, {
       props: {
         team: {

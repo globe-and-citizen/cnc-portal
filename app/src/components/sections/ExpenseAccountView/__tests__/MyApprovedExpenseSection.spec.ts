@@ -12,6 +12,7 @@ import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
 import * as viem from 'viem'
 import { estimateGas, readContract } from '@wagmi/core'
 import { mockToastStore } from '@/tests/mocks/store.mock'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -64,30 +65,6 @@ vi.mock('@/stores', async (importOriginal) => {
     }))
   }
 })
-const mockUseCurrencyStore = {
-  localCurrency: {
-    code: 'USD',
-    name: 'US Dollar',
-    symbol: '$'
-  },
-  nativeToken: {
-    id: 'ethereum',
-    isLoading: false,
-    name: 'SepoliaETH',
-    priceInLocal: 1000,
-    priceInUSD: 1000,
-    symbol: 'SepoliaETH'
-  },
-  usdc: {
-    id: 'usd-coin',
-    isLoading: false,
-    name: 'USD Coin',
-    priceInLocal: 1000,
-    priceInUSD: 1000,
-    symbol: 'USDC'
-  }
-}
-
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
