@@ -45,40 +45,25 @@
         Max
       </button>
       <div>
-        <div
-          role="button"
-          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
-          @click="
-            () => {
-              isDropdownOpen = !isDropdownOpen
-              console.log(`Dropdown open: ${isDropdownOpen}`)
+        <SelectComponent
+          :options="
+            tokenList.map((token, id) => ({
+              label: token.name,
+              value: `${id}`
+            }))
+          "
+          :disabled="isLoadingBalance"
+          @change="
+            (value) => {
+              selectedTokenId = parseInt(value)
             }
           "
-          data-test="tokenSelector"
-        >
-          <span>{{ formattedTokenName }} </span>
-          <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
-        </div>
-        <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
-          ref="target"
-          v-if="isDropdownOpen"
-          data-test="tokenDropdown"
-        >
-          <li
-            v-for="(token, id) in tokenList"
-            :key="id"
-            @click="
-              () => {
-                selectedTokenId = id
-                isDropdownOpen = false
-              }
-            "
-            :data-test="`tokenOption-${token.symbol}`"
-          >
-            <a>{{ token.name }}</a>
-          </li>
-        </ul>
+          :format-value="
+            (value: string) => {
+              return value === 'SepoliaETH' ? 'SepETH' : value
+            }
+          "
+        />
       </div>
     </div>
     <div class="label">
@@ -111,9 +96,9 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import SelectComponent from '@/components/SelectComponent.vue'
 import {
   useBalance,
   useChainId,
@@ -405,9 +390,4 @@ const handleAmountInput = (event: Event) => {
     amount.value = value
   }
 }
-
-const formattedTokenName = computed(() => {
-  const name = tokenList[selectedTokenId.value].name
-  return name === 'SepoliaETH' ? 'SepETH' : name
-})
 </script>
