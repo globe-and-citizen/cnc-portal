@@ -37,8 +37,8 @@ vi.mock('@/stores', async (importOriginal) => {
     useToastStore: vi.fn(() => ({
       addErrorToast: mockErrorToast
     })),
-    
-        useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
   }
 })
 

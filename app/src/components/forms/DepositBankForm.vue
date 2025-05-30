@@ -48,7 +48,7 @@
         <div
           role="button"
           class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
-            @click="isDropdownOpen = !isDropdownOpen"
+          @click="isDropdownOpen = !isDropdownOpen"
           data-test="tokenSelector"
         >
           <span>{{ formattedTokenName }} </span>

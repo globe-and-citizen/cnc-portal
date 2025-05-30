@@ -20,7 +20,6 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
-
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
   return {

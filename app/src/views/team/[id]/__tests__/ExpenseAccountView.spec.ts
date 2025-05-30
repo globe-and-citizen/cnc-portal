@@ -279,7 +279,6 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   }
 })
 
-
 describe('ExpenseAccountSection', () => {
   setActivePinia(createPinia())
 
