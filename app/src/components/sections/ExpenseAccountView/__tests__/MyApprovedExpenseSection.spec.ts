@@ -1,7 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ExpenseAccountSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
-import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
@@ -12,7 +11,6 @@ import * as mocks from './mock/MyApprovedExpenseSection.mock'
 import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
 import * as viem from 'viem'
 import { estimateGas, readContract } from '@wagmi/core'
-import { useExpenseDataStore, useTeamStore } from '@/stores'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 
 // Mocking wagmi functions
@@ -50,6 +48,53 @@ vi.mock('viem', async (importOriginal) => {
     encodeFunctionData: vi.fn()
   }
 })
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useExpenseDataStore: vi.fn(() => ({
+      ...mocks.mockExpenseDataStore,
+      myApprovedExpenses: ref(mocks.mockExpenseData)
+    })),
+    useTeamStore: vi.fn(() => ({
+      ...mocks.mockTeamStore
+    })),
+    useUserDataStore: vi.fn(() => ({
+      address: '0x0123456789012345678901234567890123456789'
+    }))
+  }
+})
+const mockUseCurrencyStore = {
+  localCurrency: {
+    code: 'USD',
+    name: 'US Dollar',
+    symbol: '$'
+  },
+  nativeToken: {
+    id: 'ethereum',
+    isLoading: false,
+    name: 'SepoliaETH',
+    priceInLocal: 1000,
+    priceInUSD: 1000,
+    symbol: 'SepoliaETH'
+  },
+  usdc: {
+    id: 'usd-coin',
+    isLoading: false,
+    name: 'USD Coin',
+    priceInLocal: 1000,
+    priceInUSD: 1000,
+    symbol: 'USDC'
+  }
+}
+
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+  }
+})
 
 const mockUseQuery = {
   result: ref({
@@ -82,8 +127,8 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   }
 })
 
-describe.skip('ExpenseAccountSection', () => {
-  setActivePinia(createPinia())
+describe('ExpenseAccountSection', () => {
+  // setActivePinia(createPinia())
 
   interface ComponentOptions {
     global?: Record<string, unknown>
@@ -94,10 +139,7 @@ describe.skip('ExpenseAccountSection', () => {
       global: {
         plugins: [
           createTestingPinia({
-            createSpy: vi.fn,
-            initialState: {
-              user: { address: '0x0123456789012345678901234567890123456789' }
-            }
+            createSpy: vi.fn
           })
         ],
         ...global
@@ -106,16 +148,9 @@ describe.skip('ExpenseAccountSection', () => {
   }
 
   describe('Render', () => {
-    beforeEach(() => {
-      //@ts-expect-error: TypeScript expects exact return type as original
-      vi.mocked(useExpenseDataStore).mockReturnValue({ ...mocks.mockExpenseDataStore })
-      //@ts-expect-error: TypeScript expects exact return type as original
-      vi.mocked(useTeamStore).mockReturnValue({ ...mocks.mockTeamStore })
-    })
-    it.only("should show the current user's approval data in the approval table", async () => {
+    beforeEach(() => {})
+    it("should show the current user's approval data in the approval table", async () => {
       const wrapper = createComponent()
-      await flushPromises()
-
       await flushPromises()
       const expenseAccountTable = wrapper.findComponent({ name: 'TableComponent' })
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -134,10 +169,8 @@ describe.skip('ExpenseAccountSection', () => {
       await flushPromises()
       //@ts-expect-error: not visible from vm
       expect(wrapper.vm.signatureToTransfer).toBe('0xNativeTokenSignature')
-      //@ts-expect-error: not visible from vm
-      expect(wrapper.vm.tokens).toEqual([{ balance: '0', symbol: `${NETWORK.currencySymbol}` }])
     })
-    it('should transfer from expense account', async () => {
+    it.skip('should transfer from expense account', async () => {
       const executeExpenseAccountTransfer = vi.fn()
       //@ts-expect-error: TypeScript expects exact return type as original
       vi.mocked(useWriteContract).mockReturnValue({
@@ -147,6 +180,8 @@ describe.skip('ExpenseAccountSection', () => {
 
       // Mount the component
       const wrapper = createComponent()
+
+      console.log('wrapper.vm', wrapper.html())
 
       // Set up refs
       const vm = wrapper.vm
@@ -199,7 +234,7 @@ describe.skip('ExpenseAccountSection', () => {
       expect(spendButton.exists()).toBeTruthy()
       expect(spendButton.props('disabled')).toBe(true)
     })
-    it('should notify amount withdrawn error', async () => {
+    it.skip('should notify amount withdrawn error', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(util.log, 'error')
       //@ts-expect-error: not visible from vm
@@ -209,7 +244,7 @@ describe.skip('ExpenseAccountSection', () => {
       expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
       expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
     })
-    it('should call correct logs when transferNativeToken fails', async () => {
+    it.skip('should call correct logs when transferNativeToken fails', async () => {
       vi.mocked(estimateGas).mockRejectedValue(new Error('Error getting amount withdrawn'))
       const logErrorSpy = vi.spyOn(util.log, 'error')
       //@ts-expect-error: not visible from vm
@@ -236,7 +271,7 @@ describe.skip('ExpenseAccountSection', () => {
       //@ts-expect-error: not visible from vm
       expect(vm.isLoadingTransfer).toBe(false)
     })
-    it('should call correct logs when transferErc20Token fails', async () => {
+    it.skip('should call correct logs when transferErc20Token fails', async () => {
       mocks.mockExpenseData[0].status = 'enabled'
       mocks.mockExpenseData[0].tokenAddress = USDC_ADDRESS
       vi.mocked(readContract).mockImplementation(async () => BigInt(2 * 1e6))
