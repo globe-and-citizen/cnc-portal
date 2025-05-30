@@ -114,22 +114,11 @@ describe('DepositBankModal.vue', () => {
       expect(wrapper.find('.label-text-alt').text()).toBe('Balance: 100.0000')
     })
 
-    it('displays shortened token name for SepoliaETH', () => {
-      const wrapper = createWrapper()
-      expect(wrapper.find('[data-test="tokenSelector"]').text()).toContain('SepETH')
-    })
-
-    it('displays original token name for other tokens', async () => {
-      const wrapper = createWrapper()
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
-      expect(wrapper.find('[data-test="tokenSelector"]').text()).toContain('USDC')
-    })
-
     it('displays USDC balance with 4 decimal places when USDC is selected', async () => {
       const wrapper = createWrapper()
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
+      expect(selectComponent.exists()).toBe(true)
+      await selectComponent.vm.$emit('change', '1')
       expect(wrapper.find('.label-text-alt').text()).toBe('Balance: 20000.0000')
     })
 
@@ -239,8 +228,9 @@ describe('DepositBankModal.vue', () => {
 
     it('fills input with max USDC balance when max button is clicked with USDC selected', async () => {
       const wrapper = createWrapper()
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
+      expect(selectComponent.exists()).toBe(true)
+      await selectComponent.vm.$emit('change', '1')
       await wrapper.find('[data-test="maxButton"]').trigger('click')
       expect((wrapper.find('[data-test="amountInput"]').element as HTMLInputElement).value).toBe(
         '20000.0000'
@@ -273,8 +263,9 @@ describe('DepositBankModal.vue', () => {
     })
 
     it('fills input with correct percentage of USDC balance when buttons are clicked', async () => {
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
+      expect(selectComponent.exists()).toBe(true)
+      await selectComponent.vm.$emit('change', '1')
 
       await wrapper.find('[data-test="percentButton-25"]').trigger('click')
       expect((amountInput.element as HTMLInputElement).value).toBe('5000.0000')
@@ -293,8 +284,9 @@ describe('DepositBankModal.vue', () => {
     beforeEach(async () => {
       wrapper = createWrapper()
       // Select USDC token
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
+      expect(selectComponent.exists()).toBe(true)
+      await selectComponent.vm.$emit('change', '1')
     })
 
     it('starts at step 1', () => {
@@ -326,9 +318,10 @@ describe('DepositBankModal.vue', () => {
     it('resets to step 1 when switching from USDC to ETH', async () => {
       mockUseWriteContract.isPending.value = true
       await wrapper.vm.$nextTick()
-
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-ETH"]').trigger('click')
+      const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
+      expect(selectComponent.exists()).toBe(true)
+      await selectComponent.vm.$emit('change', '0')
+      await wrapper.vm.$nextTick()
 
       const steps = wrapper.findAll('.step')
       expect(steps.length).toBe(0)
@@ -353,8 +346,9 @@ describe('DepositBankModal.vue', () => {
     })
 
     it('shows success toast and closes modal on USDC deposit confirmation', async () => {
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
+      expect(selectComponent.exists()).toBe(true)
+      await selectComponent.vm.$emit('change', '1')
 
       mockUseWaitForTransactionReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
@@ -382,8 +376,9 @@ describe('DepositBankModal.vue', () => {
 
     it('handles USDC deposit error', async () => {
       // Select USDC
-      await wrapper.find('[data-test="tokenSelector"]').trigger('click')
-      await wrapper.find('[data-test="tokenOption-USDC"]').trigger('click')
+      const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
+      expect(selectComponent.exists()).toBe(true)
+      await selectComponent.vm.$emit('change', '1')
 
       // Set amount
       await wrapper.find('[data-test="amountInput"]').setValue('100')
