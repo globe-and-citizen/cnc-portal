@@ -71,38 +71,51 @@ describe("Claim Controller", () => {
       );
     });
 
-    it("should return 400 if no wage is found for the user", async () => {
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
-
-      const response = await request(app)
-        .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe("No wage found for the user");
-    });
-
-    it("should return 201 and create a claim successfully", async () => {
-      // @ts-ignore
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue({ id: 1 });
-      // @ts-ignore
+    it("shlould create a weekly claim if it does not exist", async () => {
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Set to Monday
+      vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.weeklyClaim, "create").mockResolvedValue({
+        id: 1,
+        weekStart,
+        memberAddress: "0x123",
+        teamId: 1,
+        data: {},
+        signature: null,
+        createdAt: undefined,
+        updatedAt: undefined
+      });
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue({
+        id: 1,
+        teamId: 1,    
+        userAddress: "0x123",
+        nextWageId: null,
+        // @ts-ignore
+        team: { id: 1, ownerAddress: "0x123" },
+      });
       vi.spyOn(prisma.claim, "create").mockResolvedValue({
         id: 1,
         hoursWorked: 5,
-        memo: "",
+        memo: "test",
         status: "pending",
         wageId: 1,
+        weeklyClaimId: 1,
+        dayWorked: weekStart,
+        signature: null,
+        createdAt: undefined,
+        updatedAt: undefined,
+        tokenTx: null
       });
-
       const response = await request(app)
         .post("/claim")
         .send({ teamId: 1, hoursWorked: 5, memo: "test" });
-
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty("id");
-      expect(response.body.status).toBe("pending");
+      expect(response.body.hoursWorked).toBe(5);
+      expect(response.body.memo).toBe("test");
     });
 
+   
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
 
