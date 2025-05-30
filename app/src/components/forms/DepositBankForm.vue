@@ -48,12 +48,7 @@
         <div
           role="button"
           class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
-          @click="
-            () => {
-              isDropdownOpen = !isDropdownOpen
-              console.log(`Dropdown open: ${isDropdownOpen}`)
-            }
-          "
+            @click="isDropdownOpen = !isDropdownOpen"
           data-test="tokenSelector"
         >
           <span>{{ formattedTokenName }} </span>
@@ -106,14 +101,20 @@
 </template>
 
 <script setup lang="ts">
-import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { ref, onMounted, computed, watch } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import ButtonUI from '../ButtonUI.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
-import { useCurrencyStore } from '@/stores/currencyStore'
+import { Icon as IconifyIcon } from '@iconify/vue'
+
+import ButtonUI from '../ButtonUI.vue'
+
+import { NETWORK, USDC_ADDRESS } from '@/constant'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
+import BankABI from '@/artifacts/abi/bank.json'
+
+import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+
 import {
   useBalance,
   useChainId,
@@ -122,13 +123,9 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt
 } from '@wagmi/vue'
-import { useUserDataStore } from '@/stores/user'
-import { formatEther, type Address, parseEther } from 'viem'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
-import BankABI from '@/artifacts/abi/bank.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { useToastStore } from '@/stores/useToastStore'
+import { formatEther, parseEther, type Address } from 'viem'
 
 const props = defineProps<{
   loading?: boolean
