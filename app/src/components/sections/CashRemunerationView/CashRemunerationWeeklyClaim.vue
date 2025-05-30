@@ -51,8 +51,8 @@
           </span>
         </template>
         <template #action-data="{ row }">
-          <CRSigne :claim="row" @claim-signed="fetchTeamClaimData()" />
-          <CRWithdrawClaim :claim="row" @claim-withdrawn="fetchTeamClaimData()" />
+          <CRSigne :weeklyClaim="formatRow(row)" @claim-signed="fetchTeamWeeklyClaimData()" />
+          <CRWithdrawClaim :weeklyClaim="formatRow(row)" @claim-withdrawn="fetchTeamWeeklyClaimData()" />
         </template>
       </TableComponent>
     </WeeklyClaimComponent>
@@ -68,31 +68,16 @@ import CRSigne from './CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+
 // Formatage de date façon dayUtils
 function formatDate(date: string | Date) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
   return d.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
-
-// const weeklyClaimUrl = computed(() => `/weeklyClaim/?teamId=${teamStore.teamId}`)
-
 const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
 
-// Table columns configuration
 const columns = [
-  {
-    key: 'weekStart',
-    label: 'Début de semaine',
-    sortable: true,
-    class: 'text-black text-base'
-  },
-  {
-    key: 'claims',
-    label: 'Claims',
-    sortable: false,
-    class: 'text-black text-base'
-  },
   {
     key: 'createdAt',
     label: 'Date',
