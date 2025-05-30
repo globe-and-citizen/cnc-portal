@@ -167,7 +167,6 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       const errorMessages = wrapper.findAll('.text-red-500')
-      console.log('errorMessages', errorMessages)
       expect(errorMessages.some((el) => el.text().includes('Invalid address'))).toBe(true)
     })
 
@@ -190,7 +189,6 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       const errorMessages = wrapper.findAll('.text-red-500')
-      console.log('errorMessages', errorMessages[3].text())
       expect(
         errorMessages.some((el) => el.text().includes('Amount exceeds contract balance'))
       ).toBe(true)
@@ -238,7 +236,6 @@ describe('TransferForm.vue', () => {
       await wrapper.vm.$nextTick()
       const validTransferButton = wrapper.find('[data-test="transferButton"]')
       expect(validTransferButton.exists()).toBe(true)
-      console.log(validTransferButton.attributes())
 
       await amountInput.setValue('150')
       await wrapper.vm.$nextTick()

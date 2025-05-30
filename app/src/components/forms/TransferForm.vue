@@ -5,68 +5,57 @@
   <div class="flex flex-col gap-4 mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
-    <div class="input input-bordered flex items-center gap-2 input-md">
-      <div class="grow flex items-center gap-2">
-        <input type="number" class="grow" data-test="amount-input" v-model="model.amount" />
-        <div class="flex gap-1" data-test="percentage-buttons">
+    <div class="input-group relative">
+      <label class="input input-bordered flex items-center gap-2 input-md">
+        <input
+          type="text"
+          class="grow min-w-0 h-full"
+          data-test="amount-input"
+          v-model="model.amount"
+          @input="handleAmountInput"
+        />
+        <div class="flex flex-nowrap min-w-0 items-center h-full">
+          <!-- Added flex-nowrap and min-w-0 -->
+          <div class="flex gap-1 shrink-0 items-center" data-test="percentage-buttons">
+            <!-- Added shrink-0 -->
+            <button
+              v-for="percent in [25, 50, 75]"
+              :key="percent"
+              class="btn btn-xs btn-ghost cursor-pointer"
+              @click="usePercentageOfBalance(percent)"
+              :data-test="`percentButton-${percent}`"
+            >
+              {{ percent }}%
+            </button>
+          </div>
           <button
-            v-for="percent in [25, 50, 75]"
-            :key="percent"
-            class="btn btn-xs btn-ghost cursor-pointer"
-            @click="usePercentageOfBalance(percent)"
-            :data-test="`percentButton-${percent}`"
+            class="btn btn-xs btn-ghost mr-2 shrink-0"
+            @click="setMaxAmount"
+            type="button"
+            data-test="max-button"
           >
-            {{ percent }}%
+            Max
           </button>
-        </div>
-        <button
-          class="btn btn-xs btn-ghost mr-2"
-          @click="setMaxAmount"
-          type="button"
-          data-test="max-button"
-        >
-          Max
-        </button>
 
-        <div
-          role="button"
-          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
-          @click="
-            () => {
-              if (tokens.length > 1) {
-                isDropdownOpen = !isDropdownOpen
-              }
-            }
-          "
-          data-test="token-selector"
-        >
-          <span>{{ model.token.symbol }}</span>
-          <IconifyIcon
-            v-if="tokens.length > 1"
-            icon="heroicons-outline:chevron-down"
-            class="w-4 h-4"
-          />
+          <div class="min-w-[100px] items-center">
+            <!-- Wrapped Select in container with min-width -->
+            <SelectComponent
+              :options="props.tokens.map((token) => ({ value: token.symbol, label: token.symbol }))"
+              :disabled="props.loading"
+              :format-value="
+                (value: string) => {
+                  return value === 'SepoliaETH' ? 'SepETH' : value
+                }
+              "
+              @change="
+                (value: string) => {
+                  model.token = props.tokens.find((token) => token.symbol === value) || model.token
+                }
+              "
+            />
+          </div>
         </div>
-        <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
-          ref="target"
-          data-test="token-dropdown"
-          v-if="isDropdownOpen"
-        >
-          <li
-            v-for="token in tokens"
-            :key="token.symbol"
-            @click="
-              () => {
-                model.token = token
-                isDropdownOpen = false
-              }
-            "
-          >
-            <a>{{ token.symbol }}</a>
-          </li>
-        </ul>
-      </div>
+      </label>
     </div>
 
     <div v-if="model.amount && parseFloat(model.amount) > 0" class="text-sm text-gray-500">
@@ -102,11 +91,11 @@ import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { formatCurrencyShort } from '@/utils'
+import SelectComponent from '../SelectComponent.vue'
 
 export interface Token {
   symbol: string
@@ -147,6 +136,9 @@ const currencyStore = useCurrencyStore()
 const usePercentageOfBalance = (percentage: number) => {
   model.value.amount = ((model.value.token.balance * percentage) / 100).toFixed(4)
 }
+// const getSelectedTokenBalance = computed(() => {
+//   return model.value.token.balance
+// })
 
 // New computed property for transfer amount in default currency
 const formattedTransferAmount = computed(() => {

@@ -1,6 +1,5 @@
 <template>
   <GenericTransactionHistory
-    v-if="transactionData.length > 0"
     :transactions="transactionData"
     title="Expense Account Transfer History"
     :currencies="currencies"

@@ -47,7 +47,7 @@ const { result, loading, error } = useQuery(
           contractAddress: $contractAddress
           blockTimestamp_gte: $startDate
           blockTimestamp_lte: $endDate
-          transactionType: "transfer"
+          transactionType: transfer
         }
       ) {
         amount
