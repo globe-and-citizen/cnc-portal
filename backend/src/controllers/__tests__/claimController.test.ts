@@ -82,12 +82,12 @@ describe("Claim Controller", () => {
         teamId: 1,
         data: {},
         signature: null,
-        createdAt: undefined,
-        updatedAt: undefined
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       vi.spyOn(prisma.wage, "findFirst").mockResolvedValue({
         id: 1,
-        teamId: 1,    
+        teamId: 1,
         userAddress: "0x123",
         nextWageId: null,
         // @ts-ignore
@@ -102,9 +102,9 @@ describe("Claim Controller", () => {
         weeklyClaimId: 1,
         dayWorked: weekStart,
         signature: null,
-        createdAt: undefined,
-        updatedAt: undefined,
-        tokenTx: null
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tokenTx: null,
       });
       const response = await request(app)
         .post("/claim")
@@ -115,7 +115,8 @@ describe("Claim Controller", () => {
       expect(response.body.memo).toBe("test");
     });
 
-   
+    it();
+
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
 
