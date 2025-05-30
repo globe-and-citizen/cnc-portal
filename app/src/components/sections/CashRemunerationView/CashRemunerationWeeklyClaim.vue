@@ -6,7 +6,7 @@
   <CardComponent title="Weekly Claim" class="w-full pb-7">
     <WeeklyClaimComponent>
       <TableComponent
-        :rows="teamClaimData ?? undefined"
+        :rows="data ?? undefined"
         :columns="columns"
         :loading="isTeamClaimDataFetching"
       >

@@ -115,7 +115,14 @@ describe("Claim Controller", () => {
       expect(response.body.memo).toBe("test");
     });
 
-    it();
+    it("should return 400 if wage is not found", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("No wage found for the user");
+    });
 
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
