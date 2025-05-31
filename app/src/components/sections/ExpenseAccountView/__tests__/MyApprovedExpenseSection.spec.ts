@@ -158,7 +158,7 @@ describe('ExpenseAccountSection', () => {
       // Mount the component
       const wrapper = createComponent()
 
-      console.log('wrapper.vm', wrapper.html())
+      // console.log('wrapper.vm', wrapper.html())
 
       // Set up refs
       const vm = wrapper.vm
