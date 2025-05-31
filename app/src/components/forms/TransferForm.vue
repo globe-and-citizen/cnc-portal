@@ -12,7 +12,6 @@
           class="grow min-w-0 h-full"
           data-test="amount-input"
           v-model="model.amount"
-          @input="handleAmountInput"
         />
         <div class="flex flex-nowrap min-w-0 items-center h-full">
           <!-- Added flex-nowrap and min-w-0 -->
