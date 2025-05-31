@@ -44,6 +44,32 @@
           </div>
         </template>
 
+        <template #totalAmount-data="{ row }">
+          <span class="font-bold">
+            {{
+              row.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) *
+              row.wage.cashRatePerHour
+            }}
+            {{ NETWORK.currencySymbol }}
+          </span>
+          <br />
+          <span class="font-bold">
+            {{
+              row.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) *
+              row.wage.tokenRatePerHour
+            }}
+            TOKEN
+          </span>
+          <br />
+          <span class="font-bold">
+            {{
+              row.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) *
+              row.wage.usdcRatePerHour
+            }}
+            USDC
+          </span>
+        </template>
+
         <!-- <template #totalAmount-data="{ row }">
           <div v-for="wage of row.wages" :key="wage.id">
             <span class="font-bold">
