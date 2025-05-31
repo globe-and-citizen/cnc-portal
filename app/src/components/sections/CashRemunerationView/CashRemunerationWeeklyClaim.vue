@@ -28,19 +28,23 @@
           <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
         </template>
 
-        <!-- <template #hourlyRate-data="{ row }">
-          <div v-for="wage of row.wages" :key="wage.id">
-          
-            <span class="font-bold"> {{ wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} </span>
+        <template #hourlyRate-data="{ row }">
+          <div>
+            <span class="font-bold">
+              {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }}
+            </span>
             <br />
-            <span class="font-bold"> {{ wage.tokenRatePerHour }} TOKEN </span>
+            <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN </span>
             <br />
-            <span class="font-bold"> {{ wage.usdcRatePerHour }} USDC </span>
+            <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
             <br />
-            <span> {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD </span>
+            <!-- <span>
+              {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD
+            </span> -->
           </div>
         </template>
-        <template #totalAmount-data="{ row }">
+
+        <!-- <template #totalAmount-data="{ row }">
           <div v-for="wage of row.wages" :key="wage.id">
             <span class="font-bold">
               {{
