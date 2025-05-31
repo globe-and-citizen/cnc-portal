@@ -1,5 +1,6 @@
 -- AlterTable
-ALTER TABLE "Claim" ADD COLUMN     "weeklyClaimId" INTEGER;
+ALTER TABLE "Claim" ADD COLUMN     "dayWorked" TIMESTAMP(3),
+ADD COLUMN     "weeklyClaimId" INTEGER;
 
 -- CreateTable
 CREATE TABLE "WeeklyClaim" (
@@ -9,6 +10,7 @@ CREATE TABLE "WeeklyClaim" (
     "memberAddress" TEXT NOT NULL,
     "teamId" INTEGER NOT NULL,
     "signature" TEXT,
+    "wageId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -23,3 +25,6 @@ ALTER TABLE "WeeklyClaim" ADD CONSTRAINT "WeeklyClaim_memberAddress_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "WeeklyClaim" ADD CONSTRAINT "WeeklyClaim_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WeeklyClaim" ADD CONSTRAINT "WeeklyClaim_wageId_fkey" FOREIGN KEY ("wageId") REFERENCES "Wage"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

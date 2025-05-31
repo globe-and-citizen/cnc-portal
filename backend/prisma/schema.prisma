@@ -76,21 +76,22 @@ model Expense {
 }
 
 model Wage {
-  id                  Int      @id @default(autoincrement())
-  team                Team     @relation(fields: [teamId], references: [id])
-  user                User     @relation(fields: [userAddress], references: [address])
+  id                  Int           @id @default(autoincrement())
+  team                Team          @relation(fields: [teamId], references: [id])
+  user                User          @relation(fields: [userAddress], references: [address])
   teamId              Int
   userAddress         String
-  cashRatePerHour     Float    @default(0.0)
-  tokenRatePerHour    Float    @default(0.0)
-  usdcRatePerHour     Float    @default(0.0)
+  cashRatePerHour     Float         @default(0.0)
+  tokenRatePerHour    Float         @default(0.0)
+  usdcRatePerHour     Float         @default(0.0)
   maximumHoursPerWeek Int
-  nextWageId          Int?     @unique
-  nextWage            Wage?    @relation("wageRelated", fields: [nextWageId], references: [id])
-  previousWage        Wage?    @relation("wageRelated")
+  nextWageId          Int?          @unique
+  nextWage            Wage?         @relation("wageRelated", fields: [nextWageId], references: [id])
+  previousWage        Wage?         @relation("wageRelated")
   claims              Claim[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  weeklyClaims        WeeklyClaim[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   @@unique([teamId, userAddress, nextWageId]) // Need to be checked
 }
@@ -121,6 +122,8 @@ model WeeklyClaim {
   team          Team     @relation(fields: [teamId], references: [id])
   signature     String?
   claims        Claim[]  @relation("WeeklyClaimToClaims")
+  wageId        Int
+  wage          Wage     @relation(fields: [wageId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
