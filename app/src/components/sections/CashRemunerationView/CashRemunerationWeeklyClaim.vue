@@ -1,9 +1,10 @@
 <template>
- <pre>
- {{data}}
- {{error}}
+  <pre>
+ {{ data }}
+ {{ error }}
  
-   </pre>
+   </pre
+  >
   <CardComponent title="Weekly Claim" class="w-full pb-7">
     <WeeklyClaimComponent>
       <TableComponent :rows="flatClaims" :columns="columns" :loading="isTeamClaimDataFetching">
@@ -19,6 +20,33 @@
           </span>
           <br />
           <span>{{ row.wage.maximumHoursPerWeek }} h/week</span>
+        </template>
+        <template #hourlyRate-data="{ row }">
+          <span class="font-bold">
+            {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} / h
+          </span>
+          <br />
+          <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN / h </span>
+          <br />
+          <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC / h </span>
+        </template>
+        <template #status-data="{ row }">
+          <span
+            class="badge"
+            :class="{
+              'badge-info': row.status === 'pending',
+              'badge-outline': row.status === 'signed',
+              'bg-error': row.status === 'disabled',
+              'bg-neutral text-white': row.status === 'withdrawn'
+            }"
+            >{{
+              row.status == 'pending'
+                ? 'Submitted'
+                : row.status == 'signed'
+                  ? 'Approved'
+                  : row.status.charAt(0).toUpperCase() + row.status.slice(1)
+            }}</span
+          >
         </template>
       </TableComponent>
     </WeeklyClaimComponent>
@@ -42,11 +70,10 @@ const flatClaims = computed(() => {
     (weeklyClaim.claims || []).map((claim: any) => ({
       ...claim,
       weekStart: weeklyClaim.weekStart,
-      memberAddress: weeklyClaim.memberAddress,
+      memberAddress: weeklyClaim.memberAddress
     }))
   )
 })
-
 
 // Formatage de date façon dayUtils
 function formatDate(date: string | Date) {
