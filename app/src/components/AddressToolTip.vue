@@ -16,7 +16,6 @@
       @click="
         () => {
           copy(address)
-          console.log('copied', copied)
         }
       "
       v-if="isSupported"
