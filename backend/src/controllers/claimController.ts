@@ -43,8 +43,23 @@ export const addClaim = async (req: Request, res: Response) => {
   }
 
   try {
+    // Get user current
+    const wage = await prisma.wage.findFirst({
+      where: { userAddress: callerAddress, nextWageId: null, teamId: teamId },
+    });
+
+    if (!wage) {
+      return errorResponse(400, "No wage found for the user", res);
+    }
+
+    // get the member current wage
+
     let weeklyClaim = await prisma.weeklyClaim.findFirst({
       where: {
+        wage: {
+          teamId: teamId,
+          nextWageId: null,
+        },
         weekStart: weekStart,
         memberAddress: callerAddress,
         teamId: teamId,
@@ -54,6 +69,7 @@ export const addClaim = async (req: Request, res: Response) => {
     if (!weeklyClaim) {
       weeklyClaim = await prisma.weeklyClaim.create({
         data: {
+          wageId: wage.id,
           weekStart: weekStart,
           memberAddress: callerAddress,
           teamId: teamId,
@@ -61,14 +77,7 @@ export const addClaim = async (req: Request, res: Response) => {
         },
       });
     }
-    // Get user current
-    const wage = await prisma.wage.findFirst({
-      where: { userAddress: callerAddress, nextWageId: null, teamId: teamId },
-    });
 
-    if (!wage) {
-      return errorResponse(400, "No wage found for the user", res);
-    }
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,

@@ -8,91 +8,36 @@
     <WeeklyClaimComponent>
       <TableComponent
         v-if="data"
-        :rows="
-          data.map((weeklyClaim) => {
-            const hoursWorked = weeklyClaim.claims.reduce(
-              (sum: number, claim) => sum + claim.hoursWorked,
-              0
-            )
-
-            // For each weeklyClaim, we want to group all claims by their wage.
-            // We use a map (wagesMap) where the key is wage.id.
-            // For each claim, if its wage is not yet in the map, we add it with a claims array.
-            // Then we push the claim into the corresponding wage's claims array.
-            // Finally, we extract all unique wages (with their grouped claims) as an array.
-            // This gives us all unique wages for the week, each with the claims that used that wage.
-
-            // @ts-ignore
-            const wagesMap: Record<string, any> = {}
-            weeklyClaim.claims.forEach((claim) => {
-              if (!wagesMap[claim.wage.id]) {
-                wagesMap[claim.wage.id] = {
-                  ...claim.wage,
-                  claims: []
-                }
-              }
-              wagesMap[claim.wage.id].claims.push(claim)
-            })
-            const wages = Object.values(wagesMap)
-            return {
-              ...weeklyClaim,
-              wages,
-              hoursWorked: hoursWorked
-            }
-          })
-        "
+        :rows="data"
         :columns="columns"
         :loading="isTeamClaimDataFetching"
       >
-        <template #memberAddress-data="{ row }">
-          <!-- <pre>{{ row.wages }}</pre> -->
-
-          <div v-for="wage of row.wages" :key="wage.id" class="border border-red-800 pb-2 mb-2">
-            <div class="flex items-center justify-between">
-              <span class="font-bold">{{ wage.name }}</span>
-              <span class="text-gray-500"> {{ wage.tokenRatePerHour }} TOKEN / hr </span>
-            </div>
-            <div class="text-sm text-gray-600">
-              {{ wage.description }}
-            </div>
-            <!-- {{ wage }} -->
-          </div>
-          <UserComponent
-            :user="{
-              address: row.memberAddress,
-              name: 'Unknown',
-              imageUrl: ''
-            }"
-          />
+        <template #member-data="{ row }">
+          <UserComponent :user="row.member" />
         </template>
 
         <template #weekStart-data="{ row }">
           <span>{{ formatDate(row.weekStart) }}</span>
         </template>
-        <!-- remplacer signature par hoursworked -->
+
         <template #hoursWorked-data="{ row }">
-          <!-- <span class="font-bold"> 15:00 hrs </span>
+          <span class="font-bold">
+            {{ row.claims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0) }}:00 hrs
+          </span>
           <br />
-          <span> of 52 hrs weekly limit</span> -->
-          <div v-for="wage of row.wages" :key="wage.id">
-            <span class="font-bold">
-              {{ wage.claims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0) }}:00 hrs
-            </span>
-            <br />
-            <span> of {{ wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
-          </div>
+          <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
         </template>
 
-        <template #hourlyRate-data="{ row }">
+        <!-- <template #hourlyRate-data="{ row }">
           <div v-for="wage of row.wages" :key="wage.id">
-            <!-- {{ wage }} -->
+          
             <span class="font-bold"> {{ wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} </span>
             <br />
             <span class="font-bold"> {{ wage.tokenRatePerHour }} TOKEN </span>
             <br />
             <span class="font-bold"> {{ wage.usdcRatePerHour }} USDC </span>
             <br />
-            <!-- <span> {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD </span> -->
+            <span> {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD </span>
           </div>
         </template>
         <template #totalAmount-data="{ row }">
@@ -121,9 +66,9 @@
               USDC
             </span>
             <br />
-            <!-- <span> {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD </span> -->
+            <span> {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD </span>
           </div>
-        </template>
+        </template> -->
         <!-- 
        
         -->
@@ -197,7 +142,7 @@ const columns = [
     class: 'text-black text-base'
   },
   {
-    key: 'memberAddress',
+    key: 'member',
     label: 'Member',
     sortable: false,
     class: 'text-black text-base'

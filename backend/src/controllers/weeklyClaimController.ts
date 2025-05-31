@@ -22,9 +22,13 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
         },
       },
       include: {
-        claims: {
-          include: {
-            wage: true, // include wage info if needed
+        wage: true,
+        claims: true,
+        member: {
+          select: {
+            address: true,
+            name: true,
+            imageUrl: true,
           },
         },
       },
