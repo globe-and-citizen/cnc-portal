@@ -13,12 +13,7 @@ export default defineConfig((env) =>
     test: {
       setupFiles: mockFiles,
       environment: 'jsdom',
-      exclude: [
-        ...configDefaults.exclude,
-        'test/e2e/*',
-        'constant/*',
-        'src/components/__tests__/GenericTokenHoldingsSection.spec.t'
-      ],
+      exclude: [...configDefaults.exclude, 'test/e2e/*', 'constant/*'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       coverage: {
         provider: 'istanbul',
