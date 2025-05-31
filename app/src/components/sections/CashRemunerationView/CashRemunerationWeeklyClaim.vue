@@ -1,10 +1,8 @@
 <template>
-  <pre>
- {{ data }}
- {{ error }}
- 
-   </pre
-  >
+<!-- <pre>
+{{data}}
+{{error}}
+</pre> -->
   <CardComponent title="Weekly Claim" class="w-full pb-7">
     <WeeklyClaimComponent>
       <TableComponent :rows="flatClaims" :columns="columns" :loading="isTeamClaimDataFetching">
@@ -12,23 +10,32 @@
           <span>{{ formatDate(row.weekStart) }}</span>
         </template>
         <template #memberAddress-data="{ row }">
-          <UserComponent v-if="row.wage && row.wage.user" :user="row.wage.user" />
+          <!-- Affiche UserComponent si tu as une fonction getUserByAddress, sinon juste l'adresse -->
+          <UserComponent
+            v-if="getUserByAddress && getUserByAddress(row.memberAddress)"
+            :user="getUserByAddress(row.memberAddress)"
+          />
+          <span v-else>{{ row.memberAddress }}</span>
         </template>
         <template #hoursWorked-data="{ row }">
           <span class="font-bold">
-            {{ row.hoursWorked }} / {{ row.wage.maximumHoursPerWeek }} h
+            {{ row.hoursWorked }} / {{ row.wage?.maximumHoursPerWeek ?? '-' }} h
           </span>
           <br />
-          <span>{{ row.wage.maximumHoursPerWeek }} h/week</span>
+          <span>{{ row.wage?.maximumHoursPerWeek }} h/week</span>
         </template>
         <template #hourlyRate-data="{ row }">
           <span class="font-bold">
-            {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} / h
+            {{ row.wage?.cashRatePerHour }} {{ NETWORK.currencySymbol }} / h
           </span>
           <br />
-          <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN / h </span>
+          <span class="font-bold">
+            {{ row.wage?.tokenRatePerHour  }} TOKEN / h
+          </span>
           <br />
-          <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC / h </span>
+          <span class="font-bold">
+            {{ row.wage?.usdcRatePerHour }} USDC / h
+          </span>
         </template>
         <template #status-data="{ row }">
           <span
@@ -39,15 +46,17 @@
               'bg-error': row.status === 'disabled',
               'bg-neutral text-white': row.status === 'withdrawn'
             }"
-            >{{
+          >
+            {{
               row.status == 'pending'
                 ? 'Submitted'
                 : row.status == 'signed'
                   ? 'Approved'
                   : row.status.charAt(0).toUpperCase() + row.status.slice(1)
-            }}</span
-          >
+            }}
+          </span>
         </template>
+        <!-- Ajoute ici d'autres slots si besoin -->
       </TableComponent>
     </WeeklyClaimComponent>
   </CardComponent>
@@ -56,13 +65,23 @@
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
 import WeeklyClaimComponent from '@/components/WeeklyClaimComponent.vue'
-import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
+import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import CRSigne from './CRSigne.vue'
-import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
+
+// 1. Récupère la liste des users de l'équipe (exemple avec useCustomFetch, adapte selon ton API)
+const { data: teamUsersData } = useCustomFetch('/user/?teamId=1').get().json()
+
+// 2. Fonction utilitaire pour retrouver un user par son address
+function getUserByAddress(address: string) {
+  return teamUsersData.value?.find((u: any) => u.address === address)
+}
+
+const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
+
+const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
 const flatClaims = computed(() => {
   if (!data.value) return []
@@ -75,7 +94,6 @@ const flatClaims = computed(() => {
   )
 })
 
-// Formatage de date façon dayUtils
 function formatDate(date: string | Date) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
@@ -86,8 +104,6 @@ function formatDate(date: string | Date) {
     day: 'numeric'
   })
 }
-
-const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
 
 const columns = [
   {
