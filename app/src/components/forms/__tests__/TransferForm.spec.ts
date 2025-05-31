@@ -303,7 +303,7 @@ describe('TransferForm.vue', () => {
         {
           address: { name: 'Test', address: '0x1234567890123456789012345678901234567890' },
           token: { symbol: NETWORK.currencySymbol, balance: 100 },
-          amount: "10"
+          amount: '10'
         }
       ])
     })
