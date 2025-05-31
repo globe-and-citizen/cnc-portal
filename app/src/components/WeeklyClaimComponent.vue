@@ -4,7 +4,7 @@
     <div class="card-body overflow-x-auto">
       <slot />
       <!-- Corps du tableau -->
-      <transition-group tag="tbody" name="slide" class="relative">
+      <!-- <transition-group tag="tbody" name="slide" class="relative">
         <tr
           v-for="(notif, idx) in notifications"
           :key="notif.id"
@@ -12,7 +12,7 @@
           :style="{ zIndex: notifications.length - idx }"
           @click="moveToBack(idx)"
         ></tr
-      ></transition-group>
+      ></transition-group> -->
     </div>
   </div>
 </template>

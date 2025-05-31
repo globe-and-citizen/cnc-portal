@@ -1,43 +1,89 @@
 <template>
-<!-- <pre>
-{{data}}
-{{error}}
-</pre> -->
+  <pre
+    >{{ data }}
+{{ error }}
+</pre
+  >
   <CardComponent title="Weekly Claim" class="w-full pb-7">
     <WeeklyClaimComponent>
-      <TableComponent :rows="flatClaims" :columns="columns" :loading="isTeamClaimDataFetching">
+      <TableComponent
+        v-if="data"
+        :rows="
+          data.map((weeklyClaim) => {
+            const hoursWorked = weeklyClaim.claims.reduce(
+              (sum, claim) => sum + claim.hoursWorked,
+              0
+            )
+
+            // a claim have a wage, creage a list of unique wage, with an attribute of claims: goupe claims by wage
+
+            // const wages =
+            return {
+              ...weeklyClaim,
+              hoursWorked: hoursWorked,
+              wages: weeklyClaim.claims.reduce((acc, claim) => {
+                
+                if (!acc[claim.wage.id]) {
+                  acc[claim.wage.id] = {
+                    ...claim.wage,
+                    claims: []
+                  }
+                }
+
+                console.log("acc length", acc.length)
+                console.log('claim wage id', claim.wage.id)
+                acc[claim.wage.id].claims.push(claim)
+                console.log('acc', acc)
+                return acc
+              }, [])
+            }
+          })
+        "
+        :columns="columns"
+        :loading="isTeamClaimDataFetching"
+      >
+        <template #memberAddress-data="{ row }">
+          <pre>
+ 
+        {{ row.wages }}
+        </pre
+          >
+          <UserComponent
+            :user="{
+              address: row.memberAddress,
+              name: 'Unknown',
+              imageUrl: ''
+            }"
+          />
+        </template>
+
         <template #weekStart-data="{ row }">
           <span>{{ formatDate(row.weekStart) }}</span>
         </template>
-        <template #memberAddress-data="{ row }">
-          <!-- Affiche UserComponent si tu as une fonction getUserByAddress, sinon juste l'adresse -->
-          <UserComponent
-            v-if="getUserByAddress && getUserByAddress(row.memberAddress)"
-            :user="getUserByAddress(row.memberAddress)"
-          />
-          <span v-else>{{ row.memberAddress }}</span>
-        </template>
+        <!-- remplacer signature par hoursworked -->
         <template #hoursWorked-data="{ row }">
-          <span class="font-bold">
-            {{ row.hoursWorked }} / {{ row.wage?.maximumHoursPerWeek ?? '-' }} h
-          </span>
+          <!-- <span class="font-bold"> 15:00 hrs </span>
           <br />
-          <span>{{ row.wage?.maximumHoursPerWeek }} h/week</span>
+          <span> of 52 hrs weekly limit</span> -->
+          <span class="font-bold"> {{ row.hoursWorked }}:00 hrs </span>
+          <br />
+          <span> of {{ row.wage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
         </template>
+        <!-- 
+       
+        
         <template #hourlyRate-data="{ row }">
           <span class="font-bold">
-            {{ row.wage?.cashRatePerHour }} {{ NETWORK.currencySymbol }} / h
+            {{ row.cashRatePerHour * row.hoursWorked }} {{ NETWORK.currencySymbol }}
           </span>
           <br />
-          <span class="font-bold">
-            {{ row.wage?.tokenRatePerHour  }} TOKEN / h
-          </span>
+          <span class="font-bold"> {{ row.tokenRatePerHour * row.hoursWorked }} TOKEN </span>
           <br />
-          <span class="font-bold">
-            {{ row.wage?.usdcRatePerHour }} USDC / h
-          </span>
-        </template>
-        <template #status-data="{ row }">
+          <span class="font-bold"> {{ row.usdcRatePerHour * row.hoursWorked }} USDC </span>
+          <br />
+          <span> {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD </span>
+        </template> -->
+        <!-- <template #status-data="{ row }">
           <span
             class="badge"
             :class="{
@@ -55,7 +101,7 @@
                   : row.status.charAt(0).toUpperCase() + row.status.slice(1)
             }}
           </span>
-        </template>
+        </template> -->
         <!-- Ajoute ici d'autres slots si besoin -->
       </TableComponent>
     </WeeklyClaimComponent>
@@ -70,11 +116,11 @@ import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
+import { useCurrencyStore } from '@/stores'
 
-// 1. Récupère la liste des users de l'équipe (exemple avec useCustomFetch, adapte selon ton API)
+// Récupère la liste des users de l'équipe
 const { data: teamUsersData } = useCustomFetch('/user/?teamId=1').get().json()
 
-// 2. Fonction utilitaire pour retrouver un user par son address
 function getUserByAddress(address: string) {
   return teamUsersData.value?.find((u: any) => u.address === address)
 }
@@ -83,16 +129,10 @@ const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
 
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
-const flatClaims = computed(() => {
-  if (!data.value) return []
-  return data.value.flatMap((weeklyClaim: any) =>
-    (weeklyClaim.claims || []).map((claim: any) => ({
-      ...claim,
-      weekStart: weeklyClaim.weekStart,
-      memberAddress: weeklyClaim.memberAddress
-    }))
-  )
-})
+// const currencyStore = useCurrencyStore()
+// const getHoulyRateInUserCurrency = (rate: number) => {
+//   return (currencyStore.nativeTokenPrice ? rate * currencyStore.nativeTokenPrice : 0).toFixed(2)
+// }
 
 function formatDate(date: string | Date) {
   const d = new Date(date)
@@ -131,8 +171,8 @@ const columns = [
     class: 'text-black text-base'
   },
   {
-    key: 'status',
-    label: 'Status',
+    key: 'totalAmount',
+    label: 'Total Amount',
     sortable: false,
     class: 'text-black text-base'
   },
