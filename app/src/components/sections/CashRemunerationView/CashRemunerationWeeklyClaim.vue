@@ -1,9 +1,4 @@
 <template>
-  <pre
-    >{{ data }}
-{{ error }}
-</pre
-  >
   <CardComponent title="Weekly Claim" class="w-full pb-7">
     <WeeklyClaimComponent>
       <TableComponent
@@ -38,9 +33,6 @@
             <br />
             <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
             <br />
-            <!-- <span>
-              {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD
-            </span> -->
           </div>
         </template>
 
@@ -67,6 +59,11 @@
               row.wage.usdcRatePerHour
             }}
             USDC
+          </span>
+          <br />
+          <span class="text-gray-500">
+            {{ getHoulyRateInUserCurrency(row.wage.cashRatePerHour) }}
+            {{ NETWORK.nativeTokenSymbol }} / USD
           </span>
         </template>
 
@@ -102,10 +99,10 @@ const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
 
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
-// const currencyStore = useCurrencyStore()
-// const getHoulyRateInUserCurrency = (rate: number) => {
-//   return (currencyStore.nativeTokenPrice ? rate * currencyStore.nativeTokenPrice : 0).toFixed(2)
-// }
+const currencyStore = useCurrencyStore()
+const getHoulyRateInUserCurrency = (rate: number) => {
+  return (currencyStore.nativeTokenPrice ? rate * currencyStore.nativeTokenPrice : 0).toFixed(2)
+}
 
 function formatDate(date: string | Date) {
   const d = new Date(date)
