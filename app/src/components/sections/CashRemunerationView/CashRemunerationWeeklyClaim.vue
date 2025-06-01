@@ -70,58 +70,11 @@
           </span>
         </template>
 
-        <!-- <template #totalAmount-data="{ row }">
-          <div v-for="wage of row.wages" :key="wage.id">
-            <span class="font-bold">
-              {{
-                wage.cashRatePerHour *
-                wage.claims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0)
-              }}
-              {{ NETWORK.currencySymbol }}
-            </span>
-            <br />
-            <span class="font-bold">
-              {{
-                wage.tokenRatePerHour *
-                wage.claims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0)
-              }}
-              TOKEN
-            </span>
-            <br />
-            <span class="font-bold">
-              {{
-                wage.usdcRatePerHour *
-                wage.claims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0)
-              }}
-              USDC
-            </span>
-            <br />
-            <span> {{ getHoulyRateInUserCurrency(row.usdcRatePerHour * row.hoursWorked) }} USD </span>
-          </div>
-        </template> -->
-        <!-- 
-       
-        -->
-        <!-- <template #status-data="{ row }">
-          <span
-            class="badge"
-            :class="{
-              'badge-info': row.status === 'pending',
-              'badge-outline': row.status === 'signed',
-              'bg-error': row.status === 'disabled',
-              'bg-neutral text-white': row.status === 'withdrawn'
-            }"
-          >
-            {{
-              row.status == 'pending'
-                ? 'Submitted'
-                : row.status == 'signed'
-                  ? 'Approved'
-                  : row.status.charAt(0).toUpperCase() + row.status.slice(1)
-            }}
-          </span>
-        </template> -->
-        <!-- Ajoute ici d'autres slots si besoin -->
+        <template #action-data="{ row }">
+          <ButtonUI class="btn btn-success btn-sm" type="button" @click="onApprove(row)">
+            Approve
+          </ButtonUI>
+        </template>
       </TableComponent>
     </WeeklyClaimComponent>
   </CardComponent>
@@ -136,6 +89,7 @@ import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 // Récupère la liste des users de l'équipe
 const { data: teamUsersData } = useCustomFetch('/user/?teamId=1').get().json()
