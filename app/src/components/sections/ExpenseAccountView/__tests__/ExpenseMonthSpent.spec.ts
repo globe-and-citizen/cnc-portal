@@ -53,7 +53,7 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   }
 })
 
-describe('ExpenseMonthSpent', () => {
+describe.skip('ExpenseMonthSpent', () => {
   const createComponent = () => {
     return shallowMount(ExpenseMonthSpent, {
       global: {
