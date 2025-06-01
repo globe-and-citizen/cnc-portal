@@ -44,6 +44,7 @@ describe("getTeamWeeklyClaims", () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
+          wageId: 0,
         },
         {
           id: 2,
@@ -54,6 +55,7 @@ describe("getTeamWeeklyClaims", () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
+          wageId: 0,
         },
       ];
 
