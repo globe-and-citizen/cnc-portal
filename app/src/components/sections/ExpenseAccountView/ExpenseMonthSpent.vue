@@ -31,7 +31,7 @@ import { computed } from 'vue'
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { localCurrency, nativeToken, usdc } = storeToRefs(currencyStore)
+const { currency, nativeTokenPrice, usdPriceInLocal } = storeToRefs(currencyStore)
 const contractAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'ExpenseAccountEIP712'
 )?.address
@@ -47,7 +47,7 @@ const { result, loading, error } = useQuery(
           contractAddress: $contractAddress
           blockTimestamp_gte: $startDate
           blockTimestamp_lte: $endDate
-          transactionType: transfer
+          transactionType: "transfer"
         }
       ) {
         amount
@@ -69,13 +69,12 @@ const totalMonthlySpentAmount = computed(() => {
       totalAmountInUSDC += parseFloat(formatUnits(transaction.amount, 6))
     }
   })
-  const totalNetworkInLocalCurrency =
-    totalAmountInNetworkCurrency * (nativeToken.value.priceInLocal || 0)
-  const totalUSDCInLocalCurrency = totalAmountInUSDC * (usdc.value.priceInLocal || 0)
+  const totalNetworkInLocalCurrency = totalAmountInNetworkCurrency * (nativeTokenPrice.value || 0)
+  const totalUSDCInLocalCurrency = totalAmountInUSDC * (usdPriceInLocal.value || 0)
 
   return formatCurrencyShort(
     totalNetworkInLocalCurrency + totalUSDCInLocalCurrency,
-    localCurrency.value.code
+    currency.value.code
   )
 })
 

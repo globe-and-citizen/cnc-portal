@@ -188,17 +188,13 @@ vi.mock('@/stores', async (importOriginal) => {
 
 vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: vi.fn(() => ({
-    localCurrency: {
+    currency: {
       code: 'USD',
       symbol: '$'
     },
-    nativeToken: {
-      priceInLocal: 2000,
-      priceInUSD: 2000
-    },
-    usdc: {
-      priceInLocal: 2000
-    }
+    nativeTokenPrice: 2000,
+    nativeTokenPriceInUSD: 2000,
+    usdPriceInLocal: 2000
   }))
 }))
 

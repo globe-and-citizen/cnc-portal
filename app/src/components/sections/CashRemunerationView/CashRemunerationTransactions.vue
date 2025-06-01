@@ -21,7 +21,7 @@ import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
 const currencies = computed(() => {
-  const defaultCurrency = currencyStore.localCurrency.code
+  const defaultCurrency = currencyStore.currency.code
   return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
 })
 const contractAddress = teamStore.currentTeam?.teamContracts.find(

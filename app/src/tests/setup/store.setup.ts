@@ -10,6 +10,7 @@ vi.mock('@/stores', async (importOriginal) => {
     })),
     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
     useExpenseDataStore: vi.fn(),
+    useCryptoPrice: vi.fn(),
     useCurrencyStore: vi.fn(() => ({
       currency: {
         code: 'USD',

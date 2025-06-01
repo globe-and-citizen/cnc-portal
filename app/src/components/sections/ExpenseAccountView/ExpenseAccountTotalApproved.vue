@@ -4,7 +4,7 @@
     subtitle="Total Approved"
     variant="info"
     :card-icon="personIcon"
-    :loading="nativeToken.isLoading || usdc.isLoading"
+    :loading="isLoadingNativeTokenPrice || isLoadingUSDPrice"
     ><div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
@@ -27,14 +27,20 @@ import { computed, onMounted } from 'vue'
 
 const expenseDataStore = useExpenseDataStore()
 const currencyStore = useCurrencyStore()
-const { localCurrency, nativeToken, usdc } = storeToRefs(currencyStore)
+const {
+  currency,
+  isLoading: isLoadingNativeTokenPrice,
+  isLoadingUSDPrice: isLoadingUSDPrice,
+  nativeTokenPrice,
+  usdPriceInLocal
+} = storeToRefs(currencyStore)
 const totalApproved = computed(() => {
   const { usdcAmount, usdtAmount, nativeTokenAmount } = calculateTokenAmounts()
   const total =
-    (usdcAmount + usdtAmount) * (usdc.value.priceInLocal ?? 0) +
-    nativeTokenAmount * (nativeToken.value.priceInLocal ?? 0)
+    (usdcAmount + usdtAmount) * (usdPriceInLocal.value ?? 0) +
+    nativeTokenAmount * (nativeTokenPrice.value ?? 0)
 
-  return formatCurrencyShort(parseFloat(total.toString()), localCurrency.value.code)
+  return formatCurrencyShort(parseFloat(total.toString()), currency.value.code)
 })
 
 function calculateTokenAmounts() {

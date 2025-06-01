@@ -67,7 +67,7 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   }
 })
 
-describe.skip('TransactionHistorySection', () => {
+describe('TransactionHistorySection', () => {
   const mockTransactions: ExpenseTransaction[] = [
     {
       txHash: '0x123',

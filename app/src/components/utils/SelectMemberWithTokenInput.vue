@@ -27,22 +27,12 @@
         :placeholder="`Member Address`"
       />
       |
-      <!--<select v-model="input.token" class="bg-white grow" data-test="select-token">
+      <select v-model="input.token" class="bg-white grow" data-test="select-token">
         <option disabled :value="null">-- Select a token --</option>
         <option v-for="(address, symbol) of tokens" :value="address" :key="address">
           {{ symbol }}
         </option>
-      </select>-->
-      <SelectComponent
-        v-model="input.token"
-        :options="options"
-        :disabled="isFetching"
-        :format-value="
-          (value: string) => {
-            return value === `SepoliaETH` ? `SepETH` : value
-          }
-        "
-      />
+      </select>
     </label>
     <!-- Dropdown positioned relative to the input -->
     <div
@@ -63,18 +53,17 @@
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { computed, ref, useTemplateRef } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import SelectComponent from '@/components/SelectComponent.vue'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
   default: {
     name: '',
     address: '',
-    token: ''
+    token: null
   }
 })
 
@@ -88,12 +77,6 @@ const tokens = ref({
   [NETWORK.currencySymbol]: zeroAddress,
   USDC: USDC_ADDRESS,
   USDT: USDT_ADDRESS
-})
-const options = computed(() => {
-  return Object.entries(tokens.value).map(([symbol, address]) => ({
-    value: address,
-    label: symbol
-  }))
 })
 
 const url = ref('user/search')
