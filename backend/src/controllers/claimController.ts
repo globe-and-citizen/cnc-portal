@@ -9,6 +9,37 @@ type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
   memo: string;
   teamId: string;
 };
+
+async function hasReachedMaxHoursThisWeek(
+  userAddress: string,
+  teamId: number,
+  weekStart: Date,
+  hoursWorked: number
+) {
+  const wage = await prisma.wage.findFirst({
+    where: { userAddress, nextWageId: null, teamId },
+  });
+  if (!wage) return true;
+
+  const weeklyClaim = await prisma.weeklyClaim.findFirst({
+    where: {
+      weekStart,
+      memberAddress: userAddress,
+      teamId,
+      wageId: wage.id,
+    },
+    include: { claims: true },
+  });
+
+  const totalHours = weeklyClaim
+    ? weeklyClaim.claims.reduce(
+        (sum, claim) => sum + (claim.hoursWorked || 0),
+        0
+      )
+    : 0;
+  return totalHours + hoursWorked > wage.maximumHoursPerWeek;
+}
+
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
@@ -40,6 +71,21 @@ export const addClaim = async (req: Request, res: Response) => {
     );
   if (parametersError.length > 0) {
     return errorResponse(400, parametersError.join(", "), res);
+  }
+
+  if (
+    await hasReachedMaxHoursThisWeek(
+      callerAddress,
+      teamId,
+      weekStart,
+      hoursWorked
+    )
+  ) {
+    return errorResponse(
+      400,
+      "Maximum weekly hours reached, cannot submit more claims for this week.",
+      res
+    );
   }
 
   try {
