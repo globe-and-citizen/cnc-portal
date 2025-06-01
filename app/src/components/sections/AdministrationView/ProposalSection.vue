@@ -196,7 +196,7 @@ const fetchProposals = async () => {
     if (error instanceof Error) {
       console.log(error.message)
     } else {
-      console.log("There is an error")
+      console.log('There is an error')
     }
     addErrorToast('Failed to get proposals')
   } finally {
