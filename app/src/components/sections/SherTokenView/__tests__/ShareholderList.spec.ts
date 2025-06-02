@@ -5,7 +5,6 @@ import { parseEther, formatEther, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-// import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import TableComponent from '@/components/TableComponent.vue'
 import { useTeamStore } from '@/stores'
@@ -156,7 +155,6 @@ describe('ShareholderList', () => {
   })
 
   it('should add error toast when mint failed', async () => {
-    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).mintError = 'Mint failed'
@@ -166,7 +164,6 @@ describe('ShareholderList', () => {
   })
 
   it('should emit refetchShareholders, add success toast and set modal to false when mint success', async () => {
-    // const { addSuccessToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).isSuccessMinting = true
