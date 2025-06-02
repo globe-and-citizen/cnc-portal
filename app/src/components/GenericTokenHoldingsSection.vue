@@ -7,7 +7,9 @@
         currencyStore.usdc.isLoading ||
         isLoadingNetworkCuerrencyBalance ||
         isLoadingUsdcBalance ||
-        currencyStore.nativeToken.isLoading
+        currencyStore.nativeToken.isLoading ||
+        isLoadingTokenBalance ||
+        isLoadingTokenSymbol
       "
       :columns="[
         { key: 'rank', label: 'RANK' },
@@ -96,8 +98,8 @@ const {
 
 const {
   data: tokenSymbol,
-  isLoading: tokenSymbolLoading,
-  error: tokenSymbolError
+  isLoading: isLoadingTokenSymbol
+  // error: tokenSymbolError
 } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
@@ -106,9 +108,9 @@ const {
 
 const {
   data: tokenBalance,
-  error: tokenBalanceError,
-  isLoading: loadingTokenBalance,
-  refetch: refetchTokenBalance
+  // error: tokenBalanceError,
+  isLoading: isLoadingTokenBalance
+  // refetch: refetchTokenBalance
 } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
