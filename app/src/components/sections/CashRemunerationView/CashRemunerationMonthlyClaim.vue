@@ -31,7 +31,7 @@ import { computed } from 'vue'
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
+const { localCurrency, nativeToken } = storeToRefs(currencyStore)
 const contractAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'CashRemunerationEIP712'
 )?.address
@@ -67,7 +67,10 @@ const totalMonthlyWithdrawnAmount = computed(() => {
     return acc + parseFloat(formatEther(BigInt(transaction.amount)))
   }, 0)
 
-  return formatCurrencyShort(totalAmount * (nativeTokenPrice.value || 0), currency.value.code)
+  return formatCurrencyShort(
+    totalAmount * (nativeToken.value.priceInLocal || 0),
+    localCurrency.value.code
+  )
 })
 
 watch(error, (err) => {
