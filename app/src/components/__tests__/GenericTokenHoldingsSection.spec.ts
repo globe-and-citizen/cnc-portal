@@ -49,7 +49,10 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   return {
     ...original,
     useBalance: vi.fn(() => ({ ...mockUseBalance })),
-    useReadContract: vi.fn(() => ({ ...mockUseReadContract })),
+    useReadContract: vi.fn((args) => ({
+      ...mockUseReadContract,
+      data: args.functionName === 'balanceOf' ? ref(BigInt(20000 * 1e6)) : ref('TEST')
+    })),
     useChainId: vi.fn(() => ref(1))
   }
 })
