@@ -45,25 +45,40 @@
         Max
       </button>
       <div>
-        <SelectComponent
-          :options="
-            tokenList.map((token, id) => ({
-              label: token.name,
-              value: `${id}`
-            }))
-          "
-          :disabled="isLoadingBalance"
-          @change="
-            (value) => {
-              selectedTokenId = parseInt(value)
+        <div
+          role="button"
+          class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
+          @click="
+            () => {
+              isDropdownOpen = !isDropdownOpen
+              console.log(`Dropdown open: ${isDropdownOpen}`)
             }
           "
-          :format-value="
-            (value: string) => {
-              return value === 'SepoliaETH' ? 'SepETH' : value
-            }
-          "
-        />
+          data-test="tokenSelector"
+        >
+          <span>{{ formattedTokenName }} </span>
+          <IconifyIcon icon="heroicons-outline:chevron-down" class="w-4 h-4" />
+        </div>
+        <ul
+          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
+          ref="target"
+          v-if="isDropdownOpen"
+          data-test="tokenDropdown"
+        >
+          <li
+            v-for="(token, id) in tokenList"
+            :key="id"
+            @click="
+              () => {
+                selectedTokenId = id
+                isDropdownOpen = false
+              }
+            "
+            :data-test="`tokenOption-${token.symbol}`"
+          >
+            <a>{{ token.name }}</a>
+          </li>
+        </ul>
       </div>
     </div>
     <div class="label">
@@ -91,20 +106,14 @@
 </template>
 
 <script setup lang="ts">
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { ref, onMounted, computed, watch } from 'vue'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import { onClickOutside } from '@vueuse/core'
-
-import { NETWORK, USDC_ADDRESS } from '@/constant'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
-import BankABI from '@/artifacts/abi/bank.json'
-
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
-
-import SelectComponent from '@/components/SelectComponent.vue'
 import ButtonUI from '../ButtonUI.vue'
-
+import { Icon as IconifyIcon } from '@iconify/vue'
+import { onClickOutside } from '@vueuse/core'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import {
   useBalance,
   useChainId,
@@ -113,9 +122,13 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt
 } from '@wagmi/vue'
+import { useUserDataStore } from '@/stores/user'
+import { formatEther, type Address, parseEther } from 'viem'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
+import BankABI from '@/artifacts/abi/bank.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { formatEther, parseEther, type Address } from 'viem'
+import { useToastStore } from '@/stores/useToastStore'
 
 const props = defineProps<{
   loading?: boolean
@@ -190,7 +203,7 @@ onMounted(() => {
     isDropdownOpen.value = false
   })
   // Fetch the current price when component mounts
-  // currencyStore.fetchNativeTokenPrice()
+  currencyStore.fetchNativeTokenPrice()
 })
 
 const formattedBalance = computed(() => {
@@ -248,16 +261,16 @@ const estimatedPrice = computed(() => {
   if (selectedTokenId.value === 0) {
     return Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.localCurrency.code,
+      currency: currencyStore.currency.code,
       minimumFractionDigits: 2
-    }).format((currencyStore.nativeToken.priceInLocal || 0) * amountValue)
+    }).format((currencyStore.nativeTokenPrice || 0) * amountValue)
   }
 
   return Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currencyStore.localCurrency.code,
+    currency: currencyStore.currency.code,
     minimumFractionDigits: 2
-  }).format((currencyStore.usdc.priceInLocal || 0) * amountValue)
+  }).format((currencyStore.usdPriceInLocal || 0) * amountValue)
 })
 
 // Add currentStep ref
@@ -392,4 +405,9 @@ const handleAmountInput = (event: Event) => {
     amount.value = value
   }
 }
+
+const formattedTokenName = computed(() => {
+  const name = tokenList[selectedTokenId.value].name
+  return name === 'SepoliaETH' ? 'SepETH' : name
+})
 </script>

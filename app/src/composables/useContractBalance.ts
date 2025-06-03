@@ -1,10 +1,9 @@
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
 
 export interface ContractBalance {
   nativeToken: {
@@ -20,19 +19,6 @@ export interface ContractBalance {
   error: Error | null
 }
 
-interface Balance {
-  code: string
-  amount: number
-  valueInUSD: {
-    value: number
-    formated: string
-  }
-  valueInLocalCurrency: {
-    value: number
-    formated: string
-  }
-}
-
 export function useContractBalance(address: Address | undefined) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
@@ -40,99 +26,75 @@ export function useContractBalance(address: Address | undefined) {
   const {
     data: nativeBalance,
     isLoading: isLoadingNative,
-    error: nativeError
+    error: nativeError,
+    refetch: fetchNativeBalance
   } = useBalance({
     address,
-    chainId,
-    query: {
-      refetchInterval: 60000
-    }
+    chainId
   })
 
   const {
     data: usdcBalance,
     isLoading: isLoadingUsdc,
-    error: usdcError
+    error: usdcError,
+    refetch: fetchUsdcBalance
   } = useReadContract({
     address: USDC_ADDRESS as Address,
     abi: ERC20ABI,
     functionName: 'balanceOf',
-    args: [address as Address],
-    query: {
-      refetchInterval: 60000
-    }
+    args: [address as Address]
   })
 
-  // Function to calculate value in USD / Local and format it in a short printable way
-  const getValue = (amount: number, price: number, local: boolean = false) => {
-    const value = Number((amount * (price || 0)).toFixed(2))
-    return {
-      value,
-      formated: formatCurrencyShort(value, local ? currencyStore.localCurrency.code : undefined)
+  const formattedNativeBalance = computed(() =>
+    nativeBalance.value ? formatEther(nativeBalance.value.value) : '0'
+  )
+
+  const formattedUsdcBalance = computed(() =>
+    usdcBalance.value ? (Number(usdcBalance.value) / 1e6).toString() : '0'
+  )
+
+  const totalValueUSD = computed(() => {
+    const nativeValue =
+      Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPriceInUSD || 0)
+    const usdcValue = Number(formattedUsdcBalance.value)
+    return (nativeValue + usdcValue).toFixed(2)
+  })
+
+  const totalValueInLocalCurrency = computed(() => {
+    const nativeValue = Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPrice || 0)
+    const usdcValue = Number(formattedUsdcBalance.value) * (currencyStore.usdPriceInLocal || 0)
+    return (nativeValue + usdcValue).toFixed(2)
+  })
+
+  const isLoading = computed(() => isLoadingNative.value || isLoadingUsdc.value)
+
+  const error = computed(() => nativeError.value || usdcError.value)
+
+  const refetch = async () => {
+    try {
+      await Promise.all([fetchNativeBalance(), fetchUsdcBalance()])
+    } catch (err) {
+      console.error('Error refetching balances:', err)
     }
   }
 
-  // Combined loading and error states
-  const isLoading = computed(() => isLoadingNative.value || isLoadingUsdc.value)
-  const error = computed(() => nativeError.value || usdcError.value)
-
-  // Computed balances with formatted values
-  const balances = computed<Array<Balance>>(() => {
-    const nativeAmount = nativeBalance.value ? Number(formatEther(nativeBalance.value.value)) : 0
-    const usdcAmount = usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0
-
-    return [
-      {
-        amount: nativeAmount,
-        code: nativeBalance.value?.symbol || 'ETH',
-        valueInUSD: getValue(nativeAmount, currencyStore.nativeToken.priceInUSD ?? 0),
-        valueInLocalCurrency: getValue(
-          nativeAmount,
-          currencyStore.nativeToken.priceInLocal ?? 0,
-          true
-        )
-      },
-      {
-        amount: usdcAmount,
-        code: 'USDC',
-        valueInUSD: getValue(usdcAmount, currencyStore.usdc.priceInUSD ?? 0),
-        valueInLocalCurrency: getValue(usdcAmount, currencyStore.usdc.priceInLocal ?? 0, true)
-      }
-    ]
-  })
-
-  // Computed total balance in USD and local currency
-  const total = computed(() => {
-    const usdValue = Number(
-      balances.value
-        .reduce((acc, balance) => {
-          return acc + balance.valueInUSD.value
-        }, 0)
-        .toFixed(2)
-    )
-    const localValue = Number(
-      balances.value
-        .reduce((acc, balance) => {
-          return acc + balance.valueInLocalCurrency.value
-        }, 0)
-        .toFixed(2)
-    )
-    return {
-      usdBalance: {
-        value: usdValue,
-        formated: formatCurrencyShort(usdValue)
-      },
-      localCurrencyBalance: {
-        value: localValue,
-        formated: formatCurrencyShort(localValue, currencyStore.localCurrency.code)
-      }
-    }
+  const balances = reactive({
+    nativeToken: {
+      balance: computed(() => nativeBalance.value?.value),
+      formatted: computed(() => formattedNativeBalance.value)
+    },
+    usdc: {
+      balance: computed(() => usdcBalance.value),
+      formatted: computed(() => formattedUsdcBalance.value)
+    },
+    totalValueUSD: computed(() => totalValueUSD.value),
+    totalValueInLocalCurrency: computed(() => totalValueInLocalCurrency.value)
   })
 
   return {
     balances,
-    total,
     isLoading,
-    error
+    error,
+    refetch
   }
 }

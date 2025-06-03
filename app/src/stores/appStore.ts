@@ -18,7 +18,7 @@ export const useAppStore = defineStore('app', () => {
     if (val === undefined) return
 
     if (!SUPPORTED_CHAINS.includes(val)) {
-      // console.log('here', val)
+      console.log('here', val)
       toastStore.addErrorToast('Unsupported chain')
       switchChain({
         chainId: 11155111

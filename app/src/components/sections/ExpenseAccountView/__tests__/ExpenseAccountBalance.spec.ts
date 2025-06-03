@@ -28,12 +28,11 @@ vi.mock('@/stores', async (importOriginal) => {
           }
         ]
       }
-    })),
-    useCurrencyStore: vi.fn
+    }))
   }
 })
 
-describe.skip('ExpenseAccountBalance', () => {
+describe('ExpenseAccountBalance', () => {
   const createComponent = () => {
     return shallowMount(ExpenseAccountBalance, {
       global: {

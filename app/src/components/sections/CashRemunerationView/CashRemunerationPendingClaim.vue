@@ -30,7 +30,7 @@ import type { ClaimResponse } from '@/types'
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { localCurrency, nativeToken } = storeToRefs(currencyStore)
+const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
 const { data, isFetching, error } = useCustomFetch(
   `/claim?teamId=${teamStore.currentTeamId}&status=signed`
 )
@@ -41,8 +41,8 @@ const totalPendingAmount = computed(() => {
     return acc + (claim.hoursWorked || 0) * (claim.wage.cashRatePerHour || 0)
   }, 0)
   return formatCurrencyShort(
-    (totalAmount || 0) * (nativeToken.value.priceInLocal || 0),
-    localCurrency.value.code
+    (totalAmount || 0) * (nativeTokenPrice.value || 0),
+    currency.value.code
   )
 })
 

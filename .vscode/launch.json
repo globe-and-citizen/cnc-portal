@@ -8,12 +8,8 @@
       "type": "msedge",
       "request": "launch",
       "name": "Launch Edge against localhost",
-      "url": "http://localhost:5173",
-      "webRoot": "${workspaceFolder}/app",
-      "userDataDir": false,
-      "runtimeArgs": [
-        "--profile-directory=Default" // ou "Profile 1" si MetaMask est installé là
-      ]
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}"
     }
   ]
 }
