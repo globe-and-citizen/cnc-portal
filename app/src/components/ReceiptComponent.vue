@@ -52,7 +52,7 @@ import { NETWORK } from '@/constant'
 
 const { receiptData } = defineProps<{ receiptData: Partial<ReceiptData> }>()
 const currencyStore = useCurrencyStore()
-const { nativeToken } = storeToRefs(currencyStore)
+const { nativeTokenPriceInUSD } = storeToRefs(currencyStore)
 
 const emit = defineEmits<{
   (e: 'export-excel', data: ReceiptData): void
@@ -88,7 +88,7 @@ const formattedReceiptData = {
   price:
     receiptData['token'] === 'USDC'
       ? '1 USD / USDC'
-      : `${nativeToken.value.priceInUSD} USD / ${receiptData['token']}`,
+      : `${nativeTokenPriceInUSD.value} USD / ${receiptData['token']}`,
   value: `${receiptData['valueUSD']} USD`
 }
 

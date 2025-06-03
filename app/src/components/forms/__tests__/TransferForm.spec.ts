@@ -5,26 +5,17 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
     useCurrencyStore: vi.fn(() => ({
-      localCurrency: {
+      currency: {
         code: 'USD',
         symbol: '$'
       }
     }))
-  }
-})
-
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
   }
 })
 
@@ -36,12 +27,12 @@ describe('TransferForm.vue', () => {
         loading: false,
         service: 'Test Service',
         tokens: [
-          { symbol: NETWORK.currencySymbol, balance: 100 },
-          { symbol: 'USDC', balance: 50 }
+          { symbol: NETWORK.currencySymbol, balance: '100' },
+          { symbol: 'USDC', balance: '50' }
         ],
         modelValue: {
           address: { name: '', address: '' },
-          token: { symbol: NETWORK.currencySymbol, balance: 100 },
+          token: { symbol: NETWORK.currencySymbol, balance: '100' },
           amount: '0'
         }
       },
@@ -61,12 +52,12 @@ describe('TransferForm.vue', () => {
           loading: true,
           service: 'Test Service',
           tokens: [
-            { symbol: NETWORK.currencySymbol, balance: 100 },
-            { symbol: 'USDC', balance: 50 }
+            { symbol: NETWORK.currencySymbol, balance: '100' },
+            { symbol: 'USDC', balance: '50' }
           ],
           modelValue: {
             address: { name: '', address: '' },
-            token: { symbol: NETWORK.currencySymbol, balance: 100 },
+            token: { symbol: NETWORK.currencySymbol, balance: '100' },
             amount: '0'
           }
         },
@@ -99,7 +90,7 @@ describe('TransferForm.vue', () => {
     })
   })
 
-  describe.skip('Token Selection', () => {
+  describe('Token Selection', () => {
     it('opens and closes the token dropdown', async () => {
       const dropdownButton = wrapper.find('.badge-info')
       await dropdownButton.trigger('click')
@@ -110,7 +101,7 @@ describe('TransferForm.vue', () => {
     })
   })
 
-  describe.skip('Amount Input Handling', () => {
+  describe('Amount Input Handling', () => {
     let amountInput: ReturnType<typeof wrapper.find>
 
     beforeEach(() => {
@@ -167,6 +158,7 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       const errorMessages = wrapper.findAll('.text-red-500')
+      console.log('errorMessages', errorMessages)
       expect(errorMessages.some((el) => el.text().includes('Invalid address'))).toBe(true)
     })
 
@@ -189,6 +181,7 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       const errorMessages = wrapper.findAll('.text-red-500')
+      console.log('errorMessages', errorMessages[3].text())
       expect(
         errorMessages.some((el) => el.text().includes('Amount exceeds contract balance'))
       ).toBe(true)
@@ -236,6 +229,7 @@ describe('TransferForm.vue', () => {
       await wrapper.vm.$nextTick()
       const validTransferButton = wrapper.find('[data-test="transferButton"]')
       expect(validTransferButton.exists()).toBe(true)
+      console.log(validTransferButton.attributes())
 
       await amountInput.setValue('150')
       await wrapper.vm.$nextTick()
@@ -302,7 +296,7 @@ describe('TransferForm.vue', () => {
       expect(wrapper.emitted('transfer')?.[0]).toEqual([
         {
           address: { name: 'Test', address: '0x1234567890123456789012345678901234567890' },
-          token: { symbol: NETWORK.currencySymbol, balance: 100 },
+          token: { symbol: NETWORK.currencySymbol, balance: '100' },
           amount: '10'
         }
       ])

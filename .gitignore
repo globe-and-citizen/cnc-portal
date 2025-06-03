@@ -32,6 +32,7 @@ coverage
 
 *.tsbuildinfo
 .env
+.gide.md
 
 # Synpress
 .cache-synpress

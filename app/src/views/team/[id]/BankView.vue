@@ -1,12 +1,12 @@
 <template>
   <div class="flex flex-col gap-6">
     <BankBalanceSection
-      v-if="typedBankAddress"
+      v-if="teamStore.currentTeam && typedBankAddress"
       ref="bankBalanceSection"
-      :bank-address="typedBankAddress"
+      :bank-address="typedBankAddress as Address"
       @balance-updated="$forceUpdate()"
     />
-    <GenericTokenHoldingsSection v-if="typedBankAddress" :address="typedBankAddress" />
+    <GenericTokenHoldingsSection v-if="typedBankAddress" :address="typedBankAddress as Address" />
     <TransactionsHistorySection />
   </div>
 </template>

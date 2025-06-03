@@ -91,7 +91,7 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
-describe.skip('ExpenseAccountTotalApproved', () => {
+describe('ExpenseAccountTotalApproved', () => {
   const createComponent = () => {
     return shallowMount(ExpenseAccountTotalApproved, {
       global: {

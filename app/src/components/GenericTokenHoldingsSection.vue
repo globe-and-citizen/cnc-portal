@@ -4,10 +4,10 @@
     <TableComponent
       :rows="tokensWithRank"
       :loading="
-        currencyStore.usdc.isLoading ||
+        currencyStore.isLoading ||
         isLoadingNetworkCuerrencyBalance ||
         isLoadingUsdcBalance ||
-        currencyStore.nativeToken.isLoading ||
+        currencyStore.isLoadingUSDPrice ||
         isLoadingTokenBalance ||
         isLoadingTokenSymbol
       "
@@ -120,10 +120,10 @@ const {
 
 // Computed properties for prices
 const networkCurrencyPrice = computed(() => {
-  return currencyStore.nativeToken.priceInLocal || 1
+  return currencyStore.nativeTokenPrice || 1
 })
 const usdcPrice = computed(() => {
-  return currencyStore.usdc.priceInLocal || 1
+  return currencyStore.usdPriceInLocal || 1
 })
 
 const networkIcon = computed(() => {
@@ -136,11 +136,11 @@ const tokens = computed(() => [
     network: NETWORK.currencySymbol,
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.localCurrency.code
+      currency: currencyStore.currency.code
     }).format(networkCurrencyPrice.value),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.localCurrency.code
+      currency: currencyStore.currency.code
     }).format(Number(formattedNetworkCurrencyBalance.value) * networkCurrencyPrice.value),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',
@@ -154,11 +154,11 @@ const tokens = computed(() => [
     network: 'USDC',
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.localCurrency.code
+      currency: currencyStore.currency.code
     }).format(usdcPrice.value || 0),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.localCurrency.code
+      currency: currencyStore.currency.code
     }).format(Number(formattedUsdcBalance.value) * (usdcPrice.value || 0)),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',

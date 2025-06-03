@@ -10,7 +10,6 @@ import type {
 } from '@vuelidate/core'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { zeroAddress } from 'viem'
 
 interface ComponentData {
   selectedOptions: { [key in 0 | 1 | 2]: boolean }
@@ -196,7 +195,7 @@ describe('ApproveUsersForm', () => {
       expect(wrapper.vm.input).toEqual({
         name: 'Test Name',
         address: '0xAddressToApprove',
-        token: zeroAddress
+        token: null
       })
     })
     it('should update date when expiry date is selected', async () => {

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest'
 import CashRemunerationTable from '../CashRemunerationTable.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 const errorMock = ref<unknown>(undefined)
 const mockFetch = vi.fn()
@@ -69,7 +68,13 @@ vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore })),
+    useCurrencyStore: vi.fn(() => ({
+      currency: ref({
+        code: 'USD',
+        symbol: '$'
+      }),
+      nativeTokenPrice: ref(1000)
+    })),
     useToastStore: vi.fn(() => ({
       addErrorToast: mockErrorToast
     })),
