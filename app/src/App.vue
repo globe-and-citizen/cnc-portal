@@ -72,8 +72,6 @@
     <!-- Toast Notifications -->
     <ToastContainer position="bottom-right" />
   </div>
-
-  <VueQueryDevtools />
 </template>
 
 <script setup lang="ts">
@@ -94,7 +92,6 @@ import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
-import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 

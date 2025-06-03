@@ -31,7 +31,6 @@
     "@iconify/vue": "^5.0.0",
     "@rollup/plugin-inject": "^5.0.5",
     "@tanstack/vue-query": "^5.54.1",
-    "@tanstack/vue-query-devtools": "^5.76.0",
     "@types/pdfmake": "^0.2.11",
     "@types/xlsx": "^0.0.35",
     "@vue/apollo-composable": "^4.2.1",

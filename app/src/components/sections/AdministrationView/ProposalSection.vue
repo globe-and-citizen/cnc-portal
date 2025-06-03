@@ -193,11 +193,7 @@ const fetchProposals = async () => {
     ) as Partial<Proposal>[]
     oldProposals.value = proposalsList.filter((proposal) => !proposal.isActive)
   } catch (error) {
-    if (error instanceof Error) {
-      console.log(error.message)
-    } else {
-      console.log('There is an error')
-    }
+    console.log(error)
     addErrorToast('Failed to get proposals')
   } finally {
     loadingGetProposals.value = false

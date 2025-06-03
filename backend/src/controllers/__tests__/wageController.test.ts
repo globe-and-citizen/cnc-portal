@@ -166,29 +166,26 @@ describe("Wage Controller", () => {
     });
   });
 
-
   describe("GET: /", () => {
     // Reset all mock functions before each test
     beforeEach(() => {
       vi.clearAllMocks();
     });
-  
+
     it("should return 403 if user is not a team member", async () => {
       // Simulate the case where the user is not a member of the team
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null); //  return false
-  
-      const response = await request(app)
-        .get("/")
-        .query({ teamId: 1 });
-  
+
+      const response = await request(app).get("/").query({ teamId: 1 });
+
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Member is not a team member");
     });
-  
+
     it("should return 200 and wages if user is a team member", async () => {
       // Simulate that the user is indeed a member of the team
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-  
+
       // Simulate returning wages data
       vi.spyOn(prisma.wage, "findMany").mockResolvedValue([
         {
@@ -196,31 +193,24 @@ describe("Wage Controller", () => {
           previousWage: { id: 0 },
         },
       ]);
-  
-      const response = await request(app)
-        .get("/")
-        .query({ teamId: 1 });
-  
+
+      const response = await request(app).get("/").query({ teamId: 1 });
+
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body[0]).toHaveProperty("userAddress", "0xMemberAddress");
     });
-  
+
     it("should return 500 on internal server error", async () => {
       // Simulate a database error when checking team membership
       vi.spyOn(prisma.team, "findFirst").mockRejectedValue(
         new Error("Database error")
       );
-  
-      const response = await request(app)
-        .get("/")
-        .query({ teamId: 1 });
-  
+
+      const response = await request(app).get("/").query({ teamId: 1 });
+
       expect(response.status).toBe(500);
       expect(response.body.message).toContain("Internal server error");
     });
   });
-  
 });
-
-  

@@ -26,7 +26,7 @@ const currencyStore = useCurrencyStore()
 
 // Computed property for currencies based on user preference
 const currencies = computed(() => {
-  const defaultCurrency = currencyStore.localCurrency.code
+  const defaultCurrency = currencyStore.currency.code
   return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
 })
 
