@@ -172,11 +172,11 @@ const tokens = computed(() => [
     network: tokenSymbol.value,
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.localCurrency.code
+      currency: currencyStore.currency.code
     }).format(0),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.localCurrency.code
+      currency: currencyStore.currency.code
     }).format(0),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',
