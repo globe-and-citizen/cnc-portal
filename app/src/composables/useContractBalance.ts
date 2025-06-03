@@ -1,28 +1,39 @@
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
 
-export interface ContractBalance {
-  nativeToken: {
-    balance: string
-    formatted: string
-  }
-  usdc: {
-    balance: string
-    formatted: string
-  }
-  totalValueUSD: string
-  isLoading: boolean
-  error: Error | null
+export interface TokenBalance {
+  address: Address | 'native'
+  symbol: string
+  name: string
+  icon?: string
+  balance: string
+  rawBalance: bigint | null
+  priceUSD: number
+  valueUSD: number
+  decimals: number
+  isNative: boolean
 }
 
-export function useContractBalance(address: Address | undefined) {
+export function useContractBalance(
+  address: Address | undefined,
+  options?: {
+    tokens?: Array<{
+      address: Address
+      symbol: string
+      name: string
+      icon?: string
+      decimals?: number
+    }>
+  }
+) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
 
+  // Native token
   const {
     data: nativeBalance,
     isLoading: isLoadingNative,
@@ -33,66 +44,94 @@ export function useContractBalance(address: Address | undefined) {
     chainId
   })
 
-  const {
-    data: usdcBalance,
-    isLoading: isLoadingUsdc,
-    error: usdcError,
-    refetch: fetchUsdcBalance
-  } = useReadContract({
-    address: USDC_ADDRESS as Address,
-    abi: ERC20ABI,
-    functionName: 'balanceOf',
-    args: [address as Address]
+  // ERC20 tokens
+  const tokens = options?.tokens || []
+  const erc20Balances = tokens.map((token) => {
+    const {
+      data: tokenBalance,
+      isLoading: isLoadingToken,
+      error: tokenError,
+      refetch: fetchTokenBalance
+    } = useReadContract({
+      address: token.address,
+      abi: ERC20ABI,
+      functionName: 'balanceOf',
+      args: [address as Address]
+    })
+    return {
+      ...token,
+      tokenBalance,
+      isLoadingToken,
+      tokenError,
+      fetchTokenBalance
+    }
   })
 
-  const formattedNativeBalance = computed(() =>
-    nativeBalance.value ? formatEther(nativeBalance.value.value) : '0'
+  // Compose balances array
+  const balances = computed<TokenBalance[]>(() => {
+    const arr: TokenBalance[] = []
+    // Native
+    const nativeRaw = nativeBalance.value?.value ?? null
+    const nativePrice = currencyStore.nativeTokenPriceInUSD || 0
+    const nativeDecimals = 18
+    arr.push({
+      address: 'native',
+      symbol: NETWORK.currencySymbol,
+      name: NETWORK.currencySymbol,
+      icon: undefined,
+      balance: nativeRaw ? formatEther(nativeRaw) : '0',
+      rawBalance: nativeRaw,
+      priceUSD: nativePrice,
+      valueUSD: nativeRaw ? Number(formatEther(nativeRaw)) * nativePrice : 0,
+      decimals: nativeDecimals,
+      isNative: true
+    })
+    // ERC20s
+    for (const t of erc20Balances) {
+      const decimals = t.decimals ?? 6
+      const raw = t.tokenBalance.value ?? null
+      const price = currencyStore.getTokenPriceUSD?.(t.address) ?? 0
+      arr.push({
+        address: t.address,
+        symbol: t.symbol,
+        name: t.name,
+        icon: t.icon,
+        balance: raw ? (Number(raw) / 10 ** decimals).toString() : '0',
+        rawBalance: raw,
+        priceUSD: price,
+        valueUSD: raw ? (Number(raw) / 10 ** decimals) * price : 0,
+        decimals,
+        isNative: false
+      })
+    }
+    return arr
+  })
+
+  const totalValueUSD = computed(() =>
+    balances.value.reduce((sum, t) => sum + t.valueUSD, 0).toFixed(2)
   )
 
-  const formattedUsdcBalance = computed(() =>
-    usdcBalance.value ? (Number(usdcBalance.value) / 1e6).toString() : '0'
+  const isLoading = computed(
+    () => isLoadingNative.value || erc20Balances.some((t) => t.isLoadingToken.value)
   )
-
-  const totalValueUSD = computed(() => {
-    const nativeValue =
-      Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPriceInUSD || 0)
-    const usdcValue = Number(formattedUsdcBalance.value)
-    return (nativeValue + usdcValue).toFixed(2)
-  })
-
-  const totalValueInLocalCurrency = computed(() => {
-    const nativeValue = Number(formattedNativeBalance.value) * (currencyStore.nativeTokenPrice || 0)
-    const usdcValue = Number(formattedUsdcBalance.value) * (currencyStore.usdPriceInLocal || 0)
-    return (nativeValue + usdcValue).toFixed(2)
-  })
-
-  const isLoading = computed(() => isLoadingNative.value || isLoadingUsdc.value)
-
-  const error = computed(() => nativeError.value || usdcError.value)
+  const error = computed(
+    () => nativeError.value || erc20Balances.find((t) => t.tokenError.value)?.tokenError.value
+  )
 
   const refetch = async () => {
     try {
-      await Promise.all([fetchNativeBalance(), fetchUsdcBalance()])
+      await Promise.all([
+        fetchNativeBalance(),
+        ...erc20Balances.map((t) => t.fetchTokenBalance())
+      ])
     } catch (err) {
       console.error('Error refetching balances:', err)
     }
   }
 
-  const balances = reactive({
-    nativeToken: {
-      balance: computed(() => nativeBalance.value?.value),
-      formatted: computed(() => formattedNativeBalance.value)
-    },
-    usdc: {
-      balance: computed(() => usdcBalance.value),
-      formatted: computed(() => formattedUsdcBalance.value)
-    },
-    totalValueUSD: computed(() => totalValueUSD.value),
-    totalValueInLocalCurrency: computed(() => totalValueInLocalCurrency.value)
-  })
-
   return {
     balances,
+    totalValueUSD,
     isLoading,
     error,
     refetch

@@ -125,6 +125,30 @@ export const useCurrencyStore = defineStore(
       usdPriceInLocal.value = usdPriceResponse.value.market_data.current_price[currencyCode]
     }
 
+    /**
+     * Get the USD price for a token by address or symbol
+     * Supports native, USDC, USDT, and can be extended for more
+     */
+    function getTokenPriceUSD(token: string) {
+      // Native token
+      if (
+        token.toLowerCase() === NETWORK.currencySymbol.toLowerCase() ||
+        token === 'native'
+      ) {
+        return nativeTokenPriceInUSD.value || 0
+      }
+      // USDC
+      if (token.toLowerCase().includes('usdc')) {
+        return 1 // USDC is always $1
+      }
+      // USDT
+      if (token.toLowerCase().includes('usdt')) {
+        return 1 // USDT is always $1
+      }
+      // Extend here for more tokens if needed
+      return 0
+    }
+
     onMounted(async () => {
       if (nativeTokenPrice.value === undefined || nativeTokenPriceInUSD.value === undefined) {
         await fetchNativeTokenPrice()
@@ -143,7 +167,8 @@ export const useCurrencyStore = defineStore(
       isLoading,
       isLoadingUSDPrice,
       setCurrency,
-      fetchNativeTokenPrice
+      fetchNativeTokenPrice,
+      getTokenPriceUSD
     }
   },
   {
