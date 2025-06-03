@@ -7,7 +7,9 @@
         currencyStore.isLoading ||
         isLoadingNetworkCuerrencyBalance ||
         isLoadingUsdcBalance ||
-        currencyStore.isLoadingUSDPrice
+        currencyStore.isLoadingUSDPrice ||
+        isLoadingTokenBalance ||
+        isLoadingTokenSymbol
       "
       :columns="[
         { key: 'rank', label: 'RANK' },
@@ -19,7 +21,10 @@
     >
       <template #token-data="{ row }">
         <div class="flex items-center gap-2 lg:w-48">
-          <img :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
+          <img v-if="row.icon" :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
+          <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <span class="text-gray-500">{{ row.name.charAt(0) }}</span>
+          </div>
           <div class="flex flex-col">
             <div class="font-medium">{{ row.name }}</div>
             <div class="text-sm text-gray-500">{{ row.network }}</div>
@@ -51,14 +56,22 @@ import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
 import { formatEther, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { useTeamStore } from '@/stores'
+import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 
 const props = defineProps<{
   address: string
 }>()
 
+const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
 
 const chainId = useChainId()
+
+const investorsAddress = computed(() => {
+  return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
+    ?.address as Address
+})
 
 const {
   data: networkCurrencyBalance,
@@ -79,6 +92,28 @@ const {
 } = useReadContract({
   address: USDC_ADDRESS as Address,
   abi: ERC20ABI,
+  functionName: 'balanceOf',
+  args: [props.address as unknown as Address]
+})
+
+const {
+  data: tokenSymbol,
+  isLoading: isLoadingTokenSymbol
+  // error: tokenSymbolError
+} = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'symbol'
+})
+
+const {
+  data: tokenBalance,
+  // error: tokenBalanceError,
+  isLoading: isLoadingTokenBalance
+  // refetch: refetchTokenBalance
+} = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
   functionName: 'balanceOf',
   args: [props.address as unknown as Address]
 })
@@ -131,8 +166,28 @@ const tokens = computed(() => [
       maximumFractionDigits: 3
     }).format(Number(formattedUsdcBalance.value)),
     icon: USDCIcon
+  },
+  {
+    name: tokenSymbol.value,
+    network: tokenSymbol.value,
+    price: Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyStore.currency.code
+    }).format(0),
+    balance: Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyStore.currency.code
+    }).format(0),
+    amount: Intl.NumberFormat('en-US', {
+      style: 'decimal',
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+    }).format(Number(formattedTokenBalance.value))
   }
 ])
+const formattedTokenBalance = computed(() =>
+  tokenBalance.value ? formatEther(tokenBalance.value) : `0`
+)
 
 const formattedNetworkCurrencyBalance = computed(() =>
   networkCurrencyBalance.value?.value ? formatEther(networkCurrencyBalance.value.value) : `0`
