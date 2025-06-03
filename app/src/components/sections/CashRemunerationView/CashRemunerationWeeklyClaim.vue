@@ -89,11 +89,11 @@ import { useCurrencyStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 // Récupère la liste des users de l'équipe
-const { data: teamUsersData } = useCustomFetch('/user/?teamId=1').get().json()
+// const { data: teamUsersData } = useCustomFetch('/user/?teamId=1').get().json()
 
-function getUserByAddress(address: string) {
-  return teamUsersData.value?.find((u: any) => u.address === address)
-}
+// function getUserByAddress(address: string) {
+//   return teamUsersData.value?.find((u: any) => u.address === address)
+// }
 
 const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
 
