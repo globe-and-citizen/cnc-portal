@@ -22,6 +22,7 @@ export interface ClaimResponse {
     userAddress: string
     cashRatePerHour: number
     tokenRatePerHour: number
+    usdcRatePerHour: number
     maximumHoursPerWeek: number
     nextWageId: number | null
     createdAt: string // ISO date string
