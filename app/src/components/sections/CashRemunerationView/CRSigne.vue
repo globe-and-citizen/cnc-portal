@@ -15,11 +15,12 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables'
 import { useChainId, useSignTypedData } from '@wagmi/vue'
-import { parseEther, type Address } from 'viem'
+import { parseEther, zeroAddress, type Address } from 'viem'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
 import { log } from '@/utils'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { USDC_ADDRESS } from '@/constant'
 
 // Props claim : ClaimResponse
 const props = defineProps<{ claim: ClaimResponse }>()
@@ -72,19 +73,67 @@ const approveClaim = async (claim: ClaimResponse) => {
         chainId: chainId.value,
         verifyingContract: cashRemunerationEip712Address.value
       },
+      // types: {
+      //   WageClaim: [
+      //     { name: 'employeeAddress', type: 'address' },
+      //     { name: 'hoursWorked', type: 'uint8' },
+      //     { name: 'hourlyRate', type: 'uint256' },
+      //     { name: 'date', type: 'uint256' }
+      //   ]
+      // },
       types: {
+        Wage: [
+          { name: 'hourlyRate', type: 'uint256' },
+          { name: 'tokenAddress', type: 'address' }
+        ],
         WageClaim: [
           { name: 'employeeAddress', type: 'address' },
           { name: 'hoursWorked', type: 'uint8' },
-          { name: 'hourlyRate', type: 'uint256' },
+          { name: 'wages', type: 'Wage[]' },
           { name: 'date', type: 'uint256' }
         ]
       },
+      // message: {
+      //   hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
+      //   hoursWorked: claim.hoursWorked,
+      //   employeeAddress: claim.wage.userAddress as Address,
+      //   date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
+      // },
       message: {
-        hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
         hoursWorked: claim.hoursWorked,
         employeeAddress: claim.wage.userAddress as Address,
-        date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
+        date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000)),
+        wages: [
+          // Native token wage
+          ...(claim.wage.cashRatePerHour > 0
+            ? [
+                {
+                  hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
+                  tokenAddress: zeroAddress as Address
+                }
+              ]
+            : []),
+          // SHER token wage
+          ...(claim.wage.tokenRatePerHour > 0
+            ? [
+                {
+                  hourlyRate: BigInt(claim.wage.tokenRatePerHour * 1e6),
+                  tokenAddress: teamStore.currentTeam?.teamContracts.find(
+                    (contract) => contract.type === 'InvestorsV1'
+                  )?.address as Address
+                }
+              ]
+            : []),
+          // USDC token wage
+          ...(claim.wage.usdcRatePerHour > 0
+            ? [
+                {
+                  hourlyRate: BigInt(claim.wage.usdcRatePerHour * 1e6),
+                  tokenAddress: USDC_ADDRESS as Address
+                }
+              ]
+            : [])
+        ]
       },
       primaryType: 'WageClaim'
     })
@@ -112,6 +161,10 @@ const approveClaim = async (claim: ClaimResponse) => {
 
   loading.value = false
 }
+
+onMounted(() => {
+  console.log('CRSigne mounted with claim:', props.claim)
+})
 </script>
 
 <style scoped></style>
