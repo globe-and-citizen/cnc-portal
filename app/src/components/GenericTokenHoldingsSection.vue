@@ -95,8 +95,8 @@ const {
 })
 
 const {
-  data: tokenSymbol,
-  isLoading: isLoadingTokenSymbol
+  data: tokenSymbol
+  // isLoading: isLoadingTokenSymbol
   // error: tokenSymbolError
 } = useReadContract({
   abi: INVESTOR_ABI,
@@ -105,9 +105,9 @@ const {
 })
 
 const {
-  data: tokenBalance,
+  data: tokenBalance
   // error: tokenBalanceError,
-  isLoading: isLoadingTokenBalance
+  // isLoading: isLoadingTokenBalance
   // refetch: refetchTokenBalance
 } = useReadContract({
   abi: INVESTOR_ABI,
