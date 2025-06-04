@@ -101,9 +101,10 @@ const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
 const currencyStore = useCurrencyStore()
 const getHoulyRateInUserCurrency = (rate: number) => {
-  return (currencyStore.nativeTokenPrice ? rate * currencyStore.nativeTokenPrice : 0).toFixed(2)
+  return (
+    currencyStore.nativeToken.priceInLocal ? rate * currencyStore.nativeToken.priceInLocal : 0
+  ).toFixed(2)
 }
-
 function formatDate(date: string | Date) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)

@@ -3,6 +3,6 @@ import { getTeamWeeklyClaims } from "../controllers/weeklyClaimController";
 
 const weeklyClaimRoutes = express.Router();
 
-weeklyClaimRoutes.get("/team", getTeamWeeklyClaims);
+weeklyClaimRoutes.get("/", getTeamWeeklyClaims);
 
 export default weeklyClaimRoutes;
