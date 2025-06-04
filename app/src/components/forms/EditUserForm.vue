@@ -65,7 +65,7 @@
         <option
           :key="currency.code"
           v-for="currency in LIST_CURRENCIES"
-          :selected="currencyStore.currency.code == currency.code"
+          :selected="currencyStore.localCurrency.code == currency.code"
           :value="currency.code"
         >
           {{ currency.code }}
@@ -98,7 +98,8 @@ import { required, minLength } from '@vuelidate/validators'
 import ToolTip from '@/components/ToolTip.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '../ButtonUI.vue'
-import { LIST_CURRENCIES, useCurrencyStore } from '@/stores'
+import { useCurrencyStore } from '@/stores'
+import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
 import { ref } from 'vue'
@@ -110,7 +111,7 @@ const emits = defineEmits(['submitEditUser'])
 
 // Currency store
 const currencyStore = useCurrencyStore()
-const selectedCurrency = ref<string>(currencyStore.currency.code)
+const selectedCurrency = ref<string>(currencyStore.localCurrency.code)
 
 // User form
 const user = defineModel({

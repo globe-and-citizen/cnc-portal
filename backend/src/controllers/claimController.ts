@@ -3,43 +3,11 @@ import { errorResponse } from "../utils/utils";
 import { prisma } from "../utils";
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
-import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
   memo: string;
   teamId: string;
 };
-
-async function hasReachedMaxHoursThisWeek(
-  userAddress: string,
-  teamId: number,
-  weekStart: Date,
-  hoursWorked: number
-) {
-  const wage = await prisma.wage.findFirst({
-    where: { userAddress, nextWageId: null, teamId },
-  });
-  if (!wage) return true;
-
-  const weeklyClaim = await prisma.weeklyClaim.findFirst({
-    where: {
-      weekStart,
-      memberAddress: userAddress,
-      teamId,
-      wageId: wage.id,
-    },
-    include: { claims: true },
-  });
-
-  const totalHours = weeklyClaim
-    ? weeklyClaim.claims.reduce(
-        (sum, claim) => sum + (claim.hoursWorked || 0),
-        0
-      )
-    : 0;
-  return totalHours + hoursWorked > wage.maximumHoursPerWeek;
-}
-
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
@@ -47,9 +15,6 @@ export const addClaim = async (req: Request, res: Response) => {
   const hoursWorked = Number(body.hoursWorked);
   const memo = body.memo as string;
   const teamId = Number(body.teamId);
-
-  const weekStart = getMondayStart(new Date());
-  const dayWorked = todayMidnight(new Date());
 
   // Validating the claim data
   // Checking required data
@@ -73,21 +38,6 @@ export const addClaim = async (req: Request, res: Response) => {
     return errorResponse(400, parametersError.join(", "), res);
   }
 
-  if (
-    await hasReachedMaxHoursThisWeek(
-      callerAddress,
-      teamId,
-      weekStart,
-      hoursWorked
-    )
-  ) {
-    return errorResponse(
-      400,
-      "Maximum weekly hours reached, cannot submit more claims for this week.",
-      res
-    );
-  }
-
   try {
     // Get user current
     const wage = await prisma.wage.findFirst({
@@ -97,41 +47,12 @@ export const addClaim = async (req: Request, res: Response) => {
     if (!wage) {
       return errorResponse(400, "No wage found for the user", res);
     }
-
-    // get the member current wage
-
-    let weeklyClaim = await prisma.weeklyClaim.findFirst({
-      where: {
-        wage: {
-          teamId: teamId,
-          nextWageId: null,
-        },
-        weekStart: weekStart,
-        memberAddress: callerAddress,
-        teamId: teamId,
-      },
-    });
-
-    if (!weeklyClaim) {
-      weeklyClaim = await prisma.weeklyClaim.create({
-        data: {
-          wageId: wage.id,
-          weekStart: weekStart,
-          memberAddress: callerAddress,
-          teamId: teamId,
-          data: {},
-        },
-      });
-    }
-
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
         memo,
         wageId: wage.id,
         status: "pending",
-        weeklyClaimId: weeklyClaim.id,
-        dayWorked: dayWorked,
       },
     });
 
