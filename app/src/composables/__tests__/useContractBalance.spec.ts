@@ -3,19 +3,18 @@ import { useContractBalance } from '../useContractBalance'
 
 import type { Address } from 'viem'
 import { ref } from 'vue'
+import { LIST_CURRENCIES } from '@/constant/index'
 
 const mockUseBalance = {
   data: ref<{ value: bigint } | null>(null),
   isLoading: ref(false),
-  error: ref<unknown>(null),
-  refetch: vi.fn()
+  error: ref<unknown>(null)
 }
 
 const mockUseReadContract = {
   data: ref<bigint | null>(null),
   isLoading: ref(false),
-  error: ref<unknown>(null),
-  refetch: vi.fn()
+  error: ref<unknown>(null)
 }
 
 const mockUseChainId = ref(1)
@@ -29,11 +28,48 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useChainId: vi.fn(() => mockUseChainId)
   }
 })
+type CurrencyStore = {
+  localCurrency: {
+    code: string
+    name: string
+    symbol: string
+  }
+  nativeToken: {
+    id: string
+    name: string
+    symbol: string
+    priceInLocal: number
+    priceInUSD: number
+    isLoading: boolean
+  }
+  usdc: {
+    id: string
+    name: string
+    symbol: string
+    priceInLocal: number
+    priceInUSD: number
+    isLoading: boolean
+  }
+}
 
-const mockCurrencyStore = {
-  nativeTokenPriceInUSD: 2000,
-  nativeTokenPrice: 3000,
-  usdPriceInLocal: 1
+const mockCurrencyStore: CurrencyStore = {
+  localCurrency: LIST_CURRENCIES[1],
+  nativeToken: {
+    id: 'eth',
+    name: 'Ethereum',
+    symbol: 'ETH',
+    priceInLocal: 3000,
+    priceInUSD: 2000,
+    isLoading: false
+  },
+  usdc: {
+    id: 'usdc',
+    name: 'USD Coin',
+    symbol: 'USDC',
+    priceInLocal: 1,
+    priceInUSD: 1,
+    isLoading: false
+  }
 }
 
 vi.mock('@/stores/currencyStore', () => ({
@@ -54,85 +90,87 @@ describe('useContractBalance', () => {
     mockUseChainId.value = 1
   })
 
-  it('should return correct native token balance', () => {
-    mockUseBalance.data.value = { value: BigInt('1000000000000000000') }
-    mockUseReadContract.data.value = BigInt('0')
-
-    const { balances } = useContractBalance(mockAddress)
-    expect(balances.nativeToken.formatted).toBe('1')
-    expect(balances.totalValueUSD).toBe('2000.00')
-  })
-
-  it('should return correct USDC balance', () => {
-    mockUseBalance.data.value = { value: BigInt('0') }
-    mockUseReadContract.data.value = BigInt('100000000')
-
-    const { balances } = useContractBalance(mockAddress)
-    expect(balances.usdc.formatted).toBe('100')
-    expect(balances.totalValueUSD).toBe('100.00')
-  })
-
   it('should return correct total value with both balances', () => {
     mockUseBalance.data.value = { value: BigInt('500000000000000000') }
     mockUseReadContract.data.value = BigInt('50000000')
 
+    const { balances, total, isLoading, error } = useContractBalance(mockAddress)
+    expect(total.value).toMatchInlineSnapshot(`
+      {
+        "localCurrencyBalance": {
+          "formated": "€1.55K",
+          "value": 1550,
+        },
+        "usdBalance": {
+          "formated": "$1.05K",
+          "value": 1050,
+        },
+      }
+    `)
+    expect(isLoading.value).toBe(false)
+    expect(error.value).toBe(null)
+    expect(balances.value).toMatchInlineSnapshot(`
+       [
+         {
+           "amount": 0.5,
+           "code": "ETH",
+           "valueInLocalCurrency": {
+             "formated": "€1.5K",
+             "value": 1500,
+           },
+           "valueInUSD": {
+             "formated": "$1K",
+             "value": 1000,
+           },
+         },
+         {
+           "amount": 50,
+           "code": "USDC",
+           "valueInLocalCurrency": {
+             "formated": "€50",
+             "value": 50,
+           },
+           "valueInUSD": {
+             "formated": "$50",
+             "value": 50,
+           },
+         },
+       ]
+     `)
+  })
+
+  it('should return correct value even if useBalance or useReadContract is null', () => {
+    mockUseBalance.data.value = null
+    mockUseReadContract.data.value = null
+
     const { balances } = useContractBalance(mockAddress)
-    expect(balances.nativeToken.formatted).toBe('0.5')
-    expect(balances.usdc.formatted).toBe('50')
-    expect(balances.totalValueUSD).toBe('1050.00')
-  })
-
-  it('should return correct native token raw balance and formatted value', () => {
-    const nativeBalance = BigInt('1500000000000000000') // 1.5 ETH
-    mockUseBalance.data.value = { value: nativeBalance }
-    mockUseReadContract.data.value = BigInt('0')
-
-    const { balances } = useContractBalance(mockAddress)
-    expect(balances.nativeToken.balance).toBe(nativeBalance)
-    expect(balances.nativeToken.formatted).toBe('1.5')
-  })
-
-  it('should return correct USDC raw balance and formatted value', () => {
-    const usdcBalance = BigInt('150000000') // 150 USDC
-    mockUseBalance.data.value = { value: BigInt('0') }
-    mockUseReadContract.data.value = usdcBalance
-
-    const { balances } = useContractBalance(mockAddress)
-    expect(balances.usdc.balance).toBe(usdcBalance)
-    expect(balances.usdc.formatted).toBe('150')
-  })
-
-  it('should refetch both balances when refetch is called', async () => {
-    const { refetch } = useContractBalance(mockAddress)
-    await refetch()
-
-    expect(mockUseBalance.refetch).toHaveBeenCalled()
-    expect(mockUseReadContract.refetch).toHaveBeenCalled()
-  })
-
-  it('should compute total value in local currency correctly', () => {
-    mockUseBalance.data.value = { value: BigInt('1000000000000000000') } // 1 ETH
-    mockUseReadContract.data.value = BigInt('100000000') // 100 USDC
-    mockCurrencyStore.nativeTokenPrice = 3000
-    mockCurrencyStore.usdPriceInLocal = 1 // $1 per USDC
-
-    const { balances } = useContractBalance(mockAddress)
-
-    // 1 ETH * 3000 + 100 USDC * 1 = 3100
-    expect(balances.totalValueInLocalCurrency).toBe('3100.00')
-  })
-
-  it('should log error if refetch throws', async () => {
-    const error = new Error('Refetch failed')
-    mockUseBalance.refetch.mockRejectedValueOnce(error)
-
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
-    const { refetch } = useContractBalance(mockAddress)
-    await refetch()
-
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Error refetching balances:', error)
-
-    consoleErrorSpy.mockRestore()
+    expect(balances.value).toMatchInlineSnapshot(`
+      [
+        {
+          "amount": 0,
+          "code": "ETH",
+          "valueInLocalCurrency": {
+            "formated": "€0",
+            "value": 0,
+          },
+          "valueInUSD": {
+            "formated": "$0",
+            "value": 0,
+          },
+        },
+        {
+          "amount": 0,
+          "code": "USDC",
+          "valueInLocalCurrency": {
+            "formated": "€0",
+            "value": 0,
+          },
+          "valueInUSD": {
+            "formated": "$0",
+            "value": 0,
+          },
+        },
+      ]
+    `)
   })
 })

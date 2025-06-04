@@ -152,7 +152,7 @@ const props = defineProps<{
   users: User[]
 }>()
 
-const input = ref({ name: '', address: '', token: null })
+const input = ref({ name: '', address: '', token: '' })
 const limitValue = ref('')
 const date = ref<Date | string>('')
 const description = ref<string>('')

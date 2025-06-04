@@ -4,12 +4,10 @@
     <TableComponent
       :rows="tokensWithRank"
       :loading="
-        currencyStore.isLoading ||
+        currencyStore.usdc.isLoading ||
         isLoadingNetworkCuerrencyBalance ||
         isLoadingUsdcBalance ||
-        currencyStore.isLoadingUSDPrice ||
-        isLoadingTokenBalance ||
-        isLoadingTokenSymbol
+        currencyStore.nativeToken.isLoading
       "
       :columns="[
         { key: 'rank', label: 'RANK' },
@@ -120,10 +118,10 @@ const {
 
 // Computed properties for prices
 const networkCurrencyPrice = computed(() => {
-  return currencyStore.nativeTokenPrice || 1
+  return currencyStore.nativeToken.priceInLocal || 1
 })
 const usdcPrice = computed(() => {
-  return currencyStore.usdPriceInLocal || 1
+  return currencyStore.usdc.priceInLocal || 1
 })
 
 const networkIcon = computed(() => {
@@ -136,11 +134,11 @@ const tokens = computed(() => [
     network: NETWORK.currencySymbol,
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
+      currency: currencyStore.localCurrency.code
     }).format(networkCurrencyPrice.value),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
+      currency: currencyStore.localCurrency.code
     }).format(Number(formattedNetworkCurrencyBalance.value) * networkCurrencyPrice.value),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',
@@ -154,11 +152,11 @@ const tokens = computed(() => [
     network: 'USDC',
     price: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
+      currency: currencyStore.localCurrency.code
     }).format(usdcPrice.value || 0),
     balance: Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyStore.currency.code
+      currency: currencyStore.localCurrency.code
     }).format(Number(formattedUsdcBalance.value) * (usdcPrice.value || 0)),
     amount: Intl.NumberFormat('en-US', {
       style: 'decimal',
