@@ -6,9 +6,7 @@
           :rows="
             shareholders?.map((shareholder, index) => ({
               index: index + 1,
-              name:
-                team.members!.filter((member) => member.address == shareholder.shareholder)?.[0]
-                  .name ?? 'Unknown',
+              name: getShareholderName(shareholder.shareholder) || 'Unknown',
               address: shareholder.shareholder,
               balance: `${formatEther(shareholder.amount)} ${tokenSymbol}`,
               percentage: !totalSupplyLoading
@@ -72,7 +70,7 @@ import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { watch } from 'vue'
 import { log } from '@/utils'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import type { Team } from '@/types'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -84,6 +82,7 @@ const selectedShareholder = ref<Address | null>(null)
 const emits = defineEmits(['refetchShareholders'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
+const teamStore = useTeamStore()
 
 const props = defineProps<{
   team: Partial<Team>
@@ -118,6 +117,14 @@ const mintToken = (address: Address, amount: string) => {
     functionName: 'individualMint',
     args: [address, parseEther(amount)]
   })
+}
+
+const getShareholderName = (address: Address) => {
+  const member = teamStore.currentTeam?.members?.find((member) => member.address === address)
+  const contract = teamStore.currentTeam?.teamContracts?.find(
+    (contract) => contract.address === address
+  )
+  return member ? member.name : contract ? contract.type : 'Unknown'
 }
 
 watch(mintError, (value) => {
