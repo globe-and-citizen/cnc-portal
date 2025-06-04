@@ -1,5 +1,4 @@
 <template>
- 
   <div class="card bg-base-100 shadow-xl w-full pb-7">
     <div class="card-body overflow-x-auto">
       <slot />

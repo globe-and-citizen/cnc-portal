@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../utils";
 import { errorResponse } from "../utils/utils";
+import { Prisma } from "@prisma/client";
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   const teamId = Number(req.query.teamId);
@@ -9,6 +10,10 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     return errorResponse(400, "Missing or invalid teamId", res);
   }
 
+  let memberAddressFilter: Prisma.WeeklyClaimWhereInput = {};
+  if (req.query.memberAddress) {
+    memberAddressFilter = { memberAddress: req.query.memberAddress as string };
+  }
   try {
     // Get all WeeklyClaims that have at least one claim for this team
     const weeklyClaims = await prisma.weeklyClaim.findMany({
@@ -20,6 +25,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
             },
           },
         },
+        ...memberAddressFilter,
       },
       include: {
         wage: true,
