@@ -99,6 +99,12 @@ export const useCurrencyStore = defineStore('currency', () => {
     // refetchPrice()
   }
 
+  /**
+   * @description Get the price of a token in a specific currency
+   * @param tokenId 
+   * @param currencyCode 
+   * @returns 
+   */
   function getTokenPrice(tokenId: string, currencyCode: string): number | null {
     const token = tokenStates.find((t) => t.id === tokenId)
     const priceData = token?.data.value
@@ -119,6 +125,24 @@ export const useCurrencyStore = defineStore('currency', () => {
     return token?.loading.value ?? false
   }
 
+  /**
+   * @description Get token info and prices for a given tokenId
+   */
+  function getTokenInfo(tokenId: string) {
+    const token = SUPPORTED_TOKENS.find(t => t.id === tokenId)
+    if (!token) return null
+    const priceData = tokenStates.find(t => t.id === tokenId)?.data.value
+    const priceInCurrent = priceData?.market_data.current_price[currency.value.code.toLowerCase()] ?? null
+    const priceInUSD = priceData?.market_data.current_price.usd ?? null
+    return {
+      id: token.id,
+      name: token.name,
+      symbol: token.symbol,
+      priceInCurrent,
+      priceInUSD
+    }
+  }
+
   return {
     localCurrency: currency,
     supportedTokens: SUPPORTED_TOKENS,
@@ -126,6 +150,7 @@ export const useCurrencyStore = defineStore('currency', () => {
     getTokenPrice,
     getTokenPriceUSD,
     isTokenLoading,
-    setCurrency
+    setCurrency,
+    getTokenInfo
   }
 })
