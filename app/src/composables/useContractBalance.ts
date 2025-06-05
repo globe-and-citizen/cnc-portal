@@ -1,26 +1,13 @@
 import { computed } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
-import { formatEther, type Address } from 'viem'
-import { USDC_ADDRESS } from '@/constant'
+import { formatEther, formatUnits, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import type { TokenConfig } from '@/stores/currencyStore'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
+import { USDC_ADDRESS } from '@/constant'
 
-export interface ContractBalance {
-  nativeToken: {
-    balance: string
-    formatted: string
-  }
-  usdc: {
-    balance: string
-    formatted: string
-  }
-  totalValueUSD: string
-  isLoading: boolean
-  error: Error | null
-}
-
-interface Balance {
+interface TokenBalance {
   code: string
   amount: number
   valueInUSD: {
@@ -36,34 +23,44 @@ interface Balance {
 export function useContractBalance(address: Address | undefined) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
+  const tokens = currencyStore.supportedTokens as TokenConfig[]
 
-  const {
-    data: nativeBalance,
-    isLoading: isLoadingNative,
-    error: nativeError
-  } = useBalance({
-    address,
-    chainId,
-    query: {
-      refetchInterval: 60000
+  // Store for all token balances
+  const tokenBalances = tokens.map(token => {
+    if (token.id === 'native') {
+      // Native token (ETH, MATIC, etc)
+      const native = useBalance({
+        address,
+        chainId,
+        query: { refetchInterval: 60000 }
+      })
+      return {
+        token,
+        data: native.data,
+        isLoading: native.isLoading,
+        error: native.error,
+        isNative: true
+      }
+    } else {
+      // ERC20 token
+      const erc20 = useReadContract({
+        address: token.symbol === 'USDC' ? (USDC_ADDRESS as Address) : (token.address as Address),
+        abi: ERC20ABI,
+        functionName: 'balanceOf',
+        args: [address as Address],
+        query: { refetchInterval: 60000 }
+      })
+      return {
+        token,
+        data: erc20.data,
+        isLoading: erc20.isLoading,
+        error: erc20.error,
+        isNative: false
+      }
     }
   })
 
-  const {
-    data: usdcBalance,
-    isLoading: isLoadingUsdc,
-    error: usdcError
-  } = useReadContract({
-    address: USDC_ADDRESS as Address,
-    abi: ERC20ABI,
-    functionName: 'balanceOf',
-    args: [address as Address],
-    query: {
-      refetchInterval: 60000
-    }
-  })
-
-  // Function to calculate value in USD / Local and format it in a short printable way
+  // Helper to get value and formatted string
   const getValue = (amount: number, price: number, local: boolean = false) => {
     const value = Number((amount * (price || 0)).toFixed(2))
     return {
@@ -72,50 +69,33 @@ export function useContractBalance(address: Address | undefined) {
     }
   }
 
-  // Combined loading and error states
-  const isLoading = computed(() => isLoadingNative.value || isLoadingUsdc.value)
-  const error = computed(() => nativeError.value || usdcError.value)
-
-  // Computed balances with formatted values
-  const balances = computed<Array<Balance>>(() => {
-    const nativeAmount = nativeBalance.value ? Number(formatEther(nativeBalance.value.value)) : 0
-    const usdcAmount = usdcBalance.value ? Number(usdcBalance.value) / 1e6 : 0
-
-    return [
-      {
-        amount: nativeAmount,
-        code: nativeBalance.value?.symbol || 'ETH',
-        valueInUSD: getValue(nativeAmount, currencyStore.nativeToken.priceInUSD ?? 0),
-        valueInLocalCurrency: getValue(
-          nativeAmount,
-          currencyStore.nativeToken.priceInLocal ?? 0,
-          true
-        )
-      },
-      {
-        amount: usdcAmount,
-        code: 'USDC',
-        valueInUSD: getValue(usdcAmount, currencyStore.usdc.priceInUSD ?? 0),
-        valueInLocalCurrency: getValue(usdcAmount, currencyStore.usdc.priceInLocal ?? 0, true)
+  // Computed balances for all tokens
+  const balances = computed<TokenBalance[]>(() => {
+    return tokenBalances.map(({ token, data, isNative }) => {
+      let amount = 0
+      if (data.value) {
+        if (isNative) {
+          amount = Number(formatEther(data.value.value))
+        } else {
+          amount = Number(formatUnits(data.value, token.decimals))
+        }
       }
-    ]
+      return {
+        amount,
+        code: token.symbol,
+        valueInUSD: getValue(amount, currencyStore.getTokenPriceUSD(token.id) ?? 0),
+        valueInLocalCurrency: getValue(amount, currencyStore.getTokenPrice(token.id, currencyStore.localCurrency.code.toLowerCase()) ?? 0, true)
+      }
+    })
   })
 
   // Computed total balance in USD and local currency
   const total = computed(() => {
     const usdValue = Number(
-      balances.value
-        .reduce((acc, balance) => {
-          return acc + balance.valueInUSD.value
-        }, 0)
-        .toFixed(2)
+      balances.value.reduce((acc, balance) => acc + balance.valueInUSD.value, 0).toFixed(2)
     )
     const localValue = Number(
-      balances.value
-        .reduce((acc, balance) => {
-          return acc + balance.valueInLocalCurrency.value
-        }, 0)
-        .toFixed(2)
+      balances.value.reduce((acc, balance) => acc + balance.valueInLocalCurrency.value, 0).toFixed(2)
     )
     return {
       usdBalance: {
@@ -128,6 +108,10 @@ export function useContractBalance(address: Address | undefined) {
       }
     }
   })
+
+  // Combined loading and error states
+  const isLoading = computed(() => tokenBalances.some(tb => tb.isLoading.value))
+  const error = computed(() => tokenBalances.find(tb => tb.error.value)?.error.value || null)
 
   return {
     balances,
