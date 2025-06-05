@@ -51,7 +51,7 @@ import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
 import { log, parseError } from '@/utils'
 import { useBalance, useChainId, useReadContract } from '@wagmi/vue'
-import { formatEther, type Address } from 'viem'
+import { formatEther, formatUnits, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTeamStore } from '@/stores'
@@ -74,8 +74,8 @@ const investorsAddress = computed(() => {
 const {
   data: networkCurrencyBalance,
   isLoading: isLoadingNetworkCuerrencyBalance,
-  error: networkCurrencyBalanceError,
-  refetch: refetchNetworkCurrencyBalance
+  error: networkCurrencyBalanceError
+  // refetch: refetchNetworkCurrencyBalance
 } = useBalance({
   address: props.address as unknown as Address,
   chainId
@@ -85,7 +85,7 @@ const {
 const {
   data: usdcBalance,
   isLoading: isLoadingUsdcBalance,
-  refetch: refetchUsdcBalance,
+  // refetch: refetchUsdcBalance,
   error: usdcBalanceError
 } = useReadContract({
   address: USDC_ADDRESS as Address,
@@ -105,8 +105,8 @@ const {
 })
 
 const {
-  data: tokenBalance
-  // error: tokenBalanceError,
+  data: tokenBalance,
+  error: tokenBalanceError
   // isLoading: isLoadingTokenBalance
   // refetch: refetchTokenBalance
 } = useReadContract({
@@ -184,7 +184,7 @@ const tokens = computed(() => [
   }
 ])
 const formattedTokenBalance = computed(() =>
-  tokenBalance.value ? formatEther(tokenBalance.value) : `0`
+  tokenBalance.value ? formatUnits(tokenBalance.value, 6) : `0`
 )
 
 const formattedNetworkCurrencyBalance = computed(() =>
@@ -205,6 +205,12 @@ const tokensWithRank = computed(() =>
   }))
 )
 
+watch(tokenBalanceError, (newError) => {
+  if (newError) {
+    log.error('tokenBalanceError.value', parseError(newError))
+  }
+})
+
 watch(networkCurrencyBalanceError, (newError) => {
   if (newError) {
     log.error('networkCurrencyBalanceError.value', parseError(newError))
@@ -217,8 +223,8 @@ watch(usdcBalanceError, (newError) => {
   }
 })
 
-onMounted(async () => {
-  await refetchNetworkCurrencyBalance()
-  await refetchUsdcBalance()
-})
+// onMounted(async () => {
+//   await refetchNetworkCurrencyBalance()
+//   await refetchUsdcBalance()
+// })
 </script>
