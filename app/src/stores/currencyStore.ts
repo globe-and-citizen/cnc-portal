@@ -101,9 +101,9 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   /**
    * @description Get the price of a token in a specific currency
-   * @param tokenId 
-   * @param currencyCode 
-   * @returns 
+   * @param tokenId
+   * @param currencyCode
+   * @returns
    */
   function getTokenPrice(tokenId: string, currencyCode: string): number | null {
     const token = tokenStates.find((t) => t.id === tokenId)
@@ -127,19 +127,33 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   /**
    * @description Get token info and prices for a given tokenId
+   * Returns: { id, name, symbol, prices: [{ price, code, symbol }] }
    */
   function getTokenInfo(tokenId: string) {
-    const token = SUPPORTED_TOKENS.find(t => t.id === tokenId)
+    const token = SUPPORTED_TOKENS.find((t) => t.id === tokenId)
     if (!token) return null
-    const priceData = tokenStates.find(t => t.id === tokenId)?.data.value
-    const priceInCurrent = priceData?.market_data.current_price[currency.value.code.toLowerCase()] ?? null
-    const priceInUSD = priceData?.market_data.current_price.usd ?? null
+    const priceData = tokenStates.find((t) => t.id === tokenId)?.data.value
+    const prices: Array<{ id: string; price: number | null; code: string; symbol: string }> = []
+    // Current currency
+    const currentCode = currency.value.code.toLowerCase()
+    prices.push({
+      id: 'local',
+      price: priceData?.market_data.current_price[currentCode] ?? null,
+      code: currentCode,
+      symbol: currency.value.symbol
+    })
+    // USD
+    prices.push({
+      id: 'usd',
+      price: priceData?.market_data.current_price.usd ?? null,
+      code: 'usd',
+      symbol: '$'
+    })
     return {
       id: token.id,
       name: token.name,
       symbol: token.symbol,
-      priceInCurrent,
-      priceInUSD
+      prices
     }
   }
 
