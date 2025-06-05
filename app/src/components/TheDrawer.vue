@@ -285,6 +285,16 @@ const menuItems = computed(() => [
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
+    label: 'vesting',
+    icon: 'heroicons:briefcase',
+    route: {
+      name: 'vesting',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'vesting',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
     label: 'Contract Management',
     icon: 'heroicons:wrench',
     route: {
