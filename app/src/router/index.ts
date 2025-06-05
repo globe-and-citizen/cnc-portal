@@ -11,6 +11,7 @@ import BankView from '@/views/team/[id]/BankView.vue'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
+import VestingView from '@/views/team/[id]/VestingView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -51,6 +52,12 @@ const router = createRouter({
           name: 'expense-account',
           meta: { name: 'Expense Account' },
           component: ExpenseAccountView
+        },
+        {
+          path: '/teams/:id/vesting',
+          name: 'vesting',
+          meta: { name: 'Vesting' },
+          component: VestingView
         },
         {
           path: '/teams/:id/bank',
