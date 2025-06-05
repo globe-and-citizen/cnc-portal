@@ -4,8 +4,10 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract Vesting is  OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+    using SafeERC20 for IERC20;
+
     struct VestingInfo {
         uint64 start; // Vesting start time
         uint64 duration; // Vesting duration
@@ -27,6 +29,11 @@ contract Vesting is  OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
     mapping(address => uint256[]) public userTeams;
     mapping(address => mapping(uint256 => VestingInfo)) public vestings;
     mapping(address => mapping(uint256 => bool)) public isUserInTeam;
+
+    event VestingCreated(address indexed member, uint256 indexed teamId, uint256 amount);
+    event TokensReleased(address indexed member, uint256 indexed teamId, uint256 amount);
+    event VestingStopped(address indexed member, uint256 indexed teamId);
+    event UnvestedWithdrawn(address indexed member, uint256 indexed teamId, uint256 amount);
     /// @notice Initializer instead of constructor for proxy compatibility
     function initialize() public initializer {
         __Ownable_init(msg.sender);
@@ -70,7 +77,7 @@ contract Vesting is  OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
         uint256 allowance = IERC20(tokenAddr).allowance(msg.sender, address(this));
         require(allowance >= totalAmount, "Not enough allowance");
 
-        require(IERC20(tokenAddr).transferFrom(msg.sender, address(this), totalAmount), "Token transfer failed");
+        IERC20(tokenAddr).safeTransferFrom(msg.sender, address(this), totalAmount);
         
         vestings[member][teamId] = VestingInfo({
             start: start,
@@ -88,21 +95,60 @@ contract Vesting is  OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
             isUserInTeam[member][teamId] = true;
         }
 
+        emit VestingCreated(member, teamId, totalAmount);
+
     }
 
     /// @notice Disable a member's vesting
     function stopVesting(address member, uint256 teamId) external onlyTeamOwner(teamId) {
+        require(vestings[member][teamId].active, "Already stopped");
         vestings[member][teamId].active = false;
+        emit VestingStopped(member, teamId);
+    }
+
+    /**
+     * @dev Calculates the amount of tokens vested at a given timestamp.
+     * Tokens are locked until the cliff period ends. After the cliff,
+     * vesting is linear until the full duration is reached.
+     *
+     * @param totalAllocation Total amount of tokens allocated for vesting
+     * @param start Timestamp when vesting starts
+     * @param cliff Duration (in seconds) of the cliff period
+     * @param duration Total vesting duration (in seconds)
+     * @param timestamp Current timestamp to calculate vested amount
+     * @return Amount of tokens vested at the given timestamp
+     */
+    function _vestingSchedule(
+        uint256 totalAllocation,
+        uint64 start,
+        uint64 cliff,
+        uint64 duration,
+        uint64 timestamp
+    ) internal pure returns (uint256) {
+        if (timestamp < start + cliff) {
+            return 0;
+        } else if (timestamp >= start + duration) {
+            return totalAllocation;
+        } else {
+            return (totalAllocation * (timestamp - start)) / duration;
+        }
     }
 
     /// @notice Get the amount vested for a member
     function vestedAmount(address member, uint256 teamId) public view returns (uint256) {
         VestingInfo memory v = vestings[member][teamId];
-        if (!v.active || block.timestamp < v.start + v.cliff) return 0;
-        if (block.timestamp >= v.start + v.duration) return v.totalAmount;
-        uint256 elapsed = block.timestamp - v.start;
-        return (v.totalAmount * elapsed) / v.duration;
+        if (!v.active) return 0;
+
+        return _vestingSchedule(
+            v.totalAmount,
+            v.start,
+            v.cliff,
+            v.duration,
+            uint64(block.timestamp)
+        );
     }
+
+    
 
     /// @notice Get the releasable amount for a member
     function releasable(address member, uint256 teamId) public view returns (uint256) {
@@ -117,7 +163,9 @@ contract Vesting is  OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
         uint256 amount = releasable(msg.sender, teamId);
         require(amount > 0, "Nothing to release");
         v.released += amount;
-        require(IERC20(teams[teamId].token).transfer(msg.sender, amount), "Transfer failed");
+        IERC20(teams[teamId].token).safeTransfer(msg.sender, amount);
+        emit TokensReleased(msg.sender, teamId, amount);
+
     }
 
     /// @notice Withdraw unvested tokens back to the team owner
@@ -127,8 +175,10 @@ contract Vesting is  OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpg
         uint256 unvested = v.totalAmount - v.released;
         delete vestings[member][teamId];
         if (unvested > 0) {
-            require(IERC20(teams[teamId].token).transfer(msg.sender, unvested), "Withdraw failed");
+            IERC20(teams[teamId].token).safeTransfer(msg.sender, unvested);
         }
+        emit UnvestedWithdrawn(member, teamId, unvested);
+
     }
 
     /// @notice Get members of a specific team
