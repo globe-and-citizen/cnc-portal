@@ -286,7 +286,7 @@ const menuItems = computed(() => [
   },
   {
     label: 'vesting',
-    icon: 'heroicons:briefcase',
+    icon: 'heroicons:lock-closed',
     route: {
       name: 'vesting',
       params: { id: teamStore.currentTeam?.id || '1' }
