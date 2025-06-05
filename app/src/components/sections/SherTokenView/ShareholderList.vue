@@ -63,7 +63,7 @@
 </template>
 <script setup lang="ts">
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { formatEther, formatUnits, parseEther, parseUnits, type Address } from 'viem'
+import { formatUnits, parseUnits, type Address } from 'viem'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { ref } from 'vue'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'

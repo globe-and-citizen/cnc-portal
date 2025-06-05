@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import type { Team } from '@/types'
-import { formatEther, formatUnits } from 'viem'
+import { formatUnits } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 

@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
@@ -222,9 +222,4 @@ watch(usdcBalanceError, (newError) => {
     log.error('usdcBalanceError.value', parseError(newError))
   }
 })
-
-// onMounted(async () => {
-//   await refetchNetworkCurrencyBalance()
-//   await refetchUsdcBalance()
-// })
 </script>
