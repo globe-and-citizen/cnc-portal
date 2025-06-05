@@ -2,7 +2,10 @@
   <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
     <div class="w-full flex justify-between">
       <span class="font-bold text-lg">Claims Table</span>
-      <SubmitClaims v-if="hasWage" @refetch-claims="async () => await fetchTeamClaimData()" />
+      <div class="flex flex-row gap-4">
+        <CRAddERC20Support />
+        <SubmitClaims v-if="hasWage" @refetch-claims="async () => await fetchTeamClaimData()" />
+      </div>
     </div>
     <div class="form-control flex flex-row gap-4">
       <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
@@ -112,6 +115,7 @@ import UserComponent from '@/components/UserComponent.vue'
 import CRSigne from './CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { NETWORK } from '@/constant'
+import CRAddERC20Support from './CRAddERC20Support.vue'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
