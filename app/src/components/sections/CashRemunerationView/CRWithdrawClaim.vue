@@ -16,7 +16,7 @@ import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse } from '@/types'
 import { log } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { formatEther, parseEther, zeroAddress, type Address } from 'viem'
+import { formatEther, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
 import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { getBalance } from 'viem/actions'
@@ -96,7 +96,7 @@ const withdrawClaim = async () => {
       ...(claim.wage.tokenRatePerHour > 0
         ? [
             {
-              hourlyRate: BigInt(claim.wage.tokenRatePerHour * 1e6),
+              hourlyRate: parseUnits(`${claim.wage.tokenRatePerHour}`, 6),
               tokenAddress: teamStore.currentTeam?.teamContracts.find(
                 (contract) => contract.type === 'InvestorsV1'
               )?.address as Address
@@ -107,7 +107,7 @@ const withdrawClaim = async () => {
       ...(claim.wage.usdcRatePerHour > 0
         ? [
             {
-              hourlyRate: BigInt(claim.wage.usdcRatePerHour * 1e6),
+              hourlyRate: parseUnits(`${claim.wage.usdcRatePerHour}`, 6),
               tokenAddress: USDC_ADDRESS as Address
             }
           ]
