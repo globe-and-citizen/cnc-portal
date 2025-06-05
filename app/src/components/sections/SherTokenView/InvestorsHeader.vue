@@ -4,7 +4,7 @@
       <div class="flex flex-col text-right">
         <h2>Balance</h2>
         <p v-if="!loadingTokenBalance && !tokenSymbolLoading" data-test="token-balance">
-          <span class="text-3xl">{{ formatEther(tokenBalance!) }}</span>
+          <span class="text-3xl">{{ formatUnits(tokenBalance!, 6) }}</span>
           {{ tokenSymbol }}
         </p>
         <span
@@ -16,7 +16,7 @@
       <div class="flex flex-col text-right gap-y-4">
         <h3>Total Supply</h3>
         <p v-if="!tokenSymbolLoading && !totalSupplyLoading" data-test="total-supply">
-          <span class="text-3xl">{{ formatEther(totalSupply!) }}</span>
+          <span class="text-3xl">{{ formatUnits(totalSupply!, 6) }}</span>
           {{ tokenSymbol }}
         </p>
         <span
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import type { Team } from '@/types'
-import { formatEther } from 'viem'
+import { formatEther, formatUnits } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 
