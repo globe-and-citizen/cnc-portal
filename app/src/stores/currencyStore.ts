@@ -2,7 +2,6 @@
 import { NETWORK } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { reactive } from 'vue'
 import { LIST_CURRENCIES } from '@/constant'
 import { useQuery } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
@@ -16,22 +15,22 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
 }
 
 export interface TokenConfig {
-  id: string;
-  name: string;
-  symbol: string;
-  coingeckoId: string;
-  decimals: number;
+  id: string
+  name: string
+  symbol: string
+  coingeckoId: string
+  decimals: number
 }
 
 export interface PriceResponse {
   market_data: {
     current_price: {
-      [key: string]: number; // Add index signature for dynamic currency codes
-      usd: number;
-      cad: number;
-      eur: number;
-      idr: number;
-      inr: number;
+      [key: string]: number // Add index signature for dynamic currency codes
+      usd: number
+      cad: number
+      eur: number
+      idr: number
+      inr: number
     }
   }
 }
@@ -68,10 +67,20 @@ export const useCurrencyStore = defineStore('currency', () => {
     if (!res.ok) throw new Error('Failed to fetch price')
     return res.json() as Promise<PriceResponse>
   }
+  /**
+   * @dev For a dynamic supported token, Map is better than Array
+   */
+  // Combine price and loading into a single array
+  const tokenStates: Array<{
+    id: string
+    data: Ref<PriceResponse | undefined>
+    loading: Ref<boolean>
+  }> = []
 
-  const tokenPrices = reactive<Record<string, Ref<PriceResponse | undefined>>>({})
-  const tokenLoading = reactive<Record<string, Ref<boolean>>>({})
-
+  /**
+   * @dev If in the future, supported tokens are dynamic,
+   * we can use a Map to store token prices and loading states
+   */
   SUPPORTED_TOKENS.forEach((token) => {
     const { data, isFetching } = useQuery({
       queryKey: ['price', token.coingeckoId],
@@ -79,8 +88,7 @@ export const useCurrencyStore = defineStore('currency', () => {
       retryDelay: 30000,
       gcTime: 1000 * 60 * 10
     })
-    tokenPrices[token.id] = data
-    tokenLoading[token.id] = isFetching
+    tokenStates.push({ id: token.id, data, loading: isFetching })
   })
 
   async function setCurrency(value: string) {
@@ -92,27 +100,29 @@ export const useCurrencyStore = defineStore('currency', () => {
   }
 
   function getTokenPrice(tokenId: string, currencyCode: string): number | null {
-    const priceData = tokenPrices[tokenId]?.value;
-    if (!priceData) return null;
-    if (!(currencyCode in priceData.market_data.current_price)) return null;
-    return tokenPrices[tokenId].market_data.current_price[currencyCode] ?? null
+    const token = tokenStates.find((t) => t.id === tokenId)
+    const priceData = token?.data.value
+    if (!priceData) return null
+    if (!(currencyCode in priceData.market_data.current_price)) return null
+    return priceData.market_data.current_price[currencyCode] ?? null
   }
 
   function getTokenPriceUSD(tokenId: string): number | null {
-    const priceData = tokenPrices[tokenId]?.value
+    const token = tokenStates.find((t) => t.id === tokenId)
+    const priceData = token?.data.value
     if (!priceData) return null
     return priceData.market_data.current_price.usd ?? null
   }
 
   function isTokenLoading(tokenId: string): boolean {
-    return tokenLoading[tokenId]?.value ?? false
+    const token = tokenStates.find((t) => t.id === tokenId)
+    return token?.loading.value ?? false
   }
 
   return {
     localCurrency: currency,
     supportedTokens: SUPPORTED_TOKENS,
-    tokenPrices,
-    tokenLoading,
+    tokenStates,
     getTokenPrice,
     getTokenPriceUSD,
     isTokenLoading,
