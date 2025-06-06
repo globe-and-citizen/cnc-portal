@@ -95,10 +95,12 @@ import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { formatCurrencyShort } from '@/utils'
 import SelectComponent from '../SelectComponent.vue'
+import type { TokenId } from '@/constant'
 
 export interface Token {
   symbol: string
   balance: number
+  tokenId: TokenId
 }
 
 export interface TransferModel {
@@ -121,7 +123,7 @@ const model = defineModel<TransferModel>({
   required: true,
   default: () => ({
     address: { name: '', address: '' },
-    token: { symbol: '', balance: 0 },
+    token: { symbol: '', balance: 0, tokenId: 'ds' },
     amount: '0'
   })
 })
@@ -135,15 +137,14 @@ const currencyStore = useCurrencyStore()
 const usePercentageOfBalance = (percentage: number) => {
   model.value.amount = ((model.value.token.balance * percentage) / 100).toFixed(4)
 }
-// const getSelectedTokenBalance = computed(() => {
-//   return model.value.token.balance
-// })
 
 // New computed property for transfer amount in default currency
 const formattedTransferAmount = computed(() => {
-  // Price in local currency
-  const value = (Number(model.value.amount) || 0) * (currencyStore.nativeToken.priceInLocal || 0)
-  return formatCurrencyShort(value, currencyStore.localCurrency.code)
+  const tokenInfo = currencyStore.getTokenInfo(model.value.token?.tokenId as TokenId)
+  const priceObj = tokenInfo?.prices.find((p) => p.id === 'local')
+  const price = priceObj?.price ?? 0
+  const value = (Number(model.value.amount) || 0) * price
+  return formatCurrencyShort(value, priceObj?.code ?? 'USD')
 })
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
