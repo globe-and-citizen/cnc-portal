@@ -47,6 +47,7 @@ describe('CRSigne', () => {
       userAddress: '0x1234567890123456789012345678901234567890',
       cashRatePerHour: 10,
       tokenRatePerHour: 0,
+      usdcRatePerHour: 0,
       maximumHoursPerWeek: 40,
       nextWageId: null,
       createdAt: '2024-01-01T00:00:00Z',
