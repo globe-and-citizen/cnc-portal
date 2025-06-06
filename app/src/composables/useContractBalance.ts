@@ -17,7 +17,6 @@ export type TokenBalanceValue = {
 }
 
 interface TokenBalance {
-  code: string
   amount: number
   token: (typeof SUPPORTED_TOKENS)[number]
   values: Record<string, TokenBalanceValue>
@@ -104,7 +103,6 @@ export function useContractBalance(address: Address) {
       }
       return {
         amount,
-        code: token.symbol,
         token,
         values
       }

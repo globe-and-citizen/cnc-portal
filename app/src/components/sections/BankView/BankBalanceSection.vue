@@ -7,13 +7,13 @@
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
               <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
-              <span v-else>{{ total['usd']?.formated ?? 0 }}</span>
+              <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          ≈ {{ total[currency.code.toLowerCase()]?.formated ?? 0 }} {{ currency.code }}
+          ≈ {{ total[currency.code]?.formated ?? 0 }} {{ currency.code }}
         </div>
       </div>
       <div class="flex flex-col items-end gap-4">
@@ -60,13 +60,7 @@
       <TransferForm
         v-if="transferModal"
         v-model="transferData"
-        :tokens="[
-          {
-            symbol: NETWORK.currencySymbol,
-            balance: balances.find((b) => b.code === NETWORK.currencySymbol)?.amount || 0
-          },
-          { symbol: 'USDC', balance: balances.find((b) => b.code === 'USDC')?.amount || 0 }
-        ]"
+        :tokens="getTokens()"
         :loading="transferLoading || isConfirmingTransfer"
         service="Bank"
         @transfer="handleTransfer"
@@ -163,4 +157,7 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
     transferModal.value = false
   }
 })
+
+const getTokens = () =>
+  balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount }))
 </script>
