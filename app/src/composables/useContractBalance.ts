@@ -112,16 +112,21 @@ export function useContractBalance(address: Address) {
   })
 
   // Computed total balance for each currency
-  const total = computed(() => {
-    const totals: Record<string, { value: number; formated: string }> = {}
+  const total = computed<Record<string, TokenBalanceValue>>(() => {
+    const totals: Record<string, TokenBalanceValue> = {}
     if (balances.value.length > 0) {
-      // Collect all currency codes from the first token (assuming all tokens have the same set)
       const allCodes = Object.keys(balances.value[0].values)
+      console.log('All codes:', allCodes)
       for (const code of allCodes) {
+        const first = balances.value[0].values[code]
         const sum = balances.value.reduce((acc, bal) => acc + (bal.values[code]?.value ?? 0), 0)
         totals[code] = {
           value: sum,
-          formated: formatCurrencyShort(sum, code)
+          formated: formatCurrencyShort(sum, code),
+          id: first.id,
+          code: first.code,
+          symbol: first.symbol,
+          price: first.price
         }
       }
     }
