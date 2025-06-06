@@ -3,24 +3,29 @@ import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, formatUnits, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
+import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
+import type { Currency } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
+
+// Extracted value type for balances
+export type TokenBalanceValue = {
+  value: number
+  formated: string
+  id: string
+  code: string
+  symbol: string
+  price: number | null
+}
 
 interface TokenBalance {
   code: string
   amount: number
-  valueInUSD: {
-    value: number
-    formated: string
-  }
-  valueInLocalCurrency: {
-    value: number
-    formated: string
-  }
+  token: (typeof SUPPORTED_TOKENS)[number]
+  values: Record<string, TokenBalanceValue>
 }
 
-export function useContractBalance(address: Address | undefined) {
+export function useContractBalance(address: Address) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
 
@@ -43,10 +48,10 @@ export function useContractBalance(address: Address | undefined) {
     } else {
       // ERC20 token
       const erc20 = useReadContract({
-        address: token.symbol === 'USDC' ? (USDC_ADDRESS as Address) : (token.address as Address),
+        address: token.address,
         abi: ERC20ABI,
         functionName: 'balanceOf',
-        args: [address as Address],
+        args: [address],
         query: { refetchInterval: 60000 }
       })
       return {
@@ -62,6 +67,7 @@ export function useContractBalance(address: Address | undefined) {
   // Computed balances for all tokens
   const balances = computed<TokenBalance[]>(() => {
     return tokenBalances.map(({ token, data, isNative }) => {
+      // token balance lenght
       let amount = 0
       if (data.value) {
         if (isNative) {
@@ -72,43 +78,41 @@ export function useContractBalance(address: Address | undefined) {
       }
       // Use getTokenInfo for price info
       const info = currencyStore.getTokenInfo(token.id as TokenId)
-      const local = info?.prices.find((p) => p.id === 'local')
-      const usd = info?.prices.find((p) => p.id === 'usd')
+      const values: Record<string, TokenBalanceValue> = {}
+      if (info?.prices) {
+        for (const price of info.prices) {
+          const val = amount * (price.price ?? 0)
+          values[price.code] = {
+            value: val,
+            formated: formatCurrencyShort(val, price.code),
+            ...price
+          }
+        }
+      }
       return {
         amount,
         code: token.symbol,
-        valueInUSD: {
-          value: usd?.price ?? 0,
-          formated: formatCurrencyShort(usd?.price ?? 0)
-        },
-        valueInLocalCurrency: {
-          value: local?.price ?? 0,
-          formated: formatCurrencyShort(local?.price ?? 0, local?.code)
-        }
+        token,
+        values
       }
     })
   })
 
-  // Computed total balance in USD and local currency
+  // Computed total balance for each currency
   const total = computed(() => {
-    const usdValue = Number(
-      balances.value.reduce((acc, balance) => acc + balance.valueInUSD.value, 0).toFixed(2)
-    )
-    const localValue = Number(
-      balances.value
-        .reduce((acc, balance) => acc + balance.valueInLocalCurrency.value, 0)
-        .toFixed(2)
-    )
-    return {
-      usdBalance: {
-        value: usdValue,
-        formated: formatCurrencyShort(usdValue)
-      },
-      localCurrencyBalance: {
-        value: localValue,
-        formated: formatCurrencyShort(localValue, currencyStore.localCurrency.code)
+    const totals: Record<string, { value: number; formated: string }> = {}
+    if (balances.value.length > 0) {
+      // Collect all currency codes from the first token (assuming all tokens have the same set)
+      const allCodes = Object.keys(balances.value[0].values)
+      for (const code of allCodes) {
+        const sum = balances.value.reduce((acc, bal) => acc + (bal.values[code]?.value ?? 0), 0)
+        totals[code] = {
+          value: sum,
+          formated: formatCurrencyShort(sum, code)
+        }
       }
     }
+    return totals
   })
 
   // Combined loading and error states

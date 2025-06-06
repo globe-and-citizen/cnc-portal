@@ -3,6 +3,7 @@ import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
+import type { Address } from 'viem'
 
 export const NETWORK = getNetwork()
 
@@ -188,12 +189,12 @@ export const SUPPORTED_TOKENS: TokenConfig[] = [
     symbol: 'USDC',
     coingeckoId: 'usd-coin',
     decimals: 6,
-    address: USDC_ADDRESS
+    address: USDC_ADDRESS as Address
   }
   // Add more tokens here
 ]
 
-interface Currency {
+export interface Currency {
   code: string
   name: string
   symbol: string
@@ -232,5 +233,5 @@ export interface TokenConfig {
   symbol: string
   coingeckoId: string
   decimals: number
-  address: string
+  address: Address
 }
