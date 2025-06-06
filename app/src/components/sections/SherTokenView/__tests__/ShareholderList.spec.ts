@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
-import { parseEther, formatEther, type Address } from 'viem'
+import { parseEther, formatUnits, parseUnits, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -68,7 +68,7 @@ describe('ShareholderList', () => {
         },
         tokenSymbol: 'TEST',
         tokenSymbolLoading: false,
-        totalSupply: parseEther('300'),
+        totalSupply: parseUnits('300', 6),
         totalSupplyLoading: false,
         shareholders: [
           { shareholder: '0x123', amount: parseEther('100') },
@@ -107,8 +107,8 @@ describe('ShareholderList', () => {
         (member) => member.address == shareholder.shareholder
       )[0].name,
       address: shareholder.shareholder,
-      balance: `${formatEther(shareholder.amount)} TEST`,
-      percentage: `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(parseEther('300'))).toString()}%`,
+      balance: `${formatUnits(shareholder.amount, 6)} TEST`,
+      percentage: `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(parseUnits('300', 6))).toString()}%`,
       shareholder: shareholder.shareholder,
       amount: shareholder.amount
     }))
