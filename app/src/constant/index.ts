@@ -179,6 +179,7 @@ export const SUPPORTED_TOKENS: TokenConfig[] = [
     id: 'native',
     name: NETWORK.currencySymbol,
     symbol: NETWORK.currencySymbol,
+    code: NETWORK.currencySymbol,
     coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
     decimals: 18,
     address: '0x0000000000000000000000000000000000000000'
@@ -187,6 +188,7 @@ export const SUPPORTED_TOKENS: TokenConfig[] = [
     id: 'usdc',
     name: 'USD Coin',
     symbol: 'USDC',
+    code: 'USDC',
     coingeckoId: 'usd-coin',
     decimals: 6,
     address: USDC_ADDRESS as Address
@@ -234,4 +236,5 @@ export interface TokenConfig {
   coingeckoId: string
   decimals: number
   address: Address
+  code: string
 }

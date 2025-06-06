@@ -100,24 +100,25 @@ export const useCurrencyStore = defineStore('currency', () => {
     const priceData = tokenStates.find((t) => t.id === tokenId)?.data.value
     const prices: Array<{ id: string; price: number | null; code: string; symbol: string }> = []
     // Current currency
-    const currentCode = currency.value.code.toLowerCase()
+    const currentCode = currency.value.code
     prices.push({
       id: 'local',
       price: priceData?.market_data.current_price[currentCode] ?? null,
       code: currentCode,
-      symbol: currency.value.symbol
+      symbol: currency.value.symbol,
     })
     // USD
     prices.push({
       id: 'usd',
       price: priceData?.market_data.current_price.usd ?? null,
-      code: 'usd',
+      code: 'USD',
       symbol: '$'
     })
     return {
       id: token.id,
       name: token.name,
       symbol: token.symbol,
+      code: token.code,
       prices
     }
   }
