@@ -1,27 +1,10 @@
 // import { useCustomFetch } from '@/composables'
-import { NETWORK } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { LIST_CURRENCIES } from '@/constant'
+import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
+import type { TokenId } from '@/constant'
 import { useQuery } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
-
-const NETWORK_TO_COIN_ID: Record<string, string> = {
-  POL: 'matic-network',
-  ETH: 'ethereum',
-  AMOYPOL: 'matic-network',
-  SepoliaETH: 'ethereum',
-  GO: 'ethereum'
-}
-
-export type TokenId = 'native' | 'usdc' // Add more token IDs as needed
-export interface TokenConfig {
-  id: TokenId
-  name: string
-  symbol: string
-  coingeckoId: string
-  decimals: number
-}
 
 export interface PriceResponse {
   market_data: {
@@ -42,25 +25,6 @@ export const useCurrencyStore = defineStore('currency', () => {
     name: 'US Dollar',
     symbol: '$'
   })
-
-  // Example: Add more tokens here as needed
-  const SUPPORTED_TOKENS: TokenConfig[] = [
-    {
-      id: 'native',
-      name: NETWORK.currencySymbol,
-      symbol: NETWORK.currencySymbol,
-      coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
-      decimals: 18
-    },
-    {
-      id: 'usdc',
-      name: 'USD Coin',
-      symbol: 'USDC',
-      coingeckoId: 'usd-coin',
-      decimals: 6
-    }
-    // Add more tokens here
-  ]
 
   // Fetch prices for all tokens
   async function fetchTokenPrice(coingeckoId: string) {

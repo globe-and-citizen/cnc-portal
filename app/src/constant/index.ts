@@ -163,6 +163,36 @@ const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresse
 export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
 export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''
 
+const NETWORK_TO_COIN_ID: Record<string, string> = {
+  POL: 'matic-network',
+  ETH: 'ethereum',
+  AMOYPOL: 'matic-network',
+  SepoliaETH: 'ethereum',
+  GO: 'ethereum'
+}
+
+export type TokenId = 'native' | 'usdc' // Add more token IDs as needed
+
+export const SUPPORTED_TOKENS: TokenConfig[] = [
+  {
+    id: 'native',
+    name: NETWORK.currencySymbol,
+    symbol: NETWORK.currencySymbol,
+    coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
+    decimals: 18,
+    address: '0x0000000000000000000000000000000000000000'
+  },
+  {
+    id: 'usdc',
+    name: 'USD Coin',
+    symbol: 'USDC',
+    coingeckoId: 'usd-coin',
+    decimals: 6,
+    address: USDC_ADDRESS
+  }
+  // Add more tokens here
+]
+
 interface Currency {
   code: string
   name: string
@@ -195,3 +225,12 @@ export const LIST_CURRENCIES: Currency[] = [
     symbol: '₹'
   }
 ]
+
+export interface TokenConfig {
+  id: TokenId
+  name: string
+  symbol: string
+  coingeckoId: string
+  decimals: number
+  address: string
+}

@@ -3,9 +3,9 @@ import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, formatUnits, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import type { TokenConfig } from '@/stores/currencyStore'
+import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
+import type { TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
-import { USDC_ADDRESS } from '@/constant'
 
 interface TokenBalance {
   code: string
@@ -23,10 +23,9 @@ interface TokenBalance {
 export function useContractBalance(address: Address | undefined) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
-  const tokens = currencyStore.supportedTokens as TokenConfig[]
 
   // Store for all token balances
-  const tokenBalances = tokens.map(token => {
+  const tokenBalances = SUPPORTED_TOKENS.map((token) => {
     if (token.id === 'native') {
       // Native token (ETH, MATIC, etc)
       const native = useBalance({
@@ -60,15 +59,6 @@ export function useContractBalance(address: Address | undefined) {
     }
   })
 
-  // Helper to get value and formatted string
-  const getValue = (amount: number, price: number, local: boolean = false) => {
-    const value = Number((amount * (price || 0)).toFixed(2))
-    return {
-      value,
-      formated: formatCurrencyShort(value, local ? currencyStore.localCurrency.code : undefined)
-    }
-  }
-
   // Computed balances for all tokens
   const balances = computed<TokenBalance[]>(() => {
     return tokenBalances.map(({ token, data, isNative }) => {
@@ -80,11 +70,21 @@ export function useContractBalance(address: Address | undefined) {
           amount = Number(formatUnits(data.value, token.decimals))
         }
       }
+      // Use getTokenInfo for price info
+      const info = currencyStore.getTokenInfo(token.id as TokenId)
+      const local = info?.prices.find((p) => p.id === 'local')
+      const usd = info?.prices.find((p) => p.id === 'usd')
       return {
         amount,
         code: token.symbol,
-        valueInUSD: getValue(amount, currencyStore.getTokenPriceUSD(token.id) ?? 0),
-        valueInLocalCurrency: getValue(amount, currencyStore.getTokenPrice(token.id, currencyStore.localCurrency.code.toLowerCase()) ?? 0, true)
+        valueInUSD: {
+          value: usd?.price ?? 0,
+          formated: formatCurrencyShort(usd?.price ?? 0)
+        },
+        valueInLocalCurrency: {
+          value: local?.price ?? 0,
+          formated: formatCurrencyShort(local?.price ?? 0, local?.code)
+        }
       }
     })
   })
@@ -95,7 +95,9 @@ export function useContractBalance(address: Address | undefined) {
       balances.value.reduce((acc, balance) => acc + balance.valueInUSD.value, 0).toFixed(2)
     )
     const localValue = Number(
-      balances.value.reduce((acc, balance) => acc + balance.valueInLocalCurrency.value, 0).toFixed(2)
+      balances.value
+        .reduce((acc, balance) => acc + balance.valueInLocalCurrency.value, 0)
+        .toFixed(2)
     )
     return {
       usdBalance: {
@@ -110,8 +112,8 @@ export function useContractBalance(address: Address | undefined) {
   })
 
   // Combined loading and error states
-  const isLoading = computed(() => tokenBalances.some(tb => tb.isLoading.value))
-  const error = computed(() => tokenBalances.find(tb => tb.error.value)?.error.value || null)
+  const isLoading = computed(() => tokenBalances.some((tb) => tb.isLoading.value))
+  const error = computed(() => tokenBalances.find((tb) => tb.error.value)?.error.value || null)
 
   return {
     balances,
