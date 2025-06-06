@@ -14,8 +14,9 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
   GO: 'ethereum'
 }
 
+export type TokenId = 'native' | 'usdc' // Add more token IDs as needed
 export interface TokenConfig {
-  id: string
+  id: TokenId
   name: string
   symbol: string
   coingeckoId: string
@@ -105,7 +106,7 @@ export const useCurrencyStore = defineStore('currency', () => {
    * @param currencyCode
    * @returns
    */
-  function getTokenPrice(tokenId: string, currencyCode: string): number | null {
+  function getTokenPrice(tokenId: TokenId, currencyCode: string): number | null {
     const token = tokenStates.find((t) => t.id === tokenId)
     const priceData = token?.data.value
     if (!priceData) return null
@@ -113,14 +114,14 @@ export const useCurrencyStore = defineStore('currency', () => {
     return priceData.market_data.current_price[currencyCode] ?? null
   }
 
-  function getTokenPriceUSD(tokenId: string): number | null {
+  function getTokenPriceUSD(tokenId: TokenId): number | null {
     const token = tokenStates.find((t) => t.id === tokenId)
     const priceData = token?.data.value
     if (!priceData) return null
     return priceData.market_data.current_price.usd ?? null
   }
 
-  function isTokenLoading(tokenId: string): boolean {
+  function isTokenLoading(tokenId: TokenId): boolean {
     const token = tokenStates.find((t) => t.id === tokenId)
     return token?.loading.value ?? false
   }
@@ -129,7 +130,7 @@ export const useCurrencyStore = defineStore('currency', () => {
    * @description Get token info and prices for a given tokenId
    * Returns: { id, name, symbol, prices: [{ price, code, symbol }] }
    */
-  function getTokenInfo(tokenId: string) {
+  function getTokenInfo(tokenId: TokenId) {
     const token = SUPPORTED_TOKENS.find((t) => t.id === tokenId)
     if (!token) return null
     const priceData = tokenStates.find((t) => t.id === tokenId)?.data.value
