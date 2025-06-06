@@ -87,6 +87,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { useUserDataStore, useTeamStore } from '@/stores'
 
 // // Récupère la liste des users de l'équipe
 // const { data: teamUsersData } = useCustomFetch('/user/?teamId=1').get().json()
@@ -94,8 +95,18 @@ import ButtonUI from '@/components/ButtonUI.vue'
 // function getUserByAddress(address: string) {
 //   return teamUsersData.value?.find((u: any) => u.address === address)
 // }
+const userStore = useUserDataStore()
+const teamStore = useTeamStore()
+const weeklyClaimUrl = computed(
+  () =>
+    `/weeklyClaim/?teamId=1${
+      userStore.address !== teamStore.currentTeam?.ownerAddress
+        ? `&memberAddress=${userStore.address}`
+        : ''
+    }`
+)
 
-const { data, error } = useCustomFetch('/weeklyClaim/?teamId=1').get().json()
+const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 

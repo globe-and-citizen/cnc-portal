@@ -14,6 +14,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   if (req.query.memberAddress) {
     memberAddressFilter = { memberAddress: req.query.memberAddress as string };
   }
+
   try {
     // Get all WeeklyClaims that have at least one claim for this team
     const weeklyClaims = await prisma.weeklyClaim.findMany({
