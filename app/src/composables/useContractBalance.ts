@@ -3,19 +3,17 @@ import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, formatUnits, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
+import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
-import type { Currency } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 
-// Extracted value type for balances
 export type TokenBalanceValue = {
   value: number
   formated: string
   id: string
   code: string
   symbol: string
-  price: number | null
+  price: number
 }
 
 interface TokenBalance {
@@ -25,14 +23,29 @@ interface TokenBalance {
   values: Record<string, TokenBalanceValue>
 }
 
+type NativeTokenBalanceEntry = {
+  token: (typeof SUPPORTED_TOKENS)[number]
+  data: { value?: { value: bigint } }
+  isLoading: { value: boolean }
+  error: { value: unknown }
+  isNative: true
+}
+type ERC20TokenBalanceEntry = {
+  token: (typeof SUPPORTED_TOKENS)[number]
+  data: { value?: bigint }
+  isLoading: { value: boolean }
+  error: { value: unknown }
+  isNative: false
+}
+type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
+
 export function useContractBalance(address: Address) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
 
   // Store for all token balances
-  const tokenBalances = SUPPORTED_TOKENS.map((token) => {
+  const tokenBalances: TokenBalanceEntry[] = SUPPORTED_TOKENS.map((token) => {
     if (token.id === 'native') {
-      // Native token (ETH, MATIC, etc)
       const native = useBalance({
         address,
         chainId,
@@ -44,9 +57,8 @@ export function useContractBalance(address: Address) {
         isLoading: native.isLoading,
         error: native.error,
         isNative: true
-      }
+      } as NativeTokenBalanceEntry
     } else {
-      // ERC20 token
       const erc20 = useReadContract({
         address: token.address,
         abi: ERC20ABI,
@@ -60,23 +72,21 @@ export function useContractBalance(address: Address) {
         isLoading: erc20.isLoading,
         error: erc20.error,
         isNative: false
-      }
+      } as ERC20TokenBalanceEntry
     }
   })
 
   // Computed balances for all tokens
   const balances = computed<TokenBalance[]>(() => {
     return tokenBalances.map(({ token, data, isNative }) => {
-      // token balance lenght
       let amount = 0
       if (data.value) {
         if (isNative) {
-          amount = Number(formatEther(data.value.value))
+          amount = Number(formatEther((data.value as { value: bigint }).value))
         } else {
-          amount = Number(formatUnits(data.value, token.decimals))
+          amount = Number(formatUnits(data.value as bigint, token.decimals))
         }
       }
-      // Use getTokenInfo for price info
       const info = currencyStore.getTokenInfo(token.id as TokenId)
       const values: Record<string, TokenBalanceValue> = {}
       if (info?.prices) {
@@ -85,7 +95,10 @@ export function useContractBalance(address: Address) {
           values[price.code] = {
             value: val,
             formated: formatCurrencyShort(val, price.code),
-            ...price
+            id: price.id,
+            code: price.code,
+            symbol: price.symbol,
+            price: price.price ?? 0
           }
         }
       }
