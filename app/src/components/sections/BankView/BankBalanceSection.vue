@@ -86,6 +86,7 @@ import TransferForm from '@/components/forms/TransferForm.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import type { TokenId } from '@/constant'
 
 const props = defineProps<{
   bankAddress: Address
@@ -106,7 +107,7 @@ const depositModal = ref(false)
 const transferModal = ref(false)
 const transferData = ref({
   address: { name: '', address: '' },
-  token: { symbol: NETWORK.currencySymbol, balance: 0 },
+  token: { symbol: NETWORK.currencySymbol, balance: 0, tokenId: 'native' as TokenId },
   amount: '0'
 })
 
@@ -158,6 +159,5 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   }
 })
 
-const getTokens = () =>
-  balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount }))
+const getTokens = () => balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
 </script>
