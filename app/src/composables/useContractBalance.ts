@@ -114,7 +114,6 @@ export function useContractBalance(address: Address) {
     const totals: Record<string, TokenBalanceValue> = {}
     if (balances.value.length > 0) {
       const allCodes = Object.keys(balances.value[0].values)
-      console.log('All codes:', allCodes)
       for (const code of allCodes) {
         const first = balances.value[0].values[code]
         const sum = balances.value.reduce((acc, bal) => acc + (bal.values[code]?.value ?? 0), 0)
