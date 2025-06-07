@@ -123,7 +123,7 @@ const model = defineModel<TransferModel>({
   required: true,
   default: () => ({
     address: { name: '', address: '' },
-    token: { symbol: '', balance: 0, tokenId: 'ds' },
+    token: { symbol: '', balance: 0, tokenId: '' },
     amount: '0'
   })
 })
