@@ -120,6 +120,15 @@ describe("Claim Controller", () => {
         "Invalid hoursWorked, hoursWorked must be greater than 0"
       );
     });
+
+    it("should return 500 if internal server error", async () => {
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: "memo" });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error has occured");
+    });
   });
 
   describe("GET: /claim", () => {
