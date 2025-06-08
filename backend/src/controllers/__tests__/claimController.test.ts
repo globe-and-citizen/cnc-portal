@@ -31,7 +31,7 @@ const mockWeeklyClaims: WeeklyClaim = {
   data: {},
   memberAddress: "0xMemberAddress",
   signature: null,
-  claims: [],
+  claims: [{ hoursWorked: 30 }],
   wageId: 1,
 } as WeeklyClaim;
 
@@ -132,9 +132,34 @@ describe("Claim Controller", () => {
       );
     });
 
-    it("should return 201 and create a claim successfully", async () => {
+    it("should return 201 when you create a weekly claim an created", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
       vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.weeklyClaim, "create").mockResolvedValue(
+        mockWeeklyClaims
+      );
+
+      vi.spyOn(prisma.claim, "create").mockResolvedValue(mockClaim);
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: "test memo" });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        id: mockClaim.id,
+        hoursWorked: mockClaim.hoursWorked,
+        memo: mockClaim.memo,
+        wageId: mockClaim.wageId,
+        status: mockClaim.status,
+        weeklyClaimId: mockClaim.weeklyClaimId,
+      });
+    });
+
+    it("should return 201 when you add a claim an existing weekly claim", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(
+        mockWeeklyClaims
+      );
       vi.spyOn(prisma.weeklyClaim, "create").mockResolvedValue(
         mockWeeklyClaims
       );

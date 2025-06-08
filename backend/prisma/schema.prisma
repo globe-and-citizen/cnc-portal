@@ -99,7 +99,7 @@ model Wage {
 model Claim {
   id            Int          @id @default(autoincrement()) // Add an ID for easy referencing
   status        String
-  hoursWorked   Int?
+  hoursWorked   Int
   dayWorked     DateTime?
   memo          String?
   signature     String?

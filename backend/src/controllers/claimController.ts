@@ -71,10 +71,8 @@ export const addClaim = async (req: Request, res: Response) => {
     // Check tu max hours.
 
     const totalHours =
-      weeklyClaim?.claims.reduce(
-        (sum, claim) => sum + (claim.hoursWorked || 0),
-        0
-      ) ?? 0;
+      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ??
+      0;
 
     if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
       return errorResponse(
