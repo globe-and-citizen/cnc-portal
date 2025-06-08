@@ -61,10 +61,8 @@
           </span>
         </template>
 
-        <template #action-data="{ row }">
-          <ButtonUI class="btn btn-success btn-sm" type="button" @click="onApprove(row)">
-            Approve
-          </ButtonUI>
+        <template #action-data="{}">
+          <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
         </template>
       </TableComponent>
     </WeeklyClaimComponent>
