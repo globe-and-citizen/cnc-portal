@@ -90,4 +90,55 @@ describe("getTeamWeeklyClaims", () => {
       });
     });
   });
+  it("should filter weekly claims by memberAddress if provided", async () => {
+    const testDate = new Date();
+    const mockWeeklyClaims: WeeklyClaim[] = [
+      {
+        id: 1,
+        weekStart: testDate,
+        memberAddress: "0xAnotherAddress",
+        teamId: 1,
+        data: {},
+        signature: null,
+        createdAt: testDate,
+        updatedAt: testDate,
+        wageId: 0,
+      },
+    ];
+
+    const findManySpy = vi
+      .spyOn(prisma.weeklyClaim, "findMany")
+      .mockResolvedValue(mockWeeklyClaims);
+
+    const response = await request(app).get(
+      "/?teamId=1&memberAddress=0xAnotherAddress"
+    );
+    expect(response.status).toBe(200);
+
+    const expectedResponse = mockWeeklyClaims.map((claim) => ({
+      ...claim,
+      weekStart: claim.weekStart.toISOString(),
+      createdAt: claim.createdAt.toISOString(),
+      updatedAt: claim.updatedAt.toISOString(),
+    }));
+
+    expect(response.body).toEqual(expectedResponse);
+
+    expect(findManySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          claims: {
+            some: {
+              wage: {
+                teamId: 1,
+              },
+            },
+          },
+          memberAddress: "0xAnotherAddress",
+        }),
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      })
+    );
+  });
 });
