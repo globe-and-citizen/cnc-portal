@@ -55,6 +55,7 @@ export const addClaim = async (req: Request, res: Response) => {
 
     // get the member current wage
 
+    console.log("weekStart", weekStart);
     let weeklyClaim = await prisma.weeklyClaim.findFirst({
       where: {
         wage: {
@@ -75,7 +76,7 @@ export const addClaim = async (req: Request, res: Response) => {
         (sum, claim) => sum + (claim.hoursWorked || 0),
         0
       ) ?? 0;
-
+      
     if (tatalHours + hoursWorked > wage.maximumHoursPerWeek) {
       return errorResponse(
         400,
