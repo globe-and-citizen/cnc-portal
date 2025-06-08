@@ -10,36 +10,6 @@ type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
   teamId: string;
 };
 
-async function hasReachedMaxHoursThisWeek(
-  userAddress: string,
-  teamId: number,
-  weekStart: Date,
-  hoursWorked: number
-) {
-  const wage = await prisma.wage.findFirst({
-    where: { userAddress, nextWageId: null, teamId },
-  });
-  if (!wage) return true;
-
-  const weeklyClaim = await prisma.weeklyClaim.findFirst({
-    where: {
-      weekStart,
-      memberAddress: userAddress,
-      teamId,
-      wageId: wage.id,
-    },
-    include: { claims: true },
-  });
-
-  const totalHours = weeklyClaim
-    ? weeklyClaim.claims.reduce(
-        (sum, claim) => sum + (claim.hoursWorked || 0),
-        0
-      )
-    : 0;
-  return totalHours + hoursWorked > wage.maximumHoursPerWeek;
-}
-
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
@@ -73,21 +43,6 @@ export const addClaim = async (req: Request, res: Response) => {
     return errorResponse(400, parametersError.join(", "), res);
   }
 
-  if (
-    await hasReachedMaxHoursThisWeek(
-      callerAddress,
-      teamId,
-      weekStart,
-      hoursWorked
-    )
-  ) {
-    return errorResponse(
-      400,
-      "Maximum weekly hours reached, cannot submit more claims for this week.",
-      res
-    );
-  }
-
   try {
     // Get user current
     const wage = await prisma.wage.findFirst({
@@ -110,7 +65,24 @@ export const addClaim = async (req: Request, res: Response) => {
         memberAddress: callerAddress,
         teamId: teamId,
       },
+      include: { claims: true },
     });
+
+    // Check tu max hours.
+
+    const tatalHours =
+      weeklyClaim?.claims.reduce(
+        (sum, claim) => sum + (claim.hoursWorked || 0),
+        0
+      ) ?? 0;
+
+    if (tatalHours + hoursWorked > wage.maximumHoursPerWeek) {
+      return errorResponse(
+        400,
+        "Maximum weekly hours reached, cannot submit more claims for this week.",
+        res
+      );
+    }
 
     if (!weeklyClaim) {
       weeklyClaim = await prisma.weeklyClaim.create({
@@ -120,6 +92,9 @@ export const addClaim = async (req: Request, res: Response) => {
           memberAddress: callerAddress,
           teamId: teamId,
           data: {},
+        },
+        include: {
+          claims: true,
         },
       });
     }
