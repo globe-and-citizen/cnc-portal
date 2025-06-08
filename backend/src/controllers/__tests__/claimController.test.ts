@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { addClaim, getClaims, updateClaim } from "../claimController";
-import { Wage, WeeklyClaim } from "@prisma/client";
+import { Claim, Wage, WeeklyClaim } from "@prisma/client";
 
 vi.mock("../../utils");
 function setAddressMiddleware(address: string) {
@@ -34,6 +34,17 @@ const mockWeeklyClaims: WeeklyClaim = {
   claims: [],
   wageId: 1,
 } as WeeklyClaim;
+
+const mockClaim = {
+  id: 123,
+  hoursWorked: 5,
+  memo: "test memo",
+  wageId: 1,
+  status: "pending",
+  weeklyClaimId: 1,
+  dayWorked: new Date(),
+} as Claim;
+
 const app = express();
 app.use(express.json());
 app.post("/claim", setAddressMiddleware("0x123"), addClaim);
@@ -121,12 +132,41 @@ describe("Claim Controller", () => {
       );
     });
 
+    it("should return 201 and create a claim successfully", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.weeklyClaim, "create").mockResolvedValue(
+        mockWeeklyClaims
+      );
+
+      vi.spyOn(prisma.claim, "create").mockResolvedValue(mockClaim);
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: "test memo" });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        id: mockClaim.id,
+        hoursWorked: mockClaim.hoursWorked,
+        memo: mockClaim.memo,
+        wageId: mockClaim.wageId,
+        status: mockClaim.status,
+        weeklyClaimId: mockClaim.weeklyClaimId,
+      });
+    });
+
     it("should return 500 if internal server error", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockRejectedValue(
+        new Error("DB error")
+      );
+
       const response = await request(app)
         .post("/claim")
         .send({ teamId: 1, hoursWorked: 5, memo: "memo" });
 
+      expect(prisma.wage.findFirst).toHaveBeenCalled();
       expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty("message");
       expect(response.body.message).toBe("Internal server error has occured");
     });
   });

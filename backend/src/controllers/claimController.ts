@@ -55,7 +55,6 @@ export const addClaim = async (req: Request, res: Response) => {
 
     // get the member current wage
 
-    console.log("weekStart", weekStart);
     let weeklyClaim = await prisma.weeklyClaim.findFirst({
       where: {
         wage: {
@@ -71,13 +70,13 @@ export const addClaim = async (req: Request, res: Response) => {
 
     // Check tu max hours.
 
-    const tatalHours =
+    const totalHours =
       weeklyClaim?.claims.reduce(
         (sum, claim) => sum + (claim.hoursWorked || 0),
         0
       ) ?? 0;
-      
-    if (tatalHours + hoursWorked > wage.maximumHoursPerWeek) {
+
+    if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
       return errorResponse(
         400,
         "Maximum weekly hours reached, cannot submit more claims for this week.",
