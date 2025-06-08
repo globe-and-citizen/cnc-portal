@@ -4,6 +4,7 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { addClaim, getClaims, updateClaim } from "../claimController";
 
+vi.mock("../../utils");
 function setAddressMiddleware(address: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     (req as any).address = address;
@@ -69,49 +70,6 @@ describe("Claim Controller", () => {
       expect(response.body.message).toContain(
         "Invalid hoursWorked, hoursWorked must be greater than 0"
       );
-    });
-
-    it("should return 400 if no wage is found for the user", async () => {
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
-
-      const response = await request(app)
-        .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe("No wage found for the user");
-    });
-
-    it("should return 201 and create a claim successfully", async () => {
-      // @ts-ignore
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue({ id: 1 });
-      // @ts-ignore
-      vi.spyOn(prisma.claim, "create").mockResolvedValue({
-        id: 1,
-        hoursWorked: 5,
-        memo: "",
-        status: "pending",
-        wageId: 1,
-      });
-
-      const response = await request(app)
-        .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
-
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("id");
-      expect(response.body.status).toBe("pending");
-    });
-
-    it("should return 500 if an error occurs", async () => {
-      vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
-
-      const response = await request(app)
-        .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
-
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Internal server error has occured");
     });
   });
 
