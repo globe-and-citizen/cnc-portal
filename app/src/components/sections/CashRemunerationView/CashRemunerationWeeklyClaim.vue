@@ -16,9 +16,7 @@
         </template>
 
         <template #hoursWorked-data="{ row }">
-          <span class="font-bold">
-            {{ row.claims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0) }}:00 hrs
-          </span>
+          <span class="font-bold"> {{ getTotalHoursWorked(row.claims) }}:00 hrs </span>
           <br />
           <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
         </template>
@@ -38,31 +36,27 @@
 
         <template #totalAmount-data="{ row }">
           <span class="font-bold">
-            {{
-              row.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) *
-              row.wage.cashRatePerHour
-            }}
+            {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
             {{ NETWORK.currencySymbol }}
           </span>
           <br />
           <span class="font-bold">
-            {{
-              row.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) *
-              row.wage.tokenRatePerHour
-            }}
+            {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
             TOKEN
           </span>
           <br />
           <span class="font-bold">
-            {{
-              row.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) *
-              row.wage.usdcRatePerHour
-            }}
+            {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
             USDC
           </span>
           <br />
           <span class="text-gray-500">
-            {{ getHoulyRateInUserCurrency(row.wage.cashRatePerHour) }}
+            {{
+              (
+                getTotalHoursWorked(row.claims) *
+                Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+              ).toFixed(2)
+            }}
             {{ NETWORK.nativeTokenSymbol }} / USD
           </span>
         </template>
@@ -89,12 +83,10 @@ import { useCurrencyStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 
-// // Récupère la liste des users de l'équipe
-// const { data: teamUsersData } = useCustomFetch('/user/?teamId=1').get().json()
+function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
+  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+}
 
-// function getUserByAddress(address: string) {
-//   return teamUsersData.value?.find((u: any) => u.address === address)
-// }
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const weeklyClaimUrl = computed(
