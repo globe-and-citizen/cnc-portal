@@ -70,20 +70,20 @@ export const useCurrencyStore = defineStore('currency', () => {
    * @param currencyCode
    * @returns
    */
-  function getTokenPrice(tokenId: TokenId, currencyCode: string): number | null {
-    const token = tokenStates.find((t) => t.id === tokenId)
-    const priceData = token?.data.value
-    if (!priceData) return null
-    if (!(currencyCode in priceData.market_data.current_price)) return null
-    return priceData.market_data.current_price[currencyCode] ?? null
-  }
+  // function getTokenPrice(tokenId: TokenId, currencyCode: string): number | null {
+  //   const token = tokenStates.find((t) => t.id === tokenId)
+  //   const priceData = token?.data.value
+  //   if (!priceData) return null
+  //   if (!(currencyCode in priceData.market_data.current_price)) return null
+  //   return priceData.market_data.current_price[currencyCode] ?? null
+  // }
 
-  function getTokenPriceUSD(tokenId: TokenId): number | null {
-    const token = tokenStates.find((t) => t.id === tokenId)
-    const priceData = token?.data.value
-    if (!priceData) return null
-    return priceData.market_data.current_price.usd ?? null
-  }
+  // function getTokenPriceUSD(tokenId: TokenId): number | null {
+  //   const token = tokenStates.find((t) => t.id === tokenId)
+  //   const priceData = token?.data.value
+  //   if (!priceData) return null
+  //   return priceData.market_data.current_price.usd ?? null
+  // }
 
   function isTokenLoading(tokenId: TokenId): boolean {
     const token = tokenStates.find((t) => t.id === tokenId)
@@ -127,8 +127,8 @@ export const useCurrencyStore = defineStore('currency', () => {
     localCurrency: currency,
     supportedTokens: SUPPORTED_TOKENS,
     tokenStates,
-    getTokenPrice,
-    getTokenPriceUSD,
+    // getTokenPrice,
+    // getTokenPriceUSD,
     isTokenLoading,
     setCurrency,
     getTokenInfo
