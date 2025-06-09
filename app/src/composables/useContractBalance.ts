@@ -14,6 +14,7 @@ export type TokenBalanceValue = {
   code: string
   symbol: string
   price: number
+  formatedPrice: string
 }
 
 interface TokenBalance {
@@ -104,7 +105,8 @@ export function useContractBalance(address: Address) {
             id: price.id,
             code: price.code,
             symbol: price.symbol,
-            price: price.price ?? 0
+            price: price.price ?? 0,
+            formatedPrice: price.price ? formatCurrencyShort(price.price, price.code) : 'N/A'
           }
         }
       }
