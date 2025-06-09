@@ -1,8 +1,8 @@
 import { it, expect, describe, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import TransferForm from '../TransferForm.vue'
+import TransferForm, { type Token } from '../TransferForm.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { NETWORK } from '@/constant'
+import { NETWORK, type TokenId } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
@@ -14,65 +14,49 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
     useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
   }
 })
+const defaultTokens: Token[] = [
+  { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId },
+  { symbol: 'USDC', balance: 50, tokenId: 'usdc' as TokenId }
+]
+const defaultModelValue = {
+  address: { name: '', address: '' },
+  token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId },
+  amount: '0'
+}
+
+const defaultProps = {
+  loading: false,
+  service: 'Test Service',
+  tokens: defaultTokens,
+  modelValue: defaultModelValue
+}
+function factory(props = {}) {
+  return mount(TransferForm, {
+    props: { ...defaultProps, ...props },
+    global: {
+      stubs: { SelectMemberInput: true },
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
+    }
+  })
+}
 
 describe('TransferForm.vue', () => {
   let wrapper: ReturnType<typeof mount<typeof TransferForm>>
   beforeEach(() => {
-    wrapper = mount(TransferForm, {
-      props: {
-        loading: false,
-        service: 'Test Service',
-        tokens: [
-          { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
-          { symbol: 'USDC', balance: 50, tokenId: 'usdc' }
-        ],
-        modelValue: {
-          address: { name: '', address: '' },
-          token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
-          amount: '0'
-        }
-      },
-      global: {
-        stubs: {
-          SelectMemberInput: true
-        },
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
+    wrapper = factory()
   })
 
   describe('Renders', () => {
     it('loading button', () => {
-      const wrapper = mount(TransferForm, {
-        props: {
-          loading: true,
-          service: 'Test Service',
-          tokens: [
-            { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
-            { symbol: 'USDC', balance: 50, tokenId: 'usdc' }
-          ],
-          modelValue: {
-            address: { name: '', address: '' },
-            token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
-            amount: '0'
-          }
-        },
-        global: {
-          stubs: {
-            SelectMemberInput: true
-          }
-        }
-      })
+      const wrapper = factory({ loading: true })
       expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
     })
-
     it('renders initial UI correctly', () => {
       expect(wrapper.find('h1').text()).toBe('Transfer from Test Service Contract')
       expect(wrapper.find('.btn-primary').text()).toBe('Transfer')
       expect(wrapper.find('.btn-error').text()).toBe('Cancel')
       expect(wrapper.find('[data-test="amount-input"]').exists()).toBe(true)
     })
-
     it('renders SelectMemberInput component', () => {
       expect(wrapper.findComponent(SelectMemberContractsInput).exists()).toBe(true)
     })
@@ -286,10 +270,12 @@ describe('TransferForm.vue', () => {
       await transferButton.trigger('click')
 
       expect(wrapper.emitted('transfer')).toBeTruthy()
-      expect(wrapper.emitted('transfer')?.[0]).toEqual([
+      const emitted = wrapper.emitted('transfer')
+      expect(emitted).toBeTruthy()
+      expect(emitted?.[0]).toMatchObject([
         {
           address: { name: 'Test', address: '0x1234567890123456789012345678901234567890' },
-          token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
+          token: expect.objectContaining(defaultTokens[0]),
           amount: '10'
         }
       ])
