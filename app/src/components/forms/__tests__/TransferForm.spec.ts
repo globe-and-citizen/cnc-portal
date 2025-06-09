@@ -7,19 +7,6 @@ import { createTestingPinia } from '@pinia/testing'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
-vi.mock('@/stores', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({
-      localCurrency: {
-        code: 'USD',
-        symbol: '$'
-      }
-    }))
-  }
-})
-
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
@@ -36,12 +23,12 @@ describe('TransferForm.vue', () => {
         loading: false,
         service: 'Test Service',
         tokens: [
-          { symbol: NETWORK.currencySymbol, balance: 100 },
-          { symbol: 'USDC', balance: 50 }
+          { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
+          { symbol: 'USDC', balance: 50, tokenId: 'usdc' }
         ],
         modelValue: {
           address: { name: '', address: '' },
-          token: { symbol: NETWORK.currencySymbol, balance: 100 },
+          token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
           amount: '0'
         }
       },
@@ -61,12 +48,12 @@ describe('TransferForm.vue', () => {
           loading: true,
           service: 'Test Service',
           tokens: [
-            { symbol: NETWORK.currencySymbol, balance: 100 },
-            { symbol: 'USDC', balance: 50 }
+            { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
+            { symbol: 'USDC', balance: 50, tokenId: 'usdc' }
           ],
           modelValue: {
             address: { name: '', address: '' },
-            token: { symbol: NETWORK.currencySymbol, balance: 100 },
+            token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
             amount: '0'
           }
         },
@@ -302,7 +289,7 @@ describe('TransferForm.vue', () => {
       expect(wrapper.emitted('transfer')?.[0]).toEqual([
         {
           address: { name: 'Test', address: '0x1234567890123456789012345678901234567890' },
-          token: { symbol: NETWORK.currencySymbol, balance: 100 },
+          token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' },
           amount: '10'
         }
       ])
