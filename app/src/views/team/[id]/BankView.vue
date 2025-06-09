@@ -7,7 +7,7 @@
       @balance-updated="$forceUpdate()"
     />
     <GenericTokenHoldingsSection v-if="typedBankAddress" :address="typedBankAddress" />
-    <TransactionsHistorySection />
+    <!-- <TransactionsHistorySection /> -->
   </div>
 </template>
 
@@ -16,7 +16,7 @@ import { ref, computed } from 'vue'
 import { type Address } from 'viem'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
-import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
+// import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
