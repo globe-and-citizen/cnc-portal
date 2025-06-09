@@ -85,12 +85,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { onClickOutside } from '@vueuse/core'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { formatCurrencyShort } from '@/utils'
@@ -127,9 +126,6 @@ const model = defineModel<TransferModel>({
     amount: '0'
   })
 })
-
-const isDropdownOpen = ref(false)
-const target = ref<HTMLElement | null>(null)
 
 const emit = defineEmits(['transfer', 'closeModal'])
 const currencyStore = useCurrencyStore()
@@ -199,11 +195,6 @@ const submitForm = () => {
 const setMaxAmount = () => {
   model.value.amount = model.value.token.balance.toString()
 }
-
-// Handle clicking outside of dropdown
-onClickOutside(target, () => {
-  isDropdownOpen.value = false
-})
 
 const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
   model.value.address = item
