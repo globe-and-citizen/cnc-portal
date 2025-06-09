@@ -22,7 +22,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useTeamStore } from '@/stores'
 import { useStorage } from '@vueuse/core'
-import { computed } from 'vue'
+import type { Address } from 'viem'
 
 const currency = useStorage('currency', {
   code: 'USD',
@@ -31,11 +31,8 @@ const currency = useStorage('currency', {
 })
 const teamStore = useTeamStore()
 
-const contractAddress = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'CashRemunerationEIP712'
-    )?.address
-)
-const { isLoading: isLoadingBalance, total } = useContractBalance(contractAddress)
+const contractAddress = teamStore.currentTeam?.teamContracts.find(
+  (contract) => contract.type === 'CashRemunerationEIP712'
+)?.address
+const { isLoading: isLoadingBalance, total } = useContractBalance(contractAddress as Address)
 </script>
