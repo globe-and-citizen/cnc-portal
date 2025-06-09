@@ -39,6 +39,7 @@ type ERC20TokenBalanceEntry = {
 }
 type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
 
+// TODO: support reactive address changes
 /**
  * @description Composable to fetch and compute balances for an address
  * 
@@ -50,44 +51,42 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
 
-  // Store for all token balances (reactive to address)
-  const tokenBalances = computed<TokenBalanceEntry[]>(() =>
-    SUPPORTED_TOKENS.map((token) => {
-      if (token.id === 'native') {
-        const native = useBalance({
-          address: unref(address),
-          chainId,
-          query: { refetchInterval: 60000 }
-        })
-        return {
-          token,
-          data: native.data,
-          isLoading: native.isLoading,
-          error: native.error,
-          isNative: true
-        } as NativeTokenBalanceEntry
-      } else {
-        const erc20 = useReadContract({
-          address: token.address,
-          abi: ERC20ABI,
-          functionName: 'balanceOf',
-          args: [unref(address)],
-          query: { refetchInterval: 60000 }
-        })
-        return {
-          token,
-          data: erc20.data,
-          isLoading: erc20.isLoading,
-          error: erc20.error,
-          isNative: false
-        } as ERC20TokenBalanceEntry
-      }
-    })
-  )
+  // Store for all token balances
+  const tokenBalances: TokenBalanceEntry[] = SUPPORTED_TOKENS.map((token) => {
+    if (token.id === 'native') {
+      const native = useBalance({
+        address: unref(address),
+        chainId,
+        query: { refetchInterval: 60000 }
+      })
+      return {
+        token,
+        data: native.data,
+        isLoading: native.isLoading,
+        error: native.error,
+        isNative: true
+      } as NativeTokenBalanceEntry
+    } else {
+      const erc20 = useReadContract({
+        address: token.address,
+        abi: ERC20ABI,
+        functionName: 'balanceOf',
+        args: [unref(address)],
+        query: { refetchInterval: 60000 }
+      })
+      return {
+        token,
+        data: erc20.data,
+        isLoading: erc20.isLoading,
+        error: erc20.error,
+        isNative: false
+      } as ERC20TokenBalanceEntry
+    }
+  })
 
   // Computed balances for all tokens
   const balances = computed<TokenBalance[]>(() => {
-    return tokenBalances.value.map(({ token, data, isNative }) => {
+    return tokenBalances.map(({ token, data, isNative }) => {
       let amount = 0
       if (data.value) {
         if (isNative) {
@@ -142,8 +141,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
   })
 
   // Combined loading and error states
-  const isLoading = computed(() => tokenBalances.value.some((tb) => tb.isLoading.value))
-  const error = computed(() => tokenBalances.value.find((tb) => tb.error.value)?.error.value || null)
+  const isLoading = computed(() => tokenBalances.some((tb) => tb.isLoading.value))
+  const error = computed(() => tokenBalances.find((tb) => tb.error.value)?.error.value || null)
 
   return {
     balances,
