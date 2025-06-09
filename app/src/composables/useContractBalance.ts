@@ -38,6 +38,13 @@ type ERC20TokenBalanceEntry = {
 }
 type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
 
+/**
+ * @description Composable to fetch and compute balances for an address
+ * 
+ * Supports both native and ERC20 tokens
+ * 
+ * Returns: { balances, total, isLoading, error }
+ */
 export function useContractBalance(address: Address) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
