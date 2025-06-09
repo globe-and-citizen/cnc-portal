@@ -36,7 +36,7 @@
       <button
         class="btn btn-xs btn-ghost mr-2"
         @click="useMaxBalance"
-        :disabled="isLoadingBalance"
+        :disabled="isLoading"
         data-test="maxButton"
       >
         Max
@@ -49,7 +49,7 @@
               value: token.tokenId
             }))
           "
-          :disabled="isLoadingBalance"
+          :disabled="isLoading"
           @change="
             (value) => {
               selectedTokenId = value
@@ -78,7 +78,7 @@
     <ButtonUI
       variant="primary"
       @click="submitForm"
-      :loading="isLoading"
+      :loading="submitting"
       :disabled="isLoading || $v.amount.$invalid"
     >
       Deposit
@@ -122,6 +122,7 @@ const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native') // Default to native token (ETH)
 const depositAmount = ref<string>('')
 const currentStep = ref(1)
+const submitting = ref(false)
 
 // Stores
 const currencyStore = useCurrencyStore()
@@ -182,12 +183,14 @@ const estimatedPrice = computed(() => {
   return formatCurrencyShort(value, priceObj?.code ?? 'USD')
 })
 
-const isLoadingBalance = computed(() => isLoading.value)
-
 // Methods
 
-// wait until a value is true
-
+/**
+ * Utility function to wait for a condition to be met
+ * @description This function repeatedly checks a condition until it returns true or a timeout occurs.
+ * @param condition () => boolean - A function that returns a boolean indicating whether the condition is met.
+ * @param timeout
+ */
 const waitForCondition = (condition: () => boolean, timeout = 5000) => {
   return new Promise((resolve, reject) => {
     const startTime = Date.now()
@@ -245,7 +248,7 @@ const $v = useVuelidate(rules, { amount })
 const submitForm = async () => {
   await $v.value.$touch()
   if ($v.value.$invalid) return
-
+  submitting.value = true
   try {
     if (selectedTokenId.value === 'native') {
       await sendTransaction({
@@ -305,7 +308,6 @@ const submitForm = async () => {
         emits('closeModal')
       } else {
         addErrorToast('Selected token is not valid')
-        return
       }
     }
   } catch (error) {
@@ -313,6 +315,7 @@ const submitForm = async () => {
     addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
   }
 
+  submitting.value = false
   currentStep.value = 1
 }
 
