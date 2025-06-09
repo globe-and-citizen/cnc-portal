@@ -1,6 +1,6 @@
 <template>
   <OverviewCard
-    :title="total.localCurrencyBalance.formated"
+    :title="total[currency.code]?.formated ?? 0"
     variant="success"
     subtitle="Total Balance"
     :card-icon="bagIcon"
@@ -21,10 +21,21 @@ import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useTeamStore } from '@/stores'
+import { useStorage } from '@vueuse/core'
+import { computed } from 'vue'
 
+const currency = useStorage('currency', {
+  code: 'USD',
+  name: 'US Dollar',
+  symbol: '$'
+})
 const teamStore = useTeamStore()
-const contractAddress = teamStore.currentTeam?.teamContracts.find(
-  (contract) => contract.type === 'CashRemunerationEIP712'
-)?.address
+
+const contractAddress = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'CashRemunerationEIP712'
+    )?.address
+)
 const { isLoading: isLoadingBalance, total } = useContractBalance(contractAddress)
 </script>
