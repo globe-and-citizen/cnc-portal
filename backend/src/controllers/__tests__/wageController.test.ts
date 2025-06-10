@@ -33,11 +33,15 @@ const mockWage = {
   id: 1,
   teamId: 1,
   userAddress: "0xMemberAddress",
-  cashRatePerHour: 50,
-  tokenRatePerHour: 100,
+  // cashRatePerHour: 50,
+  // tokenRatePerHour: 100,
+  ratePerHour: [
+    { type: "cash", amount: 50 },
+    { type: "token", amount: 100 },
+  ],
   maximumHoursPerWeek: 40,
   nextWageId: null,
-} as Wage;
+} as unknown as Wage;
 
 describe("Wage Controller", () => {
   describe("PUT: /wage", () => {
@@ -50,7 +54,7 @@ describe("Wage Controller", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
-        "Missing or invalid parameters: teamId, userAddress, cashRatePerHour, tokenRatePerHour, maximumHoursPerWeek"
+        "Missing or invalid parameters: teamId, userAddress, maximumHoursPerWeek, ratePerHour"
       );
     });
 
@@ -58,14 +62,18 @@ describe("Wage Controller", () => {
       const response = await request(app).put("/wage").send({
         teamId: 1,
         userAddress: "0xMemberAddress",
-        cashRatePerHour: -50,
-        tokenRatePerHour: 100,
+        // cashRatePerHour: -50,
+        // tokenRatePerHour: 100,
+        ratePerHour: [
+          { type: "cash", amount: -50 },
+          { type: "token", amount: 100 }
+        ],
         maximumHoursPerWeek: "0.5",
       });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
-        "Errors: Invalid maximumHoursPerWeek, Invalid cashRatePerHour"
+        "Errors: Invalid maximumHoursPerWeek, Invalid wage rate"
       );
     });
 
@@ -75,8 +83,12 @@ describe("Wage Controller", () => {
       const response = await request(app).put("/wage").send({
         teamId: 1,
         userAddress: "0xMemberAddress",
-        cashRatePerHour: 50,
-        tokenRatePerHour: 100,
+        // cashRatePerHour: 50,
+        // tokenRatePerHour: 100,
+        ratePerHour: [
+          { type: "cash", amount: 50 },
+          { type: "token", amount: 100 }
+        ],
         maximumHoursPerWeek: 40,
       });
 
@@ -96,8 +108,12 @@ describe("Wage Controller", () => {
         .send({
           teamId: 1,
           userAddress: "0xMemberAddress",
-          cashRatePerHour: 50,
-          tokenRatePerHour: 100,
+          // cashRatePerHour: 50,
+          // tokenRatePerHour: 100,
+          ratePerHour: [
+            { type: "cash", amount: 50 },
+            { type: "token", amount: 100 }
+          ],
           maximumHoursPerWeek: 40,
         });
 
@@ -117,8 +133,12 @@ describe("Wage Controller", () => {
         .send({
           teamId: 1,
           userAddress: "0xMemberAddress",
-          cashRatePerHour: 50,
-          tokenRatePerHour: 100,
+          // cashRatePerHour: 50,
+          // tokenRatePerHour: 100,
+          ratePerHour: [
+            { type: "cash", amount: 50 },
+            { type: "token", amount: 100 }
+          ],
           maximumHoursPerWeek: 40,
         });
 
@@ -139,8 +159,12 @@ describe("Wage Controller", () => {
         .send({
           teamId: 1,
           userAddress: "0xMemberAddress",
-          cashRatePerHour: 50,
-          tokenRatePerHour: 100,
+          // cashRatePerHour: 50,
+          // tokenRatePerHour: 100,
+          ratePerHour: [
+            { type: "cash", amount: 50 },
+            { type: "token", amount: 100 }
+          ],
           maximumHoursPerWeek: 40,
         });
 
@@ -155,8 +179,12 @@ describe("Wage Controller", () => {
       const response = await request(app).put("/wage").send({
         teamId: 1,
         userAddress: "0xMemberAddress",
-        cashRatePerHour: 50,
-        tokenRatePerHour: 100,
+        // cashRatePerHour: 50,
+        // tokenRatePerHour: 100,
+        ratePerHour: [
+          { type: "cash", amount: 50 },
+          { type: "token", amount: 100 }
+        ],
         maximumHoursPerWeek: 40,
       });
 
@@ -193,6 +221,7 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "findMany").mockResolvedValue([
         {
           ...mockWage,
+          //@ts-expect-error: wage relationship
           previousWage: { id: 0 },
         },
       ]);
