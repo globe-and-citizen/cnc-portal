@@ -46,6 +46,7 @@ export interface ClaimResponse {
 export interface WageResponse {
   userAddress: Address
   maximumHoursPerWeek: number
+  ratePerHour?: Array<{ type: string; amount: number }>
   cashRatePerHour: number
   tokenRatePerHour?: number
   usdcRatePerHour?: number
