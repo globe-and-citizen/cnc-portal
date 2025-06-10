@@ -79,9 +79,7 @@ model Wage {
   user                User     @relation(fields: [userAddress], references: [address])
   teamId              Int
   userAddress         String
-  cashRatePerHour     Float    @default(0.0)
-  tokenRatePerHour    Float    @default(0.0)
-  usdcRatePerHour     Float    @default(0.0)
+  ratePerHour         Json      @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
   maximumHoursPerWeek Int
   nextWageId          Int?     @unique
   nextWage            Wage?    @relation("wageRelated", fields: [nextWageId], references: [id])
