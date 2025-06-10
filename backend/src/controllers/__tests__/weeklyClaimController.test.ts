@@ -1,0 +1,144 @@
+import request from "supertest";
+import express, { Request, Response, NextFunction } from "express";
+import { getTeamWeeklyClaims } from "../weeklyClaimController";
+import { prisma } from "../../utils";
+import { describe, it, beforeEach, expect, vi } from "vitest";
+import { WeeklyClaim } from "@prisma/client";
+
+vi.mock("../../utils");
+vi.mock("../../utils/viem.config");
+
+function setAddressMiddleware(address: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = address;
+    next();
+  };
+}
+
+const app = express();
+app.use(express.json());
+app.use(setAddressMiddleware("0xMemberAddress"));
+app.get("/", getTeamWeeklyClaims);
+
+describe("getTeamWeeklyClaims", () => {
+  describe("GET: /", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return 400 if teamId is missing", async () => {
+      const response = await request(app).get("/");
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ message: "Missing or invalid teamId" });
+    });
+
+    it("should get weekly claims for a valid teamId", async () => {
+      const testDate = new Date();
+      const mockWeeklyClaims: WeeklyClaim[] = [
+        {
+          id: 1,
+          weekStart: testDate,
+          memberAddress: "0xMemberAddress",
+          teamId: 1,
+          data: {},
+          signature: null,
+          createdAt: testDate,
+          updatedAt: testDate,
+          wageId: 0,
+        },
+        {
+          id: 2,
+          weekStart: testDate,
+          memberAddress: "0xMemberAddress",
+          teamId: 1,
+          data: {},
+          signature: null,
+          createdAt: testDate,
+          updatedAt: testDate,
+          wageId: 0,
+        },
+      ];
+
+      vi.spyOn(prisma.weeklyClaim, "findMany").mockResolvedValue(
+        mockWeeklyClaims
+      );
+
+      const response = await request(app).get("/?teamId=1");
+      expect(response.status).toBe(200);
+
+      // Correction: comparer avec les dates sérialisées en JSON
+      const expectedResponse = mockWeeklyClaims.map((claim) => ({
+        ...claim,
+        weekStart: claim.weekStart.toISOString(),
+        createdAt: claim.createdAt.toISOString(),
+        updatedAt: claim.updatedAt.toISOString(),
+      }));
+
+      expect(response.body).toEqual(expectedResponse);
+    });
+
+    it("should return 500 on database error", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findMany").mockRejectedValue(
+        new Error("Database error")
+      );
+
+      const response = await request(app).get("/?teamId=1");
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        message: "Internal server error has occured",
+        error: expect.any(String),
+      });
+    });
+  });
+  it("should filter weekly claims by memberAddress if provided", async () => {
+    const testDate = new Date();
+    const mockWeeklyClaims: WeeklyClaim[] = [
+      {
+        id: 1,
+        weekStart: testDate,
+        memberAddress: "0xAnotherAddress",
+        teamId: 1,
+        data: {},
+        signature: null,
+        createdAt: testDate,
+        updatedAt: testDate,
+        wageId: 0,
+      },
+    ];
+
+    const findManySpy = vi
+      .spyOn(prisma.weeklyClaim, "findMany")
+      .mockResolvedValue(mockWeeklyClaims);
+
+    const response = await request(app).get(
+      "/?teamId=1&memberAddress=0xAnotherAddress"
+    );
+    expect(response.status).toBe(200);
+
+    const expectedResponse = mockWeeklyClaims.map((claim) => ({
+      ...claim,
+      weekStart: claim.weekStart.toISOString(),
+      createdAt: claim.createdAt.toISOString(),
+      updatedAt: claim.updatedAt.toISOString(),
+    }));
+
+    expect(response.body).toEqual(expectedResponse);
+
+    expect(findManySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          claims: {
+            some: {
+              wage: {
+                teamId: 1,
+              },
+            },
+          },
+          memberAddress: "0xAnotherAddress",
+        }),
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      })
+    );
+  });
+});
