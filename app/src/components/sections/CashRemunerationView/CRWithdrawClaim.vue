@@ -94,38 +94,6 @@ const withdrawClaim = async () => {
                 (contract) => contract.type === 'InvestorsV1'
               )?.address as Address)
     }))
-
-    /*[
-      // Native token wage
-      ...(claim.wage.cashRatePerHour > 0
-        ? [
-            {
-              hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
-              tokenAddress: zeroAddress as Address
-            }
-          ]
-        : []),
-      // SHER token wage
-      ...(claim.wage.tokenRatePerHour > 0
-        ? [
-            {
-              hourlyRate: parseUnits(`${claim.wage.tokenRatePerHour}`, 6),
-              tokenAddress: teamStore.currentTeam?.teamContracts.find(
-                (contract) => contract.type === 'InvestorsV1'
-              )?.address as Address
-            }
-          ]
-        : []),
-      // USDC token wage
-      ...(claim.wage.usdcRatePerHour > 0
-        ? [
-            {
-              hourlyRate: parseUnits(`${claim.wage.usdcRatePerHour}`, 6),
-              tokenAddress: USDC_ADDRESS as Address
-            }
-          ]
-        : [])
-    ]*/
   }
 
   // withdraw
@@ -134,16 +102,7 @@ const withdrawClaim = async () => {
       abi: EIP712ABI,
       address: cashRemunerationEip712Address.value,
       functionName: 'withdraw',
-      args: [
-        // {
-        //   hourlyRate: parseEther(String(props.claim.wage.cashRatePerHour)),
-        //   hoursWorked: props.claim.hoursWorked,
-        //   employeeAddress: props.claim.wage.user.address as Address,
-        //   date: BigInt(Math.floor(new Date(props.claim.createdAt).getTime() / 1000))
-        // },
-        claimData,
-        props.claim.signature
-      ]
+      args: [claimData, props.claim.signature]
     })
   } catch (error) {
     toastStore.addErrorToast('Failed to withdraw claim')

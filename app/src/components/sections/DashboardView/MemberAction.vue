@@ -270,11 +270,6 @@ const rules = {
       numeric,
       notZero
     }
-    // hourlyRate: {
-    //   required: true,
-    //   numeric: true,
-    //   notZero
-    // }
   },
   ratePerHour: {
     $each: {
@@ -325,23 +320,8 @@ const {
   .put(() => ({
     teamId: props.teamId,
     userAddress: props.member.address,
-    ratePerHour:
-      /*[
-      ...(wageData.value.hourlyRate > 0
-        ? [{ type: 'native', amount: wageData.value.hourlyRate }]
-        : []),
-      ...(wageData.value.hourlyRateUsdc > 0
-        ? [{ type: 'usdc', amount: wageData.value.hourlyRateUsdc }]
-        : []),
-      ...(wageData.value.hourlyRateToken > 0
-        ? [{ type: 'sher', amount: wageData.value.hourlyRateToken }]
-        : [])
-    ]*/ ratePerHour.value,
-    // cashRatePerHour: wageData.value.hourlyRate,
-    // tokenRatePerHour: wageData.value.hourlyRateToken,
+    ratePerHour: ratePerHour.value,
     maximumHoursPerWeek: wageData.value.maxWeeklyHours
-    // usdcRatePerHour: wageData.value.hourlyRateUsdc
-    // sherRatePerHour: wageData.value.hourlyRateSher
   }))
   .json()
 

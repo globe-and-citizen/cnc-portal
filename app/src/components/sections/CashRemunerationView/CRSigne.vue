@@ -73,14 +73,6 @@ const approveClaim = async (claim: ClaimResponse) => {
         chainId: chainId.value,
         verifyingContract: cashRemunerationEip712Address.value
       },
-      // types: {
-      //   WageClaim: [
-      //     { name: 'employeeAddress', type: 'address' },
-      //     { name: 'hoursWorked', type: 'uint8' },
-      //     { name: 'hourlyRate', type: 'uint256' },
-      //     { name: 'date', type: 'uint256' }
-      //   ]
-      // },
       types: {
         Wage: [
           { name: 'hourlyRate', type: 'uint256' },
@@ -93,12 +85,6 @@ const approveClaim = async (claim: ClaimResponse) => {
           { name: 'date', type: 'uint256' }
         ]
       },
-      // message: {
-      //   hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
-      //   hoursWorked: claim.hoursWorked,
-      //   employeeAddress: claim.wage.userAddress as Address,
-      //   date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
-      // },
       message: {
         hoursWorked: claim.hoursWorked,
         employeeAddress: claim.wage.userAddress as Address,
@@ -115,38 +101,6 @@ const approveClaim = async (claim: ClaimResponse) => {
                     (contract) => contract.type === 'InvestorsV1'
                   )?.address as Address)
         }))
-
-        /*[
-          // Native token wage
-          ...(claim.wage.cashRatePerHour > 0
-            ? [
-                {
-                  hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
-                  tokenAddress: zeroAddress as Address
-                }
-              ]
-            : []),
-          // SHER token wage
-          ...(claim.wage.tokenRatePerHour > 0
-            ? [
-                {
-                  hourlyRate: BigInt(claim.wage.tokenRatePerHour * 1e6),
-                  tokenAddress: teamStore.currentTeam?.teamContracts.find(
-                    (contract) => contract.type === 'InvestorsV1'
-                  )?.address as Address
-                }
-              ]
-            : []),
-          // USDC token wage
-          ...(claim.wage.usdcRatePerHour > 0
-            ? [
-                {
-                  hourlyRate: BigInt(claim.wage.usdcRatePerHour * 1e6),
-                  tokenAddress: USDC_ADDRESS as Address
-                }
-              ]
-            : [])
-        ]*/
       },
       primaryType: 'WageClaim'
     })
