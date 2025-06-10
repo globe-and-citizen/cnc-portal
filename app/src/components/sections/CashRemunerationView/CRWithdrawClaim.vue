@@ -82,7 +82,20 @@ const withdrawClaim = async () => {
     hoursWorked: claim.hoursWorked,
     employeeAddress: claim.wage.userAddress as Address,
     date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000)),
-    wages: [
+    wages: claim.wage.ratePerHour.map((rate) => ({
+      hourlyRate:
+        rate.type === 'native' ? parseEther(`${rate.amount}`) : parseUnits(`${rate.amount}`, 6), // Convert to wei (assuming 6 decimals for USDC)
+      tokenAddress:
+        rate.type === 'native'
+          ? (zeroAddress as Address)
+          : rate.type === 'usdc'
+            ? (USDC_ADDRESS as Address)
+            : (teamStore.currentTeam?.teamContracts.find(
+                (contract) => contract.type === 'InvestorsV1'
+              )?.address as Address)
+    }))
+
+    /*[
       // Native token wage
       ...(claim.wage.cashRatePerHour > 0
         ? [
@@ -112,7 +125,7 @@ const withdrawClaim = async () => {
             }
           ]
         : [])
-    ]
+    ]*/
   }
 
   // withdraw
