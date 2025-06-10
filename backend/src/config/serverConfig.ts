@@ -12,6 +12,7 @@ import notificationRoutes from "../routes/notificationRoute";
 import actionRoutes from "../routes/actionsRoute";
 import wageRoutes from "../routes/wageRoute";
 import claimRoutes from "../routes/claimRoute";
+import weeklyClaimRoutes from "../routes/weeklyClaimRoute";
 import expenseRoutes from "../routes/expenseRoute";
 import uploadRoute from "../routes/uploadRoute";
 import contractRoutes from "../routes/contractRoutes";
@@ -53,9 +54,10 @@ class Server {
       notification: "/api/notification/",
       actions: "/api/actions/",
       wage: "/api/wage/",
+      weeklyClaim: "/api/weeklyclaim/",
       expense: "/api/expense/",
       claim: "/api/claim/",
-      upload:"/api/upload/",
+      upload: "/api/upload/",
       constract: "/api/contract/",
       apidocs: "/api-docs",
     };
@@ -107,7 +109,8 @@ class Server {
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
-    this.app.use(this.paths.upload,authorizeUser, uploadRoute);
+    this.app.use(this.paths.upload, authorizeUser, uploadRoute);
+    this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.get(this.paths.apidocs, (req, res) => {
