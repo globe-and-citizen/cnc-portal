@@ -141,17 +141,30 @@ watch(
   }
 )
 
+watch(teamWageData, (newData) => {
+  if (newData) console.log('Team wage data fetched successfully:', newData)
+})
+
 const getMemberWage = (memberAddress: Address) => {
   let memberWage
-  if (teamWageData.value)
+  let cashRatePerHour
+  let usdcRatePerHour
+  let tokenRatePerHour
+
+  if (teamWageData.value) {
     memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
+    if (memberWage) {
+      cashRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'native')?.amount
+      usdcRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'usdc')?.amount
+      tokenRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'sher')?.amount
+    }
+  }
+
   return {
     maximumHoursPerWeek: memberWage ? `${memberWage.maximumHoursPerWeek} hrs/wk` : 'N/A',
-    cashRatePerHour: memberWage
-      ? `${memberWage.cashRatePerHour} ${NETWORK.currencySymbol}/hr`
-      : 'N/A',
-    usdcRatePerHour: memberWage ? `${memberWage.usdcRatePerHour} USDC/hr` : 'N/A',
-    tokenRatePerHour: memberWage ? `${memberWage.tokenRatePerHour} SHER/hr` : 'N/A'
+    cashRatePerHour: cashRatePerHour ? `${cashRatePerHour} ${NETWORK.currencySymbol}/hr` : 'N/A',
+    usdcRatePerHour: usdcRatePerHour ? `${usdcRatePerHour} USDC/hr` : 'N/A',
+    tokenRatePerHour: tokenRatePerHour ? `${tokenRatePerHour} SHER/hr` : 'N/A'
   }
 }
 
