@@ -44,7 +44,7 @@ export const setWage = async (req: Request, res: Response) => {
   // if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
   if (isNaN(maximumHoursPerWeek)) missingParameters.push("maximumHoursPerWeek");
   if (!Array.isArray(ratePerHour) || ratePerHour.length === 0) missingParameters.push("ratePerHour");
-  ratePerHour = ratePerHour.map((rate) => ({
+  ratePerHour = ratePerHour?.map((rate) => ({
     type: rate.type,
     amount: Number(rate.amount),
   }));
