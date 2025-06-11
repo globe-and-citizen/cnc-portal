@@ -129,9 +129,9 @@
       </div>
 
       <nav class="space-y-4">
-        <div v-for="item in visibleMenuItems" :key="item.label">
+        <div v-for="item in menuItems" :key="item.label">
           <!-- Élément avec sous-menu -->
-          <div v-if="item.hasChildren">
+          <div v-if="item.children && item.children.length > 0">
             <!-- Lien principal -->
             <div class="flex items-center">
               <RouterLink
@@ -153,18 +153,6 @@
                   {{ item.label }}
                 </span>
               </RouterLink>
-              <!-- Bouton pour toggle le sous-menu -->
-              <!-- <button
-                v-if="!isCollapsed && item.visibleChildren.length > 0"
-                @click="toggleSubmenu(item.label)"
-                class="min-w-8 min-h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 mr-2"
-              >
-                <IconifyIcon
-                  icon="heroicons:chevron-down"
-                  class="w-4 h-4 transition-transform duration-200"
-                  :class="{ 'rotate-180': expandedMenus.includes(item.label) }"
-                />
-              </button> -->
             </div>
 
             <!-- Sous-éléments -->
@@ -177,11 +165,11 @@
               leave-to-class="opacity-0 max-h-0"
             >
               <div
-                v-if="!isCollapsed && item.visibleChildren.length > 0"
+                v-if="!isCollapsed && item.children && item.children.length > 0"
                 class="overflow-hidden mt-3"
               >
                 <RouterLink
-                  v-for="child in item.visibleChildren"
+                  v-for="child in item.children"
                   :key="child.label"
                   :to="child.route"
                   class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-2 ml-6 rounded-xl text-gray-600 group transition-all duration-200 z-10"
@@ -204,7 +192,7 @@
             </transition>
           </div>
 
-          <!-- Élément simple sans sous-menu -->
+          <!-- Lien principal sans sous-menu -->
           <RouterLink
             v-else
             :to="item.route"
@@ -299,7 +287,6 @@ const getIconClass = (active: boolean | undefined) => {
 
 onMounted(() => {
   onClickOutside(target, () => {
-    console.log('clicked outside')
     isDropdownOpen.value = false
   })
 })
@@ -318,8 +305,7 @@ const formatedUserAddress = computed(() => {
     : ''
 })
 
-// Définition des items de menu avec leurs enfants
-const allMenuItems = computed(() => [
+const menuItems = computed(() => [
   {
     label: 'Dashboard',
     icon: 'heroicons:home',
@@ -328,8 +314,7 @@ const allMenuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'show-team',
-    show: true,
-    children: []
+    show: true
   },
   {
     label: 'Bank',
@@ -339,8 +324,7 @@ const allMenuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'bank',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
-    children: []
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Cash Remuneration',
@@ -362,7 +346,7 @@ const allMenuItems = computed(() => [
         active: route.name === 'weekly-claim',
         show: teamStore.currentTeam?.ownerAddress === userStore.address
       }
-    ]
+    ].filter((child) => child.show)
   },
   {
     label: 'Expense Account',
@@ -372,8 +356,7 @@ const allMenuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'expense-account',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
-    children: []
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Contract Management',
@@ -383,8 +366,7 @@ const allMenuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'contract-management',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
-    children: []
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'SHER Token',
@@ -394,21 +376,9 @@ const allMenuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'sher-token',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
-    children: []
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
 ])
-
-// Computed property pour filtrer les items visibles
-const visibleMenuItems = computed(() => {
-  return allMenuItems.value
-    .filter((item) => item.show)
-    .map((item) => ({
-      ...item,
-      hasChildren: item.children.length > 0,
-      visibleChildren: item.children.filter((child) => child.show)
-    }))
-})
 
 const toggleDropdown = () => {
   teamStore.teamsMeta.reloadTeams()
