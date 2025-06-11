@@ -45,6 +45,7 @@ describe('CRSigne', () => {
       id: 1,
       teamId: 1,
       userAddress: '0x1234567890123456789012345678901234567890',
+      ratePerHour: [{ type: 'native', amount: 10 }],
       cashRatePerHour: 10,
       tokenRatePerHour: 0,
       usdcRatePerHour: 0,
