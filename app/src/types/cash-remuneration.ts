@@ -24,7 +24,7 @@ export interface ClaimResponse {
     id: number
     teamId: number
     userAddress: string
-    ratePerHour: Array<{ type: string; amount: number }>
+    ratePerHour: RatePerHour //Array<{ type: string; amount: number }>
     cashRatePerHour: number
     tokenRatePerHour: number
     usdcRatePerHour: number
