@@ -77,7 +77,6 @@
         </template>
 
         <template #action-data="{ row }">
-          <!-- <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI> -->
           <CRSigne
             v-if="row.claims.length > 0 && row.wage.ratePerHour"
             :claim="{
@@ -106,7 +105,6 @@ import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import type { RatePerHour, SupportedTokens } from '@/types'
 import CRSigne from './CRSigne.vue'
@@ -146,18 +144,6 @@ function formatDate(date: string | Date) {
     month: 'long',
     day: 'numeric'
   })
-}
-
-const getDate = (claims: { id: number; createdAt: string }[]) => {
-  let latestDate
-  let latestId = 0
-  for (const claim of claims) {
-    if (claim.id > latestId) {
-      latestId = claim.id
-      latestDate = claim.createdAt
-    }
-  }
-  return latestDate
 }
 
 const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
