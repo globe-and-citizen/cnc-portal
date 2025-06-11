@@ -76,8 +76,21 @@
           </span>
         </template>
 
-        <template #action-data="{}">
-          <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
+        <template #action-data="{ row }">
+          <!-- <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI> -->
+          <CRSigne
+            v-if="row.claims.length > 0 && row.wage.ratePerHour"
+            :claim="{
+              id: row.id, //which id do we use, individual or weekly claim?
+              status: 'pending',
+              hoursWorked: getTotalHoursWorked(row.claims),
+              createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
+              wage: {
+                ratePerHour: row.wage.ratePerHour as RatePerHour,
+                userAddress: row.wage.userAddress as Address
+              }
+            }"
+          />
         </template>
       </TableComponent>
     </WeeklyClaimComponent>
@@ -96,6 +109,8 @@ import { useCurrencyStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import type { RatePerHour, SupportedTokens } from '@/types'
+import CRSigne from './CRSigne.vue'
+import type { Address } from 'viem'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -131,6 +146,18 @@ function formatDate(date: string | Date) {
     month: 'long',
     day: 'numeric'
   })
+}
+
+const getDate = (claims: { id: number; createdAt: string }[]) => {
+  let latestDate
+  let latestId = 0
+  for (const claim of claims) {
+    if (claim.id > latestId) {
+      latestId = claim.id
+      latestDate = claim.createdAt
+    }
+  }
+  return latestDate
 }
 
 const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
