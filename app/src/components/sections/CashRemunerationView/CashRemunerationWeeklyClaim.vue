@@ -1,77 +1,69 @@
 <template>
   <CardComponent title="Weekly Claim" class="w-full pb-7">
-    <WeeklyClaimComponent>
-      <TableComponent
-        v-if="data"
-        :rows="data"
-        :columns="columns"
-        :loading="isTeamClaimDataFetching"
-      >
-        <template #member-data="{ row }">
-          <UserComponent :user="row.member" />
-        </template>
+    <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
+      <template #member-data="{ row }">
+        <UserComponent :user="row.member" />
+      </template>
 
-        <template #weekStart-data="{ row }">
-          <span>{{ formatDate(row.weekStart) }}</span>
-        </template>
+      <template #weekStart-data="{ row }">
+        <span>{{ formatDate(row.weekStart) }}</span>
+      </template>
 
-        <template #hoursWorked-data="{ row }">
-          <span class="font-bold"> {{ getTotalHoursWorked(row.claims) }}:00 hrs </span>
-          <br />
-          <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
-        </template>
+      <template #hoursWorked-data="{ row }">
+        <span class="font-bold"> {{ getTotalHoursWorked(row.claims) }}:00 hrs </span>
+        <br />
+        <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
+      </template>
 
-        <template #hourlyRate-data="{ row }">
-          <div>
-            <span class="font-bold">
-              {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }}
-            </span>
-            <br />
-            <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN </span>
-            <br />
-            <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
-            <br />
-          </div>
-        </template>
-
-        <template #totalAmount-data="{ row }">
+      <template #hourlyRate-data="{ row }">
+        <div>
           <span class="font-bold">
-            {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
-            {{ NETWORK.currencySymbol }}
+            {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }}
           </span>
           <br />
-          <span class="font-bold">
-            {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
-            TOKEN
-          </span>
+          <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN </span>
           <br />
-          <span class="font-bold">
-            {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
-            USDC
-          </span>
+          <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
           <br />
-          <span class="text-gray-500">
-            {{
-              (
-                getTotalHoursWorked(row.claims) *
-                Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-              ).toFixed(2)
-            }}
-            {{ NETWORK.nativeTokenSymbol }} / USD
-          </span>
-        </template>
+        </div>
+      </template>
 
-        <template #action-data="{}">
-          <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
-        </template>
-      </TableComponent>
-    </WeeklyClaimComponent>
+      <template #totalAmount-data="{ row }">
+        <span class="font-bold">
+          {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
+          {{ NETWORK.currencySymbol }}
+        </span>
+        <br />
+        <span class="font-bold">
+          {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
+          TOKEN
+        </span>
+        <br />
+        <span class="font-bold">
+          {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
+          USDC
+        </span>
+        <br />
+        <span class="text-gray-500">
+          {{
+            (
+              getTotalHoursWorked(row.claims) *
+              Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+            ).toFixed(2)
+          }}
+          {{ NETWORK.nativeTokenSymbol }} / USD
+        </span>
+      </template>
+
+      <template #action-data="{}">
+        <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
+      </template>
+    </TableComponent>
   </CardComponent>
 </template>
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import WeeklyClaimComponent from '@/components/WeeklyClaimComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
@@ -89,7 +81,7 @@ const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const weeklyClaimUrl = computed(
   () =>
-    `/weeklyClaim/?teamId=1${
+    `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
       userStore.address !== teamStore.currentTeam?.ownerAddress
         ? `&memberAddress=${userStore.address}`
         : ''
@@ -109,7 +101,8 @@ const getHoulyRateInUserCurrency = (rate: number) => {
 function formatDate(date: string | Date) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
-  return d.toLocaleDateString('fr-FR', {
+  const locale = navigator.language || 'en-US'
+  return d.toLocaleDateString(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
