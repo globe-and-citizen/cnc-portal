@@ -1,5 +1,9 @@
 import type { Address } from 'viem'
 
+export type SupportedTokens = 'native' | 'usdc' | 'sher'
+
+export type RatePerHour = Array<{ type: SupportedTokens; amount: number }>
+
 export interface WageClaim {
   hoursWorked: number
   hourlyRate: number | bigint
