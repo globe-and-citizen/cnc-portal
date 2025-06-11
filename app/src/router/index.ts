@@ -11,6 +11,8 @@ import BankView from '@/views/team/[id]/BankView.vue'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
+import WeeklyClaimView from '@/views/team/[id]/WeeklyClaimView.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -40,6 +42,12 @@ const router = createRouter({
       name: 'show-team',
       meta: { name: 'Team View' },
       children: [
+        {
+          path: '/teams/:id/cash-remunerations/weekly-claim',
+          name: 'weekly-claim',
+          meta: { name: 'Cash Remuneration-Weekly Claim' },
+          component: WeeklyClaimView
+        },
         {
           path: '/teams/:id/cash-remunerations',
           name: 'cash-remunerations',
