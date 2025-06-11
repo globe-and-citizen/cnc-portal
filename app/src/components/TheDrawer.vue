@@ -154,7 +154,7 @@
                 </span>
               </RouterLink>
               <!-- Bouton pour toggle le sous-menu -->
-              <button
+              <!-- <button
                 v-if="!isCollapsed && item.visibleChildren.length > 0"
                 @click="toggleSubmenu(item.label)"
                 class="min-w-8 min-h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 mr-2"
@@ -164,7 +164,7 @@
                   class="w-4 h-4 transition-transform duration-200"
                   :class="{ 'rotate-180': expandedMenus.includes(item.label) }"
                 />
-              </button>
+              </button> -->
             </div>
 
             <!-- Sous-éléments -->
@@ -177,11 +177,7 @@
               leave-to-class="opacity-0 max-h-0"
             >
               <div
-                v-if="
-                  expandedMenus.includes(item.label) &&
-                  !isCollapsed &&
-                  item.visibleChildren.length > 0
-                "
+                v-if="!isCollapsed && item.visibleChildren.length > 0"
                 class="overflow-hidden mt-3"
               >
                 <RouterLink
@@ -293,24 +289,12 @@ const props = defineProps<{
 const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
-const expandedMenus = ref<string[]>([])
 
 const getIconClass = (active: boolean | undefined) => {
   return [
     'w-6 h-6 transition-all duration-300 ease-in-out',
     active ? 'text-emerald-500 scale-110' : 'group-hover:scale-110 group-hover:text-emerald-500'
   ].join(' ')
-}
-
-const toggleSubmenu = (menuLabel: string) => {
-  if (isCollapsed.value) return
-
-  const index = expandedMenus.value.indexOf(menuLabel)
-  if (index > -1) {
-    expandedMenus.value.splice(index, 1)
-  } else {
-    expandedMenus.value.push(menuLabel)
-  }
 }
 
 onMounted(() => {
@@ -324,10 +308,6 @@ const emits = defineEmits(['openEditUserModal'])
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
-  // Fermer tous les sous-menus quand on collapse
-  if (isCollapsed.value) {
-    expandedMenus.value = []
-  }
 }
 
 const formatedUserAddress = computed(() => {
