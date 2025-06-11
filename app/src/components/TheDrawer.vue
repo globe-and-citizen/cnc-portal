@@ -31,7 +31,6 @@
         class="shadow-sm"
         data-test="toggle-collapse"
       >
-        <!-- I adde is collapsed class because data-test is not working on the icone -->
         <IconifyIcon
           icon="heroicons:arrow-left-start-on-rectangle"
           class="is-collapsed w-5 h-5 text-gray-600"
@@ -44,6 +43,7 @@
         />
       </ButtonUI>
     </div>
+
     <!-- Team Display Group -->
     <div
       class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
@@ -108,7 +108,6 @@
                   :team="team"
                   :to="team.id"
               /></RouterLink>
-              <!-- TODO: Make the button functional -->
               <div class="min-w-40 w-full p-1">
                 <div
                   class="flex justify-center items-center h-12 hover:bg-slate-100 rounded-xl"
@@ -130,28 +129,107 @@
       </div>
 
       <nav class="space-y-4">
-        <RouterLink
-          v-for="item in menuItems"
-          :key="item.label"
-          :to="item.route"
-          class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-          :class="{
-            'bg-emerald-500/10 shadow-sm': item.active,
-            'hover:bg-gray-100': !item.active,
-            hidden: !item.show
-          }"
-        >
-          <div class="relative">
-            <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+        <div v-for="item in visibleMenuItems" :key="item.label">
+          <!-- Élément avec sous-menu -->
+          <div v-if="item.hasChildren">
+            <!-- Lien principal -->
+            <div class="flex items-center">
+              <RouterLink
+                :to="item.route"
+                class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 flex-1"
+                :class="{
+                  'bg-emerald-500/10 shadow-sm': item.active,
+                  'hover:bg-gray-100': !item.active
+                }"
+              >
+                <div class="relative">
+                  <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+                </div>
+                <span
+                  v-if="!isCollapsed"
+                  class="text-sm font-medium transition-colors duration-200"
+                  :class="{ 'text-emerald-600': item.active }"
+                >
+                  {{ item.label }}
+                </span>
+              </RouterLink>
+              <!-- Bouton pour toggle le sous-menu -->
+              <button
+                v-if="!isCollapsed && item.visibleChildren.length > 0"
+                @click="toggleSubmenu(item.label)"
+                class="min-w-8 min-h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 mr-2"
+              >
+                <IconifyIcon
+                  icon="heroicons:chevron-down"
+                  class="w-4 h-4 transition-transform duration-200"
+                  :class="{ 'rotate-180': expandedMenus.includes(item.label) }"
+                />
+              </button>
+            </div>
+
+            <!-- Sous-éléments -->
+            <transition
+              enter-active-class="transition-all duration-300 ease-out"
+              enter-from-class="opacity-0 max-h-0"
+              enter-to-class="opacity-100 max-h-40"
+              leave-active-class="transition-all duration-300 ease-in"
+              leave-from-class="opacity-100 max-h-40"
+              leave-to-class="opacity-0 max-h-0"
+            >
+              <div
+                v-if="
+                  expandedMenus.includes(item.label) &&
+                  !isCollapsed &&
+                  item.visibleChildren.length > 0
+                "
+                class="overflow-hidden mt-3"
+              >
+                <RouterLink
+                  v-for="child in item.visibleChildren"
+                  :key="child.label"
+                  :to="child.route"
+                  class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-2 ml-6 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+                  :class="{
+                    'bg-emerald-500/10 shadow-sm': child.active,
+                    'hover:bg-gray-100': !child.active
+                  }"
+                >
+                  <div class="relative">
+                    <IconifyIcon :icon="child.icon" :class="getIconClass(child.active)" />
+                  </div>
+                  <span
+                    class="text-sm font-medium transition-colors duration-200"
+                    :class="{ 'text-emerald-600': child.active }"
+                  >
+                    {{ child.label }}
+                  </span>
+                </RouterLink>
+              </div>
+            </transition>
           </div>
-          <span
-            v-if="!isCollapsed"
-            class="text-sm font-medium transition-colors duration-200"
-            :class="{ 'text-emerald-600': item.active }"
+
+          <!-- Élément simple sans sous-menu -->
+          <RouterLink
+            v-else
+            :to="item.route"
+            class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+            :class="{
+              'bg-emerald-500/10 shadow-sm': item.active,
+              'hover:bg-gray-100': !item.active
+            }"
           >
-            {{ item.label }}
-          </span>
-        </RouterLink>
+            <div class="relative">
+              <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+            </div>
+            <span
+              v-if="!isCollapsed"
+              class="text-sm font-medium transition-colors duration-200"
+              :class="{ 'text-emerald-600': item.active }"
+            >
+              {{ item.label }}
+            </span>
+          </RouterLink>
+        </div>
       </nav>
     </div>
 
@@ -192,11 +270,12 @@ import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
-import { useTeamStore, useAppStore } from '@/stores'
+import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
 
 const appStore = useAppStore()
 const route = useRoute()
+const userStore = useUserDataStore()
 
 interface User {
   name: string
@@ -214,12 +293,24 @@ const props = defineProps<{
 const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
+const expandedMenus = ref<string[]>([])
 
 const getIconClass = (active: boolean | undefined) => {
   return [
     'w-6 h-6 transition-all duration-300 ease-in-out',
     active ? 'text-emerald-500 scale-110' : 'group-hover:scale-110 group-hover:text-emerald-500'
   ].join(' ')
+}
+
+const toggleSubmenu = (menuLabel: string) => {
+  if (isCollapsed.value) return
+
+  const index = expandedMenus.value.indexOf(menuLabel)
+  if (index > -1) {
+    expandedMenus.value.splice(index, 1)
+  } else {
+    expandedMenus.value.push(menuLabel)
+  }
 }
 
 onMounted(() => {
@@ -233,6 +324,10 @@ const emits = defineEmits(['openEditUserModal'])
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
+  // Fermer tous les sous-menus quand on collapse
+  if (isCollapsed.value) {
+    expandedMenus.value = []
+  }
 }
 
 const formatedUserAddress = computed(() => {
@@ -243,7 +338,8 @@ const formatedUserAddress = computed(() => {
     : ''
 })
 
-const menuItems = computed(() => [
+// Définition des items de menu avec leurs enfants
+const allMenuItems = computed(() => [
   {
     label: 'Dashboard',
     icon: 'heroicons:home',
@@ -252,7 +348,8 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'show-team',
-    show: true
+    show: true,
+    children: []
   },
   {
     label: 'Bank',
@@ -262,7 +359,8 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'bank',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: []
   },
   {
     label: 'Cash Remuneration',
@@ -272,17 +370,30 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'cash-remunerations',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: [
+      {
+        label: 'Weekly Claim',
+        icon: 'heroicons:at-symbol',
+        route: {
+          name: 'weekly-claim',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'weekly-claim',
+        show: teamStore.currentTeam?.ownerAddress === userStore.address
+      }
+    ]
   },
   {
-    label: 'Expense Account ',
+    label: 'Expense Account',
     icon: 'heroicons:briefcase',
     route: {
       name: 'expense-account',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'expense-account',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: []
   },
   {
     label: 'Contract Management',
@@ -292,7 +403,8 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'contract-management',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: []
   },
   {
     label: 'SHER Token',
@@ -302,9 +414,21 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'sher-token',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: []
   }
 ])
+
+// Computed property pour filtrer les items visibles
+const visibleMenuItems = computed(() => {
+  return allMenuItems.value
+    .filter((item) => item.show)
+    .map((item) => ({
+      ...item,
+      hasChildren: item.children.length > 0,
+      visibleChildren: item.children.filter((child) => child.show)
+    }))
+})
 
 const toggleDropdown = () => {
   teamStore.teamsMeta.reloadTeams()
