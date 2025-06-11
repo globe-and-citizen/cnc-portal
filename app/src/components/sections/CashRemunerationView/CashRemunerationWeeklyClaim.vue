@@ -24,29 +24,44 @@
         <template #hourlyRate-data="{ row }">
           <div>
             <span class="font-bold">
-              {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }}
+              {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
             </span>
             <br />
-            <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN </span>
+            <span class="font-bold"> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN </span>
             <br />
-            <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
+            <span class="font-bold"> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
             <br />
           </div>
         </template>
 
         <template #totalAmount-data="{ row }">
           <span class="font-bold">
-            {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
+            {{
+              getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
+                ? 'N/A'
+                : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
+                  getTotalHoursWorked(row.claims)
+            }}
             {{ NETWORK.currencySymbol }}
           </span>
           <br />
           <span class="font-bold">
-            {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
+            {{
+              getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
+                ? 'N/A'
+                : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
+                  getTotalHoursWorked(row.claims)
+            }}
             TOKEN
           </span>
           <br />
           <span class="font-bold">
-            {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
+            {{
+              getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
+                ? 'N/A'
+                : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
+                  getTotalHoursWorked(row.claims)
+            }}
             USDC
           </span>
           <br />
@@ -80,6 +95,7 @@ import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
+import type { RatePerHour, SupportedTokens } from '@/types'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -115,6 +131,25 @@ function formatDate(date: string | Date) {
     month: 'long',
     day: 'numeric'
   })
+}
+
+const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
+  switch (type) {
+    case 'native':
+      return ratePerHour.find((rate) => rate.type === 'native')
+        ? ratePerHour.find((rate) => rate.type === 'native')!.amount
+        : 'N/A'
+    case 'sher':
+      return ratePerHour.find((rate) => rate.type === 'sher')
+        ? ratePerHour.find((rate) => rate.type === 'sher')!.amount
+        : 'N/A'
+    case 'usdc':
+      return ratePerHour.find((rate) => rate.type === 'usdc')
+        ? ratePerHour.find((rate) => rate.type === 'usdc')!.amount
+        : 'N/A'
+    default:
+      return 'N/A'
+  }
 }
 
 const columns = [
