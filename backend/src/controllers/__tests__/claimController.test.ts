@@ -3,13 +3,47 @@ import express, { Request, Response, NextFunction } from "express";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { addClaim, getClaims, updateClaim } from "../claimController";
+import { Claim, Wage, WeeklyClaim } from "@prisma/client";
 
+vi.mock("../../utils");
 function setAddressMiddleware(address: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     (req as any).address = address;
     next();
   };
 }
+const mockWage = {
+  id: 1,
+  teamId: 1,
+  userAddress: "0xMemberAddress",
+  cashRatePerHour: 50,
+  tokenRatePerHour: 100,
+  maximumHoursPerWeek: 40,
+  nextWageId: null,
+} as Wage;
+
+const mockWeeklyClaims: WeeklyClaim = {
+  id: 1,
+  teamId: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  weekStart: new Date(),
+  data: {},
+  memberAddress: "0xMemberAddress",
+  signature: null,
+  claims: [{ hoursWorked: 30 }],
+  wageId: 1,
+} as WeeklyClaim;
+
+const mockClaim = {
+  id: 123,
+  hoursWorked: 5,
+  memo: "test memo",
+  wageId: 1,
+  status: "pending",
+  weeklyClaimId: 1,
+  dayWorked: new Date(),
+} as Claim;
 
 const app = express();
 app.use(express.json());
@@ -55,6 +89,33 @@ describe("Claim Controller", () => {
       );
     });
 
+    it("should return 400 if user don't have wage", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
+
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: "memo" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("No wage found for the user");
+    });
+
+    it("should return 400 if maximum claim is reached", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(
+        mockWeeklyClaims
+      );
+
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 45, memo: "memo" });
+
+      expect(response.body.message).toBe(
+        "Maximum weekly hours reached, cannot submit more claims for this week."
+      );
+      expect(response.status).toBe(400);
+    });
+
     it("should return 400 if required fields are missing", async () => {
       const response = await request(app).post("/claim").send({});
       expect(response.status).toBe(400);
@@ -71,46 +132,66 @@ describe("Claim Controller", () => {
       );
     });
 
-    it("should return 400 if no wage is found for the user", async () => {
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
+    it("should return 201 when you create a weekly claim an created", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(null);
+      vi.spyOn(prisma.weeklyClaim, "create").mockResolvedValue(
+        mockWeeklyClaims
+      );
 
+      vi.spyOn(prisma.claim, "create").mockResolvedValue(mockClaim);
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe("No wage found for the user");
-    });
-
-    it("should return 201 and create a claim successfully", async () => {
-      // @ts-ignore
-      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue({ id: 1 });
-      // @ts-ignore
-      vi.spyOn(prisma.claim, "create").mockResolvedValue({
-        id: 1,
-        hoursWorked: 5,
-        memo: "",
-        status: "pending",
-        wageId: 1,
-      });
-
-      const response = await request(app)
-        .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
+        .send({ teamId: 1, hoursWorked: 5, memo: "test memo" });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("id");
-      expect(response.body.status).toBe("pending");
+      expect(response.body).toMatchObject({
+        id: mockClaim.id,
+        hoursWorked: mockClaim.hoursWorked,
+        memo: mockClaim.memo,
+        wageId: mockClaim.wageId,
+        status: mockClaim.status,
+        weeklyClaimId: mockClaim.weeklyClaimId,
+      });
     });
 
-    it("should return 500 if an error occurs", async () => {
-      vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Test");
+    it("should return 201 when you add a claim an existing weekly claim", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(
+        mockWeeklyClaims
+      );
+      vi.spyOn(prisma.weeklyClaim, "create").mockResolvedValue(
+        mockWeeklyClaims
+      );
+
+      vi.spyOn(prisma.claim, "create").mockResolvedValue(mockClaim);
+      const response = await request(app)
+        .post("/claim")
+        .send({ teamId: 1, hoursWorked: 5, memo: "test memo" });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        id: mockClaim.id,
+        hoursWorked: mockClaim.hoursWorked,
+        memo: mockClaim.memo,
+        wageId: mockClaim.wageId,
+        status: mockClaim.status,
+        weeklyClaimId: mockClaim.weeklyClaimId,
+      });
+    });
+
+    it("should return 500 if internal server error", async () => {
+      vi.spyOn(prisma.wage, "findFirst").mockRejectedValue(
+        new Error("DB error")
+      );
 
       const response = await request(app)
         .post("/claim")
-        .send({ teamId: 1, hoursWorked: 5, memo: "test" });
+        .send({ teamId: 1, hoursWorked: 5, memo: "memo" });
 
+      expect(prisma.wage.findFirst).toHaveBeenCalled();
       expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty("message");
       expect(response.body.message).toBe("Internal server error has occured");
     });
   });
