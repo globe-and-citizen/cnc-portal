@@ -17,13 +17,20 @@ import { useCustomFetch } from '@/composables'
 import { useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import type { ClaimResponse } from '@/types'
+import type { ClaimResponse, RatePerHour } from '@/types'
 import { log } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 
 // Props claim : ClaimResponse
-const props = defineProps<{ claim: ClaimResponse }>()
+const props = defineProps<{
+  claim: Pick<ClaimResponse, 'id' | 'status' | 'hoursWorked' | 'createdAt'> & {
+    wage: {
+      ratePerHour: RatePerHour
+      userAddress: Address
+    }
+  }
+}>()
 const emit = defineEmits(['claim-signed'])
 
 // Stores
