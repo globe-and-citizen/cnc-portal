@@ -5,8 +5,9 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useTeamStore, useUserDataStore, useToastStore } from '@/stores'
 import { useSignTypedData } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables'
-import type { ClaimResponse } from '@/types'
+import type { ClaimResponse, RatePerHour } from '@/types'
 import { ref } from 'vue'
+import type { Address } from 'viem'
 
 // Mock the stores and composables
 vi.mock('@/stores', () => ({
@@ -31,32 +32,39 @@ vi.mock('@/composables', () => ({
   }))
 }))
 
+type CRSignClaim = Pick<ClaimResponse, 'id' | 'status' | 'hoursWorked' | 'createdAt'> & {
+  wage: {
+    ratePerHour: RatePerHour
+    userAddress: Address
+  }
+}
+
 describe('CRSigne', () => {
-  const mockClaim: ClaimResponse = {
+  const mockClaim: CRSignClaim = {
     id: 1,
     status: 'pending',
     hoursWorked: 8,
-    signature: null,
-    tokenTx: null,
-    wageId: 1,
+    // signature: null,
+    // tokenTx: null,
+    // wageId: 1,
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
+    // updatedAt: '2024-01-01T00:00:00Z',
     wage: {
-      id: 1,
-      teamId: 1,
+      // id: 1,
+      // teamId: 1,
       userAddress: '0x1234567890123456789012345678901234567890',
-      ratePerHour: [{ type: 'native', amount: 10 }],
-      cashRatePerHour: 10,
-      tokenRatePerHour: 0,
-      usdcRatePerHour: 0,
-      maximumHoursPerWeek: 40,
-      nextWageId: null,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-      user: {
-        address: '0x1234567890123456789012345678901234567890',
-        name: 'Test User'
-      }
+      ratePerHour: [{ type: 'native', amount: 10 }]
+      // cashRatePerHour: 10,
+      // tokenRatePerHour: 0,
+      // usdcRatePerHour: 0,
+      // maximumHoursPerWeek: 40,
+      // nextWageId: null,
+      // createdAt: '2024-01-01T00:00:00Z',
+      // updatedAt: '2024-01-01T00:00:00Z',
+      // user: {
+      //   address: '0x1234567890123456789012345678901234567890',
+      //   name: 'Test User'
+      // }
     }
   }
 
