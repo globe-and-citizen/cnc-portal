@@ -284,16 +284,7 @@ const menuItems = computed(() => [
     active: route.name === 'expense-account',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
-  {
-    label: 'vesting',
-    icon: 'heroicons:lock-closed',
-    route: {
-      name: 'vesting',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'vesting',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  },
+
   {
     label: 'Contract Management',
     icon: 'heroicons:wrench',
@@ -312,6 +303,16 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'sher-token',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'vesting',
+    icon: 'heroicons:lock-closed',
+    route: {
+      name: 'vesting',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'vesting',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
 ])
