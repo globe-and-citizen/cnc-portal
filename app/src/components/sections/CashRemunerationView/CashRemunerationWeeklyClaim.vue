@@ -2,12 +2,18 @@
   <CardComponent title="Weekly Claim: Pending" class="w-full pb-7">
     <div class="">
       <transition-group name="stack" tag="div" class="stack w-full">
-        <div v-for="item in data" :key="item.weekStart" class="card shadow-md bg-white p-4">
+        <div
+          v-for="(item, index) in data"
+          :key="item.weekStart"
+          class="card shadow-md bg-white p-4"
+          :class="{
+            'transition -translate-y-full opacity-0  duration-1000': index === 0
+          }"
+        >
           <TableComponent :rows="[item]" :columns="columns" :loading="isTeamClaimDataFetching">
             <template #member-data="{ row }">
               <UserComponent :user="row.member" />
             </template>
-
             <template #weekStart-data="{ row }">
               <span>{{ formatDate(row.weekStart) }}</span>
             </template>
