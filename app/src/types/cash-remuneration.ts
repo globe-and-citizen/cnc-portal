@@ -20,8 +20,10 @@ export interface ClaimResponse {
     id: number
     teamId: number
     userAddress: string
+    ratePerHour: Array<{ type: string; amount: number }>
     cashRatePerHour: number
     tokenRatePerHour: number
+    usdcRatePerHour: number
     maximumHoursPerWeek: number
     nextWageId: number | null
     createdAt: string // ISO date string
@@ -45,6 +47,7 @@ export interface ClaimResponse {
 export interface WageResponse {
   userAddress: Address
   maximumHoursPerWeek: number
+  ratePerHour?: Array<{ type: string; amount: number }>
   cashRatePerHour: number
   tokenRatePerHour?: number
   usdcRatePerHour?: number

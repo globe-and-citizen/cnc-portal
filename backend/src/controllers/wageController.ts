@@ -9,21 +9,30 @@ type wageBodyRequest = Pick<
   Wage,
   | "teamId"
   | "userAddress"
-  | "cashRatePerHour"
-  | "tokenRatePerHour"
+  // | "cashRatePerHour"
+  // | "tokenRatePerHour"
   | "maximumHoursPerWeek"
-  | "usdcRatePerHour"
->;
+  | "ratePerHour"
+  // | "usdcRatePerHour"
+> & {
+  ratePerHour: Array<{
+    type: string;
+    amount: number;
+  }>
+};
 export const setWage = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   const body = req.body as wageBodyRequest;
   const teamId = Number(body.teamId);
   const userAddress = body.userAddress as Address;
-  const cashRatePerHour = Number(body.cashRatePerHour);
-  const tokenRatePerHour = Number(body.tokenRatePerHour);
+  // const cashRatePerHour = Number(body.cashRatePerHour);
+  // const tokenRatePerHour = Number(body.tokenRatePerHour);
   const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
-  const usdcRatePerHour = Number(body.usdcRatePerHour);
+  // const usdcRatePerHour = Number(body.usdcRatePerHour);
+  let ratePerHour = body.ratePerHour;
+
+  console.log("setWage called with body: ", body);
 
   // Validating the wage data
   // Checking required data
@@ -31,9 +40,14 @@ export const setWage = async (req: Request, res: Response) => {
   let missingParameters = [];
   if (isNaN(teamId)) missingParameters.push("teamId");
   if (!userAddress) missingParameters.push("userAddress");
-  if (isNaN(cashRatePerHour)) missingParameters.push("cashRatePerHour");
-  if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
+  // if (isNaN(cashRatePerHour)) missingParameters.push("cashRatePerHour");
+  // if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
   if (isNaN(maximumHoursPerWeek)) missingParameters.push("maximumHoursPerWeek");
+  if (!Array.isArray(ratePerHour) || ratePerHour.length === 0) missingParameters.push("ratePerHour");
+  ratePerHour = ratePerHour?.map((rate) => ({
+    type: rate.type,
+    amount: Number(rate.amount),
+  }));
 
   // Checking if the parameters are empty
   if (missingParameters.length > 0) {
@@ -51,8 +65,16 @@ export const setWage = async (req: Request, res: Response) => {
     errors.push("Invalid maximumHoursPerWeek");
   }
 
-  if (cashRatePerHour <= 0) {
-    errors.push("Invalid cashRatePerHour");
+  for (const rate of ratePerHour) {
+    if (
+      typeof rate.type !== "string" ||
+      !rate.type ||
+      rate.amount <= 0 || 
+      isNaN(rate.amount)
+    ) {
+    // errors.push("Invalid cashRatePerHour");
+      errors.push("Invalid wage rate");
+    }
   }
 
   if (errors.length > 0) {
@@ -80,10 +102,11 @@ export const setWage = async (req: Request, res: Response) => {
         data: {
           teamId: Number(teamId),
           userAddress,
-          cashRatePerHour,
-          tokenRatePerHour,
+          // cashRatePerHour,
+          // tokenRatePerHour,
           maximumHoursPerWeek,
-          usdcRatePerHour,
+          // usdcRatePerHour,
+          ratePerHour,
           previousWage: {
             connect: {
               id: wage.id,
@@ -112,10 +135,11 @@ export const setWage = async (req: Request, res: Response) => {
         data: {
           teamId: Number(teamId),
           userAddress,
-          cashRatePerHour,
-          tokenRatePerHour,
+          // cashRatePerHour,
+          // tokenRatePerHour,
           maximumHoursPerWeek,
-          usdcRatePerHour
+          // usdcRatePerHour
+          ratePerHour
         },
       });
       res.status(201).json(createdWage);

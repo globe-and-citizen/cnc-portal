@@ -160,6 +160,15 @@
         </div>
 
         <!-- Error Messages -->
+        <div
+          data-test="rate-per-hour-error"
+          class="text-red-500 text-sm w-full text-left"
+          v-for="error of v$.ratePerHour?.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
+
         <div v-if="addMemberWageDataError" data-test="error-state">
           <div
             class="alert alert-warning"
@@ -234,6 +243,25 @@ const wageData = ref({
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
+const ratePerHour = computed(() => {
+  return [
+    ...(wageData.value.hourlyRate > 0
+      ? [{ type: 'native', amount: wageData.value.hourlyRate }]
+      : []),
+    ...(wageData.value.hourlyRateUsdc > 0
+      ? [{ type: 'usdc', amount: wageData.value.hourlyRateUsdc }]
+      : []),
+    ...(wageData.value.hourlyRateToken > 0
+      ? [{ type: 'sher', amount: wageData.value.hourlyRateToken }]
+      : [])
+  ]
+})
+const atLeastOneRate = helpers.withMessage(
+  'At least one hourly rate must be set',
+  (value: { type: string; amount: number }[]) => {
+    return value.some((rate) => rate.amount > 0)
+  }
+)
 
 const rules = {
   wageData: {
@@ -241,15 +269,23 @@ const rules = {
       required,
       numeric,
       notZero
-    },
-    hourlyRate: {
-      required: true,
-      numeric: true,
-      notZero
     }
+  },
+  ratePerHour: {
+    $each: {
+      type: {
+        required
+      },
+      amount: {
+        required,
+        numeric,
+        notZero
+      }
+    },
+    atLeastOneRate
   }
 }
-const v$ = useVuelidate(rules, { wageData })
+const v$ = useVuelidate(rules, { wageData, ratePerHour })
 
 // useFetch instance for deleting member
 const {
@@ -284,11 +320,8 @@ const {
   .put(() => ({
     teamId: props.teamId,
     userAddress: props.member.address,
-    cashRatePerHour: wageData.value.hourlyRate,
-    tokenRatePerHour: wageData.value.hourlyRateToken,
-    maximumHoursPerWeek: wageData.value.maxWeeklyHours,
-    usdcRatePerHour: wageData.value.hourlyRateUsdc
-    // sherRatePerHour: wageData.value.hourlyRateSher
+    ratePerHour: ratePerHour.value,
+    maximumHoursPerWeek: wageData.value.maxWeeklyHours
   }))
   .json()
 

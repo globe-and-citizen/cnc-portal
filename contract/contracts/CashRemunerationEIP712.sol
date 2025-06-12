@@ -119,17 +119,21 @@ contract CashRemunerationEIP712 is
      */
     function initialize(
         address owner,
-        address _usdcAddress
+        address[] calldata tokenAddresses
     ) public initializer {
         require(owner != address(0), "Owner address cannot be zero");
-        require(_usdcAddress != address(0), "USDC address cannot be zero");
+        // require(_usdcAddress != address(0), "USDC address cannot be zero");
         __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
         __EIP712_init("CashRemuneration", "1");
 
         // Set the initial supported tokens
-        supportedTokens[_usdcAddress] = true;
+        for (uint256 i = 0; i < tokenAddresses.length; i++) {
+            require(tokenAddresses[i] != address(0), "Token address cannot be zero");
+            supportedTokens[tokenAddresses[i]] = true;
+        }
+        // supportedTokens[_usdcAddress] = true;
     }
 
     /**
