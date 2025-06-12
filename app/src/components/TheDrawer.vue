@@ -31,6 +31,7 @@
         class="shadow-sm"
         data-test="toggle-collapse"
       >
+        <!-- I adde is collapsed class because data-test is not working on the icone -->
         <IconifyIcon
           icon="heroicons:arrow-left-start-on-rectangle"
           class="is-collapsed w-5 h-5 text-gray-600"
@@ -43,7 +44,6 @@
         />
       </ButtonUI>
     </div>
-
     <!-- Team Display Group -->
     <div
       class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
@@ -108,6 +108,7 @@
                   :team="team"
                   :to="team.id"
               /></RouterLink>
+              <!-- TODO: Make the button functional -->
               <div class="min-w-40 w-full p-1">
                 <div
                   class="flex justify-center items-center h-12 hover:bg-slate-100 rounded-xl"
@@ -129,77 +130,14 @@
       </div>
 
       <nav class="space-y-4">
-        <div v-for="item in menuItems" :key="item.label">
-          <!-- Élément avec sous-menu -->
-          <div v-if="item.children && item.children.length > 0">
-            <!-- Lien principal -->
-            <div class="flex items-center">
-              <RouterLink
-                :to="item.route"
-                class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 flex-1"
-                :class="{
-                  'bg-emerald-500/10 shadow-sm': item.active,
-                  'hover:bg-gray-100': !item.active
-                }"
-              >
-                <div class="relative">
-                  <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
-                </div>
-                <span
-                  v-if="!isCollapsed"
-                  class="text-sm font-medium transition-colors duration-200"
-                  :class="{ 'text-emerald-600': item.active }"
-                >
-                  {{ item.label }}
-                </span>
-              </RouterLink>
-            </div>
-
-            <!-- Sous-éléments -->
-            <transition
-              enter-active-class="transition-all duration-300 ease-out"
-              enter-from-class="opacity-0 max-h-0"
-              enter-to-class="opacity-100 max-h-40"
-              leave-active-class="transition-all duration-300 ease-in"
-              leave-from-class="opacity-100 max-h-40"
-              leave-to-class="opacity-0 max-h-0"
-            >
-              <div
-                v-if="!isCollapsed && item.children && item.children.length > 0"
-                class="overflow-hidden mt-3"
-              >
-                <RouterLink
-                  v-for="child in item.children"
-                  :key="child.label"
-                  :to="child.route"
-                  class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-2 ml-6 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-                  :class="{
-                    'bg-emerald-500/10 shadow-sm': child.active,
-                    'hover:bg-gray-100': !child.active
-                  }"
-                >
-                  <div class="relative">
-                    <IconifyIcon :icon="child.icon" :class="getIconClass(child.active)" />
-                  </div>
-                  <span
-                    class="text-sm font-medium transition-colors duration-200"
-                    :class="{ 'text-emerald-600': child.active }"
-                  >
-                    {{ child.label }}
-                  </span>
-                </RouterLink>
-              </div>
-            </transition>
-          </div>
-
-          <!-- Lien principal sans sous-menu -->
+        <div v-for="item in menuItems" :key="item.label" class="space-y-2">
           <RouterLink
-            v-else
             :to="item.route"
             class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
             :class="{
               'bg-emerald-500/10 shadow-sm': item.active,
-              'hover:bg-gray-100': !item.active
+              'hover:bg-gray-100': !item.active,
+              hidden: !item.show
             }"
           >
             <div class="relative">
@@ -213,6 +151,28 @@
               {{ item.label }}
             </span>
           </RouterLink>
+          <div v-for="item in item.children" :key="item.label">
+            <RouterLink
+              :to="item.route"
+              class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+              :class="{
+                'bg-emerald-500/10 shadow-sm': item.active,
+                'hover:bg-gray-100': !item.active,
+                hidden: !item.show
+              }"
+            >
+              <div class="relative">
+                <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+              </div>
+              <span
+                v-if="!isCollapsed"
+                class="text-sm font-medium transition-colors duration-200"
+                :class="{ 'text-emerald-600': item.active }"
+              >
+                {{ item.label }}
+              </span>
+            </RouterLink>
+          </div>
         </div>
       </nav>
     </div>
@@ -287,6 +247,7 @@ const getIconClass = (active: boolean | undefined) => {
 
 onMounted(() => {
   onClickOutside(target, () => {
+    console.log('clicked outside')
     isDropdownOpen.value = false
   })
 })
@@ -333,12 +294,20 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'cash-remunerations',
+    active: false,
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
+        label: 'CR Dashboard',
+        route: {
+          name: 'cash-remunerations',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'cash-remunerations',
+        show: true
+      },
+      {
         label: 'Weekly Claim',
-        icon: 'heroicons:at-symbol',
         route: {
           name: 'weekly-claim',
           params: { id: teamStore.currentTeam?.id || '1' }
@@ -349,7 +318,7 @@ const menuItems = computed(() => [
     ].filter((child) => child.show)
   },
   {
-    label: 'Expense Account',
+    label: 'Expense Account ',
     icon: 'heroicons:briefcase',
     route: {
       name: 'expense-account',
