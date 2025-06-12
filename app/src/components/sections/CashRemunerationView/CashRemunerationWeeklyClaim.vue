@@ -79,9 +79,10 @@
         <template #action-data="{ row }">
           <CRSigne
             v-if="row.claims.length > 0 && row.wage.ratePerHour"
+            :is-weekly-claim="true"
             :claim="{
               id: row.id, //which id do we use, individual or weekly claim?
-              status: 'pending',
+              status: !row.status ? 'pending' : row.status,
               hoursWorked: getTotalHoursWorked(row.claims),
               createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
               wage: {
@@ -89,6 +90,19 @@
                 userAddress: row.wage.userAddress as Address
               }
             }"
+          />
+          <CRWithdrawClaim
+            :claim="{
+                id: row.id, //which id do we use, individual or weekly claim?
+                status: !row.status ? 'pending' : row.status,
+                hoursWorked: getTotalHoursWorked(row.claims),
+                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
+                signature: row.signature,
+                wage: {
+                  ratePerHour: row.wage.ratePerHour as RatePerHour,
+                  userAddress: row.wage.userAddress as Address
+                }
+              }"
           />
         </template>
       </TableComponent>
@@ -109,6 +123,7 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import type { RatePerHour, SupportedTokens } from '@/types'
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
+import CRWithdrawClaim from './CRWithdrawClaim.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
