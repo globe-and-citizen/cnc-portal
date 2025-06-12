@@ -2,6 +2,61 @@ import { Request, Response } from "express";
 import { prisma } from "../utils";
 import { errorResponse } from "../utils/utils";
 import { Prisma } from "@prisma/client";
+import { isHex } from "viem";
+
+export const updateWeeklyClaims = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address;
+  const claimId = Number(req.params.claimId);
+  const { action } = req.query
+  const { signature } = req.body
+
+  console.log('callerAddress: ', callerAddress)
+  console.log('claimId: ', claimId)
+  console.log('action: ', action)
+  console.log('signature: ', req.body.signature)
+
+  const data: Prisma.WeeklyClaimUpdateInput = {}
+
+  if (!claimId || isNaN(claimId))
+    return errorResponse(400, "Missing or invalid claimId", res)
+
+  try {
+    const weeklyClaim = await prisma.weeklyClaim.findFirst({ 
+      where: { id: claimId },
+      include: {
+        wage: {
+          include: { team: true }
+        }
+      }
+    })
+
+    switch(action) {
+      case 'sign':
+        // Validate signature
+        if (!signature || !isHex(signature))
+          return errorResponse(400, "Missing or invalid signature", res)
+        // Validate signer
+        if(weeklyClaim?.wage.team.ownerAddress !== callerAddress) 
+          return errorResponse(403, "Caller is not owner of the team", res)
+        // Update signature and status
+        data.signature = signature
+        data.status = "signed"
+        break;
+    }
+
+    const updatedWeeklyClaim = await prisma.weeklyClaim.update({
+      where: { id: claimId },
+      data
+    })
+
+    res.status(200).json(updatedWeeklyClaim)
+  } catch(error) {
+    console.error(error);
+    return errorResponse(500, error, res)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   const teamId = Number(req.query.teamId);
