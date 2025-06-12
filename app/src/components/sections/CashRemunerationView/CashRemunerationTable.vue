@@ -37,7 +37,7 @@
         </template>
         <template #action-data="{ row }">
           <CRSigne :claim="formatRow(row) as CRSignClaim" @claim-signed="fetchTeamClaimData()" />
-          <CRWithdrawClaim :claim="formatRow(row)" @claim-withdrawn="fetchTeamClaimData()" />
+          <CRWithdrawClaim :claim="formatRow(row) as CRSignClaim" @claim-withdrawn="fetchTeamClaimData()" />
           <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
             variant="success"
