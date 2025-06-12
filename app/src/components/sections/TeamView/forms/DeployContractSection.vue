@@ -187,7 +187,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: CashRemunerationEIP712ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, USDC_ADDRESS]
+        args: [currentUserAddress, [USDC_ADDRESS]]
       })
     })
 

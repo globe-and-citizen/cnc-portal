@@ -14,6 +14,7 @@ interface WageData {
   cashRatePerHour: number
   usdcRatePerHour?: number
   tokenRatePerHour?: number
+  ratePerHour?: { type: string; amount: number }[]
 }
 
 interface MemberSectionInstance {
@@ -49,6 +50,11 @@ describe('MemberSection.vue', () => {
     {
       userAddress: '0x1234' as Address,
       maximumHoursPerWeek: 40,
+      ratePerHour: [
+        { type: 'native', amount: 20 },
+        { type: 'usdc', amount: 50 },
+        { type: 'sher', amount: 10 }
+      ],
       cashRatePerHour: 20,
       usdcRatePerHour: 50,
       tokenRatePerHour: 10
@@ -56,6 +62,11 @@ describe('MemberSection.vue', () => {
     {
       userAddress: '0x5678' as Address,
       maximumHoursPerWeek: 30,
+      ratePerHour: [
+        { type: 'native', amount: 25 },
+        { type: 'usdc', amount: 45 },
+        { type: 'sher', amount: 15 }
+      ],
       cashRatePerHour: 25,
       usdcRatePerHour: 45,
       tokenRatePerHour: 15

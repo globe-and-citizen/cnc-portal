@@ -67,7 +67,7 @@ import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
 import { log } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { parseEther, type Address } from 'viem'
+import { parseUnits, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
@@ -156,7 +156,7 @@ const mintToken = (address: Address, amount: string) => {
     abi: INVESTOR_ABI,
     address: investorsAddress.value as Address,
     functionName: 'individualMint',
-    args: [address, parseEther(amount)]
+    args: [address, parseUnits(amount, 6)]
   })
 }
 
