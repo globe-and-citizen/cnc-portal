@@ -99,6 +99,7 @@
 
               <button
                 v-if="row.status === 'Active' && team?.ownerAddress == useUserDataStore().address"
+                data-test="stop-btn"
                 class="btn btn-xs btn-error flex items-center justify-center"
                 @click.stop="
                   stopVesting({
@@ -120,6 +121,8 @@
               <button
                 v-if="row.status === 'Active' && row.member === useUserDataStore().address"
                 class="btn btn-xs btn-success flex items-center justify-center"
+                :disabled="!row.isStarted"
+                :title="!row.isStarted ? 'Vesting has not started yet' : ''"
                 @click.stop="
                   releaseVesting({
                     address: VESTING_ADDRESS as Address,
@@ -229,6 +232,8 @@ watch(displayActive, async () => {
   await getArchivedVestingInfos()
 })
 const vestings = computed(() => {
+  const currentDateInSeconds = Math.floor(Date.now() / 1000)
+
   let currentVestings = vestingInfos.value
   if (!displayActive.value) {
     currentVestings = archivedVestingInfos.value
@@ -252,6 +257,7 @@ const vestings = computed(() => {
             const year = date.getFullYear()
             return `${day}/${month}/${year}`
           })(),
+          isStarted: currentDateInSeconds > Number(v.start),
           durationDays: Math.floor(Number(v.duration) / 86400),
           cliffDays: Math.floor(Number(v.cliff) / 86400),
           totalAmount: Number(formatEther(v.totalAmount)),

@@ -5,7 +5,14 @@
     <label class="input input-bordered flex items-center gap-2 input-md mt-4">
       <span class="w-32">Member</span>
       <div class="flex flex-col grow">
-        <input type="text" class="grow" v-model="member" placeholder="Member address" required />
+        <input
+          data-test="member"
+          type="text"
+          class="grow"
+          v-model="member"
+          placeholder="Member address"
+          required
+        />
         <span v-if="member && !isAddress(member)" class="text-xs text-red-500 mt-1">
           Please enter a valid Ethereum address.
         </span>
@@ -14,7 +21,7 @@
 
     <label class="input input-bordered flex items-center gap-2 input-md mt-4">
       <span class="w-32">Start Date</span>
-      <input type="date" class="grow" v-model="startDate" required />
+      <input data-test="start-date" type="date" class="grow" v-model="startDate" required />
     </label>
 
     <div class="flex gap-3 mt-4 grow">
@@ -22,18 +29,18 @@
         class="input input-xs input-bordered flex items-center gap-4 input-md min-w-0 mt-4 p-1"
       >
         <span class="w-full text-xs">Duration(days)</span>
-        <input type="number" v-model.number="duration" required min="1" />
+        <input data-test="duration" type="number" v-model.number="duration" required min="1" />
       </label>
       <label class="input input-bordered flex items-center gap-2 input-md mt-4 min-w-0 p-1">
         <span class="w-full text-xs">Cliff(days)</span>
-        <input type="number" v-model.number="cliff" required />
+        <input data-test="cliff" type="number" v-model.number="cliff" required />
       </label>
     </div>
 
     <div class="flex gap-3 mt-4 grow">
       <label class="input input-bordered flex items-center gap-2 input-md mt-4">
         <span class="w-full text-xs">Amount</span>
-        <input type="number" class="grow" v-model="totalAmount" required />
+        <input data-test="total-amount" type="number" class="grow" v-model="totalAmount" required />
       </label>
       <span class="flex items-center gap-2 input-md mt-4 min-w-0 p-1">
         <ButtonUI
@@ -42,6 +49,7 @@
           @click="approveAllowance"
           :disabled="totalAmount <= 0 || tokenApproved || loadingAllowance"
           :loading="loadingAllowance"
+          data-test="approve-btn"
         >
           approve Allowance
         </ButtonUI>
@@ -60,6 +68,7 @@
         @click="submit"
         :disabled="loading || !formValid || !tokenApproved"
         :loading="loading"
+        data-test="submit-btn"
       >
         Create Vesting
       </ButtonUI>
@@ -153,6 +162,10 @@ watch(errorAddVesting, () => {
     addErrorToast('Add vesting failed')
     console.error('add vesting error', errorAddVesting.value)
   }
+})
+
+defineExpose({
+  tokenApproved
 })
 
 const {
