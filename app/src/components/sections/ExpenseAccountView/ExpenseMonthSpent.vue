@@ -27,14 +27,15 @@ import { storeToRefs } from 'pinia'
 import { formatEther, formatUnits, zeroAddress } from 'viem'
 import { watch } from 'vue'
 import { computed } from 'vue'
+import { useContractBalance } from '@/composables/useContractBalance'
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { localCurrency, nativeToken, usdc } = storeToRefs(currencyStore)
-const contractAddress = teamStore.currentTeam?.teamContracts.find(
+const contractAddress = computed(() => teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'ExpenseAccountEIP712'
-)?.address
+)?.address)
+const { balances, isLoading } = useContractBalance(contractAddress)
 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000
@@ -60,23 +61,20 @@ const { result, loading, error } = useQuery(
 
 const totalMonthlySpentAmount = computed(() => {
   const transactions = result.value?.transactions || []
-  let totalAmountInNetworkCurrency = 0
-  let totalAmountInUSDC = 0
+  let totalNative = 0
+  let totalUSDC = 0
   transactions.forEach((transaction: { amount: bigint; tokenAddress: string }) => {
     if (transaction.tokenAddress === zeroAddress) {
-      totalAmountInNetworkCurrency += parseFloat(formatEther(transaction.amount))
+      totalNative += parseFloat(formatEther(transaction.amount))
     } else {
-      totalAmountInUSDC += parseFloat(formatUnits(transaction.amount, 6))
+      totalUSDC += parseFloat(formatUnits(transaction.amount, 6))
     }
   })
-  const totalNetworkInLocalCurrency =
-    totalAmountInNetworkCurrency * (nativeToken.value.priceInLocal || 0)
-  const totalUSDCInLocalCurrency = totalAmountInUSDC * (usdc.value.priceInLocal || 0)
-
-  return formatCurrencyShort(
-    totalNetworkInLocalCurrency + totalUSDCInLocalCurrency,
-    localCurrency.value.code
-  )
+  const nativePrice = currencyStore.getTokenInfo('native')?.prices.find(p => p.id === 'local')?.price || 0
+  const usdcPrice = currencyStore.getTokenInfo('usdc')?.prices.find(p => p.id === 'local')?.price || 0
+  const totalNativeInLocal = totalNative * nativePrice
+  const totalUSDCInLocal = totalUSDC * usdcPrice
+  return formatCurrencyShort(totalNativeInLocal + totalUSDCInLocal, currencyStore.localCurrency.code)
 })
 
 watch(error, (err) => {

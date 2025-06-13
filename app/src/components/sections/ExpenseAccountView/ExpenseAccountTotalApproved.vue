@@ -20,21 +20,27 @@ import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { useCurrencyStore, useExpenseDataStore } from '@/stores'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useTeamStore } from '@/stores'
 import type { BudgetData } from '@/types'
 import { formatCurrencyShort } from '@/utils'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted } from 'vue'
 
-const expenseDataStore = useExpenseDataStore()
 const currencyStore = useCurrencyStore()
+const teamStore = useTeamStore()
+const expenseDataStore = useExpenseDataStore()
+const expenseAddress = computed(() => teamStore.currentTeam?.teamContracts.find(
+  (contract: { type: string; address: string }) => contract.type === 'ExpenseAccountEIP712'
+)?.address)
+const { balances } = useContractBalance(expenseAddress)
 const { localCurrency, nativeToken, usdc } = storeToRefs(currencyStore)
 const totalApproved = computed(() => {
   const { usdcAmount, usdtAmount, nativeTokenAmount } = calculateTokenAmounts()
-  const total =
-    (usdcAmount + usdtAmount) * (usdc.value.priceInLocal ?? 0) +
-    nativeTokenAmount * (nativeToken.value.priceInLocal ?? 0)
-
-  return formatCurrencyShort(parseFloat(total.toString()), localCurrency.value.code)
+  const nativePrice = currencyStore.getTokenInfo('native')?.prices.find(p => p.id === 'local')?.price || 0
+  const usdcPrice = currencyStore.getTokenInfo('usdc')?.prices.find(p => p.id === 'local')?.price || 0
+  const total = usdcAmount * usdcPrice + usdtAmount * usdcPrice + nativeTokenAmount * nativePrice
+  return formatCurrencyShort(parseFloat(total.toString()), currencyStore.localCurrency.code)
 })
 
 function calculateTokenAmounts() {
@@ -65,15 +71,12 @@ function calculateMinApprovedAmount(budgets: BudgetData[]): number {
   if (transactionPerPeriod && amountPerPeriod && amountPerTransaction) {
     return Math.min(amountPerPeriod, transactionPerPeriod * amountPerTransaction)
   }
-
   if (transactionPerPeriod && amountPerTransaction) {
     return transactionPerPeriod * amountPerTransaction
   }
-
   if (amountPerPeriod && amountPerTransaction) {
     return Math.min(amountPerPeriod, amountPerTransaction)
   }
-
   return 0
 }
 
