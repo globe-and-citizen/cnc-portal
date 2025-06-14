@@ -3,7 +3,7 @@ import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
-import type { Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 
 export const NETWORK = getNetwork()
 
@@ -172,7 +172,7 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
   GO: 'ethereum'
 }
 
-export type TokenId = 'native' | 'usdc' // Add more token IDs as needed
+export type TokenId = 'native' | 'usdc' | 'usdt' | 'sher' // Add more token IDs as needed
 
 export const SUPPORTED_TOKENS: TokenConfig[] = [
   {
@@ -182,7 +182,7 @@ export const SUPPORTED_TOKENS: TokenConfig[] = [
     code: NETWORK.currencySymbol,
     coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
     decimals: 18,
-    address: '0x0000000000000000000000000000000000000000'
+    address: zeroAddress
   },
   {
     id: 'usdc',
