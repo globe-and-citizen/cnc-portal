@@ -26,7 +26,6 @@ import gql from 'graphql-tag'
 import {  formatUnits } from 'viem'
 import { watch } from 'vue'
 import { computed } from 'vue'
-import { useContractBalance } from '@/composables/useContractBalance'
 import { SUPPORTED_TOKENS } from '@/constant'
 
 const teamStore = useTeamStore()
