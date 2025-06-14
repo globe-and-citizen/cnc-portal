@@ -19,7 +19,7 @@
 <script setup lang="ts">
 //#region Imports
 import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/ExpenseStatsSection.vue'
-import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
+// import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import { useTeamStore } from '@/stores'
