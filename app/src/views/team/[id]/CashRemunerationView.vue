@@ -28,6 +28,8 @@
       "
     />
 
+    <CashRemunerationWeeklyClaim />
+
     <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" />
     <!-- <CashRemunerationTransactions /> -->
   </div>
@@ -41,6 +43,6 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
-
+import CashRemunerationWeeklyClaim from '@/components/sections/CashRemunerationView/CashRemunerationWeeklyClaim.vue'
 const teamStore = useTeamStore()
 </script>

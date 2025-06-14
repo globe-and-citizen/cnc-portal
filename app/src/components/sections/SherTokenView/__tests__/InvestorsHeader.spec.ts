@@ -2,7 +2,7 @@ import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import InvestorsHeader from '../InvestorsHeader.vue'
 import type { Team } from '@/types'
-import { parseEther } from 'viem'
+import { parseUnits } from 'viem'
 
 describe('InvestorsHeader', () => {
   const createComponent = (props?: {
@@ -30,9 +30,9 @@ describe('InvestorsHeader', () => {
         },
         tokenSymbol: 'BTC',
         tokenSymbolLoading: false,
-        totalSupply: parseEther('1000000'),
+        totalSupply: parseUnits('1000000', 6),
         totalSupplyLoading: false,
-        tokenBalance: parseEther('100'),
+        tokenBalance: parseUnits('100', 6),
         loadingTokenBalance: false,
         ...props
       },

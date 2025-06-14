@@ -3,11 +3,13 @@ import { errorResponse } from "../utils/utils";
 import { prisma } from "../utils";
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
+import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
   memo: string;
   teamId: string;
 };
+
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
@@ -15,6 +17,9 @@ export const addClaim = async (req: Request, res: Response) => {
   const hoursWorked = Number(body.hoursWorked);
   const memo = body.memo as string;
   const teamId = Number(body.teamId);
+
+  const weekStart = getMondayStart(new Date());
+  const dayWorked = todayMidnight(new Date());
 
   // Validating the claim data
   // Checking required data
@@ -47,12 +52,59 @@ export const addClaim = async (req: Request, res: Response) => {
     if (!wage) {
       return errorResponse(400, "No wage found for the user", res);
     }
+
+    // get the member current wage
+
+    let weeklyClaim = await prisma.weeklyClaim.findFirst({
+      where: {
+        wage: {
+          teamId: teamId,
+          nextWageId: null,
+        },
+        weekStart: weekStart,
+        memberAddress: callerAddress,
+        teamId: teamId,
+      },
+      include: { claims: true },
+    });
+
+    // Check tu max hours.
+
+    const totalHours =
+      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ??
+      0;
+
+    if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
+      return errorResponse(
+        400,
+        "Maximum weekly hours reached, cannot submit more claims for this week.",
+        res
+      );
+    }
+
+    if (!weeklyClaim) {
+      weeklyClaim = await prisma.weeklyClaim.create({
+        data: {
+          wageId: wage.id,
+          weekStart: weekStart,
+          memberAddress: callerAddress,
+          teamId: teamId,
+          data: {},
+        },
+        include: {
+          claims: true,
+        },
+      });
+    }
+
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
         memo,
         wageId: wage.id,
         status: "pending",
+        weeklyClaimId: weeklyClaim.id,
+        dayWorked: dayWorked,
       },
     });
 
@@ -108,7 +160,6 @@ export const getClaims = async (req: Request, res: Response) => {
     });
     return res.status(200).json(claims);
   } catch (error) {
-    console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
   } finally {
     await prisma.$disconnect();
