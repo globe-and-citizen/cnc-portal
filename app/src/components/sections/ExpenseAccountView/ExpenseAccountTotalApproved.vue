@@ -1,9 +1,5 @@
 <template>
-  <OverviewCard
-    :title="10"
-    subtitle="Total Approved"
-    variant="info"
-    :card-icon="personIcon"
+  <OverviewCard :title="10" subtitle="Total Approved" variant="info" :card-icon="personIcon"
     ><div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>

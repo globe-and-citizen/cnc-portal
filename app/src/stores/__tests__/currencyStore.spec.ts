@@ -106,10 +106,10 @@ describe('Currency Store', () => {
     expect(native).toMatchSnapshot()
 
     expect(usdc).toMatchSnapshot()
-    expect(native?.prices.find(p => p.id === 'usd')?.price).toBe(1000)
-    expect(native?.prices.find(p => p.id === 'local')?.price).toBe(900)
-    expect(usdc?.prices.find(p => p.id === 'usd')?.price).toBe(1000)
-    expect(usdc?.prices.find(p => p.id === 'local')?.price).toBe(900)
+    expect(native?.prices.find((p) => p.id === 'usd')?.price).toBe(1000)
+    expect(native?.prices.find((p) => p.id === 'local')?.price).toBe(900)
+    expect(usdc?.prices.find((p) => p.id === 'usd')?.price).toBe(1000)
+    expect(usdc?.prices.find((p) => p.id === 'local')?.price).toBe(900)
     // Test getTokenPrice
     // expect(store.getTokenPrice('native', 'usd')).toBe(1000)
     // expect(store.getTokenPrice('usdc', 'usd')).toBe(1000)
@@ -131,6 +131,6 @@ describe('Currency Store', () => {
     // getTokenInfo should return null prices
     const native = store.getTokenInfo('native')
     expect(native).toMatchSnapshot()
-    expect(native?.prices.find(p => p.id === 'usd')?.price).toBeNull()
+    expect(native?.prices.find((p) => p.id === 'usd')?.price).toBeNull()
   })
 })

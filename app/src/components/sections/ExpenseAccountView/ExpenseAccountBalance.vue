@@ -27,8 +27,11 @@ import { computed } from 'vue'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
-const expenseAddress = computed(() => teamStore.currentTeam?.teamContracts.find(
-  (contract) => contract.type === 'ExpenseAccountEIP712'
-)?.address)
+const expenseAddress = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address
+)
 const { total, isLoading } = useContractBalance(expenseAddress)
 </script>

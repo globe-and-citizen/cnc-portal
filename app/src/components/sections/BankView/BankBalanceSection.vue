@@ -159,5 +159,6 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   }
 })
 
-const getTokens = () => balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
+const getTokens = () =>
+  balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
 </script>

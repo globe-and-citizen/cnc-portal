@@ -105,7 +105,7 @@ export const useCurrencyStore = defineStore('currency', () => {
       id: 'local',
       price: priceData?.market_data.current_price[currentCode.toLocaleLowerCase()] ?? null,
       code: currentCode,
-      symbol: currency.value.symbol,
+      symbol: currency.value.symbol
     })
     // USD
     prices.push({

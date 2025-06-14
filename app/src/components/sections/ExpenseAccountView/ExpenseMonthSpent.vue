@@ -23,7 +23,7 @@ import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
-import {  formatUnits } from 'viem'
+import { formatUnits } from 'viem'
 import { watch } from 'vue'
 import { computed } from 'vue'
 import { SUPPORTED_TOKENS } from '@/constant'
@@ -31,9 +31,12 @@ import { SUPPORTED_TOKENS } from '@/constant'
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const contractAddress = computed(() => teamStore.currentTeam?.teamContracts.find(
-  (contract) => contract.type === 'ExpenseAccountEIP712'
-)?.address)
+const contractAddress = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address
+)
 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000
@@ -65,16 +68,19 @@ const totalMonthlySpentAmount = computed(() => {
     spentByToken[token.id] = 0
   }
   transactions.forEach((transaction: { amount: bigint; tokenAddress: string }) => {
-    const token = SUPPORTED_TOKENS.find(t => t.address.toLowerCase() === transaction.tokenAddress.toLowerCase())
+    const token = SUPPORTED_TOKENS.find(
+      (t) => t.address.toLowerCase() === transaction.tokenAddress.toLowerCase()
+    )
     if (token) {
       const decimals = token.decimals
       spentByToken[token.id] += parseFloat(formatUnits(transaction.amount, decimals))
     }
   })
-  
+
   let totalInLocal = 0
   for (const token of SUPPORTED_TOKENS) {
-    const price = currencyStore.getTokenInfo(token.id)?.prices.find(p => p.id === 'local')?.price || 0
+    const price =
+      currencyStore.getTokenInfo(token.id)?.prices.find((p) => p.id === 'local')?.price || 0
     totalInLocal += spentByToken[token.id] * price
   }
   return formatCurrencyShort(totalInLocal, currencyStore.localCurrency.code)

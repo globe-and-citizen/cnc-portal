@@ -42,9 +42,9 @@ type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
 // TODO: support reactive address changes
 /**
  * @description Composable to fetch and compute balances for an address
- * 
+ *
  * Supports both native and ERC20 tokens
- * 
+ *
  * Returns: { balances, total, isLoading, error }
  */
 export function useContractBalance(address: Address | Ref<Address | undefined>) {
