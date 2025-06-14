@@ -3,25 +3,16 @@
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
     <ExpenseStatsSection />
-
     <GenericTokenHoldingsSection
-      v-if="
-        teamStore.currentTeam?.teamContracts.find(
-          (contract) => contract.type === 'ExpenseAccountEIP712'
-        )
-      "
-      :address="
-        teamStore.currentTeam?.teamContracts.find(
-          (contract) => contract.type === 'ExpenseAccountEIP712'
-        )?.address || ''
-      "
+      v-if="teamStore.getContractAddressByType('ExpenseAccountEIP712')"
+      :address="teamStore.getContractAddressByType('ExpenseAccountEIP712')!"
     />
 
     <MyApprovedExpenseSection />
 
     <ApprovedExpensesSection />
 
-    <TransactionHistorySection />
+    <!-- <TransactionHistorySection /> -->
   </div>
 </template>
 
