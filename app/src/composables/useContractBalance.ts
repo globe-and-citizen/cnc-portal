@@ -133,7 +133,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
           id: first.id,
           code: first.code,
           symbol: first.symbol,
-          price: first.price
+          price: first.price,
+          formatedPrice: formatCurrencyShort(first.price, code)
         }
       }
     }
