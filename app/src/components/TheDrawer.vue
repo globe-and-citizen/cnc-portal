@@ -294,7 +294,9 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: teamStore.currentTeam?.ownerAddress !== userStore.address,
+    active:
+      route.name === 'cash-remunerations' &&
+      teamStore.currentTeam?.ownerAddress !== userStore.address,
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
