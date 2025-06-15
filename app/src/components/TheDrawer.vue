@@ -294,7 +294,7 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: false,
+    active: teamStore.currentTeam?.ownerAddress !== userStore.address,
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
@@ -304,7 +304,7 @@ const menuItems = computed(() => [
           params: { id: teamStore.currentTeam?.id || '1' }
         },
         active: route.name === 'cash-remunerations',
-        show: true
+        show: teamStore.currentTeam?.ownerAddress === userStore.address
       },
       {
         label: 'Weekly Claim',
