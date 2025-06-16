@@ -8,7 +8,7 @@
               index: index + 1,
               name: getShareholderName(shareholder.shareholder) || 'Unknown',
               address: shareholder.shareholder,
-              balance: `${formatEther(shareholder.amount)} ${tokenSymbol}`,
+              balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbol}`,
               percentage: !totalSupplyLoading
                 ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupply!)).toString()}%`
                 : '...%',
@@ -63,7 +63,7 @@
 </template>
 <script setup lang="ts">
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { formatEther, parseEther, type Address } from 'viem'
+import { formatUnits, parseUnits, type Address } from 'viem'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { ref } from 'vue'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
@@ -115,7 +115,7 @@ const mintToken = (address: Address, amount: string) => {
     address: props.team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
       ?.address as Address,
     functionName: 'individualMint',
-    args: [address, parseEther(amount)]
+    args: [address, parseUnits(amount, 6)]
   })
 }
 

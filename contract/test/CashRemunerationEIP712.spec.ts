@@ -18,7 +18,7 @@ describe('CashRemuneration*** (EIP712)', () => {
     const CashRemunerationImplementation = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationProxy = (await upgrades.deployProxy(
       CashRemunerationImplementation,
-      [employer.address, await mockUSDC.getAddress()],
+      [employer.address, [await mockUSDC.getAddress()]],
       { initializer: 'initialize' }
     )) as unknown as CashRemunerationEIP712
   }
@@ -46,7 +46,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       await expect(
         upgrades.deployProxy(
           CashRemunerationImplementation,
-          [ethers.ZeroAddress, await mockUSDC.getAddress()],
+          [ethers.ZeroAddress, [await mockUSDC.getAddress()]],
           { initializer: 'initialize' }
         )
       ).to.be.revertedWith('Owner address cannot be zero')
@@ -58,15 +58,15 @@ describe('CashRemuneration*** (EIP712)', () => {
       await expect(
         upgrades.deployProxy(
           CashRemunerationImplementation,
-          [employer.address, ethers.ZeroAddress],
+          [employer.address, [ethers.ZeroAddress]],
           { initializer: 'initialize' }
         )
-      ).to.be.revertedWith('USDC address cannot be zero')
+      ).to.be.revertedWith('Token address cannot be zero')
     })
 
     it('should prevent reinitialization', async () => {
       await expect(
-        cashRemunerationProxy.initialize(employer.address, await mockUSDC.getAddress())
+        cashRemunerationProxy.initialize(employer.address, [await mockUSDC.getAddress()])
       ).to.be.revertedWithCustomError(cashRemunerationProxy, 'InvalidInitialization')
     })
   })

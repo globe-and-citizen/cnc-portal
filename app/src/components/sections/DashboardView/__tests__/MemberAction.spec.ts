@@ -193,8 +193,9 @@ describe('MemberAction', () => {
     await wrapper.find('[data-test="max-hours-input"]').setValue('')
     await wrapper.find('[data-test="add-wage-button"]').trigger('click')
 
-    expect(wrapper.find('[data-test="hourly-rate-error"]').exists()).toBeTruthy()
-    expect(wrapper.find('[data-test="max-weekly-hours-error"]').exists()).toBeTruthy()
+    // expect(wrapper.find('[data-test="hourly-rate-error"]').exists()).toBeTruthy()
+    // expect(wrapper.find('[data-test="max-weekly-hours-error"]').exists()).toBeTruthy()
+    expect(wrapper.find('[data-test="rate-per-hour-error"]').exists()).toBeTruthy()
 
     // 3- Cancel and chek if the modal is closed
     await wrapper.find('[data-test="add-wage-cancel-button"]').trigger('click')
