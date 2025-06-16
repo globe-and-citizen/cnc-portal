@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import type { ClaimResponse, CRSignClaim } from '@/types'
+import type { CRSignClaim } from '@/types'
 import { log, parseError } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import {
