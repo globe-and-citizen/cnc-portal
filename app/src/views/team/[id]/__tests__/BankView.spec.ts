@@ -1,34 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {shallowMount } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
 import BankView from '../BankView.vue'
 import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
 
 import { mockTeamStore } from '@/tests/mocks/store.mock'
-
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 0
-    }
-  })),
-  createRouter: vi.fn(() => ({
-    beforeEach: vi.fn(),
-    push: vi.fn(),
-    replace: vi.fn(),
-    go: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn()
-  })),
-  createWebHistory: vi.fn(),
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    go: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn()
-  }))
-}))
 
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
@@ -56,12 +32,16 @@ describe('BankView', () => {
 
     it('passes correct bank address to BankBalanceSection', () => {
       const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
-      expect(bankBalanceSection.props('bankAddress')).toBe(mockTeamStore.getContractAddressByType('Bank'))
+      expect(bankBalanceSection.props('bankAddress')).toBe(
+        mockTeamStore.getContractAddressByType('Bank')
+      )
     })
 
     it('passes bankBalanceSection ref to TokenHoldingsSection', () => {
       const tokenHoldingsSection = wrapper.findComponent({ name: 'GenericTokenHoldingsSection' })
-      expect(tokenHoldingsSection.props('address')).toBe(mockTeamStore.getContractAddressByType('Bank'))
+      expect(tokenHoldingsSection.props('address')).toBe(
+        mockTeamStore.getContractAddressByType('Bank')
+      )
     })
 
     it('renders BankBalanceSection', () => {
