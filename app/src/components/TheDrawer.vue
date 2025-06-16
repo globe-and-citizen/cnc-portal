@@ -151,7 +151,7 @@
               {{ item.label }}
             </span>
           </RouterLink>
-          <div v-for="item in item.children" :key="item.label">
+          <div v-for="child in item.children" :key="child.label">
             <RouterLink
               :to="item.route"
               class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
@@ -162,14 +162,14 @@
               }"
             >
               <div class="relative">
-                <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+                <!-- <IconifyIcon :icon="child.icon" :class="getIconClass(child.active)" /> -->
               </div>
               <span
                 v-if="!isCollapsed"
                 class="text-sm font-medium transition-colors duration-200"
-                :class="{ 'text-emerald-600': item.active }"
+                :class="{ 'text-emerald-600': child.active }"
               >
-                {{ item.label }}
+                {{ child.label }}
               </span>
             </RouterLink>
           </div>
