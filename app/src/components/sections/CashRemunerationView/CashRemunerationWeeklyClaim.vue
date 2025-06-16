@@ -92,17 +92,18 @@
             }"
           />
           <CRWithdrawClaim
+            :is-weekly-claim="true"
             :claim="{
-                id: row.id, //which id do we use, individual or weekly claim?
-                status: !row.status ? 'pending' : row.status,
-                hoursWorked: getTotalHoursWorked(row.claims),
-                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-                signature: row.signature,
-                wage: {
-                  ratePerHour: row.wage.ratePerHour as RatePerHour,
-                  userAddress: row.wage.userAddress as Address
-                }
-              }"
+              id: row.id, //which id do we use, individual or weekly claim?
+              status: !row.status ? 'pending' : row.status,
+              hoursWorked: getTotalHoursWorked(row.claims),
+              createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
+              signature: row.signature,
+              wage: {
+                ratePerHour: row.wage.ratePerHour as RatePerHour,
+                userAddress: row.wage.userAddress as Address
+              }
+            }"
           />
         </template>
       </TableComponent>
