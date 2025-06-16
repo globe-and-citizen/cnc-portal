@@ -91,7 +91,6 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
-
 const weeklyClaimUrl = computed(() => {
   return `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
     userStore.address !== teamStore.currentTeam?.ownerAddress
@@ -113,9 +112,7 @@ const getHoulyRateInUserCurrency = (rate: number) => {
 function formatDate(date: string | Date) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
-
   return d.toLocaleDateString('en-US', {
-
     weekday: 'long',
     year: 'numeric',
     month: 'long',
