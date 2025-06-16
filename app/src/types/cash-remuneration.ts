@@ -58,7 +58,10 @@ export interface WageResponse {
   sherRatePerHour?: number
 }
 
-export type CRSignClaim = Pick<ClaimResponse, 'id' | 'status' | 'hoursWorked' | 'createdAt' | 'signature'> & {
+export type CRSignClaim = Pick<
+  ClaimResponse,
+  'id' | 'status' | 'hoursWorked' | 'createdAt' | 'signature'
+> & {
   wage: {
     ratePerHour: RatePerHour
     userAddress: Address
