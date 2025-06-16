@@ -29,7 +29,7 @@ const props = defineProps<{
       ratePerHour: RatePerHour
       userAddress: Address
     }
-  },
+  }
   isWeeklyClaim?: boolean
 }>()
 const emit = defineEmits(['claim-signed'])
@@ -45,7 +45,9 @@ const chainId = useChainId()
 
 // Computed properties
 const teamOwner = computed(() => teamStore.currentTeam?.ownerAddress)
-const claimUrl = computed(() => `/${props.isWeeklyClaim ? 'weeklyclaim' : 'claim'}/${props.claim.id}/?action=sign`)
+const claimUrl = computed(
+  () => `/${props.isWeeklyClaim ? 'weeklyclaim' : 'claim'}/${props.claim.id}/?action=sign`
+)
 
 // const { signature, execute: signClaim } = useSignWageClaim()
 const loading = ref(false)
