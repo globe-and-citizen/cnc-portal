@@ -78,7 +78,7 @@
 import CardComponent from '@/components/CardComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import TableComponent from '@/components/TableComponent.vue'
+import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
