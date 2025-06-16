@@ -16,7 +16,14 @@ import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse, CRSignClaim } from '@/types'
 import { log, parseError } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { encodeFunctionData, formatEther, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
+import {
+  encodeFunctionData,
+  formatEther,
+  parseEther,
+  parseUnits,
+  zeroAddress,
+  type Address
+} from 'viem'
 import { computed, ref } from 'vue'
 import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { getBalance } from 'viem/actions'
@@ -26,7 +33,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { estimateGas } from '@wagmi/core'
 
-const props = defineProps<{ claim: CRSignClaim }>()
+const props = defineProps<{ claim: CRSignClaim; isWeeklyClaim?: boolean }>()
 const emit = defineEmits(['claim-withdrawn'])
 
 const userDataStore = useUserDataStore()
@@ -50,7 +57,9 @@ const { isSuccess: withdrawSuccess, error: withdrawTrxError } = useWaitForTransa
 })
 
 const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(
-  computed(() => `/claim/${props.claim.id}/?action=withdraw`),
+  computed(
+    () => `/${props.isWeeklyClaim ? 'weeklyClaim' : 'claim'}/${props.claim.id}/?action=withdraw`
+  ),
   {
     immediate: false
   }
@@ -70,7 +79,8 @@ const withdrawClaim = async () => {
   )
   if (
     Number(balance) <
-    Number(props.claim.wage.ratePerHour.find(rate => rate.type === 'native')) * Number(props.claim.hoursWorked)
+    Number(props.claim.wage.ratePerHour.find((rate) => rate.type === 'native')) *
+      Number(props.claim.hoursWorked)
   ) {
     isLoading.value = false
     toastStore.addErrorToast('Insufficient balance')
