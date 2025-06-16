@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import BankView from '../BankView.vue'
 import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
 
 import { mockTeamStore } from '@/tests/mocks/store.mock'
+
+import BankView from '../BankView.vue'
 
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
